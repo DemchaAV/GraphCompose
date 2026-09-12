@@ -230,15 +230,442 @@ follow semantic versioning; release dates are ISO 8601.
   Nothing renders differently — a link annotation is not ink, and every pixel baseline in
   the suite passes untouched.
 
-### Deprecated
+- **Text style carries typographic tracking.** `DocumentTextStyle.builder().letterSpacing(...)`
+  takes a `DocumentLetterSpacing` — either `ofFontSize(0.12)`, a share of the font size, or
+  `points(1.2)`, an absolute amount. Negative values tighten. The unit lives in the value
+  rather than in a bare `double`, because `0.12` and `1.2` are both plausible-looking
+  numbers and a call site passing one has no way to say which it meant.
 
-- **`templates.data.schedule` — every type.** `WeeklyScheduleData`,
-  `WeeklyScheduleDocumentSpec`, `ScheduleDay`, `ScheduleCategory`, `SchedulePerson`,
-  `ScheduleAssignment`, `ScheduleSlot` and `ScheduleMetricRow` are deprecated since
-  2.4.0 in favour of `templates.data.rota`, each naming its replacement. They still
-  ship and still compile; nothing in the library ever rendered them, so no output moves.
-  `docs/templates/which-template-system.md` now points a caller at the rota model
-  instead.
+  The default is `DocumentLetterSpacing.NONE`, which resolves to zero at every font size, so
+  a document that never asks for tracking renders exactly as it did.
+
+  **PDF honours it natively.** The advance comes from the PDF `Tc` operator, not from spaces
+  pushed into the string, so a spaced-caps headline still reads as `JANE DOE` to search,
+  copy/paste, text extraction and ATS parsers — one glyph per character, the original text.
+  Tracked runs also state their own text via `ActualText`, because an extractor decides
+  where words are by how far apart glyphs sit and tracking is the act of moving them apart;
+  without that statement a widely tracked line comes back as `J A N E  D O E` from a file
+  that is otherwise perfectly correct.
+
+  Measurement and drawing use one rule, measured off PDFBox rather than assumed: one spacing
+  unit per Unicode **code point** of the string actually drawn, the trailing unit included.
+  Wrapping, `CENTER`/`RIGHT` alignment, underline and strike rules, link rectangles and
+  table cells all consume that one measured width, so they follow without special cases.
+  Negative tracking tightens, and the measured width is not clamped — the pen really does
+  move backwards, and a measurement that refused to would simply stop matching the page.
+
+  **All three backends carry it natively.** PPTX writes DrawingML's `spc` in hundredths of
+  a point, DOCX writes Word's run-level `w:spacing` in twentieths, and neither pads the
+  text. The units and the advance rule were measured rather than read off the
+  specification: probe files were exported to PDF by PowerPoint and Word themselves and the
+  glyph positions read back. Both applications spend the spacing the way PDF's `Tc` does —
+  one unit per code point, the trailing one included, an ordinary space counted like any
+  other character.
+
+  **Tracking has a granularity, and it is 0.01pt in a fixed-layout document.** DrawingML can
+  only state hundredths of a point, so that is the finest distinction a PDF and a deck can
+  both make. The engine measures on that grid rather than on the raw value, which is what
+  keeps the width it reserves, wraps against and aligns to the width the file will actually
+  draw: ask for a third of a point and every fixed backend, and the measurement behind them,
+  uses 0.33. Word's own grid is coarser still at 0.05pt, and the DOCX export rounds the
+  authored value to it independently — a semantic document owes the fixed backends no
+  coordinate. The authored `DocumentLetterSpacing` is never rewritten; it keeps the value
+  and the unit it was given, and reports them back unchanged.
+
+  A tracking too large for a format to state is refused rather than silently wrapped —
+  beyond ±4000pt for fixed layout, which is where DrawingML's own bound sits.
+
+  Asking for no tracking writes nothing at all: no `spc` attribute, no `w:spacing` element,
+  no `Tc` operator. Every existing document is byte-for-byte what it was.
+
+- **The built-in CV and cover-letter presets now use real tracking, so their text is
+  readable again.** Spaced caps in those presets were drawn by rewriting the string with a
+  space between every pair of letters. The page looked right and the file did not: an
+  applicant's name was stored as `J A N E   D O E`, which is the one field a CV is searched
+  and parsed by. All 33 call sites are migrated — the name, the job title, section banners,
+  skill labels, education headings — and the text in the file is now the text that was
+  typed, in PDF, PPTX and DOCX alike.
+
+  **Headings also stop breaking mid-word.** Padding every letter out made each letter its
+  own word to the line breaker, so a heading wrapped wherever it ran out of room:
+  `EDUCATION & CERT` / `IFICATIONS`, `ORACLE JAVA CERTIFICAT` / `ION`. Words are whole
+  again, so they wrap between words.
+
+  The tracking is `ofFontSize(0.18)`, one value for every preset, chosen by measuring what
+  the old transform produced: a space glyph between letters is 0.232–0.278 em in the faces
+  these presets use, and matching the old *total* width — real tracking adds a unit after
+  the last glyph and to the word space as well — puts the equivalent at 0.174–0.209 em.
+  Headings therefore occupy close to the width they did. Expect small visual differences on
+  the presets that use spaced caps; nine of the sixteen CV presets move, all by under 2% of
+  the page.
+
+  No built-in preset calls `TextOrnaments.spacedUpper` any more, and the two private copies
+  of it that had grown in `SidebarPortrait` and `TimelineMinimal` are gone. The public
+  method itself stays, unchanged, and is deprecated — see **Deprecations** below.
+  `TextOrnaments.upper` is the replacement and does only what its name says.
+
+- **A list can hang its wrapped lines under its own text instead of under its marker.**
+  `ListBuilder.hangingIndent(true)` gives an item a marker column and a content column, so
+  every visual line of it starts at one horizontal position — the first line, the lines it
+  wraps onto, and the lines that continue on the next page. `markerGap(points)` sets the
+  space between the two columns and defaults to 4pt.
+
+  Without it a list renders exactly as it always has, and there is no plan to change that
+  default. The reason to reach for it is that the older arrangement puts the marker inside
+  the item's text and indents wrapped lines with a run of spaces wide enough to clear it.
+  A whole number of spaces rarely equals a bullet, so those lines land a little past the
+  first line's own text — 2.9pt at the default style, enough to read as ragged in a CV or
+  a report. The marker is measured now, and its width is used directly.
+
+  Measured, never assumed and never counted in characters: a bullet, a dash, an arrow and
+  a multi-character marker each get the column they actually need. An item with no marker
+  takes no marker width and no gap, so it starts flush rather than at an inset with nothing
+  in it. An item with a marker and no text stays a row and keeps its marker. Nested lists
+  indent as an outline — a child's marker starts where its parent's text starts, a
+  grandchild's where the child's does, and each level keeps its own content width.
+  `CENTER` and `RIGHT` align text inside the content column and leave the marker where it
+  is.
+
+  The marker is drawn on the item's first line and shares its baseline. It does not make
+  the row taller, does not paginate on its own, and is not drawn again when an item
+  continues onto later pages. Where the marker column is wider than the room available,
+  the marker overflows and the text is broken as narrowly as it can be — what the text
+  engine already does with a word too long for its line, rather than dropping the text.
+
+  **This is fixed-layout geometry: PDF and PPTX honour it, the semantic DOCX export does
+  not.** DOCX writes a Word paragraph per item and lets Word lay it out, so it keeps the
+  marker in the item's text and exports identically whether or not the setting is on —
+  same paragraphs, same text, same nesting, all content intact. Word places content at
+  absolute indents and has no way to be told "start the text one marker width plus a gap
+  from here", so honouring this there would mean measuring the marker, which the semantic
+  backend cannot do without a font runtime it deliberately does not depend on. Approximating
+  it was measured and rejected: a reserved-column approximation renders a gap that is not
+  the one you asked for, and misaligns outright for a marker wider than the column.
+
+- **A timeline's rail is one line, drawn from where its markers landed.**
+  It was a left border repeated on every entry section, which is why it sat at the entry's
+  edge whatever the markers did, could not stop short of them, and had no way to be
+  anything but the full height of the entries. It is now computed after layout from the
+  markers' and entries' resolved positions, and contributed as one fragment per page —
+  one logical rail, however many pages it crosses, bounded on each by that page alone.
+
+  Two independent choices, and they stay independent. `TimelineRailExtent` says how far the
+  rail runs: `ENTRY_BOUNDS`, the default and what every existing timeline already draws, or
+  `MARKER_TO_MARKER`, which starts at the first marker and stops at the last.
+  `markerOnRail()` says where it runs: it aligns every marker's declared anchor with the
+  timeline axis. With the current centre anchor, markers of different sizes are centred
+  within the axis column and share one continuous rail — a 6pt dot, a 14pt numbered disc
+  and a 24pt square all sit on the same line rather than on the same left edge. An entry's
+  body moves with them into the content column beside the marker, so the line is left with
+  only markers to cross — see *Fixed* below. A timeline that does not call it keeps the
+  left-edge anchor and the placement it has always had.
+  A timeline with one entry and `MARKER_TO_MARKER` emits no rail at all rather than a line
+  of no length. `TIMELINE_BOUNDS` is named and rejected — on one page it is the same line
+  as `ENTRY_BOUNDS`, and across pages there is nothing to measure it against.
+
+  **A leading column sits to the left of the timeline axis; it does not move the rail to
+  the entry boundary.** The layout is `LEADING | AXIS | CONTENT`, and the rail belongs to
+  the axis.
+
+  Existing timelines lay out where they always did — the rail's geometry matches the border
+  it replaces to 0.000000 in x and at both ends, on every page, and page counts are
+  unchanged. It is not pixel-identical, and the difference is worth knowing: two pixels in a
+  three-entry timeline and one in a two-entry one, at the rows where two entry borders used
+  to abut. Each drew its own antialiased end there, so the seam came out *lighter* than the
+  rail's own colour; one continuous line has no seams and paints the colour asked for.
+
+- **A timeline's rail is one configuration.**
+  `TimelineBuilder.rail(Consumer<TimelineRailBuilder>)` takes a `DocumentStroke`, and
+  `connector(colour, width)` is now the shorthand that normalizes into exactly the same
+  rail — one rendering system rather than an old spelling and a new one, which is what
+  lets the rail grow later without a second path growing beside it. Saying it both ways
+  throws, naming both calls; saying it twice the same way still works, because
+  `connector(colour, 0)` followed by `connector(null, width)` has always been a way to set
+  the two halves separately and code doing that must not start failing.
+
+- **A timeline marker can be anything you can draw.**
+  `TimelineMarker.custom(width, height, recipe)` takes a declared box and a recipe that
+  fills it, so a marker made of three stacked shapes, a bordered pill or an icon needs no
+  change to `TimelineBuilder` — the four built-in factories now go through the same door.
+  The box is declared rather than measured, and it does not have to be square; a marker
+  drawn as several fragments has one box exactly as a marker drawn as one does, which is
+  what keeps the geometry around it independent of how the marker was built.
+
+  Fixed along the way: `TimelineMarker`'s documentation said the marker's size laid out the
+  rail column. It never did — the column's width comes from `markerColumnWeight(...)` or
+  `axisWidth(...)`, and the field the sentence pointed at was read by nothing.
+
+- **A timeline's marker column can be given a width in points.**
+  `TimelineBuilder.axisWidth(double)` is the peer of `markerColumnWeight(double)`: points
+  rather than a share of the row. Reach for it when the markers should sit the same
+  distance from the edge on every page width — a weight is a share of what the row has
+  left, so it moves when the page or the columns beside it do.
+
+  Declare one or the other, not both; a timeline that asks for both throws, naming both
+  calls. There is no conversion between them that does not need a row width neither the
+  builder nor the caller has, and a conversion done anyway is right on exactly one page:
+  the default `markerColumnWeight(0.10)` resolves to 24pt on a 320pt page and to 38.5pt on
+  a 480pt one. Nothing converts; the row resolves whichever it was handed. Timelines that
+  set neither are unchanged.
+
+- **A timeline can put a column before its markers — the `DATE` of `DATE | ● | CONTENT`.**
+  `TimelineBuilder.leadingColumn(DocumentRowColumn)` declares the width once for the whole
+  timeline and `TimelineEntryBuilder.leading(Consumer<SectionBuilder>)` fills it per entry.
+  Every entry gets the column, including entries that put nothing in it, because the point
+  of the column is that the markers after it start at the same x whatever the dates say.
+  Nothing is styled for you inside it, as with `content(...)`.
+
+  `auto()` is rejected at the call, with the reason. An auto column is measured from its
+  own row's content, so a timeline whose dates read `2023` and `September 2024 - present`
+  would put those two markers 131pt apart — measured, which is why this is an exception
+  rather than a documented caveat. `fixed(points)` and `weight(share)` are decided by the
+  row and both align exactly. Leading content without a declared column throws too, naming
+  the call to add, rather than inventing a width per entry.
+
+- **A timeline entry can fill its own content column.**
+  `TimelineBuilder.entry(Consumer<TimelineEntryBuilder>)` is a longer form of the existing
+  `entry(marker, ...)` that takes its marker from `TimelineEntryBuilder.marker(...)` inside
+  the lambda, and `TimelineEntryBuilder.content(Consumer<SectionBuilder>)` hands that
+  entry's content column over whole. An entry that needs a table, a chart or a nested row
+  beside its marker no longer has to express it as a title plus an `add(...)` block below
+  the body.
+
+  The two ways of describing an entry do not mix. `title`/`meta`/`body`/`add` and their
+  style overrides describe slots the timeline styles and arranges for you; `content(...)`
+  says it should arrange nothing. Calling both on one entry throws at authoring time, in
+  either order, rather than quietly letting one win — a mistake that would otherwise
+  surface only in the rendered document. `entry(marker, ...)` and `entry(e -> e.marker(...))`
+  build the same entry, and declaring a marker both ways throws for the same reason.
+
+- **A vertical flow can pin its width and still grow with its content.**
+  `AbstractFlowBuilder.fixedWidth(double)` — so `addSection(s -> s.fixedWidth(240))`,
+  `module(m -> m.fixedWidth(240))` and `pageFlow(page -> page.fixedWidth(200))` —
+  measures, decorates and places the box at exactly the requested width, and wraps
+  its children inside that width less the flow's own padding. Narrowing a box used
+  to mean expressing the width as something else: a row whose neighbouring slot
+  soaks up the remainder, or a large one-sided `margin`. Neither pins a width —
+  both leave the box free to shrink to its content inside the space they carve
+  out — and both make the width a property of the box's surroundings rather than
+  of the box that wants it.
+
+  The constraint is horizontal only. The height is the same natural,
+  content-driven measurement it always was, so a fixed-width box still grows as
+  paragraphs are added and paginates exactly as it did — there is no
+  `fixedHeight` counterpart and no fixed box. Padding is inside the requested
+  width (a `fixedWidth(240).padding(20)` card occupies 240pt and gives its
+  children 200pt), and a request wider than the surrounding region is clamped to
+  that region rather than overflowing it, which makes the call safe on a computed
+  width. Nesting clamps against the parent box, not the page, and under per-page
+  margins the cap follows the page a block starts on rather than the page it
+  began the document on. NaN, infinity, zero and negative values are rejected at
+  the call, and a sub-point width that can only fail at layout now fails naming
+  the fixed width instead of blaming the parent's padding.
+
+  The value is carried by a new canonical `DocumentFlowWidth`
+  (`natural()` / `of(points)`) on `DocumentNode.flowWidth()`, stored on
+  `SectionNode` and `ContainerNode`. Both records keep their previous
+  constructors, so existing callers compile and link unchanged, and both default
+  to `natural()` — a flow that never calls `fixedWidth` keeps the shrink-to-fit
+  measurement it already had, and every committed layout snapshot is unchanged.
+
+  Documented in [`docs/recipes/fixed-width-flows.md`](docs/recipes/fixed-width-flows.md).
+
+- **A chip is sized like the text around it.** `ParagraphBuilder.inlineChip(text, fg, bg)`
+  built its glyph style from scratch — `DocumentTextStyle.builder().color(fg)` — so the
+  badge came out at the 14 pt Helvetica default whatever the paragraph said. In a 9 pt
+  footer the words rendered at 9 pt and the chip between them rendered half again as
+  large, which reads as a rendering fault rather than a choice.
+
+  The colour-only overload now derives its style from the paragraph's `textStyle` and
+  replaces only the colour:
+
+  ```java
+  paragraph.textStyle(DocumentTextStyle.builder().size(9).build())
+          .inlineText("Build ")
+          .inlineChip(" Paid ", GREEN_INK, GREEN_FILL);   // a 9 pt chip
+  ```
+
+  That is how the rest of the builder already behaves. `inlineText`, `inlineLink` and
+  `inlineLinkTo` pass a `null` run style, which the layout resolves to the paragraph's,
+  and `inlineHighlight` documents that fallback on its `textStyle` parameter. The chip
+  sugar was the one call that opted out of it.
+
+  It follows the same rule about *when*, too: the style is resolved as the paragraph is
+  built, so `textStyle(...)` may be set on either side of the chip. Reading the style at
+  the call would have made "a chip is sized like the text around it" true only for
+  callers who happened to order the two that way, and left `inlineChip` the one run on
+  the builder whose result depended on where its style was set.
+
+  **This moves rendered output** wherever a chip sits in a paragraph that is not at the
+  default style: the glyphs — and with them the chip's measured width — now follow the
+  paragraph.
+
+- **`inlineStyledChip(text, textStyle, bg)`** styles a chip that is meant to differ from
+  its paragraph: an explicit glyph style on a custom fill, keeping the default chip
+  radius and padding, which previously meant restating both through `inlineHighlight`.
+  It carries its own name rather than overloading `inlineChip` on the second parameter,
+  which would have made a literal `inlineChip(text, null, bg)` ambiguous and stopped it
+  compiling.
+
+  `RichText.chip(...)` is unchanged and still draws at the default size: a rich-text
+  builder is assembled without a paragraph to read. Its documentation now says so, and
+  points at `highlight(...)` for an explicitly sized chip.
+
+### Layout
+
+- **A resolved anchor on content that spans pages is now that page's slice of the box.**
+  It reported the whole subtree on every page instead — a section across five pages said
+  453.25pt five times, with tops hundreds of points outside the page — which was written
+  down as a limitation because nothing yet needed the per-page extent. Something does now,
+  and the numbers were unusable rather than merely imprecise, so the semantics are fixed
+  rather than documented: one occurrence per page occupied, each the border-box slice
+  lying on that page. The first runs from the node's top to the bottom of that page's
+  content band, a middle one is the whole band, and the last runs from the band's top to
+  the node's bottom; all of them share one id. The bands are the ones a spanning node's
+  border already clamps to, per-page margins included, so there is one formula rather than
+  two drifting apart. A child's margin comes off the edges its slice actually contains —
+  the top margin only on the first page, the bottom only on the last, neither in the
+  middle — while horizontal margins come off every slice as before. **An anchor whose
+  content fits on one page is unchanged**, which is every anchor that exists today.
+
+- **A timeline's markers now report where they landed, and the marker column gains a
+  level in the node tree.** Each marker is wrapped so the finished layout carries one
+  resolved anchor per marker — one box however many shapes the marker drew, on the page
+  the marker is actually on — which is what the rail will be computed from instead of a
+  per-entry section border. Nothing is drawn for it and nothing moves: every existing
+  timeline renders pixel for pixel as it did, and every box that was in the layout graph is
+  still there at the same coordinates. What changes is the *paths*: the marker's column now
+  holds a wrapper holding the marker, so a **committed layout snapshot that includes a
+  timeline needs re-recording** — check that the diff is only added wrapper entries and
+  renamed paths before approving it, as the three snapshots in this repository were.
+
+- **A built-in feature can now draw from geometry the layout has already resolved.**
+  Some things cannot be drawn while laying out because they depend on where other things
+  ended up — a rail running between markers, a bracket spanning sections, a leader joining
+  a callout to its subject. Nothing carried that back: a node definition is handed its own
+  box and nothing else. A resolved-layout pass runs afterwards, over the finished graph,
+  and may only *add* fragments — never remove, reorder, mutate, add pages or touch the
+  canvas — so a document with nothing registered is handed back the very graph the
+  compiler produced, unchanged by identity rather than by comparison.
+
+  The mechanism is internal, and adds nothing at all to the public API. Opening it would
+  mean settling when passes run, what one sees of another, whether one may change nodes,
+  failure handling and thread safety — none of which the built-in case needs answered, and
+  answering it by accident is worse than leaving it open. Each fixed backend does need a
+  handler for the anchor's payload, since it refuses a payload class it has no handler
+  for; both are package-private and draw nothing.
+
+- **A decorated root flow and its children can disagree under per-page margins.**
+  A known limitation, now measured and written down rather than met by surprise.
+  A block is placed once and its background is that block's own box on every page
+  it spans, but a *direct child of the root* is seated in the column of the page
+  that child starts on. So when the root carries both a `fixedWidth` and a
+  background, and that width is narrower than a later page's column, such a child
+  is placed against the column and lands beside its own background — a 200pt root
+  banded at 20..220 gets a child at 80..280. A root at least as wide as the
+  column is unaffected, and so is a background put on a section *inside* the
+  root, which is seated as one box together with the content it decorates and is
+  the shape to prefer. Both sides are pinned in `FixedWidthPageMarginChromeTest`.
+  The inconsistency is in how the compiler seats a spanning parent's children —
+  such a parent has no single box to be — so the fix belongs there and not in the
+  decoration band, which cannot follow the page without abandoning the content of
+  any block that merely flows across the boundary.
+
+  Documented in [`docs/recipes/fixed-width-flows.md`](docs/recipes/fixed-width-flows.md).
+
+- **A composed table cell sits where its anchor says, and a spanning one stops
+  falling to the foot of its span.** `emitComposedCellFragments` accepted the
+  cell's height and never read it: a child authored with
+  `DocumentTableCell.node(...)` was placed at `cellLocalY + padding.bottom()`
+  whatever the cell's `textAnchor` said. On an ordinary row that is invisible,
+  because the row is as tall as its tallest cell and the bottom of the box is
+  also the top of it. On a cell with `rowSpan(2)` it is not: the cell's height is
+  the whole span, so a badge beside a two-row block sat level with the second
+  row, and `TOP_LEFT` moved it nowhere — `defaultCellStyle`, `rowStyle` and the
+  cell's own `withStyle` all did nothing, because no branch read the anchor at
+  all. Composed content and text in one table disagreed for the same reason: text
+  is anchored in `resolveTextLines` and centres by default, a node was bottomed.
+
+  The anchor is now applied to composed content the way it already was to text —
+  same default (`centerLeft`, from `TableCellLayoutStyle.DEFAULT`), same mapping
+  of `BOTTOM` and `DEFAULT` onto the bottom edge. Slack is clamped at zero, so a
+  child taller than its cell still starts at the bottom rather than being pushed
+  below it by a negative offset.
+
+  **This changes existing output.** A composed cell shorter than its row moved
+  from the bottom of the row to its middle — that is what it takes for a node and
+  the text beside it to sit on one line. A document that wants the old placement
+  asks for it: `DocumentTableStyle.builder().textAnchor(BOTTOM_LEFT)`.
+
+  Two committed previews move with it: `composed-table-cell-showcase.pdf`, where
+  a three-line note beside a four-line one stops sitting a line low, and
+  `inline-code-column-wrap.pdf`. Two others draw composed cells and do not move
+  — the emoji tables, where the glyph is the tallest thing in its row and there
+  is no slack to place the child in.
+
+  No pixel baseline and no layout snapshot moves, and neither could have caught
+  it if it had: a composed cell emits no placed node for a snapshot to see, and
+  the one preset that composes a cell, `MintEditorial`, does it in a References
+  section its parity fixture does not build. Its composed cells are guarded by
+  neither gate; the coverage for this change is the unit test and the two
+  previews.
+
+- **A row child with a horizontal margin is measured and placed at the same
+  width.** A row band is sized in two passes over the same children:
+  `measureRow` prepares each child inside its slot less that child's own margin
+  and takes the tallest result as the band height, then `LayoutCompiler`
+  prepares it again to place it. The placement pass handed
+  `prepareForRegionWidth` a width the margin had already been taken out of —
+  and that helper subtracts the margin itself — so the child was laid out at
+  `slot - 2 * margin` against a band measured from `slot - margin`. Given
+  enough text to wrap, the second subtraction bought an extra line and the
+  row's own guard rejected the document it had just measured: `Row '…' child
+  'SectionNode' measured height … exceeds row inner height`. A left or right
+  inset on a row child was the whole trigger; a section wrapping a paragraph is
+  the shortest way to reach it.
+
+  Both copies of the seating loop are fixed — the page-level row band and
+  `placeRowBandInFixedSlot`, which seats a row nested in a LayerStack layer or
+  a composed table cell — so the whole slot goes in and the margin comes off
+  once. Only the page-level band throws; the other two symptoms were silent. In
+  a fixed-slot band there is no inner-height guard, so a margin-carrying tallest
+  child was simply seated above its band and spilled through the top under a
+  non-`TOP` `verticalAlign`. And `compileNodeInFixedSlot` always derived its own
+  region as `slot - margin`, so a composite row child reported one width while
+  its own children were laid out in another.
+
+  **This changes output only for a row child carrying a left or right margin**,
+  which now occupies its slot less that margin rather than less twice it. A row
+  child without one is untouched, the arithmetic being identical at zero, and
+  no layout snapshot, pixel baseline or committed preview moves: nothing in the
+  templates, the examples or the fixtures puts a horizontal margin on a row
+  child, which is also why neither gate caught this.
+
+- **A margin on composed table-cell content is honoured, and honoured by both
+  passes.** The node handed to `DocumentTableCell.node(...)` was measured at the
+  cell's full inner width with its margin left in, and then laid out by the
+  fixed-box walk, which removes that margin itself — so the content re-wrapped
+  one margin narrower than the row had been sized for and painted below its own
+  table, while its box shifted right and overhung the next column. The vertical
+  axis failed the other way round: the cell height ignored the margin outright
+  while placement still applied `margin.top`, dropping the content through the
+  cell floor. On a leaf child — a bare paragraph or image — the margin was
+  discarded altogether.
+
+  A cell's inner box is now the content's margin box, the same contract a row
+  slot uses: the measure subtracts the margin once and the row reserves it on
+  both axes. The seam that made this possible is also closed. A
+  `FragmentPlacement` is a *content* box — every caller builds one at the exact
+  rectangle the content should occupy and passes `Margin.zero()` — but
+  `emitCompositeSubtree` handed it to the fixed-box walk, which reads a *margin*
+  box; it now converts between the two, so a composite child is laid out in the
+  rectangle its owner reserved rather than one margin inside it.
+
+  **This changes output only for composed cell content that carries a margin**,
+  which now sits inside the room the cell reserves for it instead of spilling
+  out. Content without one is untouched — every conversion is an identity at
+  zero — and no layout snapshot, pixel baseline or committed preview moves:
+  every composed cell in the templates and the examples uses zero margins.
 
 ### Fixed
 
@@ -294,6 +721,71 @@ follow semantic versioning; release dates are ISO 8601.
   Nothing on any page moves: a link annotation is not ink, and no fixture prints a trunk
   prefix, so no pixel baseline and no layout snapshot changes — what changes is where the
   link goes when a caller's own number carries one.
+
+- **`markerOnRail()` no longer draws the rail through the entry's text.**
+  Putting the markers on the rail moves the line into the middle of the axis column, and an
+  entry's body spanned the whole entry — so the line was drawn straight through ordinary
+  body text. It now starts where the title starts:
+
+  ```
+  LEADING | AXIS | CONTENT
+          |  ●   | title
+          |  │   | body line 1
+          |  │   | body line 2
+          |  ●   | next entry
+  ```
+
+  The body uses the content column the entry's own header row resolved, so a column given in
+  points and a column given as a share of the row behave identically — neither is recomputed
+  — and it stays a vertical block, so an entry longer than a page still splits across pages
+  with its text at the same x on every one.
+
+  A timeline that does not call `markerOnRail()` is untouched: the rail stays beside the
+  axis, the body still spans the entry and clears the line by the gutter, and every baseline
+  and layout snapshot of one is byte-identical. What changed is a narrower body under
+  `markerOnRail()`, which wraps into more lines — so those timelines can take more pages than
+  they did while the text was running under the line.
+
+- **A timeline marker is the box it declared.**
+  `TimelineMarker.custom(width, height, recipe)` took a box and then ignored it: the
+  timeline measured whatever the recipe happened to draw, so the two numbers a caller wrote
+  reserved nothing and the class documentation — "the box is declared, not measured" — was
+  describing an intention rather than the code. A recipe drawing a 10pt dot inside a
+  declared 30pt box resolved to 10, and everything derived from the marker followed the ink
+  instead of the declaration.
+
+  The recipe is now handed a canvas of exactly the declared size and draws from its origin.
+  Smaller content leaves the rest of the box empty; larger content overflows visibly rather
+  than growing it, and the declaration outranks even the axis column, because the rail is
+  derived from this box and a clamped one would put the line where nothing asked for it. The
+  four built-in factories draw exactly what they declare, so none of them moved — every
+  pixel baseline is unchanged, and the layout snapshots gained one node per marker and not
+  one changed coordinate.
+
+- **A timeline inside a card keeps its rail.**
+  A rail is drawn under the body, and "the body" was taken to be the document's: the
+  fragment went to the front of the list, before everything. Everything includes the fill of
+  whatever the timeline sits inside, so a timeline in a panel had its rail painted first and
+  covered a moment later — present in the geometry, absent from the page, and invisible to
+  any assertion that reads coordinates. The feature catalogue is exactly that shape, and its
+  timeline lost its line.
+
+  Under-body now means under the contributing feature's own content: the fragment is spliced
+  immediately before the first fragment that feature drew on that page. A pass that anchored
+  nothing on a page still goes to the front, which is what a page-wide backdrop wants.
+
+- **A DOCX export no longer loses the content of a wrapper it cannot draw.**
+  The semantic backend writes the nodes it recognises and skips the rest, and skipping a
+  wrapper took its whole subtree with it. Two were unknown to it: `AlignNode`, which says
+  where in the available width to place its child, and the internal anchor a feature uses
+  to learn where its child landed. Word lays text out itself, so neither survives as
+  geometry — but each has exactly one child, and that child is the document. An aligned
+  section exported as a well-formed file with its text missing: no exception, no warning,
+  nothing to read.
+
+  Both are transparent to the export now, in the document walk and the row-cell walk
+  alike — a wrapper handled in one and missed in the other loses a subtree just as
+  completely. PDF and PPTX were never affected; they draw what the layout produced.
 
 ### Templates
 
@@ -1118,6 +1610,135 @@ follow semantic versioning; release dates are ISO 8601.
   from `ContactUri` and watching all ten go red. `ConsultingInvoiceSmokeTest` asks the
   same of the invoice design that was furthest out, giving the masthead and the closing
   prose different numbers so that neither site can answer for the other.
+
+- **The timeline's finished visual model is pinned scene by scene.** Ten scenarios, each
+  given the instrument that can decide it: a coordinate where the claim is a coordinate,
+  a picture where the claim is a shape or a paint order, and neither where the other
+  already says it. Five new baselines — three marker sizes on one axis, the two extents
+  drawn on one identical scene so the pair reads as a diff, a rail crossing three pages,
+  and a ring the line disappears behind — with nine assertions for the invariants that
+  only exist once the parts are assembled: one x for a whole timeline however many pages
+  it crosses, a date of any length leaving the axis alone, no fragment reaching outside
+  its own page's band, and a marker of three shapes railing exactly as a plain one of the
+  same declared box.
+
+  No layout snapshot was added, and that is measured rather than preferred: a snapshot
+  records nodes, the rail is a fragment, and neither committed timeline snapshot contains
+  the word. The four baselines recorded before the rework are byte-identical.
+
+- **A timeline written before the rail moved is guarded against moving.** Eleven documents
+  using nothing but the builder as it shipped — every marker factory, every knob, a body
+  across a page break, an entry taller than four pages, a timeline started near the bottom
+  of one, one inside a padded section, two on a page — hold every placed box and every page
+  count they had, and the per-entry borders they used to draw are covered by the rail that
+  replaced them to within 1.4e-14 across sixteen page-instances. No member left the public
+  surface: 2540 before, 2556 after, all sixteen of the difference new.
+
+  What can be re-checked on one branch is a test: every method the old builder had, called
+  in one expression; the default anchor still packing markers left; the page counts; one
+  rail on each page the entries occupy and on no other; the two extents moving nothing but
+  the rail; a padded section, a margin and a card each carrying the timeline with them; five
+  constructions of one 16pt marker; an outline of any thickness; and the rail painted before
+  the text and not only before the markers.
+
+### Deprecations
+
+- **`templates.data.schedule` — every type.** `WeeklyScheduleData`,
+  `WeeklyScheduleDocumentSpec`, `ScheduleDay`, `ScheduleCategory`, `SchedulePerson`,
+  `ScheduleAssignment`, `ScheduleSlot` and `ScheduleMetricRow` are deprecated since
+  2.4.0 in favour of `templates.data.rota`, each naming its replacement. They still
+  ship and still compile; nothing in the library ever rendered them, so no output moves.
+  `docs/templates/which-template-system.md` now points a caller at the rota model
+  instead.
+
+- **`TextOrnaments.spacedUpper(String)`** is `@Deprecated(since = "2.4.0", forRemoval = true)`.
+  It is not removed, and its behaviour has not changed by a single character — code written
+  against 2.3.0 keeps compiling and keeps getting the same strings back. What changed is that
+  no built-in preset calls it: they set `TextOrnaments.SPACED_CAPS` on the style instead, so
+  the letters are spread by the typography rather than by rewriting the text.
+
+  New code should do the same — `TextOrnaments.upper(...)` for the text, and `SPACED_CAPS`
+  or any `DocumentLetterSpacing` on the style. The reason to migrate is not tidiness: padding
+  the string is what stored a name in the file as `J A N E   D O E`, which is how it reached
+  search, copy/paste, screen readers and applicant-tracking parsers. Expect the same look at a
+  slightly different width — a whole space glyph per gap is wider than editorial tracking.
+
+  Per [`docs/api-stability.md`](docs/api-stability.md) § 3 it is Stable-tier, so it is removed
+  no earlier than 3.0 and not before a full minor has shipped with the deprecation in place.
+
+### Build
+
+- **`graph-compose-templates` is under the binary-compatibility gate.** japicmp used to diff
+  `graph-compose-core` alone, so a Stable templates method could be deleted in a minor with
+  every check green. The module now carries its own `japicmp` profile, run by the same CI job,
+  the publish workflow and the release script, and diffs each build against two published
+  releases: the 2.x floor (`2.0.0`), which holds the GA surface, and the latest release
+  (`2.3.0` today), which holds everything added since. `cut-release.ps1 -PostReleaseOnly`
+  moves the second pin after each release. Every `templates.*` package is Stable, so the only
+  exclusion is the per-element `@Internal` marker, and nothing carries it. A baseline the gate
+  cannot resolve fails the build; japicmp's default would skip that diff with a warning and
+  pass. Each path that runs the gate then checks that every execution left its report, since
+  one that does not run — switched off, unbound, or not selected — writes none and fails
+  nothing. A pin may never name the version being built: japicmp resolves such a pin to the
+  artifact the build just produced and reports no differences, so both pins stay strictly
+  older than the working version, every path drops our cached artifacts before it resolves,
+  and the publish workflow runs the gate before the `install` that seeds the repository.
+  While a major has no release of its own, the pins name the previous major's floor and last
+  release and `japicmp.break.binary` is `false` — those diffs are reported, not enforced —
+  until the first post-release bump after `X.0.0` ships. `VersionConsistencyGuardTest` holds
+  the pins and that switch to the CHANGELOG, and `BinaryCompatibilityGateGuardTest` holds the
+  executions, their settings, the trigger, the report checks and the publish ordering in place.
+
+### Documentation
+
+- **The timeline recipe describes the finished model.** `LEADING | AXIS | CONTENT`, what the
+  rail belongs to and what cannot move it, both ways to fill an entry, the leading column and
+  why `auto()` is refused, the two axis sizings, what a declared marker box means, what
+  `markerOnRail()` does to markers *and* to the body, the two supported extents and the one
+  that is not, pagination, and what each backend does with a rail. The old sentence calling
+  the rail "a left accent border on each entry" is gone; it stopped being true when the rail
+  became one line resolved after layout.
+
+- **Two engine seams are written down, and so is the difference between them.**
+  `docs/architecture/resolved-layout-seams.md`: a resolved-layout pass reads geometry that is
+  already settled and can only draw, while a resolved horizontal band is read during the same
+  compile and therefore changes what is measured after it. The note ends with the paint order
+  in one block, including what "under the body" means — under the contributing feature's own
+  content, which is not the same as the front of the page's fragment list.
+
+- **A row's width rule, and what `fill()` does when there is no slot.** Two things a
+  signature cannot say now have a page and a proof. A row with no `columns(...)`, no
+  `weights(...)`, no grow spacer and the default `START` arrangement splits its inner
+  width into equal shares — one per child, content playing no part — so a 13pt icon
+  beside a paragraph takes half the row and the text wraps into twice the lines;
+  `columns(auto(), weight(1))` is the form that stays right when the column is resized.
+  And `LineBuilder.horizontal(width)` is points, not a percentage, with nothing clipping
+  the line to the space it was given: a rule that must meet the column edge is `fill()`
+  in a weight column. `LineBuilder.fill()`'s own Javadoc now names the case it used to
+  promise away — a flex row (a grow spacer, or any non-`START` arrangement) sizes every
+  non-grow child to its content, so a filled line answers with the row's whole available
+  width and is then placed past the edge. `docs/recipes/layered-page-design.md` carries
+  both sections, and the recipe's own failure modes are documented with them: a spacer
+  neither shrinks a fixed rule nor gives `fill()` a slot, and a centre- or right-aligned
+  heading claims the whole `auto()` column and leaves the rule zero width.
+
+- **The stability document is guarded, and the pack records a beta *package*.**
+  `docs/api-stability.md` is where a reader asks what is still moving, and nothing was
+  checking that it still names what carries `@Beta`: the guard it cites,
+  `BetaAnnotationDocumentationTest`, examines the annotation type — its retention, its
+  targets, its own Javadoc — and never what is annotated.
+  `knowledge/tools/api-surface/check-stability-doc.mjs` now runs in CI and fails when a
+  marker written on a package, type or member goes unnamed. It found two things at once.
+  Four `@Beta` members of the otherwise-Stable PDF backend were undocumented —
+  `PdfFixedLayoutBackend.renderSections` / `writeSections`, and `Builder.deterministic`
+  in both overloads — and the document now names them. And the generated surfaces
+  recorded no package-level stability at all: every `knowledge/api/*.json` described
+  zero beta packages while two `package-info.java` files declare `@Beta`, so the pack
+  presented fifteen PPTX handler types as fifteen separate beta decisions rather than
+  one beta package. The extractor now carries `packageStability` through to the package
+  entry and the Markdown view marks the package heading `[beta]` the way it already
+  marked types and members, so a consumer can tell a beta package from a package whose
+  one admitted type happens to be beta.
 
 ## v2.3.0 — 2026-08-31
 

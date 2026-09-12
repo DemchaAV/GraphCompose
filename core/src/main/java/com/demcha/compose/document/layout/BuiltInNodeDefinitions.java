@@ -47,6 +47,9 @@ public final class BuiltInNodeDefinitions {
                 .register(new PolygonDefinition())
                 .register(new PathDefinition())
                 .register(new AlignDefinition())
+                .register(new LayoutAnchorDefinition())
+                .register(new HorizontalBandsDefinition())
+                .register(new HorizontalBandContentDefinition())
                 .register(new ChartDefinition());
     }
 }

@@ -160,6 +160,11 @@ public final class PdfParagraphFragmentRenderHandler
             text = BidiVisualOrder.visualize(sanitizedLogical, span.rightToLeft());
             written = PdfActualText.writtenTextOf(span);
             environment.markReorderedText();
+        } else if (span.textStyle().letterSpacing() != 0.0) {
+            // As in renderLine: tracked glyphs are far enough apart that an
+            // extractor invents word breaks between them, so the chip states
+            // its own text rather than leaving a reader to guess it from gaps.
+            written = PdfActualText.writtenTextOf(span);
         }
         if (text.isEmpty()) {
             return false;                                       // nothing to paint — no glyph-less fill or mark
@@ -181,6 +186,7 @@ public final class PdfParagraphFragmentRenderHandler
         textState.invalidate();
         textState.applyFont(stream, font.fontType(span.textStyle().decoration()), (float) span.textStyle().size());
         textState.applyColor(stream, span.textStyle().color());
+        textState.applyCharacterSpacing(stream, (float) span.textStyle().letterSpacing());
         if (written != null) {
             stream.beginMarkedContent(PdfActualText.tag(), PdfActualText.properties(written));
         }
@@ -429,6 +435,19 @@ public final class PdfParagraphFragmentRenderHandler
                         // run stays ordinary glyphs a reader keeps whole.
                         written = PdfActualText.writtenTextOf(textSpan);
                         environment.markReorderedText();
+                    } else if (textSpan.textStyle().letterSpacing() != 0.0) {
+                        // Tracked glyphs are the other case where the marks and
+                        // the meaning come apart, for a different reason. The
+                        // file is correct — one glyph per character, the right
+                        // ToUnicode — but an extractor decides where the words
+                        // are by how far apart the glyphs sit, and tracking is
+                        // precisely the act of moving them apart. Left alone,
+                        // PDFBox reads a spaced headline back as "J A N E  D O E",
+                        // which is the exact defect this feature exists to end.
+                        // ActualText states the run's own text, and a reader that
+                        // honours it takes that instead of guessing from gaps.
+                        // Not markReorderedText(): nothing was reordered.
+                        written = PdfActualText.writtenTextOf(textSpan);
                     }
                     if (text.isEmpty()) {
                         cursorX += textSpan.width();
@@ -443,6 +462,7 @@ public final class PdfParagraphFragmentRenderHandler
                             font.fontType(textSpan.textStyle().decoration()),
                             (float) textSpan.textStyle().size());
                     textState.applyColor(stream, textSpan.textStyle().color());
+                    textState.applyCharacterSpacing(stream, (float) textSpan.textStyle().letterSpacing());
                     if (written != null) {
                         stream.beginMarkedContent(PdfActualText.tag(),
                                 PdfActualText.properties(written));
@@ -543,6 +563,10 @@ public final class PdfParagraphFragmentRenderHandler
         // own q..Q, so the alpha WE set is what survives — invalidate() must
         // not reset it.
         private float alpha = 1f;
+        // Tc. Zero is the page default, so a document with no tracking anywhere
+        // never emits the operator and its content stream is byte-identical to
+        // what it was before tracking existed.
+        private float characterSpacing = 0f;
 
         TextRenderState(PdfRenderEnvironment environment) {
             this.environment = environment;
@@ -553,6 +577,24 @@ public final class PdfParagraphFragmentRenderHandler
                 stream.setFont(newFont, newSize);
                 font = newFont;
                 size = newSize;
+            }
+        }
+
+        /**
+         * Sets the tracking for the run about to be drawn.
+         *
+         * <p>Deduplicated like the font and the colour, and — more importantly —
+         * <em>always</em> applied before a run rather than only when the run
+         * wants tracking. {@code Tc} persists across {@code BT}/{@code ET} and
+         * over the whole {@code q..Q} block, so a span that says nothing about
+         * tracking keeps whatever the span before it set. Setting it back to
+         * zero for an untracked run is what stops a tracked headline from
+         * spreading the ordinary paragraph that follows it.</p>
+         */
+        void applyCharacterSpacing(PDPageContentStream stream, float newSpacing) throws IOException {
+            if (newSpacing != characterSpacing) {
+                stream.setCharacterSpacing(newSpacing);
+                characterSpacing = newSpacing;
             }
         }
 
@@ -592,6 +634,12 @@ public final class PdfParagraphFragmentRenderHandler
             font = null;
             size = Float.NaN;
             color = null;
+            // characterSpacing is deliberately NOT reset. Every nested draw runs
+            // in its own balanced q..Q, which restores Tc along with the rest of
+            // the graphics state, so the tracked value is still what the stream
+            // holds. Resetting it would force a re-emit, and in a document with
+            // no tracking at all that means writing a "0 Tc" that was never
+            // there before — a byte change for no behaviour change.
         }
     }
 

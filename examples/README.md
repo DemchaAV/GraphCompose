@@ -115,14 +115,15 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Rich text](#rich-text) | Every `RichText` method (bold / italic / underline / link / colour / accent / size / append) | [PDF](../assets/readme/examples/rich-text-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java) |
 | [Text direction](#text-direction) | `TextDirection` — right-to-left paragraphs and table cells, `AUTO` resolved from the first strong character, and Latin embedded in Hebrew | [PDF](../assets/readme/examples/text-direction.pdf) · [Source](src/main/java/com/demcha/examples/features/text/TextDirectionExample.java) |
 | [Arabic article](#arabic-article) | A full right-to-left article — shaped Arabic joined by the engine, every line reordered, natural pagination onto a second page | [PDF](../assets/readme/examples/arabic-article.pdf) · [Source](src/main/java/com/demcha/examples/features/text/ArabicArticleExample.java) |
-| [Hebrew invoice](#hebrew-invoice) | A right-to-left invoice whose every line mixes Hebrew with digits and Latin names — built from rows, since a table cell carries no direction | [PDF](../assets/readme/examples/hebrew-invoice.pdf) · [Source](src/main/java/com/demcha/examples/features/text/HebrewInvoiceExample.java) |
+| [Hebrew invoice](#hebrew-invoice) | A right-to-left invoice whose every line mixes Hebrew with digits and Latin names — built from rows | [PDF](../assets/readme/examples/hebrew-invoice.pdf) · [Source](src/main/java/com/demcha/examples/features/text/HebrewInvoiceExample.java) |
 | [World scripts](#world-scripts) | One card per bundled script — Arabic, Hebrew, Georgian, Armenian, Korean — each set in its own `FontName` family | [PDF](../assets/readme/examples/world-scripts.pdf) · [Source](src/main/java/com/demcha/examples/features/text/WorldScriptsExample.java) |
 | [Inline shapes](#inline-shapes) | `InlineShapeRun` — dots, arrows, chevrons, diamonds, stars, checkmarks and checkboxes drawn as geometry on the text baseline | [PDF](../assets/readme/examples/inline-shapes.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineShapesExample.java) |
 | [Inline highlight chips](#inline-highlight-chips) | `RichText.code(text)` / `chip(text, fg, bg)` / `highlight(text, style, bg, radius, padding)` — text on a rounded padded fill (inline code + status badges), wrapping across lines | [PDF](../assets/readme/examples/inline-highlight-chips.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineHighlightExample.java) |
+| [Letter spacing](#letter-spacing) | `DocumentTextStyle.builder().letterSpacing(DocumentLetterSpacing.ofFontSize(0.18))` — real typographic tracking through PDF `Tc`, DrawingML `spc` and Word `w:spacing`, so wide caps still copy and search as the word they are | [PDF](../assets/readme/examples/letter-spacing.pdf) · [Source](src/main/java/com/demcha/examples/features/text/LetterSpacingExample.java) |
 | [Inline SVG icons](#inline-svg-icons) | `RichText.svgIcon(icon, size)` — a parsed multi-colour `SvgIcon` on the text baseline, crisp at any zoom and carrying its own colours | [PDF](../assets/readme/examples/inline-svg-icons.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java) |
 | [Colour emoji](#colour-emoji) | `RichText.emoji(":star:", size)` — GitHub-style shortcodes resolve to inline vector glyphs via the `graph-compose-emoji` artifact; unknown codes fall back to literal text | [PDF](../assets/readme/examples/emoji-shortcodes.pdf) · [Source](src/main/java/com/demcha/examples/features/text/EmojiShortcodeExample.java) |
 | [Section presets](#section-presets) | `pageBackground`, `band`, `softPanel`, `accentLeft / Right / Top / Bottom`, per-corner `DocumentCornerRadius` | [PDF](../assets/readme/examples/section-presets.pdf) · [Source](src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java) |
-| Nested lists | `ListBuilder.addItem(label, Consumer)` — depth cascade, per-depth markers, mixed flat / nested authoring | [PDF](../assets/readme/examples/nested-list-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/lists/NestedListExample.java) |
+| Nested lists | `ListBuilder.addItem(label, Consumer)` — depth cascade, per-depth markers, mixed flat / nested authoring, plus `hangingIndent(true)` + `markerGap(...)` giving the marker its own measured column so wrapped lines hang under their own first line | [PDF](../assets/readme/examples/nested-list-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/lists/NestedListExample.java) |
 | Composed table cells | `DocumentTableCell.node(DocumentNode)` — paragraphs, lists, sub-tables, sections and rows inside cells with two-pass measurement | [PDF](../assets/readme/examples/composed-table-cell-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java) |
 | [Inline-code column wrap](#inline-code-column-wrap) | A long `inlineCode(...)` coordinate breaks at its `. : / -` seams inside a narrow **fixed** column and an **auto** column grows to fit it on one line | [PDF](../assets/readme/examples/inline-code-column-wrap.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/InlineCodeColumnWrapExample.java) |
 | Canvas layer (free placement) | `CanvasLayerNode` — pixel-precise `(x, y)` placement of children inside a fixed bounding box, with `ClipPolicy` clipping | [PDF](../assets/readme/examples/canvas-layer-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java) |
@@ -706,7 +707,8 @@ failures only appear at length: paragraphs wrap with every line reordered,
 the flow breaks onto a second page and keeps its direction, and Latin names
 and digits inside the Arabic keep running forwards. The one thing positioned
 by hand is the list — a list carries no direction of its own, so it declares
-`align(RIGHT)` or its bullets land on the wrong side.
+`align(RIGHT)` to sit against the right margin. Its items are still laid out as
+left-to-right paragraphs, so each bullet stays at the left end of its item.
 
 <!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
@@ -727,9 +729,9 @@ page.addList(list -> list
 
 The document type where right-to-left text meets numbers: a Hebrew
 description beside a Latin product name, a date, a quantity, a total. Line
-items are **rows rather than a table**, because a table cell carries no
-writing direction. Latin runs whose trailing punctuation must stay put are
-wrapped in Unicode isolates.
+items are laid out as **rows**; a table cell takes a writing direction too,
+through `DocumentTableStyle.direction(...)`. Latin runs whose trailing
+punctuation must stay put are wrapped in Unicode isolates.
 
 <!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
@@ -783,6 +785,27 @@ across lines, painting one continuous rounded fill per visual fragment. On
 
 [📄 View PDF](../assets/readme/examples/inline-highlight-chips.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/text/InlineHighlightExample.java)
+
+### Letter spacing
+
+`DocumentTextStyle.builder().letterSpacing(...)` (`@since 2.4.0`) takes a
+`DocumentLetterSpacing` — `ofFontSize(0.18)` for a share of the type that scales
+with it, or `points(1.2)` for an absolute amount; negative values tighten. The
+advance is the format's own (PDF `Tc`, DrawingML `spc`, Word `w:spacing`), so the
+string in the file stays the string that was typed: a headline set in wide caps
+still copies, searches and parses as `JANE DOE` rather than `J A N E   D O E`.
+The example prints back what each of the three formats says its text is.
+
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
+```java
+.textStyle(DocumentTextStyle.builder()
+        .fontName(FontName.LATO).size(22)
+        .letterSpacing(DocumentLetterSpacing.ofFontSize(0.18))
+        .build())
+```
+
+[📄 View PDF](../assets/readme/examples/letter-spacing.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/text/LetterSpacingExample.java)
 
 ### Inline SVG icons
 

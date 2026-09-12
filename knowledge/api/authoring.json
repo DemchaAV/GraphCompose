@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 232,
-    "methods": 2064,
-    "constants": 230,
-    "generated": 1106
+    "types": 237,
+    "methods": 2107,
+    "constants": 237,
+    "generated": 1126
   },
   "packages": [
     {
@@ -5481,6 +5481,20 @@
             },
             {
               "kind": "method",
+              "name": "fixedWidth",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "T",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "points"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "fillColor",
               "static": false,
               "origin": "source",
@@ -9352,6 +9366,34 @@
             },
             {
               "kind": "method",
+              "name": "hangingIndent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListBuilder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": "hangingIndent"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "markerGap",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListBuilder",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "markerGap"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "normalizeMarkers",
               "static": false,
               "origin": "source",
@@ -10324,6 +10366,28 @@
                 {
                   "type": "DocumentColor",
                   "name": "fg"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "bg"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "inlineStyledChip",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ParagraphBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "text"
+                },
+                {
+                  "type": "DocumentTextStyle",
+                  "name": "textStyle"
                 },
                 {
                   "type": "DocumentColor",
@@ -14993,6 +15057,29 @@
             },
             {
               "kind": "method",
+              "name": "rail",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "Consumer<TimelineRailBuilder>",
+                  "name": "spec"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "markerOnRail",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
               "name": "gutter",
               "static": false,
               "origin": "source",
@@ -15030,6 +15117,34 @@
                 {
                   "type": "double",
                   "name": "weight"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "axisWidth",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "points"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "leadingColumn",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "DocumentRowColumn",
+                  "name": "column"
                 }
               ]
             },
@@ -15109,6 +15224,20 @@
             },
             {
               "kind": "method",
+              "name": "entry",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "Consumer<TimelineEntryBuilder>",
+                  "name": "entry"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "keepTogether",
               "static": false,
               "origin": "source",
@@ -15136,6 +15265,48 @@
           ],
           "artifact": "graph-compose-core",
           "members": [
+            {
+              "kind": "method",
+              "name": "marker",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineEntryBuilder",
+              "params": [
+                {
+                  "type": "TimelineMarker",
+                  "name": "marker"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "content",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineEntryBuilder",
+              "params": [
+                {
+                  "type": "Consumer<SectionBuilder>",
+                  "name": "content"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "leading",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineEntryBuilder",
+              "params": [
+                {
+                  "type": "Consumer<SectionBuilder>",
+                  "name": "leading"
+                }
+              ]
+            },
             {
               "kind": "method",
               "name": "title",
@@ -15382,6 +15553,99 @@
                   "name": "fill"
                 }
               ]
+            },
+            {
+              "kind": "method",
+              "name": "custom",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineMarker",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "width"
+                },
+                {
+                  "type": "double",
+                  "name": "height"
+                },
+                {
+                  "type": "Consumer<SectionBuilder>",
+                  "name": "recipe"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "TimelineRailBuilder",
+          "binaryName": "com.demcha.compose.document.dsl.TimelineRailBuilder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "stroke",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineRailBuilder",
+              "params": [
+                {
+                  "type": "DocumentStroke",
+                  "name": "stroke"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "extent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineRailBuilder",
+              "params": [
+                {
+                  "type": "TimelineRailExtent",
+                  "name": "extent"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "TimelineRailExtent",
+          "binaryName": "com.demcha.compose.document.dsl.TimelineRailExtent",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "MARKER_TO_MARKER",
+              "static": true,
+              "origin": "generated",
+              "type": "TimelineRailExtent"
+            },
+            {
+              "kind": "constant",
+              "name": "ENTRY_BOUNDS",
+              "static": true,
+              "origin": "generated",
+              "type": "TimelineRailExtent"
+            },
+            {
+              "kind": "constant",
+              "name": "TIMELINE_BOUNDS",
+              "static": true,
+              "origin": "generated",
+              "type": "TimelineRailExtent"
             }
           ]
         },
@@ -16571,6 +16835,64 @@
                 {
                   "type": "DocumentBookmarkOptions",
                   "name": null
+                },
+                {
+                  "type": "DocumentFlowWidth",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ContainerNode",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "List<DocumentNode>",
+                  "name": "children"
+                },
+                {
+                  "type": "double",
+                  "name": "spacing"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "padding"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "margin"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "fillColor"
+                },
+                {
+                  "type": "DocumentStroke",
+                  "name": "stroke"
+                },
+                {
+                  "type": "DocumentCornerRadius",
+                  "name": "cornerRadius"
+                },
+                {
+                  "type": "DocumentBorders",
+                  "name": "borders"
+                },
+                {
+                  "type": "String",
+                  "name": "anchor"
+                },
+                {
+                  "type": "DocumentBookmarkOptions",
+                  "name": "bookmarkOptions"
                 }
               ]
             },
@@ -16847,6 +17169,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "DocumentBookmarkOptions",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "flowWidth",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentFlowWidth",
               "params": []
             }
           ]
@@ -17303,6 +17634,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "DocumentBleed",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "flowWidth",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentFlowWidth",
               "params": []
             }
           ]
@@ -20207,6 +20547,13 @@
           "artifact": "graph-compose-core",
           "members": [
             {
+              "kind": "constant",
+              "name": "DEFAULT_MARKER_GAP",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
               "kind": "constructor",
               "name": "ListNode",
               "static": false,
@@ -20261,6 +20608,14 @@
                 {
                   "type": "DocumentInsets",
                   "name": null
+                },
+                {
+                  "type": "boolean",
+                  "name": null
+                },
+                {
+                  "type": "double",
+                  "name": null
                 }
               ]
             },
@@ -20279,6 +20634,64 @@
                 {
                   "type": "List<String>",
                   "name": "items"
+                },
+                {
+                  "type": "ListMarker",
+                  "name": "marker"
+                },
+                {
+                  "type": "DocumentTextStyle",
+                  "name": "textStyle"
+                },
+                {
+                  "type": "TextAlign",
+                  "name": "align"
+                },
+                {
+                  "type": "double",
+                  "name": "lineSpacing"
+                },
+                {
+                  "type": "double",
+                  "name": "itemSpacing"
+                },
+                {
+                  "type": "String",
+                  "name": "continuationIndent"
+                },
+                {
+                  "type": "boolean",
+                  "name": "normalizeMarkers"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "padding"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "margin"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ListNode",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "List<String>",
+                  "name": "items"
+                },
+                {
+                  "type": "List<ListItem>",
+                  "name": "nestedItems"
                 },
                 {
                   "type": "ListMarker",
@@ -20424,6 +20837,24 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "DocumentInsets",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "hangingIndent",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "markerGap",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "double",
               "params": []
             }
           ]
@@ -22371,6 +22802,76 @@
                 {
                   "type": "boolean",
                   "name": null
+                },
+                {
+                  "type": "DocumentFlowWidth",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "SectionNode",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "List<DocumentNode>",
+                  "name": "children"
+                },
+                {
+                  "type": "double",
+                  "name": "spacing"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "padding"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "margin"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "fillColor"
+                },
+                {
+                  "type": "DocumentStroke",
+                  "name": "stroke"
+                },
+                {
+                  "type": "DocumentCornerRadius",
+                  "name": "cornerRadius"
+                },
+                {
+                  "type": "DocumentBorders",
+                  "name": "borders"
+                },
+                {
+                  "type": "boolean",
+                  "name": "keepTogether"
+                },
+                {
+                  "type": "String",
+                  "name": "anchor"
+                },
+                {
+                  "type": "DocumentBleed",
+                  "name": "bleed"
+                },
+                {
+                  "type": "DocumentBookmarkOptions",
+                  "name": "bookmarkOptions"
+                },
+                {
+                  "type": "boolean",
+                  "name": "keepWithNext"
                 }
               ]
             },
@@ -22848,6 +23349,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "flowWidth",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentFlowWidth",
               "params": []
             }
           ]
@@ -28460,6 +28970,86 @@
           ]
         },
         {
+          "name": "DocumentFlowWidth",
+          "binaryName": "com.demcha.compose.document.style.DocumentFlowWidth",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "DocumentFlowWidth",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "double",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "natural",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentFlowWidth",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "of",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentFlowWidth",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "points"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isFixed",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "resolve",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "double",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "availableWidth"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "points",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "double",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "DocumentInsets",
           "binaryName": "com.demcha.compose.document.style.DocumentInsets",
           "kind": "record",
@@ -28648,6 +29238,136 @@
               "static": true,
               "origin": "generated",
               "type": "DocumentLeader"
+            }
+          ]
+        },
+        {
+          "name": "DocumentLetterSpacing",
+          "binaryName": "com.demcha.compose.document.style.DocumentLetterSpacing",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "NONE",
+              "static": true,
+              "origin": "generated",
+              "type": "DocumentLetterSpacing"
+            },
+            {
+              "kind": "constructor",
+              "name": "DocumentLetterSpacing",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "DocumentLetterSpacing.Type",
+                  "name": null
+                },
+                {
+                  "type": "double",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "points",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentLetterSpacing",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "points"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "ofFontSize",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentLetterSpacing",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "fraction"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "resolve",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "double",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "fontSize"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isNone",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "type",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentLetterSpacing.Type",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "value",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "double",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "DocumentLetterSpacing.Type",
+          "binaryName": "com.demcha.compose.document.style.DocumentLetterSpacing$Type",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "POINTS",
+              "static": true,
+              "origin": "generated",
+              "type": "DocumentLetterSpacing.Type"
+            },
+            {
+              "kind": "constant",
+              "name": "FONT_SIZE",
+              "static": true,
+              "origin": "generated",
+              "type": "DocumentLetterSpacing.Type"
             }
           ]
         },
@@ -29679,6 +30399,36 @@
                 {
                   "type": "DocumentColor",
                   "name": null
+                },
+                {
+                  "type": "DocumentLetterSpacing",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "DocumentTextStyle",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "FontName",
+                  "name": "fontName"
+                },
+                {
+                  "type": "double",
+                  "name": "size"
+                },
+                {
+                  "type": "DocumentTextDecoration",
+                  "name": "decoration"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "color"
                 }
               ]
             },
@@ -29721,6 +30471,20 @@
             },
             {
               "kind": "method",
+              "name": "withLetterSpacing",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "DocumentLetterSpacing",
+                  "name": "letterSpacing"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "fontName",
               "static": false,
               "origin": "generated",
@@ -29753,6 +30517,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "DocumentColor",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "letterSpacing",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentLetterSpacing",
               "params": []
             }
           ]
@@ -29819,6 +30592,20 @@
                 {
                   "type": "DocumentColor",
                   "name": "color"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "letterSpacing",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle.Builder",
+              "params": [
+                {
+                  "type": "DocumentLetterSpacing",
+                  "name": "letterSpacing"
                 }
               ]
             },
@@ -32255,6 +33042,32 @@
               "kind": "constructor",
               "name": "TextStyle",
               "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "FontName",
+                  "name": "fontName"
+                },
+                {
+                  "type": "double",
+                  "name": "size"
+                },
+                {
+                  "type": "TextDecoration",
+                  "name": "decoration"
+                },
+                {
+                  "type": "Color",
+                  "name": "color"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "TextStyle",
+              "static": false,
               "origin": "generated",
               "typeParameters": null,
               "returns": null,
@@ -32273,6 +33086,10 @@
                 },
                 {
                   "type": "Color",
+                  "name": null
+                },
+                {
+                  "type": "double",
                   "name": null
                 }
               ]
@@ -32320,6 +33137,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "Color",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "letterSpacing",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "double",
               "params": []
             }
           ]
@@ -32384,6 +33210,20 @@
               "params": [
                 {
                   "type": "Color",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "letterSpacing",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "TextStyle.TextStyleBuilder",
+              "params": [
+                {
+                  "type": "double",
                   "name": null
                 }
               ]

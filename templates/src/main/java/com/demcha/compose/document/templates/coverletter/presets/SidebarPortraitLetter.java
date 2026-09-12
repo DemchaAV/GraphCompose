@@ -108,7 +108,7 @@ public final class SidebarPortraitLetter {
                 String jobTitle = identity.jobTitle();
                 String subline = jobTitle == null || jobTitle.isBlank()
                         ? ""
-                        : TextOrnaments.spacedUpper(jobTitle);
+                        : TextOrnaments.upper(jobTitle);
                 flow.addSection("CoverLetterV2SidebarPortraitHero", hero -> {
                     // No fill: the CV's beige hero band reads as a coloured box
                     // on a single-column letter, which clashed with the concept,
@@ -143,10 +143,12 @@ public final class SidebarPortraitLetter {
                         DocumentTextDecoration.BOLD, theme.palette().ink());
             }
 
+            /** Spaced caps: only the hero subline uses this. */
             private DocumentTextStyle subtitleStyle() {
                 return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeEntryDate(),
-                        DocumentTextDecoration.DEFAULT, theme.palette().ink());
+                        DocumentTextDecoration.DEFAULT, theme.palette().ink())
+                        .withLetterSpacing(TextOrnaments.SPACED_CAPS);
             }
 
             private DocumentTextStyle contactStyle() {

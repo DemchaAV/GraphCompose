@@ -65,6 +65,38 @@ class CvPresetTextLayerTest {
                         .contains(probe));
     }
 
+    /**
+     * The spaced-caps blocks read back as words.
+     *
+     * <p>These are the blocks the probe words above deliberately avoid, and the
+     * reason they had to: while the look was made by rewriting the string, a
+     * name came out of the file as {@code "J A N E   D O E"}, so the one thing
+     * every reader of a CV searches for — the applicant's name — was the one
+     * thing not in it. Tracking is a style now, so the name is a name.</p>
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("presets")
+    void theNameAndSectionTitlesReadBackAsWords(
+            String slug, double margin, Supplier<DocumentTemplate<CvDocument>> factory)
+            throws Exception {
+
+        String extracted = renderText(factory.get(), margin);
+
+        // Two words with the single space between them intact — the old
+        // transform widened an authored space into three, so this is exactly
+        // the case it broke, and the name is the field a CV is searched by.
+        assertThat(extracted)
+                .describedAs("the applicant's name is not in the text layer of %s", slug)
+                .containsIgnoringCase("JANE DOE");
+        // And nothing anywhere on the page is spelled out letter by letter.
+        // Asserted as a shape rather than against particular words, because
+        // presets word their headings differently and any of them regressing
+        // should be caught, not just the ones this test happened to name.
+        assertThat(extracted)
+                .describedAs("something is spelled out letter by letter in %s", slug)
+                .doesNotMatch("(?s).*\\b(?:[A-Za-z] ){3,}[A-Za-z]\\b.*");
+    }
+
     private static String renderText(DocumentTemplate<CvDocument> template, double margin)
             throws Exception {
         byte[] pdf;

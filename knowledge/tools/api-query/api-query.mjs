@@ -138,7 +138,96 @@ function answerTask(id) {
       .filter((t) => t.includes(id) || id.includes(t.split(".").pop()));
     return { found: false, query: { task: id }, didYouMean: near, available: doc.tasks.map((t) => t.task) };
   }
-  return { found: true, query: { task: id }, ...route };
+  // The pack's own version travels with the answer: a route's verifiedAgainst
+  // is only meaningful next to the pack being read from, and check-routes --
+  // which owns the comparison -- is not shipped in the bundle.
+  return { found: true, query: { task: id }, ...route, packVersion: packVersion() };
+}
+
+/**
+ * Whether the pages a route hands over are actually beside this pack — true in a
+ * checkout, false in the published bundle, which carries the routing table but
+ * not the documentation tree.
+ *
+ * Every cited page is resolved, rather than probing for a directory called
+ * `docs`. The bundle is normally unpacked *inside* another project, and that
+ * project usually has documentation of its own: keying on the directory name
+ * suppressed the note exactly where it was needed and handed the reader a
+ * GraphCompose path that appeared to resolve against their own tree.
+ *
+ * @param {string[]} refs the route's `docs:` entries
+ */
+function docsArePresent(refs) {
+  return (refs ?? []).every((ref) => {
+    const rel = ref.split("#")[0];
+    if (!rel) return false;
+    return fs.existsSync(path.join(KNOWLEDGE_ROOT, "..", ...rel.split("/")));
+  });
+}
+
+/**
+ * The version the surfaces were extracted from, read without loading them all.
+ *
+ * `targetVersion` is not a fallback: it is a line (`2.4.x`), not a version, and
+ * comparing a route against it is not something {@link versionParts} can do.
+ */
+function packVersion() {
+  let files;
+  try {
+    // Sorted: an inconsistent pack must not answer differently depending on the
+    // order the filesystem lists it in.
+    files = fs.readdirSync(API_DIR).sort();
+  } catch {
+    // No surfaces at all is a pack that can still answer routing questions; the
+    // provenance line goes back to naming the route's own version.
+    return null;
+  }
+  for (const file of files) {
+    if (!file.endsWith(".json") || file === "excluded.json") continue;
+    try {
+      const doc = JSON.parse(fs.readFileSync(path.join(API_DIR, file), "utf8"));
+      if (doc.verifiedAgainst) return doc.verifiedAgainst;
+    } catch {
+      // Per file, not per pack. One unreadable surface used to take the whole
+      // version down with it -- and `authoring.json` sorts first, so the most
+      // likely corruption was also the one that silently removed the staleness
+      // note from every answer while four good surfaces still carried the stamp.
+    }
+  }
+  return null;
+}
+
+/*
+ * Version ordering, duplicated on purpose.
+ *
+ * knowledge/tools/routing/lib/pack-version.mjs is the canonical copy, and this
+ * file cannot import it: build-bundle.mjs publishes this one file as
+ * `bin/query.mjs` with nothing beside it, so a relative import would make the
+ * published bundle fail to start. The duplicate is held to the canonical one by
+ * knowledge/tools/routing/test/pack-version.test.mjs, which runs the same table
+ * through both -- because an unwatched copy drifts, and this one already did:
+ * it shipped raw string comparison while the gate compared numeric heads, so at
+ * a release tag the bundle called every route stale and the gate called none.
+ */
+
+/** The numeric head of a version, or null when it cannot be ordered. */
+function versionParts(version) {
+  const head = String(version).trim().split("-")[0];
+  const parts = head.split(".");
+  if (!parts.length || parts.some((p) => !/^\d+$/.test(p))) return null;
+  return parts.map(Number);
+}
+
+/** -1 route behind pack · 0 same line · 1 route ahead · null unorderable. */
+function compareVersions(routeVersion, packVersion) {
+  const a = versionParts(routeVersion);
+  const b = versionParts(packVersion);
+  if (!a || !b) return null;
+  for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
+    const diff = (a[i] ?? 0) - (b[i] ?? 0);
+    if (diff !== 0) return diff < 0 ? -1 : 1;
+  }
+  return 0;
 }
 
 function renderTask(answer) {
@@ -176,6 +265,39 @@ function renderTask(answer) {
   if (answer.docs?.length) {
     out.push("");
     out.push(`  read: ${answer.docs.join("  ")}`);
+    // The bundle ships routing/ and not docs/, so in that copy the path above
+    // names a page that is not in the archive. Saying so beats printing it as
+    // though it were openable: a reader with only the bundle would otherwise go
+    // looking for a file that was never there.
+    if (!docsArePresent(answer.docs)) {
+      out.push("        (not in this bundle — that path is relative to the GraphCompose repository)");
+    }
+  }
+  // Provenance, not decoration: two routes read identically otherwise, and a
+  // reader has no way to tell one re-checked against this pack from one last
+  // looked at two minors ago. A bare route version cannot answer that either --
+  // "2.2.3-SNAPSHOT" means nothing without the pack it is being read from --
+  // so the pack's own version is printed beside it whenever the two differ.
+  if (answer.verifiedAgainst) {
+    out.push("");
+    const pack = answer.packVersion;
+    // Behind by version, not by spelling: at a release tag the surfaces read
+    // 2.4.0 while a route signed during the cycle reads 2.4.0-SNAPSHOT, and
+    // those are the same line of development.
+    // Every verdict is forwarded, not only "behind". An unorderable version and
+    // one ahead of the surfaces both look like provenance and are not, and
+    // printing them bare made a typo read exactly like a route re-read today.
+    // check-routes fails on both, but it is not what a reader runs.
+    const order = pack === null ? undefined : compareVersions(answer.verifiedAgainst, pack);
+    let note = "";
+    if (order === null) {
+      note = ` (this pack is ${pack} — those two versions cannot be compared)`;
+    } else if (order < 0) {
+      note = ` (this pack is ${pack} — the route has not been re-read since)`;
+    } else if (order > 0) {
+      note = ` (this pack is ${pack} — the route claims a version the surfaces do not have)`;
+    }
+    out.push(`  checked against: ${answer.verifiedAgainst}${note}`);
   }
   if (!answer.confirmedBy) {
     out.push("");

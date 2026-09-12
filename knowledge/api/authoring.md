@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 1106
+Types: 237 · methods: 2107 · constants: 237 · compiler-generated members: 1126
 
 ## com.demcha.compose
 
@@ -478,6 +478,7 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `T margin(float top, float right, float bottom, float left)`
 - `T bleed(DocumentBleed bleed)`
 - `T bleedToEdge(DocumentEdge... edges)`
+- `T fixedWidth(double points)`
 - `T fillColor(Color fillColor)`
 - `T fillColor(DocumentColor fillColor)`
 - `T stroke(DocumentStroke stroke)`
@@ -761,6 +762,8 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `ListBuilder lineSpacing(double lineSpacing)`
 - `ListBuilder itemSpacing(double itemSpacing)`
 - `ListBuilder continuationIndent(String continuationIndent)`
+- `ListBuilder hangingIndent(boolean hangingIndent)`
+- `ListBuilder markerGap(double markerGap)`
 - `ListBuilder normalizeMarkers(boolean normalizeMarkers)`
 - `ListBuilder padding(DocumentInsets padding)`
 - `ListBuilder padding(float top, float right, float bottom, float left)`
@@ -832,6 +835,7 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `ParagraphBuilder inlineCode(String text)`
 - `ParagraphBuilder inlineCode(String text, DocumentTextStyle textStyle)`
 - `ParagraphBuilder inlineChip(String text, DocumentColor fg, DocumentColor bg)`
+- `ParagraphBuilder inlineStyledChip(String text, DocumentTextStyle textStyle, DocumentColor bg)`
 - `ParagraphBuilder inlineImage(DocumentImageData imageData, double width, double height)`
 - `ParagraphBuilder inlineImage(DocumentImageData imageData, double width, double height, InlineImageAlignment alignment)`
 - `ParagraphBuilder inlineImage(DocumentImageData imageData, double width, double height, InlineImageAlignment alignment, double baselineOffset, DocumentLinkOptions linkOptions)`
@@ -1120,18 +1124,26 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 
 ### TimelineBuilder (class)
 - `TimelineBuilder connector(DocumentColor color, double width)`
+- `TimelineBuilder rail(Consumer<TimelineRailBuilder> spec)`
+- `TimelineBuilder markerOnRail()`
 - `TimelineBuilder gutter(double gutter)`
 - `TimelineBuilder markerGap(double gap)`
 - `TimelineBuilder markerColumnWeight(double weight)`
+- `TimelineBuilder axisWidth(double points)`
+- `TimelineBuilder leadingColumn(DocumentRowColumn column)`
 - `TimelineBuilder spacing(double spacing)`
 - `TimelineBuilder titleStyle(DocumentTextStyle style)`
 - `TimelineBuilder metaStyle(DocumentTextStyle style)`
 - `TimelineBuilder bodyStyle(DocumentTextStyle style)`
 - `TimelineBuilder entry(TimelineMarker marker, Consumer<TimelineEntryBuilder> content)`
+- `TimelineBuilder entry(Consumer<TimelineEntryBuilder> entry)`
 - `TimelineBuilder keepTogether()`
 - `TimelineBuilder keepEntriesTogether()`
 
 ### TimelineEntryBuilder (class)
+- `TimelineEntryBuilder marker(TimelineMarker marker)`
+- `TimelineEntryBuilder content(Consumer<SectionBuilder> content)`
+- `TimelineEntryBuilder leading(Consumer<SectionBuilder> leading)`
 - `TimelineEntryBuilder title(String title)`
 - `TimelineEntryBuilder title(String title, DocumentTextStyle style)`
 - `TimelineEntryBuilder titleStyle(DocumentTextStyle style)`
@@ -1148,6 +1160,14 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `TimelineMarker circle(double size, DocumentColor fill, DocumentStroke stroke)`
 - `TimelineMarker numbered(int number, double size, DocumentColor fill, DocumentColor textColor)`
 - `TimelineMarker square(double size, DocumentColor fill)`
+- `TimelineMarker custom(double width, double height, Consumer<SectionBuilder> recipe)`
+
+### TimelineRailBuilder (class)
+- `TimelineRailBuilder stroke(DocumentStroke stroke)`
+- `TimelineRailBuilder extent(TimelineRailExtent extent)`
+
+### TimelineRailExtent (enum)
+- constants: `MARKER_TO_MARKER`, `ENTRY_BOUNDS`, `TIMELINE_BOUNDS`
 
 ### TocBuilder (class)
 - `new TocBuilder()`
@@ -1250,7 +1270,8 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `DocumentInsets padding()`
 
 ### ContainerNode (record)
-- `new ContainerNode(String, List<DocumentNode>, double, DocumentInsets, DocumentInsets, DocumentColor, DocumentStroke, DocumentCornerRadius, DocumentBorders, String, DocumentBookmarkOptions)`
+- `new ContainerNode(String, List<DocumentNode>, double, DocumentInsets, DocumentInsets, DocumentColor, DocumentStroke, DocumentCornerRadius, DocumentBorders, String, DocumentBookmarkOptions, DocumentFlowWidth)`
+- `new ContainerNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders, String anchor, DocumentBookmarkOptions bookmarkOptions)`
 - `new ContainerNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders, String anchor)`
 - `new ContainerNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders)`
 - `new ContainerNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius)`
@@ -1266,6 +1287,7 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `DocumentBorders borders()`
 - `String anchor()`
 - `DocumentBookmarkOptions bookmarkOptions()`
+- `DocumentFlowWidth flowWidth()`
 
 ### DocumentBarcodeOptions (class)
 - `DocumentBarcodeOptions.DocumentBarcodeOptionsBuilder builder()`
@@ -1311,6 +1333,7 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `boolean keepTogether()`
 - `boolean keepWithNext()`
 - `DocumentBleed bleed()`
+- `DocumentFlowWidth flowWidth()`
 
 ### EllipseNode (record)
 - `new EllipseNode(String, double, double, DocumentColor, DocumentStroke, DocumentLinkTarget, DocumentBookmarkOptions, DocumentInsets, DocumentInsets, DocumentTransform, String)`
@@ -1496,8 +1519,9 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `String value()`
 
 ### ListNode (record)
-- `new ListNode(String, List<String>, List<ListItem>, ListMarker, DocumentTextStyle, TextAlign, double, double, String, boolean, DocumentInsets, DocumentInsets)`
+- `new ListNode(String, List<String>, List<ListItem>, ListMarker, DocumentTextStyle, TextAlign, double, double, String, boolean, DocumentInsets, DocumentInsets, boolean, double)`
 - `new ListNode(String name, List<String> items, ListMarker marker, DocumentTextStyle textStyle, TextAlign align, double lineSpacing, double itemSpacing, String continuationIndent, boolean normalizeMarkers, DocumentInsets padding, DocumentInsets margin)`
+- `new ListNode(String name, List<String> items, List<ListItem> nestedItems, ListMarker marker, DocumentTextStyle textStyle, TextAlign align, double lineSpacing, double itemSpacing, String continuationIndent, boolean normalizeMarkers, DocumentInsets padding, DocumentInsets margin)`
 - `String name()`
 - `List<String> items()`
 - `List<ListItem> nestedItems()`
@@ -1510,6 +1534,9 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `boolean normalizeMarkers()`
 - `DocumentInsets padding()`
 - `DocumentInsets margin()`
+- `boolean hangingIndent()`
+- `double markerGap()`
+- constants: `DEFAULT_MARKER_GAP`
 
 ### PageBreakNode (record)
 - `new PageBreakNode(String, DocumentInsets)`
@@ -1625,7 +1652,8 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - constants: `TOP`, `CENTER`, `BOTTOM`
 
 ### SectionNode (record)
-- `new SectionNode(String, List<DocumentNode>, double, DocumentInsets, DocumentInsets, DocumentColor, DocumentStroke, DocumentCornerRadius, DocumentBorders, boolean, String, DocumentBleed, DocumentBookmarkOptions, boolean)`
+- `new SectionNode(String, List<DocumentNode>, double, DocumentInsets, DocumentInsets, DocumentColor, DocumentStroke, DocumentCornerRadius, DocumentBorders, boolean, String, DocumentBleed, DocumentBookmarkOptions, boolean, DocumentFlowWidth)`
+- `new SectionNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders, boolean keepTogether, String anchor, DocumentBleed bleed, DocumentBookmarkOptions bookmarkOptions, boolean keepWithNext)`
 - `new SectionNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders, boolean keepTogether, String anchor, DocumentBleed bleed, DocumentBookmarkOptions bookmarkOptions)`
 - `new SectionNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders, boolean keepTogether, String anchor, DocumentBleed bleed)`
 - `new SectionNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders, boolean keepTogether, String anchor)`
@@ -1647,6 +1675,7 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `DocumentBleed bleed()`
 - `DocumentBookmarkOptions bookmarkOptions()`
 - `boolean keepWithNext()`
+- `DocumentFlowWidth flowWidth()`
 
 ### ShapeContainerNode (record)
 - `new ShapeContainerNode(String name, ShapeOutline outline, List<LayerStackNode.Layer> layers, ClipPolicy clipPolicy, DocumentColor fillColor, DocumentStroke stroke, DocumentInsets padding, DocumentInsets margin)`
@@ -2131,6 +2160,14 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 ### DocumentEdge (enum)
 - constants: `TOP`, `RIGHT`, `BOTTOM`, `LEFT`
 
+### DocumentFlowWidth (record)
+- `new DocumentFlowWidth(double)`
+- `DocumentFlowWidth natural()`
+- `DocumentFlowWidth of(double points)`
+- `boolean isFixed()`
+- `double resolve(double availableWidth)`
+- `double points()`
+
 ### DocumentInsets (record)
 - `new DocumentInsets(double, double, double, double)`
 - `DocumentInsets zero()`
@@ -2147,6 +2184,19 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 
 ### DocumentLeader (enum)
 - constants: `NONE`, `DOTS`, `DASHES`
+
+### DocumentLetterSpacing (record)
+- `new DocumentLetterSpacing(DocumentLetterSpacing.Type, double)`
+- `DocumentLetterSpacing points(double points)`
+- `DocumentLetterSpacing ofFontSize(double fraction)`
+- `double resolve(double fontSize)`
+- `boolean isNone()`
+- `DocumentLetterSpacing.Type type()`
+- `double value()`
+- constants: `NONE`
+
+### DocumentLetterSpacing.Type (enum)
+- constants: `POINTS`, `FONT_SIZE`
 
 ### DocumentLineCap (enum)
 - `int pdfCode()`
@@ -2236,14 +2286,17 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - constants: `NONE`, `FIRST_LINE`, `FROM_SECOND_LINE`, `ALL_LINES`
 
 ### DocumentTextStyle (record)
-- `new DocumentTextStyle(FontName, double, DocumentTextDecoration, DocumentColor)`
+- `new DocumentTextStyle(FontName, double, DocumentTextDecoration, DocumentColor, DocumentLetterSpacing)`
+- `new DocumentTextStyle(FontName fontName, double size, DocumentTextDecoration decoration, DocumentColor color)`
 - `DocumentTextStyle.Builder builder()`
 - `DocumentTextStyle withSize(double size)`
 - `DocumentTextStyle withColor(DocumentColor color)`
+- `DocumentTextStyle withLetterSpacing(DocumentLetterSpacing letterSpacing)`
 - `FontName fontName()`
 - `double size()`
 - `DocumentTextDecoration decoration()`
 - `DocumentColor color()`
+- `DocumentLetterSpacing letterSpacing()`
 - constants: `DEFAULT`
 
 ### DocumentTextStyle.Builder (class)
@@ -2251,6 +2304,7 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `DocumentTextStyle.Builder size(double size)`
 - `DocumentTextStyle.Builder decoration(DocumentTextDecoration decoration)`
 - `DocumentTextStyle.Builder color(DocumentColor color)`
+- `DocumentTextStyle.Builder letterSpacing(DocumentLetterSpacing letterSpacing)`
 - `DocumentTextStyle build()`
 
 ### DocumentTransform (record)
@@ -2464,18 +2518,21 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - constants: `DEFAULT`, `BOLD`, `ITALIC`, `BOLD_ITALIC`, `UNDERLINE`, `STRIKETHROUGH`
 
 ### TextStyle (record)
-- `new TextStyle(FontName, double, TextDecoration, Color)`
+- `new TextStyle(FontName fontName, double size, TextDecoration decoration, Color color)`
+- `new TextStyle(FontName, double, TextDecoration, Color, double)`
 - `TextStyle.TextStyleBuilder builder()`
 - `FontName fontName()`
 - `double size()`
 - `TextDecoration decoration()`
 - `Color color()`
+- `double letterSpacing()`
 
 ### TextStyle.TextStyleBuilder (class)
 - `TextStyle.TextStyleBuilder fontName(FontName)`
 - `TextStyle.TextStyleBuilder size(double)`
 - `TextStyle.TextStyleBuilder decoration(TextDecoration)`
 - `TextStyle.TextStyleBuilder color(Color)`
+- `TextStyle.TextStyleBuilder letterSpacing(double)`
 - `TextStyle build()`
 
 ## com.demcha.compose.engine.components.geometry

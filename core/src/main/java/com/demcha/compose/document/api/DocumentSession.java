@@ -83,6 +83,7 @@ public final class DocumentSession implements AutoCloseable {
     private boolean markdown;
     private DocumentDebugOptions debug = DocumentDebugOptions.none();
     private List<PageBackgroundFill> pageBackgrounds = List.of();
+    private List<ResolvedLayoutPass> layoutPasses = List.of();
     private List<PageMarginRule> pageMargins = List.of();
     private MeasurementResources measurementResources;
     private boolean closed;
@@ -435,6 +436,31 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * Registers a resolved-layout pass, to run in registration order after the layout is
+     * compiled and before the page backgrounds are spliced.
+     *
+     * <p>Package-private on purpose. Passes exist so a built-in feature can draw from
+     * geometry it could not know during layout; opening that to authors would mean
+     * settling failure handling, re-entrancy, thread safety and what one pass may see of
+     * another, none of which the built-in cases need answered yet.</p>
+     *
+     * @param pass the pass to register; {@code null} is ignored
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    DocumentSession registerLayoutPass(ResolvedLayoutPass pass) {
+        ensureOpen();
+        if (pass == null) {
+            return this;
+        }
+        List<ResolvedLayoutPass> updated = new ArrayList<>(this.layoutPasses);
+        updated.add(pass);
+        this.layoutPasses = List.copyOf(updated);
+        invalidate();
+        return this;
+    }
+
+    /**
      * Overrides the page margin for ranges of pages, replacing the document-wide
      * {@link #margin(DocumentInsets)} on the pages each rule covers. Use this for a
      * document whose pages are not all the same shape — a full-bleed cover with
@@ -752,8 +778,12 @@ public final class DocumentSession implements AutoCloseable {
     private LayoutGraph computeLayout() {
         // Backgrounds go under the body, zones over it, so the two splices bracket
         // the compiled graph in that order.
+        // Passes run before the backgrounds: a background prepends its fragments, so a
+        // pass running afterwards would have its under-body fragment pushed beneath an
+        // opaque page fill and never seen.
+        LayoutGraph withPasses = ResolvedLayoutPasses.apply(layoutResolver.resolve(), layoutPasses);
         LayoutGraph withBackgrounds =
-                DocumentPageBackgrounds.apply(layoutResolver.resolve(), pageBackgrounds);
+                DocumentPageBackgrounds.apply(withPasses, pageBackgrounds);
         List<DocumentPageZone> zones = chromeOptions.zones();
         // A zone rides the body's machinery, anchors included: a page reference
         // inside one resolves against the graph the body just settled.

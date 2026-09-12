@@ -56,6 +56,18 @@ matrix.
 > methods on `DocumentSession` (`toPptxBytes`, `writePptx`, `buildPptx`).
 > Geometry identity with the PDF backend is a design invariant and will not
 > change; the API shape around it may still move in a minor release.
+>
+> Four members of the otherwise-Stable **PDF backend** also carry `@Beta`. The
+> package is not Experimental — these are:
+> `PdfFixedLayoutBackend.renderSections` / `writeSections`, the low-level seam
+> that concatenates several sections into one document, where
+> `MultiSectionDocument` via `GraphCompose.documents()` is the settled entry
+> point most callers want instead; and
+> `PdfFixedLayoutBackend.Builder.deterministic` in both overloads, which pins
+> `CreationDate` / `ModDate` and derives the `/ID` from metadata so a document
+> renders byte-identically across runs. Determinism is off by default, and what
+> reproducible builds depend on is the *behaviour* — it is the shape of the
+> opt-in that may still move.
 
 ### What each tier promises
 
@@ -197,27 +209,66 @@ window starts, and its `Status` flips to `deprecated 1.x`.
 
 The Stable-tier promise (§ 1 — no binary breaks outside a major release) is enforced
 mechanically by [japicmp](https://siom79.github.io/japicmp/), run in a `japicmp` Maven
-profile on the engine module during `verify`.
+profile during `verify` on the engine module (`graph-compose-core`) and on
+`graph-compose-templates`. The render backends (`graph-compose-render-pdf`,
+`-render-docx`, `-render-pptx`) and `graph-compose-testing` are not gated yet.
 
-- **Baseline:** the published `graph-compose-core` on Maven Central, pinned by the
-  `japicmp.baseline` property in `core/pom.xml`. It is the current major's **floor** —
-  `2.0.0` for the whole 2.x line — and advances only at the next major. Holding it at
-  the floor (rather than the previous release) is what enforces the Stable promise:
-  every 2.x build must stay binary-compatible with the `2.0.0` public surface, not
-  merely with the last minor.
+- **Baselines:** the published artifacts on Maven Central.
+  - `graph-compose-core` is diffed against the `japicmp.baseline` property in
+    `core/pom.xml`: the current major's **floor**, `2.0.0` for the whole 2.x line,
+    advancing only at the next major. Holding it at the floor (rather than the previous
+    release) is what enforces the Stable promise: every 2.x build must stay
+    binary-compatible with the `2.0.0` public surface, not merely with the last minor.
+  - `graph-compose-templates` is diffed twice, one execution each: against the floor
+    (`japicmp.baseline.floor`, `2.0.0`) and against the latest published release
+    (`japicmp.baseline.previous`). The floor holds the GA surface; the previous release
+    holds everything added since, which a floor-only diff cannot protect — a member
+    first published in `2.2.0` is absent from `2.0.0`. `cut-release.ps1
+    -PostReleaseOnly` moves the previous pin to the release just published, and
+    `VersionConsistencyGuardTest` fails the build when a pin disagrees with the working
+    version and the CHANGELOG.
 - **What fails the build:** any binary-incompatible change to the public surface
-  against the baseline — a removed or less-accessible public method/field/type, a
-  changed signature, and so on. `@Internal` packages (`com.demcha.compose.engine.*`,
-  `com.demcha.compose.document.layout.*` and its render-handoff payload records) are
-  excluded; they carry no compatibility promise (§ 1). Source-only incompatibilities
-  (e.g. adding a default method to an interface) are reported but do not fail, pending
-  a finalized 2.x source-compatibility policy.
-- **Activity window:** the gate compares the working version against the baseline, so
-  it is a no-op only when the two are equal — the `2.0.0` release commit itself — and
-  active for every `-SNAPSHOT` development cycle across the 2.x line that follows.
-
-During the 2.0 major transition the gate ran report-only (the major intentionally
-broke 1.x binary compatibility); it enforces from the `2.0.0` baseline forward.
+  against a baseline — a removed or less-accessible public method/field/type or
+  constructor, a changed signature, and so on. A deprecated element stays protected like
+  any other until a major release removes it (§ 3). `@Internal` packages
+  (`com.demcha.compose.engine.*`, `com.demcha.compose.document.layout.*` and its
+  render-handoff payload records) are excluded; they carry no compatibility promise
+  (§ 1). Every `templates.*` package is Stable (§ 4), so in `graph-compose-templates`
+  only an element carrying the per-element `@Internal` marker is excluded — none does
+  today. Source-only incompatibilities (e.g. adding a default method to an interface)
+  are reported but do not fail, pending a finalized 2.x source-compatibility policy.
+- **Where it runs:** the pull-request `Binary Compatibility` job, `cut-release.ps1` Step 5b
+  and the publish workflow. Each ends by checking that every execution left its report: an
+  execution that does not run — switched off, unbound, or not selected — writes none and
+  fails nothing. A baseline japicmp cannot resolve still leaves a report, so that case is
+  caught only where the gate fails on it — `graph-compose-templates`, as the next point
+  says. `BinaryCompatibilityGateGuardTest` holds the executions, their settings, the job's
+  trigger and those checks in place.
+- **Where a baseline comes from:** a published release, never this build. japicmp resolves
+  a pin equal to the module's own version to the artifact the build just produced —
+  measured on a simulated `3.0.0` cut, where it reported *"No incompatible changes found
+  while checking backward compatibility of version 3.0.0 with the previous version
+  3.0.0"*, from the reactor and from a local repository the release had been installed
+  into alike. So both pins are held **strictly older** than the working version
+  (`VersionConsistencyGuardTest`), every path drops our cached artifacts from the local
+  repository before it resolves, and the publish workflow runs the gate *before* the
+  `install` that seeds that repository with the release being published.
+- **Activity window:** active for every `-SNAPSHOT` cycle and every release commit of a
+  major that has a published release of its own; a `graph-compose-templates` baseline that
+  cannot be resolved fails the build rather than skipping its diff (japicmp's default,
+  which the engine gate still runs with, skips it with a warning).
+- **Opening a major:** while major `X` has no release of its own — the whole
+  `X.0.0-SNAPSHOT` cycle *and* the `X.0.0` release commit — there is nothing in-major to
+  diff against. `graph-compose-templates` then pins the **previous** major's floor and its
+  last release, and `japicmp.break.binary` is `false`: both diffs run and are reported, and
+  a break does not fail the build, because a major is allowed to break. That is the posture
+  the 2.0 transition ran under. The `X.0.0` publish workflow therefore checks those same two
+  diffs, report-only, against releases already on Central — it never waits for `X.0.0`
+  itself and never compares `X.0.0` with itself. The pins become `X.0.0` and
+  `japicmp.break.binary` returns to `true` at the first `-PostReleaseOnly` after `X.0.0` is
+  published and dated in the CHANGELOG, so strict same-major enforcement resumes with the
+  first `X.0.1-SNAPSHOT` build. `VersionConsistencyGuardTest` derives all three values from
+  the CHANGELOG and fails the build until the poms match them.
 
 ---
 

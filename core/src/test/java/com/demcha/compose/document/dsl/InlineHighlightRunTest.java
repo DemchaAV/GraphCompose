@@ -3,6 +3,7 @@ package com.demcha.compose.document.dsl;
 import com.demcha.compose.document.node.InlineHighlightRun;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.font.FontName;
@@ -81,6 +82,83 @@ class InlineHighlightRunTest {
                 "x", DocumentTextStyle.DEFAULT, DocumentColor.GRAY, 4.0, padding,
                 new com.demcha.compose.document.node.DocumentLinkOptions("https://example.com")));
         assertThat(linked.linkTarget()).isNotNull();
+    }
+
+    @Test
+    void paragraphChipInheritsTheParagraphStyleAndOverridesOnlyTheColour() {
+        DocumentTextStyle paragraphStyle = DocumentTextStyle.builder()
+                .fontName(FontName.TIMES_ROMAN)
+                .size(9)
+                .decoration(DocumentTextDecoration.BOLD)
+                .build();
+        InlineHighlightRun run = onlyHighlight(new ParagraphBuilder()
+                .textStyle(paragraphStyle)
+                .inlineChip(" Paid ", DocumentColor.rgb(0, 100, 0), DocumentColor.rgb(220, 255, 220)));
+
+        // Everything but the colour is the paragraph's, compared as a whole so a
+        // component added to DocumentTextStyle later is covered too. Normalized to
+        // one shared colour because DocumentColor compares by identity.
+        assertThat(run.textStyle().withColor(DocumentColor.BLACK))
+                .isEqualTo(paragraphStyle.withColor(DocumentColor.BLACK));
+        assertThat(run.textStyle().size()).isEqualTo(9.0, within(1e-9));
+        assertThat(run.textStyle().fontName()).isEqualTo(FontName.TIMES_ROMAN);
+        assertThat(run.textStyle().decoration()).isEqualTo(DocumentTextDecoration.BOLD);
+        assertThat(run.textStyle().color().color()).isEqualTo(new Color(0, 100, 0));
+        // The fill and the chip geometry are the caller's, not the paragraph's.
+        assertThat(run.background().fill().color()).isEqualTo(new Color(220, 255, 220));
+        assertThat(run.background().cornerRadius()).isEqualTo(3.0);
+    }
+
+    @Test
+    void paragraphChipWithAnExplicitStyleIgnoresTheParagraph() {
+        DocumentTextStyle chipStyle = DocumentTextStyle.builder().size(20).build();
+        InlineHighlightRun run = onlyHighlight(new ParagraphBuilder()
+                .textStyle(DocumentTextStyle.builder().size(9).build())
+                .inlineStyledChip("BIG", chipStyle, DocumentColor.GRAY));
+        assertThat(run.textStyle().size()).isEqualTo(20.0, within(1e-9));
+    }
+
+    @Test
+    void paragraphChipTakesTheStyleTheParagraphEndsWithFromEitherSide() {
+        // The chip inherits the paragraph's final style, not whichever one happened to
+        // be set at the call: textStyle(...) works on either side of it, the way it
+        // already does around inlineText. An order-dependent answer would make "a chip
+        // is sized like the text around it" true only by convention.
+        DocumentTextStyle small = DocumentTextStyle.builder().size(9).build();
+        DocumentColor ink = DocumentColor.rgb(0, 100, 0);
+
+        InlineHighlightRun styleFirst = onlyHighlight(new ParagraphBuilder()
+                .textStyle(small)
+                .inlineChip("x", ink, DocumentColor.GRAY));
+        InlineHighlightRun chipFirst = onlyHighlight(new ParagraphBuilder()
+                .inlineChip("x", ink, DocumentColor.GRAY)
+                .textStyle(small));
+
+        assertThat(styleFirst.textStyle().size()).isEqualTo(9.0, within(1e-9));
+        assertThat(chipFirst.textStyle().size())
+                .as("a textStyle set after the chip reaches it too")
+                .isEqualTo(9.0, within(1e-9));
+        // The colour is the chip's own either way — the one thing it does not inherit.
+        assertThat(chipFirst.textStyle().color()).isSameAs(ink);
+    }
+
+    @Test
+    void theParagraphStyleAChipInheritsIsTheLastOneSet() {
+        // Resolving at build() means the paragraph's final style, not the nearest
+        // preceding one — otherwise "either side" would still hide an ordering rule.
+        InlineHighlightRun run = onlyHighlight(new ParagraphBuilder()
+                .textStyle(DocumentTextStyle.builder().size(9).build())
+                .inlineChip("x", DocumentColor.rgb(0, 100, 0), DocumentColor.GRAY)
+                .textStyle(DocumentTextStyle.builder().size(20).build()));
+        assertThat(run.textStyle().size()).isEqualTo(20.0, within(1e-9));
+    }
+
+    private static InlineHighlightRun onlyHighlight(ParagraphBuilder paragraph) {
+        return paragraph.build().inlineRuns().stream()
+                .filter(InlineHighlightRun.class::isInstance)
+                .map(InlineHighlightRun.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("no InlineHighlightRun in the paragraph"));
     }
 
     private static InlineHighlightRun onlyHighlight(RichText rich) {

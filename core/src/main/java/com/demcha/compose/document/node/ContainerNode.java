@@ -21,6 +21,9 @@ import java.util.Objects;
  *                     destination at the container's top-left, or {@code null} for none
  * @param bookmarkOptions optional PDF outline entry placed at the container's top on
  *                        its start page, or {@code null} for none
+ * @param flowWidth    horizontal size constraint; {@link DocumentFlowWidth#natural()}
+ *                     measures the container at the width its parent offers, a fixed
+ *                     value pins that width while leaving the height content-driven
  * @author Artem Demchyshyn
  */
 public record ContainerNode(
@@ -34,7 +37,8 @@ public record ContainerNode(
         DocumentCornerRadius cornerRadius,
         DocumentBorders borders,
         String anchor,
-        DocumentBookmarkOptions bookmarkOptions
+        DocumentBookmarkOptions bookmarkOptions,
+        DocumentFlowWidth flowWidth
 ) implements DocumentNode {
     /**
      * Creates a normalized vertical flow container.
@@ -48,9 +52,41 @@ public record ContainerNode(
         cornerRadius = cornerRadius == null ? DocumentCornerRadius.ZERO : cornerRadius;
         borders = borders == null ? DocumentBorders.NONE : borders;
         anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
+        flowWidth = flowWidth == null ? DocumentFlowWidth.natural() : flowWidth;
         if (spacing < 0 || Double.isNaN(spacing) || Double.isInfinite(spacing)) {
             throw new IllegalArgumentException("spacing must be finite and non-negative: " + spacing);
         }
+    }
+
+    /**
+     * Backward-compatible constructor without the flow-width constraint (defaults to
+     * {@link DocumentFlowWidth#natural()}).
+     *
+     * @param name         node name used in snapshots and layout graph paths
+     * @param children     child semantic nodes in source order
+     * @param spacing      vertical spacing between children
+     * @param padding      inner padding
+     * @param margin       outer margin
+     * @param fillColor    optional background fill
+     * @param stroke       optional uniform border stroke
+     * @param cornerRadius optional render-only corner radius
+     * @param borders      optional per-side border strokes overriding the uniform stroke
+     * @param anchor       optional navigation anchor name
+     * @param bookmarkOptions optional PDF outline entry, or {@code null} for none
+     */
+    public ContainerNode(String name,
+                         List<DocumentNode> children,
+                         double spacing,
+                         DocumentInsets padding,
+                         DocumentInsets margin,
+                         DocumentColor fillColor,
+                         DocumentStroke stroke,
+                         DocumentCornerRadius cornerRadius,
+                         DocumentBorders borders,
+                         String anchor,
+                         DocumentBookmarkOptions bookmarkOptions) {
+        this(name, children, spacing, padding, margin, fillColor, stroke, cornerRadius, borders, anchor,
+                bookmarkOptions, DocumentFlowWidth.natural());
     }
 
     /**

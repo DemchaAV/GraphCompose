@@ -30,6 +30,9 @@ import java.util.Objects;
  *                     follows it — it is relocated to the next page rather than
  *                     stranded at a page bottom apart from the first line of the
  *                     following content (see {@link DocumentNode#keepWithNext()})
+ * @param flowWidth    horizontal size constraint; {@link DocumentFlowWidth#natural()}
+ *                     measures the section at the width its parent offers, a fixed
+ *                     value pins that width while leaving the height content-driven
  * @author Artem Demchyshyn
  */
 public record SectionNode(
@@ -46,7 +49,8 @@ public record SectionNode(
         String anchor,
         DocumentBleed bleed,
         DocumentBookmarkOptions bookmarkOptions,
-        boolean keepWithNext
+        boolean keepWithNext,
+        DocumentFlowWidth flowWidth
 ) implements DocumentNode {
     /**
      * Normalizes optional section fields and validates child spacing.
@@ -61,9 +65,47 @@ public record SectionNode(
         borders = borders == null ? DocumentBorders.NONE : borders;
         anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         bleed = bleed == null ? DocumentBleed.none() : bleed;
+        flowWidth = flowWidth == null ? DocumentFlowWidth.natural() : flowWidth;
         if (spacing < 0 || Double.isNaN(spacing) || Double.isInfinite(spacing)) {
             throw new IllegalArgumentException("spacing must be finite and non-negative: " + spacing);
         }
+    }
+
+    /**
+     * Backward-compatible constructor without the flow-width constraint (defaults to
+     * {@link DocumentFlowWidth#natural()}).
+     *
+     * @param name            node name
+     * @param children        child nodes
+     * @param spacing         vertical spacing
+     * @param padding         inner padding
+     * @param margin          outer margin
+     * @param fillColor       optional background fill
+     * @param stroke          optional uniform border stroke
+     * @param cornerRadius    optional render-only corner radius
+     * @param borders         optional per-side borders
+     * @param keepTogether    keep-together relocation flag
+     * @param anchor          optional navigation anchor name
+     * @param bleed           optional bleed declaration
+     * @param bookmarkOptions optional PDF outline entry, or {@code null} for none
+     * @param keepWithNext    keep-with-next relocation flag
+     */
+    public SectionNode(String name,
+                       List<DocumentNode> children,
+                       double spacing,
+                       DocumentInsets padding,
+                       DocumentInsets margin,
+                       DocumentColor fillColor,
+                       DocumentStroke stroke,
+                       DocumentCornerRadius cornerRadius,
+                       DocumentBorders borders,
+                       boolean keepTogether,
+                       String anchor,
+                       DocumentBleed bleed,
+                       DocumentBookmarkOptions bookmarkOptions,
+                       boolean keepWithNext) {
+        this(name, children, spacing, padding, margin, fillColor, stroke, cornerRadius, borders, keepTogether,
+                anchor, bleed, bookmarkOptions, keepWithNext, DocumentFlowWidth.natural());
     }
 
     /**

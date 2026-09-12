@@ -17,11 +17,31 @@ library's to define. That is what moving the generator here fixes.
 | Path | Job |
 |---|---|
 | `api-surface/extract-api.mjs` | reads class files with `javap`, writes the surface JSON and its Markdown view |
+| `api-surface/check-stability-doc.mjs` | the gate that `docs/api-stability.md` still names everything carrying `@Beta` |
+| `api-surface/lib/stability-doc.mjs` | which markers originate a `@Beta` and which inherit one from their package or type |
 | `api-surface/lib/javap.mjs` | drives `javap` and normalises what it prints |
 | `api-surface/lib/source-names.mjs` | lifts real parameter names out of a sources jar |
 | `api-surface/lib/zip.mjs` | reads a jar without unpacking it |
 | `api-surface/lib/render-markdown.mjs` | renders the Markdown view *from the JSON* |
+| `api-surface/lib/surfaces.mjs` | the admission and stability rules — which types belong to which surface |
+| `api-surface/lib/annotations.mjs` | reads `@Internal` / `@Beta` off a class, package included |
+| `api-surface/lib/tree.mjs` | finds the reactor's modules and the version they build at |
+| `api-surface/lib/provenance.mjs` | records what a run read: commit, timestamp, artifact digests |
 | `api-query/api-query.mjs` | answers a question about the surfaces instead of making you read them |
+| `claims/check-claims.mjs` | holds a page to what it claims, and builds the reverse index |
+| `claims/lib/claims.mjs` | reads the claim markers, resolves a symbol against the surfaces, and decides whether a Java file really holds a named, enabled test |
+| `routing/check-routes.mjs` | the gate a route must pass: anchors resolve, symbols exist, constraints are proven |
+| `routing/lib/anchors.mjs` | GitHub's heading-to-anchor rule, and the references a prose field makes |
+| `routing/lib/pack-version.mjs` | orders a route's `verifiedAgainst` against the version the surfaces carry |
+| `changeset/changeset.mjs` | what changed between two surfaces, as the set of pages it invalidates |
+| `bundle/build-bundle.mjs` | packs all of it into an archive that answers with no repository around it |
+| `bundle/lib/zip-write.mjs` | writes the archive; hand-rolled, because this directory ships no dependencies |
+| `lib/fixtures.mjs` | the fixture harness every `*.test.mjs` below reports through |
+
+Every `*.test.mjs` under `knowledge/tools/` is a fixture suite. CI discovers them
+and then holds the discovered set against a list it declares, so adding,
+renaming or deleting one goes red until `.github/workflows/ci.yml` says so too —
+a suite that silently stops running looks exactly like a suite that passes.
 
 ## The rules
 

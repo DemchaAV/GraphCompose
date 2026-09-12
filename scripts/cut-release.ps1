@@ -223,6 +223,73 @@ function Update-PomVersion($pomPath, $newVersion) {
     }
 }
 
+function Update-JapicmpPreviousBaseline($pomPath, $releasedVersion) {
+    # Moves the japicmp.baseline.previous property onto the release just published
+    # (why the gate needs it: docs/api-stability.md, Binary-compatibility
+    # enforcement). Runs in -PostReleaseOnly, next to the SNAPSHOT bump: on the
+    # release commit itself the just-cut version is not on Central yet, so the pin
+    # stays one release back until the publish workflow has uploaded it. Idempotent,
+    # and held to the CHANGELOG by VersionConsistencyGuardTest. A pom without the
+    # property (the engine pom, which gates against the floor alone) is left untouched.
+    if (-not (Test-Path $pomPath)) {
+        Note "skip (no file): $pomPath"
+        return $false
+    }
+    $content = [System.IO.File]::ReadAllText($pomPath)
+    $previousRegex = [regex]'<japicmp\.baseline\.previous>[\w\.\-]+</japicmp\.baseline\.previous>'
+    $match = $previousRegex.Match($content)
+    if (-not $match.Success) {
+        Note "no japicmp.baseline.previous property in $pomPath, nothing to move"
+        return $false
+    }
+    $new = '<japicmp.baseline.previous>' + $releasedVersion + '</japicmp.baseline.previous>'
+    if ($match.Value -eq $new) {
+        Note "japicmp previous baseline already $releasedVersion in $pomPath"
+        return $false
+    }
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] japicmp previous baseline: $pomPath to $releasedVersion" -ForegroundColor Yellow
+        return $true
+    }
+    [System.IO.File]::WriteAllText($pomPath, $previousRegex.Replace($content, $new, 1))
+    Note "japicmp previous baseline: $pomPath now $releasedVersion"
+    return $true
+}
+
+function Update-JapicmpMajorBaseline($pomPath, $releasedVersion) {
+    # The release that OPENS a major (X.0.0) is the first artifact the new major can
+    # be diffed against, so it becomes the floor and the gate goes back to breaking
+    # the build. Until it shipped, both pins named the previous major and
+    # japicmp.break.binary was false (docs/api-stability.md, Opening a major). Only an
+    # X.0.0 release moves them, and only a pom that carries the properties.
+    if ($releasedVersion -notmatch '^\d+\.0\.0$') {
+        return $false
+    }
+    if (-not (Test-Path $pomPath)) {
+        Note "skip (no file): $pomPath"
+        return $false
+    }
+    $content = [System.IO.File]::ReadAllText($pomPath)
+    $floorRegex = [regex]'<japicmp\.baseline\.floor>[\w\.\-]+</japicmp\.baseline\.floor>'
+    $breakRegex = [regex]'<japicmp\.break\.binary>[\w]+</japicmp\.break\.binary>'
+    if (-not $floorRegex.IsMatch($content)) {
+        return $false
+    }
+    $updated = $floorRegex.Replace($content, '<japicmp.baseline.floor>' + $releasedVersion + '</japicmp.baseline.floor>', 1)
+    $updated = $breakRegex.Replace($updated, '<japicmp.break.binary>true</japicmp.break.binary>', 1)
+    if ($updated -eq $content) {
+        Note "japicmp floor already $releasedVersion in $pomPath"
+        return $false
+    }
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] japicmp floor: $pomPath to $releasedVersion, break.binary to true" -ForegroundColor Yellow
+        return $true
+    }
+    [System.IO.File]::WriteAllText($pomPath, $updated)
+    Note "japicmp floor: $pomPath now $releasedVersion, break.binary true"
+    return $true
+}
+
 function Update-AssetVersion($pomPath, $newVersion) {
     # Moves <graphcompose.examples.assetVersion> — the version the committed previews
     # under assets/readme were rendered at. CommittedAssetDriftTest renders at it to
@@ -1117,6 +1184,56 @@ function Render-ReadmeBanner {
     Note "banner: assets/readme/repository_showcase_render.png re-rendered"
 }
 
+function Update-KnowledgeSurfaces {
+    # Regenerates the tracked knowledge pack — knowledge/api/*.json|md plus
+    # knowledge/manifest.json — from THIS tree's compiled classes, then holds the
+    # claims index and the routing table to it, the same three commands the
+    # tag-time gate in release.yml and the develop CI job run. The surfaces
+    # embed the reactor version (extract-api reads it from the root pom.xml), so
+    # every version bump this script performs makes them stale in the very
+    # commit that ships the bump. The 2.3.0 cycle paid for that twice: the
+    # release bump left them naming the -SNAPSHOT (the tag-time --check would
+    # have refused the tag; the cut was finished with -SkipPush, a manual regen
+    # and an amend), and the -PostReleaseOnly bump left them naming the release,
+    # which kept develop's "Knowledge pack — API surface is current" job red
+    # until a follow-up commit regenerated them. So the regen runs between the
+    # bump and its commit, in BOTH modes.
+    #
+    # The claims / routing checks run as gates for the same reason the tag runs
+    # them: the pack ships as one unit, and a claim naming API no surface has,
+    # or a route whose anchor no longer resolves, would ride the commit
+    # unchallenged. (check-routes has no --check flag — routes have no
+    # generated counterpart, so validating them IS the check.)
+    #
+    # Callers guarantee the classes exist: a release cut arrives here after
+    # Step 5's clean verify built the reactor (and under -SkipVerify, Step 4's
+    # catalogue build already installed every module the extractor reads);
+    # -PostReleaseOnly arrives after its Step 2 installed the train, and the
+    # bump between touched only poms. If the tree is not built after all,
+    # extract-api refuses with the exact mvnw command to run — a loud stop,
+    # never a silently stale commit.
+    if (-not (Test-Path (Join-Path $repoRoot 'knowledge/tools/api-surface/extract-api.mjs'))) {
+        Note "skip (no knowledge/ pack in this tree)"
+        return
+    }
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        # Skip rather than throw — a cut on a machine without Node is still a
+        # valid cut — but say it in red: the commit about to be created ships
+        # surfaces naming the PREVIOUS version, and the knowledge CI gate (on a
+        # tag, release.yml's --check) stays red until the regen lands.
+        Write-Host "    !! node not found on PATH — knowledge surfaces NOT regenerated." -ForegroundColor Red
+        Write-Host "    !! The tracked surfaces still name the pre-bump version, so the" -ForegroundColor Red
+        Write-Host "    !! knowledge CI gate (and, on a tag, release.yml) fails on this" -ForegroundColor Red
+        Write-Host "    !! commit. Stop before the push step (Ctrl+C, or -SkipPush on a" -ForegroundColor Red
+        Write-Host "    !! cut), install Node, then run and commit:" -ForegroundColor Red
+        Write-Host "    !!   node knowledge/tools/api-surface/extract-api.mjs --from-reactor" -ForegroundColor Red
+        return
+    }
+    Run "node knowledge/tools/api-surface/extract-api.mjs --from-reactor"
+    Run "node knowledge/tools/claims/check-claims.mjs --check"
+    Run "node knowledge/tools/routing/check-routes.mjs"
+}
+
 # ============================================================
 # Mode: -PostReleaseOnly
 # ============================================================
@@ -1159,7 +1276,25 @@ if ($PostReleaseOnly) {
         # during a -SNAPSHOT cycle. cut-release rewrites the snippets to the new version
         # at the NEXT release commit. Idempotent: if the poms are already on a -SNAPSHOT,
         # Get-NextSnapshotVersion returns $null and the bump is skipped.
+        # Before any pom moves: prove THIS tree can regenerate the surfaces the
+        # bump is about to invalidate. Step 2 builds the train only when the
+        # showcase actually flipped, so on a re-run — or after a -SkipShowcase
+        # cut plus a clean — Step 3c would otherwise be the first to notice the
+        # missing classes, throwing with 13 poms already rewritten and the
+        # clean-tree preflight blocking the retry. extract-api --check is the
+        # probe: it fails when the reactor slice is not built AND when the
+        # classes on disk no longer reproduce the committed surfaces (stale
+        # build), and it writes nothing. Skipped under the same conditions
+        # Update-KnowledgeSurfaces skips, so the probe and the regen agree.
+        $knowledgeToolingReady = (Test-Path (Join-Path $repoRoot 'knowledge/tools/api-surface/extract-api.mjs')) -and
+            $null -ne (Get-Command node -ErrorAction SilentlyContinue)
+        if ($nextSnapshot -and $knowledgeToolingReady) {
+            Step "2b" "Pre-bump gate: this tree can regenerate the knowledge surfaces"
+            Run "node knowledge/tools/api-surface/extract-api.mjs --from-reactor --check"
+        }
+
         $bumpedPoms = @()
+        $japicmpMoved = $false
         if ($nextSnapshot) {
             Step 3 "Open the next development line: bump train poms to $nextSnapshot"
             foreach ($pom in @('core/pom.xml', 'pom.xml', 'examples/pom.xml', 'benchmarks/pom.xml',
@@ -1170,8 +1305,26 @@ if ($PostReleaseOnly) {
                     $bumpedPoms += $pom
                 }
             }
+
+            # The release just cut is now the newest published one, so it becomes the
+            # japicmp previous-release baseline for the cycle that opens here. Only a
+            # pom that carries the pin is touched (graph-compose-templates today).
+            Step "3a" "Move the japicmp previous-release baseline to $currentVersion"
+            foreach ($pom in @('core/pom.xml', 'templates/pom.xml')) {
+                $japicmpPom = Join-Path $repoRoot $pom
+                $movedPrevious = Update-JapicmpPreviousBaseline $japicmpPom $currentVersion
+                # An X.0.0 release also ends the bootstrap: floor onto itself, break switch on.
+                $openedMajor = Update-JapicmpMajorBaseline $japicmpPom $currentVersion
+                if ($movedPrevious -or $openedMajor) {
+                    $japicmpMoved = $true
+                    if ($bumpedPoms -notcontains $pom) { $bumpedPoms += $pom }
+                }
+            }
         } else {
-            Step 3 "Skipped SNAPSHOT bump (no core/pom.xml, or the current version is not a final X.Y.Z release)"
+            # The same condition governs the japicmp previous-release pin: it may only
+            # move onto a final X.Y.Z, never onto a -SNAPSHOT or an -rc, since neither is
+            # on Central for the gate to resolve.
+            Step 3 "Skipped SNAPSHOT bump and japicmp baseline move (no core/pom.xml, or the current version is not a final X.Y.Z release)"
         }
 
         # Validate the bump BEFORE committing or pushing: a reactor `validate` resolves
@@ -1203,13 +1356,35 @@ if ($PostReleaseOnly) {
             }
         }
 
-        # Commit whatever changed: the bumped poms and/or the restored showcase files.
+        # The bump moved the version the knowledge surfaces embed, so regenerate
+        # and gate them before the commit that ships it — otherwise develop's
+        # knowledge gate goes red on surfaces still naming the release version.
+        # The classes the extractor reads are guaranteed: either Step 2's
+        # catalogue build just compiled the train, or the Step 2b probe proved
+        # the tree could already reproduce the surfaces — and the bump between
+        # touched only poms.
+        if ($bumpedPoms.Count -gt 0) {
+            Step "3c" "Regenerate the knowledge pack surfaces at $nextSnapshot"
+            Update-KnowledgeSurfaces
+        }
+
+        # Commit whatever changed: the bumped poms + regenerated knowledge
+        # surfaces, and/or the restored showcase files.
         $filesToCommit = @()
         if ($showcaseChanged -or $DryRun) { $filesToCommit += @($showcaseMetadata, 'web/examples.json') }
         $filesToCommit += $bumpedPoms
+        # The surfaces Step 3c regenerated at the new SNAPSHOT ride in the same
+        # commit as the bump they track — left behind, they are the follow-up
+        # commit the develop CI gate had to wait for on the 2.3.0 cycle. When
+        # the regen was skipped (no node / no knowledge pack), the directory is
+        # unchanged and the add stages nothing.
+        if ($bumpedPoms.Count -gt 0 -and (Test-Path (Join-Path $repoRoot 'knowledge'))) {
+            $filesToCommit += 'knowledge'
+        }
         if ($filesToCommit.Count -gt 0) {
             $parts = @()
             if ($bumpedPoms.Count -gt 0) { $parts += "open $nextSnapshot" }
+            if ($japicmpMoved) { $parts += "japicmp previous baseline $currentVersion" }
             if ($showcaseChanged -or $DryRun) { $parts += "restore /blob/$Branch showcase links" }
             $msg = "chore(release): " + ($parts -join ' + ')
             Step 4 "Commit"
@@ -1488,28 +1663,55 @@ try {
     }
 
     if (-not $SkipVerify) {
-        Step "5b" "Binary-compatibility gate (japicmp vs the published baseline)"
-        # Confirm the graph-compose-core public API stays binary-compatible with the
-        # japicmp baseline BEFORE the tag is cut — independent of the PR-time CI japicmp
-        # job, which a direct-to-branch push could bypass. 2.0 module layout only (core/
-        # present); the legacy 1.x single-artifact tree has no such gate. Precondition:
-        # the baseline (japicmp.baseline in core/pom.xml) must already be on Central — so
-        # this gate is meaningful from 2.0.1 onward (vs the published 2.0.0), not on the
-        # first-of-a-major cut that publishes the baseline itself.
+        Step "5b" "Binary-compatibility gate (japicmp vs the published baselines)"
+        # Confirm the graph-compose-core and graph-compose-templates public APIs stay
+        # binary-compatible with their japicmp baselines BEFORE the tag is cut —
+        # independent of the PR-time CI japicmp job, which a direct-to-branch push could
+        # bypass. One reactor run diffs both. 2.0 module layout only (core/ present); the
+        # legacy 1.x single-artifact tree has no such gate. Precondition: every baseline is
+        # already on Central. On the first cut of a new major the templates baselines
+        # (X.0.0) are not, so this gate — and publish.yml's — fails that cut until it is
+        # decided how the gate runs for it.
         if (Test-Path (Join-Path $repoRoot 'core/pom.xml')) {
-            $japicmpArgs = @('-B', '-ntp', '-P', 'japicmp', '-Dmaven.test.skip=true', '-Djacoco.skip=true', 'verify', '-pl', ':graph-compose-core')
+            $japicmpArgs = @('-B', '-ntp', '-P', 'japicmp', '-Dmaven.test.skip=true', '-Djacoco.skip=true', 'verify', '-pl', ':graph-compose-core,:graph-compose-templates')
+            # An execution that does not run writes no report and fails nothing, so every
+            # execution the gate relies on must leave its report from THIS run.
+            $japicmpReports = @('core/target/japicmp/japicmp-against-baseline.xml',
+                'templates/target/japicmp/japicmp-against-major-floor.xml',
+                'templates/target/japicmp/japicmp-against-previous-release.xml')
+            # Step 4 installed the just-bumped version into the local repository, so a
+            # baseline is dropped from there before the gate resolves it: the diff must
+            # be against the release on Central, never against what this cut built.
+            $corePomText = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'core/pom.xml'))
+            $templatesPomText = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'templates/pom.xml'))
+            $japicmpBaselines = @(
+                'graph-compose-core/' + [regex]::Match($corePomText, '<japicmp\.baseline>([^<]+)<').Groups[1].Value,
+                'graph-compose-templates/' + [regex]::Match($templatesPomText, '<japicmp\.baseline\.floor>([^<]+)<').Groups[1].Value,
+                'graph-compose-templates/' + [regex]::Match($templatesPomText, '<japicmp\.baseline\.previous>([^<]+)<').Groups[1].Value)
             if ($DryRun) {
                 Write-Host "    [DRY RUN] $mvnw $($japicmpArgs -join ' ')" -ForegroundColor Yellow
             } else {
+                foreach ($report in $japicmpReports) {
+                    Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $repoRoot $report)
+                }
+                foreach ($baseline in $japicmpBaselines) {
+                    $cached = Join-Path $env:USERPROFILE ('.m2/repository/io/github/demchaav/' + $baseline)
+                    Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $cached
+                }
                 & $mvnw @japicmpArgs 2>&1 | ForEach-Object {
                     if ($_ -match 'BUILD SUCCESS|BUILD FAILURE|ERROR|incompatib') {
                         Write-Host "    $_" -ForegroundColor DarkGray
                     }
                 }
                 if ($LASTEXITCODE -ne 0) {
-                    throw "japicmp gate failed: the tagged code breaks binary compatibility with the published baseline."
+                    throw "japicmp gate failed: the tagged code breaks binary compatibility with the published baselines."
                 }
-                Note "japicmp: binary-compatible with the baseline OK"
+                foreach ($report in $japicmpReports) {
+                    if (-not (Test-Path (Join-Path $repoRoot $report))) {
+                        throw "japicmp gate incomplete: $report is missing, so that execution did not run."
+                    }
+                }
+                Note "japicmp: binary-compatible with the baselines OK"
             }
         } else {
             Note "japicmp gate skipped (1.x single-artifact layout)"
@@ -1517,6 +1719,16 @@ try {
     } else {
         Step "5b" "Skipped japicmp gate (-SkipVerify)"
     }
+
+    # The knowledge surfaces embed the version Step 1 just moved, so they are
+    # regenerated here — after the verify (re)built the classes they read — and
+    # gated before anything is committed. Deliberately NOT skipped by
+    # -SkipVerify: the surfaces must move with the version either way, and
+    # Step 4's installs already compiled every module the extractor reads. Runs
+    # for pre-releases too — the tag gate re-checks the pack at whatever
+    # version the tagged poms carry.
+    Step "5c" "Regenerate the knowledge pack surfaces at $Version"
+    Update-KnowledgeSurfaces
 
     Step 6 "Commit release"
     $commitMsg = "Release v$Version"
@@ -1583,6 +1795,15 @@ try {
         if (Test-Path (Join-Path $repoRoot $docPage)) {
             $commitFiles += $docPage
         }
+    }
+    # The knowledge surfaces embed the reactor version, so Step 5c regenerated
+    # them at $Version and they ship in the release commit — a pack still naming
+    # the -SNAPSHOT fails release.yml's tag-time --check after the tag is
+    # already pushed. Staged as a directory: the generated files are exactly
+    # what changed under it (Step 0 required a clean tree), and the add stages
+    # nothing when the regen was skipped.
+    if (Test-Path (Join-Path $repoRoot 'knowledge')) {
+        $commitFiles += 'knowledge'
     }
     # The README assets ride along whenever they were re-rendered — every final cut,
     # -SkipShowcase or not, since that flag is about the published site and these ship

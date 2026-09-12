@@ -141,7 +141,7 @@ public final class TimelineMinimalLetter {
             private void addNameBlock(SectionBuilder section, CvIdentity identity) {
                 section.spacing(4)
                         .addParagraph(paragraph -> paragraph
-                                .text(TextOrnaments.spacedUpper(identity.name().full()))
+                                .text(TextOrnaments.upper(identity.name().full()))
                                 .textStyle(nameStyle())
                                 .margin(DocumentInsets.zero()));
                 String jobTitle = identity.jobTitle();
@@ -210,10 +210,12 @@ public final class TimelineMinimalLetter {
                 return SvgGlyph.fromResource(CONTACT_ICON_ROOT + iconFile);
             }
 
+            /** Spaced caps: only the name block uses this. */
             private DocumentTextStyle nameStyle() {
                 return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeHeadline(),
-                        DocumentTextDecoration.DEFAULT, theme.palette().ink());
+                        DocumentTextDecoration.DEFAULT, theme.palette().ink())
+                        .withLetterSpacing(TextOrnaments.SPACED_CAPS);
             }
 
             private DocumentTextStyle jobTitleStyle() {

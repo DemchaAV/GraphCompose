@@ -119,6 +119,44 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
+      - name: Install graph-compose-fonts (resolved at test scope by core)
+        # The gate below runs before the reactor install and without `-am`, so core's
+        # test-scope companions resolve from Central unless they are built here first,
+        # and a tree may pin a companion version that is not published yet. Neither is
+        # a gated artifact, so seeding them cannot supply a baseline.
+        run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
+
+      - name: Install graph-compose-emoji (resolved at test scope by core)
+        run: ./mvnw -B -ntp -f emoji/pom.xml -DskipTests install
+
+      - name: Drop cached GraphCompose artifacts before the gate resolves
+        # Nothing of ours may stand in for a published baseline, so the pinned
+        # coordinates are fetched from Central for this run. This runs before the
+        # install below for the same reason: the release being published must not
+        # be in the local repository while its own baselines resolve.
+        run: |
+          rm -rf ~/.m2/repository/io/github/demchaav/graph-compose-core
+          rm -rf ~/.m2/repository/io/github/demchaav/graph-compose-templates
+
+      - name: Verify binary compatibility against the published baselines
+        # Defence in depth: run the japicmp gate on the tagged commit before any
+        # deploy, so an accidental binary-incompatible change to the public surface
+        # aborts the publish even when the tag reached here by bypassing branch
+        # protection (the CI japicmp job only gates pull requests). One reactor run
+        # diffs graph-compose-core and graph-compose-templates against the releases
+        # their poms pin, exactly as the pull-request job does; templates resolves
+        # the engine from the reactor rather than from the local repository, which
+        # is what lets this run before the install below.
+        run: ./mvnw -B -ntp -DskipTests -P japicmp verify -pl :graph-compose-core,:graph-compose-templates
+
+      - name: Prove every japicmp execution ran
+        # A japicmp execution that does not run writes no report and fails nothing,
+        # so each one the gate relies on must have left its report.
+        run: |
+          test -s core/target/japicmp/japicmp-against-baseline.xml
+          test -s templates/target/japicmp/japicmp-against-major-floor.xml
+          test -s templates/target/japicmp/japicmp-against-previous-release.xml
+
       - name: Build, test and install to local m2 (verify + seed the deploys)
         # Re-verify the tagged commit before publishing (defence in depth
         # against a tag pushed from a broken branch). `install` — not `verify` —
@@ -127,20 +165,9 @@ jobs:
         # profile never publishes. Each per-module `-P release deploy` below
         # builds in isolation and resolves its inter-module deps (Maven resolves
         # test-scope deps even with -DskipTests) from this local m2, so the
-        # unpublished tests-jar no longer fails the deploy.
+        # unpublished tests-jar no longer fails the deploy. It runs after the gate
+        # above, so the artifacts it installs cannot serve as baselines.
         run: ./mvnw -B -ntp clean install
-
-      - name: Verify binary compatibility against the published baseline
-        # Defence in depth: run the japicmp gate on the tagged commit before any
-        # deploy, so an accidental binary-incompatible change to the public
-        # surface aborts the publish even when the tag reached here by bypassing
-        # branch protection (the CI japicmp job only gates pull requests). Compares
-        # the freshly built graph-compose-core against the japicmp.baseline release
-        # on Maven Central and fails the job on any Stable-surface break; the
-        # Internal packages (engine.**, document.layout.**) are excluded per
-        # docs/api-stability.md. Test build is skipped — the install step above
-        # already ran the full suite on this commit.
-        run: ./mvnw -B -ntp -f core/pom.xml -P japicmp -Dmaven.test.skip=true verify
 
       - name: Plan the deploy set (start_at resume)
         id: plan

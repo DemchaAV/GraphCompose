@@ -282,6 +282,13 @@ public final class RichText {
      * Appends a coloured chip: {@code text} in {@code fg} on a {@code bg} fill,
      * with the default code radius and padding.
      *
+     * <p>A rich-text builder is assembled without a paragraph, so — unlike
+     * {@link ParagraphBuilder#inlineChip(String, DocumentColor, DocumentColor)},
+     * which reads the paragraph it is called on — these glyphs are drawn at the
+     * default family and size. In a paragraph styled to another size, reach for
+     * {@link #highlight(String, DocumentTextStyle, DocumentColor, double, DocumentInsets)}
+     * with an explicit style instead.</p>
+     *
      * @param text the text
      * @param fg   the text colour
      * @param bg   the chip fill colour; must not be {@code null}

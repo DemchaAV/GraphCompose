@@ -2,6 +2,7 @@ package com.demcha.compose.document.backend.fixed.pptx;
 
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.AnchorMarkerPayload;
+import com.demcha.compose.document.layout.payloads.LayoutAnchorPayload;
 import com.demcha.compose.document.layout.payloads.BookmarkMarkerPayload;
 import com.demcha.compose.document.layout.payloads.BarcodeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
@@ -118,7 +119,8 @@ final class PptxClipSafety {
             if (payload instanceof TransformEndPayload
                     || payload instanceof ShapeClipEndPayload
                     || payload instanceof AnchorMarkerPayload
-                    || payload instanceof BookmarkMarkerPayload) {
+                    || payload instanceof BookmarkMarkerPayload
+                    || payload instanceof LayoutAnchorPayload) {
                 // Markers draw nothing themselves.
                 continue;
             }

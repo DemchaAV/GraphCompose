@@ -139,6 +139,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                 new PdfTransformBeginRenderHandler(),
                 new PdfTransformEndRenderHandler(),
                 new PdfAnchorMarkerRenderHandler(),
+                new PdfLayoutAnchorRenderHandler(),
                 new PdfBookmarkMarkerRenderHandler());
     }
 

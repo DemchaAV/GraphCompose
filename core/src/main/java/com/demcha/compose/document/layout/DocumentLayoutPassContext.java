@@ -200,14 +200,23 @@ public final class DocumentLayoutPassContext implements PrepareContext, Fragment
         if (subtreeCompiler == null) {
             subtreeCompiler = new LayoutCompiler(registry);
         }
+        // A FragmentPlacement is the child's CONTENT box — every caller builds one
+        // at the exact rectangle the content should occupy and passes
+        // Margin.zero(). The fixed-box walk takes a slot, which is a MARGIN box,
+        // and removes the node's margin itself, so the box is grown by that margin
+        // here and comes back out the same rectangle. Without this the margin came
+        // off a second time and the subtree was laid out narrower and lower than
+        // the owner reserved for it. Identity when the margin is zero, which is
+        // every composed cell and chart primitive shipped today.
+        com.demcha.compose.document.style.DocumentInsets margin = child.node().margin();
         List<PlacedFragment> placed = subtreeCompiler.compileFixedBoxSubtree(
                 child,
                 placement.parentPath(),
                 placement.childIndex(),
                 placement.depth(),
-                placement.x(),
-                placement.y() + placement.height(),
-                placement.width(),
+                placement.x() - margin.left(),
+                placement.y() + placement.height() + margin.top(),
+                placement.width() + margin.horizontal(),
                 placement.pageIndex(),
                 canvas,
                 this,

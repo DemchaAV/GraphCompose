@@ -303,7 +303,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeList(document, list);
         } else if (node instanceof ContainerNode || node instanceof SectionNode
                    || node instanceof com.demcha.compose.document.node.LayerStackNode
-                   || node instanceof com.demcha.compose.document.node.CanvasLayerNode) {
+                   || node instanceof com.demcha.compose.document.node.CanvasLayerNode
+                   || isSemanticallyTransparent(node)) {
             // Overlay/positioned wrappers have no DOCX analogue for their
             // geometry, but their children can be semantic (text, images) —
             // render them sequentially rather than dropping the subtree.
@@ -972,6 +973,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A wrapper contributes nothing of its own to a Word cell, so its children are
      * written in its place rather than the wrapper being dropped with them inside.</p>
      */
+    /**
+     * Whether a node exists only to say something about geometry, and so has nothing of its
+     * own to write here.
+     *
+     * <p>A layout anchor reports where its child landed and an alignment says where in the
+     * available width to put it. Word lays text out itself, so neither has an analogue —
+     * but both have exactly one child, and dropping a wrapper takes the content with it.
+     * The two walkers below ask this rather than each keeping its own list, because a
+     * wrapper missing from one of them loses a subtree the other would have kept.</p>
+     *
+     * @param node the node being written
+     * @return true when the node itself writes nothing and its children should be written
+     */
+    private static boolean isSemanticallyTransparent(DocumentNode node) {
+        return node instanceof com.demcha.compose.document.layout.LayoutAnchorNode
+               || node instanceof com.demcha.compose.document.node.AlignNode;
+    }
+
     private void writeCellNode(XWPFTableCell cell, DocumentNode child) throws Exception {
         if (child instanceof ParagraphNode paragraph) {
             // Same walk as writeParagraph, all of it: a cell paragraph keeps per-run
@@ -987,6 +1006,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         } else if (child instanceof SectionNode section) {
             for (DocumentNode grandChild : section.children()) {
+                writeCellNode(cell, grandChild);
+            }
+        } else if (isSemanticallyTransparent(child)) {
+            for (DocumentNode grandChild : child.children()) {
                 writeCellNode(cell, grandChild);
             }
         } else if (child instanceof SpacerNode) {
@@ -1035,6 +1058,59 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
+    /**
+     * Writes tracking as Word's own run-level {@code w:spacing}, never as spaces
+     * pushed into the text.
+     *
+     * <p>The unit is twentieths of a point. Measured rather than assumed:
+     * exporting a probe document through Word itself and reading the glyph
+     * positions out of the PDF it wrote, {@code w:spacing w:val="100"} widened
+     * every step of {@code "JANE"} by 5.0pt — including the step onto a
+     * following untracked run, which is the trailing unit — and {@code "-30"}
+     * narrowed each by 1.5pt, with an ordinary space spaced like any other
+     * character. Word spends the value the same way the PDF {@code Tc} operator
+     * does.</p>
+     *
+     * <p>This is the one place the backend resolves the public unit itself: a
+     * semantic export never passes through the engine's text style, which is
+     * where a fixed-layout backend would have had it resolved already. Word owns
+     * the layout here, so the contract is that the asked-for tracking arrives as
+     * the right native value — not that any x coordinate matches the PDF.
+     * Twentieths of a point quantise to 0.05pt, which is the format's own
+     * granularity and not something to work around.</p>
+     *
+     * <p>No tracking writes no element, so a document that never asks for it
+     * carries exactly the run properties it carried before.</p>
+     *
+     * <p>Out of range is refused rather than wrapped. The value goes out as an
+     * {@code int} of twentieths, and a large enough tracking changes sign on the
+     * cast &mdash; {@code 1e9} points becomes {@code -1474836480}, turning wide
+     * tracking into tight. The limit is Word's, not the fixed backends': a
+     * semantic document is not held to what DrawingML can spell.</p>
+     */
+    private static void applyLetterSpacing(XWPFRun run, DocumentTextStyle style) {
+        double points = style.letterSpacing().resolve(style.size());
+        if (points == 0.0) {
+            return;
+        }
+        if (Math.abs(points) > MAX_TRACKING_POINTS) {
+            throw new IllegalArgumentException(
+                    "Letter spacing resolves to " + points + "pt, beyond the "
+                            + MAX_TRACKING_POINTS + "pt a Word run can express "
+                            + "(w:spacing is twentieths of a point, written as an int).");
+        }
+        run.setCharacterSpacing((int) Math.round(points * 20.0));
+    }
+
+    /**
+     * The largest tracking that survives the conversion, in points &mdash; the
+     * point at which twentieths stop fitting in the {@code int} the value is
+     * written as. Not a typographic limit: Word renders nothing remotely near
+     * it, and this exists only so an absurd value fails loudly instead of
+     * wrapping into a negative.
+     */
+    private static final double MAX_TRACKING_POINTS = Integer.MAX_VALUE / 20.0;
+
     private void applyStyle(XWPFRun run, DocumentTextStyle style) {
         if (style == null) {
             return;
@@ -1052,6 +1128,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // and everything else at Word's own default until this is written too.
             run.setComplexScriptFontSize(style.size());
         }
+        applyLetterSpacing(run, style);
         if (style.color() != null) {
             run.setColor(toHexColor(style.color().color()));
         }

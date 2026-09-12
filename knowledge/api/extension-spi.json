@@ -300,6 +300,7 @@
     },
     {
       "name": "com.demcha.compose.document.backend.fixed.pptx",
+      "stability": "beta",
       "types": [
         {
           "name": "PptxFragmentRenderHandler",

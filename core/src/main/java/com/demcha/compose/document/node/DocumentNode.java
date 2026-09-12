@@ -1,6 +1,7 @@
 package com.demcha.compose.document.node;
 
 import com.demcha.compose.document.style.DocumentBleed;
+import com.demcha.compose.document.style.DocumentFlowWidth;
 import com.demcha.compose.document.style.DocumentInsets;
 
 import java.util.List;
@@ -116,6 +117,25 @@ public interface DocumentNode {
      */
     default DocumentBleed bleed() {
         return DocumentBleed.none();
+    }
+
+    /**
+     * Horizontal size constraint for this node. Default
+     * {@link DocumentFlowWidth#natural()} — the node is measured and placed at the
+     * width its parent offers, exactly as it was before this constraint existed.
+     *
+     * <p>Carried by the vertical flow boxes that can honour it,
+     * {@link SectionNode} and {@link ContainerNode}, and authored through
+     * {@link com.demcha.compose.document.dsl.AbstractFlowBuilder#fixedWidth(double)}.
+     * A fixed value pins only the horizontal axis: the height stays the natural,
+     * content-driven measurement, so the box still grows with its content and
+     * paginates unchanged.</p>
+     *
+     * @return the flow width constraint; never {@code null}
+     * @since 2.4.0
+     */
+    default DocumentFlowWidth flowWidth() {
+        return DocumentFlowWidth.natural();
     }
 }
 

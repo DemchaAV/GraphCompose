@@ -53,7 +53,7 @@ jobs:
       # the write that follows is then a no-op for tracked files and exists only
       # to produce target/knowledge/provenance.json, which the bundle carries.
       - name: Set up Node for the knowledge bundle
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
 
@@ -69,6 +69,15 @@ jobs:
           # generated counterpart, so validating them is the check.)
           node knowledge/tools/claims/check-claims.mjs --check
           node knowledge/tools/routing/check-routes.mjs
+          # And the tool fixtures, for the same reason. build-bundle --verify
+          # asserts exit codes only, which cannot see whether the version
+          # comparison inside the shipped bin/query.mjs is right — and that copy
+          # exists precisely because the bundle cannot import the shared module.
+          # Without this, the one thing pinning it never runs at a tag.
+          for suite in $(find knowledge/tools -type f -name '*.test.mjs' | sort); do
+            echo "--- $suite"
+            node "$suite"
+          done
           node knowledge/tools/bundle/build-bundle.mjs --verify
 
       - name: Extract CHANGELOG section for the tag

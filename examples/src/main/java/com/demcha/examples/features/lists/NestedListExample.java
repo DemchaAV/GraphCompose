@@ -130,7 +130,7 @@ public final class NestedListExample {
                                     .addItem("Ran mvnw verify locally"))
                             .addItem("Closed bug: marker double-space rendering")
                             .addItem("Triaged backlog", triage -> triage
-                                    .addItem("Deferred: hanging indent on wrapped items")
+                                    .addItem("Shipped: hanging indent on wrapped items")
                                     .addItem("CanvasLayerNode parked")))
 
                     // 4) Deep nesting (depth 4+) falls back to the · cascade.
@@ -149,6 +149,47 @@ public final class NestedListExample {
                                                     .addItem("Step", l3 -> l3
                                                             .addItem("Sub-step (depth 4)")
                                                             .addItem("Another sub-step at depth 4"))))))
+
+                    // 5) hangingIndent(true) — a marker column and a content column.
+                    .addParagraph("5. hangingIndent(true) + markerGap(points)", sectionHeading)
+                    .addParagraph(
+                            "Off by default, a wrapped line is indented with spaces measured to "
+                                    + "clear the marker, which lands it a fraction of a space past the "
+                                    + "first line's text. Opting in gives the marker its own measured "
+                                    + "column, so every line of an item — including one that continues "
+                                    + "on the next page — starts at one content origin.", caption)
+                    .addList(list -> list
+                            .name("HangingOff")
+                            .textStyle(body)
+                            .itemSpacing(2)
+                            .items("Default: this wrapped item indents its continuation lines with a "
+                                   + "run of spaces, so they sit slightly right of the first line's text."))
+                    .addList(list -> list
+                            .name("HangingOn")
+                            .textStyle(body)
+                            .itemSpacing(2)
+                            .hangingIndent(true)
+                            .items("hangingIndent(true): every line of this item begins directly "
+                                   + "beneath the first word of its own first line, however many "
+                                   + "lines it takes and wherever the page break falls."))
+                    .addList(list -> list
+                            .name("HangingWideMarker")
+                            .textStyle(body)
+                            .itemSpacing(2)
+                            .marker("=>")
+                            .hangingIndent(true)
+                            .markerGap(6)
+                            .items("A wider marker takes a wider column — measured, not guessed — "
+                                   + "and the wrapped lines follow it there."))
+                    .addList(list -> list
+                            .name("HangingNested")
+                            .textStyle(body)
+                            .itemSpacing(2)
+                            .hangingIndent(true)
+                            .markerFor(1, ListMarker.dash())
+                            .addItem("Nested lists indent as an outline", child -> child
+                                    .addItem("A child's marker starts where its parent's text starts, "
+                                             + "and its own wrapped lines hang under its own text.")))
                     .build();
             document.buildPdf();
         }

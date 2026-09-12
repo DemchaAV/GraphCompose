@@ -11,18 +11,20 @@ authoring API; public application code should not import
 | --- | --- |
 | [Charts](recipes/charts.md) | Native vector bar / line / area / pie-donut charts: data–spec–style layers, axis & grid toggles, point markers, value-label halos, legend placement, translucent area fills |
 | [Keep-together pagination](recipes/keep-together.md) | `keepTogether()` / `keepEntriesTogether()` — blocks that relocate whole instead of orphaning a heading at a page break |
+| [Fixed-width flows](recipes/fixed-width-flows.md) | `fixedWidth(points)` — a section, module or page flow pinned to a narrow width, with the height left content-driven |
 | [Themes](recipes/themes.md) | `BrandTheme` token bundle (palette / typography / spacing / decoration), theme factories per family, page background, direct DSL styling |
 | [Shapes and visual primitives](recipes/shapes.md) | Filled cards, dividers, spacers, lines, ellipses, image fit modes, soft panels |
 | [Shape-as-container](recipes/shape-as-container.md) | `addCircle` / `addEllipse` / `addContainer` with `ClipPolicy` (clipped layered children) |
 | [Transforms and z-index](recipes/transforms.md) | `rotate` / `scale` mixin, per-layer `zIndex` for overlays |
 | [Page backgrounds](recipes/page-backgrounds.md) | `pageBackground` / `pageBackgrounds`, `PageBackgroundFill` columns, bands, point-based fills, layering |
-| [Layered page design](recipes/layered-page-design.md) | Page background vs. row vs. layer stack vs. canvas — choosing the layer |
+| [Layered page design](recipes/layered-page-design.md) | Page background vs. row vs. layer stack vs. canvas — choosing the layer; how a row splits its width, icon beside text, a rule that reaches the column edge |
 | [Absolute placement](recipes/absolute-placement.md) | `addCanvas` + `position(x, y)` for pixel-precise certificates and badges |
 | [Tables](recipes/tables.md) | Row span, zebra rows, totals row, repeated header on page break |
-| [Text direction](recipes/text-direction.md) | `TextDirection` — right-to-left paragraphs, `AUTO` resolved from the text, mixed lines, and the bundled Hebrew / Arabic families |
+| [Text direction](recipes/text-direction.md) | `TextDirection` — right-to-left paragraphs and table cells, `AUTO` resolved from the text, mixed lines, and the bundled Hebrew / Arabic families |
 | [Rich text](recipes/rich-text.md) | `RichText` mixed-style runs in one paragraph: bold/accent/styled segments, inline links, inline images, inline SVG icons, emoji shortcodes, inline shapes and checkboxes |
+| [Letter spacing](recipes/letter-spacing.md) | `DocumentLetterSpacing` — real typographic tracking for spaced caps, declared natively in PDF / PPTX / DOCX so the text layer still holds the word |
 | [Lists](recipes/lists.md) | `addList`: quick bulleted lists, marker customisation, nested lists with per-depth markers, spacing and styled items |
-| [Timelines](recipes/timelines.md) | `addTimeline`: markers (dot / circle / numbered / square) on a connector rail, geometry and text-style controls, pagination opt-ins |
+| [Timelines](recipes/timelines.md) | `addTimeline`: the leading / axis / content model, markers (dot / circle / numbered / square / custom), leading column, axis sizing, `markerOnRail()`, rail extent, pagination, backends |
 | [Barcodes](recipes/barcodes.md) | QR / Code 128 / Code 39 / EAN / UPC / PDF417 / DataMatrix, tinting, quiet zone, card centring |
 | [Images](recipes/images.md) | Sources (bytes/path), sizing precedence, STRETCH/CONTAIN/COVER fit modes, images in rows and cards |
 | [PDF chrome](recipes/pdf-chrome.md) | Metadata, watermarks, running header/footer with `{page}/{pages}/{date}`, protection, links and outline bookmarks |

@@ -230,6 +230,28 @@ class ListDrawnMarkerTest {
         assertThat(withDisc).isEqualTo(withBullet, within(EPS));
     }
 
+    @Test
+    void aDiscMarkerReachesThePageAndNotJustTheGeometry() throws Exception {
+        // Everything else here measures where the marker is. This asks whether it
+        // is there at all: a drawn marker contributes no glyphs, so no text-layer
+        // or span assertion can tell a painted disc from a described one.
+        long withDisc = inkedPixels(pdf(200, 120, l -> l
+                .textStyle(BODY)
+                .marker(m -> m.dot(6.0, ACCENT))
+                .hangingIndent(true)
+                .markerGap(4.0)
+                .items("Alpha", "Beta", "Gamma")));
+        long withoutMarker = inkedPixels(pdf(200, 120, l -> l
+                .textStyle(BODY)
+                .noMarker()
+                .hangingIndent(true)
+                .items("Alpha", "Beta", "Gamma")));
+
+        assertThat(withDisc)
+                .as("three 6pt discs of ink the markerless list does not have")
+                .isGreaterThan(withoutMarker + 3 * 20);
+    }
+
     // --- refusals -----------------------------------------------------------
 
     @Test
@@ -277,6 +299,36 @@ class ListDrawnMarkerTest {
                 .create()) {
             session.pageFlow().name("Root").addList(spec).build();
             return new Rendered(session.layoutGraph(), glyphs(session.toPdfBytes()));
+        }
+    }
+
+    private static byte[] pdf(double width, double height, Consumer<ListBuilder> spec)
+            throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(width, height)
+                .margin(DocumentInsets.of(12))
+                .create()) {
+            session.pageFlow().name("Root").addList(spec).build();
+            return session.toPdfBytes();
+        }
+    }
+
+    /** Pixels darker than paper on page 0, rendered at 72 dpi. */
+    private static long inkedPixels(byte[] pdf) throws Exception {
+        try (org.apache.pdfbox.pdmodel.PDDocument document = org.apache.pdfbox.Loader.loadPDF(pdf)) {
+            java.awt.image.BufferedImage image =
+                    new org.apache.pdfbox.rendering.PDFRenderer(document).renderImage(0, 1.0f);
+            long inked = 0;
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    int rgb = image.getRGB(x, y);
+                    int luma = ((rgb >> 16 & 0xFF) + (rgb >> 8 & 0xFF) + (rgb & 0xFF)) / 3;
+                    if (luma < 200) {
+                        inked++;
+                    }
+                }
+            }
+            return inked;
         }
     }
 

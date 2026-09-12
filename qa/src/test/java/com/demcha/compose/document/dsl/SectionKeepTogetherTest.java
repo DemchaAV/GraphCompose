@@ -126,10 +126,15 @@ class SectionKeepTogetherTest {
             PlacedNode oversized = document.layoutGraph().nodes().stream()
                     .filter(n -> "Oversized".equals(n.semanticName()))
                     .findFirst().orElseThrow();
-            // The keep-together request is ignored for a block taller than a
-            // full page: the section starts in the remaining space on page 0
-            // (no pointless relocation) and flows across the boundary.
-            assertThat(oversized.startPage()).isEqualTo(0);
+            // The keep-together request is ignored for a block taller than a full
+            // page: the section cannot relocate whole, so it flows across the
+            // boundary. What it does NOT do is claim page 0. Its first child is a
+            // 100pt shape and 98pt remain there, so nothing of it was ever going on
+            // that page — measured either way, all five shapes sit at the same y on
+            // pages 1 and 2 and the document is three pages long. Starting the box
+            // on page 0 only made it span a page it held nothing on, which is what
+            // painted a section's accent beside empty space.
+            assertThat(oversized.startPage()).isEqualTo(1);
             assertThat(oversized.endPage()).isGreaterThan(oversized.startPage());
         } catch (Exception e) {
             throw new RuntimeException(e);

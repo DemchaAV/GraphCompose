@@ -38,6 +38,9 @@ class TimelineRailGeometryTest {
     private static final DocumentColor RAIL = DocumentColor.rgb(150, 158, 172);
     private static final DocumentColor INK = DocumentColor.rgb(20, 40, 70);
 
+    /** The margin {@link #timeline(double, double, Consumer)} sets, so the content band is known. */
+    private static final double PAGE_MARGIN = 20.0;
+
     // --- extent ---------------------------------------------------------------
 
     @Test
@@ -395,6 +398,61 @@ class TimelineRailGeometryTest {
         // and none of them reaches beyond it.
         assertThat(rails.stream().map(PlacedFragment::pageIndex).distinct())
                 .hasSize(graph.totalPages());
+    }
+
+    @Test
+    void aRailStopsAtTheLastEntryOnThePageAndNotAtTheBandBelowIt() throws Exception {
+        // The case the test above cannot see. Its entry is splittable, so it genuinely
+        // occupies the foot of the page and the rail is right to reach it. Here every entry
+        // is held whole, and the one that will not fit moves — leaving a gap at the foot of
+        // page 0 that nothing occupies. The rail has to stop where the entries stop.
+        LayoutGraph graph = timeline(320, 220, t -> {
+            t.spacing(10).keepEntriesTogether();
+            for (int i = 0; i < 7; i++) {
+                String title = "Entry " + i;
+                t.entry(TimelineMarker.dot(8, INK), e -> e
+                        .title(title).body("One body line of this entry."));
+            }
+        });
+
+        assertThat(graph.totalPages()).isEqualTo(2);
+        List<PlacedFragment> rails = rails(graph);
+        assertThat(rails).as("one fragment per page").hasSize(2);
+
+        PlacedFragment first = rails.stream()
+                .filter(r -> r.pageIndex() == 0).findFirst().orElseThrow();
+        List<ResolvedLayoutAnchor> onFirstPage = entryAnchors(graph).stream()
+                .filter(a -> a.pageIndex() == 0).toList();
+        double lastEntryFoot = onFirstPage.stream()
+                .mapToDouble(ResolvedLayoutAnchor::y).min().orElseThrow();
+
+        assertThat(first.y())
+                .as("the rail ends at the last entry the page actually holds")
+                .isEqualTo(lastEntryFoot, within(1e-9));
+
+        // The assertion that tells an entry-derived extent from a band-derived one.
+        // Comparing the rail against the anchors alone cannot: when an entry that moved
+        // leaves a slice behind on the page it skipped, the rail follows it down and still
+        // agrees with them. The page's own content band is the independent reference — the
+        // margin this helper sets — and a gap has to remain between it and the rail's foot.
+        assertThat(first.y())
+                .as("and stops short of the band, which is where it used to run to")
+                .isGreaterThan(PAGE_MARGIN + 1.0);
+
+        // Nothing of the entry that moved is left on the page it skipped.
+        assertThat(onFirstPage).as("only the entries that fit").hasSize(5);
+        assertThat(entryAnchors(graph).stream().filter(a -> a.pageIndex() == 1).toList())
+                .as("and the rest are on the page they moved to").hasSize(2);
+
+        // The continuation page still opens at its first entry: an intermediate page's rail
+        // is bounded by the entries on it at both ends, head as well as foot.
+        PlacedFragment second = rails.stream()
+                .filter(r -> r.pageIndex() == 1).findFirst().orElseThrow();
+        double secondTop = entryAnchors(graph).stream().filter(a -> a.pageIndex() == 1)
+                .mapToDouble(a -> a.pointY(1.0)).max().orElseThrow();
+        assertThat(second.y() + second.height())
+                .as("page 1 starts at its first entry")
+                .isEqualTo(secondTop, within(1e-9));
     }
 
     @Test

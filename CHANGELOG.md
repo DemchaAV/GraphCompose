@@ -349,19 +349,30 @@ follow semantic versioning; release dates are ISO 8601.
   markers' and entries' resolved positions, and contributed as one fragment per page —
   one logical rail, however many pages it crosses, bounded on each by that page alone.
 
-  Two independent choices, and they stay independent. `TimelineRailExtent` says how far the
-  rail runs: `ENTRY_BOUNDS`, the default and what every existing timeline already draws, or
-  `MARKER_TO_MARKER`, which starts at the first marker and stops at the last.
-  `markerOnRail()` says where it runs: it aligns every marker's declared anchor with the
-  timeline axis. With the current centre anchor, markers of different sizes are centred
-  within the axis column and share one continuous rail — a 6pt dot, a 14pt numbered disc
-  and a 24pt square all sit on the same line rather than on the same left edge. An entry's
-  body moves with them into the content column beside the marker, so the line is left with
-  only markers to cross — see *Fixed* below. A timeline that does not call it keeps the
-  left-edge anchor and the placement it has always had.
-  A timeline with one entry and `MARKER_TO_MARKER` emits no rail at all rather than a line
-  of no length. `TIMELINE_BOUNDS` is named and rejected — on one page it is the same line
-  as `ENTRY_BOUNDS`, and across pages there is nothing to measure it against.
+  Two independent choices, and they stay independent. `rail(r -> r.from(...).to(...))` says
+  how far the rail runs, one end at a time: each is a `TimelineRailEnd`, either
+  `ENTRY_BOUND` — the entries' own bound, the default, and what every existing timeline
+  already draws — or `MARKER`, the marker's anchor point. `markerOnRail()` says where it
+  runs: it aligns every marker's declared anchor with the timeline axis. With the current
+  centre anchor, markers of different sizes are centred within the axis column and share one
+  continuous rail — a 6pt dot, a 14pt numbered disc and a 24pt square all sit on the same
+  line rather than on the same left edge. An entry's body moves with them into the content
+  column beside the marker, so the line is left with only markers to cross — see *Fixed*
+  below. A timeline that does not call it keeps the left-edge anchor and the placement it has
+  always had.
+
+  **The two ends are chosen separately because a design that wants them the same is only one
+  of four.** A sidebar whose line begins at the first dot and carries on past the last one to
+  close the block is a real design, and with a single value naming both ends it could not be
+  asked for: `ENTRY_BOUND` at both ends drew a stub above the first dot, and `MARKER` at both
+  cut the tail the block draws on purpose. The preset that wanted it painted over the stub
+  with the page colour and redrew the line below — and measured, that did not even work,
+  because an accent draws above the mask. It now says `from(MARKER).to(ENTRY_BOUND)`, which
+  is 4.650pt shorter at the top than the first and 26.690pt longer at the foot than the
+  second.
+
+  A timeline with one entry and both ends on the marker emits no rail at all rather than a
+  line of no length.
 
   **A leading column sits to the left of the timeline axis; it does not move the rail to
   the entry boundary.** The layout is `LEADING | AXIS | CONTENT`, and the rail belongs to

@@ -3,7 +3,7 @@ package com.demcha.compose.document.api;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.dsl.TimelineBuilder;
 import com.demcha.compose.document.dsl.TimelineMarker;
-import com.demcha.compose.document.dsl.TimelineRailExtent;
+import com.demcha.compose.document.dsl.TimelineRailEnd;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.ResolvedLayoutAnchor;
@@ -68,18 +68,18 @@ class TimelineVisualScenarioGeometryTest {
         // The rail is one logical line. Across pages it arrives as several fragments, and
         // "one line" means those fragments agree about x — including under MARKER_TO_MARKER,
         // which changes both ends on the outer pages and must change nothing else.
-        for (TimelineRailExtent extent : List.of(TimelineRailExtent.ENTRY_BOUNDS,
-                TimelineRailExtent.MARKER_TO_MARKER)) {
-            LayoutGraph graph = paginated(extent);
+        for (TimelineRailEnd both : List.of(TimelineRailEnd.ENTRY_BOUND,
+                TimelineRailEnd.MARKER)) {
+            LayoutGraph graph = paginated(both);
 
             assertThat(graph.totalPages())
                     .as("the premise: it does cross pages")
                     .isGreaterThanOrEqualTo(3);
             assertThat(rails(graph))
-                    .as("%s: one fragment per page", extent)
+                    .as("%s: one fragment per page", both)
                     .hasSize(graph.totalPages());
             assertThat(rails(graph).stream().map(PlacedFragment::x).distinct())
-                    .as("%s: and one x between them", extent)
+                    .as("%s: and one x between them", both)
                     .hasSize(1);
         }
     }
@@ -89,7 +89,7 @@ class TimelineVisualScenarioGeometryTest {
         // Scenario 7's hard invariant. A rail derived from anchors could in principle be
         // handed a box belonging to another page and paint into the margin; every fragment
         // is checked against the band its own page actually has.
-        LayoutGraph graph = paginated(TimelineRailExtent.ENTRY_BOUNDS);
+        LayoutGraph graph = paginated(TimelineRailEnd.ENTRY_BOUND);
         double width = graph.canvas().width();
         double height = graph.canvas().height();
         assertThat(graph.canvas().innerHeight())
@@ -114,8 +114,8 @@ class TimelineVisualScenarioGeometryTest {
         // draw: the same page, the same three entries, one argument different. Scenarios 5
         // and 6, asserted against each other so that "shorter" is a comparison and not an
         // impression.
-        PlacedFragment bounded = rails(extentScene(TimelineRailExtent.ENTRY_BOUNDS)).get(0);
-        LayoutGraph trimmed = extentScene(TimelineRailExtent.MARKER_TO_MARKER);
+        PlacedFragment bounded = rails(extentScene(TimelineRailEnd.ENTRY_BOUND)).get(0);
+        LayoutGraph trimmed = extentScene(TimelineRailEnd.MARKER);
         PlacedFragment betweenMarkers = rails(trimmed).get(0);
         List<ResolvedLayoutAnchor> markers = markerAnchors(trimmed);
 
@@ -138,7 +138,7 @@ class TimelineVisualScenarioGeometryTest {
         // 16pt of spacing between them — and one unbroken line, because an entry's spacing
         // is padding inside its own slice rather than a gap between two of them. If it were
         // a gap, this is the scene where a rail assembled per entry would show it.
-        LayoutGraph graph = extentScene(TimelineRailExtent.ENTRY_BOUNDS);
+        LayoutGraph graph = extentScene(TimelineRailEnd.ENTRY_BOUND);
         List<ResolvedLayoutAnchor> entries = entryAnchors(graph);
         PlacedFragment rail = rails(graph).get(0);
 
@@ -164,7 +164,7 @@ class TimelineVisualScenarioGeometryTest {
         // about the other. The first page is trimmed at the top, the last at the bottom,
         // and the page between them carries no marker at all, so it is trimmed at neither
         // end and runs the whole band its entry occupies.
-        LayoutGraph graph = paginated(TimelineRailExtent.MARKER_TO_MARKER);
+        LayoutGraph graph = paginated(TimelineRailEnd.MARKER);
         List<PlacedFragment> rails = rails(graph);
         List<ResolvedLayoutAnchor> markers = markerAnchors(graph);
         List<ResolvedLayoutAnchor> entries = entryAnchors(graph);
@@ -291,10 +291,10 @@ class TimelineVisualScenarioGeometryTest {
     // --- scenes ------------------------------------------------------------------
 
     /** The scene both extent baselines draw; they differ by this argument and nothing else. */
-    private static LayoutGraph extentScene(TimelineRailExtent extent) throws Exception {
+    private static LayoutGraph extentScene(TimelineRailEnd both) throws Exception {
         return timeline(300, 250, t -> t
                 .spacing(16)
-                .rail(rail -> rail.extent(extent))
+                .rail(rail -> rail.from(both).to(both))
                 .entry(TimelineMarker.dot(9, INK), e -> e
                         .title("Tall entry").meta("2023 - Present")
                         .body("A body long enough to run to three lines on a page this "
@@ -305,12 +305,12 @@ class TimelineVisualScenarioGeometryTest {
     }
 
     /** The scene timeline-dsl/paginated-marker-to-marker draws: two entries, three pages. */
-    private static LayoutGraph paginated(TimelineRailExtent extent) throws Exception {
+    private static LayoutGraph paginated(TimelineRailEnd both) throws Exception {
         return timeline(300, 150, t -> t
                 .spacing(14)
                 .markerOnRail()
                 .axisWidth(24)
-                .rail(rail -> rail.extent(extent))
+                .rail(rail -> rail.from(both).to(both))
                 .entry(TimelineMarker.dot(10, INK), e -> e.title("Runs on").body(longBody()))
                 .entry(TimelineMarker.dot(10, INK), e -> e.title("And ends here")));
     }

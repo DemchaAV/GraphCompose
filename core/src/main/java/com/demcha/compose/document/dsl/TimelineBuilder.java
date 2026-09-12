@@ -39,7 +39,7 @@ import java.util.function.Consumer;
  *
  * <p>The rail is one logical line, computed after layout from where the markers and
  * entries actually landed and drawn as one fragment per page it crosses. How far it
- * runs is a {@link TimelineRailExtent}; where it runs comes from the marker anchor,
+ * runs is a {@link TimelineRailEnd} at each end; where it runs comes from the marker anchor,
  * a gutter to the left of the markers by default or through them after
  * {@link #markerOnRail()}. It is drawn beneath the markers, so a filled marker
  * covers the line passing under it.</p>
@@ -61,7 +61,8 @@ public final class TimelineBuilder {
     private final List<TimelineEntryBuilder> entries = new ArrayList<>();
     private DocumentStroke railStroke = DocumentStroke.of(DEFAULT_RAIL, 1.5);
     private String railDeclaredBy;
-    private TimelineRailExtent railExtent = TimelineRailExtent.ENTRY_BOUNDS;
+    private TimelineRailEnd railStart = TimelineRailEnd.ENTRY_BOUND;
+    private TimelineRailEnd railEnd = TimelineRailEnd.ENTRY_BOUND;
     private TimelineMarkerAnchor markerAnchor;
     private double gutter = 8.0;
     private double markerGap = 8.0;
@@ -145,8 +146,11 @@ public final class TimelineBuilder {
         Objects.requireNonNull(spec, "spec");
         TimelineRailBuilder builder = new TimelineRailBuilder();
         spec.accept(builder);
-        if (builder.extent() != null) {
-            this.railExtent = builder.extent();
+        if (builder.start() != null) {
+            this.railStart = builder.start();
+        }
+        if (builder.end() != null) {
+            this.railEnd = builder.end();
         }
         if (builder.stroke() == null) {
             return this;
@@ -501,13 +505,6 @@ public final class TimelineBuilder {
         // One owner per timeline, allocated here. Every marker below anchors on this
         // instance, so the pass that draws the rail asks for it and gets these markers and
         // nobody else's — two timelines on a page never merge.
-        if (railExtent == TimelineRailExtent.TIMELINE_BOUNDS) {
-            throw new IllegalArgumentException(
-                    "TimelineRailExtent.TIMELINE_BOUNDS is not implemented. On one page it is the "
-                    + "same line as ENTRY_BOUNDS, and across pages there is nothing to measure it "
-                    + "against — a timeline's own box draws nothing. Use ENTRY_BOUNDS or "
-                    + "MARKER_TO_MARKER.");
-        }
         TimelineRailSpec railSpec = new TimelineRailSpec(railStroke);
         // The gutter is only knowable here, so the default anchor is resolved here too —
         // and it is the same model the opted-in one uses, not a branch beside it.
@@ -516,7 +513,7 @@ public final class TimelineBuilder {
         // Unset resolves to the marker gap, which is the single-gap layout the two columns
         // either side of the axis have always shared.
         double resolvedLeadingGap = leadingGap == null ? markerGap : leadingGap;
-        return new TimelineSpec(new TimelineRailOwner(railSpec, railExtent, anchor),
+        return new TimelineSpec(new TimelineRailOwner(railSpec, railStart, railEnd, anchor),
                 railSpec, leadingColumn, resolvedLeadingGap, gutter, markerGap, axis, anchor,
                 entrySpacing, keepTogether, keepEntriesTogether, List.copyOf(specs));
     }

@@ -5,7 +5,7 @@ import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.dsl.TimelineMarker;
-import com.demcha.compose.document.dsl.TimelineRailExtent;
+import com.demcha.compose.document.dsl.TimelineRailEnd;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
@@ -152,7 +152,7 @@ final class SlateOrangeMain {
                 timeline.markerOnRail()
                         .rail(rail -> rail
                                 .stroke(DocumentStroke.of(RULE, RULE_THICKNESS))
-                                .extent(TimelineRailExtent.MARKER_TO_MARKER))
+                                .from(TimelineRailEnd.MARKER).to(TimelineRailEnd.MARKER))
                         .axisWidth(MARKER_DIAMETER)
                         .markerGap(ENTRY_INDENT - MARKER_DIAMETER / 2.0)
                         .gutter(0)

@@ -3,7 +3,7 @@ package com.demcha.testing.visual;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.TimelineMarker;
-import com.demcha.compose.document.dsl.TimelineRailExtent;
+import com.demcha.compose.document.dsl.TimelineRailEnd;
 import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -224,7 +224,7 @@ class TimelineRailVisualTest {
         // Entries of deliberately different heights, 16pt apart — and the line covers the
         // gaps, because an entry's spacing is padding inside its own box rather than a hole
         // between two boxes. That is the default every existing timeline draws.
-        try (DocumentSession session = extentScene(TimelineRailExtent.ENTRY_BOUNDS)) {
+        try (DocumentSession session = extentScene(TimelineRailEnd.ENTRY_BOUND)) {
             VISUAL.assertMatchesBaseline("timeline-dsl/entry-bounds", session);
         }
     }
@@ -234,7 +234,7 @@ class TimelineRailVisualTest {
         // The other half. Same page, same entries, same rail — and now the line begins at
         // the first marker and ends at the last, with the tall entry's body hanging below
         // it. Read against its twin, the diff is the two ends and nothing else.
-        try (DocumentSession session = extentScene(TimelineRailExtent.MARKER_TO_MARKER)) {
+        try (DocumentSession session = extentScene(TimelineRailEnd.MARKER)) {
             VISUAL.assertMatchesBaseline("timeline-dsl/marker-to-marker", session);
         }
     }
@@ -255,7 +255,7 @@ class TimelineRailVisualTest {
                             .spacing(14)
                             .markerOnRail()
                             .axisWidth(24)
-                            .rail(rail -> rail.extent(TimelineRailExtent.MARKER_TO_MARKER))
+                            .rail(rail -> rail.from(TimelineRailEnd.MARKER).to(TimelineRailEnd.MARKER))
                             .entry(TimelineMarker.dot(10, INK), e -> e
                                     .title("Runs on").body(longBody()))
                             .entry(TimelineMarker.dot(10, INK), e -> e
@@ -296,7 +296,7 @@ class TimelineRailVisualTest {
     }
 
     /** The scene both extent baselines draw; they differ by this argument and nothing else. */
-    private static DocumentSession extentScene(TimelineRailExtent extent) throws Exception {
+    private static DocumentSession extentScene(TimelineRailEnd both) throws Exception {
         DocumentSession session = GraphCompose.document()
                 .pageSize(300, 250)
                 .margin(DocumentInsets.of(18))
@@ -305,7 +305,7 @@ class TimelineRailVisualTest {
                 .addTimeline(t -> t
                         .connector(RAIL, 1.5)
                         .spacing(16)
-                        .rail(rail -> rail.extent(extent))
+                        .rail(rail -> rail.from(both).to(both))
                         .entry(TimelineMarker.dot(9, INK), e -> e
                                 .title("Tall entry").meta("2023 - Present")
                                 .body("A body long enough to run to three lines on a page this "

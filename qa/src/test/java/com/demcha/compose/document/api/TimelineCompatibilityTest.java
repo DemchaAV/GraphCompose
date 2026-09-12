@@ -5,7 +5,7 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.TimelineBuilder;
 import com.demcha.compose.document.dsl.TimelineMarker;
-import com.demcha.compose.document.dsl.TimelineRailExtent;
+import com.demcha.compose.document.dsl.TimelineRailEnd;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.ResolvedLayoutAnchor;
@@ -152,8 +152,8 @@ class TimelineCompatibilityTest {
     void nothingInTheDocumentMovesBecauseTheRailChoseADifferentExtent() {
         // The rail is drawing, not layout. Two graphs of one document, ENTRY_BOUNDS and
         // MARKER_TO_MARKER: the rail differs and every anchor, and the page count, do not.
-        LayoutGraph bounded = paginatedScene(TimelineRailExtent.ENTRY_BOUNDS);
-        LayoutGraph trimmed = paginatedScene(TimelineRailExtent.MARKER_TO_MARKER);
+        LayoutGraph bounded = paginatedScene(TimelineRailEnd.ENTRY_BOUND);
+        LayoutGraph trimmed = paginatedScene(TimelineRailEnd.MARKER);
 
         assertThat(trimmed.totalPages()).isEqualTo(bounded.totalPages());
         assertThat(box(markers(trimmed))).as("markers").isEqualTo(box(markers(bounded)));
@@ -386,11 +386,11 @@ class TimelineCompatibilityTest {
         return paginatedScene(null);
     }
 
-    private static LayoutGraph paginatedScene(TimelineRailExtent extent) {
+    private static LayoutGraph paginatedScene(TimelineRailEnd both) {
         return timeline(320, 170, t -> {
             t.spacing(14);
-            if (extent != null) {
-                t.rail(rail -> rail.extent(extent));
+            if (both != null) {
+                t.rail(rail -> rail.from(both).to(both));
             }
             t.entry(TimelineMarker.dot(8, INK), e -> e.title("Runs on").body(longBody(30)))
                     .entry(TimelineMarker.dot(8, INK), e -> e.title("And ends here"));

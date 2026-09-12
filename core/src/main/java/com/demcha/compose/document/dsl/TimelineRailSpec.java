@@ -10,7 +10,7 @@ import com.demcha.compose.document.style.DocumentStroke;
  * configuration for the layout to read rather than an old shape and a new one.</p>
  *
  * <p>A stroke is all it takes to describe, because the rail's geometry is not here: how far
- * it runs is a {@link TimelineRailExtent} and where it runs comes from the marker anchor,
+ * it runs is a {@link TimelineRailEnd} at each end and where it runs comes from the marker anchor,
  * both resolved after layout. This is only what it is drawn with.</p>
  *
  * @param stroke the rail's colour and width

@@ -3,7 +3,7 @@ package com.demcha.compose.document.templates.cv.presets;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.TimelineMarker;
-import com.demcha.compose.document.dsl.TimelineRailExtent;
+import com.demcha.compose.document.dsl.TimelineRailEnd;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
@@ -118,7 +118,7 @@ final class SerifHeadlineMain {
             timeline.markerOnRail()
                     .rail(rail -> rail
                             .stroke(DocumentStroke.of(DIVIDER, RAIL_THICKNESS))
-                            .extent(TimelineRailExtent.MARKER_TO_MARKER))
+                            .from(TimelineRailEnd.MARKER).to(TimelineRailEnd.MARKER))
                     .axisWidth(MARKER_DIAMETER)
                     .markerGap(ENTRY_TEXT_INSET - MARKER_DIAMETER / 2.0)
                     .gutter(0)

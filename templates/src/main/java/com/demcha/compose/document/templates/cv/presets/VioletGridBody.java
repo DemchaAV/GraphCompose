@@ -5,7 +5,7 @@ import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.dsl.TimelineMarker;
-import com.demcha.compose.document.dsl.TimelineRailExtent;
+import com.demcha.compose.document.dsl.TimelineRailEnd;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.HorizontalAlign;
@@ -250,7 +250,7 @@ final class VioletGridBody {
                 timeline.markerOnRail()
                         .rail(rail -> rail
                                 .stroke(DocumentStroke.of(RULE, RAIL_THICKNESS))
-                                .extent(TimelineRailExtent.MARKER_TO_MARKER))
+                                .from(TimelineRailEnd.MARKER).to(TimelineRailEnd.MARKER))
                         .leadingColumn(DocumentRowColumn.fixed(DATE_COLUMN))
                         .leadingGap(DATE_TO_MARKER)
                         .axisWidth(MARKER_DIAMETER)

@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 237,
-    "methods": 2108,
-    "constants": 237,
-    "generated": 1126
+    "methods": 2109,
+    "constants": 236,
+    "generated": 1125
   },
   "packages": [
     {
@@ -15617,23 +15617,37 @@
             },
             {
               "kind": "method",
-              "name": "extent",
+              "name": "from",
               "static": false,
               "origin": "source",
               "typeParameters": null,
               "returns": "TimelineRailBuilder",
               "params": [
                 {
-                  "type": "TimelineRailExtent",
-                  "name": "extent"
+                  "type": "TimelineRailEnd",
+                  "name": "start"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "to",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineRailBuilder",
+              "params": [
+                {
+                  "type": "TimelineRailEnd",
+                  "name": "end"
                 }
               ]
             }
           ]
         },
         {
-          "name": "TimelineRailExtent",
-          "binaryName": "com.demcha.compose.document.dsl.TimelineRailExtent",
+          "name": "TimelineRailEnd",
+          "binaryName": "com.demcha.compose.document.dsl.TimelineRailEnd",
           "kind": "enum",
           "modifiers": [
             "final"
@@ -15642,24 +15656,17 @@
           "members": [
             {
               "kind": "constant",
-              "name": "MARKER_TO_MARKER",
+              "name": "ENTRY_BOUND",
               "static": true,
               "origin": "generated",
-              "type": "TimelineRailExtent"
+              "type": "TimelineRailEnd"
             },
             {
               "kind": "constant",
-              "name": "ENTRY_BOUNDS",
+              "name": "MARKER",
               "static": true,
               "origin": "generated",
-              "type": "TimelineRailExtent"
-            },
-            {
-              "kind": "constant",
-              "name": "TIMELINE_BOUNDS",
-              "static": true,
-              "origin": "generated",
-              "type": "TimelineRailExtent"
+              "type": "TimelineRailEnd"
             }
           ]
         },

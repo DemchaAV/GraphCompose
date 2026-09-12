@@ -6,7 +6,7 @@ import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.ShapeBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.dsl.TimelineMarker;
-import com.demcha.compose.document.dsl.TimelineRailExtent;
+import com.demcha.compose.document.dsl.TimelineRailEnd;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
@@ -323,9 +323,13 @@ final class ProfessionalSidebarAside {
                 EDUCATION_RAIL_X - EDUCATION_MARKER_DIAMETER / 2.0));
         holder.addTimeline(timeline -> {
             timeline.markerOnRail()
+                    // Begin at the first dot, run on to the foot of the entries. That is
+                    // what this block is drawn as, and what the mask-and-redraw it replaced
+                    // was trying to fake — it could not be asked for while the rail's two
+                    // ends were one value.
                     .rail(rail -> rail
                             .stroke(DocumentStroke.of(RULE_MUTED, EDUCATION_RAIL_WIDTH))
-                            .extent(TimelineRailExtent.ENTRY_BOUNDS))
+                            .from(TimelineRailEnd.MARKER).to(TimelineRailEnd.ENTRY_BOUND))
                     .axisWidth(EDUCATION_MARKER_DIAMETER)
                     .markerGap(EDUCATION_TEXT_X - EDUCATION_MARKER_DIAMETER / 2.0)
                     .gutter(0)

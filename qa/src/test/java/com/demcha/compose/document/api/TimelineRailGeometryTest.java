@@ -3,7 +3,7 @@ package com.demcha.compose.document.api;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.dsl.TimelineBuilder;
 import com.demcha.compose.document.dsl.TimelineMarker;
-import com.demcha.compose.document.dsl.TimelineRailExtent;
+import com.demcha.compose.document.dsl.TimelineRailEnd;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.ResolvedLayoutAnchor;
@@ -80,7 +80,7 @@ class TimelineRailGeometryTest {
 
         PlacedFragment bounded = rails(timeline(320, 300, entries)).get(0);
         PlacedFragment betweenMarkers = rails(timeline(320, 300, t -> {
-            t.rail(rail -> rail.extent(TimelineRailExtent.MARKER_TO_MARKER));
+            t.rail(rail -> rail.from(TimelineRailEnd.MARKER).to(TimelineRailEnd.MARKER));
             entries.accept(t);
         })).get(0);
 
@@ -98,7 +98,7 @@ class TimelineRailGeometryTest {
     @Test
     void markerToMarkerRunsBetweenTheAnchorPointsItIsNamedFor() throws Exception {
         LayoutGraph graph = timeline(320, 300, t -> t
-                .rail(rail -> rail.extent(TimelineRailExtent.MARKER_TO_MARKER))
+                .rail(rail -> rail.from(TimelineRailEnd.MARKER).to(TimelineRailEnd.MARKER))
                 .entry(TimelineMarker.dot(8, INK), e -> e.title("First").body("Body one."))
                 .entry(TimelineMarker.dot(8, INK), e -> e.title("Second").body("Body two.")));
 
@@ -115,7 +115,7 @@ class TimelineRailGeometryTest {
         // A rail of no length is not a shorter rail: nothing reaches a backend, rather
         // than a zero- or negative-height fragment for one to cope with.
         LayoutGraph graph = timeline(320, 300, t -> t
-                .rail(rail -> rail.extent(TimelineRailExtent.MARKER_TO_MARKER))
+                .rail(rail -> rail.from(TimelineRailEnd.MARKER).to(TimelineRailEnd.MARKER))
                 .entry(TimelineMarker.dot(8, INK), e -> e.title("Only").body("Body.")));
 
         assertThat(rails(graph)).isEmpty();
@@ -130,13 +130,95 @@ class TimelineRailGeometryTest {
                 .hasSize(1);
     }
 
+    // The timeline-bounds case went with the constant that named it. It was defined and not
+    // implemented, threw when asked for, and was indistinguishable from the entries' bound on
+    // one page — so with the ends chosen separately there is nothing for it to mean, and a
+    // throwing constant is not API worth releasing.
+
     @Test
-    void timelineBoundsIsRejectedRatherThanResolvedToItsNeighbour() throws Exception {
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> timeline(320, 300, t -> t
-                        .rail(rail -> rail.extent(TimelineRailExtent.TIMELINE_BOUNDS))
-                        .entry(TimelineMarker.dot(8, INK), e -> e.title("x"))))
-                .withMessageContaining("not implemented");
+    void theFourEndCombinationsAreFourDifferentLines() throws Exception {
+        // The whole point of choosing the ends separately: the two mixed lines are the ones
+        // that could not be asked for before, and each shares exactly one end with each of
+        // the symmetric pair.
+        Consumer<TimelineBuilder> entries = t -> t
+                .spacing(14)
+                .entry(TimelineMarker.dot(8, INK), e -> e.title("First").body("Body one."))
+                .entry(TimelineMarker.dot(8, INK), e -> e.title("Second").body("Body two."));
+
+        PlacedFragment boundToBound = railOf(entries, TimelineRailEnd.ENTRY_BOUND,
+                TimelineRailEnd.ENTRY_BOUND);
+        PlacedFragment markerToMarker = railOf(entries, TimelineRailEnd.MARKER,
+                TimelineRailEnd.MARKER);
+        PlacedFragment markerToBound = railOf(entries, TimelineRailEnd.MARKER,
+                TimelineRailEnd.ENTRY_BOUND);
+        PlacedFragment boundToMarker = railOf(entries, TimelineRailEnd.ENTRY_BOUND,
+                TimelineRailEnd.MARKER);
+
+        // Each end is whichever of the two it was asked for, and nothing else changes it.
+        assertThat(top(markerToBound))
+                .as("marker -> bound starts where marker -> marker starts")
+                .isEqualTo(top(markerToMarker), within(1e-9));
+        assertThat(markerToBound.y())
+                .as("and ends where bound -> bound ends")
+                .isEqualTo(boundToBound.y(), within(1e-9));
+        assertThat(top(boundToMarker))
+                .as("bound -> marker starts where bound -> bound starts")
+                .isEqualTo(top(boundToBound), within(1e-9));
+        assertThat(boundToMarker.y())
+                .as("and ends where marker -> marker ends")
+                .isEqualTo(markerToMarker.y(), within(1e-9));
+
+        // Four distinct lines, not two dressed up: the mixed pair is longer than
+        // marker-to-marker and shorter than bound-to-bound at one end each.
+        assertThat(markerToBound.height()).isGreaterThan(markerToMarker.height());
+        assertThat(markerToBound.height()).isLessThan(boundToBound.height());
+        assertThat(boundToMarker.height()).isGreaterThan(markerToMarker.height());
+        assertThat(boundToMarker.height()).isLessThan(boundToBound.height());
+
+        // And no end moved the line sideways.
+        assertThat(List.of(markerToMarker.x(), markerToBound.x(), boundToMarker.x()))
+                .allSatisfy(x -> assertThat(x).isEqualTo(boundToBound.x(), within(1e-9)));
+    }
+
+    @Test
+    void eachEndTrimsOnlyItsOwnPageWhenTheTimelineCrossesOne() throws Exception {
+        // Pagination, per end. The start trims the page the first marker is on and the end
+        // trims the page the last is on; a page holding neither is bounded by its entries at
+        // both ends whatever was asked for. marker -> bound is the case ProfessionalSidebar
+        // wants: begin at the first dot, run to the foot of the last entry.
+        Consumer<TimelineBuilder> entries = t -> {
+            t.spacing(10).keepEntriesTogether();
+            for (int i = 0; i < 7; i++) {
+                String title = "Entry " + i;
+                t.entry(TimelineMarker.dot(8, INK), e -> e
+                        .title(title).body("One body line of this entry."));
+            }
+        };
+
+        LayoutGraph boundToBound = scene(220, entries, TimelineRailEnd.ENTRY_BOUND,
+                TimelineRailEnd.ENTRY_BOUND);
+        LayoutGraph markerToBound = scene(220, entries, TimelineRailEnd.MARKER,
+                TimelineRailEnd.ENTRY_BOUND);
+        assertThat(boundToBound.totalPages()).isEqualTo(2);
+        assertThat(markerToBound.totalPages()).isEqualTo(2);
+
+        PlacedFragment firstOfBoth = railOnPage(boundToBound, 0);
+        PlacedFragment firstOfMixed = railOnPage(markerToBound, 0);
+        PlacedFragment lastOfBoth = railOnPage(boundToBound, 1);
+        PlacedFragment lastOfMixed = railOnPage(markerToBound, 1);
+
+        assertThat(top(firstOfMixed))
+                .as("page 0 is trimmed to the first marker, because the start asked for it")
+                .isLessThan(top(firstOfBoth));
+        assertThat(firstOfMixed.y())
+                .as("but its foot is the page's own entries, not an end")
+                .isEqualTo(firstOfBoth.y(), within(1e-9));
+        assertThat(top(lastOfMixed))
+                .as("page 1 is not trimmed at the top: the first marker is not on it")
+                .isEqualTo(top(lastOfBoth), within(1e-9));
+        assertThat(lastOfMixed.y())
+                .as("nor at the foot, because the end asked for the entries' bound")
+                .isEqualTo(lastOfBoth.y(), within(1e-9));
     }
 
     // --- the marker anchor, which is a different question ----------------------
@@ -256,18 +338,18 @@ class TimelineRailGeometryTest {
     void markerOnRailHoldsForEveryShapeAndForBothExtents() throws Exception {
         // The extent decides the two ends and must not touch the x. Same three markers,
         // both extents, one answer.
-        for (TimelineRailExtent extent : List.of(TimelineRailExtent.ENTRY_BOUNDS,
-                TimelineRailExtent.MARKER_TO_MARKER)) {
+        for (TimelineRailEnd both : List.of(TimelineRailEnd.ENTRY_BOUND,
+                TimelineRailEnd.MARKER)) {
             LayoutGraph graph = timeline(360, 320, t -> t
                     .markerOnRail()
-                    .rail(rail -> rail.extent(extent))
+                    .rail(rail -> rail.from(both).to(both))
                     .axisWidth(28)
                     .entry(TimelineMarker.dot(12, INK), e -> e.title("Dot").body("Body."))
                     .entry(TimelineMarker.square(12, INK), e -> e.title("Square").body("Body.")));
 
             double railX = rails(graph).get(0).x();
             assertThat(markerAnchors(graph)).allSatisfy(marker -> assertThat(railX)
-                    .as("%s must not move the rail sideways", extent)
+                    .as("%s must not move the rail sideways", both)
                     .isEqualTo(marker.x() + marker.width() / 2, within(1e-9)));
         }
     }
@@ -295,7 +377,7 @@ class TimelineRailGeometryTest {
     void markerOnRailWithMarkerToMarkerRunsBetweenTheMarkerCentres() throws Exception {
         LayoutGraph graph = timeline(360, 320, t -> t
                 .markerOnRail()
-                .rail(rail -> rail.extent(TimelineRailExtent.MARKER_TO_MARKER))
+                .rail(rail -> rail.from(TimelineRailEnd.MARKER).to(TimelineRailEnd.MARKER))
                 .axisWidth(28)
                 .entry(TimelineMarker.dot(12, INK), e -> e.title("First").body("Body."))
                 .entry(TimelineMarker.dot(12, INK), e -> e.title("Second").body("Body.")));
@@ -505,6 +587,33 @@ class TimelineRailGeometryTest {
 
     private static List<PlacedFragment> rails(LayoutGraph graph) {
         return graph.fragments().stream().filter(f -> "@timeline-rail".equals(f.path())).toList();
+    }
+
+    /** A rail's top, which is the edge the start end decides. */
+    private static double top(PlacedFragment rail) {
+        return rail.y() + rail.height();
+    }
+
+    /** The one rail of a single-page scene with those two ends. */
+    private static PlacedFragment railOf(Consumer<TimelineBuilder> entries,
+                                         TimelineRailEnd start,
+                                         TimelineRailEnd end) throws Exception {
+        return rails(scene(300, entries, start, end)).get(0);
+    }
+
+    private static PlacedFragment railOnPage(LayoutGraph graph, int page) {
+        return rails(graph).stream().filter(r -> r.pageIndex() == page)
+                .findFirst().orElseThrow(() -> new AssertionError("no rail on page " + page));
+    }
+
+    private static LayoutGraph scene(double height,
+                                     Consumer<TimelineBuilder> entries,
+                                     TimelineRailEnd start,
+                                     TimelineRailEnd end) throws Exception {
+        return timeline(320, height, t -> {
+            t.rail(rail -> rail.from(start).to(end));
+            entries.accept(t);
+        });
     }
 
     private static List<ResolvedLayoutAnchor> entryAnchors(LayoutGraph graph) {

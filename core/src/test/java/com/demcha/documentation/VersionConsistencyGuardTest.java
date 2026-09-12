@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -199,6 +200,221 @@ class VersionConsistencyGuardTest {
         assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("templates/pom.xml"), "jacoco.plugin.version"))
                 .describedAs("templates jacoco.plugin.version must match the engine pom's (%s)", core)
                 .isEqualTo(core);
+    }
+
+    /**
+     * The binary-compatibility gate runs the same japicmp plugin in every module
+     * that carries a {@code japicmp} profile — a version pinned as a literal in each
+     * standalone pom. Two literals of one version drift apart silently, and a
+     * plugin skew here means the two modules are judged by different
+     * compatibility rules. Only the plugin version is held in lockstep: the
+     * releases each module is diffed against are pinned per module, and
+     * {@link #japicmpBaselinesTrackTheWorkingMajorAndTheLatestRelease} holds the
+     * templates pins to the CHANGELOG.
+     */
+    @Test
+    void japicmpPluginVersionAgreesAcrossGatedModules() throws Exception {
+        String core = pinnedVersionProperty(PROJECT_ROOT.resolve("core/pom.xml"), "japicmp.version");
+
+        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("templates/pom.xml"), "japicmp.version"))
+                .describedAs("templates japicmp.version must match the engine pom's (%s)", core)
+                .isEqualTo(core);
+    }
+
+    /**
+     * The poms whose {@code japicmp} profile diffs against two published releases: the
+     * floor of the working major and the release before the working version. The
+     * engine pom still diffs against its floor alone ({@code japicmp.baseline}).
+     */
+    private static final List<String> TWO_BASELINE_JAPICMP_POMS = List.of("templates/pom.xml");
+
+    /**
+     * The two-baseline japicmp pins name published releases, and never the one being built.
+     *
+     * <p>Inside a live major the floor ({@code japicmp.baseline.floor}) is that major's
+     * first release and the previous pin ({@code japicmp.baseline.previous}) the newest
+     * release below the working version; why the gate needs both is set out in
+     * {@code docs/api-stability.md} (Binary-compatibility enforcement). The previous pin
+     * only protects anything while it names the release actually published, and it is a
+     * literal that {@code cut-release.ps1 -PostReleaseOnly} moves after each cut, so it is
+     * derived from the CHANGELOG here rather than trusted. That reading is right on both
+     * sides of a cut — on the release commit (pom {@code 2.4.0}, CHANGELOG
+     * {@code ## v2.4.0 — <date>}) the newest release below 2.4.0 is still 2.3.0, which is
+     * what the release must be diffed against; on the next {@code 2.4.1-SNAPSHOT} it is
+     * 2.4.0, so a bump commit that forgets the pin fails here, and
+     * {@code -PostReleaseOnly} runs this test before it commits.</p>
+     *
+     * <p>A major with no release of its own — the cycle that opens it, and its own release
+     * commit — has nothing in-major to diff against. The pins then name the previous
+     * major's floor and its last release, and {@code japicmp.break.binary} is
+     * {@code false}: those diffs are reported rather than enforced, because a major is
+     * allowed to break. All three flip back on the first post-release bump, once the new
+     * major's first release is published and dated in the CHANGELOG.</p>
+     *
+     * <p>In both states every pin stays <em>strictly older</em> than the working version,
+     * which is what stops a build from checking itself. Measured on a simulated 3.0.0 cut
+     * with both pins at 3.0.0: japicmp resolved the module's own artifact and reported "No
+     * incompatible changes found while checking backward compatibility of version 3.0.0
+     * with the previous version 3.0.0" — from the reactor, and from a local repository the
+     * release had just been installed into, alike.</p>
+     */
+    @Test
+    void japicmpBaselinesTrackTheWorkingMajorAndTheLatestRelease() throws Exception {
+        String changelog = Files.readString(PROJECT_ROOT.resolve("CHANGELOG.md"));
+
+        for (String pom : TWO_BASELINE_JAPICMP_POMS) {
+            Path path = PROJECT_ROOT.resolve(pom);
+            String working = effectiveVersion(path);
+            Optional<String> inMajor = newestFinalReleaseInMajorBefore(changelog, working);
+            String previous = inMajor.orElseGet(() -> newestFinalReleaseOlderThan(changelog, working)
+                    .orElseThrow(() -> new AssertionError(
+                            "CHANGELOG.md names no dated final release older than " + working + ", so "
+                                    + pom + " has no published release to use as a baseline")));
+            String floor = segment(previous, 0) + ".0.0";
+            String breakBinary = inMajor.isPresent() ? "true" : "false";
+
+            assertThat(pinnedVersionProperty(path, "japicmp.baseline.floor"))
+                    .describedAs("%s japicmp.baseline.floor must be %s: the first release of the major "
+                            + "the working version (%s) belongs to, or of the previous major while this "
+                            + "one has no release of its own", pom, floor, working)
+                    .isEqualTo(floor);
+            assertThat(pinnedVersionProperty(path, "japicmp.baseline.previous"))
+                    .describedAs("%s japicmp.baseline.previous must be %s: the newest dated CHANGELOG "
+                            + "release below the working version %s — cut-release.ps1 -PostReleaseOnly "
+                            + "moves it to the version just published; a stale pin leaves everything "
+                            + "added in that release unprotected by the japicmp gate", pom, previous, working)
+                    .isEqualTo(previous);
+            assertThat(pinnedVersionProperty(path, "japicmp.break.binary"))
+                    .describedAs("%s japicmp.break.binary must be %s: the gate breaks the build inside a "
+                            + "major, and only reports while the major that opens has no release of its "
+                            + "own to diff against", pom, breakBinary)
+                    .isEqualTo(breakBinary);
+
+        }
+    }
+
+    /** Every japicmp baseline pin, per gated pom. The engine pom carries a single one. */
+    private static final Map<String, List<String>> JAPICMP_BASELINE_PINS = Map.of(
+            "core/pom.xml", List.of("japicmp.baseline"),
+            "templates/pom.xml", List.of("japicmp.baseline.floor", "japicmp.baseline.previous"));
+
+    /**
+     * No japicmp baseline names the version being built.
+     *
+     * <p>japicmp resolves such a pin to the artifact this build just produced — from the
+     * reactor as readily as from the local repository — and reports no differences:
+     * measured on a simulated 3.0.0 cut, where it announced "No incompatible changes found
+     * while checking backward compatibility of version 3.0.0 with the previous version
+     * 3.0.0" and passed, with the same jar as old and new archive. A gate comparing a
+     * release with itself protects nothing, and nothing else in the build can tell that
+     * apart from a real green, so the rule lives here rather than in a comment: in every
+     * gated pom, every pin names a release strictly older than the working version.</p>
+     */
+    @Test
+    void noJapicmpBaselineNamesTheVersionBeingBuilt() throws Exception {
+        assertThat(JAPICMP_BASELINE_PINS.keySet())
+                .describedAs("every module whose pom declares the japicmp profile must list its "
+                        + "baseline pins here: a gated module missing from this map is free to pin "
+                        + "the version being built, and japicmp then compares that release with its "
+                        + "own artifact and passes")
+                .containsAll(BinaryCompatibilityGateGuardTest.gatedModules().stream()
+                        .map(module -> module + "/pom.xml")
+                        .toList());
+
+        for (Map.Entry<String, List<String>> pom : JAPICMP_BASELINE_PINS.entrySet()) {
+            Path path = PROJECT_ROOT.resolve(pom.getKey());
+            String working = releaseLineOf(effectiveVersion(path));
+            for (String pin : pom.getValue()) {
+                String pinned = pinnedVersionProperty(path, pin);
+                assertThat(compareReleases(pinned, working))
+                        .describedAs("%s %s is %s and the version being built is %s. japicmp resolves a "
+                                + "baseline equal to it to this build's own artifact and reports no "
+                                + "differences, so the gate would pass having compared the release with "
+                                + "itself", pom.getKey(), pin, pinned, working)
+                        .isNegative();
+            }
+        }
+    }
+
+    /**
+     * The newest dated final release ({@code ## vX.Y.Z — YYYY-MM-DD}) in {@code changelog}
+     * that shares {@code version}'s major and is strictly older than its {@code X.Y.Z};
+     * empty when the major has none yet. Open ({@code — Planned}) and pre-release
+     * ({@code -rc.N}) entries never count: neither is a published Maven Central artifact
+     * a gate could resolve. Releases of an earlier major never count either — diffing
+     * across a major boundary would fail the build on breaks the major is allowed to make.
+     *
+     * <p>String-driven so {@code ChangelogVersionParsingTest} can hold the shapes: a
+     * snapshot cycle, the release commit (working version equal to the newest release),
+     * the opening of a new major, and a log with nothing older.</p>
+     */
+    static Optional<String> newestFinalReleaseInMajorBefore(String changelog, String version) {
+        String working = releaseLineOf(version);
+        Matcher released = DATED_FINAL_RELEASE.matcher(changelog);
+        String newest = null;
+        while (released.find()) {
+            String candidate = released.group(1);
+            if (segment(candidate, 0).equals(segment(working, 0))
+                    && compareReleases(candidate, working) < 0
+                    && (newest == null || compareReleases(candidate, newest) > 0)) {
+                newest = candidate;
+            }
+        }
+        return Optional.ofNullable(newest);
+    }
+
+    /**
+     * The newest dated final release in {@code changelog} strictly older than
+     * {@code version}, whatever its major; empty when there is none. This is what a major
+     * with no release of its own falls back to: the previous major's last release. Never
+     * the working version itself, which japicmp would resolve to this build's own artifact.
+     */
+    static Optional<String> newestFinalReleaseOlderThan(String changelog, String version) {
+        String working = releaseLineOf(version);
+        Matcher released = DATED_FINAL_RELEASE.matcher(changelog);
+        String newest = null;
+        while (released.find()) {
+            String candidate = released.group(1);
+            if (compareReleases(candidate, working) < 0
+                    && (newest == null || compareReleases(candidate, newest) > 0)) {
+                newest = candidate;
+            }
+        }
+        return Optional.ofNullable(newest);
+    }
+
+    /**
+     * Orders two {@code X.Y.Z} release lines, comparing each segment as a number.
+     *
+     * <p>Compared as digit strings rather than parsed: {@code Integer.parseInt} throws
+     * {@link NumberFormatException} on a segment wider than an {@code int}, which in a
+     * guard would surface as a stack trace instead of the assertion message that says
+     * which pin is wrong. Nothing here needs the numeric value — only the order — and
+     * a longer digit string is the larger number once leading zeros are gone.</p>
+     */
+    private static int compareReleases(String left, String right) {
+        for (int i = 0; i < 3; i++) {
+            String a = segment(left, i);
+            String b = segment(right, i);
+            int order = a.length() != b.length()
+                    ? Integer.compare(a.length(), b.length())
+                    : a.compareTo(b);
+            if (order != 0) {
+                return order;
+            }
+        }
+        return 0;
+    }
+
+    /** Segment {@code index} of an {@code X.Y.Z} version, leading zeros stripped. */
+    private static String segment(String version, int index) {
+        String[] parts = version.split("\\.");
+        String part = index < parts.length ? parts[index] : "0";
+        int firstSignificant = 0;
+        while (firstSignificant < part.length() - 1 && part.charAt(firstSignificant) == '0') {
+            firstSignificant++;
+        }
+        return part.substring(firstSignificant);
     }
 
     /**
@@ -798,17 +1014,22 @@ class VersionConsistencyGuardTest {
      */
     private String latestPublishedRelease() throws Exception {
         String changelog = Files.readString(PROJECT_ROOT.resolve("CHANGELOG.md"));
-        // Only a FINAL semver header (## vX.Y.Z — YYYY-MM-DD) counts as published on
-        // Maven Central. A dated pre-release header (## vX.Y.Z-rc.N — …) must NOT be
-        // treated as the published version — pre-releases never ship to Central — so the
-        // version group is anchored to \d+\.\d+\.\d+ with no suffix.
-        Matcher released = Pattern.compile("^## v(\\d+\\.\\d+\\.\\d+)\\s*[\\u2014\\-]\\s*\\d{4}-\\d{2}-\\d{2}", Pattern.MULTILINE)
-                .matcher(changelog);
+        Matcher released = DATED_FINAL_RELEASE.matcher(changelog);
         assertThat(released.find())
                 .describedAs("CHANGELOG.md must contain a dated final release entry (## vX.Y.Z — YYYY-MM-DD) to anchor the install snippets")
                 .isTrue();
         return released.group(1);
     }
+
+    /**
+     * A dated final release entry, {@code ## vX.Y.Z — YYYY-MM-DD}. Only a FINAL semver
+     * header counts as published on Maven Central. A dated pre-release header
+     * ({@code ## vX.Y.Z-rc.N — …}) must NOT be treated as a published version —
+     * pre-releases never ship to Central — so the version group is anchored to
+     * {@code X.Y.Z} with no suffix.
+     */
+    private static final Pattern DATED_FINAL_RELEASE = Pattern.compile(
+            "^## v(\\d+\\.\\d+\\.\\d+)\\s*[\\u2014\\-]\\s*\\d{4}-\\d{2}-\\d{2}", Pattern.MULTILINE);
 
     /**
      * One {@code ## vX.Y.Z — <marker>} entry: the release line it names, and whatever

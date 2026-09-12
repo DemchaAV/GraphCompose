@@ -73,6 +73,24 @@
 
         <!-- See the engine pom: opted in via -Dgpg.skip=false on the publish workflow. -->
         <gpg.skip>true</gpg.skip>
+
+        <!-- Binary-compatibility baselines for the japicmp profile below: the floor of
+             the current major and the latest release, each diffed in its own execution
+             (why both, and what runs while a new major has no release of its own:
+             docs/api-stability.md, Binary-compatibility enforcement).
+             cut-release.ps1 -PostReleaseOnly moves the previous pin after each release;
+             VersionConsistencyGuardTest derives both pins and japicmp.break.binary from
+             the working version and the CHANGELOG, and holds japicmp.version to the
+             engine pom's. Both pins name a published release STRICTLY OLDER than the
+             working version, so an artifact this build produces can never stand in for
+             a baseline. -->
+        <japicmp.version>0.26.2</japicmp.version>
+        <japicmp.baseline.floor>2.0.0</japicmp.baseline.floor>
+        <japicmp.baseline.previous>2.3.0</japicmp.baseline.previous>
+        <!-- True while the working major has a published release of its own. False only
+             during the cycle that opens a major, where the diff against the previous
+             major is a report: a major is allowed to break. -->
+        <japicmp.break.binary>true</japicmp.break.binary>
     </properties>
 
     <dependencies>
@@ -257,6 +275,91 @@
                             <publishingServerId>central</publishingServerId>
                             <autoPublish>false</autoPublish>
                             <waitUntil>validated</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
+            Binary-compatibility gate for this module. Activated with `-P japicmp`,
+            the same profile id as the engine pom, so one reactor invocation
+            (-pl :graph-compose-core,:graph-compose-templates) gates both modules.
+            Resolves the two published baselines pinned by japicmp.baseline.floor /
+            japicmp.baseline.previous from Maven Central and diffs the freshly-built
+            jar against each in its own execution; reports are named after the
+            execution id, so the two do not overwrite each other. Fails the build on
+            any binary-incompatible modification to the public surface; source-
+            incompatible changes are reported but do not fail, the engine's phased
+            policy. A baseline that cannot be resolved fails the build rather than
+            skipping its diff. Every templates.* package is Stable per
+            docs/api-stability.md and none is an @Internal tree, so the only exclusion
+            is the per-element @Internal marker, as in the engine pom.
+        -->
+        <profile>
+            <id>japicmp</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.siom79.japicmp</groupId>
+                        <artifactId>japicmp-maven-plugin</artifactId>
+                        <version>${japicmp.version}</version>
+                        <executions>
+                            <execution>
+                                <id>japicmp-against-major-floor</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>cmp</goal>
+                                </goals>
+                                <configuration>
+                                    <oldVersion>
+                                        <dependency>
+                                            <groupId>io.github.demchaav</groupId>
+                                            <artifactId>graph-compose-templates</artifactId>
+                                            <version>${japicmp.baseline.floor}</version>
+                                        </dependency>
+                                    </oldVersion>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>japicmp-against-previous-release</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>cmp</goal>
+                                </goals>
+                                <configuration>
+                                    <oldVersion>
+                                        <dependency>
+                                            <groupId>io.github.demchaav</groupId>
+                                            <artifactId>graph-compose-templates</artifactId>
+                                            <version>${japicmp.baseline.previous}</version>
+                                        </dependency>
+                                    </oldVersion>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <newVersion>
+                                <file>
+                                    <path>${project.build.directory}/${project.build.finalName}.jar</path>
+                                </file>
+                            </newVersion>
+                            <parameter>
+                                <onlyModified>true</onlyModified>
+                                <breakBuildOnBinaryIncompatibleModifications>${japicmp.break.binary}</breakBuildOnBinaryIncompatibleModifications>
+                                <breakBuildOnSourceIncompatibleModifications>false</breakBuildOnSourceIncompatibleModifications>
+                                <includeSynthetic>false</includeSynthetic>
+                                <reportOnlyFilename>true</reportOnlyFilename>
+                                <skipPomModules>true</skipPomModules>
+                                <!-- japicmp defaults this to true: a baseline it cannot resolve
+                                     is skipped with a warning, and the build passes having
+                                     compared nothing. False makes a mistyped or unpublished pin,
+                                     or a repository that cannot serve it, fail the build. -->
+                                <ignoreMissingOldVersion>false</ignoreMissingOldVersion>
+                                <excludes>
+                                    <exclude>@com.demcha.compose.document.api.Internal</exclude>
+                                </excludes>
+                            </parameter>
                         </configuration>
                     </plugin>
                 </plugins>

@@ -560,6 +560,29 @@ follow semantic versioning; release dates are ISO 8601.
   Per [`docs/api-stability.md`](docs/api-stability.md) § 3 it is Stable-tier, so it is removed
   no earlier than 3.0 and not before a full minor has shipped with the deprecation in place.
 
+### Build
+
+- **`graph-compose-templates` is under the binary-compatibility gate.** japicmp used to diff
+  `graph-compose-core` alone, so a Stable templates method could be deleted in a minor with
+  every check green. The module now carries its own `japicmp` profile, run by the same CI job,
+  the publish workflow and the release script, and diffs each build against two published
+  releases: the 2.x floor (`2.0.0`), which holds the GA surface, and the latest release
+  (`2.3.0` today), which holds everything added since. `cut-release.ps1 -PostReleaseOnly`
+  moves the second pin after each release. Every `templates.*` package is Stable, so the only
+  exclusion is the per-element `@Internal` marker, and nothing carries it. A baseline the gate
+  cannot resolve fails the build; japicmp's default would skip that diff with a warning and
+  pass. Each path that runs the gate then checks that every execution left its report, since
+  one that does not run — switched off, unbound, or not selected — writes none and fails
+  nothing. A pin may never name the version being built: japicmp resolves such a pin to the
+  artifact the build just produced and reports no differences, so both pins stay strictly
+  older than the working version, every path drops our cached artifacts before it resolves,
+  and the publish workflow runs the gate before the `install` that seeds the repository.
+  While a major has no release of its own, the pins name the previous major's floor and last
+  release and `japicmp.break.binary` is `false` — those diffs are reported, not enforced —
+  until the first post-release bump after `X.0.0` ships. `VersionConsistencyGuardTest` holds
+  the pins and that switch to the CHANGELOG, and `BinaryCompatibilityGateGuardTest` holds the
+  executions, their settings, the trigger, the report checks and the publish ordering in place.
+
 ### Documentation
 
 - **The timeline recipe describes the finished model.** `LEADING | AXIS | CONTENT`, what the

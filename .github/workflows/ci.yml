@@ -66,16 +66,17 @@ jobs:
         # in qa) run in build-and-test below, which now also covers docs-only PRs.
         run: |
           ./mvnw -B -ntp clean \
-            "-Dtest=EnginePdfBoundaryTest,DocumentationCoverageTest,CanonicalSurfaceGuardTest,PackageMapGuardTest,VersionConsistencyGuardTest,CiGuardListGuardTest,CiGateCoverageGuardTest,CodeQlScopeGuardTest,AgentsGuideGuardTest,BenchmarkDependencyInstallGuardTest" \
+            "-Dtest=EnginePdfBoundaryTest,DocumentationCoverageTest,CanonicalSurfaceGuardTest,PackageMapGuardTest,VersionConsistencyGuardTest,CiGuardListGuardTest,CiGateCoverageGuardTest,BinaryCompatibilityGateGuardTest,CodeQlScopeGuardTest,AgentsGuideGuardTest,BenchmarkDependencyInstallGuardTest" \
             test -pl :graph-compose-core
 
   changes:
     # Path-based change detection for selective CI on pull requests. Emits the
     # reverse-dependency flags the heavy jobs gate on: `code` (any build input),
-    # `docs` (markdown the guard suites read and compile), `core` (the root
-    # graph-compose-core module — drives japicmp), `perf`
-    # (modules the smoke benchmark exercises), and `jvm` (published library modules
-    # + toolchain — drives the JDK matrix width). Pushes/dispatch bypass these gates.
+    # `docs` (markdown the guard suites read and compile), `core` and `templates`
+    # (the graph-compose-core / graph-compose-templates sources + pom — the two
+    # modules under the japicmp gate), `perf` (modules the smoke benchmark
+    # exercises), and `jvm` (published library modules + toolchain — drives the
+    # JDK matrix width). Pushes/dispatch bypass these gates.
     name: Detect changed paths
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
@@ -83,6 +84,7 @@ jobs:
       code: ${{ steps.filter.outputs.code }}
       docs: ${{ steps.filter.outputs.docs }}
       core: ${{ steps.filter.outputs.core }}
+      templates: ${{ steps.filter.outputs.templates }}
       perf: ${{ steps.filter.outputs.perf }}
       jvm: ${{ steps.filter.outputs.jvm }}
     steps:
@@ -133,6 +135,9 @@ jobs:
             core:
               - 'core/src/**'
               - 'core/pom.xml'
+            templates:
+              - 'templates/src/**'
+              - 'templates/pom.xml'
             perf:
               - 'core/src/**'
               - 'render-pdf/**'
@@ -478,9 +483,13 @@ jobs:
 
   binary-compat:
     name: Binary Compatibility (japicmp vs pom baseline)
-    # japicmp diffs the graph-compose-core public surface, so it only matters
-    # when the core module (`core/src/**` or `core/pom.xml`) changed.
-    if: github.event_name == 'pull_request' && needs.changes.outputs.core == 'true'
+    # japicmp diffs the graph-compose-core and graph-compose-templates public
+    # surfaces (each module carries a `japicmp` profile), so it only matters when
+    # one of them changed (`core/src/**`, `core/pom.xml`, `templates/src/**` or
+    # `templates/pom.xml`). Both are diffed in one reactor invocation: templates
+    # compiles against the core built in the same run, and a core change can move
+    # the surface templates exposes.
+    if: github.event_name == 'pull_request' && (needs.changes.outputs.core == 'true' || needs.changes.outputs.templates == 'true')
     needs: [architecture-and-documentation-guards, changes]
     runs-on: ubuntu-latest
     env:
@@ -506,21 +515,47 @@ jobs:
       - name: Install graph-compose-emoji (resolved at test scope by core)
         run: ./mvnw -B -ntp -f emoji/pom.xml -DskipTests install
 
+      - name: Drop cached GraphCompose artifacts before the gate resolves
+        # The gate must diff against the PUBLISHED baselines. Anything of ours
+        # already in the runner's cached repository could stand in for one, so
+        # the pinned coordinates are fetched from Central for this run. The
+        # modules under test come from the reactor, never from the repository.
+        run: |
+          rm -rf ~/.m2/repository/io/github/demchaav/graph-compose-core
+          rm -rf ~/.m2/repository/io/github/demchaav/graph-compose-templates
+
       - name: Compare public API against baseline
-        # The `japicmp` profile resolves the baseline release pinned
-        # by the `japicmp.baseline` property in core/pom.xml (the
-        # published graph-compose-core on Maven Central) and diffs it
-        # against the freshly-built artifact. Fails the job on any binary-
-        # incompatible modification to the public surface. Source-
-        # incompatible changes are reported only (phased policy).
-        run: ./mvnw -B -ntp -DskipTests -P japicmp verify -pl :graph-compose-core
+        # Each module's `japicmp` profile resolves the published releases its
+        # pom pins from Maven Central and diffs them against the freshly-built
+        # artifact: graph-compose-core against `japicmp.baseline` (the 2.x
+        # floor), graph-compose-templates against `japicmp.baseline.floor` and
+        # `japicmp.baseline.previous` (the floor and the latest release). Fails
+        # the job on any binary-incompatible modification to either public
+        # surface. Source-incompatible changes are reported only (phased policy).
+        run: ./mvnw -B -ntp -DskipTests -P japicmp verify -pl :graph-compose-core,:graph-compose-templates
+
+      - name: Prove every japicmp execution ran
+        # A japicmp execution that does not run — switched off, unbound from the
+        # lifecycle, or left out of the reactor — writes no report and fails
+        # nothing, so the step above can pass having diffed nothing. Each execution
+        # the gate relies on must have left its XML report;
+        # BinaryCompatibilityGateGuardTest keeps this list in step with the poms.
+        # (A baseline japicmp cannot resolve still leaves a report; the templates
+        # gate fails on it through ignoreMissingOldVersion=false.)
+        run: |
+          ls -l core/target/japicmp templates/target/japicmp
+          test -s core/target/japicmp/japicmp-against-baseline.xml
+          test -s templates/target/japicmp/japicmp-against-major-floor.xml
+          test -s templates/target/japicmp/japicmp-against-previous-release.xml
 
       - name: Upload japicmp report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: japicmp-report-${{ github.run_id }}
-          path: core/target/japicmp/**
+          path: |
+            core/target/japicmp/**
+            templates/target/japicmp/**
           if-no-files-found: ignore
 
   perf-smoke:

@@ -92,12 +92,18 @@
         <!-- Binary compatibility baseline (japicmp profile) -->
         <japicmp.version>0.26.2</japicmp.version>
         <!-- 2.x binary-compatibility baseline: the published graph-compose-core on
-             Maven Central. The 2.0 major transition is complete, so the gate now
-             enforces binary compatibility against 2.0.0 (see the japicmp profile).
-             The gate is a no-op while the working version equals the baseline
-             (2.0.0) and becomes active the moment the version bumps to the next
-             -SNAPSHOT — proven: 2.0.1-SNAPSHOT + a reduced-access public method
-             fails with METHOD_LESS_ACCESSIBLE. -->
+             Maven Central. The 2.0 major transition is complete, so the gate
+             enforces binary compatibility against 2.0.0 (see the japicmp profile)
+             — proven: 2.0.1-SNAPSHOT + a reduced-access public method fails with
+             METHOD_LESS_ACCESSIBLE. It must stay STRICTLY OLDER than the working
+             version, which VersionConsistencyGuardTest enforces: a baseline equal
+             to the version being built is NOT a no-op — japicmp resolves it to this
+             build's own artifact and reports no differences, so the gate passes
+             having compared the release with itself (measured on a simulated 3.0.0
+             cut). Moving this pin onto a new major therefore waits until that
+             major's first release is on Central; docs/api-stability.md (Opening a
+             major) records how the templates gate handles that cycle, and this one
+             needs the same decision when 3.0 opens. -->
         <japicmp.baseline>2.0.0</japicmp.baseline>
 
         <!--

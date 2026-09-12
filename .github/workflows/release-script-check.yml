@@ -12,10 +12,13 @@ on:
     paths:
       - 'scripts/cut-release.ps1'
       - '.github/workflows/release-script-check.yml'
+      # Carries the japicmp previous-release pin the script moves.
+      - 'templates/pom.xml'
   pull_request:
     paths:
       - 'scripts/cut-release.ps1'
       - '.github/workflows/release-script-check.yml'
+      - 'templates/pom.xml'
 
 permissions:
   contents: read
@@ -351,3 +354,98 @@ jobs:
           if ((Get-Content $roadmap -Raw) -ne $after) { throw "a second promotion changed the file" }
 
           Write-Host "roadmap promotion: 3 refusals, 1 rewrite, idempotent on re-run."
+
+      - name: Unit-check the japicmp previous-release baseline move
+        shell: pwsh
+        run: |
+          # The japicmp previous-release pin has to move onto the version just published
+          # at every cut (docs/api-stability.md, Binary-compatibility enforcement), so the
+          # move is code that has to be exercised, not a step someone remembers. Lifted by
+          # AST like the checks above, so the code under test is the code that ships.
+          $path = (Resolve-Path scripts/cut-release.ps1).Path
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
+          $want = @('Update-JapicmpPreviousBaseline', 'Update-JapicmpMajorBaseline')
+          $fn = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $want -contains $n.Name
+            }, $true)
+          $missing = $want | Where-Object { $_ -notin ($fn | ForEach-Object { $_.Name }) }
+          if ($missing) { throw "cut-release.ps1 no longer defines: $($missing -join ', ')" }
+          Invoke-Expression (($fn | ForEach-Object { $_.Extent.Text }) -join "`n")
+          function Note($m) { Write-Host "    $m" }
+          $DryRun = $false
+
+          # A function nothing calls moves no pin. Assert the post-release path still
+          # invokes every one of them: the failure this guards is a helper surviving a
+          # refactor that drops the call, which every content assertion below would still
+          # pass — the pin it moves simply stops moving.
+          $calls = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.CommandAst] -and
+              $want -contains $n.GetCommandName()
+            }, $true)
+          $called = $calls | ForEach-Object { $_.GetCommandName() } | Select-Object -Unique
+          $uncalled = $want | Where-Object { $_ -notin $called }
+          if ($uncalled) { throw "nothing in cut-release.ps1 calls: $($uncalled -join ', ')" }
+
+          function New-Pom($previous) {
+            $file = Join-Path ([IO.Path]::GetTempPath()) ("pom-" + [guid]::NewGuid().ToString() + ".xml")
+            Set-Content -Path $file -NoNewline -Value (@(
+              '<project>',
+              '  <version>2.4.1-SNAPSHOT</version>',
+              '  <properties>',
+              '    <japicmp.baseline.floor>2.0.0</japicmp.baseline.floor>',
+              "    <japicmp.baseline.previous>$previous</japicmp.baseline.previous>",
+              '    <japicmp.break.binary>false</japicmp.break.binary>',
+              '  </properties>',
+              '</project>'
+            ) -join "`n")
+            return $file
+          }
+
+          $pom = New-Pom '2.3.0'
+          if (-not (Update-JapicmpPreviousBaseline $pom '2.4.0')) { throw 'moving the pin reported no change' }
+          $after = Get-Content $pom -Raw
+          if ($after -notmatch '<japicmp\.baseline\.previous>2\.4\.0</japicmp\.baseline\.previous>') {
+            throw "the previous-release pin did not move:`n$after"
+          }
+          if ($after -notmatch '<japicmp\.baseline\.floor>2\.0\.0</japicmp\.baseline\.floor>') {
+            throw "the major floor must not move at a cut:`n$after"
+          }
+          if ($after -notmatch '<version>2\.4\.1-SNAPSHOT</version>') { throw "the project version was rewritten:`n$after" }
+
+          if (Update-JapicmpPreviousBaseline $pom '2.4.0') { throw 'a second move reported a change' }
+
+          $bare = Join-Path ([IO.Path]::GetTempPath()) ("pom-" + [guid]::NewGuid().ToString() + ".xml")
+          Set-Content -Path $bare -NoNewline -Value "<project>`n  <version>2.4.1-SNAPSHOT</version>`n</project>"
+          if (Update-JapicmpPreviousBaseline $bare '2.4.0') { throw 'a pom without the pin reported a change' }
+          if (Update-JapicmpPreviousBaseline (Join-Path ([IO.Path]::GetTempPath()) 'no-such-pom.xml') '2.4.0') {
+            throw 'a missing pom reported a change'
+          }
+
+          # And on the real templates pom, so the pattern is proven against the file it
+          # has to move rather than only against one written to fit it.
+          $real = Join-Path ([IO.Path]::GetTempPath()) ("templates-pom-" + [guid]::NewGuid().ToString() + ".xml")
+          Copy-Item templates/pom.xml $real
+          if (-not (Update-JapicmpPreviousBaseline $real '9.9.9')) { throw 'the real templates pom: the pin did not move' }
+          $expected = [regex]::Replace((Get-Content templates/pom.xml -Raw),
+                                       '<japicmp\.baseline\.previous>[^<]*</japicmp\.baseline\.previous>',
+                                       '<japicmp.baseline.previous>9.9.9</japicmp.baseline.previous>')
+          if ((Get-Content $real -Raw) -ne $expected) { throw 'the real templates pom: the move changed more than the pin' }
+
+          # Opening a major is the one release that moves the floor and turns the break
+          # switch back on; every other release leaves both alone (docs/api-stability.md,
+          # Opening a major). Until that release ships, the pins name the previous major.
+          $bootstrap = New-Pom '2.4.0'
+          if (-not (Update-JapicmpMajorBaseline $bootstrap '3.0.0')) { throw 'the X.0.0 release did not move the floor' }
+          $opened = Get-Content $bootstrap -Raw
+          if ($opened -notmatch '<japicmp\.baseline\.floor>3\.0\.0</japicmp\.baseline\.floor>') {
+            throw "the floor did not move onto the release that opened the major:`n$opened"
+          }
+          if ($opened -notmatch '<japicmp\.break\.binary>true</japicmp\.break\.binary>') {
+            throw "the break switch did not return to true:`n$opened"
+          }
+          if (Update-JapicmpMajorBaseline $bootstrap '3.0.0') { throw 'a second major move reported a change' }
+          if (Update-JapicmpMajorBaseline (New-Pom '2.4.0') '3.0.1') { throw 'a patch release must not move the floor' }
+
+          Write-Host 'japicmp baseline: previous moves, floor stays except at X.0.0, idempotent, the real pom moves, and the cut calls both.'

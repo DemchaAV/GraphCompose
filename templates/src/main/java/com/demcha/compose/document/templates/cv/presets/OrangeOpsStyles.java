@@ -244,6 +244,17 @@ final class OrangeOpsStyles {
     static final double EDUCATION_ICON_COLUMN = 69 * PX;
     static final double CERT_TEXT_INSET = 16 * PX;
     static final double BULLET_SIZE = 5 * PX;
+
+    /**
+     * The distance from a skill's accent dot to its name.
+     *
+     * <p>Recovered rather than declared. The dot and the name were a paragraph
+     * with four literal spaces between them, and four spaces of this face at the
+     * aside's body size are a fact about the face rather than a distance the
+     * design asked for. The nearest round value in the sheet's own unit is what
+     * stands here, and the difference it makes is recorded with the change.</p>
+     */
+    static final double SKILL_BULLET_GAP = 15 * PX;
     static final double DATE_COLUMN_RATIO = 0.30;
     static final double METRIC_SEPARATOR = 0.6;
 

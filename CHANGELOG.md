@@ -898,6 +898,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **Orange Ops' skills are a real list.** Each name was a paragraph opened by an accent
+  dot, because a list marker used to take the list's own text colour and these dots are
+  accent against charcoal. The gap between dot and name was four literal spaces, which is a
+  measurement of the face rather than a distance the design states; it is now
+  `SKILL_BULLET_GAP`, the nearest round value in the sheet's own unit, and the dot is the
+  list's marker. Measured: **one named node moves, by `placementWidth` +0.067pt** — the
+  difference between those four spaces and the declared gap — with no x, no y, no page
+  ownership, still one page. 4 784 pixels of 500 395 change at zero tolerance, maxDelta 15,
+  so the pixel gate never noticed; the baseline is re-recorded anyway, with all 126 hashed
+  either side to prove only this one moved. Eleven `Skill*` paragraph nodes become one
+  `SkillNames` list node.
+
 - **Teal Pulse's dotted lines are a real list, so its one declared gap is the gap it
   draws.** The sheet's competencies, experience highlights and certifications were a
   paragraph per label: a teal dot, then a run of spaces standing in for the gap, then the

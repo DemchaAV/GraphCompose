@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.CvEntry;
 import com.demcha.compose.document.templates.cv.data.CvSkill;
@@ -46,6 +47,7 @@ import static com.demcha.compose.document.templates.cv.presets.OrangeOpsStyles.I
 import static com.demcha.compose.document.templates.cv.presets.OrangeOpsStyles.LATO;
 import static com.demcha.compose.document.templates.cv.presets.OrangeOpsStyles.MUTED;
 import static com.demcha.compose.document.templates.cv.presets.OrangeOpsStyles.RULE_TO_BODY;
+import static com.demcha.compose.document.templates.cv.presets.OrangeOpsStyles.SKILL_BULLET_GAP;
 import static com.demcha.compose.document.templates.cv.presets.OrangeOpsStyles.SKILL_PITCH;
 import static com.demcha.compose.document.templates.cv.presets.OrangeOpsStyles.gap;
 import static com.demcha.compose.document.templates.cv.presets.OrangeOpsStyles.leading;
@@ -105,12 +107,17 @@ final class OrangeOpsAside {
     }
 
     /**
-     * The skills — one paragraph per name, opened by an inline accent dot.
+     * The skills — a list of charcoal names, each opened by an accent dot.
      *
-     * <p>Not a list: a list marker takes the list's own text colour, and here
-     * the dots are accent against charcoal text. The design draws one flat run
-     * of names, so a section that groups its skills has its groups flattened in
-     * the order they were given; the group names are not drawn.</p>
+     * <p>The dot is the list's marker and {@link OrangeOpsStyles#SKILL_BULLET_GAP}
+     * the gap after it. It was a paragraph per name, because a list marker used
+     * to take the list's own text colour and these dots are accent against
+     * charcoal; the gap was four literal spaces, which is a measurement of the
+     * face rather than a distance the design states.</p>
+     *
+     * <p>The design draws one flat run of names, so a section that groups its
+     * skills has its groups flattened in the order they were given; the group
+     * names are not drawn.</p>
      */
     private static void renderSkills(SectionBuilder side, SkillsSection skills) {
         side.addSection("Skills", block -> {
@@ -123,22 +130,26 @@ final class OrangeOpsAside {
                     names.add(skill.name());
                 }
             }
-            for (int i = 0; i < names.size(); i++) {
-                String name = names.get(i);
-                int index = i;
-                // The section's own spacing is the item pitch, which is tighter
-                // than the gap under the accent rule; the first item makes up
-                // the difference rather than the rule being nudged.
-                float lead = i == 0 ? (float) Math.max(0.0, RULE_TO_BODY - itemGap) : 0f;
-                block.addParagraph(p -> p
-                        .name("Skill" + index)
+            DocumentTextStyle nameStyle = style(BODY_FONT, BODY_SIZE, BODY, false);
+            // The section's own spacing is the item pitch, which is tighter than
+            // the gap under the accent rule; the list's top margin makes up the
+            // difference rather than the rule being nudged. It sits on the list
+            // because the list's first item is the block's first item.
+            float lead = (float) Math.max(0.0, RULE_TO_BODY - itemGap);
+            block.addList(list -> {
+                list.name("SkillNames")
+                        .textStyle(nameStyle)
                         .lineSpacing(0)
-                        .textStyle(style(BODY_FONT, BODY_SIZE, BODY, false))
-                        .dot(BULLET_SIZE, ACCENT)
-                        .inlineText("    ", style(BODY_FONT, BODY_SIZE, BODY, false))
-                        .inlineText(name, style(BODY_FONT, BODY_SIZE, BODY, false))
-                        .margin(lead, 0f, 0f, 0f));
-            }
+                        .marker(marker -> marker.dot(BULLET_SIZE, ACCENT))
+                        .hangingIndent(true)
+                        .markerGap(SKILL_BULLET_GAP)
+                        .itemSpacing(itemGap)
+                        .normalizeMarkers(false)
+                        .margin(new DocumentInsets(lead, 0, 0, 0));
+                for (String name : names) {
+                    list.addItem(name);
+                }
+            });
         });
     }
 

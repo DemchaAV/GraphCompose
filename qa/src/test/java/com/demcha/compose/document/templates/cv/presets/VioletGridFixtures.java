@@ -49,6 +49,60 @@ final class VioletGridFixtures {
         return new CvDocument(identity(), placements);
     }
 
+    /**
+     * The canonical CV with six earlier roles appended, which is enough to run the sheet
+     * past one page and to carry the role list itself across the break.
+     *
+     * <p>Only the experience list grows. Every other section, the identity and every layout
+     * constant are the canonical ones, so what this fixture exercises is the preset's stated
+     * overflow behaviour — a CV with more content than the design holds runs onto a second
+     * page rather than losing anything — and not some other design.</p>
+     */
+    static CvDocument overflowCv() {
+        List<CvDocument.Placement> placements = new ArrayList<>();
+        placements.add(new CvDocument.Placement(Slot.MAIN, summary()));
+        placements.add(new CvDocument.Placement(Slot.MAIN, skills()));
+        placements.add(new CvDocument.Placement(Slot.MAIN, tools()));
+        placements.add(new CvDocument.Placement(Slot.MAIN, experienceWithEarlierRoles()));
+        placements.add(new CvDocument.Placement(Slot.MAIN, projects()));
+        placements.add(new CvDocument.Placement(Slot.FOOTER, education()));
+        placements.add(new CvDocument.Placement(Slot.FOOTER, languages()));
+        placements.add(new CvDocument.Placement(Slot.FOOTER, quote()));
+        return new CvDocument(identity(), placements);
+    }
+
+    /**
+     * The canonical three roles, then six earlier ones of the same shape.
+     *
+     * <p>Six rather than three on purpose: with three the roles still fit the first page and
+     * only the sections after them move, which exercises the bands but never breaks the rail.
+     * Six carries the list itself across the boundary, which is the case worth pinning.</p>
+     */
+    private static EntriesSection experienceWithEarlierRoles() {
+        List<CvEntry> entries = new ArrayList<>(experience().entries());
+        entries.add(earlierRole("Product Designer", "Harbour Labs", "2018 - 2020"));
+        entries.add(earlierRole("Interaction Designer", "Ridgeway Studio", "2016 - 2018"));
+        entries.add(earlierRole("Junior Designer", "Fieldnote Agency", "2014 - 2016"));
+        entries.add(earlierRole("Design Intern", "Fieldnote Agency", "2013 - 2014"));
+        entries.add(earlierRole("Visual Designer", "Copperline Co", "2012 - 2013"));
+        entries.add(earlierRole("Design Assistant", "Copperline Co", "2011 - 2012"));
+        return new EntriesSection("EXPERIENCE", entries);
+    }
+
+    private static CvEntry earlierRole(String title, String employer, String dates) {
+        return CvEntry.builder(title)
+                .subtitle(employer)
+                .place("San Francisco, CA")
+                .date(dates)
+                .body(String.join(NEWLINE,
+                        "Designed and shipped product surfaces across web and mobile, "
+                                + "working from research through to handover.",
+                        "Ran usability sessions and fed the findings back into the next "
+                                + "iteration of the interface.",
+                        "Maintained the shared component library and its documentation."))
+                .build();
+    }
+
     static CvIdentity identity() {
         return new CvIdentity(
                 CvName.of("SOFIA", "MARTINEZ"),

@@ -312,6 +312,15 @@ class VersionConsistencyGuardTest {
      */
     @Test
     void noJapicmpBaselineNamesTheVersionBeingBuilt() throws Exception {
+        assertThat(JAPICMP_BASELINE_PINS.keySet())
+                .describedAs("every module whose pom declares the japicmp profile must list its "
+                        + "baseline pins here: a gated module missing from this map is free to pin "
+                        + "the version being built, and japicmp then compares that release with its "
+                        + "own artifact and passes")
+                .containsAll(BinaryCompatibilityGateGuardTest.gatedModules().stream()
+                        .map(module -> module + "/pom.xml")
+                        .toList());
+
         for (Map.Entry<String, List<String>> pom : JAPICMP_BASELINE_PINS.entrySet()) {
             Path path = PROJECT_ROOT.resolve(pom.getKey());
             String working = releaseLineOf(effectiveVersion(path));

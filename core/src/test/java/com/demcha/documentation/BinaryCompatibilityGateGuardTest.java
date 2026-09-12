@@ -135,6 +135,13 @@ class BinaryCompatibilityGateGuardTest {
      */
     @Test
     void everyJapicmpExecutionTheGateReliesOnStillRuns() throws Exception {
+        assertThat(REQUIRED_EXECUTIONS.keySet())
+                .describedAs("every module whose pom declares the japicmp profile must name its "
+                        + "executions here: one missing from this map has no execution bound, no "
+                        + "baseline checked and no report proved, so its diff can stop running with "
+                        + "every check in this class green")
+                .containsAll(gatedModules().stream().map(module -> module + "/pom.xml").toList());
+
         for (Map.Entry<String, Map<String, String>> pom : REQUIRED_EXECUTIONS.entrySet()) {
             String where = pom.getKey();
             Element plugin = japicmpPlugin(PROJECT_ROOT.resolve(where));
@@ -464,8 +471,12 @@ class BinaryCompatibilityGateGuardTest {
         return Pattern.compile("(?m)^\\s+rm -rf [^\\n]*/io/github/demchaav/" + Pattern.quote(artifact) + "\\s*$");
     }
 
-    /** Every module directory whose pom declares a {@code japicmp} profile, sorted. */
-    private static List<String> gatedModules() throws Exception {
+    /**
+     * Every module directory whose pom declares a {@code japicmp} profile, sorted. Package-visible
+     * because {@code VersionConsistencyGuardTest} holds the same discovered set to its map of
+     * baseline pins, so one discovery decides what both classes are required to cover.
+     */
+    static List<String> gatedModules() throws Exception {
         List<Path> poms;
         try (Stream<Path> entries = Files.list(PROJECT_ROOT)) {
             poms = entries.filter(Files::isDirectory)

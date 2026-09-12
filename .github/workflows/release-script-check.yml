@@ -376,14 +376,17 @@ jobs:
           $DryRun = $false
 
           # A function nothing calls moves no pin. Assert the post-release path still
-          # invokes it: the failure this guards is the helper surviving a refactor that
-          # drops the call, which every content assertion below would still pass.
+          # invokes every one of them: the failure this guards is a helper surviving a
+          # refactor that drops the call, which every content assertion below would still
+          # pass — the pin it moves simply stops moving.
           $calls = $ast.FindAll({
               param($n)
               $n -is [System.Management.Automation.Language.CommandAst] -and
-              $n.GetCommandName() -eq 'Update-JapicmpPreviousBaseline'
+              $want -contains $n.GetCommandName()
             }, $true)
-          if (-not $calls) { throw 'nothing in cut-release.ps1 calls Update-JapicmpPreviousBaseline' }
+          $called = $calls | ForEach-Object { $_.GetCommandName() } | Select-Object -Unique
+          $uncalled = $want | Where-Object { $_ -notin $called }
+          if ($uncalled) { throw "nothing in cut-release.ps1 calls: $($uncalled -join ', ')" }
 
           function New-Pom($previous) {
             $file = Join-Path ([IO.Path]::GetTempPath()) ("pom-" + [guid]::NewGuid().ToString() + ".xml")

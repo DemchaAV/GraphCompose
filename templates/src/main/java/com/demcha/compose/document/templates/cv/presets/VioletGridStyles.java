@@ -294,11 +294,23 @@ final class VioletGridStyles {
     static final double LOCATION_COLUMN = px(200);
     static final double ROLE_COLUMN = ENTRY_WIDTH - LOCATION_COLUMN;
 
-    /** The dates sit back at the page margin, outside the rail. */
-    static final double DATE_OFFSET = -(RAIL_INDENT + ENTRY_INDENT);
+    /** Air between the dates and the disc. */
+    static final double DATE_TO_MARKER = px(18);
 
-    /** Half the disc, plus the indent, puts its centre on the border. */
-    static final double MARKER_OFFSET = -(ENTRY_INDENT + MARKER_DIAMETER / 2.0);
+    /**
+     * The dates' column: from the page margin to the disc, less that air.
+     *
+     * <p>Everything before the rail belongs to the dates and the air after them, and the
+     * rail runs through the disc's centre — so the column is the rail indent less half a
+     * disc less the air. It comes to 61.93pt, and the longest date this design sets,
+     * {@code 2022 - Present}, measures 57.01, so it stays on one line with room to spare.
+     * The measurement is why the air is stated and the column derived rather than the other
+     * way round: a column named directly would be a number chosen to clear one string.</p>
+     */
+    static final double DATE_COLUMN = RAIL_INDENT - MARKER_DIAMETER / 2.0 - DATE_TO_MARKER;
+
+    /** The disc's own column, and the air between it and the copy. */
+    static final double MARKER_TO_COPY = ENTRY_INDENT - MARKER_DIAMETER / 2.0;
 
     static final double BULLET_COLUMN = px(16);
     static final double BULLET_DOT_DIAMETER = px(6);

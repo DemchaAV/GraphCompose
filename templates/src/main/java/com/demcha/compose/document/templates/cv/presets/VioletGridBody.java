@@ -4,13 +4,15 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.TableBuilder;
+import com.demcha.compose.document.dsl.TimelineMarker;
+import com.demcha.compose.document.dsl.TimelineRailExtent;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.HorizontalAlign;
-import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
@@ -31,7 +33,8 @@ import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.BULLET_DOT_DIAMETER;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.BULLET_PITCH;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.CONTENT_WIDTH;
-import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.DATE_OFFSET;
+import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.DATE_COLUMN;
+import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.DATE_TO_MARKER;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.DISPLAY_FONT;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.EMPLOYER_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.ENTRY_GAP;
@@ -49,7 +52,7 @@ import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.LOCATION_COLUMN;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.LOCATION_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.MARKER_DIAMETER;
-import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.MARKER_OFFSET;
+import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.MARKER_TO_COPY;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.MUTED;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.PERIOD_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.PIPE;
@@ -224,10 +227,10 @@ final class VioletGridBody {
     /**
      * The dated timeline.
      *
-     * <p>The entries host is indented so its LEFT EDGE lands on the rail. That
-     * is what lets each entry's left border BE the rail: consecutive entries
-     * butt together into one unbroken line, and it stops at the last marker
-     * because the last entry does not carry it.</p>
+     * <p>Three columns, which is what the design has always been: the dates out at the page
+     * margin, the discs on the rail, the copy inside it. Each is stated once for the whole
+     * timeline, so the dates cannot drift the markers and a longer date cannot move the
+     * copy. The rail is the timeline's own, drawn from where the markers landed.</p>
      */
     static void renderExperience(PageFlowBuilder page, EntriesSection experience) {
         if (experience == null || experience.entries().isEmpty()) {
@@ -238,43 +241,69 @@ final class VioletGridBody {
         page.addSection("ExperienceEntries", host -> {
             host.spacing(0);
             host.margin((float) HEADING_TO_ENTRIES, 0f, 0f, 0f);
-            host.padding(0f, 0f, 0f, (float) RAIL_INDENT);
-            for (int i = 0; i < entries.size(); i++) {
-                CvEntry entry = entries.get(i);
-                boolean last = i == entries.size() - 1;
-                int index = i;
-                host.addSection("ExperienceEntry_" + index, body -> {
-                    body.spacing(0);
-                    body.keepTogether();
-                    if (!last) {
-                        body.accentLeft(RULE, RAIL_THICKNESS);
-                    }
-                    body.padding(0f, 0f, last ? 0f : (float) ENTRY_GAP, (float) ENTRY_INDENT);
-                    renderEntry(body, entry, index);
-                });
-            }
+            host.addTimeline(timeline -> {
+                // Each gap is its own: the dates' column plus the air after it puts the
+                // disc's centre on the rail, and the air after the disc puts the copy one
+                // entry indent inside it. With a single gap for both, the dates' column
+                // would be whatever was left over — 55.86pt, which breaks the longest date
+                // across two lines.
+                timeline.markerOnRail()
+                        .rail(rail -> rail
+                                .stroke(DocumentStroke.of(RULE, RAIL_THICKNESS))
+                                .extent(TimelineRailExtent.MARKER_TO_MARKER))
+                        .leadingColumn(DocumentRowColumn.fixed(DATE_COLUMN))
+                        .leadingGap(DATE_TO_MARKER)
+                        .axisWidth(MARKER_DIAMETER)
+                        .markerGap(MARKER_TO_COPY)
+                        .gutter(0)
+                        .spacing(ENTRY_GAP)
+                        .keepEntriesTogether();
+                for (int i = 0; i < entries.size(); i++) {
+                    CvEntry entry = entries.get(i);
+                    int index = i;
+                    timeline.entry(entryMarker(index), e -> e
+                            .leading(column -> period(column, entry, index))
+                            .content(column -> renderEntry(column, entry, index)));
+                }
+            });
         });
     }
 
     /**
-     * One entry: the title line with its dates and marker, then the bullets.
+     * The disc, in a box the height of the title line it belongs to.
      *
-     * <p>The dates and the disc ride the title line's own layer stack at
-     * negative offsets, so both are placed relative to the line they belong to
-     * rather than at a measured y. The title itself is a two-column table — a
-     * row here would be a row inside a row's cell.</p>
+     * <p>Declaring the line rather than the disc is what keeps the mark where it was: a
+     * timeline top-aligns a marker in its column, so a box the size of the disc would ride
+     * the line's top edge instead of its middle. A box the size of the line, with the disc
+     * centred in it, puts the disc where the layer stack used to hold it — and puts the
+     * rail's anchor, that box's own centre, through the disc rather than above it.</p>
+     */
+    private static TimelineMarker entryMarker(int index) {
+        return TimelineMarker.custom(MARKER_DIAMETER, ROLE_SIZE * LINE_FACTOR, column -> {
+            column.spacing(0);
+            column.padding((float) centred(MARKER_DIAMETER), 0f, 0f, 0f);
+            column.add(markerDot("Marker_" + index, MARKER_DIAMETER,
+                    MARKER_DIAMETER / LINE_FACTOR, ACCENT));
+        });
+    }
+
+    /** The dates, in their own column, dropped onto the title line's setting. */
+    private static void period(SectionBuilder column, CvEntry entry, int index) {
+        column.spacing(0);
+        column.padding((float) centred(PERIOD_SIZE * LINE_FACTOR), 0f, 0f, 0f);
+        column.add(text("Period_" + index, entry.date(),
+                style(BODY_FONT, PERIOD_SIZE, ACCENT, false)));
+    }
+
+    /**
+     * One entry: the title line, then the bullets.
+     *
+     * <p>The title is a two-column table — a row here would be a row inside a row's
+     * cell.</p>
      */
     private static void renderEntry(SectionBuilder body, CvEntry entry, int index) {
-        body.addLayerStack(stack -> stack
-                .name("EntryTitle_" + index)
-                .layer(titleLine(entry, index), LayerAlign.TOP_LEFT, 0)
-                .position(text("Period_" + index, entry.date(),
-                                style(BODY_FONT, PERIOD_SIZE, ACCENT, false)),
-                        DATE_OFFSET, centred(PERIOD_SIZE * LINE_FACTOR),
-                        LayerAlign.TOP_LEFT, 1)
-                .position(markerDot("Marker_" + index, MARKER_DIAMETER,
-                                MARKER_DIAMETER / LINE_FACTOR, ACCENT),
-                        MARKER_OFFSET, centred(MARKER_DIAMETER), LayerAlign.TOP_LEFT, 1));
+        body.spacing(0);
+        body.add(titleLine(entry, index));
         List<String> highlights = lines(entry.body());
         if (highlights.isEmpty()) {
             return;

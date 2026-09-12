@@ -1,8 +1,9 @@
 package com.demcha.compose.document.templates.cv.presets;
 
-import com.demcha.compose.document.dsl.EllipseBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.dsl.TimelineMarker;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.node.TextAlign;
@@ -47,20 +48,20 @@ import static com.demcha.compose.document.templates.cv.presets.MidnightNavyStyle
  * The paper column: the summary, the roles held on a rail, the achievement
  * discs and the certifications.
  *
- * <h2>Why the rail is an accent and not a timeline</h2>
+ * <h2>The rail</h2>
  *
- * <p>A timeline builder has no slot for a date on the far side of its rail and
- * discards a negative gutter, so its marker cannot centre on the rail. Here the
- * rail is instead the left accent of the entry section, so its height derives
- * from the entry it belongs to, and the gap between entries is bottom padding
- * <em>inside</em> the border — which is what makes consecutive rails meet
- * rather than leaving a break between roles.</p>
+ * <p>The roles are a timeline: one rail, one marker per role, sitting on it. It was built
+ * from a per-entry left accent with the marker positioned into a layer stack, because a
+ * timeline could not then put a marker on its rail. It can — {@code markerOnRail()} anchors
+ * the rail through the marker's centre — so the rail is the timeline's, and the layer stack
+ * and its offsets are gone.</p>
  *
- * <p>An accent is drawn centred on the edge it belongs to, so the section's
- * left edge already <em>is</em> the rail's axis: a marker reaches it by walking
- * back across the gutter and half its own width, and nothing else. Correcting
- * by half the rail's thickness on top of that lands every marker a rail width
- * to the right of the line it is meant to sit on.</p>
+ * <p>Two things keep the drawing where it was. The rail's ends come from
+ * {@code ENTRY_BOUNDS}, which spans the entries' own boxes: the gap between roles is padding
+ * inside an entry's box and the last entry carries none, so consecutive segments meet and
+ * nothing trails past the final marker, exactly as the accents did. And the axis column
+ * centres the rail on itself, so the timeline starts half an axis to the left and the rail
+ * lands back on the column edge the heading rule shares.</p>
  */
 final class MidnightNavyMain {
 
@@ -110,87 +111,110 @@ final class MidnightNavyMain {
         column.addSection("Experience", block -> {
             block.spacing(0);
             MidnightNavyWidgets.mainHeading(block, experience.title(), MAIN_RULE_THICKNESS, px(23));
-            List<CvEntry> entries = experience.entries();
-            for (int i = 0; i < entries.size(); i++) {
-                renderExperienceEntry(block, entries.get(i), i == entries.size() - 1);
-            }
+            renderExperienceTimeline(block, experience.entries());
         });
     }
 
-    private static void renderExperienceEntry(SectionBuilder block, CvEntry entry, boolean last) {
-        block.addSection("ExperienceEntry", section -> {
-            section.spacing(0)
-                    .keepTogether()
-                    .accentLeft(HAIRLINE, RAIL_WIDTH)
-                    .padding(new DocumentInsets(0, 0, last ? 0 : ENTRY_GAP, RAIL_GUTTER));
-
-            // The header row and the marker share one layer stack: the row needs
-            // the wrapper anyway, and the marker then rides the row it is level
-            // with rather than being placed against the section.
-            SectionBuilder header = new SectionBuilder();
-            header.name("EntryHeaderHolder");
-            header.addRow("EntryHeader", row -> {
-                row.spacing(0).weights(0.62, 0.38);
-                row.addParagraph(p -> {
-                    p.name("EntryTitle");
-                    p.textStyle(style(JOB_TITLE_SIZE, INK, DocumentTextDecoration.BOLD));
-                    if (entry.link().isBlank()) {
-                        p.inlineText(entry.title(),
-                                style(JOB_TITLE_SIZE, INK, DocumentTextDecoration.BOLD));
-                    } else {
-                        p.inlineText(entry.title(),
-                                style(JOB_TITLE_SIZE, INK, DocumentTextDecoration.BOLD),
-                                new DocumentLinkOptions(entry.link()));
-                    }
-                });
-                row.addParagraph(p -> p
-                        .name("EntryPeriod")
-                        .text(entry.date())
-                        .textStyle(style(BODY_SIZE, MUTED, DocumentTextDecoration.DEFAULT))
-                        .align(TextAlign.RIGHT));
+    /**
+     * The roles, on one rail.
+     *
+     * <p>The axis column centres the rail on itself, so the timeline starts half an axis
+     * left of the column the heading rule sits on and the rail lands back on that edge —
+     * where the per-entry accent drew it before. The rail's ends come from
+     * {@code ENTRY_BOUNDS}: the gap between roles is padding inside an entry's own box and
+     * the last entry carries none, which is what made consecutive accents meet.</p>
+     */
+    private static void renderExperienceTimeline(SectionBuilder block, List<CvEntry> entries) {
+        SectionBuilder holder = new SectionBuilder();
+        holder.name("ExperienceRailHolder");
+        {
+            SectionBuilder host = holder;
+            host.spacing(0)
+                    .margin(new DocumentInsets(0, 0, 0, -MARKER_DIAMETER / 2.0));
+            host.addTimeline(timeline -> {
+                timeline.markerOnRail()
+                        .connector(HAIRLINE, RAIL_WIDTH)
+                        .axisWidth(MARKER_DIAMETER)
+                        .markerGap(RAIL_GUTTER - MARKER_DIAMETER / 2.0)
+                        .gutter(0)
+                        .spacing(ENTRY_GAP)
+                        .keepEntriesTogether();
+                for (CvEntry entry : entries) {
+                    timeline.entry(entryMarker(),
+                            e -> e.content(section -> renderExperienceEntry(section, entry)));
+                }
             });
-            section.addLayerStack(stack -> {
-                stack.name("EntryHeaderLayer");
-                stack.layer(header.build(), LayerAlign.TOP_LEFT, 0);
-                // The accent is drawn centred on the section's left edge, so
-                // that edge already IS the rail's axis and the marker only has
-                // to walk back across the gutter and half its own width.
-                // Adding half the rail's thickness on top corrects in the
-                // direction the marker is already offset and lands it a rail
-                // width to the right of the line it is meant to sit on.
-                stack.position(new EllipseBuilder()
-                                .name("EntryMarker")
-                                .circle(MARKER_DIAMETER)
-                                .fillColor(NAVY)
-                                .build(),
-                        -RAIL_GUTTER - MARKER_DIAMETER / 2.0,
-                        px(3.1), LayerAlign.TOP_LEFT, 1);
-            });
+        }
+        DocumentNode node = holder.build();
+        block.addLayerStack(stack -> stack
+                .name("ExperienceRail")
+                .layer(node, LayerAlign.TOP_LEFT, 0));
+    }
 
-            MidnightNavyWidgets.layeredRow(section, "EntrySubheader", row -> {
-                row.spacing(0).weights(0.62, 0.38);
-                row.addParagraph(p -> p
-                        .name("EntryCompany")
-                        .text(entry.subtitle())
-                        .textStyle(style(BODY_SIZE, MUTED, DocumentTextDecoration.ITALIC))
-                        .margin(new DocumentInsets(px(5.4), 0, 0, 0)));
-                row.addParagraph(p -> p
-                        .name("EntryLocation")
-                        .text(entry.place())
-                        .textStyle(style(BODY_SIZE, MUTED, DocumentTextDecoration.DEFAULT))
-                        .align(TextAlign.RIGHT)
-                        .margin(new DocumentInsets(px(5.4), 0, 0, 0)));
-            });
+    /**
+     * The navy disc, in a box tall enough to carry the drop that sets it on the title's cap
+     * height. A marker's declared box is what the timeline reserves and derives the rail
+     * from, so the drop rides inside the marker rather than being positioned against the
+     * header row.
+     */
+    private static TimelineMarker entryMarker() {
+        return TimelineMarker.custom(MARKER_DIAMETER, MARKER_DIAMETER + px(3.1),
+                column -> column.addEllipse(ellipse -> ellipse
+                        .name("EntryMarker")
+                        .circle(MARKER_DIAMETER)
+                        .fillColor(NAVY)
+                        .margin(new DocumentInsets(px(3.1), 0, 0, 0))));
+    }
 
-            section.addList(list -> list
-                    .name("EntryBullets")
-                    .marker("·")
-                    .items(MidnightNavyWidgets.lines(entry.body()))
-                    .textStyle(style(BODY_SIZE, BODY, DocumentTextDecoration.DEFAULT))
-                    .lineSpacing(leading(23.7, BODY_SIZE))
-                    .itemSpacing(leading(23.7, BODY_SIZE))
-                    .margin(new DocumentInsets(px(24.8), 0, 0, 0)));
+    private static void renderExperienceEntry(SectionBuilder section, CvEntry entry) {
+        section.spacing(0);
+        // A row nested directly in a row cell is refused, and a timeline entry lays its
+        // content out in one — so the header goes through the same wrapper as every other
+        // horizontal pair in this sheet.
+        MidnightNavyWidgets.layeredRow(section, "EntryHeader", row -> {
+            row.spacing(0).weights(0.62, 0.38);
+            row.addParagraph(p -> {
+                p.name("EntryTitle");
+                p.textStyle(style(JOB_TITLE_SIZE, INK, DocumentTextDecoration.BOLD));
+                if (entry.link().isBlank()) {
+                    p.inlineText(entry.title(),
+                            style(JOB_TITLE_SIZE, INK, DocumentTextDecoration.BOLD));
+                } else {
+                    p.inlineText(entry.title(),
+                            style(JOB_TITLE_SIZE, INK, DocumentTextDecoration.BOLD),
+                            new DocumentLinkOptions(entry.link()));
+                }
+            });
+            row.addParagraph(p -> p
+                    .name("EntryPeriod")
+                    .text(entry.date())
+                    .textStyle(style(BODY_SIZE, MUTED, DocumentTextDecoration.DEFAULT))
+                    .align(TextAlign.RIGHT));
         });
+
+        MidnightNavyWidgets.layeredRow(section, "EntrySubheader", row -> {
+            row.spacing(0).weights(0.62, 0.38);
+            row.addParagraph(p -> p
+                    .name("EntryCompany")
+                    .text(entry.subtitle())
+                    .textStyle(style(BODY_SIZE, MUTED, DocumentTextDecoration.ITALIC))
+                    .margin(new DocumentInsets(px(5.4), 0, 0, 0)));
+            row.addParagraph(p -> p
+                    .name("EntryLocation")
+                    .text(entry.place())
+                    .textStyle(style(BODY_SIZE, MUTED, DocumentTextDecoration.DEFAULT))
+                    .align(TextAlign.RIGHT)
+                    .margin(new DocumentInsets(px(5.4), 0, 0, 0)));
+        });
+
+        section.addList(list -> list
+                .name("EntryBullets")
+                .marker("·")
+                .items(MidnightNavyWidgets.lines(entry.body()))
+                .textStyle(style(BODY_SIZE, BODY, DocumentTextDecoration.DEFAULT))
+                .lineSpacing(leading(23.7, BODY_SIZE))
+                .itemSpacing(leading(23.7, BODY_SIZE))
+                .margin(new DocumentInsets(px(24.8), 0, 0, 0)));
     }
 
     /**

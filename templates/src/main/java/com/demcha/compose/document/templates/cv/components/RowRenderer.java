@@ -61,27 +61,22 @@ public final class RowRenderer {
     }
 
     /**
-     * Renders the row as two stacked paragraphs: bullet + bold label
-     * on line 1, body indented under the label on line 2. Both
-     * paragraphs draw through {@link ParagraphPrimitive#writeBulleted}
-     * so only the bullet glyph / margin differs.
+     * Renders the row as a bulleted bold name with its body hanging under the
+     * name rather than under the bullet.
+     *
+     * <p>The two are one list: the name is its item and the body a markerless
+     * child of that item, so the body begins at the name's own content origin.
+     * {@code Decoration.stackedIndent} is no longer read for this — a run of
+     * spaces cannot equal a measured marker column, which is exactly why the
+     * body used to start a little to the left of the name it hangs under.</p>
      */
     private static void stacked(SectionBuilder section, CvRow row, BrandTheme theme) {
-        DocumentTextStyle base = theme.bodyStyle();
-        DocumentTextStyle nameStyle = theme.bodyBoldStyle();
-        DocumentInsets topMargin = DocumentInsets.top(
-                (float) theme.spacing().paragraphMarginTop());
-
-        // Line 1 — bullet + bold name.
-        ParagraphPrimitive.writeBulleted(section, row.label(), nameStyle,
-                theme.decoration().bulletGlyph(), topMargin, theme);
-
-        if (row.body().isBlank()) {
-            return;
-        }
-        // Line 2 — body indented under name (not under bullet).
-        ParagraphPrimitive.writeBulleted(section, row.body(), base,
-                theme.decoration().stackedIndent(), DocumentInsets.zero(), theme);
+        ParagraphPrimitive.writeBulletedPair(section,
+                row.label(), row.body(),
+                theme.bodyBoldStyle(), theme.bodyStyle(),
+                theme.decoration().bulletGlyph(),
+                DocumentInsets.top((float) theme.spacing().paragraphMarginTop()),
+                theme);
     }
 
     /**

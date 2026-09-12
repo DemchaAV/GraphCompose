@@ -898,6 +898,47 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **A stacked row's body now hangs under its name, not a couple of points to the left of
+  it.** The shared bullet path every themed CV preset draws its rows through —
+  `RowRenderer`, `SkillsRenderer` — put the glyph inside the paragraph's text as a
+  `bulletOffset` and indented what followed with a run of spaces measured to clear it.
+  `Decoration.stackedIndent`, the two spaces under a stacked row's bold name, carries its own
+  contract: it "must visually occupy the same width as bulletGlyph". Measured on the
+  canonical document it does not, by **0.720pt to 3.078pt** depending on the theme's type
+  size — so the body of every Projects-style row started slightly left of the name it hangs
+  under.
+
+  Each row is a list now. A bulleted row is one item, so its marker sits in a measured
+  column and every visual line of it starts at one content origin. A stacked row is one item
+  with a **markerless child**: a child's marker column opens at its parent's content origin,
+  and a child with no marker takes no marker width and no gap, so the body begins exactly
+  where the name's text begins — by construction rather than by a count of spaces. The
+  content is inline runs, so the bold label of a `label: body` row stays part of one item.
+  The gap after a bullet is a quarter of the type size, which is what the trailing space
+  inside `bulletGlyph` was approximating.
+
+  Measured per preset, at the pixel gate's own canonical document. Page counts, wrapping and
+  vertical rhythm are unchanged everywhere — the correction is horizontal:
+
+  | preset | pages | row text origin | stacked body → name | pixels (of 500 395) |
+  |---|---|---|---|---|
+  | `blue_banner` | 2 → 2 | 38.437 → 38.391 | own path, unchanged | 7 422, maxΔ 12 |
+  | `boxed_sections` | 2 → 2 | 38.003 → 38.063 | 36.180 → 38.338 (**+2.158**) | 26 085, maxΔ 201 |
+  | `centered_headline` | 2 → 2 | 35.273 → 35.221 | own path, unchanged | 8 709, maxΔ 12 |
+  | `executive` | 2 → 2 | 35.819 → 35.885 | 32.864 → 35.885 (**+3.021**) | 29 553, maxΔ 202 |
+  | `minimal_underlined` | 2 → 2 | 42.003 → 42.063 | 40.180 → 42.338 (**+2.158**) | 26 300, maxΔ 202 |
+  | `modern_professional` | 2 → 2 | 36.280 → 36.000 | 35.560 → 36.000 (**+0.440**) | 32 165, maxΔ 98 |
+  | `panel` | 1 → 1 | 33.858 → 33.802 | 313.451 → 316.440 (**+2.989**) | 29 990, maxΔ 201 |
+
+  The row text origin moves by at most 0.280pt, which is the difference between a quarter of
+  the type size and the space it replaces. Every multi-line count is identical before and
+  after, and so is every page count; the only structural change is one extra fragment per row,
+  which is the marker's own. The seven pixel baselines and seven committed previews are
+  re-recorded, with all 126 baselines and all 118 previews hashed either side: exactly seven
+  of each moved. `engineering_resume`'s baseline differs from its render by 306 pixels for a
+  reason that predates this work — verified by measuring it against the unmodified code — so
+  it is left alone, as are the four preview drifts under separate investigation.
+
 - **A long degree title no longer draws over its own institution line on Professional
   Sidebar.** The title sat in a container of exactly `ENTRY_HEAD_HEIGHT`, centred, which put
   its centre on the rail dot's — and works for a title of one line and no other. Measured

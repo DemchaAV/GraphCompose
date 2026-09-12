@@ -200,6 +200,11 @@ final class NavySidebarMain {
             }
         });
         DocumentNode node = holder.build();
+        // The timeline goes in through a layer stack rather than straight into the
+        // section. A timeline publishes a row, a row cannot nest inside a row cell,
+        // and this section can sit in one — the stack is what insulates it.
+        // Unwinding the stacks that turn out not to need it buys no capability, so
+        // they stay until that is done as its own deliberate cleanup.
         section.addLayerStack(stack -> stack
                 .name("ExperienceRail")
                 .layer(node, LayerAlign.TOP_LEFT, 0));

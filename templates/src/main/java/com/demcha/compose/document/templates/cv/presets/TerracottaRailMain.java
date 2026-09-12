@@ -208,6 +208,11 @@ final class TerracottaRailMain {
                 }
             });
             DocumentNode experienceRail = holder.build();
+            // The timeline goes in through a layer stack rather than straight into
+            // the block. A timeline publishes a row, a row cannot nest inside a row
+            // cell, and this block can sit in one — the stack is what insulates it.
+            // Unwinding the stacks that turn out not to need it buys no capability,
+            // so they stay until that is done as its own deliberate cleanup.
             block.addLayerStack(stack -> stack
                     .name("ExperienceRail")
                     .layer(experienceRail, LayerAlign.TOP_LEFT, 0));

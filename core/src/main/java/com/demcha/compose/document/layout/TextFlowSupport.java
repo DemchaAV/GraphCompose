@@ -15,7 +15,9 @@ import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.*;
 import static com.demcha.compose.document.layout.NodeDefinitionSupport.EPS;
@@ -40,6 +42,13 @@ public final class TextFlowSupport {
      * without rewriting the wrap pipeline.
      */
     private static final String NESTED_LIST_INDENT_UNIT = "  ";
+
+    /**
+     * The width a drawn list marker is measured at — wide enough that nothing a
+     * marker could reasonably be will wrap, so its measured width is the width of
+     * what it draws rather than of the column it happens to sit in.
+     */
+    private static final double MARKER_MEASURE_WIDTH = 100_000.0;
 
     // ------------------------------------------------------------------
     // Paragraph entry points
@@ -208,6 +217,9 @@ public final class TextFlowSupport {
     private static PreparedNode<ListNode> prepareLegacyPrefixList(ListNode node,
                                                                   PrepareContext ctx,
                                                                   BoxConstraints constraints) {
+        // The list's own marker reaches a flat list without going through the
+        // nested walk, so it is checked here as well as there.
+        refuseDrawnMarker(node.marker());
         ListNode effective = node.nestedItems().isEmpty()
                 ? node
                 : flattenNestedListNode(node);
@@ -233,8 +245,9 @@ public final class TextFlowSupport {
                                                                    PrepareContext ctx,
                                                                    BoxConstraints constraints) {
         double availableItemWidth = Math.max(0.0, constraints.availableWidth() - node.padding().horizontal());
+        List<ListItemSpec> specs = ListItemNormalizer.normalize(node);
         List<MarkerContentItem> geometry = ListMarkerGeometry.resolve(
-                ListItemNormalizer.normalize(node), node, availableItemWidth, ctx.textMeasurement());
+                specs, node, availableItemWidth, ctx.textMeasurement(), prepareDrawnMarkers(specs, node, ctx));
 
         List<PreparedListItemLayout> items = new ArrayList<>(geometry.size());
         for (MarkerContentItem item : geometry) {
@@ -288,6 +301,56 @@ public final class TextFlowSupport {
     }
 
     /**
+     * Measures each distinct drawn marker in the list as one line of inline
+     * runs, through the pipeline that measures the items' own content.
+     *
+     * <p>A marker's width has to be known before any content origin can be, so
+     * this runs ahead of {@link ListMarkerGeometry}. Measuring it as a paragraph
+     * line rather than as a special case is what makes a disc, an icon and a
+     * coloured glyph all resolve to the width of the thing they draw, and what
+     * lets the emit phase place the marker's pieces with spans the renderers
+     * already know how to draw.</p>
+     *
+     * <p>Measured unbounded, because a marker is one line by definition and a
+     * marker wider than its column overflows — the same answer a too-wide text
+     * marker already gets, rather than wrapping into a second line the row has
+     * no space for.</p>
+     */
+    private static Map<ListMarker, ParagraphLine> prepareDrawnMarkers(List<ListItemSpec> specs,
+                                                                      ListNode node,
+                                                                      PrepareContext ctx) {
+        Map<ListMarker, ParagraphLine> lines = null;
+        for (ListItemSpec spec : specs) {
+            ListMarker marker = spec.marker();
+            if (!marker.isRich()) {
+                continue;
+            }
+            if (lines == null) {
+                lines = new LinkedHashMap<>();
+            } else if (lines.containsKey(marker)) {
+                // A list shows the same handful of markers over and over, one per
+                // depth, so each distinct one is measured once for the whole list.
+                continue;
+            }
+            ParagraphNode asParagraph = new ParagraphNode(
+                    "", "", marker.runs(), node.textStyle(), TextAlign.LEFT, 0.0, "",
+                    DocumentTextIndent.NONE, null, null,
+                    DocumentInsets.zero(), DocumentInsets.zero());
+            PreparedParagraphLayout layout = prepareParagraphLayout(
+                    asParagraph, MARKER_MEASURE_WIDTH, ctx.textMeasurement(), false);
+            if (layout.visualLines().size() != 1) {
+                throw new IllegalStateException(
+                        "a list marker is one line: \"" + marker.value() + "\" measured "
+                        + layout.visualLines().size() + " lines. A marker sits on the item's "
+                        + "first line and shares its baseline, so it has nowhere to put a "
+                        + "second one");
+            }
+            lines.put(marker, layout.visualLines().get(0));
+        }
+        return lines == null ? Map.of() : lines;
+    }
+
+    /**
      * Widest point any row reaches — the marker column and the content column
      * are both candidates, and a marker-only row is measured by its marker.
      */
@@ -337,6 +400,21 @@ public final class TextFlowSupport {
                 node.markerGap());
     }
 
+    /**
+     * Refuses a drawn marker on the legacy layout, where a marker is characters
+     * at the front of the item's text and a drawing has nowhere to go. Its plain
+     * reading is empty for a marker that draws only a disc or an icon, so
+     * rendering that would leave the list markerless with no signal at all.
+     */
+    private static void refuseDrawnMarker(ListMarker marker) {
+        if (marker != null && marker.isRich()) {
+            throw new IllegalStateException(
+                    "a drawn list marker needs marker/content geometry: call "
+                    + "hangingIndent(true) on the list. The legacy layout puts the marker "
+                    + "inside the item's text, which can hold characters but not a drawing");
+        }
+    }
+
     private static void flattenNestedItems(List<ListItem> items, int depth, List<String> output) {
         for (ListItem item : items) {
             // A rich item's content is a sequence of independently styled runs and
@@ -354,6 +432,7 @@ public final class TextFlowSupport {
                         + "which cannot hold the runs of \"" + item.label() + "\"");
             }
             ListMarker marker = item.marker() != null ? item.marker() : ListMarker.defaultForDepth(depth);
+            refuseDrawnMarker(marker);
             StringBuilder prefix = new StringBuilder(NESTED_LIST_INDENT_UNIT.repeat(depth));
             if (marker.isVisible()) {
                 // ListMarker.normalize already appends a trailing space
@@ -535,6 +614,21 @@ public final class TextFlowSupport {
                                             MarkerContentItem geometry) {
         ParagraphLine first = itemLayout.visualLines().get(0);
         String text = geometry.markerText();
+        // A drawn marker's pieces were measured already, as inline runs. They are
+        // placed in a line whose metrics are still the content's first line, so a
+        // disc or an icon rides the item's own baseline exactly as a glyph does
+        // and does not make the row taller; one drawn larger than the line
+        // overflows it, the answer a marker wider than its column already gets.
+        List<ParagraphSpan> spans = geometry.hasDrawnMarker()
+                ? geometry.markerSpans()
+                : List.of(new ParagraphTextSpan(
+                        text,
+                        toTextStyle(node.textStyle()),
+                        geometry.measuredMarkerWidth(),
+                        first.textLineHeight(),
+                        null,
+                        null,
+                        false));
         return new ParagraphLine(
                 text,
                 geometry.measuredMarkerWidth(),
@@ -542,14 +636,7 @@ public final class TextFlowSupport {
                 first.textLineHeight(),
                 first.textAscent(),
                 first.baselineOffsetFromBottom(),
-                List.of(new ParagraphTextSpan(
-                        text,
-                        toTextStyle(node.textStyle()),
-                        geometry.measuredMarkerWidth(),
-                        first.textLineHeight(),
-                        null,
-                        null,
-                        false)));
+                spans);
     }
 
     private static ParagraphFragmentPayload paragraphPayload(ListNode node,

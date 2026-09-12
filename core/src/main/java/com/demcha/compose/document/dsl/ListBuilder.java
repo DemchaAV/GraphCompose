@@ -265,6 +265,49 @@ public final class ListBuilder {
     }
 
     /**
+     * Sets a marker that is drawn rather than typed — a coloured disc, an icon,
+     * a glyph in a face of its own.
+     *
+     * <p>The marker is a {@link RichText}, the same inline runs a paragraph and
+     * a list item are made of, so {@code m -> m.dot(4, ACCENT)} is a teal disc,
+     * {@code m -> m.color("•", ACCENT)} is an accent bullet beside near-black
+     * text, and {@code m -> m.svgIcon(icon, 8)} is an icon. A marker's colour is
+     * its own here; the text form takes the list's, which is what a design with
+     * a coloured mark and dark copy could not say.</p>
+     *
+     * <p>Drawn or typed, the marker is measured and occupies the marker column:
+     * {@link #markerGap(double)} is points of real space after it and every
+     * visual line of the item starts at one x. So this needs
+     * {@link #hangingIndent(boolean)}, and the layout says so if it is missing —
+     * the older layout puts the marker inside the item's text, where a drawing
+     * cannot go.</p>
+     *
+     * <p>Seed the supplied builder with {@link RichText#plain(String)} — not
+     * {@code m.text(...)}: {@link RichText#text(String)} is a static factory, so
+     * that call compiles but builds a separate, discarded {@code RichText} and
+     * leaves the list markerless.</p>
+     *
+     * <p>This sets the list's marker, which is its depth-0 marker. A drawn marker
+     * at a deeper level goes through {@link #markerFor(int, ListMarker)} as
+     * {@code markerFor(1, ListMarker.ofRuns(RichText.empty().dot(4, ACCENT).runs()))}
+     * — deliberately not a second lambda overload, because
+     * {@code markerFor(depth, null)} clears an override and a lambda overload
+     * would make that call ambiguous for code that already compiles.</p>
+     *
+     * @param marker callback that appends the marker's inline runs
+     * @return this builder
+     * @throws NullPointerException if {@code marker} is null
+     * @since 2.4.0
+     */
+    public ListBuilder marker(Consumer<RichText> marker) {
+        Objects.requireNonNull(marker, "marker");
+        RichText rich = RichText.empty();
+        marker.accept(rich);
+        return marker(ListMarker.ofRuns(rich.runs()));
+    }
+
+
+    /**
      * Uses bullet markers.
      *
      * @return this builder

@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 237,
-    "methods": 2118,
+    "methods": 2123,
     "constants": 236,
-    "generated": 1128
+    "generated": 1129
   },
   "packages": [
     {
@@ -9295,6 +9295,20 @@
               "params": [
                 {
                   "type": "String",
+                  "name": "marker"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "marker",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListBuilder",
+              "params": [
+                {
+                  "type": "Consumer<RichText>",
                   "name": "marker"
                 }
               ]
@@ -20590,8 +20604,49 @@
                 {
                   "type": "String",
                   "name": null
+                },
+                {
+                  "type": "List<InlineRun>",
+                  "name": null
                 }
               ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ListMarker",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "ofRuns",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListMarker",
+              "params": [
+                {
+                  "type": "List<InlineRun>",
+                  "name": "runs"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isRich",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
             },
             {
               "kind": "method",
@@ -20691,6 +20746,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "runs",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<InlineRun>",
               "params": []
             }
           ]

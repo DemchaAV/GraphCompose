@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 237 · methods: 2118 · constants: 236 · compiler-generated members: 1128
+Types: 237 · methods: 2123 · constants: 236 · compiler-generated members: 1129
 
 ## com.demcha.compose
 
@@ -756,6 +756,7 @@ Types: 237 · methods: 2118 · constants: 236 · compiler-generated members: 112
 - `ListBuilder markerFor(int depth, ListMarker marker)`
 - `ListBuilder marker(ListMarker marker)`
 - `ListBuilder marker(String marker)`
+- `ListBuilder marker(Consumer<RichText> marker)`
 - `ListBuilder bullet()`
 - `ListBuilder dash()`
 - `ListBuilder noMarker()`
@@ -1518,7 +1519,10 @@ Types: 237 · methods: 2118 · constants: 236 · compiler-generated members: 112
 - `List<ListItem> children()`
 
 ### ListMarker (record)
-- `new ListMarker(String)`
+- `new ListMarker(String, List<InlineRun>)`
+- `new ListMarker(String value)`
+- `ListMarker ofRuns(List<InlineRun> runs)`
+- `boolean isRich()`
 - `ListMarker bullet()`
 - `ListMarker dash()`
 - `ListMarker none()`
@@ -1528,6 +1532,7 @@ Types: 237 · methods: 2118 · constants: 236 · compiler-generated members: 112
 - `boolean isVisible()`
 - `String prefix()`
 - `String value()`
+- `List<InlineRun> runs()`
 
 ### ListNode (record)
 - `new ListNode(String, List<String>, List<ListItem>, ListMarker, DocumentTextStyle, TextAlign, double, double, String, boolean, DocumentInsets, DocumentInsets, boolean, double)`

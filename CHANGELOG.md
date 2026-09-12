@@ -381,6 +381,45 @@ follow semantic versioning; release dates are ISO 8601.
   same one-per-kind warning a rich paragraph's do. Because the semantic export lays nothing
   out, it is indifferent to `hangingIndent` and needs no opt-in to carry the runs.
 
+- **A list marker can be drawn, and can carry a colour of its own.**
+  `ListBuilder.marker(Consumer<RichText>)` takes the marker as inline runs, so
+  `m -> m.dot(4, ACCENT)` is a coloured disc, `m -> m.color("•", ACCENT)` is an accent
+  bullet beside near-black copy, and `m -> m.svgIcon(icon, 8)` is an icon.
+  `marker(String)` is unchanged and remains the simple form.
+
+  The marker's one span was built in the list's own text style, so a design with an accent
+  mark and dark text could not be written as a list at all. What the designs that wanted it
+  did instead was a paragraph per item — the mark, then a run of spaces standing in for the
+  gap, then the text — which buys the mark and loses the column. Measured on that
+  construction at a width that wraps: the first line's text starts at 25.246 and every line
+  after it at 12.000, because a paragraph has no marker column to hang under. The spaces are
+  a second cost. Rounded to a whole count and then measured at each item's own type size,
+  one declared 9.175pt gap came out as 9.308pt in one column of a real CV and 8.356pt in
+  another — the same constant, two gaps.
+
+  A drawn marker is measured as what it draws: a disc's column is its diameter, an icon's is
+  its box. Nothing is counted in characters and nothing is approximated, so `markerGap` is
+  points of real space after it and `contentX` is `markerX + width + gap` exactly. It is
+  measured once per distinct marker for the whole list, through the same pipeline that
+  measures the items' own content — which is also why a marker can be anything an inline run
+  can be, and why no renderer needed a new branch to draw one.
+
+  Everything the marker column already promised holds: every visual line of an item starts at
+  one x, the marker is drawn once when an item continues onto later pages, a child's marker
+  starts where its parent's text does, and the marker rides the item's first baseline without
+  making the row taller. A marker drawn larger than that line overflows it, which is the
+  answer a marker wider than its column already gets.
+
+  Because the marker column is what makes this possible, `hangingIndent(true)` is required
+  and the layout says so if it is missing. A drawn marker's plain reading is empty, so the
+  older layout — where the marker is characters at the front of the item's text — would render
+  the list with no marker at all and no signal.
+
+  **In the semantic DOCX export** a marker written as text keeps the colour and face it was
+  given, because a run's style is something Word holds. A marker that draws a disc or an icon
+  has no Word analogue, so it drops with the export's usual one-per-kind warning and its item
+  is written unmarked, rather than substituting a glyph nobody asked for.
+
 - **A timeline's rail is one line, drawn from where its markers landed.**
   It was a left border repeated on every entry section, which is why it sat at the entry's
   edge whatever the markers did, could not stop short of them, and had no way to be

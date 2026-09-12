@@ -177,6 +177,51 @@ class DocxSemanticBackendTest {
                 .isEqualTo(runStructure(richListDocx(true)));
     }
 
+    @Test
+    void aDrawnListMarkerDropsAndATextMarkerKeepsItsOwnStyle() throws Exception {
+        byte[] docxBytes;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addList(list -> list
+                            .hangingIndent(true)
+                            .marker(m -> m.dot(4.0, DocumentColor.rgb(0, 0x88, 0x88)))
+                            .items("Drawn marker item"))
+                    .addList(list -> list
+                            .hangingIndent(true)
+                            .marker(m -> m.color("•", DocumentColor.rgb(0, 0x88, 0x88)))
+                            .items("Coloured marker item"))
+                    .build();
+            docxBytes = session.export(new DocxSemanticBackend());
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            List<XWPFParagraph> paragraphs = document.getParagraphs().stream()
+                    .filter(p -> !p.getText().isBlank())
+                    .toList();
+            assertThat(paragraphs).hasSize(2);
+
+            // A disc has no Word analogue, so it drops — and drops rather than
+            // being replaced by a bullet nobody asked for. The item survives.
+            assertThat(paragraphs.get(0).getText()).isEqualTo("Drawn marker item");
+
+            // A marker written as text keeps the colour it was given, because a
+            // run colour is something Word holds.
+            XWPFParagraph coloured = paragraphs.get(1);
+            assertThat(coloured.getText()).isEqualTo("• Coloured marker item");
+            assertThat(coloured.getRuns().stream().map(XWPFRun::text).toList())
+                    .containsExactly("", "•", " ", "Coloured marker item");
+            assertThat(coloured.getRuns().get(1).getColor())
+                    .as("the marker's own colour")
+                    .isEqualTo("008888");
+            assertThat(coloured.getRuns().get(3).getColor())
+                    .as("and the item's text does not take it")
+                    .isNotEqualTo("008888");
+        }
+    }
+
     private static byte[] richListDocx(boolean hangingIndent) throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(595, 842)

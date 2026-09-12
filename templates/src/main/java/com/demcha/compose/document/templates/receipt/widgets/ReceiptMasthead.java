@@ -72,10 +72,16 @@ public final class ReceiptMasthead {
                             }
                         }
                         if (hasName) {
-                            p.inlineText(logo == null
-                                            ? TextOrnaments.spacedUpper(data.issuerName())
-                                            : data.issuerName(),
-                                    ReceiptStyles.title(theme));
+                            // With no mark the name IS the wordmark, so it takes
+                            // the spaced caps; beside a mark it is set as written.
+                            boolean wordmark = logo == null;
+                            p.inlineText(
+                                    wordmark ? TextOrnaments.upper(data.issuerName())
+                                             : data.issuerName(),
+                                    wordmark
+                                            ? ReceiptStyles.title(theme)
+                                                    .withLetterSpacing(TextOrnaments.SPACED_CAPS)
+                                            : ReceiptStyles.title(theme));
                         }
                         p.margin(DocumentInsets.zero());
                     });

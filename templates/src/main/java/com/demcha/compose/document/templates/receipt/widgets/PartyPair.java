@@ -95,7 +95,7 @@ public final class PartyPair {
     private static void side(SectionBuilder host, String label, ReceiptParty party, BrandTheme theme) {
         host.spacing(theme.spacing().sectionBodySpacing())
                 .addParagraph(p -> p
-                        .text(TextOrnaments.spacedUpper(label))
+                        .text(TextOrnaments.upper(label))
                         .textStyle(ReceiptStyles.eyebrow(theme))
                         .margin(DocumentInsets.zero()));
 

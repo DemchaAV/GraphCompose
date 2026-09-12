@@ -72,7 +72,7 @@ public final class AmountHero {
                         .addSection("ReceiptAmountColumn", column -> {
                             column.spacing(3);
                             column.addParagraph(p -> p
-                                    .text(TextOrnaments.spacedUpper(data.amountLabel()))
+                                    .text(TextOrnaments.upper(data.amountLabel()))
                                     .textStyle(ReceiptStyles.eyebrow(theme))
                                     .margin(DocumentInsets.zero()));
                             column.addParagraph(p -> p

@@ -10,6 +10,9 @@ import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.data.receipt.ReceiptDocumentSpec;
 import com.demcha.compose.document.templates.data.receipt.ReceiptStatus;
 import com.demcha.compose.document.templates.data.receipt.ReceiptStatusTone;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -84,6 +87,51 @@ class ModernReceiptSmokeTest {
         DocumentTemplate<ReceiptDocumentSpec> template = ModernReceipt.create();
         assertThat(template.id()).isEqualTo(ModernReceipt.ID);
         assertThat(template.displayName()).isEqualTo(ModernReceipt.DISPLAY_NAME);
+    }
+
+    @Test
+    void theSpacedCapsLabelsReachTheTextLayerAsWords() throws Exception {
+        // The spaced-caps look used to be built by rewriting the string with a
+        // space between every pair of letters, so a reader saw the right page
+        // and the file stored "A M O U N T   C O L L E C T E D" — unsearchable,
+        // unparseable, and read out letter by letter. The tracking is on the
+        // style now and the words are words. That is the whole point of the
+        // change, and neither the pixel nor the geometry gate can see it.
+        String text;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(DocumentPageSize.A4)
+                .margin(DocumentInsets.of(ModernReceipt.RECOMMENDED_MARGIN))
+                .create()) {
+            ModernReceipt.create().compose(session, ReceiptFixtures.canonicalReceipt());
+            try (PDDocument document = Loader.loadPDF(session.toPdfBytes())) {
+                text = new PDFTextStripper().getText(document);
+            }
+        }
+
+        // Runs of whitespace collapse first. A PDF text extractor synthesises
+        // spaces from the gaps it sees, and real tracking widens the word space
+        // too, so the issuer's name comes back out with a run of them between
+        // its words. That is the extractor measuring, not the file storing —
+        // and collapsing makes the negatives below stricter rather than weaker,
+        // since letters padded apart still read as single-spaced letters.
+        String words = text.replaceAll("\\s+", " ");
+
+        assertThat(words)
+                .as("every label the spaced-caps styles set, as written")
+                .contains("NORTHWIND PAY")
+                .contains("AMOUNT COLLECTED")
+                .contains("PAID FROM")
+                .contains("PAID TO")
+                .contains("TRANSFER DETAILS")
+                .contains("AMOUNT BREAKDOWN")
+                .contains("PAYMENT PROGRESS")
+                .contains("NOTES");
+        assertThat(words)
+                .as("and not one of them padded out letter by letter")
+                .doesNotContain("A M O U N T")
+                .doesNotContain("P A I D")
+                .doesNotContain("N O R T H W I N D")
+                .doesNotContain("N O T E S");
     }
 
     @Test

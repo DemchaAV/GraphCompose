@@ -371,7 +371,7 @@ public final class ModernReceipt {
             host.keepTogether()
                     .spacing(theme.spacing().sectionBodySpacing())
                     .addParagraph(p -> p
-                            .text(TextOrnaments.spacedUpper("Notes"))
+                            .text(TextOrnaments.upper("Notes"))
                             .textStyle(ReceiptStyles.groupTitle(theme))
                             .margin(new DocumentInsets(0, 0, 6, 0)))
                     .addParagraph(p -> p

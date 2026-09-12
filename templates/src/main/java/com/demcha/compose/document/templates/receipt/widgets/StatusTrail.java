@@ -82,7 +82,7 @@ public final class StatusTrail {
             block.keepTogether();
             if (title != null && !title.isBlank()) {
                 block.addParagraph(p -> p
-                        .text(TextOrnaments.spacedUpper(title))
+                        .text(TextOrnaments.upper(title))
                         .textStyle(ReceiptStyles.groupTitle(theme))
                         .margin(new DocumentInsets(0, 0, 8, 0)));
             }

@@ -3,6 +3,7 @@ package com.demcha.compose.document.templates.receipt.components;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
@@ -28,23 +29,30 @@ public final class ReceiptStyles {
     /**
      * Small spaced-caps caption above a block — {@code AMOUNT SENT}.
      *
+     * <p>Spaced on the style, so a caller hands over the words rather than a
+     * padded-out copy of them.</p>
+     *
      * @param theme active theme
      * @return the eyebrow style
      */
     public static DocumentTextStyle eyebrow(BrandTheme theme) {
         return TextStyles.of(theme.typography().bodyFont(), theme.typography().sizeBanner(),
-                DocumentTextDecoration.DEFAULT, theme.palette().muted());
+                        DocumentTextDecoration.DEFAULT, theme.palette().muted())
+                .withLetterSpacing(TextOrnaments.SPACED_CAPS);
     }
 
     /**
      * Spaced-caps heading over a field group — {@code TRANSFER DETAILS}.
+     *
+     * <p>Spaced on the style, as {@link #eyebrow(BrandTheme)} is.</p>
      *
      * @param theme active theme
      * @return the group-heading style
      */
     public static DocumentTextStyle groupTitle(BrandTheme theme) {
         return TextStyles.of(theme.typography().bodyFont(), theme.typography().sizeBanner(),
-                DocumentTextDecoration.BOLD, theme.palette().ink());
+                        DocumentTextDecoration.BOLD, theme.palette().ink())
+                .withLetterSpacing(TextOrnaments.SPACED_CAPS);
     }
 
     /**

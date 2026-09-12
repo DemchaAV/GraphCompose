@@ -46,7 +46,7 @@ public final class DetailGroup {
             block.keepTogether();
             if (!group.title().isBlank()) {
                 block.addParagraph(p -> p
-                        .text(TextOrnaments.spacedUpper(group.title()))
+                        .text(TextOrnaments.upper(group.title()))
                         .textStyle(ReceiptStyles.groupTitle(theme))
                         .margin(new DocumentInsets(0, 0, TITLE_GAP, 0)));
             }

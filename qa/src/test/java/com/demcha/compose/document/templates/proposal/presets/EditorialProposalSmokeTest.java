@@ -74,6 +74,20 @@ class EditorialProposalSmokeTest {
     }
 
     @Test
+    void theDocumentLabelReachesTheTextLayerAsAWord() throws Exception {
+        // The tracked label used to be built by padding the string out with a
+        // space between every letter, so the file stored "P R O P O S A L". The
+        // tracking is on the style now and the word is a word. Neither the pixel
+        // nor the snapshot gate can see this: the label's paragraph takes its
+        // section's width, so the geometry does not move when the glyphs do.
+        String words = textOf(render(EditorialProposalFixtures.canonicalProposal()))
+                .replaceAll("\\s+", " ");
+        assertThat(words).as("the label, as written").contains("PROPOSAL");
+        assertThat(words).as("and not padded out letter by letter")
+                .doesNotContain("P R O P O S A L");
+    }
+
+    @Test
     void canonicalRenderCarriesTheTableText() throws Exception {
         // The phase grid and the investment table are single leaf nodes in
         // the layout snapshot, so their content is asserted on the text layer.

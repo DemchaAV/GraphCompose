@@ -3,6 +3,7 @@ package com.demcha.compose.document.templates.proposal.presets;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.font.FontName;
 
 /**
@@ -188,8 +189,10 @@ final class EditorialStyles {
             style(BODY_FONT, WORDMARK_SIZE, DocumentTextDecoration.BOLD, INK);
     static final DocumentTextStyle WORDMARK_SUB =
             style(BODY_FONT, WORDMARK_SUB_SIZE, DocumentTextDecoration.BOLD, INK);
+    /** The document label, spaced on the style so its caller passes the words. */
     static final DocumentTextStyle DOC_LABEL =
-            style(BODY_FONT, DOC_LABEL_SIZE, DocumentTextDecoration.BOLD, INK);
+            style(BODY_FONT, DOC_LABEL_SIZE, DocumentTextDecoration.BOLD, INK)
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
     static final DocumentTextStyle SIGNATURE_LABEL =
             style(BODY_FONT, TABLE_SIZE, DocumentTextDecoration.DEFAULT, INK);
 

@@ -6,7 +6,6 @@ import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
@@ -29,6 +28,17 @@ import com.demcha.compose.document.templates.core.theme.BrandTheme;
  */
 final class ParagraphPrimitive {
 
+    /**
+     * The gap between a bullet and its text, as a share of the type size.
+     *
+     * <p>A quarter of the size, which is what the trailing space inside
+     * {@code Decoration.bulletGlyph} was approximating — at the sizes these sheets
+     * set, one space of their body faces measures within a fraction of a point of
+     * it. A share rather than a value, so the gap follows the type instead of
+     * needing one number per theme.</p>
+     */
+    private static final double BULLET_GAP_EM = 0.25;
+
     private ParagraphPrimitive() {
     }
 
@@ -41,20 +51,8 @@ final class ParagraphPrimitive {
                           DocumentTextStyle style, BrandTheme theme) {
         write(host, text, style,
                 DocumentInsets.top((float) theme.spacing().paragraphMarginTop()),
-                theme.typography().bodyLineSpacing(),
-                null);
+                theme.typography().bodyLineSpacing());
     }
-
-    /**
-     * The gap between a bullet and its text, as a share of the type size.
-     *
-     * <p>A quarter of the size, which is what the trailing space inside
-     * {@code Decoration.bulletGlyph} was approximating — at the sizes these
-     * sheets set, one space of their body faces measures within a fraction of a
-     * point of it. A share rather than a value so the gap follows the type
-     * instead of needing one number per theme.</p>
-     */
-    private static final double BULLET_GAP_EM = 0.25;
 
     /**
      * One bulleted row, as a list of one item.
@@ -148,7 +146,7 @@ final class ParagraphPrimitive {
      */
     static void writeSubtitle(SectionBuilder host, String text,
                               DocumentTextStyle style) {
-        write(host, text, style, DocumentInsets.zero(), null, null);
+        write(host, text, style, DocumentInsets.zero(), null);
     }
 
     /**
@@ -156,16 +154,18 @@ final class ParagraphPrimitive {
      * that need a one-off combination not covered by the convenience
      * methods above.
      *
+     * <p>It used to take a bullet glyph too, applied as {@code bulletOffset}
+     * under {@code DocumentTextIndent.ALL_LINES}. Bulleted rows are lists now,
+     * so nothing passed one and the branch was reachable only with null.</p>
+     *
      * @param margin      paragraph margin
      * @param lineSpacing optional lineSpacing override; null = use
      *                    engine default
-     * @param bulletGlyph optional bullet prefix; null = no bullet
      */
     static void write(SectionBuilder host, String text,
                       DocumentTextStyle style,
                       DocumentInsets margin,
-                      Double lineSpacing,
-                      String bulletGlyph) {
+                      Double lineSpacing) {
         host.addParagraph(p -> {
             p.textStyle(style)
                     .align(TextAlign.LEFT)
@@ -173,10 +173,6 @@ final class ParagraphPrimitive {
                     .rich(rich -> MarkdownInline.append(rich, text, style));
             if (lineSpacing != null) {
                 p.lineSpacing(lineSpacing);
-            }
-            if (bulletGlyph != null) {
-                p.bulletOffset(bulletGlyph)
-                        .indentStrategy(DocumentTextIndent.ALL_LINES);
             }
         });
     }

@@ -1606,26 +1606,26 @@
   }, {
     "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]",
     "entityName" : "ExperienceRail",
-    "entityKind" : "SectionNode",
+    "entityKind" : "LayerStackNode",
     "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]",
     "childIndex" : 1,
     "depth" : 5,
     "layer" : 5,
-    "computedX" : 213.097,
-    "computedY" : 327.937,
-    "placementX" : 213.097,
-    "placementY" : 327.937,
-    "placementWidth" : 345.679,
-    "placementHeight" : 285.55,
+    "computedX" : 202.197,
+    "computedY" : 258.175,
+    "placementX" : 202.197,
+    "placementY" : 258.175,
+    "placementWidth" : 356.579,
+    "placementHeight" : 370.675,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 345.679,
-    "contentHeight" : 285.55,
+    "contentWidth" : 356.579,
+    "contentHeight" : 370.675,
     "margin" : {
-      "top" : 15.363,
+      "top" : 0.0,
       "right" : 0.0,
       "bottom" : 0.0,
-      "left" : 10.9
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1634,23 +1634,53 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingManager[0]",
-    "entityName" : "EntryHead_MarketingManager",
-    "entityKind" : "ShapeContainerNode",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]",
+    "entityName" : "ExperienceRailHolder",
+    "entityKind" : "SectionNode",
     "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]",
     "childIndex" : 0,
     "depth" : 6,
     "layer" : 6,
-    "computedX" : 213.097,
-    "computedY" : 606.687,
-    "placementX" : 213.097,
-    "placementY" : 606.687,
-    "placementWidth" : 345.679,
-    "placementHeight" : 6.8,
+    "computedX" : 209.697,
+    "computedY" : 258.175,
+    "placementX" : 209.697,
+    "placementY" : 258.175,
+    "placementWidth" : 349.079,
+    "placementHeight" : 355.312,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 345.679,
-    "contentHeight" : 6.8,
+    "contentWidth" : 349.079,
+    "contentHeight" : 355.312,
+    "margin" : {
+      "top" : 15.363,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 7.5
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 209.697,
+    "computedY" : 258.175,
+    "placementX" : 209.697,
+    "placementY" : 258.175,
+    "placementWidth" : 349.079,
+    "placementHeight" : 355.312,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.079,
+    "contentHeight" : 355.312,
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
@@ -1664,13 +1694,133 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingManager[0]/Marker_MarketingManager[0]",
-    "entityName" : "Marker_MarketingManager",
-    "entityKind" : "EllipseNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingManager[0]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]",
     "childIndex" : 0,
-    "depth" : 7,
-    "layer" : 7,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 209.697,
+    "computedY" : 474.112,
+    "placementX" : 209.697,
+    "placementY" : 474.112,
+    "placementWidth" : 349.079,
+    "placementHeight" : 139.375,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.079,
+    "contentHeight" : 139.375,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 209.697,
+    "computedY" : 474.112,
+    "placementX" : 209.697,
+    "placementY" : 474.112,
+    "placementWidth" : 349.079,
+    "placementHeight" : 139.375,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.079,
+    "contentHeight" : 139.375,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 26.363,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]",
+    "entityName" : null,
+    "entityKind" : "HorizontalBandsNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 209.697,
+    "computedY" : 500.475,
+    "placementX" : 209.697,
+    "placementY" : 500.475,
+    "placementWidth" : 349.079,
+    "placementHeight" : 113.012,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.079,
+    "contentHeight" : 113.012,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]",
+    "childIndex" : 0,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 209.697,
+    "computedY" : 500.475,
+    "placementX" : 209.697,
+    "placementY" : 500.475,
+    "placementWidth" : 349.079,
+    "placementHeight" : 113.012,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.079,
+    "contentHeight" : 113.012,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 0,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 209.697,
     "computedY" : 606.687,
     "placementX" : 209.697,
@@ -1694,13 +1844,223 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingManager[0]/JobTitle_MarketingManager[1]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 209.697,
+    "computedY" : 606.687,
+    "placementX" : 209.697,
+    "placementY" : 606.687,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 14,
+    "layer" : 14,
+    "computedX" : 209.697,
+    "computedY" : 606.687,
+    "placementX" : 209.697,
+    "placementY" : 606.687,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "entityName" : "marker",
+    "entityKind" : "CanvasLayerNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 15,
+    "layer" : 15,
+    "computedX" : 209.697,
+    "computedY" : 606.687,
+    "placementX" : 209.697,
+    "placementY" : 606.687,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "childIndex" : 0,
+    "depth" : 16,
+    "layer" : 16,
+    "computedX" : 209.697,
+    "computedY" : 606.687,
+    "placementX" : 209.697,
+    "placementY" : 606.687,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/Marker_MarketingManager[0]",
+    "entityName" : "Marker_MarketingManager",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 17,
+    "layer" : 17,
+    "computedX" : 209.697,
+    "computedY" : 606.687,
+    "placementX" : 209.697,
+    "placementY" : 606.687,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 1,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 232.097,
+    "computedY" : 500.475,
+    "placementX" : 232.097,
+    "placementY" : 500.475,
+    "placementWidth" : 326.679,
+    "placementHeight" : 113.012,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 326.679,
+    "contentHeight" : 113.012,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingManager[0]",
+    "entityName" : "EntryHead_MarketingManager",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 232.097,
+    "computedY" : 606.687,
+    "placementX" : 232.097,
+    "placementY" : 606.687,
+    "placementWidth" : 326.679,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 326.679,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingManager[0]/JobTitle_MarketingManager[0]",
     "entityName" : "JobTitle_MarketingManager",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingManager[0]",
-    "childIndex" : 1,
-    "depth" : 7,
-    "layer" : 7,
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingManager[0]",
+    "childIndex" : 0,
+    "depth" : 14,
+    "layer" : 14,
     "computedX" : 232.097,
     "computedY" : 604.05,
     "placementX" : 232.097,
@@ -1724,22 +2084,22 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingManager[0]/JobDates_MarketingManager[2]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingManager[0]/JobDates_MarketingManager[1]",
     "entityName" : "JobDates_MarketingManager",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingManager[0]",
-    "childIndex" : 2,
-    "depth" : 7,
-    "layer" : 7,
-    "computedX" : 213.097,
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingManager[0]",
+    "childIndex" : 1,
+    "depth" : 14,
+    "layer" : 14,
+    "computedX" : 232.097,
     "computedY" : 605.362,
-    "placementX" : 213.097,
+    "placementX" : 232.097,
     "placementY" : 605.362,
-    "placementWidth" : 345.679,
+    "placementWidth" : 326.679,
     "placementHeight" : 10.8,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 345.679,
+    "contentWidth" : 326.679,
     "contentHeight" : 10.8,
     "margin" : {
       "top" : 0.0,
@@ -1754,13 +2114,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/Employer_MarketingManager[1]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Employer_MarketingManager[1]",
     "entityName" : "Employer_MarketingManager",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
     "childIndex" : 1,
-    "depth" : 6,
-    "layer" : 6,
+    "depth" : 13,
+    "layer" : 13,
     "computedX" : 232.097,
     "computedY" : 588.525,
     "placementX" : 232.097,
@@ -1775,7 +2135,7 @@
       "top" : 7.363,
       "right" : 0.0,
       "bottom" : 7.0,
-      "left" : 19.0
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1784,13 +2144,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/Highlights_MarketingManager[2]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Highlights_MarketingManager[2]",
     "entityName" : "Highlights_MarketingManager",
     "entityKind" : "ListNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
     "childIndex" : 2,
-    "depth" : 6,
-    "layer" : 6,
+    "depth" : 13,
+    "layer" : 13,
     "computedX" : 232.097,
     "computedY" : 500.475,
     "placementX" : 232.097,
@@ -1804,8 +2164,8 @@
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
-      "bottom" : 26.363,
-      "left" : 19.0
+      "bottom" : 0.0,
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1814,23 +2174,23 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingSpecialist[3]",
-    "entityName" : "EntryHead_MarketingSpecialist",
-    "entityKind" : "ShapeContainerNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]",
-    "childIndex" : 3,
-    "depth" : 6,
-    "layer" : 6,
-    "computedX" : 213.097,
-    "computedY" : 467.312,
-    "placementX" : 213.097,
-    "placementY" : 467.312,
-    "placementWidth" : 345.679,
-    "placementHeight" : 6.8,
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 209.697,
+    "computedY" : 334.737,
+    "placementX" : 209.697,
+    "placementY" : 334.737,
+    "placementWidth" : 349.079,
+    "placementHeight" : 139.375,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 345.679,
-    "contentHeight" : 6.8,
+    "contentWidth" : 349.079,
+    "contentHeight" : 139.375,
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
@@ -1844,13 +2204,103 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingSpecialist[3]/Marker_MarketingSpecialist[0]",
-    "entityName" : "Marker_MarketingSpecialist",
-    "entityKind" : "EllipseNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingSpecialist[3]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]",
     "childIndex" : 0,
-    "depth" : 7,
-    "layer" : 7,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 209.697,
+    "computedY" : 334.737,
+    "placementX" : 209.697,
+    "placementY" : 334.737,
+    "placementWidth" : 349.079,
+    "placementHeight" : 139.375,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.079,
+    "contentHeight" : 139.375,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 26.363,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]",
+    "entityName" : null,
+    "entityKind" : "HorizontalBandsNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 209.697,
+    "computedY" : 361.1,
+    "placementX" : 209.697,
+    "placementY" : 361.1,
+    "placementWidth" : 349.079,
+    "placementHeight" : 113.012,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.079,
+    "contentHeight" : 113.012,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]",
+    "childIndex" : 0,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 209.697,
+    "computedY" : 361.1,
+    "placementX" : 209.697,
+    "placementY" : 361.1,
+    "placementWidth" : 349.079,
+    "placementHeight" : 113.012,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.079,
+    "contentHeight" : 113.012,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 0,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 209.697,
     "computedY" : 467.312,
     "placementX" : 209.697,
@@ -1874,13 +2324,223 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingSpecialist[3]/JobTitle_MarketingSpecialist[1]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 209.697,
+    "computedY" : 467.312,
+    "placementX" : 209.697,
+    "placementY" : 467.312,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 14,
+    "layer" : 14,
+    "computedX" : 209.697,
+    "computedY" : 467.312,
+    "placementX" : 209.697,
+    "placementY" : 467.312,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "entityName" : "marker",
+    "entityKind" : "CanvasLayerNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 15,
+    "layer" : 15,
+    "computedX" : 209.697,
+    "computedY" : 467.312,
+    "placementX" : 209.697,
+    "placementY" : 467.312,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "childIndex" : 0,
+    "depth" : 16,
+    "layer" : 16,
+    "computedX" : 209.697,
+    "computedY" : 467.312,
+    "placementX" : 209.697,
+    "placementY" : 467.312,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/Marker_MarketingSpecialist[0]",
+    "entityName" : "Marker_MarketingSpecialist",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 17,
+    "layer" : 17,
+    "computedX" : 209.697,
+    "computedY" : 467.312,
+    "placementX" : 209.697,
+    "placementY" : 467.312,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 1,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 232.097,
+    "computedY" : 361.1,
+    "placementX" : 232.097,
+    "placementY" : 361.1,
+    "placementWidth" : 326.679,
+    "placementHeight" : 113.012,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 326.679,
+    "contentHeight" : 113.012,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingSpecialist[0]",
+    "entityName" : "EntryHead_MarketingSpecialist",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 232.097,
+    "computedY" : 467.312,
+    "placementX" : 232.097,
+    "placementY" : 467.312,
+    "placementWidth" : 326.679,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 326.679,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingSpecialist[0]/JobTitle_MarketingSpecialist[0]",
     "entityName" : "JobTitle_MarketingSpecialist",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingSpecialist[3]",
-    "childIndex" : 1,
-    "depth" : 7,
-    "layer" : 7,
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingSpecialist[0]",
+    "childIndex" : 0,
+    "depth" : 14,
+    "layer" : 14,
     "computedX" : 232.097,
     "computedY" : 464.675,
     "placementX" : 232.097,
@@ -1904,22 +2564,22 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingSpecialist[3]/JobDates_MarketingSpecialist[2]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingSpecialist[0]/JobDates_MarketingSpecialist[1]",
     "entityName" : "JobDates_MarketingSpecialist",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingSpecialist[3]",
-    "childIndex" : 2,
-    "depth" : 7,
-    "layer" : 7,
-    "computedX" : 213.097,
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingSpecialist[0]",
+    "childIndex" : 1,
+    "depth" : 14,
+    "layer" : 14,
+    "computedX" : 232.097,
     "computedY" : 465.987,
-    "placementX" : 213.097,
+    "placementX" : 232.097,
     "placementY" : 465.987,
-    "placementWidth" : 345.679,
+    "placementWidth" : 326.679,
     "placementHeight" : 10.8,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 345.679,
+    "contentWidth" : 326.679,
     "contentHeight" : 10.8,
     "margin" : {
       "top" : 0.0,
@@ -1934,13 +2594,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/Employer_MarketingSpecialist[4]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Employer_MarketingSpecialist[1]",
     "entityName" : "Employer_MarketingSpecialist",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]",
-    "childIndex" : 4,
-    "depth" : 6,
-    "layer" : 6,
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 1,
+    "depth" : 13,
+    "layer" : 13,
     "computedX" : 232.097,
     "computedY" : 449.15,
     "placementX" : 232.097,
@@ -1955,7 +2615,7 @@
       "top" : 7.363,
       "right" : 0.0,
       "bottom" : 7.0,
-      "left" : 19.0
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1964,13 +2624,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/Highlights_MarketingSpecialist[5]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Highlights_MarketingSpecialist[2]",
     "entityName" : "Highlights_MarketingSpecialist",
     "entityKind" : "ListNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]",
-    "childIndex" : 5,
-    "depth" : 6,
-    "layer" : 6,
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 2,
+    "depth" : 13,
+    "layer" : 13,
     "computedX" : 232.097,
     "computedY" : 361.1,
     "placementX" : 232.097,
@@ -1984,8 +2644,8 @@
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
-      "bottom" : 26.363,
-      "left" : 19.0
+      "bottom" : 0.0,
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1994,23 +2654,23 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingIntern[6]",
-    "entityName" : "EntryHead_MarketingIntern",
-    "entityKind" : "ShapeContainerNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]",
-    "childIndex" : 6,
-    "depth" : 6,
-    "layer" : 6,
-    "computedX" : 213.097,
-    "computedY" : 327.937,
-    "placementX" : 213.097,
-    "placementY" : 327.937,
-    "placementWidth" : 345.679,
-    "placementHeight" : 6.8,
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]",
+    "childIndex" : 2,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 209.697,
+    "computedY" : 258.175,
+    "placementX" : 209.697,
+    "placementY" : 258.175,
+    "placementWidth" : 349.079,
+    "placementHeight" : 76.562,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 345.679,
-    "contentHeight" : 6.8,
+    "contentWidth" : 349.079,
+    "contentHeight" : 76.562,
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
@@ -2024,13 +2684,103 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingIntern[6]/Marker_MarketingIntern[0]",
-    "entityName" : "Marker_MarketingIntern",
-    "entityKind" : "EllipseNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingIntern[6]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]",
     "childIndex" : 0,
-    "depth" : 7,
-    "layer" : 7,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 209.697,
+    "computedY" : 258.175,
+    "placementX" : 209.697,
+    "placementY" : 258.175,
+    "placementWidth" : 349.079,
+    "placementHeight" : 76.562,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.079,
+    "contentHeight" : 76.562,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]",
+    "entityName" : null,
+    "entityKind" : "HorizontalBandsNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 209.697,
+    "computedY" : 258.175,
+    "placementX" : 209.697,
+    "placementY" : 258.175,
+    "placementWidth" : 349.079,
+    "placementHeight" : 76.562,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.079,
+    "contentHeight" : 76.562,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]",
+    "childIndex" : 0,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 209.697,
+    "computedY" : 258.175,
+    "placementX" : 209.697,
+    "placementY" : 258.175,
+    "placementWidth" : 349.079,
+    "placementHeight" : 76.562,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.079,
+    "contentHeight" : 76.562,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 0,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 209.697,
     "computedY" : 327.937,
     "placementX" : 209.697,
@@ -2054,13 +2804,223 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingIntern[6]/JobTitle_MarketingIntern[1]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 209.697,
+    "computedY" : 327.937,
+    "placementX" : 209.697,
+    "placementY" : 327.937,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 14,
+    "layer" : 14,
+    "computedX" : 209.697,
+    "computedY" : 327.937,
+    "placementX" : 209.697,
+    "placementY" : 327.937,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "entityName" : "marker",
+    "entityKind" : "CanvasLayerNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 15,
+    "layer" : 15,
+    "computedX" : 209.697,
+    "computedY" : 327.937,
+    "placementX" : 209.697,
+    "placementY" : 327.937,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "childIndex" : 0,
+    "depth" : 16,
+    "layer" : 16,
+    "computedX" : 209.697,
+    "computedY" : 327.937,
+    "placementX" : 209.697,
+    "placementY" : 327.937,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/Marker_MarketingIntern[0]",
+    "entityName" : "Marker_MarketingIntern",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 17,
+    "layer" : 17,
+    "computedX" : 209.697,
+    "computedY" : 327.937,
+    "placementX" : 209.697,
+    "placementY" : 327.937,
+    "placementWidth" : 6.8,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.8,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 1,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 232.097,
+    "computedY" : 258.175,
+    "placementX" : 232.097,
+    "placementY" : 258.175,
+    "placementWidth" : 326.679,
+    "placementHeight" : 76.562,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 326.679,
+    "contentHeight" : 76.562,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingIntern[0]",
+    "entityName" : "EntryHead_MarketingIntern",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 232.097,
+    "computedY" : 327.937,
+    "placementX" : 232.097,
+    "placementY" : 327.937,
+    "placementWidth" : 326.679,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 326.679,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingIntern[0]/JobTitle_MarketingIntern[0]",
     "entityName" : "JobTitle_MarketingIntern",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingIntern[6]",
-    "childIndex" : 1,
-    "depth" : 7,
-    "layer" : 7,
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingIntern[0]",
+    "childIndex" : 0,
+    "depth" : 14,
+    "layer" : 14,
     "computedX" : 232.097,
     "computedY" : 325.3,
     "placementX" : 232.097,
@@ -2084,22 +3044,22 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingIntern[6]/JobDates_MarketingIntern[2]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingIntern[0]/JobDates_MarketingIntern[1]",
     "entityName" : "JobDates_MarketingIntern",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/EntryHead_MarketingIntern[6]",
-    "childIndex" : 2,
-    "depth" : 7,
-    "layer" : 7,
-    "computedX" : 213.097,
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_MarketingIntern[0]",
+    "childIndex" : 1,
+    "depth" : 14,
+    "layer" : 14,
+    "computedX" : 232.097,
     "computedY" : 326.612,
-    "placementX" : 213.097,
+    "placementX" : 232.097,
     "placementY" : 326.612,
-    "placementWidth" : 345.679,
+    "placementWidth" : 326.679,
     "placementHeight" : 10.8,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 345.679,
+    "contentWidth" : 326.679,
     "contentHeight" : 10.8,
     "margin" : {
       "top" : 0.0,
@@ -2114,43 +3074,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceTail[2]",
-    "entityName" : "ExperienceTail",
-    "entityKind" : "SectionNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]",
-    "childIndex" : 2,
-    "depth" : 5,
-    "layer" : 5,
-    "computedX" : 213.097,
-    "computedY" : 258.175,
-    "placementX" : 213.097,
-    "placementY" : 258.175,
-    "placementWidth" : 293.005,
-    "placementHeight" : 69.762,
-    "startPage" : 0,
-    "endPage" : 0,
-    "contentWidth" : 293.005,
-    "contentHeight" : 69.762,
-    "margin" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 10.9
-    },
-    "padding" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    }
-  }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceTail[2]/Employer_MarketingIntern[0]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Employer_MarketingIntern[1]",
     "entityName" : "Employer_MarketingIntern",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceTail[2]",
-    "childIndex" : 0,
-    "depth" : 6,
-    "layer" : 6,
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 1,
+    "depth" : 13,
+    "layer" : 13,
     "computedX" : 232.097,
     "computedY" : 309.775,
     "placementX" : 232.097,
@@ -2165,7 +3095,7 @@
       "top" : 7.363,
       "right" : 0.0,
       "bottom" : 7.0,
-      "left" : 19.0
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -2174,13 +3104,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceTail[2]/Highlights_MarketingIntern[1]",
+    "path" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Highlights_MarketingIntern[2]",
     "entityName" : "Highlights_MarketingIntern",
     "entityKind" : "ListNode",
-    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceTail[2]",
-    "childIndex" : 1,
-    "depth" : 6,
-    "layer" : 6,
+    "parentPath" : "NavySidebarCv[0]/PageGrid[0]/Main[1]/Experience[3]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 2,
+    "depth" : 13,
+    "layer" : 13,
     "computedX" : 232.097,
     "computedY" : 258.175,
     "placementX" : 232.097,
@@ -2195,7 +3125,7 @@
       "top" : 0.0,
       "right" : 0.0,
       "bottom" : 0.0,
-      "left" : 19.0
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,

@@ -1,13 +1,15 @@
 package com.demcha.compose.document.templates.cv.presets;
 
-import com.demcha.compose.document.dsl.EllipseBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.dsl.TimelineMarker;
+import com.demcha.compose.document.dsl.TimelineRailExtent;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
@@ -165,34 +167,58 @@ final class NavySidebarMain {
      * The roles held, strung on a vertical rail with a filled marker at each
      * one.
      *
-     * <p>The rail is the section's left accent, which runs the full height
-     * of what the section holds — so the last role's body is composed in a
-     * second section outside the rail, and the line stops at the last
-     * marker instead of running past it to the foot of the block.</p>
+     * <p>The rail stops at the last marker, which is what {@code MARKER_TO_MARKER} means. It
+     * used to be the section's left accent, and an accent runs the full height of what its
+     * section holds — so the last role's body was composed in a second section outside the
+     * rail to keep the line from running on to the foot of the block. The extent says it
+     * directly now, and that sibling section is gone.</p>
+     *
+     * <p>Wrapped in a layer because a row nested in a row cell is refused and this sheet's
+     * main column is one.</p>
      */
     private static void renderExperience(SectionBuilder section, EntriesSection experience) {
         sectionHeader(section, NavySidebarIcons.BRIEFCASE, experience.title());
-        List<CvEntry> entries = experience.entries();
-        int last = entries.size() - 1;
-        section.addSection("ExperienceRail", rail -> {
-            rail.spacing(0);
-            // The rail starts where the first marker's band does, which is
-            // half a title's overhang below the heading.
-            rail.margin(new DocumentInsets(
-                    HEADER_TO_BODY + TITLE_OVERFLOW, 0, 0, RAIL_MARGIN_LEFT));
-            rail.accentLeft(RAIL, RAIL_WIDTH);
-            for (int i = 0; i < entries.size(); i++) {
-                renderEntryHead(rail, entries.get(i));
-                if (i < last) {
-                    renderEntryBody(rail, entries.get(i), ENTRY_GAP + TITLE_OVERFLOW);
-                }
+        SectionBuilder holder = new SectionBuilder();
+        holder.name("ExperienceRailHolder");
+        holder.spacing(0);
+        // The rail starts where the first marker's band does, which is half a title's
+        // overhang below the heading; the axis column centres the rail on itself, so the
+        // timeline starts half a marker further left than the accent did.
+        holder.margin(new DocumentInsets(HEADER_TO_BODY + TITLE_OVERFLOW, 0, 0,
+                RAIL_MARGIN_LEFT - MARKER_DIAMETER / 2.0));
+        holder.addTimeline(timeline -> {
+            timeline.markerOnRail()
+                    .rail(rail -> rail
+                            .stroke(DocumentStroke.of(RAIL, RAIL_WIDTH))
+                            .extent(TimelineRailExtent.MARKER_TO_MARKER))
+                    .axisWidth(MARKER_DIAMETER)
+                    .markerGap(ENTRY_TEXT_INSET - MARKER_DIAMETER / 2.0)
+                    .gutter(0)
+                    .spacing(ENTRY_GAP + TITLE_OVERFLOW);
+            for (CvEntry entry : experience.entries()) {
+                timeline.entry(entryMarker(entry), e -> e.content(body -> renderEntry(body, entry)));
             }
         });
-        section.addSection("ExperienceTail", tail -> {
-            tail.spacing(0);
-            tail.margin(new DocumentInsets(0, 0, 0, RAIL_MARGIN_LEFT));
-            renderEntryBody(tail, entries.get(last), 0);
-        });
+        DocumentNode node = holder.build();
+        section.addLayerStack(stack -> stack
+                .name("ExperienceRail")
+                .layer(node, LayerAlign.TOP_LEFT, 0));
+    }
+
+    /** The filled disc that marks a role, in a box as tall as the head band it rides. */
+    private static TimelineMarker entryMarker(CvEntry entry) {
+        return TimelineMarker.custom(MARKER_DIAMETER, ENTRY_HEAD_BAND_HEIGHT,
+                column -> column.addEllipse(ellipse -> ellipse
+                        .name("Marker_" + compact(entry.title()))
+                        .circle(MARKER_DIAMETER)
+                        .fillColor(NAVY)));
+    }
+
+    /** One role: the head band carrying its title and dates, then the body. */
+    private static void renderEntry(SectionBuilder body, CvEntry entry) {
+        body.spacing(0);
+        renderEntryHead(body, entry);
+        renderEntryBody(body, entry);
     }
 
     /**
@@ -201,11 +227,6 @@ final class NavySidebarMain {
      * of type are pulled up by half their own overhang to centre on it.
      */
     private static void renderEntryHead(SectionBuilder rail, CvEntry entry) {
-        DocumentNode marker = new EllipseBuilder()
-                .name("Marker_" + compact(entry.title()))
-                .circle(MARKER_DIAMETER)
-                .fillColor(NAVY)
-                .build();
         DocumentNode title = new ParagraphBuilder()
                 .name("JobTitle_" + compact(entry.title()))
                 .text(entry.title().toUpperCase(Locale.ROOT))
@@ -219,24 +240,27 @@ final class NavySidebarMain {
                 .align(TextAlign.RIGHT)
                 .margin(DocumentInsets.zero())
                 .build();
+        // The marker has left the band for the timeline's axis column, so the band starts at
+        // the content column and the title no longer walks in past the rail.
         rail.addContainer(head -> head
                 .name("EntryHead_" + compact(entry.title()))
-                .rectangle(ENTRY_WIDTH, ENTRY_HEAD_BAND_HEIGHT)
+                .rectangle(ENTRY_WIDTH - ENTRY_TEXT_INSET, ENTRY_HEAD_BAND_HEIGHT)
                 .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
-                .position(marker, -MARKER_DIAMETER / 2.0, 0, LayerAlign.CENTER_LEFT)
-                .position(title, ENTRY_TEXT_INSET, -TITLE_OVERFLOW, LayerAlign.CENTER_LEFT)
+                .position(title, 0, -TITLE_OVERFLOW, LayerAlign.CENTER_LEFT)
                 .position(dates, 0, -DATE_OVERFLOW, LayerAlign.CENTER_RIGHT));
     }
 
     /** The employer in accent, then one bullet per line of the entry body. */
-    private static void renderEntryBody(SectionBuilder rail, CvEntry entry, double gapBelow) {
+    private static void renderEntryBody(SectionBuilder rail, CvEntry entry) {
+        // No left inset: the content column already starts where the text did, and the gap
+        // below an entry is the timeline's spacing rather than the last list's bottom margin.
         rail.addParagraph(p -> p
                 .name("Employer_" + compact(entry.title()))
                 .text(entry.subtitle())
                 .textStyle(style(BODY_SIZE, ACCENT, DocumentTextDecoration.DEFAULT))
                 .margin(new DocumentInsets(
                         ENTRY_TITLE_TO_EMPLOYER + TITLE_OVERFLOW, 0,
-                        ENTRY_EMPLOYER_TO_BULLETS, ENTRY_TEXT_INSET)));
+                        ENTRY_EMPLOYER_TO_BULLETS, 0)));
         List<String> highlights = lines(entry.body());
         if (!highlights.isEmpty()) {
             rail.addList(list -> list
@@ -246,7 +270,7 @@ final class NavySidebarMain {
                     .textStyle(body())
                     .lineSpacing(BULLET_LEADING)
                     .itemSpacing(BULLET_ITEM_GAP)
-                    .margin(new DocumentInsets(0, 0, gapBelow, ENTRY_TEXT_INSET)));
+                    .margin(DocumentInsets.zero()));
         }
     }
 

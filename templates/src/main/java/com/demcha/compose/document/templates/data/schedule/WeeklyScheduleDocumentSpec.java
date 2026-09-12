@@ -13,7 +13,13 @@ import java.util.function.Consumer;
  *
  * @param schedule normalized weekly schedule content rendered by templates
  * @author Artem Demchyshyn
+ *
+ * @deprecated superseded by
+ *             {@link com.demcha.compose.document.templates.data.rota.StructuredRotaDocumentSpec},
+ *             which is the spec rota presets are parameterised on. No preset
+ *             ever consumed this one.
  */
+@Deprecated(since = "2.4.0")
 public record WeeklyScheduleDocumentSpec(WeeklyScheduleData schedule) {
 
     /**

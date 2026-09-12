@@ -16,6 +16,8 @@ import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
+import com.demcha.compose.document.templates.core.identity.ContactUri;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -235,7 +237,8 @@ public final class EngineeringResume {
                 }
                 List<ContactPart> parts = new ArrayList<>();
                 addPart(parts, identity.contact().address(), null);
-                addPart(parts, identity.contact().phone(), null);
+                addPart(parts, identity.contact().phone(),
+                        ContactUri.telLink(identity.contact().phone()));
                 String email = identity.contact().email();
                 if (!email.isBlank()) {
                     addPart(parts, email,

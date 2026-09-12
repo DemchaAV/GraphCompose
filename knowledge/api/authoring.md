@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 237 · methods: 2107 · constants: 237 · compiler-generated members: 1126
+Types: 237 · methods: 2123 · constants: 236 · compiler-generated members: 1129
 
 ## com.demcha.compose
 
@@ -751,9 +751,12 @@ Types: 237 · methods: 2107 · constants: 237 · compiler-generated members: 112
 - `ListBuilder items(List<String> items)`
 - `ListBuilder addItem(String item)`
 - `ListBuilder addItem(String label, Consumer<ListBuilder> body)`
+- `ListBuilder addItem(Consumer<RichText> content)`
+- `ListBuilder addItem(Consumer<RichText> content, Consumer<ListBuilder> body)`
 - `ListBuilder markerFor(int depth, ListMarker marker)`
 - `ListBuilder marker(ListMarker marker)`
 - `ListBuilder marker(String marker)`
+- `ListBuilder marker(Consumer<RichText> marker)`
 - `ListBuilder bullet()`
 - `ListBuilder dash()`
 - `ListBuilder noMarker()`
@@ -1128,6 +1131,7 @@ Types: 237 · methods: 2107 · constants: 237 · compiler-generated members: 112
 - `TimelineBuilder markerOnRail()`
 - `TimelineBuilder gutter(double gutter)`
 - `TimelineBuilder markerGap(double gap)`
+- `TimelineBuilder leadingGap(double gap)`
 - `TimelineBuilder markerColumnWeight(double weight)`
 - `TimelineBuilder axisWidth(double points)`
 - `TimelineBuilder leadingColumn(DocumentRowColumn column)`
@@ -1164,10 +1168,11 @@ Types: 237 · methods: 2107 · constants: 237 · compiler-generated members: 112
 
 ### TimelineRailBuilder (class)
 - `TimelineRailBuilder stroke(DocumentStroke stroke)`
-- `TimelineRailBuilder extent(TimelineRailExtent extent)`
+- `TimelineRailBuilder from(TimelineRailEnd start)`
+- `TimelineRailBuilder to(TimelineRailEnd end)`
 
-### TimelineRailExtent (enum)
-- constants: `MARKER_TO_MARKER`, `ENTRY_BOUNDS`, `TIMELINE_BOUNDS`
+### TimelineRailEnd (enum)
+- constants: `ENTRY_BOUND`, `MARKER`
 
 ### TocBuilder (class)
 - `new TocBuilder()`
@@ -1402,6 +1407,8 @@ Types: 237 · methods: 2107 · constants: 237 · compiler-generated members: 112
 - `DocumentLinkTarget linkTarget()`
 
 ### InlineRun (interface)
+- `String plainText(List<InlineRun>)`
+- `List<InlineTextRun> textRuns(List<InlineRun>)`
 
 ### InlineShapeRun (record)
 - `new InlineShapeRun(List<ShapeLayer>, InlineImageAlignment, double, DocumentLinkTarget)`
@@ -1498,16 +1505,24 @@ Types: 237 · methods: 2107 · constants: 237 · compiler-generated members: 112
 - `boolean keepWithNext()`
 
 ### ListItem (record)
-- `new ListItem(String, ListMarker, List<ListItem>)`
+- `new ListItem(String, List<InlineRun>, ListMarker, List<ListItem>)`
+- `new ListItem(String label, ListMarker marker, List<ListItem> children)`
+- `ListItem ofRuns(List<InlineRun> runs)`
+- `ListItem ofRuns(String label, List<InlineRun> runs)`
+- `boolean isRich()`
 - `ListItem of(String label)`
 - `ListItem of(String label, List<ListItem> children)`
 - `boolean isLeaf()`
 - `String label()`
+- `List<InlineRun> runs()`
 - `ListMarker marker()`
 - `List<ListItem> children()`
 
 ### ListMarker (record)
-- `new ListMarker(String)`
+- `new ListMarker(String, List<InlineRun>)`
+- `new ListMarker(String value)`
+- `ListMarker ofRuns(List<InlineRun> runs)`
+- `boolean isRich()`
 - `ListMarker bullet()`
 - `ListMarker dash()`
 - `ListMarker none()`
@@ -1517,6 +1532,7 @@ Types: 237 · methods: 2107 · constants: 237 · compiler-generated members: 112
 - `boolean isVisible()`
 - `String prefix()`
 - `String value()`
+- `List<InlineRun> runs()`
 
 ### ListNode (record)
 - `new ListNode(String, List<String>, List<ListItem>, ListMarker, DocumentTextStyle, TextAlign, double, double, String, boolean, DocumentInsets, DocumentInsets, boolean, double)`

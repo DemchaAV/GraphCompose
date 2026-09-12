@@ -25,6 +25,8 @@ import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.identity.SvgGlyph;
 import com.demcha.compose.document.templates.core.widgets.TimelineAxisWidget;
 
+import com.demcha.compose.document.templates.core.identity.ContactUri;
+
 import java.util.*;
 
 /**
@@ -433,7 +435,8 @@ public final class TimelineMinimal {
                 addContactItem(items, "LOC", "location.svg",
                         identity.contact().address(), null);
                 addContactItem(items, "TEL", "phone.svg",
-                        identity.contact().phone(), null);
+                        identity.contact().phone(),
+                        ContactUri.telLink(identity.contact().phone()));
                 String email = identity.contact().email();
                 if (!email.isBlank()) {
                     addContactItem(items, "@", "email.svg", email,
@@ -538,12 +541,17 @@ public final class TimelineMinimal {
                                     .margin(DocumentInsets.zero()));
                         }
                     } else {
+                        // No marker. A bulletOffset used to be set here, and it
+                        // reached no page: the prefix is drawn only under an
+                        // indent strategy that asks for it, and a paragraph's
+                        // default asks for neither the first line nor the
+                        // wrapped ones. What the design has always shown is
+                        // these lines set plain, so that is what it now says.
                         for (String line : lines) {
                             block.addParagraph(paragraph -> paragraph
                                     .text(line)
                                     .textStyle(mainBulletStyle())
                                     .lineSpacing(1.2)
-                                    .bulletOffset("-")
                                     .margin(DocumentInsets.zero()));
                         }
                     }

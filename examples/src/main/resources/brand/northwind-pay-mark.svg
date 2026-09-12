@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!--
+    Fictional issuer mark for the Modern Receipt example: a double chevron
+    reading as "forward". One filled path, no holes, so SvgGlyph flattens it
+    to a single recolourable silhouette.
+  -->
+  <path fill="#0D0F14"
+        d="M4 12 L26 32 L4 52 L4 39 L11.5 32 L4 25 Z
+           M30 12 L52 32 L30 52 L30 39 L37.5 32 L30 25 Z"/>
+</svg>

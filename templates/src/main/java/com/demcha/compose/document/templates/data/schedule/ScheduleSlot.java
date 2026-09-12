@@ -7,7 +7,13 @@ import java.util.Objects;
  *
  * @param start start time/label
  * @param end   end time/label
+ *
+ * @deprecated superseded by
+ *             {@link com.demcha.compose.document.templates.data.rota.RotaShift},
+ *             whose text is whatever the cell prints — a span of hours, or the
+ *             word for a day not worked, which a start/end pair cannot carry.
  */
+@Deprecated(since = "2.4.0")
 public record ScheduleSlot(
         String start,
         String end

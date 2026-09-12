@@ -21,6 +21,8 @@ import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.identity.SvgGlyph;
 import com.demcha.compose.font.FontName;
 
+import com.demcha.compose.document.templates.core.identity.ContactUri;
+
 import java.util.*;
 
 /**
@@ -897,7 +899,8 @@ public final class MonogramSidebar {
             return List.of();
         }
         List<ContactItem> items = new ArrayList<>();
-        addContactItem(items, "phone.svg", identity.contact().phone(), null);
+        addContactItem(items, "phone.svg", identity.contact().phone(),
+                ContactUri.telLink(identity.contact().phone()));
         String email = identity.contact().email();
         if (!email.isBlank()) {
             addContactItem(items, "email.svg", email,

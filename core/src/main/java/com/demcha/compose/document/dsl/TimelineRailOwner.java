@@ -42,12 +42,15 @@ final class TimelineRailOwner implements ResolvedLayoutPass {
     private static final double EPS = 1e-9;
 
     private final TimelineRailSpec rail;
-    private final TimelineRailExtent extent;
+    private final TimelineRailEnd start;
+    private final TimelineRailEnd end;
     private final TimelineMarkerAnchor markerAnchor;
 
-    TimelineRailOwner(TimelineRailSpec rail, TimelineRailExtent extent, TimelineMarkerAnchor markerAnchor) {
+    TimelineRailOwner(TimelineRailSpec rail, TimelineRailEnd start, TimelineRailEnd end,
+                      TimelineMarkerAnchor markerAnchor) {
         this.rail = rail;
-        this.extent = extent;
+        this.start = start;
+        this.end = end;
         this.markerAnchor = markerAnchor;
     }
 
@@ -103,11 +106,19 @@ final class TimelineRailOwner implements ResolvedLayoutPass {
     /**
      * The rail's vertical extent, one segment per page it appears on.
      *
-     * <p>Both extents are built from the entries' resolved slices, because those already
+     * <p>Every segment starts as the entries' own resolved slices, because those already
      * carry the one thing neither the markers nor the node boxes do: what a page's content
-     * band is, on that page, after per-page margins. {@code MARKER_TO_MARKER} then trims
-     * the first and last of them back to the markers rather than deriving a band of its
-     * own.</p>
+     * band is, on that page, after per-page margins. An end asked for on the marker then
+     * trims that page's slice back to the marker rather than deriving a band of its own —
+     * and only that page's, which is what lets the two ends be chosen one at a time. A
+     * middle page is trimmed by neither, because neither the first marker nor the last is
+     * on it.</p>
+     *
+     * <p>Trimming <em>back</em> is the whole of it: {@code min} at the top and {@code max}
+     * at the bottom, so an end on a marker can only shorten the line, never invent rail
+     * outside the entries. A page past the marker that bounds it drops out for the same
+     * reason — with the start on the first marker there is nothing to draw on a page before
+     * it.</p>
      */
     private List<Segment> segments(ResolvedLayoutMetadata metadata, List<ResolvedLayoutAnchor> markers) {
         Map<Integer, Segment> byPage = new LinkedHashMap<>();
@@ -116,7 +127,9 @@ final class TimelineRailOwner implements ResolvedLayoutPass {
                     new Segment(entry.pageIndex(), entry.pointY(1.0), entry.y()),
                     Segment::union);
         }
-        if (extent == TimelineRailExtent.ENTRY_BOUNDS) {
+        boolean startsOnMarker = start == TimelineRailEnd.MARKER;
+        boolean endsOnMarker = end == TimelineRailEnd.MARKER;
+        if (!startsOnMarker && !endsOnMarker) {
             return List.copyOf(byPage.values());
         }
 
@@ -126,11 +139,18 @@ final class TimelineRailOwner implements ResolvedLayoutPass {
         double endY = markerAnchor.y(last);
         List<Segment> trimmed = new ArrayList<>();
         for (Segment segment : byPage.values()) {
-            if (segment.page < first.pageIndex() || segment.page > last.pageIndex()) {
+            if (startsOnMarker && segment.page < first.pageIndex()) {
                 continue;
             }
-            double top = segment.page == first.pageIndex() ? Math.min(segment.top, startY) : segment.top;
-            double bottom = segment.page == last.pageIndex() ? Math.max(segment.bottom, endY) : segment.bottom;
+            if (endsOnMarker && segment.page > last.pageIndex()) {
+                continue;
+            }
+            double top = startsOnMarker && segment.page == first.pageIndex()
+                    ? Math.min(segment.top, startY)
+                    : segment.top;
+            double bottom = endsOnMarker && segment.page == last.pageIndex()
+                    ? Math.max(segment.bottom, endY)
+                    : segment.bottom;
             trimmed.add(new Segment(segment.page, top, bottom));
         }
         return trimmed;

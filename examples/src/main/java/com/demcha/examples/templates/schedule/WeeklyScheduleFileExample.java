@@ -63,8 +63,8 @@ public final class WeeklyScheduleFileExample {
     private static final List<DayPlan> WEEK = List.of(
             new DayPlan("Bank Holiday Monday / Clean Crushed Ice Machine & Area", 163, 35),
             new DayPlan("Pianist 18:30 / Clean Crushed Ice Machine & Area", 21, 63),
-            new DayPlan("TEAM DAY OUT / Motown GF / Pianist 18:30", 52, 74),
-            new DayPlan("Ex Hire Terrace Dinner 13PAX / Pianist 18:30 / MGM meeting 3:30pm", 35, 75),
+            new DayPlan("TEAM DAY OUT / Soul GF / Pianist 18:30", 52, 74),
+            new DayPlan("Ex Hire Terrace Dinner 13PAX / Pianist 18:30 / Partner meeting 3:30pm", 35, 75),
             new DayPlan("Pianist 19:00", 82, 78),
             new DayPlan("Ex Hire FF Lunch 44PAX / Pianist 19:00", 131, 149),
             new DayPlan("Masterclass 4PAX (2x2) / Line Check / Clean Cubed Ice Machine & Area", 130, 36)

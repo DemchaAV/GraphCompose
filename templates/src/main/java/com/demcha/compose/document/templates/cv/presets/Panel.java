@@ -17,6 +17,8 @@ import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.widgets.CardWidget;
 import com.demcha.compose.font.FontName;
 
+import com.demcha.compose.document.templates.core.identity.ContactUri;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -244,14 +246,31 @@ public final class Panel {
                                         .align(TextAlign.CENTER)
                                         .margin(DocumentInsets.zero()));
                             }
-                            String contact = joinPipe(identity.contact().address(),
-                                    identity.contact().phone());
-                            if (!contact.isBlank()) {
-                                card.addParagraph(paragraph -> paragraph
-                                        .text(contact)
-                                        .textStyle(headerMetaStyle())
-                                        .align(TextAlign.CENTER)
-                                        .margin(DocumentInsets.zero()));
+                            String address = identity.contact().address();
+                            String phone = identity.contact().phone();
+                            if (!address.isBlank() || !phone.isBlank()) {
+                                // The number is its own run rather than part of one joined string, so
+                                // it can carry a dialling target without the address being swept into
+                                // it. The glyphs and their order are what the joined string gave.
+                                card.addParagraph(paragraph -> {
+                                    paragraph.textStyle(headerMetaStyle())
+                                            .align(TextAlign.CENTER)
+                                            .margin(DocumentInsets.zero());
+                                    if (!address.isBlank()) {
+                                        paragraph.inlineText(address.trim(), headerMetaStyle());
+                                    }
+                                    if (!phone.isBlank()) {
+                                        if (!address.isBlank()) {
+                                            paragraph.inlineText(" | ", headerMetaStyle());
+                                        }
+                                        DocumentLinkOptions dial = ContactUri.telLink(phone);
+                                        if (dial == null) {
+                                            paragraph.inlineText(phone.trim(), headerMetaStyle());
+                                        } else {
+                                            paragraph.inlineText(phone.trim(), headerMetaStyle(), dial);
+                                        }
+                                    }
+                                });
                             }
                             addLinkRow(card, identity);
                         });
@@ -496,20 +515,6 @@ public final class Panel {
                         theme.typography().sizeBanner(),
                         DocumentTextDecoration.BOLD,
                         ACCENT);
-            }
-
-            private static String joinPipe(String... parts) {
-                StringBuilder sb = new StringBuilder();
-                for (String part : parts) {
-                    if (part == null || part.isBlank()) {
-                        continue;
-                    }
-                    if (sb.length() > 0) {
-                        sb.append(" | ");
-                    }
-                    sb.append(part.trim());
-                }
-                return sb.toString();
             }
         }
 }

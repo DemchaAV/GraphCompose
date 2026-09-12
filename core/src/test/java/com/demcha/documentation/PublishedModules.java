@@ -33,6 +33,10 @@ final class PublishedModules {
     private static final Pattern DEPLOY_STEP =
             Pattern.compile("-f\\s+([\\w-]+)/pom\\.xml");
 
+    /** The {@code order="core render-pdf ..."} line publish.yml validates its resume against. */
+    private static final Pattern TRAIN_ORDER =
+            Pattern.compile("order=\"([^\"]+)\"");
+
     /**
      * The modules a release actually deploys, read from the publish workflows.
      *
@@ -42,26 +46,72 @@ final class PublishedModules {
      * comparison, which is precisely the shape that keeps it green.</p>
      */
     static List<String> deployed(Path repoRoot) throws IOException {
-        Path workflows = repoRoot.resolve(".github/workflows");
         List<String> deployed = new ArrayList<>();
+        deployedByWorkflow(repoRoot).values().forEach(modules -> modules.forEach(module -> {
+            if (!deployed.contains(module)) {
+                deployed.add(module);
+            }
+        }));
+        return deployed;
+    }
+
+    /**
+     * The modules each publish workflow deploys, keyed by the workflow's file name —
+     * including the workflows that deploy none.
+     *
+     * <p>Attribution is what lets a caller tell "this workflow publishes nothing" from
+     * "this workflow was not read". A flat list cannot: both look like a shorter list,
+     * and a shorter list is exactly what a guard comparing against it wants to see.</p>
+     *
+     * @param repoRoot the repository root
+     * @return every {@code publish*.yml}, mapped to the module directories it deploys
+     * @throws IOException when a workflow cannot be read
+     */
+    static Map<String, List<String>> deployedByWorkflow(Path repoRoot) throws IOException {
+        Path workflows = repoRoot.resolve(".github/workflows");
+        Map<String, List<String>> byWorkflow = new LinkedHashMap<>();
         try (var files = Files.list(workflows)) {
             for (Path workflow : files.sorted().toList()) {
                 String name = workflow.getFileName().toString();
                 if (!name.startsWith("publish") || !name.endsWith(".yml")) {
                     continue;
                 }
+                List<String> modules = new ArrayList<>();
                 for (String line : Files.readAllLines(workflow)) {
                     if (!line.contains("deploy")) {
                         continue;
                     }
                     Matcher module = DEPLOY_STEP.matcher(line);
-                    if (module.find() && !deployed.contains(module.group(1))) {
-                        deployed.add(module.group(1));
+                    if (module.find() && !modules.contains(module.group(1))) {
+                        modules.add(module.group(1));
                     }
                 }
+                byWorkflow.put(name, modules);
             }
         }
-        return deployed;
+        return byWorkflow;
+    }
+
+    /**
+     * The publish train {@code publish.yml} declares for itself, in order.
+     *
+     * <p>The workflow states its module set twice — once as the {@code order} the resume
+     * input is validated against, and once as the deploy steps themselves. Neither is
+     * derived from the other, so holding them together catches the step list drifting
+     * away from the train without anything having to restate it a third time.</p>
+     *
+     * @param repoRoot the repository root
+     * @return the module directories the train names, or an empty list when the
+     *         declaration is absent
+     * @throws IOException when the workflow cannot be read
+     */
+    static List<String> declaredTrain(Path repoRoot) throws IOException {
+        Path workflow = repoRoot.resolve(".github/workflows/publish.yml");
+        if (!Files.isRegularFile(workflow)) {
+            return List.of();
+        }
+        Matcher order = TRAIN_ORDER.matcher(Files.readString(workflow));
+        return order.find() ? List.of(order.group(1).strip().split("\\s+")) : List.of();
     }
 
     /** The module directories the root reactor builds, in declaration order. */

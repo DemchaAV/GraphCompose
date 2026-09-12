@@ -18,6 +18,8 @@ import java.util.List;
  * @param rail                the connector rail
  * @param leadingColumn       how wide the column before the marker is, or null when the
  *                            timeline has no leading column at all
+ * @param leadingGap          horizontal gap between the leading column and the marker
+ *                            column; carries no meaning without a leading column
  * @param gutter              space between the rail and the entry's content
  * @param markerGap           horizontal gap between the marker column and the content
  *                            beside it
@@ -32,6 +34,7 @@ import java.util.List;
 record TimelineSpec(TimelineRailOwner owner,
                     TimelineRailSpec rail,
                     DocumentRowColumn leadingColumn,
+                    double leadingGap,
                     double gutter,
                     double markerGap,
                     TimelineAxisSize axis,

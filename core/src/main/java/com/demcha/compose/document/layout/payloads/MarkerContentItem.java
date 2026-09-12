@@ -1,5 +1,6 @@
 package com.demcha.compose.document.layout.payloads;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -40,6 +41,11 @@ import java.util.Objects;
  *                             unexplained inset
  * @param contentX             {@code markerX + measuredMarkerWidth + markerGap}
  * @param contentWidth         the width the item's text wraps within
+ * @param markerSpans          the measured pieces a drawn marker is made of —
+ *                             a disc, an icon, a glyph in a colour of its own —
+ *                             and empty for a text marker, whose one span the
+ *                             emit phase builds from the item's own first line
+ *                             so that it shares that line's metrics
  * @author Artem Demchyshyn
  * @since 2.4.0
  */
@@ -49,7 +55,8 @@ public record MarkerContentItem(
         double measuredMarkerWidth,
         double markerGap,
         double contentX,
-        double contentWidth
+        double contentWidth,
+        List<ParagraphSpan> markerSpans
 ) {
 
     /**
@@ -62,6 +69,7 @@ public record MarkerContentItem(
      */
     public MarkerContentItem {
         Objects.requireNonNull(spec, "spec");
+        markerSpans = markerSpans == null ? List.of() : List.copyOf(markerSpans);
         requireFinite(markerX, "markerX");
         requireFinite(measuredMarkerWidth, "measuredMarkerWidth");
         requireFinite(markerGap, "markerGap");
@@ -76,6 +84,34 @@ public record MarkerContentItem(
                     "contentX must be markerX + measuredMarkerWidth + markerGap: "
                     + contentX + " != " + expected);
         }
+    }
+
+    /**
+     * Creates an item whose marker is text, so it has no pre-measured spans.
+     *
+     * @param spec                the item's authored depth, marker and content
+     * @param markerX             where the marker starts
+     * @param measuredMarkerWidth the marker's measured width
+     * @param markerGap           the gap applied between marker and content
+     * @param contentX            {@code markerX + measuredMarkerWidth + markerGap}
+     * @param contentWidth        the width the item's text wraps within
+     */
+    public MarkerContentItem(ListItemSpec spec,
+                             double markerX,
+                             double measuredMarkerWidth,
+                             double markerGap,
+                             double contentX,
+                             double contentWidth) {
+        this(spec, markerX, measuredMarkerWidth, markerGap, contentX, contentWidth, List.of());
+    }
+
+    /**
+     * Returns whether this item's marker is drawn rather than typed.
+     *
+     * @return {@code true} when the marker has pre-measured spans
+     */
+    public boolean hasDrawnMarker() {
+        return !markerSpans.isEmpty();
     }
 
     private static void requireFinite(double value, String name) {

@@ -1,0 +1,3677 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 402.871,
+    "innerHeight" : 732.911,
+    "margin" : {
+      "top" : 46.3,
+      "right" : 38.931,
+      "bottom" : 62.679,
+      "left" : 153.474
+    }
+  },
+  "totalPages" : 3,
+  "nodes" : [ {
+    "path" : "LumaStudioInvoice[0]",
+    "entityName" : "LumaStudioInvoice",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 153.474,
+    "computedY" : -695.368,
+    "placementX" : 153.474,
+    "placementY" : -695.368,
+    "placementWidth" : 402.871,
+    "placementHeight" : 1490.957,
+    "startPage" : 0,
+    "endPage" : 2,
+    "contentWidth" : 402.871,
+    "contentHeight" : 1490.957,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]",
+    "entityName" : "Sidebar",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 0.0,
+    "computedY" : 841.49,
+    "placementX" : 0.0,
+    "placementY" : 841.49,
+    "placementWidth" : 132.032,
+    "placementHeight" : 0.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 132.032,
+    "contentHeight" : 0.4,
+    "margin" : {
+      "top" : -46.3,
+      "right" : 0.0,
+      "bottom" : 45.9,
+      "left" : -153.474
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]/SidebarOrnament[0]",
+    "entityName" : "SidebarOrnament",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Sidebar[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 0.0,
+    "computedY" : 0.0,
+    "placementX" : 0.0,
+    "placementY" : 0.0,
+    "placementWidth" : 132.032,
+    "placementHeight" : 634.667,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 132.032,
+    "contentHeight" : 634.667,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]/SidebarOrnament[0]/OrnamentDisc[0]",
+    "entityName" : "OrnamentDisc",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "LumaStudioInvoice[0]/Sidebar[0]/SidebarOrnament[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 17.489,
+    "computedY" : 527.868,
+    "placementX" : 17.489,
+    "placementY" : 527.868,
+    "placementWidth" : 205.382,
+    "placementHeight" : 205.382,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 205.382,
+    "contentHeight" : 205.382,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]/SidebarOrnament[0]/OrnamentArch[1]",
+    "entityName" : "OrnamentArch",
+    "entityKind" : "ShapeNode",
+    "parentPath" : "LumaStudioInvoice[0]/Sidebar[0]/SidebarOrnament[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 15.799,
+    "computedY" : 0.0,
+    "placementX" : 15.799,
+    "placementY" : 0.0,
+    "placementWidth" : 116.234,
+    "placementHeight" : 236.588,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 116.234,
+    "contentHeight" : 236.588,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]/SidebarOrnament[0]/SvgIcon[2]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "LumaStudioInvoice[0]/Sidebar[0]/SidebarOrnament[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 12.977,
+    "computedY" : 282.647,
+    "placementX" : 12.977,
+    "placementY" : 282.647,
+    "placementWidth" : 95.244,
+    "placementHeight" : 95.244,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 95.244,
+    "contentHeight" : 95.244,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]/SidebarOrnament[0]/SvgIcon[2]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "LumaStudioInvoice[0]/Sidebar[0]/SidebarOrnament[0]/SvgIcon[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 12.977,
+    "computedY" : 282.647,
+    "placementX" : 12.977,
+    "placementY" : 282.647,
+    "placementWidth" : 95.244,
+    "placementHeight" : 95.244,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 95.244,
+    "contentHeight" : 95.244,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]/BrandBlock[1]",
+    "entityName" : "BrandBlock",
+    "entityKind" : "ShapeNode",
+    "parentPath" : "LumaStudioInvoice[0]/Sidebar[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 0.0,
+    "computedY" : 634.667,
+    "placementX" : 0.0,
+    "placementY" : 634.667,
+    "placementWidth" : 132.032,
+    "placementHeight" : 207.223,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 132.032,
+    "contentHeight" : 207.223,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]/BrandLockup[2]",
+    "entityName" : "BrandLockup",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Sidebar[0]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 0.0,
+    "computedY" : 634.667,
+    "placementX" : 0.0,
+    "placementY" : 634.667,
+    "placementWidth" : 132.032,
+    "placementHeight" : 207.223,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 132.032,
+    "contentHeight" : 207.223,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]/BrandLockup[2]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Sidebar[0]/BrandLockup[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 33.288,
+    "computedY" : 715.218,
+    "placementX" : 33.288,
+    "placementY" : 715.218,
+    "placementWidth" : 36.655,
+    "placementHeight" : 88.273,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 36.655,
+    "contentHeight" : 88.273,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]/BrandLockup[2]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Sidebar[0]/BrandLockup[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 33.288,
+    "computedY" : 705.462,
+    "placementX" : 33.288,
+    "placementY" : 705.462,
+    "placementWidth" : 68.585,
+    "placementHeight" : 47.212,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 68.585,
+    "contentHeight" : 47.212,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]/BrandLockup[2]/LockupRule[2]",
+    "entityName" : "LockupRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "LumaStudioInvoice[0]/Sidebar[0]/BrandLockup[2]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 33.288,
+    "computedY" : 704.671,
+    "placementX" : 33.288,
+    "placementY" : 704.671,
+    "placementWidth" : 20.311,
+    "placementHeight" : 1.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.311,
+    "contentHeight" : 1.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]/BrandLockup[2]/Wordmark[3]",
+    "entityName" : "Wordmark",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Sidebar[0]/BrandLockup[2]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 33.288,
+    "computedY" : 675.395,
+    "placementX" : 33.288,
+    "placementY" : 675.395,
+    "placementWidth" : 82.984,
+    "placementHeight" : 9.524,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 82.984,
+    "contentHeight" : 9.524,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Sidebar[0]/BrandLockup[2]/ParagraphNode[4]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Sidebar[0]/BrandLockup[2]",
+    "childIndex" : 4,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 33.288,
+    "computedY" : 661.626,
+    "placementX" : 33.288,
+    "placementY" : 661.626,
+    "placementWidth" : 77.712,
+    "placementHeight" : 8.047,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 77.712,
+    "contentHeight" : 8.047,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]",
+    "entityName" : "Masthead",
+    "entityKind" : "RowNode",
+    "parentPath" : "LumaStudioInvoice[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 153.474,
+    "computedY" : 647.091,
+    "placementX" : 153.474,
+    "placementY" : 647.091,
+    "placementWidth" : 402.871,
+    "placementHeight" : 148.499,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 402.871,
+    "contentHeight" : 148.499,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]",
+    "entityName" : "SupplierHeader",
+    "entityKind" : "SectionNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 153.474,
+    "computedY" : 655.01,
+    "placementX" : 153.474,
+    "placementY" : 655.01,
+    "placementWidth" : 236.404,
+    "placementHeight" : 140.58,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.404,
+    "contentHeight" : 140.58,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 7.334
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/SupplierName[0]",
+    "entityName" : "SupplierName",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 160.808,
+    "computedY" : 782.164,
+    "placementX" : 160.808,
+    "placementY" : 782.164,
+    "placementWidth" : 94.638,
+    "placementHeight" : 13.425,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 94.638,
+    "contentHeight" : 13.425,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/SupplierAddress[1]",
+    "entityName" : "SupplierAddress",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 160.808,
+    "computedY" : 727.228,
+    "placementX" : 160.808,
+    "placementY" : 727.228,
+    "placementWidth" : 85.39,
+    "placementHeight" : 48.726,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 85.39,
+    "contentHeight" : 48.726,
+    "margin" : {
+      "top" : 6.21,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]",
+    "entityName" : "ContactRows",
+    "entityKind" : "SectionNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 160.808,
+    "computedY" : 674.232,
+    "placementX" : 160.808,
+    "placementY" : 674.232,
+    "placementWidth" : 229.071,
+    "placementHeight" : 43.184,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.071,
+    "contentHeight" : 43.184,
+    "margin" : {
+      "top" : 9.812,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[0]",
+    "entityName" : "ContactRow",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 160.808,
+    "computedY" : 703.022,
+    "placementX" : 160.808,
+    "placementY" : 703.022,
+    "placementWidth" : 229.071,
+    "placementHeight" : 14.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.071,
+    "contentHeight" : 14.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 160.808,
+    "computedY" : 705.919,
+    "placementX" : 160.808,
+    "placementY" : 705.919,
+    "placementWidth" : 8.6,
+    "placementHeight" : 8.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.6,
+    "contentHeight" : 8.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 160.808,
+    "computedY" : 705.919,
+    "placementX" : 160.808,
+    "placementY" : 705.919,
+    "placementWidth" : 8.6,
+    "placementHeight" : 8.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.6,
+    "contentHeight" : 8.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[0]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 181.808,
+    "computedY" : 704.482,
+    "placementX" : 181.808,
+    "placementY" : 704.482,
+    "placementWidth" : 78.706,
+    "placementHeight" : 11.475,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 78.706,
+    "contentHeight" : 11.475,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[1]",
+    "entityName" : "ContactRow",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 160.808,
+    "computedY" : 688.627,
+    "placementX" : 160.808,
+    "placementY" : 688.627,
+    "placementWidth" : 229.071,
+    "placementHeight" : 14.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.071,
+    "contentHeight" : 14.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[1]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 160.808,
+    "computedY" : 691.524,
+    "placementX" : 160.808,
+    "placementY" : 691.524,
+    "placementWidth" : 8.6,
+    "placementHeight" : 8.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.6,
+    "contentHeight" : 8.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[1]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[1]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 160.808,
+    "computedY" : 691.524,
+    "placementX" : 160.808,
+    "placementY" : 691.524,
+    "placementWidth" : 8.6,
+    "placementHeight" : 8.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.6,
+    "contentHeight" : 8.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[1]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 181.808,
+    "computedY" : 690.087,
+    "placementX" : 181.808,
+    "placementY" : 690.087,
+    "placementWidth" : 95.852,
+    "placementHeight" : 11.475,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 95.852,
+    "contentHeight" : 11.475,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[2]",
+    "entityName" : "ContactRow",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 160.808,
+    "computedY" : 674.232,
+    "placementX" : 160.808,
+    "placementY" : 674.232,
+    "placementWidth" : 229.071,
+    "placementHeight" : 14.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.071,
+    "contentHeight" : 14.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[2]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 160.808,
+    "computedY" : 677.129,
+    "placementX" : 160.808,
+    "placementY" : 677.129,
+    "placementWidth" : 8.6,
+    "placementHeight" : 8.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.6,
+    "contentHeight" : 8.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[2]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[2]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 160.808,
+    "computedY" : 677.129,
+    "placementX" : 160.808,
+    "placementY" : 677.129,
+    "placementWidth" : 8.6,
+    "placementHeight" : 8.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.6,
+    "contentHeight" : 8.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[2]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/ContactRows[2]/ContactRow[2]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 181.808,
+    "computedY" : 675.692,
+    "placementX" : 181.808,
+    "placementY" : 675.692,
+    "placementWidth" : 91.105,
+    "placementHeight" : 11.475,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 91.105,
+    "contentHeight" : 11.475,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]/Registration[3]",
+    "entityName" : "Registration",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/SupplierHeader[0]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 160.808,
+    "computedY" : 655.01,
+    "placementX" : 160.808,
+    "placementY" : 655.01,
+    "placementWidth" : 148.091,
+    "placementHeight" : 8.79,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 148.091,
+    "contentHeight" : 8.79,
+    "margin" : {
+      "top" : 10.433,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]",
+    "entityName" : "InvoiceHeader",
+    "entityKind" : "SectionNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 389.878,
+    "computedY" : 647.091,
+    "placementX" : 389.878,
+    "placementY" : 647.091,
+    "placementWidth" : 166.466,
+    "placementHeight" : 148.499,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 166.466,
+    "contentHeight" : 148.499,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/InvoiceTitleBlock[0]",
+    "entityName" : "InvoiceTitleBlock",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 389.878,
+    "computedY" : 749.89,
+    "placementX" : 389.878,
+    "placementY" : 749.89,
+    "placementWidth" : 166.466,
+    "placementHeight" : 45.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 166.466,
+    "contentHeight" : 45.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 15.3,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/InvoiceTitleBlock[0]/InvoiceTitle[0]",
+    "entityName" : "InvoiceTitle",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/InvoiceTitleBlock[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 389.878,
+    "computedY" : 736.636,
+    "placementX" : 389.878,
+    "placementY" : 736.636,
+    "placementWidth" : 164.751,
+    "placementHeight" : 55.553,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 164.751,
+    "contentHeight" : 55.553,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/InvoiceTitleBlock[0]/TitleRule[1]",
+    "entityName" : "TitleRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/InvoiceTitleBlock[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 389.878,
+    "computedY" : 749.89,
+    "placementX" : 389.878,
+    "placementY" : 749.89,
+    "placementWidth" : 58.7,
+    "placementHeight" : 1.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 58.7,
+    "contentHeight" : 1.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[1]",
+    "entityName" : "MetadataRow",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 389.878,
+    "computedY" : 717.09,
+    "placementX" : 389.878,
+    "placementY" : 717.09,
+    "placementWidth" : 166.466,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 166.466,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[1]/MetaLabel[0]",
+    "entityName" : "MetaLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 389.878,
+    "computedY" : 720.957,
+    "placementX" : 389.878,
+    "placementY" : 720.957,
+    "placementWidth" : 57.062,
+    "placementHeight" : 9.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 57.062,
+    "contentHeight" : 9.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 491.989,
+    "computedY" : 720.103,
+    "placementX" : 491.989,
+    "placementY" : 720.103,
+    "placementWidth" : 57.65,
+    "placementHeight" : 11.475,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 57.65,
+    "contentHeight" : 11.475,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[2]",
+    "entityName" : "MetadataRow",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 389.878,
+    "computedY" : 699.59,
+    "placementX" : 389.878,
+    "placementY" : 699.59,
+    "placementWidth" : 166.466,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 166.466,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[2]/MetaLabel[0]",
+    "entityName" : "MetaLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 389.878,
+    "computedY" : 703.458,
+    "placementX" : 389.878,
+    "placementY" : 703.458,
+    "placementWidth" : 51.552,
+    "placementHeight" : 9.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 51.552,
+    "contentHeight" : 9.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[2]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[2]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 491.989,
+    "computedY" : 702.603,
+    "placementX" : 491.989,
+    "placementY" : 702.603,
+    "placementWidth" : 49.641,
+    "placementHeight" : 11.475,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 49.641,
+    "contentHeight" : 11.475,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[3]",
+    "entityName" : "MetadataRow",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 389.878,
+    "computedY" : 682.09,
+    "placementX" : 389.878,
+    "placementY" : 682.09,
+    "placementWidth" : 166.466,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 166.466,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[3]/MetaLabel[0]",
+    "entityName" : "MetaLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[3]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 389.878,
+    "computedY" : 685.958,
+    "placementX" : 389.878,
+    "placementY" : 685.958,
+    "placementWidth" : 43.963,
+    "placementHeight" : 9.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 43.963,
+    "contentHeight" : 9.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[3]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[3]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 491.989,
+    "computedY" : 685.103,
+    "placementX" : 491.989,
+    "placementY" : 685.103,
+    "placementWidth" : 50.393,
+    "placementHeight" : 11.475,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 50.393,
+    "contentHeight" : 11.475,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[4]",
+    "entityName" : "MetadataRow",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]",
+    "childIndex" : 4,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 389.878,
+    "computedY" : 664.591,
+    "placementX" : 389.878,
+    "placementY" : 664.591,
+    "placementWidth" : 166.466,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 166.466,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[4]/MetaLabel[0]",
+    "entityName" : "MetaLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[4]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 389.878,
+    "computedY" : 668.458,
+    "placementX" : 389.878,
+    "placementY" : 668.458,
+    "placementWidth" : 75.89,
+    "placementHeight" : 9.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.89,
+    "contentHeight" : 9.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[4]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[4]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 491.989,
+    "computedY" : 667.603,
+    "placementX" : 491.989,
+    "placementY" : 667.603,
+    "placementWidth" : 29.873,
+    "placementHeight" : 11.475,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 29.873,
+    "contentHeight" : 11.475,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[5]",
+    "entityName" : "MetadataRow",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]",
+    "childIndex" : 5,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 389.878,
+    "computedY" : 647.091,
+    "placementX" : 389.878,
+    "placementY" : 647.091,
+    "placementWidth" : 166.466,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 166.466,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[5]/MetaLabel[0]",
+    "entityName" : "MetaLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[5]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 389.878,
+    "computedY" : 650.958,
+    "placementX" : 389.878,
+    "placementY" : 650.958,
+    "placementWidth" : 46.267,
+    "placementHeight" : 9.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 46.267,
+    "contentHeight" : 9.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[5]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Masthead[1]/InvoiceHeader[1]/MetadataRow[5]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 491.989,
+    "computedY" : 650.103,
+    "placementX" : 491.989,
+    "placementY" : 650.103,
+    "placementWidth" : 15.905,
+    "placementHeight" : 11.475,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 15.905,
+    "contentHeight" : 11.475,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/HeaderRule[2]",
+    "entityName" : "HeaderRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "LumaStudioInvoice[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 160.808,
+    "computedY" : 633.091,
+    "placementX" : 160.808,
+    "placementY" : 633.091,
+    "placementWidth" : 395.537,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 395.537,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 13.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 7.334
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Parties[3]",
+    "entityName" : "Parties",
+    "entityKind" : "RowNode",
+    "parentPath" : "LumaStudioInvoice[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 153.474,
+    "computedY" : 532.149,
+    "placementX" : 153.474,
+    "placementY" : 532.149,
+    "placementWidth" : 402.871,
+    "placementHeight" : 88.942,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 402.871,
+    "contentHeight" : 88.942,
+    "margin" : {
+      "top" : 12.0,
+      "right" : 0.0,
+      "bottom" : 12.9,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Parties[3]/BILLTO[0]",
+    "entityName" : "BILLTO",
+    "entityKind" : "SectionNode",
+    "parentPath" : "LumaStudioInvoice[0]/Parties[3]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 153.474,
+    "computedY" : 532.149,
+    "placementX" : 153.474,
+    "placementY" : 532.149,
+    "placementWidth" : 103.12,
+    "placementHeight" : 88.942,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 103.12,
+    "contentHeight" : 88.942,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 7.334
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Parties[3]/BILLTO[0]/PartyHeading[0]",
+    "entityName" : "PartyHeading",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Parties[3]/BILLTO[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 160.808,
+    "computedY" : 611.326,
+    "placementX" : 160.808,
+    "placementY" : 611.326,
+    "placementWidth" : 33.342,
+    "placementHeight" : 9.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 33.342,
+    "contentHeight" : 9.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Parties[3]/BILLTO[0]/PartyAddress[1]",
+    "entityName" : "PartyAddress",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Parties[3]/BILLTO[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 160.808,
+    "computedY" : 532.149,
+    "placementX" : 160.808,
+    "placementY" : 532.149,
+    "placementWidth" : 95.786,
+    "placementHeight" : 70.235,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 95.786,
+    "contentHeight" : 70.235,
+    "margin" : {
+      "top" : 8.942,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Parties[3]/SHIPTO[1]",
+    "entityName" : "SHIPTO",
+    "entityKind" : "SectionNode",
+    "parentPath" : "LumaStudioInvoice[0]/Parties[3]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 344.757,
+    "computedY" : 532.149,
+    "placementX" : 344.757,
+    "placementY" : 532.149,
+    "placementWidth" : 133.88,
+    "placementHeight" : 88.942,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 133.88,
+    "contentHeight" : 88.942,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 34.4
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Parties[3]/SHIPTO[1]/PartyHeading[0]",
+    "entityName" : "PartyHeading",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Parties[3]/SHIPTO[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 379.157,
+    "computedY" : 611.326,
+    "placementX" : 379.157,
+    "placementY" : 611.326,
+    "placementWidth" : 35.173,
+    "placementHeight" : 9.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 35.173,
+    "contentHeight" : 9.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Parties[3]/SHIPTO[1]/PartyAddress[1]",
+    "entityName" : "PartyAddress",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Parties[3]/SHIPTO[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 379.157,
+    "computedY" : 532.149,
+    "placementX" : 379.157,
+    "placementY" : 532.149,
+    "placementWidth" : 99.48,
+    "placementHeight" : 70.235,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 99.48,
+    "contentHeight" : 70.235,
+    "margin" : {
+      "top" : 8.942,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/LineItems[4]",
+    "entityName" : "LineItems",
+    "entityKind" : "TableNode",
+    "parentPath" : "LumaStudioInvoice[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 153.474,
+    "computedY" : 99.964,
+    "placementX" : 153.474,
+    "placementY" : 99.964,
+    "placementWidth" : 402.871,
+    "placementHeight" : 1011.964,
+    "startPage" : 0,
+    "endPage" : 1,
+    "contentWidth" : 402.871,
+    "contentHeight" : 1011.964,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Totals[5]",
+    "entityName" : "Totals",
+    "entityKind" : "SectionNode",
+    "parentPath" : "LumaStudioInvoice[0]",
+    "childIndex" : 5,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 306.404,
+    "computedY" : 108.172,
+    "placementX" : 306.404,
+    "placementY" : 108.172,
+    "placementWidth" : 249.941,
+    "placementHeight" : 66.174,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 249.941,
+    "contentHeight" : 66.174,
+    "margin" : {
+      "top" : 4.4,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 152.93
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Totals[5]/TotalsRow[0]",
+    "entityName" : "TotalsRow",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Totals[5]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 306.404,
+    "computedY" : 156.237,
+    "placementX" : 306.404,
+    "placementY" : 156.237,
+    "placementWidth" : 249.941,
+    "placementHeight" : 18.108,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 249.941,
+    "contentHeight" : 18.108,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Totals[5]/TotalsRow[0]/TotalsLabel[0]",
+    "entityName" : "TotalsLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Totals[5]/TotalsRow[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 348.204,
+    "computedY" : 159.439,
+    "placementX" : 348.204,
+    "placementY" : 159.439,
+    "placementWidth" : 46.299,
+    "placementHeight" : 11.704,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 46.299,
+    "contentHeight" : 11.704,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Totals[5]/TotalsRow[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Totals[5]/TotalsRow[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 293.404,
+    "computedY" : 159.439,
+    "placementX" : 293.404,
+    "placementY" : 159.439,
+    "placementWidth" : 249.941,
+    "placementHeight" : 11.704,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 249.941,
+    "contentHeight" : 11.704,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Totals[5]/TotalsRow[1]",
+    "entityName" : "TotalsRow",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Totals[5]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 306.404,
+    "computedY" : 138.129,
+    "placementX" : 306.404,
+    "placementY" : 138.129,
+    "placementWidth" : 249.941,
+    "placementHeight" : 18.108,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 249.941,
+    "contentHeight" : 18.108,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Totals[5]/TotalsRow[1]/TotalsLabel[0]",
+    "entityName" : "TotalsLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Totals[5]/TotalsRow[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 348.204,
+    "computedY" : 141.331,
+    "placementX" : 348.204,
+    "placementY" : 141.331,
+    "placementWidth" : 45.982,
+    "placementHeight" : 11.704,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 45.982,
+    "contentHeight" : 11.704,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Totals[5]/TotalsRow[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Totals[5]/TotalsRow[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 293.404,
+    "computedY" : 141.331,
+    "placementX" : 293.404,
+    "placementY" : 141.331,
+    "placementWidth" : 249.941,
+    "placementHeight" : 11.704,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 249.941,
+    "contentHeight" : 11.704,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Totals[5]/TotalDueBand[2]",
+    "entityName" : "TotalDueBand",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Totals[5]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 306.404,
+    "computedY" : 108.172,
+    "placementX" : 306.404,
+    "placementY" : 108.172,
+    "placementWidth" : 249.941,
+    "placementHeight" : 27.1,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 249.941,
+    "contentHeight" : 27.1,
+    "margin" : {
+      "top" : 2.857,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Totals[5]/TotalDueBand[2]/TotalsLabel[0]",
+    "entityName" : "TotalsLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Totals[5]/TotalDueBand[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 348.204,
+    "computedY" : 115.468,
+    "placementX" : 348.204,
+    "placementY" : 115.468,
+    "placementWidth" : 52.971,
+    "placementHeight" : 12.507,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 52.971,
+    "contentHeight" : 12.507,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Totals[5]/TotalDueBand[2]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Totals[5]/TotalDueBand[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 293.404,
+    "computedY" : 110.431,
+    "placementX" : 293.404,
+    "placementY" : 110.431,
+    "placementWidth" : 249.941,
+    "placementHeight" : 22.582,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 249.941,
+    "contentHeight" : 22.582,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/FooterRule[6]",
+    "entityName" : "FooterRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "LumaStudioInvoice[0]",
+    "childIndex" : 6,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 153.474,
+    "computedY" : 105.172,
+    "placementX" : 153.474,
+    "placementY" : 105.172,
+    "placementWidth" : 402.871,
+    "placementHeight" : 1.0,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 402.871,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 2.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]",
+    "entityName" : "Closing",
+    "entityKind" : "RowNode",
+    "parentPath" : "LumaStudioInvoice[0]",
+    "childIndex" : 7,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 153.474,
+    "computedY" : 675.411,
+    "placementX" : 153.474,
+    "placementY" : 675.411,
+    "placementWidth" : 402.871,
+    "placementHeight" : 108.178,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 402.871,
+    "contentHeight" : 108.178,
+    "margin" : {
+      "top" : 12.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]",
+    "entityName" : "Notes",
+    "entityKind" : "SectionNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 153.474,
+    "computedY" : 687.309,
+    "placementX" : 153.474,
+    "placementY" : 687.309,
+    "placementWidth" : 167.03,
+    "placementHeight" : 96.281,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 167.03,
+    "contentHeight" : 96.281,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/SectionHead[0]",
+    "entityName" : "SectionHead",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 153.474,
+    "computedY" : 758.79,
+    "placementX" : 153.474,
+    "placementY" : 758.79,
+    "placementWidth" : 167.03,
+    "placementHeight" : 24.8,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 167.03,
+    "contentHeight" : 24.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/SectionHead[0]/Disc-notes[0]",
+    "entityName" : "Disc-notes",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/SectionHead[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 153.474,
+    "computedY" : 758.79,
+    "placementX" : 153.474,
+    "placementY" : 758.79,
+    "placementWidth" : 24.8,
+    "placementHeight" : 24.8,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 24.8,
+    "contentHeight" : 24.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/SectionHead[0]/Disc-notes[0]/DiscFill[0]",
+    "entityName" : "DiscFill",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/SectionHead[0]/Disc-notes[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 153.474,
+    "computedY" : 758.79,
+    "placementX" : 153.474,
+    "placementY" : 758.79,
+    "placementWidth" : 24.8,
+    "placementHeight" : 24.8,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 24.8,
+    "contentHeight" : 24.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/SectionHead[0]/Disc-notes[0]/SvgIcon[1]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/SectionHead[0]/Disc-notes[0]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 159.874,
+    "computedY" : 765.19,
+    "placementX" : 159.874,
+    "placementY" : 765.19,
+    "placementWidth" : 12.0,
+    "placementHeight" : 12.0,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 12.0,
+    "contentHeight" : 12.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/SectionHead[0]/Disc-notes[0]/SvgIcon[1]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/SectionHead[0]/Disc-notes[0]/SvgIcon[1]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 159.874,
+    "computedY" : 765.19,
+    "placementX" : 159.874,
+    "placementY" : 765.19,
+    "placementWidth" : 12.0,
+    "placementHeight" : 12.0,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 12.0,
+    "contentHeight" : 12.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/SectionHead[0]/SectionHeading[1]",
+    "entityName" : "SectionHeading",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/SectionHead[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.974,
+    "computedY" : 766.307,
+    "placementX" : 188.974,
+    "placementY" : 766.307,
+    "placementWidth" : 28.177,
+    "placementHeight" : 9.765,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 28.177,
+    "contentHeight" : 9.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/NotesBody[1]",
+    "entityName" : "NotesBody",
+    "entityKind" : "SectionNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 153.474,
+    "computedY" : 687.309,
+    "placementX" : 153.474,
+    "placementY" : 687.309,
+    "placementWidth" : 156.503,
+    "placementHeight" : 69.245,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 156.503,
+    "contentHeight" : 69.245,
+    "margin" : {
+      "top" : 2.236,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 35.5
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/NotesBody[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/NotesBody[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.974,
+    "computedY" : 726.589,
+    "placementX" : 188.974,
+    "placementY" : 726.589,
+    "placementWidth" : 103.794,
+    "placementHeight" : 29.965,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 103.794,
+    "contentHeight" : 29.965,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/NotesBody[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/Notes[0]/NotesBody[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.974,
+    "computedY" : 687.309,
+    "placementX" : 188.974,
+    "placementY" : 687.309,
+    "placementWidth" : 121.003,
+    "placementHeight" : 29.965,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 121.003,
+    "contentHeight" : 29.965,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]",
+    "entityName" : "PaymentDetails",
+    "entityKind" : "SectionNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 320.504,
+    "computedY" : 675.411,
+    "placementX" : 320.504,
+    "placementY" : 675.411,
+    "placementWidth" : 235.84,
+    "placementHeight" : 108.178,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 235.84,
+    "contentHeight" : 108.178,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 24.3
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/SectionHead[0]",
+    "entityName" : "SectionHead",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 344.804,
+    "computedY" : 758.79,
+    "placementX" : 344.804,
+    "placementY" : 758.79,
+    "placementWidth" : 211.54,
+    "placementHeight" : 24.8,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 211.54,
+    "contentHeight" : 24.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/SectionHead[0]/Disc-bank[0]",
+    "entityName" : "Disc-bank",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/SectionHead[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 344.804,
+    "computedY" : 758.79,
+    "placementX" : 344.804,
+    "placementY" : 758.79,
+    "placementWidth" : 24.8,
+    "placementHeight" : 24.8,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 24.8,
+    "contentHeight" : 24.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/SectionHead[0]/Disc-bank[0]/DiscFill[0]",
+    "entityName" : "DiscFill",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/SectionHead[0]/Disc-bank[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 344.804,
+    "computedY" : 758.79,
+    "placementX" : 344.804,
+    "placementY" : 758.79,
+    "placementWidth" : 24.8,
+    "placementHeight" : 24.8,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 24.8,
+    "contentHeight" : 24.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/SectionHead[0]/Disc-bank[0]/SvgIcon[1]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/SectionHead[0]/Disc-bank[0]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 351.204,
+    "computedY" : 765.19,
+    "placementX" : 351.204,
+    "placementY" : 765.19,
+    "placementWidth" : 12.0,
+    "placementHeight" : 12.0,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 12.0,
+    "contentHeight" : 12.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/SectionHead[0]/Disc-bank[0]/SvgIcon[1]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/SectionHead[0]/Disc-bank[0]/SvgIcon[1]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 351.204,
+    "computedY" : 765.19,
+    "placementX" : 351.204,
+    "placementY" : 765.19,
+    "placementWidth" : 12.0,
+    "placementHeight" : 12.0,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 12.0,
+    "contentHeight" : 12.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/SectionHead[0]/SectionHeading[1]",
+    "entityName" : "SectionHeading",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/SectionHead[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 380.304,
+    "computedY" : 766.307,
+    "placementX" : 380.304,
+    "placementY" : 766.307,
+    "placementWidth" : 82.727,
+    "placementHeight" : 9.765,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 82.727,
+    "contentHeight" : 9.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]",
+    "entityName" : "PaymentBody",
+    "entityKind" : "SectionNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 344.804,
+    "computedY" : 675.411,
+    "placementX" : 344.804,
+    "placementY" : 675.411,
+    "placementWidth" : 211.54,
+    "placementHeight" : 81.143,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 211.54,
+    "contentHeight" : 81.143,
+    "margin" : {
+      "top" : 2.236,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 35.5
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentInstruction[0]",
+    "entityName" : "PaymentInstruction",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 380.304,
+    "computedY" : 748.58,
+    "placementX" : 380.304,
+    "placementY" : 748.58,
+    "placementWidth" : 121.183,
+    "placementHeight" : 7.974,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 121.183,
+    "contentHeight" : 7.974,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/AccountHolder[1]",
+    "entityName" : "AccountHolder",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 380.304,
+    "computedY" : 733.226,
+    "placementX" : 380.304,
+    "placementY" : 733.226,
+    "placementWidth" : 83.026,
+    "placementHeight" : 9.765,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 83.026,
+    "contentHeight" : 9.765,
+    "margin" : {
+      "top" : 5.589,
+      "right" : 0.0,
+      "bottom" : 6.831,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[2]",
+    "entityName" : "PaymentField",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 380.304,
+    "computedY" : 716.199,
+    "placementX" : 380.304,
+    "placementY" : 716.199,
+    "placementWidth" : 176.04,
+    "placementHeight" : 10.197,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 176.04,
+    "contentHeight" : 10.197,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[2]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 380.304,
+    "computedY" : 716.902,
+    "placementX" : 380.304,
+    "placementY" : 716.902,
+    "placementWidth" : 17.087,
+    "placementHeight" : 8.79,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 17.087,
+    "contentHeight" : 8.79,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[2]/BankPipe[1]",
+    "entityName" : "BankPipe",
+    "entityKind" : "LineNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[2]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 433.904,
+    "computedY" : 717.932,
+    "placementX" : 433.904,
+    "placementY" : 717.932,
+    "placementWidth" : 1.0,
+    "placementHeight" : 6.73,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 1.0,
+    "contentHeight" : 6.73,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[2]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[2]",
+    "childIndex" : 2,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 444.104,
+    "computedY" : 716.902,
+    "placementX" : 444.104,
+    "placementY" : 716.902,
+    "placementWidth" : 38.198,
+    "placementHeight" : 8.79,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 38.198,
+    "contentHeight" : 8.79,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[3]",
+    "entityName" : "PaymentField",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 380.304,
+    "computedY" : 706.002,
+    "placementX" : 380.304,
+    "placementY" : 706.002,
+    "placementWidth" : 176.04,
+    "placementHeight" : 10.197,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 176.04,
+    "contentHeight" : 10.197,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[3]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[3]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 380.304,
+    "computedY" : 706.705,
+    "placementX" : 380.304,
+    "placementY" : 706.705,
+    "placementWidth" : 34.245,
+    "placementHeight" : 8.79,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 34.245,
+    "contentHeight" : 8.79,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[3]/BankPipe[1]",
+    "entityName" : "BankPipe",
+    "entityKind" : "LineNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[3]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 433.904,
+    "computedY" : 707.735,
+    "placementX" : 433.904,
+    "placementY" : 707.735,
+    "placementWidth" : 1.0,
+    "placementHeight" : 6.73,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 1.0,
+    "contentHeight" : 6.73,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[3]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[3]",
+    "childIndex" : 2,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 444.104,
+    "computedY" : 706.705,
+    "placementX" : 444.104,
+    "placementY" : 706.705,
+    "placementWidth" : 26.31,
+    "placementHeight" : 8.79,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 26.31,
+    "contentHeight" : 8.79,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[4]",
+    "entityName" : "PaymentField",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 380.304,
+    "computedY" : 695.805,
+    "placementX" : 380.304,
+    "placementY" : 695.805,
+    "placementWidth" : 176.04,
+    "placementHeight" : 10.197,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 176.04,
+    "contentHeight" : 10.197,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[4]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[4]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 380.304,
+    "computedY" : 696.509,
+    "placementX" : 380.304,
+    "placementY" : 696.509,
+    "placementWidth" : 43.022,
+    "placementHeight" : 8.79,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 43.022,
+    "contentHeight" : 8.79,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[4]/BankPipe[1]",
+    "entityName" : "BankPipe",
+    "entityKind" : "LineNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[4]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 433.904,
+    "computedY" : 697.538,
+    "placementX" : 433.904,
+    "placementY" : 697.538,
+    "placementWidth" : 1.0,
+    "placementHeight" : 6.73,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 1.0,
+    "contentHeight" : 6.73,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[4]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[4]",
+    "childIndex" : 2,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 444.104,
+    "computedY" : 696.509,
+    "placementX" : 444.104,
+    "placementY" : 696.509,
+    "placementWidth" : 29.205,
+    "placementHeight" : 8.79,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 29.205,
+    "contentHeight" : 8.79,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[5]",
+    "entityName" : "PaymentField",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]",
+    "childIndex" : 5,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 380.304,
+    "computedY" : 685.608,
+    "placementX" : 380.304,
+    "placementY" : 685.608,
+    "placementWidth" : 176.04,
+    "placementHeight" : 10.197,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 176.04,
+    "contentHeight" : 10.197,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[5]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[5]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 380.304,
+    "computedY" : 686.312,
+    "placementX" : 380.304,
+    "placementY" : 686.312,
+    "placementWidth" : 15.07,
+    "placementHeight" : 8.79,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 15.07,
+    "contentHeight" : 8.79,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[5]/BankPipe[1]",
+    "entityName" : "BankPipe",
+    "entityKind" : "LineNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[5]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 433.904,
+    "computedY" : 687.342,
+    "placementX" : 433.904,
+    "placementY" : 687.342,
+    "placementWidth" : 1.0,
+    "placementHeight" : 6.73,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 1.0,
+    "contentHeight" : 6.73,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[5]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[5]",
+    "childIndex" : 2,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 444.104,
+    "computedY" : 686.312,
+    "placementX" : 444.104,
+    "placementY" : 686.312,
+    "placementWidth" : 89.789,
+    "placementHeight" : 8.79,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 89.789,
+    "contentHeight" : 8.79,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[6]",
+    "entityName" : "PaymentField",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]",
+    "childIndex" : 6,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 380.304,
+    "computedY" : 675.411,
+    "placementX" : 380.304,
+    "placementY" : 675.411,
+    "placementWidth" : 176.04,
+    "placementHeight" : 10.197,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 176.04,
+    "contentHeight" : 10.197,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[6]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[6]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 380.304,
+    "computedY" : 676.115,
+    "placementX" : 380.304,
+    "placementY" : 676.115,
+    "placementWidth" : 9.771,
+    "placementHeight" : 8.79,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 9.771,
+    "contentHeight" : 8.79,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[6]/BankPipe[1]",
+    "entityName" : "BankPipe",
+    "entityKind" : "LineNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[6]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 433.904,
+    "computedY" : 677.145,
+    "placementX" : 433.904,
+    "placementY" : 677.145,
+    "placementWidth" : 1.0,
+    "placementHeight" : 6.73,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 1.0,
+    "contentHeight" : 6.73,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[6]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/Closing[7]/PaymentDetails[1]/PaymentBody[1]/PaymentField[6]",
+    "childIndex" : 2,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 444.104,
+    "computedY" : 676.115,
+    "placementX" : 444.104,
+    "placementY" : 676.115,
+    "placementWidth" : 29.918,
+    "placementHeight" : 8.79,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 29.918,
+    "contentHeight" : 8.79,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/ClosingBanner[8]",
+    "entityName" : "ClosingBanner",
+    "entityKind" : "SectionNode",
+    "parentPath" : "LumaStudioInvoice[0]",
+    "childIndex" : 8,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 153.474,
+    "computedY" : 666.511,
+    "placementX" : 153.474,
+    "placementY" : 666.511,
+    "placementWidth" : 402.871,
+    "placementHeight" : 0.3,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 402.871,
+    "contentHeight" : 0.3,
+    "margin" : {
+      "top" : 8.6,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]",
+    "entityName" : "BannerContent",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "LumaStudioInvoice[0]/ClosingBanner[8]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 0.0,
+    "computedY" : 604.133,
+    "placementX" : 0.0,
+    "placementY" : 604.133,
+    "placementWidth" : 595.276,
+    "placementHeight" : 62.679,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 595.276,
+    "contentHeight" : 62.679,
+    "margin" : {
+      "top" : 0.0,
+      "right" : -38.931,
+      "bottom" : -62.379,
+      "left" : -153.474
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/BannerBand[0]",
+    "entityName" : "BannerBand",
+    "entityKind" : "ShapeNode",
+    "parentPath" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 0.0,
+    "computedY" : 604.133,
+    "placementX" : 0.0,
+    "placementY" : 604.133,
+    "placementWidth" : 595.276,
+    "placementHeight" : 62.679,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 595.276,
+    "contentHeight" : 62.679,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/Disc-heart[1]",
+    "entityName" : "Disc-heart",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 32.728,
+    "computedY" : 618.522,
+    "placementX" : 32.728,
+    "placementY" : 618.522,
+    "placementWidth" : 33.9,
+    "placementHeight" : 33.9,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 33.9,
+    "contentHeight" : 33.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/Disc-heart[1]/DiscFill[0]",
+    "entityName" : "DiscFill",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/Disc-heart[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 32.728,
+    "computedY" : 618.522,
+    "placementX" : 32.728,
+    "placementY" : 618.522,
+    "placementWidth" : 33.9,
+    "placementHeight" : 33.9,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 33.9,
+    "contentHeight" : 33.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/Disc-heart[1]/SvgIcon[1]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/Disc-heart[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 41.678,
+    "computedY" : 627.472,
+    "placementX" : 41.678,
+    "placementY" : 627.472,
+    "placementWidth" : 16.0,
+    "placementHeight" : 16.0,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 16.0,
+    "contentHeight" : 16.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/Disc-heart[1]/SvgIcon[1]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/Disc-heart[1]/SvgIcon[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 41.678,
+    "computedY" : 627.472,
+    "placementX" : 41.678,
+    "placementY" : 627.472,
+    "placementWidth" : 16.0,
+    "placementHeight" : 16.0,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 16.0,
+    "contentHeight" : 16.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/BannerLines[2]",
+    "entityName" : "BannerLines",
+    "entityKind" : "SectionNode",
+    "parentPath" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 80.628,
+    "computedY" : 622.394,
+    "placementX" : 80.628,
+    "placementY" : 622.394,
+    "placementWidth" : 179.909,
+    "placementHeight" : 26.156,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 179.909,
+    "contentHeight" : 26.156,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/BannerLines[2]/SignOff[0]",
+    "entityName" : "SignOff",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/BannerLines[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 80.628,
+    "computedY" : 636.846,
+    "placementX" : 80.628,
+    "placementY" : 636.846,
+    "placementWidth" : 179.909,
+    "placementHeight" : 11.704,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 179.909,
+    "contentHeight" : 11.704,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/BannerLines[2]/DueNotice[1]",
+    "entityName" : "DueNotice",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "LumaStudioInvoice[0]/ClosingBanner[8]/BannerContent[0]/BannerLines[2]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 80.628,
+    "computedY" : 622.394,
+    "placementX" : 80.628,
+    "placementY" : 622.394,
+    "placementWidth" : 135.165,
+    "placementHeight" : 11.347,
+    "startPage" : 2,
+    "endPage" : 2,
+    "contentWidth" : 135.165,
+    "contentHeight" : 11.347,
+    "margin" : {
+      "top" : 3.105,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

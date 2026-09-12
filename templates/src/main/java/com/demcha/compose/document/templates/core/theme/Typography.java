@@ -404,4 +404,33 @@ public record Typography(
                 11.0,    // body (summary, sections, parties, cells — modern body)
                 1.3);    // line spacing
     }
+
+    /**
+     * Helvetica scale for the Modern Receipt preset — a fintech statement
+     * ladder, which inverts the usual one: on a receipt the largest thing on
+     * the page is the amount, not the title.
+     *
+     * <p>So {@code sizeHeadline} carries the hero amount at 30pt and the
+     * document title takes the {@code entryTitle} slot at 14pt. Field values
+     * sit in {@code entryDate} — a receipt's right-hand column is the same
+     * kind of column a CV puts dates in — and the spaced-caps group headings
+     * and eyebrow labels take the small {@code banner} slot.</p>
+     *
+     * @return a {@code Typography} scale for the Modern Receipt preset
+     */
+    public static Typography receiptModern() {
+        return new Typography(
+                // Both slots name the family, not a face: every receipt style sets
+                // its own decoration, and naming HELVETICA_BOLD here would be the
+                // face arriving twice.
+                FontName.HELVETICA, FontName.HELVETICA,
+                30.0,    // headline (hero amount — the largest thing on the page)
+                8.0,     // contact (footer small print + support lines)
+                8.0,     // banner (spaced-caps group headings and eyebrow labels)
+                14.0,    // entry title (document title, party names)
+                10.0,    // entry date (field values in the right-hand column)
+                8.8,     // entry subtitle (captions under the amount and the title)
+                9.6,     // body (notes, address lines)
+                1.35);   // line spacing
+    }
 }

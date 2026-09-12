@@ -13,6 +13,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.junit.jupiter.api.Test;
 
@@ -139,6 +140,111 @@ class DocxSemanticBackendTest {
             assertThat(texts).contains(
                     "• Root",
                     "  ‣ Child");
+        }
+    }
+
+    @Test
+    void aRichListItemKeepsOneWordRunPerAuthoredRun() throws Exception {
+        try (XWPFDocument document = new XWPFDocument(
+                new ByteArrayInputStream(richListDocx(true)))) {
+            List<XWPFParagraph> paragraphs = document.getParagraphs().stream()
+                    .filter(p -> !p.getText().isBlank())
+                    .toList();
+            assertThat(paragraphs).hasSize(2);
+
+            // The marker still reads the same down the whole list, and the
+            // item's text is all there. The geometry hangingIndent(true) asks
+            // for has no Word analogue; which piece of an item is bold does.
+            assertThat(paragraphs.get(0).getText()).isEqualTo("- Plain item");
+            XWPFParagraph rich = paragraphs.get(1);
+            assertThat(rich.getText()).isEqualTo("- Status: pending");
+            assertThat(rich.getRuns().stream().map(XWPFRun::text).toList())
+                    .as("the marker leads in the list's own style, then one run each")
+                    .containsExactly("- ", "Status: ", "pending");
+            assertThat(rich.getRuns().stream().map(XWPFRun::isBold).toList())
+                    .as("and only the bold run is bold")
+                    .containsExactly(false, true, false);
+        }
+    }
+
+    @Test
+    void aRichListItemExportsTheSameWhetherOrNotTheListOptedIntoMarkerGeometry() throws Exception {
+        // hangingIndent is fixed-layout geometry, and the semantic export lays
+        // nothing out — so unlike the PDF path, which needs the opt-in before it
+        // can carry runs at all, this one is indifferent to it. Word owns the
+        // layout here and can hold a run's style either way.
+        assertThat(runStructure(richListDocx(false)))
+                .isEqualTo(runStructure(richListDocx(true)));
+    }
+
+    @Test
+    void aDrawnListMarkerDropsAndATextMarkerKeepsItsOwnStyle() throws Exception {
+        byte[] docxBytes;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addList(list -> list
+                            .hangingIndent(true)
+                            .marker(m -> m.dot(4.0, DocumentColor.rgb(0, 0x88, 0x88)))
+                            .items("Drawn marker item"))
+                    .addList(list -> list
+                            .hangingIndent(true)
+                            .marker(m -> m.color("•", DocumentColor.rgb(0, 0x88, 0x88)))
+                            .items("Coloured marker item"))
+                    .build();
+            docxBytes = session.export(new DocxSemanticBackend());
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            List<XWPFParagraph> paragraphs = document.getParagraphs().stream()
+                    .filter(p -> !p.getText().isBlank())
+                    .toList();
+            assertThat(paragraphs).hasSize(2);
+
+            // A disc has no Word analogue, so it drops — and drops rather than
+            // being replaced by a bullet nobody asked for. The item survives.
+            assertThat(paragraphs.get(0).getText()).isEqualTo("Drawn marker item");
+
+            // A marker written as text keeps the colour it was given, because a
+            // run colour is something Word holds.
+            XWPFParagraph coloured = paragraphs.get(1);
+            assertThat(coloured.getText()).isEqualTo("• Coloured marker item");
+            assertThat(coloured.getRuns().stream().map(XWPFRun::text).toList())
+                    .containsExactly("", "•", " ", "Coloured marker item");
+            assertThat(coloured.getRuns().get(1).getColor())
+                    .as("the marker's own colour")
+                    .isEqualTo("008888");
+            assertThat(coloured.getRuns().get(3).getColor())
+                    .as("and the item's text does not take it")
+                    .isNotEqualTo("008888");
+        }
+    }
+
+    private static byte[] richListDocx(boolean hangingIndent) throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addList(list -> list
+                            .dash()
+                            .hangingIndent(hangingIndent)
+                            .addItem("Plain item")
+                            .addItem(t -> t.bold("Status: ").plain("pending")))
+                    .build();
+            return session.export(new DocxSemanticBackend());
+        }
+    }
+
+    private static List<String> runStructure(byte[] docxBytes) throws Exception {
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            return document.getParagraphs().stream()
+                    .filter(p -> !p.getText().isBlank())
+                    .flatMap(p -> p.getRuns().stream())
+                    .map(run -> run.text() + "|bold=" + run.isBold())
+                    .toList();
         }
     }
 

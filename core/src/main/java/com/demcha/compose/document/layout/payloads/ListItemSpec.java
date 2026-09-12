@@ -1,7 +1,9 @@
 package com.demcha.compose.document.layout.payloads;
 
+import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.ListMarker;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -36,7 +38,7 @@ import java.util.Objects;
  * @author Artem Demchyshyn
  * @since 2.4.0
  */
-public record ListItemSpec(int depth, ListMarker marker, String content) {
+public record ListItemSpec(int depth, ListMarker marker, String content, List<InlineRun> runs) {
 
     /**
      * Normalizes nullable inputs and rejects a negative depth.
@@ -49,6 +51,27 @@ public record ListItemSpec(int depth, ListMarker marker, String content) {
         }
         marker = marker == null ? ListMarker.none() : marker;
         content = content == null ? "" : content;
+        runs = runs == null ? List.of() : List.copyOf(runs);
+    }
+
+    /**
+     * Creates a spec whose content is plain text.
+     *
+     * @param depth   nesting depth
+     * @param marker  the item's resolved marker
+     * @param content the item's text
+     */
+    public ListItemSpec(int depth, ListMarker marker, String content) {
+        this(depth, marker, content, List.of());
+    }
+
+    /**
+     * Returns whether this item's content is runs rather than plain text.
+     *
+     * @return {@code true} when the item carries inline runs
+     */
+    public boolean isRich() {
+        return !runs.isEmpty();
     }
 
     /**

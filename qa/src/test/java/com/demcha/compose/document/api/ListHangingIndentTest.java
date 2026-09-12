@@ -7,8 +7,12 @@ import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
+import com.demcha.compose.document.layout.payloads.ParagraphShapeSpan;
+import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.engine.components.content.text.TextDecoration;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -21,6 +25,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 /**
@@ -169,6 +174,188 @@ class ListHangingIndentTest {
         double firstToSecond = fragments.get(0).y() - fragments.get(2).y();
         double secondToThird = fragments.get(2).y() - fragments.get(4).y();
         assertThat(firstToSecond).isEqualTo(secondToThird, within(EPS));
+    }
+
+    // --- rich items ---------------------------------------------------------
+
+    @Test
+    void aRichItemSitsInTheSameMarkerColumnAndContentOriginAsAPlainOne() throws Exception {
+        // The same reading, authored twice: once as a string, once as runs. The
+        // point of expressing styled content as inline runs rather than as a
+        // second rich-text model is that nothing about the row's geometry knows
+        // the difference.
+        Rendered plain = render(200, 240, l -> l.bullet().hangingIndent(true)
+                .addItem("Status: pending"));
+        Rendered rich = render(200, 240, l -> l.bullet().hangingIndent(true)
+                .addItem(t -> t.bold("Status: ").plain("pending")));
+
+        assertThat(rich.fragments()).as("one marker, one content block").hasSize(2);
+        PlacedFragment marker = rich.fragments().get(0);
+        PlacedFragment content = rich.fragments().get(1);
+
+        assertThat(texts(marker)).containsExactly("•");
+        assertThat(marker.x()).isEqualTo(12.000, within(EPS));
+        assertThat(marker.width()).as("the marker is measured, not skipped")
+                .isEqualTo(4.900, within(EPS));
+        assertThat(content.x()).isEqualTo(20.900, within(EPS));
+        assertThat(content.x()).as("the same origin a plain item gets")
+                .isEqualTo(plain.fragments().get(1).x(), within(EPS));
+        assertThat(content.width()).as("and the same content column")
+                .isEqualTo(plain.fragments().get(1).width(), within(EPS));
+
+        // One row, not two: the runs are content of a single item.
+        assertThat(texts(content)).containsExactly("Status: pending");
+        assertThat(rich.glyphs()).allSatisfy(g -> assertThat(g.page()).isZero());
+    }
+
+    @Test
+    void eachRunOfARichItemKeepsItsOwnStyle() throws Exception {
+        Rendered rich = render(200, 240, l -> l.bullet().hangingIndent(true)
+                .addItem(t -> t.bold("Status: ").plain("pending")));
+
+        // Word spans are what the wrapper produces, so the authored runs are
+        // read back by their text rather than by a span count.
+        List<ParagraphTextSpan> words = textSpans(rich.fragments().get(1)).stream()
+                .filter(s -> !s.text().isBlank())
+                .toList();
+        assertThat(words).hasSize(2);
+        assertThat(words.get(0).text()).isEqualTo("Status:");
+        assertThat(words.get(0).textStyle().decoration()).isEqualTo(TextDecoration.BOLD);
+        assertThat(words.get(1).text()).isEqualTo("pending");
+        assertThat(words.get(1).textStyle().decoration())
+                .as("a run with no style of its own inherits the list's")
+                .isEqualTo(TextDecoration.DEFAULT);
+
+        // And the styles are load-bearing: the bold half measures wider than the
+        // same characters would have if the item were one face throughout.
+        Rendered flat = render(200, 240, l -> l.bullet().hangingIndent(true)
+                .addItem("Status: pending"));
+        assertThat(lineWidths(rich.fragments().get(1)).get(0))
+                .as("bold glyphs are wider, so the mixed line is the wider line")
+                .isGreaterThan(lineWidths(flat.fragments().get(1)).get(0) + EPS);
+    }
+
+    @Test
+    void aRichItemWrapsInsideItsContentColumnAndEveryLineStartsAtTheOrigin() throws Exception {
+        Rendered rendered = render(165, 240, l -> l.bullet().hangingIndent(true)
+                .addItem(t -> t.bold("Lead: ").plain(
+                        "the rest of this item is long enough to wrap across several visual "
+                        + "lines while the item keeps one bullet.")));
+
+        PlacedFragment content = rendered.fragments().get(1);
+        assertThat(content.x()).isEqualTo(20.900, within(EPS));
+        assertThat(content.width()).isEqualTo(132.100, within(EPS));
+        assertThat(texts(content)).hasSizeGreaterThanOrEqualTo(3);
+
+        // Wrapped inside the content column, not inside the row.
+        assertThat(lineWidths(content))
+                .allSatisfy(w -> assertThat(w).isLessThanOrEqualTo(content.width() + EPS));
+        assertThat(lineWidths(content).stream().mapToDouble(Double::doubleValue).max().orElseThrow())
+                .isGreaterThan(content.width() * 0.75);
+
+        // The bold run is on the first line only; the continuation is the plain
+        // run, and it starts at the same origin rather than under the marker.
+        assertThat(textSpans(content).get(0).textStyle().decoration()).isEqualTo(TextDecoration.BOLD);
+        assertThat(rendered.glyphs().stream().filter(g -> !g.text().equals("•")))
+                .allSatisfy(g -> assertThat(g.x()).isEqualTo(20.900, within(EPS)));
+    }
+
+    @Test
+    void aRichItemCrossingAPageDrawsItsMarkerOnceAndKeepsItsContentOrigin() throws Exception {
+        Rendered rendered = render(150, 70, l -> l.bullet().hangingIndent(true)
+                .addItem(t -> t.bold("Lead: ").plain(
+                        "the rest of this item is long enough to wrap across many visual lines "
+                        + "so that it has to cross a page boundary and continue on the following "
+                        + "page with its indent intact and unchanged.")));
+
+        assertThat(rendered.graph().totalPages()).isGreaterThanOrEqualTo(2);
+        assertThat(markerCount(rendered))
+                .as("the marker belongs to the item, not to each page of it")
+                .isEqualTo(1);
+
+        for (int page = 0; page < rendered.graph().totalPages(); page++) {
+            PlacedFragment content = onPage(rendered, page).stream()
+                    .filter(f -> !texts(f).equals(List.of("•")))
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(content.x()).as("page %d contentX", page).isEqualTo(20.900, within(EPS));
+            assertThat(content.width()).as("page %d contentWidth", page).isEqualTo(117.100, within(EPS));
+        }
+        assertThat(rendered.glyphs().stream().filter(g -> !g.text().equals("•")))
+                .allSatisfy(g -> assertThat(g.x()).isEqualTo(20.900, within(EPS)));
+    }
+
+    @Test
+    void aRichParentsChildrenHangUnderItsText() throws Exception {
+        Rendered rendered = render(220, 240, l -> l.hangingIndent(true)
+                .addItem(t -> t.bold("Top"), c -> c.addItem("Child")));
+
+        List<PlacedFragment> fragments = rendered.fragments();
+        assertThat(fragments).hasSize(4);
+        assertThat(fragments.get(0).x()).isEqualTo(12.000, within(EPS));
+        assertThat(fragments.get(1).x()).isEqualTo(20.900, within(EPS));
+        assertThat(fragments.get(2).x()).as("the child's marker starts at the parent's text")
+                .isEqualTo(fragments.get(1).x(), within(EPS));
+        assertThat(fragments.get(3).x()).isEqualTo(32.684, within(EPS));
+        assertThat(textSpans(fragments.get(1)).get(0).textStyle().decoration())
+                .as("a styled label still heads the sub-tree")
+                .isEqualTo(TextDecoration.BOLD);
+    }
+
+    @Test
+    void aRichItemThatDrawsNoTextIsStillARowOfItsOwn() throws Exception {
+        // A row whose runs are a shape and nothing else reads as "", which is
+        // exactly the reading an item that draws nothing has — and with no
+        // marker to keep it either, the two are indistinguishable by text. What
+        // separates them is the runs, so that is what decides whether the row
+        // survives normalization.
+        Rendered rendered = render(200, 240, l -> l.noMarker().hangingIndent(true)
+                .addItem("Alpha")
+                .addItem(t -> t.dot(6.0, DocumentColor.rgb(0x33, 0x66, 0x99)))
+                .addItem("Beta"));
+
+        List<PlacedFragment> fragments = rendered.fragments();
+        assertThat(fragments).as("three rows, content only — a markerless list draws no marker")
+                .hasSize(3);
+        assertThat(texts(fragments.get(1))).as("no invented filler text").containsExactly("");
+        assertThat(fragments.get(1).height()).as("a real row with a real height").isPositive();
+
+        // The dot is a span of the row, so the row is as tall as the dot needs.
+        assertThat(((ParagraphFragmentPayload) fragments.get(1).payload()).lines().get(0).spans())
+                .hasAtLeastOneElementOfType(ParagraphShapeSpan.class);
+
+        // Rows stay evenly spaced, so the shape row occupies one of them.
+        double firstToSecond = fragments.get(0).y() - fragments.get(1).y();
+        double secondToThird = fragments.get(1).y() - fragments.get(2).y();
+        assertThat(firstToSecond).isEqualTo(secondToThird, within(EPS));
+    }
+
+    @Test
+    void aFlatListsOwnMarkerStillAppliesWhenOneOfItsItemsIsRich() throws Exception {
+        // A rich item makes the list carry an item tree, because runs do not fit
+        // a list of labels. That is a representation change and must not become
+        // a marker change: the author asked for dashes.
+        Rendered rendered = render(200, 240, l -> l.dash().hangingIndent(true)
+                .addItem("Plain")
+                .addItem(t -> t.bold("Rich")));
+
+        assertThat(texts(rendered.fragments().get(0))).containsExactly("-");
+        assertThat(texts(rendered.fragments().get(2)))
+                .as("the rich row takes the same marker as the plain one")
+                .containsExactly("-");
+        assertThat(rendered.fragments().get(2).x())
+                .isEqualTo(rendered.fragments().get(0).x(), within(EPS));
+        assertThat(rendered.fragments().get(3).x())
+                .isEqualTo(rendered.fragments().get(1).x(), within(EPS));
+    }
+
+    @Test
+    void aRichItemWithoutTheOptInSaysSoInsteadOfDroppingItsStyles() throws Exception {
+        assertThatThrownBy(() -> render(200, 240, l -> l.bullet()
+                .addItem(t -> t.bold("Status: ").plain("pending"))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("hangingIndent(true)")
+                .hasMessageContaining("Status: pending");
     }
 
     // --- nesting -----------------------------------------------------------
@@ -440,6 +627,15 @@ class ListHangingIndentTest {
     private static List<Double> lineWidths(PlacedFragment fragment) {
         return ((ParagraphFragmentPayload) fragment.payload()).lines().stream()
                 .map(ParagraphLine::width)
+                .toList();
+    }
+
+    private static List<ParagraphTextSpan> textSpans(PlacedFragment fragment) {
+        return ((ParagraphFragmentPayload) fragment.payload()).lines().stream()
+                .map(ParagraphLine::spans)
+                .flatMap(List::stream)
+                .filter(ParagraphTextSpan.class::isInstance)
+                .map(ParagraphTextSpan.class::cast)
                 .toList();
     }
 

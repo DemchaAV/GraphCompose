@@ -275,7 +275,30 @@ public final class LayoutCompiler {
         boolean keepWhole = node.keepTogether()
                             && outerHeight <= state.activeInnerHeight() + CAPACITY_TOLERANCE;
         double startReservation = margin.top() + padding.top();
+
+        // A box must not open on a page its first indivisible unit cannot start on.
+        // The box is recorded here and its children are placed afterwards, so when the
+        // first thing inside it has to move — it asked to be kept whole, or it is
+        // indivisible and too tall for the space left — the box stays behind spanning a
+        // page it holds nothing on. Every consumer of that box then believes it: a
+        // section's accent paints a stub at the foot of the page beside nothing, and
+        // anything deriving an extent from it runs to the bottom margin, which is how a
+        // timeline's rail grew a tail below its last entry.
+        //
+        // So the box relocates too. This is the keep-together rule above asked of the
+        // leading unit instead of the whole node, and the same fallback applies: a unit
+        // that would not fit a fresh page either has nothing to gain from the break, so
+        // it flows where it stands. A box whose first unit does fit is untouched, which
+        // is why this moves no content — the content had already moved.
+        double leadingUnit = leadingUnitHeight(node, regionWidth, prepareContext,
+                                               state.activeInnerHeight());
+        boolean relocateWithLeadingUnit =
+                leadingUnit > state.remainingHeight() + EPS
+                && leadingUnit <= state.activeInnerHeight() + CAPACITY_TOLERANCE;
+
         if (keepWhole && outerHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
+            state.newPage();
+        } else if (relocateWithLeadingUnit && state.usedHeight > EPS) {
             state.newPage();
         } else if (startReservation > state.remainingHeight() + EPS && state.usedHeight > EPS) {
             state.newPage();

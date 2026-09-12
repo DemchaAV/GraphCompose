@@ -43,15 +43,19 @@ class TimelineLeadingColumnLayoutTest {
         LayoutGraph graph = timeline(DocumentRowColumn.fixed(56));
 
         Map<Integer, List<Double>> byColumn = columnPositions(graph);
-        assertThat(byColumn).as("three columns, four entries").hasSize(3);
+        // Five columns: the leading one, the marker, the content, and a gap either side of
+        // the marker. Each gap is a column of its own because a row spaces every pair of
+        // its columns by one number, and the two gaps have to be free to differ.
+        assertThat(byColumn).as("five columns, four entries").hasSize(5);
         assertThat(byColumn.get(0)).as("every leading column").hasSize(4);
 
         byColumn.forEach((index, positions) -> assertThat(positions)
                 .as("column %d starts at one x in every entry, not one per date length", index)
                 .containsOnly(positions.get(0)));
 
-        // And they are three distinct columns, not one collapsed on top of another.
-        assertThat(List.of(byColumn.get(0).get(0), byColumn.get(1).get(0), byColumn.get(2).get(0)))
+        // And the three that carry something are distinct columns in order, not one
+        // collapsed on top of another.
+        assertThat(List.of(byColumn.get(0).get(0), byColumn.get(2).get(0), byColumn.get(4).get(0)))
                 .isSorted()
                 .doesNotHaveDuplicates();
     }

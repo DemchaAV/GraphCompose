@@ -2,6 +2,8 @@ package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.layout.payloads.ListItemSpec;
 import com.demcha.compose.document.layout.payloads.MarkerContentItem;
+import com.demcha.compose.document.layout.payloads.ParagraphLine;
+import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
@@ -45,12 +47,16 @@ final class ListMarkerGeometry {
      * @param node               the list, for its marker gap and text style
      * @param availableItemWidth width one row may occupy, inside the list padding
      * @param measurement        text measurement service
+     * @param drawnMarkers       the already-measured single line of each drawn
+     *                           marker used in the list, keyed by the marker;
+     *                           empty when every marker is text
      * @return one resolved item per spec, in the same order
      */
     static List<MarkerContentItem> resolve(List<ListItemSpec> specs,
                                            ListNode node,
                                            double availableItemWidth,
-                                           TextMeasurementSystem measurement) {
+                                           TextMeasurementSystem measurement,
+                                           Map<ListMarker, ParagraphLine> drawnMarkers) {
         if (specs.isEmpty()) {
             return List.of();
         }
@@ -75,10 +81,20 @@ final class ListMarkerGeometry {
             double markerX = depth == 0 ? 0.0 : contentXByDepth[depth - 1];
 
             boolean hasMarker = spec.hasMarker();
-            double markerWidth = hasMarker
-                    ? markerWidths.computeIfAbsent(spec.markerText(),
-                            text -> measurement.textWidth(style, text))
-                    : 0.0;
+            // A drawn marker was measured as a line of inline runs before this
+            // loop, by the same pipeline that measures the item's own content, so
+            // its width is the width of what it actually draws — a disc's
+            // diameter, an icon's box — rather than of any text.
+            ParagraphLine drawn = drawnMarkers.get(spec.marker());
+            double markerWidth;
+            if (!hasMarker) {
+                markerWidth = 0.0;
+            } else if (drawn != null) {
+                markerWidth = drawn.width();
+            } else {
+                markerWidth = markerWidths.computeIfAbsent(spec.markerText(),
+                        text -> measurement.textWidth(style, text));
+            }
             double gap = hasMarker ? node.markerGap() : 0.0;
             double contentX = markerX + markerWidth + gap;
             // Floored at the width the text pipeline already treats as its
@@ -91,7 +107,8 @@ final class ListMarkerGeometry {
                     ParagraphWrapping.MIN_TEXT_WIDTH, availableItemWidth - contentX);
 
             contentXByDepth[depth] = contentX;
-            out.add(new MarkerContentItem(spec, markerX, markerWidth, gap, contentX, contentWidth));
+            out.add(new MarkerContentItem(spec, markerX, markerWidth, gap, contentX, contentWidth,
+                    drawn == null || !hasMarker ? List.of() : drawn.spans()));
         }
         return List.copyOf(out);
     }

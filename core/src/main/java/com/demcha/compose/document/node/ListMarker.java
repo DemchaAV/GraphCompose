@@ -1,22 +1,74 @@
 package com.demcha.compose.document.node;
 
+import java.util.List;
+
 /**
  * Marker rendered before each item in a canonical list node.
  *
  * <p>The marker keeps the public list API small while still allowing custom
  * list prefixes for CVs, reports, and template-specific layouts.</p>
  *
- * @param value visible marker prefix, or an empty string for markerless lists
+ * <p>A marker is either a piece of text — {@code value}, which is all a marker
+ * could be before it could be drawn — or a sequence of {@code runs}: the same
+ * {@link InlineRun} sequence a paragraph and a list item are made of. Runs are
+ * what let a marker be a coloured disc, an icon or a glyph in a face and colour
+ * of its own, independent of the item beside it. When {@code runs} is non-empty
+ * it is the marker, and {@code value} is its plain-text reading.</p>
+ *
+ * @param value visible marker prefix, or an empty string for markerless lists;
+ *              the plain-text reading when {@code runs} is set
+ * @param runs  inline runs the marker draws, empty when the marker is text
  * @author Artem Demchyshyn
  */
-public record ListMarker(String value) {
+public record ListMarker(String value, List<InlineRun> runs) {
     /**
-     * Creates a normalized marker.
+     * Normalizes the text form and copy-protects the runs.
      *
      * @param value visible marker value, or {@code null} for no marker
+     * @param runs  inline runs, or {@code null} for a text marker
      */
     public ListMarker {
         value = normalize(value);
+        runs = runs == null ? List.of() : List.copyOf(runs);
+    }
+
+    /**
+     * Creates a marker that is a piece of text, which is all a marker could be
+     * before it could be drawn.
+     *
+     * <p>Kept as its own constructor rather than folded into the canonical one,
+     * so code written against the one-argument shape still compiles and still
+     * links.</p>
+     *
+     * @param value visible marker value, or {@code null} for no marker
+     */
+    public ListMarker(String value) {
+        this(value, List.of());
+    }
+
+    /**
+     * Creates a marker drawn from a sequence of inline runs.
+     *
+     * <p>Its plain-text reading is whatever text the runs carry, which for a
+     * marker that draws only a disc or an icon is nothing — the reading is what
+     * a surface that cannot draw falls back to, not the marker itself.</p>
+     *
+     * @param runs the runs the marker draws
+     * @return drawn marker
+     * @since 2.4.0
+     */
+    public static ListMarker ofRuns(List<InlineRun> runs) {
+        return new ListMarker(InlineRun.plainText(runs), runs);
+    }
+
+    /**
+     * Returns whether this marker is drawn from runs rather than being text.
+     *
+     * @return {@code true} when the marker carries inline runs
+     * @since 2.4.0
+     */
+    public boolean isRich() {
+        return !runs.isEmpty();
     }
 
     /**
@@ -121,12 +173,17 @@ public record ListMarker(String value) {
     }
 
     /**
-     * Returns {@code true} when this marker has non-whitespace content.
+     * Returns {@code true} when this marker draws anything — non-whitespace
+     * text, or any run at all.
+     *
+     * <p>A drawn marker is visible whatever its reading says, which is the whole
+     * difference between a marker of a teal disc and a markerless item: both
+     * read as nothing, and only one of them puts ink on the page.</p>
      *
      * @return whether the marker is visible
      */
     public boolean isVisible() {
-        return value.chars().anyMatch(ch -> !Character.isWhitespace(ch));
+        return isRich() || value.chars().anyMatch(ch -> !Character.isWhitespace(ch));
     }
 
     /**

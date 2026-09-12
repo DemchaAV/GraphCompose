@@ -29,6 +29,8 @@ import com.demcha.compose.document.templates.core.identity.Subheadline;
 import com.demcha.compose.document.templates.core.identity.SvgGlyph;
 import com.demcha.compose.document.svg.SvgIcon;
 
+import com.demcha.compose.document.templates.core.identity.ContactUri;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -694,7 +696,8 @@ public final class MintEditorial {
                 String phone = identity.contact().phone();
                 if (!phone.isBlank()) {
                     IconTextRow.render(block, glyph("phone.svg"), ICON_COLOR,
-                            CONTACT_ICON_SIZE, phone, style, null,
+                            CONTACT_ICON_SIZE, phone, style,
+                            ContactUri.telLink(phone),
                             DocumentInsets.bottom(13));
                 }
                 String email = identity.contact().email();

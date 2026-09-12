@@ -338,7 +338,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * no signal at all, weaker than the block-level drop path.
      */
     private void warnDroppedInlineRuns(ParagraphNode node) {
-        for (InlineRun run : node.inlineRuns()) {
+        warnDroppedInlineRuns(node.inlineRuns());
+    }
+
+    private void warnDroppedInlineRuns(List<InlineRun> runs) {
+        for (InlineRun run : runs) {
             if (run instanceof InlineTextRun || run instanceof InlineHighlightRun) {
                 continue;
             }
@@ -369,8 +373,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (normalized.isBlank()) {
                 continue;
             }
-            writeListLine(document, list.textStyle(),
-                    list.marker().prefix() + normalized, 0);
+            if (list.marker().isRich()) {
+                // A drawn marker's pieces are runs, so the row is written the way
+                // any row with runs in it is; its item is still just a label.
+                writeRichListLine(document, list.textStyle(), list.marker(),
+                        com.demcha.compose.document.node.ListItem.of(normalized), 0);
+            } else {
+                writeListLine(document, list.textStyle(),
+                        list.marker().prefix() + normalized, 0);
+            }
         }
         for (com.demcha.compose.document.node.ListItem item : list.nestedItems()) {
             writeNestedItem(document, list, item, 0);
@@ -389,7 +400,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 item.marker() != null
                         ? item.marker()
                         : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth);
-        writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth);
+        if (item.isRich() || marker.isRich()) {
+            writeRichListLine(document, list.textStyle(), marker, item, depth);
+        } else {
+            writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth);
+        }
         for (com.demcha.compose.document.node.ListItem child : item.children()) {
             writeNestedItem(document, list, child, depth + 1);
         }
@@ -401,6 +416,68 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFRun run = para.createRun();
         applyStyle(run, style);
         run.setText("  ".repeat(depth) + text);
+    }
+
+    /**
+     * Writes an item whose marker or whose content is made of inline runs as one
+     * Word run per inline run, the way {@link #writeParagraphRuns} writes a rich
+     * paragraph.
+     *
+     * <p>This is the part of the opt-in marker/content list the semantic export
+     * can reproduce, and it reproduces it exactly. The geometry — the measured
+     * marker column, the gap, the shared content origin — is unavailable here for
+     * the reason {@code hangingIndent} documents. Which piece of an item is bold
+     * is not geometry: Word carries a style per run inside a paragraph, so
+     * writing the item's plain reading in one face would be dropping something
+     * Word can hold.</p>
+     *
+     * <p>The same is true of a marker. A marker written as text keeps the colour
+     * and face it was given, because those are run properties Word has. A marker
+     * that draws a disc or an icon has no Word analogue at all, so it drops with
+     * the export's usual per-kind warning and its item is written unmarked —
+     * rather than substituting a glyph the author did not ask for.</p>
+     */
+    private void writeRichListLine(XWPFDocument document, DocumentTextStyle style,
+                                   com.demcha.compose.document.node.ListMarker marker,
+                                   com.demcha.compose.document.node.ListItem item,
+                                   int depth) {
+        warnDroppedInlineRuns(marker.runs());
+        warnDroppedInlineRuns(item.runs());
+        XWPFParagraph para = document.createParagraph();
+        XWPFRun leading = para.createRun();
+        applyStyle(leading, style);
+        leading.setText("  ".repeat(depth) + (marker.isRich() ? "" : marker.prefix()));
+        if (marker.isRich()) {
+            writeInlineTextRuns(para, style, marker.runs());
+            // The gap after a marker is markerGap, which is geometry and so not
+            // available here; a space is what separates a marker from its item on
+            // the text path, and it separates them here for the same reason.
+            if (!com.demcha.compose.document.node.InlineRun.plainText(marker.runs()).isBlank()) {
+                XWPFRun gap = para.createRun();
+                applyStyle(gap, style);
+                gap.setText(" ");
+            }
+        }
+        if (item.isRich()) {
+            writeInlineTextRuns(para, style, item.runs());
+        } else {
+            XWPFRun label = para.createRun();
+            applyStyle(label, style);
+            label.setText(item.label());
+        }
+    }
+
+    /**
+     * Appends one Word run per text-carrying inline run, each in its own style
+     * and falling back to {@code style} when it has none.
+     */
+    private void writeInlineTextRuns(XWPFParagraph para, DocumentTextStyle style,
+                                     List<InlineRun> runs) {
+        for (InlineTextRun run : com.demcha.compose.document.node.InlineRun.textRuns(runs)) {
+            XWPFRun docRun = para.createRun();
+            applyStyle(docRun, run.textStyle() == null ? style : run.textStyle());
+            docRun.setText(run.text() == null ? "" : run.text());
+        }
     }
 
     /**

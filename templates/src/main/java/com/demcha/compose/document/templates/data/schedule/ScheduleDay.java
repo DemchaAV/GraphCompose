@@ -9,7 +9,14 @@ import java.util.Objects;
  * @param label            display day label
  * @param headerNote       optional header note
  * @param headerCategoryId optional category shown in the header
+ *
+ * @deprecated superseded by
+ *             {@link com.demcha.compose.document.templates.data.rota.RotaDay},
+ *             which keeps the weekday, the ordinal and its tail apart so a
+ *             design can set the suffix apart, and carries the day's expected
+ *             covers.
  */
+@Deprecated(since = "2.4.0")
 public record ScheduleDay(
         String id,
         String label,

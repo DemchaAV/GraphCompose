@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 237,
-    "methods": 2107,
-    "constants": 237,
-    "generated": 1126
+    "methods": 2123,
+    "constants": 236,
+    "generated": 1129
   },
   "packages": [
     {
@@ -9223,6 +9223,38 @@
             },
             {
               "kind": "method",
+              "name": "addItem",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListBuilder",
+              "params": [
+                {
+                  "type": "Consumer<RichText>",
+                  "name": "content"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "addItem",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListBuilder",
+              "params": [
+                {
+                  "type": "Consumer<RichText>",
+                  "name": "content"
+                },
+                {
+                  "type": "Consumer<ListBuilder>",
+                  "name": "body"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "markerFor",
               "static": false,
               "origin": "source",
@@ -9263,6 +9295,20 @@
               "params": [
                 {
                   "type": "String",
+                  "name": "marker"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "marker",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListBuilder",
+              "params": [
+                {
+                  "type": "Consumer<RichText>",
                   "name": "marker"
                 }
               ]
@@ -15108,6 +15154,20 @@
             },
             {
               "kind": "method",
+              "name": "leadingGap",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "gap"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "markerColumnWeight",
               "static": false,
               "origin": "source",
@@ -15603,23 +15663,37 @@
             },
             {
               "kind": "method",
-              "name": "extent",
+              "name": "from",
               "static": false,
               "origin": "source",
               "typeParameters": null,
               "returns": "TimelineRailBuilder",
               "params": [
                 {
-                  "type": "TimelineRailExtent",
-                  "name": "extent"
+                  "type": "TimelineRailEnd",
+                  "name": "start"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "to",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineRailBuilder",
+              "params": [
+                {
+                  "type": "TimelineRailEnd",
+                  "name": "end"
                 }
               ]
             }
           ]
         },
         {
-          "name": "TimelineRailExtent",
-          "binaryName": "com.demcha.compose.document.dsl.TimelineRailExtent",
+          "name": "TimelineRailEnd",
+          "binaryName": "com.demcha.compose.document.dsl.TimelineRailEnd",
           "kind": "enum",
           "modifiers": [
             "final"
@@ -15628,24 +15702,17 @@
           "members": [
             {
               "kind": "constant",
-              "name": "MARKER_TO_MARKER",
+              "name": "ENTRY_BOUND",
               "static": true,
               "origin": "generated",
-              "type": "TimelineRailExtent"
+              "type": "TimelineRailEnd"
             },
             {
               "kind": "constant",
-              "name": "ENTRY_BOUNDS",
+              "name": "MARKER",
               "static": true,
               "origin": "generated",
-              "type": "TimelineRailExtent"
-            },
-            {
-              "kind": "constant",
-              "name": "TIMELINE_BOUNDS",
-              "static": true,
-              "origin": "generated",
-              "type": "TimelineRailExtent"
+              "type": "TimelineRailEnd"
             }
           ]
         },
@@ -18677,7 +18744,36 @@
           "kind": "interface",
           "modifiers": [],
           "artifact": "graph-compose-core",
-          "members": []
+          "members": [
+            {
+              "kind": "method",
+              "name": "plainText",
+              "static": true,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [
+                {
+                  "type": "List<InlineRun>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "textRuns",
+              "static": true,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<InlineTextRun>",
+              "params": [
+                {
+                  "type": "List<InlineRun>",
+                  "name": null
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "InlineShapeRun",
@@ -20333,6 +20429,10 @@
                   "name": null
                 },
                 {
+                  "type": "List<InlineRun>",
+                  "name": null
+                },
+                {
                   "type": "ListMarker",
                   "name": null
                 },
@@ -20341,6 +20441,69 @@
                   "name": null
                 }
               ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ListItem",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "ListMarker",
+                  "name": "marker"
+                },
+                {
+                  "type": "List<ListItem>",
+                  "name": "children"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "ofRuns",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListItem",
+              "params": [
+                {
+                  "type": "List<InlineRun>",
+                  "name": "runs"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "ofRuns",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListItem",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "List<InlineRun>",
+                  "name": "runs"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isRich",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
             },
             {
               "kind": "method",
@@ -20394,6 +20557,15 @@
             },
             {
               "kind": "method",
+              "name": "runs",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<InlineRun>",
+              "params": []
+            },
+            {
+              "kind": "method",
               "name": "marker",
               "static": false,
               "origin": "generated",
@@ -20432,8 +20604,49 @@
                 {
                   "type": "String",
                   "name": null
+                },
+                {
+                  "type": "List<InlineRun>",
+                  "name": null
                 }
               ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ListMarker",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "ofRuns",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListMarker",
+              "params": [
+                {
+                  "type": "List<InlineRun>",
+                  "name": "runs"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isRich",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
             },
             {
               "kind": "method",
@@ -20533,6 +20746,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "runs",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<InlineRun>",
               "params": []
             }
           ]

@@ -1,0 +1,100 @@
+package com.demcha.compose.document.templates.data.invoice;
+
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * The sender's address and contact channels on a structured invoice.
+ *
+ * <p>Distinct from {@link InvoiceParty}, the narrative model's party
+ * record: this block carries a website channel and a labelled business
+ * registration (ABN, VAT or company number — the label is content because
+ * it differs by jurisdiction), which a structured invoice prints in its
+ * contact band and its footer.</p>
+ *
+ * @param legalName          the registered business name
+ * @param addressLines       the address lines, in order
+ * @param phone              the phone channel
+ * @param email              the email channel
+ * @param website            the website channel
+ * @param registrationLabel  the label of the registration number
+ *                           (e.g. {@code "ABN"})
+ * @param registrationNumber the registration number itself
+ * @param taxRegistrationLabel  the label of a second registration a
+ *                              jurisdiction requires beside the first
+ *                              (e.g. {@code "VAT No."}); blank when absent
+ * @param taxRegistrationNumber that second number itself; blank when absent
+ * @param legalFootnote      a legal disclosure the sheet prints beside the
+ *                           name — a parent-company or regulator statement
+ *                           such as {@code "… is a subsidiary of …"}; blank
+ *                           when the jurisdiction requires none
+ */
+public record InvoiceContactBlock(
+        String legalName,
+        List<String> addressLines,
+        String phone,
+        String email,
+        String website,
+        String registrationLabel,
+        String registrationNumber,
+        String taxRegistrationLabel,
+        String taxRegistrationNumber,
+        String legalFootnote) {
+
+    /**
+     * Normalizes optional fields and freezes the address lines.
+     */
+    public InvoiceContactBlock {
+        legalName = Objects.requireNonNullElse(legalName, "");
+        addressLines = List.copyOf(Objects.requireNonNullElse(addressLines, List.of()));
+        phone = Objects.requireNonNullElse(phone, "");
+        email = Objects.requireNonNullElse(email, "");
+        website = Objects.requireNonNullElse(website, "");
+        registrationLabel = Objects.requireNonNullElse(registrationLabel, "");
+        registrationNumber = Objects.requireNonNullElse(registrationNumber, "");
+        taxRegistrationLabel = Objects.requireNonNullElse(taxRegistrationLabel, "");
+        taxRegistrationNumber = Objects.requireNonNullElse(taxRegistrationNumber, "");
+        legalFootnote = Objects.requireNonNullElse(legalFootnote, "");
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the legal
+     * footnote.
+     *
+     * @param legalName             the registered business name
+     * @param addressLines          the address lines, in order
+     * @param phone                 the phone channel
+     * @param email                 the email channel
+     * @param website               the website channel
+     * @param registrationLabel     the label of the registration number
+     * @param registrationNumber    the registration number itself
+     * @param taxRegistrationLabel  the label of the second registration
+     * @param taxRegistrationNumber that second number itself
+     */
+    public InvoiceContactBlock(String legalName, List<String> addressLines, String phone,
+                               String email, String website, String registrationLabel,
+                               String registrationNumber, String taxRegistrationLabel,
+                               String taxRegistrationNumber) {
+        this(legalName, addressLines, phone, email, website, registrationLabel,
+                registrationNumber, taxRegistrationLabel, taxRegistrationNumber, "");
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the second
+     * registration.
+     *
+     * @param legalName          the registered business name
+     * @param addressLines       the address lines, in order
+     * @param phone              the phone channel
+     * @param email              the email channel
+     * @param website            the website channel
+     * @param registrationLabel  the label of the registration number
+     * @param registrationNumber the registration number itself
+     */
+    public InvoiceContactBlock(String legalName, List<String> addressLines, String phone,
+                               String email, String website, String registrationLabel,
+                               String registrationNumber) {
+        this(legalName, addressLines, phone, email, website,
+                registrationLabel, registrationNumber, "", "", "");
+    }
+}

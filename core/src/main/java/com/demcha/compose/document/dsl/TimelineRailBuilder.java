@@ -23,7 +23,8 @@ import java.util.Objects;
 public final class TimelineRailBuilder {
 
     private DocumentStroke stroke;
-    private TimelineRailExtent extent;
+    private TimelineRailEnd start;
+    private TimelineRailEnd end;
 
     TimelineRailBuilder() {
     }
@@ -41,19 +42,37 @@ public final class TimelineRailBuilder {
     }
 
     /**
-     * Sets how far the rail runs.
+     * Sets where the rail begins.
      *
-     * <p>Independent of where it runs: an extent is the line's two ends, and its x comes
-     * from the marker anchor. A timeline that sets neither keeps
-     * {@link TimelineRailExtent#ENTRY_BOUNDS}, which is what it already draws.</p>
+     * <p>Independent of where it ends, and of where it runs: the two ends are chosen one at
+     * a time and the x comes from the marker anchor. A rail that is asked for neither end
+     * begins at {@link TimelineRailEnd#ENTRY_BOUND}, which is what a timeline already
+     * draws.</p>
      *
-     * @param extent the rail's extent
+     * @param start where the rail's first end sits
      * @return this builder
-     * @throws NullPointerException if {@code extent} is null
+     * @throws NullPointerException if {@code start} is null
      * @since 2.4.0
      */
-    public TimelineRailBuilder extent(TimelineRailExtent extent) {
-        this.extent = Objects.requireNonNull(extent, "extent");
+    public TimelineRailBuilder from(TimelineRailEnd start) {
+        this.start = Objects.requireNonNull(start, "start");
+        return this;
+    }
+
+    /**
+     * Sets where the rail ends.
+     *
+     * <p>The companion of {@link #from(TimelineRailEnd)} and just as independent: a rail
+     * may begin on its first marker and still run to the foot of its last entry. Unasked,
+     * it ends at {@link TimelineRailEnd#ENTRY_BOUND}.</p>
+     *
+     * @param end where the rail's last end sits
+     * @return this builder
+     * @throws NullPointerException if {@code end} is null
+     * @since 2.4.0
+     */
+    public TimelineRailBuilder to(TimelineRailEnd end) {
+        this.end = Objects.requireNonNull(end, "end");
         return this;
     }
 
@@ -62,8 +81,13 @@ public final class TimelineRailBuilder {
         return stroke;
     }
 
-    /** The extent this rail was given, or null when the caller set none. */
-    TimelineRailExtent extent() {
-        return extent;
+    /** The start this rail was given, or null when the caller asked for none. */
+    TimelineRailEnd start() {
+        return start;
+    }
+
+    /** The end this rail was given, or null when the caller asked for none. */
+    TimelineRailEnd end() {
+        return end;
     }
 }

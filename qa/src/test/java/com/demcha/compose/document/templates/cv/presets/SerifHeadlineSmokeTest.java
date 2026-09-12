@@ -3,6 +3,7 @@ package com.demcha.compose.document.templates.cv.presets;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.exceptions.AtomicNodeTooLargeException;
+import com.demcha.compose.document.snapshot.LayoutNodeSnapshot;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.identity.Contact;
 import com.demcha.compose.document.templates.core.identity.Link;
@@ -20,13 +21,18 @@ import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.pdfbox.text.TextPosition;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * Smoke test for {@link SerifHeadline} — proves the preset renders a
@@ -37,6 +43,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * overlap reach the right berths.
  */
 class SerifHeadlineSmokeTest {
+
+    /** Everything right of this belongs to the aside, not the main rail. */
+    private static final double MAIN_RAIL_RIGHT_EDGE = 380.0;
 
     private static byte[] render(CvDocument doc) throws Exception {
         // The preset owns its page geometry, so the session starts unconfigured.
@@ -107,6 +116,147 @@ class SerifHeadlineSmokeTest {
                      Loader.loadPDF(render(SerifHeadlineFixtures.canonicalCv()))) {
             assertThat(document.getNumberOfPages()).isEqualTo(1);
         }
+    }
+
+    @Test
+    void everyHighlightLineStartsOnTheSameTextColumn() throws Exception {
+        // Neither parity gate can see this. A list's items are not layout nodes,
+        // so the snapshot records the list's box and nothing inside it, and two
+        // continuation lines moving 1.5pt sits far inside the pixel budget. The
+        // contract is that the dot has a column and the text has a column, and
+        // that a highlight which wraps resumes on the text one — so it is read
+        // off the glyph positions, which is where it actually lives.
+        List<HighlightLine> lines = highlightLines(
+                render(SerifHeadlineFixtures.canonicalCv()));
+
+        assertThat(lines).filteredOn(line -> !line.wrapped())
+                .as("every authored highlight is here")
+                .hasSize(11);
+        assertThat(lines).filteredOn(HighlightLine::wrapped)
+                .as("and at least one of them wraps, with nothing of its own in the marker"
+                    + " column — a continuation padded back to that column with spaces would"
+                    + " land here too, and is what this is watching for")
+                .isNotEmpty();
+
+        double textColumn = lines.get(0).textX();
+        double markerColumn = lines.stream().filter(line -> !line.wrapped())
+                .mapToDouble(HighlightLine::markerX).findFirst().orElse(Double.NaN);
+        assertThat(lines).allSatisfy(line -> assertThat(line.textX())
+                .as("the %s line %s starts its text on the column",
+                        line.wrapped() ? "wrapped" : "first", line.text())
+                .isCloseTo(textColumn, within(0.01)));
+        assertThat(lines).filteredOn(HighlightLine::wrapped)
+                .as("a wrapped line resumes on the text, never in the marker column")
+                .allSatisfy(line -> assertThat(line.markerX()).isNaN());
+
+        // 6.750pt between the two columns: 4.683 of dot advance and the 2.067
+        // the design authors as the gap. Pinned because it is the number the
+        // migration had to solve for, and nothing else on the sheet would move
+        // if it drifted.
+        assertThat(textColumn - markerColumn)
+                .as("the dot's advance plus the authored gap")
+                .isCloseTo(6.750, within(0.01));
+    }
+
+    /** One rendered highlight line: where its dot is, if any, and where its text starts. */
+    private record HighlightLine(double markerX, double textX, String text) {
+
+        boolean wrapped() {
+            return Double.isNaN(markerX);
+        }
+    }
+
+    /**
+     * The highlight lines of the canonical sheet, read off the page.
+     *
+     * <p>Scoped by the y-bands of the {@code Highlights_*} list boxes and to the
+     * main rail's half of the sheet, so the aside's own text cannot wander in.</p>
+     *
+     * @param pdfBytes the rendered sheet
+     * @return one entry per rendered line
+     */
+    private static List<HighlightLine> highlightLines(byte[] pdfBytes) throws Exception {
+        List<double[]> bands = new ArrayList<>();
+        try (DocumentSession session = GraphCompose.document().create()) {
+            SerifHeadline.create().compose(session, SerifHeadlineFixtures.canonicalCv());
+            for (LayoutNodeSnapshot node : session.layoutSnapshot().nodes()) {
+                if (node.entityName() != null && node.entityName().startsWith("Highlights_")) {
+                    bands.add(new double[] {
+                            node.placementY(), node.placementY() + node.placementHeight()});
+                }
+            }
+        }
+        assertThat(bands).as("three highlight lists on the canonical sheet").hasSize(3);
+
+        List<Glyph> glyphs = new ArrayList<>();
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            double pageHeight = document.getPage(0).getMediaBox().getHeight();
+            PDFTextStripper stripper = new PDFTextStripper() {
+                @Override
+                protected void writeString(String text, List<TextPosition> positions) {
+                    for (TextPosition position : positions) {
+                        // Every glyph that belongs to a highlight, with the
+                        // baseline it sits on. The call boundaries are no use
+                        // here: a marker is its own text run, so a first line
+                        // arrives as two calls, and a call can reach across both
+                        // columns of the sheet. Grouping by baseline afterwards
+                        // is what puts a dot back with its own text.
+                        double y = pageHeight - position.getYDirAdj();
+                        boolean inBand = bands.stream()
+                                .anyMatch(band -> y > band[0] - 1.5 && y < band[1] + 1.5);
+                        if (!inBand || position.getXDirAdj() > MAIN_RAIL_RIGHT_EDGE) {
+                            continue;
+                        }
+                        glyphs.add(new Glyph(position.getXDirAdj(), y, position.getUnicode()));
+                    }
+                }
+            };
+            stripper.setSortByPosition(true);
+            stripper.getText(document);
+        }
+
+        // The dot does not survive the text layer as "•" — its font carries no
+        // ToUnicode for it, so it extracts as a replacement character. The
+        // marker column is therefore the leftmost x any highlight glyph sits at,
+        // read off the page rather than assumed, and a baseline with a glyph
+        // there is one that shows a dot. That is what makes the interesting
+        // number — where the TEXT starts — comparable between a first line and a
+        // wrapped one.
+        double markerColumn = glyphs.stream().mapToDouble(Glyph::x).min().orElse(Double.NaN);
+        Map<Long, List<Glyph>> byBaseline = new TreeMap<>(Comparator.reverseOrder());
+        for (Glyph glyph : glyphs) {
+            byBaseline.computeIfAbsent(Math.round(glyph.y() * 4.0), key -> new ArrayList<>())
+                    .add(glyph);
+        }
+
+        List<HighlightLine> lines = new ArrayList<>(byBaseline.size());
+        for (List<Glyph> baseline : byBaseline.values()) {
+            boolean hasMarker = baseline.stream()
+                    .anyMatch(glyph -> Math.abs(glyph.x() - markerColumn) < 0.01);
+            StringBuilder body = new StringBuilder();
+            double textX = Double.NaN;
+            for (Glyph glyph : baseline.stream().sorted(Comparator.comparingDouble(Glyph::x))
+                    .toList()) {
+                if (hasMarker && Math.abs(glyph.x() - markerColumn) < 0.01) {
+                    continue;
+                }
+                if (Double.isNaN(textX) && !glyph.unicode().isBlank()) {
+                    textX = glyph.x();
+                }
+                if (!Double.isNaN(textX)) {
+                    body.append(glyph.unicode());
+                }
+            }
+            if (!Double.isNaN(textX)) {
+                lines.add(new HighlightLine(hasMarker ? markerColumn : Double.NaN, textX,
+                        body.length() > 18 ? body.substring(0, 18) : body.toString()));
+            }
+        }
+        return lines;
+    }
+
+    /** One extracted glyph: where it sits and what it is. */
+    private record Glyph(double x, double y, String unicode) {
     }
 
     @Test

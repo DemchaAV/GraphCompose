@@ -22,6 +22,7 @@ import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyl
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.BULLET_LEADING;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.BULLETS_TO_SEPARATOR;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.BULLET_MARKER;
+import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.BULLET_MARKER_GAP;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.CARD_BODY_LEADING;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.CARD_TECH_TO_BODY;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.CARD_TITLE_TO_TECH;
@@ -206,12 +207,13 @@ final class SerifHeadlineMain {
         });
         List<String> highlights = SerifHeadlineText.lines(entry.body());
         if (!highlights.isEmpty()) {
-            // marker(), not bullet(): the design leaves more air between the
-            // dot and its text than the built-in bullet does, and the marker
-            // is the only place that gap can be authored.
+            // The gap after the dot is a measurement, so a highlight that wraps
+            // resumes on its own text instead of the marker column.
             rail.addList(list -> list
                     .name("Highlights_" + compact(entry.title()))
                     .marker(BULLET_MARKER)
+                    .markerGap(BULLET_MARKER_GAP)
+                    .hangingIndent(true)
                     .items(highlights)
                     .textStyle(body())
                     .lineSpacing(BULLET_LEADING)

@@ -143,8 +143,23 @@ final class SerifHeadlineStyles {
     static final double TRACKING_EM = 0.17;
     static final double SPACE_ADVANCE_EM = 0.25;
 
-    /** The marker string: the dot and the space the design leaves after it. */
-    static final String BULLET_MARKER = "•  ";
+    /** The marker: the dot, with the gap after it authored as {@link #BULLET_MARKER_GAP}. */
+    static final String BULLET_MARKER = "•";
+
+    /**
+     * The gap between the dot and its text — the body face's own space advance.
+     *
+     * <p>2.067pt at {@link #BODY_SIZE}, solved against the frozen render rather
+     * than assumed. The marker used to be written {@code "•  "}, but a list
+     * marker's authored trailing whitespace is stripped and a single space
+     * re-appended, so the page has only ever shown one space of gap; setting
+     * that one space as a real measurement puts the text back where it was and
+     * brings the wrapped lines it governs onto it, instead of 1.518pt past.</p>
+     *
+     * <p>Not {@link #SPACE_ADVANCE_EM}: that 0.25 em is a rounding kept for the
+     * tracking spacer, and it is 0.049pt short of this face's real advance.</p>
+     */
+    static final double BULLET_MARKER_GAP = 0.256 * BODY_SIZE;
 
     static final double BLANK_BODY = blankBelow(BODY_SIZE);
     static final double BLANK_SMALL = blankBelow(SMALL_SIZE);

@@ -4,12 +4,15 @@ import com.demcha.compose.document.dsl.ListBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.TableBuilder;
+import com.demcha.compose.document.dsl.TimelineMarker;
+import com.demcha.compose.document.dsl.TimelineRailExtent;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
@@ -26,6 +29,7 @@ import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles
 import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.BODY_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.BODY_TOP;
 import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.CREDENTIAL_GUTTER;
+import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.LINE_FACTOR;
 import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.CREDENTIAL_HEADING_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.CREDENTIAL_HEADING_TO_RULE;
 import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.CREDENTIAL_LEFT_COLUMN;
@@ -138,36 +142,45 @@ final class SlateOrangeMain {
             block.margin((float) PROFILE_TO_EXPERIENCE, 0f, 0f, 0f);
             block.keepTogether();
             heading(block, "Experience", experience.title());
-            block.addSection("ExperienceEntries", host -> {
-                host.spacing(0);
-                host.margin((float) RULE_TO_MAIN_BODY, 0f, 0f, 0f);
+            SectionBuilder holder = new SectionBuilder();
+            holder.name("ExperienceEntriesHolder");
+            holder.spacing(0);
+            // The axis column centres the rail on itself, so the timeline starts half a disc
+            // left of the edge the accents drew on and the line lands back on it.
+            holder.margin(new DocumentInsets(RULE_TO_MAIN_BODY, 0, 0, -MARKER_DIAMETER / 2.0));
+            holder.addTimeline(timeline -> {
+                timeline.markerOnRail()
+                        .rail(rail -> rail
+                                .stroke(DocumentStroke.of(RULE, RULE_THICKNESS))
+                                .extent(TimelineRailExtent.MARKER_TO_MARKER))
+                        .axisWidth(MARKER_DIAMETER)
+                        .markerGap(ENTRY_INDENT - MARKER_DIAMETER / 2.0)
+                        .gutter(0)
+                        .spacing(ENTRY_GAP);
                 List<CvEntry> entries = experience.entries();
                 for (int i = 0; i < entries.size(); i++) {
                     CvEntry entry = entries.get(i);
-                    boolean last = i == entries.size() - 1;
                     int index = i;
-                    host.addSection("ExperienceEntry_" + index, body -> {
+                    timeline.entry(entryMarker(index), e -> e.content(body -> {
                         body.spacing(0);
-                        if (!last) {
-                            body.accentLeft(RULE, RULE_THICKNESS);
-                        }
-                        body.padding(0f, 0f, last ? 0f : (float) ENTRY_GAP,
-                                (float) ENTRY_INDENT);
                         renderEntry(body, entry, index);
-                    });
+                    }));
                 }
             });
+            DocumentNode entriesNode = holder.build();
+            block.addLayerStack(stack -> stack
+                    .name("ExperienceEntries")
+                    .layer(entriesNode, LayerAlign.TOP_LEFT, 0));
         });
     }
 
     /** One entry: the role and its dates, the employer line, then the bullets. */
     private static void renderEntry(SectionBuilder body, CvEntry entry, int index) {
+        // The disc has left this stack for the timeline's axis column; the layer stays
+        // because the role line is a table and a table is not a row cell's to hold.
         body.addLayerStack(stack -> stack
                 .name("RoleLine_" + index)
-                .layer(roleLine(entry, index), LayerAlign.TOP_LEFT, 0)
-                .position(marker(index),
-                        -(ENTRY_INDENT + MARKER_DIAMETER / 2.0), 0.0,
-                        LayerAlign.TOP_LEFT, 1));
+                .layer(roleLine(entry, index), LayerAlign.TOP_LEFT, 0));
         body.addParagraph(p -> p
                 .name("Employer_" + index)
                 .text(entry.subtitle())
@@ -218,13 +231,21 @@ final class SlateOrangeMain {
     }
 
     /** The disc that caps the rail beside a role line. */
-    private static DocumentNode marker(int index) {
-        ParagraphBuilder paragraph = new ParagraphBuilder();
-        paragraph.name("Marker_" + index);
-        paragraph.lineSpacing(0);
-        paragraph.textStyle(style(BODY_FONT, MARKER_DIAMETER, ACCENT, false));
-        paragraph.dot(MARKER_DIAMETER, ACCENT);
-        return paragraph.build();
+    /**
+     * The disc that marks a role, as a timeline marker.
+     *
+     * <p>The box is the disc's own line box — {@code LINE_FACTOR} times its size, which is
+     * what the paragraph measured to when the stack positioned it — so the anchor the rail
+     * runs through is the centre of the same box the disc has always occupied.</p>
+     */
+    private static TimelineMarker entryMarker(int index) {
+        return TimelineMarker.custom(MARKER_DIAMETER, MARKER_DIAMETER * LINE_FACTOR,
+                column -> column.addParagraph(paragraph -> {
+                    paragraph.name("Marker_" + index);
+                    paragraph.lineSpacing(0);
+                    paragraph.textStyle(style(BODY_FONT, MARKER_DIAMETER, ACCENT, false));
+                    paragraph.dot(MARKER_DIAMETER, ACCENT);
+                }));
     }
 
     // -- credentials -------------------------------------------------------

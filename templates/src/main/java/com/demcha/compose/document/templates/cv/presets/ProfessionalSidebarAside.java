@@ -35,11 +35,13 @@ import java.util.Locale;
 
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.ACCENT_PRIMARY;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.BODY_FONT;
+import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.BODY_LEADING;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.BODY_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.CONTACT_HEADING_TO_BODY;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.CONTACT_ROW_GAP;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.CONTACT_TO_SKILLS_ABOVE;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.CONTACT_TO_SKILLS_BELOW;
+import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.EDUCATION_DEGREE_AIR;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.EDUCATION_DEGREE_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.EDUCATION_ENTRY_GAP;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.EDUCATION_HEADING_TO_BODY;
@@ -298,19 +300,15 @@ final class ProfessionalSidebarAside {
      * The education rail: a hairline down the left of the block with a dot
      * on each entry's first line.
      *
-     * <p>The rail spans the entries, which is what {@code ENTRY_BOUNDS} means and what the
-     * block has always drawn. It used to be the section's left accent, and the first entry
-     * filled its own head band with the sidebar colour, masked the rail's protruding edge
-     * above its dot and redrew the rail below it, meaning to start the line at the first
-     * marker. Measured against the render, that never happened: an accent draws above the
-     * fill and above the mask, so the rail stayed visible for the 2.5pt above the first dot
-     * and the only thing the construction achieved was drawing that stretch below the dot
-     * twice. The mask and the redraw are gone; the rail is the timeline's and says what it
-     * does.</p>
-     *
-     * <p>Starting the line at the first marker while still running it to the foot of the
-     * entries is not something the extent vocabulary can say today — see the follow-up
-     * table in the integration plan.</p>
+     * <p>The rail runs from the first dot to the foot of the last entry, which is what the
+     * block is drawn as and what it now asks for. It used to be the section's left accent,
+     * and the first entry filled its own head band with the sidebar colour, masked the rail's
+     * protruding edge above its dot and redrew the rail below it, meaning to start the line
+     * at the first marker. Measured against the render, that never happened: an accent draws
+     * above the fill and above the mask, so the rail stayed visible for the 2.5pt above the
+     * first dot and the only thing the construction achieved was drawing that stretch below
+     * the dot twice. The mask and the redraw are gone; the rail is the timeline's and says
+     * what it does.</p>
      */
     private static void renderEducation(SectionBuilder section, EntriesSection education) {
         sidebarHeading(section, education.title(), EDUCATION_HEADING_TO_BODY);
@@ -379,19 +377,35 @@ final class ProfessionalSidebarAside {
                         .margin(new DocumentInsets(halfBand, 0, 0, 0))));
     }
 
+    /**
+     * The degree title — the entry's own first line, not a band of declared height.
+     *
+     * <p>It was a container of exactly {@code ENTRY_HEAD_HEIGHT} with the title centred in
+     * it, which put the title's centre on the dot's, the dot being centred in a box of the
+     * same height. That works for a title of one line and for no other. "MSc Advanced
+     * Computer Science and Software Engineering" needs three lines in a sidebar this narrow,
+     * and a box told to be 9.3pt tall stayed 9.3pt tall; under
+     * {@link ClipPolicy#OVERFLOW_VISIBLE} the extra lines drew rather than vanished — 16.840pt
+     * of them, over the institution and the dates below.</p>
+     *
+     * <p>Nothing about a one-line title moves. The band's surplus over one line is now
+     * {@link ProfessionalSidebarStyles#EDUCATION_DEGREE_AIR} above and below the title, so it
+     * occupies the same 9.3pt and its centre stays on the dot's; and the width is the same
+     * number too, since the container declared
+     * {@code SIDEBAR_INNER_WIDTH - EDUCATION_RAIL_X - EDUCATION_TEXT_X} and the timeline's
+     * content column resolves to exactly that out of {@code axisWidth} and {@code markerGap}.
+     * What changes is only that a title needing a second line now gets one.</p>
+     */
     private static void renderEducationHead(SectionBuilder rail, CvEntry entry, int index) {
-        DocumentNode degree = paragraph("EducationDegree_" + index, entry.title(),
-                style(BODY_FONT, EDUCATION_DEGREE_SIZE, TEXT_PRIMARY,
-                        DocumentTextDecoration.BOLD),
-                TextAlign.LEFT);
-        // The dot has left this band for the timeline's axis column, so the degree starts at
-        // the content column rather than walking in past the rail.
-        rail.addContainer(head -> head
-                .name("EducationHead_" + index)
-                .rectangle(SIDEBAR_INNER_WIDTH - EDUCATION_RAIL_X - EDUCATION_TEXT_X,
-                        ENTRY_HEAD_HEIGHT)
-                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
-                .position(degree, 0, 0, LayerAlign.CENTER_LEFT));
+        rail.addParagraph(p -> p
+                .name("EducationDegree_" + index)
+                .text(entry.title())
+                .textStyle(style(BODY_FONT, EDUCATION_DEGREE_SIZE, TEXT_PRIMARY,
+                        DocumentTextDecoration.BOLD))
+                .align(TextAlign.LEFT)
+                .lineSpacing(BODY_LEADING)
+                .margin(new DocumentInsets(
+                        EDUCATION_DEGREE_AIR, 0, EDUCATION_DEGREE_AIR, 0)));
     }
 
     // -- languages -------------------------------------------------------

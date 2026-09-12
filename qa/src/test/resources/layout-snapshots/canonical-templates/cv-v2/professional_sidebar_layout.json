@@ -2335,11 +2335,11 @@
     "computedY" : 160.394,
     "placementX" : 33.6,
     "placementY" : 160.394,
-    "placementWidth" : 91.656,
+    "placementWidth" : 51.713,
     "placementHeight" : 31.34,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 91.656,
+    "contentWidth" : 51.713,
     "contentHeight" : 31.34,
     "margin" : {
       "top" : 0.0,
@@ -2354,43 +2354,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationHead_0[0]",
-    "entityName" : "EducationHead_0",
-    "entityKind" : "ShapeContainerNode",
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationDegree_0[0]",
+    "entityName" : "EducationDegree_0",
+    "entityKind" : "ParagraphNode",
     "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
     "childIndex" : 0,
     "depth" : 14,
     "layer" : 14,
-    "computedX" : 33.6,
-    "computedY" : 182.434,
-    "placementX" : 33.6,
-    "placementY" : 182.434,
-    "placementWidth" : 91.656,
-    "placementHeight" : 9.3,
-    "startPage" : 0,
-    "endPage" : 0,
-    "contentWidth" : 91.656,
-    "contentHeight" : 9.3,
-    "margin" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    },
-    "padding" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    }
-  }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationHead_0[0]/EducationDegree_0[0]",
-    "entityName" : "EducationDegree_0",
-    "entityKind" : "ParagraphNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationHead_0[0]",
-    "childIndex" : 0,
-    "depth" : 15,
-    "layer" : 15,
     "computedX" : 33.6,
     "computedY" : 182.704,
     "placementX" : 33.6,
@@ -2402,9 +2372,9 @@
     "contentWidth" : 51.713,
     "contentHeight" : 8.76,
     "margin" : {
-      "top" : 0.0,
+      "top" : 0.27,
       "right" : 0.0,
-      "bottom" : 0.0,
+      "bottom" : 0.27,
       "left" : 0.0
     },
     "padding" : {
@@ -2785,11 +2755,11 @@
     "computedY" : 118.054,
     "placementX" : 33.6,
     "placementY" : 118.054,
-    "placementWidth" : 91.656,
+    "placementWidth" : 51.713,
     "placementHeight" : 31.34,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 91.656,
+    "contentWidth" : 51.713,
     "contentHeight" : 31.34,
     "margin" : {
       "top" : 0.0,
@@ -2804,43 +2774,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationHead_1[0]",
-    "entityName" : "EducationHead_1",
-    "entityKind" : "ShapeContainerNode",
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationDegree_1[0]",
+    "entityName" : "EducationDegree_1",
+    "entityKind" : "ParagraphNode",
     "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
     "childIndex" : 0,
     "depth" : 14,
     "layer" : 14,
-    "computedX" : 33.6,
-    "computedY" : 140.094,
-    "placementX" : 33.6,
-    "placementY" : 140.094,
-    "placementWidth" : 91.656,
-    "placementHeight" : 9.3,
-    "startPage" : 0,
-    "endPage" : 0,
-    "contentWidth" : 91.656,
-    "contentHeight" : 9.3,
-    "margin" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    },
-    "padding" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    }
-  }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationHead_1[0]/EducationDegree_1[0]",
-    "entityName" : "EducationDegree_1",
-    "entityKind" : "ParagraphNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationHead_1[0]",
-    "childIndex" : 0,
-    "depth" : 15,
-    "layer" : 15,
     "computedX" : 33.6,
     "computedY" : 140.364,
     "placementX" : 33.6,
@@ -2852,9 +2792,9 @@
     "contentWidth" : 51.713,
     "contentHeight" : 8.76,
     "margin" : {
-      "top" : 0.0,
+      "top" : 0.27,
       "right" : 0.0,
-      "bottom" : 0.0,
+      "bottom" : 0.27,
       "left" : 0.0
     },
     "padding" : {

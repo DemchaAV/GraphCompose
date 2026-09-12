@@ -83,6 +83,26 @@ final class ProfessionalSidebarStyles {
 
     static final double ENTRY_HEAD_HEIGHT = 9.3;
 
+    /**
+     * The line box of the body face as a share of its type size.
+     *
+     * <p>Declared because one thing on this sheet has to reason about the height of a line
+     * without measuring one: see {@link #EDUCATION_DEGREE_AIR}.</p>
+     */
+    private static final double BODY_LINE_FACTOR = 1.200;
+
+    /**
+     * The air above and below a degree title.
+     *
+     * <p>Half of what {@link #ENTRY_HEAD_HEIGHT} had over one line of the degree, and
+     * declared as air rather than left implicit in a band height so that a degree needing
+     * two lines gets two lines with the same air around them. As a band the title kept the
+     * air and lost the lines: a box told to be 9.3pt tall stays 9.3pt tall, and the overflow
+     * drew over the institution below it.</p>
+     */
+    static final double EDUCATION_DEGREE_AIR =
+            Math.max(0.0, (ENTRY_HEAD_HEIGHT - EDUCATION_DEGREE_SIZE * BODY_LINE_FACTOR) / 2.0);
+
     // -- type ------------------------------------------------------------
 
     static final FontName DISPLAY_FONT = FontName.BARLOW_CONDENSED;

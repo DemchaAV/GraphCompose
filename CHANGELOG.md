@@ -898,6 +898,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **A long degree title no longer draws over its own institution line on Professional
+  Sidebar.** The title sat in a container of exactly `ENTRY_HEAD_HEIGHT`, centred, which put
+  its centre on the rail dot's — and works for a title of one line and no other. Measured
+  with a real degree, "MSc Advanced Computer Science and Software Engineering", the title
+  needed three lines in a sidebar that narrow and the box stayed 9.3pt tall: under
+  `OVERFLOW_VISIBLE` the extra lines drew rather than vanished, putting the title's foot
+  **16.840pt below its own institution line**, across that line and the dates under it.
+
+  A declared box that stays its declared size is the engine doing as it was told, so the fix
+  is where the box was declared. The title is now the entry's own paragraph with the band's
+  surplus over one line as air above and below it — `EDUCATION_DEGREE_AIR`, declared as air
+  rather than left implicit in a height, so a title needing two lines gets two lines with the
+  same air around them. **Nothing about the canonical sheet moves:** the paragraph occupies
+  the same 9.3pt, its centre stays on the dot's, and its wrap width is the same number,
+  because the container's declared width and the timeline's content column resolve to the
+  same expression. Zero named nodes move in the layout snapshot; the two
+  `EducationHead_*` wrapper nodes are gone with the containers, and the pixel baseline and
+  the committed preview are untouched.
+
 - **Orange Ops' skills are a real list.** Each name was a paragraph opened by an accent
   dot, because a list marker used to take the list's own text colour and these dots are
   accent against charcoal. The gap between dot and name was four literal spaces, which is a

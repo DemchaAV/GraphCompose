@@ -1,9 +1,13 @@
 package com.demcha.compose.document.templates.cv.presets;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.dsl.TimelineRailExtent;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.templates.cv.data.CvEntry;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.data.EntriesSection;
@@ -57,12 +61,14 @@ import static com.demcha.compose.document.templates.cv.presets.TerracottaRailSty
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.SUMMARY_LINE_SPACING;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.italic;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.text;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MARKER_DIAMETER;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.divider;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.heading;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.headingWithDash;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.inlineIcon;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.layeredRow;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.railedLine;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.entryLine;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.ringMarker;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.titleAndDate;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.trackedWide;
 
@@ -159,37 +165,52 @@ final class TerracottaRailMain {
         main.addSection("Experience", block -> {
             block.spacing(0);
             heading(block, experience.title(), MAIN_HEADING_SPACER);
-            List<CvEntry> entries = experience.entries();
-            for (int i = 0; i < entries.size(); i++) {
-                CvEntry entry = entries.get(i);
-                boolean last = i == entries.size() - 1;
-                int index = i;
-                block.addSection("ExperienceEntry_" + index, body -> {
-                    body.spacing(0);
-                    if (!last) {
-                        body.accentLeft(RULE, RULE_THICKNESS);
-                    }
-                    body.padding(0f, 0f, last ? 0f : (float) ENTRY_GAP, (float) ENTRY_INDENT);
-                    railedLine(body, "Role", index,
-                            titleAndDate("RoleTable_" + index, entry.title(), entry.date(),
-                                    ENTRY_WIDTH, ROLE_PERIOD_SHARE, entry.link()));
-                    body.addParagraph(p -> p
-                            .name("Employer_" + index)
-                            .text(entry.subtitle())
-                            .textStyle(italic(BODY_SIZE, MUTED))
-                            .margin(0f, 0f, (float) EMPLOYER_GAP, 0f));
-                    List<String> highlights = lines(entry.body());
-                    if (!highlights.isEmpty()) {
-                        body.addList(list -> list
-                                .name("Highlights_" + index)
-                                .items(highlights)
-                                .marker(ListMarker.bullet())
-                                .textStyle(text(BODY_SIZE, INK, false))
-                                .itemSpacing(HIGHLIGHT_ITEM_SPACING)
-                                .lineSpacing(HIGHLIGHT_LINE_SPACING));
-                    }
-                });
-            }
+            SectionBuilder holder = new SectionBuilder();
+            holder.name("ExperienceRailHolder");
+            holder.spacing(0);
+            // The axis column centres the rail on itself, so the timeline starts half a ring
+            // left of the edge the accents drew on and the line lands back on it.
+            holder.margin(new DocumentInsets(0, 0, 0, -MARKER_DIAMETER / 2.0));
+            holder.addTimeline(timeline -> {
+                timeline.markerOnRail()
+                        .rail(rail -> rail
+                                .stroke(DocumentStroke.of(RULE, RULE_THICKNESS))
+                                .extent(TimelineRailExtent.MARKER_TO_MARKER))
+                        .axisWidth(MARKER_DIAMETER)
+                        .markerGap(ENTRY_INDENT - MARKER_DIAMETER / 2.0)
+                        .gutter(0)
+                        .spacing(ENTRY_GAP);
+                List<CvEntry> entries = experience.entries();
+                for (int i = 0; i < entries.size(); i++) {
+                    CvEntry entry = entries.get(i);
+                    int index = i;
+                    timeline.entry(ringMarker("Role", index), e -> e.content(body -> {
+                        body.spacing(0);
+                        entryLine(body, "Role", index,
+                                titleAndDate("RoleTable_" + index, entry.title(), entry.date(),
+                                        ENTRY_WIDTH, ROLE_PERIOD_SHARE, entry.link()));
+                        body.addParagraph(p -> p
+                                .name("Employer_" + index)
+                                .text(entry.subtitle())
+                                .textStyle(italic(BODY_SIZE, MUTED))
+                                .margin(0f, 0f, (float) EMPLOYER_GAP, 0f));
+                        List<String> highlights = lines(entry.body());
+                        if (!highlights.isEmpty()) {
+                            body.addList(list -> list
+                                    .name("Highlights_" + index)
+                                    .items(highlights)
+                                    .marker(ListMarker.bullet())
+                                    .textStyle(text(BODY_SIZE, INK, false))
+                                    .itemSpacing(HIGHLIGHT_ITEM_SPACING)
+                                    .lineSpacing(HIGHLIGHT_LINE_SPACING));
+                        }
+                    }));
+                }
+            });
+            DocumentNode experienceRail = holder.build();
+            block.addLayerStack(stack -> stack
+                    .name("ExperienceRail")
+                    .layer(experienceRail, LayerAlign.TOP_LEFT, 0));
         });
     }
 
@@ -287,28 +308,45 @@ final class TerracottaRailMain {
                     cell.spacing(0);
                     cell.accentRight(RULE, RULE_THICKNESS);
                     cell.padding(0f, (float) EDUCATION_BAND_PAD_RIGHT, 0f, 0f);
-                    List<CvEntry> entries = education.entries();
-                    for (int i = 0; i < entries.size(); i++) {
-                        CvEntry entry = entries.get(i);
-                        boolean last = i == entries.size() - 1;
-                        int index = i;
-                        cell.addSection("EducationEntry_" + index, body -> {
-                            body.spacing(0);
-                            if (!last) {
-                                body.accentLeft(ACCENT, RULE_THICKNESS);
-                            }
-                            body.padding(0f, 0f, last ? 0f : (float) ENTRY_GAP,
-                                    (float) ENTRY_INDENT);
-                            railedLine(body, "Edu", index,
-                                    titleAndDate("EduTable_" + index, entry.title(), entry.date(),
-                                            EDUCATION_ENTRY_WIDTH, EDUCATION_PERIOD_SHARE,
-                                            entry.link()));
-                            body.addParagraph(p -> p
-                                    .name("Institution_" + index)
-                                    .text(entry.subtitle())
-                                    .textStyle(italic(BODY_SIZE, MUTED)));
-                        });
-                    }
+                    // A second rail, terracotta rather than grey, and its own timeline: two
+                    // timelines on a page are two rail owners and never merge into one line.
+                    SectionBuilder holder = new SectionBuilder();
+                    holder.name("EducationRailHolder");
+                    holder.spacing(0);
+                    holder.margin(new DocumentInsets(0, 0, 0, -MARKER_DIAMETER / 2.0));
+                    holder.addTimeline(timeline -> {
+                        timeline.markerOnRail()
+                                .rail(rail -> rail
+                                        .stroke(DocumentStroke.of(ACCENT, RULE_THICKNESS))
+                                        .extent(TimelineRailExtent.MARKER_TO_MARKER))
+                                .axisWidth(MARKER_DIAMETER)
+                                .markerGap(ENTRY_INDENT - MARKER_DIAMETER / 2.0)
+                                .gutter(0)
+                                .spacing(ENTRY_GAP);
+                        List<CvEntry> entries = education.entries();
+                        for (int i = 0; i < entries.size(); i++) {
+                            CvEntry entry = entries.get(i);
+                            int index = i;
+                            timeline.entry(ringMarker("Edu", index), e -> e.content(body -> {
+                                body.spacing(0);
+                                entryLine(body, "Edu", index,
+                                        titleAndDate("EduTable_" + index, entry.title(), entry.date(),
+                                                EDUCATION_ENTRY_WIDTH, EDUCATION_PERIOD_SHARE,
+                                                entry.link()));
+                                body.addParagraph(p -> p
+                                        .name("Institution_" + index)
+                                        .text(entry.subtitle())
+                                        .textStyle(italic(BODY_SIZE, MUTED)));
+                            }));
+                        }
+                    });
+                    DocumentNode educationRail = holder.build();
+                    // The band's own stack wraps the band row, one level above this cell, so
+                    // it does not insulate a timeline placed inside the cell: this is a row
+                    // slot and needs a layer of its own.
+                    cell.addLayerStack(stack -> stack
+                            .name("EducationRail")
+                            .layer(educationRail, LayerAlign.TOP_LEFT, 0));
                 });
                 band.addSection("EducationBandRight", empty -> empty.spacing(0));
             });

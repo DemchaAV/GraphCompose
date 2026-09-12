@@ -5,6 +5,7 @@ import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.TableBuilder;
+import com.demcha.compose.document.dsl.TimelineMarker;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.InlineImageAlignment;
@@ -161,31 +162,30 @@ final class TerracottaRailWidgets {
 
     // -- the rail ----------------------------------------------------------
 
-    /** The marker an entry rides: a terracotta ring with the paper inside. */
-    private static DocumentNode marker(String prefix, int index) {
-        return new EllipseBuilder()
-                .name(prefix + "Marker_" + index)
-                .circle(MARKER_DIAMETER)
-                .fillColor(PAPER)
-                .stroke(DocumentStroke.of(ACCENT, 1.0))
-                .build();
+    /**
+     * The marker an entry rides: a terracotta ring with the paper inside, declared as a
+     * timeline marker so the rail runs through the centre of the box it occupies.
+     */
+    static TimelineMarker ringMarker(String prefix, int index) {
+        return TimelineMarker.custom(MARKER_DIAMETER, MARKER_DIAMETER,
+                column -> column.addEllipse(ellipse -> ellipse
+                        .name(prefix + "Marker_" + index)
+                        .circle(MARKER_DIAMETER)
+                        .fillColor(PAPER)
+                        .stroke(DocumentStroke.of(ACCENT, 1.0))));
     }
 
     /**
-     * An entry's first line, with its marker sitting ON the rail.
+     * An entry's first line, in the layer its table needs.
      *
-     * <p>The marker is nudged left by the entry's own indent plus half the
-     * ring, so the ring's centre lands on the rail rather than beside it.
-     * Both terms are geometry the sheet already holds, not offsets tuned by
-     * eye.</p>
+     * <p>The marker used to be positioned into this stack, nudged left by the entry's own
+     * indent plus half the ring to land on the rail; it sits in the timeline's axis column
+     * now. The layer stays because the line is a table and a row cell is no place for one.</p>
      */
-    static void railedLine(SectionBuilder body, String prefix, int index, DocumentNode line) {
+    static void entryLine(SectionBuilder body, String prefix, int index, DocumentNode line) {
         body.addLayerStack(stack -> stack
                 .name(prefix + "Line_" + index)
-                .layer(line, LayerAlign.TOP_LEFT, 0)
-                .position(marker(prefix, index),
-                        -(ENTRY_INDENT + MARKER_DIAMETER / 2.0), 0.0,
-                        LayerAlign.TOP_LEFT, 1));
+                .layer(line, LayerAlign.TOP_LEFT, 0));
     }
 
     /**

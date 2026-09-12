@@ -164,7 +164,10 @@ class TerracottaRailSmokeTest {
                 .create()) {
             TerracottaRail.create().compose(session, TerracottaRailFixtures.canonicalCv());
             List<Double> heights = session.layoutSnapshot().nodes().stream()
-                    .filter(node -> node.entityName().startsWith("Contact_"))
+                    // A timeline contributes nodes of its own, and an engine-generated node
+                    // carries no entity name.
+                    .filter(node -> node.entityName() != null
+                                    && node.entityName().startsWith("Contact_"))
                     .map(node -> node.placementHeight())
                     .toList();
             assertThat(heights).hasSize(4);

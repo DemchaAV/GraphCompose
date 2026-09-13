@@ -23,11 +23,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  * only useful place to discover that Node is missing is before the first file
  * changes.</p>
  *
- * <p>This holds three properties of {@code cut-release.ps1}: the tooling check
- * runs before either mode mutates, it terminates rather than warns, and what it
- * gates covers what the tag will re-check. They are read structurally — by
- * where things sit relative to each other — rather than by line number, so
+ * <p>This holds four properties: the tooling check runs before either mode of
+ * {@code cut-release.ps1} mutates, it terminates rather than warns, what it
+ * gates covers what the tag will re-check, and the release runbook describes
+ * that contract rather than the one it replaced. They are read structurally —
+ * by where things sit relative to each other — rather than by line number, so
  * ordinary edits to the script do not redden it.</p>
+ *
+ * <p>What a text reading cannot say is whether the {@code throw} is reachable:
+ * invert the condition to {@code if (Get-Command node)} and every assertion
+ * here still passes. That half is executed instead, by the <em>Missing Node
+ * aborts both release paths</em> step in {@code release-script-check.yml},
+ * which lifts this same function and runs it with {@code node} reported
+ * missing.</p>
  */
 class ReleaseKnowledgeGateGuardTest {
 
@@ -35,6 +43,8 @@ class ReleaseKnowledgeGateGuardTest {
     private static final Path SCRIPT = PROJECT_ROOT.resolve("scripts/cut-release.ps1");
     private static final Path RELEASE_WORKFLOW =
             PROJECT_ROOT.resolve(".github/workflows/release.yml");
+    private static final Path RUNBOOK =
+            PROJECT_ROOT.resolve("docs/contributing/release-process.md");
 
     private static final String PREFLIGHT = "Assert-KnowledgeToolingAvailable";
 
@@ -142,6 +152,35 @@ class ReleaseKnowledgeGateGuardTest {
                 .describedAs("build-bundle --verify used to run only in release.yml, which "
                         + "is after the tag exists and therefore too late to stop a bad one")
                 .anySatisfy(command -> assertThat(command).contains("build-bundle.mjs"));
+    }
+
+    // --- D. the runbook describes the contract that ships -------------------
+
+    @Test
+    void theRunbookDescribesTheGateTheScriptActuallyRuns() throws IOException {
+        String runbook = Files.readString(RUNBOOK);
+        List<String> localTools = knowledgeCommands(Files.readString(SCRIPT)).stream()
+                .map(ReleaseKnowledgeGateGuardTest::tool)
+                .distinct()
+                .toList();
+
+        assertThat(localTools)
+                .describedAs("the release runbook must name every knowledge tool the cut "
+                        + "runs, so a tool added to the script cannot stay undocumented — "
+                        + "build-bundle joined the local gate and nothing held the runbook "
+                        + "to following it")
+                .allSatisfy(expected -> assertThat(runbook).contains(expected));
+
+        assertThat(runbook)
+                .describedAs("a runbook that does not name the preflight cannot tell a "
+                        + "maintainer when a cut will refuse to start")
+                .contains(PREFLIGHT);
+
+        assertThat(runbook)
+                .describedAs("the preflight throws. A runbook that still says the step is "
+                        + "skipped, and tells the maintainer to regenerate and amend "
+                        + "afterwards, documents the failure mode this gate removed")
+                .doesNotContain("the step is skipped with a loud warning");
     }
 
     // --- helpers ----------------------------------------------------------

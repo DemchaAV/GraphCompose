@@ -4,8 +4,10 @@ name: Release Script Check
 # changes, so without this a break in the release tooling (a parse error, a bad
 # parameter set, a throw in the pre-flight / version bump / metadata gate) would ship
 # unnoticed and only surface mid-release. This runs the script's dry-runs — which
-# exercise every code path except the actual git/Maven mutations — plus a focused unit
-# check of the pure version helper. It creates no tag and touches no remote.
+# exercise every code path except the actual git/Maven mutations — plus focused unit
+# checks of the helpers a dry-run cannot reach on its own: the version arithmetic, the
+# README and roadmap promotions, the japicmp baseline move, and the knowledge-tooling
+# refusal. It creates no tag and touches no remote.
 
 on:
   push:
@@ -449,3 +451,98 @@ jobs:
           if (Update-JapicmpMajorBaseline (New-Pom '2.4.0') '3.0.1') { throw 'a patch release must not move the floor' }
 
           Write-Host 'japicmp baseline: previous moves, floor stays except at X.0.0, idempotent, the real pom moves, and the cut calls both.'
+
+      - name: Missing Node aborts both release paths
+        shell: pwsh
+        run: |
+          # The refusal itself, executed. ReleaseKnowledgeGateGuardTest reads the
+          # preflight as text — it holds that the function contains a throw and that it
+          # sits before the first mutation — but text cannot say whether the throw is
+          # reachable. Invert the condition to `if (Get-Command node)` and every
+          # structural assertion still passes while a cut with no Node sails through to
+          # a pushed tag. So the shipped function is lifted and run, with node reported
+          # missing, and the outcome is asserted rather than inferred.
+          $path = (Resolve-Path scripts/cut-release.ps1).Path
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
+          $want = @('Test-KnowledgePackPresent', 'Assert-KnowledgeToolingAvailable')
+          $fn = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $want -contains $n.Name
+            }, $true)
+          $absent = $want | Where-Object { $_ -notin ($fn | ForEach-Object { $_.Name }) }
+          if ($absent) { throw "cut-release.ps1 no longer defines: $($absent -join ', ')" }
+
+          # The tool list travels with them. The preflight checks every entry, so a copy
+          # written out here would keep passing while the shipped list rotted.
+          $assignment = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+              $n.Left.Extent.Text -eq '$KnowledgeTools'
+            }, $true)
+          if ($assignment.Count -ne 1) {
+            throw "expected exactly one `$KnowledgeTools assignment, found $($assignment.Count)"
+          }
+          $lifted = (@($assignment[0].Extent.Text) + ($fn | ForEach-Object { $_.Extent.Text })) -join "`n"
+          Invoke-Expression $assignment[0].Extent.Text
+
+          # One case per scope, so the Get-Command shadow cannot leak into the next.
+          # Node presence is shadowed in both directions rather than read from the
+          # runner, so the healthy case proves as much as the refusals.
+          $case = {
+            param([string] $Lifted, [string] $Root, [bool] $NodeOnPath)
+            $repoRoot = $Root
+            function Note($message) { Write-Host "    $message" }
+            function Get-Command {
+              [CmdletBinding()]
+              param([Parameter(Position = 0)][string] $Name)
+              if ($Name -eq 'node') {
+                if ($NodeOnPath) { return [pscustomobject]@{ Name = 'node' } }
+                return $null
+              }
+              Microsoft.PowerShell.Core\Get-Command $Name
+            }
+            Invoke-Expression $Lifted
+            try { Assert-KnowledgeToolingAvailable; return '' } catch { return $_.Exception.Message }
+          }
+
+          function New-Tree([string[]] $present) {
+            $root = Join-Path ([IO.Path]::GetTempPath()) ("knowledge-tree-" + [guid]::NewGuid().ToString())
+            foreach ($tool in $present) {
+              $file = Join-Path $root $tool
+              New-Item -ItemType Directory -Force -Path (Split-Path $file) | Out-Null
+              Set-Content -Path $file -Value '// fixture'
+            }
+            return $root
+          }
+
+          $repo = (Get-Location).Path
+
+          # 1. A pack it cannot regenerate stops the release.
+          $message = & $case $lifted $repo $false
+          if ($message -notmatch '^Node\.js is required') {
+            throw "pack present and node missing: expected the Node.js refusal, got '$message'"
+          }
+
+          # 2. Node alone is not enough — a missing tool is refused, and named, because
+          #    the message is what tells the maintainer which install is short. The
+          #    one tool Test-KnowledgePackPresent keys on cannot be the one dropped —
+          #    without it the tree reads as pack-less and case 3 is what runs.
+          $sentinel = ($fn | Where-Object { $_.Name -eq 'Test-KnowledgePackPresent' }).Extent.Text
+          $dropped = $KnowledgeTools | Where-Object { $sentinel -notmatch [regex]::Escape($_) } | Select-Object -Last 1
+          if (-not $dropped) { throw 'every knowledge tool is the pack sentinel: case 2 has nothing to drop' }
+          $message = & $case $lifted (New-Tree ($KnowledgeTools | Where-Object { $_ -ne $dropped })) $true
+          if ($message -notmatch [regex]::Escape($dropped)) {
+            throw "a missing knowledge tool was not refused by name: '$message'"
+          }
+
+          # 3. A tree with no pack is valid and needs no Node at all: the 1.x line ships
+          #    none, and a 1.9.x cut must not start demanding one.
+          $message = & $case $lifted (New-Tree @()) $false
+          if ($message -ne '') { throw "a tree with no knowledge pack was refused: '$message'" }
+
+          # 4. A healthy tree passes, so the three refusals are the function deciding
+          #    rather than a harness that throws whatever it is handed.
+          $message = & $case $lifted $repo $true
+          if ($message -ne '') { throw "a complete pack with node present was refused: '$message'" }
+
+          Write-Host 'knowledge preflight: refuses without node, names a missing tool, exempts a pack-less tree, passes a healthy one.'

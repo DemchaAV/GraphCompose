@@ -1424,8 +1424,8 @@ if ($PostReleaseOnly) {
         # The surfaces Step 3c regenerated at the new SNAPSHOT ride in the same
         # commit as the bump they track — left behind, they are the follow-up
         # commit the develop CI gate had to wait for on the 2.3.0 cycle. When
-        # the regen was skipped (no node / no knowledge pack), the directory is
-        # unchanged and the add stages nothing.
+        # this tree has no knowledge pack, the directory is unchanged and the
+        # add stages nothing.
         if ($bumpedPoms.Count -gt 0 -and (Test-Path (Join-Path $repoRoot 'knowledge'))) {
             $filesToCommit += 'knowledge'
         }

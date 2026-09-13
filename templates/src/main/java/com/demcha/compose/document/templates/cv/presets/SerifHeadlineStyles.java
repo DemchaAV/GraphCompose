@@ -5,6 +5,7 @@ import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.font.FontName;
@@ -330,65 +331,19 @@ final class SerifHeadlineStyles {
 
     // -- tracked capitals ------------------------------------------------
 
-    static final double CAP_ADVANCE_NARROW = 0.30;
-    static final double CAP_ADVANCE_WIDE = 0.85;
-    static final double CAP_ADVANCE_EM = 0.62;
-
-    /** Headroom on the estimate, so a tail never runs under its heading. */
-    static final double TRACKED_WIDTH_SAFETY = 1.03;
-
     /**
-     * Writes text letter by letter with a sized space between each pair,
-     * which is how this design gets its letter-spacing: a text style carries
-     * no tracking, so the gap is a run of its own whose type size is chosen
-     * to advance by {@link #TRACKING_EM} of the surrounding size.
+     * Writes {@code text} as one run tracked by {@link #TRACKING_EM}.
+     *
+     * <p>The letters stay one string, so a caption reads and copies as the
+     * word it is rather than as its letters with spaces between them.</p>
      *
      * @param paragraph the paragraph being built
      * @param text      the text to space out
      * @param style     the style of the letters
      */
     static void tracked(ParagraphBuilder paragraph, String text, DocumentTextStyle style) {
-        DocumentTextStyle spacer = style.withSize(TRACKING_EM * style.size() / SPACE_ADVANCE_EM);
-        for (int i = 0; i < text.length(); i++) {
-            paragraph.inlineText(String.valueOf(text.charAt(i)), style);
-            if (i < text.length() - 1) {
-                paragraph.inlineText(" ", spacer);
-            }
-        }
-    }
-
-    /**
-     * How wide a run of tracked capitals will be, estimated from per-letter
-     * advances rather than measured.
-     *
-     * <p>The heading rule that trails a title has to stop before the letters
-     * start, and its width is authored — the engine offers no measurement at
-     * compose time. Three advance classes are enough for capitals, and the
-     * result is padded by {@link #TRACKED_WIDTH_SAFETY} so the estimate errs
-     * towards a shorter rule.</p>
-     *
-     * @param text the capitals to measure
-     * @param size the type size
-     * @return the estimated width in points
-     */
-    static double trackedWidth(String text, double size) {
-        if (text.isEmpty()) {
-            return 0.0;
-        }
-        double glyphs = 0.0;
-        for (int i = 0; i < text.length(); i++) {
-            glyphs += capAdvanceEm(text.charAt(i));
-        }
-        return (glyphs * size + (text.length() - 1) * size * TRACKING_EM)
-                * TRACKED_WIDTH_SAFETY;
-    }
-
-    private static double capAdvanceEm(char glyph) {
-        return switch (glyph) {
-            case 'I', 'J' -> CAP_ADVANCE_NARROW;
-            case 'M', 'W' -> CAP_ADVANCE_WIDE;
-            default -> CAP_ADVANCE_EM;
-        };
+        paragraph.inlineText(text, style.withLetterSpacing(
+                DocumentLetterSpacing.ofFontSize(TRACKING_EM)));
     }
 
     // -- bands -----------------------------------------------------------

@@ -3,11 +3,14 @@ package com.demcha.compose.document.templates.cv.presets;
 import com.demcha.compose.document.dsl.ImageBuilder;
 import com.demcha.compose.document.dsl.LineBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.style.ClipPolicy;
+import com.demcha.compose.document.style.DocumentLetterSpacing;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -24,6 +27,7 @@ import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyl
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.PLATE;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.RULE;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.TAIL_GAP;
+import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.TRACKING_EM;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.TIGHT_LEADING;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.COLUMN_TAIL_GUTTER;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.columnInsets;
@@ -31,7 +35,6 @@ import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyl
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.dashOffset;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.style;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.titleOffset;
-import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.trackedWidth;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.tracked;
 
 /**
@@ -69,46 +72,65 @@ final class SerifHeadlineWidgets {
         double dashAt = dashOffset(leftSurfaceDistance);
         double titleAt = titleOffset(leftSurfaceDistance);
 
-        DocumentTextStyle headingStyle = style(HEADING_SIZE, INK, DocumentTextDecoration.DEFAULT);
-        DocumentNode dash = new LineBuilder()
-                .name("HeadingDash_" + compact(title))
-                .horizontal(DASH_WIDTH)
-                .thickness(DASH_THICKNESS)
-                .color(INK)
-                .margin(DocumentInsets.zero())
-                .build();
-        ParagraphBuilder heading = new ParagraphBuilder()
-                .name("SectionTitle_" + compact(title))
-                .textStyle(headingStyle)
-                .lineSpacing(TIGHT_LEADING);
-        tracked(heading, caps, headingStyle);
-        DocumentNode headingNode = heading.margin(DocumentInsets.zero()).build();
+        DocumentTextStyle headingStyle = style(HEADING_SIZE, INK, DocumentTextDecoration.DEFAULT)
+                .withLetterSpacing(DocumentLetterSpacing.ofFontSize(TRACKING_EM));
+        double band = HEADING_SIZE * TIGHT_LEADING;
 
-        // The rule is authored, so its width comes from an estimate of what
-        // the letters will measure — see trackedWidth.
-        double tailWidth = width - titleAt - trackedWidth(caps, HEADING_SIZE) - TAIL_GAP;
-        DocumentNode tailNode = tail && tailWidth > 0
-                ? new LineBuilder()
-                        .name("HeadingTail_" + compact(title))
-                        .horizontal(tailWidth)
-                        .thickness(HAIRLINE_THICKNESS)
-                        .color(RULE)
-                        .margin(DocumentInsets.zero())
-                        .build()
-                : null;
+        // A row, not a stack of positioned layers: the words take what they
+        // measure and the rule takes the rest, so nothing here has to predict
+        // how wide tracked capitals will be. The row hangs left by the dash
+        // offset — a negative inset, which also hands back the width it
+        // borrows, leaving the right edge where it was.
+        RowBuilder row = new RowBuilder();
+        {
+            row.name("SectionHeadingRow_" + compact(title));
+            row.spacing(0);
+            row.margin(DocumentInsets.zero());
+            row.columns(DocumentRowColumn.fixed(DASH_WIDTH),
+                    DocumentRowColumn.auto(),
+                    DocumentRowColumn.weight(1.0));
+            row.addSection(cell -> {
+                cell.spacing(0);
+                cell.padding((float) ((band - DASH_THICKNESS) / 2), 0f, 0f, 0f);
+                cell.addLine(line -> line
+                        .name("HeadingDash_" + compact(title))
+                        .horizontal(DASH_WIDTH)
+                        .thickness(DASH_THICKNESS)
+                        .color(INK));
+            });
+            row.addSection(cell -> {
+                cell.spacing(0);
+                cell.padding(0f, 0f, 0f, (float) (titleAt - dashAt - DASH_WIDTH));
+                cell.addParagraph(p -> p
+                        .name("SectionTitle_" + compact(title))
+                        .text(caps)
+                        .textStyle(headingStyle)
+                        .lineSpacing(TIGHT_LEADING));
+            });
+            row.addSection(cell -> {
+                cell.spacing(0);
+                cell.padding((float) ((band - HAIRLINE_THICKNESS) / 2), 0f, 0f, (float) TAIL_GAP);
+                if (tail) {
+                    cell.addLine(line -> line
+                            .name("HeadingTail_" + compact(title))
+                            .fill()
+                            .thickness(HAIRLINE_THICKNESS)
+                            .color(RULE));
+                }
+            });
+        }
 
-        section.addContainer(band -> {
-            band.name("SectionHeading_" + compact(title))
-                    .rectangle(width, HEADING_SIZE * TIGHT_LEADING)
-                    .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
-                    .padding(DocumentInsets.zero())
-                    .margin(new DocumentInsets(gapAbove, 0, 0, 0))
-                    .position(dash, dashAt, 0, LayerAlign.CENTER_LEFT)
-                    .position(headingNode, titleAt, 0, LayerAlign.CENTER_LEFT);
-            if (tailNode != null) {
-                band.position(tailNode, 0, 0, LayerAlign.CENTER_RIGHT);
-            }
-        });
+        // The band stays a layer stack: a row may not nest directly inside the
+        // body's column row, and the stack is also what hands the row a width
+        // for its last column to take what the words leave. It is widened by
+        // the dash's overhang so the rule still ends on the column's edge.
+        section.addContainer(bandHost -> bandHost
+                .name("SectionHeading_" + compact(title))
+                .rectangle(width - dashAt, band)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .padding(DocumentInsets.zero())
+                .margin(new DocumentInsets(gapAbove, 0, 0, dashAt))
+                .position(row.build(), 0, 0, LayerAlign.CENTER_LEFT));
     }
 
     /**

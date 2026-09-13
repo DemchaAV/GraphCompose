@@ -81,43 +81,41 @@ final class SerifHeadlineWidgets {
         // offset — a negative inset, which also hands back the width it
         // borrows, leaving the right edge where it was.
         RowBuilder row = new RowBuilder();
-        {
-            row.name("SectionHeadingRow_" + compact(title));
-            row.spacing(0);
-            row.margin(DocumentInsets.zero());
-            row.columns(DocumentRowColumn.fixed(DASH_WIDTH),
-                    DocumentRowColumn.auto(),
-                    DocumentRowColumn.weight(1.0));
-            row.addSection(cell -> {
-                cell.spacing(0);
-                cell.padding((float) ((band - DASH_THICKNESS) / 2), 0f, 0f, 0f);
+        row.name("SectionHeadingRow_" + compact(title));
+        row.spacing(0);
+        row.margin(DocumentInsets.zero());
+        row.columns(DocumentRowColumn.fixed(DASH_WIDTH),
+                DocumentRowColumn.auto(),
+                DocumentRowColumn.weight(1.0));
+        row.addSection(cell -> {
+            cell.spacing(0);
+            cell.padding((float) ((band - DASH_THICKNESS) / 2), 0f, 0f, 0f);
+            cell.addLine(line -> line
+                    .name("HeadingDash_" + compact(title))
+                    .horizontal(DASH_WIDTH)
+                    .thickness(DASH_THICKNESS)
+                    .color(INK));
+        });
+        row.addSection(cell -> {
+            cell.spacing(0);
+            cell.padding(0f, 0f, 0f, (float) (titleAt - dashAt - DASH_WIDTH));
+            cell.addParagraph(p -> p
+                    .name("SectionTitle_" + compact(title))
+                    .text(caps)
+                    .textStyle(headingStyle)
+                    .lineSpacing(TIGHT_LEADING));
+        });
+        row.addSection(cell -> {
+            cell.spacing(0);
+            cell.padding((float) ((band - HAIRLINE_THICKNESS) / 2), 0f, 0f, (float) TAIL_GAP);
+            if (tail) {
                 cell.addLine(line -> line
-                        .name("HeadingDash_" + compact(title))
-                        .horizontal(DASH_WIDTH)
-                        .thickness(DASH_THICKNESS)
-                        .color(INK));
-            });
-            row.addSection(cell -> {
-                cell.spacing(0);
-                cell.padding(0f, 0f, 0f, (float) (titleAt - dashAt - DASH_WIDTH));
-                cell.addParagraph(p -> p
-                        .name("SectionTitle_" + compact(title))
-                        .text(caps)
-                        .textStyle(headingStyle)
-                        .lineSpacing(TIGHT_LEADING));
-            });
-            row.addSection(cell -> {
-                cell.spacing(0);
-                cell.padding((float) ((band - HAIRLINE_THICKNESS) / 2), 0f, 0f, (float) TAIL_GAP);
-                if (tail) {
-                    cell.addLine(line -> line
-                            .name("HeadingTail_" + compact(title))
-                            .fill()
-                            .thickness(HAIRLINE_THICKNESS)
-                            .color(RULE));
-                }
-            });
-        }
+                        .name("HeadingTail_" + compact(title))
+                        .fill()
+                        .thickness(HAIRLINE_THICKNESS)
+                        .color(RULE));
+            }
+        });
 
         // The band stays a layer stack: a row may not nest directly inside the
         // body's column row, and the stack is also what hands the row a width

@@ -50,7 +50,7 @@ class CoverLetterTextLayerGateTest {
         // The identity an ATS reads the letter by.
         assertThat(extracted)
                 .describedAs("%s lost the sender's name from its text layer", slug)
-                .contains(CoverLetterV2VisualParityTest.canonicalLetter().identity().name().full());
+                .contains(CoverLetterPresetFixtures.canonicalLetter().identity().name().full());
     }
 
     /** No preset ships without appearing above. */
@@ -112,7 +112,7 @@ class CoverLetterTextLayerGateTest {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
                 .create()) {
-            template.compose(session, CoverLetterV2VisualParityTest.canonicalLetter());
+            template.compose(session, CoverLetterPresetFixtures.canonicalLetter());
             pdf = session.toPdfBytes();
         }
         try (PDDocument document = Loader.loadPDF(pdf)) {

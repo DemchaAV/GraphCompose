@@ -29,7 +29,6 @@ import static com.demcha.compose.document.templates.invoice.presets.LumaStudioSt
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.META_WIDTH;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.MASTHEAD_TO_RULE;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.MICRO_MUTED;
-import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.PAPER;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.PARTIES_DIVIDER_INSET;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.RULE_THICKNESS;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.SECTION_HEADING;

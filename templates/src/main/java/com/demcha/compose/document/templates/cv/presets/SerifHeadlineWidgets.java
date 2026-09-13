@@ -2,7 +2,6 @@ package com.demcha.compose.document.templates.cv.presets;
 
 import com.demcha.compose.document.dsl.ImageBuilder;
 import com.demcha.compose.document.dsl.LineBuilder;
-import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;

@@ -10,14 +10,11 @@ import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.ClipPolicy;
-import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.style.ShapeOutline;
 
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.ACCENT;
-import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.PAPER;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.SECTION_DISC_ICON_SIZE;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.SECTION_DISC_SIZE;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.SECTION_HEADING;

@@ -38,7 +38,6 @@ import static com.demcha.compose.document.templates.invoice.presets.LumaStudioSt
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.PAGE_MARGIN_LEFT;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.PAGE_MARGIN_RIGHT;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.PANEL_HIGHLIGHT;
-import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.PAPER;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.RULE_THICKNESS;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.SECTION_HEADING_OFFSET;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.SMALL_BOLD;

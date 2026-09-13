@@ -46,13 +46,6 @@ wraps, places, and paginates it.
 Use it for server-side invoices, proposals, CVs, reports, statements, schedules,
 and other documents assembled from application data.
 
-### Start here
-
-- [Start with a first PDF](#installation)
-- Use a built-in template: [invoice or proposal](./docs/templates/business-templates.md),
-  or [CV or cover letter](./docs/templates/v2-layered/quickstart.md)
-- Export to [PowerPoint](./render-pptx/README.md) or [DOCX](./render-docx/README.md)
-
 ### Outputs and templates
 
 - **PDF** — the main production output, included in `graph-compose`.
@@ -61,10 +54,10 @@ and other documents assembled from application data.
 - **DOCX** — semantic export with partial capability coverage, not full PDF parity,
   provided by the separate [`graph-compose-render-docx`](./render-docx/README.md)
   module.
-- **Templates** — maintained invoice, proposal, CV, and cover-letter designs in the
-  separate `graph-compose-templates` module. Start with
-  [invoice and proposal templates](./docs/templates/business-templates.md) or the
-  [CV and cover-letter quickstart](./docs/templates/v2-layered/quickstart.md).
+- **Templates** — 58 maintained designs across six document families in the separate
+  `graph-compose-templates` module: invoice, proposal, receipt and rota for business
+  documents, CV and cover letter for profiles. See the
+  [templates overview](./docs/templates/README.md).
 
 <a id="installation"></a>
 ## Create your first PDF
@@ -136,7 +129,8 @@ what it needs to say.
 
 ## Grow it into a real document
 
-A larger document uses the same flow. Group related content into named modules and
+A larger document uses the same flow. Group related content into named **content
+modules** — `module(...)`, a titled block of the document, not a Maven module — and
 feed them your application data; coordinates still do not enter the authoring code.
 
 <!-- doc-example-ignore: uses application variables and the document from the complete example above -->
@@ -147,23 +141,8 @@ document.pageFlow(page -> page
         .module("Projects", module -> module.rows(projects)));
 ```
 
-### Pick the next thing you need
-
 The same flow accepts the common building blocks directly. You do not need a new
-document model for each feature.
-
-| Area | Includes | Open |
-|---|---|---|
-| **Content and data** | rich text, links, lists, tables, charts, timelines, images, SVG icons, emoji, QR and barcodes | [Find a content block](./docs/recipes.md#content-and-data) |
-| **Layout and visual composition** | sections, cards, rows, layers, clipping, shapes, backgrounds, transforms, canvases, pagination rules | [Choose a layout primitive](./docs/recipes.md#layout-and-visual-composition) |
-| **Page behaviour and output** | headers, footers, page numbers, watermarks, metadata, navigation, previews, streaming, DOCX | [Configure the document](./docs/recipes.md#page-behaviour-output-and-development) |
-| **Development confidence** | guide lines, node labels, layout snapshots, PDF visual diffs | [Test and debug it](./docs/operations/test-your-document.md) |
-
-The [recipe index](./docs/recipes.md) is the complete task map. Start from its
-smallest entry point, then open one focused guide for the styling, layout,
-pagination, backend, and testing details that matter to that feature.
-
-For example, a labelled bar chart is one more block in `pageFlow`:
+document model for each feature — a labelled bar chart is one more block in `pageFlow`:
 
 <!-- doc-example: id=readme-first-chart mode=method -->
 ```java
@@ -194,19 +173,6 @@ try (DocumentSession document = GraphCompose.document(Path.of("revenue.pdf")).cr
 From there, the [chart recipe](./docs/recipes/charts.md) shows the next questions in
 order: value formatting, legends, bar/line shape, colours, grid, labels, background,
 and snapshot coverage.
-
-### Choose a longer path only when you need it
-
-1. Follow [Your first document](./docs/first-document.md) for a guided five-minute build.
-2. Open [Recipes](./docs/recipes.md) only when you need a table, image, header,
-   barcode, chart, page-break rule, or another specific feature.
-3. Start from an [invoice or proposal template](./docs/templates/business-templates.md)
-   when the document is a standard business artifact.
-4. Use the [CV and cover-letter quickstart](./docs/templates/v2-layered/quickstart.md)
-   for resume-focused document families.
-
-For a backend endpoint, use the
-[Spring Boot streaming example](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java).
 
 ## Keep production documents from drifting
 
@@ -260,23 +226,22 @@ Start with [Testing your document](./docs/operations/test-your-document.md). The
 [visual regression](./docs/operations/visual-regression-testing.md) pages are the deeper
 references when you need custom baseline paths, approval flow, or cross-platform tolerance.
 
-## Learn only what you need
+## What to read next
 
-There is no requirement to read the repository from top to bottom. Stop at the level
-that solves your problem:
+Pick the one row that matches what you are doing. Each is a complete route — you do
+not need the others, and you never need the engine internals to author a document.
 
-1. **First PDF** — finish the example above or read [Your first document](./docs/first-document.md).
-2. **Document features** — use the [recipe index](./docs/recipes.md) as a lookup table.
-3. **Reusable business documents** — use the
-   [invoice and proposal templates](./docs/templates/business-templates.md), or the
-   [CV and cover-letter quickstart](./docs/templates/v2-layered/quickstart.md).
-4. **Production confidence** — add [snapshot and visual tests](./docs/operations/test-your-document.md),
-   then review [production rendering](./docs/operations/production-rendering.md).
-5. **Library internals** — only contributors need [Contributing](./CONTRIBUTING.md),
-   the [architecture overview](./docs/architecture/overview.md), package map, and ADRs.
+| I want to… | Go to |
+|---|---|
+| **Understand the model** behind the example above | [Your first document](./docs/first-document.md) — a guided five-minute build |
+| **Add a feature** — table, list, chart, timeline, image, header, footer, barcode, page-break rule | [Recipes](./docs/recipes.md) — the complete task index |
+| **Start from a ready-made design** — invoice, proposal, receipt, rota, CV, cover letter | [Templates](./docs/templates/README.md) — 58 presets across six families |
+| **Prove an upgrade did not move my document** | [Testing your document](./docs/operations/test-your-document.md) — layout snapshots and visual diffs |
+| **Render from a server** | [Production rendering](./docs/operations/production-rendering.md) — streaming, concurrency, failure handling; the [Spring Boot streaming example](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java) is a working endpoint |
 
-The [full documentation index](./docs/README.md) is a reference catalogue, not a
-prerequisite for creating a document.
+Contributing to GraphCompose itself is a separate path: start at
+[Contributing](./CONTRIBUTING.md). The [documentation index](./docs/README.md) is a
+reference catalogue — useful for finding a page, never required reading.
 
 <details>
 <summary><b>Output formats and optional modules</b></summary>
@@ -286,7 +251,7 @@ PDF is the production, fixed-layout output included by `graph-compose`.
 | Need | Add |
 |---|---|
 | Built-in templates, bundled fonts, and emoji together | `graph-compose-bundle` |
-| Built-in invoice, proposal, CV, or cover-letter templates | `graph-compose-templates` |
+| Built-in document templates — invoice, proposal, receipt, rota, CV, cover letter | `graph-compose-templates` |
 | Editable PowerPoint output (**beta**) | `graph-compose-render-pptx` |
 | Semantic DOCX output (**partial**) | `graph-compose-render-docx` |
 | Layout snapshots and PDF visual diffs in tests | `graph-compose-testing` |

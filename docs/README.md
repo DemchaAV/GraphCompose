@@ -12,9 +12,8 @@ Follow the path only as far as your current task requires:
 1. **Render one PDF:** [Your first document](first-document.md).
 2. **Add the blocks you need:** [Recipes](recipes.md) explains where text, tables,
    charts, icons, images, cards, rows, backgrounds, and canvases fit.
-3. **Reuse a business-document design:** start with the
-   [invoice and proposal templates](templates/business-templates.md), or the
-   [CV and cover-letter quickstart](templates/v2-layered/quickstart.md).
+3. **Reuse a ready-made design:** [Templates](templates/README.md) — invoice,
+   proposal, receipt and rota for business documents; CV and cover letter for profiles.
 4. **Protect the result:** [Testing your document](operations/test-your-document.md)
    adds deterministic layout snapshots and pixel-level visual diffs.
 5. **Run it in a backend:** [Production rendering](operations/production-rendering.md)
@@ -34,7 +33,9 @@ GraphCompose itself.
 | Add a header, footer, page number, watermark, link, bookmark, or contents page | [Page behaviour recipes](recipes.md#page-behaviour-output-and-development) |
 | Inspect layout boxes or create a page preview while developing | [Developer tools and output](recipes.md#page-behaviour-output-and-development) |
 | Protect a document with snapshots and visual diffs | [Testing your document](operations/test-your-document.md) |
+| Pick a ready-made document design | [Templates overview](templates/README.md) — all six families |
 | Render an invoice or proposal from data | [Business templates](templates/business-templates.md) |
+| Render a receipt or a shift rota from data | [Templates overview](templates/README.md#business-documents) |
 | Render a CV or cover letter with my own data | [CV and cover-letter quickstart](templates/v2-layered/quickstart.md) |
 | Design a custom CV style | [Authoring presets](templates/v2-layered/authoring-presets.md) |
 | Upgrade a pre-2.0 caller | [2.0 migration guide](migration/v2.0.0-modules.md) |
@@ -54,6 +55,7 @@ GraphCompose itself.
 - **[troubleshooting.md](troubleshooting.md)** — symptom-first fixes for common gotchas: stray `?` glyphs, silent DOCX drops, optional-dependency `NoClassDefFoundError`, running the bundled examples.
 
 ### Templates
+- **[templates/README.md](templates/README.md)** — start here: all six shipped families, what data each takes, and which guide to open.
 - **[templates/business-templates.md](templates/business-templates.md)** — invoice & proposal templates: the compose-first contract, end to end, on the layered `ModernInvoice` / `ModernProposal` surface.
 - **[templates/v2-layered/](templates/v2-layered/)** — the template surface (CV is the reference implementation): `data` / `components` / `widgets` / `presets` per family, over the shared `templates.core.theme`.
 - **[templates/v1-classic/](templates/v1-classic/)** — 🗄️ archived: the classic spec/builder/presets surface removed in 2.0; kept for pre-2.0 callers.
@@ -114,6 +116,9 @@ Kept for anyone stepping through the 1.x line one minor at a time. Nothing here 
 
 </details>
 
+<details>
+<summary><b>Library internals</b> — architecture, contributing, and ADRs. Needed only when you change GraphCompose itself, never to author a document.</summary>
+
 ### Architecture
 - **[architecture/overview.md](architecture/overview.md)** — high-level system architecture (engine + DSL + templates + backends).
 - **[architecture/lifecycle.md](architecture/lifecycle.md)** — the document lifecycle from `GraphCompose.document(...)` through `buildPdf()`.
@@ -145,6 +150,8 @@ it does.
 > **ADR numbering gap (0005–0010)** is intentional — those numbers
 > were reserved during a v1.5 restructure that landed under ADR 0011
 > instead of multiple smaller records. No deleted ADRs.
+
+</details>
 
 ### Showcase website (separate from docs)
 - The public showcase website is **not** documentation — it lives in

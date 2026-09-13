@@ -5,10 +5,9 @@ documents: **invoices** and **proposals**. You supply a typed data
 spec, pick a `BrandTheme`, and the preset renders a consistent,
 branded document. You never position anything by hand.
 
-> For **CVs and cover letters**, use the same layered model's CV and
-> cover-letter families — see the
-> [Templates v2 (layered) quickstart](v2-layered/quickstart.md).
-> Arriving from a pre-2.0 surface? See
+> This page covers two of the six shipped families. For **receipts** and
+> **shift rotas**, and for **CVs** and **cover letters**, start from the
+> [templates overview](README.md). Arriving from a pre-2.0 surface? See
 > [Which template system should I use?](which-template-system.md).
 
 ## The compose-first contract

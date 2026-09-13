@@ -11,12 +11,29 @@
 > archived at [templates/v1-classic/](../v1-classic/README.md).
 
 The **template surface** for building business documents on
-GraphCompose. All five families ship on it — CV (the reference
-implementation, `com.demcha.compose.document.templates.cv`),
-cover-letter, invoice, proposal, and receipt — and any new template
-family follows the same shape.
+GraphCompose. All six shipped families are built on it — CV is the
+reference implementation (`com.demcha.compose.document.templates.cv`) —
+and any new template family follows the same shape.
 
-This is the entry point. Pick the doc that matches your goal.
+This page is the architecture entry point. If you only want to *render*
+one of the shipped designs, start from the
+[templates overview](../README.md) instead.
+
+## The shipped families
+
+| Family | Package | Presets | Data records |
+|---|---|---|---|
+| CV | `templates.cv` | 26 | `templates.cv.data` |
+| Cover letter | `templates.coverletter` | 15 | `templates.coverletter.data` |
+| Invoice | `templates.invoice` | 11 | `templates.data.invoice` |
+| Proposal | `templates.proposal` | 4 | `templates.data.proposal` |
+| Receipt | `templates.receipt` | 1 — `ModernReceipt` | `templates.data.receipt` |
+| Rota (shift schedule) | `templates.rota` | 1 — `CobaltRota` | `templates.data.rota` |
+
+Receipt and rota are the newest and smallest, which makes them the
+easiest two to read end to end.
+
+Pick the doc below that matches your goal.
 
 ---
 

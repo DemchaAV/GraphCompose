@@ -29,7 +29,7 @@
           "kind": "behavior",
           "value": "table.composed-cell-paints-but-has-no-snapshot-node",
           "page": "docs/recipes/tables.md",
-          "line": 29,
+          "line": 41,
           "heading": "Cell content — one line, several lines, or a node"
         }
       ]
@@ -121,14 +121,14 @@
           "kind": "behavior",
           "value": "table.header-repeats-on-every-continuation-page",
           "page": "docs/recipes/tables.md",
-          "line": 192,
+          "line": 204,
           "heading": "Repeated header on page break"
         },
         {
           "kind": "behavior",
           "value": "table.repeat-header-defaults-to-zero",
           "page": "docs/recipes/tables.md",
-          "line": 193,
+          "line": 205,
           "heading": "Repeated header on page break"
         }
       ]
@@ -141,7 +141,7 @@
           "kind": "behavior",
           "value": "table.spanning-cell-height-is-sum-of-covered-rows",
           "page": "docs/recipes/tables.md",
-          "line": 72,
+          "line": 84,
           "heading": "Row span — merge a cell vertically"
         }
       ]
@@ -154,7 +154,7 @@
           "kind": "behavior",
           "value": "table.explicit-row-style-beats-zebra",
           "page": "docs/recipes/tables.md",
-          "line": 113,
+          "line": 125,
           "heading": "Zebra — alternating row fills"
         }
       ]

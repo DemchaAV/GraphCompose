@@ -14,7 +14,7 @@ custom page flow; helpers, layout primitives, and extensions come later.
 
 ```mermaid
 flowchart TD
-    A[I want to generate a document] --> B{Known family?<br/>CV / invoice / proposal / cover letter}
+    A[I want to generate a document] --> B{Known family?<br/>invoice / proposal / receipt / rota<br/>CV / cover letter}
     B -- Yes --> T[Use a maintained template]
     B -- No --> C{Mostly reads top to bottom?}
     C -- Yes --> F["GraphCompose.document(...) + pageFlow(...)"]

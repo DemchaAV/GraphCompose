@@ -85,7 +85,7 @@
       "DocumentTableCell.lines": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 27,
+          "line": 39,
           "heading": "Cell content — one line, several lines, or a node",
           "surface": "authoring",
           "stability": "stable"
@@ -94,7 +94,7 @@
       "DocumentTableCell.node": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 28,
+          "line": 40,
           "heading": "Cell content — one line, several lines, or a node",
           "surface": "authoring",
           "stability": "stable"
@@ -103,7 +103,7 @@
       "DocumentTableCell.text": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 26,
+          "line": 38,
           "heading": "Cell content — one line, several lines, or a node",
           "surface": "authoring",
           "stability": "stable"
@@ -202,7 +202,7 @@
       "TableBuilder.headerRow": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 191,
+          "line": 203,
           "heading": "Repeated header on page break",
           "surface": "authoring",
           "stability": "stable"
@@ -211,7 +211,7 @@
       "TableBuilder.repeatHeader": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 190,
+          "line": 202,
           "heading": "Repeated header on page break",
           "surface": "authoring",
           "stability": "stable"
@@ -220,7 +220,7 @@
       "TableBuilder.totalRow": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 153,
+          "line": 165,
           "heading": "Totals row — bold + subtle fill",
           "surface": "authoring",
           "stability": "stable"
@@ -229,7 +229,7 @@
       "TableBuilder.zebra": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 112,
+          "line": 124,
           "heading": "Zebra — alternating row fills",
           "surface": "authoring",
           "stability": "stable"
@@ -268,28 +268,28 @@
       "table.cell-content": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 25,
+          "line": 37,
           "heading": "Cell content — one line, several lines, or a node"
         }
       ],
       "table.repeat-header-across-pages": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 189,
+          "line": 201,
           "heading": "Repeated header on page break"
         }
       ],
       "table.row-span": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 71,
+          "line": 83,
           "heading": "Row span — merge a cell vertically"
         }
       ],
       "table.zebra-striping": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 111,
+          "line": 123,
           "heading": "Zebra — alternating row fills"
         }
       ]
@@ -362,7 +362,7 @@
       "table.composed-cell-paints-but-has-no-snapshot-node": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 29,
+          "line": 41,
           "heading": "Cell content — one line, several lines, or a node",
           "proof": "test:ComposedCellSnapshotContractTest"
         }
@@ -370,7 +370,7 @@
       "table.explicit-row-style-beats-zebra": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 113,
+          "line": 125,
           "heading": "Zebra — alternating row fills",
           "proof": "test:TableBuilderZebraAndTotalsTest"
         }
@@ -378,7 +378,7 @@
       "table.header-repeats-on-every-continuation-page": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 192,
+          "line": 204,
           "heading": "Repeated header on page break",
           "proof": "test:TableBuilderRepeatHeaderTest"
         }
@@ -386,7 +386,7 @@
       "table.repeat-header-defaults-to-zero": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 193,
+          "line": 205,
           "heading": "Repeated header on page break",
           "proof": "test:TableBuilderRepeatHeaderTest"
         }
@@ -394,7 +394,7 @@
       "table.spanning-cell-height-is-sum-of-covered-rows": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 72,
+          "line": 84,
           "heading": "Row span — merge a cell vertically",
           "proof": "test:TableBuilderRowSpanTest"
         }

@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
@@ -22,7 +23,6 @@ import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.HEADING_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.HEADING_TRACKING;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.HEADING_TO_RULE;
-import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.SPACE_RATIO;
 import static com.demcha.compose.document.templates.cv.presets.VioletGridStyles.style;
 
 /**
@@ -57,21 +57,15 @@ final class VioletGridWidgets {
     static ParagraphBuilder tracked(String name, String text, FontName font, double size,
                                     DocumentColor color, boolean bold, double tracking) {
         DocumentTextStyle glyph = style(font, size, color, bold);
+        if (tracking > 0.0) {
+            // The gap was authored in points, so the tracking is read in points.
+            glyph = glyph.withLetterSpacing(DocumentLetterSpacing.points(tracking));
+        }
         ParagraphBuilder paragraph = new ParagraphBuilder();
         paragraph.name(name);
         paragraph.lineSpacing(0);
         paragraph.textStyle(glyph);
-        if (tracking <= 0.0) {
-            paragraph.text(text);
-            return paragraph;
-        }
-        DocumentTextStyle gap = style(BODY_FONT, tracking / SPACE_RATIO, color, bold);
-        for (int index = 0; index < text.length(); index++) {
-            paragraph.inlineText(String.valueOf(text.charAt(index)), glyph);
-            if (index < text.length() - 1) {
-                paragraph.inlineText(" ", gap);
-            }
-        }
+        paragraph.text(text);
         return paragraph;
     }
 

@@ -45,6 +45,14 @@ final class CharcoalGoldStyles {
     static final double NAME_GIVEN_SIZE = 35.7;
     static final double NAME_FAMILY_SIZE = 45.5;
     static final double JOB_TITLE_SIZE = 11.6;
+
+    /**
+     * Tracking on the masthead job title. The look used to be made by writing a
+     * space between each letter, so the gap this replaces is one space advance
+     * of the body face — a quarter of the type size.
+     */
+    static final double JOB_TITLE_TRACKING_EM = 0.25;
+
     static final double MAIN_HEADING_SIZE = 11.0;
     static final double SIDEBAR_HEADING_SIZE = 10.0;
     static final double ROLE_SIZE = 10.5;
@@ -158,39 +166,6 @@ final class CharcoalGoldStyles {
      */
     static double gap(double pitch, double size) {
         return Math.max(0.0, pitch - size * LINE_FACTOR);
-    }
-
-    /**
-     * Letter-spacing by spaces rather than by sized runs: a space between
-     * letters and three between words.
-     *
-     * <p>This design tracks only one line — the job title — and does it
-     * coarsely enough that real spaces reach it, which is simpler than the
-     * per-letter spacer runs the other ported sheets need.</p>
-     *
-     * @param text the text to space out
-     * @return the spaced text
-     */
-    static String tracked(String text) {
-        if (text == null || text.isEmpty()) {
-            return "";
-        }
-        StringBuilder out = new StringBuilder(text.length() * 2);
-        boolean startOfWord = true;
-        for (int i = 0; i < text.length(); i++) {
-            char ch = text.charAt(i);
-            if (ch == ' ') {
-                out.append("   ");
-                startOfWord = true;
-                continue;
-            }
-            if (!startOfWord) {
-                out.append(' ');
-            }
-            out.append(ch);
-            startOfWord = false;
-        }
-        return out.toString();
     }
 
     /** Strips a title down to the letters and digits a node name can carry. */

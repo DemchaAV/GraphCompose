@@ -34,7 +34,7 @@ import static com.demcha.compose.document.templates.cv.presets.TerracottaRailSty
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.RULE_THICKNESS;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.SIDEBAR_DASH_WIDTH;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.SIDEBAR_DIVIDER_GAP;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.SIDEBAR_HEADING_SPACER;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.SIDEBAR_HEADING_TRACKING_EM;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.SIDEBAR_PAD_LEFT;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.SIDEBAR_PAD_RIGHT;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.SIDEBAR_PAD_TOP;
@@ -189,10 +189,10 @@ final class TerracottaRailAside {
         side.addSection(blockName, block -> {
             block.spacing(0);
             if (discBullet) {
-                headingWithDash(block, section.title(), SIDEBAR_HEADING_SPACER,
+                headingWithDash(block, section.title(), SIDEBAR_HEADING_TRACKING_EM,
                         SIDEBAR_DASH_WIDTH);
             } else {
-                heading(block, section.title(), SIDEBAR_HEADING_SPACER);
+                heading(block, section.title(), SIDEBAR_HEADING_TRACKING_EM);
             }
             int index = 0;
             for (SkillGroup group : section.groups()) {
@@ -216,7 +216,7 @@ final class TerracottaRailAside {
     private static void renderCertifications(SectionBuilder side, EntriesSection section) {
         side.addSection("Certifications", block -> {
             block.spacing(0);
-            headingWithDash(block, section.title(), SIDEBAR_HEADING_SPACER, SIDEBAR_DASH_WIDTH);
+            headingWithDash(block, section.title(), SIDEBAR_HEADING_TRACKING_EM, SIDEBAR_DASH_WIDTH);
             List<CvEntry> entries = section.entries();
             for (int index = 0; index < entries.size(); index++) {
                 CvEntry entry = entries.get(index);
@@ -236,7 +236,7 @@ final class TerracottaRailAside {
     private static void renderFacts(SectionBuilder side, EntriesSection section) {
         side.addSection("AdditionalInformation", block -> {
             block.spacing(0);
-            heading(block, section.title(), SIDEBAR_HEADING_SPACER);
+            heading(block, section.title(), SIDEBAR_HEADING_TRACKING_EM);
             List<CvEntry> entries = section.entries();
             for (int i = 0; i < entries.size(); i++) {
                 CvEntry entry = entries.get(i);

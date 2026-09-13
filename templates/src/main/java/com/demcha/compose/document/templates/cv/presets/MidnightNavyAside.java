@@ -12,6 +12,7 @@ import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -159,8 +160,10 @@ final class MidnightNavyAside {
 
         column.addParagraph(p -> p
                 .name("Role")
-                .text(MidnightNavyWidgets.tracked(identity.jobTitle().toUpperCase(Locale.ROOT)))
-                .textStyle(style(ROLE_SIZE, WHITE, DocumentTextDecoration.DEFAULT))
+                .text(identity.jobTitle().toUpperCase(Locale.ROOT))
+                .textStyle(style(ROLE_SIZE, WHITE, DocumentTextDecoration.DEFAULT)
+                        .withLetterSpacing(DocumentLetterSpacing.ofFontSize(
+                                MidnightNavyWidgets.ROLE_TRACKING_EM)))
                 .align(TextAlign.CENTER)
                 .margin(new DocumentInsets(px(13.1), 0, 0, 0)));
 

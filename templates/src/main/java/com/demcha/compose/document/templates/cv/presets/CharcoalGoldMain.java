@@ -5,6 +5,7 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.CvEntry;
@@ -47,7 +48,7 @@ import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyle
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.SUMMARY_TO_EXPERIENCE;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.TITLE_TO_RULE;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.textStyle;
-import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.tracked;
+import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.JOB_TITLE_TRACKING_EM;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldWidgets.mainHeading;
 
 /**
@@ -102,8 +103,9 @@ final class CharcoalGoldMain {
                     .margin(0f, 0f, (float) MASTHEAD_TO_TITLE, 0f));
             block.addParagraph(p -> p
                     .name("JobTitle")
-                    .text(tracked(identity.jobTitle()))
-                    .textStyle(textStyle(JOB_TITLE_SIZE, INK, false))
+                    .text(identity.jobTitle())
+                    .textStyle(textStyle(JOB_TITLE_SIZE, INK, false)
+                            .withLetterSpacing(DocumentLetterSpacing.ofFontSize(JOB_TITLE_TRACKING_EM)))
                     .margin(0f, 0f, (float) TITLE_TO_RULE, 0f));
             block.addLine(line -> line
                     .name("MastheadRule")

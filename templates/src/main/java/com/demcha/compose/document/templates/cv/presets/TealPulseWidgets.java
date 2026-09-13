@@ -9,6 +9,7 @@ import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 
@@ -38,8 +39,6 @@ import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.P
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.SECTION_GAP;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.compact;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.gapRun;
-import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.spacerRuns;
-import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.spacerStyle;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.style;
 
 /**
@@ -69,30 +68,21 @@ final class TealPulseWidgets {
      */
     static void tracked(ParagraphBuilder paragraph, String text, DocumentTextStyle textStyle,
                         double trackingEm) {
-        int runs = spacerRuns(trackingEm);
-        DocumentTextStyle spacer = spacerStyle(textStyle, trackingEm, runs);
-        for (int index = 0; index < text.length(); index++) {
-            paragraph.inlineText(String.valueOf(text.charAt(index)), textStyle);
-            if (index + 1 < text.length()) {
-                paragraph.inlineText(" ".repeat(runs), spacer);
-            }
-        }
+        paragraph.inlineText(text, spacedBy(textStyle, trackingEm));
     }
 
     /**
-     * The same, with the paper laid behind every run, so a rule the heading is
+     * The same, with the paper laid behind the run, so a rule the heading is
      * drawn over shows only past the end of the words.
      */
     static void knockedOut(ParagraphBuilder paragraph, String text,
                            DocumentTextStyle textStyle, double trackingEm) {
-        int runs = spacerRuns(trackingEm);
-        DocumentTextStyle spacer = spacerStyle(textStyle, trackingEm, runs);
-        for (int index = 0; index < text.length(); index++) {
-            knockedOutRun(paragraph, String.valueOf(text.charAt(index)), textStyle);
-            if (index + 1 < text.length()) {
-                knockedOutRun(paragraph, " ".repeat(runs), spacer);
-            }
-        }
+        knockedOutRun(paragraph, text, spacedBy(textStyle, trackingEm));
+    }
+
+    /** {@code textStyle} tracked by {@code trackingEm}, the letters left whole. */
+    private static DocumentTextStyle spacedBy(DocumentTextStyle textStyle, double trackingEm) {
+        return textStyle.withLetterSpacing(DocumentLetterSpacing.ofFontSize(trackingEm));
     }
 
     /** One knocked-out run. No horizontal padding, so neighbours abut. */

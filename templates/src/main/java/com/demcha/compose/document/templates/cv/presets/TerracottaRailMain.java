@@ -36,7 +36,8 @@ import static com.demcha.compose.document.templates.cv.presets.TerracottaRailSty
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_DASH_WIDTH;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_DIVIDER_BOTTOM;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_DIVIDER_TOP;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_HEADING_SPACER;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_HEADING_TRACKING_EM;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MASTHEAD_TRACKING_EM;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_PAD_LEFT;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_PAD_RIGHT;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_PAD_TOP;
@@ -70,7 +71,7 @@ import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWid
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.entryLine;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.ringMarker;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.titleAndDate;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.trackedWide;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.spacedBy;
 
 /**
  * The wide column: the masthead, the summary, the roles held on a rail, the
@@ -123,13 +124,13 @@ final class TerracottaRailMain {
             block.spacing(0);
             block.addParagraph(p -> p
                     .name("FullName")
-                    .text(trackedWide(identity.name().full().toUpperCase(Locale.ROOT)))
-                    .textStyle(text(NAME_SIZE, INK, true))
+                    .text(identity.name().full().toUpperCase(Locale.ROOT))
+                    .textStyle(spacedBy(text(NAME_SIZE, INK, true), MASTHEAD_TRACKING_EM))
                     .margin(0f, 0f, (float) NAME_TO_SUBTITLE_GAP, 0f));
             block.addParagraph(p -> p
                     .name("JobTitle")
-                    .text(trackedWide(identity.jobTitle().toUpperCase(Locale.ROOT)))
-                    .textStyle(text(SUBTITLE_SIZE, ACCENT, true))
+                    .text(identity.jobTitle().toUpperCase(Locale.ROOT))
+                    .textStyle(spacedBy(text(SUBTITLE_SIZE, ACCENT, true), MASTHEAD_TRACKING_EM))
                     .margin(0f, 0f, (float) SUBTITLE_TO_RULE_GAP, 0f));
         });
     }
@@ -140,7 +141,7 @@ final class TerracottaRailMain {
     private static void renderSummary(SectionBuilder main, ParagraphSection summary) {
         main.addSection("Summary", block -> {
             block.spacing(0);
-            headingWithDash(block, summary.title(), MAIN_HEADING_SPACER, MAIN_DASH_WIDTH);
+            headingWithDash(block, summary.title(), MAIN_HEADING_TRACKING_EM, MAIN_DASH_WIDTH);
             List<String> paragraphs = lines(summary.body());
             for (int i = 0; i < paragraphs.size(); i++) {
                 int index = i;
@@ -164,7 +165,7 @@ final class TerracottaRailMain {
     private static void renderExperience(SectionBuilder main, EntriesSection experience) {
         main.addSection("Experience", block -> {
             block.spacing(0);
-            heading(block, experience.title(), MAIN_HEADING_SPACER);
+            heading(block, experience.title(), MAIN_HEADING_TRACKING_EM);
             SectionBuilder holder = new SectionBuilder();
             holder.name("ExperienceRailHolder");
             holder.spacing(0);
@@ -232,7 +233,7 @@ final class TerracottaRailMain {
     private static void renderProjects(SectionBuilder main, EntriesSection projects) {
         main.addSection("SelectedProjects", block -> {
             block.spacing(0);
-            headingWithDash(block, projects.title(), MAIN_HEADING_SPACER, MAIN_DASH_WIDTH);
+            headingWithDash(block, projects.title(), MAIN_HEADING_TRACKING_EM, MAIN_DASH_WIDTH);
             List<CvEntry> entries = projects.entries();
             for (int i = 0; i < entries.size(); i++) {
                 CvEntry entry = entries.get(i);
@@ -306,7 +307,7 @@ final class TerracottaRailMain {
     private static void renderEducation(SectionBuilder main, EntriesSection education) {
         main.addSection("Education", block -> {
             block.spacing(0);
-            headingWithDash(block, education.title(), MAIN_HEADING_SPACER, MAIN_DASH_WIDTH);
+            headingWithDash(block, education.title(), MAIN_HEADING_TRACKING_EM, MAIN_DASH_WIDTH);
             layeredRow(block, "EducationBand", 0.0, 0.0, band -> {
                 band.weights(EDUCATION_BAND_WEIGHT, 1.0 - EDUCATION_BAND_WEIGHT);
                 band.addSection("EducationEntries", cell -> {

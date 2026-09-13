@@ -13,7 +13,9 @@ import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
@@ -61,63 +63,27 @@ final class TerracottaRailWidgets {
      * @param spacer the space to set between letters
      * @return the tracked string
      */
-    static String tracked(String text, char spacer) {
-        if (text == null || text.isEmpty()) {
-            return "";
-        }
-        StringBuilder out = new StringBuilder(text.length() * 2);
-        for (int index = 0; index < text.length(); index++) {
-            char letter = text.charAt(index);
-            if (letter == ' ') {
-                out.append(spacer).append(' ').append(spacer);
-                continue;
-            }
-            if (index > 0 && text.charAt(index - 1) != ' ') {
-                out.append(spacer);
-            }
-            out.append(letter);
-        }
-        return out.toString();
-    }
-
-    /** The masthead's own tracking: a full space between letters. */
-    static String trackedWide(String text) {
-        if (text == null || text.isEmpty()) {
-            return "";
-        }
-        StringBuilder out = new StringBuilder(text.length() * 2);
-        boolean startOfWord = true;
-        for (int index = 0; index < text.length(); index++) {
-            char letter = text.charAt(index);
-            if (letter == ' ') {
-                out.append("   ");
-                startOfWord = true;
-                continue;
-            }
-            if (!startOfWord) {
-                out.append(' ');
-            }
-            out.append(letter);
-            startOfWord = false;
-        }
-        return out.toString();
+    /** {@code style} tracked by {@code trackingEm}, the letters left whole. */
+    static DocumentTextStyle spacedBy(DocumentTextStyle style, double trackingEm) {
+        return style.withLetterSpacing(DocumentLetterSpacing.ofFontSize(trackingEm));
     }
 
     /** A heading with nothing under it. */
-    static void heading(SectionBuilder block, String title, char spacer) {
+    static void heading(SectionBuilder block, String title, double trackingEm) {
         block.addParagraph(p -> p
                 .name("Heading_" + compact(title))
-                .text(tracked(title, spacer))
-                .textStyle(text(SECTION_HEADING_SIZE, INK, true))
+                .text(title)
+                .textStyle(spacedBy(text(SECTION_HEADING_SIZE, INK, true), trackingEm))
                 .margin(0f, 0f, (float) HEADING_TO_BODY_GAP, 0f));
     }
 
     /** A heading over a short terracotta dash. */
-    static void headingWithDash(SectionBuilder block, String title, char spacer, double dashWidth) {
+    static void headingWithDash(SectionBuilder block, String title, double trackingEm,
+                                double dashWidth) {
         block.addParagraph(p -> p
                 .name("Heading_" + compact(title))
-                .text(tracked(title, spacer))
-                .textStyle(text(SECTION_HEADING_SIZE, INK, true))
+                .text(title)
+                .textStyle(spacedBy(text(SECTION_HEADING_SIZE, INK, true), trackingEm))
                 .margin(0f, 0f, (float) HEADING_TO_DASH_GAP, 0f));
         block.addLine(line -> line
                 .name("AccentLine_" + compact(title))

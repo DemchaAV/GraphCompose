@@ -134,15 +134,17 @@ final class TerracottaRailStyles {
     // -- tracking ----------------------------------------------------------
 
     /**
-     * The gaps a heading is letter-spaced with. A text style carries no
-     * tracking, so a tracked line is written with a space character between
-     * the letters, and which space is the whole choice: the sidebar takes a
-     * hair space (a tenth of an em) because a full one would set ADDITIONAL
-     * INFORMATION wider than the column and wrap it, and the main column,
-     * being wider, takes a thin space (a fifth).
+     * The gaps a heading is letter-spaced with. These were hair and thin space
+     * characters written between the letters; they are the same measures as
+     * tracking. The sidebar takes a tenth of an em because a wider one sets
+     * ADDITIONAL INFORMATION past the column and wraps it, and the main column,
+     * being wider, takes a fifth.
      */
-    static final char SIDEBAR_HEADING_SPACER = '\u200A';
-    static final char MAIN_HEADING_SPACER = '\u2009';
+    static final double SIDEBAR_HEADING_TRACKING_EM = 0.10;
+    static final double MAIN_HEADING_TRACKING_EM = 0.20;
+
+    /** The masthead's own tracking \u2014 it used a full space between letters. */
+    static final double MASTHEAD_TRACKING_EM = 0.25;
 
     // -- helpers ------------------------------------------------------------
 

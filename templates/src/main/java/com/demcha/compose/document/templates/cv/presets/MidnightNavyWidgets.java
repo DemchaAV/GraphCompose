@@ -109,37 +109,13 @@ final class MidnightNavyWidgets {
     }
 
     /**
-     * The role line's wide tracking, as spaces between characters.
+     * The role line's wide tracking.
      *
-     * <p>There is no letter-spacing API, so the tracking is real spaces and its
-     * width depends on the face's space advance: change the family and the
-     * tracking has to be re-checked.</p>
-     *
-     * @param text the line to track
-     * @return the same line with a space between every pair of characters and
-     *         three between words
+     * <p>The look used to be made by writing a space between each letter, so
+     * the gap this replaces is one space advance of the face — a quarter of the
+     * type size.</p>
      */
-    static String tracked(String text) {
-        if (text == null || text.isEmpty()) {
-            return "";
-        }
-        StringBuilder out = new StringBuilder(text.length() * 2);
-        boolean startOfWord = true;
-        for (int i = 0; i < text.length(); i++) {
-            char ch = text.charAt(i);
-            if (ch == ' ') {
-                out.append("   ");
-                startOfWord = true;
-                continue;
-            }
-            if (!startOfWord) {
-                out.append(' ');
-            }
-            out.append(ch);
-            startOfWord = false;
-        }
-        return out.toString();
-    }
+    static final double ROLE_TRACKING_EM = 0.25;
 
     /** A label reduced to what can go in a node name. */
     static String compact(String text) {

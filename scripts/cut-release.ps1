@@ -1184,6 +1184,56 @@ function Render-ReadmeBanner {
     Note "banner: assets/readme/repository_showcase_render.png re-rendered"
 }
 
+# The knowledge commands a release must pass locally, before it mutates
+# anything. One list, so the local gate and the tag-time gate in release.yml
+# cannot drift apart: release.yml re-runs these independently after the tag,
+# which stays and is the point — this list is what lets the local run predict
+# it. The bundle verification is here because it used to run only at tag time,
+# which is after the tag exists and so too late to stop a bad one.
+$KnowledgeVerification = @(
+    'node knowledge/tools/api-surface/extract-api.mjs --from-reactor',
+    'node knowledge/tools/claims/check-claims.mjs --check',
+    'node knowledge/tools/routing/check-routes.mjs',
+    'node knowledge/tools/bundle/build-bundle.mjs --verify'
+)
+
+# The scripts those commands invoke, as repository-relative paths.
+$KnowledgeTools = @(
+    'knowledge/tools/api-surface/extract-api.mjs',
+    'knowledge/tools/claims/check-claims.mjs',
+    'knowledge/tools/routing/check-routes.mjs',
+    'knowledge/tools/bundle/build-bundle.mjs'
+)
+
+# True when this tree ships a knowledge pack at all. The 1.x line has none.
+function Test-KnowledgePackPresent {
+    return Test-Path (Join-Path $repoRoot 'knowledge/tools/api-surface/extract-api.mjs')
+}
+
+function Assert-KnowledgeToolingAvailable {
+    # Availability only — whether the tools exist, never whether the pack is
+    # current; Update-KnowledgeSurfaces owns that.
+    #
+    # It throws rather than reporting, because the caller is a release. A
+    # boolean here would let the cut carry on and rewrite thirteen poms, the
+    # CHANGELOG, the ROADMAP, the README and ShowcaseMetadata, commit, tag and
+    # push — and only then have release.yml refuse the tag it had already
+    # published. A tag Maven Central has validated cannot be moved, so the
+    # refusal has to happen before the first file changes.
+    if (-not (Test-KnowledgePackPresent)) {
+        Note "knowledge tooling: no pack in this tree, nothing to check"
+        return
+    }
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        throw "Node.js is required to regenerate and verify the knowledge pack before a release mutates anything. Install Node.js and retry."
+    }
+    $missing = $KnowledgeTools | Where-Object { -not (Test-Path (Join-Path $repoRoot $_)) }
+    if ($missing) {
+        throw "The knowledge pack is present but these required tools are missing: $($missing -join ', '). The release cannot verify what it is about to ship."
+    }
+    Note "knowledge tooling: Node.js and $($KnowledgeTools.Count) required tools available"
+}
+
 function Update-KnowledgeSurfaces {
     # Regenerates the tracked knowledge pack — knowledge/api/*.json|md plus
     # knowledge/manifest.json — from THIS tree's compiled classes, then holds the
@@ -1212,26 +1262,18 @@ function Update-KnowledgeSurfaces {
     # bump between touched only poms. If the tree is not built after all,
     # extract-api refuses with the exact mvnw command to run — a loud stop,
     # never a silently stale commit.
-    if (-not (Test-Path (Join-Path $repoRoot 'knowledge/tools/api-surface/extract-api.mjs'))) {
+    if (-not (Test-KnowledgePackPresent)) {
         Note "skip (no knowledge/ pack in this tree)"
         return
     }
-    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-        # Skip rather than throw — a cut on a machine without Node is still a
-        # valid cut — but say it in red: the commit about to be created ships
-        # surfaces naming the PREVIOUS version, and the knowledge CI gate (on a
-        # tag, release.yml's --check) stays red until the regen lands.
-        Write-Host "    !! node not found on PATH — knowledge surfaces NOT regenerated." -ForegroundColor Red
-        Write-Host "    !! The tracked surfaces still name the pre-bump version, so the" -ForegroundColor Red
-        Write-Host "    !! knowledge CI gate (and, on a tag, release.yml) fails on this" -ForegroundColor Red
-        Write-Host "    !! commit. Stop before the push step (Ctrl+C, or -SkipPush on a" -ForegroundColor Red
-        Write-Host "    !! cut), install Node, then run and commit:" -ForegroundColor Red
-        Write-Host "    !!   node knowledge/tools/api-surface/extract-api.mjs --from-reactor" -ForegroundColor Red
-        return
+    # Defence in depth. Step 0 already refused a release whose tooling is
+    # missing, so reaching here without Node means something called this
+    # directly — and a knowledge step that cannot run must say so rather than
+    # hand back a tree whose surfaces still name the previous version.
+    Assert-KnowledgeToolingAvailable
+    foreach ($command in $KnowledgeVerification) {
+        Run $command
     }
-    Run "node knowledge/tools/api-surface/extract-api.mjs --from-reactor"
-    Run "node knowledge/tools/claims/check-claims.mjs --check"
-    Run "node knowledge/tools/routing/check-routes.mjs"
 }
 
 # ============================================================
@@ -1245,6 +1287,12 @@ if ($PostReleaseOnly) {
         # also commits and pushes to $Branch, so it must not run from the wrong branch,
         # over a dirty tree, or out of sync with origin.
         Assert-BranchPreflight $Branch
+
+        # And the knowledge pipeline has to be able to run before this mode
+        # bumps the train and commits: it regenerates the surfaces between the
+        # bump and the commit, so tooling it does not have is a refusal, not a
+        # warning carried into a pushed commit.
+        Assert-KnowledgeToolingAvailable
 
         # The released version is whatever the train poms currently carry (a cut leaves
         # them at the release version). Open the next patch development line from it. The
@@ -1286,9 +1334,9 @@ if ($PostReleaseOnly) {
         # classes on disk no longer reproduce the committed surfaces (stale
         # build), and it writes nothing. Skipped under the same conditions
         # Update-KnowledgeSurfaces skips, so the probe and the regen agree.
-        $knowledgeToolingReady = (Test-Path (Join-Path $repoRoot 'knowledge/tools/api-surface/extract-api.mjs')) -and
-            $null -ne (Get-Command node -ErrorAction SilentlyContinue)
-        if ($nextSnapshot -and $knowledgeToolingReady) {
+        # Step 0 has already refused a tree whose tooling is missing, so the
+        # only thing left to ask is whether this tree ships a pack at all.
+        if ($nextSnapshot -and (Test-KnowledgePackPresent)) {
             Step "2b" "Pre-bump gate: this tree can regenerate the knowledge surfaces"
             Run "node knowledge/tools/api-surface/extract-api.mjs --from-reactor --check"
         }
@@ -1439,6 +1487,12 @@ try {
 
     # Branch / clean-tree / origin-sync gate (shared with -PostReleaseOnly).
     Assert-BranchPreflight $Branch
+
+    # The knowledge pipeline has to be able to run at all, for the same reason
+    # the roadmap check below sits here rather than at the edit it gates: the
+    # first write is thirteen poms, and a condition knowable now must not be
+    # discovered after a tag has been pushed.
+    Assert-KnowledgeToolingAvailable
 
     # The roadmap has to be able to describe this release before anything is rewritten.
     # Deciding it here rather than at the edit in Step 1 is the whole point: by Step 1

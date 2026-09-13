@@ -4,6 +4,7 @@ import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.font.FontName;
@@ -122,12 +123,6 @@ final class ProfessionalSidebarStyles {
     static final double HEADING_TRACKING_EM = 0.14;
     static final double ROLE_TRACKING_EM = 0.18;
 
-    /**
-     * The advance of a space in the body face, as a fraction of type size.
-     * {@link #tracked} sizes its spacer runs against this to hit a tracking
-     * measured in ems.
-     */
-    static final double SPACE_ADVANCE_EM = 0.25;
 
     // -- vertical rhythm -------------------------------------------------
 
@@ -197,10 +192,12 @@ final class ProfessionalSidebarStyles {
     }
 
     /**
-     * Writes text letter by letter with a sized space between each pair,
-     * which is how this design gets its letter-spacing: a text style carries
-     * no tracking, so the gap is a run of its own whose type size is chosen
-     * to advance by {@code trackingEm} of the surrounding size.
+     * Writes {@code text} as one run tracked by {@code trackingEm}.
+     *
+     * <p>The design wants the letters held apart; it does not want the gaps to
+     * become part of the text. Native tracking keeps the run a single string,
+     * so the heading is drawn spaced but reads, copies and searches as the word
+     * it is — {@code PROFILE}, not {@code P R O F I L E}.</p>
      *
      * @param paragraph  the paragraph being built
      * @param text       the text to space out
@@ -209,13 +206,7 @@ final class ProfessionalSidebarStyles {
      */
     static void tracked(ParagraphBuilder paragraph, String text,
                         DocumentTextStyle style, double trackingEm) {
-        DocumentTextStyle spacer = style.withSize(trackingEm * style.size() / SPACE_ADVANCE_EM);
-        for (int i = 0; i < text.length(); i++) {
-            paragraph.inlineText(String.valueOf(text.charAt(i)), style);
-            if (i + 1 < text.length()) {
-                paragraph.inlineText(" ", spacer);
-            }
-        }
+        paragraph.inlineText(text, style.withLetterSpacing(DocumentLetterSpacing.ofFontSize(trackingEm)));
     }
 
     /** Strips a title down to the letters and digits a node name can carry. */

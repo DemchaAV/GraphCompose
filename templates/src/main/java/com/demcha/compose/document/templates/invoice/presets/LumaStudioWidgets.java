@@ -12,6 +12,7 @@ import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.style.ShapeOutline;
 
@@ -35,21 +36,20 @@ final class LumaStudioWidgets {
     /**
      * A run of letter-spaced text.
      *
-     * <p>A text style carries no tracking, so the gap between letters is an
-     * inline rectangle of the ground colour — invisible, and exactly as wide
-     * as the spacing asks for. The rectangle is 0.05pt tall so it takes no
-     * part in the line box.</p>
+     * <p>The letters stay one string and the pen carries the tracking, so a
+     * label reads and copies as the word it is. The gaps used to be inline
+     * rectangles of the ground colour, which is why this once took a ground
+     * to paint them in and no longer does.</p>
      *
      * @param name     the node name
      * @param text     the text to space out
      * @param style    the style of the letters
      * @param tracking the gap in points; zero or less writes the text plainly
-     * @param ground   the colour behind the run, which the gaps are painted in
      * @return the paragraph node
      */
     static DocumentNode tracked(String name, String text, DocumentTextStyle style,
-                                double tracking, DocumentColor ground) {
-        return tracked(name, text, style, tracking, ground, TextVerticalAlign.DEFAULT);
+                                double tracking) {
+        return tracked(name, text, style, tracking, TextVerticalAlign.DEFAULT);
     }
 
     /**
@@ -59,14 +59,12 @@ final class LumaStudioWidgets {
      * @param text          the text to space out
      * @param style         the style of the letters
      * @param tracking      the gap in points
-     * @param ground        the colour the gaps are painted in
      * @param verticalAlign where the text sits in its box
      * @return the paragraph node
      */
     static DocumentNode tracked(String name, String text, DocumentTextStyle style,
-                                double tracking, DocumentColor ground,
-                                TextVerticalAlign verticalAlign) {
-        return tracked(name, text, style, tracking, ground, TextAlign.LEFT, verticalAlign);
+                                double tracking, TextVerticalAlign verticalAlign) {
+        return tracked(name, text, style, tracking, TextAlign.LEFT, verticalAlign);
     }
 
     /**
@@ -77,32 +75,25 @@ final class LumaStudioWidgets {
      * @param text          the text to space out
      * @param style         the style of the letters
      * @param tracking      the gap in points
-     * @param ground        the colour the gaps are painted in
      * @param align         where the run sits across its box
      * @param verticalAlign where the text sits in its box
      * @return the paragraph node
      */
     static DocumentNode tracked(String name, String text, DocumentTextStyle style,
-                                double tracking, DocumentColor ground, TextAlign align,
+                                double tracking, TextAlign align,
                                 TextVerticalAlign verticalAlign) {
-        ParagraphBuilder paragraph = new ParagraphBuilder()
+        DocumentTextStyle run = tracking > 0
+                ? style.withLetterSpacing(DocumentLetterSpacing.points(tracking))
+                : style;
+        return new ParagraphBuilder()
                 .name(name)
-                .textStyle(style)
+                .textStyle(run)
                 .align(align)
                 .verticalAlign(verticalAlign)
                 .lineSpacing(0)
-                .margin(DocumentInsets.zero());
-        if (tracking <= 0) {
-            return paragraph.text(text).build();
-        }
-        return paragraph.rich(rich -> {
-            for (int index = 0; index < text.length(); index++) {
-                if (index > 0) {
-                    rich.shape(new ShapeOutline.Rectangle(tracking, 0.05), ground);
-                }
-                rich.style(String.valueOf(text.charAt(index)), style);
-            }
-        }).build();
+                .margin(DocumentInsets.zero())
+                .text(text)
+                .build();
     }
 
     /** A plain paragraph as a node, for anchoring inside a container. */
@@ -166,7 +157,7 @@ final class LumaStudioWidgets {
                 .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                 .centerLeft(disc(SECTION_DISC_SIZE, iconToken, SECTION_DISC_ICON_SIZE))
                 .position(tracked("SectionHeading", heading, SECTION_HEADING,
-                                TRACK_SECTION_HEADING, PAPER),
+                                TRACK_SECTION_HEADING),
                         SECTION_HEADING_OFFSET, 0, LayerAlign.CENTER_LEFT));
     }
 }

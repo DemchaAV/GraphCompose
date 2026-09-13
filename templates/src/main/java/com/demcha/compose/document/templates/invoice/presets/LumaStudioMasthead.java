@@ -156,7 +156,7 @@ final class LumaStudioMasthead {
                 .rectangle(META_WIDTH, TITLE_BLOCK_HEIGHT)
                 .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                 .position(tracked("InvoiceTitle", masthead.title(), INVOICE_TITLE,
-                                TRACK_TITLE, PAPER, TextVerticalAlign.TOP),
+                                TRACK_TITLE, TextVerticalAlign.TOP),
                         0, TITLE_CAP_INSET, LayerAlign.TOP_LEFT)
                 .position(new LineBuilder()
                                 .name("TitleRule")
@@ -173,7 +173,7 @@ final class LumaStudioMasthead {
                     .rectangle(META_WIDTH, META_ROW_HEIGHT)
                     .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                     .centerLeft(tracked("MetaLabel", entry.label(), META_LABEL,
-                            TRACK_META_LABEL, PAPER))
+                            TRACK_META_LABEL))
                     .position(paragraph(entry.value(), BODY, TextAlign.LEFT),
                             META_WIDTH * META_VALUE_SPLIT, 0, LayerAlign.CENTER_LEFT));
         }
@@ -220,7 +220,7 @@ final class LumaStudioMasthead {
             section.padding(new DocumentInsets(0, 0, 0, TEXT_INSET));
         }
         section.add(tracked("PartyHeading", heading, SECTION_HEADING,
-                        TRACK_SECTION_HEADING, PAPER))
+                        TRACK_SECTION_HEADING))
                 .addParagraph(p -> p
                         .name("PartyAddress")
                         .text(String.join(NEWLINE, addressOf(party)))

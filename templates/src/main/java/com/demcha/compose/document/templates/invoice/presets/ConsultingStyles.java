@@ -3,6 +3,7 @@ package com.demcha.compose.document.templates.invoice.presets;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -98,6 +99,15 @@ final class ConsultingStyles {
             style(SECTION_SIZE, DocumentTextDecoration.BOLD, ACCENT_PRIMARY);
     static final DocumentTextStyle INVOICE_TITLE =
             style(TITLE_SIZE, DocumentTextDecoration.BOLD, ACCENT_PRIMARY);
+
+    /**
+     * The heading treatment's tracking. It used to be a space written between
+     * every pair of letters, so the gap it replaces is one space advance — a
+     * quarter of whichever size the run carrying it is set at.
+     */
+    static final DocumentLetterSpacing HEADING_TRACKING =
+            DocumentLetterSpacing.ofFontSize(0.25);
+
     static final DocumentTextStyle BRAND_NAME =
             style(BODY_SIZE * 2.45, DocumentTextDecoration.BOLD, INK);
     static final DocumentTextStyle BRAND_MARK =

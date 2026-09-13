@@ -108,7 +108,7 @@ final class LumaStudioSidebar {
                                 .build(),
                         LOCKUP_LEFT, LOCKUP_RULE_Y, LayerAlign.TOP_LEFT)
                 .position(tracked("Wordmark", brand.name(), WORDMARK,
-                                TRACK_WORDMARK, ACCENT, TextVerticalAlign.TOP),
+                                TRACK_WORDMARK, TextVerticalAlign.TOP),
                         LOCKUP_LEFT, WORDMARK_Y, LayerAlign.TOP_LEFT)
                 .position(seated(brand.tagline(), TAGLINE),
                         LOCKUP_LEFT, TAGLINE_Y, LayerAlign.TOP_LEFT)

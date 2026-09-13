@@ -117,7 +117,7 @@ final class LumaStudioLines {
      */
     private static DocumentTableCell headerCell(String text, TextAlign align) {
         return DocumentTableCell.node(tracked("HeaderCell", text, TABLE_HEADER,
-                TRACK_TABLE_HEADER, INK_SURFACE, align, TextVerticalAlign.DEFAULT));
+                TRACK_TABLE_HEADER, align, TextVerticalAlign.DEFAULT));
     }
 
     /**

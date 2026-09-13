@@ -33,7 +33,7 @@ import static com.demcha.compose.document.templates.invoice.presets.ConsultingSt
 import static com.demcha.compose.document.templates.invoice.presets.ConsultingStyles.SMALL_BOLD;
 import static com.demcha.compose.document.templates.invoice.presets.ConsultingStyles.SUPPLIER_WIDTH;
 import static com.demcha.compose.document.templates.invoice.presets.ConsultingText.link;
-import static com.demcha.compose.document.templates.invoice.presets.ConsultingText.tracked;
+import static com.demcha.compose.document.templates.invoice.presets.ConsultingStyles.HEADING_TRACKING;
 
 /**
  * The masthead of the Consulting Invoice: the sender's lockup and contact
@@ -116,8 +116,8 @@ final class ConsultingMasthead {
                         .margin(DocumentInsets.zero()))
                 .addParagraph(paragraph -> paragraph
                         .text(brand.qualifier().isBlank()
-                                ? "" : "—  " + tracked(brand.qualifier()) + "  —")
-                        .textStyle(BRAND_QUALIFIER)
+                                ? "" : "—  " + brand.qualifier() + "  —")
+                        .textStyle(BRAND_QUALIFIER.withLetterSpacing(HEADING_TRACKING))
                         .align(TextAlign.CENTER)
                         .margin(DocumentInsets.zero()))
                 .addParagraph(paragraph -> paragraph
@@ -152,8 +152,8 @@ final class ConsultingMasthead {
                 .padding(0, 0, 0, 24)
                 .spacing(1)
                 .addParagraph(paragraph -> paragraph
-                        .text(tracked(masthead.title()))
-                        .textStyle(INVOICE_TITLE)
+                        .text(masthead.title())
+                        .textStyle(INVOICE_TITLE.withLetterSpacing(HEADING_TRACKING))
                         .margin(DocumentInsets.bottom(8)));
         for (InvoiceMasthead.Entry entry : masthead.entries()) {
             metadataBand(section, entry);
@@ -206,8 +206,8 @@ final class ConsultingMasthead {
             return;
         }
         section.addParagraph(paragraph -> paragraph
-                        .text(tracked(heading))
-                        .textStyle(SECTION_HEADING)
+                        .text(heading)
+                        .textStyle(SECTION_HEADING.withLetterSpacing(HEADING_TRACKING))
                         .lineSpacing(1.0)
                         .margin(DocumentInsets.zero()))
                 .addLine(line -> line

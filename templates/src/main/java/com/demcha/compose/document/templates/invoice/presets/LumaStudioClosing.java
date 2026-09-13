@@ -98,8 +98,7 @@ final class LumaStudioClosing {
                     .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                     .position(tracked("TotalsLabel", label,
                                     emphasised ? TOTAL_DUE_LABEL : TOTAL_LABEL,
-                                    TRACK_TOTAL_LABEL,
-                                    emphasised ? PANEL_HIGHLIGHT : PAPER),
+                                    TRACK_TOTAL_LABEL),
                             TOTALS_LABEL_INSET, 0, LayerAlign.CENTER_LEFT)
                     .position(paragraph(amount,
                                     emphasised ? TOTAL_DUE_AMOUNT : TOTAL_AMOUNT,

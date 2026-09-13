@@ -83,23 +83,6 @@ final class ConsultingText {
     }
 
     /**
-     * Spaces a value out into tracked capitals (the heading treatment).
-     *
-     * @param value the text, already in the case it is set in
-     * @return the tracked text
-     */
-    static String tracked(String value) {
-        StringBuilder tracked = new StringBuilder(value.length() * 2);
-        for (int index = 0; index < value.length(); index++) {
-            if (index > 0) {
-                tracked.append(' ');
-            }
-            tracked.append(value.charAt(index));
-        }
-        return tracked.toString();
-    }
-
-    /**
      * Formats a quantity at two decimal places, without grouping.
      *
      * @param value the quantity

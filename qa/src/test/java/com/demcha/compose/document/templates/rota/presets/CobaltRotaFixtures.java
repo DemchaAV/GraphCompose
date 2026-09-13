@@ -35,13 +35,13 @@ import java.util.List;
  * invented. The shape is a real week's, because that is what the gates have to
  * measure against; the content is not anyone's.</p>
  */
-final class CobaltRotaFixtures {
+public final class CobaltRotaFixtures {
 
     private CobaltRotaFixtures() {
     }
 
     /** One week of a bar's rota. */
-    static StructuredRotaDocumentSpec canonicalRota() {
+    public static StructuredRotaDocumentSpec canonicalRota() {
         return StructuredRotaDocumentSpec.from(StructuredRotaData.builder()
                 // A short wordmark on purpose: the lockup is sized by a fixed
                 // fraction of its column, so a long name wraps rather than

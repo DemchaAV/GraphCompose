@@ -129,7 +129,7 @@ class CoverLetterV2VisualParityTest {
      * <p>Kept inline (not pulled from the examples module) so the test
      * depends only on main + main-test code.</p>
      */
-    private static CoverLetterDocument canonicalLetter() {
+    static CoverLetterDocument canonicalLetter() {
         return CoverLetterDocument.builder()
                 .identity(CvIdentity.builder()
                         .name("Jordan", "Rivera")

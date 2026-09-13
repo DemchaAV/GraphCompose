@@ -78,7 +78,7 @@ class ProposalV2VisualParityTest {
      * emphasized total), the acceptance terms, and the footer. Kept inline
      * so the test depends only on main + main-test code.
      */
-    private static ProposalDocumentSpec canonicalProposal() {
+    static ProposalDocumentSpec canonicalProposal() {
         return ProposalDocumentSpec.from(ProposalData.builder()
                 .title("Proposal")
                 .proposalNumber("GC-P-2026-014")

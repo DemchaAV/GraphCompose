@@ -12,6 +12,8 @@ import com.demcha.compose.document.templates.invoice.presets.LumaStudioInvoice;
 import com.demcha.compose.document.templates.invoice.presets.LumaStudioInvoiceFixtures;
 import com.demcha.compose.document.templates.receipt.presets.ModernReceipt;
 import com.demcha.compose.document.templates.receipt.presets.ReceiptFixtures;
+import com.demcha.compose.document.templates.rota.presets.CobaltRota;
+import com.demcha.compose.document.templates.rota.presets.CobaltRotaFixtures;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -110,6 +112,15 @@ class TemplateTextLayerGateTest {
 
         assertThat(extracted).contains("NORTHPOINT");
         assertThat(extracted).contains("CONSULTING");
+        assertThat(spelledOutRuns(extracted)).isEmpty();
+    }
+
+    /** The rota family's only preset, which no committed preview renders. */
+    @Test
+    void theRotaReadsBackAsWords() throws Exception {
+        String extracted = extract(session ->
+                CobaltRota.create().compose(session, CobaltRotaFixtures.canonicalRota()));
+
         assertThat(spelledOutRuns(extracted)).isEmpty();
     }
 

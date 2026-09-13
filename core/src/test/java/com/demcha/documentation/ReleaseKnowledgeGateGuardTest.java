@@ -25,10 +25,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>This holds four properties: the tooling check runs before either mode of
  * {@code cut-release.ps1} mutates, it terminates rather than warns, what it
- * gates covers what the tag will re-check, and the release runbook describes
- * that contract rather than the one it replaced. They are read structurally —
- * by where things sit relative to each other — rather than by line number, so
- * ordinary edits to the script do not redden it.</p>
+ * gates and what the tag will re-check are the same tools, and the release
+ * runbook describes that contract rather than the one it replaced. They are
+ * read structurally — by where things sit relative to each other — rather
+ * than by line number, so ordinary edits to the script do not redden it.</p>
  *
  * <p>What a text reading cannot say is whether the {@code throw} is reachable:
  * invert the condition to {@code if (Get-Command node)} and every assertion
@@ -125,7 +125,7 @@ class ReleaseKnowledgeGateGuardTest {
     // --- C. parity with what the tag will re-check -------------------------
 
     @Test
-    void theLocalGateCoversEveryKnowledgeCheckTheTagWillRun() throws IOException {
+    void theLocalAndTagTimeGatesRunTheSameKnowledgeTools() throws IOException {
         List<String> local = knowledgeCommands(Files.readString(SCRIPT));
         List<String> onTag = knowledgeCommands(Files.readString(RELEASE_WORKFLOW));
 
@@ -137,13 +137,21 @@ class ReleaseKnowledgeGateGuardTest {
                 .isNotEmpty();
 
         // --check variants are a tag-time refinement of the same tool; compare
-        // the tools themselves, which is what can silently diverge.
+        // the tools themselves, which is what can silently diverge. The contract
+        // is which tools each side runs, not the order it runs them in.
         List<String> localTools = local.stream().map(ReleaseKnowledgeGateGuardTest::tool).distinct().toList();
-        assertThat(onTag.stream().map(ReleaseKnowledgeGateGuardTest::tool).distinct().toList())
+        List<String> tagTools = onTag.stream().map(ReleaseKnowledgeGateGuardTest::tool).distinct().toList();
+
+        assertThat(tagTools)
                 .describedAs("the tag re-runs a knowledge tool the local gate never ran, so "
                         + "a cut can push a tag that its own machine could not have predicted "
                         + "would fail")
-                .allSatisfy(onTagTool -> assertThat(localTools).contains(onTagTool));
+                .isSubsetOf(localTools);
+        assertThat(localTools)
+                .describedAs("the local gate runs a knowledge tool the tag does not re-run, so "
+                        + "the independent re-verification after push does not cover it — a "
+                        + "tag pushed without the script ships whatever that tool would catch")
+                .isSubsetOf(tagTools);
     }
 
     @Test
@@ -185,9 +193,16 @@ class ReleaseKnowledgeGateGuardTest {
 
     // --- helpers ----------------------------------------------------------
 
-    /** Every {@code node knowledge/tools/...} command a file invokes. */
+    /**
+     * Every {@code node knowledge/tools/...} command a file invokes, one per match.
+     *
+     * <p>A command's flags end with its line. {@code release.yml} runs its commands on
+     * consecutive lines of one {@code run:} block, and a flag class that also matched a
+     * line break ran on into the next command and swallowed its prefix, hiding that
+     * command from the parity check.</p>
+     */
     private static List<String> knowledgeCommands(String content) {
-        Matcher matcher = Pattern.compile("node knowledge/tools/[\\w./-]+\\.mjs[\\w\\s-]*")
+        Matcher matcher = Pattern.compile("node knowledge/tools/[\\w./-]+\\.mjs[\\w -]*")
                 .matcher(content);
         List<String> commands = new ArrayList<>();
         while (matcher.find()) {

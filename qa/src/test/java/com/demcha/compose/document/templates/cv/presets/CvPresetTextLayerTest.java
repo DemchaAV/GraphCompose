@@ -49,6 +49,9 @@ class CvPresetTextLayerTest {
     private static final List<String> PROBES =
             List.of("Platform", "certification", "retired", "drafts", "fifteen");
 
+    /** Margin for presets whose design paints to the page edge. */
+    private static final double FULL_BLEED = 0.0;
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("presets")
     void theProfileTextIsInTheFileAsItWasWritten(
@@ -105,6 +108,9 @@ class CvPresetTextLayerTest {
                 .pageSize(DocumentPageSize.A4)
                 .margin(m, m, m, m)
                 .create()) {
+            // OrangeOps names Oswald and leaves registering it to the caller, so
+            // every session here carries it; the other presets do not ask for it.
+            OrangeOpsTestFont.register(session);
             template.compose(session, probeDocument());
             pdf = session.toPdfBytes();
         }
@@ -154,7 +160,23 @@ class CvPresetTextLayerTest {
                 preset("engineering_resume", EngineeringResume.RECOMMENDED_MARGIN, EngineeringResume::create),
                 preset("monogram_sidebar", MonogramSidebar.RECOMMENDED_MARGIN, MonogramSidebar::create),
                 preset("sidebar_portrait", SidebarPortrait.RECOMMENDED_MARGIN, SidebarPortrait::create),
-                preset("mint_editorial", MintEditorial.RECOMMENDED_MARGIN, MintEditorial::create));
+                preset("mint_editorial", MintEditorial.RECOMMENDED_MARGIN, MintEditorial::create),
+                // The promoted presets. They were absent from this list while each
+                // grew its own letter-by-letter tracker, which is exactly how ten
+                // of them shipped spelling their headings out in the text layer.
+                preset("charcoal_gold", CharcoalGold.RECOMMENDED_MARGIN, CharcoalGold::create),
+                preset("navy_sidebar", NavySidebar.RECOMMENDED_MARGIN, NavySidebar::create),
+                preset("professional_sidebar", ProfessionalSidebar.RECOMMENDED_MARGIN, ProfessionalSidebar::create),
+                preset("serif_headline", SerifHeadline.RECOMMENDED_MARGIN, SerifHeadline::create),
+                preset("terracotta_rail", TerracottaRail.RECOMMENDED_MARGIN, TerracottaRail::create),
+                // Full-bleed designs: they paint to the page edge and publish no
+                // recommended margin, so they are composed the way their own
+                // snapshot tests compose them.
+                preset("midnight_navy", FULL_BLEED, MidnightNavy::create),
+                preset("orange_ops", FULL_BLEED, OrangeOps::create),
+                preset("slate_orange", FULL_BLEED, SlateOrange::create),
+                preset("teal_pulse", FULL_BLEED, TealPulse::create),
+                preset("violet_grid", FULL_BLEED, VioletGrid::create));
     }
 
     private static Arguments preset(String slug, double margin,

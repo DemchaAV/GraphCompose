@@ -21,7 +21,7 @@ import java.util.List;
  * geometry shift the pixel budget absorbs still trips the exact snapshot,
  * and vice versa.
  */
-final class LumaStudioInvoiceFixtures {
+public final class LumaStudioInvoiceFixtures {
 
     /** The break the sheet stacks its multi-line notes on. */
     private static final String NEWLINE = String.valueOf((char) 10);
@@ -34,7 +34,7 @@ final class LumaStudioInvoiceFixtures {
      * exercising the sidebar lockup, both party blocks, the VAT column, the
      * total-due band, the notes and payment pair, and the sign-off band.
      */
-    static StructuredInvoiceDocumentSpec canonicalInvoice() {
+    public static StructuredInvoiceDocumentSpec canonicalInvoice() {
         return StructuredInvoiceDocumentSpec.from(base().build());
     }
 

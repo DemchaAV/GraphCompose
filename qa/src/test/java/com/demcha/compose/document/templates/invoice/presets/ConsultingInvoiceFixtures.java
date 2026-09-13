@@ -36,13 +36,13 @@ import java.util.List;
  * {@code ConsultingInvoiceSampleData} — the two modules cannot share a
  * source file, so a content change here belongs there too.</p>
  */
-final class ConsultingInvoiceFixtures {
+public final class ConsultingInvoiceFixtures {
 
     private ConsultingInvoiceFixtures() {
     }
 
     /** The single-page reference invoice. */
-    static StructuredInvoiceDocumentSpec canonicalInvoice() {
+    public static StructuredInvoiceDocumentSpec canonicalInvoice() {
         return StructuredInvoiceDocumentSpec.from(baseBuilder(serviceLines(5)).build());
     }
 

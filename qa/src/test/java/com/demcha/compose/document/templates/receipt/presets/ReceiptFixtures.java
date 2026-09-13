@@ -11,7 +11,7 @@ import com.demcha.compose.document.templates.data.receipt.ReceiptStatus;
  * <p>Kept in the test tree and built only from main code, so the gates depend on the
  * templates module and not on the examples module.</p>
  */
-final class ReceiptFixtures {
+public final class ReceiptFixtures {
 
     private ReceiptFixtures() {
     }
@@ -23,7 +23,7 @@ final class ReceiptFixtures {
      *
      * @return the canonical receipt spec shared by every receipt gate
      */
-    static ReceiptDocumentSpec canonicalReceipt() {
+    public static ReceiptDocumentSpec canonicalReceipt() {
         return ReceiptDocumentSpec.of(receipt -> receipt
                 .documentTitle("Transfer confirmation")
                 .issuerName("Northwind Pay")

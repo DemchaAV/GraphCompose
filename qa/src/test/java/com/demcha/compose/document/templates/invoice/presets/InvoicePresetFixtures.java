@@ -1,7 +1,12 @@
 package com.demcha.compose.document.templates.invoice.presets;
 
+import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import org.junit.jupiter.params.provider.Arguments;
+
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Shared fixture data for the invoice preset gates — the SAME specs feed
@@ -11,6 +16,22 @@ import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 final class InvoicePresetFixtures {
 
     private InvoicePresetFixtures() {
+    }
+
+    /**
+     * The {@link InvoiceDocumentSpec} presets {@link InvoicePresetLayoutSnapshotTest}
+     * snapshots, as (slug, recommended margin, factory).
+     *
+     * <p>{@code ClassicInvoice} takes the same spec but is not listed:
+     * {@code ClassicInvoiceLayoutSnapshotTest} already pins it on
+     * {@link #canonicalInvoice()} at the same margin, plus the overflow case, so
+     * listing it here would record the same page twice.</p>
+     */
+    static Stream<Arguments> layoutSnapshotPresets() {
+        return Stream.of(
+                Arguments.of("modern_invoice",
+                        ModernInvoice.RECOMMENDED_MARGIN,
+                        (Supplier<DocumentTemplate<InvoiceDocumentSpec>>) ModernInvoice::create));
     }
 
     /**

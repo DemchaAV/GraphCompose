@@ -93,6 +93,27 @@ class TemplateTextLayerGateTest {
     }
 
     /**
+     * The brand qualifier is tracked; the rules that flank it are not.
+     *
+     * <p>Reached only when the brand carries no logo, which no committed
+     * preview does — so this is the one place the text lockup is drawn at all.
+     * The tracking belongs to the word: applying it to the whole run would
+     * spread the two rules away from the word they point at, which is a
+     * styling change rather than the text-layer fix, and centre alignment
+     * hides it from the layout snapshot.</p>
+     */
+    @Test
+    void onlyTheBrandQualifierIsTracked() throws Exception {
+        String extracted = extract(session ->
+                ConsultingInvoice.create().compose(
+                        session, ConsultingInvoiceFixtures.logolessInvoice()));
+
+        assertThat(extracted).contains("NORTHPOINT");
+        assertThat(extracted).contains("CONSULTING");
+        assertThat(spelledOutRuns(extracted)).isEmpty();
+    }
+
+    /**
      * The control. This preset never faked its tracking — it has carried
      * native spaced caps from the day it shipped — so it is the case that must
      * keep passing. If a change to the detector ever reddens this one, the

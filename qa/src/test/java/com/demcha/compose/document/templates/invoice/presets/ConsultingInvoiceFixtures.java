@@ -46,6 +46,19 @@ public final class ConsultingInvoiceFixtures {
         return StructuredInvoiceDocumentSpec.from(baseBuilder(serviceLines(5)).build());
     }
 
+    /**
+     * The same invoice with no logo, which is the only way to reach the text
+     * lockup — the brand name over its qualifier, flanked by two rules. Every
+     * other fixture supplies a logo, so that branch of the masthead is drawn
+     * by no committed preview.
+     */
+    public static StructuredInvoiceDocumentSpec logolessInvoice() {
+        return StructuredInvoiceDocumentSpec.from(baseBuilder(serviceLines(5))
+                .brand(new InvoiceBrand(null, "NORTHPOINT", "CONSULTING",
+                        "Strategy. Solutions. Results."))
+                .build());
+    }
+
     /** Enough service lines to push the table onto a second page. */
     static StructuredInvoiceDocumentSpec overflowInvoice() {
         return StructuredInvoiceDocumentSpec.from(baseBuilder(serviceLines(26)).build());

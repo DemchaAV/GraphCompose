@@ -115,9 +115,20 @@ final class ConsultingMasthead {
                         .lineSpacing(1.0)
                         .margin(DocumentInsets.zero()))
                 .addParagraph(paragraph -> paragraph
-                        .text(brand.qualifier().isBlank()
-                                ? "" : "—  " + brand.qualifier() + "  —")
-                        .textStyle(BRAND_QUALIFIER.withLetterSpacing(HEADING_TRACKING))
+                        // Three runs, because only the word is tracked. The rules
+                        // that flank it are punctuation set at the qualifier's own
+                        // size; tracking them would spread the dashes off the word
+                        // they point at.
+                        .rich(rich -> {
+                            if (brand.qualifier().isBlank()) {
+                                return;
+                            }
+                            rich.style("—  ", BRAND_QUALIFIER)
+                                    .style(brand.qualifier(),
+                                            BRAND_QUALIFIER.withLetterSpacing(HEADING_TRACKING))
+                                    .style("  —", BRAND_QUALIFIER);
+                        })
+                        .textStyle(BRAND_QUALIFIER)
                         .align(TextAlign.CENTER)
                         .margin(DocumentInsets.zero()))
                 .addParagraph(paragraph -> paragraph

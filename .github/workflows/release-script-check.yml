@@ -6,8 +6,8 @@ name: Release Script Check
 # unnoticed and only surface mid-release. This runs the script's dry-runs — which
 # exercise every code path except the actual git/Maven mutations — plus focused unit
 # checks of the helpers a dry-run cannot reach on its own: the version arithmetic, the
-# README and roadmap promotions, the japicmp baseline move, and the knowledge-tooling
-# refusal. It creates no tag and touches no remote.
+# README install-snippet bump, the README and roadmap promotions, the japicmp baseline
+# move, and the knowledge-tooling refusal. It creates no tag and touches no remote.
 
 on:
   push:
@@ -273,6 +273,95 @@ jobs:
           }
 
           Write-Host "release-status: a staged story is promoted, a patch keeps its line's headline."
+
+      - name: Unit-check the README install-snippet bump
+        shell: pwsh
+        run: |
+          # Every train coordinate the root README names moves with a final cut, not only
+          # graph-compose: v2.4.0 shipped graph-compose-testing:2.3.0 beside
+          # graph-compose:2.4.0 because the bump matched the bare coordinate alone. The
+          # companions version on their own tags and must stay put. Lifted by AST like the
+          # checks around it, so the code under test is the code that ships.
+          $path = (Resolve-Path scripts/cut-release.ps1).Path
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
+          $fn = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Update-ReadmeInstallVersion'
+            }, $true) | Select-Object -First 1
+          if (-not $fn) { throw 'cut-release.ps1 no longer defines Update-ReadmeInstallVersion' }
+          $calls = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.CommandAst] -and $n.GetCommandName() -eq 'Update-ReadmeInstallVersion'
+            }, $true)
+          if ($calls.Count -eq 0) { throw 'nothing in cut-release.ps1 calls Update-ReadmeInstallVersion' }
+          Invoke-Expression $fn.Extent.Text
+          function Note($m) { Write-Host "    $m" }
+          $DryRun = $false
+
+          # 1. A fixture carrying every shape, against its exact expected text. The test
+          #    coordinate starts a release behind, as it did on the README that shipped.
+          $fixture = Join-Path ([IO.Path]::GetTempPath()) ("readme-" + [guid]::NewGuid().ToString() + ".md")
+          Set-Content -Path $fixture -NoNewline -Value (@(
+            '    <artifactId>graph-compose</artifactId>',
+            '    <version>1.2.3</version>',
+            'dependencies { implementation("io.github.demchaav:graph-compose:1.2.3") }',
+            '    <artifactId>graph-compose-testing</artifactId>',
+            '    <version>1.2.2</version>',
+            'dependencies { testImplementation("io.github.demchaav:graph-compose-testing:1.2.2") }',
+            '    <artifactId>graph-compose-fonts</artifactId>',
+            '    <version>1.1.0</version>',
+            'dependencies { implementation("io.github.demchaav:graph-compose-emoji:1.0.0") }'
+          ) -join "`n")
+          $expected = @(
+            '    <artifactId>graph-compose</artifactId>',
+            '    <version>9.9.9</version>',
+            'dependencies { implementation("io.github.demchaav:graph-compose:9.9.9") }',
+            '    <artifactId>graph-compose-testing</artifactId>',
+            '    <version>9.9.9</version>',
+            'dependencies { testImplementation("io.github.demchaav:graph-compose-testing:9.9.9") }',
+            '    <artifactId>graph-compose-fonts</artifactId>',
+            '    <version>1.1.0</version>',
+            'dependencies { implementation("io.github.demchaav:graph-compose-emoji:1.0.0") }'
+          ) -join "`n"
+          Update-ReadmeInstallVersion $fixture '9.9.9'
+          $after = Get-Content $fixture -Raw
+          if ($after -ne $expected) { throw "the fixture did not bump to its expected text:`n$after" }
+          Update-ReadmeInstallVersion $fixture '9.9.9'
+          if ((Get-Content $fixture -Raw) -ne $expected) { throw 'a second bump changed the fixture' }
+
+          # 2. The real README: nothing left behind, and nothing but version tokens moved.
+          $copy = Join-Path ([IO.Path]::GetTempPath()) ("readme-real-" + [guid]::NewGuid().ToString() + ".md")
+          Copy-Item README.md $copy
+          Update-ReadmeInstallVersion $copy '9.9.9'
+          $old = @(Get-Content README.md)
+          $new = @(Get-Content $copy)
+          if ($old.Count -ne $new.Count) { throw 'the bump changed the README line count' }
+          $companions = @('graph-compose-fonts', 'graph-compose-emoji')
+          $checked = 0
+          for ($i = 0; $i -lt $new.Count; $i++) {
+            if ($old[$i] -ne $new[$i] -and $new[$i] -notmatch '9\.9\.9') {
+              throw "README line $($i + 1) changed without taking the new version: $($new[$i])"
+            }
+            if ($new[$i] -match '<artifactId>(graph-compose[\w-]*)</artifactId>') {
+              $artifact = $Matches[1]
+              if ($artifact -notin $companions) {
+                $window = $new[$i..([Math]::Min($i + 3, $new.Count - 1))] -join "`n"
+                $version = [regex]::Match($window, '<version>([^<]+)</version>').Groups[1].Value
+                if ($version -ne '9.9.9') { throw "README $artifact Maven snippet reads '$version' after the bump" }
+                $checked++
+              }
+            }
+            foreach ($gradle in [regex]::Matches($new[$i], 'io\.github\.demchaav:(graph-compose[\w-]*):([^"'')\s]+)')) {
+              if ($gradle.Groups[1].Value -in $companions) { continue }
+              if ($gradle.Groups[2].Value -ne '9.9.9') {
+                throw "README $($gradle.Groups[1].Value) Gradle snippet reads '$($gradle.Groups[2].Value)' after the bump"
+              }
+              $checked++
+            }
+          }
+          if ($checked -lt 2) { throw "the README should carry at least the graph-compose Maven and Gradle snippets; checked $checked" }
+
+          Write-Host "README install snippets: every train coordinate moves, companions stay, idempotent; real README $checked coordinates checked."
 
       - name: Unit-check the roadmap promotion (refusals and the real rewrite)
         shell: pwsh

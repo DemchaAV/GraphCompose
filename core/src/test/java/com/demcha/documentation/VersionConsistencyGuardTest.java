@@ -555,6 +555,17 @@ class VersionConsistencyGuardTest {
                 .isNull();
     }
 
+    /**
+     * The root README's install snippets advertise the version a reader can resolve.
+     *
+     * <p>The {@code graph-compose} Maven and Gradle snippets have to be there, and so does
+     * every other GraphCompose coordinate the page tells a reader to add. v2.4.0 shipped a
+     * README whose {@code graph-compose-testing} snippet still read 2.3.0 beside
+     * {@code graph-compose} 2.4.0: this check and the release script's bump both matched
+     * the bare {@code graph-compose} coordinate alone, and the train is only a
+     * tested-compatible set when every module carries the same version. A companion
+     * coordinate (fonts, emoji) is held to its own pom, as it is under {@code docs/}.</p>
+     */
     @Test
     void readmeInstallSnippetsMatchTheProjectVersion() throws Exception {
         Set<String> targets = acceptableTargets();
@@ -569,6 +580,10 @@ class VersionConsistencyGuardTest {
         assertThat(gradleSnippetVersion)
                 .describedAs("README Gradle install snippet must reference the latest published release, or the release version in a release commit (one of %s)", targets)
                 .isIn(targets);
+        assertThat(driftIn(coordinatesIn("README.md", readme), targets))
+                .describedAs("every GraphCompose install coordinate in README.md must advertise the version a "
+                        + "reader can resolve beside graph-compose, not only graph-compose itself")
+                .isEmpty();
     }
 
     /**
@@ -670,15 +685,7 @@ class VersionConsistencyGuardTest {
     void documentationInstallSnippetsMatchTheProjectVersion() throws Exception {
         Set<String> trainTargets = acceptableTargets();
         List<DocCoordinate> coordinates = documentationCoordinates();
-        List<String> drift = new ArrayList<>();
-
-        for (DocCoordinate coordinate : coordinates) {
-            Set<String> expected = expectedVersionsFor(coordinate.artifact(), trainTargets);
-            if (!expected.contains(coordinate.version())) {
-                drift.add("%s:%d %s advertises %s, expected one of %s".formatted(
-                        coordinate.page(), coordinate.line(), coordinate.artifact(), coordinate.version(), expected));
-            }
-        }
+        List<String> drift = driftIn(coordinates, trainTargets);
 
         assertThat(coordinates)
                 .describedAs("no versioned install coordinate found under docs/ — this guard would cover nothing")
@@ -750,15 +757,38 @@ class VersionConsistencyGuardTest {
         for (Path page : pages) {
             String text = Files.readString(page);
             String name = PROJECT_ROOT.relativize(page).toString().replace('\\', '/');
-            for (Pattern pattern : List.of(DOCS_MAVEN_COORDINATE, DOCS_GRADLE_COORDINATE)) {
-                Matcher coordinate = pattern.matcher(text);
-                while (coordinate.find()) {
-                    found.add(new DocCoordinate(name, lineOf(text, coordinate.start()),
-                            coordinate.group(1), coordinate.group(2).trim()));
-                }
+            found.addAll(coordinatesIn(name, text));
+        }
+        return found;
+    }
+
+    /** Every versioned GraphCompose coordinate in one page, Maven form first, then Gradle. */
+    private static List<DocCoordinate> coordinatesIn(String page, String text) {
+        List<DocCoordinate> found = new ArrayList<>();
+        for (Pattern pattern : List.of(DOCS_MAVEN_COORDINATE, DOCS_GRADLE_COORDINATE)) {
+            Matcher coordinate = pattern.matcher(text);
+            while (coordinate.find()) {
+                found.add(new DocCoordinate(page, lineOf(text, coordinate.start()),
+                        coordinate.group(1), coordinate.group(2).trim()));
             }
         }
         return found;
+    }
+
+    /**
+     * The coordinates that advertise a version a reader cannot resolve beside the rest of
+     * the train: a train artifact off {@code trainTargets}, or a companion off its own pom.
+     */
+    private List<String> driftIn(List<DocCoordinate> coordinates, Set<String> trainTargets) throws Exception {
+        List<String> drift = new ArrayList<>();
+        for (DocCoordinate coordinate : coordinates) {
+            Set<String> expected = expectedVersionsFor(coordinate.artifact(), trainTargets);
+            if (!expected.contains(coordinate.version())) {
+                drift.add("%s:%d %s advertises %s, expected one of %s".formatted(
+                        coordinate.page(), coordinate.line(), coordinate.artifact(), coordinate.version(), expected));
+            }
+        }
+        return drift;
     }
 
     /** The {@code $docPage} lists in {@code cut-release.ps1}, in source order: bump first, staging second. */

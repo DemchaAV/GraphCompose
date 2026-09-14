@@ -43,6 +43,16 @@
     flagships: 'Flagship'
   };
 
+  // The ATS statuses that earn the "ATS-friendly" chip on a CV card.
+  // ShowcaseSync already writes whether a card has one; the status is
+  // checked here as well, so a badge flag edited on its own shows nothing.
+  const ATS_BADGE_STATUSES = new Set([
+    'ATS_CERTIFIED',
+    'ATS_COMPATIBLE_WITH_KNOWN_PARSER_LIMITATIONS'
+  ]);
+  const ATS_BADGE_CLAIM = 'Validated for text extraction, section recognition and reading order '
+    + 'using multiple independent PDF resume parsers.';
+
   // Groups whose card grid is collapsed by default to "first 4
   // visible + Show all (N)" — protects the page from the 15-letter
   // cover letter wall while still letting users browse the full set.
@@ -305,9 +315,33 @@
       example.id || '',
       example.title || '',
       example.description || '',
-      (example.tags || []).join(' ')
+      (example.tags || []).join(' '),
+      hasAtsBadge(example) ? 'ats-friendly' : ''
     ].join(' ').toLowerCase();
     return haystack.includes(activeQuery);
+  }
+
+  // A card shows the chip only when the manifest marks the badge AND its
+  // status is one that earns it.
+  function hasAtsBadge(example) {
+    const ats = example.ats;
+    return !!ats && ats.badge === true && ATS_BADGE_STATUSES.has(ats.status);
+  }
+
+  // The chip's tooltip: the conservative claim, a compatible preset's known
+  // limitation, and when and with what the sample was checked.
+  function atsBadgeTitle(ats) {
+    const parts = [ATS_BADGE_CLAIM];
+    const limitations = ats.knownLimitations || [];
+    if (limitations.length) {
+      parts.push('Known parser limitation: ' + limitations.join(' '));
+    }
+    if (ats.lastValidated) {
+      const tested = ats.tested || [];
+      parts.push('Checked on ' + ats.lastValidated + ' against the sample shown'
+        + (tested.length ? ', with ' + tested.join(', ') : '') + '.');
+    }
+    return parts.join(' ');
   }
 
   function renderCategory(category, groupBlocks, count) {
@@ -351,6 +385,17 @@
   function renderCard(ex) {
     const tags = (ex.tags || [])
       .map(t => '<span class="tag">' + escHtml(t) + '</span>').join('');
+    // The chip links to the documented claim, so a keyboard or touch visitor
+    // reaches the caveats a pointer reads in the tooltip. The claim also rides
+    // in visually hidden text for a screen reader.
+    const atsTitle = hasAtsBadge(ex) ? atsBadgeTitle(ex.ats) : '';
+    const atsNote = '<span class="ats-badge-note">. ' + escHtml(atsTitle) + '</span>';
+    const atsBadge = !atsTitle
+      ? ''
+      : ex.ats.details
+        ? '<a class="ats-badge" href="' + escAttr(ex.ats.details) + '" target="_blank" rel="noopener"'
+          + ' title="' + escAttr(atsTitle) + '">ATS-friendly' + atsNote + '</a>'
+        : '<span class="ats-badge" title="' + escAttr(atsTitle) + '">ATS-friendly' + atsNote + '</span>';
     const screenshot = ex.screenshot || '';
     const pdf = ex.pdf || '';
     const pptx = ex.pptx || '';
@@ -373,7 +418,7 @@
       '  <div class="example-body">',
       '    <h5 class="example-title">' + escHtml(ex.title || ex.id || '') + '</h5>',
       '    <p class="example-desc">' + escHtml(ex.description || '') + '</p>',
-      tags ? '    <div class="example-tags">' + tags + '</div>' : '',
+      (atsBadge || tags) ? '    <div class="example-tags">' + atsBadge + tags + '</div>' : '',
       '    <div class="example-actions">',
       '      <a class="example-action" href="' + escAttr(pdf) + '" target="_blank" rel="noopener" aria-label="Open PDF">View PDF</a>',
       // A twin flagship also ships the deck the same session emitted. Only the

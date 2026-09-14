@@ -215,6 +215,38 @@ BoxedSections.create(BrandTheme.boxedClassic())    // explicit
 BoxedSections.create(myCustomTheme)             // your own
 ```
 
+<a id="ats-friendly-presets"></a>
+### ATS-friendly and design-first presets
+
+Many applicant tracking systems read a CV with a PDF parser before a person
+sees it, so every CV preset falls into one of two categories:
+
+- **ATS-friendly** — validated for text extraction, section recognition and
+  reading order using multiple independent PDF resume parsers. The showcase
+  marks these with an "ATS-friendly" badge.
+- **Design-first** — the layout is the point of the design: a sidebar,
+  columns, a monogram. The text still extracts, but the layout costs a parser
+  at least one of those checks, and the preset keeps its design rather than
+  trading it away.
+
+The badge is earned, not assumed. Each preset's showcase sample was read with
+the OpenResume parser (pdf.js), ATS Reader (pdfplumber) and resume-parser-ats
+(pdf-parse), last on 2026-09-14. It is not a claim about every ATS product,
+and a document with different content can parse differently.
+
+| ATS-friendly preset | Known parser limitation |
+|---|---|
+| `BlueBanner.create()` | — |
+| `BoxedSections.create()` | — |
+| `CenteredHeadline.create()` | — |
+| `ClassicSerif.create()` | — |
+| `EditorialBlue.create()` | — |
+| `Executive.create()` | — |
+| `MinimalUnderlined.create()` | — |
+| `ModernProfessional.create()` | ATS Reader does not recognise the multi-word headings "Professional Experience" and "Technical Skills"; the other two parsers do |
+
+Every other CV preset is design-first.
+
 ### Presets that cap content
 
 Three presets are compositions for a fixed amount of content rather than

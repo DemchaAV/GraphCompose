@@ -47,7 +47,10 @@ import java.util.stream.Stream;
  * grouping every example by category and group. Per-example titles,
  * descriptions, and tags come from the hand-curated
  * {@link ShowcaseMetadata} catalogue; entries without metadata fall
- * back to a sensible filename-derived default.</p>
+ * back to a sensible filename-derived default. A CV preset's card also
+ * carries its {@code ats} classification — the status, whether it earns
+ * the "ATS-friendly" badge, the parsers and date of the check, and what the
+ * parsers still get wrong — which the page reads to show the badge.</p>
  *
  * <p>Run via Maven:</p>
  * <pre>{@code
@@ -164,7 +167,8 @@ public final class ShowcaseSync {
                     relativeUrl(showcaseRoot, pdfTarget, siteRoot),
                     pptxUrl,
                     relativeUrl(showcaseRoot, pngTarget, siteRoot),
-                    meta.codeUrl());
+                    meta.codeUrl(),
+                    ShowcaseMetadata.ats(basename));
             tree.computeIfAbsent(category, c -> new TreeMap<>())
                     .computeIfAbsent(group, g -> new ArrayList<>())
                     .add(entry);
@@ -384,8 +388,42 @@ public final class ShowcaseSync {
     }
 
     /**
+     * The {@code ats} object on a CV card: the classification, whether it earns the badge,
+     * what the sample was read with and when, what the parsers still get wrong, and the page
+     * that explains the claim.
+     *
+     * <p>{@code badge} is decided here from the status, so the manifest states it outright.
+     * The page checks the status as well, so a badge flag edited on its own shows nothing.</p>
+     *
+     * @param ats    the classification
+     * @param indent the indentation of the line the object opens on
+     * @return the object as JSON
+     */
+    static String atsJson(ShowcaseMetadata.Ats ats, String indent) {
+        String inner = indent + "  ";
+        return "{\n"
+                + inner + "\"status\": " + jsonString(ats.status().name()) + ",\n"
+                + inner + "\"badge\": " + ats.status().earnsBadge() + ",\n"
+                + inner + "\"tested\": " + jsonArray(ats.tested()) + ",\n"
+                + inner + "\"lastValidated\": " + jsonString(ats.lastValidated()) + ",\n"
+                + inner + "\"knownLimitations\": " + jsonArray(ats.knownLimitations()) + ",\n"
+                + inner + "\"details\": " + jsonString(ShowcaseMetadata.ATS_DETAILS_URL) + "\n"
+                + indent + "}";
+    }
+
+    private static String jsonArray(List<String> values) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < values.size(); i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(jsonString(values.get(i)));
+        }
+        return sb.append("]").toString();
+    }
+
+    /**
      * One showcase card. {@code pptx} is {@code null} for the majority of
-     * examples that render PDF only; the twin flagships carry both.
+     * examples that render PDF only; the twin flagships carry both. {@code ats}
+     * is {@code null} on every card but a CV preset's.
      */
     private record ManifestEntry(
             String id,
@@ -395,26 +433,25 @@ public final class ShowcaseSync {
             String pdf,
             String pptx,
             String screenshot,
-            String code) {
+            String code,
+            ShowcaseMetadata.Ats ats) {
 
         String toJson() {
             StringBuilder sb = new StringBuilder("{\n");
             sb.append("              \"id\": ").append(jsonString(id)).append(",\n");
             sb.append("              \"title\": ").append(jsonString(title)).append(",\n");
             sb.append("              \"description\": ").append(jsonString(description)).append(",\n");
-            sb.append("              \"tags\": [");
-            for (int i = 0; i < tags.size(); i++) {
-                if (i > 0) sb.append(", ");
-                sb.append(jsonString(tags.get(i)));
-            }
-            sb.append("],\n");
+            sb.append("              \"tags\": ").append(jsonArray(tags)).append(",\n");
             sb.append("              \"pdf\": ").append(jsonString(pdf)).append(",\n");
             if (pptx != null) {
                 sb.append("              \"pptx\": ").append(jsonString(pptx)).append(",\n");
             }
             sb.append("              \"screenshot\": ").append(jsonString(screenshot)).append(",\n");
-            sb.append("              \"code\": ").append(jsonString(code)).append("\n");
-            sb.append("            }");
+            sb.append("              \"code\": ").append(jsonString(code));
+            if (ats != null) {
+                sb.append(",\n              \"ats\": ").append(atsJson(ats, "              "));
+            }
+            sb.append("\n            }");
             return sb.toString();
         }
     }

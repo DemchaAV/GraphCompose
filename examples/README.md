@@ -282,6 +282,13 @@ catalogue runner generates. The gallery below renders every preset from one entr
 instead, and is not part of that run — use it to produce the whole set locally:
 [📜 Full source](src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java)
 
+Eight presets are **ATS-friendly**: their showcase samples are validated for text extraction,
+section recognition and reading order using multiple independent PDF resume parsers. They are Blue Banner, Boxed
+Sections, Centered Headline, Classic Serif, Editorial Blue, Executive, Minimal Underlined
+and Modern Professional, whose multi-word headings ATS Reader misses. The rest are
+design-first: their sidebars, columns and monograms stay, at a parser's expense. See
+[ATS-friendly and design-first presets](../docs/templates/v2-layered/using-templates.md#ats-friendly-presets).
+
 ### Cover letter — template gallery
 
 Generates all paired v2 cover-letter presets in one run — one

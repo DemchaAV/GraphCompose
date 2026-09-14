@@ -21,6 +21,9 @@ import java.util.Map;
  *   <li>Wire it into {@code GenerateAllExamples.main}.</li>
  *   <li>Register the metadata entry below using the basename of the
  *       generated PDF as the key.</li>
+ *   <li>For a CV preset, also classify it in the ATS block below, from a
+ *       resume-parser check of its showcase sample. A CV card without a
+ *       classification fails {@code ShowcaseAtsClassificationTest}.</li>
  *   <li>Re-run {@code GenerateAllExamples} then {@code ShowcaseSync}.</li>
  * </ol>
  *
@@ -39,11 +42,72 @@ final class ShowcaseMetadata {
     record Entry(String title, String description, List<String> tags, String codeUrl) {
     }
 
+    /**
+     * How a CV preset's showcase sample fared when resume parsers read it.
+     *
+     * <p>Two statuses earn the "ATS-friendly" badge on the site. The other two carry none:
+     * a template that still needs a fix, and a design-first template whose sidebar, columns
+     * or monogram — the point of the design — cost the parsers one of the checks the badge
+     * stands for.</p>
+     */
+    enum AtsStatus {
+        /** Every check passed in every parser. */
+        ATS_CERTIFIED(true),
+        /** Every check passed except where a parser's own proven limitation stops it. */
+        ATS_COMPATIBLE_WITH_KNOWN_PARSER_LIMITATIONS(true),
+        /** A check fails for a reason the template could fix. */
+        NEEDS_TEMPLATE_FIX(false),
+        /** A check fails because of the layout the design is built around. */
+        DESIGN_FIRST(false);
+
+        private final boolean badge;
+
+        AtsStatus(boolean badge) {
+            this.badge = badge;
+        }
+
+        /** Whether a preset with this status shows the "ATS-friendly" badge. */
+        boolean earnsBadge() {
+            return badge;
+        }
+    }
+
+    /**
+     * The classification behind a CV card.
+     *
+     * @param status           what the check concluded
+     * @param tested           the parsers the showcase sample was read with
+     * @param lastValidated    the ISO date of that check
+     * @param knownLimitations what the parsers still get wrong, in words a reader can act on;
+     *                         empty for a certified preset
+     */
+    record Ats(AtsStatus status, List<String> tested, String lastValidated,
+               List<String> knownLimitations) {
+    }
+
+    /**
+     * The parsers every CV showcase sample was read with, each with the text extractor it runs
+     * on. Two of them extract with pdf.js, at different versions.
+     */
+    private static final List<String> ATS_PARSERS = List.of(
+            "OpenResume parser (pdf.js 3.7.107)",
+            "ATS Reader (pdfplumber 0.11.10)",
+            "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)");
+
+    /** The day the CV showcase samples were last read with those parsers. */
+    static final String ATS_LAST_VALIDATED = "2026-09-14";
+
+    /** The page that states the claim, the two categories and the known limitations. */
+    static final String ATS_DETAILS_URL =
+            GH_BASE + "/docs/templates/v2-layered/using-templates.md#ats-friendly-presets";
+
     private static final Map<String, Entry> ENTRIES = new LinkedHashMap<>();
+
+    private static final Map<String, Ats> ATS = new LinkedHashMap<>();
 
     static {
         // ===== Templates / CV (v2 layered) =====
-        cv("cv-modern-professional-v2", "CvModernV2Example", "Modern Professional", "Clean two-column resume with right-aligned header, tinted profile panel, and uppercase section headings.", "minimal");
+        cv("cv-modern-professional-v2", "CvModernV2Example", "Modern Professional", "Clean single-column resume with a right-aligned slate-blue name and flat bright-blue section titles.", "minimal");
         cv("cv-nordic-clean-v2", "CvNordicCleanExample", "Nordic Clean", "Sidebar layout with soft-tinted PROFILE panel, Nordic palette, and bullet skill list.", "sidebar");
         cv("cv-classic-serif-v2", "CvClassicSerifExample", "Classic Serif", "Two-page editorial CV with Times-style serif headings and conservative grey rules.", "serif", "two-page");
         cv("cv-compact-mono-v2", "CvCompactMonoExample", "Compact Mono", "Single-column dense layout with monospace contact line — favourite for engineering roles.", "compact", "mono");
@@ -53,7 +117,7 @@ final class ShowcaseMetadata {
         cv("cv-boxed-sections-v2", "CvBoxedV2Example", "Boxed Sections", "Each section wrapped in a grey banner header — bold, structured feel.", "structured");
         cv("cv-centered-headline-v2", "CvCenteredHeadlineExample", "Centered Headline", "Centered name + role with full-width accent rules between sections.", "centered");
         cv("cv-blue-banner-v2", "CvBlueBannerExample", "Blue Banner", "Light-blue full-width section bands with high-contrast headings.", "banner", "blue");
-        cv("cv-editorial-blue-v2", "CvEditorialBlueExample", "Editorial Blue", "Magazine-style editorial layout with two-column body and tinted skills table.", "editorial", "blue");
+        cv("cv-editorial-blue-v2", "CvEditorialBlueExample", "Editorial Blue", "Single-column editorial layout with a centred uppercase masthead, blue rules and a compact skills table.", "editorial", "blue");
         cv("cv-panel-v2", "CvPanelExample", "Panel", "Soft-tinted panels per section, Product-Leader feel — was ProductLeader in v1.5.", "panel");
         cv("cv-sidebar-portrait-v2", "CvSidebarPortraitExample", "Sidebar Portrait", "Edge-to-edge grey sidebar with portrait photo, contact stack, and skills.", "sidebar", "portrait");
         cv("cv-monogram-sidebar-v2", "CvMonogramSidebarExample", "Monogram Sidebar", "Sidebar with monogram badge, accent rule, and structured contact + skills column.", "sidebar", "monogram");
@@ -70,6 +134,106 @@ final class ShowcaseMetadata {
         cv("cv-violet-grid-v2", "VioletGridExample", "Violet Grid", "Single-column sheet in bands: a two-tone name beside the contact list, a six-up grid of marked skills on dotted rules, a tools strip, a dated timeline, tinted project tiles and a closing quotation.", "single-column", "grid", "violet");
         cv("cv-orange-ops-v2", "OrangeOpsExample", "Orange Ops", "Operations sheet with a two-tone name over a slanted role bar and accent slashes, a contact strip on hairlines, and a sidebar of skills, achievement discs and credentials beside a profile, dated roles and a four-metric strip.", "sidebar", "metrics", "orange");
         cv("cv-midnight-navy-v2", "MidnightNavyExample", "Midnight Navy", "Full-height navy plate carrying an outlined monogram, a tracked role line, metered skills and dotted languages, beside a paper column with the summary, roles on a rail, achievement discs and divided certification columns.", "sidebar", "monogram", "navy");
+
+        // ===== ATS classification of the CV presets =====
+        // Every CV card carries one, read from a resume-parser check of its showcase sample.
+        // Only the two earned statuses show the badge. Each badged preset's status, with a
+        // fingerprint of the text its sample gives a parser, is pinned in the examples tests'
+        // ats-validated-samples.properties, so a badge cannot outlive the sample it was earned
+        // on. A design-first preset keeps its layout; its limitations say what that costs a
+        // parser.
+        certified("cv-blue-banner-v2");
+        certified("cv-boxed-sections-v2");
+        certified("cv-centered-headline-v2");
+        certified("cv-classic-serif-v2");
+        certified("cv-editorial-blue-v2");
+        certified("cv-executive-v2");
+        certified("cv-minimal-underlined-v2");
+        compatible("cv-modern-professional-v2",
+                "ATS Reader does not recognise the multi-word headings \"Professional Experience\""
+                        + " and \"Technical Skills\"; OpenResume and resume-parser-ats do.");
+        designFirst("cv-charcoal-gold-v2",
+                "ATS Reader interleaves the sidebar with the main column, so its reading order fails"
+                        + " and it misses the Experience heading.",
+                "All three parsers read only the first line of the two-line name.");
+        designFirst("cv-compact-mono-v2",
+                "ATS Reader interleaves the skills rail with the body, so its reading order fails"
+                        + " and it misses the Experience and Skills headings.",
+                "OpenResume reads only the first word of the name.");
+        designFirst("cv-engineering-resume-v2",
+                "ATS Reader merges the name with the contact stack beside it and reads a contact"
+                        + " line as the name.",
+                "ATS Reader interleaves the two body columns, so its reading order fails and it"
+                        + " misses the Education heading.");
+        designFirst("cv-midnight-navy-v2",
+                "OpenResume and ATS Reader read the monogram letter as the name.",
+                "The navy plate is stored before the body, so all three parsers read part of the"
+                        + " page out of order.");
+        designFirst("cv-mint-editorial-v2",
+                "The two columns interleave, so reading order fails in all three parsers and ATS"
+                        + " Reader misses the Experience and Skills headings.",
+                "resume-parser-ats reads the degree line under Education as a heading and drops"
+                        + " Education.",
+                "OpenResume reads the role line as the name.");
+        designFirst("cv-mint-editorial-v2-custom",
+                "The two columns interleave, so reading order fails in all three parsers and ATS"
+                        + " Reader misses the Experience and Skills headings.",
+                "resume-parser-ats reads the degree line under Education as a heading and drops"
+                        + " Education.",
+                "OpenResume reads the role line as the name.");
+        designFirst("cv-monogram-sidebar-v2",
+                "OpenResume reads the monogram as the name, and resume-parser-ats the sidebar's"
+                        + " contact heading.",
+                "ATS Reader interleaves the sidebar with the body, so its reading order fails.");
+        designFirst("cv-navy-sidebar-v2",
+                "OpenResume reads the sidebar's contact heading as the name.",
+                "ATS Reader interleaves the sidebar with the body, so its reading order fails.");
+        designFirst("cv-nordic-clean-v2",
+                "ATS Reader merges the name with the contact stack beside it and reads a contact"
+                        + " line as the name.",
+                "ATS Reader interleaves the columns, so its reading order fails.");
+        designFirst("cv-orange-ops-v2",
+                "ATS Reader interleaves the aside with the main column, so its reading order fails"
+                        + " and it misses the Education and Skills headings.");
+        designFirst("cv-panel-v2",
+                "ATS Reader interleaves the side-by-side panel content, so its reading order fails"
+                        + " and it misses the Experience heading.");
+        designFirst("cv-professional-sidebar-v2",
+                "OpenResume and resume-parser-ats read the sidebar's contact heading as the name.",
+                "ATS Reader interleaves the sidebar with the body, so its reading order fails.");
+        designFirst("cv-serif-headline-v2",
+                "The two body columns interleave, so reading order fails in all three parsers and"
+                        + " ATS Reader misses the Experience and Education headings.",
+                "OpenResume and resume-parser-ats read the first skill-group caption as a new"
+                        + " heading, which leaves Skills empty.");
+        designFirst("cv-sidebar-portrait-v2",
+                "ATS Reader interleaves the portrait sidebar with the body, so its reading order"
+                        + " fails.");
+        designFirst("cv-slate-orange-v2",
+                "The Education and Certifications headings sit side by side and fuse into one"
+                        + " line, so two of the three parsers miss Education.",
+                "ATS Reader interleaves the two body columns, so its reading order fails and it"
+                        + " misses the Experience and Skills headings.");
+        designFirst("cv-teal-pulse-v2",
+                "OpenResume reads the role line as the name, and the skill \"Patient Education\""
+                        + " as the Education heading.",
+                "ATS Reader interleaves the competencies column with the body, so its reading order"
+                        + " fails and it misses the Education heading.");
+        designFirst("cv-terracotta-rail-v2",
+                "OpenResume and resume-parser-ats read the monogram as the name.",
+                "ATS Reader interleaves the sidebar with the body, so its reading order fails and"
+                        + " it misses the Education and Skills headings.");
+        designFirst("cv-timeline-minimal-v2",
+                "OpenResume and ATS Reader read the role line as the name.",
+                "ATS Reader interleaves the columns, so its reading order fails and it misses the"
+                        + " Education heading.");
+        designFirst("cv-violet-grid-v2",
+                "The Education and Languages headings sit side by side and fuse into one line, so"
+                        + " no parser finds Education.",
+                "The skills grid and the side-by-side band interleave, so reading order fails in"
+                        + " all three parsers.",
+                "ATS Reader merges the name with the contact list beside it and reads a contact"
+                        + " line as the name.");
 
         // ===== Templates / Cover Letter (v2 layered, paired 1:1 with CV) =====
         // Registered directly: letter() points at the layered preset examples under
@@ -193,6 +357,37 @@ final class ShowcaseMetadata {
      */
     static Map<String, Entry> registeredEntries() {
         return Map.copyOf(ENTRIES);
+    }
+
+    /**
+     * The ATS classification of a card.
+     *
+     * @param basename the basename of the PDF the card describes
+     * @return the classification, or {@code null} for a card that is not a CV preset
+     */
+    static Ats ats(String basename) {
+        return ATS.get(basename);
+    }
+
+    /** Every ATS classification, keyed like {@link #registeredEntries()}. */
+    static Map<String, Ats> registeredAts() {
+        return Map.copyOf(ATS);
+    }
+
+    private static void certified(String id) {
+        classify(id, AtsStatus.ATS_CERTIFIED);
+    }
+
+    private static void compatible(String id, String... limitations) {
+        classify(id, AtsStatus.ATS_COMPATIBLE_WITH_KNOWN_PARSER_LIMITATIONS, limitations);
+    }
+
+    private static void designFirst(String id, String... limitations) {
+        classify(id, AtsStatus.DESIGN_FIRST, limitations);
+    }
+
+    private static void classify(String id, AtsStatus status, String... limitations) {
+        ATS.put(id, new Ats(status, ATS_PARSERS, ATS_LAST_VALIDATED, List.of(limitations)));
     }
 
     static Entry lookup(String basename, String category, String group) {

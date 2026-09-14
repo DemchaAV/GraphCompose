@@ -1226,6 +1226,59 @@ code[class*="language-"] .token.class-name {
   font-size: 0.7rem;
 }
 
+/* Earned, never defaulted: only a CV preset whose showcase sample passed
+   the resume-parser checks carries this chip. It links to the documented
+   claim and its caveats. */
+.example-tags .ats-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  border-radius: 999px;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  font-size: 0.7rem;
+  font-weight: 760;
+  text-decoration: none;
+}
+
+.example-tags a.ats-badge:hover,
+.example-tags a.ats-badge:focus-visible {
+  border-color: rgba(16, 185, 129, 0.8);
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.example-tags a.ats-badge:focus-visible {
+  outline: 2px solid rgba(16, 185, 129, 0.8);
+  outline-offset: 2px;
+}
+
+/* The second declaration gives the mark empty alternative text where it is
+   supported; a browser that does not parse it keeps the first. */
+.example-tags .ats-badge::before {
+  content: "\2713";
+  content: "\2713" / "";
+}
+
+html[data-theme="light"] .example-tags .ats-badge {
+  color: #047857;
+  border-color: rgba(4, 120, 87, 0.35);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+/* The chip's full claim, for a screen reader only. */
+.example-tags .ats-badge-note {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .example-actions {
   display: flex;
   flex-wrap: wrap;

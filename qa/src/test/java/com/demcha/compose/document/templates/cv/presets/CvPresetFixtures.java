@@ -160,7 +160,7 @@ final class CvPresetFixtures {
                                 CvSkill.of("JitPack", 0.8),
                                 CvSkill.of("semantic versioning discipline", 0.85)))
                         .build())
-                .section(EntriesSection.builder("Education & Certifications")
+                .section(EntriesSection.builder("Education")
                         .entry("MSc Computer Science",
                                 "University of Manchester",
                                 "2019-2021",

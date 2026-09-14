@@ -367,7 +367,7 @@ public final class ExampleDataFactory {
                 .build();
 
         EntriesSection education = EntriesSection
-                .builder("Education & Certifications")
+                .builder("Education")
                 .entry("MSc Computer Science",
                         "University of Manchester",
                         "2019-2021",

@@ -434,8 +434,8 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]",
-    "entityName" : "CvV2TimelineMinimalSidebareducationcertifications",
+    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]",
+    "entityName" : "CvV2TimelineMinimalSidebareducation",
     "entityKind" : "SectionNode",
     "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]",
     "childIndex" : 0,
@@ -464,10 +464,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]/ParagraphNode[0]",
+    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]/ParagraphNode[0]",
     "entityName" : null,
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]",
+    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]",
     "childIndex" : 0,
     "depth" : 5,
     "layer" : 5,
@@ -475,11 +475,11 @@
     "computedY" : 715.39,
     "placementX" : 22.0,
     "placementY" : 715.39,
-    "placementWidth" : 135.3,
+    "placementWidth" : 50.3,
     "placementHeight" : 15.0,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 135.3,
+    "contentWidth" : 50.3,
     "contentHeight" : 15.0,
     "margin" : {
       "top" : 0.0,
@@ -494,10 +494,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]/ParagraphNode[1]",
+    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]/ParagraphNode[1]",
     "entityName" : null,
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]",
+    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]",
     "childIndex" : 1,
     "depth" : 5,
     "layer" : 5,
@@ -524,10 +524,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]/ParagraphNode[2]",
+    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]/ParagraphNode[2]",
     "entityName" : null,
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]",
+    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]",
     "childIndex" : 2,
     "depth" : 5,
     "layer" : 5,
@@ -554,10 +554,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]/ParagraphNode[3]",
+    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]/ParagraphNode[3]",
     "entityName" : null,
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]",
+    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]",
     "childIndex" : 3,
     "depth" : 5,
     "layer" : 5,
@@ -584,10 +584,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]/ParagraphNode[4]",
+    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]/ParagraphNode[4]",
     "entityName" : null,
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]",
+    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]",
     "childIndex" : 4,
     "depth" : 5,
     "layer" : 5,
@@ -614,10 +614,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]/ParagraphNode[5]",
+    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]/ParagraphNode[5]",
     "entityName" : null,
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]",
+    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]",
     "childIndex" : 5,
     "depth" : 5,
     "layer" : 5,
@@ -644,10 +644,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]/ParagraphNode[6]",
+    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]/ParagraphNode[6]",
     "entityName" : null,
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]",
+    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]",
     "childIndex" : 6,
     "depth" : 5,
     "layer" : 5,
@@ -674,10 +674,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]/LineNode[7]",
+    "path" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]/LineNode[7]",
     "entityName" : null,
     "entityKind" : "LineNode",
-    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducationcertifications[0]",
+    "parentPath" : "CvV2TimelineMinimalRoot[0]/CvV2TimelineMinimalBody0[2]/CvV2TimelineMinimalSidebar[0]/CvV2TimelineMinimalSidebareducation[0]",
     "childIndex" : 7,
     "depth" : 5,
     "layer" : 5,

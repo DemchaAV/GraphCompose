@@ -281,7 +281,7 @@ public final class EditorialBlue {
                 }
                 if (normalized.contains("experience")
                     || normalized.contains("employment")) {
-                    return "EMPLOYMENT HISTORY";
+                    return "EXPERIENCE";
                 }
                 if (normalized.contains("project")) {
                     return "PROJECTS";
@@ -291,7 +291,7 @@ public final class EditorialBlue {
                     return "EDUCATION";
                 }
                 if (normalized.contains("skill")) {
-                    return "KEY SKILLS";
+                    return "SKILLS";
                 }
                 if (normalized.contains("additional")) {
                     return "ADDITIONAL";

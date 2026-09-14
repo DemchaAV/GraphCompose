@@ -68,7 +68,7 @@ public final class TerracottaRailSampleData {
     }
 
     private static SkillsSection competencies() {
-        return plainSkills("CORE COMPETENCIES",
+        return plainSkills("SKILLS",
                 "Architectural Design", "Concept Development", "Planning Applications",
                 "Technical Drawings", "Revit", "AutoCAD", "BIM Coordination",
                 "Design Presentations", "Project Delivery", "Stakeholder Management",

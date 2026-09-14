@@ -132,7 +132,7 @@ final class VioletGridFixtures {
 
     /** The six-up grid: a mark, a label and a description each. */
     static EntriesSection skills() {
-        return new EntriesSection("DESIGN SKILLS", List.of(
+        return new EntriesSection("SKILLS", List.of(
                 CvEntry.builder("UX RESEARCH")
                         .icon("ux-research")
                         .body("User interviews, surveys, personas, journey maps, "

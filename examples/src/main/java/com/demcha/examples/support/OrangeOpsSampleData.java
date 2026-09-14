@@ -67,7 +67,7 @@ public final class OrangeOpsSampleData {
 
     /** The skills, as one flat group — the design draws no group names. */
     private static SkillsSection skills() {
-        return new SkillsSection("KEY SKILLS", List.of(SkillGroup.ofNames("KEY SKILLS", List.of(
+        return new SkillsSection("SKILLS", List.of(SkillGroup.ofNames("SKILLS", List.of(
                 "Warehouse Operations Management",
                 "Team Leadership & Development",
                 "Inventory Control & Accuracy",

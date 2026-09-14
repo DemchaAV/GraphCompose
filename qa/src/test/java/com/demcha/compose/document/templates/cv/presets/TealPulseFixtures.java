@@ -72,8 +72,8 @@ final class TealPulseFixtures {
                 "Discharge Coordination", "Electronic Health Records"}) {
             entries.add(new CvSkill(name, OptionalDouble.empty()));
         }
-        return new SkillsSection("CORE COMPETENCIES",
-                List.of(new SkillGroup("CORE COMPETENCIES", entries)));
+        return new SkillsSection("SKILLS",
+                List.of(new SkillGroup("SKILLS", entries)));
     }
 
     static ParagraphSection summary() {

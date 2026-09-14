@@ -424,7 +424,7 @@ public final class MonogramSidebar {
 
             CvSection skills = SectionLookup.firstMatching(sections, SKILL_KEYS);
             if (hasContent(skills)) {
-                addSidebarHeader(section, "EXPERTISE", innerWidth);
+                addSidebarHeader(section, "SKILLS", innerWidth);
                 addSkillsList(section, skills);
             }
         }

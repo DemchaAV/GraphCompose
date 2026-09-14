@@ -215,10 +215,10 @@ class SlateOrangeSmokeTest {
 
     @Test
     void anUnknownMarkIsReportedAsADataError() {
-        EntriesSection wrong = new EntriesSection("CORE COMPETENCIES", List.of(
+        EntriesSection wrong = new EntriesSection("SKILLS", List.of(
                 CvEntry.builder("Telepathy").icon("telescope").build()));
 
-        assertThatThrownBy(() -> render(withSection(Slot.SIDEBAR, wrong, "CORE COMPETENCIES")))
+        assertThatThrownBy(() -> render(withSection(Slot.SIDEBAR, wrong, "SKILLS")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("telescope")
                 .hasMessageContaining("time-management");

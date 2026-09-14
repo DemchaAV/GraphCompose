@@ -355,11 +355,11 @@
     "computedY" : 457.063,
     "placementX" : 25.4,
     "placementY" : 457.063,
-    "placementWidth" : 107.671,
+    "placementWidth" : 106.829,
     "placementHeight" : 210.926,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 107.671,
+    "contentWidth" : 106.829,
     "contentHeight" : 210.926,
     "margin" : {
       "top" : 0.0,
@@ -374,8 +374,8 @@
       "left" : 0.0
     }
   }, {
-    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Heading_CORECOMPETENCIES[0]",
-    "entityName" : "Heading_CORECOMPETENCIES",
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Heading_SKILLS[0]",
+    "entityName" : "Heading_SKILLS",
     "entityKind" : "ParagraphNode",
     "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
     "childIndex" : 0,
@@ -385,11 +385,11 @@
     "computedY" : 657.463,
     "placementX" : 25.4,
     "placementY" : 657.463,
-    "placementWidth" : 107.671,
+    "placementWidth" : 32.657,
     "placementHeight" : 10.526,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 107.671,
+    "contentWidth" : 32.657,
     "contentHeight" : 10.526,
     "margin" : {
       "top" : 0.0,

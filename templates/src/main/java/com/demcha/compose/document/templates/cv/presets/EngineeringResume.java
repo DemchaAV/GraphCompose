@@ -29,9 +29,9 @@ import java.util.Objects;
  * <p>Senior engineering CV with a full-width navy command header
  * (UPPERCASE name, subtitle line, right-aligned contact stack with
  * cyan-green underlined links), a dark navy skill rail
- * (<em>Core Stack</em> / <em>Learning</em> / <em>Details</em> with
- * green accent labels), and white evidence cards for Leadership
- * Experience plus Technical Evidence on the right.</p>
+ * (<em>Skills</em> / <em>Education</em> / <em>Details</em> with
+ * green accent labels), and white evidence cards for Experience
+ * plus Technical Evidence on the right.</p>
  *
  * <p>The preset stays a thin orchestrator. Theme tokens cover body
  * ink / muted / rule / profile-band fill; the navy header, brighter
@@ -316,7 +316,7 @@ public final class EngineeringResume {
                     return;
                 }
                 parent.addSection("CvV2EngineeringResumeSkills", block -> {
-                    addRailHeading(block, "Core Stack");
+                    addRailHeading(block, "Skills");
                     List<SkillGroup> groups = skills.groups();
                     for (int i = 0; i < Math.min(groups.size(), 7); i++) {
                         SkillGroup group = groups.get(i);
@@ -350,7 +350,7 @@ public final class EngineeringResume {
                     return;
                 }
                 parent.addSection("CvV2EngineeringResumeEducation", block -> {
-                    addRailHeading(block, "Learning");
+                    addRailHeading(block, "Education");
                     List<CvEntry> list = entries.entries();
                     for (int i = 0; i < Math.min(list.size(), 4); i++) {
                         CvEntry entry = list.get(i);
@@ -425,7 +425,7 @@ public final class EngineeringResume {
                     return;
                 }
                 parent.addSection("CvV2EngineeringResumeExperience", block -> {
-                    addMainHeading(block, "Leadership Experience");
+                    addMainHeading(block, "Experience");
                     List<CvEntry> list = entries.entries();
                     for (int i = 0; i < Math.min(list.size(), 2); i++) {
                         CvEntry entry = list.get(i);

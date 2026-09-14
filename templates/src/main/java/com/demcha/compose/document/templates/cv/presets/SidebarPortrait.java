@@ -439,7 +439,7 @@ public final class SidebarPortrait {
 
             CvSection skills = SectionLookup.firstMatching(sections, SKILL_KEYS);
             if (hasContent(skills)) {
-                addSidebarHeader(section, "Key Skills");
+                addSidebarHeader(section, "Skills");
                 addSkillsList(section, skills);
             }
 

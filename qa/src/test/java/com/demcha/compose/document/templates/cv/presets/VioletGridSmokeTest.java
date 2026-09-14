@@ -119,7 +119,7 @@ class VioletGridSmokeTest {
         assertThat(compact(text))
                 .contains("SOFIAMARTINEZ")
                 .contains("UX/UIDESIGNER")
-                .contains("DESIGNSKILLS")
+                .contains("SKILLS")
                 .doesNotContain("QUOTE");
     }
 
@@ -200,10 +200,10 @@ class VioletGridSmokeTest {
 
     @Test
     void anUnknownMarkIsReportedAsADataError() {
-        EntriesSection wrong = new EntriesSection("DESIGN SKILLS", List.of(
+        EntriesSection wrong = new EntriesSection("SKILLS", List.of(
                 CvEntry.builder("Telepathy").icon("telescope").body("Reading minds.").build()));
 
-        assertThatThrownBy(() -> render(withSection(Slot.MAIN, wrong, "DESIGN SKILLS")))
+        assertThatThrownBy(() -> render(withSection(Slot.MAIN, wrong, "SKILLS")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("telescope")
                 .hasMessageContaining("wireframing");
@@ -211,10 +211,10 @@ class VioletGridSmokeTest {
 
     @Test
     void aSkillWithoutAMarkIsDrawnWithoutOne() throws Exception {
-        EntriesSection unmarked = new EntriesSection("DESIGN SKILLS", List.of(
+        EntriesSection unmarked = new EntriesSection("SKILLS", List.of(
                 CvEntry.builder("UX RESEARCH").body("User interviews and surveys.").build()));
 
-        String text = textOf(render(withSection(Slot.MAIN, unmarked, "DESIGN SKILLS")));
+        String text = textOf(render(withSection(Slot.MAIN, unmarked, "SKILLS")));
         // The description wraps inside its narrow column, so a fragment
         // of one line is what is asserted.
         assertThat(text).contains("User interviews and");

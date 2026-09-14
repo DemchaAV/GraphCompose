@@ -15,9 +15,9 @@ import java.nio.file.Path;
  * Renders the v2 Engineering Resume CV preset against the shared
  * grouped skills sample data — full-width navy command header with
  * UPPERCASE Barlow name, right-aligned contact stack with cyan-green
- * underlined links, dark navy skill rail (Core Stack / Learning /
- * Details) and white evidence cards for Leadership Experience and
- * Technical Evidence on the right.
+ * underlined links, dark navy skill rail (Skills / Education /
+ * Details) and white evidence cards for Experience and Technical
+ * Evidence on the right.
  *
  * <p>Output:
  * {@code examples/target/generated-pdfs/templates/cv/cv-engineering-resume-v2.pdf}.</p>

@@ -71,7 +71,7 @@ public final class SlateOrangeSampleData {
 
     /** The competencies, each behind the mark its entry names. */
     private static EntriesSection competencies() {
-        return new EntriesSection("CORE COMPETENCIES", List.of(
+        return new EntriesSection("SKILLS", List.of(
                 CvEntry.builder("Customer Service Excellence").icon("customer-service").build(),
                 CvEntry.builder("Operations & Process Support").icon("operations").build(),
                 CvEntry.builder("Project & Calendar Management").icon("calendar").build(),

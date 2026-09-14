@@ -195,7 +195,7 @@ public final class ClassicSerif {
                 flow.addSection("CvV2ClassicSerifCoreSkills", host -> {
                     host.spacing(theme.spacing().sectionBodySpacing())
                             .padding(new DocumentInsets(0, 0, 2, 0));
-                    keptHeader(host, "Core Skills");
+                    keptHeader(host, "Skills");
                     renderCoverSkillsBody(host, section);
                 });
             }

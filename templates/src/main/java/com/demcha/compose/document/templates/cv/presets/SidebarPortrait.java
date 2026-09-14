@@ -6,7 +6,9 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.PageBackgroundFill;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.InlineImageAlignment;
+import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -62,7 +64,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * two.</p>
  *
  * <p>The caps are load-bearing rather than a matter of taste. The two columns
- * are one {@code addRow}, and a row is atomic — it must fit a page whole or
+ * are one layer stack, and a stack is atomic — it must fit a page whole or
  * the paginator raises {@code AtomicNodeTooLargeException} rather than
  * breaking inside it. Lifting a cap without teaching the preset to choose its
  * own page boundaries turns a CV that silently lost an entry into one that
@@ -204,13 +206,11 @@ public final class SidebarPortrait {
     /**
      * Maximum number of project rows rendered in the main column.
      *
-     * <p>The side-by-side body is wrapped in a {@code flow.addRow},
-     * which is atomic by engine contract (see {@code RowBuilder}'s
-     * error message: <em>"tables are splittable and would conflict
-     * with the row's atomic pagination"</em>). That means the whole
-     * sidebar + main row has to fit on a single page — content
-     * overflow raises {@code AtomicNodeTooLargeException} instead of
-     * page-breaking. Capping projects keeps the dense canonical
+     * <p>The side-by-side body is one layer stack, which is atomic by
+     * engine contract, so the whole sidebar and main column have to fit
+     * on a single page — content overflow raises
+     * {@code AtomicNodeTooLargeException} instead of page-breaking.
+     * Capping projects keeps the dense canonical
      * sample data inside the page bound; richer CVs that genuinely
      * need page-breaking sidebar layouts will need a separate
      * preset wired against a future splittable-row engine primitive.</p>
@@ -385,6 +385,11 @@ public final class SidebarPortrait {
 
             List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
 
+            // The column widths follow the page, as the row's weights did.
+            double innerWidth = document.canvas().innerWidth();
+            double sidebarWidth = innerWidth * SIDEBAR_WIDTH_RATIO;
+            double mainWidth = innerWidth * (1.0 - SIDEBAR_WIDTH_RATIO);
+
             // Paint the two-column chrome via pageBackgrounds — the
             // engine emits both fills on every page automatically, so
             // overflow content on page 2+ keeps the same visual
@@ -395,26 +400,61 @@ public final class SidebarPortrait {
                     PageBackgroundFill.rightColumn(1.0 - SIDEBAR_WIDTH_RATIO,
                             mainFill)));
 
+            // The name is drawn first, the sidebar next and the rest of the
+            // main column last. The hero strip is composed twice for that:
+            // once with its fill and the name, once with neither, each holding
+            // the other's place. A reader that follows the content stream
+            // meets the name, then the contact lines. See ReadingOrderColumns.
+            Map<String, ReadingOrderColumns.Box> hero = ReadingOrderColumns.measure(document,
+                    page -> page.add(heroLayer(sidebarWidth, doc.identity(),
+                            HeroPart.WHOLE, Map.of())),
+                    HERO_NAME, HERO_SUBTITLE);
+
             document.dsl()
                     .pageFlow()
                     .name("CvV2SidebarPortraitRoot")
                     .spacing(theme.spacing().pageFlowSpacing())
                     .padding(DocumentInsets.zero())
-                    .addRow("CvV2SidebarPortraitBodyRow", row -> row
-                            .spacing(0)
-                            .weights(SIDEBAR_WIDTH_RATIO,
-                                    1.0 - SIDEBAR_WIDTH_RATIO)
-                            .addSection("CvV2SidebarPortraitSidebar",
+                    .addLayerStack(grid -> grid
+                            .name("CvV2SidebarPortraitBody")
+                            .layer(heroLayer(sidebarWidth, doc.identity(),
+                                    HeroPart.NAME, hero),
+                                    LayerAlign.TOP_LEFT)
+                            .layer(ReadingOrderColumns.column(
+                                    "CvV2SidebarPortraitSidebarLayer",
+                                    0, mainWidth,
+                                    "CvV2SidebarPortraitSidebar",
                                     section -> addSidebar(section, doc,
-                                            sections))
-                            .addSection("CvV2SidebarPortraitMain",
+                                            sections)),
+                                    LayerAlign.TOP_LEFT)
+                            .layer(ReadingOrderColumns.column(
+                                    "CvV2SidebarPortraitMainLayer",
+                                    sidebarWidth, 0,
+                                    "CvV2SidebarPortraitMain",
                                     section -> {
                                         section.spacing(0)
                                                 .padding(DocumentInsets.zero());
-                                        addNameBlock(section, doc.identity());
+                                        addNameBlock(section, doc.identity(),
+                                                HeroPart.SUBTITLE, hero);
                                         addMain(section, sections);
-                                    }))
+                                    }),
+                                    LayerAlign.TOP_LEFT))
                     .build();
+        }
+
+        /**
+         * The layer that draws the hero strip's fill and the name, inset to
+         * the main column — or, as {@link HeroPart#WHOLE}, the strip laid out
+         * on its own to be measured.
+         */
+        private DocumentNode heroLayer(double sidebarWidth, CvIdentity identity,
+                                       HeroPart part,
+                                       Map<String, ReadingOrderColumns.Box> held) {
+            return ReadingOrderColumns.column("CvV2SidebarPortraitNameLayer",
+                    sidebarWidth, 0, "CvV2SidebarPortraitNameColumn", section -> {
+                        section.spacing(0).padding(DocumentInsets.zero());
+                        addNameBlock(section, identity, part, held);
+                    });
         }
 
         // -- Sidebar -------------------------------------------------------
@@ -610,7 +650,35 @@ public final class SidebarPortrait {
 
         // -- Main column ---------------------------------------------------
 
-        private void addNameBlock(SectionBuilder section, CvIdentity identity) {
+        /** The name of the hero strip's name paragraph, which the preset measures. */
+        private static final String HERO_NAME = "CvV2SidebarPortraitName";
+
+        /** The name of the hero strip's subtitle paragraph, which the preset measures. */
+        private static final String HERO_SUBTITLE = "CvV2SidebarPortraitSubtitle";
+
+        /** The piece of the hero strip a layer draws; see {@link #addNameBlock}. */
+        private enum HeroPart {
+            /** The whole strip, laid out on its own to be measured. */
+            WHOLE,
+            /** The fill and the name, holding the subtitle's place. */
+            NAME,
+            /** The subtitle alone, under a stand-in for the name. */
+            SUBTITLE
+        }
+
+        /**
+         * The hero strip: the name over the subtitle, on the sidebar's fill.
+         *
+         * <p>The page draws the strip in two pieces so that the name comes
+         * first in the content stream, before the sidebar's contact lines:
+         * {@link HeroPart#NAME} carries the fill and the name, and
+         * {@link HeroPart#SUBTITLE} the subtitle, each holding the other's
+         * place with a stand-in of the size {@code held} records, so the two
+         * lie over each other as the one strip.</p>
+         */
+        private void addNameBlock(SectionBuilder section, CvIdentity identity,
+                                  HeroPart part,
+                                  Map<String, ReadingOrderColumns.Box> held) {
             String displayName = identity == null
                     ? ""
                     : identity.name().full();
@@ -618,29 +686,44 @@ public final class SidebarPortrait {
             String subline = jobTitle == null || jobTitle.isBlank()
                     ? "Your Professional Title Goes Here"
                     : jobTitle;
-            section.addSection("CvV2SidebarPortraitHero", hero -> hero
-                    .fillColor(sidebarFill)
-                    .padding(new DocumentInsets(HERO_PADDING_TOP, 34,
-                            HERO_PADDING_BOTTOM, 34))
-                    .spacing(3)
-                    .margin(DocumentInsets.top(HERO_TOP_OFFSET))
-                    // Name is rendered inline rather than via
-                    // Headline.uppercaseCentered because that widget
-                    // calls host.padding(theme.spacing().headlinePadding())
-                    // which would overwrite the hero strip's
-                    // carefully-tuned HERO_PADDING_TOP / BOTTOM and
-                    // break the on-axis alignment with the photo.
-                    .addParagraph(paragraph -> paragraph
+            section.addSection("CvV2SidebarPortraitHero", hero -> {
+                hero.padding(new DocumentInsets(HERO_PADDING_TOP, 34,
+                                HERO_PADDING_BOTTOM, 34))
+                        .spacing(3)
+                        .margin(DocumentInsets.top(HERO_TOP_OFFSET));
+                if (part != HeroPart.SUBTITLE) {
+                    hero.fillColor(sidebarFill);
+                }
+                // Name is rendered inline rather than via
+                // Headline.uppercaseCentered because that widget
+                // calls host.padding(theme.spacing().headlinePadding())
+                // which would overwrite the hero strip's
+                // carefully-tuned HERO_PADDING_TOP / BOTTOM and
+                // break the on-axis alignment with the photo.
+                if (part == HeroPart.SUBTITLE) {
+                    ReadingOrderColumns.holdPlace(hero, "CvV2SidebarPortraitNamePlace",
+                            held.get(HERO_NAME), DocumentInsets.zero());
+                } else {
+                    hero.addParagraph(paragraph -> paragraph
+                            .name(HERO_NAME)
                             .text(displayName)
                             .textStyle(nameStyle())
                             .align(TextAlign.CENTER)
                             .lineSpacing(1.0)
-                            .margin(DocumentInsets.zero()))
-                    .addParagraph(paragraph -> paragraph
+                            .margin(DocumentInsets.zero()));
+                }
+                if (part == HeroPart.NAME) {
+                    ReadingOrderColumns.holdPlace(hero, "CvV2SidebarPortraitSubtitlePlace",
+                            held.get(HERO_SUBTITLE), DocumentInsets.zero());
+                } else {
+                    hero.addParagraph(paragraph -> paragraph
+                            .name(HERO_SUBTITLE)
                             .text(TextOrnaments.upper(subline))
                             .textStyle(subtitleStyle())
                             .align(TextAlign.CENTER)
-                            .margin(DocumentInsets.zero())));
+                            .margin(DocumentInsets.zero()));
+                }
+            });
         }
 
         private void addMain(SectionBuilder section, List<CvSection> sections) {

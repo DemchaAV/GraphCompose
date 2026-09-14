@@ -46,7 +46,7 @@
   }, {
     "path" : "SlateOrangeCv[0]/Masthead[0]",
     "entityName" : "Masthead",
-    "entityKind" : "RowNode",
+    "entityKind" : "LayerStackNode",
     "parentPath" : "SlateOrangeCv[0]",
     "childIndex" : 0,
     "depth" : 2,
@@ -74,83 +74,23 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Monogram[0]",
-    "entityName" : "Monogram",
+    "path" : "SlateOrangeCv[0]/Masthead[0]/IdentityLayer[0]",
+    "entityName" : "IdentityLayer",
     "entityKind" : "SectionNode",
     "parentPath" : "SlateOrangeCv[0]/Masthead[0]",
     "childIndex" : 0,
     "depth" : 3,
     "layer" : 3,
     "computedX" : 0.0,
-    "computedY" : 745.39,
+    "computedY" : 728.135,
     "placementX" : 0.0,
-    "placementY" : 745.39,
-    "placementWidth" : 85.8,
-    "placementHeight" : 96.5,
+    "placementY" : 728.135,
+    "placementWidth" : 566.325,
+    "placementHeight" : 113.755,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 85.8,
-    "contentHeight" : 96.5,
-    "margin" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    },
-    "padding" : {
-      "top" : 35.8,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    }
-  }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Monogram[0]/Initials[0]",
-    "entityName" : "Initials",
-    "entityKind" : "ParagraphNode",
-    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/Monogram[0]",
-    "childIndex" : 0,
-    "depth" : 4,
-    "layer" : 4,
-    "computedX" : 0.0,
-    "computedY" : 748.79,
-    "placementX" : 0.0,
-    "placementY" : 748.79,
-    "placementWidth" : 85.8,
-    "placementHeight" : 57.3,
-    "startPage" : 0,
-    "endPage" : 0,
-    "contentWidth" : 85.8,
-    "contentHeight" : 57.3,
-    "margin" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 1.7,
-      "left" : 0.0
-    },
-    "padding" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    }
-  }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Monogram[0]/Align[1]",
-    "entityName" : null,
-    "entityKind" : "Align",
-    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/Monogram[0]",
-    "childIndex" : 1,
-    "depth" : 4,
-    "layer" : 4,
-    "computedX" : 0.0,
-    "computedY" : 745.39,
-    "placementX" : 0.0,
-    "placementY" : 745.39,
-    "placementWidth" : 85.8,
-    "placementHeight" : 1.7,
-    "startPage" : 0,
-    "endPage" : 0,
-    "contentWidth" : 85.8,
-    "contentHeight" : 1.7,
+    "contentWidth" : 566.325,
+    "contentHeight" : 113.755,
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
@@ -159,48 +99,18 @@
     },
     "padding" : {
       "top" : 0.0,
-      "right" : 0.0,
+      "right" : 211.576,
       "bottom" : 0.0,
-      "left" : 0.0
+      "left" : 85.8
     }
   }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Monogram[0]/Align[1]/MonogramRule[0]",
-    "entityName" : "MonogramRule",
-    "entityKind" : "LineNode",
-    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/Monogram[0]/Align[1]",
-    "childIndex" : 0,
-    "depth" : 5,
-    "layer" : 5,
-    "computedX" : 24.3,
-    "computedY" : 745.39,
-    "placementX" : 24.3,
-    "placementY" : 745.39,
-    "placementWidth" : 37.2,
-    "placementHeight" : 1.7,
-    "startPage" : 0,
-    "endPage" : 0,
-    "contentWidth" : 37.2,
-    "contentHeight" : 1.7,
-    "margin" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    },
-    "padding" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    }
-  }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Identity[1]",
+    "path" : "SlateOrangeCv[0]/Masthead[0]/IdentityLayer[0]/Identity[0]",
     "entityName" : "Identity",
     "entityKind" : "SectionNode",
-    "parentPath" : "SlateOrangeCv[0]/Masthead[0]",
-    "childIndex" : 1,
-    "depth" : 3,
-    "layer" : 3,
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/IdentityLayer[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
     "computedX" : 85.8,
     "computedY" : 728.135,
     "placementX" : 85.8,
@@ -224,13 +134,13 @@
       "left" : 22.0
     }
   }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Identity[1]/Name[0]",
+    "path" : "SlateOrangeCv[0]/Masthead[0]/IdentityLayer[0]/Identity[0]/Name[0]",
     "entityName" : "Name",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/Identity[1]",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/IdentityLayer[0]/Identity[0]",
     "childIndex" : 0,
-    "depth" : 4,
-    "layer" : 4,
+    "depth" : 5,
+    "layer" : 5,
     "computedX" : 107.8,
     "computedY" : 768.077,
     "placementX" : 107.8,
@@ -254,13 +164,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Identity[1]/RoleLine[1]",
+    "path" : "SlateOrangeCv[0]/Masthead[0]/IdentityLayer[0]/Identity[0]/RoleLine[1]",
     "entityName" : "RoleLine",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/Identity[1]",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/IdentityLayer[0]/Identity[0]",
     "childIndex" : 1,
-    "depth" : 4,
-    "layer" : 4,
+    "depth" : 5,
+    "layer" : 5,
     "computedX" : 107.8,
     "computedY" : 747.668,
     "placementX" : 107.8,
@@ -284,13 +194,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Identity[1]/Tagline[2]",
+    "path" : "SlateOrangeCv[0]/Masthead[0]/IdentityLayer[0]/Identity[0]/Tagline[2]",
     "entityName" : "Tagline",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/Identity[1]",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/IdentityLayer[0]/Identity[0]",
     "childIndex" : 2,
-    "depth" : 4,
-    "layer" : 4,
+    "depth" : 5,
+    "layer" : 5,
     "computedX" : 107.8,
     "computedY" : 728.135,
     "placementX" : 107.8,
@@ -314,13 +224,193 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/MastheadHairline[2]",
-    "entityName" : "MastheadHairline",
+    "path" : "SlateOrangeCv[0]/Masthead[0]/MonogramLayer[1]",
+    "entityName" : "MonogramLayer",
+    "entityKind" : "SectionNode",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 0.0,
+    "computedY" : 745.39,
+    "placementX" : 0.0,
+    "placementY" : 745.39,
+    "placementWidth" : 595.276,
+    "placementHeight" : 96.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 595.276,
+    "contentHeight" : 96.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 509.476,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SlateOrangeCv[0]/Masthead[0]/MonogramLayer[1]/Monogram[0]",
+    "entityName" : "Monogram",
+    "entityKind" : "SectionNode",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/MonogramLayer[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 0.0,
+    "computedY" : 745.39,
+    "placementX" : 0.0,
+    "placementY" : 745.39,
+    "placementWidth" : 85.8,
+    "placementHeight" : 96.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 85.8,
+    "contentHeight" : 96.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 35.8,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SlateOrangeCv[0]/Masthead[0]/MonogramLayer[1]/Monogram[0]/Initials[0]",
+    "entityName" : "Initials",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/MonogramLayer[1]/Monogram[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 0.0,
+    "computedY" : 748.79,
+    "placementX" : 0.0,
+    "placementY" : 748.79,
+    "placementWidth" : 85.8,
+    "placementHeight" : 57.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 85.8,
+    "contentHeight" : 57.3,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.7,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SlateOrangeCv[0]/Masthead[0]/MonogramLayer[1]/Monogram[0]/Align[1]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/MonogramLayer[1]/Monogram[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 0.0,
+    "computedY" : 745.39,
+    "placementX" : 0.0,
+    "placementY" : 745.39,
+    "placementWidth" : 85.8,
+    "placementHeight" : 1.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 85.8,
+    "contentHeight" : 1.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SlateOrangeCv[0]/Masthead[0]/MonogramLayer[1]/Monogram[0]/Align[1]/MonogramRule[0]",
+    "entityName" : "MonogramRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/MonogramLayer[1]/Monogram[0]/Align[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 24.3,
+    "computedY" : 745.39,
+    "placementX" : 24.3,
+    "placementY" : 745.39,
+    "placementWidth" : 37.2,
+    "placementHeight" : 1.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 37.2,
+    "contentHeight" : 1.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SlateOrangeCv[0]/Masthead[0]/MastheadHairlineLayer[2]",
+    "entityName" : "MastheadHairlineLayer",
     "entityKind" : "SectionNode",
     "parentPath" : "SlateOrangeCv[0]/Masthead[0]",
     "childIndex" : 2,
     "depth" : 3,
     "layer" : 3,
+    "computedX" : 0.0,
+    "computedY" : 705.29,
+    "placementX" : 0.0,
+    "placementY" : 705.29,
+    "placementWidth" : 595.276,
+    "placementHeight" : 136.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 595.276,
+    "contentHeight" : 136.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 210.376,
+      "bottom" : 0.0,
+      "left" : 383.7
+    }
+  }, {
+    "path" : "SlateOrangeCv[0]/Masthead[0]/MastheadHairlineLayer[2]/MastheadHairline[0]",
+    "entityName" : "MastheadHairline",
+    "entityKind" : "SectionNode",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/MastheadHairlineLayer[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
     "computedX" : 383.7,
     "computedY" : 705.29,
     "placementX" : 383.7,
@@ -344,13 +434,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/MastheadHairline[2]/MastheadHairlineRule[0]",
+    "path" : "SlateOrangeCv[0]/Masthead[0]/MastheadHairlineLayer[2]/MastheadHairline[0]/MastheadHairlineRule[0]",
     "entityName" : "MastheadHairlineRule",
     "entityKind" : "LineNode",
-    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/MastheadHairline[2]",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/MastheadHairlineLayer[2]/MastheadHairline[0]",
     "childIndex" : 0,
-    "depth" : 4,
-    "layer" : 4,
+    "depth" : 5,
+    "layer" : 5,
     "computedX" : 383.7,
     "computedY" : 728.49,
     "placementX" : 383.7,
@@ -374,13 +464,43 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Contact[3]",
-    "entityName" : "Contact",
+    "path" : "SlateOrangeCv[0]/Masthead[0]/ContactLayer[3]",
+    "entityName" : "ContactLayer",
     "entityKind" : "SectionNode",
     "parentPath" : "SlateOrangeCv[0]/Masthead[0]",
     "childIndex" : 3,
     "depth" : 3,
     "layer" : 3,
+    "computedX" : 0.0,
+    "computedY" : 730.27,
+    "placementX" : 0.0,
+    "placementY" : 730.27,
+    "placementWidth" : 554.318,
+    "placementHeight" : 111.62,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 554.318,
+    "contentHeight" : 111.62,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 384.9
+    }
+  }, {
+    "path" : "SlateOrangeCv[0]/Masthead[0]/ContactLayer[3]/Contact[0]",
+    "entityName" : "Contact",
+    "entityKind" : "SectionNode",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/ContactLayer[3]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
     "computedX" : 384.9,
     "computedY" : 730.27,
     "placementX" : 384.9,
@@ -404,13 +524,13 @@
       "left" : 21.4
     }
   }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Contact[3]/Contact_0_phone[0]",
+    "path" : "SlateOrangeCv[0]/Masthead[0]/ContactLayer[3]/Contact[0]/Contact_0_phone[0]",
     "entityName" : "Contact_0_phone",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/Contact[3]",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/ContactLayer[3]/Contact[0]",
     "childIndex" : 0,
-    "depth" : 4,
-    "layer" : 4,
+    "depth" : 5,
+    "layer" : 5,
     "computedX" : 406.3,
     "computedY" : 793.57,
     "placementX" : 406.3,
@@ -434,13 +554,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Contact[3]/Contact_1_email[1]",
+    "path" : "SlateOrangeCv[0]/Masthead[0]/ContactLayer[3]/Contact[0]/Contact_1_email[1]",
     "entityName" : "Contact_1_email",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/Contact[3]",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/ContactLayer[3]/Contact[0]",
     "childIndex" : 1,
-    "depth" : 4,
-    "layer" : 4,
+    "depth" : 5,
+    "layer" : 5,
     "computedX" : 406.3,
     "computedY" : 772.47,
     "placementX" : 406.3,
@@ -464,13 +584,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Contact[3]/Contact_2_linkedin[2]",
+    "path" : "SlateOrangeCv[0]/Masthead[0]/ContactLayer[3]/Contact[0]/Contact_2_linkedin[2]",
     "entityName" : "Contact_2_linkedin",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/Contact[3]",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/ContactLayer[3]/Contact[0]",
     "childIndex" : 2,
-    "depth" : 4,
-    "layer" : 4,
+    "depth" : 5,
+    "layer" : 5,
     "computedX" : 406.3,
     "computedY" : 751.37,
     "placementX" : 406.3,
@@ -494,13 +614,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SlateOrangeCv[0]/Masthead[0]/Contact[3]/Contact_3_location[3]",
+    "path" : "SlateOrangeCv[0]/Masthead[0]/ContactLayer[3]/Contact[0]/Contact_3_location[3]",
     "entityName" : "Contact_3_location",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/Contact[3]",
+    "parentPath" : "SlateOrangeCv[0]/Masthead[0]/ContactLayer[3]/Contact[0]",
     "childIndex" : 3,
-    "depth" : 4,
-    "layer" : 4,
+    "depth" : 5,
+    "layer" : 5,
     "computedX" : 406.3,
     "computedY" : 730.27,
     "placementX" : 406.3,

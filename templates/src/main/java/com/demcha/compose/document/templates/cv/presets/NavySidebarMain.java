@@ -73,18 +73,41 @@ import static com.demcha.compose.document.templates.cv.presets.NavySidebarWidget
  */
 final class NavySidebarMain {
 
+    /** The name of the paragraph that carries the candidate's name. */
+    static final String NAME = "Name";
+
+    private static final DocumentInsets NAME_MARGIN = new DocumentInsets(0, 0, NAME_TO_ROLE, 0);
+
     private NavySidebarMain() {
+    }
+
+    /**
+     * The name alone, where {@link #compose} keeps its place: the column's
+     * padding, then the identity block holding the name and nothing under it.
+     * The preset draws this before the sidebar, so a reader that follows the
+     * content stream meets the name before the contact heading.
+     *
+     * @param section  a layer inset to the main column
+     * @param identity whose name to draw
+     */
+    static void composeName(SectionBuilder section, CvIdentity identity) {
+        pad(section);
+        section.addSection("Identity", inner -> renderName(inner, identity));
     }
 
     static void compose(SectionBuilder section,
                         CvIdentity identity,
+                        ReadingOrderColumns.Box name,
                         ParagraphSection summary,
                         EntriesSection experience,
                         ParagraphSection achievements,
                         ParagraphSection certifications) {
-        section.spacing(0)
-                .padding(new DocumentInsets(MAIN_PAD_TOP, PAGE_MARGIN, PAGE_MARGIN, TROUGH));
-        section.addSection("Identity", inner -> renderIdentity(inner, identity));
+        pad(section);
+        section.addSection("Identity", inner -> {
+            // The name itself is drawn by composeName; this keeps its place.
+            ReadingOrderColumns.holdPlace(inner, "NamePlace", name, NAME_MARGIN);
+            renderRole(inner, identity);
+        });
         if (SectionLookup.hasContent(summary)) {
             section.addSection("Summary", inner -> renderSummary(inner, summary));
         }
@@ -127,15 +150,22 @@ final class NavySidebarMain {
 
     // -- identity --------------------------------------------------------
 
-    private static void renderIdentity(SectionBuilder section, CvIdentity identity) {
+    private static void pad(SectionBuilder section) {
+        section.spacing(0)
+                .padding(new DocumentInsets(MAIN_PAD_TOP, PAGE_MARGIN, PAGE_MARGIN, TROUGH));
+    }
+
+    private static void renderName(SectionBuilder section, CvIdentity identity) {
         DocumentTextStyle nameStyle = style(NAME_SIZE, INK, DocumentTextDecoration.DEFAULT);
         section.addParagraph(p -> p
-                .name("Name")
+                .name(NAME)
                 .text(identity.name().full().toUpperCase(Locale.ROOT))
                 .textStyle(nameStyle)
                 .align(TextAlign.LEFT)
-                .margin(new DocumentInsets(0, 0, NAME_TO_ROLE, 0)));
+                .margin(NAME_MARGIN));
+    }
 
+    private static void renderRole(SectionBuilder section, CvIdentity identity) {
         DocumentTextStyle roleStyle = style(ROLE_SIZE, ACCENT, DocumentTextDecoration.BOLD);
         section.addParagraph(p -> {
             p.name("Role");

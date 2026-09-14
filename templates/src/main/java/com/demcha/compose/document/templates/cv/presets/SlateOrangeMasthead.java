@@ -7,8 +7,8 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.HorizontalAlign;
+import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.core.identity.Contact;
 import com.demcha.compose.document.templates.core.identity.ContactUri;
@@ -49,6 +49,7 @@ import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles
 import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.MONOGRAM_TOP;
 import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.NAME_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.NAME_TO_ROLE;
+import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.PAGE;
 import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.PAGE_HEIGHT;
 import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.PAGE_MARGIN;
 import static com.demcha.compose.document.templates.cv.presets.SlateOrangeStyles.PAGE_WIDTH;
@@ -109,29 +110,44 @@ final class SlateOrangeMasthead {
     }
 
     /**
-     * The band's content, as four cells of one top-level row.
+     * The band's content, as four cells side by side: the tile, the identity
+     * strip, the hairline and the contact column.
      *
-     * <p>The row's height is set by the hairline cell rather than by whichever
+     * <p>The cells are the layers of one stack rather than the columns of a
+     * row, so the identity strip can be drawn first: a reader that follows the
+     * content stream meets the name before the tile's initials. Each layer is
+     * inset to the band a row of fixed columns would give its cell, and the
+     * contact column takes whatever the other three leave, so the page is the
+     * same either way.</p>
+     *
+     * <p>The band's height is set by the hairline cell rather than by whichever
      * text block happens to be tallest: that cell's padding and its line add
      * up to the band's height exactly, so the body below starts where the
      * slate fill ends however the type is later adjusted.</p>
      */
     static void render(PageFlowBuilder page, CvIdentity identity, ParagraphSection specialisms) {
-        page.addRow("Masthead", row -> {
-            row.spacing(0);
-            row.columns(
-                    DocumentRowColumn.fixed(TILE_WIDTH),
-                    DocumentRowColumn.fixed(IDENTITY_WIDTH),
-                    DocumentRowColumn.fixed(HAIRLINE_THICKNESS),
-                    // The remainder, not a fourth measured width: four fixed
-                    // columns summing to the page leave the engine nothing to
-                    // round with, and it refuses the row by a third of a point.
-                    DocumentRowColumn.weight(1.0));
-            row.addSection("Monogram", tile -> renderTile(tile, identity));
-            row.addSection("Identity", block -> renderIdentity(block, identity, specialisms));
-            row.addSection("MastheadHairline", SlateOrangeMasthead::renderHairline);
-            row.addSection("Contact", block -> renderContact(block, identity));
-        });
+        double width = PAGE.width();
+        double identityLeft = TILE_WIDTH;
+        double hairlineLeft = identityLeft + IDENTITY_WIDTH;
+        double contactLeft = hairlineLeft + HAIRLINE_THICKNESS;
+        page.addLayerStack(band -> band
+                .name("Masthead")
+                .layer(ReadingOrderColumns.column("IdentityLayer",
+                                identityLeft, width - hairlineLeft, "Identity",
+                                block -> renderIdentity(block, identity, specialisms)),
+                        LayerAlign.TOP_LEFT)
+                .layer(ReadingOrderColumns.column("MonogramLayer",
+                                0, width - identityLeft, "Monogram",
+                                tile -> renderTile(tile, identity)),
+                        LayerAlign.TOP_LEFT)
+                .layer(ReadingOrderColumns.column("MastheadHairlineLayer",
+                                hairlineLeft, width - contactLeft, "MastheadHairline",
+                                SlateOrangeMasthead::renderHairline),
+                        LayerAlign.TOP_LEFT)
+                .layer(ReadingOrderColumns.column("ContactLayer",
+                                contactLeft, 0, "Contact",
+                                block -> renderContact(block, identity)),
+                        LayerAlign.TOP_LEFT));
     }
 
     // -- the tile ----------------------------------------------------------
@@ -219,9 +235,9 @@ final class SlateOrangeMasthead {
 
     /**
      * The vertical accent between the two halves of the band. It is a cell of
-     * the row, so its horizontal position comes from the row's own column
-     * widths rather than from a measured x — and its padding is what gives the
-     * row its height.
+     * the band, so its horizontal position comes from the widths of the cells
+     * before it rather than from a measured x — and its padding is what gives
+     * the band its height.
      */
     private static void renderHairline(SectionBuilder cell) {
         cell.spacing(0);

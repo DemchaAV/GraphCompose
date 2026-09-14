@@ -57,17 +57,45 @@ import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldWidge
  */
 final class CharcoalGoldMain {
 
+    /** The name of the paragraph that carries the given name. */
+    static final String GIVEN_NAME = "GivenName";
+
+    /** The name of the paragraph that carries the family name. */
+    static final String FAMILY_NAME = "FamilyName";
+
+    private static final DocumentInsets FAMILY_NAME_MARGIN =
+            new DocumentInsets(0, 0, (float) MASTHEAD_TO_TITLE, 0);
+
     private CharcoalGoldMain() {
+    }
+
+    /**
+     * The two halves of the name alone, where {@link #compose} keeps their
+     * place: the column's padding, then the masthead holding the name and
+     * nothing under it. The preset draws this before the sidebar, so a reader
+     * that follows the content stream meets the name before the contact
+     * heading.
+     *
+     * @param column   a layer inset to the main column
+     * @param identity whose name to draw
+     */
+    static void composeName(SectionBuilder column, CvIdentity identity) {
+        pad(column);
+        column.addSection("Masthead", block -> {
+            block.spacing(0);
+            renderName(block, identity);
+        });
     }
 
     static void compose(SectionBuilder main,
                         CvIdentity identity,
+                        ReadingOrderColumns.Box givenName,
+                        ReadingOrderColumns.Box familyName,
                         ParagraphSection summary,
                         EntriesSection experience) {
         main.name("MainColumn");
-        main.spacing(0);
-        main.padding((float) MAIN_PAD_TOP, (float) MAIN_PAD_RIGHT, 0f, (float) MAIN_PAD_LEFT);
-        renderMasthead(main, identity);
+        pad(main);
+        renderMasthead(main, identity, givenName, familyName);
         if (SectionLookup.hasContent(summary)) {
             renderSummary(main, summary);
         }
@@ -78,29 +106,47 @@ final class CharcoalGoldMain {
 
     // -- masthead --------------------------------------------------------
 
+    private static void pad(SectionBuilder column) {
+        column.spacing(0);
+        column.padding((float) MAIN_PAD_TOP, (float) MAIN_PAD_RIGHT, 0f, (float) MAIN_PAD_LEFT);
+    }
+
     /**
      * The name in two tones and two sizes — the given name in ink, the
-     * family name larger and in gold — then the role tracked out, and the
-     * short gold rule that closes the block.
+     * family name larger and in gold.
      *
      * <p>The two halves come from {@code CvName}, which is why this preset
      * wants a structured name rather than one string: nothing else could
      * tell it where to change colour.</p>
      */
-    private static void renderMasthead(SectionBuilder main, CvIdentity identity) {
+    private static void renderName(SectionBuilder block, CvIdentity identity) {
+        block.addParagraph(p -> p
+                .name(GIVEN_NAME)
+                .text(identity.name().first())
+                .textStyle(textStyle(NAME_GIVEN_SIZE, INK, false))
+                .lineSpacing(1.0));
+        block.addParagraph(p -> p
+                .name(FAMILY_NAME)
+                .text(identity.name().last())
+                .textStyle(textStyle(NAME_FAMILY_SIZE, ACCENT, false))
+                .lineSpacing(1.0)
+                .margin(0f, 0f, (float) MASTHEAD_TO_TITLE, 0f));
+    }
+
+    /**
+     * The masthead under the name: the role tracked out, and the short gold
+     * rule that closes the block. The name above them is drawn by
+     * {@link #composeName}; stand-ins keep the place of its two halves here.
+     */
+    private static void renderMasthead(SectionBuilder main, CvIdentity identity,
+                                       ReadingOrderColumns.Box givenName,
+                                       ReadingOrderColumns.Box familyName) {
         main.addSection("Masthead", block -> {
             block.spacing(0);
-            block.addParagraph(p -> p
-                    .name("GivenName")
-                    .text(identity.name().first())
-                    .textStyle(textStyle(NAME_GIVEN_SIZE, INK, false))
-                    .lineSpacing(1.0));
-            block.addParagraph(p -> p
-                    .name("FamilyName")
-                    .text(identity.name().last())
-                    .textStyle(textStyle(NAME_FAMILY_SIZE, ACCENT, false))
-                    .lineSpacing(1.0)
-                    .margin(0f, 0f, (float) MASTHEAD_TO_TITLE, 0f));
+            ReadingOrderColumns.holdPlace(block, "GivenNamePlace", givenName,
+                    DocumentInsets.zero());
+            ReadingOrderColumns.holdPlace(block, "FamilyNamePlace", familyName,
+                    FAMILY_NAME_MARGIN);
             block.addParagraph(p -> p
                     .name("JobTitle")
                     .text(identity.jobTitle())

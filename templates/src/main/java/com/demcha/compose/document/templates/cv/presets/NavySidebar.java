@@ -2,10 +2,13 @@ package com.demcha.compose.document.templates.cv.presets;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.PageBackgroundFill;
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.data.CvSection;
 import com.demcha.compose.document.templates.cv.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.data.ParagraphSection;
@@ -15,10 +18,11 @@ import com.demcha.compose.document.templates.cv.data.SkillsSection;
 import java.util.List;
 import java.util.Objects;
 
-import static com.demcha.compose.document.templates.cv.presets.NavySidebarStyles.MAIN_WEIGHT;
+import static com.demcha.compose.document.templates.cv.presets.NavySidebarStyles.MAIN_WIDTH;
 import static com.demcha.compose.document.templates.cv.presets.NavySidebarStyles.NAVY;
 import static com.demcha.compose.document.templates.cv.presets.NavySidebarStyles.PAGE;
 import static com.demcha.compose.document.templates.cv.presets.NavySidebarStyles.SIDEBAR_WEIGHT;
+import static com.demcha.compose.document.templates.cv.presets.NavySidebarStyles.SIDEBAR_WIDTH;
 
 /**
  * Navy Sidebar — a one-page A4 CV in two columns: a navy plate carrying a
@@ -32,9 +36,9 @@ import static com.demcha.compose.document.templates.cv.presets.NavySidebarStyles
  *
  * <h2>One page, and what happens past it</h2>
  *
- * <p>This sheet holds one page of content. The two columns are a single row,
- * and a row is atomic — it cannot be split — so a CV longer than the sheet
- * does not flow onto a second page: composing it raises
+ * <p>This sheet holds one page of content. The two columns are a single layer
+ * stack, and a stack is atomic — it cannot be split — so a CV longer than the
+ * sheet does not flow onto a second page: composing it raises
  * {@code AtomicNodeTooLargeException}, naming the node and the height it
  * needed. It draws no cap of its own, because a CV that quietly loses a job
  * is worse than one that refuses to compose. {@link TimelineMinimal} is the
@@ -177,6 +181,14 @@ public final class NavySidebar {
             ParagraphSection certifications =
                     berth(sections, ParagraphSection.class, CERTIFICATION_KEYS);
 
+            // The name is drawn first, the sidebar next and the rest of the main
+            // column last, under a stand-in as tall as the name: a reader that
+            // follows the content stream meets the name, then the contact
+            // lines. See ReadingOrderColumns.
+            ReadingOrderColumns.Box name = ReadingOrderColumns.measure(document,
+                    page -> page.add(nameLayer(doc.identity())), NavySidebarMain.NAME)
+                    .get(NavySidebarMain.NAME);
+
             document.pageFlow(page -> page
                     .name("NavySidebarCv")
                     .padding(DocumentInsets.zero())
@@ -184,16 +196,24 @@ public final class NavySidebar {
                     // node that owns it, so a flow gap would add to all of
                     // them.
                     .spacing(0)
-                    .addRow("PageGrid", row -> {
-                        row.spacing(0);
-                        row.weights(SIDEBAR_WEIGHT, MAIN_WEIGHT);
-                        row.addSection("Sidebar", aside ->
-                                NavySidebarAside.compose(aside, doc.identity(),
-                                        education, skills, languages));
-                        row.addSection("Main", main ->
-                                NavySidebarMain.compose(main, doc.identity(),
-                                        summary, experience, achievements, certifications));
-                    }));
+                    .addLayerStack(grid -> grid
+                            .name("PageGrid")
+                            .layer(nameLayer(doc.identity()), LayerAlign.TOP_LEFT)
+                            .layer(ReadingOrderColumns.column("SidebarLayer", 0, MAIN_WIDTH,
+                                    "Sidebar", aside -> NavySidebarAside.compose(aside,
+                                            doc.identity(), education, skills, languages)),
+                                    LayerAlign.TOP_LEFT)
+                            .layer(ReadingOrderColumns.column("MainLayer", SIDEBAR_WIDTH, 0,
+                                    "Main", main -> NavySidebarMain.compose(main, doc.identity(),
+                                            name, summary, experience, achievements,
+                                            certifications)),
+                                    LayerAlign.TOP_LEFT)));
+        }
+
+        /** The layer that draws the name alone, inset to the main column. */
+        private static DocumentNode nameLayer(CvIdentity identity) {
+            return ReadingOrderColumns.column("NameLayer", SIDEBAR_WIDTH, 0, "NameBlock",
+                    block -> NavySidebarMain.composeName(block, identity));
         }
 
         /**

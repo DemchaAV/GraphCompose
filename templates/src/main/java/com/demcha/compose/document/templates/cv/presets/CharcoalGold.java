@@ -2,9 +2,12 @@ package com.demcha.compose.document.templates.cv.presets;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.PageBackgroundFill;
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.data.CvSection;
 import com.demcha.compose.document.templates.cv.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.data.ParagraphSection;
@@ -12,6 +15,7 @@ import com.demcha.compose.document.templates.cv.data.RowsSection;
 import com.demcha.compose.document.templates.cv.data.SkillsSection;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.MAIN_WEIGHT;
@@ -34,11 +38,11 @@ import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyle
  *
  * <h2>One page, and what happens past it</h2>
  *
- * <p>The two columns are a single row, and a row is atomic — it cannot be
- * split — so a CV longer than the sheet does not flow onto a second page:
- * composing it raises {@code AtomicNodeTooLargeException}, naming the node
- * and the height it needed. It draws no cap of its own, because a CV that
- * quietly loses a job is worse than one that refuses to compose.
+ * <p>The two columns are a single layer stack, and a stack is atomic — it
+ * cannot be split — so a CV longer than the sheet does not flow onto a second
+ * page: composing it raises {@code AtomicNodeTooLargeException}, naming the
+ * node and the height it needed. It draws no cap of its own, because a CV
+ * that quietly loses a job is worse than one that refuses to compose.
  * {@link TimelineMinimal} is the preset in this package that splits its own
  * columns across pages.</p>
  *
@@ -189,27 +193,50 @@ public final class CharcoalGold {
                     || SectionLookup.hasContent(achievements);
             boolean hasTools = SectionLookup.hasContent(tools);
 
+            // The column widths follow the page, as the row's weights did.
+            double pageWidth = document.canvas().innerWidth();
+            double sidebarWidth = pageWidth * SIDEBAR_WEIGHT;
+            double mainWidth = pageWidth * MAIN_WEIGHT;
+
+            // The name is drawn first, the sidebar next and the rest of the main
+            // column last, under stand-ins as tall as the two halves of the
+            // name: a reader that follows the content stream meets the name,
+            // then the contact lines. See ReadingOrderColumns.
+            Map<String, ReadingOrderColumns.Box> name = ReadingOrderColumns.measure(document,
+                    page -> page.add(nameLayer(sidebarWidth, doc.identity())),
+                    CharcoalGoldMain.GIVEN_NAME, CharcoalGoldMain.FAMILY_NAME);
+
             document.pageFlow(page -> page
                     .name("CharcoalGoldCv")
                     .spacing(0)
-                    .addRow("Body", row -> {
-                        row.name("Body");
-                        row.spacing(0);
-                        row.weights(SIDEBAR_WEIGHT, MAIN_WEIGHT);
-                        row.addSection("Sidebar", side ->
-                                CharcoalGoldAside.compose(side, doc.identity(),
-                                        skills, languages, education));
-                        row.addSection("MainColumn", main -> {
-                            CharcoalGoldMain.compose(main, doc.identity(), summary, experience);
-                            if (hasCredentials) {
-                                CharcoalGoldCredentials.renderCredentials(main,
-                                        certifications, achievements);
-                            }
-                            if (hasTools) {
-                                CharcoalGoldCredentials.renderTools(main, tools);
-                            }
-                        });
-                    }));
+                    .addLayerStack(grid -> grid
+                            .name("Body")
+                            .layer(nameLayer(sidebarWidth, doc.identity()), LayerAlign.TOP_LEFT)
+                            .layer(ReadingOrderColumns.column("SidebarLayer", 0, mainWidth,
+                                    "Sidebar", side -> CharcoalGoldAside.compose(side,
+                                            doc.identity(), skills, languages, education)),
+                                    LayerAlign.TOP_LEFT)
+                            .layer(ReadingOrderColumns.column("MainLayer", sidebarWidth, 0,
+                                    "MainColumn", main -> {
+                                        CharcoalGoldMain.compose(main, doc.identity(),
+                                                name.get(CharcoalGoldMain.GIVEN_NAME),
+                                                name.get(CharcoalGoldMain.FAMILY_NAME),
+                                                summary, experience);
+                                        if (hasCredentials) {
+                                            CharcoalGoldCredentials.renderCredentials(main,
+                                                    certifications, achievements);
+                                        }
+                                        if (hasTools) {
+                                            CharcoalGoldCredentials.renderTools(main, tools);
+                                        }
+                                    }),
+                                    LayerAlign.TOP_LEFT)));
+        }
+
+        /** The layer that draws the name alone, inset to the main column. */
+        private static DocumentNode nameLayer(double sidebarWidth, CvIdentity identity) {
+            return ReadingOrderColumns.column("NameLayer", sidebarWidth, 0, "NameColumn",
+                    column -> CharcoalGoldMain.composeName(column, identity));
         }
 
         /**

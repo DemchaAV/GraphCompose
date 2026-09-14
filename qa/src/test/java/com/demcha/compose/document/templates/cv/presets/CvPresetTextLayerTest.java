@@ -100,6 +100,42 @@ class CvPresetTextLayerTest {
                 .doesNotMatch("(?s).*\\b(?:[A-Za-z] ){3,}[A-Za-z]\\b.*");
     }
 
+    /**
+     * The name is the first text in the file.
+     *
+     * <p>A resume parser that reads the content stream rather than the page takes the
+     * name from the lines above the first section heading. These presets set the name
+     * beside a sidebar and used to draw the sidebar first, so the parser met a monogram
+     * or a contact heading there and took that for the name. They draw the name before
+     * anything else now; that the page itself did not move is what their visual parity
+     * and layout snapshot tests hold.</p>
+     *
+     * <p>{@link PDFTextStripper} returns text in content-stream order unless it is told to
+     * sort by position, which is the order these parsers read.</p>
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("nameFirstPresets")
+    void theNameIsTheFirstTextInTheFile(
+            String slug, double margin, Supplier<DocumentTemplate<CvDocument>> factory)
+            throws Exception {
+
+        String extracted = renderText(factory.get(), margin).strip();
+
+        assertThat(extracted)
+                .describedAs("%s no longer draws the applicant's name before anything else",
+                        slug)
+                .startsWithIgnoringCase("JANE DOE");
+    }
+
+    private static Stream<Arguments> nameFirstPresets() {
+        return Stream.of(
+                preset("charcoal_gold", CharcoalGold.RECOMMENDED_MARGIN, CharcoalGold::create),
+                preset("navy_sidebar", NavySidebar.RECOMMENDED_MARGIN, NavySidebar::create),
+                preset("sidebar_portrait", SidebarPortrait.RECOMMENDED_MARGIN,
+                        SidebarPortrait::create),
+                preset("slate_orange", FULL_BLEED, SlateOrange::create));
+    }
+
     private static String renderText(DocumentTemplate<CvDocument> template, double margin)
             throws Exception {
         byte[] pdf;

@@ -229,8 +229,8 @@ API or the produced PDF reports that they were dropped.
 | `MintEditorial.create()` | 6 expertise labels, 6 skill bars (experience spans both pages in full) |
 
 The caps are load-bearing, not a matter of taste: each of these presets
-builds its columns as one `addRow`, and a row is atomic — it fits a page
-whole or the paginator raises `AtomicNodeTooLargeException`. Lifting a
+builds its columns as one atomic node — a row or a layer stack — that fits
+a page whole or the paginator raises `AtomicNodeTooLargeException`. Lifting a
 cap without teaching the preset to pick its own page boundaries turns a
 CV that silently lost an entry into one that fails to render.
 

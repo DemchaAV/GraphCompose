@@ -15,6 +15,7 @@ import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
 import com.demcha.compose.engine.text.bidi.BidiVisualOrder;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDFont;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -194,26 +195,66 @@ public final class PdfTableRowFragmentRenderHandler
         stream.saveGraphicsState();
         try {
             PdfAlphaSupport.applyFillAlpha(environment, stream, cell.style().textStyle().color());
-            stream.setFont(font.fontType(cell.style().textStyle().decoration()), (float) cell.style().textStyle().size());
-            stream.setNonStrokingColor(cell.style().textStyle().color());
+            PDFont face = font.fontType(cell.style().textStyle().decoration());
+            float size = (float) cell.style().textStyle().size();
             double letterSpacing = cell.style().textStyle().letterSpacing();
-            if (letterSpacing != 0.0) {
+            // A tracked cell draws with a letter-spaced face whose widths carry the spacing (see
+            // PdfRenderEnvironment#letterSpacedFont), so readers that ignore ActualText do not
+            // split its words into letters. One style, one decision: the face has to serve every
+            // line it would draw, handed over joined on line breaks. A reordered line — every line
+            // of a right-to-left cell, and any line that needs bidi — keeps the plain face and Tc.
+            // Only a tracked cell sanitises its lines ahead of drawing them, because only it needs
+            // their text for that decision.
+            String[] trackedTexts = letterSpacing == 0.0 ? null : new String[lines.size()];
+            PdfRenderEnvironment.LetterSpacedFont spaced = null;
+            if (trackedTexts != null) {
+                StringBuilder drawn = new StringBuilder();
+                for (int index = 0; index < lines.size(); index++) {
+                    ResolvedTextLine line = lines.get(index);
+                    trackedTexts[index] = font.sanitizeForRender(cell.style().textStyle(), line.text());
+                    if (!line.reordered() && !trackedTexts[index].isEmpty()) {
+                        drawn.append(trackedTexts[index]).append('\n');
+                    }
+                }
+                spaced = environment.letterSpacedFont(face, size, letterSpacing, drawn.toString());
+            }
+            PDFont cellFace = spaced == null ? face : spaced.font();
+            float cellSpacing = spaced == null ? (float) letterSpacing : spaced.characterSpacing();
+            stream.setFont(cellFace, size);
+            stream.setNonStrokingColor(cell.style().textStyle().color());
+            if (cellSpacing != 0f) {
                 // One style for the whole cell, so Tc is set once here. Emitted
-                // only when there is tracking to apply: this q..Q block starts at
+                // only when there is spacing to apply: this q..Q block starts at
                 // the page default of zero, so writing "0 Tc" would add a byte to
                 // every table ever rendered and change nothing about any of them.
                 // The enclosing restoreGraphicsState puts Tc back, so a tracked
                 // cell cannot spread the next one.
-                stream.setCharacterSpacing((float) letterSpacing);
+                stream.setCharacterSpacing(cellSpacing);
             }
+            PDFont currentFace = cellFace;
+            float currentSpacing = cellSpacing;
             List<PdfTextDecorations.Segment> decorations = null;
-            for (ResolvedTextLine line : lines) {
+            for (int index = 0; index < lines.size(); index++) {
+                ResolvedTextLine line = lines.get(index);
                 if (line.text().isEmpty()) {
                     continue;
                 }
                 // Sanitise per-line so a single unsupported glyph in a
                 // cell does not crash the whole table render.
-                String safeText = font.sanitizeForRender(cell.style().textStyle(), line.text());
+                String safeText = trackedTexts != null
+                        ? trackedTexts[index]
+                        : font.sanitizeForRender(cell.style().textStyle(), line.text());
+                boolean plainLine = spaced != null && line.reordered();
+                PDFont lineFace = plainLine ? face : cellFace;
+                float lineSpacing = plainLine ? (float) letterSpacing : cellSpacing;
+                if (lineFace != currentFace) {
+                    stream.setFont(lineFace, size);
+                    currentFace = lineFace;
+                }
+                if (lineSpacing != currentSpacing) {
+                    stream.setCharacterSpacing(lineSpacing);
+                    currentSpacing = lineSpacing;
+                }
                 // A reordered line goes out wrapped in what it says, so a reader copying
                 // the cell gets the letters that were typed rather than the order they
                 // happen to be painted in.

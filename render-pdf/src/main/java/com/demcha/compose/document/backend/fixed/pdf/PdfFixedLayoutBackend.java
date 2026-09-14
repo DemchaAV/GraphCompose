@@ -321,7 +321,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
     private int renderToOutput(LayoutGraph graph, FixedLayoutRenderContext context, OutputStream output) throws Exception {
         Rendered rendered = buildDocument(graph, context);
         try (PDDocument document = rendered.document()) {
-            PdfShapedGlyphUnicode.save(document, rendered.reorderedText(),
+            PdfSubsetAwareSave.save(document, rendered.reorderedText(), rendered.letterSpacedFonts(),
                     rendered.deferredProtection(), output);
             return document.getNumberOfPages();
         }
@@ -358,7 +358,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
         Rendered rendered = buildDocument(graph, context);
         try (PDDocument document = rendered.document();
              ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
-            PdfShapedGlyphUnicode.save(document, rendered.reorderedText(),
+            PdfSubsetAwareSave.save(document, rendered.reorderedText(), rendered.letterSpacedFonts(),
                     rendered.deferredProtection(), buffer);
             documentBytes = buffer.toByteArray();
         }
@@ -385,12 +385,14 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
      * A built document, and whether drawing it put any run in an order other than the
      * one it was written in.
      *
-     * <p>The second half is what {@link PdfShapedGlyphUnicode#save} needs and cannot
-     * work out for itself: it is a fact about the render, and by the time the document
-     * is saved the render is over.</p>
+     * <p>The rest is what {@link PdfSubsetAwareSave#save} needs and cannot work out for
+     * itself: facts about the render, and by the time the document is saved the render is
+     * over. {@code letterSpacedFonts} holds the letter-spaced font resources the render drew
+     * with, which the save completes once the fonts are subset.</p>
      */
     private record Rendered(PDDocument document,
                             boolean reorderedText,
+                            PdfTrackedFontResources letterSpacedFonts,
                             PdfProtectionOptions deferredProtection) {
     }
 
@@ -404,12 +406,14 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
     private Rendered buildDocument(LayoutGraph graph, FixedLayoutRenderContext context) throws Exception {
         PDDocument document = new PDDocument();
         boolean reorderedText = false;
+        PdfTrackedFontResources letterSpacedFonts = new PdfTrackedFontResources(document);
         try {
             FontLibrary fonts = PdfFontLibraryFactory.library(document, context.customFontFamilies());
             List<PDPage> pages = createPages(document, graph);
 
             try (PdfRenderSession session = new PdfRenderSession(document, pages)) {
-                PdfRenderEnvironment environment = new PdfRenderEnvironment(document, fonts, session);
+                PdfRenderEnvironment environment =
+                        new PdfRenderEnvironment(document, fonts, session, letterSpacedFonts);
                 renderGraph(graph, environment);
                 reorderedText = environment.reorderedText();
                 PdfBookmarkOutlineWriter.apply(document, environment.bookmarkRecords());
@@ -421,12 +425,13 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                         environment.deferredInternalLinks());
             }
 
-            // Protection is deferred for a reordered document: encrypting happens while
-            // saving and writes ciphertext back into the streams it encrypted, which
-            // would leave the glyph maps unreadable to the correction that runs between
-            // the saves. PdfShapedGlyphUnicode.save applies it after correcting.
+            // Protection is deferred when the save has to finish dictionaries after the font
+            // subsets exist: encrypting happens while saving and writes ciphertext back into the
+            // streams it encrypted, so a protected first save would be encrypted again by the
+            // second. PdfSubsetAwareSave applies it once, before the final save.
+            boolean savesTwice = reorderedText || letterSpacedFonts.hasResources();
             PdfProtectionOptions protectNow =
-                    reorderedText && protectionOptions != null ? null : protectionOptions;
+                    savesTwice && protectionOptions != null ? null : protectionOptions;
             PdfDocumentPostProcessor.apply(
                     document,
                     context.canvas(),
@@ -440,8 +445,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                 PdfDeterminismWriter.apply(document, deterministicTimestamp);
             }
 
-            return new Rendered(document, reorderedText,
-                    reorderedText ? protectionOptions : null);
+            return new Rendered(document, reorderedText, letterSpacedFonts,
+                    savesTwice ? protectionOptions : null);
         } catch (Exception ex) {
             document.close();
             throw ex;
@@ -514,7 +519,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
         Objects.requireNonNull(output, "output");
         Rendered rendered = buildSectionsDocument(sections);
         try (PDDocument document = rendered.document()) {
-            PdfShapedGlyphUnicode.save(document, rendered.reorderedText(),
+            PdfSubsetAwareSave.save(document, rendered.reorderedText(), rendered.letterSpacedFonts(),
                     rendered.deferredProtection(), output);
         }
     }
@@ -531,6 +536,9 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             List<PdfRenderEnvironment.DeferredInternalLink> links = new ArrayList<>();
             List<PdfRenderEnvironment.BookmarkRecord> bookmarks = new ArrayList<>();
             boolean reorderedText = false;
+            // One registry for the combined document: a letter-spaced face drawn in two sections
+            // is one font resource, like the base font it shares its program with.
+            PdfTrackedFontResources letterSpacedFonts = new PdfTrackedFontResources(document);
             int pageOffset = 0;
             for (SectionUnit section : sections) {
                 LayoutGraph graph = section.graph();
@@ -539,8 +547,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                 try (PdfRenderSession renderSession = new PdfRenderSession(document, pages)) {
                     // Each section renders with its OWN backend's handlers/debug, but
                     // records navigation against the combined document via the page offset.
-                    PdfRenderEnvironment environment =
-                            new PdfRenderEnvironment(document, fonts, renderSession, pageOffset);
+                    PdfRenderEnvironment environment = new PdfRenderEnvironment(
+                            document, fonts, renderSession, pageOffset, letterSpacedFonts);
                     chrome.renderGraph(graph, environment);
                     reorderedText |= environment.reorderedText();
                     bookmarks.addAll(environment.bookmarkRecords());
@@ -566,12 +574,12 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             // combined outline resolve in a single pass over the merged maps.
             PdfBookmarkOutlineWriter.apply(document, List.copyOf(bookmarks));
             PdfInternalLinkWriter.apply(document, Map.copyOf(anchors), List.copyOf(links));
-            PdfProtectionOptions deferred =
-                    applyDocumentMetadataAndProtection(document, sections, reorderedText);
+            PdfProtectionOptions deferred = applyDocumentMetadataAndProtection(
+                    document, sections, reorderedText || letterSpacedFonts.hasResources());
             if (deterministicTimestamp != null) {
                 PdfDeterminismWriter.apply(document, deterministicTimestamp);
             }
-            return new Rendered(document, reorderedText, deferred);
+            return new Rendered(document, reorderedText, letterSpacedFonts, deferred);
         } catch (Exception ex) {
             document.close();
             throw ex;
@@ -580,14 +588,14 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
 
     /**
      * Applies document-global metadata and viewer preferences, and either applies or
-     * defers protection: a reordered document must not be encrypted before its glyph
-     * maps are corrected, so its protection is returned to the caller to apply between
-     * the two saves instead.
+     * defers protection: a document whose save finishes dictionaries after the font subsets
+     * exist (reordered text, letter-spaced fonts) is saved twice and must not be encrypted
+     * before that, so its protection is returned to the caller to apply between the saves.
      *
-     * @return the protection to apply after glyph-map correction, or {@code null}
+     * @return the protection to apply before the final save, or {@code null}
      */
     private static PdfProtectionOptions applyDocumentMetadataAndProtection(
-            PDDocument document, List<SectionUnit> sections, boolean reorderedText)
+            PDDocument document, List<SectionUnit> sections, boolean savesTwice)
             throws IOException {
         // Metadata, protection, and viewer preferences are document-global in PDF;
         // the first section that declares each wins for the combined document.
@@ -606,7 +614,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                 viewerPreferences = chrome.viewerPreferencesOptions;
             }
         }
-        PdfProtectionOptions deferred = reorderedText ? protection : null;
+        PdfProtectionOptions deferred = savesTwice ? protection : null;
         PdfDocumentPostProcessor.applyDocumentMetadataAndProtection(
                 document, metadata, deferred == null ? protection : null);
         PdfDocumentPostProcessor.applyViewerPreferences(document, viewerPreferences);

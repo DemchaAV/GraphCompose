@@ -1,6 +1,5 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.engine.text.bidi.ArabicShaper;
 
 import org.apache.pdfbox.cos.COSBase;
@@ -44,9 +43,8 @@ import java.util.regex.Pattern;
  * are shapes standing in for something else.</p>
  *
  * <p>The rewrite has to happen after the map exists, and the map is built during the save.
- * Hence the shape of {@link #save}: the first save is what builds the subsets, and a second
- * one is spent only when there is something to correct. A document that never reordered a
- * line skips all of it and is saved exactly as before.</p>
+ * {@link PdfSubsetAwareSave} therefore saves once to build the subsets and then saves for real;
+ * this correction runs between the two only when a line was reordered.</p>
  */
 final class PdfShapedGlyphUnicode {
 
@@ -65,60 +63,6 @@ final class PdfShapedGlyphUnicode {
                     + "<([0-9A-Fa-f]{4,})>[ \\t]*$", Pattern.MULTILINE);
 
     private PdfShapedGlyphUnicode() {
-    }
-
-    /**
-     * Saves {@code document}, correcting what its glyphs claim to mean.
-     *
-     * <p>{@code mayCarryShapedText} is the caller's answer to whether the render reordered
-     * anything, which is the only way text reaches the page in a shaped form. When it did
-     * not, this is {@link PDDocument#save(OutputStream)} and nothing else — no second
-     * pass, no behaviour to regress.</p>
-     *
-     * <p>When it did, the map this needs to read is built <em>during</em> a save, so the
-     * document is saved twice: once into a null sink, which builds the font subsets and
-     * their glyph maps and clears the subsetting queue, and once for real after the maps
-     * are corrected. Both saves stream; nothing is buffered.</p>
-     *
-     * <p>{@code deferredProtection} is how the correction survives encryption. Encrypting
-     * is part of saving, and it writes the ciphertext back into the streams it encrypted —
-     * so a map built by a protected first save would be unreadable, and the correction
-     * would silently find nothing. The caller therefore builds a protected, reordered
-     * document <em>without</em> its protection and hands it here; the policy is applied
-     * between the two saves, so the first save writes readable maps and the second
-     * encrypts the corrected document exactly once.</p>
-     *
-     * @param document           the rendered document
-     * @param mayCarryShapedText whether the render drew any reordered text
-     * @param deferredProtection protection to apply between the saves, or {@code null}
-     *                           when the document is unprotected or was already protected
-     *                           by the build (which the caller does whenever no text was
-     *                           reordered)
-     * @param output             where to write
-     * @throws IOException if saving fails
-     */
-    static void save(PDDocument document,
-                     boolean mayCarryShapedText,
-                     PdfProtectionOptions deferredProtection,
-                     OutputStream output) throws IOException {
-
-        if (!mayCarryShapedText) {
-            document.save(output);
-            return;
-        }
-
-        // The first save is what builds the font subsets and, with them, the glyph maps
-        // this needs to read. It also clears the document's subsetting queue, so the
-        // second save writes the corrected maps rather than rebuilding them. Its bytes
-        // are not kept: the second save produces the same document, corrected, and
-        // streaming it directly to the caller is what keeps memory flat for a document
-        // of any size.
-        document.save(OutputStream.nullOutputStream());
-        restoreBaseLetters(document);
-        if (deferredProtection != null) {
-            PdfDocumentPostProcessor.applyProtection(document, deferredProtection);
-        }
-        document.save(output);
     }
 
     /**

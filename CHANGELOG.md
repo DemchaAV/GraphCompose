@@ -239,13 +239,36 @@ follow semantic versioning; release dates are ISO 8601.
   The default is `DocumentLetterSpacing.NONE`, which resolves to zero at every font size, so
   a document that never asks for tracking renders exactly as it did.
 
-  **PDF honours it natively.** The advance comes from the PDF `Tc` operator, not from spaces
-  pushed into the string, so a spaced-caps headline still reads as `JANE DOE` to search,
-  copy/paste, text extraction and ATS parsers — one glyph per character, the original text.
-  Tracked runs also state their own text via `ActualText`, because an extractor decides
-  where words are by how far apart glyphs sit and tracking is the act of moving them apart;
-  without that statement a widely tracked line comes back as `J A N E  D O E` from a file
-  that is otherwise perfectly correct.
+  **PDF honours it natively.** The advance is drawn by the PDF itself — in the glyph widths
+  of the font, or with the `Tc` operator — not from spaces pushed into the string, so a
+  spaced-caps headline still reads as `JANE DOE` to search, copy/paste, text extraction and
+  ATS parsers — one glyph per character, the original text.
+
+  Placing the letters is only half of it. An extractor decides where the words are from the
+  gaps between glyph boxes, and a box is as wide as the font says its glyph is: drawn with
+  `Tc` alone, every tracked letter sits in the right place and still stands apart from the
+  next by the whole tracking, and pdf.js (past about a tenth of the font size) and
+  pdfplumber (past three points) read a widely tracked line as `J A N E  D O E`. So a
+  positively tracked run is drawn with a second font resource over the same embedded font
+  program — its FontFile2, ToUnicode, CIDToGIDMap and descriptor shared by reference — whose
+  widths include the tracking. The glyphs land where `Tc` puts them, each box reaches the
+  next, and no font program is duplicated or modified. The widths are whole thousandths of
+  an em, because PDFium truncates fractional CID widths; the rest of the tracking, at most
+  half a thousandth of the font size, stays in `Tc`. One resource serves each face and
+  tracking per em for the whole document, on every page.
+
+  Tracked runs still state their own text via `ActualText`, for the readers that honour it.
+  Negative tracking, Standard 14 faces, text drawn in visual order (a right-to-left run, every
+  line of a right-to-left table cell, a highlight chip whose text needs bidi) and text a
+  face's GSUB substitutions would rewrite keep drawing with `Tc` alone; a table cell decides
+  once for all its lines, so a single line the face cannot serve keeps the whole cell on `Tc`.
+  The raised widths differ from the font program's own advances on purpose, which ISO 32000
+  allows and PDF/A and PDF/UA do not; the backend has no output mode that claims either. A
+  custom paragraph or table handler draws tracked text the same way through
+  `PdfRenderEnvironment.letterSpacedFont(font, fontSize, letterSpacing, text)`, which ships
+  `@Beta` with its result record `LetterSpacedFont`: the glyph positions and text layer it
+  produces are settled, while the shape of the call — a nullable result, a face bound to one
+  size — may still move in a minor release.
 
   Measurement and drawing use one rule, measured off PDFBox rather than assumed: one spacing
   unit per Unicode **code point** of the string actually drawn, the trailing unit included.
@@ -1831,6 +1854,32 @@ follow semantic versioning; release dates are ISO 8601.
   the reason for the change and no pixel or geometry gate can see it.
 
 ### Tests
+
+- **Letter spacing carried in widths is held to the picture `Tc` draws.**
+  `PdfLetterSpacedFontTest` compares every glyph origin of a tracked run with the same run
+  drawn by PDFBox with `Tc` from the same point — at 0.18em, at 0.02em, and at a points
+  tracking across three sizes, to 0.01pt, the trailing advance included — and requires the
+  gap a reader measures between two tracked letters to be no more than 0.005pt, in a
+  paragraph, a table cell and a highlight chip alike. It reads the text layer back from
+  each; checks that the letter-spaced resource draws with the base font's own program,
+  ToUnicode and CIDToGIDMap with every width raised by the tracking and no `Tc` carrying
+  it; opens a password-protected document and finds the resource still there; and holds
+  one resource per face and tracking per em across styles, sizes, pages and the sections of
+  one document, with a face handed back standing for its base instead of stacking a second
+  tracking on it. `PdfLetterSpacedFontFallbackTest` pins each run that keeps `Tc`: negative
+  tracking, a Standard 14 face, a right-to-left run, a highlight chip whose text needs
+  bidi, tracking below half a thousandth of an em, and Devanagari that Poppins'
+  substitutions rewrite — while the same face still carries a Latin heading's spacing in
+  its widths. A table cell decides once from the text it draws, so one line the face cannot
+  serve keeps the whole cell on `Tc`, and a line drawn in visual order goes back to `Tc`
+  inside a cell whose other lines keep the widths. Verified by mutation: sending every run
+  back to `Tc`, widening by one unit too many, skipping the substitution check, excluding
+  every face that keeps substitutions, handing a table cell no text, not unwrapping a face
+  handed back, and sending a highlight chip or a table cell back to `Tc` or leaving the
+  full `Tc` on top of its widths each turn the tests that describe them red.
+  `LetterSpacingAcrossBackendsTest` and `TrackingFixedLayoutParityTest` read the tracking a
+  PDF declares as the width raise over its embedded program plus the `Tc` in force, and
+  turn red when the widths are one unit too wide or the residual `Tc` is dropped.
 
 - **The schedule fixtures no longer carry a real venue's staff.** The weekly-schedule
   test fixture and the example data factory were written from a real bar's rota and kept

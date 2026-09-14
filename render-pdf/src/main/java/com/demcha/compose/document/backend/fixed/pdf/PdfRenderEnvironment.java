@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
+import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.engine.components.content.ImageData;
@@ -41,10 +42,12 @@ public final class PdfRenderEnvironment {
     private final List<BookmarkRecord> bookmarkRecords = new ArrayList<>();
     private final Map<String, AnchorDestination> anchorDestinations = new LinkedHashMap<>();
     private final List<DeferredInternalLink> deferredInternalLinks = new ArrayList<>();
+    private final PdfTrackedFontResources letterSpacedFonts;
     private boolean reorderedText;
 
-    PdfRenderEnvironment(PDDocument document, FontLibrary fonts, PdfRenderSession session) {
-        this(document, fonts, session, 0);
+    PdfRenderEnvironment(PDDocument document, FontLibrary fonts, PdfRenderSession session,
+                         PdfTrackedFontResources letterSpacedFonts) {
+        this(document, fonts, session, 0, letterSpacedFonts);
     }
 
     /**
@@ -61,12 +64,88 @@ public final class PdfRenderEnvironment {
      * @param fonts           shared font library
      * @param session         page-scoped drawing surface for this section
      * @param pageIndexOffset number of pages already placed before this section
+     * @param letterSpacedFonts the document's letter-spaced font resources, shared by all its sections
      */
-    PdfRenderEnvironment(PDDocument document, FontLibrary fonts, PdfRenderSession session, int pageIndexOffset) {
+    PdfRenderEnvironment(PDDocument document, FontLibrary fonts, PdfRenderSession session, int pageIndexOffset,
+                         PdfTrackedFontResources letterSpacedFonts) {
         this.document = document;
         this.fonts = fonts;
         this.session = session;
         this.pageIndexOffset = pageIndexOffset;
+        this.letterSpacedFonts = letterSpacedFonts;
+    }
+
+    /**
+     * Returns the face a letter-spaced run should be drawn with so that its spacing lives in the
+     * glyph widths instead of between the glyph boxes.
+     *
+     * <p>A run drawn with {@code Tc} is placed correctly, but readers that ignore
+     * {@code ActualText} find word breaks by the gaps between glyph boxes, and tracking is exactly
+     * such a gap: pdf.js and pdfminer read a heading tracked at 0.18em as single letters. The
+     * returned face shares the embedded program of {@code font} and states every width raised by
+     * the tracking, so the glyphs land where {@code Tc} would put them and no gap is left. Draw the
+     * run with {@link LetterSpacedFont#font()}, and with {@link LetterSpacedFont#characterSpacing()}
+     * as its {@code Tc}.</p>
+     *
+     * <p>Only positive tracking of at least half a thousandth of an em and at most a hundred ems,
+     * drawn with an embedded, subset, horizontal Type 0 font, qualifies, and only for non-empty
+     * text the font's GSUB substitutions, if it keeps any, leave unchanged. For anything else
+     * &mdash; and when the resource cannot be registered &mdash; this returns {@code null}, and the
+     * run keeps drawing with {@code font} and a {@code Tc} equal to its letter spacing, exactly as
+     * before.</p>
+     *
+     * <p>The returned face belongs to the document being rendered and to the size and spacing
+     * asked for; ask again for another size. {@code font} must belong to the same document.
+     * Asking is not free: once any face has been returned, the document is saved twice, because
+     * the resource can only be completed after its base font has been subset. Text a handler
+     * draws in visual order, such as reordered right-to-left text, should not be passed; the
+     * built-in handlers keep {@code Tc} for it. A face this method returned may be passed back,
+     * and stands for its base font.</p>
+     *
+     * <p><b>Experimental.</b> The glyph positions and text layer this produces are settled; the
+     * shape of the call &mdash; a nullable result, a face bound to one size &mdash; may still change
+     * in a minor release.</p>
+     *
+     * @param font          the face the run would otherwise be drawn with
+     * @param fontSize      font size in points
+     * @param letterSpacing the run's resolved letter spacing in points
+     * @param text          the text the returned face would draw, after sanitizing: one run, or
+     *                      several lines joined on line breaks when one decision covers them
+     * @return the face and character spacing to draw the run with, or {@code null} to keep
+     *         drawing with {@code font} and {@code Tc}
+     * @since 2.4.0
+     */
+    @Beta
+    public LetterSpacedFont letterSpacedFont(org.apache.pdfbox.pdmodel.font.PDFont font,
+                                             double fontSize,
+                                             double letterSpacing,
+                                             String text) {
+        return letterSpacedFonts.resolve(font, fontSize, letterSpacing, text);
+    }
+
+    /**
+     * A face whose glyph widths carry a run's letter spacing, and the character spacing still owed.
+     *
+     * <p><b>Experimental</b>, like {@link #letterSpacedFont}: its shape may still change in a minor
+     * release.</p>
+     *
+     * @param font             the font resource to select for the run
+     * @param characterSpacing the {@code Tc} to draw the run with: the part of the letter spacing a
+     *                         whole thousandth of an em cannot state, at most half a thousandth of
+     *                         the font size, or zero
+     * @since 2.4.0
+     */
+    @Beta
+    public record LetterSpacedFont(org.apache.pdfbox.pdmodel.font.PDFont font, float characterSpacing) {
+    }
+
+    /**
+     * The document's letter-spaced font resources, which the backend completes when it saves.
+     *
+     * @return the shared registry
+     */
+    PdfTrackedFontResources letterSpacedFonts() {
+        return letterSpacedFonts;
     }
 
     /**

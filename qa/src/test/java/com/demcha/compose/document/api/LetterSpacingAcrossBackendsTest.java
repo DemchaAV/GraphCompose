@@ -28,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * One authored style, all three backends.
@@ -40,8 +41,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>The three units are genuinely different numbers for the same distance:
  * 2.4pt is {@code spc="240"} in DrawingML's hundredths, {@code w:val="48"} in
- * Word's twentieths, and a {@code Tc} of 2.4 in the PDF's points. A test that
- * asserted one number across all three would be asserting a bug.</p>
+ * Word's twentieths, and 2.4 points of advance per glyph in the PDF, which states
+ * it in the widths of the font it draws with (120 thousandths of the 20pt em) and
+ * in {@code Tc} for any remainder. A test that asserted one number across all
+ * three would be asserting a bug.</p>
  */
 class LetterSpacingAcrossBackendsTest {
 
@@ -84,12 +87,13 @@ class LetterSpacingAcrossBackendsTest {
     }
 
     @Test
-    void pdfReceivesItAsPointsOfCharacterSpacing() throws Exception {
+    void pdfReceivesItAsPointsOfAdvancePerGlyph() throws Exception {
         byte[] pdf = render(session -> session.render(new PdfFixedLayoutBackend()));
 
-        // Tc is written in points, so the operator carries the resolved value
-        // itself rather than a converted one.
-        assertThat(contentStream(pdf)).containsPattern("2\\.4\\d*\\s+Tc");
+        // Read off the file, not off the backend: what the glyph widths carry
+        // beyond the embedded program's own, plus Tc, is the distance every glyph
+        // moves, and it is the resolved value itself.
+        assertThat(PdfDeclaredTracking.ofFirstRun(pdf)).isCloseTo(EXPECTED_POINTS, within(1e-6));
         assertThat(pdfText(pdf)).isEqualTo(NAME);
     }
 
@@ -190,13 +194,6 @@ class LetterSpacingAcrossBackendsTest {
     private static String pdfText(byte[] pdf) throws Exception {
         try (PDDocument document = Loader.loadPDF(pdf)) {
             return new PDFTextStripper().getText(document).trim();
-        }
-    }
-
-    private static String contentStream(byte[] pdf) throws Exception {
-        try (PDDocument document = Loader.loadPDF(pdf)) {
-            return new String(document.getPage(0).getContents().readAllBytes(),
-                    java.nio.charset.StandardCharsets.ISO_8859_1);
         }
     }
 }

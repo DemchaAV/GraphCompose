@@ -40,8 +40,8 @@ import static org.assertj.core.api.Assertions.within;
  * hundredths of a point, so if the engine measured a finer value than that, the
  * width it reserved is a width the deck will never draw. The engine therefore
  * measures on the grid the file can express, and this holds the three numbers
- * together: what the engine measured, what the PDF's {@code Tc} says, and what
- * the deck's {@code spc} says.</p>
+ * together: what the engine measured, what the PDF declares — its glyph widths
+ * and its {@code Tc} together — and what the deck's {@code spc} says.</p>
  *
  * <p>This is <em>not</em> a claim that a PDF and a deck rasterise identically.
  * Measured by exporting both through PowerPoint, an <em>untracked</em>
@@ -55,7 +55,6 @@ class TrackingFixedLayoutParityTest {
     /** Long enough that a per-code-point residue would be unmistakable. */
     private static final String LONG = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMN";
     private static final Pattern SPC = Pattern.compile("spc=\"(-?[0-9]+)\"");
-    private static final Pattern TC = Pattern.compile("(-?[0-9]*\\.?[0-9]+)\\s+Tc");
     private static final Pattern W_SPACING = Pattern.compile("spacing[^/>]*val=\"(-?[0-9]+)\"");
 
     private static DocumentTextStyle style(DocumentLetterSpacing spacing) {
@@ -71,11 +70,13 @@ class TrackingFixedLayoutParityTest {
         DocumentTextStyle style = style(DocumentLetterSpacing.points(points));
 
         int spc = spcOf(render(style, s -> s.render(new PptxFixedLayoutBackend())));
-        double tc = tcOf(render(style, s -> s.render(new PdfFixedLayoutBackend())));
+        double pdf = PdfDeclaredTracking.ofFirstRun(render(style, s -> s.render(new PdfFixedLayoutBackend())));
 
         // Both files state the same distance. Unquantised, the PDF said
-        // 0.3333333333333333 where the deck said 0.33.
-        assertThat(spc / 100.0).as("PPTX spc=%d against PDF Tc=%s", spc, tc).isEqualTo(tc);
+        // 0.3333333333333333 where the deck said 0.33. The PDF's figure is the sum
+        // of what its widths and its Tc carry, so it holds ordinary float residue;
+        // the gap being ruled out is thousands of times larger.
+        assertThat(pdf).as("PPTX spc=%d against PDF %s pt", spc, pdf).isCloseTo(spc / 100.0, within(1e-6));
     }
 
     @ParameterizedTest(name = "[{index}] {0} pt")
@@ -331,14 +332,6 @@ class TrackingFixedLayoutParityTest {
             }
         }
         throw new AssertionError("no w:spacing written");
-    }
-
-    private static double tcOf(byte[] pdf) throws Exception {
-        Matcher matcher = TC.matcher(contentStream(pdf));
-        if (!matcher.find()) {
-            throw new AssertionError("no Tc written");
-        }
-        return Double.parseDouble(matcher.group(1));
     }
 
     private static List<String> pptxRunXml(byte[] pptx) throws Exception {

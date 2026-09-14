@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 69 · methods: 371 · constants: 18 · compiler-generated members: 189
+Types: 70 · methods: 375 · constants: 18 · compiler-generated members: 192
 
 ## com.demcha.compose.document.backend.fixed
 
@@ -115,6 +115,7 @@ Types: 69 · methods: 371 · constants: 18 · compiler-generated members: 189
 - `PdfHeaderFooterOptions toPdf(DocumentHeaderFooter entry)`
 
 ### PdfRenderEnvironment (class)
+- `PdfRenderEnvironment.LetterSpacedFont letterSpacedFont(PDFont font, double fontSize, double letterSpacing, String text)   [beta]`
 - `PDDocument document()`
 - `FontLibrary fonts()`
 - `PDPageContentStream pageSurface(int pageIndex)`
@@ -124,6 +125,11 @@ Types: 69 · methods: 371 · constants: 18 · compiler-generated members: 189
 - `PDImageXObject resolveImage(ImageData imageData)`
 - `void markReorderedText()`
 - `void registerAnchor(PlacedFragment fragment, String anchor)`
+
+### PdfRenderEnvironment.LetterSpacedFont (record)   [beta]
+- `new LetterSpacedFont(PDFont, float)   [beta]`
+- `PDFont font()   [beta]`
+- `float characterSpacing()   [beta]`
 
 ## com.demcha.compose.document.backend.fixed.pdf.handlers
 

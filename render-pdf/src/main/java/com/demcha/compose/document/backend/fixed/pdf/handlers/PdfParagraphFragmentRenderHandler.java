@@ -156,7 +156,8 @@ public final class PdfParagraphFragmentRenderHandler
         // skipping the resolution handed that Hebrew to the content stream logically —
         // drawn left to right, the word came out backwards. The flag is the base the
         // resolution runs against, not the question of whether to run it.
-        if (span.rightToLeft() || BidiParagraphResolver.requiresBidi(sanitizedLogical)) {
+        boolean reordered = span.rightToLeft() || BidiParagraphResolver.requiresBidi(sanitizedLogical);
+        if (reordered) {
             text = BidiVisualOrder.visualize(sanitizedLogical, span.rightToLeft());
             written = PdfActualText.writtenTextOf(span);
             environment.markReorderedText();
@@ -184,9 +185,20 @@ public final class PdfParagraphFragmentRenderHandler
         stream.beginText();
         stream.newLineAtOffset((float) (cursorX + pad.left()), (float) baselineY);
         textState.invalidate();
-        textState.applyFont(stream, font.fontType(span.textStyle().decoration()), (float) span.textStyle().size());
+        PDFont face = font.fontType(span.textStyle().decoration());
+        float characterSpacing = (float) span.textStyle().letterSpacing();
+        if (!reordered && characterSpacing != 0f) {
+            // As in renderLine: the tracking goes into the widths of a letter-spaced face.
+            PdfRenderEnvironment.LetterSpacedFont spaced = environment.letterSpacedFont(
+                    face, span.textStyle().size(), span.textStyle().letterSpacing(), text);
+            if (spaced != null) {
+                face = spaced.font();
+                characterSpacing = spaced.characterSpacing();
+            }
+        }
+        textState.applyFont(stream, face, (float) span.textStyle().size());
         textState.applyColor(stream, span.textStyle().color());
-        textState.applyCharacterSpacing(stream, (float) span.textStyle().letterSpacing());
+        textState.applyCharacterSpacing(stream, characterSpacing);
         if (written != null) {
             stream.beginMarkedContent(PdfActualText.tag(), PdfActualText.properties(written));
         }
@@ -458,11 +470,22 @@ public final class PdfParagraphFragmentRenderHandler
                         stream.newLineAtOffset((float) cursorX, (float) baselineY);
                         inTextBlock = true;
                     }
-                    textState.applyFont(stream,
-                            font.fontType(textSpan.textStyle().decoration()),
-                            (float) textSpan.textStyle().size());
+                    PDFont face = font.fontType(textSpan.textStyle().decoration());
+                    float characterSpacing = (float) textSpan.textStyle().letterSpacing();
+                    if (!textSpan.rightToLeft() && characterSpacing != 0f) {
+                        // The tracking goes into the widths of a letter-spaced face rather than
+                        // between the glyph boxes, where readers that ignore ActualText split on
+                        // it. The glyphs land where Tc would put them; ActualText stays.
+                        PdfRenderEnvironment.LetterSpacedFont spaced = environment.letterSpacedFont(
+                                face, textSpan.textStyle().size(), textSpan.textStyle().letterSpacing(), text);
+                        if (spaced != null) {
+                            face = spaced.font();
+                            characterSpacing = spaced.characterSpacing();
+                        }
+                    }
+                    textState.applyFont(stream, face, (float) textSpan.textStyle().size());
                     textState.applyColor(stream, textSpan.textStyle().color());
-                    textState.applyCharacterSpacing(stream, (float) textSpan.textStyle().letterSpacing());
+                    textState.applyCharacterSpacing(stream, characterSpacing);
                     if (written != null) {
                         stream.beginMarkedContent(PdfActualText.tag(),
                                 PdfActualText.properties(written));

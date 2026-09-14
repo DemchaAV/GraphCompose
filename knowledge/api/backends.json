@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 69,
-    "methods": 371,
+    "types": 70,
+    "methods": 375,
     "constants": 18,
-    "generated": 189
+    "generated": 192
   },
   "packages": [
     {
@@ -1035,6 +1035,33 @@
           "members": [
             {
               "kind": "method",
+              "name": "letterSpacedFont",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfRenderEnvironment.LetterSpacedFont",
+              "params": [
+                {
+                  "type": "PDFont",
+                  "name": "font"
+                },
+                {
+                  "type": "double",
+                  "name": "fontSize"
+                },
+                {
+                  "type": "double",
+                  "name": "letterSpacing"
+                },
+                {
+                  "type": "String",
+                  "name": "text"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
               "name": "document",
               "static": false,
               "origin": "source",
@@ -1147,6 +1174,57 @@
                   "name": "anchor"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "name": "PdfRenderEnvironment.LetterSpacedFont",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment$LetterSpacedFont",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "LetterSpacedFont",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "PDFont",
+                  "name": null
+                },
+                {
+                  "type": "float",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "font",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PDFont",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "characterSpacing",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "float",
+              "params": [],
+              "stability": "beta"
             }
           ]
         }

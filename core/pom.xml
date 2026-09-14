@@ -49,7 +49,7 @@
         <flexmark.version>0.64.8</flexmark.version>
         <logback.version>1.6.3</logback.version>
         <lombok.version>1.18.48</lombok.version>
-        <slf4j.version>2.0.18</slf4j.version>
+        <slf4j.version>2.0.19</slf4j.version>
 
         <!-- Test dependencies -->
         <assertj.version>3.27.7</assertj.version>

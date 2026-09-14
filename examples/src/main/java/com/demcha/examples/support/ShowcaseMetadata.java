@@ -137,11 +137,10 @@ final class ShowcaseMetadata {
 
         // ===== ATS classification of the CV presets =====
         // Every CV card carries one, read from a resume-parser check of its showcase sample.
-        // Only the two earned statuses show the badge. Each badged preset's status, with a
-        // fingerprint of the text its sample gives a parser, is pinned in the examples tests'
-        // ats-validated-samples.properties, so a badge cannot outlive the sample it was earned
-        // on. A design-first preset keeps its layout; its limitations say what that costs a
-        // parser.
+        // Only the two earned statuses show the badge. Each badged preset's status is recorded in
+        // the examples tests' ats-validated-samples.properties with the SHA-256 of the exact PDF
+        // its check read, so a badge cannot outlive the sample it was earned on. A design-first
+        // preset keeps its layout; its limitations say what that costs a parser.
         certified("cv-blue-banner-v2");
         certified("cv-boxed-sections-v2");
         certified("cv-centered-headline-v2");

@@ -26,9 +26,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>The badge is a public claim about a template, so it is earned and never defaulted. Every CV
  * card carries a classification, only the two earned statuses show the badge, the badged presets
- * and their statuses match the samples a parser check validated — pinned in
- * {@code ats-validated-samples.properties} — and the docs list exactly those presets. Awarding a
- * badge takes the register, the pinned evidence and the docs together.</p>
+ * and their statuses match the samples an ATS check certified — recorded with the hash of the
+ * exact PDF each check read in {@code ats-validated-samples.properties} — and the docs list
+ * exactly those presets. Awarding a badge takes the register, the recorded evidence and the docs
+ * together.</p>
  */
 class ShowcaseAtsClassificationTest {
 
@@ -37,6 +38,9 @@ class ShowcaseAtsClassificationTest {
 
     /** A row of the ATS-friendly table in the templates guide. */
     private static final Pattern GUIDE_ROW = Pattern.compile("^\\| `(\\w+)\\.create\\(\\)` \\|");
+
+    /** Where the CV presets live; a certification names one of them. */
+    private static final String CV_PRESETS = "com.demcha.compose.document.templates.cv.presets.";
 
     @Test
     void everyCvCardIsClassifiedAndNoOtherCardIs() {
@@ -65,15 +69,48 @@ class ShowcaseAtsClassificationTest {
             }
         });
         Map<String, ShowcaseMetadata.AtsStatus> validated = new TreeMap<>();
-        ShowcaseAtsEvidence.pins().forEach((id, pin) -> validated.put(id, pin.status()));
+        ShowcaseAtsEvidence.certifications().forEach((id, certification) ->
+                validated.put(id, certification.status()));
 
         assertThat(validated)
-                .describedAs("no validated sample is pinned — the guard would have nothing to compare")
+                .describedAs("no certified sample is recorded — the guard would have nothing to compare")
                 .isNotEmpty();
         assertThat(badged)
                 .describedAs("a badge, and the status it shows, stand only on a sample a parser check "
                         + "validated: the register and ats-validated-samples.properties change together")
                 .isEqualTo(validated);
+    }
+
+    @Test
+    void everyCertificationNamesItsPresetAndTheDayTheBadgeShows() throws IOException {
+        Set<String> mismatched = new TreeSet<>();
+        for (Map.Entry<String, ShowcaseAtsEvidence.Certification> entry
+                : ShowcaseAtsEvidence.certifications().entrySet()) {
+            String id = entry.getKey();
+            ShowcaseAtsEvidence.Certification certification = entry.getValue();
+            var card = ShowcaseMetadata.registeredEntries().get(id);
+            ShowcaseMetadata.Ats ats = ShowcaseMetadata.ats(id);
+            if (card == null || ats == null) {
+                mismatched.add(id + " — certified, but not a classified card");
+                continue;
+            }
+            String preset = card.title().replace(" ", "");
+            if (!certification.preset().equals(preset)) {
+                mismatched.add(id + " — certifies " + certification.preset()
+                        + ", but the card shows " + preset);
+            } else if (!isCvPreset(preset)) {
+                mismatched.add(id + " — " + preset + " is not a CV preset");
+            }
+            if (!certification.validatedAt().toString().equals(ats.lastValidated())) {
+                mismatched.add(id + " — checked on " + certification.validatedAt()
+                        + ", but the badge says " + ats.lastValidated());
+            }
+        }
+
+        assertThat(mismatched)
+                .describedAs("a certification names the preset its sample renders and the day its check "
+                        + "ran, and the badge shows that day")
+                .isEmpty();
     }
 
     @Test
@@ -183,6 +220,15 @@ class ShowcaseAtsClassificationTest {
             assertThat(paragraph)
                     .describedAs("the examples README names every ATS-friendly preset")
                     .contains(title);
+        }
+    }
+
+    private static boolean isCvPreset(String preset) {
+        try {
+            Class.forName(CV_PRESETS + preset, false, ShowcaseAtsClassificationTest.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException missing) {
+            return false;
         }
     }
 

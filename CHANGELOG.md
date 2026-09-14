@@ -2103,9 +2103,10 @@ follow semantic versioning; release dates are ISO 8601.
   document with different content can parse differently. A design-first preset keeps the
   layout that is the point of its design — a sidebar, columns, a monogram — at the cost of
   at least one of those checks. On the showcase site a CV card carries an "ATS-friendly"
-  chip, linking to that section, only when its classification earns one, and
-  `ShowcaseAtsEvidenceTest` pins a fingerprint of each badged sample's extracted text, so the
-  build fails when that text changes after the check.
+  chip, linking to that section, only when its classification earns one. Each badged sample
+  renders deterministically, and `ShowcaseAtsEvidenceTest` holds it to the SHA-256 of the
+  exact PDF its check read, so the build fails when the sample renders to any other bytes,
+  until the check is run on the new file.
 
 ## v2.3.0 — 2026-08-31
 

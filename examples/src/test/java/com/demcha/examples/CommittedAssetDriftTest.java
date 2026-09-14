@@ -143,10 +143,7 @@ class CommittedAssetDriftTest {
             "chart-showcase.png",
             "feature-catalog.png",
             "repository_showcase_render.png",
-            "social-card.png",
-            "twin-output-editing.png",
-            "twin-output-pdf.png",
-            "twin-output-pptx.png");
+            "social-card.png");
 
     /** The folders under {@code assets/readme}: the previews this compares, and 1.5's figures. */
     private static final Set<String> ASSET_FOLDERS = Set.of("examples", "v1.5");

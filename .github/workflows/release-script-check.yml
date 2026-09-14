@@ -559,3 +559,76 @@ jobs:
           if ($message -ne '') { throw "a complete pack with node present was refused: '$message'" }
 
           Write-Host 'knowledge preflight: refuses without node, names a missing tool, exempts a pack-less tree, passes a healthy one.'
+
+      - name: A failed git mutation stops the cut
+        shell: pwsh
+        run: |
+          # PowerShell does not stop on a native non-zero exit. On the 2.4.0 cut a stale
+          # .git/index.lock failed the release add and commit, the script reported the
+          # commit anyway, and Step 7 tagged the commit before it. Invoke-Git is lifted
+          # by AST, so the code under test is the code that ships, and run against a
+          # throwaway repository holding that same lock.
+          $path = (Resolve-Path scripts/cut-release.ps1).Path
+          $tokens = $null; $errors = $null
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+          $fn = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Invoke-Git'
+            }, $true) | Select-Object -First 1
+          if (-not $fn) { throw 'cut-release.ps1 no longer defines Invoke-Git' }
+          Invoke-Expression $fn.Extent.Text
+
+          function Get-Refusal([scriptblock]$block) {
+            try { & $block 2>$null; return '' } catch { return $_.Exception.Message }
+          }
+
+          $repo = Join-Path ([IO.Path]::GetTempPath()) ('git-exit-' + [guid]::NewGuid().ToString())
+          New-Item -ItemType Directory -Path $repo | Out-Null
+          Push-Location $repo
+          try {
+            git init -q
+            git config user.email ci@example.invalid
+            git config user.name ci
+            Set-Content -Path 'a.txt' -Value 'a'
+            Set-Content -Path 'b c.txt' -Value 'b'
+            $lock = Join-Path $repo '.git/index.lock'
+            [IO.File]::WriteAllText($lock, '')
+
+            # 1. The control: a bare git call under the lock does not throw. Without
+            #    this the checks below could be passing on a harness that throws anyway.
+            $bare = Get-Refusal { git add a.txt }
+            if ($bare -ne '') { throw "a bare git add threw on its own — the harness proves nothing: '$bare'" }
+
+            # 2. The same calls through Invoke-Git stop, and say which call failed.
+            foreach ($case in @(
+                @{ label = 'add';    block = { Invoke-Git add a.txt } },
+                @{ label = 'commit'; block = { Invoke-Git commit -m 'Release v9.9.9' } })) {
+              $message = Get-Refusal $case.block
+              if ($message -notmatch "^git $($case.label) .*failed \(exit \d+\)") {
+                throw "Invoke-Git $($case.label) under a held index.lock did not stop: '$message'"
+              }
+            }
+
+            # 3. Without the lock the helper passes its arguments through unchanged — a
+            #    path with a space and a message with a space arrive as one argument each.
+            [IO.File]::Delete($lock)
+            $files = @('a.txt', 'b c.txt')
+            Invoke-Git add @files
+            Invoke-Git commit -q -m 'Release v9.9.9'
+            $tag = 'v9.9.9'
+            Invoke-Git tag -a $tag -m "Release $tag"
+            if ((git log -1 --format=%s) -ne 'Release v9.9.9') { throw 'the commit message did not arrive intact' }
+            if (((git show --name-only --format= HEAD) -join ',') -ne 'a.txt,b c.txt') { throw 'the staged paths did not arrive intact' }
+            if ((git tag -l --format='%(contents:subject)' $tag) -ne 'Release v9.9.9') { throw 'the tag message did not arrive intact' }
+
+            # 4. A tag that already exists and a push with no remote stop too.
+            if ((Get-Refusal { Invoke-Git tag -a $tag -m 'again' }) -notmatch '^git tag .*failed') { throw 'an existing tag did not stop the cut' }
+            if ((Get-Refusal { Invoke-Git push origin $tag }) -notmatch '^git push .*failed') { throw 'a failed push did not stop the cut' }
+          } finally {
+            Pop-Location
+          }
+          Write-Host 'Invoke-Git: stops on a held lock, an existing tag and a failed push; passes arguments intact.'
+          # The last git call above failed on purpose, and the Actions pwsh wrapper ends
+          # every step with `exit $LASTEXITCODE` — without this the step would pass every
+          # check and still report exit 128.
+          $global:LASTEXITCODE = 0

@@ -41,8 +41,9 @@ A preset is one template. Templates and hand-written DSL compose into the same
 
 Every preset is a static factory: `SomePreset.create()`, and `create(BrandTheme)`
 where the design accepts your palette. The exact spec type a preset takes is the
-type parameter on its `create()` — within the invoice family, for example, older
-presets take `InvoiceDocumentSpec` while newer ones take `StructuredInvoiceData`.
+type parameter on its `create()` — the invoice family alone uses three:
+`InvoiceDocumentSpec` (`ModernInvoice`, `ClassicInvoice`), `StructuredInvoiceDocumentSpec`
+(`ConsultingInvoice`, `LumaStudioInvoice`) and `StructuredInvoiceData` (the other seven).
 
 All six families are built the same way — family data, then components, widgets and
 presets over the shared `templates.core.theme`. Receipt and rota are the newest and

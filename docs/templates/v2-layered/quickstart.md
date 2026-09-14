@@ -6,7 +6,7 @@ example that renders a CV PDF.
 > **Dependency.** CV and cover-letter presets ship in
 > `graph-compose-templates`, which is **not** included in `graph-compose`. Add it
 > separately, or use `graph-compose-bundle`, which includes PDF, templates, fonts,
-> and emoji. See the [README install matrix](../../../README.md#installation).
+> and emoji. See the [README module table](../../../README.md#which-artifact).
 
 ---
 

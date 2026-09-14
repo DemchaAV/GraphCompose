@@ -48,4 +48,4 @@ Independent version line (`emoji-v*`) — pinned, not the engine version:
 dependencies { implementation("io.github.demchaav:graph-compose-emoji:1.0.0") }
 ```
 
-The full "which artifact?" table: [root README → Installation](../README.md#installation).
+The full "which artifact?" table: [root README → Output formats and optional modules](../README.md#which-artifact).

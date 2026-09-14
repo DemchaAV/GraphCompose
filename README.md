@@ -252,26 +252,29 @@ Contributing to GraphCompose itself is a separate path: start at
 [Contributing](./CONTRIBUTING.md). The [documentation index](./docs/README.md) is a
 reference catalogue — useful for finding a page, never required reading.
 
+<a id="which-artifact"></a>
 <details>
 <summary><b>Output formats and optional modules</b></summary>
 
-PDF is the production, fixed-layout output included by `graph-compose`.
+PDF is the production, fixed-layout output: [`graph-compose`](./wrapper/README.md)
+includes the [`graph-compose-render-pdf`](./render-pdf/README.md) backend.
 
 | Need | Add |
 |---|---|
-| Built-in templates, bundled fonts, and emoji together | `graph-compose-bundle` |
-| Built-in document templates — invoice, proposal, receipt, rota, CV, cover letter | `graph-compose-templates` |
-| Editable PowerPoint output (**beta**) | `graph-compose-render-pptx` |
-| Semantic DOCX output (**partial**) | `graph-compose-render-docx` |
-| Layout snapshots and PDF visual diffs in tests | `graph-compose-testing` |
-| Only the authoring surface and engine | `graph-compose-core` |
+| Built-in templates, bundled fonts, and emoji together | [`graph-compose-bundle`](./bundle/README.md) |
+| Built-in document templates — invoice, proposal, receipt, rota, CV, cover letter | [`graph-compose-templates`](./templates/README.md) |
+| Editable PowerPoint output (**beta**) | [`graph-compose-render-pptx`](./render-pptx/README.md) |
+| Semantic DOCX output (**partial**) | [`graph-compose-render-docx`](./render-docx/README.md) |
+| Layout snapshots and PDF visual diffs in tests | [`graph-compose-testing`](./testing/README.md) |
+| Only the authoring surface and engine | [`graph-compose-core`](./core/README.md) |
 
 `graph-compose-bundle` includes PDF, templates, fonts, and emoji. PPTX and DOCX
 are not included in the bundle; add their render modules separately when needed.
 
-Modules use the same GraphCompose version. Bundled fonts and colour emoji have their
-own release lines. Consult the [module guide](./docs/migration/v2.0.0-modules.md) only
-when you need to split dependencies, and the
+Modules use the same GraphCompose version. [Bundled fonts](./fonts/README.md) and
+[colour emoji](./emoji/README.md) have their own release lines. Consult the
+[module guide](./docs/migration/v2.0.0-modules.md) only when you need to split
+dependencies, and the
 [backend capability matrix](./docs/architecture/backend-capability-matrix.md) before
 relying on a feature outside PDF.
 

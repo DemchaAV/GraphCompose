@@ -40,7 +40,7 @@ the chart width from its container and uses the spec's size policy for height.
 | Use brand colours | pass a `ChartStyle` with `.seriesPaint(index, paint)` |
 | Round bar corners or change bar width | `.barCornerRadius(...)` / `.barWidthRatio(...)` on `ChartStyle` |
 | Add line dots and tune the stroke | `.pointMarker(...)` / `.lineWidth(...)` on `ChartStyle` |
-| Hide grid, tick labels, or category labels | use `AxisSpec` toggles and `.showCategoryLabels(false)` |
+| Hide grid, tick labels, or category labels | `.showGridLines(false)` / `.showTickLabels(false)` on `AxisSpec`; `.showCategoryLabels(false)` on a bar or line spec |
 | Put the chart on a coloured card | call `chart(...)` inside a `softPanel(...)` section and match `valueLabelHalo` to the panel |
 | Catch chart movement after an upgrade | snapshot the containing `DocumentSession` with `LayoutSnapshotAssertions` |
 

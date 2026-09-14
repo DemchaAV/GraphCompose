@@ -7,9 +7,10 @@ authoring API; public application code should not import
 
 ## Where content goes
 
-Most document features are blocks in the same `pageFlow`. A section, module, row,
-or card is just a container that groups those blocks; it does not introduce a
-different authoring API.
+Most document features are blocks in the same `pageFlow`. A section, module, or card
+is a container that groups those blocks with the same calls. A row places blocks
+side by side and takes a narrower set — paragraphs, images, shapes, barcodes, and
+sections — so a chart or a table goes into a section inside the row.
 
 ```text
 DocumentSession
@@ -56,7 +57,7 @@ pagination or backend limits behave when they apply.
 | [Overlapping content](recipes/layered-page-design.md) | `addLayerStack(stack -> ...)` | alignment, offsets, z-index, and when to use a container or canvas |
 | [A clipped circle, ellipse, or custom container](recipes/shape-as-container.md) | `addContainer(...)` | outline, child alignment, `CLIP_PATH`, bounds, visible overflow |
 | [A repeating page tint, sidebar, or band](recipes/page-backgrounds.md) | `pageBackgrounds(...)` | full fills, partial fills, bleed, and layering |
-| [Rotation, scale, or layer ordering](recipes/transforms.md) | `rotate(...)` / `scale(...)` / `zIndex(...)` | transform origin, clipped transforms, deterministic overlap |
+| [Rotation, scale, or layer ordering](recipes/transforms.md) | `rotate(...)` / `scale(...)` / `position(node, x, y, align, zIndex)` | transform origin, clipped transforms, deterministic overlap |
 | [Pixel-precise placement](recipes/absolute-placement.md) | `addCanvas(...)` | fixed box size, `(x, y)` positions, clipping, appropriate use cases |
 | [A block that should not split badly](recipes/keep-together.md) | `keepTogether()` / `keepWithNext()` | sections, lines, timeline entries, relocation at page breaks |
 | [A theme shared across documents](recipes/themes.md) | `BrandTheme` | palette, typography, spacing, decoration, preset-level reuse |

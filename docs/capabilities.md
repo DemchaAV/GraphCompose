@@ -62,7 +62,7 @@ tracks what is `Partial` or `Planned`.
 | Stream to a caller-owned stream | `writePdf(OutputStream)` | Stable | [Streaming](recipes/streaming.md) |
 | In-memory bytes | `toPdfBytes()` | Stable | [Getting started](getting-started.md) |
 | Page preview images | `toImage(pageIndex, dpi)`, `toImages(dpi)` | Stable | [Streaming and output](recipes/streaming.md) |
-| Geometry-identical PowerPoint deck | `buildPptx()`, `buildPptx(Path)`, `writePptx(OutputStream)`, `toPptxBytes()` — needs `graph-compose-render-pptx` on the classpath | Experimental (`@Beta`, first shipped in 2.1.0) | [Backend capability matrix](architecture/backend-capability-matrix.md) |
+| Geometry-identical PowerPoint deck | `buildPptx(Path)`, `writePptx(OutputStream)`, `toPptxBytes()` — needs `graph-compose-render-pptx` on the classpath | Experimental (`@Beta`, first shipped in 2.1.0) | [Backend capability matrix](architecture/backend-capability-matrix.md) |
 | Editable Word (semantic) | `export(new DocxSemanticBackend())` | Stable (semantic, not PDF parity) | [Troubleshooting](troubleshooting.md) |
 | PDF chrome (metadata / watermark / header / footer / protection) | `metadata(...)`, `watermark(...)`, `header(...)`, `footer(...)`, `protect(...)` | Stable | [PDF chrome](recipes/pdf-chrome.md) |
 | Repeating node-based page zones | `chrome().zone(DocumentPageZone.header(...) / footer(...))` | Stable | [PDF chrome](recipes/pdf-chrome.md) |

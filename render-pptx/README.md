@@ -157,7 +157,7 @@ Same version as the rest of the GraphCompose train (lockstep):
 dependencies { implementation("io.github.demchaav:graph-compose-render-pptx:2.3.0") }
 ```
 
-The full "which artifact?" table: [root README → Installation](../README.md#installation).
+The full "which artifact?" table: [root README → Output formats and optional modules](../README.md#which-artifact).
 Upgrading from 1.x: [modules migration guide](../docs/migration/v2.0.0-modules.md).
 
 ---

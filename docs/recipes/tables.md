@@ -23,7 +23,7 @@ Start there. Add style or pagination behaviour only when the document needs it.
 | Style every cell | `.defaultCellStyle(...)` |
 | Add several lines to one cell | `DocumentTableCell.lines(String...)` |
 | Put any document node in a cell | `DocumentTableCell.node(DocumentNode)` |
-| Merge cells across columns or rows | `.colSpan(...)` / `.rowSpan(...)` |
+| Merge cells across columns or rows | `DocumentTableCell.text(...).colSpan(...)` / `.rowSpan(...)` |
 | Colour alternating rows | `.zebra(odd, even)` |
 | Give the total a branded style | `.totalRow(style, values...)` |
 | Repeat headings after a page break | `.repeatHeader()` |

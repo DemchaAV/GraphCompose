@@ -98,5 +98,5 @@ Independent version line (`fonts-v*`) — pinned, not the engine version:
 dependencies { implementation("io.github.demchaav:graph-compose-fonts:1.1.0") }
 ```
 
-The full "which artifact?" table: [root README → Installation](../README.md#installation);
+The full "which artifact?" table: [root README → Output formats and optional modules](../README.md#which-artifact);
 background in the [v1.8.0 fonts migration note](../docs/migration/v1.8.0-fonts.md).

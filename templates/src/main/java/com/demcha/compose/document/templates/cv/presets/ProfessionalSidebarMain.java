@@ -96,6 +96,88 @@ final class ProfessionalSidebarMain {
         }
     }
 
+    /**
+     * The column as blocks that move to another page whole, for a CV longer
+     * than the sheet: the identity, the profile, each role, each project and
+     * the references. A heading rides on the first entry it heads, and the
+     * hairline between two entries is the second one's lead, so it is left
+     * out when that entry opens a page.
+     */
+    static List<ColumnPages.Block> blocks(CvIdentity identity,
+                                          ParagraphSection profile,
+                                          EntriesSection experience,
+                                          EntriesSection projects,
+                                          ParagraphSection references) {
+        List<ColumnPages.Block> blocks = new ArrayList<>();
+        blocks.add(ColumnPages.Block.of("Identity",
+                column -> column.addSection("Identity", host -> renderIdentity(host, identity))));
+        if (SectionLookup.hasContent(profile)) {
+            blocks.add(ColumnPages.Block.of("Profile",
+                    column -> column.addSection("Profile", host -> renderProfile(host, profile))));
+        }
+        if (SectionLookup.hasContent(experience)) {
+            for (int i = 0; i < experience.entries().size(); i++) {
+                blocks.add(roleBlock(experience, i));
+            }
+        }
+        if (SectionLookup.hasContent(projects)) {
+            for (int i = 0; i < projects.entries().size(); i++) {
+                blocks.add(projectBlock(projects, i));
+            }
+        }
+        if (SectionLookup.hasContent(references)) {
+            blocks.add(ColumnPages.Block.of("References",
+                    column -> column.addSection("References",
+                            host -> renderReferences(host, references))));
+        }
+        return blocks;
+    }
+
+    /**
+     * One page of the column: the padding it carries on every page, then the
+     * blocks the plan put there.
+     */
+    static void composePage(SectionBuilder section, List<ColumnPages.Block> blocks,
+                            List<Integer> page) {
+        section.spacing(0);
+        section.padding(new DocumentInsets(MAIN_PAD_TOP, MAIN_PAD_RIGHT, 0, MAIN_PAD_LEFT));
+        ColumnPages.compose(section, blocks, page);
+    }
+
+    private static ColumnPages.Block roleBlock(EntriesSection experience, int index) {
+        List<CvEntry> entries = experience.entries();
+        String name = "Experience_" + index;
+        return new ColumnPages.Block(name,
+                index == 0 ? null : column -> mainDivider(column, ENTRY_TO_DIVIDER, DIVIDER_TO_ENTRY),
+                column -> column.addSection(name, host -> {
+                    host.spacing(0);
+                    if (index == 0) {
+                        mainHeading(host, experience.title(), EXPERIENCE_HEADING_TO_BODY);
+                    }
+                    renderRole(host, entries.get(index), index);
+                    if (index == entries.size() - 1) {
+                        spacer(host, EXPERIENCE_TO_PROJECTS);
+                    }
+                }));
+    }
+
+    private static ColumnPages.Block projectBlock(EntriesSection projects, int index) {
+        List<CvEntry> entries = projects.entries();
+        String name = "Projects_" + index;
+        return new ColumnPages.Block(name,
+                index == 0 ? null : column -> mainDivider(column, PROJECT_TO_DIVIDER, DIVIDER_TO_PROJECT),
+                column -> column.addSection(name, host -> {
+                    host.spacing(0);
+                    if (index == 0) {
+                        mainHeading(host, projects.title(), PROJECT_HEADING_TO_BODY);
+                    }
+                    renderProject(host, entries.get(index), index);
+                    if (index == entries.size() - 1) {
+                        spacer(host, PROJECTS_TO_REFERENCES);
+                    }
+                }));
+    }
+
     // -- identity --------------------------------------------------------
 
     /**
@@ -198,21 +280,23 @@ final class ProfessionalSidebarMain {
         mainHeading(section, projects.title(), PROJECT_HEADING_TO_BODY);
         List<CvEntry> entries = projects.entries();
         for (int i = 0; i < entries.size(); i++) {
-            int index = i;
-            CvEntry project = entries.get(i);
-            titleDateBand(section, "ProjectHead_" + index, project.title(), project.date());
-            spacer(section, PROJECT_HEAD_TO_BODY);
-            section.addParagraph(p -> p
-                    .name("ProjectDescription_" + index)
-                    .text(project.body())
-                    .textStyle(body())
-                    .lineSpacing(BODY_LEADING)
-                    .margin(DocumentInsets.zero()));
+            renderProject(section, entries.get(i), i);
             if (i + 1 < entries.size()) {
                 mainDivider(section, PROJECT_TO_DIVIDER, DIVIDER_TO_PROJECT);
             }
         }
         spacer(section, PROJECTS_TO_REFERENCES);
+    }
+
+    private static void renderProject(SectionBuilder section, CvEntry project, int index) {
+        titleDateBand(section, "ProjectHead_" + index, project.title(), project.date());
+        spacer(section, PROJECT_HEAD_TO_BODY);
+        section.addParagraph(p -> p
+                .name("ProjectDescription_" + index)
+                .text(project.body())
+                .textStyle(body())
+                .lineSpacing(BODY_LEADING)
+                .margin(DocumentInsets.zero()));
     }
 
     // -- references ------------------------------------------------------

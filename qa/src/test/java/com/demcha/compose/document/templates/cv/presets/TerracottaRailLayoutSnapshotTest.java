@@ -12,7 +12,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Exact layout snapshot gate for {@link TerracottaRail} — freezes the
  * resolved geometry of the canonical one-page CV, which the pixel budget
  * cannot see: a small column or spacing shift stays under the visual-diff
- * budget but changes the snapshot.
+ * budget but changes the snapshot. It also freezes a CV longer than the page,
+ * which is where the page boundaries the preset picks can move.
  *
  * <p>This preset leaves the page to the caller, so the session sets A4 with
  * no margin: both columns run to the paper edge and each carries its own
@@ -33,6 +34,19 @@ class TerracottaRailLayoutSnapshotTest {
             assertThat(session.layoutSnapshot().totalPages()).isEqualTo(1);
             TemplateTestSupport.assertCanonicalSnapshot(
                     session, "terracotta_rail_layout", "cv-v2");
+        }
+    }
+
+    @Test
+    void cvLongerThanThePageMatchesLayoutSnapshot() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(DocumentPageSize.A4)
+                .margin(0f, 0f, 0f, 0f)
+                .create()) {
+            TerracottaRail.create().compose(session, TerracottaRailFixtures.longCv());
+            assertThat(session.layoutSnapshot().totalPages()).isEqualTo(2);
+            TemplateTestSupport.assertCanonicalSnapshot(
+                    session, "terracotta_rail_long_layout", "cv-v2");
         }
     }
 }

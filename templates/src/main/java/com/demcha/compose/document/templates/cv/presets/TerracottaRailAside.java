@@ -86,6 +86,63 @@ final class TerracottaRailAside {
         }
     }
 
+    /**
+     * The column as blocks that move to another page whole, for a CV longer
+     * than the page: the monogram with the contact channels under it, then
+     * the four lists, each led by the hairline above it, which is left out
+     * when the list opens a page.
+     */
+    static List<ColumnPages.Block> blocks(CvIdentity identity, SkillsSection competencies,
+                                          SkillsSection software, EntriesSection certifications,
+                                          EntriesSection facts) {
+        List<ColumnPages.Block> blocks = new ArrayList<>();
+        blocks.add(ColumnPages.Block.of("Lockup", side -> {
+            renderMonogram(side, identity);
+            renderContact(side, identity);
+        }));
+        if (hasSkills(competencies)) {
+            blocks.add(new ColumnPages.Block("CoreCompetencies",
+                    side -> divider(side, "AfterContact", SIDEBAR_DIVIDER_GAP, SIDEBAR_DIVIDER_GAP),
+                    side -> renderBulletedSkills(side, competencies, "CoreCompetencies",
+                            "Competency", false)));
+        }
+        if (hasSkills(software)) {
+            blocks.add(new ColumnPages.Block("Software",
+                    side -> divider(side, "AfterCompetencies", SIDEBAR_DIVIDER_GAP,
+                            SIDEBAR_DIVIDER_GAP),
+                    side -> renderBulletedSkills(side, software, "Software", "Software", true)));
+        }
+        if (hasEntries(certifications)) {
+            blocks.add(new ColumnPages.Block("Certifications",
+                    side -> divider(side, "AfterSoftware", SIDEBAR_DIVIDER_GAP, SIDEBAR_DIVIDER_GAP),
+                    side -> renderCertifications(side, certifications)));
+        }
+        if (hasEntries(facts)) {
+            blocks.add(new ColumnPages.Block("AdditionalInformation",
+                    side -> divider(side, "AfterCertifications", SIDEBAR_DIVIDER_GAP,
+                            SIDEBAR_DIVIDER_GAP),
+                    side -> renderFacts(side, facts)));
+        }
+        return blocks;
+    }
+
+    /**
+     * One page of the column: its padding on every page and the blocks the
+     * plan put there. The hairline between the columns is this column's right
+     * border, so a page that carries nothing in the column draws none.
+     */
+    static void composePage(SectionBuilder side, List<ColumnPages.Block> blocks,
+                            List<Integer> page) {
+        side.name("Sidebar");
+        side.spacing(0);
+        if (!page.isEmpty()) {
+            side.accentRight(RULE, RULE_THICKNESS);
+        }
+        side.padding((float) SIDEBAR_PAD_TOP, (float) SIDEBAR_PAD_RIGHT,
+                (float) COLUMN_PAD_BOTTOM, (float) SIDEBAR_PAD_LEFT);
+        ColumnPages.compose(side, blocks, page);
+    }
+
     // -- the lockup --------------------------------------------------------
 
     /**

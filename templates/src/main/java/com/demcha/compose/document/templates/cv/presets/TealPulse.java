@@ -52,8 +52,8 @@ import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.P
  * the summary and every role — raises {@code AtomicNodeTooLargeException},
  * naming the node and the height it needed. The preset draws no cap of its
  * own, because a CV that quietly loses a role is worse than one that refuses
- * to compose. {@link TimelineMinimal} is the preset in this package that
- * splits its own columns across pages.</p>
+ * to compose. {@link TimelineMinimal}, {@link ProfessionalSidebar} and
+ * {@link TerracottaRail} carry a longer CV onto more pages.</p>
  *
  * <h2>How a document reaches its berth</h2>
  *

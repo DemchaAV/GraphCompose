@@ -14,40 +14,52 @@ import com.demcha.compose.document.templates.cv.data.SkillsSection;
 import java.util.List;
 import java.util.Objects;
 
+import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.HEADER_PLATE_HEIGHT;
+import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.MAIN_PAD_LEFT;
+import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.MAIN_PAD_RIGHT;
+import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.MAIN_PAD_TOP;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.MAIN_WEIGHT;
+import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.MAIN_WIDTH;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.PAGE_BACKGROUND;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.PAGE_HEIGHT;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.PAGE_WIDTH;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.SIDEBAR_BACKGROUND;
+import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.SIDEBAR_BODY_TOP;
+import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.SIDEBAR_PAD_X;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.SIDEBAR_WEIGHT;
+import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.SIDEBAR_WIDTH;
 
 /**
- * Professional Sidebar — a one-page CV in two columns: a pale sidebar under
- * a navy monogram plate carrying the contact channels, the skill meters, the
- * education rail and the language ratings, and a white main column carrying
- * the name, the profile, the roles held, the projects and the references
- * note.
+ * Professional Sidebar — a CV in two columns drawn as one sheet: a pale
+ * sidebar under a navy monogram plate carrying the contact channels, the
+ * skill meters, the education rail and the language ratings, and a white main
+ * column carrying the name, the profile, the roles held, the projects and the
+ * references note.
  *
  * <p>The preset owns its page: a 491.6 x 737.28pt sheet with no margin, the
  * page fill and the pale sidebar painted as page backgrounds so the column
  * reaches the foot of the sheet whatever the sidebar holds.</p>
  *
- * <h2>One page, and what happens past it</h2>
+ * <h2>Longer than the sheet</h2>
  *
- * <p>This sheet holds one page of content. The two columns are a single row,
- * and a row is atomic — it cannot be split — so a CV longer than the sheet
- * does not flow onto a second page: composing it raises
- * {@code AtomicNodeTooLargeException}, naming the node and the height it
- * needed. Feed it a CV of about the length the design was drawn around: five
- * or six roles with three or four highlights each, alongside the sidebar
- * blocks.</p>
+ * <p>A CV that fits the sheet is composed as the one row the design is: the
+ * two columns side by side. A longer one continues onto as many pages as it
+ * needs, each page a row of its own. The plate caps the sidebar on the first
+ * page only; the pale column runs down every page, being a page
+ * background.</p>
  *
- * <p>The preset draws no cap of its own, which is the deliberate half of
- * that: its siblings {@link MonogramSidebar}, {@link SidebarPortrait} and
- * {@link MintEditorial} cap each block and silently drop what does not fit,
- * and a CV that quietly loses a job is worse than one that refuses to
- * compose. {@link TimelineMinimal} is the preset in this package that splits
- * its own columns across pages.</p>
+ * <p>What moves to the next page is a whole block: the identity, the
+ * profile, a role, a project, the references, or one of the sidebar's lists.
+ * A heading stays with the first entry it heads, and the hairline between two
+ * entries or two lists is left out when the second one opens a page. A single
+ * block taller than a page — a role with a page of highlights — cannot be
+ * split, and composing it raises {@code AtomicNodeTooLargeException}, naming
+ * the block.</p>
+ *
+ * <p>The preset draws no cap of its own: its siblings {@link MonogramSidebar},
+ * {@link SidebarPortrait} and {@link MintEditorial} cap each block and
+ * silently drop what does not fit, and a CV that quietly loses a job is worse
+ * than one that runs to a second page.</p>
  *
  * <h2>How a document reaches its berth</h2>
  *
@@ -136,7 +148,7 @@ public final class ProfessionalSidebar {
     /**
      * Creates the template.
      *
-     * @return a template composing a {@link CvDocument} onto its own page
+     * @return a template composing a {@link CvDocument} onto pages of its own
      */
     public static DocumentTemplate<CvDocument> create() {
         return new Template();
@@ -184,14 +196,29 @@ public final class ProfessionalSidebar {
             ParagraphSection references =
                     berth(sections, ParagraphSection.class, REFERENCES_KEYS);
 
-            document.pageFlow(page -> page
-                    .name("ProfessionalSidebarCv")
-                    .padding(DocumentInsets.zero())
-                    // spacing(0): every gap in this design is authored on the
-                    // node that owns it, so a flow gap would add to all of
-                    // them.
-                    .spacing(0)
-                    .addRow("PageGrid", row -> {
+            List<ColumnPages.Block> asideBlocks = ProfessionalSidebarAside.blocks(
+                    doc.identity(), skills, education, languages);
+            List<ColumnPages.Block> mainBlocks = ProfessionalSidebarMain.blocks(
+                    doc.identity(), profile, experience, projects, references);
+            double pageHeight = document.availableHeight();
+            ColumnPages.Plan plan = ColumnPages.plan(document, List.of(
+                    new ColumnPages.Column(0, MAIN_WIDTH, SIDEBAR_PAD_X, SIDEBAR_PAD_X,
+                            pageHeight - HEADER_PLATE_HEIGHT - SIDEBAR_BODY_TOP,
+                            pageHeight - SIDEBAR_BODY_TOP, asideBlocks),
+                    new ColumnPages.Column(SIDEBAR_WIDTH, 0, MAIN_PAD_LEFT, MAIN_PAD_RIGHT,
+                            pageHeight - MAIN_PAD_TOP, pageHeight - MAIN_PAD_TOP,
+                            mainBlocks)));
+
+            document.pageFlow(page -> {
+                page.name("ProfessionalSidebarCv")
+                        .padding(DocumentInsets.zero())
+                        // spacing(0): every gap in this design is authored on
+                        // the node that owns it, so a flow gap would add to all
+                        // of them.
+                        .spacing(0);
+                if (plan.pages() == 1) {
+                    // The sheet as drawn: one row, the two columns side by side.
+                    page.addRow("PageGrid", row -> {
                         row.spacing(0);
                         row.weights(SIDEBAR_WEIGHT, MAIN_WEIGHT);
                         row.addSection("Sidebar", aside ->
@@ -200,7 +227,23 @@ public final class ProfessionalSidebar {
                         row.addSection("Main", main ->
                                 ProfessionalSidebarMain.compose(main, doc.identity(),
                                         profile, experience, projects, references));
-                    }));
+                    });
+                    return;
+                }
+                // Longer than the sheet: a row per page, each on a page of
+                // its own and holding the blocks the plan put there. See
+                // ColumnPages.
+                ColumnPages.addRows(page, plan, "PageGrid", (row, pageIndex) -> {
+                    row.spacing(0);
+                    row.weights(SIDEBAR_WEIGHT, MAIN_WEIGHT);
+                    row.addSection("Sidebar", aside ->
+                            ProfessionalSidebarAside.composePage(aside, doc.identity(),
+                                    pageIndex == 0, asideBlocks, plan.blocks(0, pageIndex)));
+                    row.addSection("Main", main ->
+                            ProfessionalSidebarMain.composePage(main, mainBlocks,
+                                    plan.blocks(1, pageIndex)));
+                });
+            });
         }
 
         /**

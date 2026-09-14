@@ -3,6 +3,7 @@ package com.demcha.compose.document.templates.cv.presets;
 import com.demcha.compose.document.templates.core.identity.Contact;
 import com.demcha.compose.document.templates.core.identity.Link;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
+import com.demcha.compose.document.templates.cv.data.CvEntry;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.data.CvSkill;
 import com.demcha.compose.document.templates.cv.data.EntriesSection;
@@ -11,6 +12,7 @@ import com.demcha.compose.document.templates.cv.data.SkillGroup;
 import com.demcha.compose.document.templates.cv.data.SkillsSection;
 import com.demcha.compose.document.templates.cv.data.Slot;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -124,5 +126,39 @@ public final class ProfessionalSidebarFixtures {
                 .section(Slot.MAIN, new ParagraphSection("REFERENCES",
                         "Available upon request."))
                 .build();
+    }
+
+    /**
+     * The canonical CV with six more roles, which no longer fits the sheet:
+     * the document the paginated layout is measured on.
+     *
+     * @return the fixture document
+     */
+    public static CvDocument longCv() {
+        CvDocument canonical = canonicalCv();
+        List<CvDocument.Placement> placements = new ArrayList<>();
+        for (CvDocument.Placement placement : canonical.placements()) {
+            if (placement.section() instanceof EntriesSection entries
+                    && entries.title().equals("EXPERIENCE")) {
+                List<CvEntry> roles = new ArrayList<>(entries.entries());
+                for (int i = 1; i <= 6; i++) {
+                    roles.add(CvEntry.builder("CONTRACT DEVELOPER " + i)
+                            .subtitle("Client " + i + "   |   Remote")
+                            .date((2019 - i) + " " + DASH + " " + (2020 - i))
+                            .body(String.join("\n",
+                                    "Delivered backend features against a fixed scope and"
+                                            + " deadline.",
+                                    "Kept the client's services covered by integration tests.",
+                                    "Handed over documentation and runbooks at the end of the"
+                                            + " contract."))
+                            .build());
+                }
+                placements.add(new CvDocument.Placement(placement.slot(),
+                        new EntriesSection(entries.title(), roles)));
+            } else {
+                placements.add(placement);
+            }
+        }
+        return new CvDocument(canonical.identity(), placements);
     }
 }

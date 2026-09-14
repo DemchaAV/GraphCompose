@@ -3,11 +3,15 @@ package com.demcha.compose.document.templates.cv.presets;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.exceptions.AtomicNodeTooLargeException;
+import com.demcha.compose.document.snapshot.LayoutNodeSnapshot;
+import com.demcha.compose.document.snapshot.LayoutSnapshot;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.identity.Contact;
 import com.demcha.compose.document.templates.core.identity.Link;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
+import com.demcha.compose.document.templates.cv.data.CvEntry;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvSection;
 import com.demcha.compose.document.templates.cv.data.CvSkill;
 import com.demcha.compose.document.templates.cv.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.data.SkillGroup;
@@ -35,10 +39,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * fills none of the berths, and draws a name without a level rather than an
  * empty meter.
  *
- * <p>It also pins the two limits the class documents, because both are things
- * a caller finds out the hard way otherwise: the sheet holds one page and
- * raises past it, and three fields this design has no place for are not
- * drawn.</p>
+ * <p>It also pins what the class documents about length and about fields,
+ * because each is something a caller finds out the hard way otherwise: a CV
+ * longer than the sheet carries on to more pages, each row on a page of its
+ * own; a role taller than the sheet is refused by name; and three fields this
+ * design has no place for are not drawn.</p>
  */
 class ProfessionalSidebarSmokeTest {
 
@@ -173,30 +178,107 @@ class ProfessionalSidebarSmokeTest {
     }
 
     @Test
-    void refusesACvLongerThanTheSheet() {
-        // The sheet holds one page: the two columns are a single row, and a
-        // row is atomic. A CV past that raises rather than flowing — pinned
-        // here because the alternative the sibling presets take is to cap
-        // each block and drop the rest without saying so.
+    void carriesACvLongerThanTheSheetOntoMorePages() throws Exception {
+        // A CV that fits the sheet is the one row the design is. A longer one
+        // continues onto more pages a whole role at a time, rather than
+        // raising — or dropping what does not fit, as the capped siblings do.
         EntriesSection.Builder experience = EntriesSection.builder("EXPERIENCE");
         for (int i = 0; i < 12; i++) {
-            experience.entry("ROLE " + i, "Employer " + i + "   |   City",
+            experience.entry("ROLE " + (char) ('A' + i), "Employer " + i + "   |   City",
                     "2010 - 2011",
                     String.join("\n",
                             "Did a substantial thing that took a full line of text here.",
                             "Did a second substantial thing, also a full line of text.",
                             "And a third, so each role occupies real vertical space."));
         }
-        CvDocument doc = CvDocument.builder()
+        byte[] pdfBytes = render(CvDocument.builder()
                 .identity(identity())
                 .section(experience.build())
+                .build());
+
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            assertThat(document.getNumberOfPages()).isGreaterThan(1);
+        }
+        String text = textOf(pdfBytes);
+        for (int i = 0; i < 12; i++) {
+            assertThat(text).contains("ROLE " + (char) ('A' + i));
+        }
+    }
+
+    @Test
+    void startsTheLastRoleOnAPageOfItsOwnWhenOnlyTheHairlineAboveItOverflows() {
+        // The canonical profile and first role, then four contract roles: the last one
+        // and the hairline above it overrun the sheet by a few points. The role opens the
+        // next page without the hairline, and its row is then short enough to fit the
+        // room the first row leaves — the break before it is what keeps it off that page.
+        CvDocument doc = CvDocument.builder()
+                .identity(ProfessionalSidebarFixtures.canonicalCv().identity())
+                .section(Slot.MAIN, canonicalSection("PROFILE"))
+                .section(Slot.MAIN, new EntriesSection("EXPERIENCE", firstRoleAndFourContracts()))
                 .build();
+
         try (DocumentSession session = GraphCompose.document().create()) {
             ProfessionalSidebar.create().compose(session, doc);
-            assertThatThrownBy(session::toPdfBytes)
-                    .isInstanceOf(AtomicNodeTooLargeException.class)
-                    .hasMessageContaining("PageGrid");
+            LayoutSnapshot snapshot = session.layoutSnapshot();
+
+            assertThat(snapshot.totalPages()).isEqualTo(2);
+            assertThat(snapshot.nodes())
+                    .filteredOn(node -> "PageGrid_1".equals(node.entityName()))
+                    .extracting(LayoutNodeSnapshot::startPage)
+                    .containsExactly(1);
         }
+    }
+
+    @Test
+    void refusesARoleTallerThanTheSheetAndNamesIt() {
+        // A role moves to another page whole, so one with more highlights than a sheet
+        // holds has nowhere to go: composing it says which block that is.
+        List<String> highlights = new ArrayList<>();
+        for (int i = 1; i <= 80; i++) {
+            highlights.add("Highlight " + i + " takes a line of its own.");
+        }
+        CvDocument doc = CvDocument.builder()
+                .identity(identity())
+                .section(EntriesSection.builder("EXPERIENCE")
+                        .entry("ROLE", "Employer   |   City", "2010 - 2011",
+                                String.join("\n", highlights))
+                        .build())
+                .build();
+
+        try (DocumentSession session = GraphCompose.document().create()) {
+            assertThatThrownBy(() -> ProfessionalSidebar.create().compose(session, doc))
+                    .isInstanceOf(AtomicNodeTooLargeException.class)
+                    .hasMessageContaining("'Experience_0'");
+        }
+    }
+
+    /** The canonical fixture's section of this title. */
+    private static CvSection canonicalSection(String title) {
+        for (CvDocument.Placement placement
+                : ProfessionalSidebarFixtures.canonicalCv().placements()) {
+            if (placement.section().title().equals(title)) {
+                return placement.section();
+            }
+        }
+        throw new AssertionError("The canonical fixture has no " + title);
+    }
+
+    /** The canonical first role, then the long fixture's first four contract roles. */
+    private static List<CvEntry> firstRoleAndFourContracts() {
+        for (CvDocument.Placement placement : ProfessionalSidebarFixtures.longCv().placements()) {
+            if (placement.section() instanceof EntriesSection entries
+                    && entries.title().equals("EXPERIENCE")) {
+                List<CvEntry> roles = new ArrayList<>();
+                roles.add(entries.entries().get(0));
+                for (CvEntry entry : entries.entries()) {
+                    if (entry.title().matches("CONTRACT DEVELOPER [1-4]")) {
+                        roles.add(entry);
+                    }
+                }
+                return roles;
+            }
+        }
+        throw new AssertionError("The long fixture has no EXPERIENCE");
     }
 
     @Test

@@ -54,6 +54,33 @@ final class TerracottaRailFixtures {
         return new CvDocument(identity(), placements);
     }
 
+    /**
+     * The canonical CV with six more roles on the rail, which no longer fits
+     * the page: the document the paginated layout is measured on.
+     */
+    static CvDocument longCv() {
+        List<CvEntry> roles = new ArrayList<>(experience().entries());
+        for (int index = 1; index <= 6; index++) {
+            roles.add(CvEntry.builder("Project Architect " + index)
+                    .subtitle("Studio " + index + ", Bristol, UK")
+                    .date((2016 - index) + EN_DASH + (2017 - index))
+                    .body(String.join(NEWLINE,
+                            "Delivered planning and technical packages on residential schemes.",
+                            "Coordinated consultants to keep each design buildable and on "
+                                    + "budget."))
+                    .build());
+        }
+        List<CvDocument.Placement> placements = new ArrayList<>();
+        for (CvDocument.Placement placement : canonicalCv().placements()) {
+            placements.add(placement.section() instanceof EntriesSection entries
+                    && entries.title().equals("PROFESSIONAL EXPERIENCE")
+                    ? new CvDocument.Placement(placement.slot(),
+                            new EntriesSection(entries.title(), roles))
+                    : placement);
+        }
+        return new CvDocument(identity(), placements);
+    }
+
     static CvIdentity identity() {
         return new CvIdentity(
                 CvName.of("OLIVER", "BENNETT"),

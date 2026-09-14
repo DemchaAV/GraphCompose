@@ -3,6 +3,7 @@ package com.demcha.compose.document.templates.cv.presets;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.exceptions.AtomicNodeTooLargeException;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.identity.Contact;
 import com.demcha.compose.document.templates.core.identity.Link;
@@ -32,10 +33,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Smoke test for {@link TerracottaRail} — proves the preset renders a
  * {@link CvDocument} end-to-end with its packaged marks, draws the monogram
- * from the name, reports an unknown icon token as a data error, refuses a CV
- * longer than its sheet rather than losing an entry, and carries the contact
- * channels and a project title as link annotations, which move no pixel and
- * no layout node so neither gate would notice them going missing.
+ * from the name, reports an unknown icon token as a data error, carries a CV
+ * longer than its sheet onto more pages rather than losing an entry, refuses
+ * by name a role taller than the page, and carries the contact channels and a
+ * project title as link annotations, which move no pixel and no layout node so
+ * neither gate would notice them going missing.
  */
 class TerracottaRailSmokeTest {
 
@@ -278,22 +280,54 @@ class TerracottaRailSmokeTest {
     }
 
     @Test
-    void refusesACvLongerThanTheSheet() {
-        // The two columns are one row, and a row is atomic: a CV that outgrows
-        // the sheet raises rather than losing an entry to a silent cap.
+    void carriesACvLongerThanThePageOntoMorePages() throws Exception {
+        // A CV that fits is the one row the sheet is; a longer one continues
+        // onto more pages a whole role at a time, rather than raising or
+        // losing an entry to a silent cap.
         List<CvEntry> many = new ArrayList<>();
         for (int index = 0; index < 14; index++) {
-            many.add(CvEntry.builder("Senior Architect " + index)
+            many.add(CvEntry.builder("Senior Architect " + (char) ('A' + index))
                     .subtitle("Northline Studio, Bristol, UK")
                     .date("2021")
                     .body("Lead design packages from concept through to detailed design.")
                     .build());
         }
-        CvDocument tooLong = withSection(Slot.MAIN,
+        byte[] pdfBytes = render(withSection(Slot.MAIN,
                 new EntriesSection("PROFESSIONAL EXPERIENCE", many),
+                "PROFESSIONAL EXPERIENCE"));
+
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            assertThat(document.getNumberOfPages()).isGreaterThan(1);
+        }
+        String text = textOf(pdfBytes);
+        for (int index = 0; index < 14; index++) {
+            assertThat(text).contains("Senior Architect " + (char) ('A' + index));
+        }
+    }
+
+    @Test
+    void refusesARoleTallerThanThePageAndNamesIt() {
+        // A role moves to another page whole, so one with more highlights than a page holds
+        // has nowhere to go: composing it says which block that is.
+        List<String> highlights = new ArrayList<>();
+        for (int index = 1; index <= 90; index++) {
+            highlights.add("Highlight " + index + " takes a line of its own.");
+        }
+        CvDocument tall = withSection(Slot.MAIN, new EntriesSection("PROFESSIONAL EXPERIENCE",
+                        List.of(CvEntry.builder("Senior Architect")
+                                .subtitle("Northline Studio, Bristol, UK")
+                                .date("2021")
+                                .body(String.join("\n", highlights))
+                                .build())),
                 "PROFESSIONAL EXPERIENCE");
 
-        assertThatThrownBy(() -> render(tooLong))
-                .hasMessageContaining("Body");
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(DocumentPageSize.A4)
+                .margin(0f, 0f, 0f, 0f)
+                .create()) {
+            assertThatThrownBy(() -> TerracottaRail.create().compose(session, tall))
+                    .isInstanceOf(AtomicNodeTooLargeException.class)
+                    .hasMessageContaining("Role_0");
+        }
     }
 }

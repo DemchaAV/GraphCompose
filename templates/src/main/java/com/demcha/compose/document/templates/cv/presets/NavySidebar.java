@@ -41,8 +41,9 @@ import static com.demcha.compose.document.templates.cv.presets.NavySidebarStyles
  * sheet does not flow onto a second page: composing it raises
  * {@code AtomicNodeTooLargeException}, naming the node and the height it
  * needed. It draws no cap of its own, because a CV that quietly loses a job
- * is worse than one that refuses to compose. {@link TimelineMinimal} is the
- * preset in this package that splits its own columns across pages.</p>
+ * is worse than one that refuses to compose. {@link TimelineMinimal},
+ * {@link ProfessionalSidebar} and {@link TerracottaRail} carry a longer CV
+ * onto more pages.</p>
  *
  * <h2>How a document reaches its berth</h2>
  *

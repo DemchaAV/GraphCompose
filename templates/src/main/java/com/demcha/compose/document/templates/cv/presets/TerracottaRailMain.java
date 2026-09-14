@@ -2,7 +2,6 @@ package com.demcha.compose.document.templates.cv.presets;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.TimelineRailEnd;
-import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.ListMarker;
@@ -17,10 +16,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailProjects.projectDivider;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailProjects.renderProject;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailProjects.renderProjects;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.ACCENT;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.BODY_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.COLUMN_PAD_BOTTOM;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.DETAIL_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.EDUCATION_BAND_PAD_RIGHT;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.EDUCATION_BAND_WEIGHT;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.EDUCATION_ENTRY_WIDTH;
@@ -32,7 +33,6 @@ import static com.demcha.compose.document.templates.cv.presets.TerracottaRailSty
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.HIGHLIGHT_ITEM_SPACING;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.HIGHLIGHT_LINE_SPACING;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.INK;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.ITEM_TITLE_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_DASH_WIDTH;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_DIVIDER_BOTTOM;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_DIVIDER_TOP;
@@ -46,13 +46,6 @@ import static com.demcha.compose.document.templates.cv.presets.TerracottaRailSty
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MUTED;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.NAME_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.NAME_TO_SUBTITLE_GAP;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.PROJECT_DESCRIPTION_PAD_LEFT;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.PROJECT_DIVIDER_GAP;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.PROJECT_LINE_SPACING;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.PROJECT_META_PAD_LEFT;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.PROJECT_META_PAD_RIGHT;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.PROJECT_ROW_GAP;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.PROJECT_WEIGHTS;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.ROLE_PERIOD_SHARE;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.RULE;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.RULE_THICKNESS;
@@ -66,7 +59,6 @@ import static com.demcha.compose.document.templates.cv.presets.TerracottaRailSty
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.divider;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.heading;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.headingWithDash;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.inlineIcon;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.layeredRow;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.entryLine;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWidgets.ringMarker;
@@ -79,6 +71,31 @@ import static com.demcha.compose.document.templates.cv.presets.TerracottaRailWid
  */
 final class TerracottaRailMain {
 
+    /** What a block of the column holds. */
+    enum Kind {
+        /** The name over the role. */
+        MASTHEAD,
+        /** The summary under its hairline. */
+        SUMMARY,
+        /** One role; the first carries the experience heading. */
+        ROLE,
+        /** One project; the first carries the projects heading. */
+        PROJECT,
+        /** The degrees. */
+        EDUCATION
+    }
+
+    /**
+     * One block of the column, and what it holds — which is what lets a page
+     * put the roles it carries back on a single rail.
+     *
+     * @param kind  what the block holds
+     * @param index the entry's index for a role or a project, otherwise zero
+     * @param block the block as a plan measures it
+     */
+    record Piece(Kind kind, int index, ColumnPages.Block block) {
+    }
+
     private TerracottaRailMain() {
     }
 
@@ -86,9 +103,7 @@ final class TerracottaRailMain {
                         EntriesSection experience, EntriesSection projects,
                         EntriesSection education) {
         main.name("MainColumn");
-        main.spacing(0);
-        main.padding((float) MAIN_PAD_TOP, (float) MAIN_PAD_RIGHT,
-                (float) COLUMN_PAD_BOTTOM, (float) MAIN_PAD_LEFT);
+        pad(main);
 
         renderMasthead(main, identity);
 
@@ -109,6 +124,110 @@ final class TerracottaRailMain {
             mainDivider(main, "AfterProjects");
             renderEducation(main, education);
         }
+    }
+
+    /**
+     * The column as blocks that move to another page whole, for a CV longer
+     * than the page: the masthead, the summary, each role, each project and
+     * the degrees. A heading rides on the first entry it heads, and the
+     * hairline above a block is its lead, left out when the block opens a
+     * page. A later role's lead is the rail's gap between two entries, which
+     * only the plan counts: on the page, the rail itself spaces them.
+     */
+    static List<Piece> pieces(CvIdentity identity, ParagraphSection summary,
+                              EntriesSection experience, EntriesSection projects,
+                              EntriesSection education) {
+        List<Piece> pieces = new ArrayList<>();
+        pieces.add(new Piece(Kind.MASTHEAD, 0, ColumnPages.Block.of("Masthead",
+                main -> renderMasthead(main, identity))));
+        if (hasBody(summary)) {
+            pieces.add(new Piece(Kind.SUMMARY, 0, new ColumnPages.Block("Summary",
+                    main -> divider(main, "AfterMasthead", MASTHEAD_DIVIDER_TOP,
+                            MASTHEAD_DIVIDER_BOTTOM),
+                    main -> renderSummary(main, summary))));
+        }
+        if (hasEntries(experience)) {
+            for (int i = 0; i < experience.entries().size(); i++) {
+                int index = i;
+                pieces.add(new Piece(Kind.ROLE, index, new ColumnPages.Block("Role_" + index,
+                        index == 0
+                                ? main -> mainDivider(main, "AfterSummary")
+                                : main -> main.addSpacer(spacer -> spacer
+                                        .name("RoleGap_" + index)
+                                        .height(ENTRY_GAP)),
+                        main -> renderRoles(main, experience, index, index))));
+            }
+        }
+        if (hasEntries(projects)) {
+            for (int i = 0; i < projects.entries().size(); i++) {
+                int index = i;
+                pieces.add(new Piece(Kind.PROJECT, index, new ColumnPages.Block("Project_" + index,
+                        index == 0
+                                ? main -> mainDivider(main, "AfterExperience")
+                                : main -> projectDivider(main, index - 1),
+                        main -> renderProject(main, projects, index))));
+            }
+        }
+        if (hasEntries(education)) {
+            pieces.add(new Piece(Kind.EDUCATION, 0, new ColumnPages.Block("Education",
+                    main -> mainDivider(main, "AfterProjects"),
+                    main -> renderEducation(main, education))));
+        }
+        return pieces;
+    }
+
+    /**
+     * The blocks of a column's pieces, in order, as a plan measures them.
+     *
+     * @param pieces the column's pieces
+     * @return their blocks
+     */
+    static List<ColumnPages.Block> blocks(List<Piece> pieces) {
+        List<ColumnPages.Block> blocks = new ArrayList<>(pieces.size());
+        for (Piece piece : pieces) {
+            blocks.add(piece.block());
+        }
+        return blocks;
+    }
+
+    /**
+     * One page of the column: its padding on every page and the blocks the
+     * plan put there, the page's roles drawn on one rail.
+     *
+     * @param main       the column's section on the page
+     * @param pieces     all of the column's pieces
+     * @param experience the roles, for drawing a page's run of them together
+     * @param page       the indices of the pieces on the page
+     */
+    static void composePage(SectionBuilder main, List<Piece> pieces, EntriesSection experience,
+                            List<Integer> page) {
+        main.name("MainColumn");
+        pad(main);
+        int at = 0;
+        while (at < page.size()) {
+            Piece piece = pieces.get(page.get(at));
+            if (at > 0 && piece.block().lead() != null) {
+                piece.block().lead().accept(main);
+            }
+            if (piece.kind() == Kind.ROLE) {
+                int last = at;
+                while (last + 1 < page.size()
+                        && pieces.get(page.get(last + 1)).kind() == Kind.ROLE) {
+                    last++;
+                }
+                renderRoles(main, experience, piece.index(), pieces.get(page.get(last)).index());
+                at = last + 1;
+            } else {
+                piece.block().content().accept(main);
+                at++;
+            }
+        }
+    }
+
+    private static void pad(SectionBuilder main) {
+        main.spacing(0);
+        main.padding((float) MAIN_PAD_TOP, (float) MAIN_PAD_RIGHT,
+                (float) COLUMN_PAD_BOTTOM, (float) MAIN_PAD_LEFT);
     }
 
     private static void mainDivider(SectionBuilder main, String name) {
@@ -163,9 +282,20 @@ final class TerracottaRailMain {
      * line stops at the last marker instead of running past it.
      */
     private static void renderExperience(SectionBuilder main, EntriesSection experience) {
-        main.addSection("Experience", block -> {
+        renderRoles(main, experience, 0, experience.entries().size() - 1);
+    }
+
+    /**
+     * The roles from {@code from} to {@code to} on one rail, under the
+     * experience heading when the first of them is the first role.
+     */
+    private static void renderRoles(SectionBuilder main, EntriesSection experience,
+                                    int from, int to) {
+        main.addSection(from == 0 ? "Experience" : "Experience_" + from, block -> {
             block.spacing(0);
-            heading(block, experience.title(), MAIN_HEADING_TRACKING_EM);
+            if (from == 0) {
+                heading(block, experience.title(), MAIN_HEADING_TRACKING_EM);
+            }
             SectionBuilder holder = new SectionBuilder();
             holder.name("ExperienceRailHolder");
             holder.spacing(0);
@@ -182,7 +312,7 @@ final class TerracottaRailMain {
                         .gutter(0)
                         .spacing(ENTRY_GAP);
                 List<CvEntry> entries = experience.entries();
-                for (int i = 0; i < entries.size(); i++) {
+                for (int i = from; i <= to; i++) {
                     CvEntry entry = entries.get(i);
                     int index = i;
                     timeline.entry(ringMarker("Role", index), e -> e.content(body -> {
@@ -217,80 +347,6 @@ final class TerracottaRailMain {
             block.addLayerStack(stack -> stack
                     .name("ExperienceRail")
                     .layer(experienceRail, LayerAlign.TOP_LEFT, 0));
-        });
-    }
-
-    // -- projects ----------------------------------------------------------
-
-    /**
-     * The projects grid: a sketch, the project's own three lines, and its
-     * description across a hairline.
-     *
-     * <p>The mark is an inline run inside a paragraph rather than a block
-     * icon node: a block icon in a row cell makes the whole row lay its cells
-     * out vertically.</p>
-     */
-    private static void renderProjects(SectionBuilder main, EntriesSection projects) {
-        main.addSection("SelectedProjects", block -> {
-            block.spacing(0);
-            headingWithDash(block, projects.title(), MAIN_HEADING_TRACKING_EM, MAIN_DASH_WIDTH);
-            List<CvEntry> entries = projects.entries();
-            for (int i = 0; i < entries.size(); i++) {
-                CvEntry entry = entries.get(i);
-                boolean last = i == entries.size() - 1;
-                int index = i;
-                layeredRow(block, "Project_" + index, 0.0, PROJECT_ROW_GAP, row -> {
-                    row.weights(PROJECT_WEIGHTS[0], PROJECT_WEIGHTS[1], PROJECT_WEIGHTS[2]);
-                    row.addParagraph(p -> {
-                        p.name("ProjIcon_" + index);
-                        if (!entry.icon().isBlank()) {
-                            inlineIcon(p, entry.icon(), TerracottaRailIcons.PROJECT_SIZE);
-                        }
-                    });
-                    row.addSection("ProjMeta_" + index, meta -> {
-                        meta.spacing(0);
-                        meta.padding(0f, (float) PROJECT_META_PAD_RIGHT, 0f,
-                                (float) PROJECT_META_PAD_LEFT);
-                        meta.addParagraph(p -> {
-                            p.name("ProjTitle_" + index)
-                                    .text(entry.title())
-                                    .textStyle(text(ITEM_TITLE_SIZE, INK, true))
-                                    .margin(0f, 0f, 1.0f, 0f);
-                            if (!entry.link().isBlank()) {
-                                p.link(new DocumentLinkOptions(entry.link()));
-                            }
-                        });
-                        meta.addParagraph(p -> p
-                                .name("ProjSub_" + index)
-                                .text(entry.subtitle())
-                                .textStyle(italic(DETAIL_SIZE, MUTED))
-                                .margin(0f, 0f, 1.0f, 0f));
-                        meta.addParagraph(p -> p
-                                .name("ProjLoc_" + index)
-                                .text(entry.place())
-                                .textStyle(text(DETAIL_SIZE, INK, false)));
-                    });
-                    row.addSection("ProjDesc_" + index, description -> {
-                        description.spacing(0);
-                        description.accentLeft(RULE, RULE_THICKNESS);
-                        description.padding(0f, 0f, 0f, (float) PROJECT_DESCRIPTION_PAD_LEFT);
-                        description.addParagraph(p -> p
-                                .name("ProjDescText_" + index)
-                                .text(entry.body())
-                                .textStyle(text(BODY_SIZE, INK, false))
-                                .lineSpacing(PROJECT_LINE_SPACING));
-                    });
-                });
-                if (!last) {
-                    block.addLine(line -> line
-                            .name("ProjDiv_" + index)
-                            .fill()
-                            .thickness(RULE_THICKNESS)
-                            .color(RULE)
-                            .margin(new DocumentInsets(
-                                    PROJECT_DIVIDER_GAP, 0, PROJECT_DIVIDER_GAP, 0)));
-                }
-            }
         });
     }
 

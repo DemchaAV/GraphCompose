@@ -12,15 +12,22 @@ import com.demcha.compose.document.templates.cv.data.SkillsSection;
 import java.util.List;
 import java.util.Objects;
 
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.COLUMN_PAD_BOTTOM;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_PAD_LEFT;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_PAD_RIGHT;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_PAD_TOP;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MAIN_WEIGHT;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.SIDEBAR_PAD_LEFT;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.SIDEBAR_PAD_RIGHT;
+import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.SIDEBAR_PAD_TOP;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.SIDEBAR_WEIGHT;
 
 /**
- * Terracotta Rail — a one-page CV in two columns: a narrow column carrying a
- * serif monogram over a terracotta rule, the contact channels behind their
- * marks, two bulleted lists and a block of closing facts, beside a wide
- * column carrying a letter-spaced masthead, the summary, the roles held on a
- * ringed rail, a projects grid and the degrees.
+ * Terracotta Rail — a CV in two columns drawn as one page: a narrow column
+ * carrying a serif monogram over a terracotta rule, the contact channels
+ * behind their marks, two bulleted lists and a block of closing facts, beside
+ * a wide column carrying a letter-spaced masthead, the summary, the roles held
+ * on a ringed rail, a projects grid and the degrees.
  *
  * <p>The columns are divided by a hairline the sidebar carries as its own
  * right border, so it is as tall as the sidebar rather than as tall as the
@@ -28,15 +35,24 @@ import static com.demcha.compose.document.templates.cv.presets.TerracottaRailSty
  * leaves the page size and the margin to the caller — the geometry follows
  * the page's own width, so another page rescales rather than breaks.</p>
  *
- * <h2>One page, and what happens past it</h2>
+ * <h2>Longer than one page</h2>
  *
- * <p>The two columns are a single row, and a row is atomic — it cannot be
- * split — so a CV longer than the sheet does not flow onto a second page:
- * composing it raises {@code AtomicNodeTooLargeException}, naming the node
- * and the height it needed. It draws no cap of its own, because a CV that
- * quietly loses a job is worse than one that refuses to compose.
- * {@link TimelineMinimal} is the preset in this package that splits its own
- * columns across pages.</p>
+ * <p>A CV that fits the page is composed as the one row the sheet is: the two
+ * columns side by side. A longer one continues onto as many pages as it needs,
+ * each page a row of its own, both columns keeping their padding on every
+ * page. The hairline runs as far as the sidebar does on each page, and a page
+ * whose sidebar has nothing left to hold draws none. The pages are planned
+ * for the session's own page size and margin, so a per-page margin rule that
+ * changes a later page is not taken into account.</p>
+ *
+ * <p>What moves to the next page is a whole block: the masthead, the summary,
+ * a role, a project, the degrees, or one of the sidebar's lists. A heading
+ * stays with the first entry it heads, the roles a page carries share one
+ * rail, and the hairline between two blocks is left out when the second one
+ * opens a page. A single block taller than a page cannot be split, and
+ * composing it raises {@code AtomicNodeTooLargeException}, naming the block.
+ * The preset draws no cap of its own, because a CV that quietly loses a job is
+ * worse than one that runs to a second page.</p>
  *
  * <h2>How a document reaches its berth</h2>
  *
@@ -179,10 +195,29 @@ public final class TerracottaRail {
             EntriesSection projects = berth(sections, EntriesSection.class, PROJECT_KEYS);
             EntriesSection education = berth(sections, EntriesSection.class, EDUCATION_KEYS);
 
-            document.pageFlow(page -> page
-                    .name("TerracottaRailCv")
-                    .spacing(0)
-                    .addRow("Body", row -> {
+            List<ColumnPages.Block> asideBlocks = TerracottaRailAside.blocks(doc.identity(),
+                    competencies, software, certifications, facts);
+            List<TerracottaRailMain.Piece> mainPieces = TerracottaRailMain.pieces(doc.identity(),
+                    summary, experience, projects, education);
+            // The column widths follow the page, as the row's weights do.
+            double pageWidth = document.canvas().innerWidth();
+            double pageHeight = document.availableHeight();
+            ColumnPages.Plan plan = ColumnPages.plan(document, List.of(
+                    new ColumnPages.Column(0, pageWidth * MAIN_WEIGHT,
+                            SIDEBAR_PAD_LEFT, SIDEBAR_PAD_RIGHT,
+                            pageHeight - SIDEBAR_PAD_TOP - COLUMN_PAD_BOTTOM,
+                            pageHeight - SIDEBAR_PAD_TOP - COLUMN_PAD_BOTTOM, asideBlocks),
+                    new ColumnPages.Column(pageWidth * SIDEBAR_WEIGHT, 0,
+                            MAIN_PAD_LEFT, MAIN_PAD_RIGHT,
+                            pageHeight - MAIN_PAD_TOP - COLUMN_PAD_BOTTOM,
+                            pageHeight - MAIN_PAD_TOP - COLUMN_PAD_BOTTOM,
+                            TerracottaRailMain.blocks(mainPieces))));
+
+            document.pageFlow(page -> {
+                page.name("TerracottaRailCv").spacing(0);
+                if (plan.pages() == 1) {
+                    // The sheet as drawn: one row, the two columns side by side.
+                    page.addRow("Body", row -> {
                         row.name("Body");
                         row.spacing(0);
                         row.weights(SIDEBAR_WEIGHT, MAIN_WEIGHT);
@@ -192,7 +227,22 @@ public final class TerracottaRail {
                         row.addSection("MainColumn", main ->
                                 TerracottaRailMain.compose(main, doc.identity(), summary,
                                         experience, projects, education));
-                    }));
+                    });
+                    return;
+                }
+                // Longer than the page: a row per page, each on a page of its
+                // own and holding the blocks the plan put there. See ColumnPages.
+                ColumnPages.addRows(page, plan, "Body", (row, pageIndex) -> {
+                    row.spacing(0);
+                    row.weights(SIDEBAR_WEIGHT, MAIN_WEIGHT);
+                    row.addSection("Sidebar", side ->
+                            TerracottaRailAside.composePage(side, asideBlocks,
+                                    plan.blocks(0, pageIndex)));
+                    row.addSection("MainColumn", main ->
+                            TerracottaRailMain.composePage(main, mainPieces, experience,
+                                    plan.blocks(1, pageIndex)));
+                });
+            });
         }
 
         /**

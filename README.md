@@ -56,8 +56,17 @@ and other documents assembled from application data.
   module.
 - **Templates** — 58 maintained designs across six document families in the separate
   `graph-compose-templates` module: invoice, proposal, receipt and rota for business
-  documents, CV and cover letter for profiles. See the
-  [templates overview](./docs/templates/README.md).
+  documents, CV and cover letter for profiles. Start with
+  [invoice and proposal](./docs/templates/business-templates.md),
+  [CV and cover letter](./docs/templates/v2-layered/quickstart.md), or the
+  [templates overview](./docs/templates/README.md) for all six families.
+
+### Choose a starting point
+
+- [Start with a first PDF](#create-your-first-pdf).
+- [Use a built-in template](./docs/templates/README.md).
+- Export to [PowerPoint](./render-pptx/README.md) or
+  [DOCX](./render-docx/README.md).
 
 <a id="installation"></a>
 ## Create your first PDF
@@ -235,7 +244,7 @@ not need the others, and you never need the engine internals to author a documen
 |---|---|
 | **Understand the model** behind the example above | [Your first document](./docs/first-document.md) — a guided five-minute build |
 | **Add a feature** — table, list, chart, timeline, image, header, footer, barcode, page-break rule | [Recipes](./docs/recipes.md) — the complete task index |
-| **Start from a ready-made design** — invoice, proposal, receipt, rota, CV, cover letter | [Templates](./docs/templates/README.md) — 58 presets across six families |
+| **Start from a ready-made design** | [Invoice and proposal](./docs/templates/business-templates.md) · [CV and cover letter](./docs/templates/v2-layered/quickstart.md) · [receipt, rota, and all 58 presets](./docs/templates/README.md) |
 | **Prove an upgrade did not move my document** | [Testing your document](./docs/operations/test-your-document.md) — layout snapshots and visual diffs |
 | **Render from a server** | [Production rendering](./docs/operations/production-rendering.md) — streaming, concurrency, failure handling; the [Spring Boot streaming example](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java) is a working endpoint |
 

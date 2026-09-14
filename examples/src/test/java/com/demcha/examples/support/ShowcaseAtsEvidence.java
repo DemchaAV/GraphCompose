@@ -1,7 +1,13 @@
 package com.demcha.examples.support;
 
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.IOException;
@@ -13,6 +19,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
@@ -160,6 +169,74 @@ final class ShowcaseAtsEvidence {
             String text = inStreamOrder.getText(document) + "\f" + inPositionOrder.getText(document);
             return HexFormat.of().formatHex(sha256().digest(text.getBytes(StandardCharsets.UTF_8)));
         }
+    }
+
+    /**
+     * What a published sample does not share with the certified render of the same document.
+     *
+     * <p>Two renders of one document through differently configured PDF backends still draw the
+     * same pages: the same page sizes, byte for byte the same content streams, the same fonts
+     * under the same resource names, the same links. Only the document ID and dates may differ.
+     * Anything else means the published sample is no longer the document the ATS check read.</p>
+     *
+     * @param published the sample as its example writes it
+     * @param certified the certified render
+     * @return what differs; empty when the two draw the same document
+     * @throws IOException when either document cannot be read
+     */
+    static List<String> documentDifferences(Path published, Path certified) throws IOException {
+        List<String> differences = new ArrayList<>();
+        try (PDDocument drawn = Loader.loadPDF(published.toFile());
+             PDDocument read = Loader.loadPDF(certified.toFile())) {
+            if (drawn.getNumberOfPages() != read.getNumberOfPages()) {
+                differences.add(drawn.getNumberOfPages() + " pages instead of " + read.getNumberOfPages());
+                return differences;
+            }
+            for (int index = 0; index < drawn.getNumberOfPages(); index++) {
+                PDPage page = drawn.getPage(index);
+                PDPage certifiedPage = read.getPage(index);
+                String where = "page " + (index + 1) + " has ";
+                if (!page.getMediaBox().toString().equals(certifiedPage.getMediaBox().toString())) {
+                    differences.add(where + "a different size");
+                }
+                if (!Arrays.equals(contents(page), contents(certifiedPage))) {
+                    differences.add(where + "a different content stream");
+                }
+                if (!fonts(page).equals(fonts(certifiedPage))) {
+                    differences.add(where + "different fonts");
+                }
+                if (!links(page).equals(links(certifiedPage))) {
+                    differences.add(where + "different links");
+                }
+            }
+        }
+        return differences;
+    }
+
+    private static byte[] contents(PDPage page) throws IOException {
+        try (InputStream in = page.getContents()) {
+            return in.readAllBytes();
+        }
+    }
+
+    private static List<String> fonts(PDPage page) throws IOException {
+        List<String> fonts = new ArrayList<>();
+        PDResources resources = page.getResources();
+        for (COSName name : resources.getFontNames()) {
+            fonts.add(name.getName() + "=" + resources.getFont(name).getName());
+        }
+        Collections.sort(fonts);
+        return fonts;
+    }
+
+    private static List<String> links(PDPage page) throws IOException {
+        List<String> links = new ArrayList<>();
+        for (PDAnnotation annotation : page.getAnnotations()) {
+            String target = annotation instanceof PDAnnotationLink link
+                    && link.getAction() instanceof PDActionURI uri ? uri.getURI() : "";
+            links.add(annotation.getSubtype() + " " + annotation.getRectangle() + " " + target);
+        }
+        return links;
     }
 
     private static MessageDigest sha256() {

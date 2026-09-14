@@ -3,7 +3,6 @@ package com.demcha.examples.templates.cv.v2;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
 import com.demcha.compose.document.templates.cv.presets.Executive;
@@ -38,9 +37,7 @@ public final class CvExecutiveExample {
                 .margin(m, m, m, m)
                 .create()) {
             template.compose(document, doc);
-            // Rendered deterministically, so the sample is the same bytes on every run and its
-            // ATS check stays tied to the exact PDF the parsers read.
-            document.render(PdfFixedLayoutBackend.builder().deterministic(true).build());
+            document.buildPdf();
         }
         return outputFile;
     }

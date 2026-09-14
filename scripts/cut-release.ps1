@@ -124,6 +124,20 @@ function Run($command) {
     }
 }
 
+function Invoke-Git {
+    # Every git call that changes the repository — add, commit, tag, push — goes
+    # through here. PowerShell does not stop on a native command's non-zero exit, so a
+    # bare `git commit` that loses to a stale .git/index.lock prints "fatal:" and the
+    # script carries on. On the 2.4.0 cut that is what happened: the add and the commit
+    # both failed, the script reported "commit: Release v2.4.0", and Step 7 tagged the
+    # commit before it. Throwing here stops the release at the step that failed, before
+    # a tag can name the wrong commit or a push can publish it.
+    git @args
+    if ($LASTEXITCODE -ne 0) {
+        throw "git $($args -join ' ') failed (exit $LASTEXITCODE); nothing after it ran."
+    }
+}
+
 function Assert-BranchPreflight($branch) {
     # Shared safety gate for BOTH a full release cut and -PostReleaseOnly: the current
     # branch is the target branch, the working tree is clean, and the local branch is
@@ -1440,15 +1454,15 @@ if ($PostReleaseOnly) {
                 Write-Host "    [DRY RUN] git add $($filesToCommit -join ' ')" -ForegroundColor Yellow
                 Write-Host "    [DRY RUN] git commit -m `"$msg`"" -ForegroundColor Yellow
             } else {
-                git add @filesToCommit
-                git commit -m $msg
+                Invoke-Git add @filesToCommit
+                Invoke-Git commit -m $msg
                 Note "commit: $msg"
             }
             Step 5 "Push $Branch"
             if ($DryRun) {
                 Write-Host "    [DRY RUN] git push origin $Branch" -ForegroundColor Yellow
             } else {
-                git push origin $Branch
+                Invoke-Git push origin $Branch
             }
         } else {
             Note "Nothing to do (showcase already on /blob/$Branch and version already a SNAPSHOT)."
@@ -1879,8 +1893,8 @@ try {
         Write-Host "    [DRY RUN] git add $($commitFiles -join ' ')" -ForegroundColor Yellow
         Write-Host "    [DRY RUN] git commit -m `"$commitMsg`"" -ForegroundColor Yellow
     } else {
-        git add @commitFiles
-        git commit -m $commitMsg
+        Invoke-Git add @commitFiles
+        Invoke-Git commit -m $commitMsg
         Note "commit: $commitMsg"
     }
 
@@ -1888,7 +1902,7 @@ try {
     if ($DryRun) {
         Write-Host "    [DRY RUN] git tag -a $tag -m `"Release $tag`"" -ForegroundColor Yellow
     } else {
-        git tag -a $tag -m "Release $tag"
+        Invoke-Git tag -a $tag -m "Release $tag"
         Note "tag: $tag"
     }
 
@@ -1902,8 +1916,8 @@ try {
             Write-Host "    [DRY RUN] git push origin $Branch" -ForegroundColor Yellow
             Write-Host "    [DRY RUN] git push origin $tag" -ForegroundColor Yellow
         } else {
-            git push origin $Branch
-            git push origin $tag
+            Invoke-Git push origin $Branch
+            Invoke-Git push origin $tag
             Note "pushed: $Branch + $tag"
         }
     }

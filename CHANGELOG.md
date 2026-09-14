@@ -921,6 +921,44 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **Five CV presets name their sections with the headings resume parsers look for.** A
+  resume parser finds a section by matching its heading against a short list of names such
+  as Experience, Education and Skills, so a heading outside that list can hide a section
+  that is plainly on the page. These presets print a heading of their own in place of the
+  document's section title: `ClassicSerif` now prints "Skills" for "Core Skills";
+  `EditorialBlue` "EXPERIENCE" and "SKILLS" for "EMPLOYMENT HISTORY" and "KEY SKILLS";
+  `SidebarPortrait` "Skills" for "Key Skills"; `MonogramSidebar` "SKILLS" for "EXPERTISE";
+  and `EngineeringResume` "Skills", "Education" and "Experience" for "Core Stack",
+  "Learning" and "Leadership Experience". Only the words change: every heading keeps its
+  font, colour, tracking and rules. The showcase samples follow suit — the sample CV titles
+  its education section "Education" rather than "Education & Certifications", and the
+  Orange Ops, Teal Pulse, Slate Orange, Violet Grid and Terracotta Rail samples title their
+  skills "SKILLS".
+
+- **Four sidebar CVs draw the name first, and the page looks the same.** A parser that reads
+  the content stream rather than the page takes the name, the email and the phone from the
+  lines above the first section heading. `NavySidebar`, `CharcoalGold` and `SidebarPortrait`
+  drew their sidebar before the main column, and `SlateOrange` its monogram tile before the
+  identity strip, so OpenResume and resume-parser-ats met "CONTACT", "DH" or a contact line
+  first and took it for the name. The three sidebar presets' page grid is now a layer stack,
+  atomic like the row it replaces, that draws the name, then the sidebar, then the rest of
+  the main column under a stand-in as tall as the name. Drawing the whole main column first
+  would trade the email for the name, because its first heading would then come before the
+  sidebar's contact lines. `SlateOrange`'s masthead cells become layers, identity strip
+  first. At 100 dpi no pixel changes; Sidebar Portrait's main column sits 0.0005pt lower,
+  because the stand-in's height comes from a layout snapshot rounded to a thousandth of a
+  point. `CvPresetTextLayerTest` holds the four to drawing the name first.
+
+- **Professional Sidebar and Terracotta Rail carry a longer CV onto more pages.** Both
+  composed their two columns as one row, and a row is atomic, so a CV longer than one sheet
+  raised `AtomicNodeTooLargeException`. A CV that fits keeps the single row it always had,
+  and its output is unchanged. A longer one is packed a whole block at a time — a role, a
+  project, a sidebar list — onto one row per page, each row after the first behind a page
+  break. A heading stays with its first entry, a page's roles share one rail in Terracotta
+  Rail, and a block taller than a page is refused with `AtomicNodeTooLargeException` naming
+  the block. `ColumnPagesTest` covers the packing, and each preset gains a two-page layout
+  snapshot.
+
 - **A stacked row's body now hangs under its name, not a couple of points to the left of
   it.** The shared bullet path every themed CV preset draws its rows through —
   `RowRenderer`, `SkillsRenderer` — put the glyph inside the paragraph's text as a
@@ -1461,7 +1499,7 @@ follow semantic versioning; release dates are ISO 8601.
   refusal of a body taller than one), an exact layout snapshot and a pixel-parity gate;
   the examples showcase gains `cv-teal-pulse-v2`.
 
-- **An architect's two-column CV preset: `TerracottaRail`.** A one-page A4 sheet whose
+- **An architect's two-column CV preset: `TerracottaRail`.** An A4 sheet whose
   narrow column carries a serif monogram over a terracotta rule, the contact channels
   behind their marks, two bulleted lists and a block of closing facts, beside a wide
   column carrying a letter-spaced masthead, the summary, the roles held on a ringed
@@ -1485,13 +1523,12 @@ follow semantic versioning; release dates are ISO 8601.
   size for every document. The departure is exactly measured — two of 154 nodes narrow,
   1 743 of 2 173 720 pixels change, and nothing moves vertically — and both baselines
   were recorded with it. A link takes the mark of the network it points at, or a globe.
-  Like its siblings it holds one page: the body is a single atomic row, so a longer CV raises
-  `AtomicNodeTooLargeException` rather than flowing or dropping entries. Guarded by a
-  smoke test (including the unknown-mark data error, an entry with no mark, an identity
-  with no links, a document with nothing but an identity, the monogram, the link
-  targets on every kind of title, the four contact rows sharing one axis and the
-  one-page limit), an exact layout snapshot and a pixel-parity gate;
-  the examples showcase gains `cv-terracotta-rail-v2`.
+  A CV longer than the page continues onto more pages. Guarded by a smoke test (including
+  the unknown-mark data error, an entry with no mark, an identity with no links, a document
+  with nothing but an identity, the monogram, the link targets on every kind of title, the
+  four contact rows sharing one axis, the run onto more pages and the refusal of a role
+  taller than the page), an exact layout snapshot and a pixel-parity gate; the examples
+  showcase gains `cv-terracotta-rail-v2`.
 
 - **The first invoice preset that paginates what it ports: `LumaStudioInvoice`.** A
   studio invoice built around a cream sidebar — the two-line monogram and the wordmark
@@ -1575,8 +1612,8 @@ follow semantic versioning; release dates are ISO 8601.
   shows, subtracting the blank a line box already carries above and below its own type.
   Eight berths reach their sections by title, the projects and achievements take the
   mark each entry names in `CvEntry.icon()` from this preset's own vocabulary, and the
-  employer's city and the campus come from `CvEntry.place()`. Like its siblings it owns
-  its page and holds one: the body is a single atomic row, so a longer CV raises
+  employer's city and the campus come from `CvEntry.place()`. It owns its page and holds
+  one: the body is a single atomic row, so a longer CV raises
   `AtomicNodeTooLargeException` rather than flowing or dropping entries. Guarded by a
   smoke test (including the unknown-mark data error, an entry with no mark, an employer
   with no place, the overlapping soft-skills berth, the link targets and the one-page
@@ -1589,8 +1626,8 @@ follow semantic versioning; release dates are ISO 8601.
   the roles held on a timeline rail with a filled marker at each one, and the
   achievements and certifications behind badged headings. Ships as
   `cv.presets.NavySidebar` on the existing `CvDocument` model, porting the rendered
-  layout of the published standalone `navy-sidebar-cv` template. Like its sibling it
-  owns its page and holds one: the two columns are a single atomic row, so a CV longer
+  layout of the published standalone `navy-sidebar-cv` template. It owns its page and
+  holds one: the two columns are a single layer stack, which is atomic, so a CV longer
   than the sheet raises `AtomicNodeTooLargeException` rather than flowing or dropping
   entries. Sections reach their berth by title rather than by `Slot`; languages are a
   `RowsSection` because this design writes the proficiency out — "Native", "Advanced" —
@@ -1606,28 +1643,27 @@ follow semantic versioning; release dates are ISO 8601.
   and the fields it has no place for), an exact layout snapshot and a pixel-parity
   gate; the examples showcase gains `cv-navy-sidebar-v2`.
 
-- **The first CV preset that owns its page: `ProfessionalSidebar`.** A one-page CV
-  in two columns on the Barlow&nbsp;Condensed / Lato pair — a navy monogram plate over a
+- **The first CV preset that owns its page: `ProfessionalSidebar`.** A CV in two columns
+  on the Barlow&nbsp;Condensed / Lato pair — a navy monogram plate over a
   pale sidebar carrying the contact channels, meter-bar skills, an education rail with
   dot markers and five-dot language ratings, beside a white column of the tracked name,
   the profile, the roles held with bulleted highlights, the projects and the references
   note. Ships as `cv.presets.ProfessionalSidebar` on the existing `CvDocument` model —
   no model change was needed — porting the rendered layout of the published standalone
   `professional-sidebar-cv` template. The preset owns its page: a 491.6&nbsp;x&nbsp;737.28pt
-  sheet with no margin, the page fill and the pale sidebar painted as page backgrounds. The
-  sheet holds one page — its two columns are a single atomic row, so a CV longer than the
-  sheet raises `AtomicNodeTooLargeException` rather than flowing onto a second page or
-  silently dropping entries the way the capped sidebar presets do. The class documentation
-  says so, points at `TimelineMinimal` for a preset that splits its own columns, and
+  sheet with no margin, the page fill and the pale sidebar painted as page backgrounds. A CV
+  longer than the sheet continues onto more pages rather than silently dropping entries the
+  way the capped sidebar presets do; the class documentation says so, and
   `docs/templates/v2-layered/using-templates.md` carries it beside the capped presets.
   Sections reach their berth by title rather than by `Slot`,
   because the columns are fixed; skills and languages are both `SkillsSection`s drawn
   differently, and a level the document omits draws the name alone. The contact channels
   come off `CvIdentity`, with `tel:` and `mailto:` targets built from the values and the
   packaged marks chosen per channel. Guarded by a smoke test (including the identity-only
-  document, the unlevelled skill, the PDF link targets, the one-page limit and the fields
-  this design has no place for), an exact layout snapshot and a pixel-parity gate; the
-  examples showcase gains `cv-professional-sidebar-v2`.
+  document, the unlevelled skill, the PDF link targets, the run onto more pages, the refusal
+  of a role taller than the sheet and the fields this design has no place for), an exact
+  layout snapshot and a pixel-parity gate; the examples showcase gains
+  `cv-professional-sidebar-v2`.
 
 - **A second structured proposal preset: `EditorialProposal`.** The same document the
   `NorthlineProposal` preset renders, in a different hand: an orange accent, section
@@ -2056,6 +2092,20 @@ follow semantic versioning; release dates are ISO 8601.
   entry and the Markdown view marks the package heading `[beta]` the way it already
   marked types and members, so a consumer can tell a beta package from a package whose
   one admitted type happens to be beta.
+
+- **Every CV preset is either ATS-friendly or design-first, and the showcase says which.**
+  `docs/templates/v2-layered/using-templates.md` describes the two categories and lists the
+  eight ATS-friendly presets and the one parser limitation known among them: ATS Reader does
+  not recognise `ModernProfessional`'s multi-word headings "Professional Experience" and
+  "Technical Skills". Each preset's showcase sample was checked for text extraction, section
+  recognition and reading order with the OpenResume parser (pdf.js), ATS Reader (pdfplumber)
+  and resume-parser-ats (pdf-parse); that is not a claim about every ATS product, and a
+  document with different content can parse differently. A design-first preset keeps the
+  layout that is the point of its design — a sidebar, columns, a monogram — at the cost of
+  at least one of those checks. On the showcase site a CV card carries an "ATS-friendly"
+  chip, linking to that section, only when its classification earns one, and
+  `ShowcaseAtsEvidenceTest` pins a fingerprint of each badged sample's extracted text, so the
+  build fails when that text changes after the check.
 
 ## v2.3.0 — 2026-08-31
 

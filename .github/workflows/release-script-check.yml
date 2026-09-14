@@ -13,12 +13,18 @@ on:
   push:
     paths:
       - 'scripts/cut-release.ps1'
+      - 'scripts/release-notes.mjs'
+      - 'scripts/release-notes.test.mjs'
+      - '.github/workflows/release.yml'
       - '.github/workflows/release-script-check.yml'
       # Carries the japicmp previous-release pin the script moves.
       - 'templates/pom.xml'
   pull_request:
     paths:
       - 'scripts/cut-release.ps1'
+      - 'scripts/release-notes.mjs'
+      - 'scripts/release-notes.test.mjs'
+      - '.github/workflows/release.yml'
       - '.github/workflows/release-script-check.yml'
       - 'templates/pom.xml'
 
@@ -31,6 +37,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+
+      - name: Release notes fit a GitHub Release body
+        run: |
+          # release.yml publishes the tag's CHANGELOG section through this script, and
+          # GitHub refuses a body over 125 000 characters. The oversized case is the
+          # real 2.4.0 section, the one that failed its tag.
+          node scripts/release-notes.test.mjs
 
       - name: Resolve a throwaway version on the roadmap's current line
         shell: pwsh

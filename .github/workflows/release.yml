@@ -104,6 +104,11 @@ jobs:
             echo "::warning::No CHANGELOG section found for ${NOTES_TAG}; using a generic note."
             printf '%s\n' "Release ${TAG}. See [CHANGELOG.md](CHANGELOG.md) for details." > "${NOTES_FILE}"
           fi
+          # GitHub refuses a Release body over 125 000 characters (HTTP 422), which is
+          # how the v2.4.0 tag's Release failed after its build had passed. A section
+          # that fits is left as written; a longer one is cut to its entry leads with a
+          # link to the full section at the tag.
+          node scripts/release-notes.mjs "${NOTES_FILE}" "${TAG}" "${GITHUB_REPOSITORY}"
           echo "notes_file=${NOTES_FILE}" >> "${GITHUB_OUTPUT}"
           # Tags carrying a pre-release suffix (e.g. v1.7.0-rc.1) ship as
           # GitHub pre-releases so they never become "Latest".

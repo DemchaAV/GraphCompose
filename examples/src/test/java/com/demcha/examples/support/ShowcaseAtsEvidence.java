@@ -152,8 +152,9 @@ final class ShowcaseAtsEvidence {
      *
      * <p>Stream order is the order a pdf.js-based parser follows. Position order is closer to what
      * a layout-mode extractor sees, and it changes when a block moves beside another even if nothing
-     * is redrawn in a different order. Line breaks are fixed to {@code \n} so the hash is the same
-     * on every platform.</p>
+     * is redrawn in a different order. Line breaks and page ends are both fixed to {@code \n}, so
+     * the hash is the same on every platform: {@code setLineSeparator} alone leaves every page
+     * ending in the platform's own separator.</p>
      *
      * @param pdf the document
      * @return the hash, as lowercase hex
@@ -163,8 +164,10 @@ final class ShowcaseAtsEvidence {
         try (PDDocument document = Loader.loadPDF(pdf.toFile())) {
             PDFTextStripper inStreamOrder = new PDFTextStripper();
             inStreamOrder.setLineSeparator("\n");
+            inStreamOrder.setPageEnd("\n");
             PDFTextStripper inPositionOrder = new PDFTextStripper();
             inPositionOrder.setLineSeparator("\n");
+            inPositionOrder.setPageEnd("\n");
             inPositionOrder.setSortByPosition(true);
             String text = inStreamOrder.getText(document) + "\f" + inPositionOrder.getText(document);
             return HexFormat.of().formatHex(sha256().digest(text.getBytes(StandardCharsets.UTF_8)));

@@ -12,6 +12,9 @@ and a generated JSON manifest, served directly with **no build step**. It lives
   It also resolves the anchors the menu and the sitemap link to (`#showcase`,
   `#<category>-section`) by selecting that category's filter first: a category
   section exists only while its filter is shown.
+- `gallery-viewer.js` — the viewer the gallery opens: one family at a time, at
+  `#/<category>/<group>/<id>`. `scripts/site/gallery-viewer.test.mjs` tests its addresses
+  and navigation in CI's guard job.
 - `examples.json` — **generated** gallery manifest. Do **not** hand-edit it; it is
   rewritten by `ShowcaseSync` (see below).
 - `robots.txt`, `sitemap.xml` — SEO.
@@ -69,7 +72,9 @@ writes to it.
 - a card names a PDF, preview or deck that is not a file under `showcase/`;
 - `index.html`, `sitemap.xml` or `robots.txt` links to a site file that is not here;
 - a `#<category>-section` anchor or a filter pill names a category `examples.json`
-  does not have, or another anchor names no element in `index.html`;
+  does not have, a `#/<category>/<group>[/<id>]` viewer address names a family or card
+  it does not have, or another anchor names no element in `index.html`;
+- a card, family or category id repeats, or would need escaping in a viewer address;
 - `examples.json` is not strict JSON, which the page's `fetch` would refuse as well.
 
 ## Deploy

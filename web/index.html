@@ -396,6 +396,35 @@
     </p>
   </footer>
 
+  <dialog class="gallery-viewer" id="gallery-viewer" aria-labelledby="gallery-viewer-title">
+    <div class="gallery-viewer-frame">
+      <header class="gallery-viewer-header">
+        <div class="gallery-viewer-families" data-viewer="families" role="group" aria-label="Document families"></div>
+        <button type="button" class="gallery-viewer-close" data-viewer-close autofocus aria-label="Close the viewer">&times;</button>
+      </header>
+      <div class="gallery-viewer-body">
+        <button type="button" class="gallery-viewer-step" data-viewer="previous" data-viewer-step="-1" aria-label="Previous document">&#x2039;</button>
+        <figure class="gallery-viewer-stage" data-viewer="stage">
+          <img class="gallery-viewer-image" data-viewer="image" alt="" hidden>
+          <div class="gallery-viewer-notice" data-viewer="notice" hidden></div>
+        </figure>
+        <button type="button" class="gallery-viewer-step" data-viewer="next" data-viewer-step="1" aria-label="Next document">&#x203A;</button>
+      </div>
+      <footer class="gallery-viewer-footer">
+        <div class="gallery-viewer-meta">
+          <h2 class="gallery-viewer-title" id="gallery-viewer-title" data-viewer="title" aria-live="polite"></h2>
+          <p class="gallery-viewer-counter" data-viewer="counter" aria-live="polite"></p>
+          <p class="gallery-viewer-description" data-viewer="description"></p>
+        </div>
+        <div class="gallery-viewer-actions">
+          <span class="gallery-viewer-note">First page shown</span>
+          <a class="example-action" data-viewer="pdf" target="_blank" rel="noopener">Open PDF</a>
+          <a class="example-action example-action-ghost" data-viewer="code" target="_blank" rel="noopener">View code</a>
+        </div>
+      </footer>
+    </div>
+  </dialog>
+
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
@@ -417,6 +446,7 @@
       });
     })();
   </script>
+  <script src="gallery-viewer.js"></script>
   <script src="examples.js"></script>
 </body>
 </html>

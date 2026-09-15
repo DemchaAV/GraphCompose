@@ -27,6 +27,18 @@ follow semantic versioning; release dates are ISO 8601.
   tiles use the same fit instead of an A4-shaped frame, and the image tags no longer
   declare an A4 size that was wrong for 26 of the 117 previews.
 
+- **The gallery opens a viewer that pages through one family at a time.** A card, a
+  featured tile or a family tile opens its family (CV, cover letters, invoices and so on)
+  in a viewer that shows the whole first page, moves with Previous, Next and the arrow
+  keys, shows where it is in the family, and links the PDF and source of the document
+  shown. A switch moves to the other families of the category, and each reopens on the
+  document it was left on. The address `#/<category>/<family>/<id>` reopens the same
+  document on a reload or from a shared link and follows Back and Forward. The viewer
+  replaces the zoom lightbox. `ShowcaseSiteGuardTest` now also requires unique,
+  address-safe card and family ids, and holds any viewer address written into a page to a
+  family and document that exist; `scripts/site/gallery-viewer.test.mjs` tests the
+  addresses, the navigation and the dialog in CI.
+
 ## v2.4.0 — 2026-09-14
 
 ### Public API

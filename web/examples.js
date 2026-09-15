@@ -21,6 +21,9 @@
   const CONTENT = document.getElementById('showcase-content');
   const SEARCH = document.getElementById('showcase-search');
   const FILTERS = document.getElementById('showcase-filters');
+  // The document viewer (gallery-viewer.js). Without it a card opens its PDF.
+  const Gallery = window.GraphComposeGallery || null;
+  const VIEWER_DIALOG = document.getElementById('gallery-viewer');
 
   // Hand-picked highlights — one strong tile from each category
   // shown at the top of #showcase so first-time visitors see the
@@ -66,6 +69,8 @@
   let manifest = null;
   let activeCategory = 'all';
   let activeQuery = '';
+  let catalogue = null;
+  let viewer = null;
 
   fetch(MANIFEST_URL, { cache: 'no-cache' })
     .then(r => {
@@ -75,13 +80,23 @@
     .then(data => {
       manifest = data;
       injectFullItemListJsonLd();
+      startViewer();
       // An anchor in the address bar may name a category section, which does
       // not exist until its filter renders it. The page then opens at the
       // gallery, unless the browser is putting the reader back where they were.
-      const categoryId = categoryForHash(location.hash);
+      // A viewer address selects the filter of its own category and opens the viewer over
+      // it, so closing lands on that part of the gallery. A browser without `<dialog>`
+      // cannot show the viewer at all: there the reader gets that gallery rather than the
+      // top of the page.
+      const route = viewerRoute(location.hash);
+      const categoryId = categoryForHash(route ? '#' + route.category + '-section' : location.hash);
       if (categoryId) setCategory(categoryId);
       render();
-      if (categoryId && !isRestoringScroll()) scrollToGallery(true);
+      if (route) {
+        if (!openRoute(route, 'none', null) && !isRestoringScroll()) scrollToGallery(true);
+      } else if (categoryId && !isRestoringScroll()) {
+        scrollToGallery(true);
+      }
     })
     .catch(err => {
       CONTENT.innerHTML =
@@ -219,11 +234,89 @@
     title.focus({ preventScroll: true });
   }
 
+  // === Document viewer ===
+  // Cards, featured tiles and family tiles open the viewer (gallery-viewer.js).
+  // Its address, #/<category>/<group>/<id>, reopens it on a reload, from a
+  // shared link, and on Back and Forward.
+  function startViewer() {
+    catalogue = buildCatalogue();
+    if (Gallery && VIEWER_DIALOG && typeof VIEWER_DIALOG.showModal === 'function') {
+      viewer = Gallery.createViewer({ dialog: VIEWER_DIALOG, catalogue, onClose: onViewerClosed });
+    }
+  }
+
+  function viewerRoute(hash) {
+    return Gallery ? Gallery.parseRoute(hash) : null;
+  }
+
+  // Opens a route in the viewer. An address that names no family is put back
+  // to the gallery rather than left in the address bar.
+  function openRoute(route, historyMode, opener) {
+    if (viewer && viewer.open(route, { history: historyMode, opener })) return true;
+    if (viewerRoute(location.hash)) history.replaceState(null, '', GALLERY_HASH);
+    // The address names no document any more, so the viewer must not stay open over the
+    // gallery still showing the one before it.
+    if (viewer && viewer.isOpen()) viewer.close({ byHistory: true });
+    return false;
+  }
+
+  // The view of the manifest the viewer navigates: every family with the ids
+  // it holds, and each id's example with the family it lives in.
+  function buildCatalogue() {
+    const index = buildIndex();
+    const categories = (manifest.categories || []).map(category => ({
+      id: category.id,
+      label: category.label,
+      groups: (category.groups || []).map(group => ({
+        id: group.id,
+        label: group.label,
+        ids: (group.examples || []).filter(ex => ex && ex.id).map(ex => ex.id)
+      }))
+    }));
+    return { categories, get: id => index.get(id) };
+  }
+
+  // Closing returns the address to the gallery (Back when the viewer added the
+  // entry, a replacement otherwise), and focus to what opened the viewer, or to
+  // the card of the document last shown.
+  function onViewerClosed(closed) {
+    if (!closed.byHistory) {
+      if (history.state && history.state.galleryViewer) {
+        history.back();
+      } else {
+        history.replaceState(null, '', hashForCategory(activeCategory));
+      }
+    }
+    const opener = closed.opener && document.contains(closed.opener) ? closed.opener : null;
+    const shownId = closed.view && closed.view.id;
+    const card = !opener && shownId
+      ? CONTENT.querySelector('[data-action="view"][data-id="' + cssEscape(shownId) + '"]')
+      : null;
+    if (opener) {
+      opener.focus({ preventScroll: true });
+    } else if (card) {
+      card.scrollIntoView({ block: 'center' });
+      card.focus({ preventScroll: true });
+    } else {
+      focusGallery();
+    }
+  }
+
+  function cssEscape(value) {
+    return window.CSS && CSS.escape ? CSS.escape(value) : String(value).replace(/["\\]/g, '\\$&');
+  }
+
   document.addEventListener('click', e => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     const link = e.target.closest('a[href^="#"]');
     if (!link) return;
     const hash = link.getAttribute('href');
+    const route = viewer ? viewerRoute(hash) : null;
+    if (route) {
+      e.preventDefault();
+      openRoute(route, 'push', link);
+      return;
+    }
     const categoryId = categoryForHash(hash);
     if (!categoryId) return;
     e.preventDefault();
@@ -233,10 +326,18 @@
     focusGallery();
   });
 
-  // Back / Forward, or an anchor typed into the address bar. An entry with no
-  // anchor is the page as it was before a gallery link was followed: it shows
-  // the whole gallery, at the position the browser restores.
+  // Back / Forward, or an anchor typed into the address bar. A viewer address
+  // opens the viewer, and leaving one closes it. An entry with no anchor is the
+  // page as it was before a gallery link was followed: it shows the whole
+  // gallery, at the position the browser restores.
   window.addEventListener('hashchange', () => {
+    if (!manifest) return;
+    const route = viewerRoute(location.hash);
+    if (route) {
+      openRoute(route, 'none', document.activeElement);
+      return;
+    }
+    if (viewer && viewer.isOpen()) viewer.close({ byHistory: true });
     const categoryId = location.hash ? categoryForHash(location.hash) : 'all';
     if (!categoryId || categoryId === activeCategory) return;
     showCategory(categoryId);
@@ -271,6 +372,16 @@
     const fragments = [];
     let total = 0;
     const index = buildIndex();
+
+    // Families: one tile per family of the category in view, each opening the
+    // viewer on it. Hidden during a search, like the featured strip.
+    if (viewer && !activeQuery) {
+      const familiesOf = (manifest.categories || [])
+        .find(c => c.id === (activeCategory === 'all' ? 'templates' : activeCategory));
+      if (familiesOf && (familiesOf.groups || []).length > 1) {
+        fragments.push(renderFamilies(familiesOf));
+      }
+    }
 
     // Highlights strip: rendered when no search query is active and
     // the user hasn't drilled into a single category. Once they
@@ -378,12 +489,50 @@
     requestAnimationFrame(updateArrowState);
   }
 
+  // A family tile: a featured document of the family as its cover when there
+  // is one, the family's name, and its count from the manifest.
+  function renderFamilies(category) {
+    const heading = category.id === 'templates'
+      ? 'Browse templates by family'
+      : 'Browse ' + String(category.label || category.id).toLowerCase() + ' by topic';
+    const tiles = (category.groups || [])
+      .filter(group => (group.examples || []).length > 0)
+      .map(group => {
+        const examples = group.examples;
+        const cover = examples.find(ex => HIGHLIGHT_IDS.includes(ex.id)) || examples[0];
+        const count = examples.length;
+        const href = Gallery.formatRoute({ category: category.id, group: group.id });
+        return [
+          '<a class="family-tile" href="' + escAttr(href) + '">',
+          '  <span class="family-cover">',
+          cover.screenshot
+            ? '    <img loading="lazy" decoding="async" src="' + escAttr(cover.screenshot) + '" alt="">'
+            : '',
+          '  </span>',
+          '  <span class="family-name">' + escHtml(group.label || group.id) + '</span>',
+          '  <span class="family-count">' + count + ' document' + (count === 1 ? '' : 's') + '</span>',
+          '</a>'
+        ].join('\n');
+      });
+    return [
+      '<section class="showcase-families" aria-labelledby="families-heading">',
+      '  <header class="highlights-heading">',
+      '    <h3 id="families-heading">' + escHtml(heading) + '</h3>',
+      '    <p class="highlights-sub">Open a family to page through its documents one at a time.</p>',
+      '  </header>',
+      '  <div class="families-grid">',
+      tiles.join('\n'),
+      '  </div>',
+      '</section>'
+    ].join('\n');
+  }
+
   function renderHighlightsStrip(tiles) {
     return [
       '<section class="showcase-highlights" aria-labelledby="highlights-heading">',
       '  <header class="highlights-heading">',
       '    <h3 id="highlights-heading">Featured</h3>',
-      '    <p class="highlights-sub">A spread across templates, features, and flagships &mdash; click any tile to zoom.</p>',
+      '    <p class="highlights-sub">A spread across templates, features, and flagships &mdash; open any tile to page through its family.</p>',
       '  </header>',
       '  <div class="highlights-strip" role="list">',
       tiles.join('\n'),
@@ -395,17 +544,14 @@
   function renderHighlight(ex, categoryId) {
     const screenshot = ex.screenshot || '';
     const pdf = ex.pdf || '';
-    const code = ex.code || '#';
     const badge = CATEGORY_BADGE[categoryId] || '';
     return [
       '<article class="highlight-tile" data-id="' + escAttr(ex.id || '') + '" role="listitem">',
       '  <button type="button" class="highlight-preview"',
-      '          data-action="lightbox"',
-      '          data-screenshot="' + escAttr(screenshot) + '"',
+      '          data-action="view"',
+      '          data-id="' + escAttr(ex.id || '') + '"',
       '          data-pdf="' + escAttr(pdf) + '"',
-      '          data-code="' + escAttr(code) + '"',
-      '          data-title="' + escAttr(ex.title || ex.id || '') + '"',
-      '          aria-label="Open preview for ' + escAttr(ex.title || ex.id || '') + '">',
+      '          aria-label="Open ' + escAttr(ex.title || ex.id || '') + ' in the viewer">',
       screenshot
         ? '    <img loading="lazy" decoding="async" src="' + escAttr(screenshot) + '" alt="' + escAttr(ex.title || '') + ' preview">'
         : '    <div class="example-preview-fallback">PDF</div>',
@@ -514,16 +660,14 @@
     return [
       '<article class="example-card" data-id="' + escAttr(ex.id || '') + '">',
       '  <button type="button" class="example-preview"',
-      '          data-action="lightbox"',
-      '          data-screenshot="' + escAttr(screenshot) + '"',
+      '          data-action="view"',
+      '          data-id="' + escAttr(ex.id || '') + '"',
       '          data-pdf="' + escAttr(pdf) + '"',
-      '          data-code="' + escAttr(code) + '"',
-      '          data-title="' + escAttr(ex.title || ex.id || '') + '"',
-      '          aria-label="Open preview for ' + escAttr(ex.title || ex.id || '') + '">',
+      '          aria-label="Open ' + escAttr(ex.title || ex.id || '') + ' in the viewer">',
       screenshot
         ? '    <img loading="lazy" decoding="async" src="' + escAttr(screenshot) + '" alt="' + escAttr(altText) + '">'
         : '    <div class="example-preview-fallback">PDF</div>',
-      '    <span class="example-zoom-hint">Click to zoom</span>',
+      '    <span class="example-view-hint">View</span>',
       '  </button>',
       '  <div class="example-body">',
       '    <h5 class="example-title">' + escHtml(ex.title || ex.id || '') + '</h5>',
@@ -560,69 +704,6 @@
     return title + ' preview';
   }
 
-  // === Lightbox ===
-  // Click a preview card -> open a full-size modal with the
-  // screenshot. Esc / click outside / close button to dismiss.
-  let lightbox = null;
-  function ensureLightbox() {
-    if (lightbox) return lightbox;
-    lightbox = document.createElement('div');
-    lightbox.className = 'lightbox';
-    lightbox.setAttribute('role', 'dialog');
-    lightbox.setAttribute('aria-modal', 'true');
-    lightbox.setAttribute('aria-hidden', 'true');
-    lightbox.innerHTML = [
-      '<div class="lightbox-backdrop" data-close></div>',
-      '<div class="lightbox-frame">',
-      '  <header class="lightbox-header">',
-      '    <h4 class="lightbox-title"></h4>',
-      '    <div class="lightbox-actions">',
-      '      <a class="example-action lightbox-pdf-link" target="_blank" rel="noopener" aria-label="Open PDF">Open PDF</a>',
-      '      <a class="example-action example-action-ghost lightbox-code-link" target="_blank" rel="noopener" aria-label="Open source on GitHub">View Code</a>',
-      '      <button class="lightbox-close" type="button" aria-label="Close" data-close>&times;</button>',
-      '    </div>',
-      '  </header>',
-      '  <div class="lightbox-body">',
-      '    <img class="lightbox-image" alt="">',
-      '  </div>',
-      '</div>'
-    ].join('\n');
-    document.body.appendChild(lightbox);
-    lightbox.addEventListener('click', e => {
-      if (e.target.closest('[data-close]')) {
-        closeLightbox();
-      }
-    });
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && lightbox.classList.contains('is-open')) {
-        closeLightbox();
-      }
-    });
-    return lightbox;
-  }
-  function openLightbox(screenshot, pdf, code, title) {
-    const lb = ensureLightbox();
-    lb.querySelector('.lightbox-image').src = screenshot;
-    lb.querySelector('.lightbox-image').alt = title + ' preview';
-    lb.querySelector('.lightbox-title').textContent = title;
-    lb.querySelector('.lightbox-pdf-link').href = pdf;
-    const codeLink = lb.querySelector('.lightbox-code-link');
-    if (code && code !== '#') {
-      codeLink.href = code;
-      codeLink.style.display = '';
-    } else {
-      codeLink.style.display = 'none';
-    }
-    lb.classList.add('is-open');
-    lb.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('lightbox-open');
-  }
-  function closeLightbox() {
-    if (!lightbox) return;
-    lightbox.classList.remove('is-open');
-    lightbox.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('lightbox-open');
-  }
   document.addEventListener('click', e => {
     // Group expand/collapse (oversized groups like Cover Letter).
     const toggleBtn = e.target.closest('[data-action="toggle-group"]');
@@ -638,17 +719,16 @@
       return;
     }
 
-    const trigger = e.target.closest('[data-action="lightbox"]');
+    // A card or featured tile opens its document in the viewer; without the
+    // viewer it opens the PDF.
+    const trigger = e.target.closest('[data-action="view"]');
     if (!trigger) return;
     e.preventDefault();
-    const screenshot = trigger.dataset.screenshot;
-    const pdf = trigger.dataset.pdf;
-    const code = trigger.dataset.code;
-    const title = trigger.dataset.title;
-    if (screenshot) {
-      openLightbox(screenshot, pdf, code, title);
-    } else if (pdf) {
-      window.open(pdf, '_blank');
+    const hit = catalogue && catalogue.get(trigger.dataset.id);
+    if (hit && viewer) {
+      openRoute({ category: hit.categoryId, group: hit.groupId, id: hit.example.id }, 'push', trigger);
+    } else if (trigger.dataset.pdf) {
+      window.open(trigger.dataset.pdf, '_blank', 'noopener');
     }
   });
 

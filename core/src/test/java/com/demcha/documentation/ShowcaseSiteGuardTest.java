@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -72,6 +73,13 @@ class ShowcaseSiteGuardTest {
 
     /** The category a filter pill selects. */
     private static final Pattern FILTER_PILL = Pattern.compile("data-category\\s*=\\s*\"([^\"]+)\"");
+
+    /**
+     * A viewer address is read and shared as it stands, so category, family and card ids stay
+     * lowercase words and hyphens: an id needing percent-encoding still works, but the address
+     * stops being readable.
+     */
+    private static final Pattern ADDRESS_SAFE_ID = Pattern.compile("[a-z0-9]+(?:-[a-z0-9]+)*");
 
     @Test
     void everyFeaturedExampleIsACardInTheCatalogue() throws IOException {
@@ -146,7 +154,9 @@ class ShowcaseSiteGuardTest {
 
     @Test
     void everyAnchorAndFilterNamesSomethingThePageShows() throws IOException {
-        Set<String> categories = categoryIds(readManifest());
+        Object manifest = readManifest();
+        Set<String> categories = categoryIds(manifest);
+        Map<String, Map<String, Set<String>>> families = families(manifest);
         String index = read("index.html");
         Set<String> elementIds = matches(ELEMENT_ID, index);
 
@@ -160,7 +170,9 @@ class ShowcaseSiteGuardTest {
 
             Set<String> missing = new TreeSet<>();
             for (String anchor : anchors) {
-                boolean lands = anchor.endsWith(SECTION_SUFFIX)
+                boolean lands = anchor.startsWith("/")
+                        ? viewerAddressLands(anchor, families)
+                        : anchor.endsWith(SECTION_SUFFIX)
                         ? categories.contains(anchor.substring(0, anchor.length() - SECTION_SUFFIX.length()))
                         : elementIds.contains(anchor);
                 if (!lands) {
@@ -173,8 +185,9 @@ class ShowcaseSiteGuardTest {
         }
         assertThat(broken)
                 .describedAs("these anchors land nowhere: examples.js renders a category section as "
-                        + "<category id>%s only for a category web/examples.json has, and any other anchor "
-                        + "needs an element with that id in index.html", SECTION_SUFFIX)
+                        + "<category id>%s only for a category web/examples.json has, the viewer opens "
+                        + "#/<category>/<family>[/<card>] only for a family and card it has, and any other "
+                        + "anchor needs an element with that id in index.html", SECTION_SUFFIX)
                 .isEmpty();
 
         Set<String> pills = matches(FILTER_PILL, index);
@@ -187,6 +200,61 @@ class ShowcaseSiteGuardTest {
                 .describedAs("filter pills in web/index.html select categories web/examples.json does not have, "
                         + "so choosing one empties the gallery")
                 .isEmpty();
+    }
+
+    @Test
+    void everyCardAndFamilyIdIsUniqueAndReadsTheSameInAnAddress() throws IOException {
+        Object manifest = readManifest();
+        List<Map<String, Object>> cards = cards(manifest);
+        assertThat(cards)
+                .describedAs("web/examples.json lists no cards — this guard would have nothing to check")
+                .isNotEmpty();
+
+        Set<String> seen = new TreeSet<>();
+        Set<String> duplicates = new TreeSet<>();
+        Set<String> unsafe = new TreeSet<>();
+        for (Map<String, Object> card : cards) {
+            String id = String.valueOf(card.get("id"));
+            if (!seen.add(id)) {
+                duplicates.add(id);
+            }
+            if (!ADDRESS_SAFE_ID.matcher(id).matches()) {
+                unsafe.add("card " + id);
+            }
+        }
+        families(manifest).forEach((category, groups) -> {
+            if (!ADDRESS_SAFE_ID.matcher(category).matches()) {
+                unsafe.add("category " + category);
+            }
+            groups.keySet().stream()
+                    .filter(group -> !ADDRESS_SAFE_ID.matcher(group).matches())
+                    .forEach(group -> unsafe.add("family " + category + "/" + group));
+        });
+
+        assertThat(duplicates)
+                .describedAs("card ids in web/examples.json must be unique: the viewer and the featured list "
+                        + "find a card by its id, so a second card with the same id cannot be reached")
+                .isEmpty();
+        assertThat(unsafe)
+                .describedAs("ids in web/examples.json must be lowercase words joined by hyphens: the viewer "
+                        + "writes them unescaped into #/<category>/<family>/<card> addresses")
+                .isEmpty();
+    }
+
+    @Test
+    void aViewerAddressLandsOnlyOnAFamilyAndACardItHolds() {
+        Map<String, Map<String, Set<String>>> families =
+                Map.of("templates", Map.of("cv", Set.of("cv-a", "cv-b")));
+
+        assertThat(viewerAddressLands("/templates/cv", families)).isTrue();
+        assertThat(viewerAddressLands("/templates/cv/cv-b", families)).isTrue();
+        assertThat(viewerAddressLands("/templates/cv/cv-c", families)).isFalse();
+        assertThat(viewerAddressLands("/templates/invoice", families)).isFalse();
+        assertThat(viewerAddressLands("/features/cv", families)).isFalse();
+        assertThat(viewerAddressLands("/templates", families)).isFalse();
+        assertThat(viewerAddressLands("/templates//cv", families)).isFalse();
+        assertThat(viewerAddressLands("/templates/cv/", families)).isFalse();
+        assertThat(viewerAddressLands("/templates/cv/cv-a/extra", families)).isFalse();
     }
 
     @Test
@@ -212,10 +280,12 @@ class ShowcaseSiteGuardTest {
     @Test
     void anAnchorIsReadFromInPageLinksAndSiteAddresses() {
         String page = "<a href=\"#install\"><a href='#top'><a href=\"#\"><a href=\"showcase/a.pdf#page=3\">"
+                + "<a href=\"#/templates/cv/cv-a\">"
                 + "<loc>" + SITE_URL + "#features-section</loc><loc>" + SITE_URL + "index.html#showcase</loc>"
-                + "<loc>" + SITE_URL + "showcase/b.pdf#page=2</loc>";
+                + "<loc>" + SITE_URL + "#/templates/cv</loc><loc>" + SITE_URL + "showcase/b.pdf#page=2</loc>";
 
-        assertThat(anchors(page)).containsExactlyInAnyOrder("install", "top", "features-section", "showcase");
+        assertThat(anchors(page)).containsExactlyInAnyOrder(
+                "install", "top", "features-section", "showcase", "/templates/cv/cv-a", "/templates/cv");
     }
 
     /** The ids in the featured-strip constant of {@code examples.js}. */
@@ -300,6 +370,42 @@ class ShowcaseSiteGuardTest {
             ids.add(String.valueOf(object(category, "a category").get("id")));
         }
         return ids;
+    }
+
+    /** Each category's families, each with the ids of its cards. */
+    static Map<String, Map<String, Set<String>>> families(Object manifest) {
+        Map<String, Map<String, Set<String>>> families = new LinkedHashMap<>();
+        for (Object category : array(object(manifest, "the manifest").get("categories"), "categories")) {
+            Map<String, Object> categoryObject = object(category, "a category");
+            Map<String, Set<String>> groups = families.computeIfAbsent(
+                    String.valueOf(categoryObject.get("id")), key -> new LinkedHashMap<>());
+            for (Object group : array(categoryObject.get("groups"), "groups")) {
+                Map<String, Object> groupObject = object(group, "a group");
+                Set<String> ids = groups.computeIfAbsent(
+                        String.valueOf(groupObject.get("id")), key -> new LinkedHashSet<>());
+                for (Object card : array(groupObject.get("examples"), "examples")) {
+                    ids.add(String.valueOf(object(card, "a card").get("id")));
+                }
+            }
+        }
+        return families;
+    }
+
+    /**
+     * Whether a viewer address, without its {@code #}, names a family the manifest has
+     * and, when it names a card, a card of that family. It is read the way
+     * {@code gallery-viewer.js} reads it: two or three non-empty segments.
+     */
+    static boolean viewerAddressLands(String address, Map<String, Map<String, Set<String>>> families) {
+        if (!address.startsWith("/")) {
+            return false;
+        }
+        String[] segments = address.substring(1).split("/", -1);
+        if (segments.length < 2 || segments.length > 3 || Arrays.stream(segments).anyMatch(String::isEmpty)) {
+            return false;
+        }
+        Set<String> cards = families.getOrDefault(segments[0], Map.of()).get(segments[1]);
+        return cards != null && !cards.isEmpty() && (segments.length == 2 || cards.contains(segments[2]));
     }
 
     private static Set<String> matches(Pattern pattern, String text) {

@@ -1378,7 +1378,7 @@ html[data-theme="light"] .example-tags .ats-badge {
   background:
     radial-gradient(circle at 30% 20%, var(--accent-glow), transparent 55%),
     var(--preview-bg);
-  cursor: zoom-in;
+  cursor: pointer;
   border: 0;
   width: 100%;
   appearance: none;
@@ -1403,7 +1403,7 @@ html[data-theme="light"] .example-tags .ats-badge {
     0 6px 14px rgba(0, 0, 0, 0.4);
 }
 
-.example-zoom-hint {
+.example-view-hint {
   position: absolute;
   bottom: 12px;
   right: 14px;
@@ -1421,8 +1421,8 @@ html[data-theme="light"] .example-tags .ats-badge {
   pointer-events: none;
 }
 
-.example-card[data-id] .example-preview:hover .example-zoom-hint,
-.example-card[data-id] .example-preview:focus-visible .example-zoom-hint {
+.example-card[data-id] .example-preview:hover .example-view-hint,
+.example-card[data-id] .example-preview:focus-visible .example-view-hint {
   opacity: 1;
   transform: translateY(0);
 }
@@ -1444,103 +1444,141 @@ html[data-theme="light"] .example-tags .ats-badge {
   line-height: 1.6;
 }
 
-/* Lightbox — full-size preview */
-.lightbox {
-  position: fixed;
-  inset: 0;
-  display: none;
-  z-index: 1000;
+/* Document viewer (gallery-viewer.js): one family at a time. Like the code
+   panels, it stays dark in both themes, so every page reads on the same ground. */
+body.viewer-open {
+  overflow: hidden;
 }
 
-.lightbox.is-open {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: lightbox-fade 0.18s ease;
-}
-
-@keyframes lightbox-fade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-.lightbox-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(2, 6, 23, 0.88);
-  backdrop-filter: blur(4px);
-}
-
-.lightbox-frame {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  width: min(92vw, 1080px);
-  max-height: 92vh;
+.gallery-viewer {
+  width: min(96vw, 1180px);
+  max-width: 96vw;
+  height: 94vh;
+  height: min(94dvh, 980px);
+  max-height: 94vh;
+  max-height: 94dvh;
+  margin: auto;
+  padding: 0;
   border: 1px solid rgba(var(--accent-rgb), 0.35);
   border-radius: 12px;
   background: var(--code-bg);
+  color: #e2e8f0;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65);
   overflow: hidden;
 }
 
-.lightbox-header {
+.gallery-viewer::backdrop {
+  background: rgba(2, 6, 23, 0.88);
+  backdrop-filter: blur(4px);
+}
+
+/* Author display rules would otherwise override the hidden attribute. */
+.gallery-viewer [hidden] {
+  display: none !important;
+}
+
+.gallery-viewer-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.gallery-viewer-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(15, 23, 42, 0.85);
 }
 
-.lightbox-title {
-  margin: 0;
-  min-width: 0; /* let the title absorb the squeeze (wrap) instead of the buttons */
-  color: #f8fafc; /* lightbox overlay is always dark in both themes */
-  font-size: 1.05rem;
-  font-weight: 720;
-  letter-spacing: 0;
-}
-
-.lightbox-actions {
+.gallery-viewer-families {
+  position: relative;
   display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-shrink: 0; /* actions keep their full size regardless of title length */
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
-.lightbox-close {
+.gallery-viewer-family {
   display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: transparent;
+  color: #cbd5e1;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 660;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.gallery-viewer-family:hover {
+  border-color: rgba(var(--accent-rgb), 0.5);
+  color: #f8fafc;
+}
+
+.gallery-viewer-family[aria-pressed="true"] {
+  border-color: rgba(var(--accent-rgb), 0.7);
+  background: rgba(var(--accent-rgb), 0.24);
+  color: #f8fafc;
+}
+
+.gallery-viewer-family-count {
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.gallery-viewer-close,
+.gallery-viewer-step {
+  display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  background: transparent;
+  background: rgba(15, 23, 42, 0.8);
   color: #e2e8f0;
-  font-size: 1.4rem;
-  font-weight: 760;
+  font: inherit;
+  font-size: 1.6rem;
   line-height: 1;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
 }
 
-.lightbox-close:hover {
+.gallery-viewer-close:hover {
   border-color: rgba(248, 113, 113, 0.55);
   color: #fca5a5;
 }
 
-.lightbox-body {
+.gallery-viewer-step:hover:not(:disabled) {
+  border-color: rgba(var(--accent-rgb), 0.7);
+  background: rgba(var(--accent-rgb), 0.2);
+}
+
+.gallery-viewer-step:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.gallery-viewer-body {
+  display: grid;
   flex: 1;
-  display: flex;
+  grid-template-columns: 64px minmax(0, 1fr) 64px;
+  grid-template-rows: minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  padding: 28px;
-  overflow: auto;
+  justify-items: center;
+  min-height: 0;
   background:
     repeating-linear-gradient(
       45deg,
@@ -1552,20 +1590,100 @@ html[data-theme="light"] .example-tags .ats-badge {
     #06101f;
 }
 
-.lightbox-image {
+.gallery-viewer-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 20px 0;
+}
+
+.gallery-viewer-image {
+  display: block;
+  width: auto;
+  height: auto;
   max-width: 100%;
-  max-height: 78vh;
-  object-fit: contain;
-  background: white;
+  max-height: 100%;
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
+  background: white;
   box-shadow:
     0 30px 60px rgba(0, 0, 0, 0.55),
     0 8px 16px rgba(0, 0, 0, 0.4);
+  transition: opacity 0.15s ease;
 }
 
-body.lightbox-open {
-  overflow: hidden;
+.gallery-viewer-stage[aria-busy="true"] .gallery-viewer-image {
+  opacity: 0.5;
+}
+
+.gallery-viewer-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 36rem;
+  padding: 24px;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+.gallery-viewer-notice p {
+  margin: 0;
+}
+
+.gallery-viewer-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.gallery-viewer-meta {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.gallery-viewer-title {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.1rem;
+  font-weight: 720;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.gallery-viewer-counter {
+  margin: 2px 0 0;
+  color: #94a3b8;
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gallery-viewer-description {
+  margin: 6px 0 0;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.gallery-viewer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.gallery-viewer-note {
+  color: #94a3b8;
+  font-size: 0.8rem;
 }
 
 /* Heavier section labels + headings for visual hierarchy */
@@ -1590,21 +1708,110 @@ body.lightbox-open {
   font-weight: 760;
 }
 
-/* Mobile lightbox */
+/* Viewer on a narrow screen: the page fills the screen, and the arrows sit
+   over its edges, clear of the safe areas. */
 @media (max-width: 768px) {
-  .lightbox-frame {
-    width: 96vw;
-    max-height: 96vh;
+  .gallery-viewer {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
   }
-  .lightbox-body {
-    padding: 16px;
+  .gallery-viewer-body {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr);
   }
-  .lightbox-header {
-    padding: 12px 14px;
+  .gallery-viewer-stage {
+    padding: 12px;
   }
-  .lightbox-title {
-    font-size: 0.94rem;
+  .gallery-viewer-step {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    transform: translateY(-50%);
   }
+  .gallery-viewer-step[data-viewer-step="-1"] {
+    left: calc(8px + env(safe-area-inset-left, 0px));
+  }
+  .gallery-viewer-step[data-viewer-step="1"] {
+    right: calc(8px + env(safe-area-inset-right, 0px));
+  }
+  .gallery-viewer-footer {
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .gallery-viewer-description,
+  .gallery-viewer-note {
+    display: none;
+  }
+}
+
+/* Families: one tile per family, each opening the viewer on it. */
+.showcase-families {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.families-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.family-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.family-tile:hover,
+.family-tile:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(var(--accent-rgb), 0.5);
+}
+
+.family-cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 180px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 30% 20%, var(--accent-glow), transparent 55%),
+    var(--preview-bg);
+}
+
+.family-cover img {
+  width: auto;
+  height: auto;
+  max-width: calc(100% - 20px);
+  max-height: calc(100% - 20px);
+  border-radius: 3px;
+  background: white;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
+.family-name {
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.family-count {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ===========================================================
@@ -1743,7 +1950,7 @@ body.lightbox-open {
   background:
     radial-gradient(circle at 30% 18%, var(--accent-glow), transparent 60%),
     var(--preview-bg);
-  cursor: zoom-in;
+  cursor: pointer;
   appearance: none;
 }
 

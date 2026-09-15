@@ -9,6 +9,9 @@ and a generated JSON manifest, served directly with **no build step**. It lives
   architecture sections, and the searchable gallery shell.
 - `styles.css` — visual system and responsive layout.
 - `examples.js` — client script that fetches the manifest and renders the gallery.
+  It also resolves the anchors the menu and the sitemap link to (`#showcase`,
+  `#<category>-section`) by selecting that category's filter first: a category
+  section exists only while its filter is shown.
 - `examples.json` — **generated** gallery manifest. Do **not** hand-edit it; it is
   rewritten by `ShowcaseSync` (see below).
 - `robots.txt`, `sitemap.xml` — SEO.
@@ -16,6 +19,8 @@ and a generated JSON manifest, served directly with **no build step**. It lives
   landing previews, superseded by `showcase/`; safe to prune.)
 - `showcase/pdf/<category>/<group>/…` — generated example PDFs.
 - `showcase/screenshots/<category>/<group>/…` — PNG previews of those PDFs.
+- `showcase/pptx/<category>/<group>/…` — the PowerPoint decks of the examples that
+  also render one.
 
 ## Regenerating the gallery
 Driven by code, not hand-edited JSON. Source of truth:
@@ -36,19 +41,47 @@ Driven by code, not hand-edited JSON. Source of truth:
    `web/showcase/screenshots/…`, and rewrites `web/examples.json`.
 5. Commit the regenerated `web/showcase/**` + `web/examples.json`.
 
-## Version + source links
-- The displayed version lives **only** in `index.html` (JSON-LD `softwareVersion`,
-  the Maven Central URL, the hero badge, and the Maven + Gradle snippets) — it does
-  not inherit from the pom. `scripts/cut-release.ps1` flips it on release and
-  `VersionConsistencyGuardTest` fails the `verify` gate if it drifts.
-- "View source" links resolve through `ShowcaseMetadata.GH_BASE`, which
-  `cut-release.ps1` flips between `/blob/develop` and `/blob/v<tag>` at release.
+## What a release changes here
+`scripts/cut-release.ps1` is what edits this folder at a release; no CI workflow
+writes to it.
+
+- **Version.** The displayed version lives only in `index.html`, in five places the
+  script rewrites by pattern on a final release: the JSON-LD `softwareVersion`, the
+  Maven Central `downloadUrl`, the hero badge (`Java &middot; v… &middot; MIT`), and
+  the Maven and Gradle snippets for `graph-compose`. Keep each in its current shape:
+  a place the patterns no longer match is left unchanged. `VersionConsistencyGuardTest`
+  holds four of them to the release — every one but the `downloadUrl` — so a stale one
+  of those fails the cut's verify gate. A pre-release cut leaves all five on the last
+  published version, and so does the post-release bump.
+- **Catalogue.** Unless run with `-SkipShowcase`, the cut sets
+  `ShowcaseMetadata.GH_BASE` to `/blob/v<version>` and runs `ShowcaseSync`, so the
+  release commit carries a regenerated `examples.json` and `showcase/` whose source
+  links name the tag. `-PostReleaseOnly` sets them back to the branch it runs from
+  (`/blob/develop` by default).
+  Between releases the committed catalogue is the last sync: an example added on
+  `develop` appears here at the next cut.
+
+## Checks
+`ShowcaseSiteGuardTest` runs in CI's guard job and fails when:
+
+- an id in the featured list of `examples.js` is not a card in `examples.json` —
+  the page would skip it without a sign;
+- a card names a PDF, preview or deck that is not a file under `showcase/`;
+- `index.html`, `sitemap.xml` or `robots.txt` links to a site file that is not here;
+- a `#<category>-section` anchor or a filter pill names a category `examples.json`
+  does not have, or another anchor names no element in `index.html`;
+- `examples.json` is not strict JSON, which the page's `fetch` would refuse as well.
 
 ## Deploy
 Published to GitHub Pages by **`.github/workflows/deploy-web.yml`** (GitHub Actions),
-which uploads this `web/` folder on pushes to `main`. Pages must be set to
+which uploads this `web/` folder as committed on every push to `main` — at a release,
+the fast-forward of `main` after the tag. Pages must be set to
 **Settings → Pages → Source: GitHub Actions** — that one-time switch replaced the old
 branch-deploy from `/docs` when the site moved out of `docs/`.
+
+The deploy does not wait for Maven Central. Each Central deployment is published by
+hand, so a push to `main` before that step shows install snippets for a version that
+does not resolve yet.
 
 Live: https://demchaav.github.io/GraphCompose/
 

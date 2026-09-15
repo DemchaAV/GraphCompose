@@ -1108,6 +1108,11 @@ code[class*="language-"] .token.class-name {
   color: #bae6fd;
 }
 
+.showcase-error a {
+  color: var(--accent-2);
+  text-decoration: underline;
+}
+
 .showcase-category {
   display: flex;
   flex-direction: column;

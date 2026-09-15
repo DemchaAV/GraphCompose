@@ -407,7 +407,7 @@
       '          data-title="' + escAttr(ex.title || ex.id || '') + '"',
       '          aria-label="Open preview for ' + escAttr(ex.title || ex.id || '') + '">',
       screenshot
-        ? '    <img loading="lazy" decoding="async" width="595" height="842" src="' + escAttr(screenshot) + '" alt="' + escAttr(ex.title || '') + ' preview">'
+        ? '    <img loading="lazy" decoding="async" src="' + escAttr(screenshot) + '" alt="' + escAttr(ex.title || '') + ' preview">'
         : '    <div class="example-preview-fallback">PDF</div>',
       badge ? '    <span class="highlight-badge">' + escHtml(badge) + '</span>' : '',
       '  </button>',
@@ -521,7 +521,7 @@
       '          data-title="' + escAttr(ex.title || ex.id || '') + '"',
       '          aria-label="Open preview for ' + escAttr(ex.title || ex.id || '') + '">',
       screenshot
-        ? '    <img loading="lazy" decoding="async" width="595" height="842" src="' + escAttr(screenshot) + '" alt="' + escAttr(altText) + '">'
+        ? '    <img loading="lazy" decoding="async" src="' + escAttr(screenshot) + '" alt="' + escAttr(altText) + '">'
         : '    <div class="example-preview-fallback">PDF</div>',
       '    <span class="example-zoom-hint">Click to zoom</span>',
       '  </button>',

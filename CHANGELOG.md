@@ -21,6 +21,12 @@ follow semantic versioning; release dates are ISO 8601.
   the page counted 16 CV presets where 26 ship, and the template-authoring links
   pointed at `develop` instead of the released docs on `main`.
 
+- **The gallery shows each document's whole first page.** A card cropped its preview to a
+  248-pixel band, so a page was judged by its header and a wide slide lost its sides.
+  The preview now shrinks into a fixed-height box at its own aspect ratio, featured
+  tiles use the same fit instead of an A4-shaped frame, and the image tags no longer
+  declare an A4 size that was wrong for 26 of the 117 previews.
+
 ## v2.4.0 — 2026-09-14
 
 ### Public API

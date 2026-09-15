@@ -26,6 +26,9 @@
   --shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
   --radius: 8px;
   --max-width: 1180px;
+  /* Height of the box a gallery card or a featured tile shows its page in. */
+  --card-preview-height: 320px;
+  --tile-preview-height: 380px;
 }
 
 /* Light theme — opt-in via the header toggle (data-theme="light" on <html>).
@@ -1108,6 +1111,11 @@ code[class*="language-"] .token.class-name {
   color: #bae6fd;
 }
 
+.showcase-error a {
+  color: var(--accent-2);
+  text-decoration: underline;
+}
+
 .showcase-category {
   display: flex;
   flex-direction: column;
@@ -1169,23 +1177,30 @@ code[class*="language-"] .token.class-name {
 }
 
 .example-card[data-id] .example-preview {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--card-preview-height);
+  min-height: 0;
   padding: 16px;
-  min-height: 280px;
 }
 
+/* The whole first page at its own aspect ratio: the image shrinks into the
+   fixed box instead of being cropped to it, so a landscape slide and an A4
+   page each read as what they are, and every card keeps the same height
+   before its image loads. */
 .example-card[data-id] .example-preview img {
   display: block;
-  width: 100%;
-  max-height: 320px;
-  object-fit: contain;
-  background: white;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .example-card[data-id] .example-preview-fallback {
   display: grid;
   width: 100%;
-  height: 280px;
+  height: 100%;
   place-items: center;
   color: var(--muted);
   font-size: 1.4rem;
@@ -1370,14 +1385,6 @@ html[data-theme="light"] .example-tags .ats-badge {
 }
 
 .example-card[data-id] .example-preview img {
-  width: 100%;
-  /* Crop to the top band of each document (masthead + first section)
-     at a uniform height so the gallery scans fast and the preview text
-     is legible — the full page is one click away in the lightbox. Fixed
-     height also reserves the box before lazy-load, avoiding layout shift. */
-  height: 248px;
-  object-fit: cover;
-  object-position: top center;
   background: white;
   border: 2px solid rgba(255, 255, 255, 0.06);
   border-radius: 4px;
@@ -1726,9 +1733,12 @@ body.lightbox-open {
 
 .highlight-preview {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  padding: 14px 14px 0;
+  height: var(--tile-preview-height);
+  padding: 14px;
   border: 0;
   background:
     radial-gradient(circle at 30% 18%, var(--accent-glow), transparent 60%),
@@ -1738,13 +1748,10 @@ body.lightbox-open {
 }
 
 .highlight-preview img {
-  width: 100%;
+  width: auto;
   height: auto;
-  aspect-ratio: 595 / 842;
-  /* Cap height so very-tall A4 previews don't make the strip
-     grotesque on desktop. The image still fills the tile cleanly. */
-  max-height: 360px;
-  object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
   background: white;
   border: 2px solid rgba(255, 255, 255, 0.06);
   border-radius: 4px;
@@ -1795,6 +1802,10 @@ body.lightbox-open {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --card-preview-height: 300px;
+    --tile-preview-height: 340px;
+  }
   .highlight-tile {
     flex-basis: 240px;
   }

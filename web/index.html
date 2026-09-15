@@ -55,7 +55,7 @@
         "description": "Declarative Java PDF layout engine for structured business documents — CVs, invoices, proposals, reports. Compose ParagraphNode, TableNode, SectionNode, LayerStackNode; the engine handles measurement, pagination, fonts, and PDFBox rendering.",
         "applicationCategory": "DeveloperApplication",
         "applicationSubCategory": "Library",
-        "operatingSystem": "Cross-platform (JVM 21+)",
+        "operatingSystem": "Cross-platform (JVM 17+)",
         "programmingLanguage": "Java",
         "softwareVersion": "2.4.0",
         "url": "https://demchaav.github.io/GraphCompose/",
@@ -76,7 +76,7 @@
         "featureList": [
           "Semantic node tree DSL (ParagraphNode, TableNode, SectionNode, LayerStackNode, CanvasLayerNode)",
           "Atomic pagination with row-by-row table splitting",
-          "16 CV presets and 15 matching cover letters out of the box",
+          "26 CV presets and 15 matching cover letters out of the box",
           "Theme tokens via BrandTheme.modernProfessional() / executive() / boxedClassic()",
           "Markdown-aware bodies (bold, italic) in every paragraph and list block",
           "PDFBox-backed render pipeline, an editable PowerPoint backend geometry-identical to the PDF, and a semantic DOCX backend",
@@ -88,7 +88,7 @@
         "name": "GraphCompose",
         "codeRepository": "https://github.com/DemchaAV/GraphCompose",
         "programmingLanguage": "Java",
-        "runtimePlatform": "JVM 21+",
+        "runtimePlatform": "JVM 17+",
         "license": "https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE"
       },
       {
@@ -194,9 +194,9 @@
         <h2 id="layered-title">Building your own templates?</h2>
         <p>The <strong>layered architecture</strong> guide walks you through the five-folder pattern &mdash; <code>data</code> / <code>theme</code> / <code>components</code> / <code>widgets</code> / <code>presets</code> &mdash; with a worked CV example, widget cookbook, and step-by-step contributor checklist. New templates and major rewrites follow this shape.</p>
         <div class="layered-actions">
-          <a class="button button-primary" href="https://github.com/DemchaAV/GraphCompose/tree/develop/docs/templates/v2-layered">Quickstart (5 min)</a>
-          <a class="button button-secondary" href="https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/authoring-presets.md">Author a preset</a>
-          <a class="button button-ghost" href="https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/contributor-guide.md">Add a template family</a>
+          <a class="button button-primary" href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/templates/v2-layered/quickstart.md">Quickstart (5 min)</a>
+          <a class="button button-secondary" href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/templates/v2-layered/authoring-presets.md">Author a preset</a>
+          <a class="button button-ghost" href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/templates/v2-layered/contributor-guide.md">Add a template family</a>
         </div>
       </div>
     </section>
@@ -212,8 +212,8 @@
           <p>Tables split row-by-row, rows are atomic, layer stacks atomic. No manual page math.</p>
         </div>
         <div>
-          <h3>16 CV presets, 15 matching letters</h3>
-          <p>Every preset is one final class with a one-liner <code>create(BrandTheme)</code> factory.</p>
+          <h3>26 CV presets, 15 matching letters</h3>
+          <p>Every preset is one final class with a one-liner <code>create()</code> factory.</p>
         </div>
         <div>
           <h3>Tested at every layer</h3>
@@ -282,7 +282,7 @@
 
       <noscript>
         <div class="showcase-noscript">
-          <p><strong>JavaScript is disabled.</strong> The full searchable gallery requires JS. Below is a static index of the catalogue so you can still reach the rendered PDFs and source files.</p>
+          <p><strong>JavaScript is disabled.</strong> The full searchable gallery requires JS. Below is a static index of selected examples so you can still reach rendered PDFs and their source.</p>
 
           <h3 id="templates-section">Templates</h3>
 
@@ -306,7 +306,6 @@
 
           <h4>Cover Letter</h4>
           <ul>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-modern-professional-v2.pdf">Cover Letter (canonical)</a></li>
             <li><a href="showcase/pdf/templates/coverletter/cover-letter-modern-professional-v2.pdf">Modern Professional letter</a></li>
             <li><a href="showcase/pdf/templates/coverletter/cover-letter-executive-v2.pdf">Executive letter</a></li>
             <li><a href="showcase/pdf/templates/coverletter/cover-letter-monogram-sidebar-v2.pdf">Monogram Sidebar letter</a></li>
@@ -315,9 +314,9 @@
 
           <h4>Invoice / Proposal / Schedule</h4>
           <ul>
-            <li><a href="showcase/pdf/templates/invoice/invoice.pdf">Invoice (canonical)</a></li>
+            <li><a href="showcase/pdf/templates/invoice/invoice-modern-v2.pdf">Modern Invoice</a></li>
             <li><a href="showcase/pdf/templates/invoice/invoice-cinematic.pdf">Cinematic Invoice</a></li>
-            <li><a href="showcase/pdf/templates/proposal/proposal.pdf">Proposal (canonical)</a></li>
+            <li><a href="showcase/pdf/templates/proposal/proposal-modern-v2.pdf">Modern Proposal</a></li>
             <li><a href="showcase/pdf/templates/proposal/project-proposal-cinematic.pdf">Cinematic Project Proposal</a></li>
             <li><a href="showcase/pdf/templates/schedule/weekly-schedule.pdf">Weekly Schedule</a></li>
           </ul>
@@ -332,7 +331,6 @@
             <li><a href="showcase/pdf/features/transforms/transforms.pdf">Transforms</a></li>
             <li><a href="showcase/pdf/features/text/rich-text-showcase.pdf">Rich Text Showcase</a></li>
             <li><a href="showcase/pdf/features/text/section-presets.pdf">Section Presets</a></li>
-            <li><a href="showcase/pdf/features/themes/invoice-custom-theme.pdf">Invoice with Custom Theme</a></li>
             <li><a href="showcase/pdf/features/chrome/pdf-chrome.pdf">PDF Chrome (header/footer)</a></li>
             <li><a href="showcase/pdf/features/barcodes/barcode-showcase.pdf">Barcode Showcase</a></li>
             <li><a href="showcase/pdf/features/streaming/invoice-http-stream.pdf">Invoice over HTTP Stream</a></li>
@@ -394,7 +392,7 @@
     <p>
       <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a> &middot;
       <a href="https://github.com/DemchaAV/GraphCompose/blob/main/CHANGELOG.md">Changelog</a> &middot;
-      <a href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/roadmaps/migration-v1-6-to-v1-7.md">v1.6 &rarr; v1.7 migration</a>
+      <a href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/migration/v2.0.0-modules.md">Migrating to 2.0</a>
     </p>
   </footer>
 

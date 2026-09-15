@@ -3,6 +3,30 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.4.1 — Planned
+
+### Documentation
+
+- **The showcase site's menu and section links reach the gallery, and its pages link
+  only to files the site publishes.** A category section is rendered only while its
+  filter is shown, so after picking *Features* the *Templates* menu link changed the
+  address and moved nothing. A gallery anchor now selects its filter, whether it is
+  followed from the menu, reached with Back or Forward, or opened directly, and the
+  filter pills keep the address in step. The no-JavaScript index linked to three PDFs
+  the site does not publish, and two featured ids named no card, so the featured strip
+  showed six of its eight tiles without a sign. `ShowcaseSiteGuardTest` fails the build
+  on a featured id that is not a card, a card file missing from `showcase/`, a page link
+  to a site file that does not exist, and an anchor or filter pill that names nothing
+  the page shows. The structured data said JVM 21+ where every module targets Java 17,
+  the page counted 16 CV presets where 26 ship, and the template-authoring links
+  pointed at `develop` instead of the released docs on `main`.
+
+- **The gallery shows each document's whole first page.** A card cropped its preview to a
+  248-pixel band, so a page was judged by its header and a wide slide lost its sides.
+  The preview now shrinks into a fixed-height box at its own aspect ratio, featured
+  tiles use the same fit instead of an A4-shaped frame, and the image tags no longer
+  declare an A4 size that was wrong for 26 of the 117 previews.
+
 ## v2.4.0 — 2026-09-14
 
 ### Public API

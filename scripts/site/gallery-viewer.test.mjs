@@ -166,8 +166,8 @@ check("index.html loads the viewer before examples.js and carries its dialog", (
   assert.ok(viewerScript >= 0, "index.html does not load gallery-viewer.js");
   assert.ok(pageScript > viewerScript, "gallery-viewer.js has to load before examples.js");
   assert.match(page, /<dialog[^>]*\bid="gallery-viewer"/);
-  for (const part of ["families", "stage", "image", "notice", "title", "counter", "description",
-    "pdf", "code", "previous", "next"]) {
+  for (const part of ["families", "thumbnails", "stage", "image", "notice", "title", "counter",
+    "description", "pdf", "code", "previous", "next"]) {
     assert.ok(page.includes(`data-viewer="${part}"`), `the dialog has no data-viewer="${part}"`);
   }
 });
@@ -204,6 +204,8 @@ class StubNode {
     this.src = "";
     this.alt = "";
     this.text = "";
+    this.tabIndex = 0;
+    this.scrolledTo = null;
     // Only the ones the viewer measures; a stub never lays anything out.
     this.scrollWidth = 0;
     this.clientWidth = 0;
@@ -240,6 +242,7 @@ class StubNode {
   contains(node) { for (let walk = node; walk; walk = walk.parent) if (walk === this) return true; return false; }
   addEventListener(type, listener) { this.listeners.set(type, (this.listeners.get(type) || []).concat(listener)); }
   focus() { this.doc.activeElement = this; }
+  scrollTo(options) { this.scrolledTo = options; this.scrollLeft = options.left; }
 }
 
 class StubDialog extends StubNode {
@@ -290,10 +293,13 @@ function viewerHarness(catalogueUnderTest = catalogue) {
     pdf: add(dialog, "a", { "data-viewer": "pdf" }),
     code: add(dialog, "a", { "data-viewer": "code" })
   };
+  parts.thumbnails = add(dialog, "nav", { "data-viewer": "thumbnails" });
   parts.image = add(parts.stage, "img", { "data-viewer": "image" });
   parts.notice = add(parts.stage, "div", { "data-viewer": "notice" });
   parts.image.hidden = true;
   parts.notice.hidden = true;
+  // The browser's part: a stage wide enough for the share-of-the-page rule to bite.
+  parts.stage.clientWidth = 800;
 
   const entries = [{ state: null, hash: "#showcase" }];
   let at = 0;
@@ -308,15 +314,58 @@ function viewerHarness(catalogueUnderTest = catalogue) {
     constructor() { this.onload = null; this.onerror = null; this.src = ""; images.push(this); }
   }
 
+  // A clock the test owns: a timer the viewer sets is visible here and runs when the test
+  // says the time has passed, so a window that never closes cannot pass for one that does.
+  const timers = new Map();
+  let nextTimer = 1;
+  const clock = {
+    pending: () => [...timers.values()].map((timer) => timer.after),
+    pass: () => {
+      for (const [id, timer] of [...timers]) {
+        timers.delete(id);
+        timer.run();
+      }
+    }
+  };
+
   // The viewer reads these as globals of the realm the script was loaded in.
-  Object.assign(sandbox, { document: doc, history, location, Image: StubImage });
+  const connection = { saveData: false };
+  const reducedMotion = { matches: false };
+  Object.assign(sandbox, {
+    document: doc, history, location, Image: StubImage,
+    navigator: { connection },
+    matchMedia: () => reducedMotion,
+    innerWidth: 1280,
+    visualViewport: null,
+    setTimeout: (run, after) => { const id = nextTimer++; timers.set(id, { run, after }); return id; },
+    clearTimeout: (id) => { timers.delete(id); }
+  });
   const closed = [];
   const viewer = gallery.createViewer({ dialog, catalogue: catalogueUnderTest, onClose: (report) => closed.push(report) });
   return {
-    doc, dialog, parts, entries, history, location, images, closed, viewer,
+    doc, dialog, parts, entries, history, location, images, closed, viewer, connection, clock, reducedMotion,
+    // What a browser would do once the strip has been laid out: a row wider than the strip.
+    layoutStrip: () => {
+      const buttons = parts.thumbnails.querySelectorAll("[data-viewer-thumb]");
+      buttons.forEach((button, index) => {
+        button.offsetLeft = index * 62;
+        button.offsetWidth = 54;
+      });
+      parts.thumbnails.clientWidth = 150;
+      parts.thumbnails.scrollWidth = buttons.length * 62;
+    },
     click: (node) => dispatch(node, { type: "click" }),
     press: (key, extra = {}) => dispatch(doc.body, { type: "keydown", key, isComposing: false, ...extra }),
-    familyButtons: () => parts.families.querySelectorAll("[data-viewer-family]")
+    pointer: (type, detail) => dispatch(parts.stage, { type, pointerType: "touch", pointerId: 1, ...detail }),
+    swipe: ({ from, to, pointerType = "touch", pointerId = 1 }) => {
+      dispatch(parts.stage, { type: "pointerdown", pointerType, pointerId, clientX: from[0], clientY: from[1] });
+      dispatch(parts.stage, { type: "pointerup", pointerType, pointerId, clientX: to[0], clientY: to[1] });
+    },
+    familyButtons: () => parts.families.querySelectorAll("[data-viewer-family]"),
+    thumbButtons: () => parts.thumbnails.querySelectorAll("[data-viewer-thumb]"),
+    // The image the stage is waiting on, which is the one given a load handler; the
+    // others were made by the preload and nobody is listening to them.
+    pageLoader: () => [...images].reverse().find((image) => typeof image.onload === "function")
   };
 }
 
@@ -358,9 +407,9 @@ check("a preview that arrives late never lands under a newer document", () => {
   const page = viewerHarness();
   const ids = idsOf("templates", "cv");
   page.viewer.open({ category: "templates", group: "cv", id: ids[0] }, { history: "push" });
-  const slow = page.images[page.images.length - 1];
+  const slow = page.pageLoader();
   page.click(page.parts.next);
-  const quick = page.images[page.images.length - 1];
+  const quick = page.pageLoader();
   assert.notEqual(slow, quick, "fixture: each document asks for its own page image");
   quick.onload();
   slow.onload();
@@ -393,6 +442,183 @@ check("a one-document family disables both steps and leaves focus on Close", () 
   assert.equal(page.parts.previous.disabled, true);
   assert.equal(page.parts.next.disabled, true);
   assert.equal(page.doc.activeElement, page.parts.closer);
+});
+
+check("every document of the family gets a thumbnail, and the one shown is marked", () => {
+  const page = viewerHarness();
+  const ids = idsOf("templates", "cv");
+  page.viewer.open({ category: "templates", group: "cv", id: ids[2] }, { history: "push" });
+  const thumbs = page.thumbButtons();
+  assert.deepEqual(thumbs.map((button) => button.dataset.viewerThumb), ids);
+  assert.equal(thumbs[2].getAttribute("aria-current"), "true");
+  assert.equal(thumbs.filter((button) => button.getAttribute("aria-current") === "true").length, 1);
+  assert.equal(thumbs[2].getAttribute("aria-label"), exampleOf(ids[2]).title,
+    "a thumbnail is an image of a page: its name has to be said, not left to a tooltip");
+  page.click(page.familyButtons().find((button) => button.dataset.viewerFamily === "invoice"));
+  assert.deepEqual(page.thumbButtons().map((button) => button.dataset.viewerThumb), idsOf("templates", "invoice"),
+    "the strip belongs to the family shown, so it is rebuilt when the family changes");
+});
+
+check("a thumbnail shows its document without recording a history entry", () => {
+  const page = viewerHarness();
+  const ids = idsOf("templates", "cv");
+  page.viewer.open({ category: "templates", group: "cv", id: ids[0] }, { history: "push" });
+  const entries = page.entries.length;
+  page.click(page.thumbButtons()[4]);
+  assert.equal(page.parts.counter.textContent, "5 / " + ids.length);
+  assert.equal(page.location.hash, "#/templates/cv/" + ids[4]);
+  assert.equal(page.entries.length, entries, "a thumbnail replaces the entry, as Previous and Next do");
+});
+
+check("the strip brings the document shown into view, and stops animating when asked", () => {
+  const page = viewerHarness();
+  const ids = idsOf("templates", "cv");
+  page.viewer.open({ category: "templates", group: "cv", id: ids[0] }, { history: "push" });
+  page.layoutStrip();
+  page.click(page.parts.next);
+  const scrolled = page.parts.thumbnails.scrolledTo;
+  assert.ok(scrolled, "the thumbnail of the document shown was never brought into view");
+  assert.equal(scrolled.left, 14, "centred: 62px along a 150px strip, 54px wide");
+  assert.equal(scrolled.behavior, "smooth");
+  page.reducedMotion.matches = true;
+  page.click(page.parts.next);
+  assert.equal(page.parts.thumbnails.scrolledTo.left, 76);
+  assert.equal(page.parts.thumbnails.scrolledTo.behavior, "auto",
+    "the CSS rule for reduced motion cannot reach a scroll made from a script");
+});
+
+check("a reader saving data gets no strip of page-sized previews", () => {
+  const page = viewerHarness();
+  page.connection.saveData = true;
+  const ids = idsOf("templates", "cv");
+  page.viewer.open({ category: "templates", group: "cv", id: ids[1] }, { history: "push" });
+  assert.equal(page.parts.thumbnails.hidden, true);
+  assert.equal(page.thumbButtons().length, 0, "a thumbnail here is a whole page in a 54px slot");
+  assert.equal(page.images.length, 1, "only the page being read is fetched");
+});
+
+check("the strip is one tab stop, on the document shown", () => {
+  const page = viewerHarness();
+  const ids = idsOf("templates", "cv");
+  page.viewer.open({ category: "templates", group: "cv", id: ids[3] }, { history: "push" });
+  const tabbable = page.thumbButtons().filter((button) => button.tabIndex === 0);
+  assert.equal(tabbable.length, 1, "a reader must not tab through the whole family to reach the links");
+  assert.equal(tabbable[0].dataset.viewerThumb, ids[3]);
+  page.click(page.parts.next);
+  assert.deepEqual(page.thumbButtons().filter((button) => button.tabIndex === 0)
+    .map((button) => button.dataset.viewerThumb), [ids[4]], "the stop follows the document shown");
+});
+
+check("clicking the thumbnail of the document already shown asks for nothing", () => {
+  const page = viewerHarness();
+  const ids = idsOf("templates", "cv");
+  page.viewer.open({ category: "templates", group: "cv", id: ids[2] }, { history: "push" });
+  const fetched = page.images.length;
+  page.click(page.thumbButtons()[2]);
+  assert.equal(page.images.length, fetched, "the page on screen was fetched and decoded a second time");
+  assert.equal(page.parts.counter.textContent, "3 / " + ids.length);
+});
+
+check("the pages either side are fetched ahead, and none of them in data-saver mode", () => {
+  const ids = idsOf("templates", "cv");
+  for (const id of [ids[0], ids[1], ids[2], ids[3]]) {
+    assert.ok(exampleOf(id).screenshot, "fixture: every CV in this check needs a page image");
+  }
+  const page = viewerHarness();
+  page.viewer.open({ category: "templates", group: "cv", id: ids[1] }, { history: "push" });
+  const asked = page.images.map((image) => image.src);
+  assert.ok(asked.includes(exampleOf(ids[0]).screenshot), "the page before is not fetched ahead");
+  assert.ok(asked.includes(exampleOf(ids[2]).screenshot), "the page after is not fetched ahead");
+  assert.ok(!asked.includes(exampleOf(ids[3]).screenshot), "only the neighbours are fetched ahead");
+
+  const saving = viewerHarness();
+  saving.connection.saveData = true;
+  saving.viewer.open({ category: "templates", group: "cv", id: ids[1] }, { history: "push" });
+  const askedWhileSaving = saving.images.map((image) => image.src);
+  assert.ok(!askedWhileSaving.includes(exampleOf(ids[0]).screenshot));
+  assert.ok(!askedWhileSaving.includes(exampleOf(ids[2]).screenshot));
+  assert.ok(askedWhileSaving.includes(exampleOf(ids[1]).screenshot), "the page shown is still loaded");
+});
+
+check("a drag across the page moves a document; a short, vertical or edge drag does not", () => {
+  const page = viewerHarness();
+  const ids = idsOf("templates", "cv");
+  const at = () => page.parts.counter.textContent;
+  page.viewer.open({ category: "templates", group: "cv", id: ids[1] }, { history: "push" });
+  assert.equal(at(), "2 / " + ids.length);
+  page.swipe({ from: [600, 300], to: [440, 320] });
+  assert.equal(at(), "3 / " + ids.length, "a drag to the left moves forward");
+  page.swipe({ from: [440, 300], to: [600, 320] });
+  assert.equal(at(), "2 / " + ids.length, "a drag to the right moves back");
+  page.swipe({ from: [600, 300], to: [570, 300] });
+  assert.equal(at(), "2 / " + ids.length, "a 30px drag is not a swipe");
+  page.swipe({ from: [600, 300], to: [440, 480] });
+  assert.equal(at(), "2 / " + ids.length, "a drag more vertical than horizontal is a scroll");
+  page.swipe({ from: [10, 300], to: [200, 300] });
+  assert.equal(at(), "2 / " + ids.length, "a drag from the screen edge belongs to the browser");
+});
+
+check("a drag has to cross a share of the page, not only clear the 48px floor", () => {
+  const page = viewerHarness();
+  const ids = idsOf("templates", "cv");
+  const at = () => page.parts.counter.textContent;
+  page.viewer.open({ category: "templates", group: "cv", id: ids[1] }, { history: "push" });
+  page.swipe({ from: [600, 300], to: [500, 300] });
+  assert.equal(at(), "2 / " + ids.length, "100px is over the floor but under a 15% share of an 800px page");
+  page.swipe({ from: [600, 300], to: [470, 300] });
+  assert.equal(at(), "3 / " + ids.length, "130px clears the share");
+});
+
+check("a second finger, a pinch, a cancel or a mouse is never a swipe", () => {
+  const page = viewerHarness();
+  const ids = idsOf("templates", "cv");
+  const at = () => page.parts.counter.textContent;
+  page.viewer.open({ category: "templates", group: "cv", id: ids[1] }, { history: "push" });
+
+  page.pointer("pointerdown", { pointerId: 1, clientX: 600, clientY: 300 });
+  page.pointer("pointerdown", { pointerId: 2, clientX: 620, clientY: 300 });
+  page.pointer("pointerup", { pointerId: 1, clientX: 440, clientY: 300 });
+  assert.equal(at(), "2 / " + ids.length, "a second finger is a pinch, not a swipe");
+
+  page.pointer("pointerdown", { pointerId: 1, clientX: 600, clientY: 300 });
+  page.pointer("pointercancel", { pointerId: 1 });
+  page.pointer("pointerup", { pointerId: 1, clientX: 440, clientY: 300 });
+  assert.equal(at(), "2 / " + ids.length, "a cancelled pointer leaves no gesture behind");
+
+  sandbox.visualViewport = { scale: 2 };
+  page.swipe({ from: [600, 300], to: [440, 300] });
+  sandbox.visualViewport = null;
+  assert.equal(at(), "2 / " + ids.length, "a reader who has zoomed in is panning the page");
+
+  page.pointer("pointerdown", { pointerId: 1, clientX: 600, clientY: 300 });
+  dispatch(page.parts.next, { type: "pointerdown", pointerType: "touch", pointerId: 2, clientX: 700, clientY: 300 });
+  page.pointer("pointerup", { pointerId: 1, clientX: 440, clientY: 300 });
+  assert.equal(at(), "2 / " + ids.length, "a second finger on an arrow laid over the page ends it too");
+
+  page.swipe({ from: [600, 300], to: [440, 300], pointerType: "mouse" });
+  assert.equal(at(), "2 / " + ids.length, "a mouse drag is not a swipe");
+});
+
+check("the click the browser sends after a swipe presses nothing, and the window shuts itself", () => {
+  const page = viewerHarness();
+  const ids = idsOf("templates", "cv");
+  const at = () => page.parts.counter.textContent;
+  page.viewer.open({ category: "templates", group: "cv", id: ids[1] }, { history: "push" });
+  page.swipe({ from: [600, 300], to: [440, 300] });
+  assert.equal(at(), "3 / " + ids.length);
+  assert.deepEqual(page.clock.pending(), [350],
+    "the window has to shut on a timer: on some engines the click never comes to close it");
+  page.click(page.parts.next);
+  assert.equal(at(), "3 / " + ids.length, "the click the drag leaves behind is swallowed");
+  page.click(page.parts.next);
+  assert.equal(at(), "4 / " + ids.length, "the next real press still works");
+
+  // A drag whose click never arrives must not leave the window open over the next tap.
+  page.swipe({ from: [600, 300], to: [440, 300] });
+  assert.equal(at(), "5 / " + ids.length);
+  page.clock.pass();
+  page.click(page.parts.next);
+  assert.equal(at(), "6 / " + ids.length, "a tap after the window is the reader's, not the drag's");
 });
 
 if (failures > 0) {

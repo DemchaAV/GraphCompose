@@ -34,10 +34,14 @@ follow semantic versioning; release dates are ISO 8601.
   shown. A switch moves to the other families of the category, and each reopens on the
   document it was left on. The address `#/<category>/<family>/<id>` reopens the same
   document on a reload or from a shared link and follows Back and Forward. The viewer
-  replaces the zoom lightbox. `ShowcaseSiteGuardTest` now also requires unique,
-  address-safe card and family ids, and holds any viewer address written into a page to a
-  family and document that exist; `scripts/site/gallery-viewer.test.mjs` tests the
-  addresses, the navigation and the dialog in CI.
+  replaces the zoom lightbox. A drag across the page moves between documents on a touch
+  screen, a strip under the page holds every document of the family and marks the one on
+  screen, and the pages either side are fetched before they are asked for. A reader who
+  has asked to save data gets neither: no strip of page-sized previews, and nothing fetched
+  ahead. `ShowcaseSiteGuardTest` now also requires unique, address-safe card and family ids,
+  and holds any viewer address written into a page to a family and document that exist;
+  `scripts/site/gallery-viewer.test.mjs` tests the addresses, the navigation and the dialog
+  in CI.
 
 ## v2.4.0 — 2026-09-14
 

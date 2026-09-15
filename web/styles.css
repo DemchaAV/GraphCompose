@@ -1599,6 +1599,8 @@ body.viewer-open {
   min-height: 0;
   margin: 0;
   padding: 20px 0;
+  /* A horizontal drag is the viewer's; the page keeps vertical scroll and pinch. */
+  touch-action: pan-y pinch-zoom;
 }
 
 .gallery-viewer-image {
@@ -1686,6 +1688,53 @@ body.viewer-open {
   font-size: 0.8rem;
 }
 
+/* The documents of the family shown, as a strip under the page. */
+.gallery-viewer-thumbs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  padding: 10px 14px;
+  overflow-x: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.7);
+  scrollbar-width: thin;
+}
+
+.gallery-viewer-thumb {
+  display: block;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 72px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 4px;
+  background: #0b1524;
+  opacity: 0.65;
+  cursor: pointer;
+  transition: border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.gallery-viewer-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.gallery-viewer-thumb:hover,
+.gallery-viewer-thumb:focus-visible {
+  border-color: rgba(var(--accent-rgb), 0.6);
+  opacity: 1;
+}
+
+.gallery-viewer-thumb[aria-current="true"] {
+  border-color: rgba(var(--accent-rgb), 0.9);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.35);
+  opacity: 1;
+}
+
 /* Heavier section labels + headings for visual hierarchy */
 .section-label {
   font-weight: 760;
@@ -1742,6 +1791,13 @@ body.viewer-open {
   }
   .gallery-viewer-footer {
     padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .gallery-viewer-thumbs {
+    padding: 8px 10px;
+  }
+  .gallery-viewer-thumb {
+    width: 46px;
+    height: 62px;
   }
   .gallery-viewer-description,
   .gallery-viewer-note {

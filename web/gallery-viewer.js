@@ -112,7 +112,7 @@
   function createViewer(options) {
     const dialog = options.dialog;
     const catalogue = options.catalogue;
-    const navigator = createNavigator(catalogue);
+    const routes = createNavigator(catalogue);
     const part = name => dialog.querySelector('[data-viewer="' + name + '"]');
     const families = part('families');
     const stage = part('stage');
@@ -126,18 +126,21 @@
     const previous = part('previous');
     const next = part('next');
     const closer = dialog.querySelector('[data-viewer-close]');
+    const thumbs = part('thumbnails');
 
     let view = null;
     let opener = null;
     let familiesOf = null;
+    let thumbsOf = null;
     let ticket = 0;
     let closingByHistory = false;
+    const preloaded = new Set();
 
     // Shows a route. history 'push' records a new entry, as when a reader opens the
     // viewer; 'none' is for an address that already names the route (a page load,
     // Back, Forward) and only corrects it to the canonical form.
     function open(route, settings) {
-      const target = navigator.resolve(route);
+      const target = routes.resolve(route);
       if (target.status === 'unknown-group') return false;
       const wasOpen = dialog.open;
       if (!wasOpen) opener = (settings && settings.opener) || null;
@@ -169,12 +172,13 @@
     }
 
     function move(delta) {
-      const target = navigator.step(view, delta);
+      const target = routes.step(view, delta);
       if (target) show(target, 'replace');
     }
 
     function render() {
       renderFamilies();
+      renderThumbnails();
       const shown = view.status === 'ok' ? catalogue.get(view.id).example : null;
       const total = view.group.ids.length;
       title.textContent = shown ? (shown.title || shown.id) : 'Not in this catalogue';
@@ -197,6 +201,7 @@
       } else {
         showMissing();
       }
+      preloadNeighbours();
     }
 
     function setLink(link, href) {
@@ -231,9 +236,86 @@
       for (const button of families.querySelectorAll('[data-viewer-family]')) {
         const current = button.dataset.viewerFamily === view.group.id;
         button.setAttribute('aria-pressed', String(current));
-        if (current && families.scrollWidth > families.clientWidth) {
-          families.scrollLeft = Math.max(0, button.offsetLeft - (families.clientWidth - button.offsetWidth) / 2);
+        if (current) keepInView(families, button);
+      }
+    }
+
+    // One thumbnail per document of the family shown, each the document's card preview.
+    // Those files are whole pages — only the catalogue can make smaller ones — so a reader
+    // who asked to save data gets no strip at all, rather than a row of page-sized images.
+    function renderThumbnails() {
+      thumbs.hidden = savingData();
+      if (thumbs.hidden) return;
+      if (thumbsOf !== view.group) {
+        thumbsOf = view.group;
+        thumbs.textContent = '';
+        for (const id of view.group.ids) {
+          const example = catalogue.get(id).example;
+          const name = example.title || id;
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'gallery-viewer-thumb';
+          button.dataset.viewerThumb = id;
+          button.setAttribute('aria-label', name);
+          button.title = name;
+          const preview = document.createElement('img');
+          preview.loading = 'lazy';
+          preview.decoding = 'async';
+          preview.fetchPriority = 'low';
+          preview.alt = '';
+          if (example.screenshot) preview.src = example.screenshot;
+          button.append(preview);
+          thumbs.append(button);
         }
+      }
+      // The strip is one tab stop: Tab reaches the document shown and the arrow keys and the
+      // pointer reach the rest, rather than 27 stops between the page and its own links.
+      let tabbable = null;
+      for (const button of thumbs.querySelectorAll('[data-viewer-thumb]')) {
+        const current = button.dataset.viewerThumb === view.id;
+        button.setAttribute('aria-current', String(current));
+        button.tabIndex = current ? 0 : -1;
+        if (current) {
+          tabbable = button;
+          keepInView(thumbs, button);
+        }
+      }
+      // A view showing no document of the family (an unknown id) would leave the strip with
+      // no tab stop at all, so the first thumbnail takes it.
+      if (!tabbable) {
+        const first = thumbs.querySelector('[data-viewer-thumb]');
+        if (first) first.tabIndex = 0;
+      }
+    }
+
+    function savingData() {
+      return !!(navigator.connection && navigator.connection.saveData);
+    }
+
+    // Brings the current item of a strip into view, without animating it for a reader who
+    // asked for less motion — the CSS rule for that cannot reach a scroll made from here.
+    function keepInView(strip, item) {
+      if (strip.scrollWidth <= strip.clientWidth) return;
+      const left = Math.max(0, item.offsetLeft - (strip.clientWidth - item.offsetWidth) / 2);
+      if (typeof strip.scrollTo === 'function') {
+        strip.scrollTo({ left, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      } else {
+        strip.scrollLeft = left;
+      }
+    }
+
+    // The pages either side of the one shown, so Previous and Next land on an image the
+    // browser already has. A reader saving data gets none of it.
+    function preloadNeighbours() {
+      if (savingData()) return;
+      for (const delta of [1, -1]) {
+        const neighbour = routes.step(view, delta);
+        const page = neighbour && catalogue.get(neighbour.id).example.screenshot;
+        if (!page || preloaded.has(page)) continue;
+        preloaded.add(page);
+        const loader = new Image();
+        loader.fetchPriority = 'low';
+        loader.src = page;
       }
     }
 
@@ -290,8 +372,59 @@
       notice.hidden = false;
     }
 
+    // A drag across the page moves to the next document. Touch and pen only — a mouse has
+    // the buttons and the keys — one pointer at a time, and never from the very edge of the
+    // screen, where the drag belongs to the browser's own back gesture.
+    const SWIPE_MIN = 48;
+    const SCREEN_EDGE = 24;
+    // Long enough for the click a browser sends after a drag, short enough not to reach the
+    // reader's next deliberate tap.
+    const CLICK_AFTER_SWIPE = 350;
+    let gesture = null;
+    let swipedClick = false;
+    let swipedClickTimer = 0;
+
+    stage.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'mouse' || !dialog.open) return;
+      if (gesture) {
+        gesture = null;
+        return;
+      }
+      if (event.clientX <= SCREEN_EDGE || event.clientX >= innerWidth - SCREEN_EDGE) return;
+      gesture = { pointer: event.pointerId, x: event.clientX, y: event.clientY };
+    });
+
+    stage.addEventListener('pointerup', event => {
+      const swipe = gesture;
+      gesture = null;
+      if (!swipe || !dialog.open || event.pointerId !== swipe.pointer) return;
+      if (visualViewport && visualViewport.scale > 1) return;
+      const dx = event.clientX - swipe.x;
+      const dy = event.clientY - swipe.y;
+      if (Math.abs(dx) < Math.max(SWIPE_MIN, stage.clientWidth * 0.15)) return;
+      if (Math.abs(dx) <= Math.abs(dy) * 1.5) return;
+      // The browser follows the drag with a click; it must not also press what is under it.
+      swipedClick = true;
+      clearTimeout(swipedClickTimer);
+      swipedClickTimer = setTimeout(() => { swipedClick = false; }, CLICK_AFTER_SWIPE);
+      move(dx < 0 ? 1 : -1);
+    });
+
+    stage.addEventListener('pointercancel', () => { gesture = null; });
+
+    // A second finger landing anywhere else over the dialog ends the gesture too. On a narrow
+    // screen the arrows sit over the page, so that finger never reaches the stage's own
+    // handler — and two fingers are a pinch or a two-handed press, not a swipe.
+    dialog.addEventListener('pointerdown', event => {
+      if (gesture && event.pointerId !== gesture.pointer && !stage.contains(event.target)) {
+        gesture = null;
+      }
+    }, true);
+
     dialog.addEventListener('close', () => {
       ticket++;
+      gesture = null;
+      swipedClick = false;
       document.body.classList.remove('viewer-open');
       const closed = { view, opener, byHistory: closingByHistory };
       closingByHistory = false;
@@ -300,6 +433,13 @@
     });
 
     dialog.addEventListener('click', event => {
+      if (swipedClick) {
+        swipedClick = false;
+        // The drag has already moved the document; whatever the finger came to rest on —
+        // a button, or a link that would open a tab — must not also fire.
+        event.preventDefault();
+        return;
+      }
       if (event.target === dialog) {
         close();
         return;
@@ -311,8 +451,18 @@
       }
       const familyButton = event.target.closest('[data-viewer-family]');
       if (familyButton) {
-        const target = navigator.switchFamily(view, familyButton.dataset.viewerFamily);
+        const target = routes.switchFamily(view, familyButton.dataset.viewerFamily);
         if (target) show(target, 'replace');
+        return;
+      }
+      const thumb = event.target.closest('[data-viewer-thumb]');
+      if (thumb) {
+        const id = thumb.dataset.viewerThumb;
+        // The document already on screen: re-showing it would fetch and decode its page again.
+        if (id !== view.id) {
+          const target = routes.resolve({ category: view.category.id, group: view.group.id, id });
+          if (target.status === 'ok') show(target, 'replace');
+        }
         return;
       }
       if (event.target.closest('[data-viewer-close]')) {
@@ -320,7 +470,7 @@
         return;
       }
       if (event.target.closest('[data-viewer-show-family]') && view) {
-        show(navigator.resolve({ category: view.category.id, group: view.group.id, id: null }), 'replace');
+        show(routes.resolve({ category: view.category.id, group: view.group.id, id: null }), 'replace');
       }
     });
 

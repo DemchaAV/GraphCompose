@@ -110,6 +110,20 @@ follow semantic versioning; release dates are ISO 8601.
   a CV from the published aggregate with nothing else installed, which is how the first of
   these defects surfaced.
 
+- **The showcase site's pages are generated from its catalogue.** `web/index.html` and
+  `web/sitemap.xml` are rendered from `web-src/` by `scripts/site/build.mjs` and committed;
+  GitHub Pages still serves `web/` exactly as committed and runs no build of its own. The index
+  a visitor without JavaScript gets named 38 of the 117 documents the site publishes, and the
+  preset counts and structured data were hand-copied beside a catalogue that already knew them.
+  That index now names every document, under its category and group, and the counts are computed
+  from the catalogue by the same rule the guard checks them against. The release the pages
+  advertise is written down once, in `web-src/data/release.json`, and the build injects it into
+  the seven spots that inherit from no pom; the release cut moves those two values and rebuilds
+  the pages after the catalogue sync instead of editing them, so a later build cannot undo the
+  release's own version. `scripts/site/build.test.mjs` fails when what is committed under `web/`
+  is not what `web-src/` builds, and the build refuses rather than publishes when a template
+  token, a featured id or a card's title has gone.
+
 ## v2.4.0 — 2026-09-14
 
 ### Public API

@@ -1,12 +1,26 @@
 # GraphCompose showcase site (`web/`)
 
 The static GitHub Pages site for GraphCompose — plain HTML, CSS, JavaScript,
-and a generated JSON manifest, served directly with **no build step**. It lives
+and a generated JSON manifest. GitHub Pages serves this folder **exactly as
+committed** and runs nothing, so what is here is what ships. It lives
 **outside `docs/`** (which is documentation only) so the two never tangle.
 
+Two of the files are **generated**: `index.html` and `sitemap.xml` are rendered
+from `web-src/` by `node scripts/site/build.mjs`. Everything else — the
+stylesheet, the scripts, the assets and the whole `showcase/` tree — is static
+and the build never reads or writes it. Do not hand-edit the two generated
+pages: `scripts/site/build.test.mjs` fails when what is committed here is not
+what `web-src/` builds, and CI's guard job runs it.
+
 ## Files
-- `index.html` — single-page showcase: hero, install snippets, feature /
-  architecture sections, and the searchable gallery shell.
+- `index.html` — **generated** from `web-src/pages/index.html`. Single-page
+  showcase: hero, install snippets, feature / architecture sections, and the
+  searchable gallery shell. What comes from data rather than from the template:
+  the release the page advertises (seven spots, from `web-src/data/release.json`),
+  the JSON-LD item list and the sitemap's documents (names are editorial, in
+  `web-src/data/featured.json`; the URLs are resolved from the manifest so a
+  renamed PDF cannot leave a crawler pointed at nothing), the preset counts, and
+  the no-JavaScript index of every document in the catalogue.
 - `styles.css` — visual system and responsive layout.
 - `examples.js` — client script that fetches the manifest and renders the gallery.
   It also resolves the anchors the menu and the sitemap link to (`#showcase`,
@@ -23,7 +37,7 @@ and a generated JSON manifest, served directly with **no build step**. It lives
   the paging and that panel in CI's guard job.
 - `examples.json` — **generated** gallery manifest. Do **not** hand-edit it; it is
   rewritten by `ShowcaseSync` (see below).
-- `robots.txt`, `sitemap.xml` — SEO.
+- `sitemap.xml` — **generated** from `web-src/pages/sitemap.xml`; `robots.txt` — SEO, static.
 - `assets/logo/` — site logo. (`assets/pdf` + `assets/screenshots` are legacy
   landing previews, superseded by `showcase/`; safe to prune.)
 - `showcase/pdf/<category>/<group>/…` — generated example PDFs.
@@ -97,23 +111,29 @@ Driven by code, not hand-edited JSON. Source of truth:
    `ShowcasePresetRegistrationTest`, and each card's font claim to its own document by
    `ShowcaseBundledFontClaimTest` — both in the examples module, which is where PDFBox and a
    JSON reader are both on the test classpath.
-5. Commit the regenerated `web/showcase/**` + `web/examples.json`.
+5. Rebuild the site — `node scripts/site/build.mjs` — and commit the regenerated
+   `web/showcase/**`, `web/examples.json` **and** the rebuilt `web/index.html` +
+   `web/sitemap.xml`. The page's
+   no-JavaScript index and its preset counts are rendered from the manifest, so a
+   new card changes the page too; skipping the rebuild leaves the committed page
+   disagreeing with `web-src/`, which `scripts/site/build.test.mjs` fails on.
 
 ## What a release changes here
 `scripts/cut-release.ps1` is what edits this folder at a release; no CI workflow
 writes to it.
 
-- **Version.** The displayed version lives only in `index.html`. The
-  `<script type="application/json" id="release-context">` block at the top of the page is
-  where it is written down — `stableVersion`, `releaseTag`, `javaMinimum` — and the JSON-LD
-  `softwareVersion`, the Maven Central `downloadUrl`, the hero badge
-  (`Java &middot; v… &middot; MIT`) and the Maven and Gradle snippets for `graph-compose`
-  repeat it, because a crawler and a reader with no JavaScript both have to see the right
-  release. On a final release `cut-release.ps1` rewrites **every occurrence** of all seven,
-  and a pattern that matches nothing stops the cut rather than leaving that spot behind.
-  `VersionConsistencyGuardTest` holds every occurrence of every one of them to the release,
-  so a stale copy fails the cut's verify gate. A pre-release cut leaves them all on the last
-  published version, and so does the post-release bump.
+- **Version.** The displayed version is written down once, in
+  `web-src/data/release.json` (`stableVersion`, `releaseTag`, `javaMinimum`), and the build
+  injects it into the seven spots on the page that inherit from no pom: the
+  `<script type="application/json" id="release-context">` block the page itself reads, the
+  JSON-LD `softwareVersion` and Maven Central `downloadUrl` a crawler reads, and the hero
+  badge (`Java &middot; v… &middot; MIT`) and the Maven and Gradle snippets a visitor reads.
+  On a final release `cut-release.ps1` moves those two values and then runs the build; a
+  pattern that matches nothing stops the cut rather than leaving that spot behind. Rewriting
+  the page directly is what the generated site rules out — the next build would undo it.
+  `VersionConsistencyGuardTest` holds every occurrence of all seven **in the built page**, so
+  a page that was not rebuilt fails the cut's verify gate. A pre-release cut leaves them all
+  on the last published version, and so does the post-release bump.
 - **Catalogue.** Unless run with `-SkipShowcase`, the cut sets
   `ShowcaseMetadata.GH_BASE` to `/blob/v<version>` and runs `ShowcaseSync`, so the
   release commit carries a regenerated `examples.json` and `showcase/` whose source

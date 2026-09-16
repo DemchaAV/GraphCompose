@@ -19,6 +19,10 @@ on:
       - '.github/workflows/release-script-check.yml'
       # Carries the japicmp previous-release pin the script moves.
       - 'templates/pom.xml'
+      # The published page is generated, so the cut bumps web-src/data/release.json and runs
+      # the site build. A change to either is a change to the release path.
+      - 'scripts/site/**'
+      - 'web-src/**'
   pull_request:
     paths:
       - 'scripts/cut-release.ps1'
@@ -27,6 +31,8 @@ on:
       - '.github/workflows/release.yml'
       - '.github/workflows/release-script-check.yml'
       - 'templates/pom.xml'
+      - 'scripts/site/**'
+      - 'web-src/**'
 
 permissions:
   contents: read
@@ -363,77 +369,106 @@ jobs:
 
           Write-Host "README install snippets: every train coordinate moves, companions stay, idempotent; real README $checked coordinates checked."
 
-      - name: Unit-check the showcase version bump
+      - name: Unit-check the site release-data bump
         shell: pwsh
         run: |
-          # The published site states the version in seven places that do not inherit from the
-          # pom, and the cut is the only thing that moves them. Two failures this covers: a
-          # first-match rewrite leaving a second snippet a release behind, and a spot that
-          # quietly stops matching — renamed or reformatted — after which the function used to
-          # report success while publishing the previous version. Lifted by AST like the checks
-          # around it, so the code under test is the code that ships.
+          # web/index.html is generated from web-src/, so the cut no longer rewrites the page —
+          # it moves the two values the build injects into the seven version spots, and the
+          # site is rebuilt from them. Three failures this covers: a value left behind, a
+          # non-version field dragged along by a sloppy pattern, and a spot that quietly stops
+          # matching — renamed or reformatted — after which the function used to report success
+          # while publishing the previous version. Lifted by AST like the checks around it, so
+          # the code under test is the code that ships.
           $path = (Resolve-Path scripts/cut-release.ps1).Path
           $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
           $fn = $ast.FindAll({
               param($n)
-              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Update-IndexHtmlVersion'
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Update-SiteReleaseData'
             }, $true) | Select-Object -First 1
-          if (-not $fn) { throw 'cut-release.ps1 no longer defines Update-IndexHtmlVersion' }
+          if (-not $fn) { throw 'cut-release.ps1 no longer defines Update-SiteReleaseData' }
           $calls = $ast.FindAll({
               param($n)
-              $n -is [System.Management.Automation.Language.CommandAst] -and $n.GetCommandName() -eq 'Update-IndexHtmlVersion'
+              $n -is [System.Management.Automation.Language.CommandAst] -and $n.GetCommandName() -eq 'Update-SiteReleaseData'
             }, $true)
-          if ($calls.Count -eq 0) { throw 'nothing in cut-release.ps1 calls Update-IndexHtmlVersion' }
+          if ($calls.Count -eq 0) { throw 'nothing in cut-release.ps1 calls Update-SiteReleaseData' }
           Invoke-Expression $fn.Extent.Text
           function Note($m) { Write-Host "    $m" }
           $DryRun = $false
 
-          function New-Page([string] $version, [string] $second) {
-            $file = Join-Path ([IO.Path]::GetTempPath()) ("index-" + [guid]::NewGuid().ToString() + ".html")
-            Set-Content -Path $file -NoNewline -Value (@(
-              '    { "stableVersion": "' + $version + '", "releaseTag": "v' + $version + '", "javaMinimum": "17" }',
-              '        "softwareVersion": "' + $version + '",',
-              '        "downloadUrl": "https://central.sonatype.com/artifact/io.github.demchaav/graph-compose/' + $version + '",',
-              '        <p class="eyebrow">Java &middot; v' + $version + ' &middot; MIT</p>',
-              '  &lt;artifactId&gt;graph-compose&lt;/artifactId&gt;',
-              '  &lt;version&gt;' + $version + '&lt;/version&gt;',
-              "    'io.github.demchaav:graph-compose:" + $version + "'",
-              "    'io.github.demchaav:graph-compose:" + $second + "'"
-            ) -join "`n")
+          # One literal with placeholders, not a multi-line array of concatenations. The version
+          # has to land *inside* the JSON string, and a builder whose pieces can come apart
+          # writes "stableVersion": "<newline>1.2.3<newline>" — on which the pattern correctly
+          # finds nothing and this step fails for its own fixture instead of for the code.
+          function New-ReleaseData([string] $version) {
+            $file = Join-Path ([IO.Path]::GetTempPath()) ("release-" + [guid]::NewGuid().ToString() + ".json")
+            $json = '{~  "stableVersion": "VER",~  "releaseTag": "vVER",~  "javaMinimum": "17"~}'
+            Set-Content -Path $file -NoNewline -Value ($json.Replace('VER', $version).Replace('~', [string][char]10))
             return $file
           }
 
-          # 1. Every occurrence moves, including a second snippet that starts a release behind.
-          $page = New-Page '1.2.3' '1.2.2'
-          Update-IndexHtmlVersion $page '9.9.9'
-          $after = Get-Content $page -Raw
-          foreach ($stale in @('1.2.3', '1.2.2')) {
-            if ($after -match [regex]::Escape($stale)) { throw "a $stale version survived the bump:`n$after" }
-          }
-          # Eight tokens, not seven: the Gradle pattern matches both snippets, which is the
-          # every-occurrence behaviour this step exists to hold.
-          if (([regex]::Matches($after, '9\.9\.9')).Count -ne 8) {
-            throw "expected all eight version tokens on 9.9.9:`n$after"
-          }
+          # 1. Both values move, and the bare/prefixed split is kept: the Maven Central
+          #    coordinates the build writes take the bare semver, the badge and tag the v-form.
+          $data = New-ReleaseData '1.2.3'
+          Update-SiteReleaseData $data '9.9.9'
+          $after = Get-Content $data -Raw
+          if ($after -match '1\.2\.3') { throw "a 1.2.3 version survived the bump:`n$after" }
+          if ($after -notmatch '"stableVersion": "9\.9\.9"') { throw "stableVersion did not move:`n$after" }
           if ($after -notmatch '"releaseTag": "v9\.9\.9"') { throw "the release tag kept no v-prefix:`n$after" }
-          if ($after -notmatch 'Java &middot; v9\.9\.9 &middot; MIT') { throw "the hero badge kept no v-prefix:`n$after" }
+          # javaMinimum is not a release version and must not be dragged along — the failure a
+          # pattern loose enough to match any quoted value would produce.
+          if ($after -notmatch '"javaMinimum": "17"') { throw "the bump moved a field that is not the version:`n$after" }
 
           # 2. Idempotent: a second bump is a no-op, not a throw.
-          Update-IndexHtmlVersion $page '9.9.9'
-          if ((Get-Content $page -Raw) -ne $after) { throw 'a second bump changed the page' }
+          Update-SiteReleaseData $data '9.9.9'
+          if ((Get-Content $data -Raw) -ne $after) { throw 'a second bump changed the file' }
 
           # 3. A spot that no longer matches stops the cut, and names itself.
-          $moved = Get-Content $page -Raw
-          $moved = $moved -replace '"stableVersion"', '"stable_version"'
-          $broken = Join-Path ([IO.Path]::GetTempPath()) ("index-broken-" + [guid]::NewGuid().ToString() + ".html")
+          $moved = (Get-Content $data -Raw) -replace '"stableVersion"', '"stable_version"'
+          $broken = Join-Path ([IO.Path]::GetTempPath()) ("release-broken-" + [guid]::NewGuid().ToString() + ".json")
           Set-Content -Path $broken -NoNewline -Value $moved
-          $refusal = try { Update-IndexHtmlVersion $broken '8.8.8'; '' } catch { "$_" }
+          $refusal = try { Update-SiteReleaseData $broken '8.8.8'; '' } catch { "$_" }
           if ($refusal -notmatch 'stableVersion') {
             throw "a vanished spot did not stop the cut by name, got: '$refusal'"
           }
-          if ((Get-Content $broken -Raw) -match '8\.8\.8') { throw 'the refusal still rewrote the page' }
+          if ((Get-Content $broken -Raw) -match '8\.8\.8') { throw 'the refusal still rewrote the file' }
 
-          Write-Host 'showcase version bump: every occurrence moves, idempotent, and a vanished spot refuses.'
+          Write-Host 'site release data: both values move, non-version fields stay, idempotent, and a vanished spot refuses.'
+
+      - name: The published page is rebuilt from the bumped data, not edited
+        shell: pwsh
+        run: |
+          # The half the unit check above cannot see: moving the data is only half a release,
+          # because what a visitor and a crawler read is the generated page. Run the real build
+          # against a bumped copy of the release data and assert the version reaches every spot
+          # VersionConsistencyGuardTest holds — then restore, so the job leaves no diff.
+          $data = 'web-src/data/release.json'
+          $backup = Get-Content $data -Raw
+          try {
+            Set-Content -Path $data -NoNewline -Value ($backup -replace '"stableVersion": "[^"]+"', '"stableVersion": "9.9.9"' -replace '"releaseTag": "[^"]+"', '"releaseTag": "v9.9.9"')
+            node scripts/site/build.mjs
+            if ($LASTEXITCODE -ne 0) { throw 'the site build failed on bumped release data' }
+            $page = Get-Content web/index.html -Raw
+            foreach ($shape in @(
+                '"stableVersion": "9\.9\.9"',
+                '"releaseTag": "v9\.9\.9"',
+                '"softwareVersion": "9\.9\.9"',
+                'graph-compose/9\.9\.9',
+                'Java &middot; v9\.9\.9 &middot; MIT',
+                '&lt;version&gt;9\.9\.9&lt;/version&gt;',
+                "io\.github\.demchaav:graph-compose:9\.9\.9")) {
+              if ($page -notmatch $shape) { throw "the rebuilt page does not carry /$shape/" }
+            }
+            Write-Host 'the bumped data reaches all seven version spots of the generated page.'
+          } finally {
+            # Restore the input AND rebuild from it. The try block wrote a 9.9.9 page, so checking
+            # here without rebuilding compares that page against a 2.4.0 build and fails every
+            # run — for this step's own fixture rather than for the code under test.
+            Set-Content -Path $data -NoNewline -Value $backup
+            node scripts/site/build.mjs
+            if ($LASTEXITCODE -ne 0) { throw 'the site build failed while restoring the tree' }
+            node scripts/site/build.mjs --check
+            if ($LASTEXITCODE -ne 0) { throw 'the tree was not restored after the rebuild check' }
+          }
 
       - name: Unit-check the roadmap promotion (refusals and the real rewrite)
         shell: pwsh

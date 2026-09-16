@@ -50,9 +50,9 @@
        equal to this one, and the release cut rewrites all of them together. -->
   <script type="application/json" id="release-context">
     {
-      "stableVersion": "2.4.0",
-      "releaseTag": "v2.4.0",
-      "javaMinimum": "17"
+      "stableVersion": "{{stableVersion}}",
+      "releaseTag": "{{releaseTag}}",
+      "javaMinimum": "{{javaMinimum}}"
     }
   </script>
 
@@ -67,11 +67,11 @@
         "description": "Declarative Java PDF layout engine for structured business documents — CVs, invoices, proposals, reports. Compose ParagraphNode, TableNode, SectionNode, LayerStackNode; the engine handles measurement, pagination, fonts, and PDFBox rendering.",
         "applicationCategory": "DeveloperApplication",
         "applicationSubCategory": "Library",
-        "operatingSystem": "Cross-platform (JVM 17+)",
+        "operatingSystem": "Cross-platform (JVM {{javaMinimum}}+)",
         "programmingLanguage": "Java",
-        "softwareVersion": "2.4.0",
+        "softwareVersion": "{{stableVersion}}",
         "url": "https://demchaav.github.io/GraphCompose/",
-        "downloadUrl": "https://central.sonatype.com/artifact/io.github.demchaav/graph-compose/2.4.0",
+        "downloadUrl": "https://central.sonatype.com/artifact/io.github.demchaav/graph-compose/{{stableVersion}}",
         "image": "https://demchaav.github.io/GraphCompose/assets/logo/graphcompose-logo.png",
         "license": "https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE",
         "author": {
@@ -88,7 +88,7 @@
         "featureList": [
           "Semantic node tree DSL (ParagraphNode, TableNode, SectionNode, LayerStackNode, CanvasLayerNode)",
           "Atomic pagination with row-by-row table splitting",
-          "26 CV presets and 15 matching cover letters out of the box",
+          "{{cvPresetCount}} CV presets and {{letterCount}} matching cover letters out of the box",
           "Theme tokens via BrandTheme.modernProfessional() / executive() / boxedClassic()",
           "Markdown-aware bodies (bold, italic) in every paragraph and list block",
           "PDFBox-backed render pipeline, an editable PowerPoint backend geometry-identical to the PDF, and a semantic DOCX backend",
@@ -100,7 +100,7 @@
         "name": "GraphCompose",
         "codeRepository": "https://github.com/DemchaAV/GraphCompose",
         "programmingLanguage": "Java",
-        "runtimePlatform": "JVM 17+",
+        "runtimePlatform": "JVM {{javaMinimum}}+",
         "license": "https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE"
       },
       {
@@ -108,48 +108,7 @@
         "name": "GraphCompose showcase examples",
         "description": "Runnable Java examples that produce real PDFs — CV templates, cover letters, invoices, proposals, schedules, plus every supported feature.",
         "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Cinematic Project Proposal",
-            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/templates/proposal/project-proposal-cinematic.pdf"
-          },
-          {
-            "@type": "ListItem",
-            "position": 2,
-            "name": "Cinematic Invoice",
-            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/templates/invoice/invoice-cinematic.pdf"
-          },
-          {
-            "@type": "ListItem",
-            "position": 3,
-            "name": "Modern Professional CV",
-            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/templates/cv/cv-modern-professional-v2.pdf"
-          },
-          {
-            "@type": "ListItem",
-            "position": 4,
-            "name": "Sidebar Portrait CV",
-            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/templates/cv/cv-sidebar-portrait-v2.pdf"
-          },
-          {
-            "@type": "ListItem",
-            "position": 5,
-            "name": "Monogram Sidebar CV",
-            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/templates/cv/cv-monogram-sidebar-v2.pdf"
-          },
-          {
-            "@type": "ListItem",
-            "position": 6,
-            "name": "Master Showcase (flagship)",
-            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/flagships/default/master-showcase.pdf"
-          },
-          {
-            "@type": "ListItem",
-            "position": 7,
-            "name": "Business Report (flagship)",
-            "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/flagships/default/business-report.pdf"
-          }
+{{jsonLdItemList}}
         ]
       }
     ]
@@ -179,7 +138,7 @@
   <main id="top">
     <section class="hero section-shell" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="eyebrow">Java &middot; v2.4.0 &middot; MIT</p>
+        <p class="eyebrow">Java &middot; {{releaseTag}} &middot; MIT</p>
         <h1 id="hero-title">Java PDF layout engine for structured business documents.</h1>
         <p class="hero-lead">Describe documents. Render polished PDFs. A semantic layout engine for Java services that need <b>structured, paginated, theme-driven</b> output &mdash; CVs, invoices, proposals, reports.</p>
         <p class="hero-text">No drawing API. No pixel arithmetic. You compose <code>ParagraphNode</code>, <code>TableNode</code>, <code>SectionNode</code>; GraphCompose handles measurement, pagination, fonts, and PDFBox rendering.</p>
@@ -224,7 +183,7 @@
           <p>Tables split row-by-row, rows are atomic, layer stacks atomic. No manual page math.</p>
         </div>
         <div>
-          <h3>26 CV presets, 15 matching letters</h3>
+          <h3>{{cvPresetCount}} CV presets, {{letterCount}} matching letters</h3>
           <p>Every preset is one final class with a one-liner <code>create()</code> factory.</p>
         </div>
         <div>
@@ -245,14 +204,14 @@
 <pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
   &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
   &lt;artifactId&gt;graph-compose&lt;/artifactId&gt;
-  &lt;version&gt;2.4.0&lt;/version&gt;
+  &lt;version&gt;{{stableVersion}}&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
         </div>
         <div class="install-block">
           <h4>Gradle</h4>
 <pre class="language-groovy"><code class="language-groovy">dependencies {
   implementation(
-    'io.github.demchaav:graph-compose:2.4.0'
+    'io.github.demchaav:graph-compose:{{stableVersion}}'
   )
 }</code></pre>
         </div>
@@ -296,228 +255,7 @@
         <div class="showcase-noscript">
           <p><strong>JavaScript is disabled.</strong> The full searchable gallery requires JS. Below is a static index of every example so you can still reach rendered PDFs and their source.</p>
 
-          <h3 id="templates-section">Templates</h3>
-
-          <h4>CV / Resume</h4>
-          <ul>
-            <li><a href="showcase/pdf/templates/cv/cv-blue-banner-v2.pdf">Blue Banner</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-boxed-sections-v2.pdf">Boxed Sections</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-centered-headline-v2.pdf">Centered Headline</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-charcoal-gold-v2.pdf">Charcoal Gold</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-classic-serif-v2.pdf">Classic Serif</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-compact-mono-v2.pdf">Compact Mono</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-editorial-blue-v2.pdf">Editorial Blue</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-engineering-resume-v2.pdf">Engineering Resume</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-executive-v2.pdf">Executive</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-midnight-navy-v2.pdf">Midnight Navy</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-minimal-underlined-v2.pdf">Minimal Underlined</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-mint-editorial-v2.pdf">Mint Editorial</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-mint-editorial-v2-custom.pdf">Mint Editorial (custom band)</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-modern-professional-v2.pdf">Modern Professional</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-monogram-sidebar-v2.pdf">Monogram Sidebar</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-navy-sidebar-v2.pdf">Navy Sidebar</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-nordic-clean-v2.pdf">Nordic Clean</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-orange-ops-v2.pdf">Orange Ops</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-panel-v2.pdf">Panel</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-professional-sidebar-v2.pdf">Professional Sidebar</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-serif-headline-v2.pdf">Serif Headline</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-sidebar-portrait-v2.pdf">Sidebar Portrait</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-slate-orange-v2.pdf">Slate Orange</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-teal-pulse-v2.pdf">Teal Pulse</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-terracotta-rail-v2.pdf">Terracotta Rail</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-timeline-minimal-v2.pdf">Timeline Minimal</a></li>
-            <li><a href="showcase/pdf/templates/cv/cv-violet-grid-v2.pdf">Violet Grid</a></li>
-          </ul>
-
-          <h4>Proposal</h4>
-          <ul>
-            <li><a href="showcase/pdf/templates/proposal/project-proposal-cinematic.pdf">Project Proposal (cinematic)</a></li>
-            <li><a href="showcase/pdf/templates/proposal/proposal-cinematic.pdf">Cinematic Proposal</a></li>
-            <li><a href="showcase/pdf/templates/proposal/proposal-editorial-v2.pdf">Editorial Proposal</a></li>
-            <li><a href="showcase/pdf/templates/proposal/proposal-modern-v2.pdf">Modern Proposal</a></li>
-            <li><a href="showcase/pdf/templates/proposal/proposal-northline-v2.pdf">Northline Proposal</a></li>
-          </ul>
-
-          <h4>Invoice</h4>
-          <ul>
-            <li><a href="showcase/pdf/templates/invoice/invoice-cinematic.pdf">Cinematic Invoice</a></li>
-            <li><a href="showcase/pdf/templates/invoice/invoice-classic-v2.pdf">Classic Invoice</a></li>
-            <li><a href="showcase/pdf/templates/invoice/invoice-consulting-v2.pdf">Consulting Invoice</a></li>
-            <li><a href="showcase/pdf/templates/invoice/invoice-luma-studio-v2.pdf">Luma Studio Invoice</a></li>
-            <li><a href="showcase/pdf/templates/invoice/invoice-modern-v2.pdf">Modern Invoice</a></li>
-            <li><a href="showcase/pdf/templates/invoice/invoice-payments-v2.pdf">Payments Invoice</a></li>
-            <li><a href="showcase/pdf/templates/invoice/invoice-workspace-v2.pdf">Workspace Invoice</a></li>
-          </ul>
-
-          <h4>Schedule</h4>
-          <ul>
-            <li><a href="showcase/pdf/templates/schedule/weekly-schedule.pdf">Weekly Schedule</a></li>
-          </ul>
-
-          <h4>Cover Letter</h4>
-          <ul>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter.pdf">Cover Letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-blue-banner-v2.pdf">Blue Banner letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-boxed-sections-v2.pdf">Boxed Sections letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-centered-headline-v2.pdf">Centered Headline letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-classic-serif-v2.pdf">Classic Serif letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-compact-mono-v2.pdf">Compact Mono letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-editorial-blue-v2.pdf">Editorial Blue letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-engineering-resume-v2.pdf">Engineering letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-executive-v2.pdf">Executive letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-mint-editorial-v2.pdf">Mint Editorial letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-modern-professional-v2.pdf">Modern Professional letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-monogram-sidebar-v2.pdf">Monogram Sidebar letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-nordic-clean-v2.pdf">Nordic Clean letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-panel-v2.pdf">Panel letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-sidebar-portrait-v2.pdf">Sidebar Portrait letter</a></li>
-            <li><a href="showcase/pdf/templates/coverletter/cover-letter-timeline-minimal-v2.pdf">Timeline Minimal letter</a></li>
-          </ul>
-
-          <h4>Payment Receipt</h4>
-          <ul>
-            <li><a href="showcase/pdf/templates/receipt/receipt-modern.pdf">Modern Receipt</a></li>
-          </ul>
-
-          <h3 id="features-section">Features</h3>
-
-          <h4>Canvas / Free Placement</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/canvas/canvas-layer-showcase.pdf">Canvas Layer (free-canvas)</a></li>
-          </ul>
-
-          <h4>Tables</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/tables/composed-table-cell-showcase.pdf">Composed Table Cells</a></li>
-            <li><a href="showcase/pdf/features/tables/inline-code-column-wrap.pdf">Inline Code in Narrow Columns</a></li>
-            <li><a href="showcase/pdf/features/tables/table-advanced.pdf">Advanced Tables</a></li>
-          </ul>
-
-          <h4>Lists &amp; Bullets</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/lists/nested-list-showcase.pdf">Nested Lists</a></li>
-          </ul>
-
-          <h4>Shapes &amp; Containers</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/shapes/line-cap.pdf">Line Caps &amp; Dotted Lines</a></li>
-            <li><a href="showcase/pdf/features/shapes/line-fill.pdf">Fill Lines &amp; Dot Leaders</a></li>
-            <li><a href="showcase/pdf/features/shapes/photo-clip.pdf">Photo Clip (silhouette)</a></li>
-            <li><a href="showcase/pdf/features/shapes/shape-container.pdf">Shape-as-Container</a></li>
-            <li><a href="showcase/pdf/features/shapes/vector-path.pdf">Vector Paths (Bézier)</a></li>
-          </ul>
-
-          <h4>Transforms &amp; Layers</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/transforms/transforms.pdf">Layers + Transforms</a></li>
-          </ul>
-
-          <h4>Rich Text</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/text/arabic-article.pdf">Arabic Article</a></li>
-            <li><a href="showcase/pdf/features/text/emoji-clip-path.pdf">Emoji Clip-Path Report</a></li>
-            <li><a href="showcase/pdf/features/text/emoji-gallery.pdf">Emoji Gallery</a></li>
-            <li><a href="showcase/pdf/features/text/emoji-shortcodes.pdf">Emoji Shortcodes</a></li>
-            <li><a href="showcase/pdf/features/text/emoji-svg-vs-png.pdf">Emoji SVG vs PNG</a></li>
-            <li><a href="showcase/pdf/features/text/hebrew-invoice.pdf">Hebrew Invoice</a></li>
-            <li><a href="showcase/pdf/features/text/inline-highlight-chips.pdf">Inline Highlight Chips</a></li>
-            <li><a href="showcase/pdf/features/text/inline-shapes.pdf">Inline Shape Runs</a></li>
-            <li><a href="showcase/pdf/features/text/inline-svg-icons.pdf">Inline SVG Icons</a></li>
-            <li><a href="showcase/pdf/features/text/letter-spacing.pdf">Letter Spacing</a></li>
-            <li><a href="showcase/pdf/features/text/rich-text-showcase.pdf">Rich Text</a></li>
-            <li><a href="showcase/pdf/features/text/section-presets.pdf">Section Presets</a></li>
-            <li><a href="showcase/pdf/features/text/text-direction.pdf">Text Direction</a></li>
-            <li><a href="showcase/pdf/features/text/world-scripts.pdf">World Scripts</a></li>
-          </ul>
-
-          <h4>Barcodes &amp; QR</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/barcodes/barcode-showcase.pdf">Barcodes &amp; QR</a></li>
-          </ul>
-
-          <h4>PDF Chrome (header / footer / watermark)</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/chrome/page-numbering.pdf">Page Numbering</a></li>
-            <li><a href="showcase/pdf/features/chrome/page-zone.pdf">Page Zone</a></li>
-            <li><a href="showcase/pdf/features/chrome/pdf-chrome.pdf">PDF Chrome</a></li>
-            <li><a href="showcase/pdf/features/chrome/viewer-preferences.pdf">Viewer Preferences</a></li>
-          </ul>
-
-          <h4>Streaming &amp; I/O</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/streaming/invoice-http-stream.pdf">HTTP Streaming</a></li>
-          </ul>
-
-          <h4>Snapshot Testing</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/snapshots/invoice-snapshot-regression.pdf">Layout Snapshots</a></li>
-          </ul>
-
-          <h4>Charts</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/charts/chart-showcase.pdf">Vector Charts</a></li>
-          </ul>
-
-          <h4>Debug &amp; Diagnostics</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/debug/debug-overlay.pdf">Debug Overlay</a></li>
-          </ul>
-
-          <h4>Word Export (DOCX)</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/docx/word-export-companion.pdf">Word Export (DOCX)</a></li>
-          </ul>
-
-          <h4>Layout &amp; Alignment</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/layout/block-align.pdf">Block Alignment</a></li>
-            <li><a href="showcase/pdf/features/layout/content-bleed.pdf">Content Bleed</a></li>
-            <li><a href="showcase/pdf/features/layout/per-page-margin.pdf">Per-Page Margins</a></li>
-            <li><a href="showcase/pdf/features/layout/row-columns.pdf">Row Columns</a></li>
-            <li><a href="showcase/pdf/features/layout/row-flex.pdf">Row Flex &amp; Arrangement</a></li>
-            <li><a href="showcase/pdf/features/layout/row-vertical-align.pdf">Row Vertical Align</a></li>
-          </ul>
-
-          <h4>In-Document Navigation</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/navigation/container-bookmark.pdf">PDF Outline Bookmarks</a></li>
-            <li><a href="showcase/pdf/features/navigation/in-pdf-navigation.pdf">In-PDF Navigation</a></li>
-            <li><a href="showcase/pdf/features/navigation/page-reference.pdf">Page References</a></li>
-            <li><a href="showcase/pdf/features/navigation/table-of-contents.pdf">Table of Contents</a></li>
-          </ul>
-
-          <h4>Document Structure</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/structure/multi-section-document.pdf">Multi-Section Document</a></li>
-          </ul>
-
-          <h4>SVG Import</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/svg/svg-icon-gallery.pdf">SVG Icon Gallery</a></li>
-          </ul>
-
-          <h4>Title &amp; Book Pages</h4>
-          <ul>
-            <li><a href="showcase/pdf/features/title/book-template.pdf">Book Template</a></li>
-            <li><a href="showcase/pdf/features/title/poetry-title.pdf">Poetry Title Page</a></li>
-          </ul>
-
-          <h3 id="flagships-section">Flagship Examples</h3>
-
-          <h4>Flagship Demos</h4>
-          <ul>
-            <li><a href="showcase/pdf/flagships/default/business-report.pdf">Business Report Cover</a></li>
-            <li><a href="showcase/pdf/flagships/default/engine-deck.pdf">Engine Deck</a></li>
-            <li><a href="showcase/pdf/flagships/default/engine-deck-v2.pdf">Engine Deck — Module First</a></li>
-            <li><a href="showcase/pdf/flagships/default/feature-catalog.pdf">Feature Catalog</a></li>
-            <li><a href="showcase/pdf/flagships/default/financial-report.pdf">Financial Report</a></li>
-            <li><a href="showcase/pdf/flagships/default/linkedin-carousel.pdf">LinkedIn Carousel</a></li>
-            <li><a href="showcase/pdf/flagships/default/master-showcase.pdf">Master Showcase</a></li>
-            <li><a href="showcase/pdf/flagships/default/maven-banner.pdf">Maven Central Banner</a></li>
-            <li><a href="showcase/pdf/flagships/default/module-first-profile.pdf">Module-First Authoring</a></li>
-            <li><a href="showcase/pdf/flagships/default/social-card.pdf">Social Preview Card</a></li>
-            <li><a href="showcase/pdf/flagships/default/twin-output.pdf">Twin Output</a></li>
-          </ul>
+{{noscriptCatalogue}}
 
           <p>Source for every example lives under <a href="https://github.com/DemchaAV/GraphCompose/tree/main/examples/src/main/java/com/demcha/examples"><code>examples/src/main/java/com/demcha/examples</code></a> on GitHub.</p>
         </div>

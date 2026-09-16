@@ -363,6 +363,78 @@ jobs:
 
           Write-Host "README install snippets: every train coordinate moves, companions stay, idempotent; real README $checked coordinates checked."
 
+      - name: Unit-check the showcase version bump
+        shell: pwsh
+        run: |
+          # The published site states the version in seven places that do not inherit from the
+          # pom, and the cut is the only thing that moves them. Two failures this covers: a
+          # first-match rewrite leaving a second snippet a release behind, and a spot that
+          # quietly stops matching — renamed or reformatted — after which the function used to
+          # report success while publishing the previous version. Lifted by AST like the checks
+          # around it, so the code under test is the code that ships.
+          $path = (Resolve-Path scripts/cut-release.ps1).Path
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
+          $fn = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Update-IndexHtmlVersion'
+            }, $true) | Select-Object -First 1
+          if (-not $fn) { throw 'cut-release.ps1 no longer defines Update-IndexHtmlVersion' }
+          $calls = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.CommandAst] -and $n.GetCommandName() -eq 'Update-IndexHtmlVersion'
+            }, $true)
+          if ($calls.Count -eq 0) { throw 'nothing in cut-release.ps1 calls Update-IndexHtmlVersion' }
+          Invoke-Expression $fn.Extent.Text
+          function Note($m) { Write-Host "    $m" }
+          $DryRun = $false
+
+          function New-Page([string] $version, [string] $second) {
+            $file = Join-Path ([IO.Path]::GetTempPath()) ("index-" + [guid]::NewGuid().ToString() + ".html")
+            Set-Content -Path $file -NoNewline -Value (@(
+              '    { "stableVersion": "' + $version + '", "releaseTag": "v' + $version + '", "javaMinimum": "17" }',
+              '        "softwareVersion": "' + $version + '",',
+              '        "downloadUrl": "https://central.sonatype.com/artifact/io.github.demchaav/graph-compose/' + $version + '",',
+              '        <p class="eyebrow">Java &middot; v' + $version + ' &middot; MIT</p>',
+              '  &lt;artifactId&gt;graph-compose&lt;/artifactId&gt;',
+              '  &lt;version&gt;' + $version + '&lt;/version&gt;',
+              "    'io.github.demchaav:graph-compose:" + $version + "'",
+              "    'io.github.demchaav:graph-compose:" + $second + "'"
+            ) -join "`n")
+            return $file
+          }
+
+          # 1. Every occurrence moves, including a second snippet that starts a release behind.
+          $page = New-Page '1.2.3' '1.2.2'
+          Update-IndexHtmlVersion $page '9.9.9'
+          $after = Get-Content $page -Raw
+          foreach ($stale in @('1.2.3', '1.2.2')) {
+            if ($after -match [regex]::Escape($stale)) { throw "a $stale version survived the bump:`n$after" }
+          }
+          # Eight tokens, not seven: the Gradle pattern matches both snippets, which is the
+          # every-occurrence behaviour this step exists to hold.
+          if (([regex]::Matches($after, '9\.9\.9')).Count -ne 8) {
+            throw "expected all eight version tokens on 9.9.9:`n$after"
+          }
+          if ($after -notmatch '"releaseTag": "v9\.9\.9"') { throw "the release tag kept no v-prefix:`n$after" }
+          if ($after -notmatch 'Java &middot; v9\.9\.9 &middot; MIT') { throw "the hero badge kept no v-prefix:`n$after" }
+
+          # 2. Idempotent: a second bump is a no-op, not a throw.
+          Update-IndexHtmlVersion $page '9.9.9'
+          if ((Get-Content $page -Raw) -ne $after) { throw 'a second bump changed the page' }
+
+          # 3. A spot that no longer matches stops the cut, and names itself.
+          $moved = Get-Content $page -Raw
+          $moved = $moved -replace '"stableVersion"', '"stable_version"'
+          $broken = Join-Path ([IO.Path]::GetTempPath()) ("index-broken-" + [guid]::NewGuid().ToString() + ".html")
+          Set-Content -Path $broken -NoNewline -Value $moved
+          $refusal = try { Update-IndexHtmlVersion $broken '8.8.8'; '' } catch { "$_" }
+          if ($refusal -notmatch 'stableVersion') {
+            throw "a vanished spot did not stop the cut by name, got: '$refusal'"
+          }
+          if ((Get-Content $broken -Raw) -match '8\.8\.8') { throw 'the refusal still rewrote the page' }
+
+          Write-Host 'showcase version bump: every occurrence moves, idempotent, and a vanished spot refuses.'
+
       - name: Unit-check the roadmap promotion (refusals and the real rewrite)
         shell: pwsh
         run: |

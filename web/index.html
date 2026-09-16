@@ -44,6 +44,18 @@
   <meta name="twitter:image" content="https://demchaav.github.io/GraphCompose/showcase/screenshots/templates/proposal/project-proposal-cinematic.png">
 
   <!-- Structured data: SoftwareApplication + SoftwareSourceCode -->
+  <!-- The one place the site's version is written down. The JSON-LD below and the install
+       snippets further down repeat it, because a crawler and a reader with no JavaScript
+       both have to see the right release; VersionConsistencyGuardTest holds every copy
+       equal to this one, and the release cut rewrites all of them together. -->
+  <script type="application/json" id="release-context">
+    {
+      "stableVersion": "2.4.0",
+      "releaseTag": "v2.4.0",
+      "javaMinimum": "17"
+    }
+  </script>
+
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",

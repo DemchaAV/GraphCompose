@@ -925,15 +925,22 @@ function Update-IndexHtmlVersion($indexHtmlPath, $newVersion) {
     $tag = "v$newVersion"
     $changed = $false
 
-    # The GitHub Pages showcase (web/index.html) hardcodes the version in
-    # several spots that do NOT inherit from the pom — they previously sat at
-    # v1.6.1 while the library shipped v1.6.4. VersionConsistencyGuardTest
-    # fails the verify gate if any lags, so flip them all in lockstep with the
-    # README + poms. The Maven Central format coordinates use bare semver
-    # ($newVersion), the hero badge keeps the v-prefix ($tag), and the
-    # downloadUrl points at the Central artefact page. Lookbehind/lookahead
-    # so only the version token is rewritten.
+    # The GitHub Pages showcase (web/index.html) states the version in spots that do NOT
+    # inherit from the pom — they previously sat at v1.6.1 while the library shipped v1.6.4.
+    # The release-context block is the one the page itself reads; the JSON-LD is what a
+    # crawler reads, and the badge and snippets are what a visitor reads. All of them move
+    # here, in lockstep with the README + poms. The Maven Central format coordinates use bare
+    # semver ($newVersion), the hero badge and the release tag keep the v-prefix ($tag), and
+    # the downloadUrl points at the Central artefact page. Lookbehind/lookahead so only the
+    # version token is rewritten.
+    #
+    # EVERY occurrence of each pattern moves, and a pattern matching nothing stops the cut.
+    # Rewriting only the first match is how a page ends up half on the new release; and a
+    # spot that quietly stops matching — renamed, reformatted, moved into another block —
+    # used to leave this function reporting success while publishing the previous version.
     $replacements = @(
+        @{ Regex = [regex]'(?<="stableVersion": ")v?[\w\.\-]+(?=")';                                                       Value = $newVersion; Label = 'release-context stableVersion' },
+        @{ Regex = [regex]'(?<="releaseTag": ")v?[\w\.\-]+(?=")';                                                          Value = $tag;        Label = 'release-context releaseTag' },
         @{ Regex = [regex]'(?<="softwareVersion": ")v?[\w\.\-]+(?=")';                                                     Value = $newVersion; Label = 'JSON-LD softwareVersion' },
         @{ Regex = [regex]'(?<=https://central\.sonatype\.com/artifact/io\.github\.demchaav/graph-compose/)v?[\w\.\-]+(?=")'; Value = $newVersion; Label = 'Central downloadUrl' },
         @{ Regex = [regex]'(?<=Java &middot; )v?[\w\.\-]+(?= &middot; MIT)';                                                Value = $tag;        Label = 'hero badge' },
@@ -942,16 +949,24 @@ function Update-IndexHtmlVersion($indexHtmlPath, $newVersion) {
     )
 
     foreach ($r in $replacements) {
-        $after = $r.Regex.Replace($content, $r.Value, 1)
+        $hits = $r.Regex.Matches($content)
+        if ($hits.Count -eq 0) {
+            throw ("web/index.html: nothing matches the $($r.Label) pattern. That spot has moved or " +
+                   "been renamed, and a cut that skipped it would publish a page still naming the " +
+                   "previous release. Fix the pattern or the page, then re-run.")
+        }
+        $after = $r.Regex.Replace($content, $r.Value)
         if ($content -ne $after) {
             $content = $after
             $changed = $true
-            Note "bumped index.html $($r.Label) -> $($r.Value)"
+            Note "bumped index.html $($r.Label) -> $($r.Value) ($($hits.Count)x)"
         }
     }
 
     if (-not $changed) {
-        Note "no change: web/index.html version (already $tag?)"
+        # ${tag}, not $tag: PowerShell reads `$tag?` as a variable named `tag?`, so this
+        # notice spent its life telling a maintainer the page was already on nothing.
+        Note "no change: web/index.html version (already ${tag}?)"
         return
     }
 

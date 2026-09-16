@@ -65,13 +65,16 @@ Driven by code, not hand-edited JSON. Source of truth:
 `scripts/cut-release.ps1` is what edits this folder at a release; no CI workflow
 writes to it.
 
-- **Version.** The displayed version lives only in `index.html`, in five places the
-  script rewrites by pattern on a final release: the JSON-LD `softwareVersion`, the
-  Maven Central `downloadUrl`, the hero badge (`Java &middot; v… &middot; MIT`), and
-  the Maven and Gradle snippets for `graph-compose`. Keep each in its current shape:
-  a place the patterns no longer match is left unchanged. `VersionConsistencyGuardTest`
-  holds four of them to the release — every one but the `downloadUrl` — so a stale one
-  of those fails the cut's verify gate. A pre-release cut leaves all five on the last
+- **Version.** The displayed version lives only in `index.html`. The
+  `<script type="application/json" id="release-context">` block at the top of the page is
+  where it is written down — `stableVersion`, `releaseTag`, `javaMinimum` — and the JSON-LD
+  `softwareVersion`, the Maven Central `downloadUrl`, the hero badge
+  (`Java &middot; v… &middot; MIT`) and the Maven and Gradle snippets for `graph-compose`
+  repeat it, because a crawler and a reader with no JavaScript both have to see the right
+  release. On a final release `cut-release.ps1` rewrites **every occurrence** of all seven,
+  and a pattern that matches nothing stops the cut rather than leaving that spot behind.
+  `VersionConsistencyGuardTest` holds every occurrence of every one of them to the release,
+  so a stale copy fails the cut's verify gate. A pre-release cut leaves them all on the last
   published version, and so does the post-release bump.
 - **Catalogue.** Unless run with `-SkipShowcase`, the cut sets
   `ShowcaseMetadata.GH_BASE` to `/blob/v<version>` and runs `ShowcaseSync`, so the

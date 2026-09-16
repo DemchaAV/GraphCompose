@@ -3,6 +3,7 @@ package com.demcha.documentation;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -75,6 +76,20 @@ class ShowcaseSiteGuardTest {
     private static final Pattern FILTER_PILL = Pattern.compile("data-category\\s*=\\s*\"([^\"]+)\"");
 
     /**
+     * The widest a strip thumbnail may be. The strip draws a document in a 54px slot, and the
+     * catalogue writes these at 320px; the ceiling is what stops a thumbnail from quietly
+     * becoming the whole page again, which is the cost the strip has its own files to avoid.
+     */
+    private static final int THUMBNAIL_CEILING = 400;
+
+    /** How many CV presets the page tells a visitor ship. */
+    private static final Pattern CV_PRESET_CLAIM = Pattern.compile("(\\d+)\\s+CV presets");
+
+    /** How many cover letters it claims beside them. */
+    private static final Pattern LETTER_CLAIM =
+            Pattern.compile("(\\d+)\\s+matching\\s+(?:cover\\s+)?letters");
+
+    /**
      * A viewer address is read and shared as it stands, so category, family and card ids stay
      * lowercase words and hyphens: an id needing percent-encoding still works, but the address
      * stops being readable.
@@ -109,7 +124,7 @@ class ShowcaseSiteGuardTest {
 
         Set<String> missing = new TreeSet<>();
         for (Map<String, Object> card : cards) {
-            for (String key : List.of("pdf", "screenshot", "pptx")) {
+            for (String key : List.of("pdf", "screenshot", "thumbnail", "pptx")) {
                 Object value = card.get(key);
                 if (value == null && key.equals("pptx")) {
                     continue; // only the examples that render a deck ship one
@@ -239,6 +254,155 @@ class ShowcaseSiteGuardTest {
                 .describedAs("ids in web/examples.json must be lowercase words joined by hyphens: the viewer "
                         + "writes them unescaped into #/<category>/<family>/<card> addresses")
                 .isEmpty();
+    }
+
+    @Test
+    void theManifestSaysWhichContractItWasWrittenTo() throws IOException {
+        Object manifest = readManifest();
+        assertThat(manifest)
+                .describedAs("web/examples.json is not an object — the page could not read it either")
+                .isInstanceOf(Map.class);
+
+        Object version = ((Map<?, ?>) manifest).get("schemaVersion");
+        assertThat(version)
+                .describedAs("web/examples.json carries no schemaVersion. The page and this guard read the "
+                        + "manifest field by field, so a catalogue written to a different contract looks like "
+                        + "one with fields missing rather than one that has moved on")
+                .isInstanceOf(Number.class);
+        assertThat(((Number) version).intValue())
+                .describedAs("web/examples.json was written to a contract this site does not read")
+                .isEqualTo(1);
+    }
+
+    @Test
+    void everyCardMeasuresThePageItPublishes() throws IOException {
+        List<Map<String, Object>> cards = cards(readManifest());
+        assertThat(cards)
+                .describedAs("web/examples.json lists no cards — this guard would have nothing to check")
+                .isNotEmpty();
+
+        Set<String> wrong = new TreeSet<>();
+        for (Map<String, Object> card : cards) {
+            String id = String.valueOf(card.get("id"));
+            if (intOf(card.get("pageCount")) < 1) {
+                wrong.add(id + " pageCount: " + card.get("pageCount"));
+            }
+            int[] preview = pngSize(WEB.resolve(String.valueOf(card.get("screenshot"))));
+            if (preview == null) {
+                wrong.add(id + " preview is not a readable PNG: " + card.get("screenshot"));
+                continue;
+            }
+            int width = intOf(card.get("previewWidth"));
+            int height = intOf(card.get("previewHeight"));
+            if (preview[0] != width || preview[1] != height) {
+                wrong.add(id + " says " + width + "x" + height
+                        + ", its preview is " + preview[0] + "x" + preview[1]);
+            }
+            int[] thumbnail = pngSize(WEB.resolve(String.valueOf(card.get("thumbnail"))));
+            if (thumbnail == null) {
+                wrong.add(id + " thumbnail is not a readable PNG: " + card.get("thumbnail"));
+            } else if (thumbnail[0] > THUMBNAIL_CEILING || thumbnail[0] >= preview[0]) {
+                wrong.add(id + " thumbnail is " + thumbnail[0] + "px wide beside a "
+                        + preview[0] + "px preview");
+            }
+        }
+
+        assertThat(wrong)
+                .describedAs("a card's measurements are what the page holds space with before the image "
+                        + "arrives, and a page count below one describes no document. The thumbnail has to "
+                        + "stay a thumbnail: the viewer's strip has files of its own precisely so that "
+                        + "opening a family does not fetch a whole page per slot, and nothing else would "
+                        + "notice it quietly becoming one again")
+                .isEmpty();
+    }
+
+    @Test
+    void thePageCountsThePresetsTheCatalogueHas() throws IOException {
+        Object manifest = readManifest();
+        int cvPresets = presetsOf(manifest, "templates", "cv").size();
+        int letters = presetsOf(manifest, "templates", "coverletter").size();
+        assertThat(cvPresets)
+                .describedAs("no CV card in web/examples.json names a preset — this guard would be holding "
+                        + "the page against nothing")
+                .isGreaterThan(0);
+
+        String index = read("index.html");
+        Set<String> cvClaims = matches(CV_PRESET_CLAIM, index);
+        Set<String> letterClaims = matches(LETTER_CLAIM, index);
+        assertThat(cvClaims)
+                .describedAs("web/index.html no longer counts the CV presets in words this guard reads, so "
+                        + "the count it shows a visitor is no longer being checked against the catalogue")
+                .isNotEmpty();
+        assertThat(letterClaims)
+                .describedAs("web/index.html no longer counts the cover letters in words this guard reads")
+                .isNotEmpty();
+
+        assertThat(cvClaims)
+                .describedAs("the page tells a visitor how many CV presets ship, and the catalogue holds %d "
+                        + "distinct ones — a card that re-renders another's preset with different options is "
+                        + "not a second preset", cvPresets)
+                .containsExactly(String.valueOf(cvPresets));
+        assertThat(letterClaims)
+                .describedAs("the page tells a visitor how many cover letters ship, and the catalogue holds %d",
+                        letters)
+                .containsExactly(String.valueOf(letters));
+    }
+
+    /**
+     * The distinct presets the cards of one family name. A variant re-renders another card's
+     * preset with different options, so it is one more card and not one more preset.
+     */
+    @SuppressWarnings("unchecked")
+    private static Set<String> presetsOf(Object manifest, String categoryId, String groupId) {
+        Set<String> presets = new TreeSet<>();
+        for (Object category : (List<Object>) ((Map<String, Object>) manifest).get("categories")) {
+            Map<String, Object> asCategory = (Map<String, Object>) category;
+            if (!categoryId.equals(asCategory.get("id"))) {
+                continue;
+            }
+            for (Object group : (List<Object>) asCategory.get("groups")) {
+                Map<String, Object> asGroup = (Map<String, Object>) group;
+                if (!groupId.equals(asGroup.get("id"))) {
+                    continue;
+                }
+                for (Object example : (List<Object>) asGroup.get("examples")) {
+                    if (((Map<String, Object>) example).get("presetClass") instanceof String preset) {
+                        presets.add(preset);
+                    }
+                }
+            }
+        }
+        return presets;
+    }
+
+    /** A manifest number: the strict reader hands every one of them back as a double. */
+    private static int intOf(Object value) {
+        return value instanceof Number number ? number.intValue() : -1;
+    }
+
+    /**
+     * The pixel size written in a PNG's IHDR, or {@code null} when the file is not a readable
+     * PNG. Read from the header rather than decoded: the question is what the file says it is.
+     */
+    private static int[] pngSize(Path file) throws IOException {
+        if (!Files.isRegularFile(file)) {
+            return null;
+        }
+        byte[] header;
+        try (InputStream bytes = Files.newInputStream(file)) {
+            header = bytes.readNBytes(24);
+        }
+        if (header.length < 24
+                || (header[0] & 0xFF) != 0x89 || header[1] != 'P' || header[2] != 'N' || header[3] != 'G'
+                || header[12] != 'I' || header[13] != 'H' || header[14] != 'D' || header[15] != 'R') {
+            return null;
+        }
+        return new int[] {bigEndianInt(header, 16), bigEndianInt(header, 20)};
+    }
+
+    private static int bigEndianInt(byte[] bytes, int at) {
+        return ((bytes[at] & 0xFF) << 24) | ((bytes[at + 1] & 0xFF) << 16)
+                | ((bytes[at + 2] & 0xFF) << 8) | (bytes[at + 3] & 0xFF);
     }
 
     @Test

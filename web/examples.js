@@ -302,6 +302,16 @@
     }
   }
 
+  // The preview's own pixel size, from the catalogue. The card's box is a fixed height
+  // either way, so this is not what keeps the grid still: it lets the image reserve its slot
+  // inside that box at the right shape rather than appear out of nothing — and no single
+  // size can stand in for all of them, since 26 of the previews are not A4.
+  function sizeAttrs(example) {
+    return example.previewWidth && example.previewHeight
+      ? ' width="' + example.previewWidth + '" height="' + example.previewHeight + '"'
+      : '';
+  }
+
   function cssEscape(value) {
     return window.CSS && CSS.escape ? CSS.escape(value) : String(value).replace(/["\\]/g, '\\$&');
   }
@@ -505,8 +515,9 @@
         return [
           '<a class="family-tile" href="' + escAttr(href) + '">',
           '  <span class="family-cover">',
-          cover.screenshot
-            ? '    <img loading="lazy" decoding="async" src="' + escAttr(cover.screenshot) + '" alt="">'
+          // A family tile is a small box: it reads the strip-sized image, not the whole page.
+          cover.thumbnail
+            ? '    <img loading="lazy" decoding="async" src="' + escAttr(cover.thumbnail) + '" alt="">'
             : '',
           '  </span>',
           '  <span class="family-name">' + escHtml(group.label || group.id) + '</span>',
@@ -553,7 +564,7 @@
       '          data-pdf="' + escAttr(pdf) + '"',
       '          aria-label="Open ' + escAttr(ex.title || ex.id || '') + ' in the viewer">',
       screenshot
-        ? '    <img loading="lazy" decoding="async" src="' + escAttr(screenshot) + '" alt="' + escAttr(ex.title || '') + ' preview">'
+        ? '    <img loading="lazy" decoding="async"' + sizeAttrs(ex) + ' src="' + escAttr(screenshot) + '" alt="' + escAttr(ex.title || '') + ' preview">'
         : '    <div class="example-preview-fallback">PDF</div>',
       badge ? '    <span class="highlight-badge">' + escHtml(badge) + '</span>' : '',
       '  </button>',
@@ -665,7 +676,7 @@
       '          data-pdf="' + escAttr(pdf) + '"',
       '          aria-label="Open ' + escAttr(ex.title || ex.id || '') + ' in the viewer">',
       screenshot
-        ? '    <img loading="lazy" decoding="async" src="' + escAttr(screenshot) + '" alt="' + escAttr(altText) + '">'
+        ? '    <img loading="lazy" decoding="async"' + sizeAttrs(ex) + ' src="' + escAttr(screenshot) + '" alt="' + escAttr(altText) + '">'
         : '    <div class="example-preview-fallback">PDF</div>',
       '    <span class="example-view-hint">View</span>',
       '  </button>',

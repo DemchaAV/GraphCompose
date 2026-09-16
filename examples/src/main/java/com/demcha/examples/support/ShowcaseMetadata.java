@@ -37,9 +37,50 @@ final class ShowcaseMetadata {
     // (e.g. "v1.6.0") so users browsing the deployed site land on the
     // exact source that produced the artefacts.
     private static final String GH_BASE = "https://github.com/DemchaAV/GraphCompose/blob/develop";
-    private static final String EX_BASE = GH_BASE + "/examples/src/main/java/com/demcha/examples";
+    /** Where the examples live in the repository; a card carries both this and the link built on it. */
+    private static final String EX_PATH = "examples/src/main/java/com/demcha/examples";
+    private static final String EX_BASE = GH_BASE + "/" + EX_PATH;
 
-    record Entry(String title, String description, List<String> tags, String codeUrl) {
+    /** Where every preset and every model a card can name lives. */
+    private static final String TEMPLATES = "com.demcha.compose.document.templates.";
+
+    /** What a reader needs on the classpath: a template card also needs the templates module. */
+    private static final List<String> ENGINE_ONLY = List.of("graph-compose");
+    private static final List<String> WITH_TEMPLATES = List.of("graph-compose", "graph-compose-templates");
+
+    /** What a card is. A card renders a template preset, demonstrates a feature, or stands alone. */
+    enum Kind {
+        /** Renders one of the library's template presets. */
+        PRESET,
+        /** Demonstrates one engine or API feature. */
+        FEATURE,
+        /** A standalone composition — a flagship, or a demo that is neither of the above. */
+        EXAMPLE
+    }
+
+    /**
+     * One showcase card, as the register describes it.
+     *
+     * <p>{@code presetClass} and {@code dataModel} are filled only for a card whose example
+     * builds exactly one preset — {@code null} on the rest, rather than a guess. {@code kind}
+     * says what the card is and is independent of them: a feature card may well render a
+     * preset ({@code invoice-http-stream} builds {@code ModernInvoice} to have something to
+     * stream), and it stays a feature card.</p>
+     *
+     * @param title             the card's heading
+     * @param description       the line under it
+     * @param tags              the search chips, the card's category first
+     * @param codeUrl           the source link, rooted at the branch or tag {@code GH_BASE} names
+     * @param kind              what the card is
+     * @param sourcePath        the same source, repo-relative, for whatever reads the file itself
+     * @param requiredArtifacts the Maven artifacts a reader needs on the classpath to run it
+     * @param presetClass       the preset the example builds, or {@code null} where it builds none
+     * @param dataModel         the type that preset composes, or {@code null} with no preset
+     * @param variantOf         the card this one re-renders with different options, or {@code null}
+     */
+    record Entry(String title, String description, List<String> tags, String codeUrl,
+                 Kind kind, String sourcePath, List<String> requiredArtifacts,
+                 String presetClass, String dataModel, String variantOf) {
     }
 
     /**
@@ -241,7 +282,7 @@ final class ShowcaseMetadata {
         ENTRIES.put("cover-letter", entry("Cover Letter",
                 "One page composed straight in the canonical DSL — section presets carry the hierarchy, no template involved.",
                 withCategory("letter"),
-                EX_BASE + "/templates/coverletter/CoverLetterFileExample.java"));
+                "templates/coverletter/CoverLetterFileExample", Kind.EXAMPLE, ENGINE_ONLY));
         letter("cover-letter-modern-professional-v2", "CvModernProfessionalLetterV2Example", "Modern Professional letter", "Letter paired with the Modern Professional CV palette.");
         letter("cover-letter-nordic-clean-v2", "CvNordicCleanLetterV2Example", "Nordic Clean letter", "Letter paired with the Nordic Clean CV palette.");
         letter("cover-letter-classic-serif-v2", "CvClassicSerifLetterV2Example", "Classic Serif letter", "Letter with Times-style serif typography.");
@@ -345,6 +386,72 @@ final class ShowcaseMetadata {
         flagship("linkedin-carousel", "LinkedInCarouselExample", "LinkedIn Carousel", "A six-slide 4:5 carousel sized for a LinkedIn document post, typeset for a phone. Every figure is read at render time — the version from the filtered properties, the timings from the committed benchmark snapshot.", "showcase", "flagship");
         flagship("maven-banner", "MavenBannerPptxExample", "Maven Central Banner", "A five-slide brand deck emitted through the PPTX backend — gradient, rounded panels, native paths and text frames arriving in PowerPoint as an editable copy of the rendered pages, closing on Hebrew and Arabic laid out right to left.", "showcase", "flagship", "pptx");
         flagship("financial-report", "FinancialReportExample", "Financial Report", "A polished financial-report flagship — clipped-photo masthead, KPI tables, and vector charts combining the engine's data-viz and shape primitives.", "showcase", "flagship");
+
+        // ===== The preset behind each card, and the model it composes =====
+        // Only cards whose example builds exactly one preset: 56 of the 117 registered here.
+        // A feature card can be one of them — invoice-http-stream builds ModernInvoice to have
+        // something worth streaming — so this pass is independent of the card's kind.
+        preset("cv-blue-banner-v2", "cv.presets.BlueBanner", "cv.data.CvDocument");
+        preset("cv-boxed-sections-v2", "cv.presets.BoxedSections", "cv.data.CvDocument");
+        preset("cv-centered-headline-v2", "cv.presets.CenteredHeadline", "cv.data.CvDocument");
+        preset("cv-charcoal-gold-v2", "cv.presets.CharcoalGold", "cv.data.CvDocument");
+        preset("cv-classic-serif-v2", "cv.presets.ClassicSerif", "cv.data.CvDocument");
+        preset("cv-compact-mono-v2", "cv.presets.CompactMono", "cv.data.CvDocument");
+        preset("cv-editorial-blue-v2", "cv.presets.EditorialBlue", "cv.data.CvDocument");
+        preset("cv-engineering-resume-v2", "cv.presets.EngineeringResume", "cv.data.CvDocument");
+        preset("cv-executive-v2", "cv.presets.Executive", "cv.data.CvDocument");
+        preset("cv-midnight-navy-v2", "cv.presets.MidnightNavy", "cv.data.CvDocument");
+        preset("cv-minimal-underlined-v2", "cv.presets.MinimalUnderlined", "cv.data.CvDocument");
+        preset("cv-mint-editorial-v2", "cv.presets.MintEditorial", "cv.data.CvDocument");
+        preset("cv-mint-editorial-v2-custom", "cv.presets.MintEditorial", "cv.data.CvDocument",
+                "cv-mint-editorial-v2");
+        preset("cv-modern-professional-v2", "cv.presets.ModernProfessional", "cv.data.CvDocument");
+        preset("cv-monogram-sidebar-v2", "cv.presets.MonogramSidebar", "cv.data.CvDocument");
+        preset("cv-navy-sidebar-v2", "cv.presets.NavySidebar", "cv.data.CvDocument");
+        preset("cv-nordic-clean-v2", "cv.presets.NordicClean", "cv.data.CvDocument");
+        preset("cv-orange-ops-v2", "cv.presets.OrangeOps", "cv.data.CvDocument");
+        preset("cv-panel-v2", "cv.presets.Panel", "cv.data.CvDocument");
+        preset("cv-professional-sidebar-v2", "cv.presets.ProfessionalSidebar", "cv.data.CvDocument");
+        preset("cv-serif-headline-v2", "cv.presets.SerifHeadline", "cv.data.CvDocument");
+        preset("cv-sidebar-portrait-v2", "cv.presets.SidebarPortrait", "cv.data.CvDocument");
+        preset("cv-slate-orange-v2", "cv.presets.SlateOrange", "cv.data.CvDocument");
+        preset("cv-teal-pulse-v2", "cv.presets.TealPulse", "cv.data.CvDocument");
+        preset("cv-terracotta-rail-v2", "cv.presets.TerracottaRail", "cv.data.CvDocument");
+        preset("cv-timeline-minimal-v2", "cv.presets.TimelineMinimal", "cv.data.CvDocument");
+        preset("cv-violet-grid-v2", "cv.presets.VioletGrid", "cv.data.CvDocument");
+
+        preset("cover-letter-blue-banner-v2", "coverletter.presets.BlueBannerLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-boxed-sections-v2", "coverletter.presets.BoxedSectionsLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-centered-headline-v2", "coverletter.presets.CenteredHeadlineLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-classic-serif-v2", "coverletter.presets.ClassicSerifLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-compact-mono-v2", "coverletter.presets.CompactMonoLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-editorial-blue-v2", "coverletter.presets.EditorialBlueLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-engineering-resume-v2", "coverletter.presets.EngineeringResumeLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-executive-v2", "coverletter.presets.ExecutiveLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-mint-editorial-v2", "coverletter.presets.MintEditorialLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-modern-professional-v2", "coverletter.presets.ModernProfessionalLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-monogram-sidebar-v2", "coverletter.presets.MonogramSidebarLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-nordic-clean-v2", "coverletter.presets.NordicCleanLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-panel-v2", "coverletter.presets.PanelLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-sidebar-portrait-v2", "coverletter.presets.SidebarPortraitLetter", "coverletter.data.CoverLetterDocument");
+        preset("cover-letter-timeline-minimal-v2", "coverletter.presets.TimelineMinimalLetter", "coverletter.data.CoverLetterDocument");
+
+        preset("invoice-cinematic", "invoice.presets.ModernInvoice", "data.invoice.InvoiceDocumentSpec");
+        preset("invoice-modern-v2", "invoice.presets.ModernInvoice", "data.invoice.InvoiceDocumentSpec");
+        preset("invoice-classic-v2", "invoice.presets.ClassicInvoice", "data.invoice.InvoiceDocumentSpec");
+        preset("invoice-consulting-v2", "invoice.presets.ConsultingInvoice", "data.invoice.StructuredInvoiceDocumentSpec");
+        preset("invoice-luma-studio-v2", "invoice.presets.LumaStudioInvoice", "data.invoice.StructuredInvoiceDocumentSpec");
+        preset("invoice-payments-v2", "invoice.presets.PaymentsInvoice", "data.invoice.StructuredInvoiceData");
+        preset("invoice-workspace-v2", "invoice.presets.WorkspaceInvoice", "data.invoice.StructuredInvoiceData");
+        preset("invoice-http-stream", "invoice.presets.ModernInvoice", "data.invoice.InvoiceDocumentSpec");
+        preset("invoice-snapshot-regression", "invoice.presets.ModernInvoice", "data.invoice.InvoiceDocumentSpec");
+
+        preset("proposal-cinematic", "proposal.presets.ModernProposal", "data.proposal.ProposalDocumentSpec");
+        preset("proposal-modern-v2", "proposal.presets.ModernProposal", "data.proposal.ProposalDocumentSpec");
+        preset("proposal-editorial-v2", "proposal.presets.EditorialProposal", "data.proposal.StructuredProposalDocumentSpec");
+        preset("proposal-northline-v2", "proposal.presets.NorthlineProposal", "data.proposal.StructuredProposalDocumentSpec");
+
+        preset("receipt-modern", "receipt.presets.ModernReceipt", "data.receipt.ReceiptDocumentSpec");
     }
 
     /**
@@ -395,11 +502,12 @@ final class ShowcaseMetadata {
         if (e != null) {
             return e;
         }
-        // Fallback: derive title from basename, generic description.
+        // Fallback: derive title from basename, generic description. Nothing is known about
+        // what the document is, so it is an EXAMPLE naming no preset — never a guess at one.
         String title = capitalize(basename.replace('-', ' ').replace('_', ' '));
         String desc = "Generated showcase for " + category + " / " + group + ".";
-        String code = EX_BASE; // category root is the closest we can guess
-        return new Entry(title, desc, List.of(category, group), code);
+        return new Entry(title, desc, List.of(category, group), EX_BASE,
+                Kind.EXAMPLE, EX_PATH, ENGINE_ONLY, null, null, null);
     }
 
     static String groupLabel(String category, String group) {
@@ -453,47 +561,86 @@ final class ShowcaseMetadata {
     }
 
     private static void cv(String id, String exampleClass, String title, String desc, String... tags) {
-        ENTRIES.put(id, entry(title, desc, withCategory("cv", tags),
-                EX_BASE + "/templates/cv/v2/" + exampleClass + ".java"));
+        template(id, "cv", "templates/cv/v2/" + exampleClass, title, desc, tags);
     }
 
     private static void letter(String id, String exampleClass, String title, String desc, String... tags) {
-        ENTRIES.put(id, entry(title, desc, withCategory("letter", tags),
-                EX_BASE + "/templates/coverletter/v2/" + exampleClass + ".java"));
+        template(id, "letter", "templates/coverletter/v2/" + exampleClass, title, desc, tags);
     }
 
     private static void invoice(String id, String exampleClass, String title, String desc, String... tags) {
-        ENTRIES.put(id, entry(title, desc, withCategory("invoice", tags),
-                EX_BASE + "/templates/invoice/" + exampleClass + ".java"));
+        template(id, "invoice", "templates/invoice/" + exampleClass, title, desc, tags);
     }
 
     private static void proposal(String id, String exampleClass, String title, String desc, String... tags) {
-        ENTRIES.put(id, entry(title, desc, withCategory("proposal", tags),
-                EX_BASE + "/templates/proposal/" + exampleClass + ".java"));
+        template(id, "proposal", "templates/proposal/" + exampleClass, title, desc, tags);
     }
 
     private static void receipt(String id, String exampleClass, String title, String desc, String... tags) {
-        ENTRIES.put(id, entry(title, desc, withCategory("receipt", tags),
-                EX_BASE + "/templates/receipt/" + exampleClass + ".java"));
+        template(id, "receipt", "templates/receipt/" + exampleClass, title, desc, tags);
     }
 
     private static void schedule(String id, String title, String desc, String... tags) {
-        ENTRIES.put(id, entry(title, desc, withCategory("schedule", tags),
-                EX_BASE + "/templates/schedule/WeeklyScheduleFileExample.java"));
+        template(id, "schedule", "templates/schedule/WeeklyScheduleFileExample", title, desc, tags);
+    }
+
+    /**
+     * A card in a template category. It is an {@code EXAMPLE} needing only the engine until the
+     * preset pass says otherwise: three of these build no preset at all — the cover letter
+     * composed straight in the DSL, the weekly schedule and the cinematic proposal — and a card
+     * claiming a preset it does not render, or a module it never touches, is a lie a reader
+     * pastes into their own pom.
+     */
+    private static void template(String id, String tag, String source, String title, String desc, String... tags) {
+        ENTRIES.put(id, entry(title, desc, withCategory(tag, tags), source, Kind.EXAMPLE, ENGINE_ONLY));
     }
 
     private static void feature(String group, String id, String exampleClass, String title, String desc, String... tags) {
         ENTRIES.put(id, entry(title, desc, withCategory(group, tags),
-                EX_BASE + "/features/" + group + "/" + exampleClass + ".java"));
+                "features/" + group + "/" + exampleClass, Kind.FEATURE, ENGINE_ONLY));
     }
 
     private static void flagship(String id, String exampleClass, String title, String desc, String... tags) {
         ENTRIES.put(id, entry(title, desc, withCategory("flagship", tags),
-                EX_BASE + "/flagships/" + exampleClass + ".java"));
+                "flagships/" + exampleClass, Kind.EXAMPLE, ENGINE_ONLY));
     }
 
-    private static Entry entry(String title, String desc, List<String> tags, String code) {
-        return new Entry(title, desc, tags, code);
+    /**
+     * Names the preset a card's example builds, and the model that preset composes. Both are
+     * written relative to {@link #TEMPLATES}, which is where every one of them lives.
+     *
+     * <p>Only a card whose example builds exactly one preset is listed. The pairing is held to
+     * the source by {@code ShowcasePresetRegistrationTest}, which re-reads each example and
+     * fails on a preset that is named here and not built there — or built there and missing
+     * here. That check, not the spelling of these strings, is what keeps them true.</p>
+     */
+    private static void preset(String id, String presetClass, String dataModel) {
+        preset(id, presetClass, dataModel, null);
+    }
+
+    /** As {@link #preset(String, String, String)}, for a card re-rendering another card's preset. */
+    private static void preset(String id, String presetClass, String dataModel, String variantOf) {
+        Entry card = ENTRIES.get(id);
+        if (card == null) {
+            throw new IllegalStateException("a preset is registered for a card that is not: " + id);
+        }
+        // Building a preset makes a card a preset card and needs the templates module, whichever
+        // helper registered it — except a feature card, which stays one: invoice-http-stream
+        // builds ModernInvoice only to have a document worth streaming.
+        Kind kind = card.kind() == Kind.FEATURE ? Kind.FEATURE : Kind.PRESET;
+        ENTRIES.put(id, new Entry(card.title(), card.description(), card.tags(), card.codeUrl(),
+                kind, card.sourcePath(), WITH_TEMPLATES,
+                TEMPLATES + presetClass, TEMPLATES + dataModel, variantOf));
+    }
+
+    /**
+     * Builds a card from the one thing every helper knows: where its example lives. The link
+     * and the repo-relative path are the same string, so they cannot drift apart.
+     */
+    private static Entry entry(String title, String desc, List<String> tags, String source,
+                               Kind kind, List<String> artifacts) {
+        String path = EX_PATH + "/" + source + ".java";
+        return new Entry(title, desc, tags, GH_BASE + "/" + path, kind, path, artifacts, null, null, null);
     }
 
     /**

@@ -454,6 +454,10 @@ check("every document of the family gets a thumbnail, and the one shown is marke
   assert.equal(thumbs.filter((button) => button.getAttribute("aria-current") === "true").length, 1);
   assert.equal(thumbs[2].getAttribute("aria-label"), exampleOf(ids[2]).title,
     "a thumbnail is an image of a page: its name has to be said, not left to a tooltip");
+  assert.ok(exampleOf(ids[0]).thumbnail.includes("/thumbnails/"),
+    "fixture: the catalogue carries no strip-sized files for the strip to read");
+  assert.deepEqual(thumbs.map((button) => button.children[0].src), ids.map((id) => exampleOf(id).thumbnail),
+    "the strip reads the catalogue's strip-sized file for each document, not the page preview");
   page.click(page.familyButtons().find((button) => button.dataset.viewerFamily === "invoice"));
   assert.deepEqual(page.thumbButtons().map((button) => button.dataset.viewerThumb), idsOf("templates", "invoice"),
     "the strip belongs to the family shown, so it is rebuilt when the family changes");
@@ -487,13 +491,14 @@ check("the strip brings the document shown into view, and stops animating when a
     "the CSS rule for reduced motion cannot reach a scroll made from a script");
 });
 
-check("a reader saving data gets no strip of page-sized previews", () => {
+check("a reader saving data gets no strip at all", () => {
   const page = viewerHarness();
   page.connection.saveData = true;
   const ids = idsOf("templates", "cv");
   page.viewer.open({ category: "templates", group: "cv", id: ids[1] }, { history: "push" });
   assert.equal(page.parts.thumbnails.hidden, true);
-  assert.equal(page.thumbButtons().length, 0, "a thumbnail here is a whole page in a 54px slot");
+  assert.equal(page.thumbButtons().length, 0,
+    "strip-sized or not, a row of one image per document is not what that mode is for");
   assert.equal(page.images.length, 1, "only the page being read is fetched");
 });
 

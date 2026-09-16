@@ -6,6 +6,8 @@ import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 import javax.imageio.ImageIO;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -64,6 +66,20 @@ public final class ShowcaseSync {
 
     private static final float PREVIEW_SCALE = 1.5f;
 
+    /**
+     * How wide a strip thumbnail is written.
+     *
+     * <p>The viewer's strip draws a document in a 54px slot, 46px on a narrow screen. Pointing
+     * it at the card preview meant a whole page per slot — 5.2 MiB for the 27 CVs alone — so
+     * each card also gets a thumbnail, and the strip reads that instead. Wide enough to stay
+     * sharp on a dense screen, small enough that a family costs a fraction of one page.</p>
+     */
+    private static final int THUMBNAIL_WIDTH = 320;
+
+    /** What rendering a card's first page told us about the document. */
+    private record Preview(int width, int height, int pages) {
+    }
+
     private ShowcaseSync() {
     }
 
@@ -102,7 +118,7 @@ public final class ShowcaseSync {
         // reachable by URL, absent from the manifest, and rendered from source that no
         // longer exists. Clearing the three output trees first makes the published site
         // a pure function of what GenerateAllExamples just produced.
-        for (String subtree : new String[] {"pdf", "pptx", "screenshots"}) {
+        for (String subtree : new String[] {"pdf", "pptx", "screenshots", "thumbnails"}) {
             deletePublishedFiles(showcaseRoot.resolve(subtree));
         }
 
@@ -133,12 +149,15 @@ public final class ShowcaseSync {
             Path pdfTarget = showcaseRoot.resolve("pdf").resolve(category).resolve(group).resolve(fileName);
             Path pngTarget = showcaseRoot.resolve("screenshots").resolve(category).resolve(group)
                     .resolve(basename + ".png");
+            Path thumbnailTarget = showcaseRoot.resolve("thumbnails").resolve(category).resolve(group)
+                    .resolve(basename + ".png");
             Files.createDirectories(pdfTarget.getParent());
             Files.createDirectories(pngTarget.getParent());
+            Files.createDirectories(thumbnailTarget.getParent());
 
             Files.copy(pdf, pdfTarget, StandardCopyOption.REPLACE_EXISTING);
             copied++;
-            renderPreview(pdf, pngTarget);
+            Preview preview = renderPreview(pdf, pngTarget, thumbnailTarget);
             rendered++;
 
             // A twin flagship renders the same composition to a deck beside its
@@ -161,13 +180,12 @@ public final class ShowcaseSync {
             ShowcaseMetadata.Entry meta = ShowcaseMetadata.lookup(basename, category, group);
             ManifestEntry entry = new ManifestEntry(
                     basename,
-                    meta.title(),
-                    meta.description(),
-                    meta.tags(),
+                    meta,
                     relativeUrl(showcaseRoot, pdfTarget, siteRoot),
                     pptxUrl,
                     relativeUrl(showcaseRoot, pngTarget, siteRoot),
-                    meta.codeUrl(),
+                    relativeUrl(showcaseRoot, thumbnailTarget, siteRoot),
+                    preview,
                     ShowcaseMetadata.ats(basename));
             tree.computeIfAbsent(category, c -> new TreeMap<>())
                     .computeIfAbsent(group, g -> new ArrayList<>())
@@ -188,12 +206,50 @@ public final class ShowcaseSync {
         System.out.println("Wrote manifest to " + manifestFile);
     }
 
-    private static void renderPreview(Path pdfPath, Path pngTarget) throws IOException {
+    /**
+     * Renders a card's first page, writes the preview and its strip thumbnail, and reports what
+     * the document turned out to be: the preview's pixel size, so the page can reserve the right
+     * box before the image arrives, and how many pages there are to say so on the card.
+     */
+    private static Preview renderPreview(Path pdfPath, Path pngTarget, Path thumbnailTarget)
+            throws IOException {
         try (PDDocument document = Loader.loadPDF(pdfPath.toFile())) {
             PDFRenderer renderer = new PDFRenderer(document);
             BufferedImage image = renderer.renderImage(0, PREVIEW_SCALE, ImageType.RGB);
             ImageIO.write(image, "PNG", pngTarget.toFile());
+            writeThumbnail(image, thumbnailTarget);
+            return new Preview(image.getWidth(), image.getHeight(), document.getNumberOfPages());
         }
+    }
+
+    /**
+     * The same page at strip size, halved a step at a time.
+     *
+     * <p>A page is nearly three times the width of its thumbnail, and bilinear sampling reads a
+     * 2x2 neighbourhood: in one step it skips over most of the pixels and leaves fine strokes
+     * aliased. Halving until the last step is within 2x keeps the shrunk page readable as a
+     * page, which is the only reason to show one at 320px.</p>
+     */
+    private static void writeThumbnail(BufferedImage page, Path target) throws IOException {
+        BufferedImage thumbnail = page;
+        while (thumbnail.getWidth() > THUMBNAIL_WIDTH * 2) {
+            thumbnail = scaledTo(thumbnail, Math.max(THUMBNAIL_WIDTH, thumbnail.getWidth() / 2));
+        }
+        if (thumbnail.getWidth() != THUMBNAIL_WIDTH) {
+            thumbnail = scaledTo(thumbnail, THUMBNAIL_WIDTH);
+        }
+        ImageIO.write(thumbnail, "PNG", target.toFile());
+    }
+
+    private static BufferedImage scaledTo(BufferedImage source, int width) {
+        int height = Math.max(1, Math.round(source.getHeight() * (width / (float) source.getWidth())));
+        BufferedImage scaled = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D canvas = scaled.createGraphics();
+        canvas.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        canvas.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        canvas.drawImage(source, 0, 0, width, height, null);
+        canvas.dispose();
+        return scaled;
     }
 
     /**
@@ -295,7 +351,7 @@ public final class ShowcaseSync {
 
     private static String renderManifest(Map<String, Map<String, List<ManifestEntry>>> tree) {
         StringBuilder sb = new StringBuilder();
-        sb.append("{\n  \"categories\": [\n");
+        sb.append("{\n  \"schemaVersion\": 1,\n  \"categories\": [\n");
         Map<String, String> categoryLabels = new LinkedHashMap<>();
         categoryLabels.put("templates", "Templates");
         categoryLabels.put("features", "Features");
@@ -380,7 +436,9 @@ public final class ShowcaseSync {
                 case '\n' -> sb.append("\\n");
                 case '\r' -> sb.append("\\r");
                 case '\t' -> sb.append("\\t");
-                default -> sb.append(c);
+                // Everything else below U+0020 is a control character, which JSON forbids raw:
+                // a manifest carrying one is refused by the page's own fetch and by the guard.
+                default -> sb.append(c < 0x20 ? String.format("\\u%04x", (int) c) : String.valueOf(c));
             }
         }
         sb.append("\"");
@@ -427,29 +485,44 @@ public final class ShowcaseSync {
      */
     private record ManifestEntry(
             String id,
-            String title,
-            String description,
-            List<String> tags,
+            ShowcaseMetadata.Entry meta,
             String pdf,
             String pptx,
             String screenshot,
-            String code,
+            String thumbnail,
+            Preview preview,
             ShowcaseMetadata.Ats ats) {
 
         String toJson() {
+            String indent = "              ";
             StringBuilder sb = new StringBuilder("{\n");
-            sb.append("              \"id\": ").append(jsonString(id)).append(",\n");
-            sb.append("              \"title\": ").append(jsonString(title)).append(",\n");
-            sb.append("              \"description\": ").append(jsonString(description)).append(",\n");
-            sb.append("              \"tags\": ").append(jsonArray(tags)).append(",\n");
-            sb.append("              \"pdf\": ").append(jsonString(pdf)).append(",\n");
+            sb.append(indent).append("\"id\": ").append(jsonString(id)).append(",\n");
+            sb.append(indent).append("\"title\": ").append(jsonString(meta.title())).append(",\n");
+            sb.append(indent).append("\"description\": ").append(jsonString(meta.description())).append(",\n");
+            sb.append(indent).append("\"kind\": ").append(jsonString(meta.kind().name())).append(",\n");
+            sb.append(indent).append("\"tags\": ").append(jsonArray(meta.tags())).append(",\n");
+            sb.append(indent).append("\"pdf\": ").append(jsonString(pdf)).append(",\n");
             if (pptx != null) {
-                sb.append("              \"pptx\": ").append(jsonString(pptx)).append(",\n");
+                sb.append(indent).append("\"pptx\": ").append(jsonString(pptx)).append(",\n");
             }
-            sb.append("              \"screenshot\": ").append(jsonString(screenshot)).append(",\n");
-            sb.append("              \"code\": ").append(jsonString(code));
+            sb.append(indent).append("\"screenshot\": ").append(jsonString(screenshot)).append(",\n");
+            sb.append(indent).append("\"thumbnail\": ").append(jsonString(thumbnail)).append(",\n");
+            // The page's own size, so a card can hold its shape before the image arrives.
+            sb.append(indent).append("\"previewWidth\": ").append(preview.width()).append(",\n");
+            sb.append(indent).append("\"previewHeight\": ").append(preview.height()).append(",\n");
+            sb.append(indent).append("\"pageCount\": ").append(preview.pages()).append(",\n");
+            sb.append(indent).append("\"requiredArtifacts\": ").append(jsonArray(meta.requiredArtifacts())).append(",\n");
+            sb.append(indent).append("\"sourcePath\": ").append(jsonString(meta.sourcePath())).append(",\n");
+            if (meta.presetClass() != null) {
+                sb.append(indent).append("\"presetClass\": ").append(jsonString(meta.presetClass())).append(",\n");
+                sb.append(indent).append("\"dataModel\": ").append(jsonString(meta.dataModel())).append(",\n");
+            }
+            if (meta.variantOf() != null) {
+                sb.append(indent).append("\"variantOf\": ").append(jsonString(meta.variantOf())).append(",\n");
+            }
+            sb.append(indent).append("\"code\": ").append(jsonString(meta.codeUrl()));
             if (ats != null) {
-                sb.append(",\n              \"ats\": ").append(atsJson(ats, "              "));
+                sb.append(",\n").append(indent).append("\"ats\": ").append(atsJson(ats, indent));
             }
             sb.append("\n            }");
             return sb.toString();

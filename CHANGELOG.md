@@ -43,6 +43,20 @@ follow semantic versioning; release dates are ISO 8601.
   `scripts/site/gallery-viewer.test.mjs` tests the addresses, the navigation and the dialog
   in CI.
 
+- **The catalogue says what each document is, and the gallery stops jumping as it loads.**
+  `web/examples.json` carries a `schemaVersion`, and every card now carries the preset it
+  renders and the model that preset composes, the artifacts a reader needs to run it, the
+  path to its source, its page count, and the pixel size of its preview — so the image
+  reserves its slot at the right shape instead of appearing out of nothing, and no single
+  size stands in for previews that are not all A4. The viewer's strip and the family tiles
+  read thumbnails generated at 320px rather than whole pages: opening the CV family fetches
+  1.4 MiB of strip images where it fetched 5.2 MiB. `ShowcasePresetRegistrationTest` holds
+  each card's preset and model to the example that builds them — it found two feature cards
+  asking a reader for the engine alone while rendering a template preset — and
+  `ShowcaseSiteGuardTest` fails the build on a manifest without a `schemaVersion`, a card
+  whose measurements are not its preview's, a page count below one, a thumbnail that is not
+  published, or a preset count in the page copy the catalogue does not hold.
+
 ## v2.4.0 — 2026-09-14
 
 ### Public API

@@ -22,6 +22,9 @@ and a generated JSON manifest, served directly with **no build step**. It lives
   landing previews, superseded by `showcase/`; safe to prune.)
 - `showcase/pdf/<category>/<group>/…` — generated example PDFs.
 - `showcase/screenshots/<category>/<group>/…` — PNG previews of those PDFs.
+- `showcase/thumbnails/<category>/<group>/…` — the same first pages at 320px wide, which
+  the viewer's strip reads. A strip slot is 54px, 46px on a narrow screen: pointed at the
+  previews above, it would pull a whole page per slot.
 - `showcase/pptx/<category>/<group>/…` — the PowerPoint decks of the examples that
   also render one.
 
@@ -36,12 +39,26 @@ Driven by code, not hand-edited JSON. Source of truth:
 4. Regenerate, then sync:
 
    ```bash
+   ./mvnw -B -ntp -DskipTests install
    ./mvnw -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.GenerateAllExamples
    ./mvnw -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.support.ShowcaseSync
    ```
 
+   The `install` is not optional: the examples module resolves the engine, templates and
+   backend jars from your local repository, not from the working tree, so without it the two
+   `exec:java` runs stop at dependency resolution — and with a stale one they would render
+   the last-installed code.
+
    `ShowcaseSync` copies each PDF into `web/showcase/pdf/…`, rasterises a PNG into
-   `web/showcase/screenshots/…`, and rewrites `web/examples.json`.
+   `web/showcase/screenshots/…` and a 320px thumbnail into `web/showcase/thumbnails/…`, and
+   rewrites `web/examples.json`.
+
+   The manifest carries a `schemaVersion`, and each card carries what the register knows
+   (`kind`, `sourcePath`, `requiredArtifacts`, and `presetClass` + `dataModel` where the
+   example builds exactly one preset, plus `variantOf` where it re-renders another card's)
+   alongside what rendering it measured (`previewWidth`, `previewHeight`, `pageCount`).
+   The preset and model on a card are held to the example that renders them by
+   `ShowcasePresetRegistrationTest` in the examples module.
 5. Commit the regenerated `web/showcase/**` + `web/examples.json`.
 
 ## What a release changes here

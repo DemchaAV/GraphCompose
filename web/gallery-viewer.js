@@ -240,9 +240,9 @@
       }
     }
 
-    // One thumbnail per document of the family shown, each the document's card preview.
-    // Those files are whole pages — only the catalogue can make smaller ones — so a reader
-    // who asked to save data gets no strip at all, rather than a row of page-sized images.
+    // One thumbnail per document of the family shown, each the catalogue's strip-sized image
+    // of that document's first page. A reader who asked to save data still gets no strip:
+    // a row of pages, however small each one is, is not what that mode is for.
     function renderThumbnails() {
       thumbs.hidden = savingData();
       if (thumbs.hidden) return;
@@ -263,7 +263,7 @@
           preview.decoding = 'async';
           preview.fetchPriority = 'low';
           preview.alt = '';
-          if (example.screenshot) preview.src = example.screenshot;
+          if (example.thumbnail) preview.src = example.thumbnail;
           button.append(preview);
           thumbs.append(button);
         }

@@ -4,7 +4,10 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,9 +17,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,9 +33,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * <p>GitHub Pages serves {@code web/} exactly as committed, so a reference that resolves
  * to nothing reaches visitors as a dead link, a missing tile or a menu entry that moves
  * nothing. Each kind checked here had passed every other check: the featured strip skips
- * an id that is not a card in the manifest instead of reporting it, the menu and the
- * no-JavaScript index are written by hand, and a card's files are checked only while
- * {@code ShowcaseSync} writes them, not when a later change removes one.</p>
+ * an id that is not a card in the manifest instead of reporting it, a card's files are
+ * checked only while {@code ShowcaseSync} writes them, not when a later change removes one,
+ * and the document pages link back to the site through relative paths a moved file breaks
+ * without a sign.</p>
  *
  * <p>It reads the working tree, so the verify gate of a release cut runs it over the
  * catalogue the cut has just regenerated.</p>
@@ -43,10 +49,13 @@ class ShowcaseSiteGuardTest {
     /** The address {@code web/} is published at; a link that starts with it names a site file. */
     private static final String SITE_URL = "https://demchaav.github.io/GraphCompose/";
 
-    /** The pages whose links are checked. {@code examples.js} builds its links from the manifest. */
+    /**
+     * The pages whose links are checked, beside every generated document page, which are found
+     * rather than listed. {@code examples.js} builds its links from the manifest.
+     */
     private static final List<String> PAGES = List.of("index.html", "sitemap.xml", "robots.txt");
 
-    /** The pages whose anchors into {@code index.html} are checked. */
+    /** The pages whose anchors are checked, beside every generated document page. */
     private static final List<String> ANCHOR_PAGES = List.of("index.html", "sitemap.xml");
 
     /** The suffix {@code examples.js} gives the id of a rendered category section. */
@@ -195,9 +204,17 @@ class ShowcaseSiteGuardTest {
 
     @Test
     void everySiteFileThePagesLinkToIsPublished() throws IOException {
+        List<String> generated = generatedPages();
+        assertThat(generated)
+                .describedAs("found no generated document page under web/ — scripts/site/build.mjs writes one per "
+                        + "card, so either the build has not run or this guard no longer finds its pages")
+                .isNotEmpty();
+
+        List<String> pages = new ArrayList<>(PAGES);
+        pages.addAll(generated);
         Map<String, Set<String>> broken = new LinkedHashMap<>();
-        for (String page : PAGES) {
-            Set<String> references = siteReferences(read(page));
+        for (String page : pages) {
+            Set<String> references = siteReferences(read(page), directoryOf(page));
             assertThat(references)
                     .describedAs("found no link to a site file in web/%s — this guard is reading a page shape "
                             + "that moved, so it is no longer checking that page", page)
@@ -227,23 +244,34 @@ class ShowcaseSiteGuardTest {
         String index = read("index.html");
         Set<String> elementIds = matches(ELEMENT_ID, index);
 
+        List<String> pages = new ArrayList<>(ANCHOR_PAGES);
+        pages.addAll(generatedPages());
         Map<String, Set<String>> broken = new LinkedHashMap<>();
-        for (String page : ANCHOR_PAGES) {
-            Set<String> anchors = anchors(read(page));
-            assertThat(anchors)
-                    .describedAs("found no anchor into index.html in web/%s — this guard is reading a page shape "
-                            + "that moved, so it is no longer checking that page", page)
+        for (String page : pages) {
+            Map<String, Set<String>> anchorsByTarget = anchors(read(page), directoryOf(page));
+            assertThat(anchorsByTarget)
+                    .describedAs("found no anchor in web/%s — this guard is reading a page shape that moved, so "
+                            + "it is no longer checking that page", page)
                     .isNotEmpty();
 
             Set<String> missing = new TreeSet<>();
-            for (String anchor : anchors) {
-                boolean lands = anchor.startsWith("/")
-                        ? viewerAddressLands(anchor, families)
-                        : anchor.endsWith(SECTION_SUFFIX)
-                        ? categories.contains(anchor.substring(0, anchor.length() - SECTION_SUFFIX.length()))
-                        : elementIds.contains(anchor);
-                if (!lands) {
-                    missing.add("#" + anchor);
+            for (Map.Entry<String, Set<String>> target : anchorsByTarget.entrySet()) {
+                // Anchors into the home page follow its rules; an anchor into any other page needs an
+                // element with that id on that page, which has to be a page the site publishes.
+                Set<String> targetIds = target.getKey().equals("index.html") || !isPublished(target.getKey())
+                        ? Set.of()
+                        : matches(ELEMENT_ID, read(target.getKey()));
+                for (String anchor : target.getValue()) {
+                    boolean lands = !target.getKey().equals("index.html")
+                            ? targetIds.contains(anchor)
+                            : anchor.startsWith("/")
+                            ? viewerAddressLands(anchor, families)
+                            : anchor.endsWith(SECTION_SUFFIX)
+                            ? categories.contains(anchor.substring(0, anchor.length() - SECTION_SUFFIX.length()))
+                            : elementIds.contains(anchor);
+                    if (!lands) {
+                        missing.add(target.getKey().equals("index.html") ? "#" + anchor : target.getKey() + "#" + anchor);
+                    }
                 }
             }
             if (!missing.isEmpty()) {
@@ -254,7 +282,7 @@ class ShowcaseSiteGuardTest {
                 .describedAs("these anchors land nowhere: examples.js renders a category section as "
                         + "<category id>%s only for a category web/examples.json has, the viewer opens "
                         + "#/<category>/<family>[/<card>] only for a family and card it has, and any other "
-                        + "anchor needs an element with that id in index.html", SECTION_SUFFIX)
+                        + "anchor needs an element with that id on the page it points into", SECTION_SUFFIX)
                 .isEmpty();
 
         Set<String> pills = matches(FILTER_PILL, index);
@@ -678,6 +706,48 @@ class ShowcaseSiteGuardTest {
                 "install", "top", "features-section", "showcase", "/templates/cv/cv-a", "/templates/cv");
     }
 
+    @Test
+    void aLinkOnADocumentPageIsReadFromThatPagesOwnDirectory() {
+        String page = "<link href=\"../../../styles.css\"><a href=\"../../../templates/cv/cv-b/\">"
+                + "<img src=\"../../../showcase/screenshots/a.png\"><a href=\"../../../\">"
+                + "<a href=\"../../../showcase/pdf/a.pdf#page=2\"><a href=\"../../../../outside.html\">"
+                + "<link rel=\"canonical\" href=\"" + SITE_URL + "templates/cv/cv-a/\"><link href=\"/styles.css\">";
+
+        assertThat(siteReferences(page, "templates/cv/cv-a/")).containsExactlyInAnyOrder(
+                "styles.css", "templates/cv/cv-b/", "showcase/screenshots/a.png", "", "showcase/pdf/a.pdf",
+                "../outside.html", "templates/cv/cv-a/", "/styles.css");
+        assertThat(isPublished("../outside.html"))
+                .describedAs("a link climbing out of web/ names nothing the site publishes")
+                .isFalse();
+        assertThat(isPublished("/styles.css"))
+                .describedAs("the site is served under /GraphCompose/, so a root-relative link misses it")
+                .isFalse();
+    }
+
+    @Test
+    void aLinkThatIsNotAValidUriIsReportedRatherThanCrashingTheGuard() {
+        // A browser encodes a raw space and follows the link; a percent-escape already present is
+        // decoded, not encoded twice; and a character no file can be named with is simply unpublished.
+        String page = "<a href=\"docs/my file.pdf\"><a href=\"docs/my%20file.pdf\"><a href=\"a|b.html\">"
+                + "<a href=\"{brace}.png\"><a href=\"bad%zz.png\">";
+
+        assertThat(siteReferences(page, "templates/cv/cv-a/")).containsExactlyInAnyOrder(
+                "templates/cv/cv-a/docs/my file.pdf", "templates/cv/cv-a/a|b.html",
+                "templates/cv/cv-a/{brace}.png", "templates/cv/cv-a/bad%zz.png");
+        assertThat(isPublished("templates/cv/cv-a/a|b.html")).isFalse();
+    }
+
+    @Test
+    void anAnchorOnADocumentPageIsReadAsAnAnchorIntoThePageItPointsAt() {
+        String page = "<a href=\"../../../#install\"><a href=\"../../../#/templates/cv\"><a href=\"#page-2\">"
+                + "<a href=\"../cv-b/#top\"><a href=\"../../../showcase/pdf/a.pdf#page=2\">";
+
+        assertThat(anchors(page, "templates/cv/cv-a/")).isEqualTo(Map.of(
+                "index.html", Set.of("install", "/templates/cv"),
+                "templates/cv/cv-a/index.html", Set.of("page-2"),
+                "templates/cv/cv-b/index.html", Set.of("top")));
+    }
+
     /** The ids in the featured-strip constant of {@code examples.js}. */
     static List<String> featuredIds(String script) {
         Matcher list = FEATURED_LIST.matcher(script);
@@ -693,12 +763,19 @@ class ShowcaseSiteGuardTest {
         return ids;
     }
 
+    /** The site files a page at the root of {@code web/} links to; see the two-argument form. */
+    static Set<String> siteReferences(String page) {
+        return siteReferences(page, "");
+    }
+
     /**
      * The site files a page links to, as paths relative to {@code web/}: every relative
-     * {@code href} and {@code src}, and every absolute address inside the site. A fragment
-     * or query is dropped, so the site root is the empty path.
+     * {@code href} and {@code src}, read from the page's own {@code directory} (empty for the
+     * root, {@code templates/cv/cv-a/} for a document page), and every absolute address inside
+     * the site. A fragment or query is dropped, so the site root is the empty path, and a link
+     * that climbs out of {@code web/} keeps its leading {@code ../} so it can never be published.
      */
-    static Set<String> siteReferences(String page) {
+    static Set<String> siteReferences(String page, String directory) {
         Set<String> references = new TreeSet<>();
         Matcher attribute = LINK_ATTRIBUTE.matcher(page);
         while (attribute.find()) {
@@ -706,7 +783,7 @@ class ShowcaseSiteGuardTest {
             if (value.startsWith("#") || value.startsWith("//") || SCHEME.matcher(value).find()) {
                 continue;
             }
-            references.add(withoutFragmentOrQuery(value));
+            references.add(resolve(directory, withoutFragmentOrQuery(value)));
         }
         Matcher address = SITE_ADDRESS.matcher(page);
         while (address.find()) {
@@ -715,29 +792,101 @@ class ShowcaseSiteGuardTest {
         return references;
     }
 
-    /**
-     * The anchors into {@code index.html} a page carries, without the {@code #}: an
-     * in-page {@code href}, or a site address naming the root or {@code index.html}.
-     */
+    /** The anchors into {@code index.html} a page at the root of {@code web/} carries. */
     static Set<String> anchors(String page) {
-        Set<String> anchors = new TreeSet<>();
+        return anchors(page, "").getOrDefault("index.html", Set.of());
+    }
+
+    /**
+     * The anchors a page carries, without the {@code #}, keyed by the page each one points into
+     * as a path relative to {@code web/}: an in-page {@code href} points into the page itself, a
+     * relative link into the page it resolves to from the page's own {@code directory}, and a site
+     * address into the page it names. Only pages are keyed — a {@code #page=2} after a PDF is an
+     * instruction to the PDF viewer, not an anchor.
+     */
+    static Map<String, Set<String>> anchors(String page, String directory) {
+        Map<String, Set<String>> anchors = new TreeMap<>();
         Matcher attribute = LINK_ATTRIBUTE.matcher(page);
         while (attribute.find()) {
             String value = attributeValue(attribute);
-            if (value.startsWith("#") && value.length() > 1) {
-                anchors.add(value.substring(1));
+            int hash = value.indexOf('#');
+            if (hash < 0 || hash == value.length() - 1 || value.startsWith("//") || SCHEME.matcher(value).find()) {
+                continue;
             }
+            String target = hash == 0 ? directory : resolve(directory, value.substring(0, hash));
+            addAnchor(anchors, target, value.substring(hash + 1));
         }
         Matcher address = SITE_ADDRESS.matcher(page);
         while (address.find()) {
             String path = address.group(1);
-            for (String indexPage : List.of("#", "index.html#")) {
-                if (path.startsWith(indexPage) && path.length() > indexPage.length()) {
-                    anchors.add(path.substring(indexPage.length()));
-                }
+            int hash = path.indexOf('#');
+            if (hash >= 0 && hash < path.length() - 1) {
+                addAnchor(anchors, path.substring(0, hash), path.substring(hash + 1));
             }
         }
         return anchors;
+    }
+
+    private static void addAnchor(Map<String, Set<String>> anchors, String target, String anchor) {
+        String page = pageFile(target);
+        if (page.endsWith(".html")) {
+            anchors.computeIfAbsent(page, key -> new TreeSet<>()).add(anchor);
+        }
+    }
+
+    /**
+     * A relative reference written on a page in {@code directory}, as a path relative to
+     * {@code web/}. Resolved the way a browser resolves it, so a trailing slash — which is what
+     * makes {@code ../cv-b/} a page — survives.
+     */
+    static String resolve(String directory, String reference) {
+        if (reference.startsWith("/")) {
+            // Root-relative: the site lives under /GraphCompose/, so this names nothing it publishes,
+            // and it is kept as written for isPublished to refuse.
+            return reference;
+        }
+        URI relative;
+        try {
+            relative = URI.create(reference);
+        } catch (IllegalArgumentException notEncoded) {
+            try {
+                // A raw space or brace is not a URI, but a browser encodes it and follows the link,
+                // so it is read the same way here rather than failing the whole guard on its syntax.
+                relative = new URI(null, null, reference, null);
+            } catch (URISyntaxException unreadable) {
+                return reference;
+            }
+        }
+        URI base = URI.create("https://site.invalid/" + directory);
+        return base.resolve(relative).getPath().substring(1);
+    }
+
+    /** The file a site path names: a directory, the root included, means its index page. */
+    private static String pageFile(String path) {
+        return path.isEmpty() || path.endsWith("/") ? path + "index.html" : path;
+    }
+
+    /** The directory a page sits in, relative to {@code web/}: empty for the root, else ending in a slash. */
+    private static String directoryOf(String page) {
+        int slash = page.lastIndexOf('/');
+        return slash < 0 ? "" : page.substring(0, slash + 1);
+    }
+
+    /**
+     * The document pages scripts/site/build.mjs generates, found rather than listed: every
+     * {@code index.html} under {@code web/} but the home page and anything under the catalogue's
+     * own files.
+     */
+    private static List<String> generatedPages() throws IOException {
+        try (Stream<Path> files = Files.walk(WEB)) {
+            return files
+                    .filter(file -> file.getFileName().toString().equals("index.html"))
+                    .filter(file -> !file.getParent().equals(WEB) && !file.startsWith(SHOWCASE))
+                    .filter(Files::isRegularFile)
+                    .map(file -> WEB.relativize(file).toString().replace('\\', '/'))
+                    .sorted()
+                    .toList();
+        }
     }
 
     /** Every card in the manifest: the members of each group's {@code examples}. */
@@ -886,9 +1035,13 @@ class ShowcaseSiteGuardTest {
 
     /** Whether a site path names a file under {@code web/}; a directory path, the root included, means its index page. */
     private static boolean isPublished(String reference) {
-        String path = reference.isEmpty() || reference.endsWith("/") ? reference + "index.html" : reference;
-        Path file = WEB.resolve(path).normalize();
-        return file.startsWith(WEB) && Files.isRegularFile(file);
+        try {
+            Path file = WEB.resolve(pageFile(reference)).normalize();
+            return file.startsWith(WEB) && Files.isRegularFile(file);
+        } catch (InvalidPathException notAPathHere) {
+            // A character this file system cannot name (a '|' on Windows) names no published file.
+            return false;
+        }
     }
 
     /** Whether a card's path names a file under {@code web/showcase/}; an empty path never does. */

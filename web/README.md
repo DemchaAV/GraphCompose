@@ -5,12 +5,15 @@ and a generated JSON manifest. GitHub Pages serves this folder **exactly as
 committed** and runs nothing, so what is here is what ships. It lives
 **outside `docs/`** (which is documentation only) so the two never tangle.
 
-Two of the files are **generated**: `index.html` and `sitemap.xml` are rendered
+The pages are **generated**: `index.html`, `sitemap.xml` and one page per
+document in the catalogue (`<category>/<group>/<id>/index.html`) are rendered
 from `web-src/` by `node scripts/site/build.mjs`. Everything else — the
-stylesheet, the scripts, the assets and the whole `showcase/` tree — is static
-and the build never reads or writes it. Do not hand-edit the two generated
-pages: `scripts/site/build.test.mjs` fails when what is committed here is not
-what `web-src/` builds, and CI's guard job runs it.
+stylesheet, the scripts, the assets and the whole `showcase/` tree — is static:
+the build writes none of it, and reads from `showcase/` only the pixel size the
+later page images and the thumbnails state in their PNG headers. Do not hand-edit
+a generated page:
+`scripts/site/build.test.mjs` fails when what is committed here is not what
+`web-src/` builds, and CI's guard job runs it.
 
 ## Files
 - `index.html` — **generated** from `web-src/pages/index.html`. Single-page
@@ -23,7 +26,22 @@ what `web-src/` builds, and CI's guard job runs it.
   the hero's documents, the JSON-LD item list and the sitemap's documents (names are editorial, in
   `web-src/data/featured.json`; the URLs are resolved from the manifest so a
   renamed PDF cannot leave a crawler pointed at nothing), the preset counts, and
-  the no-JavaScript index of every document in the catalogue.
+  the no-JavaScript index of every document in the catalogue, each linking to its page.
+  The site header, the footer and the theme scripts are partials in `web-src/partials/`,
+  shared with the document pages.
+- `<category>/<group>/<id>/index.html` — **generated** from `web-src/pages/document.html`, one
+  per card, at the same three segments as the card's viewer address: everything the viewer
+  shows of a document, at an address of its own and readable without JavaScript. Every page of
+  the document as an image at its own pixel size, each linking into the PDF (at that page, in the
+  viewers that read `#page=`); the PDF and, where one is published, the deck; the reproduction
+  panel, open; and the other documents of its family. Each page carries a canonical URL, a title,
+  a description, Open Graph tags and a small JSON-LD block, and the sitemap lists them all. A
+  family's link on a page is its viewer address, which without JavaScript lands on that family's
+  list in the home page's no-JavaScript index. **The build owns these pages and only these:** a
+  page carrying `<meta name="generator" content="GraphCompose site build">` *and* a canonical URL
+  naming the place it sits — so a generated page copied elsewhere to start a page by hand is not
+  the build's. An owned page no card builds any more — a card renamed, moved or removed — is
+  deleted with the directories it leaves empty, and fails `--check` until it is.
 - `styles.css` — visual system and responsive layout.
 - `examples.js` — client script that fetches the manifest and renders the gallery.
   It also resolves the anchors the menu and the sitemap link to (`#showcase`,
@@ -36,14 +54,15 @@ what `web-src/` builds, and CI's guard job runs it.
   coordinates at the release the page names, the preset and model a card composes, its
   family's compiled snippet, the run command, and the source and guide at the release tag.
   It is collapsed by default, because open it took twice the room of the document it
-  describes. `scripts/site/gallery-viewer.test.mjs` tests the addresses, the navigation,
-  the paging and that panel in CI's guard job.
+  describes; Details beside the PDF link goes to the document's own page. What the panel says
+  is `panelModel`, a pure function the build loads to render the same panel on each document
+  page, and `pagePath` is the one place a page's address is formatted, so a page and the links
+  to it cannot disagree. `scripts/site/gallery-viewer.test.mjs` tests the addresses, the
+  navigation, the paging, that model and the panel drawn from it in CI's guard job.
 - `home.js` — the hero's document switch. The page is built with the first document
-  already on it, so a reader without JavaScript still sees a real result and its PDF. The
-  switch is rendered hidden and shown by the script; the link into the viewer waits for
-  `examples.js` to announce that the viewer exists (`gallery-viewer-ready`), because the
-  viewer needs the catalogue and `<dialog>`, not just its script. A choice changes the
-  picture, the caption and both links together, once the new preview is ready.
+  already on it — its PDF and its page linked — so a reader without JavaScript still sees a
+  real result and can open it. The switch is rendered hidden and shown by the script. A choice
+  changes the picture, the caption and both links together, once the new preview is ready.
   `scripts/site/home.test.mjs` runs it against the hero parsed out of the built page.
 - `examples.json` — **generated** gallery manifest. Do **not** hand-edit it; it is
   rewritten by `ShowcaseSync` (see below).
@@ -122,11 +141,12 @@ Driven by code, not hand-edited JSON. Source of truth:
    `ShowcaseBundledFontClaimTest` — both in the examples module, which is where PDFBox and a
    JSON reader are both on the test classpath.
 5. Rebuild the site — `node scripts/site/build.mjs` — and commit the regenerated
-   `web/showcase/**`, `web/examples.json` **and** the rebuilt `web/index.html` +
-   `web/sitemap.xml`. The page's
-   no-JavaScript index and its preset counts are rendered from the manifest, so a
-   new card changes the page too; skipping the rebuild leaves the committed page
-   disagreeing with `web-src/`, which `scripts/site/build.test.mjs` fails on.
+   `web/showcase/**`, `web/examples.json` **and** the rebuilt pages: `web/index.html`,
+   `web/sitemap.xml`, and the document pages under each category's directory — a new card's
+   page added, a removed card's page deleted. The home page's no-JavaScript index and its
+   preset counts, the sitemap and every page of a card's family are rendered from the
+   manifest, so a new card changes all of them; skipping the rebuild leaves the committed
+   pages disagreeing with `web-src/`, which `scripts/site/build.test.mjs` fails on.
 
 ## What a release changes here
 `scripts/cut-release.ps1` is what edits this folder at a release; no CI workflow
@@ -143,8 +163,13 @@ writes to it.
   pattern that matches nothing stops the cut rather than leaving that spot behind. Rewriting
   the page directly is what the generated site rules out — the next build would undo it.
   `VersionConsistencyGuardTest` holds every occurrence of all seven **in the built page**, so
-  a page that was not rebuilt fails the cut's verify gate. A pre-release cut leaves them all
-  on the last published version, and so does the post-release bump.
+  a page that was not rebuilt fails the cut's verify gate. The document pages name the
+  release in their coordinates and source links too; they are rebuilt in the same run, held
+  to `release.json` by `scripts/site/build.test.mjs`, and staged by the cut with one glob
+  pathspec that also stages a page the rebuild deleted — `release-script-check.yml` runs that
+  pathspec over a rewritten, a deleted and an added page, and fails if it stages anything under
+  `showcase/`. A pre-release cut leaves them all on the last published version, and so does
+  the post-release bump.
 - **Catalogue.** Unless run with `-SkipShowcase`, the cut sets
   `ShowcaseMetadata.GH_BASE` to `/blob/v<version>` and runs `ShowcaseSync`, so the
   release commit carries a regenerated `examples.json` and `showcase/` whose source
@@ -159,10 +184,12 @@ writes to it.
 - an id in the featured list of `examples.js` is not a card in `examples.json` —
   the page would skip it without a sign;
 - a card names a PDF, preview or deck that is not a file under `showcase/`;
-- `index.html`, `sitemap.xml` or `robots.txt` links to a site file that is not here;
+- `index.html`, `sitemap.xml`, `robots.txt` or any generated document page — found, not
+  listed — links to a site file that is not here, read from the linking page's own
+  directory;
 - a `#<category>-section` anchor or a filter pill names a category `examples.json`
   does not have, a `#/<category>/<group>[/<id>]` viewer address names a family or card
-  it does not have, or another anchor names no element in `index.html`;
+  it does not have, or another anchor names no element on the page it points into;
 - a card, family or category id repeats, or would need escaping in a viewer address;
 - `examples.json` is not strict JSON, which the page's `fetch` would refuse as well;
 - the manifest was written to a `schemaVersion` this site does not read;

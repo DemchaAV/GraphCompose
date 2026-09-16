@@ -973,17 +973,30 @@ function Update-SiteReleaseData($releaseDataPath, $newVersion) {
 }
 
 function Build-ShowcaseSite {
-    # web/index.html and web/sitemap.xml are generated from web-src/ AND from the catalogue, so
-    # they are rebuilt once both have settled: after the version data moved, and after the
-    # showcase sync rewrote web/examples.json. Building earlier renders the page from a catalogue
-    # the cut then replaces, which ships an index missing whatever the sync added. Skipped on a
-    # tree with no site source: the 1.x line has none.
+    # The site's pages — web/index.html, web/sitemap.xml and a page per catalogue card — are
+    # generated from web-src/ AND from the catalogue, so they are rebuilt once both have settled:
+    # after the version data moved, and after the showcase sync rewrote web/examples.json. Building
+    # earlier renders them from a catalogue the cut then replaces, which ships an index missing
+    # whatever the sync added and no page for it. Skipped on a tree with no site source: the 1.x
+    # line has none.
     $build = Join-Path $repoRoot 'scripts/site/build.mjs'
     if (-not (Test-Path $build)) {
         Note 'skip (no site build): scripts/site/build.mjs'
         return
     }
     Run "node `"$build`""
+}
+
+function Get-DocumentPagePathspecs {
+    # The document pages the site build writes, one per catalogue card at
+    # web/<category>/<group>/<id>/index.html, as the pathspec that stages them. One glob stages a
+    # page the build added, rewrote or deleted alike, and reaches nothing under web/showcase/.
+    # Empty on a tree with no site build: a pathspec that matches nothing fails `git add`, and
+    # Invoke-Git stops the cut on it.
+    if (Test-Path (Join-Path $repoRoot 'scripts/site/build.mjs')) {
+        return @(':(glob)web/*/*/*/index.html')
+    }
+    return @()
 }
 
 function Update-ShowcaseGhBase($newRef) {
@@ -1467,7 +1480,10 @@ if ($PostReleaseOnly) {
         # Commit whatever changed: the bumped poms + regenerated knowledge
         # surfaces, and/or the restored showcase files.
         $filesToCommit = @()
-        if ($showcaseChanged -or $DryRun) { $filesToCommit += @($showcaseMetadata, 'web/examples.json', 'web/index.html', 'web/sitemap.xml') }
+        if ($showcaseChanged -or $DryRun) {
+            $filesToCommit += @($showcaseMetadata, 'web/examples.json', 'web/index.html', 'web/sitemap.xml')
+            $filesToCommit += @(Get-DocumentPagePathspecs)
+        }
         $filesToCommit += $bumpedPoms
         # The surfaces Step 3c regenerated at the new SNAPSHOT ride in the same
         # commit as the bump they track — left behind, they are the follow-up
@@ -1743,7 +1759,7 @@ try {
     # After 4c either way: the version data moved in Step 1, and that alone is a reason to
     # rebuild even when the sync was skipped. Before Step 5, so the verify gate's site guards
     # read the pages this release actually publishes.
-    Step "4d" "Rebuild web/index.html + web/sitemap.xml from web-src/"
+    Step "4d" "Rebuild the site's pages from web-src/"
     Build-ShowcaseSite
 
     if (-not $SkipVerify) {
@@ -1872,6 +1888,9 @@ try {
         'scripts/release-smoke/README.md',
         '.github/workflows/release-smoke.yml'
     )
+    # The document pages carry the coordinates at the release too, so they ride with the page
+    # and the data above — a page per card, including any the rebuild deleted.
+    $commitFiles += @(Get-DocumentPagePathspecs)
     # qa + coverage exist only in the 2.0 aggregator layout; add them to the commit
     # only when present so the script stays layout-agnostic (the 1.x single-artifact
     # tree has neither) — mirroring Update-PomVersion's skip-if-absent guard. On a 2.0

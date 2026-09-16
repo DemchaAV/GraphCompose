@@ -2,8 +2,9 @@ name: Deploy web showcase to GitHub Pages
 
 # Publishes the static showcase site under `web/` to GitHub Pages via
 # GitHub Actions. The site is plain HTML / CSS / JS + generated showcase
-# assets. This workflow runs no build: index.html and sitemap.xml are generated
-# into web/ by scripts/site/build.mjs and committed from there, and everything
+# assets. This workflow runs no build: the pages — index.html, sitemap.xml and a
+# page per document — are generated into web/ by scripts/site/build.mjs and
+# committed from there, and everything
 # here is uploaded as committed. It replaced the old "deploy from branch /docs"
 # setup when the showcase moved out of docs/ into web/ so that docs/ holds
 # documentation only.

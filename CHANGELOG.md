@@ -127,7 +127,7 @@ follow semantic versioning; release dates are ISO 8601.
 - **The showcase home page leads with a result, and the catalogue uses words a newcomer knows.**
   The menu is Templates, Examples, Documentation, Releases and GitHub, with a Get started button.
   The hero shows one whole document with an Invoice / CV / Proposal / Report switch — each a real
-  catalogue document that opens as a PDF or in the viewer — where it used to fan out
+  catalogue document that opens as a PDF or as its own page — where it used to fan out
   three cropped previews; a phone now gets one compact document instead of none, and the heading
   stays within two lines at every width from 320 to 1440 pixels. The feature demonstrations are listed as *Examples* and the
   large complete documents as *Showcase*, instead of *Features* and *Flagships*. Category ids and
@@ -144,6 +144,28 @@ follow semantic versioning; release dates are ISO 8601.
   4.45:1, under the 4.5:1 minimum for body text, and now reads at 6:1; the featured tiles no longer
   skip a heading level; and a menu link to a section lands with its heading below the sticky header,
   which on a phone used to cover it.
+
+- **Every document in the catalogue has a page of its own.** Each of the 117 documents gets a
+  generated page at `<category>/<family>/<id>/` — the same three segments as its viewer address —
+  that works without JavaScript and that a crawler can read: every page of the document, each
+  linking into the PDF; the PDF, and the deck where one is published; what reproducing it takes;
+  and the other documents of its family. Each page has a canonical address, a description, link
+  preview tags and structured data, and the sitemap lists them all. The no-JavaScript index, the
+  hero and a new Details link in the viewer lead there. What a page tells a reader to add, run and
+  read is not written a second time: the viewer's panel became a pure model in `gallery-viewer.js`
+  that the build loads to render the page, and `scripts/site/build.test.mjs` holds every page's
+  section to that model and to nothing besides it. Building the pages exposed a label that was
+  wrong in the viewer too: a family's worked snippet composes one preset — the CV block builds
+  `BoxedSections` — yet it was captioned "Compose it" on every card of the family, promising Blue
+  Banner's reader code that builds a different CV. Only the card of the preset the snippet composes
+  says so now; the others say the snippet comes from the docs, and where it is published on a page
+  other than the family guide — the CV block is on `using-templates.md`, the family starts at the
+  quickstart — they link that page. The build owns only the pages it wrote where they sit: a page
+  no card builds any more is deleted, `--check` fails on a page that is missing, stale or orphaned,
+  and the release cut stages the pages a rebuild added or deleted along with the ones it rewrote.
+  `ShowcaseSiteGuardTest` finds the generated pages and checks their links and anchors from each
+  page's own directory. The viewer also stops captioning every document "First page shown", which
+  was untrue of the 33 documents it pages through.
 
 ## v2.4.0 — 2026-09-14
 

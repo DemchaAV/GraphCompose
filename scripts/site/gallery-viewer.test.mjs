@@ -174,7 +174,7 @@ check("index.html loads the viewer before examples.js and carries its dialog", (
   assert.ok(pageScript > viewerScript, "gallery-viewer.js has to load before examples.js");
   assert.match(page, /<dialog[^>]*\bid="gallery-viewer"/);
   for (const part of ["families", "thumbnails", "stage", "image", "notice", "title", "counter",
-    "description", "pdf", "code", "previous", "next"]) {
+    "description", "pdf", "details", "code", "previous", "next"]) {
     assert.ok(page.includes(`data-viewer="${part}"`), `the dialog has no data-viewer="${part}"`);
   }
 });
@@ -298,6 +298,7 @@ function viewerHarness(catalogueUnderTest = catalogue, release = RELEASE) {
     counter: add(dialog, "p", { "data-viewer": "counter" }),
     description: add(dialog, "p", { "data-viewer": "description" }),
     pdf: add(dialog, "a", { "data-viewer": "pdf" }),
+    details: add(dialog, "a", { "data-viewer": "details" }),
     code: add(dialog, "a", { "data-viewer": "code" })
   };
   parts.pages = add(dialog, "div", { "data-viewer": "pages" });
@@ -611,6 +612,119 @@ check("a view showing no document empties the panel and hides it", () => {
   page.viewer.open({ category: "templates", group: "cv", id: "no-such-document" }, { history: "push" });
   assert.equal(page.parts.panel.hidden, true);
   assert.equal(page.panelText(), "");
+});
+
+check("a document's page is the three segments of its viewer address, as a path", () => {
+  assert.equal(gallery.pagePath({ category: "templates", group: "cv", id: "cv-blue-banner-v2" }),
+    "templates/cv/cv-blue-banner-v2/");
+  // The site build writes each page at this path and the viewer links it from here, so one
+  // formatter is what keeps a link and the page it names in the same place.
+  for (const category of catalogue.categories) {
+    for (const group of category.groups) {
+      for (const id of group.ids) {
+        const route = { category: category.id, group: group.id, id };
+        assert.equal(gallery.pagePath(route), gallery.formatRoute(route).slice("#/".length) + "/", id);
+      }
+    }
+  }
+});
+
+check("the viewer links the page of the document shown, and no page while it shows none", () => {
+  const page = viewerHarness();
+  const ids = idsOf("templates", "cv");
+  page.viewer.open({ category: "templates", group: "cv", id: ids[0] }, { history: "push" });
+  assert.equal(page.parts.details.hidden, false);
+  assert.equal(page.parts.details.href, "templates/cv/" + ids[0] + "/");
+  page.click(page.parts.next);
+  assert.equal(page.parts.details.href, "templates/cv/" + ids[1] + "/", "the link follows the document shown");
+  page.viewer.open({ category: "templates", group: "cv", id: "no-such-document" }, { history: "replace" });
+  assert.equal(page.parts.details.hidden, true, "a view of no document has no page to link");
+});
+
+check("the panel the viewer draws is the panel model, item for item", () => {
+  // The document pages are rendered from panelModel too, so what the dialog draws has to be the
+  // model and nothing besides — a renderer that dropped or reordered a kind of item would make the
+  // two disagree while every other case here stayed green.
+  for (const route of [
+    { category: "templates", group: "cv", id: "cv-blue-banner-v2" },
+    { category: "templates", group: "invoice", id: "invoice-modern-v2" },
+    { category: "features", group: "tables", id: "table-advanced" },
+    { category: "flagships", group: "default", id: "twin-output" }
+  ]) {
+    const page = viewerHarness();
+    page.viewer.open(route, { history: "push" });
+    page.click(page.parts.panelToggle);
+    const model = plain(gallery.panelModel(exampleOf(route.id), catalogue, RELEASE));
+    assert.equal(page.parts.panelToggle.text, model.action, route.id);
+    const drawn = page.parts.panel.descendants().map((node) => node.text).filter(Boolean);
+    const modelled = model.items.flatMap((item) => [item.label, "code" in item ? item.code : item.value])
+      .concat(model.links.map((link) => link.text));
+    assert.deepEqual(drawn, modelled, route.id);
+    assert.deepEqual(page.panelLinks().map((link) => link.href), model.links.map((link) => link.href), route.id);
+    // A class name or a path is set as code, a sentence as text, the way the model marks them.
+    assert.deepEqual(
+      page.parts.panel.descendants().filter((node) => node.className === "gallery-viewer-panel-value").map((node) => node.tag),
+      model.items.filter((item) => !("code" in item)).map((item) => (item.literal ? "code" : "span")),
+      route.id);
+  }
+});
+
+check("the panel model runs with no DOM at all", () => {
+  // The site build loads this script into a bare context to render the document pages.
+  const bare = {};
+  vm.runInNewContext(web("gallery-viewer.js"), bare, { filename: "web/gallery-viewer.js" });
+  const model = plain(bare.GraphComposeGallery.panelModel(exampleOf("cv-blue-banner-v2"), catalogue, RELEASE));
+  assert.equal(model.action, "Use this template");
+  assert.ok(model.items.length > 0 && model.links.length > 0);
+});
+
+check("the family's block is called the document's own only on the card of the preset it composes", () => {
+  const labelOf = (id) => {
+    const home = catalogue.get(id);
+    const block = catalogue.snippets[home.groupId].code;
+    const listing = gallery.panelModel(home.example, catalogue, RELEASE).items.find((item) => item.code === block);
+    assert.ok(listing, "fixture: the panel of " + id + " shows its family's block");
+    return listing.label;
+  };
+  assert.match(manifest.snippets.cv.code, /\bBoxedSections\.create\(/, "fixture: the CV block composes BoxedSections");
+  assert.equal(labelOf("cv-boxed-sections-v2"), "Compose it");
+  assert.equal(labelOf("cv-blue-banner-v2"), "From the docs",
+    "the CV block builds BoxedSections; labelled 'Compose it' on Blue Banner it promises a document it does not build");
+  assert.equal(labelOf("invoice-modern-v2"), "Compose it");
+  assert.equal(labelOf("invoice-classic-v2"), "From the docs");
+  assert.equal(labelOf("project-proposal-cinematic"), "From the docs", "a card that builds no preset");
+
+  // Matched as a whole name: a preset called Sections does not compose BoxedSections.
+  const card = { id: "sections", kind: "PRESET", presetClass: "com.example.presets.Sections" };
+  const fixture = { snippets: { cv: { code: manifest.snippets.cv.code } }, get: () => ({ groupId: "cv", example: card }) };
+  assert.equal(gallery.panelModel(card, fixture, RELEASE).items.find((item) => "code" in item).label, "From the docs");
+});
+
+check("a listing that is not on the family guide's page links the page it is on", () => {
+  // The CV family starts at the quickstart, but its listing is published on using-templates.md:
+  // a reader told the code comes from the docs has to be able to reach the page that holds it.
+  const linksOf = (id) => plain(gallery.panelModel(exampleOf(id), catalogue, RELEASE).links);
+  assert.notEqual(manifest.snippets.cv.source, "docs/templates/v2-layered/quickstart.md",
+    "fixture: the CV listing is published somewhere other than the family guide");
+  assert.ok(linksOf("cv-blue-banner-v2").some((link) => link.text === "Snippet source"
+    && link.href.endsWith("/blob/" + RELEASE.releaseTag + "/" + manifest.snippets.cv.source)));
+  // The invoice listing lives on the family guide itself, which is already linked.
+  assert.equal(manifest.snippets.invoice.source, "docs/templates/business-templates.md");
+  assert.ok(!linksOf("invoice-classic-v2").some((link) => link.text === "Snippet source"));
+  assert.ok(!linksOf("table-advanced").some((link) => link.text === "Snippet source"), "a family with no listing links none");
+});
+
+check("a family named like a property every object has is given no guide of another's", () => {
+  // Family ids are looked up in plain objects, where "constructor" names the object's own
+  // prototype; read as a guide, it published a link to the text of a function.
+  const card = {
+    id: "only", title: "Only", kind: "FEATURE", runnable: true, requiredArtifacts: ["graph-compose"],
+    sourcePath: "examples/src/main/java/com/demcha/examples/Only.java", pdf: "showcase/pdf/features/constructor/only.pdf"
+  };
+  const fixture = catalogueOf({ categories: [{ id: "features", label: "F", groups: [
+    { id: "constructor", label: "C", examples: [card] }] }] });
+  const model = plain(gallery.panelModel(card, fixture, RELEASE));
+  assert.deepEqual(model.links.map((link) => link.text), ["Example source"]);
 });
 
 check("opening records one history entry, and moving inside the viewer records none", () => {

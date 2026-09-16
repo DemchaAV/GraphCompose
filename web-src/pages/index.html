@@ -14,16 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
-  <!-- Apply the saved theme before first paint to avoid a flash. Dark is the default. -->
-  <script>
-    (function () {
-      try {
-        if (localStorage.getItem('gc-theme') === 'light') {
-          document.documentElement.setAttribute('data-theme', 'light');
-        }
-      } catch (e) {}
-    })();
-  </script>
+{{themeInit}}
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
@@ -116,24 +107,7 @@
   </script>
 </head>
 <body>
-  <header class="site-header">
-    <a class="brand" href="#top" aria-label="GraphCompose home">
-      <img src="assets/logo/graphcompose-logo.png" alt="" width="40" height="40">
-      <span>GraphCompose</span>
-    </a>
-    <nav class="site-nav" aria-label="Primary navigation">
-      <a href="#templates-section">Templates</a>
-      <a href="#features-section">Examples</a>
-      <a href="#documentation">Documentation</a>
-      <a href="https://github.com/DemchaAV/GraphCompose/releases">Releases</a>
-      <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a>
-      <a class="nav-cta" href="#install">Get started</a>
-      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark theme" title="Toggle theme">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
-      </button>
-    </nav>
-  </header>
+{{siteHeader}}
 
   <main id="top">
     <section class="hero section-shell" aria-labelledby="hero-title">
@@ -300,7 +274,7 @@
 
       <noscript>
         <div class="showcase-noscript">
-          <p><strong>JavaScript is disabled.</strong> The full searchable gallery requires JS. Below is a static index of every example so you can still reach rendered PDFs and their source.</p>
+          <p><strong>JavaScript is disabled.</strong> The full searchable gallery requires JS. Below is every document in the catalogue, each linking to a page of its own with the PDF, every page and how to reproduce it.</p>
 
 {{noscriptCatalogue}}
 
@@ -361,14 +335,7 @@
     </section>
   </main>
 
-  <footer class="site-footer">
-    <p>GraphCompose &mdash; Java declarative PDF engine. <a href="https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE">MIT-licensed</a>.</p>
-    <p>
-      <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a> &middot;
-      <a href="https://github.com/DemchaAV/GraphCompose/blob/main/CHANGELOG.md">Changelog</a> &middot;
-      <a href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/migration/v2.0.0-modules.md">Migrating to 2.0</a>
-    </p>
-  </footer>
+{{siteFooter}}
 
   <dialog class="gallery-viewer" id="gallery-viewer" aria-labelledby="gallery-viewer-title">
     <div class="gallery-viewer-frame">
@@ -399,8 +366,8 @@
           <p class="gallery-viewer-description" data-viewer="description"></p>
         </div>
         <div class="gallery-viewer-actions">
-          <span class="gallery-viewer-note">First page shown</span>
           <a class="example-action" data-viewer="pdf" target="_blank" rel="noopener">Open PDF</a>
+          <a class="example-action example-action-ghost" data-viewer="details">Details</a>
           <a class="example-action example-action-ghost" data-viewer="code" target="_blank" rel="noopener">View code</a>
         </div>
       </footer>
@@ -417,22 +384,7 @@
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-java.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-groovy.min.js"></script>
-  <script>
-    (function () {
-      var btn = document.getElementById('theme-toggle');
-      if (!btn) return;
-      btn.addEventListener('click', function () {
-        var light = document.documentElement.getAttribute('data-theme') === 'light';
-        if (light) {
-          document.documentElement.removeAttribute('data-theme');
-          try { localStorage.setItem('gc-theme', 'dark'); } catch (e) {}
-        } else {
-          document.documentElement.setAttribute('data-theme', 'light');
-          try { localStorage.setItem('gc-theme', 'light'); } catch (e) {}
-        }
-      });
-    })();
-  </script>
+{{themeToggle}}
   <script src="gallery-viewer.js"></script>
   <script src="examples.js"></script>
   <script src="home.js"></script>

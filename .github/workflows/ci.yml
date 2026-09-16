@@ -51,7 +51,7 @@ jobs:
           node-version: '20'
 
       - name: Showcase site script tests
-        # web/ is published exactly as committed — its two generated pages are built into
+        # web/ is published exactly as committed — its generated pages are built into
         # it by scripts/site/build.mjs and committed from there — and web/** matches none
         # of the path filters below, so the viewer's address and navigation logic, and the
         # check that the committed pages are the ones web-src/ builds, are tested here, in

@@ -124,7 +124,11 @@
             '@type': 'ListItem',
             position: position++,
             name: ex.title || ex.id,
-            url: ex.pdf ? baseUrl + ex.pdf : baseUrl
+            // Each document's own page, which the site build writes for every card; the PDF only
+            // where the script that names those pages did not load.
+            url: Gallery
+              ? baseUrl + Gallery.pagePath({ category: category.id, group: group.id, id: ex.id })
+              : (ex.pdf ? baseUrl + ex.pdf : baseUrl)
           };
           if (ex.description) item.description = ex.description;
           if (ex.screenshot) item.image = baseUrl + ex.screenshot;
@@ -244,10 +248,6 @@
       viewer = Gallery.createViewer({
         dialog: VIEWER_DIALOG, catalogue, release: readRelease(), onClose: onViewerClosed
       });
-      // The hero's link into the viewer (home.js) waits for this: the viewer exists only once the
-      // catalogue has loaded and <dialog> works, so its script having loaded promises nothing.
-      document.documentElement.dataset.galleryViewer = 'ready';
-      document.dispatchEvent(new CustomEvent('gallery-viewer-ready'));
     }
   }
 

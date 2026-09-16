@@ -5,7 +5,7 @@
  * wrote it: the hero's markup is parsed out of web/index.html into a DOM small enough to live in
  * this file, so a hook renamed, or an element moved out of the figure it has to sit in, fails here
  * instead of leaving a switch that silently never appears. Checked: the switch shows only when it
- * can do something; the link into the viewer waits for the viewer; choosing a document changes its
+ * can do something; both links work before any script runs; choosing a document changes its
  * caption and both links together with its picture, once the picture is ready; a preview that
  * arrives after a newer choice is dropped; and a click on no option changes nothing.
  */
@@ -159,13 +159,13 @@ function heroDom({ keep } = {}) {
     image: body.querySelector("[data-hero-image]"),
     title: body.querySelector("[data-hero-title]"),
     pdf: body.querySelector("[data-hero-pdf]"),
-    open: body.querySelector("[data-hero-open]"),
+    page: body.querySelector("[data-hero-page]"),
     options: () => group.querySelectorAll("[data-hero-option]"),
   };
 }
 
 /** Runs home.js over a hero, with previews whose readiness the test decides. */
-function run(dom, { viewerReady = false } = {}) {
+function run(dom) {
   const images = [];
   class Image {
     constructor() {
@@ -178,17 +178,13 @@ function run(dom, { viewerReady = false } = {}) {
       });
     }
   }
-  const listeners = {};
   const document = {
-    documentElement: { dataset: viewerReady ? { galleryViewer: "ready" } : {} },
     querySelector: (selector) => dom.body.querySelector(selector),
-    addEventListener: (type, listener) => (listeners[type] ||= []).push(listener),
   };
   vm.runInNewContext(script, { document, Image, Promise }, { filename: "web/home.js" });
   return {
     ...dom,
     images,
-    announceViewer: () => (listeners["gallery-viewer-ready"] || []).forEach((listener) => listener({})),
     click: (target) => (dom.group.listeners.click || []).forEach((listener) => listener({ target })),
   };
 }
@@ -197,7 +193,7 @@ const settle = () => new Promise((resolve) => setImmediate(resolve));
 const pressedStates = (hero) => hero.options().map((option) => option.getAttribute("aria-pressed"));
 
 await test("the built hero carries every hook home.js reads, and the page loads home.js", () => {
-  for (const hook of ["data-hero", "data-hero-image", "data-hero-title", "data-hero-pdf", "data-hero-open",
+  for (const hook of ["data-hero", "data-hero-image", "data-hero-title", "data-hero-pdf", "data-hero-page",
     "data-hero-switch", "data-hero-option"]) {
     // As a whole attribute: "data-hero" is also how every other hook begins.
     assert.match(page, new RegExp(`\\s${hook}(?=[\\s>=])`), `web/index.html has no ${hook} attribute`);
@@ -206,51 +202,36 @@ await test("the built hero carries every hook home.js reads, and the page loads 
   assert.ok(heroDom().options().length > 1, "the hero offers fewer than two documents, so the switch cases test nothing");
 });
 
-await test("the event home.js waits for is the one examples.js sends once the viewer exists", () => {
-  // The cases below announce the viewer themselves, so without this a renamed or dropped event in
-  // examples.js would leave every case green and the link hidden on the live page for good.
-  const listened = /addEventListener\('([\w-]+)', revealViewerLink/.exec(script);
-  assert.ok(listened, "home.js no longer waits for an event before showing the link into the viewer");
-  const examples = read("examples.js");
-  assert.ok(examples.includes(`new CustomEvent('${listened[1]}')`),
-    `examples.js never sends '${listened[1]}', so the link into the viewer would never appear`);
-  assert.match(examples, /dataset\.galleryViewer = 'ready'/,
-    "examples.js no longer marks the viewer ready, so a home.js that ran after it would never show the link");
-  assert.match(script, /dataset\.galleryViewer === 'ready'/);
+await test("both links under the document work before any script has run", () => {
+  // Nothing here runs home.js: this is the hero a reader without JavaScript gets.
+  const hero = heroDom();
+  const first = hero.options()[0].dataset;
+  assert.equal(hero.pdf.hidden, false);
+  assert.equal(hero.page.hidden, false, "the link to the document's page is the one a reader without JavaScript can follow");
+  assert.equal(hero.pdf.href, first.pdf);
+  assert.equal(hero.page.href, first.page, "the page link names the document on screen");
 });
 
-await test("before the viewer exists the switch shows, and the link into the viewer stays hidden", () => {
+await test("the switch shows once the script runs", () => {
   const hero = run(heroDom());
   assert.equal(hero.group.hidden, false,
     "the switch never appeared: home.js found no figure, image, title or link where the built page puts them");
-  assert.equal(hero.open.hidden, true, "a link into a viewer that is not there changes the address and opens nothing");
-});
-
-await test("the link into the viewer appears when the viewer announces itself", () => {
-  const hero = run(heroDom());
-  hero.announceViewer();
-  assert.equal(hero.open.hidden, false);
-});
-
-await test("a viewer that is already up when home.js runs gets its link at once", () => {
-  const hero = run(heroDom(), { viewerReady: true });
-  assert.equal(hero.open.hidden, false);
 });
 
 await test("choosing a document changes only which option is pressed until its preview is ready", async () => {
-  const hero = run(heroDom(), { viewerReady: true });
-  const before = { src: hero.image.src, title: hero.title.textContent, pdf: hero.pdf.href, open: hero.open.href };
+  const hero = run(heroDom());
+  const before = { src: hero.image.src, title: hero.title.textContent, pdf: hero.pdf.href, page: hero.page.href };
   const chosen = hero.options()[2];
   hero.click(chosen);
   await settle();
   assert.deepEqual(pressedStates(hero), hero.options().map((option) => String(option === chosen)));
-  assert.deepEqual({ src: hero.image.src, title: hero.title.textContent, pdf: hero.pdf.href, open: hero.open.href }, before,
+  assert.deepEqual({ src: hero.image.src, title: hero.title.textContent, pdf: hero.pdf.href, page: hero.page.href }, before,
     "the page described the new document before its picture was ready");
   assert.equal(hero.figure.getAttribute("aria-busy"), "true");
 });
 
 await test("once the preview is ready, the picture, its size, the caption and both links change together", async () => {
-  const hero = run(heroDom(), { viewerReady: true });
+  const hero = run(heroDom());
   const chosen = hero.options()[2];
   hero.click(chosen);
   hero.images.at(-1).resolve();
@@ -262,12 +243,12 @@ await test("once the preview is ready, the picture, its size, the caption and bo
   assert.equal(hero.image.alt, `${data.title}, first page`);
   assert.equal(hero.title.textContent, data.title);
   assert.equal(hero.pdf.href, data.pdf);
-  assert.equal(hero.open.href, data.route);
+  assert.equal(hero.page.href, data.page);
   assert.equal(hero.figure.getAttribute("aria-busy"), null);
 });
 
 await test("a preview that becomes ready after a newer choice is dropped", async () => {
-  const hero = run(heroDom(), { viewerReady: true });
+  const hero = run(heroDom());
   const [, second, third] = hero.options();
   hero.click(second);
   hero.click(third);
@@ -278,20 +259,22 @@ await test("a preview that becomes ready after a newer choice is dropped", async
   await settle();
   assert.equal(hero.title.textContent, third.dataset.title, "a slow preview of an earlier choice replaced the later one");
   assert.equal(hero.pdf.href, third.dataset.pdf);
+  assert.equal(hero.page.href, third.dataset.page);
 });
 
 await test("a preview that fails still brings the caption along", async () => {
-  const hero = run(heroDom(), { viewerReady: true });
+  const hero = run(heroDom());
   const chosen = hero.options()[1];
   hero.click(chosen);
   hero.images.at(-1).reject(new Error("offline"));
   await settle();
   assert.equal(hero.title.textContent, chosen.dataset.title);
   assert.equal(hero.pdf.href, chosen.dataset.pdf);
+  assert.equal(hero.page.href, chosen.dataset.page);
 });
 
 await test("a click that lands on no option changes nothing", async () => {
-  const hero = run(heroDom(), { viewerReady: true });
+  const hero = run(heroDom());
   const pressed = pressedStates(hero);
   const src = hero.image.src;
   hero.click(hero.group);
@@ -302,12 +285,12 @@ await test("a click that lands on no option changes nothing", async () => {
 });
 
 await test("a single document gets no switch", () => {
-  const hero = run(heroDom({ keep: 1 }), { viewerReady: true });
+  const hero = run(heroDom({ keep: 1 }));
   assert.equal(hero.group.hidden, true, "a switch with one position switches nothing");
 });
 
 await test("a page without the hero is left alone", () => {
-  const document = { querySelector: () => null, documentElement: { dataset: {} }, addEventListener() {} };
+  const document = { querySelector: () => null };
   assert.doesNotThrow(() => vm.runInNewContext(script, { document }, { filename: "web/home.js" }));
 });
 

@@ -36,6 +36,9 @@
     <priority>0.6</priority>
   </url>
 
+  <!-- One page for every document in the catalogue -->
+{{documentPages}}
+
   <!-- Hero PDFs surfaced for crawlers + image search -->
 {{sitemapDocuments}}
 </urlset>

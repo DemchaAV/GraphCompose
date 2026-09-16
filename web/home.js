@@ -1,11 +1,9 @@
 /**
  * The hero's document switch.
  *
- * The page is built with the first document already on it — its image, its title and its PDF
- * link — so a reader without JavaScript still sees a real result and can open it. The switch is
- * rendered hidden and shown here, and the link into the viewer only once the viewer itself exists:
- * the viewer needs the catalogue and <dialog>, not merely its script, and a link into a viewer that
- * never came up would change the address and open nothing.
+ * The page is built with the first document already on it — its image, its title, its PDF and its
+ * page — so a reader without JavaScript still sees a real result and can open it. The switch is
+ * rendered hidden and shown here, because without a script it would swap nothing.
  */
 (function () {
   'use strict';
@@ -17,8 +15,8 @@
   const image = figure.querySelector('[data-hero-image]');
   const title = figure.querySelector('[data-hero-title]');
   const pdf = figure.querySelector('[data-hero-pdf]');
-  const open = figure.querySelector('[data-hero-open]');
-  if (!image || !title || !pdf || !open) return;
+  const page = figure.querySelector('[data-hero-page]');
+  if (!image || !title || !pdf || !page) return;
 
   const options = Array.from(group.querySelectorAll('[data-hero-option]'));
 
@@ -33,7 +31,7 @@
     image.alt = data.title + ', first page';
     title.textContent = data.title;
     pdf.href = data.pdf;
-    open.href = data.route;
+    page.href = data.page;
     figure.removeAttribute('aria-busy');
   }
 
@@ -45,9 +43,9 @@
     const mine = ++ticket;
     figure.setAttribute('aria-busy', 'true');
     // Everything that names the document changes with its picture, once the picture is ready:
-    // swapped first, "Open PDF" would open a document other than the one on screen for as long as
-    // the preview takes to arrive. A preview that fails still brings the caption along, so the page
-    // never goes on describing the document the reader moved away from.
+    // swapped first, "Open PDF" and "Details" would open a document other than the one on screen
+    // for as long as the preview takes to arrive. A preview that fails still brings the caption
+    // along, so the page never goes on describing the document the reader moved away from.
     const next = new Image();
     next.src = data.screenshot;
     const ready = typeof next.decode === 'function' ? next.decode() : Promise.resolve();
@@ -60,15 +58,6 @@
     const option = event.target.closest('[data-hero-option]');
     if (option && group.contains(option)) show(option);
   });
-
-  function revealViewerLink() {
-    open.hidden = false;
-  }
-  if (document.documentElement.dataset.galleryViewer === 'ready') {
-    revealViewerLink();
-  } else {
-    document.addEventListener('gallery-viewer-ready', revealViewerLink, { once: true });
-  }
 
   // One document needs no switch.
   if (options.length > 1) group.hidden = false;

@@ -59,6 +59,146 @@
     return ROUTE_PREFIX + segments.map(encodeURIComponent).join('/');
   }
 
+  // A document's own page, relative to the site root: the three segments of its viewer address,
+  // as a path. scripts/site/build.mjs writes every page at exactly this path, and the viewer, the
+  // hero and the no-JavaScript index all link it from here, so a page and a link to it cannot
+  // disagree about where it is.
+  function pagePath(route) {
+    return [route.category, route.group, route.id].map(encodeURIComponent).join('/') + '/';
+  }
+
+  // What a reader needs to reproduce a document: the artifacts to depend on at the release the
+  // page names, the classes a preset composes, the snippet its family's guide teaches, the command
+  // that runs it, and where the runnable source and that guide are. It is decided here once and
+  // drawn twice — as the viewer's panel, and as the section of the document's own page that
+  // scripts/site/build.mjs renders by loading this script — so the two cannot tell a reader
+  // different things. A card that builds no preset gets the same panel without the preset claims.
+  //
+  // Returns { action, items, links }: an item is { label, value } for a line of prose,
+  // { label, value, literal: true } for a class name or a path a reader types as written, or
+  // { label, code } for a listing; a link is { text, href }. The card's family comes from the
+  // catalogue, whose snippets are carried per family.
+  function panelModel(card, catalogue, release) {
+    const home = catalogue && typeof catalogue.get === 'function' ? catalogue.get(card.id) : undefined;
+    const family = home ? home.groupId : null;
+    const preset = card.kind === 'PRESET' && card.presetClass ? card.presetClass : null;
+    const items = [];
+    const row = (label, value) => items.push({ label, value });
+    const literal = (label, value) => items.push({ label, value, literal: true });
+    const listing = (label, code) => items.push({ label, code });
+
+    // A coordinate is only as good as the version beside it. With no release context the
+    // page would be naming a release it does not know, so it names none at all.
+    // A document that embeds a face of its own cannot be reproduced from the engine and
+    // the templates alone — it renders until the first glyph and then throws on a missing
+    // font resource — so those cards are given the aggregate instead of the pair.
+    const declared = card.requiredArtifacts || [];
+    // The aggregate carries the engine, the PDF backend, the templates and the bundled
+    // faces — but not the DOCX or PPTX backends, so anything else the card asks for stays
+    // beside it rather than being replaced by it.
+    const artifacts = card.needsBundledFonts
+      ? [BUNDLE].concat(declared.filter(name => name !== 'graph-compose' && name !== 'graph-compose-templates'))
+      : declared;
+    if (release && artifacts.length) {
+      listing('Maven', artifacts.map(artifact =>
+        '<dependency>\n'
+        + '  <groupId>' + GROUP_ID + '</groupId>\n'
+        + '  <artifactId>' + artifact + '</artifactId>\n'
+        + '  <version>' + release.stableVersion + '</version>\n'
+        + '</dependency>').join('\n'));
+      listing('Gradle', artifacts.map(artifact =>
+        "implementation '" + GROUP_ID + ':' + artifact + ':' + release.stableVersion + "'").join('\n'));
+      if (card.needsBundledFonts) {
+        row('Why the aggregate', 'this document is drawn in a bundled '
+          + 'font, and those ship separately from the engine; the aggregate carries them '
+          + 'along with the PDF backend and the templates, in one coordinate');
+      }
+    }
+    // The Java floor is a fact about the release, not about this card's coordinates: a
+    // card that named none would still need the same JVM to run.
+    if (release && release.javaMinimum) {
+      row('Java', release.javaMinimum + ' or newer');
+    }
+
+    if (preset) {
+      literal('Preset', preset);
+      if (card.dataModel) {
+        literal('Data model', card.dataModel);
+      }
+    }
+
+    // The family's compiled block, carried in the manifest because the site is served from
+    // web/ alone and cannot reach the page it is written on.
+    const snippet = family && hasOwn(catalogue.snippets, family) ? catalogue.snippets[family] : null;
+    if (snippet && snippet.code) {
+      listing(snippetLabel(preset, snippet.code), snippet.code);
+    }
+
+    // Only a class with a main of its own can be started this way. The rest are rendered by
+    // GenerateAllExamples, and handing a reader exec:java for one gives them a command that
+    // fails with "doesn't contain a main method".
+    const main = card.runnable ? mainClassOf(card.sourcePath) : '';
+    if (main) {
+      listing('Run the example', './mvnw -f examples/pom.xml exec:java -Dexec.mainClass=' + main);
+    } else if (card.runnable === false && card.sourcePath) {
+      // Only say this where the catalogue says the class has no main. A path the class-name
+      // rule cannot read is a different thing, and claiming it has no main would be a guess.
+      row('Rendered by', 'GenerateAllExamples — this example has no main of its own');
+    }
+    if (card.pdf) {
+      literal('Writes', card.pdf.replace('showcase/pdf/', 'examples/target/generated-pdfs/'));
+    }
+
+    // Source and guide are pinned to the release the page names, so a reader following them
+    // reads the code that produced the document shown, not whatever develop holds today.
+    const links = [];
+    const tag = release && release.releaseTag;
+    if (card.sourcePath && tag) {
+      links.push({ text: 'Example source', href: GITHUB_BLOB + tag + '/' + card.sourcePath });
+    } else if (card.code && card.code !== '#') {
+      links.push({ text: 'Example source', href: card.code });
+    }
+    // Looked up as an own key: a family id such as "constructor" would otherwise find the
+    // object's prototype and publish a link to it.
+    const guide = family && hasOwn(FAMILY_GUIDES, family) ? FAMILY_GUIDES[family] : '';
+    if (guide && tag) {
+      links.push({ text: 'Family guide', href: GITHUB_BLOB + tag + '/' + guide });
+    }
+    // The page the listing is published on, where that is not the guide just linked: the CV
+    // family starts at the quickstart, but its listing comes from using-templates.md, and a
+    // reader looking for the code in the family guide would not find it there.
+    if (snippet && snippet.code && snippet.source && tag && snippet.source !== guide.split('#')[0]) {
+      links.push({ text: 'Snippet source', href: GITHUB_BLOB + tag + '/' + snippet.source });
+    }
+
+    return { action: preset ? 'Use this template' : 'Run this example', items, links };
+  }
+
+  // What the family's listing is to one card. It composes a single preset of the family —
+  // BoxedSections for the CVs, ModernInvoice, ModernProposal — so "Compose it" is true on that
+  // preset's card alone: on Blue Banner's it would label code that builds a different CV. Every
+  // other card is told only that the listing comes from the documentation. The name is matched
+  // whole, so a preset called Sections is not taken for BoxedSections.
+  function snippetLabel(preset, code) {
+    const simpleName = preset ? preset.slice(preset.lastIndexOf('.') + 1) : '';
+    const composes = simpleName
+      && new RegExp('(^|[^\\w$])' + simpleName.replace(/\$/g, '\\$') + '\\.create\\(').test(code);
+    return composes ? 'Compose it' : 'From the docs';
+  }
+
+  function hasOwn(object, key) {
+    return !!object && Object.prototype.hasOwnProperty.call(object, key);
+  }
+
+  /** The runnable class a card's source path names, or '' when it names no example source. */
+  function mainClassOf(sourcePath) {
+    const prefix = 'examples/src/main/java/';
+    if (!sourcePath || sourcePath.indexOf(prefix) !== 0 || !sourcePath.endsWith('.java')) {
+      return '';
+    }
+    return sourcePath.slice(prefix.length, -'.java'.length).split('/').join('.');
+  }
+
   // Navigation over a catalogue, with no DOM: which document a route shows, where
   // Previous and Next lead, and which document each family was last left on.
   //
@@ -142,6 +282,7 @@
     const counter = part('counter');
     const description = part('description');
     const pdf = part('pdf');
+    const details = part('details');
     const code = part('code');
     const previous = part('previous');
     const next = part('next');
@@ -232,6 +373,8 @@
       previous.disabled = atStart;
       next.disabled = atEnd;
       setLink(pdf, shown ? shown.pdf : '');
+      // The document's own page, which the site build writes at this path for every card.
+      setLink(details, shown ? pagePath(view.route) : '');
       setLink(code, shown && shown.code && shown.code !== '#' ? shown.code : '');
       renderPages(shown);
       renderPanel(shown);
@@ -253,10 +396,8 @@
       }
     }
 
-    // What a reader needs to reproduce the document shown: the artifacts to depend on at the
-    // release this page was published for, the classes a preset composes, the snippet its
-    // family's guide teaches, and where the runnable source and that guide are. A card that
-    // builds no preset gets the same panel without the preset claims.
+    // The panel draws panelModel: what it says is decided there, for this dialog and for the
+    // document's own page alike.
     function renderPanel(shown) {
       panel.textContent = '';
       // Two separate questions: whether there is a document to describe, and whether the reader
@@ -271,100 +412,28 @@
       panelToggle.setAttribute('aria-expanded', String(!!shown && panelOpen));
       if (!shown) return;
 
-      const preset = shown.kind === 'PRESET' && shown.presetClass ? shown.presetClass : null;
-      panelToggle.textContent = preset ? 'Use this template' : 'Run this example';
-
-      // A coordinate is only as good as the version beside it. With no release context the
-      // page would be naming a release it does not know, so it names none at all.
-      // A document that embeds a face of its own cannot be reproduced from the engine and
-      // the templates alone — it renders until the first glyph and then throws on a missing
-      // font resource — so those cards are given the aggregate instead of the pair.
-      const declared = shown.requiredArtifacts || [];
-      // The aggregate carries the engine, the PDF backend, the templates and the bundled
-      // faces — but not the DOCX or PPTX backends, so anything else the card asks for stays
-      // beside it rather than being replaced by it.
-      const artifacts = shown.needsBundledFonts
-        ? [BUNDLE].concat(declared.filter(name => name !== 'graph-compose' && name !== 'graph-compose-templates'))
-        : declared;
-      if (release && artifacts.length) {
-        panel.append(panelBlock('Maven', artifacts.map(artifact =>
-          '<dependency>\n'
-          + '  <groupId>' + GROUP_ID + '</groupId>\n'
-          + '  <artifactId>' + artifact + '</artifactId>\n'
-          + '  <version>' + release.stableVersion + '</version>\n'
-          + '</dependency>').join('\n')));
-        panel.append(panelBlock('Gradle', artifacts.map(artifact =>
-          "implementation '" + GROUP_ID + ':' + artifact + ':' + release.stableVersion + "'").join('\n')));
-        if (shown.needsBundledFonts) {
-          panel.append(panelRow('Why the aggregate', 'this document is drawn in a bundled '
-            + 'font, and those ship separately from the engine; the aggregate carries them '
-            + 'along with the PDF backend and the templates, in one coordinate'));
+      const model = panelModel(shown, catalogue, release);
+      panelToggle.textContent = model.action;
+      for (const item of model.items) {
+        panel.append('code' in item ? panelBlock(item.label, item.code) : panelRow(item.label, item.value, item.literal));
+      }
+      if (model.links.length) {
+        const links = document.createElement('div');
+        links.className = 'gallery-viewer-panel-links';
+        for (const link of model.links) {
+          links.append(panelLink(link.text, link.href));
         }
-      }
-      // The Java floor is a fact about the release, not about this card's coordinates: a
-      // card that named none would still need the same JVM to run.
-      if (release && release.javaMinimum) {
-        panel.append(panelRow('Java', release.javaMinimum + ' or newer'));
-      }
-
-      if (preset) {
-        panel.append(panelRow('Preset', preset));
-        if (shown.dataModel) {
-          panel.append(panelRow('Data model', shown.dataModel));
-        }
-      }
-
-      // The family's compiled block, carried in the manifest because the site is served from
-      // web/ alone and cannot reach the page it is written on.
-      const snippet = (catalogue.snippets || {})[view.group.id];
-      if (snippet && snippet.code) {
-        panel.append(panelBlock(preset ? 'Compose it' : 'The shape of it', snippet.code));
-      }
-
-      // Only a class with a main of its own can be started this way. The rest are rendered by
-      // GenerateAllExamples, and handing a reader exec:java for one gives them a command that
-      // fails with "doesn't contain a main method".
-      const main = shown.runnable ? mainClassOf(shown.sourcePath) : '';
-      if (main) {
-        panel.append(panelBlock('Run the example',
-          './mvnw -f examples/pom.xml exec:java -Dexec.mainClass=' + main));
-      } else if (shown.runnable === false && shown.sourcePath) {
-        // Only say this where the catalogue says the class has no main. A path the class-name
-        // rule cannot read is a different thing, and claiming it has no main would be a guess.
-        panel.append(panelRow('Rendered by',
-          'GenerateAllExamples — this example has no main of its own'));
-      }
-      if (shown.pdf) {
-        panel.append(panelRow('Writes',
-          shown.pdf.replace('showcase/pdf/', 'examples/target/generated-pdfs/')));
-      }
-
-      const links = document.createElement('div');
-      links.className = 'gallery-viewer-panel-links';
-      // Source and guide are pinned to the release the page names, so a reader following them
-      // reads the code that produced the document shown, not whatever develop holds today.
-      const tag = release && release.releaseTag;
-      if (shown.sourcePath && tag) {
-        links.append(panelLink('Example source', GITHUB_BLOB + tag + '/' + shown.sourcePath));
-      } else if (shown.code && shown.code !== '#') {
-        links.append(panelLink('Example source', shown.code));
-      }
-      const guide = FAMILY_GUIDES[view.group.id];
-      if (guide && tag) {
-        links.append(panelLink('Family guide', GITHUB_BLOB + tag + '/' + guide));
-      }
-      if (links.children.length) {
         panel.append(links);
       }
     }
 
-    function panelRow(label, value) {
+    function panelRow(label, value, literal) {
       const row = document.createElement('p');
       row.className = 'gallery-viewer-panel-row';
       const name = document.createElement('span');
       name.className = 'gallery-viewer-panel-label';
       name.textContent = label;
-      const said = document.createElement('span');
+      const said = document.createElement(literal ? 'code' : 'span');
       said.className = 'gallery-viewer-panel-value';
       said.textContent = value;
       row.append(name, said);
@@ -395,15 +464,6 @@
       anchor.target = '_blank';
       anchor.rel = 'noopener';
       return anchor;
-    }
-
-    /** The runnable class a card's source path names, or '' when it names no example source. */
-    function mainClassOf(sourcePath) {
-      const prefix = 'examples/src/main/java/';
-      if (!sourcePath || sourcePath.indexOf(prefix) !== 0 || !sourcePath.endsWith('.java')) {
-        return '';
-      }
-      return sourcePath.slice(prefix.length, -'.java'.length).split('/').join('.');
     }
 
     function renderFamilies() {
@@ -755,5 +815,5 @@
     };
   }
 
-  global.GraphComposeGallery = { parseRoute, formatRoute, createNavigator, createViewer };
+  global.GraphComposeGallery = { parseRoute, formatRoute, pagePath, panelModel, createNavigator, createViewer };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -16,6 +16,25 @@
 
   const ROUTE_PREFIX = '#/';
 
+  // The page each family's guide lives on, from the table in docs/templates/README.md —
+  // the maintainer's own "Start here" per family, which is why CV points at the quickstart
+  // rather than the deeper authoring page. A family with no entry shows no guide link at
+  // all, rather than one belonging to another family.
+  const FAMILY_GUIDES = {
+    cv: 'docs/templates/v2-layered/quickstart.md',
+    coverletter: 'docs/templates/v2-layered/quickstart.md',
+    invoice: 'docs/templates/business-templates.md',
+    proposal: 'docs/templates/business-templates.md',
+    receipt: 'docs/templates/v2-layered/README.md#the-shipped-families',
+    schedule: 'docs/templates/v2-layered/README.md#the-shipped-families'
+  };
+  const GITHUB_BLOB = 'https://github.com/DemchaAV/GraphCompose/blob/';
+  const GROUP_ID = 'io.github.demchaav';
+  // The aggregate: the engine, the PDF backend, the templates, and the bundled fonts and
+  // emoji. It is the only published coordinate that carries the faces at the release's own
+  // version, because the fonts companion is versioned independently of the engine.
+  const BUNDLE = 'graph-compose-bundle';
+
   // Reads #/<category>/<group>[/<id>]. Anything else (a section anchor, an empty
   // segment, a fourth segment, broken percent-encoding) is not a viewer address.
   function parseRoute(hash) {
@@ -113,6 +132,7 @@
     const dialog = options.dialog;
     const catalogue = options.catalogue;
     const routes = createNavigator(catalogue);
+    const release = options.release || null;
     const part = name => dialog.querySelector('[data-viewer="' + name + '"]');
     const families = part('families');
     const stage = part('stage');
@@ -127,6 +147,7 @@
     const next = part('next');
     const closer = dialog.querySelector('[data-viewer-close]');
     const thumbs = part('thumbnails');
+    const panel = part('panel');
 
     let view = null;
     let opener = null;
@@ -196,6 +217,7 @@
       next.disabled = atEnd;
       setLink(pdf, shown ? shown.pdf : '');
       setLink(code, shown && shown.code && shown.code !== '#' ? shown.code : '');
+      renderPanel(shown);
       if (shown) {
         showPage(shown);
       } else {
@@ -212,6 +234,157 @@
         link.removeAttribute('href');
         link.hidden = true;
       }
+    }
+
+    // What a reader needs to reproduce the document shown: the artifacts to depend on at the
+    // release this page was published for, the classes a preset composes, the snippet its
+    // family's guide teaches, and where the runnable source and that guide are. A card that
+    // builds no preset gets the same panel without the preset claims.
+    function renderPanel(shown) {
+      panel.textContent = '';
+      panel.hidden = !shown;
+      if (!shown) return;
+
+      const preset = shown.kind === 'PRESET' && shown.presetClass ? shown.presetClass : null;
+      panel.append(panelHeading(preset ? 'Use this template' : 'Run this example'));
+
+      // A coordinate is only as good as the version beside it. With no release context the
+      // page would be naming a release it does not know, so it names none at all.
+      // A document that embeds a face of its own cannot be reproduced from the engine and
+      // the templates alone — it renders until the first glyph and then throws on a missing
+      // font resource — so those cards are given the aggregate instead of the pair.
+      const declared = shown.requiredArtifacts || [];
+      // The aggregate carries the engine, the PDF backend, the templates and the bundled
+      // faces — but not the DOCX or PPTX backends, so anything else the card asks for stays
+      // beside it rather than being replaced by it.
+      const artifacts = shown.needsBundledFonts
+        ? [BUNDLE].concat(declared.filter(name => name !== 'graph-compose' && name !== 'graph-compose-templates'))
+        : declared;
+      if (release && artifacts.length) {
+        panel.append(panelBlock('Maven', artifacts.map(artifact =>
+          '<dependency>\n'
+          + '  <groupId>' + GROUP_ID + '</groupId>\n'
+          + '  <artifactId>' + artifact + '</artifactId>\n'
+          + '  <version>' + release.stableVersion + '</version>\n'
+          + '</dependency>').join('\n')));
+        panel.append(panelBlock('Gradle', artifacts.map(artifact =>
+          "implementation '" + GROUP_ID + ':' + artifact + ':' + release.stableVersion + "'").join('\n')));
+        if (shown.needsBundledFonts) {
+          panel.append(panelRow('Why the aggregate', 'this document is drawn in a bundled '
+            + 'font, and those ship separately from the engine; the aggregate carries them '
+            + 'along with the PDF backend and the templates, in one coordinate'));
+        }
+      }
+      // The Java floor is a fact about the release, not about this card's coordinates: a
+      // card that named none would still need the same JVM to run.
+      if (release && release.javaMinimum) {
+        panel.append(panelRow('Java', release.javaMinimum + ' or newer'));
+      }
+
+      if (preset) {
+        panel.append(panelRow('Preset', preset));
+        if (shown.dataModel) {
+          panel.append(panelRow('Data model', shown.dataModel));
+        }
+      }
+
+      // The family's compiled block, carried in the manifest because the site is served from
+      // web/ alone and cannot reach the page it is written on.
+      const snippet = (catalogue.snippets || {})[view.group.id];
+      if (snippet && snippet.code) {
+        panel.append(panelBlock(preset ? 'Compose it' : 'The shape of it', snippet.code));
+      }
+
+      // Only a class with a main of its own can be started this way. The rest are rendered by
+      // GenerateAllExamples, and handing a reader exec:java for one gives them a command that
+      // fails with "doesn't contain a main method".
+      const main = shown.runnable ? mainClassOf(shown.sourcePath) : '';
+      if (main) {
+        panel.append(panelBlock('Run the example',
+          './mvnw -f examples/pom.xml exec:java -Dexec.mainClass=' + main));
+      } else if (shown.runnable === false && shown.sourcePath) {
+        // Only say this where the catalogue says the class has no main. A path the class-name
+        // rule cannot read is a different thing, and claiming it has no main would be a guess.
+        panel.append(panelRow('Rendered by',
+          'GenerateAllExamples — this example has no main of its own'));
+      }
+      if (shown.pdf) {
+        panel.append(panelRow('Writes',
+          shown.pdf.replace('showcase/pdf/', 'examples/target/generated-pdfs/')));
+      }
+
+      const links = document.createElement('div');
+      links.className = 'gallery-viewer-panel-links';
+      // Source and guide are pinned to the release the page names, so a reader following them
+      // reads the code that produced the document shown, not whatever develop holds today.
+      const tag = release && release.releaseTag;
+      if (shown.sourcePath && tag) {
+        links.append(panelLink('Example source', GITHUB_BLOB + tag + '/' + shown.sourcePath));
+      } else if (shown.code && shown.code !== '#') {
+        links.append(panelLink('Example source', shown.code));
+      }
+      const guide = FAMILY_GUIDES[view.group.id];
+      if (guide && tag) {
+        links.append(panelLink('Family guide', GITHUB_BLOB + tag + '/' + guide));
+      }
+      if (links.children.length) {
+        panel.append(links);
+      }
+    }
+
+    function panelHeading(text) {
+      const heading = document.createElement('h3');
+      heading.className = 'gallery-viewer-panel-heading';
+      heading.textContent = text;
+      return heading;
+    }
+
+    function panelRow(label, value) {
+      const row = document.createElement('p');
+      row.className = 'gallery-viewer-panel-row';
+      const name = document.createElement('span');
+      name.className = 'gallery-viewer-panel-label';
+      name.textContent = label;
+      const said = document.createElement('span');
+      said.className = 'gallery-viewer-panel-value';
+      said.textContent = value;
+      row.append(name, said);
+      return row;
+    }
+
+    function panelBlock(label, code) {
+      const block = document.createElement('div');
+      block.className = 'gallery-viewer-panel-block';
+      const line = document.createElement('p');
+      line.className = 'gallery-viewer-panel-row';
+      const name = document.createElement('span');
+      name.className = 'gallery-viewer-panel-label';
+      name.textContent = label;
+      line.append(name);
+      const listing = document.createElement('pre');
+      listing.className = 'gallery-viewer-panel-code';
+      listing.textContent = code;
+      block.append(line, listing);
+      return block;
+    }
+
+    function panelLink(text, href) {
+      const anchor = document.createElement('a');
+      anchor.className = 'example-action example-action-ghost';
+      anchor.textContent = text;
+      anchor.href = href;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener';
+      return anchor;
+    }
+
+    /** The runnable class a card's source path names, or '' when it names no example source. */
+    function mainClassOf(sourcePath) {
+      const prefix = 'examples/src/main/java/';
+      if (!sourcePath || sourcePath.indexOf(prefix) !== 0 || !sourcePath.endsWith('.java')) {
+        return '';
+      }
+      return sourcePath.slice(prefix.length, -'.java'.length).split('/').join('.');
     }
 
     function renderFamilies() {

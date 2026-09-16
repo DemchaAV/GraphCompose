@@ -29,18 +29,27 @@ it sets up the conceptual model in 5 minutes.
 
 ## The Pieces You Assemble
 
+<!-- doc-example: id=using-templates-pieces mode=method imports=com.demcha.compose.GraphCompose,com.demcha.compose.document.api.DocumentSession,com.demcha.compose.document.templates.api.DocumentTemplate,com.demcha.compose.document.templates.core.theme.BrandTheme,com.demcha.compose.document.templates.cv.data.CvDocument,com.demcha.compose.document.templates.cv.data.CvIdentity,com.demcha.compose.document.templates.cv.data.ParagraphSection,com.demcha.compose.document.templates.cv.presets.BoxedSections,java.nio.file.Path,java.util.List -->
 ```java
-CvDocument  doc      = …;                  // your content
-BrandTheme     theme    = BrandTheme.boxedClassic();   // optional override
-DocumentTemplate<CvDocument> tpl = BoxedSections.create(theme);
+CvIdentity identity = CvIdentity.builder()
+        .name("Jane", "Doe")
+        .jobTitle("Backend Engineer")
+        .contact("+44 20 7946 0958", "jane.doe@example.com", "London, UK")
+        .build();
 
-try (DocumentSession s = GraphCompose.document(path).create()) {
-    tpl.compose(s, doc);
-    s.buildPdf();
+CvDocument cv = CvDocument.ofMainSections(identity, List.of(
+        new ParagraphSection("Profile", "Ten years building document pipelines.")));
+
+BrandTheme theme = BrandTheme.boxedClassic();          // optional override
+DocumentTemplate<CvDocument> template = BoxedSections.create(theme);
+
+try (DocumentSession document = GraphCompose.document(Path.of("cv.pdf")).create()) {
+    template.compose(document, cv);
+    document.buildPdf();
 }
 ```
 
-Three lines of "what":
+Three pieces:
 - **`CvDocument`** — your content. Built via builder.
 - **`BrandTheme`** — visual style. Use a shipped factory or build your own.
 - **A preset** — orchestrates them into a page flow.

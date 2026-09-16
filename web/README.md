@@ -13,8 +13,11 @@ and a generated JSON manifest, served directly with **no build step**. It lives
   `#<category>-section`) by selecting that category's filter first: a category
   section exists only while its filter is shown.
 - `gallery-viewer.js` — the viewer the gallery opens: one family at a time, at
-  `#/<category>/<group>/<id>`. `scripts/site/gallery-viewer.test.mjs` tests its addresses
-  and navigation in CI's guard job.
+  `#/<category>/<group>/<id>`. Under the document it shows what reproducing it takes —
+  the coordinates at the release the page names, the preset and model a card composes,
+  its family's compiled snippet, the run command, and the source and guide at the release
+  tag. `scripts/site/gallery-viewer.test.mjs` tests its addresses, navigation and that
+  panel in CI's guard job.
 - `examples.json` — **generated** gallery manifest. Do **not** hand-edit it; it is
   rewritten by `ShowcaseSync` (see below).
 - `robots.txt`, `sitemap.xml` — SEO.
@@ -56,9 +59,37 @@ Driven by code, not hand-edited JSON. Source of truth:
    The manifest carries a `schemaVersion`, and each card carries what the register knows
    (`kind`, `sourcePath`, `requiredArtifacts`, and `presetClass` + `dataModel` where the
    example builds exactly one preset, plus `variantOf` where it re-renders another card's)
-   alongside what rendering it measured (`previewWidth`, `previewHeight`, `pageCount`).
+   alongside what rendering it measured (`previewWidth`, `previewHeight`, `pageCount`,
+   `needsBundledFonts`) and what its own source says (`runnable`, and any backend added to
+   `requiredArtifacts`).
+
+   `requiredArtifacts` is the register's list plus whatever the card actually needs. The DOCX
+   backend is named in an import. The PPTX one is discovered by format and so appears in no
+   source at all: a card needs it when its example calls one of the deck methods **or** when
+   the card publishes a deck — four of the flagship twins are rendered by a sibling class, so
+   their own example never mentions it and reading the source alone would miss them. A reader
+   without these gets a `MissingBackendException` at render rather than a compile error. `runnable` says whether that class has a `main` a reader can
+   start — the two that do not are rendered by `GenerateAllExamples`, and the site offers
+   them no `exec:java` command, which would fail. Both are held to the example source by
+   `ShowcaseCardInstructionsTest`.
+
+   `needsBundledFonts` is read from the document itself: a PDF that embeds a face of its
+   own cannot be reproduced from the engine and the templates alone — it compiles and then
+   throws on a missing font resource — and the artifact carrying the bundled faces is
+   versioned independently of the release, so those cards send a reader to
+   `graph-compose-bundle` instead. It is measured rather than registered because it differs
+   card by card inside one family: 25 of 27 CVs embed a face, 4 of 7 invoices do.
+
+   The manifest also carries a `snippets` object, one entry per family, holding the compiled
+   code block from that family's guide. The site is served from `web/` alone and cannot
+   reach a page under `docs/`, so the block is copied in at sync time; the blocks are the
+   ones `DocumentationSnippetCompileTest` compiles, so what a reader copies off the site is
+   text a compiler has accepted.
+
    The preset and model on a card are held to the example that renders them by
-   `ShowcasePresetRegistrationTest` in the examples module.
+   `ShowcasePresetRegistrationTest`, and each card's font claim to its own document by
+   `ShowcaseBundledFontClaimTest` — both in the examples module, which is where PDFBox and a
+   JSON reader are both on the test classpath.
 5. Commit the regenerated `web/showcase/**` + `web/examples.json`.
 
 ## What a release changes here
@@ -95,7 +126,12 @@ writes to it.
   does not have, a `#/<category>/<group>[/<id>]` viewer address names a family or card
   it does not have, or another anchor names no element in `index.html`;
 - a card, family or category id repeats, or would need escaping in a viewer address;
-- `examples.json` is not strict JSON, which the page's `fetch` would refuse as well.
+- `examples.json` is not strict JSON, which the page's `fetch` would refuse as well;
+- the manifest was written to a `schemaVersion` this site does not read;
+- a published snippet is no longer the block it was compiled from, or names a page or a
+  marker that has gone — the panel would otherwise publish code that no longer builds;
+- a `PRESET` card is missing anything its panel shows: the preset class, the model, the
+  templates artifact, or a source path that is a file.
 
 ## Deploy
 Published to GitHub Pages by **`.github/workflows/deploy-web.yml`** (GitHub Actions),

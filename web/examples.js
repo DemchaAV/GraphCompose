@@ -241,7 +241,25 @@
   function startViewer() {
     catalogue = buildCatalogue();
     if (Gallery && VIEWER_DIALOG && typeof VIEWER_DIALOG.showModal === 'function') {
-      viewer = Gallery.createViewer({ dialog: VIEWER_DIALOG, catalogue, onClose: onViewerClosed });
+      viewer = Gallery.createViewer({
+        dialog: VIEWER_DIALOG, catalogue, release: readRelease(), onClose: onViewerClosed
+      });
+    }
+  }
+
+  // The release this page was published for, read from the inline block in index.html.
+  // The panel quotes coordinates a reader pastes into a build file, so a context that is
+  // missing or unreadable yields nothing at all — a dependency block naming `undefined`
+  // would be worse than none, and the reader would find out at build time.
+  function readRelease() {
+    const block = document.getElementById('release-context');
+    if (!block) return null;
+    try {
+      const release = JSON.parse(block.textContent);
+      return release && typeof release.stableVersion === 'string' ? release : null;
+    } catch (err) {
+      console.error('release-context is not readable JSON', err);
+      return null;
     }
   }
 
@@ -273,7 +291,7 @@
         ids: (group.examples || []).filter(ex => ex && ex.id).map(ex => ex.id)
       }))
     }));
-    return { categories, get: id => index.get(id) };
+    return { categories, snippets: manifest.snippets || {}, get: id => index.get(id) };
   }
 
   // Closing returns the address to the gallery (Back when the viewer added the

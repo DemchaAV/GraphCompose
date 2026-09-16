@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -95,6 +96,14 @@ class ShowcaseSiteGuardTest {
      * stops being readable.
      */
     private static final Pattern ADDRESS_SAFE_ID = Pattern.compile("[a-z0-9]+(?:-[a-z0-9]+)*");
+
+    /** The family → guide map the panel links, in {@code gallery-viewer.js}. */
+    private static final Pattern FAMILY_GUIDES_BLOCK =
+            Pattern.compile("const FAMILY_GUIDES = \\{(.*?)\\};", Pattern.DOTALL);
+
+    /** One entry of that map: the family id, and the page it points at, in either quote style. */
+    private static final Pattern FAMILY_GUIDE_ENTRY =
+            Pattern.compile("(\\w+):\\s*['\"]([^'\"]+)['\"]");
 
     @Test
     void everyFeaturedExampleIsACardInTheCatalogue() throws IOException {
@@ -271,7 +280,132 @@ class ShowcaseSiteGuardTest {
                 .isInstanceOf(Number.class);
         assertThat(((Number) version).intValue())
                 .describedAs("web/examples.json was written to a contract this site does not read")
-                .isEqualTo(1);
+                .isEqualTo(2);
+    }
+
+    @Test
+    void everyFamilyGuideThePanelLinksIsAPageThatIsThere() throws IOException {
+        String viewer = read("gallery-viewer.js");
+        Matcher block = FAMILY_GUIDES_BLOCK.matcher(viewer);
+        assertThat(block.find())
+                .describedAs("no 'const FAMILY_GUIDES = { … };' in web/gallery-viewer.js — the map moved, "
+                        + "and this guard no longer reads it")
+                .isTrue();
+
+        Map<String, String> guides = new LinkedHashMap<>();
+        Matcher entry = FAMILY_GUIDE_ENTRY.matcher(block.group(1));
+        while (entry.find()) {
+            guides.put(entry.group(1), entry.group(2));
+        }
+        assertThat(guides)
+                .describedAs("the map holds no entry, so the panel offers a reader no guide for any family")
+                .isNotEmpty();
+
+        Set<String> groupIds = new TreeSet<>();
+        for (Map<String, Set<String>> groups : families(readManifest()).values()) {
+            groupIds.addAll(groups.keySet());
+        }
+
+        Set<String> wrong = new TreeSet<>();
+        for (Map.Entry<String, String> guide : guides.entrySet()) {
+            String page = withoutFragmentOrQuery(guide.getValue());
+            Path file = RepoRoot.get().resolve(page);
+            if (!Files.isRegularFile(file)) {
+                wrong.add(guide.getKey() + " points at " + guide.getValue() + ", which is not a file");
+            } else if (guide.getValue().indexOf('#') >= 0 && !hasHeadingFor(file, guide.getValue())) {
+                wrong.add(guide.getKey() + " points at " + guide.getValue()
+                        + ", and that page carries no heading answering to it");
+            }
+            // The panel looks these up by the family id the catalogue uses. A key that is not one
+            // resolves to nothing, and every card of that family quietly loses its guide link
+            // while the page it points at is still perfectly there.
+            if (!groupIds.contains(guide.getKey())) {
+                wrong.add(guide.getKey() + " is not a family the catalogue has: the panel would find "
+                        + "no guide under that name");
+            }
+        }
+
+        assertThat(wrong)
+                .describedAs("the panel links these pages at the release tag, so a guide that is renamed or "
+                        + "moved becomes a 404 the reader meets and nothing else here would notice — the "
+                        + "documentation guards read markdown and Java sources, never this script")
+                .isEmpty();
+    }
+
+    @Test
+    void everyPublishedSnippetIsTheBlockItWasCompiledFrom() throws IOException {
+        Map<String, Object> snippets =
+                object(object(readManifest(), "the manifest").get("snippets"), "snippets");
+        assertThat(snippets)
+                .describedAs("web/examples.json carries no snippets, so the panel shows a reader no code "
+                        + "for any family — and this guard would be checking nothing")
+                .isNotEmpty();
+
+        Set<String> wrong = new TreeSet<>();
+        for (Map.Entry<String, Object> family : snippets.entrySet()) {
+            Map<String, Object> snippet = object(family.getValue(), "a snippet");
+            String source = String.valueOf(snippet.get("source"));
+            String exampleId = String.valueOf(snippet.get("exampleId"));
+            Path doc = RepoRoot.get().resolve(source);
+            if (!Files.isRegularFile(doc)) {
+                wrong.add(family.getKey() + " names a page that is not there: " + source);
+                continue;
+            }
+            String block = markedBlock(Files.readAllLines(doc), exampleId);
+            if (block == null) {
+                wrong.add(family.getKey() + " names no doc-example '" + exampleId + "' in " + source);
+            } else if (!block.equals(String.valueOf(snippet.get("code")))) {
+                wrong.add(family.getKey() + " publishes code that is not the block in " + source);
+            }
+        }
+
+        assertThat(wrong)
+                .describedAs("the panel publishes code a reader pastes into their own project, and the only "
+                        + "reason to trust it is that a compiler already accepted it: each block is read back "
+                        + "from the page DocumentationSnippetCompileTest compiles, so a snippet edited in the "
+                        + "manifest, or a block that moved out from under its marker, fails here rather than "
+                        + "shipping code that no longer builds")
+                .isEmpty();
+    }
+
+    @Test
+    void everyPresetCardCarriesWhatThePanelShows() throws IOException {
+        List<Map<String, Object>> cards = cards(readManifest());
+        Set<String> presetCards = new TreeSet<>();
+        Set<String> wrong = new TreeSet<>();
+        for (Map<String, Object> card : cards) {
+            if (!"PRESET".equals(card.get("kind"))) {
+                continue;
+            }
+            String id = String.valueOf(card.get("id"));
+            presetCards.add(id);
+            if (!(card.get("presetClass") instanceof String preset) || preset.isBlank()) {
+                wrong.add(id + " names no presetClass");
+            }
+            if (!(card.get("dataModel") instanceof String model) || model.isBlank()) {
+                wrong.add(id + " names no dataModel");
+            }
+            if (!(card.get("requiredArtifacts") instanceof List<?> artifacts)
+                    || !artifacts.contains("graph-compose-templates")) {
+                wrong.add(id + " builds a preset without requiring graph-compose-templates");
+            }
+            String source = String.valueOf(card.get("sourcePath"));
+            if (!source.startsWith("examples/src/main/java/") || !source.endsWith(".java")) {
+                wrong.add(id + " has no runnable source path: " + source);
+            } else if (!Files.isRegularFile(RepoRoot.get().resolve(source))) {
+                wrong.add(id + " names a source file that is not there: " + source);
+            }
+        }
+
+        assertThat(presetCards)
+                .describedAs("no card in web/examples.json is a PRESET, so this guard would hold nothing to "
+                        + "the panel's contract")
+                .isNotEmpty();
+        assertThat(wrong)
+                .describedAs("a PRESET card's panel tells a reader which class to call, which record to fill, "
+                        + "what to depend on and where the runnable source is. A card missing any of those "
+                        + "renders a panel with a gap in it, and nothing else on the site would notice")
+                .isEmpty();
     }
 
     @Test
@@ -570,6 +704,68 @@ class ShowcaseSiteGuardTest {
         }
         Set<String> cards = families.getOrDefault(segments[0], Map.of()).get(segments[1]);
         return cards != null && !cards.isEmpty() && (segments.length == 2 || cards.contains(segments[2]));
+    }
+
+    /**
+     * The code of the {@code doc-example} block named by {@code exampleId}, or {@code null}
+     * when the page carries no such block.
+     *
+     * <p>A second copy of the reader in {@code ShowcaseSync}, because this guard lives in core
+     * and that generator lives in the examples module: core cannot depend on examples, so the
+     * two cannot share one. What the copy buys is that the comparison starts from the markdown
+     * rather than from the generator's output — a manifest edited by hand, or left behind by a
+     * page that has since moved on, fails here.</p>
+     */
+    private static String markedBlock(List<String> lines, String exampleId) {
+        for (int i = 0; i < lines.size(); i++) {
+            String marker = lines.get(i).trim();
+            if (!marker.startsWith("<!--") || !marker.contains("doc-example:")) {
+                continue;
+            }
+            if (!Arrays.asList(marker.split("\\s+")).contains("id=" + exampleId)) {
+                continue;
+            }
+            if (i + 1 >= lines.size() || !lines.get(i + 1).trim().equals("```java")) {
+                return null;
+            }
+            List<String> code = new ArrayList<>();
+            for (int j = i + 2; j < lines.size(); j++) {
+                if (lines.get(j).trim().equals("```")) {
+                    return String.join("\n", code);
+                }
+                code.add(lines.get(j));
+            }
+            return null;
+        }
+        return null;
+    }
+
+    /**
+     * Whether the page carries a heading the link's {@code #fragment} could be addressing.
+     *
+     * <p>Deliberately coarse: GitHub computes the real anchor, and deriving it here would be
+     * guessing at rules this repository has been bitten by before. Comparing on letters and
+     * digits alone is a necessary condition, not the anchor itself — it cannot say a link
+     * works, but a page whose heading has been renamed away has nothing left that matches,
+     * and that is the failure a reader meets as a jump to the top of the page.</p>
+     */
+    private static boolean hasHeadingFor(Path page, String reference) throws IOException {
+        String fragment = normalizeAnchor(reference.substring(reference.indexOf('#') + 1));
+        if (fragment.isEmpty()) {
+            return true;
+        }
+        for (String line : Files.readAllLines(page)) {
+            String trimmed = line.trim();
+            if (trimmed.startsWith("#") && normalizeAnchor(trimmed.replaceAll("^#+", "")).equals(fragment)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Letters and digits only, lowercased — enough to notice a heading that has moved on. */
+    private static String normalizeAnchor(String text) {
+        return text.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
     }
 
     private static Set<String> matches(Pattern pattern, String text) {

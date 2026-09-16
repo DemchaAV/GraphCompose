@@ -1,7 +1,11 @@
 package com.demcha.examples.support;
 
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
@@ -21,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,6 +59,14 @@ import java.util.stream.Stream;
  * the "ATS-friendly" badge, the parsers and date of the check, and what the
  * parsers still get wrong — which the page reads to show the badge.</p>
  *
+ * <p>The manifest states the contract it was written to in {@code schemaVersion}, and
+ * carries two things the site cannot work out for itself. Per family, a {@code snippets}
+ * entry holds the compiled code block from that family's guide, copied in because the site
+ * is served from {@code web/} alone and cannot reach a page under {@code docs/}. Per card,
+ * {@code needsBundledFonts} says whether that document embeds a face of its own — measured
+ * from the PDF, because it decides which coordinates a reader needs and it differs card by
+ * card inside one family.</p>
+ *
  * <p>Run via Maven:</p>
  * <pre>{@code
  * cd examples
@@ -76,8 +89,55 @@ public final class ShowcaseSync {
      */
     private static final int THUMBNAIL_WIDTH = 320;
 
-    /** What rendering a card's first page told us about the document. */
-    private record Preview(int width, int height, int pages) {
+    /**
+     * What rendering a card's first page told us about the document: the preview's pixel
+     * size, the page count, and whether the document draws with a face of its own.
+     */
+    private record Preview(int width, int height, int pages, boolean needsBundledFonts) {
+    }
+
+    /** Where a family's panel snippet is compiled: the page it lives on, and the block's id. */
+    private record SnippetSource(String doc, String exampleId) {
+    }
+
+    /**
+     * What a card's own example source says: whether a reader can run that class directly,
+     * and which backends it reaches for beyond the engine.
+     */
+    private record SourceFacts(boolean runnable, List<String> extraArtifacts) {
+    }
+
+    /** A class a reader can run on its own, rather than one {@code GenerateAllExamples} drives. */
+    private static final Pattern MAIN_METHOD = Pattern.compile("static\\s+void\\s+main\\s*\\(");
+
+    /** The DOCX backend is named in the source: it is not discovered through the ServiceLoader. */
+    private static final String DOCX_IMPORT = "import com.demcha.compose.document.backend.semantic.docx.";
+
+    /** The PPTX backend is discovered by format, so the call is the only sign the source gives. */
+    private static final List<String> PPTX_CALLS =
+            List.of(".toPptxBytes(", ".buildPptx(", ".writePptx(");
+
+    /**
+     * The snippet the "Use this template" panel shows, per catalogue family.
+     *
+     * <p>The site is served from {@code web/} alone, so a block living under {@code docs/}
+     * cannot be fetched by the page: it is copied into the manifest here, and
+     * {@code ShowcaseSiteGuardTest} holds the copy equal to its source. The blocks are the
+     * ones {@code DocumentationSnippetCompileTest} already compiles, so the text a reader
+     * copies off the site is text a compiler has accepted.</p>
+     *
+     * <p>Only the families whose guide carries such a block appear. The rest show no snippet,
+     * rather than one belonging to another family.</p>
+     */
+    private static final Map<String, SnippetSource> SNIPPETS = new LinkedHashMap<>();
+
+    static {
+        SNIPPETS.put("cv", new SnippetSource(
+                "docs/templates/v2-layered/using-templates.md", "using-templates-pieces"));
+        SNIPPETS.put("invoice", new SnippetSource(
+                "docs/templates/business-templates.md", "business-invoice"));
+        SNIPPETS.put("proposal", new SnippetSource(
+                "docs/templates/business-templates.md", "business-proposal"));
     }
 
     private ShowcaseSync() {
@@ -178,6 +238,19 @@ public final class ShowcaseSync {
             }
 
             ShowcaseMetadata.Entry meta = ShowcaseMetadata.lookup(basename, category, group);
+            SourceFacts facts = sourceFacts(repoRoot, meta.sourcePath());
+            List<String> artifacts = new ArrayList<>(meta.requiredArtifacts());
+            for (String extra : facts.extraArtifacts()) {
+                if (!artifacts.contains(extra)) {
+                    artifacts.add(extra);
+                }
+            }
+            // A card can publish a deck its own source never mentions: the flagship twins are
+            // rendered by a sibling class. What a reader needs follows from the deck the card
+            // offers them, not only from the call in the file the card links to.
+            if (pptxUrl != null && !artifacts.contains("graph-compose-render-pptx")) {
+                artifacts.add("graph-compose-render-pptx");
+            }
             ManifestEntry entry = new ManifestEntry(
                     basename,
                     meta,
@@ -186,6 +259,8 @@ public final class ShowcaseSync {
                     relativeUrl(showcaseRoot, pngTarget, siteRoot),
                     relativeUrl(showcaseRoot, thumbnailTarget, siteRoot),
                     preview,
+                    List.copyOf(artifacts),
+                    facts.runnable(),
                     ShowcaseMetadata.ats(basename));
             tree.computeIfAbsent(category, c -> new TreeMap<>())
                     .computeIfAbsent(group, g -> new ArrayList<>())
@@ -198,7 +273,7 @@ public final class ShowcaseSync {
             }
         }
 
-        String json = renderManifest(tree);
+        String json = renderManifest(tree, repoRoot);
         Files.writeString(manifestFile, json);
 
         System.out.println("Synced " + copied + " documents (" + rendered + " PDFs, "
@@ -218,8 +293,81 @@ public final class ShowcaseSync {
             BufferedImage image = renderer.renderImage(0, PREVIEW_SCALE, ImageType.RGB);
             ImageIO.write(image, "PNG", pngTarget.toFile());
             writeThumbnail(image, thumbnailTarget);
-            return new Preview(image.getWidth(), image.getHeight(), document.getNumberOfPages());
+            return new Preview(image.getWidth(), image.getHeight(), document.getNumberOfPages(),
+                    embedsAFaceOfItsOwn(document));
         }
+    }
+
+    /**
+     * Whether the document embeds a font of its own, rather than drawing only in the
+     * Standard-14 set every PDF reader already has.
+     *
+     * <p>This is what decides the coordinates a reader needs. The bundled Google faces left
+     * the engine in v1.8.0, so a card whose document embeds one cannot be reproduced from
+     * the engine and templates alone — it needs the artifact carrying those faces, and that
+     * companion is versioned independently of the release, so the published aggregate is
+     * what supplies it at the release's own version.</p>
+     *
+     * <p>Read from the file rather than declared in the register: it is a property of the
+     * document that was rendered, it differs card by card within one family, and a
+     * hand-kept list of which 117 cards need fonts would be wrong the first time a preset
+     * changed its theme.</p>
+     */
+    /**
+     * What the example's own source says about reproducing it.
+     *
+     * <p>Two things the register cannot be trusted to carry, because both follow from the code
+     * rather than from a decision somebody recorded. A class without a {@code main} is driven by
+     * {@code GenerateAllExamples} and cannot be run on its own, so offering a reader an
+     * {@code exec:java} command for it hands them a command that fails. And a document that
+     * reaches a second backend needs that backend's artifact: the DOCX one is named in an
+     * import, while the PPTX one is discovered by format and so is named nowhere at all — the
+     * call is the only sign the source carries. Either way the code compiles for a reader and
+     * then throws at render, which is the same shape as a missing font.</p>
+     *
+     * <p>The source is not the whole answer for decks, and this method does not pretend to give
+     * it: a card can publish a deck rendered by a sibling class, which its own example never
+     * mentions. The caller adds the PPTX artifact for any card that publishes one, so what a
+     * reader is asked for follows from the document offered as well as from the code named.</p>
+     *
+     * @param repoRoot   the repository root the source path is resolved against
+     * @param sourcePath the card's example source, as the register records it
+     * @return what that source says; nothing claimed when the file is not there
+     * @throws IOException if the source cannot be read
+     */
+    private static SourceFacts sourceFacts(Path repoRoot, String sourcePath) throws IOException {
+        if (sourcePath == null) {
+            return new SourceFacts(false, List.of());
+        }
+        Path source = repoRoot.resolve(sourcePath);
+        if (!Files.isRegularFile(source)) {
+            return new SourceFacts(false, List.of());
+        }
+        String text = Files.readString(source);
+        List<String> extra = new ArrayList<>();
+        if (text.contains(DOCX_IMPORT)) {
+            extra.add("graph-compose-render-docx");
+        }
+        if (PPTX_CALLS.stream().anyMatch(text::contains)) {
+            extra.add("graph-compose-render-pptx");
+        }
+        return new SourceFacts(MAIN_METHOD.matcher(text).find(), List.copyOf(extra));
+    }
+
+    private static boolean embedsAFaceOfItsOwn(PDDocument document) throws IOException {
+        for (PDPage page : document.getPages()) {
+            PDResources resources = page.getResources();
+            if (resources == null) {
+                continue;
+            }
+            for (COSName name : resources.getFontNames()) {
+                PDFont font = resources.getFont(name);
+                if (font != null && font.isEmbedded()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -349,9 +497,10 @@ public final class ShowcaseSync {
         return Path.of(".").toAbsolutePath().normalize();
     }
 
-    private static String renderManifest(Map<String, Map<String, List<ManifestEntry>>> tree) {
+    private static String renderManifest(Map<String, Map<String, List<ManifestEntry>>> tree, Path repoRoot)
+            throws IOException {
         StringBuilder sb = new StringBuilder();
-        sb.append("{\n  \"schemaVersion\": 1,\n  \"categories\": [\n");
+        sb.append("{\n  \"schemaVersion\": 2,\n  \"categories\": [\n");
         Map<String, String> categoryLabels = new LinkedHashMap<>();
         categoryLabels.put("templates", "Templates");
         categoryLabels.put("features", "Features");
@@ -421,7 +570,9 @@ public final class ShowcaseSync {
             sb.append("\n      ]\n");
             sb.append("    }");
         }
-        sb.append("\n  ]\n}\n");
+        sb.append("\n  ],\n");
+        sb.append("  \"snippets\": ").append(snippetsJson(repoRoot)).append("\n");
+        sb.append("}\n");
         return sb.toString();
     }
 
@@ -442,6 +593,85 @@ public final class ShowcaseSync {
             }
         }
         sb.append("\"");
+        return sb.toString();
+    }
+
+    /**
+     * The code of one {@code doc-example}-marked block on a documentation page.
+     *
+     * <p>The shape read here is the contract {@code DocumentationSnippetCompileTest} compiles
+     * against: an HTML comment naming the block, immediately followed by a fenced {@code java}
+     * block. Reading the same two lines is what keeps the snippet the site publishes and the
+     * snippet a compiler checked the same text.</p>
+     *
+     * @param doc       the page to read
+     * @param exampleId the {@code id=} the marker carries
+     * @return the block's lines, joined with newlines
+     * @throws IllegalStateException when the page carries no such block, so a marker that is
+     *                               renamed or removed stops the sync instead of publishing a
+     *                               catalogue that quietly lost its snippet
+     */
+    private static String readMarkedBlock(Path doc, String exampleId) throws IOException {
+        List<String> lines = Files.readAllLines(doc);
+        for (int i = 0; i < lines.size(); i++) {
+            String marker = lines.get(i).trim();
+            if (!marker.startsWith("<!--") || !marker.contains("doc-example:") || !names(marker, exampleId)) {
+                continue;
+            }
+            if (i + 1 >= lines.size() || !lines.get(i + 1).trim().equals("```java")) {
+                throw new IllegalStateException("doc-example '" + exampleId + "' in " + doc
+                        + " is not followed by a java fence");
+            }
+            List<String> code = new ArrayList<>();
+            for (int j = i + 2; j < lines.size(); j++) {
+                if (lines.get(j).trim().equals("```")) {
+                    return String.join("\n", code);
+                }
+                code.add(lines.get(j));
+            }
+            throw new IllegalStateException("doc-example '" + exampleId + "' in " + doc
+                    + " opens a fence that is never closed");
+        }
+        throw new IllegalStateException("no doc-example '" + exampleId + "' in " + doc
+                + " — the panel's snippet for that family has moved or been removed");
+    }
+
+    /** Whether a marker's attributes carry exactly this {@code id=}. */
+    private static boolean names(String marker, String exampleId) {
+        for (String token : marker.split("\\s+")) {
+            if (token.equals("id=" + exampleId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The manifest's {@code snippets} object: one entry per family that has a compiled block,
+     * carrying the page it came from, the block's id, and the code itself.
+     *
+     * @param repoRoot the repository root the documentation pages are resolved against
+     * @return the object as JSON
+     * @throws IOException if a page cannot be read
+     */
+    private static String snippetsJson(Path repoRoot) throws IOException {
+        StringBuilder sb = new StringBuilder("{\n");
+        boolean first = true;
+        for (Map.Entry<String, SnippetSource> family : SNIPPETS.entrySet()) {
+            if (!first) {
+                sb.append(",\n");
+            }
+            first = false;
+            SnippetSource source = family.getValue();
+            sb.append("    ").append(jsonString(family.getKey())).append(": {\n");
+            sb.append("      \"source\": ").append(jsonString(source.doc())).append(",\n");
+            sb.append("      \"exampleId\": ").append(jsonString(source.exampleId())).append(",\n");
+            sb.append("      \"code\": ")
+                    .append(jsonString(readMarkedBlock(repoRoot.resolve(source.doc()), source.exampleId())))
+                    .append("\n");
+            sb.append("    }");
+        }
+        sb.append("\n  }");
         return sb.toString();
     }
 
@@ -491,6 +721,8 @@ public final class ShowcaseSync {
             String screenshot,
             String thumbnail,
             Preview preview,
+            List<String> artifacts,
+            boolean runnable,
             ShowcaseMetadata.Ats ats) {
 
         String toJson() {
@@ -511,8 +743,16 @@ public final class ShowcaseSync {
             sb.append(indent).append("\"previewWidth\": ").append(preview.width()).append(",\n");
             sb.append(indent).append("\"previewHeight\": ").append(preview.height()).append(",\n");
             sb.append(indent).append("\"pageCount\": ").append(preview.pages()).append(",\n");
-            sb.append(indent).append("\"requiredArtifacts\": ").append(jsonArray(meta.requiredArtifacts())).append(",\n");
+            // Measured from the document, not declared: a card that embeds a face needs the
+            // artifact carrying the bundled faces, which the engine and templates do not.
+            sb.append(indent).append("\"needsBundledFonts\": ")
+                    .append(preview.needsBundledFonts()).append(",\n");
+            // The register's list plus whatever the example's source reaches for: a backend a
+            // reader would otherwise discover is missing only when the render throws.
+            sb.append(indent).append("\"requiredArtifacts\": ").append(jsonArray(artifacts)).append(",\n");
             sb.append(indent).append("\"sourcePath\": ").append(jsonString(meta.sourcePath())).append(",\n");
+            // Whether that class can be run on its own, or is one GenerateAllExamples drives.
+            sb.append(indent).append("\"runnable\": ").append(runnable).append(",\n");
             if (meta.presetClass() != null) {
                 sb.append(indent).append("\"presetClass\": ").append(jsonString(meta.presetClass())).append(",\n");
                 sb.append(indent).append("\"dataModel\": ").append(jsonString(meta.dataModel())).append(",\n");

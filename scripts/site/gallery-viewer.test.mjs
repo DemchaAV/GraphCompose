@@ -36,13 +36,20 @@ function catalogueOf(manifest) {
       return { id: group.id, label: group.label, ids: group.examples.map((example) => example.id) };
     }),
   }));
-  return { categories, get: (id) => index.get(id) };
+  return { categories, snippets: manifest.snippets || {}, get: (id) => index.get(id) };
 }
 
 const manifest = JSON.parse(web("examples.json"));
 const catalogue = catalogueOf(manifest);
 const idsOf = (categoryId, groupId) =>
   catalogue.categories.find((c) => c.id === categoryId).groups.find((g) => g.id === groupId).ids;
+
+// The release block index.html carries, which is where the panel's coordinates come from. Read
+// from the page rather than repeated here: a cut moves that block, and a copy of it in this file
+// would keep the suite green while asserting against a release the site no longer shows.
+const RELEASE = JSON.parse(
+  web("index.html").match(/<script type="application\/json" id="release-context">([\s\S]*?)<\/script>/)[1]
+);
 
 let failures = 0;
 function check(name, body) {
@@ -267,7 +274,7 @@ function dispatch(target, event) {
 }
 
 /** A viewer wired to a stub dialog shaped like the one in index.html. */
-function viewerHarness(catalogueUnderTest = catalogue) {
+function viewerHarness(catalogueUnderTest = catalogue, release = RELEASE) {
   const doc = {
     activeElement: null,
     listeners: new Map(),
@@ -294,6 +301,7 @@ function viewerHarness(catalogueUnderTest = catalogue) {
     code: add(dialog, "a", { "data-viewer": "code" })
   };
   parts.thumbnails = add(dialog, "nav", { "data-viewer": "thumbnails" });
+  parts.panel = add(dialog, "section", { "data-viewer": "panel" });
   parts.image = add(parts.stage, "img", { "data-viewer": "image" });
   parts.notice = add(parts.stage, "div", { "data-viewer": "notice" });
   parts.image.hidden = true;
@@ -341,7 +349,9 @@ function viewerHarness(catalogueUnderTest = catalogue) {
     clearTimeout: (id) => { timers.delete(id); }
   });
   const closed = [];
-  const viewer = gallery.createViewer({ dialog, catalogue: catalogueUnderTest, onClose: (report) => closed.push(report) });
+  const viewer = gallery.createViewer({
+    dialog, catalogue: catalogueUnderTest, release, onClose: (report) => closed.push(report)
+  });
   return {
     doc, dialog, parts, entries, history, location, images, closed, viewer, connection, clock, reducedMotion,
     // What a browser would do once the strip has been laid out: a row wider than the strip.
@@ -363,6 +373,10 @@ function viewerHarness(catalogueUnderTest = catalogue) {
     },
     familyButtons: () => parts.families.querySelectorAll("[data-viewer-family]"),
     thumbButtons: () => parts.thumbnails.querySelectorAll("[data-viewer-thumb]"),
+    // The panel is built out of plain nodes, and this DOM matches attribute selectors only,
+    // so what it says is read as the text it holds.
+    panelText: () => parts.panel.descendants().map((node) => node.text).filter(Boolean).join("\n"),
+    panelLinks: () => parts.panel.descendants().filter((node) => node.tag === "a"),
     // The image the stage is waiting on, which is the one given a load handler; the
     // others were made by the preload and nobody is listening to them.
     pageLoader: () => [...images].reverse().find((image) => typeof image.onload === "function")
@@ -370,6 +384,115 @@ function viewerHarness(catalogueUnderTest = catalogue) {
 }
 
 const exampleOf = (id) => catalogue.get(id).example;
+
+check("a preset card's panel names the preset, its model and the coordinates of the release shown", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "templates", group: "cv", id: "cv-blue-banner-v2" }, { history: "push" });
+  const said = page.panelText();
+  assert.equal(page.parts.panel.hidden, false);
+  assert.match(said, /Use this template/);
+  assert.match(said, /com\.demcha\.compose\.document\.templates\.cv\.presets\.BlueBanner/);
+  assert.match(said, /com\.demcha\.compose\.document\.templates\.cv\.data\.CvDocument/);
+  assert.match(said, /io\.github\.demchaav/);
+  // This document is drawn in a bundled face, so the pair it is registered with would
+  // compile for a reader and then throw at the first glyph: it is given the aggregate.
+  assert.equal(exampleOf("cv-blue-banner-v2").needsBundledFonts, true);
+  assert.match(said, /graph-compose-bundle/);
+  assert.match(said, /Why the aggregate/);
+  assert.ok(said.includes(RELEASE.stableVersion), "the coordinates name the release the page was published for");
+  const targets = page.panelLinks().map((link) => link.href);
+  assert.ok(targets.some((href) => href.includes("/blob/" + RELEASE.releaseTag + "/examples/src/main/java/")),
+    "the runnable source is linked at that release, not at whatever develop holds today");
+  assert.ok(targets.some((href) => href.endsWith("/docs/templates/v2-layered/quickstart.md")),
+    "the CV family's guide is the one the docs index names as its starting point");
+});
+
+check("a document that embeds no face of its own is given the pair, not the aggregate", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "templates", group: "invoice", id: "invoice-modern-v2" }, { history: "push" });
+  const said = page.panelText();
+  // The invoice theme is Helvetica, which every PDF reader already has. If this card ever
+  // embeds a face, it stops being the example of a card that needs nothing extra.
+  assert.equal(exampleOf("invoice-modern-v2").needsBundledFonts, false);
+  assert.match(said, /graph-compose-templates/);
+  assert.doesNotMatch(said, /graph-compose-bundle/);
+  assert.doesNotMatch(said, /Why the aggregate/);
+  const targets = page.panelLinks().map((link) => link.href);
+  assert.ok(targets.some((href) => href.endsWith("/docs/templates/business-templates.md")),
+    "the invoice family's guide is the business templates page");
+});
+
+check("an example GenerateAllExamples drives is not offered as one to run", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "features", group: "tables", id: "table-advanced" }, { history: "push" });
+  const said = page.panelText();
+  assert.equal(exampleOf("table-advanced").runnable, false);
+  assert.doesNotMatch(said, /exec:java/,
+    "its class has no main, and exec:java would answer with 'doesn't contain a main method'");
+  assert.match(said, /Rendered by/);
+});
+
+check("a card that renders a deck asks a reader for the deck backend", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "flagships", group: "default", id: "twin-output" }, { history: "push" });
+  // The PPTX backend is discovered by format, so nothing in the source names it and only the
+  // render says it is missing — which is why the card has to carry it.
+  assert.match(page.panelText(), /graph-compose-render-pptx/);
+});
+
+check("the aggregate stands in for the engine pair without swallowing a backend", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "features", group: "text", id: "letter-spacing" }, { history: "push" });
+  const said = page.panelText();
+  assert.equal(exampleOf("letter-spacing").needsBundledFonts, true);
+  assert.match(said, /graph-compose-bundle/);
+  assert.match(said, /graph-compose-render-docx/, "the aggregate carries no DOCX backend");
+  assert.match(said, /graph-compose-render-pptx/, "nor a PPTX one");
+  assert.doesNotMatch(said, /<artifactId>graph-compose<\/artifactId>/,
+    "the engine and templates are what the aggregate replaces");
+});
+
+check("a card that builds no preset is offered as a runnable example, and claims no preset", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "templates", group: "coverletter", id: "cover-letter" }, { history: "push" });
+  const said = page.panelText();
+  assert.match(said, /Run this example/);
+  assert.doesNotMatch(said, /Use this template/);
+  assert.doesNotMatch(said, /Preset/);
+  assert.match(said, /exec:java -Dexec\.mainClass=com\.demcha\.examples\./);
+});
+
+check("with no release context the panel names no coordinates rather than guessing a version", () => {
+  const page = viewerHarness(catalogue, null);
+  page.viewer.open({ category: "templates", group: "cv", id: "cv-blue-banner-v2" }, { history: "push" });
+  const said = page.panelText();
+  assert.doesNotMatch(said, /undefined/);
+  assert.doesNotMatch(said, /<version>/);
+  assert.ok(page.panelLinks().every((link) => !link.href.includes("/blob/v")),
+    "with no release to pin to, a link falls back to the address the catalogue already carries");
+});
+
+check("the panel shows the family's compiled block, as the manifest carries it", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "templates", group: "cv", id: "cv-blue-banner-v2" }, { history: "push" });
+  const code = manifest.snippets.cv.code;
+  assert.ok(code && code.length > 0, "the manifest carries a CV snippet for the panel to show");
+  assert.ok(page.panelText().includes(code), "the block is shown as it stands, not paraphrased");
+});
+
+check("a family with no compiled block shows no snippet rather than another family's", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "templates", group: "coverletter", id: "cover-letter" }, { history: "push" });
+  assert.equal(manifest.snippets.coverletter, undefined);
+  assert.ok(!page.panelText().includes(manifest.snippets.cv.code));
+});
+
+check("a view showing no document empties the panel and hides it", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "templates", group: "cv", id: "no-such-document" }, { history: "push" });
+  assert.equal(page.parts.panel.hidden, true);
+  assert.equal(page.panelText(), "");
+});
 
 check("opening records one history entry, and moving inside the viewer records none", () => {
   const page = viewerHarness();

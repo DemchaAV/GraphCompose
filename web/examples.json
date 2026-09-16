@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "categories": [
     {
       "id": "templates",
@@ -21,8 +21,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvBlueBannerExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.BlueBanner",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvBlueBannerExample.java",
@@ -47,8 +49,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvBoxedV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.BoxedSections",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvBoxedV2Example.java",
@@ -73,8 +77,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvCenteredHeadlineExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.CenteredHeadline",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvCenteredHeadlineExample.java",
@@ -99,8 +105,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CharcoalGoldExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.CharcoalGold",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CharcoalGoldExample.java",
@@ -125,8 +133,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvClassicSerifExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.ClassicSerif",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvClassicSerifExample.java",
@@ -151,8 +161,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvCompactMonoExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.CompactMono",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvCompactMonoExample.java",
@@ -177,8 +189,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvEditorialBlueExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.EditorialBlue",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvEditorialBlueExample.java",
@@ -203,8 +217,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvEngineeringResumeExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.EngineeringResume",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvEngineeringResumeExample.java",
@@ -229,8 +245,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvExecutiveExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.Executive",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvExecutiveExample.java",
@@ -255,8 +273,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/MidnightNavyExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.MidnightNavy",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/MidnightNavyExample.java",
@@ -281,8 +301,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMinimalUnderlinedExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.MinimalUnderlined",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMinimalUnderlinedExample.java",
@@ -307,8 +329,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMintEditorialExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.MintEditorial",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMintEditorialExample.java",
@@ -333,8 +357,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMintEditorialCustomExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.MintEditorial",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "variantOf": "cv-mint-editorial-v2",
@@ -360,8 +386,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvModernV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.ModernProfessional",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvModernV2Example.java",
@@ -386,8 +414,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMonogramSidebarExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.MonogramSidebar",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMonogramSidebarExample.java",
@@ -412,8 +442,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/NavySidebarExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.NavySidebar",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/NavySidebarExample.java",
@@ -438,8 +470,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvNordicCleanExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.NordicClean",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvNordicCleanExample.java",
@@ -464,8 +498,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/OrangeOpsExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.OrangeOps",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/OrangeOpsExample.java",
@@ -490,8 +526,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvPanelExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.Panel",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvPanelExample.java",
@@ -516,8 +554,10 @@
               "previewWidth": 737,
               "previewHeight": 1105,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/ProfessionalSidebarExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.ProfessionalSidebar",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/ProfessionalSidebarExample.java",
@@ -542,8 +582,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/SerifHeadlineExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.SerifHeadline",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/SerifHeadlineExample.java",
@@ -568,8 +610,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvSidebarPortraitExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.SidebarPortrait",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvSidebarPortraitExample.java",
@@ -594,8 +638,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/SlateOrangeExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.SlateOrange",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/SlateOrangeExample.java",
@@ -620,8 +666,10 @@
               "previewWidth": 892,
               "previewHeight": 1154,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/TealPulseExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.TealPulse",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/TealPulseExample.java",
@@ -646,8 +694,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/TerracottaRailExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.TerracottaRail",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/TerracottaRailExample.java",
@@ -672,8 +722,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/CvTimelineMinimalExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.TimelineMinimal",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvTimelineMinimalExample.java",
@@ -698,8 +750,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/cv/v2/VioletGridExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.cv.presets.VioletGrid",
               "dataModel": "com.demcha.compose.document.templates.cv.data.CvDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/VioletGridExample.java",
@@ -730,8 +784,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java"
             },
             {
@@ -746,8 +802,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.proposal.presets.ModernProposal",
               "dataModel": "com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java"
@@ -764,8 +822,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/proposal/v2/EditorialProposalV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.proposal.presets.EditorialProposal",
               "dataModel": "com.demcha.compose.document.templates.data.proposal.StructuredProposalDocumentSpec",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/v2/EditorialProposalV2Example.java"
@@ -782,8 +842,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/proposal/v2/ModernProposalV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.proposal.presets.ModernProposal",
               "dataModel": "com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/v2/ModernProposalV2Example.java"
@@ -800,8 +862,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/proposal/v2/NorthlineProposalV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.proposal.presets.NorthlineProposal",
               "dataModel": "com.demcha.compose.document.templates.data.proposal.StructuredProposalDocumentSpec",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/v2/NorthlineProposalV2Example.java"
@@ -824,8 +888,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.invoice.presets.ModernInvoice",
               "dataModel": "com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java"
@@ -842,8 +908,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/invoice/v2/ClassicInvoiceV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.invoice.presets.ClassicInvoice",
               "dataModel": "com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/ClassicInvoiceV2Example.java"
@@ -860,8 +928,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/invoice/v2/ConsultingInvoiceV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.invoice.presets.ConsultingInvoice",
               "dataModel": "com.demcha.compose.document.templates.data.invoice.StructuredInvoiceDocumentSpec",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/ConsultingInvoiceV2Example.java"
@@ -878,8 +948,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/invoice/v2/LumaStudioInvoiceV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.invoice.presets.LumaStudioInvoice",
               "dataModel": "com.demcha.compose.document.templates.data.invoice.StructuredInvoiceDocumentSpec",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/LumaStudioInvoiceV2Example.java"
@@ -896,8 +968,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/invoice/v2/ModernInvoiceV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.invoice.presets.ModernInvoice",
               "dataModel": "com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/ModernInvoiceV2Example.java"
@@ -914,8 +988,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/invoice/v2/PaymentsInvoiceV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.invoice.presets.PaymentsInvoice",
               "dataModel": "com.demcha.compose.document.templates.data.invoice.StructuredInvoiceData",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/PaymentsInvoiceV2Example.java"
@@ -932,8 +1008,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/invoice/v2/WorkspaceInvoiceV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.invoice.presets.WorkspaceInvoice",
               "dataModel": "com.demcha.compose.document.templates.data.invoice.StructuredInvoiceData",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/WorkspaceInvoiceV2Example.java"
@@ -956,8 +1034,10 @@
               "previewWidth": 1262,
               "previewHeight": 708,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java"
             }
           ]
@@ -978,8 +1058,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java"
             },
             {
@@ -994,8 +1076,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvBlueBannerLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.BlueBannerLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvBlueBannerLetterV2Example.java"
@@ -1012,8 +1096,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvBoxedSectionsLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.BoxedSectionsLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvBoxedSectionsLetterV2Example.java"
@@ -1030,8 +1116,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvCenteredHeadlineLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.CenteredHeadlineLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvCenteredHeadlineLetterV2Example.java"
@@ -1048,8 +1136,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvClassicSerifLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.ClassicSerifLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvClassicSerifLetterV2Example.java"
@@ -1066,8 +1156,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvCompactMonoLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.CompactMonoLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvCompactMonoLetterV2Example.java"
@@ -1084,8 +1176,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvEditorialBlueLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.EditorialBlueLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvEditorialBlueLetterV2Example.java"
@@ -1102,8 +1196,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvEngineeringResumeLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.EngineeringResumeLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvEngineeringResumeLetterV2Example.java"
@@ -1120,8 +1216,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvExecutiveLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.ExecutiveLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvExecutiveLetterV2Example.java"
@@ -1138,8 +1236,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvMintEditorialLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.MintEditorialLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvMintEditorialLetterV2Example.java"
@@ -1156,8 +1256,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvModernProfessionalLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.ModernProfessionalLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvModernProfessionalLetterV2Example.java"
@@ -1174,8 +1276,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvMonogramSidebarLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.MonogramSidebarLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvMonogramSidebarLetterV2Example.java"
@@ -1192,8 +1296,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvNordicCleanLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.NordicCleanLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvNordicCleanLetterV2Example.java"
@@ -1210,8 +1316,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvPanelLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.PanelLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvPanelLetterV2Example.java"
@@ -1228,8 +1336,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvSidebarPortraitLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.SidebarPortraitLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvSidebarPortraitLetterV2Example.java"
@@ -1246,8 +1356,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvTimelineMinimalLetterV2Example.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.coverletter.presets.TimelineMinimalLetter",
               "dataModel": "com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvTimelineMinimalLetterV2Example.java"
@@ -1270,8 +1382,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/templates/receipt/ModernReceiptExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.receipt.presets.ModernReceipt",
               "dataModel": "com.demcha.compose.document.templates.data.receipt.ReceiptDocumentSpec",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/receipt/ModernReceiptExample.java"
@@ -1300,8 +1414,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java"
             }
           ]
@@ -1322,8 +1438,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java"
             },
             {
@@ -1338,8 +1456,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/tables/InlineCodeColumnWrapExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/tables/InlineCodeColumnWrapExample.java"
             },
             {
@@ -1354,8 +1474,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java",
+              "runnable": false,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java"
             }
           ]
@@ -1376,8 +1498,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/lists/NestedListExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/lists/NestedListExample.java"
             }
           ]
@@ -1398,8 +1522,10 @@
               "previewWidth": 600,
               "previewHeight": 480,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/shapes/LineCapExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/LineCapExample.java"
             },
             {
@@ -1414,8 +1540,10 @@
               "previewWidth": 600,
               "previewHeight": 390,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/shapes/LineFillExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/LineFillExample.java"
             },
             {
@@ -1430,8 +1558,10 @@
               "previewWidth": 840,
               "previewHeight": 450,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/shapes/PhotoClipExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/PhotoClipExample.java"
             },
             {
@@ -1446,8 +1576,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java"
             },
             {
@@ -1462,8 +1594,10 @@
               "previewWidth": 630,
               "previewHeight": 1695,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java"
             }
           ]
@@ -1484,8 +1618,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/transforms/TransformsExample.java",
+              "runnable": false,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/transforms/TransformsExample.java"
             }
           ]
@@ -1506,8 +1642,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/ArabicArticleExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/ArabicArticleExample.java"
             },
             {
@@ -1522,8 +1660,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 4,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/EmojiClipPathReportExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/EmojiClipPathReportExample.java"
             },
             {
@@ -1538,8 +1678,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/EmojiGalleryExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/EmojiGalleryExample.java"
             },
             {
@@ -1554,8 +1696,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/EmojiShortcodeExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/EmojiShortcodeExample.java"
             },
             {
@@ -1570,8 +1714,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/EmojiSvgVsPngExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/EmojiSvgVsPngExample.java"
             },
             {
@@ -1586,8 +1732,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/HebrewInvoiceExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/HebrewInvoiceExample.java"
             },
             {
@@ -1602,8 +1750,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/InlineHighlightExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/InlineHighlightExample.java"
             },
             {
@@ -1618,8 +1768,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/InlineShapesExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/InlineShapesExample.java"
             },
             {
@@ -1634,8 +1786,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java"
             },
             {
@@ -1650,8 +1804,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
-              "requiredArtifacts": ["graph-compose"],
+              "needsBundledFonts": true,
+              "requiredArtifacts": ["graph-compose", "graph-compose-render-docx", "graph-compose-render-pptx"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/LetterSpacingExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/LetterSpacingExample.java"
             },
             {
@@ -1666,8 +1822,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java"
             },
             {
@@ -1682,8 +1840,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java"
             },
             {
@@ -1698,8 +1858,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/TextDirectionExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/TextDirectionExample.java"
             },
             {
@@ -1714,8 +1876,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/text/WorldScriptsExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/WorldScriptsExample.java"
             }
           ]
@@ -1736,8 +1900,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java"
             }
           ]
@@ -1758,8 +1924,10 @@
               "previewWidth": 450,
               "previewHeight": 345,
               "pageCount": 4,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java"
             },
             {
@@ -1774,8 +1942,10 @@
               "previewWidth": 510,
               "previewHeight": 375,
               "pageCount": 4,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/chrome/PageZoneExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/chrome/PageZoneExample.java"
             },
             {
@@ -1790,8 +1960,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java"
             },
             {
@@ -1806,8 +1978,10 @@
               "previewWidth": 540,
               "previewHeight": 480,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/chrome/ViewerPreferencesExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/chrome/ViewerPreferencesExample.java"
             }
           ]
@@ -1828,8 +2002,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.invoice.presets.ModernInvoice",
               "dataModel": "com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java"
@@ -1852,8 +2028,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose", "graph-compose-templates"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java",
+              "runnable": true,
               "presetClass": "com.demcha.compose.document.templates.invoice.presets.ModernInvoice",
               "dataModel": "com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java"
@@ -1876,8 +2054,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 5,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java"
             }
           ]
@@ -1898,8 +2078,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/debug/DebugOverlayExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/debug/DebugOverlayExample.java"
             }
           ]
@@ -1920,8 +2102,10 @@
               "previewWidth": 892,
               "previewHeight": 1263,
               "pageCount": 2,
-              "requiredArtifacts": ["graph-compose"],
+              "needsBundledFonts": false,
+              "requiredArtifacts": ["graph-compose", "graph-compose-render-docx"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/docx/WordExportExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/docx/WordExportExample.java"
             }
           ]
@@ -1942,8 +2126,10 @@
               "previewWidth": 630,
               "previewHeight": 600,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java"
             },
             {
@@ -1958,8 +2144,10 @@
               "previewWidth": 630,
               "previewHeight": 720,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/layout/BleedExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/BleedExample.java"
             },
             {
@@ -1974,8 +2162,10 @@
               "previewWidth": 540,
               "previewHeight": 450,
               "pageCount": 2,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/layout/PerPageMarginExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/PerPageMarginExample.java"
             },
             {
@@ -1990,8 +2180,10 @@
               "previewWidth": 570,
               "previewHeight": 390,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/layout/RowColumnsExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/RowColumnsExample.java"
             },
             {
@@ -2006,8 +2198,10 @@
               "previewWidth": 600,
               "previewHeight": 420,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/layout/RowFlexExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/RowFlexExample.java"
             },
             {
@@ -2022,8 +2216,10 @@
               "previewWidth": 570,
               "previewHeight": 450,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/layout/RowVerticalAlignExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/RowVerticalAlignExample.java"
             }
           ]
@@ -2044,8 +2240,10 @@
               "previewWidth": 540,
               "previewHeight": 480,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/navigation/ContainerBookmarkExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/navigation/ContainerBookmarkExample.java"
             },
             {
@@ -2060,8 +2258,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java"
             },
             {
@@ -2076,8 +2276,10 @@
               "previewWidth": 480,
               "previewHeight": 360,
               "pageCount": 2,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java"
             },
             {
@@ -2092,8 +2294,10 @@
               "previewWidth": 540,
               "previewHeight": 420,
               "pageCount": 6,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/navigation/TocExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/navigation/TocExample.java"
             }
           ]
@@ -2114,8 +2318,10 @@
               "previewWidth": 660,
               "previewHeight": 450,
               "pageCount": 4,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/structure/MultiSectionExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/structure/MultiSectionExample.java"
             }
           ]
@@ -2136,8 +2342,10 @@
               "previewWidth": 892,
               "previewHeight": 1263,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/svg/SvgIconGalleryExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/svg/SvgIconGalleryExample.java"
             }
           ]
@@ -2158,8 +2366,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 6,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/title/BookTemplateExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/title/BookTemplateExample.java"
             },
             {
@@ -2174,8 +2384,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": true,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/features/title/PoetryTitlePageExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/title/PoetryTitlePageExample.java"
             }
           ]
@@ -2203,8 +2415,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
-              "requiredArtifacts": ["graph-compose"],
+              "needsBundledFonts": false,
+              "requiredArtifacts": ["graph-compose", "graph-compose-render-pptx"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/flagships/BusinessReportExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/BusinessReportExample.java"
             },
             {
@@ -2220,8 +2434,10 @@
               "previewWidth": 1262,
               "previewHeight": 892,
               "pageCount": 4,
-              "requiredArtifacts": ["graph-compose"],
+              "needsBundledFonts": false,
+              "requiredArtifacts": ["graph-compose", "graph-compose-render-pptx"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/flagships/EngineDeckExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/EngineDeckExample.java"
             },
             {
@@ -2236,8 +2452,10 @@
               "previewWidth": 1440,
               "previewHeight": 810,
               "pageCount": 5,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/flagships/EngineDeckV2Example.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/EngineDeckV2Example.java"
             },
             {
@@ -2252,8 +2470,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 8,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/flagships/FeatureCatalogExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/FeatureCatalogExample.java"
             },
             {
@@ -2269,8 +2489,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
-              "requiredArtifacts": ["graph-compose"],
+              "needsBundledFonts": false,
+              "requiredArtifacts": ["graph-compose", "graph-compose-render-pptx"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/flagships/FinancialReportExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/FinancialReportExample.java"
             },
             {
@@ -2286,8 +2508,10 @@
               "previewWidth": 1920,
               "previewHeight": 2400,
               "pageCount": 6,
-              "requiredArtifacts": ["graph-compose"],
+              "needsBundledFonts": false,
+              "requiredArtifacts": ["graph-compose", "graph-compose-render-pptx"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/flagships/LinkedInCarouselExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/LinkedInCarouselExample.java"
             },
             {
@@ -2303,8 +2527,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 2,
-              "requiredArtifacts": ["graph-compose"],
+              "needsBundledFonts": false,
+              "requiredArtifacts": ["graph-compose", "graph-compose-render-pptx"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java"
             },
             {
@@ -2320,8 +2546,10 @@
               "previewWidth": 1440,
               "previewHeight": 810,
               "pageCount": 5,
-              "requiredArtifacts": ["graph-compose"],
+              "needsBundledFonts": true,
+              "requiredArtifacts": ["graph-compose", "graph-compose-render-pptx"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/flagships/MavenBannerPptxExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/MavenBannerPptxExample.java"
             },
             {
@@ -2336,8 +2564,10 @@
               "previewWidth": 892,
               "previewHeight": 1262,
               "pageCount": 1,
+              "needsBundledFonts": false,
               "requiredArtifacts": ["graph-compose"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java"
             },
             {
@@ -2353,8 +2583,10 @@
               "previewWidth": 1920,
               "previewHeight": 960,
               "pageCount": 1,
-              "requiredArtifacts": ["graph-compose"],
+              "needsBundledFonts": false,
+              "requiredArtifacts": ["graph-compose", "graph-compose-render-pptx"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/flagships/SocialCardExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/SocialCardExample.java"
             },
             {
@@ -2370,13 +2602,32 @@
               "previewWidth": 1440,
               "previewHeight": 810,
               "pageCount": 1,
-              "requiredArtifacts": ["graph-compose"],
+              "needsBundledFonts": false,
+              "requiredArtifacts": ["graph-compose", "graph-compose-render-pptx"],
               "sourcePath": "examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java",
+              "runnable": true,
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java"
             }
           ]
         }
       ]
     }
-  ]
+  ],
+  "snippets": {
+    "cv": {
+      "source": "docs/templates/v2-layered/using-templates.md",
+      "exampleId": "using-templates-pieces",
+      "code": "CvIdentity identity = CvIdentity.builder()\n        .name(\"Jane\", \"Doe\")\n        .jobTitle(\"Backend Engineer\")\n        .contact(\"+44 20 7946 0958\", \"jane.doe@example.com\", \"London, UK\")\n        .build();\n\nCvDocument cv = CvDocument.ofMainSections(identity, List.of(\n        new ParagraphSection(\"Profile\", \"Ten years building document pipelines.\")));\n\nBrandTheme theme = BrandTheme.boxedClassic();          // optional override\nDocumentTemplate<CvDocument> template = BoxedSections.create(theme);\n\ntry (DocumentSession document = GraphCompose.document(Path.of(\"cv.pdf\")).create()) {\n    template.compose(document, cv);\n    document.buildPdf();\n}"
+    },
+    "invoice": {
+      "source": "docs/templates/business-templates.md",
+      "exampleId": "business-invoice",
+      "code": "import com.demcha.compose.GraphCompose;\nimport com.demcha.compose.document.api.DocumentPageSize;\nimport com.demcha.compose.document.api.DocumentSession;\nimport com.demcha.compose.document.templates.api.DocumentTemplate;\nimport com.demcha.compose.document.templates.core.theme.BrandTheme;\nimport com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;\nimport com.demcha.compose.document.templates.invoice.presets.ModernInvoice;\n\nimport java.nio.file.Path;\n\nInvoiceDocumentSpec invoice = InvoiceDocumentSpec.builder()\n        .title(\"Invoice\")\n        .invoiceNumber(\"GC-2026-041\")\n        .issueDate(\"25 Jun 2026\")\n        .dueDate(\"25 Jul 2026\")\n        .reference(\"GraphCompose implementation\")\n        .status(\"Due\")\n        .fromParty(party -> party\n                .name(\"GraphCompose Studio\")\n                .addressLines(\"10 Example Street\", \"London\")\n                .email(\"billing@example.com\")\n                .phone(\"+44 20 0000 0000\")\n                .taxId(\"VAT GB000000000\"))\n        .billToParty(party -> party\n                .name(\"Client Ltd\")\n                .addressLines(\"22 Client Road\", \"Manchester\")\n                .email(\"accounts@client.example\"))\n        .lineItem(\"Document engine integration\", \"Implementation and support\",\n                \"1\", \"4,800.00\", \"4,800.00\")\n        .summaryRow(\"Subtotal\", \"4,800.00\")\n        .summaryRow(\"VAT\", \"960.00\")\n        .totalRow(\"Total\", \"5,760.00\")\n        .paymentTerm(\"Payment due within 30 days.\")\n        .footerNote(\"Thank you for your business.\")\n        .build();\n\nBrandTheme theme = BrandTheme.invoiceModern();\nDocumentTemplate<InvoiceDocumentSpec> template = ModernInvoice.create(theme);\n\nfloat margin = (float) ModernInvoice.RECOMMENDED_MARGIN;\ntry (DocumentSession document = GraphCompose.document(Path.of(\"invoice.pdf\"))\n        .pageSize(DocumentPageSize.A4)\n        .pageBackground(theme.palette().mainFill())\n        .margin(margin, margin, margin, margin)\n        .create()) {\n    template.compose(document, invoice);\n    document.buildPdf();\n}"
+    },
+    "proposal": {
+      "source": "docs/templates/business-templates.md",
+      "exampleId": "business-proposal",
+      "code": "import com.demcha.compose.GraphCompose;\nimport com.demcha.compose.document.api.DocumentPageSize;\nimport com.demcha.compose.document.api.DocumentSession;\nimport com.demcha.compose.document.templates.api.DocumentTemplate;\nimport com.demcha.compose.document.templates.core.theme.BrandTheme;\nimport com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;\nimport com.demcha.compose.document.templates.proposal.presets.ModernProposal;\n\nimport java.nio.file.Path;\n\nProposalDocumentSpec proposal = ProposalDocumentSpec.builder()\n        .title(\"Proposal\")\n        .proposalNumber(\"PR-2026-014\")\n        .preparedDate(\"25 Jun 2026\")\n        .validUntil(\"25 Jul 2026\")\n        .projectTitle(\"Document Automation Platform\")\n        .executiveSummary(\"A proposal for building reliable PDF generation into the product workflow.\")\n        .sender(party -> party\n                .name(\"GraphCompose Studio\")\n                .addressLines(\"10 Example Street\", \"London\")\n                .email(\"hello@example.com\")\n                .website(\"graphcompose.example\"))\n        .recipient(party -> party\n                .name(\"Client Ltd\")\n                .addressLines(\"22 Client Road\", \"Manchester\")\n                .email(\"product@client.example\"))\n        .section(\"Scope\", \"Backend integration, template setup, and regression checks.\")\n        .timelineItem(\"Week 1\", \"1 week\", \"Data model and rendering endpoint.\")\n        .pricingRow(\"Implementation\", \"Fixed scope\", \"4,800.00\")\n        .emphasizedPricingRow(\"Total\", \"Excluding tax\", \"4,800.00\")\n        .acceptanceTerm(\"Proposal valid for 30 days.\")\n        .footerNote(\"Prepared with GraphCompose.\")\n        .build();\n\nBrandTheme theme = BrandTheme.proposalModern();\nDocumentTemplate<ProposalDocumentSpec> template = ModernProposal.create(theme);\n\nfloat margin = (float) ModernProposal.RECOMMENDED_MARGIN;\ntry (DocumentSession document = GraphCompose.document(Path.of(\"proposal.pdf\"))\n        .pageSize(DocumentPageSize.A4)\n        .pageBackground(theme.palette().mainFill())\n        .margin(margin, margin, margin, margin)\n        .create()) {\n    template.compose(document, proposal);\n    document.buildPdf();\n}"
+    }
+  }
 }

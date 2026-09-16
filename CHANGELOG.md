@@ -57,6 +57,59 @@ follow semantic versioning; release dates are ISO 8601.
   whose measurements are not its preview's, a page count below one, a thumbnail that is not
   published, or a preset count in the page copy the catalogue does not hold.
 
+- **The version the showcase shows is written down once, and a release moves every copy of
+  it.** The published site stated the release in five places that inherit from no pom, and
+  the cut rewrote the first match of each — so a page carrying a second install snippet
+  kept it a release behind while every check passed, and a spot that stopped matching was
+  skipped in silence, leaving the cut to report success on a page still naming the previous
+  release. An inline `release-context` block now holds `stableVersion`, `releaseTag` and
+  `javaMinimum`. The JSON-LD, the Maven Central download link, the hero badge and the
+  install snippets still repeat the version, because a crawler and a reader with no
+  JavaScript both have to see the right release — but each is now a copy of that block, and
+  `VersionConsistencyGuardTest` holds every occurrence of all seven spots equal to it,
+  including the download link it never read before. A pattern that matches nothing stops the
+  cut and names the spot, rather than leaving it behind.
+
+- **Every document in the gallery shows what reproducing it takes — and 53 of them were
+  asking readers for a dependency set that cannot render them.** Under the document, the
+  viewer now shows the Maven and Gradle coordinates at the release the page names, the
+  preset class and the record it composes, its family's worked snippet, the command that
+  runs the example, and the runnable source and family guide at the release tag. Building
+  that panel exposed a defect in the catalogue it reads: a document drawn in a bundled face
+  — PT Serif and the rest left the engine in v1.8.0 — cannot be reproduced from
+  `graph-compose` + `graph-compose-templates`, which compiles and then throws
+  `Bundled font resource not found` at the first glyph, and the artifact carrying those
+  faces is versioned independently of the release, so naming it at the release version is a
+  404 on Maven Central. Those cards now send a reader to `graph-compose-bundle`, the one
+  published coordinate that carries the faces at the release's own version. Whether a
+  document needs them is measured from the PDF rather than declared, because it differs card
+  by card inside a single family: 25 of 27 CVs embed a face, 4 of 7 invoices do. The
+  snippets are the blocks `DocumentationSnippetCompileTest` already compiles, copied into
+  the manifest because the site is served from `web/` alone and cannot reach a page under
+  `docs/`.
+
+  Fonts were not the only thing the catalogue left out. Ten cards reach a second backend and
+  asked a reader for the engine alone, which compiles and then throws
+  `MissingBackendException` at render. Two name the DOCX backend in an import. Nine need the
+  PPTX one, which is discovered by format and so appears in no source at all: eight publish a
+  deck beside their PDF — four of those rendered by a sibling class, so not even their own
+  example mentions it — and one renders a deck it does not publish. The requirement now
+  follows from what a card publishes as well as from what its example names, and where a
+  document also needs the bundled faces the aggregate stands in for the engine and templates
+  without swallowing the backend beside it. Two more cards (`table-advanced`, `transforms`) have no `main` of their own —
+  `GenerateAllExamples` renders them — and were being offered an `exec:java` command that
+  answers "doesn't contain a main method"; they now say what does render them.
+
+  Each claim is checked against the example's own source or its rendered document:
+  `ShowcaseBundledFontClaimTest` holds every font claim in both directions,
+  `ShowcaseCardInstructionsTest` holds the backends and the run command the same way,
+  `ShowcaseSnippetScopeTest` holds every published snippet inside the set of pages the
+  compile gate actually scans, and `ShowcaseSiteGuardTest` fails on a snippet that is no
+  longer the block it was compiled from, on a preset card missing anything the panel shows,
+  and on a family guide the panel links that is no longer a page. A consumer project renders
+  a CV from the published aggregate with nothing else installed, which is how the first of
+  these defects surfaced.
+
 ## v2.4.0 — 2026-09-14
 
 ### Public API

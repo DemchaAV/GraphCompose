@@ -1683,6 +1683,78 @@ body.viewer-open {
   gap: 10px;
 }
 
+/* What a reader needs to reproduce the document shown: the coordinates, the classes it
+   composes, the compiled snippet, and where the runnable source and the guide are. */
+.gallery-viewer-panel {
+  flex: 1 1 100%;
+  padding: 14px 20px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.92);
+  max-height: 42vh;
+  overflow-y: auto;
+}
+
+.gallery-viewer-panel-heading {
+  margin: 0 0 10px;
+  color: #f8fafc;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.gallery-viewer-panel-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0 0 6px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.gallery-viewer-panel-label {
+  flex: 0 0 8.5rem;
+  color: #94a3b8;
+}
+
+.gallery-viewer-panel-value {
+  min-width: 0;
+  color: #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  word-break: break-word;
+}
+
+.gallery-viewer-panel-code {
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.72);
+  color: #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.gallery-viewer-panel-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 720px) {
+  .gallery-viewer-panel {
+    max-height: 38vh;
+    padding: 12px 14px 16px;
+  }
+
+  .gallery-viewer-panel-label {
+    flex-basis: 100%;
+  }
+}
+
 .gallery-viewer-note {
   color: #94a3b8;
   font-size: 0.8rem;

@@ -134,6 +134,17 @@ follow semantic versioning; release dates are ISO 8601.
   every published URL are unchanged, so existing links and shared viewer addresses keep working.
   The template-authoring guide moved from the top of the page into a Documentation block.
 
+- **The showcase says what to install for what you are building, and what each output format
+  keeps.** The install section offers four scenarios where it used to offer the engine alone: a PDF
+  from your own layout (`graph-compose`), ready-made templates (`graph-compose-bundle`, which pins
+  the independently versioned fonts and emoji for you), an editable PowerPoint deck
+  (`graph-compose-render-pptx`, Beta) and a Word document (`graph-compose-render-docx`), each at the
+  release the page names. A new block sets PDF, PowerPoint and Word side by side with their limits,
+  taken from the backend capability matrix it links to. Muted text in the light theme sat at
+  4.45:1, under the 4.5:1 minimum for body text, and now reads at 6:1; the featured tiles no longer
+  skip a heading level; and a menu link to a section lands with its heading below the sticky header,
+  which on a phone used to cover it.
+
 ## v2.4.0 — 2026-09-14
 
 ### Public API

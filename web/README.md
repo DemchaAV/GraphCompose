@@ -17,7 +17,9 @@ what `web-src/` builds, and CI's guard job runs it.
   showcase: hero, install snippets, feature / architecture sections, and the
   searchable gallery shell. What comes from data rather than from the template:
   the release the page advertises (from `web-src/data/release.json`: the seven spots the
-  version guard holds, and the latest-release link in the documentation block),
+  version guard holds, the release named above the install scenarios and every coordinate in them — held to the
+  release by `scripts/site/build.test.mjs`, since the guard reads the bare `graph-compose`
+  coordinate alone — and the latest-release link in the documentation block),
   the hero's documents, the JSON-LD item list and the sitemap's documents (names are editorial, in
   `web-src/data/featured.json`; the URLs are resolved from the manifest so a
   renamed PDF cannot leave a crawler pointed at nothing), the preset counts, and

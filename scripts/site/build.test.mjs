@@ -181,6 +181,35 @@ test("every URL the sitemap surfaces is a document the catalogue publishes", () 
   }
 });
 
+/** Every GraphCompose coordinate the built page tells a reader to add, Maven form and Gradle form. */
+function coordinatesOnPage(page) {
+  const found = [];
+  const maven = /&lt;artifactId&gt;(graph-compose[\w-]*)&lt;\/artifactId&gt;\s*&lt;version&gt;([^&]+)&lt;\/version&gt;/g;
+  for (const [, artifact, version] of page.matchAll(maven)) found.push({ form: "Maven", artifact, version });
+  const gradle = /io\.github\.demchaav:(graph-compose[\w-]*):([^\s'")<]+)/g;
+  for (const [, artifact, version] of page.matchAll(gradle)) found.push({ form: "Gradle", artifact, version });
+  return found;
+}
+
+test("every install scenario offers its coordinate in both forms, at the release", () => {
+  // VersionConsistencyGuardTest reads the bare graph-compose coordinate on this page and no other, so
+  // a bundle or backend snippet pinned to an old release would pass it; this holds all of them. Each
+  // artifact has to be read in both forms: a snippet the pattern cannot read — a line slipped in
+  // between artifactId and version, say — would otherwise go unchecked while its other form passed.
+  const coordinates = coordinatesOnPage(built["index.html"]);
+  for (const companion of ["graph-compose-fonts", "graph-compose-emoji"]) {
+    assert.ok(!coordinates.some((c) => c.artifact === companion),
+      `the page offers ${companion}, which is versioned apart from the release; the bundle pins it`);
+  }
+  for (const artifact of ["graph-compose", "graph-compose-bundle", "graph-compose-render-pptx", "graph-compose-render-docx"]) {
+    for (const form of ["Maven", "Gradle"]) {
+      const found = coordinates.filter((c) => c.artifact === artifact && c.form === form);
+      assert.equal(found.length, 1, `expected one readable ${form} coordinate for ${artifact}, found ${found.length}`);
+      assert.equal(found[0].version, release.stableVersion, `the ${form} coordinate for ${artifact} names ${found[0].version}`);
+    }
+  }
+});
+
 const featured = JSON.parse(fs.readFileSync(path.join(root, "web-src", "data", "featured.json"), "utf8"));
 const cardsById = new Map(cards.map((card) => [card.id, card]));
 

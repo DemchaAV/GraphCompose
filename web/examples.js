@@ -591,7 +591,8 @@
       badge ? '    <span class="highlight-badge">' + escHtml(badge) + '</span>' : '',
       '  </button>',
       '  <div class="highlight-meta">',
-      '    <h5 class="highlight-title">' + escHtml(ex.title || ex.id || '') + '</h5>',
+      // An h4: the tile sits directly under the strip's h3, where an h5 skipped a level.
+      '    <h4 class="highlight-title">' + escHtml(ex.title || ex.id || '') + '</h4>',
       '    <p class="highlight-desc">' + escHtml(ex.description || '') + '</p>',
       '  </div>',
       '</article>'

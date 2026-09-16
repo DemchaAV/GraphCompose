@@ -41,7 +41,9 @@ html[data-theme="light"] {
   --surface-2: #f1f5f9;
   --text: #334155;
   --text-strong: #0f172a;
-  --muted: #64748b;
+  /* #64748b measured 4.45:1 on --bg, under the 4.5:1 minimum for body text; this darker tone reads
+     about 6:1 there. */
+  --muted: #52606d;
   --border: rgba(15, 23, 42, 0.12);
   --hero-grid: rgba(15, 23, 42, 0.045);
   --accent-glow: rgba(var(--accent-rgb), 0.12);
@@ -104,6 +106,12 @@ pre {
   margin: 0;
   overflow-x: auto;
   white-space: pre;
+}
+
+/* A followed anchor lands below the sticky header instead of under it: the header is 79px tall
+   here, 146px from 641 to 980px where the menu wraps under the logo, and 141px below that. */
+html {
+  scroll-padding-top: 88px;
 }
 
 .site-header {
@@ -693,6 +701,10 @@ h2 {
 }
 
 @media (max-width: 980px) {
+  html {
+    scroll-padding-top: 154px;
+  }
+
   .site-header {
     align-items: flex-start;
     flex-direction: column;
@@ -751,6 +763,10 @@ h2 {
   .section-shell {
     width: min(100% - 28px, var(--max-width));
     padding: 64px 0;
+  }
+
+  html {
+    scroll-padding-top: 149px;
   }
 
   .site-header {
@@ -943,6 +959,16 @@ h2 {
   gap: 18px;
 }
 
+/* Four install scenarios read as two pairs; the one-column rule for narrow screens comes later in
+   the file and still wins there. */
+.install-scenarios {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.install-hello {
+  grid-column: 1 / -1;
+}
+
 .install-block {
   padding: 22px;
   border: 1px solid var(--border);
@@ -950,12 +976,55 @@ h2 {
   background: var(--surface);
 }
 
-.install-block h4 {
-  margin: 0 0 12px;
+/* The label above each coordinate. The Gradle line is Groovy DSL: the single quotes the version guard
+   reads do not compile in a build.gradle.kts, so the label says which file it belongs in. */
+.install-block > p.install-form {
+  margin: 14px 0 6px;
   color: var(--text-strong);
-  font-size: 0.94rem;
-  letter-spacing: 0.05em;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.install-block h3 {
+  margin: 0 0 8px;
+  color: var(--text-strong);
+  font-size: 1.02rem;
+}
+
+.install-block > p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.install-block pre + pre {
+  margin-top: 10px;
+}
+
+.install-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border: 1px solid rgba(var(--accent-rgb), 0.5);
+  border-radius: 999px;
+  color: var(--text-strong);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+
+.format-limits {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.format-limits li + li {
+  margin-top: 4px;
 }
 
 .install-block pre,

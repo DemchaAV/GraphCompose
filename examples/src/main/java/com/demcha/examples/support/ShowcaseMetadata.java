@@ -376,16 +376,16 @@ final class ShowcaseMetadata {
 
         // ===== Flagships =====
         flagship("master-showcase", "MasterShowcaseExample", "Master Showcase", "Kitchen-sink demo combining every primitive into a single document — the full GraphCompose surface.", "showcase");
-        flagship("business-report", "BusinessReportExample", "Business Report Cover", "Flagship cover page with hero panel, KPI table, and accent strip — ready-to-ship template.", "showcase", "cover");
+        flagship("business-report", "BusinessReportExample", "Business Report Cover", "A report cover page with a hero panel, a KPI table and an accent strip.", "showcase", "cover");
         flagship("module-first-profile", "ModuleFirstFileExample", "Module-First Authoring", "Authoring style focused on declaring data modules first, layout second.", "authoring");
-        flagship("twin-output", "TwinOutputExample", "Twin Output", "One 16:9 page written once and emitted twice from the same session — a print-ready PDF and a PowerPoint slide with identical geometry where text, panels, and vectors stay native, editable shapes.", "showcase", "flagship");
-        flagship("engine-deck-v2", "EngineDeckV2Example", "Engine Deck — Module First", "The landscape deck the README banner is cut from: the 2.0 module graph, native vector charts, and comparative benchmark figures read from the committed snapshot at render time.", "showcase", "flagship");
-        flagship("engine-deck", "EngineDeckExample", "Engine Deck", "Landscape flagship deck — hero banner, SVG-icon feature spreads, and benchmark tables and charts the engine renders from comparative data.", "showcase", "flagship");
-        flagship("feature-catalog", "FeatureCatalogExample", "Feature Catalog", "A guided catalog of the engine's primitives, one section per capability, every heading registered as a PDF outline bookmark for a navigable index.", "showcase", "flagship");
-        flagship("social-card", "SocialCardExample", "Social Preview Card", "The repository's 1280x640 social preview, itself a GraphCompose document — one sheet resolving into a portrait page and a 16:9 slide from the same content, so the card cannot drift from the palette and wordmark it is drawn with.", "showcase", "flagship");
-        flagship("linkedin-carousel", "LinkedInCarouselExample", "LinkedIn Carousel", "A six-slide 4:5 carousel sized for a LinkedIn document post, typeset for a phone. Every figure is read at render time — the version from the filtered properties, the timings from the committed benchmark snapshot.", "showcase", "flagship");
-        flagship("maven-banner", "MavenBannerPptxExample", "Maven Central Banner", "A five-slide brand deck emitted through the PPTX backend — gradient, rounded panels, native paths and text frames arriving in PowerPoint as an editable copy of the rendered pages, closing on Hebrew and Arabic laid out right to left.", "showcase", "flagship", "pptx");
-        flagship("financial-report", "FinancialReportExample", "Financial Report", "A polished financial-report flagship — clipped-photo masthead, KPI tables, and vector charts combining the engine's data-viz and shape primitives.", "showcase", "flagship");
+        flagship("twin-output", "TwinOutputExample", "Twin Output", "One 16:9 page written once and emitted twice from the same session — a print-ready PDF and a PowerPoint slide with identical geometry where text, panels, and vectors stay native, editable shapes.", "showcase");
+        flagship("engine-deck-v2", "EngineDeckV2Example", "Engine Deck — Module First", "The landscape deck the README banner is cut from: the 2.0 module graph, native vector charts, and comparative benchmark figures read from the committed snapshot at render time.", "showcase");
+        flagship("engine-deck", "EngineDeckExample", "Engine Deck", "A landscape capability deck — hero banner, SVG-icon feature spreads, and benchmark tables and charts the engine renders from comparative data.", "showcase");
+        flagship("feature-catalog", "FeatureCatalogExample", "Feature Catalog", "A guided catalog of the engine's primitives, one section per capability, every heading registered as a PDF outline bookmark for a navigable index.", "showcase");
+        flagship("social-card", "SocialCardExample", "Social Preview Card", "The repository's 1280x640 social preview, itself a GraphCompose document — one sheet resolving into a portrait page and a 16:9 slide from the same content, so the card cannot drift from the palette and wordmark it is drawn with.", "showcase");
+        flagship("linkedin-carousel", "LinkedInCarouselExample", "LinkedIn Carousel", "A six-slide 4:5 carousel sized for a LinkedIn document post, typeset for a phone. Every figure is read at render time — the version from the filtered properties, the timings from the committed benchmark snapshot.", "showcase");
+        flagship("maven-banner", "MavenBannerPptxExample", "Maven Central Banner", "A five-slide brand deck emitted through the PPTX backend — gradient, rounded panels, native paths and text frames arriving in PowerPoint as an editable copy of the rendered pages, closing on Hebrew and Arabic laid out right to left.", "showcase", "pptx");
+        flagship("financial-report", "FinancialReportExample", "Financial Report", "A financial report — clipped-photo masthead, KPI tables, and vector charts combining the engine's data-viz and shape primitives.", "showcase");
 
         // ===== The preset behind each card, and the model it composes =====
         // Only cards whose example builds exactly one preset: 56 of the 117 registered here.
@@ -537,7 +537,7 @@ final class ShowcaseMetadata {
             case "features/structure" -> "Document Structure";
             case "features/title" -> "Title & Book Pages";
             case "features/docx" -> "Word Export (DOCX)";
-            case "flagships/default" -> "Flagship Demos";
+            case "flagships/default" -> "Complete documents";
             default -> capitalize(group);
         };
     }
@@ -601,7 +601,8 @@ final class ShowcaseMetadata {
     }
 
     private static void flagship(String id, String exampleClass, String title, String desc, String... tags) {
-        ENTRIES.put(id, entry(title, desc, withCategory("flagship", tags),
+        // The tag a visitor sees and searches by is the category's visible name, not the folder's.
+        ENTRIES.put(id, entry(title, desc, withCategory("showcase", tags),
                 "flagships/" + exampleClass, Kind.EXAMPLE, ENGINE_ONLY));
     }
 

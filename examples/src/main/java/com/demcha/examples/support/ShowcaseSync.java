@@ -537,10 +537,12 @@ public final class ShowcaseSync {
             throws IOException {
         StringBuilder sb = new StringBuilder();
         sb.append("{\n  \"schemaVersion\": 2,\n  \"categories\": [\n");
+        // Labels are what a visitor reads; the ids are URLs — published paths, viewer addresses and
+        // anchors people have been given — so a label can change freely and an id never does.
         Map<String, String> categoryLabels = new LinkedHashMap<>();
         categoryLabels.put("templates", "Templates");
-        categoryLabels.put("features", "Features");
-        categoryLabels.put("flagships", "Flagship Examples");
+        categoryLabels.put("features", "Examples");
+        categoryLabels.put("flagships", "Showcase");
 
         // Per-category group ordering. The bare TreeMap sort would
         // surface "coverletter" first inside Templates (15 plain

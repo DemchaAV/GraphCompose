@@ -163,6 +163,19 @@ pre {
   color: var(--text);
 }
 
+.site-nav .nav-cta {
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  color: #06111f;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  white-space: nowrap;
+}
+
+.site-nav .nav-cta:hover,
+.site-nav .nav-cta:focus-visible {
+  color: #06111f;
+}
+
 .section-shell {
   width: min(var(--max-width), calc(100% - 40px));
   margin: 0 auto;
@@ -185,7 +198,11 @@ pre {
 .hero h1 {
   max-width: 100%;
   margin: 0;
-  font-size: 4.4rem;
+  /* At most two lines at any width. The heading wraps once its column is narrower than about ten
+     times the type size (measured from 320 to 1440px), so the size follows the column: beside the
+     document the column is 0.51 of the content width, less the gap. A fixed size between two
+     breakpoints wrapped to three and four lines. */
+  font-size: clamp(2.625rem, calc((100vw - 105px) / 20.4), 3.5rem);
   line-height: 1.02;
   letter-spacing: -0.005em;
 }
@@ -197,13 +214,6 @@ pre {
   font-size: 1.55rem;
   font-weight: 720;
   line-height: 1.18;
-}
-
-.hero-text {
-  max-width: 660px;
-  margin: 18px 0 0;
-  color: var(--muted);
-  font-size: 1.04rem;
 }
 
 .hero-actions {
@@ -263,64 +273,91 @@ pre {
 }
 
 .hero-visual {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
   min-width: 0;
-  overflow: hidden;
 }
 
-.document-stack {
-  position: relative;
-  min-height: 570px;
-  isolation: isolate;
+/* The switch and the viewer link are rendered hidden and shown by home.js. The display rules
+   below would otherwise override the attribute and show a switch that swaps nothing. */
+.hero-visual [hidden] {
+  display: none !important;
 }
 
-.document-stack::before {
-  position: absolute;
-  inset: 9% 10% 6% 4%;
-  z-index: -1;
-  content: "";
-  border: 1px solid rgba(var(--accent-rgb), 0.22);
-  border-radius: 28px;
-  background: var(--surface);
-  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+/* One whole document at its own aspect ratio: the hero is where a visitor judges the output, so
+   the page is neither cropped nor fanned out behind two others. The width and height attributes
+   reserve its space before the image arrives. */
+.hero-document {
+  display: grid;
+  gap: 10px;
+  /* Beside the copy, the document, its caption and the switch have to fit a laptop's first
+     screen, so on a short viewport the page gives up width rather than pushing them below it. */
+  width: min(100%, 400px, max(280px, calc((100vh - 240px) * 0.707)));
+  margin: 0;
 }
 
-.doc-preview {
-  position: absolute;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+.hero-document-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
   border-radius: 6px;
   background: white;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.46);
-  object-fit: cover;
-  object-position: top center;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
 }
 
-.doc-preview-main {
-  top: 36px;
-  left: 15%;
-  z-index: 3;
-  width: min(68%, 370px);
-  aspect-ratio: 0.707 / 1;
+.hero-document-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
-.doc-preview-side {
-  width: min(48%, 265px);
-  aspect-ratio: 0.707 / 1;
-  opacity: 0.88;
+.hero-document-title {
+  margin-right: auto;
+  color: var(--text-strong);
+  font-weight: 700;
 }
 
-.doc-preview-top {
-  top: 0;
-  right: 0;
-  z-index: 2;
-  transform: rotate(4deg);
+.hero-document-link {
+  color: var(--accent);
+  font-weight: 650;
 }
 
-.doc-preview-bottom {
-  right: 7%;
-  bottom: 12px;
-  z-index: 1;
-  transform: rotate(-3deg);
+.hero-switch {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hero-switch-option {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.hero-switch-option:hover,
+.hero-switch-option:focus-visible {
+  border-color: rgba(var(--accent-rgb), 0.46);
+}
+
+.hero-switch-option[aria-pressed="true"] {
+  border-color: rgba(var(--accent-rgb), 0.7);
+  /* The pressed state is carried by the border and the tint; the text keeps full contrast, which
+     the accent colour alone did not have at this size in either theme. */
+  color: var(--text-strong);
+  background: rgba(var(--accent-rgb), 0.18);
 }
 
 .section-grid {
@@ -679,7 +716,13 @@ h2 {
   }
 
   .hero h1 {
-    font-size: 3.5rem;
+    font-size: 3rem;
+  }
+
+  /* One column: the document sits below the copy, so the height cap that keeps it in a laptop's
+     first screen beside the copy does not apply. */
+  .hero-document {
+    width: min(100%, 400px);
   }
 
   .hero-lead {
@@ -688,10 +731,6 @@ h2 {
 
   h2 {
     font-size: 2.55rem;
-  }
-
-  .document-stack {
-    min-height: 480px;
   }
 
   .examples-grid,
@@ -728,7 +767,8 @@ h2 {
   }
 
   .hero h1 {
-    font-size: 2.4rem;
+    /* The full content width, which is the viewport less 28px here. */
+    font-size: clamp(1.75rem, calc((100vw - 28px) / 10.4), 2.25rem);
   }
 
   .hero-lead {
@@ -743,21 +783,10 @@ h2 {
     width: 100%;
   }
 
-  /* On phones the hero PDF stack eats ~390pt before users see
-     the value props. Hide it on the smallest viewports — the H1
-     and lead carry the message. The Featured strip below picks
-     up the visual job instead. */
-  .hero-visual {
-    display: none;
-  }
-
-  .doc-preview-main {
-    left: 7%;
-    width: 66%;
-  }
-
-  .doc-preview-side {
-    width: 45%;
+  /* On a phone the hero keeps one compact document rather than none: it is the proof of what the
+     engine produces, and hiding it left the first screen all words. */
+  .hero-document {
+    width: min(72%, 280px);
   }
 
   .examples-grid,
@@ -793,10 +822,6 @@ h2 {
 }
 
 @media (max-width: 360px) {
-  .hero h1 {
-    font-size: 2.45rem;
-  }
-
   .hero-lead {
     font-size: 1.22rem;
   }
@@ -829,63 +854,48 @@ h2 {
   text-transform: uppercase;
 }
 
-.hero-copy code {
+/* Documentation block: where the template-authoring guide lives now that the home page leads with
+   results rather than with how templates are built. */
+.docs-more {
+  margin: 22px 0 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.docs-more a {
+  color: var(--accent);
+  font-weight: 650;
+}
+
+/* Inline code inside prose blocks. The global `code` colour is set for the dark code panels and
+   has no light counterpart, so on these surfaces it follows the text instead of vanishing. */
+.docs-block code,
+.feature-card code {
   padding: 1px 6px;
   border-radius: 4px;
-  background: rgba(var(--accent-rgb), 0.14);
-  color: var(--accent-2);
-  font-size: 0.94em;
-}
-
-/* Layered architecture callout */
-.layered-callout {
-  padding-top: 32px;
-  padding-bottom: 32px;
-}
-
-.layered-card {
-  position: relative;
-  padding: 28px 32px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.10), rgba(99, 102, 241, 0.10));
-  border: 1px solid rgba(129, 140, 248, 0.35);
-}
-
-.layered-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: #0f172a;
-  background: linear-gradient(135deg, var(--accent), #818cf8);
-  border-radius: 4px;
-  margin-bottom: 12px;
-}
-
-.layered-card h2 {
-  margin: 0 0 8px 0;
-  font-size: 22px;
-  color: var(--text-strong);
-}
-
-.layered-card p {
-  margin: 0 0 18px 0;
-  max-width: 720px;
-  color: var(--muted);
-  line-height: 1.55;
-}
-
-.layered-card strong {
-  color: var(--text-strong);
-}
-
-.layered-card code {
   background: rgba(148, 163, 184, 0.18);
   color: var(--text-strong);
-  padding: 1px 6px;
-  border-radius: 3px;
-  font-size: 12px;
+  /* A call like BrandTheme.modernProfessional() has no break opportunity, and as a grid item's
+     min-content it widened every card past a 320px screen. `anywhere` lets it wrap and counts
+     toward the minimum width, which `break-word` does not. */
+  overflow-wrap: anywhere;
+}
+
+.feature-card {
+  min-width: 0;
+}
+
+/* Present to assistive technology and the document outline, absent from the layout. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .layered-actions {
@@ -2331,7 +2341,6 @@ body.viewer-open {
    on-brand for a typography/layout engine. Body copy stays Inter. */
 .hero h1,
 h2,
-.layered-card h2,
 .category-heading h3,
 .group-heading h4,
 .example-title,

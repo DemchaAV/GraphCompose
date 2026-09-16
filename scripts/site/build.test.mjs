@@ -166,7 +166,8 @@ test("the built page states the release in every shape the version guard reads",
 
 test("the release the page advertises is the one written down, not one the build invented", () => {
   assert.match(built["index.html"], new RegExp(`"releaseTag":\\s*"${release.releaseTag}"`));
-  assert.match(built["index.html"], new RegExp(`Java &middot; ${release.releaseTag} &middot; MIT`));
+  assert.match(built["index.html"], new RegExp(`${release.releaseTag} &middot; MIT`));
+  assert.match(built["index.html"], new RegExp(`Java ${release.javaMinimum}\\+ &middot;`));
 });
 
 test("every URL the sitemap surfaces is a document the catalogue publishes", () => {
@@ -178,6 +179,75 @@ test("every URL the sitemap surfaces is a document the catalogue publishes", () 
   for (const loc of locs) {
     assert.ok(pdfs.has(loc), `the sitemap sends a crawler to ${loc}, which no card publishes`);
   }
+});
+
+const featured = JSON.parse(fs.readFileSync(path.join(root, "web-src", "data", "featured.json"), "utf8"));
+const cardsById = new Map(cards.map((card) => [card.id, card]));
+
+/** A card's viewer address, the way gallery-viewer.js formats one. */
+function routeOf(id) {
+  for (const category of manifest.categories) {
+    for (const group of category.groups) {
+      if (group.examples.some((example) => example.id === id)) {
+        return `#/${category.id}/${group.id}/${id}`;
+      }
+    }
+  }
+  return null;
+}
+
+test("the hero leads with a whole document a reader without JavaScript can open", () => {
+  const page = built["index.html"];
+  const first = cardsById.get(featured.hero[0].id);
+  assert.ok(first, "the first hero entry is not a card in the catalogue");
+  const image = page.match(/<img class="hero-document-image"[^>]*>/);
+  assert.ok(image, "the built page has no hero document image");
+  assert.match(image[0], new RegExp(`src="${first.screenshot}"`));
+  // The size attributes are what reserve the document's space before the image arrives.
+  assert.match(image[0], new RegExp(`width="${first.previewWidth}"\\s+height="${first.previewHeight}"`));
+  assert.match(page, new RegExp(`data-hero-pdf href="${first.pdf}"`));
+});
+
+test("the hero's switch and viewer link wait for a script to make them do something", () => {
+  const page = built["index.html"];
+  assert.match(page, /<div class="hero-switch"[^>]*\bdata-hero-switch hidden>/);
+  assert.match(page, /<a class="hero-document-link" data-hero-open href="[^"]+" hidden>/);
+});
+
+const decodeHtml = (text) =>
+  text.replace(/&(?:amp|lt|gt|quot);/g, (entity) => ({ "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"' })[entity]);
+
+test("the hero's PDF link works without JavaScript", () => {
+  const pdfLink = built["index.html"].match(/<a class="hero-document-link" data-hero-pdf[^>]*>/);
+  assert.ok(pdfLink, "the hero has no PDF link");
+  assert.doesNotMatch(pdfLink[0], /\shidden\b/, "the PDF link is the one control a reader without JavaScript has");
+});
+
+test("every hero option carries its own card's files and viewer address", () => {
+  const options = [
+    ...built["index.html"].matchAll(/<button type="button" class="hero-switch-option"([\s\S]*?)>([^<]*)<\/button>/g),
+  ];
+  assert.equal(options.length, featured.hero.length, "one switch option per hero entry");
+  options.forEach(([, attributes, label], index) => {
+    const entry = featured.hero[index];
+    const card = cardsById.get(entry.id);
+    const attribute = (name) => (attributes.match(new RegExp(`${name}="([^"]*)"`)) || [])[1];
+    assert.equal(label, entry.label);
+    assert.equal(attribute("aria-pressed"), String(index === 0), "only the first option starts pressed");
+    assert.equal(decodeHtml(attribute("data-title")), card.title);
+    assert.equal(attribute("data-screenshot"), card.screenshot);
+    assert.equal(attribute("data-pdf"), card.pdf);
+    assert.equal(attribute("data-width"), String(card.previewWidth));
+    assert.equal(attribute("data-height"), String(card.previewHeight));
+    assert.equal(attribute("data-route"), routeOf(card.id));
+  });
+});
+
+test("a hero entry that names no card stops the build", () => {
+  assert.throws(
+    () => build({ featured: { ...featured, hero: [{ id: "no-such-card", label: "Nothing" }] } }),
+    /no-such-card/
+  );
 });
 
 if (failures.length > 0) {

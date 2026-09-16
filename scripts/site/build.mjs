@@ -71,17 +71,19 @@ export function render(template, tokens, what) {
   return out;
 }
 
-/** Every card in the manifest, and a lookup by id. */
+/** Every card in the manifest by id, and where each one sits: its category and its group. */
 function catalogue(manifest) {
   const byId = new Map();
+  const places = new Map();
   for (const category of manifest.categories) {
     for (const group of category.groups) {
       for (const example of group.examples) {
         byId.set(example.id, example);
+        places.set(example.id, { categoryId: category.id, groupId: group.id });
       }
     }
   }
-  return byId;
+  return { byId, places };
 }
 
 /**
@@ -115,8 +117,8 @@ function featuredCard(byId, entry, what) {
 }
 
 /**
- * The JSON-LD item list: the display names stay editorial (they read "Master Showcase
- * (flagship)", not the catalogue's title), while the URL is resolved from the manifest so a
+ * The JSON-LD item list: the display names stay editorial (they read "Cinematic Project Proposal",
+ * not the catalogue's "Project Proposal (cinematic)"), while the URL is resolved from the manifest so a
  * renamed PDF cannot leave a crawler pointed at nothing.
  */
 function jsonLdItemList(featured, byId) {
@@ -136,6 +138,65 @@ function jsonLdItemList(featured, byId) {
       ].join("\n");
     })
     .join(",\n");
+}
+
+/**
+ * The hero's document: the first entry rendered in full, and a switch to the others.
+ *
+ * The first document is on the page as built, so a reader without JavaScript still sees a real
+ * result and can open its PDF. The switch and the viewer link are rendered `hidden` and shown by
+ * `home.js`, because neither does anything without a script — a switch that swaps nothing is a
+ * control that lies. Every entry is a card of the catalogue, and its image, size, PDF and viewer
+ * address are read from that card, so the hero cannot point at a document the site does not
+ * publish.
+ */
+function heroDocument(featured, byId, places) {
+  if (!Array.isArray(featured.hero) || featured.hero.length === 0) {
+    throw new Error("web-src/data/featured.json: hero is empty, so the page has no document to lead with");
+  }
+  const entries = featured.hero.map((entry) => {
+    const card = featuredCard(byId, entry, "featured.json hero");
+    if (typeof entry.label !== "string" || entry.label === "") {
+      throw new Error(`web-src/data/featured.json: the hero entry "${entry.id}" has no label for its switch`);
+    }
+    for (const field of ["title", "screenshot", "pdf"]) {
+      if (typeof card[field] !== "string" || card[field] === "") {
+        throw new Error(`web/examples.json: the hero card "${card.id}" has no ${field}`);
+      }
+    }
+    if (!(card.previewWidth > 0 && card.previewHeight > 0)) {
+      throw new Error(`web/examples.json: the hero card "${card.id}" has no preview size to reserve its space with`);
+    }
+    const place = places.get(card.id);
+    return { label: entry.label, card, route: `#/${place.categoryId}/${place.groupId}/${card.id}` };
+  });
+
+  const first = entries[0];
+  const options = entries.map((entry, index) =>
+    [
+      `          <button type="button" class="hero-switch-option" data-hero-option aria-pressed="${index === 0}"`,
+      `                  data-title="${escapeHtml(entry.card.title)}" data-screenshot="${escapeHtml(entry.card.screenshot)}"`,
+      `                  data-width="${entry.card.previewWidth}" data-height="${entry.card.previewHeight}"`,
+      `                  data-pdf="${escapeHtml(entry.card.pdf)}" data-route="${escapeHtml(entry.route)}">${escapeHtml(entry.label)}</button>`,
+    ].join("\n")
+  );
+  return [
+    '      <div class="hero-visual">',
+    '        <figure class="hero-document" data-hero>',
+    `          <img class="hero-document-image" data-hero-image src="${escapeHtml(first.card.screenshot)}"`,
+    `               width="${first.card.previewWidth}" height="${first.card.previewHeight}"`,
+    `               alt="${escapeHtml(first.card.title)}, first page" fetchpriority="high">`,
+    '          <figcaption class="hero-document-caption">',
+    `            <span class="hero-document-title" data-hero-title aria-live="polite">${escapeHtml(first.card.title)}</span>`,
+    `            <a class="hero-document-link" data-hero-pdf href="${escapeHtml(first.card.pdf)}">Open PDF</a>`,
+    `            <a class="hero-document-link" data-hero-open href="${escapeHtml(first.route)}" hidden>Open in viewer</a>`,
+    "          </figcaption>",
+    "        </figure>",
+    '        <div class="hero-switch" role="group" aria-label="Show another document" data-hero-switch hidden>',
+    ...options,
+    "        </div>",
+    "      </div>",
+  ].join("\n");
 }
 
 /**
@@ -198,7 +259,7 @@ export function build(sources = {}) {
   const manifest = sources.manifest ?? readJson("web", "examples.json");
   const release = sources.release ?? readJson("web-src", "data", "release.json");
   const featured = sources.featured ?? readJson("web-src", "data", "featured.json");
-  const byId = catalogue(manifest);
+  const { byId, places } = catalogue(manifest);
 
   const index = render(
     lf(readText("web-src", "pages", "index.html")),
@@ -209,6 +270,7 @@ export function build(sources = {}) {
       cvPresetCount: String(presetCount(manifest, "templates", "cv")),
       letterCount: String(presetCount(manifest, "templates", "coverletter")),
       jsonLdItemList: jsonLdItemList(featured, byId),
+      heroDocument: heroDocument(featured, byId, places),
       noscriptCatalogue: noscriptCatalogue(manifest),
     },
     "web-src/pages/index.html"

@@ -16,8 +16,9 @@ what `web-src/` builds, and CI's guard job runs it.
 - `index.html` — **generated** from `web-src/pages/index.html`. Single-page
   showcase: hero, install snippets, feature / architecture sections, and the
   searchable gallery shell. What comes from data rather than from the template:
-  the release the page advertises (seven spots, from `web-src/data/release.json`),
-  the JSON-LD item list and the sitemap's documents (names are editorial, in
+  the release the page advertises (from `web-src/data/release.json`: the seven spots the
+  version guard holds, and the latest-release link in the documentation block),
+  the hero's documents, the JSON-LD item list and the sitemap's documents (names are editorial, in
   `web-src/data/featured.json`; the URLs are resolved from the manifest so a
   renamed PDF cannot leave a crawler pointed at nothing), the preset counts, and
   the no-JavaScript index of every document in the catalogue.
@@ -35,6 +36,13 @@ what `web-src/` builds, and CI's guard job runs it.
   It is collapsed by default, because open it took twice the room of the document it
   describes. `scripts/site/gallery-viewer.test.mjs` tests the addresses, the navigation,
   the paging and that panel in CI's guard job.
+- `home.js` — the hero's document switch. The page is built with the first document
+  already on it, so a reader without JavaScript still sees a real result and its PDF. The
+  switch is rendered hidden and shown by the script; the link into the viewer waits for
+  `examples.js` to announce that the viewer exists (`gallery-viewer-ready`), because the
+  viewer needs the catalogue and `<dialog>`, not just its script. A choice changes the
+  picture, the caption and both links together, once the new preview is ready.
+  `scripts/site/home.test.mjs` runs it against the hero parsed out of the built page.
 - `examples.json` — **generated** gallery manifest. Do **not** hand-edit it; it is
   rewritten by `ShowcaseSync` (see below).
 - `sitemap.xml` — **generated** from `web-src/pages/sitemap.xml`; `robots.txt` — SEO, static.
@@ -124,10 +132,11 @@ writes to it.
 
 - **Version.** The displayed version is written down once, in
   `web-src/data/release.json` (`stableVersion`, `releaseTag`, `javaMinimum`), and the build
-  injects it into the seven spots on the page that inherit from no pom: the
+  injects it everywhere the page states it: the latest-release link in the documentation block,
+  and the seven spots that inherit from no pom — the
   `<script type="application/json" id="release-context">` block the page itself reads, the
   JSON-LD `softwareVersion` and Maven Central `downloadUrl` a crawler reads, and the hero
-  badge (`Java &middot; v… &middot; MIT`) and the Maven and Gradle snippets a visitor reads.
+  badge (`Java 17+ &middot; v… &middot; MIT`) and the Maven and Gradle snippets a visitor reads.
   On a final release `cut-release.ps1` moves those two values and then runs the build; a
   pattern that matches nothing stops the cut rather than leaving that spot behind. Rewriting
   the page directly is what the generated site rules out — the next build would undo it.

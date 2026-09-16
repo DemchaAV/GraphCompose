@@ -453,7 +453,7 @@ jobs:
                 '"releaseTag": "v9\.9\.9"',
                 '"softwareVersion": "9\.9\.9"',
                 'graph-compose/9\.9\.9',
-                'Java &middot; v9\.9\.9 &middot; MIT',
+                'v9\.9\.9 &middot; MIT',
                 '&lt;version&gt;9\.9\.9&lt;/version&gt;',
                 "io\.github\.demchaav:graph-compose:9\.9\.9")) {
               if ($page -notmatch $shape) { throw "the rebuilt page does not carry /$shape/" }

@@ -46,8 +46,8 @@
   // category id -> short label shown as a badge on each tile.
   const CATEGORY_BADGE = {
     templates: 'Template',
-    features: 'Feature',
-    flagships: 'Flagship'
+    features: 'Example',
+    flagships: 'Showcase'
   };
 
   // The ATS statuses that earn the "ATS-friendly" chip on a CV card.
@@ -136,7 +136,7 @@
       '@context': 'https://schema.org',
       '@type': 'ItemList',
       name: 'GraphCompose showcase examples',
-      description: 'Full searchable catalogue of GraphCompose example PDFs (templates, features, flagships).',
+      description: 'Full searchable catalogue of GraphCompose example PDFs (templates, examples, showcase documents).',
       numberOfItems: items.length,
       itemListElement: items
     };
@@ -244,6 +244,10 @@
       viewer = Gallery.createViewer({
         dialog: VIEWER_DIALOG, catalogue, release: readRelease(), onClose: onViewerClosed
       });
+      // The hero's link into the viewer (home.js) waits for this: the viewer exists only once the
+      // catalogue has loaded and <dialog> works, so its script having loaded promises nothing.
+      document.documentElement.dataset.galleryViewer = 'ready';
+      document.dispatchEvent(new CustomEvent('gallery-viewer-ready'));
     }
   }
 
@@ -561,7 +565,7 @@
       '<section class="showcase-highlights" aria-labelledby="highlights-heading">',
       '  <header class="highlights-heading">',
       '    <h3 id="highlights-heading">Featured</h3>',
-      '    <p class="highlights-sub">A spread across templates, features, and flagships &mdash; open any tile to page through its family.</p>',
+      '    <p class="highlights-sub">A spread across templates, examples and showcase documents &mdash; open any tile to page through its family.</p>',
       '  </header>',
       '  <div class="highlights-strip" role="list">',
       tiles.join('\n'),

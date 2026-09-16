@@ -122,12 +122,12 @@
       <span>GraphCompose</span>
     </a>
     <nav class="site-nav" aria-label="Primary navigation">
-      <a href="#showcase">Showcase</a>
       <a href="#templates-section">Templates</a>
-      <a href="#features-section">Features</a>
-      <a href="#flagships-section">Flagships</a>
-      <a href="#install">Install</a>
+      <a href="#features-section">Examples</a>
+      <a href="#documentation">Documentation</a>
+      <a href="https://github.com/DemchaAV/GraphCompose/releases">Releases</a>
       <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a>
+      <a class="nav-cta" href="#install">Get started</a>
       <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark theme" title="Toggle theme">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
@@ -138,41 +138,20 @@
   <main id="top">
     <section class="hero section-shell" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="eyebrow">Java &middot; {{releaseTag}} &middot; MIT</p>
-        <h1 id="hero-title">Java PDF layout engine for structured business documents.</h1>
-        <p class="hero-lead">Describe documents. Render polished PDFs. A semantic layout engine for Java services that need <b>structured, paginated, theme-driven</b> output &mdash; CVs, invoices, proposals, reports.</p>
-        <p class="hero-text">No drawing API. No pixel arithmetic. You compose <code>ParagraphNode</code>, <code>TableNode</code>, <code>SectionNode</code>; GraphCompose handles measurement, pagination, fonts, and PDFBox rendering.</p>
-        <p class="hero-text">The same resolved layout also renders to an <b>editable PowerPoint deck</b> &mdash; one page per slide, geometry-identical to the PDF, text and panels as native shapes. Opt in with <code>graph-compose-render-pptx</code> (<code>@Beta</code>).</p>
+        <p class="eyebrow">Java {{javaMinimum}}+ &middot; {{releaseTag}} &middot; MIT</p>
+        <h1 id="hero-title">Business documents, composed in Java.</h1>
+        <p class="hero-lead">A layout engine that measures, paginates and renders structured PDFs &mdash; with ready-made templates for CVs, invoices and proposals.</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="#showcase">Browse Examples</a>
-          <a class="button button-secondary" href="https://github.com/DemchaAV/GraphCompose">Source on GitHub</a>
-          <a class="button button-ghost" href="#install">Install in 30s</a>
+          <a class="button button-primary" href="#install">Get started</a>
+          <a class="button button-secondary" href="#templates-section">Browse templates</a>
         </div>
       </div>
 
-      <div class="hero-visual" aria-label="Generated PDF previews">
-        <div class="document-stack">
-          <img class="doc-preview doc-preview-main" src="showcase/screenshots/templates/proposal/project-proposal-cinematic.png" alt="Cinematic project proposal preview">
-          <img class="doc-preview doc-preview-side doc-preview-top" src="showcase/screenshots/templates/invoice/invoice-cinematic.png" alt="Cinematic invoice preview">
-          <img class="doc-preview doc-preview-side doc-preview-bottom" src="showcase/screenshots/templates/cv/cv-blue-banner-v2.png" alt="Blue Banner CV preview">
-        </div>
-      </div>
-    </section>
-
-    <section class="layered-callout section-shell" aria-labelledby="layered-title">
-      <div class="layered-card">
-        <span class="layered-badge">NEW</span>
-        <h2 id="layered-title">Building your own templates?</h2>
-        <p>The <strong>layered architecture</strong> guide walks you through the five-folder pattern &mdash; <code>data</code> / <code>theme</code> / <code>components</code> / <code>widgets</code> / <code>presets</code> &mdash; with a worked CV example, widget cookbook, and step-by-step contributor checklist. New templates and major rewrites follow this shape.</p>
-        <div class="layered-actions">
-          <a class="button button-primary" href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/templates/v2-layered/quickstart.md">Quickstart (5 min)</a>
-          <a class="button button-secondary" href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/templates/v2-layered/authoring-presets.md">Author a preset</a>
-          <a class="button button-ghost" href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/templates/v2-layered/contributor-guide.md">Add a template family</a>
-        </div>
-      </div>
+{{heroDocument}}
     </section>
 
     <section class="value-prop section-shell" aria-labelledby="value-title">
+      <h2 id="value-title" class="visually-hidden">What you get</h2>
       <div class="value-grid">
         <div>
           <h3>30 lines &rarr; one invoice</h3>
@@ -232,18 +211,18 @@
 
     <section class="section-shell" id="showcase" aria-labelledby="showcase-title">
       <div class="section-heading">
-        <p class="section-label">Showcase</p>
+        <p class="section-label">Catalogue</p>
         <h2 id="showcase-title">Generated PDFs you can inspect.</h2>
         <p class="section-text">Every example below is a real, runnable Java file. Click the preview to open the rendered PDF, or jump straight into the source.</p>
       </div>
 
       <div class="showcase-controls" role="search">
-        <input type="search" id="showcase-search" placeholder="Search by title, tag, or keyword..." aria-label="Search showcase examples">
+        <input type="search" id="showcase-search" placeholder="Search by title, tag, or keyword..." aria-label="Search the catalogue">
         <div class="showcase-filters" id="showcase-filters" role="tablist" aria-label="Filter by category">
           <button class="filter-pill is-active" data-category="all" type="button">All</button>
           <button class="filter-pill" data-category="templates" type="button">Templates</button>
-          <button class="filter-pill" data-category="features" type="button">Features</button>
-          <button class="filter-pill" data-category="flagships" type="button">Flagships</button>
+          <button class="filter-pill" data-category="features" type="button">Examples</button>
+          <button class="filter-pill" data-category="flagships" type="button">Showcase</button>
         </div>
       </div>
 
@@ -296,7 +275,25 @@
           <h3>Markdown-aware bodies</h3>
           <p>Inline <code>**bold**</code>, <code>*italic*</code>, <code>_italic_</code> markers parsed in every paragraph and list block automatically.</p>
         </article>
+        <article class="feature-card">
+          <h3>The same layout as an editable deck</h3>
+          <p>One page per slide, geometry-identical to the PDF, with text and panels as native PowerPoint shapes. Opt in with <code>graph-compose-render-pptx</code> (<code>@Beta</code>).</p>
+        </article>
       </div>
+    </section>
+
+    <section class="section-shell docs-block" id="documentation" aria-labelledby="documentation-title">
+      <div class="section-heading">
+        <p class="section-label">Documentation</p>
+        <h2 id="documentation-title">Building your own templates?</h2>
+        <p class="section-text">The <strong>layered architecture</strong> guide walks through the five-folder pattern &mdash; <code>data</code> / <code>theme</code> / <code>components</code> / <code>widgets</code> / <code>presets</code> &mdash; with a worked CV example, a widget cookbook and a contributor checklist.</p>
+      </div>
+      <div class="layered-actions">
+        <a class="button button-primary" href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/templates/v2-layered/quickstart.md">Quickstart (5 min)</a>
+        <a class="button button-secondary" href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/templates/v2-layered/authoring-presets.md">Author a preset</a>
+        <a class="button button-ghost" href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/templates/v2-layered/contributor-guide.md">Add a template family</a>
+      </div>
+      <p class="docs-more"><a href="https://github.com/DemchaAV/GraphCompose/blob/main/docs/README.md">All documentation</a> &middot; latest release <a href="https://github.com/DemchaAV/GraphCompose/releases/tag/{{releaseTag}}">{{releaseTag}}</a> &middot; <a href="https://github.com/DemchaAV/GraphCompose/blob/main/CHANGELOG.md">Changelog</a></p>
     </section>
   </main>
 
@@ -374,5 +371,6 @@
   </script>
   <script src="gallery-viewer.js"></script>
   <script src="examples.js"></script>
+  <script src="home.js"></script>
 </body>
 </html>

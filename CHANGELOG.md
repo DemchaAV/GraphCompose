@@ -124,6 +124,16 @@ follow semantic versioning; release dates are ISO 8601.
   is not what `web-src/` builds, and the build refuses rather than publishes when a template
   token, a featured id or a card's title has gone.
 
+- **The showcase home page leads with a result, and the catalogue uses words a newcomer knows.**
+  The menu is Templates, Examples, Documentation, Releases and GitHub, with a Get started button.
+  The hero shows one whole document with an Invoice / CV / Proposal / Report switch — each a real
+  catalogue document that opens as a PDF or in the viewer — where it used to fan out
+  three cropped previews; a phone now gets one compact document instead of none, and the heading
+  stays within two lines at every width from 320 to 1440 pixels. The feature demonstrations are listed as *Examples* and the
+  large complete documents as *Showcase*, instead of *Features* and *Flagships*. Category ids and
+  every published URL are unchanged, so existing links and shared viewer addresses keep working.
+  The template-authoring guide moved from the top of the page into a Documentation block.
+
 ## v2.4.0 — 2026-09-14
 
 ### Public API

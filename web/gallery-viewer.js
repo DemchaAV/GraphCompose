@@ -148,6 +148,11 @@
     const closer = dialog.querySelector('[data-viewer-close]');
     const thumbs = part('thumbnails');
     const panel = part('panel');
+    const panelToggle = part('panel-toggle');
+    const pages = part('pages');
+    const pageLabel = part('page-label');
+    const pagePrevious = part('page-previous');
+    const pageNext = part('page-next');
 
     let view = null;
     let opener = null;
@@ -155,6 +160,14 @@
     let thumbsOf = null;
     let ticket = 0;
     let closingByHistory = false;
+    // Collapsed to begin with: opened by default the panel took 42% of the viewport against the
+    // stage's 21%, and a page rendered at 147px tall is not a document anyone can judge. Once a
+    // reader opens it, it stays open — paging through a family should not re-collapse it.
+    let panelOpen = false;
+    // Which page of the document shown, 1-based. Unlike the panel's open state this does NOT
+    // survive a move: the next document starts at its own first page, or a reader stepping off
+    // an eight-page catalogue would land on "page 5" of a document that has two.
+    let pageIndex = 1;
     const preloaded = new Set();
 
     // Shows a route. history 'push' records a new entry, as when a reader opens the
@@ -181,6 +194,9 @@
 
     function show(target, historyMode) {
       view = target;
+      // Every change of document comes through here — opening, the steps, a family switch — and
+      // a redraw of the same document does not, which is what makes this the right seam.
+      pageIndex = 1;
       const address = formatRoute(target.status === 'ok'
         ? target.route
         : { category: target.category.id, group: target.group.id, id: target.requested });
@@ -217,6 +233,7 @@
       next.disabled = atEnd;
       setLink(pdf, shown ? shown.pdf : '');
       setLink(code, shown && shown.code && shown.code !== '#' ? shown.code : '');
+      renderPages(shown);
       renderPanel(shown);
       if (shown) {
         showPage(shown);
@@ -242,11 +259,20 @@
     // builds no preset gets the same panel without the preset claims.
     function renderPanel(shown) {
       panel.textContent = '';
-      panel.hidden = !shown;
+      // Two separate questions: whether there is a document to describe, and whether the reader
+      // has asked to see the description. The panel is only in the way when both are not true.
+      // The same trap as the page row: hiding a button that holds focus leaves the focus
+      // nowhere, so hand it on first.
+      if (!shown && panelToggle.contains(document.activeElement)) {
+        (next.disabled ? closer : next).focus();
+      }
+      panelToggle.hidden = !shown;
+      panel.hidden = !shown || !panelOpen;
+      panelToggle.setAttribute('aria-expanded', String(!!shown && panelOpen));
       if (!shown) return;
 
       const preset = shown.kind === 'PRESET' && shown.presetClass ? shown.presetClass : null;
-      panel.append(panelHeading(preset ? 'Use this template' : 'Run this example'));
+      panelToggle.textContent = preset ? 'Use this template' : 'Run this example';
 
       // A coordinate is only as good as the version beside it. With no release context the
       // page would be naming a release it does not know, so it names none at all.
@@ -330,13 +356,6 @@
       if (links.children.length) {
         panel.append(links);
       }
-    }
-
-    function panelHeading(text) {
-      const heading = document.createElement('h3');
-      heading.className = 'gallery-viewer-panel-heading';
-      heading.textContent = text;
-      return heading;
     }
 
     function panelRow(label, value) {
@@ -481,15 +500,68 @@
     // browser already has. A reader saving data gets none of it.
     function preloadNeighbours() {
       if (savingData()) return;
+      const warm = [];
       for (const delta of [1, -1]) {
         const neighbour = routes.step(view, delta);
-        const page = neighbour && catalogue.get(neighbour.id).example.screenshot;
+        if (neighbour) warm.push(catalogue.get(neighbour.id).example.screenshot);
+      }
+      // The page after the one on screen, for the same reason the neighbouring documents are
+      // warmed: it is the one fetch paging cannot avoid, and a reader on page 1 of 8 asks for
+      // page 2 next more often than for anything else. Undefined on the last page, skipped below.
+      if (view.status === 'ok') {
+        warm.push(pagesOf(catalogue.get(view.id).example)[pageIndex]);
+      }
+      for (const page of warm) {
         if (!page || preloaded.has(page)) continue;
         preloaded.add(page);
         const loader = new Image();
         loader.fetchPriority = 'low';
         loader.src = page;
       }
+    }
+
+    /** Every page of a document in reading order: the preview is page 1, the rest follow it. */
+    function pagesOf(shown) {
+      return [shown.screenshot].concat(shown.pages || []);
+    }
+
+    // Pages move inside the document. Previous and Next, the arrow keys and a swipe all keep
+    // moving between documents: a page is not a document, and letting a swipe mean both would
+    // make the same gesture do two things on the eight-page catalogue and one everywhere else.
+    function movePage(delta) {
+      if (!view || view.status !== 'ok') return;
+      const shown = catalogue.get(view.id).example;
+      const total = pagesOf(shown).length;
+      const next = pageIndex + delta;
+      if (next < 1 || next > total) return;
+      pageIndex = next;
+      showPage(shown);
+      renderPages(shown);
+      // Warm the page after this one too, or paging forward would stay ahead of the reader for
+      // exactly one step and then wait on the network for every page after it.
+      preloadNeighbours();
+    }
+
+    function renderPages(shown) {
+      const total = shown ? pagesOf(shown).length : 0;
+      if (total < 2) {
+        // Hand focus out before hiding. A focused button inside a hidden subtree holds focus in
+        // name only: the browser drops it to the page behind the modal, and the reader loses the
+        // ring and their place in the tab order. Reached by stepping from a document of several
+        // pages to one of a single page, which the catalogue allows in 25 places.
+        if (pages.contains(document.activeElement)) (next.disabled ? closer : next).focus();
+        pages.hidden = true;
+        pageLabel.textContent = '';
+        return;
+      }
+      pages.hidden = false;
+      pageLabel.textContent = 'Page ' + pageIndex + ' of ' + total;
+      // Hand focus over before disabling, or the browser drops it to the page behind the
+      // dialog — the same trap the document steps have at the ends of a family.
+      if (pageIndex === 1 && document.activeElement === pagePrevious) pageNext.focus();
+      if (pageIndex === total && document.activeElement === pageNext) pagePrevious.focus();
+      pagePrevious.disabled = pageIndex === 1;
+      pageNext.disabled = pageIndex === total;
     }
 
     // The title, counter and links change at once; the page image changes only if its
@@ -502,21 +574,25 @@
         (next.disabled ? closer : next).focus();
       }
       notice.hidden = true;
-      if (!shown.screenshot) {
+      const source = pagesOf(shown)[pageIndex - 1];
+      if (!source) {
         pageFailed(current);
         return;
       }
+      // The page a reader is on, not always the first: telling a screen reader "first page"
+      // on page five of the catalogue is a plain untruth.
+      const which = pageIndex === 1 ? ', first page' : ', page ' + pageIndex;
       stage.setAttribute('aria-busy', 'true');
       const loader = new Image();
       loader.onload = () => {
         if (current !== ticket) return;
         image.src = loader.src;
-        image.alt = (shown.title || shown.id) + ', first page';
+        image.alt = (shown.title || shown.id) + which;
         image.hidden = false;
         stage.removeAttribute('aria-busy');
       };
       loader.onerror = () => pageFailed(current);
-      loader.src = shown.screenshot;
+      loader.src = source;
     }
 
     function pageFailed(current) {
@@ -615,6 +691,17 @@
       }
       if (event.target === dialog) {
         close();
+        return;
+      }
+      const toggle = event.target.closest('[data-viewer-toggle]');
+      if (toggle) {
+        panelOpen = !panelOpen;
+        renderPanel(view.status === 'ok' ? catalogue.get(view.id).example : null);
+        return;
+      }
+      const pageButton = event.target.closest('[data-viewer-page]');
+      if (pageButton) {
+        movePage(Number(pageButton.dataset.viewerPage));
         return;
       }
       const stepButton = event.target.closest('[data-viewer-step]');

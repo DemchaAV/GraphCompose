@@ -422,6 +422,13 @@
         </figure>
         <button type="button" class="gallery-viewer-step" data-viewer="next" data-viewer-step="1" aria-label="Next document">&#x203A;</button>
       </div>
+      <div class="gallery-viewer-pages" data-viewer="pages" hidden>
+        <button type="button" class="gallery-viewer-page-step" data-viewer="page-previous"
+                data-viewer-page="-1" aria-label="Previous page">&#x2039;</button>
+        <span class="gallery-viewer-page-label" data-viewer="page-label" aria-live="polite"></span>
+        <button type="button" class="gallery-viewer-page-step" data-viewer="page-next"
+                data-viewer-page="1" aria-label="Next page">&#x203A;</button>
+      </div>
       <nav class="gallery-viewer-thumbs" data-viewer="thumbnails" aria-label="Documents in this family"></nav>
       <footer class="gallery-viewer-footer">
         <div class="gallery-viewer-meta">
@@ -435,7 +442,11 @@
           <a class="example-action example-action-ghost" data-viewer="code" target="_blank" rel="noopener">View code</a>
         </div>
       </footer>
-      <section class="gallery-viewer-panel" data-viewer="panel" aria-label="How to reproduce this document" hidden></section>
+      <button type="button" class="gallery-viewer-panel-toggle" id="gallery-viewer-panel-toggle"
+              data-viewer="panel-toggle" data-viewer-toggle
+              aria-expanded="false" aria-controls="gallery-viewer-panel" hidden></button>
+      <section class="gallery-viewer-panel" id="gallery-viewer-panel" data-viewer="panel"
+               aria-labelledby="gallery-viewer-panel-toggle" hidden></section>
     </div>
   </dialog>
 

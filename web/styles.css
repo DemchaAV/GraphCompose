@@ -1683,6 +1683,92 @@ body.viewer-open {
   gap: 10px;
 }
 
+/* Paging inside one document, deliberately unlike the document steps either side of the page:
+   those are large arrows over the stage, these are a small centred row under it, so the two
+   kinds of movement never read as the same control. */
+.gallery-viewer-pages {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 20px;
+}
+
+.gallery-viewer-page-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gallery-viewer-page-step:hover:not(:disabled) {
+  color: #f8fafc;
+  border-color: rgba(var(--accent-rgb), 0.45);
+}
+
+.gallery-viewer-page-step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.gallery-viewer-page-label {
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The disclosure over the panel. The document keeps the dialog's room until a reader asks
+   for the reproduction details: opened by default the panel took 42vh, twice the stage. */
+.gallery-viewer-panel-toggle {
+  /* Never grows: `1 1 100%` (copied from the panel) made the button a flex item asking for
+     the dialog's whole height, which left the stage 40px and the page 0x0. */
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 20px;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.85);
+  color: #e2e8f0;
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gallery-viewer-panel-toggle:hover {
+  color: #f8fafc;
+  background: rgba(30, 41, 59, 0.9);
+}
+
+.gallery-viewer-panel-toggle::after {
+  content: '\25B8';
+  margin-left: auto;
+  color: #94a3b8;
+  transition: transform 120ms ease;
+}
+
+.gallery-viewer-panel-toggle[aria-expanded='true']::after {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-viewer-panel-toggle::after {
+    transition: none;
+  }
+}
+
 /* What a reader needs to reproduce the document shown: the coordinates, the classes it
    composes, the compiled snippet, and where the runnable source and the guide are. */
 .gallery-viewer-panel {
@@ -1690,15 +1776,12 @@ body.viewer-open {
   padding: 14px 20px 18px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(15, 23, 42, 0.92);
-  max-height: 42vh;
+  /* The document keeps roughly a third of the dialog even with the panel open. At 42vh the
+     opened panel plus its toggle left the stage 149px and the page 74x105 — smaller than the
+     regression this disclosure was added to fix. The panel scrolls, so a lower cap costs
+     scrolling; the stage cannot scroll a page into being readable. */
+  max-height: 30vh;
   overflow-y: auto;
-}
-
-.gallery-viewer-panel-heading {
-  margin: 0 0 10px;
-  color: #f8fafc;
-  font-size: 0.95rem;
-  font-weight: 600;
 }
 
 .gallery-viewer-panel-row {
@@ -1746,7 +1829,7 @@ body.viewer-open {
 
 @media (max-width: 720px) {
   .gallery-viewer-panel {
-    max-height: 38vh;
+    max-height: 34vh;
     padding: 12px 14px 16px;
   }
 

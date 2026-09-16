@@ -13,11 +13,14 @@ and a generated JSON manifest, served directly with **no build step**. It lives
   `#<category>-section`) by selecting that category's filter first: a category
   section exists only while its filter is shown.
 - `gallery-viewer.js` — the viewer the gallery opens: one family at a time, at
-  `#/<category>/<group>/<id>`. Under the document it shows what reproducing it takes —
-  the coordinates at the release the page names, the preset and model a card composes,
-  its family's compiled snippet, the run command, and the source and guide at the release
-  tag. `scripts/site/gallery-viewer.test.mjs` tests its addresses, navigation and that
-  panel in CI's guard job.
+  `#/<category>/<group>/<id>`. A document of several pages is paged through in place —
+  "Page x of N" under the stage, while the arrows, the keys and a swipe keep moving between
+  documents. A disclosure under that opens what reproducing the document takes: the
+  coordinates at the release the page names, the preset and model a card composes, its
+  family's compiled snippet, the run command, and the source and guide at the release tag.
+  It is collapsed by default, because open it took twice the room of the document it
+  describes. `scripts/site/gallery-viewer.test.mjs` tests the addresses, the navigation,
+  the paging and that panel in CI's guard job.
 - `examples.json` — **generated** gallery manifest. Do **not** hand-edit it; it is
   rewritten by `ShowcaseSync` (see below).
 - `robots.txt`, `sitemap.xml` — SEO.
@@ -30,6 +33,10 @@ and a generated JSON manifest, served directly with **no build step**. It lives
   previews above, it would pull a whole page per slot.
 - `showcase/pptx/<category>/<group>/…` — the PowerPoint decks of the examples that
   also render one.
+- `showcase/pages/<category>/<group>/<name>-<n>.png` — every page after the first, at 1.0×,
+  numbered as a reader counts them (page 1 is the screenshot above, so these start at `-2`).
+  Only the 33 multi-page documents have any: 70 images, 3.66 MiB. The viewer pages through
+  these instead of sending a reader to the PDF to see page 2.
 
 ## Regenerating the gallery
 Driven by code, not hand-edited JSON. Source of truth:

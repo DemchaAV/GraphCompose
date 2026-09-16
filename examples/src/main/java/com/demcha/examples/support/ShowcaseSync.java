@@ -80,6 +80,17 @@ public final class ShowcaseSync {
     private static final float PREVIEW_SCALE = 1.5f;
 
     /**
+     * How pages beyond the first are rendered.
+     *
+     * <p>Lower than the first page's scale because the viewer shows one page at a time in a
+     * stage about 374 CSS pixels wide: 595px covers that, and 1.5x would publish pixels the
+     * page never displays. Measured across all 33 multi-page documents, every page beyond the
+     * first costs 6.27 MiB at 1.5x, 3.66 at 1.0x and 2.47 at 0.75x — and 0.75x is already soft
+     * against that stage on a dense screen.</p>
+     */
+    private static final float PAGE_SCALE = 1.0f;
+
+    /**
      * How wide a strip thumbnail is written.
      *
      * <p>The viewer's strip draws a document in a 54px slot, 46px on a narrow screen. Pointing
@@ -178,7 +189,7 @@ public final class ShowcaseSync {
         // reachable by URL, absent from the manifest, and rendered from source that no
         // longer exists. Clearing the three output trees first makes the published site
         // a pure function of what GenerateAllExamples just produced.
-        for (String subtree : new String[] {"pdf", "pptx", "screenshots", "thumbnails"}) {
+        for (String subtree : new String[] {"pdf", "pptx", "screenshots", "thumbnails", "pages"}) {
             deletePublishedFiles(showcaseRoot.resolve(subtree));
         }
 
@@ -215,10 +226,21 @@ public final class ShowcaseSync {
             Files.createDirectories(pngTarget.getParent());
             Files.createDirectories(thumbnailTarget.getParent());
 
+            Path pagesDir = showcaseRoot.resolve("pages").resolve(category).resolve(group);
+
             Files.copy(pdf, pdfTarget, StandardCopyOption.REPLACE_EXISTING);
             copied++;
-            Preview preview = renderPreview(pdf, pngTarget, thumbnailTarget);
+            Preview preview = renderPreview(pdf, pngTarget, thumbnailTarget, pagesDir, basename);
             rendered++;
+
+            // Pages beyond the first, as the addresses the page will ask for. Derived from the
+            // page count the render just reported, so the manifest cannot name a file the render
+            // did not write.
+            List<String> pageUrls = new ArrayList<>();
+            for (int page = 2; page <= preview.pages(); page++) {
+                pageUrls.add(relativeUrl(showcaseRoot,
+                        pagesDir.resolve(basename + "-" + page + ".png"), siteRoot));
+            }
 
             // A twin flagship renders the same composition to a deck beside its
             // PDF. The deck is published as a second download on the same card:
@@ -259,6 +281,7 @@ public final class ShowcaseSync {
                     relativeUrl(showcaseRoot, pngTarget, siteRoot),
                     relativeUrl(showcaseRoot, thumbnailTarget, siteRoot),
                     preview,
+                    List.copyOf(pageUrls),
                     List.copyOf(artifacts),
                     facts.runnable(),
                     ShowcaseMetadata.ats(basename));
@@ -286,14 +309,27 @@ public final class ShowcaseSync {
      * the document turned out to be: the preview's pixel size, so the page can reserve the right
      * box before the image arrives, and how many pages there are to say so on the card.
      */
-    private static Preview renderPreview(Path pdfPath, Path pngTarget, Path thumbnailTarget)
-            throws IOException {
+    private static Preview renderPreview(Path pdfPath, Path pngTarget, Path thumbnailTarget,
+                                         Path pagesDir, String basename) throws IOException {
         try (PDDocument document = Loader.loadPDF(pdfPath.toFile())) {
             PDFRenderer renderer = new PDFRenderer(document);
             BufferedImage image = renderer.renderImage(0, PREVIEW_SCALE, ImageType.RGB);
             ImageIO.write(image, "PNG", pngTarget.toFile());
             writeThumbnail(image, thumbnailTarget);
-            return new Preview(image.getWidth(), image.getHeight(), document.getNumberOfPages(),
+
+            // The rest of the document, one file per page, so a reader can page through it
+            // without downloading it. Named by the page number a reader sees — page 1 is the
+            // preview written above, so these start at 2. Rendered from the document already
+            // open here rather than in a second pass over the file.
+            int pages = document.getNumberOfPages();
+            for (int page = 1; page < pages; page++) {
+                BufferedImage rest = renderer.renderImage(page, PAGE_SCALE, ImageType.RGB);
+                Path target = pagesDir.resolve(basename + "-" + (page + 1) + ".png");
+                Files.createDirectories(target.getParent());
+                ImageIO.write(rest, "PNG", target.toFile());
+            }
+
+            return new Preview(image.getWidth(), image.getHeight(), pages,
                     embedsAFaceOfItsOwn(document));
         }
     }
@@ -721,6 +757,7 @@ public final class ShowcaseSync {
             String screenshot,
             String thumbnail,
             Preview preview,
+            List<String> pages,
             List<String> artifacts,
             boolean runnable,
             ShowcaseMetadata.Ats ats) {
@@ -739,6 +776,11 @@ public final class ShowcaseSync {
             }
             sb.append(indent).append("\"screenshot\": ").append(jsonString(screenshot)).append(",\n");
             sb.append(indent).append("\"thumbnail\": ").append(jsonString(thumbnail)).append(",\n");
+            // Only where there is more than one page, so the 84 single-page cards carry no empty
+            // array. Page 1 is the screenshot above; these are the rest, in reading order.
+            if (!pages.isEmpty()) {
+                sb.append(indent).append("\"pages\": ").append(jsonArray(pages)).append(",\n");
+            }
             // The page's own size, so a card can hold its shape before the image arrives.
             sb.append(indent).append("\"previewWidth\": ").append(preview.width()).append(",\n");
             sb.append(indent).append("\"previewHeight\": ").append(preview.height()).append(",\n");

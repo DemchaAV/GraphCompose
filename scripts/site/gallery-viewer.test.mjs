@@ -300,7 +300,12 @@ function viewerHarness(catalogueUnderTest = catalogue, release = RELEASE) {
     pdf: add(dialog, "a", { "data-viewer": "pdf" }),
     code: add(dialog, "a", { "data-viewer": "code" })
   };
+  parts.pages = add(dialog, "div", { "data-viewer": "pages" });
+  parts.pagePrevious = add(parts.pages, "button", { "data-viewer": "page-previous", "data-viewer-page": "-1" });
+  parts.pageLabel = add(parts.pages, "span", { "data-viewer": "page-label" });
+  parts.pageNext = add(parts.pages, "button", { "data-viewer": "page-next", "data-viewer-page": "1" });
   parts.thumbnails = add(dialog, "nav", { "data-viewer": "thumbnails" });
+  parts.panelToggle = add(dialog, "button", { "data-viewer": "panel-toggle", "data-viewer-toggle": "" });
   parts.panel = add(dialog, "section", { "data-viewer": "panel" });
   parts.image = add(parts.stage, "img", { "data-viewer": "image" });
   parts.notice = add(parts.stage, "div", { "data-viewer": "notice" });
@@ -385,12 +390,118 @@ function viewerHarness(catalogueUnderTest = catalogue, release = RELEASE) {
 
 const exampleOf = (id) => catalogue.get(id).example;
 
+check("the panel stays out of the document's way until a reader asks for it", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "templates", group: "cv", id: "cv-blue-banner-v2" }, { history: "push" });
+  // Collapsed to begin with. Open by default it took 42% of the viewport against the stage's
+  // 21%, and an 892x1262 page rendered at 104x147 — not a document anyone can judge.
+  assert.equal(page.parts.panel.hidden, true);
+  assert.equal(page.parts.panelToggle.hidden, false);
+  assert.equal(page.parts.panelToggle.getAttribute("aria-expanded"), "false");
+  assert.match(page.parts.panelToggle.text, /Use this template/);
+
+  page.click(page.parts.panelToggle);
+  assert.equal(page.parts.panel.hidden, false);
+  assert.equal(page.parts.panelToggle.getAttribute("aria-expanded"), "true");
+
+  // And it stays open: paging through a family must not re-collapse it on every document.
+  page.click(page.parts.next);
+  assert.equal(page.parts.panel.hidden, false);
+  assert.equal(page.parts.panelToggle.getAttribute("aria-expanded"), "true");
+});
+
+check("a document of several pages says which one is on screen", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "flagships", group: "default", id: "feature-catalog" }, { history: "push" });
+  const total = exampleOf("feature-catalog").pages.length + 1;
+  assert.ok(total > 2, "feature-catalog is the long document this case is about");
+  assert.equal(page.parts.pages.hidden, false);
+  assert.equal(page.parts.pageLabel.text, "Page 1 of " + total);
+  assert.equal(page.parts.pagePrevious.disabled, true, "there is nothing before the first page");
+  assert.equal(page.parts.pageNext.disabled, false);
+});
+
+check("paging forward shows the next page of the same document", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "flagships", group: "default", id: "feature-catalog" }, { history: "push" });
+  const example = exampleOf("feature-catalog");
+  page.click(page.parts.pageNext);
+  assert.equal(page.parts.pageLabel.text, "Page 2 of " + (example.pages.length + 1));
+  assert.equal(page.parts.pagePrevious.disabled, false);
+  // Page 1 is the preview; page 2 is the first of the published page images.
+  assert.equal(page.pageLoader().src, example.pages[0]);
+  // The document did not change: paging is movement inside one document.
+  assert.equal(page.location.hash, "#/flagships/default/feature-catalog");
+});
+
+check("a document of one page is offered no page controls at all", () => {
+  const page = viewerHarness();
+  let single = null;
+  for (const category of catalogue.categories) {
+    for (const group of category.groups) {
+      for (const id of group.ids) {
+        if (!exampleOf(id).pages) { single = { category: category.id, group: group.id, id }; break; }
+      }
+      if (single) break;
+    }
+    if (single) break;
+  }
+  assert.ok(single, "the catalogue holds a single-page document for this case");
+  page.viewer.open(single, { history: "push" });
+  assert.equal(page.parts.pages.hidden, true);
+});
+
+check("moving to another document starts it at its own first page", () => {
+  const page = viewerHarness();
+  const ids = idsOf("flagships", "default");
+  const at = ids.indexOf("feature-catalog");
+  page.viewer.open({ category: "flagships", group: "default", id: "feature-catalog" }, { history: "push" });
+  page.click(page.parts.pageNext);
+  assert.equal(page.parts.pageLabel.text.startsWith("Page 2"), true);
+
+  page.click(page.parts.next);
+  // The page index belongs to the document, not to the viewer: without the reset in show()
+  // the next document would open on page 2, or on a page it does not have.
+  assert.equal(page.pageLoader().src, exampleOf(ids[at + 1]).screenshot);
+});
+
+check("moving to a document of one page takes focus out of the page row before hiding it", () => {
+  const page = viewerHarness();
+  const ids = idsOf("flagships", "default");
+  const at = ids.indexOf("feature-catalog");
+  page.viewer.open({ category: "flagships", group: "default", id: "feature-catalog" }, { history: "push" });
+  assert.equal(page.parts.pages.hidden, false);
+
+  page.parts.pageNext.focus();
+  assert.equal(page.doc.activeElement, page.parts.pageNext);
+
+  const neighbour = ids.slice(at + 1).find((id) => !exampleOf(id).pages);
+  assert.ok(neighbour, "fixture: a single-page document follows feature-catalog in this family");
+  page.viewer.open({ category: "flagships", group: "default", id: neighbour }, { history: "replace" });
+
+  assert.equal(page.parts.pages.hidden, true);
+  assert.equal(page.parts.pages.contains(page.doc.activeElement), false,
+    "a focused button inside a hidden row holds focus in name only: the browser drops it to the "
+    + "page behind the modal, and the reader loses the ring and their place in the tab order");
+});
+
+check("a swipe moves between documents, not between pages", () => {
+  const page = viewerHarness();
+  const ids = idsOf("flagships", "default");
+  const at = ids.indexOf("feature-catalog");
+  page.viewer.open({ category: "flagships", group: "default", id: "feature-catalog" }, { history: "push" });
+  page.swipe({ from: [600, 300], to: [200, 300] });
+  assert.equal(page.location.hash, "#/flagships/default/" + ids[at + 1],
+    "the gesture that moves documents must keep moving documents once a document has pages");
+});
+
 check("a preset card's panel names the preset, its model and the coordinates of the release shown", () => {
   const page = viewerHarness();
   page.viewer.open({ category: "templates", group: "cv", id: "cv-blue-banner-v2" }, { history: "push" });
+  page.click(page.parts.panelToggle);
   const said = page.panelText();
   assert.equal(page.parts.panel.hidden, false);
-  assert.match(said, /Use this template/);
+  assert.match(page.parts.panelToggle.text, /Use this template/);
   assert.match(said, /com\.demcha\.compose\.document\.templates\.cv\.presets\.BlueBanner/);
   assert.match(said, /com\.demcha\.compose\.document\.templates\.cv\.data\.CvDocument/);
   assert.match(said, /io\.github\.demchaav/);
@@ -410,6 +521,7 @@ check("a preset card's panel names the preset, its model and the coordinates of 
 check("a document that embeds no face of its own is given the pair, not the aggregate", () => {
   const page = viewerHarness();
   page.viewer.open({ category: "templates", group: "invoice", id: "invoice-modern-v2" }, { history: "push" });
+  page.click(page.parts.panelToggle);
   const said = page.panelText();
   // The invoice theme is Helvetica, which every PDF reader already has. If this card ever
   // embeds a face, it stops being the example of a card that needs nothing extra.
@@ -425,6 +537,7 @@ check("a document that embeds no face of its own is given the pair, not the aggr
 check("an example GenerateAllExamples drives is not offered as one to run", () => {
   const page = viewerHarness();
   page.viewer.open({ category: "features", group: "tables", id: "table-advanced" }, { history: "push" });
+  page.click(page.parts.panelToggle);
   const said = page.panelText();
   assert.equal(exampleOf("table-advanced").runnable, false);
   assert.doesNotMatch(said, /exec:java/,
@@ -435,6 +548,7 @@ check("an example GenerateAllExamples drives is not offered as one to run", () =
 check("a card that renders a deck asks a reader for the deck backend", () => {
   const page = viewerHarness();
   page.viewer.open({ category: "flagships", group: "default", id: "twin-output" }, { history: "push" });
+  page.click(page.parts.panelToggle);
   // The PPTX backend is discovered by format, so nothing in the source names it and only the
   // render says it is missing — which is why the card has to carry it.
   assert.match(page.panelText(), /graph-compose-render-pptx/);
@@ -443,6 +557,7 @@ check("a card that renders a deck asks a reader for the deck backend", () => {
 check("the aggregate stands in for the engine pair without swallowing a backend", () => {
   const page = viewerHarness();
   page.viewer.open({ category: "features", group: "text", id: "letter-spacing" }, { history: "push" });
+  page.click(page.parts.panelToggle);
   const said = page.panelText();
   assert.equal(exampleOf("letter-spacing").needsBundledFonts, true);
   assert.match(said, /graph-compose-bundle/);
@@ -455,9 +570,10 @@ check("the aggregate stands in for the engine pair without swallowing a backend"
 check("a card that builds no preset is offered as a runnable example, and claims no preset", () => {
   const page = viewerHarness();
   page.viewer.open({ category: "templates", group: "coverletter", id: "cover-letter" }, { history: "push" });
+  page.click(page.parts.panelToggle);
   const said = page.panelText();
-  assert.match(said, /Run this example/);
-  assert.doesNotMatch(said, /Use this template/);
+  assert.match(page.parts.panelToggle.text, /Run this example/);
+  assert.doesNotMatch(page.parts.panelToggle.text, /Use this template/);
   assert.doesNotMatch(said, /Preset/);
   assert.match(said, /exec:java -Dexec\.mainClass=com\.demcha\.examples\./);
 });
@@ -465,6 +581,7 @@ check("a card that builds no preset is offered as a runnable example, and claims
 check("with no release context the panel names no coordinates rather than guessing a version", () => {
   const page = viewerHarness(catalogue, null);
   page.viewer.open({ category: "templates", group: "cv", id: "cv-blue-banner-v2" }, { history: "push" });
+  page.click(page.parts.panelToggle);
   const said = page.panelText();
   assert.doesNotMatch(said, /undefined/);
   assert.doesNotMatch(said, /<version>/);
@@ -475,6 +592,7 @@ check("with no release context the panel names no coordinates rather than guessi
 check("the panel shows the family's compiled block, as the manifest carries it", () => {
   const page = viewerHarness();
   page.viewer.open({ category: "templates", group: "cv", id: "cv-blue-banner-v2" }, { history: "push" });
+  page.click(page.parts.panelToggle);
   const code = manifest.snippets.cv.code;
   assert.ok(code && code.length > 0, "the manifest carries a CV snippet for the panel to show");
   assert.ok(page.panelText().includes(code), "the block is shown as it stands, not paraphrased");
@@ -483,6 +601,7 @@ check("the panel shows the family's compiled block, as the manifest carries it",
 check("a family with no compiled block shows no snippet rather than another family's", () => {
   const page = viewerHarness();
   page.viewer.open({ category: "templates", group: "coverletter", id: "cover-letter" }, { history: "push" });
+  page.click(page.parts.panelToggle);
   assert.equal(manifest.snippets.coverletter, undefined);
   assert.ok(!page.panelText().includes(manifest.snippets.cv.code));
 });
@@ -666,6 +785,26 @@ check("the pages either side are fetched ahead, and none of them in data-saver m
   assert.ok(!askedWhileSaving.includes(exampleOf(ids[0]).screenshot));
   assert.ok(!askedWhileSaving.includes(exampleOf(ids[2]).screenshot));
   assert.ok(askedWhileSaving.includes(exampleOf(ids[1]).screenshot), "the page shown is still loaded");
+});
+
+check("the page after the one on screen is fetched ahead, and not in data-saver mode", () => {
+  const page = viewerHarness();
+  const example = exampleOf("feature-catalog");
+  assert.ok(example.pages && example.pages.length > 1, "fixture: this document has pages to warm");
+
+  page.viewer.open({ category: "flagships", group: "default", id: "feature-catalog" }, { history: "push" });
+  assert.ok(page.images.map((image) => image.src).includes(example.pages[0]),
+    "page 2 is the one fetch paging cannot avoid");
+
+  page.click(page.parts.pageNext);
+  assert.ok(page.images.map((image) => image.src).includes(example.pages[1]),
+    "paging forward has to keep warming, or it stays ahead of the reader for exactly one step");
+
+  const saving = viewerHarness();
+  saving.connection.saveData = true;
+  saving.viewer.open({ category: "flagships", group: "default", id: "feature-catalog" }, { history: "push" });
+  assert.ok(!saving.images.map((image) => image.src).includes(example.pages[0]),
+    "a reader who asked to save data is sent no page they have not asked for");
 });
 
 check("a drag across the page moves a document; a short, vertical or edge drag does not", () => {

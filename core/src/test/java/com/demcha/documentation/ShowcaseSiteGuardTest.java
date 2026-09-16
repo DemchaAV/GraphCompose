@@ -97,6 +97,35 @@ class ShowcaseSiteGuardTest {
      */
     private static final Pattern ADDRESS_SAFE_ID = Pattern.compile("[a-z0-9]+(?:-[a-z0-9]+)*");
 
+    /**
+     * The tallest the reproduction panel may be capped at, in {@code vh}.
+     *
+     * <p>A budget, not a style preference: the panel opens over the document it explains, so its
+     * cap decides how much of the page a reader can still see. At 42vh the stage fell to 149px
+     * and an A4 page rendered at 74×105. 34 is the narrow-screen cap; the desktop one is lower.</p>
+     */
+    private static final int PANEL_HEIGHT_CEILING = 34;
+
+    /**
+     * Each {@code max-height} declared on the panel itself, base rule and media queries alike.
+     *
+     * <p>The class may sit anywhere in a selector list, so a cap cannot be smuggled past this by
+     * grouping the rule with another selector, and the whole value is captured rather than a
+     * {@code vh} number — switching the cap to {@code px} has to fail here, not slip through as
+     * "no cap found". The negative lookahead keeps {@code .gallery-viewer-panel-toggle} and the
+     * other {@code -row} / {@code -label} rules out of it.</p>
+     */
+    private static final Pattern PANEL_MAX_HEIGHT =
+            Pattern.compile("\\.gallery-viewer-panel(?![-\\w])[^{]*\\{[^}]*?max-height:\\s*([^;]+);",
+                    Pattern.DOTALL);
+
+    /** A cap expressed against the viewport, which is the only form this budget can read. */
+    private static final Pattern VIEWPORT_HEIGHT = Pattern.compile("(\\d+)vh");
+
+    /** The {@code flex} shorthand on the disclosure button, which must not let it grow. */
+    private static final Pattern PANEL_TOGGLE_FLEX =
+            Pattern.compile("\\.gallery-viewer-panel-toggle\\s*\\{[^}]*?flex:\\s*([^;]+);", Pattern.DOTALL);
+
     /** The family → guide map the panel links, in {@code gallery-viewer.js}. */
     private static final Pattern FAMILY_GUIDES_BLOCK =
             Pattern.compile("const FAMILY_GUIDES = \\{(.*?)\\};", Pattern.DOTALL);
@@ -140,6 +169,20 @@ class ShowcaseSiteGuardTest {
                 }
                 if (!(value instanceof String path) || !isShowcaseFile(path)) {
                     missing.add(card.get("id") + " " + key + ": " + value);
+                }
+            }
+            // The pages after the first are an array rather than one path, so they cannot join
+            // the loop above. Absent is correct for the 84 single-page documents; present and
+            // empty is not, because nothing would then be published under a name the page asks for.
+            if (card.get("pages") != null) {
+                if (!(card.get("pages") instanceof List<?> published) || published.isEmpty()) {
+                    missing.add(card.get("id") + " pages: " + card.get("pages"));
+                } else {
+                    for (Object page : published) {
+                        if (!(page instanceof String path) || !isShowcaseFile(path)) {
+                            missing.add(card.get("id") + " pages: " + page);
+                        }
+                    }
                 }
             }
         }
@@ -284,6 +327,47 @@ class ShowcaseSiteGuardTest {
     }
 
     @Test
+    void theReproductionPanelLeavesTheDocumentRoomToBeRead() throws IOException {
+        String css = read("styles.css");
+
+        Set<String> tooTall = new TreeSet<>();
+        Matcher caps = PANEL_MAX_HEIGHT.matcher(css);
+        int capsFound = 0;
+        while (caps.find()) {
+            capsFound++;
+            String cap = caps.group(1).trim();
+            Matcher viewport = VIEWPORT_HEIGHT.matcher(cap);
+            if (!viewport.matches()) {
+                // A cap in pixels is not a budget against the document: on a short window it is
+                // the whole dialog, and this guard could not read it as too tall either.
+                tooTall.add(cap + " (not measured against the viewport)");
+            } else if (Integer.parseInt(viewport.group(1)) > PANEL_HEIGHT_CEILING) {
+                tooTall.add(cap);
+            }
+        }
+
+        assertThat(capsFound)
+                .describedAs("no max-height on .gallery-viewer-panel in web/styles.css: uncapped, the panel "
+                        + "takes whatever the dialog has, and the document it explains gets the rest")
+                .isGreaterThan(0);
+        assertThat(tooTall)
+                .describedAs("the panel opens over the document, so this cap is how much of the page a "
+                        + "reader can still see. At 42vh the stage fell to 149px and an A4 page rendered "
+                        + "at 74x105 — smaller than the regression the disclosure was added to fix")
+                .isEmpty();
+
+        Matcher flex = PANEL_TOGGLE_FLEX.matcher(css);
+        assertThat(flex.find())
+                .describedAs("no flex shorthand on .gallery-viewer-panel-toggle, so nothing here notices it "
+                        + "becoming a growing flex item again")
+                .isTrue();
+        assertThat(flex.group(1).trim())
+                .describedAs("the disclosure is a control, not a panel: as a growing flex item it asked for "
+                        + "the dialog's whole height and left the stage 40px with the page at 0x0")
+                .startsWith("0 0");
+    }
+
+    @Test
     void everyFamilyGuideThePanelLinksIsAPageThatIsThere() throws IOException {
         String viewer = read("gallery-viewer.js");
         Matcher block = FAMILY_GUIDES_BLOCK.matcher(viewer);
@@ -420,6 +504,14 @@ class ShowcaseSiteGuardTest {
             String id = String.valueOf(card.get("id"));
             if (intOf(card.get("pageCount")) < 1) {
                 wrong.add(id + " pageCount: " + card.get("pageCount"));
+            }
+            // Every page after the first is published as an image of its own, so the set a card
+            // names is exactly one shorter than the count it declares. A card claiming eight
+            // pages while publishing three sends a reader to an address with nothing behind it.
+            int beyondFirst = card.get("pages") instanceof List<?> published ? published.size() : 0;
+            if (beyondFirst != Math.max(0, intOf(card.get("pageCount")) - 1)) {
+                wrong.add(id + " declares " + card.get("pageCount") + " pages and publishes "
+                        + beyondFirst + " beyond the first");
             }
             int[] preview = pngSize(WEB.resolve(String.valueOf(card.get("screenshot"))));
             if (preview == null) {

@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
+import com.demcha.compose.document.api.Internal;
 import com.demcha.compose.engine.components.content.barcode.BarcodeData;
 import com.demcha.compose.engine.components.content.barcode.BarcodeType;
 import com.google.zxing.BarcodeFormat;
@@ -31,8 +32,11 @@ import java.util.Map;
  * so cells need not be square in the box. The drawing maps whatever matrix comes
  * back onto the box, which keeps each format's placement exactly as ZXing lays it
  * out.</p>
+ *
+ * <p>Shared by the PDF and PPTX barcode handlers so both draw the same matrix.</p>
  */
-final class BarcodeMatrices {
+@Internal
+public final class BarcodeMatrices {
 
     private static final int MIN_MATRIX_SIZE = 200;
 
@@ -48,7 +52,7 @@ final class BarcodeMatrices {
      * @return the encoded matrix; a set bit is a dark cell
      * @throws IOException if ZXing cannot encode the content in that symbology
      */
-    static BitMatrix encode(BarcodeData data, int boxWidth, int boxHeight) throws IOException {
+    public static BitMatrix encode(BarcodeData data, int boxWidth, int boxHeight) throws IOException {
         Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
         hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
         if (data.getMargin() >= 0) {

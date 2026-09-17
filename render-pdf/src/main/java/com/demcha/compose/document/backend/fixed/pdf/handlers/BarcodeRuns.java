@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
+import com.demcha.compose.document.api.Internal;
 import com.google.zxing.common.BitArray;
 import com.google.zxing.common.BitMatrix;
 
@@ -19,7 +20,8 @@ import java.util.Arrays;
  * <p>Coordinates are matrix cells with the origin at the top-left, as ZXing
  * indexes them.</p>
  */
-final class BarcodeRuns {
+@Internal
+public final class BarcodeRuns {
 
     private final int[] rects;
     private final int count;
@@ -35,7 +37,7 @@ final class BarcodeRuns {
      * @param matrix barcode matrix; a set bit is a dark cell
      * @return the rectangles covering every set bit once
      */
-    static BarcodeRuns of(BitMatrix matrix) {
+    public static BarcodeRuns of(BitMatrix matrix) {
         int width = matrix.getWidth();
         int height = matrix.getHeight();
         int[] rects = new int[64];
@@ -86,28 +88,52 @@ final class BarcodeRuns {
         return new BarcodeRuns(rects, count);
     }
 
-    /** @return the number of rectangles */
-    int count() {
+    /**
+     * Returns the number of rectangles.
+     *
+     * @return the rectangle count
+     */
+    public int count() {
         return count;
     }
 
-    /** @return left column of rectangle {@code index} */
-    int x(int index) {
+    /**
+     * Returns the left column of a rectangle.
+     *
+     * @param index rectangle index, from 0 to {@link #count()} exclusive
+     * @return the leftmost cell column the rectangle covers
+     */
+    public int x(int index) {
         return rects[index * 4];
     }
 
-    /** @return top row of rectangle {@code index} */
-    int y(int index) {
+    /**
+     * Returns the top row of a rectangle.
+     *
+     * @param index rectangle index, from 0 to {@link #count()} exclusive
+     * @return the topmost cell row the rectangle covers
+     */
+    public int y(int index) {
         return rects[index * 4 + 1];
     }
 
-    /** @return width in cells of rectangle {@code index} */
-    int width(int index) {
+    /**
+     * Returns the width of a rectangle.
+     *
+     * @param index rectangle index, from 0 to {@link #count()} exclusive
+     * @return the width in cells
+     */
+    public int width(int index) {
         return rects[index * 4 + 2];
     }
 
-    /** @return height in cells of rectangle {@code index} */
-    int height(int index) {
+    /**
+     * Returns the height of a rectangle.
+     *
+     * @param index rectangle index, from 0 to {@link #count()} exclusive
+     * @return the height in cells
+     */
+    public int height(int index) {
         return rects[index * 4 + 3];
     }
 }

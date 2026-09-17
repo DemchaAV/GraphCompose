@@ -19,6 +19,11 @@ import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentTransform;
 import com.demcha.compose.document.style.ShapePoint;
 import com.demcha.compose.engine.components.content.shape.Stroke;
+import com.google.zxing.BinaryBitmap;
+import com.google.zxing.DecodeHintType;
+import com.google.zxing.RGBLuminanceSource;
+import com.google.zxing.common.HybridBinarizer;
+import com.google.zxing.qrcode.QRCodeReader;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFFreeformShape;
 import org.apache.poi.xslf.usermodel.XSLFGroupShape;
@@ -31,17 +36,20 @@ import org.openxmlformats.schemas.presentationml.x2006.main.CTShape;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * The remaining vector payloads land at graph coordinates: image fit modes
- * (including the COVER source crop), the ZXing barcode picture, polygon and
+ * (including the COVER source crop), barcodes as freeform shapes, polygon and
  * free-path freeforms with native gradient fills and strokes, and transform
  * markers materializing as rotated, scaled group shapes.
  */
@@ -112,7 +120,7 @@ class PptxVectorFragmentsTest {
     }
 
     @Test
-    void barcodeRendersAsAPictureOnTheFragmentBox() throws Exception {
+    void barcodeRendersAsFreeformsOnTheFragmentBoxAndScans() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(300, 200)
                 .margin(DocumentInsets.of(20))
@@ -120,22 +128,76 @@ class PptxVectorFragmentsTest {
             session.add(new BarcodeBuilder().data("graphcompose").qrCode().size(60, 60).build());
             LayoutGraph graph = session.render(new GraphCapturingBackend());
             byte[] pptx = session.render(new PptxFixedLayoutBackend());
-            PlacedFragment fragment = graph.fragments().stream()
-                    .filter(candidate -> candidate.payload().getClass().getSimpleName()
-                            .equals("BarcodeFragmentPayload"))
-                    .findFirst().orElseThrow();
+            PlacedFragment fragment = barcodeFragment(graph);
             try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
-                XSLFPictureShape picture = show.getSlides().get(0).getShapes().stream()
-                        .filter(XSLFPictureShape.class::isInstance)
-                        .map(XSLFPictureShape.class::cast)
-                        .findFirst().orElseThrow();
-                assertRect(picture.getAnchor(),
+                List<XSLFShape> shapes = show.getSlides().get(0).getShapes();
+                assertThat(shapes).noneMatch(XSLFPictureShape.class::isInstance);
+                List<XSLFFreeformShape> freeforms = shapes.stream()
+                        .filter(XSLFFreeformShape.class::isInstance)
+                        .map(XSLFFreeformShape.class::cast)
+                        .toList();
+                assertThat(freeforms).as("background and dark cells").hasSize(2);
+                assertRect(freeforms.get(0).getAnchor(),
                         fragment.x(),
                         graph.canvas().height() - fragment.y() - fragment.height(),
                         fragment.width(), fragment.height());
-                assertThat(picture.getPictureData().getData().length).isPositive();
+
+                assertThat(decodeQr(rasterise(show, graph))).isEqualTo("graphcompose");
             }
         }
+    }
+
+    @Test
+    void aTransparentBarcodeForegroundCutsTheCellsOutOfTheBackground() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(300, 200)
+                .margin(DocumentInsets.of(20))
+                .pageBackground(new Color(30, 60, 120))
+                .create()) {
+            session.add(new BarcodeBuilder().data("knockout").qrCode().size(80, 80)
+                    .foreground(new Color(0, 0, 0, 0)).background(Color.WHITE).build());
+            LayoutGraph graph = session.render(new GraphCapturingBackend());
+            byte[] pptx = session.render(new PptxFixedLayoutBackend());
+            try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
+                // The page shows through the cells, so the symbol still reads.
+                assertThat(decodeQr(rasterise(show, graph))).isEqualTo("knockout");
+            }
+        }
+    }
+
+    private static PlacedFragment barcodeFragment(LayoutGraph graph) {
+        return graph.fragments().stream()
+                .filter(candidate -> candidate.payload().getClass().getSimpleName()
+                        .equals("BarcodeFragmentPayload"))
+                .findFirst().orElseThrow();
+    }
+
+    private static BufferedImage rasterise(XMLSlideShow show, LayoutGraph graph) {
+        double scale = 4;
+        BufferedImage image = new BufferedImage(
+                (int) Math.round(graph.canvas().width() * scale),
+                (int) Math.round(graph.canvas().height() * scale),
+                BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = image.createGraphics();
+        try {
+            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            graphics.setColor(Color.WHITE);
+            graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+            graphics.scale(scale, scale);
+            show.getSlides().get(0).draw(graphics);
+        } finally {
+            graphics.dispose();
+        }
+        return image;
+    }
+
+    private static String decodeQr(BufferedImage image) throws Exception {
+        int[] pixels = image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
+        return new QRCodeReader().decode(
+                new BinaryBitmap(new HybridBinarizer(
+                        new RGBLuminanceSource(image.getWidth(), image.getHeight(), pixels))),
+                Map.of(DecodeHintType.TRY_HARDER, Boolean.TRUE)).getText();
     }
 
     @Test

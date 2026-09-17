@@ -7,7 +7,7 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Performance
 
-- **A PDF barcode is drawn as vector paths, not as an image.**
+- **A barcode is drawn as vector shapes, not as an image, in PDF and PPTX.**
   `PdfBarcodeFragmentRenderHandler` turned ZXing's bit matrix into a bitmap, one `setRGB`
   call per pixel, wrote it to PNG with `ImageIO` — which, with its default cache, buffers a
   write to a stream through a temporary file in `java.io.tmpdir` — and passed the PNG to
@@ -17,17 +17,22 @@ follow semantic versioning; release dates are ISO 8601.
   image stream, no file. The matrix is the one ZXing produced for the bitmap, stretched over
   the fragment box the same way, so every symbology keeps its placement — rasterised on
   screen, the modules land on the same pixels and only anti-aliased edges differ — while the
-  edges stay sharp at any zoom. Measured locally on the feature-rich benchmark document (a QR code and
-  a Code 128; interleaved A/B against the previous handler, three rounds): median render
-  29 → 1.7 ms, allocation per document 7.0 → 0.7 MB, PDF 6.3 → 4.1 KB, and outliers of up
-  to 390 ms — the temporary-file writes — are gone. The committed barcode showcase preview
-  drops from 11.4 KB to 4.3 KB.
+  edges stay sharp at any zoom. Measured locally on the feature-rich benchmark document (a
+  QR code and a Code 128; interleaved A/B against the previous handler, three rounds):
+  median render 29 → 1.7 ms, allocation per document 7.0 → 0.7 MB, PDF 6.3 → 4.1 KB, and
+  outliers of up to 390 ms — the temporary-file writes — are gone. The committed barcode
+  showcase preview drops from 11.4 KB to 4.3 KB.
   <br><br>
-  One rendering difference: a translucent foreground used to replace the background inside
-  each dark cell, and is now painted over it, so the two blend there as they do everywhere
-  else in a document. A fully transparent foreground still leaves the dark cells empty — the
-  background is cut away there and whatever lies under the barcode shows through. PPTX still
-  places the barcode as a picture. No public API change.
+  `PptxBarcodeFragmentRenderHandler` placed a bitmap of the same matrix as a picture, written
+  to PNG through the same temporary-file path. It now draws the same matrix as two freeform
+  shapes — the background over the box and the dark cells as one path — so a slide carries a
+  sharp barcode made of native shapes and no picture.
+  <br><br>
+  One rendering difference in both formats: a translucent foreground used to replace the
+  background inside each dark cell, and is now painted over it, so the two blend there as
+  they do everywhere else in a document. A fully transparent foreground still leaves the dark
+  cells empty — the background is cut away there and whatever lies under the barcode shows
+  through. No public API change.
 
 ### Tests
 
@@ -35,9 +40,12 @@ follow semantic versioning; release dates are ISO 8601.
   formats decodes to its content, every cell of the matrix lands in place and in the chosen
   colour for all eight, translucent colours layer page, background and foreground, a
   transparent background shows the page through, a transparent foreground cuts the cells
-  out of the background, and translucent colours stay inside the barcode. `BarcodeRunsTest` holds the row merge to covering every dark cell
-  exactly once. The canonical features test now checks the QR code through its drawn
-  rectangles rather than through the presence of an image.
+  out of the background, and translucent colours stay inside the barcode. `BarcodeRunsTest`
+  holds the row merge to covering every dark cell exactly once. The canonical features test
+  now checks the QR code through its drawn rectangles rather than through the presence of an
+  image. `PptxVectorFragmentsTest` renders the slide and scans the QR code off it, with an
+  opaque and with a transparent foreground, and checks the background shape lands on the
+  fragment box.
 
 ## v2.4.0 — 2026-09-14
 

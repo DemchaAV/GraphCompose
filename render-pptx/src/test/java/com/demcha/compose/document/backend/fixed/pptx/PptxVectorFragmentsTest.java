@@ -19,9 +19,13 @@ import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentTransform;
 import com.demcha.compose.document.style.ShapePoint;
 import com.demcha.compose.engine.components.content.shape.Stroke;
+import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.DecodeHintType;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.RGBLuminanceSource;
+import com.google.zxing.common.BitMatrix;
 import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.qrcode.QRCodeReader;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
@@ -163,6 +167,67 @@ class PptxVectorFragmentsTest {
                 assertThat(decodeQr(rasterise(show, graph))).isEqualTo("knockout");
             }
         }
+    }
+
+    @Test
+    void aTranslucentBarcodeForegroundCompositesWithTheSlideNotTheBackground() throws Exception {
+        Color page = new Color(220, 235, 250);
+        Color background = new Color(255, 255, 0, 90);
+        Color foreground = new Color(200, 30, 30, 120);
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(300, 200)
+                .margin(DocumentInsets.of(20))
+                .pageBackground(page)
+                .create()) {
+            session.add(new BarcodeBuilder().data("layers").qrCode().size(80, 80)
+                    .foreground(foreground).background(background).build());
+            LayoutGraph graph = session.render(new GraphCapturingBackend());
+            byte[] pptx = session.render(new PptxFixedLayoutBackend());
+            PlacedFragment fragment = barcodeFragment(graph);
+            BitMatrix matrix = new MultiFormatWriter().encode("layers", BarcodeFormat.QR_CODE, 200, 200,
+                    Map.of(EncodeHintType.CHARACTER_SET, "UTF-8", EncodeHintType.MARGIN, 0));
+            // The top-left finder pattern: its first row is seven dark modules, the ring
+            // inside it one light module wide.
+            int[] corner = matrix.getTopLeftOnBit();
+            int module = 0;
+            while (matrix.get(corner[0] + module, corner[1])) {
+                module++;
+            }
+            module /= 7;
+            double cellWidth = fragment.width() / matrix.getWidth();
+            double cellHeight = fragment.height() / matrix.getHeight();
+            double top = graph.canvas().height() - fragment.y() - fragment.height();
+            try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
+                BufferedImage slide = rasterise(show, graph);
+                Color dark = sample(slide, fragment.x() + (corner[0] + module * 0.5) * cellWidth,
+                        top + (corner[1] + module * 0.5) * cellHeight);
+                Color light = sample(slide, fragment.x() + (corner[0] + module * 1.5) * cellWidth,
+                        top + (corner[1] + module * 1.5) * cellHeight);
+
+                // A cell is foreground or background, as in a bitmap of the matrix, so
+                // each colour lands on the slide alone.
+                assertThat(close(dark, over(foreground, page))).as("dark cell %s", dark).isTrue();
+                assertThat(close(light, over(background, page))).as("light cell %s", light).isTrue();
+            }
+        }
+    }
+
+    private static Color sample(BufferedImage slide, double pointX, double pointY) {
+        return new Color(slide.getRGB((int) Math.floor(pointX * 4), (int) Math.floor(pointY * 4)));
+    }
+
+    private static Color over(Color top, Color below) {
+        double alpha = top.getAlpha() / 255.0;
+        return new Color(
+                (int) Math.round(top.getRed() * alpha + below.getRed() * (1 - alpha)),
+                (int) Math.round(top.getGreen() * alpha + below.getGreen() * (1 - alpha)),
+                (int) Math.round(top.getBlue() * alpha + below.getBlue() * (1 - alpha)));
+    }
+
+    private static boolean close(Color actual, Color expected) {
+        return Math.abs(actual.getRed() - expected.getRed()) <= 6
+                && Math.abs(actual.getGreen() - expected.getGreen()) <= 6
+                && Math.abs(actual.getBlue() - expected.getBlue()) <= 6;
     }
 
     private static PlacedFragment barcodeFragment(LayoutGraph graph) {

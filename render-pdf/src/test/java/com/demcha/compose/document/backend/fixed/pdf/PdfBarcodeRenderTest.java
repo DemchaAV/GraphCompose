@@ -54,10 +54,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * A barcode reaches the page as the symbol that was asked for. The page is
  * rasterised and read like a printout: every format decodes back to its content,
  * every cell of the symbol lands where the encoded matrix puts it and in the
- * chosen colour, translucent colours layer page, background and foreground, a
- * transparent background shows the page through, a transparent foreground cuts the
- * cells out of the background, and a translucent colour does not leak into what is
- * drawn next. The assertions read the written PDF only.
+ * chosen colour, each translucent cell composites with the page rather than with the
+ * other colour, a transparent background shows the page through, a transparent
+ * foreground cuts the cells out of the background, and a translucent colour does not
+ * leak into what is drawn next. The assertions read the written PDF only.
  */
 class PdfBarcodeRenderTest {
 
@@ -121,10 +121,10 @@ class PdfBarcodeRenderTest {
 
         try (PDDocument document = Loader.loadPDF(pdf)) {
             PDPage page = document.getPage(0);
-            assertThat(imagesOn(page.getResources())).as("image XObjects on the page").isZero();
+            assertThat(imagesOn(page.getResources())).as("image XObjects on the %s page", format).isZero();
             // The page background is one rectangle; the bars or modules are many more.
             assertThat(operatorNames(page).stream().filter("re"::equals).count())
-                    .as("rectangles on the page").isGreaterThan(10);
+                    .as("rectangles on the %s page", format).isGreaterThan(10);
         }
     }
 
@@ -166,8 +166,8 @@ class PdfBarcodeRenderTest {
     }
 
     @Test
-    void translucentColoursBlendAsLayers() throws Exception {
-        Color page = Color.WHITE;
+    void eachTranslucentCellCompositesWithThePageNotTheOtherColour() throws Exception {
+        Color page = new Color(220, 235, 250);
         Color background = new Color(255, 255, 0, 90);
         Color foreground = new Color(200, 30, 30, 120);
         Rendered rendered = render(page, flow -> flow.addBarcode(b -> b.qrCode().data("layers").size(90, 90)
@@ -175,12 +175,13 @@ class PdfBarcodeRenderTest {
         PlacedFragment box = rendered.barcodeBox();
         BitMatrix matrix = expectedMatrix(BarcodeFormat.QR_CODE, "layers", 0, box);
 
-        // The background is painted over the page and the foreground over the background.
+        // A cell is foreground or background, as in a bitmap of the matrix, so each
+        // colour lands on the page alone: the foreground is not painted over the background.
         Color light = over(background, page);
-        Color dark = over(foreground, light);
+        Color dark = over(foreground, page);
 
         assertThat(mismatchedCells(rendered, box, matrix, dark, light))
-                .as("cells not blended page < background < foreground").isZero();
+                .as("cells not composited foreground-over-page / background-over-page").isZero();
     }
 
     @Test

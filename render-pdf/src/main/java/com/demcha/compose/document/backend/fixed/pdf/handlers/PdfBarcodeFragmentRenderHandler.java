@@ -19,9 +19,10 @@ import java.io.IOException;
  * handler fills the background over the fragment box and then fills the dark cells,
  * merged into rectangles, as one path. The matrix is stretched over the box exactly
  * as a bitmap of it would be, so each symbology keeps the placement ZXing gives it,
- * while the edges stay sharp at any zoom and no image is encoded. A translucent
- * foreground is painted over the background; a fully transparent one cuts the dark
- * cells out of it.</p>
+ * while the edges stay sharp at any zoom and no image is encoded. As in a bitmap,
+ * each cell is either foreground or background: when the foreground is not opaque,
+ * the background is cut away beneath the dark cells, so the foreground composites
+ * with whatever lies under the barcode.</p>
  */
 public final class PdfBarcodeFragmentRenderHandler
         implements PdfFragmentRenderHandler<BarcodeFragmentPayload> {
@@ -58,7 +59,7 @@ public final class PdfBarcodeFragmentRenderHandler
         try {
             // One transform to matrix cells, so every rectangle is written as whole numbers.
             stream.transform(matrixToBox(matrix, fragment.x(), fragment.y(), fragment.width(), fragment.height()));
-            fillBackground(stream, environment, matrix, runs, background, foreground.getAlpha() == 0);
+            fillBackground(stream, environment, matrix, runs, background, foreground.getAlpha() < 255);
             fillCells(stream, environment, runs, foreground);
         } finally {
             stream.restoreGraphicsState();
@@ -70,7 +71,7 @@ public final class PdfBarcodeFragmentRenderHandler
                                        BitMatrix matrix,
                                        BarcodeRuns runs,
                                        Color background,
-                                       boolean cellsTransparent) throws IOException {
+                                       boolean cutOutCells) throws IOException {
         if (background.getAlpha() == 0) {
             return;
         }
@@ -81,9 +82,10 @@ public final class PdfBarcodeFragmentRenderHandler
             PdfAlphaSupport.applyFillAlpha(environment, stream, background);
             stream.setNonStrokingColor(background);
             stream.addRect(0, 0, matrix.getWidth(), matrix.getHeight());
-            if (cellsTransparent) {
-                // A transparent foreground leaves the dark cells empty: the background
-                // is cut away there and whatever lies under the barcode shows through.
+            if (cutOutCells) {
+                // Each cell is either foreground or background, as in a bitmap of the
+                // matrix: a foreground that is not opaque composites with whatever lies
+                // under the barcode, so the background is cut away beneath the dark cells.
                 addRuns(stream, runs);
                 stream.fillEvenOdd();
             } else {

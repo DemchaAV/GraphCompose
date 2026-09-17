@@ -22,8 +22,9 @@ import java.io.IOException;
  * stretched over the fragment box the same way, so both formats place the symbol
  * alike. The background is one freeform over the box and the dark cells, merged into
  * rectangles, are a second one, so the barcode stays sharp at any zoom and editable
- * as two shapes rather than a picture. A translucent foreground is painted over the
- * background; a fully transparent one cuts the dark cells out of it.</p>
+ * as two shapes rather than a picture. As in a bitmap, each cell is either foreground
+ * or background: when the foreground is not opaque, the dark cells are cut out of the
+ * background, so the foreground composites with whatever lies under the barcode.</p>
  *
  * @since 2.1.0
  */
@@ -66,9 +67,11 @@ public final class PptxBarcodeFragmentRenderHandler
         if (background.getAlpha() > 0) {
             Path2D.Double path = new Path2D.Double();
             cells.addRect(path, 0, 0, matrix.getWidth(), matrix.getHeight(), true);
-            if (foreground.getAlpha() == 0) {
-                // A transparent foreground leaves the dark cells empty. The holes wind
-                // against the outline, so they stay open under either fill rule.
+            if (foreground.getAlpha() < 255) {
+                // Each cell is either foreground or background, as in a bitmap of the
+                // matrix: a foreground that is not opaque composites with whatever lies
+                // under the barcode, so the dark cells are holes in the background. The
+                // holes wind against the outline, so they stay open under either fill rule.
                 addRuns(path, cells, runs, false);
             }
             PptxInlineGeometry.drawPath(surface, path, background, null);

@@ -3,6 +3,30 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.4.1 — Planned
+
+### Performance
+
+- **A barcode goes into the PDF as pixels, not through a PNG.**
+  `PdfBarcodeFragmentRenderHandler` encoded each barcode bitmap to PNG with `ImageIO`,
+  only for `PDImageXObject.createFromByteArray` to decode that PNG and encode the pixels
+  again — and `ImageIO`, with its default cache, buffers a write to a stream through a
+  temporary file in `java.io.tmpdir`, so every barcode also cost a file on disk. The
+  bitmap now goes to `LosslessFactory.createFromImage` directly, and is filled through its
+  backing array rather than one `setRGB` call per pixel. **Output is byte-identical:**
+  twelve barcode documents covering all eight formats, a transparent background and a
+  translucent foreground render to the same SHA-256 before and after. Measured locally on
+  the feature-rich benchmark document (a QR code and a Code 128; interleaved A/B, three
+  rounds): median render 37 → 14 ms, allocation per document 7.0 → 1.8 MB, and the
+  outliers of up to 600 ms — the temporary-file writes — are gone. No public API or
+  behaviour change.
+
+### Tests
+
+- `PdfBarcodeImageTest` reads the image a barcode writes back out of the PDF: every format
+  decodes to its content, the foreground and background colours are the only two pixels
+  drawn, and a transparent background stays transparent.
+
 ## v2.4.0 — 2026-09-14
 
 ### Public API

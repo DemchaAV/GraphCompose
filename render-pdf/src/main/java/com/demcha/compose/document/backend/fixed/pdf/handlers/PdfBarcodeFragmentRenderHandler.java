@@ -15,11 +15,11 @@ import com.google.zxing.oned.*;
 import com.google.zxing.pdf417.PDF417Writer;
 import com.google.zxing.qrcode.QRCodeWriter;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
+import java.awt.image.DataBufferInt;
 import java.io.IOException;
 import java.util.EnumMap;
 import java.util.Map;
@@ -73,12 +73,19 @@ public final class PdfBarcodeFragmentRenderHandler
                     renderHeight,
                     hints);
 
-            BufferedImage image = new BufferedImage(matrix.getWidth(), matrix.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            int matrixWidth = matrix.getWidth();
+            int matrixHeight = matrix.getHeight();
+            BufferedImage image = new BufferedImage(matrixWidth, matrixHeight, BufferedImage.TYPE_INT_ARGB);
+            // A TYPE_INT_ARGB pixel is stored as the non-premultiplied ARGB int that
+            // setRGB would write, so filling the backing array draws the same pixels
+            // without a colour-model conversion and an array allocation per pixel.
+            int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
             int fgRgb = data.getForeground().getRGB();
             int bgRgb = data.getBackground().getRGB();
-            for (int py = 0; py < matrix.getHeight(); py++) {
-                for (int px = 0; px < matrix.getWidth(); px++) {
-                    image.setRGB(px, py, matrix.get(px, py) ? fgRgb : bgRgb);
+            for (int py = 0; py < matrixHeight; py++) {
+                int rowStart = py * matrixWidth;
+                for (int px = 0; px < matrixWidth; px++) {
+                    pixels[rowStart + px] = matrix.get(px, py) ? fgRgb : bgRgb;
                 }
             }
             return image;
@@ -88,10 +95,10 @@ public final class PdfBarcodeFragmentRenderHandler
     }
 
     private PDImageXObject createXObject(PdfRenderEnvironment environment, BufferedImage image) throws IOException {
-        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            ImageIO.write(image, "PNG", output);
-            return PDImageXObject.createFromByteArray(environment.document(), output.toByteArray(), "barcode");
-        }
+        // The pixels go to PDFBox directly. Encoding them to PNG first only had
+        // PDImageXObject.createFromByteArray decode that PNG straight back, and
+        // ImageIO buffers a write to a stream through a temporary file by default.
+        return LosslessFactory.createFromImage(environment.document(), image);
     }
 
     private com.google.zxing.Writer createWriter(BarcodeType type) {

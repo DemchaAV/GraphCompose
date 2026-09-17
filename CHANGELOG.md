@@ -7,25 +7,37 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Performance
 
-- **A barcode goes into the PDF as pixels, not through a PNG.**
-  `PdfBarcodeFragmentRenderHandler` encoded each barcode bitmap to PNG with `ImageIO`,
-  only for `PDImageXObject.createFromByteArray` to decode that PNG and encode the pixels
-  again — and `ImageIO`, with its default cache, buffers a write to a stream through a
-  temporary file in `java.io.tmpdir`, so every barcode also cost a file on disk. The
-  bitmap now goes to `LosslessFactory.createFromImage` directly, and is filled through its
-  backing array rather than one `setRGB` call per pixel. **Output is byte-identical:**
-  twelve barcode documents covering all eight formats, a transparent background and a
-  translucent foreground render to the same SHA-256 before and after. Measured locally on
-  the feature-rich benchmark document (a QR code and a Code 128; interleaved A/B, three
-  rounds): median render 37 → 14 ms, allocation per document 7.0 → 1.8 MB, and the
-  outliers of up to 600 ms — the temporary-file writes — are gone. No public API or
-  behaviour change.
+- **A PDF barcode is drawn as vector paths, not as an image.**
+  `PdfBarcodeFragmentRenderHandler` turned ZXing's bit matrix into a bitmap, one `setRGB`
+  call per pixel, wrote it to PNG with `ImageIO` — which, with its default cache, buffers a
+  write to a stream through a temporary file in `java.io.tmpdir` — and passed the PNG to
+  `PDImageXObject.createFromByteArray`, which decoded it and compressed the pixels again. The
+  handler now fills the background as one rectangle and the dark cells, merged row by row
+  into rectangles, as one path under a single transform to matrix cells: no bitmap, no
+  image stream, no file. The matrix is the one ZXing produced for the bitmap, stretched over
+  the fragment box the same way, so every symbology keeps its placement — rasterised on
+  screen, the modules land on the same pixels and only anti-aliased edges differ — while the
+  edges stay sharp at any zoom. Measured locally on the feature-rich benchmark document (a QR code and
+  a Code 128; interleaved A/B against the previous handler, three rounds): median render
+  29 → 1.7 ms, allocation per document 7.0 → 0.7 MB, PDF 6.3 → 4.1 KB, and outliers of up
+  to 390 ms — the temporary-file writes — are gone. The committed barcode showcase preview
+  drops from 11.4 KB to 4.3 KB.
+  <br><br>
+  One rendering difference: a translucent foreground used to replace the background inside
+  each dark cell, and is now painted over it, so the two blend there as they do everywhere
+  else in a document. A fully transparent foreground still leaves the dark cells empty — the
+  background is cut away there and whatever lies under the barcode shows through. PPTX still
+  places the barcode as a picture. No public API change.
 
 ### Tests
 
-- `PdfBarcodeImageTest` reads the image a barcode writes back out of the PDF: every format
-  decodes to its content, the foreground and background colours are the only two pixels
-  drawn, and a transparent background stays transparent.
+- `PdfBarcodeRenderTest` rasterises the page and reads the barcode back: each of the eight
+  formats decodes to its content, every cell of the matrix lands in place and in the chosen
+  colour for all eight, translucent colours layer page, background and foreground, a
+  transparent background shows the page through, a transparent foreground cuts the cells
+  out of the background, and translucent colours stay inside the barcode. `BarcodeRunsTest` holds the row merge to covering every dark cell
+  exactly once. The canonical features test now checks the QR code through its drawn
+  rectangles rather than through the presence of an image.
 
 ## v2.4.0 — 2026-09-14
 

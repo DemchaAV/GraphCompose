@@ -31,9 +31,10 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * Renders semantic barcode fragments with the same ZXing raster the PDF
- * handler produces — identical writer, hints, oversampled render size, and
- * pixel colors — placed as a picture on the fragment box.
+ * Renders semantic barcode fragments as a ZXing raster placed as a picture on
+ * the fragment box. The bit matrix is the one the PDF handler draws — same
+ * writer, hints and oversampled size — so both formats place the symbol alike;
+ * PDF draws it as vector paths, this handler as a bitmap of it.
  *
  * @since 2.1.0
  */
@@ -75,9 +76,8 @@ public final class PptxBarcodeFragmentRenderHandler
     }
 
     /**
-     * Mirrors the PDF handler's raster generation exactly: same oversampling,
-     * hints, and per-pixel foreground/background mapping, so both formats
-     * carry the same barcode bitmap.
+     * Encodes the same bit matrix as the PDF handler — same oversampling and
+     * hints — and maps each cell to the foreground or background colour.
      */
     private static BufferedImage generateBarcodeImage(BarcodeData data,
                                                       int width,

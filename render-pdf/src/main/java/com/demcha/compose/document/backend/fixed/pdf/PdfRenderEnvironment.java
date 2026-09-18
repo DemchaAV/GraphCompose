@@ -160,7 +160,9 @@ public final class PdfRenderEnvironment {
      * width, so extracted text reads it in place and a selection runs across the drawing. The
      * glyph rises one {@code height} from {@code baselineY}; write it on the surrounding line's
      * baseline, which keeps it in that line for readers that group text by position. Call it
-     * outside a text object; the graphics state is left as it was.</p>
+     * outside a text object; the graphics state is left as it was, including when writing fails
+     * part-way — the glyph's own text object and saved state are closed before the exception
+     * leaves.</p>
      *
      * <p><b>Experimental.</b> The text layer this produces is settled; the shape of the call may
      * still change in a minor release.</p>
@@ -174,7 +176,8 @@ public final class PdfRenderEnvironment {
      * @param height    height of the box in points
      * @throws IOException           if the content stream cannot be written
      * @throws IllegalStateException if there is text to write and {@code stream} is inside a text
-     *                               object
+     *                               object; nothing is written to the stream then, and the
+     *                               caller's text object stays open
      * @since 2.5.0
      */
     @Beta

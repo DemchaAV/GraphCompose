@@ -90,19 +90,28 @@ final class PdfTextLayer {
         // q/Q every word drawn after the glyph would be invisible too. In: spacing or rise left
         // by the run before (a letter-spaced word keeps its tracking in Tc) would stretch or
         // lift the glyph, so each is set here rather than inherited.
+        // Inside a caller's text object PDFBox refuses the q before writing it, so a misplaced
+        // call fails with nothing written. Past the q, the text object and the q are closed on
+        // every path: a failure half-way must not leave the rest of the page inside them.
         stream.saveGraphicsState();
-        stream.beginText();
-        stream.setFont(glyph.font(), height);
-        stream.setRenderingMode(RenderingMode.NEITHER);
-        stream.setCharacterSpacing(0);
-        stream.setWordSpacing(0);
-        stream.setTextRise(0);
-        // The glyph is one em wide, and an em is the font size: scale it to the box.
-        stream.setHorizontalScaling(100f * width / height);
-        stream.newLineAtOffset(x, baselineY);
-        stream.showText(glyph.shown());
-        stream.endText();
-        stream.restoreGraphicsState();
+        try {
+            stream.beginText();
+            try {
+                stream.setFont(glyph.font(), height);
+                stream.setRenderingMode(RenderingMode.NEITHER);
+                stream.setCharacterSpacing(0);
+                stream.setWordSpacing(0);
+                stream.setTextRise(0);
+                // The glyph is one em wide, and an em is the font size: scale it to the box.
+                stream.setHorizontalScaling(100f * width / height);
+                stream.newLineAtOffset(x, baselineY);
+                stream.showText(glyph.shown());
+            } finally {
+                stream.endText();
+            }
+        } finally {
+            stream.restoreGraphicsState();
+        }
     }
 
     /** A code of one text-layer font, and the string that shows it. */

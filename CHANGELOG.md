@@ -92,8 +92,12 @@ follow semantic versioning; release dates are ISO 8601.
   `ToUnicode` in blocks of at most 100; keeps one font across the sections of a multi-section
   document; writes a 256-unit text but not a 257-unit one; gives a 2:1 icon after a word
   tracked in `Tc` a glyph exactly as wide as the icon, on the baseline, so neither the
-  horizontal scaling nor the spacing and rise left by the run before can go astray; and keeps
-  `deterministic(true)` output byte-identical.
+  horizontal scaling nor the spacing and rise left by the run before can go astray; keeps
+  `deterministic(true)` output byte-identical; fails a call made inside an open text object
+  with nothing written, and closes the glyph's text object and saved state when writing fails
+  half-way. In right-to-left Hebrew and Arabic lines it places the emoji's glyph between the
+  words it was written between and keeps a ZWJ sequence and a U+FE0F on one glyph each; a
+  left-to-right sentence with a Hebrew word reads back in written order.
 
 ## v2.4.0 — 2026-09-14
 

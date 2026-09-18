@@ -5,6 +5,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.MultiSectionDocument;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.emoji.EmojiLibrary;
+import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -12,16 +13,20 @@ import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.font.FontName;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.contentstream.operator.Operator;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
+import org.apache.pdfbox.pdfparser.PDFStreamParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType3Font;
 import org.apache.pdfbox.pdmodel.graphics.state.PDTextState;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.pdfbox.text.TextPosition;
 import org.apache.pdfbox.util.Matrix;
 import org.apache.pdfbox.util.Vector;
 import org.junit.jupiter.api.Test;
@@ -43,7 +48,11 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 
 /**
  * An inline icon that states text leaves that text in the page's text layer: copying the line
@@ -194,6 +203,106 @@ class PdfTextLayerTest {
         assertThat(text(pdf)).contains(longest).doesNotContain("b");
     }
 
+    @Test
+    void calledInsideATextObjectFailsWithNothingWritten() throws Exception {
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage();
+            document.addPage(page);
+            PdfTextLayer layer = new PdfTextLayer(document);
+            try (PDPageContentStream stream = new PDPageContentStream(document, page)) {
+                stream.beginText();
+                assertThatThrownBy(() -> layer.write(stream, ROCKET, 10, 10, 12, 12))
+                        .isInstanceOf(IllegalStateException.class);
+                // The caller's text object is still open, and closes as if nothing happened.
+                stream.endText();
+            }
+            assertThat(operators(page)).containsExactly("BT", "ET");
+        }
+    }
+
+    @Test
+    void aFailureHalfWayStillClosesTheGlyphsTextObjectAndSavedState() throws Exception {
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage();
+            document.addPage(page);
+            PdfTextLayer layer = new PdfTextLayer(document);
+            PDPageContentStream stream = spy(new PDPageContentStream(document, page));
+            doThrow(new IOException("stream refused the glyph")).when(stream).showText(anyString());
+
+            assertThatThrownBy(() -> layer.write(stream, ROCKET, 10, 10, 12, 12))
+                    .isInstanceOf(IOException.class)
+                    .hasMessage("stream refused the glyph");
+            stream.close();
+
+            List<String> operators = operators(page);
+            assertThat(operators).startsWith("q", "BT").endsWith("ET", "Q");
+            assertThat(Collections.frequency(operators, "q")).isEqualTo(Collections.frequency(operators, "Q"));
+            assertThat(Collections.frequency(operators, "BT")).isEqualTo(Collections.frequency(operators, "ET"));
+        }
+    }
+
+    /**
+     * Right-to-left lines. The emoji's glyph must sit between the words it was written
+     * between and state its whole text; both are what the file controls.
+     *
+     * <p>Reading the line back is the reader's job, and readers disagree: PDFBox's
+     * {@code PDFTextStripper.handleDirection} reverses a right-to-left run one UTF-16 unit at
+     * a time, so any emoji inside one comes back with its surrogates swapped, and poppler
+     * reverses the code points of a multi-code-point glyph (a ZWJ sequence, a U+FE0F);
+     * pdf.js and MuPDF keep the glyph's text whole. So these hold the glyph, not a line.</p>
+     */
+    @Test
+    void anEmojiInARightToLeftLineSitsBetweenItsWordsAndStatesItselfWhole() throws Exception {
+        DocumentTextStyle hebrew = DocumentTextStyle.builder().fontName(FontName.DAVID_LIBRE).size(18).build();
+        DocumentTextStyle arabic = DocumentTextStyle.builder().fontName(FontName.AMIRI).size(18).build();
+        // Words with no letter in common, so every glyph belongs to exactly one of them.
+        assertEmojiBetween("שלום", "חבר", hebrew);
+        assertEmojiBetween("سلام", "كتب", arabic);
+    }
+
+    @Test
+    void zwjSequenceAndSelectorInARightToLeftLineStayOnOneGlyphEach() throws Exception {
+        DocumentTextStyle hebrew = DocumentTextStyle.builder().fontName(FontName.DAVID_LIBRE).size(18).build();
+        byte[] pdf = render(p -> p.inlineEmoji(":woman_technologist:", 18).inlineText(" שלום ", hebrew)
+                .inlineEmoji(":heart:", 18).direction(TextDirection.RTL));
+
+        assertThat(glyphs(pdf).stream().filter(Glyph::textLayer).map(Glyph::unicode))
+                .containsExactlyInAnyOrder(WOMAN_TECHNOLOGIST, RED_HEART);
+    }
+
+    @Test
+    void aMixedLineWithARightToLeftWordReadsBackInWrittenOrder() throws Exception {
+        // A left-to-right sentence with a Hebrew word: the emoji resolves left-to-right, and
+        // PDFBox reads the whole line back exactly as written.
+        DocumentTextStyle hebrew = DocumentTextStyle.builder().fontName(FontName.DAVID_LIBRE).size(18).build();
+        byte[] pdf = render(p -> p.inlineText("Deploy ").inlineText("שלום", hebrew).inlineText(" ")
+                .inlineEmoji(":rocket:", 18).inlineText(" done"));
+
+        assertThat(text(pdf)).contains("Deploy שלום " + ROCKET + " done");
+    }
+
+    private static void assertEmojiBetween(String first, String second, DocumentTextStyle style)
+            throws Exception {
+        byte[] pdf = render(p -> p.inlineText(first + " ", style).inlineEmoji(":rocket:", 18)
+                .inlineText(" " + second, style).direction(TextDirection.RTL));
+
+        List<Glyph> glyphs = glyphs(pdf);
+        List<Glyph> textLayer = glyphs.stream().filter(Glyph::textLayer).toList();
+        assertThat(textLayer).hasSize(1);
+        Glyph emoji = textLayer.get(0);
+        double firstLeft = glyphs.stream().filter(g -> first.contains(g.unicode()))
+                .mapToDouble(Glyph::x).min().orElseThrow();
+        double secondRight = glyphs.stream().filter(g -> second.contains(g.unicode()))
+                .mapToDouble(g -> g.x() + g.width()).max().orElseThrow();
+
+        assertThat(emoji.unicode()).isEqualTo(ROCKET);
+        // Drawn right to left: the second word is leftmost, the first rightmost.
+        assertThat(emoji.x()).as("%s: emoji starts right of the second word", first)
+                .isGreaterThanOrEqualTo(secondRight - 0.5);
+        assertThat(emoji.x() + emoji.width()).as("%s: emoji ends left of the first word", first)
+                .isLessThanOrEqualTo(firstLeft + 0.5);
+    }
+
     private static DocumentSession emojiSection(String label) {
         DocumentSession section = GraphCompose.document()
                 .pageSize(240, 200)
@@ -223,6 +332,34 @@ class PdfTextLayerTest {
                     .inlineText(" with ").inlineEmoji(":heart:", 14)));
             return session.render(PdfFixedLayoutBackend.builder().deterministic(true).build());
         }
+    }
+
+    /** One glyph as PDFBox positions it, before any reordering of the line. */
+    private record Glyph(String unicode, double x, double width, boolean textLayer) {
+    }
+
+    private static List<Glyph> glyphs(byte[] pdf) throws IOException {
+        List<Glyph> glyphs = new ArrayList<>();
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            new PDFTextStripper() {
+                @Override
+                protected void processTextPosition(TextPosition text) {
+                    glyphs.add(new Glyph(text.getUnicode(), text.getXDirAdj(), text.getWidthDirAdj(),
+                            text.getFont() instanceof PDType3Font));
+                }
+            }.getText(document);
+        }
+        return glyphs;
+    }
+
+    private static List<String> operators(PDPage page) throws IOException {
+        List<String> names = new ArrayList<>();
+        for (Object token : new PDFStreamParser(page).parse()) {
+            if (token instanceof Operator operator) {
+                names.add(operator.getName());
+            }
+        }
+        return names;
     }
 
     /** Records, for every text-layer glyph shown, its advance and rise under the text state it met. */

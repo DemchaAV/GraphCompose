@@ -23,7 +23,7 @@
   ],
   "counts": {
     "types": 237,
-    "methods": 2123,
+    "methods": 2125,
     "constants": 236,
     "generated": 1129
   },
@@ -31792,6 +31792,29 @@
               "typeParameters": null,
               "returns": "double",
               "params": []
+            },
+            {
+              "kind": "method",
+              "name": "text",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "withText",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "SvgIcon",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "text"
+                }
+              ]
             },
             {
               "kind": "method",

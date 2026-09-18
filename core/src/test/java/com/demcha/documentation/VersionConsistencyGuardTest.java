@@ -587,32 +587,59 @@ class VersionConsistencyGuardTest {
     }
 
     /**
-     * The GitHub Pages showcase ({@code web/index.html}) hardcodes the version
-     * in three spots — JSON-LD {@code softwareVersion}, the hero badge, and the
-     * Maven + Gradle install snippets. None inherit from the pom, so without
-     * this guard they silently drift. {@code cut-release.ps1} flips them on
-     * release; this fails the verify gate if any spot lags behind.
+     * The GitHub Pages showcase ({@code web/index.html}) states the version in spots that do
+     * not inherit from the pom: the {@code release-context} block the page itself reads, the
+     * JSON-LD a crawler reads, and the badge and install snippets a visitor reads. Without
+     * this guard they drift silently — they once sat at v1.6.1 while the library shipped
+     * v1.6.4. {@code cut-release.ps1} moves them together on a release; this fails the verify
+     * gate if any lags behind.
+     *
+     * <p>Every occurrence is checked, not the first. A page carrying two install snippets
+     * passes a first-match check with the second one a release behind, which is the shape
+     * that shipped in the root README at v2.4.0.</p>
      */
     @Test
     void showcaseSiteVersionMatchesTheProjectVersion() throws Exception {
         Set<String> targets = acceptableTargets();
         String site = Files.readString(PROJECT_ROOT.resolve("web/index.html"));
 
-        assertThat(firstGroup(site, "\"softwareVersion\":\\s*\"v?([0-9][^\"]*)\""))
-                .describedAs("web/index.html JSON-LD softwareVersion must equal the latest published release, or the release version in a release commit (one of %s)", targets)
-                .isIn(targets);
-        // Match up to the delimiter (space before `&middot;`) rather than
-        // digits-and-dots only, so a pre-release version like 2.0.0-rc.1 is
-        // captured too — consistent with the JSON-LD and snippet patterns.
-        assertThat(firstGroup(site, "v([0-9][^\\s&]*)\\s*&middot;\\s*MIT"))
-                .describedAs("web/index.html hero version badge must equal the latest published release, or the release version in a release commit (one of %s)", targets)
-                .isIn(targets);
-        assertThat(firstMatchingGroup(site, INSTALL_SNIPPET_PATTERNS_SHOWCASE_MAVEN))
-                .describedAs("web/index.html Maven install snippet must equal the latest published release, or the release version in a release commit (one of %s)", targets)
-                .isIn(targets);
-        assertThat(firstMatchingGroup(site, INSTALL_SNIPPET_PATTERNS_SHOWCASE_GRADLE))
-                .describedAs("web/index.html Gradle install snippet must equal the latest published release, or the release version in a release commit (one of %s)", targets)
-                .isIn(targets);
+        everyVersionIn(site, "\"stableVersion\":\\s*\"v?([0-9][^\"]*)\"", targets,
+                "the release context's stableVersion");
+        everyVersionIn(site, "\"releaseTag\":\\s*\"v?([0-9][^\"]*)\"", targets,
+                "the release context's releaseTag");
+        everyVersionIn(site, "\"softwareVersion\":\\s*\"v?([0-9][^\"]*)\"", targets,
+                "the JSON-LD softwareVersion");
+        everyVersionIn(site, "central\\.sonatype\\.com/artifact/io\\.github\\.demchaav/graph-compose/v?([0-9][^\"]*)",
+                targets, "the Maven Central downloadUrl");
+        // Match up to the delimiter (space before `&middot;`) rather than digits-and-dots
+        // only, so a pre-release version like 2.0.0-rc.1 is captured too.
+        everyVersionIn(site, "v([0-9][^\\s&]*)\\s*&middot;\\s*MIT", targets, "the hero version badge");
+        everyVersionIn(site, "&lt;artifactId&gt;graph-compose&lt;/artifactId&gt;\\s*&lt;version&gt;v?([0-9][^&]*)&lt;/version&gt;",
+                targets, "the Maven install snippet");
+        everyVersionIn(site, "io\\.github\\.demchaav:graph-compose:v?([0-9][^')]*)", targets,
+                "the Gradle install snippet");
+    }
+
+    /**
+     * Holds every occurrence of one version-bearing shape to the release, and fails when the
+     * shape has vanished: a pattern matching nothing is a spot no longer being checked, which
+     * from the outside reads exactly like a spot that is correct.
+     */
+    private static void everyVersionIn(String site, String regex, Set<String> targets, String what) {
+        Matcher matcher = Pattern.compile(regex).matcher(site);
+        int found = 0;
+        while (matcher.find()) {
+            found++;
+            assertThat(matcher.group(1))
+                    .describedAs("%s in web/index.html (occurrence %d) must equal the latest published "
+                            + "release, or the release version in a release commit (one of %s)",
+                            what, found, targets)
+                    .isIn(targets);
+        }
+        assertThat(found)
+                .describedAs("web/index.html no longer carries %s in the shape this guard reads (/%s/), so "
+                        + "the version shown there is not being checked at all", what, regex)
+                .isGreaterThan(0);
     }
 
     /**
@@ -869,16 +896,6 @@ class VersionConsistencyGuardTest {
             "io\\.github\\.demchaav:graph-compose:v?([0-9][^\")]*)",
             "io\\.github\\.demchaav:graphcompose:v?([0-9][^\")]*)",
             "GraphCompose:v?([0-9][^\")]*)"
-    };
-    private static final String[] INSTALL_SNIPPET_PATTERNS_SHOWCASE_MAVEN = {
-            "&lt;artifactId&gt;graph-compose&lt;/artifactId&gt;\\s*&lt;version&gt;v?([0-9][^&]*)&lt;/version&gt;",
-            "&lt;artifactId&gt;graphcompose&lt;/artifactId&gt;\\s*&lt;version&gt;v?([0-9][^&]*)&lt;/version&gt;",
-            "&lt;version&gt;v?([0-9][^&]*)&lt;/version&gt;"
-    };
-    private static final String[] INSTALL_SNIPPET_PATTERNS_SHOWCASE_GRADLE = {
-            "io\\.github\\.demchaav:graph-compose:v?([0-9][^')]*)",
-            "io\\.github\\.demchaav:graphcompose:v?([0-9][^')]*)",
-            "GraphCompose:v?([0-9][^')]*)"
     };
 
     /**

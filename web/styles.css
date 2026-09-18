@@ -3,7 +3,6 @@
   --accent: #6366f1;
   --accent-2: #818cf8;
   --accent-rgb: 99, 102, 241;
-  --accent-warm: var(--accent); /* legacy alias — kept so old rules unify onto the primary */
 
   --font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: "Space Grotesk", var(--font-body);
@@ -17,6 +16,11 @@
   --text: #e5e7eb;
   --text-strong: #f8fafc;
   --muted: #9ca3af;
+  /* The accent as text — section labels, links, tags, the ghost button. The accent itself read 3.7 to
+     4.2:1 on the backgrounds it sits on, under the 4.5:1 minimum for text this size. This tint reads
+     6.7:1 at worst: taken over the page's background glow at full strength, under the ghost button's
+     own tint. */
+  --accent-text: #a5b4fc;
   --border: rgba(255, 255, 255, 0.12);
   --code-bg: #0b1220;
   --hero-grid: rgba(255, 255, 255, 0.035);
@@ -26,6 +30,9 @@
   --shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
   --radius: 8px;
   --max-width: 1180px;
+  /* Height of the box a gallery card or a featured tile shows its page in. */
+  --card-preview-height: 320px;
+  --tile-preview-height: 380px;
 }
 
 /* Light theme — opt-in via the header toggle (data-theme="light" on <html>).
@@ -38,7 +45,12 @@ html[data-theme="light"] {
   --surface-2: #f1f5f9;
   --text: #334155;
   --text-strong: #0f172a;
-  --muted: #64748b;
+  /* #64748b measured 4.45:1 on --bg, under the 4.5:1 minimum for body text; this darker tone reads
+     about 6:1 there. */
+  --muted: #52606d;
+  /* The accent read 3.7 to 4.2:1 on the light backgrounds; this deeper indigo of the same hue reads
+     5.3:1 at worst, over the background glow at full strength under the ghost button's tint. */
+  --accent-text: #4338ca;
   --border: rgba(15, 23, 42, 0.12);
   --hero-grid: rgba(15, 23, 42, 0.045);
   --accent-glow: rgba(var(--accent-rgb), 0.12);
@@ -103,6 +115,12 @@ pre {
   white-space: pre;
 }
 
+/* A followed anchor lands below the sticky header instead of under it: the header is 79px tall
+   here, 146px from 641 to 980px where the menu wraps under the logo, and 141px below that. */
+html {
+  scroll-padding-top: 88px;
+}
+
 .site-header {
   position: sticky;
   top: 0;
@@ -160,6 +178,19 @@ pre {
   color: var(--text);
 }
 
+.site-nav .nav-cta {
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  color: #06111f;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  white-space: nowrap;
+}
+
+.site-nav .nav-cta:hover,
+.site-nav .nav-cta:focus-visible {
+  color: #06111f;
+}
+
 .section-shell {
   width: min(var(--max-width), calc(100% - 40px));
   margin: 0 auto;
@@ -182,7 +213,11 @@ pre {
 .hero h1 {
   max-width: 100%;
   margin: 0;
-  font-size: 4.4rem;
+  /* At most two lines at any width. The heading wraps once its column is narrower than about ten
+     times the type size (measured from 320 to 1440px), so the size follows the column: beside the
+     document the column is 0.51 of the content width, less the gap. A fixed size between two
+     breakpoints wrapped to three and four lines. */
+  font-size: clamp(2.625rem, calc((100vw - 105px) / 20.4), 3.5rem);
   line-height: 1.02;
   letter-spacing: -0.005em;
 }
@@ -194,13 +229,6 @@ pre {
   font-size: 1.55rem;
   font-weight: 720;
   line-height: 1.18;
-}
-
-.hero-text {
-  max-width: 660px;
-  margin: 18px 0 0;
-  color: var(--muted);
-  font-size: 1.04rem;
 }
 
 .hero-actions {
@@ -248,7 +276,7 @@ pre {
 }
 
 .button-ghost {
-  color: var(--accent);
+  color: var(--accent-text);
   border-color: rgba(var(--accent-rgb), 0.42);
   background: rgba(var(--accent-rgb), 0.09);
 }
@@ -260,64 +288,91 @@ pre {
 }
 
 .hero-visual {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
   min-width: 0;
-  overflow: hidden;
 }
 
-.document-stack {
-  position: relative;
-  min-height: 570px;
-  isolation: isolate;
+/* The switch is rendered hidden and shown by home.js. The display rules below would otherwise
+   override the attribute and show a switch that swaps nothing. */
+.hero-visual [hidden] {
+  display: none !important;
 }
 
-.document-stack::before {
-  position: absolute;
-  inset: 9% 10% 6% 4%;
-  z-index: -1;
-  content: "";
-  border: 1px solid rgba(var(--accent-rgb), 0.22);
-  border-radius: 28px;
-  background: var(--surface);
-  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+/* One whole document at its own aspect ratio: the hero is where a visitor judges the output, so
+   the page is neither cropped nor fanned out behind two others. The width and height attributes
+   reserve its space before the image arrives. */
+.hero-document {
+  display: grid;
+  gap: 10px;
+  /* Beside the copy, the document, its caption and the switch have to fit a laptop's first
+     screen, so on a short viewport the page gives up width rather than pushing them below it. */
+  width: min(100%, 400px, max(280px, calc((100vh - 240px) * 0.707)));
+  margin: 0;
 }
 
-.doc-preview {
-  position: absolute;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+.hero-document-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
   border-radius: 6px;
   background: white;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.46);
-  object-fit: cover;
-  object-position: top center;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
 }
 
-.doc-preview-main {
-  top: 36px;
-  left: 15%;
-  z-index: 3;
-  width: min(68%, 370px);
-  aspect-ratio: 0.707 / 1;
+.hero-document-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
-.doc-preview-side {
-  width: min(48%, 265px);
-  aspect-ratio: 0.707 / 1;
-  opacity: 0.88;
+.hero-document-title {
+  margin-right: auto;
+  color: var(--text-strong);
+  font-weight: 700;
 }
 
-.doc-preview-top {
-  top: 0;
-  right: 0;
-  z-index: 2;
-  transform: rotate(4deg);
+.hero-document-link {
+  color: var(--accent-text);
+  font-weight: 650;
 }
 
-.doc-preview-bottom {
-  right: 7%;
-  bottom: 12px;
-  z-index: 1;
-  transform: rotate(-3deg);
+.hero-switch {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hero-switch-option {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.hero-switch-option:hover,
+.hero-switch-option:focus-visible {
+  border-color: rgba(var(--accent-rgb), 0.46);
+}
+
+.hero-switch-option[aria-pressed="true"] {
+  border-color: rgba(var(--accent-rgb), 0.7);
+  /* The pressed state is carried by the border and the tint; the text keeps full contrast, which
+     the accent colour alone did not have at this size in either theme. */
+  color: var(--text-strong);
+  background: rgba(var(--accent-rgb), 0.18);
 }
 
 .section-grid {
@@ -330,7 +385,7 @@ pre {
 
 .section-label {
   margin: 0 0 12px;
-  color: var(--accent-warm);
+  color: var(--accent-text);
   font-size: 0.78rem;
   font-weight: 820;
   letter-spacing: 0;
@@ -446,7 +501,7 @@ h2 {
   padding: 0 9px;
   border: 1px solid rgba(var(--accent-rgb), 0.28);
   border-radius: 999px;
-  color: var(--accent);
+  color: var(--accent-text);
   background: rgba(var(--accent-rgb), 0.08);
   font-size: 0.75rem;
   font-weight: 760;
@@ -500,7 +555,7 @@ h2 {
   top: 50%;
   right: -15px;
   z-index: 2;
-  color: var(--accent);
+  color: var(--accent-text);
   content: "->";
   font-weight: 900;
   transform: translateY(-50%);
@@ -639,12 +694,12 @@ h2 {
 }
 
 .site-footer a {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .site-footer a:hover,
 .site-footer a:focus-visible {
-  color: var(--accent);
+  color: var(--text-strong);
 }
 
 :focus-visible {
@@ -653,6 +708,10 @@ h2 {
 }
 
 @media (max-width: 980px) {
+  html {
+    scroll-padding-top: 154px;
+  }
+
   .site-header {
     align-items: flex-start;
     flex-direction: column;
@@ -676,7 +735,13 @@ h2 {
   }
 
   .hero h1 {
-    font-size: 3.5rem;
+    font-size: 3rem;
+  }
+
+  /* One column: the document sits below the copy, so the height cap that keeps it in a laptop's
+     first screen beside the copy does not apply. */
+  .hero-document {
+    width: min(100%, 400px);
   }
 
   .hero-lead {
@@ -685,10 +750,6 @@ h2 {
 
   h2 {
     font-size: 2.55rem;
-  }
-
-  .document-stack {
-    min-height: 480px;
   }
 
   .examples-grid,
@@ -711,6 +772,10 @@ h2 {
     padding: 64px 0;
   }
 
+  html {
+    scroll-padding-top: 149px;
+  }
+
   .site-header {
     padding: 12px 14px;
   }
@@ -725,7 +790,8 @@ h2 {
   }
 
   .hero h1 {
-    font-size: 2.4rem;
+    /* The full content width, which is the viewport less 28px here. */
+    font-size: clamp(1.75rem, calc((100vw - 28px) / 10.4), 2.25rem);
   }
 
   .hero-lead {
@@ -740,21 +806,10 @@ h2 {
     width: 100%;
   }
 
-  /* On phones the hero PDF stack eats ~390pt before users see
-     the value props. Hide it on the smallest viewports — the H1
-     and lead carry the message. The Featured strip below picks
-     up the visual job instead. */
-  .hero-visual {
-    display: none;
-  }
-
-  .doc-preview-main {
-    left: 7%;
-    width: 66%;
-  }
-
-  .doc-preview-side {
-    width: 45%;
+  /* On a phone the hero keeps one compact document rather than none: it is the proof of what the
+     engine produces, and hiding it left the first screen all words. */
+  .hero-document {
+    width: min(72%, 280px);
   }
 
   .examples-grid,
@@ -790,10 +845,6 @@ h2 {
 }
 
 @media (max-width: 360px) {
-  .hero h1 {
-    font-size: 2.45rem;
-  }
-
   .hero-lead {
     font-size: 1.22rem;
   }
@@ -819,70 +870,55 @@ h2 {
 
 .eyebrow {
   margin: 0 0 14px;
-  color: var(--accent, #f59e0b);
+  color: var(--accent-text);
   font-size: 0.78rem;
   font-weight: 760;
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
 
-.hero-copy code {
+/* Documentation block: where the template-authoring guide lives now that the home page leads with
+   results rather than with how templates are built. */
+.docs-more {
+  margin: 22px 0 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.docs-more a {
+  color: var(--accent-text);
+  font-weight: 650;
+}
+
+/* Inline code inside prose blocks. The global `code` colour is set for the dark code panels and
+   has no light counterpart, so on these surfaces it follows the text instead of vanishing. */
+.docs-block code,
+.feature-card code {
   padding: 1px 6px;
   border-radius: 4px;
-  background: rgba(var(--accent-rgb), 0.14);
-  color: var(--accent-2);
-  font-size: 0.94em;
-}
-
-/* Layered architecture callout */
-.layered-callout {
-  padding-top: 32px;
-  padding-bottom: 32px;
-}
-
-.layered-card {
-  position: relative;
-  padding: 28px 32px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.10), rgba(99, 102, 241, 0.10));
-  border: 1px solid rgba(129, 140, 248, 0.35);
-}
-
-.layered-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: #0f172a;
-  background: linear-gradient(135deg, var(--accent), #818cf8);
-  border-radius: 4px;
-  margin-bottom: 12px;
-}
-
-.layered-card h2 {
-  margin: 0 0 8px 0;
-  font-size: 22px;
-  color: var(--text-strong);
-}
-
-.layered-card p {
-  margin: 0 0 18px 0;
-  max-width: 720px;
-  color: var(--muted);
-  line-height: 1.55;
-}
-
-.layered-card strong {
-  color: var(--text-strong);
-}
-
-.layered-card code {
   background: rgba(148, 163, 184, 0.18);
   color: var(--text-strong);
-  padding: 1px 6px;
-  border-radius: 3px;
-  font-size: 12px;
+  /* A call like BrandTheme.modernProfessional() has no break opportunity, and as a grid item's
+     min-content it widened every card past a 320px screen. `anywhere` lets it wrap and counts
+     toward the minimum width, which `break-word` does not. */
+  overflow-wrap: anywhere;
+}
+
+.feature-card {
+  min-width: 0;
+}
+
+/* Present to assistive technology and the document outline, absent from the layout. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .layered-actions {
@@ -930,6 +966,16 @@ h2 {
   gap: 18px;
 }
 
+/* Four install scenarios read as two pairs; the one-column rule for narrow screens comes later in
+   the file and still wins there. */
+.install-scenarios {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.install-hello {
+  grid-column: 1 / -1;
+}
+
 .install-block {
   padding: 22px;
   border: 1px solid var(--border);
@@ -937,12 +983,55 @@ h2 {
   background: var(--surface);
 }
 
-.install-block h4 {
-  margin: 0 0 12px;
+/* The label above each coordinate. The Gradle line is Groovy DSL: the single quotes the version guard
+   reads do not compile in a build.gradle.kts, so the label says which file it belongs in. */
+.install-block > p.install-form {
+  margin: 14px 0 6px;
   color: var(--text-strong);
-  font-size: 0.94rem;
-  letter-spacing: 0.05em;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.install-block h3 {
+  margin: 0 0 8px;
+  color: var(--text-strong);
+  font-size: 1.02rem;
+}
+
+.install-block > p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.install-block pre + pre {
+  margin-top: 10px;
+}
+
+.install-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border: 1px solid rgba(var(--accent-rgb), 0.5);
+  border-radius: 999px;
+  color: var(--text-strong);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+
+.format-limits {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.format-limits li + li {
+  margin-top: 4px;
 }
 
 .install-block pre,
@@ -1108,6 +1197,11 @@ code[class*="language-"] .token.class-name {
   color: #bae6fd;
 }
 
+.showcase-error a {
+  color: var(--accent-text);
+  text-decoration: underline;
+}
+
 .showcase-category {
   display: flex;
   flex-direction: column;
@@ -1169,23 +1263,30 @@ code[class*="language-"] .token.class-name {
 }
 
 .example-card[data-id] .example-preview {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--card-preview-height);
+  min-height: 0;
   padding: 16px;
-  min-height: 280px;
 }
 
+/* The whole first page at its own aspect ratio: the image shrinks into the
+   fixed box instead of being cropped to it, so a landscape slide and an A4
+   page each read as what they are, and every card keeps the same height
+   before its image loads. */
 .example-card[data-id] .example-preview img {
   display: block;
-  width: 100%;
-  max-height: 320px;
-  object-fit: contain;
-  background: white;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .example-card[data-id] .example-preview-fallback {
   display: grid;
   width: 100%;
-  height: 280px;
+  height: 100%;
   place-items: center;
   color: var(--muted);
   font-size: 1.4rem;
@@ -1363,21 +1464,13 @@ html[data-theme="light"] .example-tags .ats-badge {
   background:
     radial-gradient(circle at 30% 20%, var(--accent-glow), transparent 55%),
     var(--preview-bg);
-  cursor: zoom-in;
+  cursor: pointer;
   border: 0;
   width: 100%;
   appearance: none;
 }
 
 .example-card[data-id] .example-preview img {
-  width: 100%;
-  /* Crop to the top band of each document (masthead + first section)
-     at a uniform height so the gallery scans fast and the preview text
-     is legible — the full page is one click away in the lightbox. Fixed
-     height also reserves the box before lazy-load, avoiding layout shift. */
-  height: 248px;
-  object-fit: cover;
-  object-position: top center;
   background: white;
   border: 2px solid rgba(255, 255, 255, 0.06);
   border-radius: 4px;
@@ -1396,7 +1489,7 @@ html[data-theme="light"] .example-tags .ats-badge {
     0 6px 14px rgba(0, 0, 0, 0.4);
 }
 
-.example-zoom-hint {
+.example-view-hint {
   position: absolute;
   bottom: 12px;
   right: 14px;
@@ -1414,8 +1507,8 @@ html[data-theme="light"] .example-tags .ats-badge {
   pointer-events: none;
 }
 
-.example-card[data-id] .example-preview:hover .example-zoom-hint,
-.example-card[data-id] .example-preview:focus-visible .example-zoom-hint {
+.example-card[data-id] .example-preview:hover .example-view-hint,
+.example-card[data-id] .example-preview:focus-visible .example-view-hint {
   opacity: 1;
   transform: translateY(0);
 }
@@ -1437,103 +1530,141 @@ html[data-theme="light"] .example-tags .ats-badge {
   line-height: 1.6;
 }
 
-/* Lightbox — full-size preview */
-.lightbox {
-  position: fixed;
-  inset: 0;
-  display: none;
-  z-index: 1000;
+/* Document viewer (gallery-viewer.js): one family at a time. Like the code
+   panels, it stays dark in both themes, so every page reads on the same ground. */
+body.viewer-open {
+  overflow: hidden;
 }
 
-.lightbox.is-open {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: lightbox-fade 0.18s ease;
-}
-
-@keyframes lightbox-fade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-.lightbox-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(2, 6, 23, 0.88);
-  backdrop-filter: blur(4px);
-}
-
-.lightbox-frame {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  width: min(92vw, 1080px);
-  max-height: 92vh;
+.gallery-viewer {
+  width: min(96vw, 1180px);
+  max-width: 96vw;
+  height: 94vh;
+  height: min(94dvh, 980px);
+  max-height: 94vh;
+  max-height: 94dvh;
+  margin: auto;
+  padding: 0;
   border: 1px solid rgba(var(--accent-rgb), 0.35);
   border-radius: 12px;
   background: var(--code-bg);
+  color: #e2e8f0;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65);
   overflow: hidden;
 }
 
-.lightbox-header {
+.gallery-viewer::backdrop {
+  background: rgba(2, 6, 23, 0.88);
+  backdrop-filter: blur(4px);
+}
+
+/* Author display rules would otherwise override the hidden attribute. */
+.gallery-viewer [hidden] {
+  display: none !important;
+}
+
+.gallery-viewer-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.gallery-viewer-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(15, 23, 42, 0.85);
 }
 
-.lightbox-title {
-  margin: 0;
-  min-width: 0; /* let the title absorb the squeeze (wrap) instead of the buttons */
-  color: #f8fafc; /* lightbox overlay is always dark in both themes */
-  font-size: 1.05rem;
-  font-weight: 720;
-  letter-spacing: 0;
-}
-
-.lightbox-actions {
+.gallery-viewer-families {
+  position: relative;
   display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-shrink: 0; /* actions keep their full size regardless of title length */
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
-.lightbox-close {
+.gallery-viewer-family {
   display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: transparent;
+  color: #cbd5e1;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 660;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.gallery-viewer-family:hover {
+  border-color: rgba(var(--accent-rgb), 0.5);
+  color: #f8fafc;
+}
+
+.gallery-viewer-family[aria-pressed="true"] {
+  border-color: rgba(var(--accent-rgb), 0.7);
+  background: rgba(var(--accent-rgb), 0.24);
+  color: #f8fafc;
+}
+
+.gallery-viewer-family-count {
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.gallery-viewer-close,
+.gallery-viewer-step {
+  display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  background: transparent;
+  background: rgba(15, 23, 42, 0.8);
   color: #e2e8f0;
-  font-size: 1.4rem;
-  font-weight: 760;
+  font: inherit;
+  font-size: 1.6rem;
   line-height: 1;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
 }
 
-.lightbox-close:hover {
+.gallery-viewer-close:hover {
   border-color: rgba(248, 113, 113, 0.55);
   color: #fca5a5;
 }
 
-.lightbox-body {
+.gallery-viewer-step:hover:not(:disabled) {
+  border-color: rgba(var(--accent-rgb), 0.7);
+  background: rgba(var(--accent-rgb), 0.2);
+}
+
+.gallery-viewer-step:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.gallery-viewer-body {
+  display: grid;
   flex: 1;
-  display: flex;
+  grid-template-columns: 64px minmax(0, 1fr) 64px;
+  grid-template-rows: minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  padding: 28px;
-  overflow: auto;
+  justify-items: center;
+  min-height: 0;
   background:
     repeating-linear-gradient(
       45deg,
@@ -1545,20 +1676,303 @@ html[data-theme="light"] .example-tags .ats-badge {
     #06101f;
 }
 
-.lightbox-image {
+.gallery-viewer-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 20px 0;
+  /* A horizontal drag is the viewer's; the page keeps vertical scroll and pinch. */
+  touch-action: pan-y pinch-zoom;
+}
+
+.gallery-viewer-image {
+  display: block;
+  width: auto;
+  height: auto;
   max-width: 100%;
-  max-height: 78vh;
-  object-fit: contain;
-  background: white;
+  max-height: 100%;
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
+  background: white;
   box-shadow:
     0 30px 60px rgba(0, 0, 0, 0.55),
     0 8px 16px rgba(0, 0, 0, 0.4);
+  transition: opacity 0.15s ease;
 }
 
-body.lightbox-open {
+.gallery-viewer-stage[aria-busy="true"] .gallery-viewer-image {
+  opacity: 0.5;
+}
+
+.gallery-viewer-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 36rem;
+  padding: 24px;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+.gallery-viewer-notice p {
+  margin: 0;
+}
+
+.gallery-viewer-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.gallery-viewer-meta {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.gallery-viewer-title {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.1rem;
+  font-weight: 720;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.gallery-viewer-counter {
+  margin: 2px 0 0;
+  color: #94a3b8;
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gallery-viewer-description {
+  margin: 6px 0 0;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.gallery-viewer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Paging inside one document, deliberately unlike the document steps either side of the page:
+   those are large arrows over the stage, these are a small centred row under it, so the two
+   kinds of movement never read as the same control. */
+.gallery-viewer-pages {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 20px;
+}
+
+.gallery-viewer-page-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gallery-viewer-page-step:hover:not(:disabled) {
+  color: #f8fafc;
+  border-color: rgba(var(--accent-rgb), 0.45);
+}
+
+.gallery-viewer-page-step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.gallery-viewer-page-label {
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The disclosure over the panel. The document keeps the dialog's room until a reader asks
+   for the reproduction details: opened by default the panel took 42vh, twice the stage. */
+.gallery-viewer-panel-toggle {
+  /* Never grows: `1 1 100%` (copied from the panel) made the button a flex item asking for
+     the dialog's whole height, which left the stage 40px and the page 0x0. */
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 20px;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.85);
+  color: #e2e8f0;
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gallery-viewer-panel-toggle:hover {
+  color: #f8fafc;
+  background: rgba(30, 41, 59, 0.9);
+}
+
+.gallery-viewer-panel-toggle::after {
+  content: '\25B8';
+  margin-left: auto;
+  color: #94a3b8;
+  transition: transform 120ms ease;
+}
+
+.gallery-viewer-panel-toggle[aria-expanded='true']::after {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-viewer-panel-toggle::after {
+    transition: none;
+  }
+}
+
+/* What a reader needs to reproduce the document shown: the coordinates, the classes it
+   composes, the compiled snippet, and where the runnable source and the guide are. */
+.gallery-viewer-panel {
+  flex: 1 1 100%;
+  padding: 14px 20px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.92);
+  /* The document keeps roughly a third of the dialog even with the panel open. At 42vh the
+     opened panel plus its toggle left the stage 149px and the page 74x105 — smaller than the
+     regression this disclosure was added to fix. The panel scrolls, so a lower cap costs
+     scrolling; the stage cannot scroll a page into being readable. */
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.gallery-viewer-panel-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0 0 6px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.gallery-viewer-panel-label {
+  flex: 0 0 8.5rem;
+  color: #94a3b8;
+}
+
+.gallery-viewer-panel-value {
+  min-width: 0;
+  color: #e2e8f0;
+  word-break: break-word;
+}
+
+/* A class name or a path is set as code; a sentence is not. */
+code.gallery-viewer-panel-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+}
+
+.gallery-viewer-panel-code {
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.72);
+  color: #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.gallery-viewer-panel-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 720px) {
+  .gallery-viewer-panel {
+    max-height: 34vh;
+    padding: 12px 14px 16px;
+  }
+
+  .gallery-viewer-panel-label {
+    flex-basis: 100%;
+  }
+}
+
+/* The documents of the family shown, as a strip under the page. */
+.gallery-viewer-thumbs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  padding: 10px 14px;
+  overflow-x: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.7);
+  scrollbar-width: thin;
+}
+
+.gallery-viewer-thumb {
+  display: block;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 72px;
+  padding: 0;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 4px;
+  background: #0b1524;
+  opacity: 0.65;
+  cursor: pointer;
+  transition: border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.gallery-viewer-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.gallery-viewer-thumb:hover,
+.gallery-viewer-thumb:focus-visible {
+  border-color: rgba(var(--accent-rgb), 0.6);
+  opacity: 1;
+}
+
+.gallery-viewer-thumb[aria-current="true"] {
+  border-color: rgba(var(--accent-rgb), 0.9);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.35);
+  opacity: 1;
 }
 
 /* Heavier section labels + headings for visual hierarchy */
@@ -1583,21 +1997,116 @@ body.lightbox-open {
   font-weight: 760;
 }
 
-/* Mobile lightbox */
+/* Viewer on a narrow screen: the page fills the screen, and the arrows sit
+   over its edges, clear of the safe areas. */
 @media (max-width: 768px) {
-  .lightbox-frame {
-    width: 96vw;
-    max-height: 96vh;
+  .gallery-viewer {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
   }
-  .lightbox-body {
-    padding: 16px;
+  .gallery-viewer-body {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr);
   }
-  .lightbox-header {
-    padding: 12px 14px;
+  .gallery-viewer-stage {
+    padding: 12px;
   }
-  .lightbox-title {
-    font-size: 0.94rem;
+  .gallery-viewer-step {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    transform: translateY(-50%);
   }
+  .gallery-viewer-step[data-viewer-step="-1"] {
+    left: calc(8px + env(safe-area-inset-left, 0px));
+  }
+  .gallery-viewer-step[data-viewer-step="1"] {
+    right: calc(8px + env(safe-area-inset-right, 0px));
+  }
+  .gallery-viewer-footer {
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .gallery-viewer-thumbs {
+    padding: 8px 10px;
+  }
+  .gallery-viewer-thumb {
+    width: 46px;
+    height: 62px;
+  }
+  .gallery-viewer-description {
+    display: none;
+  }
+}
+
+/* Families: one tile per family, each opening the viewer on it. */
+.showcase-families {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.families-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.family-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.family-tile:hover,
+.family-tile:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(var(--accent-rgb), 0.5);
+}
+
+.family-cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 180px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 30% 20%, var(--accent-glow), transparent 55%),
+    var(--preview-bg);
+}
+
+.family-cover img {
+  width: auto;
+  height: auto;
+  max-width: calc(100% - 20px);
+  max-height: calc(100% - 20px);
+  border-radius: 3px;
+  background: white;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
+.family-name {
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.family-count {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ===========================================================
@@ -1726,25 +2235,25 @@ body.lightbox-open {
 
 .highlight-preview {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  padding: 14px 14px 0;
+  height: var(--tile-preview-height);
+  padding: 14px;
   border: 0;
   background:
     radial-gradient(circle at 30% 18%, var(--accent-glow), transparent 60%),
     var(--preview-bg);
-  cursor: zoom-in;
+  cursor: pointer;
   appearance: none;
 }
 
 .highlight-preview img {
-  width: 100%;
+  width: auto;
   height: auto;
-  aspect-ratio: 595 / 842;
-  /* Cap height so very-tall A4 previews don't make the strip
-     grotesque on desktop. The image still fills the tile cleanly. */
-  max-height: 360px;
-  object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
   background: white;
   border: 2px solid rgba(255, 255, 255, 0.06);
   border-radius: 4px;
@@ -1795,6 +2304,10 @@ body.lightbox-open {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --card-preview-height: 300px;
+    --tile-preview-height: 340px;
+  }
   .highlight-tile {
     flex-basis: 240px;
   }
@@ -1876,7 +2389,7 @@ body.lightbox-open {
   border: 1px dashed rgba(var(--accent-rgb), 0.5);
   border-radius: 999px;
   background: transparent;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.86rem;
   font-weight: 660;
   cursor: pointer;
@@ -1887,7 +2400,9 @@ body.lightbox-open {
 .group-toggle:focus-visible {
   border-color: rgba(var(--accent-rgb), 0.85);
   background: rgba(var(--accent-rgb), 0.1);
-  color: #e0f2fe;
+  /* The theme's strongest text, not a fixed pale blue: that read 1.05:1 on the light theme, so the
+     label vanished exactly when a keyboard focused it. */
+  color: var(--text-strong);
 }
 
 .group-toggle-count {
@@ -1902,7 +2417,6 @@ body.lightbox-open {
    on-brand for a typography/layout engine. Body copy stays Inter. */
 .hero h1,
 h2,
-.layered-card h2,
 .category-heading h3,
 .group-heading h4,
 .example-title,
@@ -1953,4 +2467,384 @@ html[data-theme="light"] .theme-toggle .icon-moon {
 
 html[data-theme="light"] .theme-toggle .icon-sun {
   display: block;
+}
+
+/* ===========================================================
+   Document pages — one per catalogue card, at
+   <category>/<group>/<id>/, generated by scripts/site/build.mjs.
+   What the viewer shows of a document, readable without
+   JavaScript: every page, the files, how to reproduce it.
+   =========================================================== */
+.document-page {
+  padding-top: 32px;
+  padding-bottom: 72px;
+}
+
+.document-breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 0 0 28px;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  list-style: none;
+}
+
+/* Not a slash: family names carry one ("CV / Resume"). */
+.document-breadcrumb li + li::before {
+  content: "\203A";
+  margin: 0 8px;
+  color: var(--muted);
+}
+
+.document-breadcrumb a {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--accent-rgb), 0.55);
+  text-underline-offset: 3px;
+}
+
+.document-breadcrumb a:hover,
+.document-breadcrumb a:focus-visible {
+  color: var(--text-strong);
+}
+
+.document-breadcrumb [aria-current="page"] {
+  color: var(--text-strong);
+  font-weight: 650;
+}
+
+/* The pages on the left and what a reader does with them on the right; one column once the two
+   would squeeze a page below readable. */
+.document-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-areas:
+    "pages intro"
+    "pages reproduce";
+  grid-template-rows: auto 1fr;
+  gap: 28px 48px;
+  align-items: start;
+}
+
+/* A description can be an API call with no break opportunity in it
+   (DocumentTextStyle.builder().letterSpacing(...)), which widened a 320px page to 708px. */
+.document-intro,
+.document-breadcrumb,
+.document-related-list a {
+  overflow-wrap: anywhere;
+}
+
+.document-intro {
+  grid-area: intro;
+  min-width: 0;
+}
+
+.document-intro h1 {
+  margin: 0;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 1.5rem + 1.6vw, 2.75rem);
+  line-height: 1.08;
+}
+
+.document-lead {
+  margin: 14px 0 0;
+  color: var(--text);
+  font-size: 1.08rem;
+}
+
+.document-facts {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.document-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.document-pages {
+  grid-area: pages;
+  display: grid;
+  gap: 28px;
+  min-width: 0;
+}
+
+.document-page-image {
+  margin: 0;
+}
+
+/* A page is white paper in either theme: it is the document as it prints. */
+.document-page-image a {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.document-page-image img {
+  width: 100%;
+  height: auto;
+}
+
+.document-page-image figcaption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.document-reproduce {
+  grid-area: reproduce;
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.document-reproduce h2 {
+  margin: 0 0 16px;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+
+.reproduce-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reproduce-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin: 0 0 10px;
+}
+
+.reproduce-row .reproduce-label {
+  flex: 0 0 9.5rem;
+  padding-top: 2px;
+}
+
+.reproduce-value {
+  flex: 1 1 14rem;
+  min-width: 0;
+  color: var(--text-strong);
+  font-size: 0.95rem;
+}
+
+/* A class name or a path, set as code; the global code colour belongs to the dark code panels. */
+code.reproduce-value {
+  color: var(--text-strong);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.reproduce-listing {
+  margin: 0 0 16px;
+}
+
+.reproduce-listing .reproduce-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* The same dark code panel as the install snippets, in both themes. */
+.reproduce-code {
+  padding: 14px 16px;
+  border-radius: 7px;
+  background: var(--code-bg);
+  color: #e0f2fe;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.reproduce-code code {
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.reproduce-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 0;
+}
+
+.document-related {
+  margin-top: 72px;
+}
+
+.document-related h2 {
+  margin: 0 0 20px;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+}
+
+.document-related-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 22px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.document-related-list a {
+  display: grid;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.document-related-list a:hover span,
+.document-related-list a:focus-visible span {
+  color: var(--text-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* One box for every document, portrait or landscape, so the grid keeps its rows. */
+.document-related-list img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--preview-bg);
+}
+
+@media (max-width: 980px) {
+  .document-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "intro"
+      "pages"
+      "reproduce";
+    grid-template-rows: none;
+  }
+
+  .document-pages {
+    width: min(100%, 560px);
+  }
+}
+
+@media (max-width: 640px) {
+  .document-page {
+    padding-top: 22px;
+  }
+
+  .document-reproduce {
+    padding: 16px;
+  }
+
+  .reproduce-row .reproduce-label {
+    flex-basis: 100%;
+  }
+
+  .document-related-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ===========================================================
+   Documentation page — documentation/, generated by
+   scripts/site/build.mjs: the repository's guides, linked at
+   the release the site names.
+   =========================================================== */
+.docs-page {
+  padding-top: 40px;
+  padding-bottom: 72px;
+}
+
+.docs-page h1 {
+  margin: 0;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
+  line-height: 1.08;
+}
+
+.docs-page .section-heading a {
+  color: var(--text-strong);
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--accent-rgb), 0.55);
+  text-underline-offset: 3px;
+}
+
+.docs-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.docs-section {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.docs-section h2 {
+  margin: 0 0 12px;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+}
+
+.docs-section-intro {
+  margin: -6px 0 12px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.docs-guides {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.docs-guides a {
+  color: var(--text-strong);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--accent-rgb), 0.55);
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.docs-guides p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .docs-sections {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

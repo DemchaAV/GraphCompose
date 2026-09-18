@@ -150,7 +150,8 @@ record InlineSvgToken(
         double height,
         InlineImageAlignment alignment,
         double baselineOffset,
-        DocumentLinkTarget linkTarget
+        DocumentLinkTarget linkTarget,
+        String text
 ) implements InlineLayoutToken {
     InlineSvgToken {
         alignment = alignment == null ? InlineImageAlignment.CENTER : alignment;
@@ -174,7 +175,8 @@ record InlineSvgToken(
                 run.height(),
                 run.alignment(),
                 run.baselineOffset(),
-                run.linkTarget());
+                run.linkTarget(),
+                icon.text());
     }
 
     /**

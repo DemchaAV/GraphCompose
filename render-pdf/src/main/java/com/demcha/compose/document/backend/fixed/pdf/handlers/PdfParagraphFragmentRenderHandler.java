@@ -270,7 +270,9 @@ public final class PdfParagraphFragmentRenderHandler
      * Draws an inline SVG-icon span: each resolved vector layer is painted on
      * the baseline-seated box through the shared {@link PdfPathPainter}, so the
      * inline glyph matches the block path fragment for fragment (flat colours,
-     * gradients, dashes alike).
+     * gradients, dashes alike). An icon that states text — a colour emoji, a
+     * symbol given {@code SvgIcon.withText} — also leaves that text in the
+     * page's text layer, so copying the line carries it.
      */
     private static void renderSvg(PDPageContentStream stream,
                                   ParagraphSvgSpan span,
@@ -312,6 +314,9 @@ public final class PdfParagraphFragmentRenderHandler
         } finally {
             stream.restoreGraphicsState();
         }
+        // On the line's baseline rather than the icon's bottom: readers assemble lines
+        // from glyph positions, so the text sits where the text around it sits.
+        environment.writeTextLayer(stream, span.text(), cursorX, baselineY, width, height);
     }
 
     @Override

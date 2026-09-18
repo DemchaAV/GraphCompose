@@ -412,8 +412,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             List<PDPage> pages = createPages(document, graph);
 
             try (PdfRenderSession session = new PdfRenderSession(document, pages)) {
-                PdfRenderEnvironment environment =
-                        new PdfRenderEnvironment(document, fonts, session, letterSpacedFonts);
+                PdfRenderEnvironment environment = new PdfRenderEnvironment(
+                        document, fonts, session, letterSpacedFonts, new PdfTextLayer(document));
                 renderGraph(graph, environment);
                 reorderedText = environment.reorderedText();
                 PdfBookmarkOutlineWriter.apply(document, environment.bookmarkRecords());
@@ -539,6 +539,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             // One registry for the combined document: a letter-spaced face drawn in two sections
             // is one font resource, like the base font it shares its program with.
             PdfTrackedFontResources letterSpacedFonts = new PdfTrackedFontResources(document);
+            // Likewise one text-layer font, however many sections draw icons that state text.
+            PdfTextLayer textLayer = new PdfTextLayer(document);
             int pageOffset = 0;
             for (SectionUnit section : sections) {
                 LayoutGraph graph = section.graph();
@@ -548,7 +550,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                     // Each section renders with its OWN backend's handlers/debug, but
                     // records navigation against the combined document via the page offset.
                     PdfRenderEnvironment environment = new PdfRenderEnvironment(
-                            document, fonts, renderSession, pageOffset, letterSpacedFonts);
+                            document, fonts, renderSession, pageOffset, letterSpacedFonts, textLayer);
                     chrome.renderGraph(graph, environment);
                     reorderedText |= environment.reorderedText();
                     bookmarks.addAll(environment.bookmarkRecords());

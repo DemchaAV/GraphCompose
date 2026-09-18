@@ -134,7 +134,8 @@ class PdfFixedLayoutBackendFeaturesTest {
             assertThat(annotation.getAction()).isInstanceOf(PDActionURI.class);
             assertThat(((PDActionURI) annotation.getAction()).getURI()).isEqualTo("https://example.com/docs");
 
-            assertThat(document.getPage(0).getResources().getXObjectNames()).isNotEmpty();
+            // The QR code is drawn as vector rectangles, one per run of dark cells.
+            assertThat(operatorCount(document.getPage(0), "re")).isGreaterThan(50);
 
             String extractedText = new PDFTextStripper().getText(document);
             assertThat(extractedText).contains("Visit the canonical GraphCompose docs.");
@@ -507,6 +508,12 @@ class PdfFixedLayoutBackendFeaturesTest {
             }
         }
         return false;
+    }
+
+    private static long operatorCount(PDPage page, String operatorName) throws IOException {
+        return new PDFStreamParser(page).parse().stream()
+                .filter(token -> token instanceof Operator operator && operatorName.equals(operator.getName()))
+                .count();
     }
 
     private static boolean hasOperator(PDDocument document, String operatorName) throws IOException {

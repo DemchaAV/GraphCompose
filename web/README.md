@@ -5,9 +5,9 @@ and a generated JSON manifest. GitHub Pages serves this folder **exactly as
 committed** and runs nothing, so what is here is what ships. It lives
 **outside `docs/`** (which is documentation only) so the two never tangle.
 
-The pages are **generated**: `index.html`, `sitemap.xml` and one page per
-document in the catalogue (`<category>/<group>/<id>/index.html`) are rendered
-from `web-src/` by `node scripts/site/build.mjs`. Everything else — the
+The pages are **generated**: `index.html`, `sitemap.xml`, `documentation/index.html`
+and one page per document in the catalogue (`<category>/<group>/<id>/index.html`)
+are rendered from `web-src/` by `node scripts/site/build.mjs`. Everything else — the
 stylesheet, the scripts, the assets and the whole `showcase/` tree — is static:
 the build writes none of it, and reads from `showcase/` only the pixel size the
 later page images and the thumbnails state in their PNG headers. Do not hand-edit
@@ -28,7 +28,17 @@ a generated page:
   renamed PDF cannot leave a crawler pointed at nothing), the preset counts, and
   the no-JavaScript index of every document in the catalogue, each linking to its page.
   The site header, the footer and the theme scripts are partials in `web-src/partials/`,
-  shared with the document pages.
+  shared with the other generated pages. Every link into the repository's guides and sources
+  names the release tag — the licence alone stays on `main`.
+- `documentation/index.html` — **generated** from `web-src/pages/documentation.html` and
+  `web-src/data/documentation.json`: the guides that live in the repository, grouped as the
+  docs index groups them, each linked at the release tag with one line on what it covers. No
+  guide is copied or rendered here, so there is no second version of one to keep in step, and
+  a guide path that is not a file in the repository, spelled exactly as GitHub serves it, stops
+  the build. The release cut builds from the tree it then tags, so at a release every link
+  resolves; between releases the page keeps naming the last release, so a guide moved on
+  develop since is linked at its new path under that tag — a 404 if `main` is deployed before
+  the next cut. The menu's Documentation leads here.
 - `<category>/<group>/<id>/index.html` — **generated** from `web-src/pages/document.html`, one
   per card, at the same three segments as the card's viewer address: everything the viewer
   shows of a document, at an address of its own and readable without JavaScript. Every page of
@@ -37,11 +47,12 @@ a generated page:
   panel, open; and the other documents of its family. Each page carries a canonical URL, a title,
   a description, Open Graph tags and a small JSON-LD block, and the sitemap lists them all. A
   family's link on a page is its viewer address, which without JavaScript lands on that family's
-  list in the home page's no-JavaScript index. **The build owns these pages and only these:** a
-  page carrying `<meta name="generator" content="GraphCompose site build">` *and* a canonical URL
-  naming the place it sits — so a generated page copied elsewhere to start a page by hand is not
-  the build's. An owned page no card builds any more — a card renamed, moved or removed — is
-  deleted with the directories it leaves empty, and fails `--check` until it is.
+  list in the home page's no-JavaScript index. **The build may delete these pages and nothing
+  else:** a page three directories down carrying `<meta name="generator" content="GraphCompose
+  site build">` *and* a canonical URL naming the place it sits — so a generated page copied
+  elsewhere to start a page by hand is not the build's, and neither is any page one or two
+  directories down. An owned page no card builds any more — a card renamed, moved or removed —
+  is deleted with the directories it leaves empty, and fails `--check` until it is.
 - `styles.css` — visual system and responsive layout.
 - `examples.js` — client script that fetches the manifest and renders the gallery.
   It also resolves the anchors the menu and the sitemap link to (`#showcase`,
@@ -163,13 +174,14 @@ writes to it.
   pattern that matches nothing stops the cut rather than leaving that spot behind. Rewriting
   the page directly is what the generated site rules out — the next build would undo it.
   `VersionConsistencyGuardTest` holds every occurrence of all seven **in the built page**, so
-  a page that was not rebuilt fails the cut's verify gate. The document pages name the
-  release in their coordinates and source links too; they are rebuilt in the same run, held
-  to `release.json` by `scripts/site/build.test.mjs`, and staged by the cut with one glob
-  pathspec that also stages a page the rebuild deleted — `release-script-check.yml` runs that
-  pathspec over a rewritten, a deleted and an added page, and fails if it stages anything under
-  `showcase/`. A pre-release cut leaves them all on the last published version, and so does
-  the post-release bump.
+  a page that was not rebuilt fails the cut's verify gate. The documentation page and the
+  document pages name the release in their guide links and coordinates too; they are rebuilt in
+  the same run, held to `release.json` by `scripts/site/build.test.mjs`, and staged by the cut
+  with glob pathspecs that also stage a page the rebuild deleted, and exclude `showcase/`
+  outright — `release-script-check.yml` runs them over the documentation page and a rewritten,
+  a deleted and an added card page, with an `index.html` planted under `showcase/` at a card
+  page's depth, and fails if they stage anything else. A pre-release cut leaves them all on the
+  last published version, and so does the post-release bump.
 - **Catalogue.** Unless run with `-SkipShowcase`, the cut sets
   `ShowcaseMetadata.GH_BASE` to `/blob/v<version>` and runs `ShowcaseSync`, so the
   release commit carries a regenerated `examples.json` and `showcase/` whose source

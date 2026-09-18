@@ -470,25 +470,27 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'the tree was not restored after the rebuild check' }
           }
 
-      - name: The cut stages every document page a rebuild changes, and nothing under showcase
+      - name: The cut stages every generated page a rebuild changes, and nothing under showcase
         shell: pwsh
         run: |
-          # The release commit carries the document pages through one glob pathspec. A pathspec one
-          # level off would tag a release without the pages its rebuild wrote, and one reaching
-          # web/showcase/ would commit the /ID churn the cut restores; Step 5's guards read the
-          # working tree, so neither would stop the cut. Lifted by AST, then run against this
-          # checkout: a page rewritten, a page deleted, a page added and a catalogue file touched —
-          # `git add --dry-run` has to name the three pages and nothing else.
+          # The release commit carries the generated pages — the documentation page and a page per
+          # card — through glob pathspecs. A pathspec one level off would tag a release without the
+          # pages its rebuild wrote, and one reaching web/showcase/ would commit the /ID churn the
+          # cut restores; Step 5's guards read the working tree, so neither would stop the cut.
+          # Lifted by AST, then run against this checkout: the documentation page and a card page
+          # rewritten, a card page deleted, one added, a catalogue file touched, and an index.html
+          # planted under web/showcase/ at the depth of a card page, where the card-page glob alone
+          # would reach it — `git add --dry-run` has to name the four pages and nothing else.
           $path = (Resolve-Path scripts/cut-release.ps1).Path
           $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
           $fn = $ast.FindAll({
               param($n)
-              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-DocumentPagePathspecs'
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-GeneratedPagePathspecs'
             }, $true) | Select-Object -First 1
-          if (-not $fn) { throw 'cut-release.ps1 no longer defines Get-DocumentPagePathspecs' }
+          if (-not $fn) { throw 'cut-release.ps1 no longer defines Get-GeneratedPagePathspecs' }
           $calls = $ast.FindAll({
               param($n)
-              $n -is [System.Management.Automation.Language.CommandAst] -and $n.GetCommandName() -eq 'Get-DocumentPagePathspecs'
+              $n -is [System.Management.Automation.Language.CommandAst] -and $n.GetCommandName() -eq 'Get-GeneratedPagePathspecs'
             }, $true)
           if ($calls.Count -lt 2) {
             throw "the release commit and the post-release commit both stage the pages; found $($calls.Count) call(s)"
@@ -498,28 +500,35 @@ jobs:
 
           $pages = @(git ls-files -- ':(glob)web/*/*/*/index.html')
           if ($pages.Count -lt 2) { throw "expected committed document pages under web/, found $($pages.Count)" }
+          $documentation = 'web/documentation/index.html'
+          if (-not (git ls-files -- $documentation)) { throw "expected a committed $documentation" }
           $rewritten = $pages[0]
           $deleted = $pages[1]
           $added = 'web/probe-category/probe-family/probe-card/index.html'
+          $planted = 'web/showcase/probe-a/probe-b/index.html'
           $catalogueFile = @(git ls-files -- web/showcase)[0]
           try {
+            Add-Content -Path $documentation -Value '<!-- rewritten -->'
             Add-Content -Path $rewritten -Value '<!-- rewritten -->'
             Remove-Item $deleted
             New-Item -ItemType Directory -Force -Path (Split-Path $added) | Out-Null
             Set-Content -Path $added -Value '<!-- added -->'
+            New-Item -ItemType Directory -Force -Path (Split-Path $planted) | Out-Null
+            Set-Content -Path $planted -Value '<!-- not a page -->'
             Add-Content -Path $catalogueFile -Value 'touched'
-            $staged = @(git add --dry-run -- @(Get-DocumentPagePathspecs)) | Sort-Object
-            if ($LASTEXITCODE -ne 0) { throw 'git add --dry-run refused the page pathspec' }
-            $expected = @("add '$added'", "add '$rewritten'", "remove '$deleted'") | Sort-Object
+            $staged = @(git add --dry-run -- @(Get-GeneratedPagePathspecs)) | Sort-Object
+            if ($LASTEXITCODE -ne 0) { throw 'git add --dry-run refused the page pathspecs' }
+            $expected = @("add '$documentation'", "add '$added'", "add '$rewritten'", "remove '$deleted'") | Sort-Object
             if (($staged -join "`n") -ne ($expected -join "`n")) {
-              throw "the page pathspec stages:`n$($staged -join "`n")`nwhere a rebuild changed:`n$($expected -join "`n")"
+              throw "the page pathspecs stage:`n$($staged -join "`n")`nwhere a rebuild changed:`n$($expected -join "`n")"
             }
           } finally {
-            git checkout -- $rewritten $deleted $catalogueFile
+            git checkout -- $documentation $rewritten $deleted $catalogueFile
             Remove-Item -Recurse -Force web/probe-category -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force web/showcase/probe-a -ErrorAction SilentlyContinue
           }
           if (git status --porcelain -- web) { throw 'the probe left the web/ tree changed' }
-          Write-Host 'page staging: a rewritten, a deleted and an added page are staged, and nothing under web/showcase/.'
+          Write-Host 'page staging: the documentation page and a rewritten, a deleted and an added card page are staged, and nothing under web/showcase/.'
 
       - name: Unit-check the roadmap promotion (refusals and the real rewrite)
         shell: pwsh

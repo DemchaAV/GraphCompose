@@ -16,8 +16,10 @@
   'use strict';
 
   const MANIFEST_URL = 'examples.json';
-  // Where a visitor is sent when the catalogue cannot be shown.
-  const SOURCE_URL = 'https://github.com/DemchaAV/GraphCompose/tree/main/examples/src/main/java/com/demcha/examples';
+  // Where a visitor is sent when the catalogue cannot be shown: the examples at the release the page
+  // names, like every other link into the repository, and `main` only when that release is unreadable.
+  const SOURCE_TREE = 'https://github.com/DemchaAV/GraphCompose/tree/';
+  const SOURCE_PATH = '/examples/src/main/java/com/demcha/examples';
   const CONTENT = document.getElementById('showcase-content');
   const SEARCH = document.getElementById('showcase-search');
   const FILTERS = document.getElementById('showcase-filters');
@@ -99,10 +101,12 @@
       }
     })
     .catch(err => {
+      const release = readRelease();
+      const ref = release && typeof release.releaseTag === 'string' ? release.releaseTag : 'main';
       CONTENT.innerHTML =
         '<p class="showcase-error">The example catalogue could not be loaded. ' +
         'Refresh the page, or browse the examples on ' +
-        '<a href="' + SOURCE_URL + '">GitHub</a>.</p>';
+        '<a href="' + escAttr(SOURCE_TREE + encodeURIComponent(ref) + SOURCE_PATH) + '">GitHub</a>.</p>';
       console.error(err);
     });
 

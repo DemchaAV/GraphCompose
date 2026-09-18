@@ -167,6 +167,22 @@ follow semantic versioning; release dates are ISO 8601.
   page's own directory. The viewer also stops captioning every document "First page shown", which
   was untrue of the 33 documents it pages through.
 
+- **The showcase has a Documentation page, and the site reads its guides at the release it names.**
+  The menu's Documentation used to scroll to a block on the home page that linked three template
+  guides. It now opens a page that gathers the guides already in the repository — a first document,
+  templates, recipes, output formats, testing and production, versions and upgrades, and the
+  internals for changing GraphCompose itself — each with a line on what it covers, checked against
+  the guide itself, and each linked at the release tag. No guide is copied, so there is no second
+  version of one to fall behind, and a guide path that is not a file in the repository, spelled as
+  GitHub serves it, stops the site build. The rest of the site's repository links follow: the home
+  page's authoring guides, the capability matrix, the Changelog, the migration guide and the examples
+  tree used `main`, beside panels that already linked the release, and now name the release too; only
+  the licence stays on `main`. Text set in the accent colour — section labels, the hero's links, tags,
+  the footer's links, the ghost button — read at 3.7 to 4.2:1 in both themes, under the 4.5:1 minimum
+  for text its size; it now reads at 5.3:1 at worst, taken over the page's background glow. And the
+  gallery's Show all button, which turned a pale blue on hover and focus, no longer all but vanishes
+  (1.05:1) when a keyboard focuses it in the light theme.
+
 ## v2.4.0 — 2026-09-14
 
 ### Public API

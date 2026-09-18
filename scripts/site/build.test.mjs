@@ -315,13 +315,16 @@ test("a hero entry that names no card stops the build", () => {
  * The document pages: one per card at <category>/<group>/<id>/index.html.
  * ------------------------------------------------------------------------ */
 
-const documentPages = Object.keys(built).filter((name) => name.endsWith("/index.html"));
+/** Every page the build owns: a page per card, and the documentation page. */
+const generatedPages = Object.keys(built).filter((name) => name.endsWith("/index.html"));
 const pageFile = (id) => `${pageOf(id)}index.html`;
 
-test("every card has exactly one page, and the build writes no page beyond them", () => {
-  assert.deepEqual(new Set(documentPages), new Set(cards.map((card) => pageFile(card.id))));
-  assert.equal(documentPages.length, cards.length);
-  for (const name of documentPages) {
+test("every card has exactly one page, and the build writes no page beyond them and the documentation", () => {
+  const cardPages = generatedPages.filter((name) => name.split("/").length === 4);
+  assert.deepEqual(new Set(cardPages), new Set(cards.map((card) => pageFile(card.id))));
+  assert.equal(cardPages.length, cards.length);
+  assert.deepEqual(generatedPages.filter((name) => !cardPages.includes(name)), ["documentation/index.html"]);
+  for (const name of generatedPages) {
     assert.ok(built[name].includes(GENERATOR_MARK), `web/${name} does not carry the mark the build keys ownership on`);
   }
 });
@@ -330,7 +333,8 @@ test("the committed tree holds no generated page that no card builds", () => {
   // A card renamed or removed leaves its old page behind; the build deletes it, and --check fails
   // on it. Read from disk: the committed tree is what ships.
   assert.deepEqual(orphanedPages(built), [], "these generated pages are orphans — run node scripts/site/build.mjs");
-  assert.deepEqual(new Set(ownedPages()), new Set(documentPages));
+  // The card pages are the ones the build owns; it writes the documentation page by name.
+  assert.deepEqual(new Set(ownedPages()), new Set(cards.map((card) => pageFile(card.id))));
 });
 
 /** A throwaway site root with the given files, handed to `body`, and removed afterwards. */
@@ -360,7 +364,14 @@ test("an orphan is a page the build wrote where it sits and no card builds — n
     // A generated page copied elsewhere to begin a page by hand: it carries the mark, but its
     // canonical address still names the page it was copied from.
     "guides/start/index.html": ownedAt("templates/cv/kept/", "<p>my own guide</p>"),
-    "showcase/pages/index.html": ownedAt("showcase/pages/"),
+    // The same at a card page's depth, where only the canonical address tells the two apart.
+    "templates/cv/draft/index.html": ownedAt("templates/cv/kept/", "<p>my own draft</p>"),
+    // The documentation page copied to begin another page of its shape, its canonical corrected:
+    // mark and address both match, but a page one directory down is never a card's.
+    "handbook/index.html": ownedAt("handbook/", "<p>my own handbook</p>"),
+    "documentation/index.html": ownedAt("documentation/"),
+    // Under showcase/ at a card page's depth: the catalogue's tree is never the build's to walk.
+    "showcase/pdf/probe/index.html": ownedAt("showcase/pdf/probe/"),
   }, (site) => {
     const expected = { "templates/cv/kept/index.html": "" };
     assert.deepEqual(orphanedPages(expected, site), ["oldcategory/family/card/index.html", "templates/cv/gone/index.html"],
@@ -369,7 +380,8 @@ test("an orphan is a page the build wrote where it sits and no card builds — n
     for (const orphan of orphanedPages(expected, site)) removePage(orphan, site);
     assert.equal(existsIn(site, "templates/cv/gone"), false, "the orphan's empty directory stays behind");
     assert.equal(existsIn(site, "oldcategory"), false, "a removed category's empty directories stay behind");
-    for (const kept of ["templates/cv/kept/index.html", "assets/notes/index.html", "guides/start/index.html"]) {
+    for (const kept of ["templates/cv/kept/index.html", "assets/notes/index.html", "guides/start/index.html",
+      "templates/cv/draft/index.html", "handbook/index.html", "documentation/index.html", "showcase/pdf/probe/index.html"]) {
       assert.equal(existsIn(site, kept), true, `${kept} was deleted`);
     }
   });
@@ -568,7 +580,7 @@ test("a page's reproduction section is the viewer's panel model, item for item",
 
 test("every coordinate on every page names the release", () => {
   let seen = 0;
-  for (const name of documentPages) {
+  for (const name of generatedPages) {
     for (const coordinate of coordinatesOnPage(built[name])) {
       seen++;
       assert.equal(coordinate.version, release.stableVersion, `web/${name} offers ${coordinate.artifact} at ${coordinate.version}`);
@@ -576,7 +588,126 @@ test("every coordinate on every page names the release", () => {
         `web/${name} offers ${coordinate.artifact}, which is versioned apart from the release`);
     }
   }
-  assert.ok(seen >= documentPages.length * 2, "the pages carry too few coordinates for this case to be reading them");
+  assert.ok(seen >= cards.length * 2, "the pages carry too few coordinates for this case to be reading them");
+});
+
+test("every guide or source link the site writes names the release, the licence apart", () => {
+  // The panel pinned its links to the release from the start; a footer or a menu still on main put
+  // two versions of the same guide on one page. The licence does not vary by release.
+  let seen = 0;
+  for (const name of ["index.html", ...generatedPages]) {
+    for (const [, ref, rest] of built[name].matchAll(/github\.com\/DemchaAV\/GraphCompose\/(?:blob|tree)\/([^/"]+)\/([^"]*)/g)) {
+      seen++;
+      if (rest === "LICENSE") continue;
+      assert.equal(ref, release.releaseTag, `web/${name} links ${rest} at ${ref}`);
+    }
+  }
+  assert.ok(seen > generatedPages.length, "too few repository links read for this case to be checking the pages");
+});
+
+const documentation = JSON.parse(fs.readFileSync(path.join(root, "web-src", "data", "documentation.json"), "utf8"));
+
+test("the documentation page links every guide at the release, and every guide is a file in the repository", () => {
+  const page = built["documentation/index.html"];
+  const linked = [...page.matchAll(/<ul class="docs-guides">([\s\S]*?)<\/ul>/g)]
+    .flatMap((list) => [...list[1].matchAll(/<a href="([^"]+)">([^<]*)<\/a>\s*<p>([^<]*)<\/p>/g)])
+    .map(([, href, title, summary]) => ({ href: decodeText(href), title: decodeText(title), summary: decodeText(summary) }));
+  const guides = documentation.sections.flatMap((section) => section.guides);
+  assert.ok(guides.length > 10, "fixture: the documentation data lists the guides");
+  assert.deepEqual(linked, guides.map((guide) => ({
+    href: `https://github.com/DemchaAV/GraphCompose/blob/${release.releaseTag}/${guide.path}`,
+    title: guide.title,
+    summary: guide.summary,
+  })));
+  for (const guide of guides) {
+    assert.ok(fs.statSync(path.join(root, guide.path), { throwIfNoEntry: false })?.isFile(), `${guide.path} is not a file`);
+  }
+  for (const section of documentation.sections) {
+    assert.match(page, new RegExp(`<section class="docs-section" id="${section.id}" aria-labelledby="${section.id}-title">`));
+  }
+  assert.match(page, new RegExp(`<link rel="canonical" href="${SITE}documentation/">`));
+  assert.ok(built["sitemap.xml"].includes(`<loc>${SITE}documentation/</loc>`), "the sitemap does not list the documentation page");
+});
+
+test("a guide that is not a file in the repository stops the build", () => {
+  const naming = (guidePath) => ({ sections: [{ id: "start", title: "Start", guides: [{ title: "Gone", path: guidePath, summary: "Nothing." }] }] });
+  assert.throws(() => build({ documentation: naming("docs/no-such-guide.md") }), /the guide "Gone" names docs\/no-such-guide\.md, which is not a file/);
+  assert.throws(() => build({ documentation: naming("docs") }), /which is not a file in the repository/, "a directory is not a guide");
+  assert.throws(() => build({ documentation: naming("/CHANGELOG.md") }), /which is not a file in the repository/, "a path is repository-relative");
+  // A file that does exist, outside the repository: refused for where it is, not for being absent.
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "site-guide-"));
+  try {
+    const file = path.join(outside, "guide.md");
+    fs.writeFileSync(file, "# a file outside the repository\n");
+    const relative = path.relative(root, file).split(path.sep).join("/");
+    assert.throws(() => build({ documentation: naming(relative) }), /which is not a file in the repository/,
+      `${relative} exists, but not in the repository the page links into`);
+  } finally {
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+  // GitHub is case-sensitive; a Windows or macOS checkout is not, and would find this file.
+  assert.throws(() => build({ documentation: naming("DOCS/README.md") }), /which is not a file in the repository/,
+    "a guide spelled in another case is a 404 on GitHub");
+});
+
+test("the documentation data is refused when a section or a guide is incomplete", () => {
+  const guide = { title: "First", path: "docs/first-document.md", summary: "A first document." };
+  const section = (fields) => ({ id: "start", title: "Start", guides: [guide], ...fields });
+  const refusals = [
+    [{ sections: [] }, /no sections/],
+    [{}, /no sections/],
+    [{ sections: [section({ id: "Start Here" })] }, /section id "Start Here" is missing, repeated or not address-safe/],
+    [{ sections: [section({}), section({})] }, /section id "start" is missing, repeated or not address-safe/],
+    [{ sections: [section({ title: "" })] }, /the section "start" has no title or no guides/],
+    [{ sections: [section({ guides: [] })] }, /the section "start" has no title or no guides/],
+    [{ sections: [section({ guides: [{ ...guide, summary: "" }] })] }, /a guide in "start" has no summary/],
+    [{ sections: [section({ guides: [{ title: "First", summary: "A first document." }] })] }, /a guide in "start" has no path/],
+  ];
+  for (const [documentation, message] of refusals) {
+    assert.throws(() => build({ documentation }), message, JSON.stringify(documentation));
+  }
+});
+
+test("a guide's words reach the documentation page as text, never as markup", () => {
+  const pages = build({ documentation: { sections: [{
+    id: "start", title: "Start & <finish>", intro: "Read \"this\" & <that>",
+    guides: [{ title: "Guides & <tips>", path: "docs/first-document.md", summary: "Say \"hi\" <b>now</b>" }],
+  }] } });
+  const page = pages["documentation/index.html"];
+  for (const escaped of ["Start &amp; &lt;finish&gt;", "Read &quot;this&quot; &amp; &lt;that&gt;", "Guides &amp; &lt;tips&gt;",
+    "Say &quot;hi&quot; &lt;b&gt;now&lt;/b&gt;"]) {
+    assert.ok(page.includes(escaped), `the page does not carry ${escaped}`);
+  }
+  for (const raw of ["<finish>", "<that>", "<tips>", "<b>now</b>"]) {
+    assert.equal(page.includes(raw), false, `${raw} reached the page as markup`);
+  }
+});
+
+test("a new release moves every link the site pins to one", () => {
+  // Checked against a release that is not the committed one, so a tag written into a template or a
+  // partial by hand cannot pass for one the build injected.
+  const next = { ...release, stableVersion: "9.9.9", releaseTag: "v9.9.9" };
+  const pages = build({ release: next });
+  let pinned = 0;
+  for (const [name, content] of Object.entries(pages)) {
+    for (const [, ref, rest] of content.matchAll(/github\.com\/DemchaAV\/GraphCompose\/(?:blob|tree)\/([^/"]+)\/([^"]*)/g)) {
+      if (rest === "LICENSE") continue;
+      pinned++;
+      assert.equal(ref, "v9.9.9", `web/${name} still links ${rest} at ${ref}`);
+    }
+    assert.equal(content.includes(release.releaseTag + "/"), false, `web/${name} still names ${release.releaseTag} in a link`);
+  }
+  assert.ok(pinned > cards.length, "too few pinned links read for this case to be checking the pages");
+});
+
+test("the menu on every page leads to the documentation page", () => {
+  for (const name of ["index.html", ...generatedPages]) {
+    const nav = built[name].match(/<nav class="site-nav"[\s\S]*?<\/nav>/);
+    assert.ok(nav, `web/${name} has no menu`);
+    const link = nav[0].match(/<a href="([^"]*)">Documentation<\/a>/);
+    assert.ok(link, `web/${name}'s menu has no Documentation link`);
+    assert.equal(new URL(link[1], new URL(name, SITE)).href, `${SITE}documentation/`, `web/${name}'s menu leads elsewhere`);
+  }
 });
 
 /**
@@ -607,7 +738,7 @@ test("every link on every page lands on a file the site publishes, or an anchor 
   const categories = new Set(manifest.categories.map((category) => category.id));
   const homeIds = new Set([...built["index.html"].matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
   let checked = 0;
-  for (const name of documentPages) {
+  for (const name of generatedPages) {
     for (const target of siteTargets(name, built[name])) {
       checked++;
       const published = target.file in built || fs.existsSync(path.join(root, "web", target.file));
@@ -626,7 +757,7 @@ test("every link on every page lands on a file the site publishes, or an anchor 
       }
     }
   }
-  assert.ok(checked > documentPages.length * 10, "too few links read for this case to be checking the pages");
+  assert.ok(checked > generatedPages.length * 10, "too few links read for this case to be checking the pages");
 });
 
 /** The real manifest with one card changed, for the refusals a page needs. */
@@ -641,6 +772,7 @@ test("an id that would leave its page's directory stops the build before anythin
 
 test("a category that would write its pages into a static tree stops the build", () => {
   assert.throws(() => build({ manifest: manifestWith((m) => { m.categories[0].id = "showcase"; }) }), /would write its pages into web\/showcase/);
+  assert.throws(() => build({ manifest: manifestWith((m) => { m.categories[0].id = "documentation"; }) }), /would write its pages into web\/documentation/);
 });
 
 test("two cards with one id stop the build", () => {

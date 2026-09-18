@@ -4,8 +4,8 @@
  *
  * The published site is served from `web/` exactly as committed (deploy-web.yml uploads the
  * folder, GitHub Pages runs nothing), so this build writes into `web/` and the result is what
- * ships. It generates the home page, the sitemap, and one page for every document in the
- * catalogue, at `<category>/<group>/<id>/index.html`. The stylesheet, the scripts, the assets and
+ * ships. It generates the home page, the sitemap, the documentation page, and one page for every
+ * document in the catalogue, at `<category>/<group>/<id>/index.html`. The stylesheet, the scripts, the assets and
  * the whole `showcase/` tree are static: none of them is written here, and all that is read from
  * `showcase/` is the pixel size the later page images and the thumbnails state in their PNG
  * headers (a first page's size is the catalogue's, which ShowcaseSiteGuardTest holds to its file).
@@ -16,12 +16,13 @@
  * not decided here at all: it is `panelModel` in `web/gallery-viewer.js`, loaded the way the page
  * loads it, so a document's page and the viewer's panel cannot tell a reader different things.
  *
- * The build owns a document page it wrote and no other file: one that carries GENERATOR_MARK and
- * whose canonical address is the place it sits, so a generated page copied elsewhere to start a
- * page by hand is not the build's to delete. An owned page no card builds any more is deleted,
- * with any directory it leaves empty, and `--check` reports it — along with a page that is
- * missing or differs from a fresh build. CI's guard job runs `scripts/site/build.test.mjs`, which
- * runs `--check` itself and the checks behind it.
+ * Of what it writes, the build may delete only a card page: one at `<category>/<group>/<id>/`
+ * that carries GENERATOR_MARK and whose canonical address is the place it sits, so a generated page
+ * copied elsewhere to start a page by hand is not the build's to delete. An owned page no card
+ * builds any more is deleted, with any directory it leaves empty, and `--check` reports it — along
+ * with a page that is missing or differs from a fresh build. The documentation page is written by
+ * name and never deleted. CI's guard job runs `scripts/site/build.test.mjs`, which runs `--check`
+ * itself and the checks behind it.
  *
  * Line endings are always LF. The repository sets core.autocrlf=true, so a Windows checkout can
  * hand this process CRLF templates while the committed blobs are LF; writing LF and comparing
@@ -37,7 +38,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", ".
 const webRoot = path.join(root, "web");
 export const SITE = "https://demchaav.github.io/GraphCompose/";
 
-/** Carried by every document page the build writes; with the page's canonical address, what it owns. */
+/** Where a guide is read: the repository, at the release the site names. */
+const REPOSITORY = "https://github.com/DemchaAV/GraphCompose";
+
+/** Carried by every page the build writes beyond the home page; with a card page's canonical address, what it owns. */
 export const GENERATOR_MARK = '<meta name="generator" content="GraphCompose site build">';
 
 /**
@@ -47,8 +51,8 @@ export const GENERATOR_MARK = '<meta name="generator" content="GraphCompose site
  */
 const ADDRESS_SAFE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-/** The static trees under web/ that a category's pages would be written into. */
-const STATIC_ROOTS = new Set(["assets", "showcase"]);
+/** The trees under web/ that are not a category's, which a category's pages would be written into. */
+const STATIC_ROOTS = new Set(["assets", "showcase", "documentation"]);
 
 const readText = (...parts) => fs.readFileSync(path.join(root, ...parts), "utf8");
 const readJson = (...parts) => JSON.parse(readText(...parts));
@@ -538,7 +542,7 @@ function documentPage({ card, category, group, template, gallery, catalogueView,
     {
       themeInit: partial("theme-init.html", {}),
       siteHeader: partial("site-header.html", { base }),
-      siteFooter: partial("site-footer.html", {}),
+      siteFooter: partial("site-footer.html", { releaseTag: release.releaseTag }),
       themeToggle: partial("theme-toggle.html", {}),
       base,
       pageTitle: escapeHtml(`${card.title} · ${group.label} · GraphCompose`),
@@ -562,6 +566,96 @@ function documentPage({ card, category, group, template, gallery, catalogueView,
 }
 
 /**
+ * Whether a repository path names a file, with every segment spelled as it is on disk. GitHub
+ * serves paths case-sensitively, so `DOCS/README.md` — which a Windows or macOS checkout finds — is
+ * a 404 there; each segment is matched against its directory's own listing rather than trusted to
+ * the file system's lookup.
+ */
+function isRepositoryFile(relativePath) {
+  const segments = relativePath.split("/");
+  if (segments.some((segment) => segment === "" || segment === "." || segment === "..")) return false;
+  let directory = root;
+  for (const [index, segment] of segments.entries()) {
+    if (!fs.existsSync(directory) || !fs.statSync(directory).isDirectory()) return false;
+    if (!fs.readdirSync(directory).includes(segment)) return false;
+    directory = path.join(directory, segment);
+    if (index === segments.length - 1) return fs.statSync(directory).isFile();
+  }
+  return false;
+}
+
+/**
+ * The documentation page: the guides that already live in the repository, linked at the release the
+ * site names — none copied, none rendered, so there is no second version of a guide to keep in step.
+ * The sections and the line under each guide are data, `web-src/data/documentation.json`. A guide
+ * whose path is not a file in this tree, spelled exactly, stops the build. The release cut builds the
+ * site from the tree it then tags, so at a release every link resolves at the tag it names; between
+ * releases the page keeps naming that tag, so a guide moved on develop since is linked at its new path
+ * under the old tag until the next cut.
+ */
+function documentationPage({ template, documentation, release }) {
+  const what = "web-src/data/documentation.json";
+  const sections = documentation && documentation.sections;
+  if (!Array.isArray(sections) || sections.length === 0) {
+    throw new Error(`${what}: no sections, so the documentation page would link no guide`);
+  }
+  const ids = new Set();
+  const rendered = sections.map((section) => {
+    if (typeof section.id !== "string" || !ADDRESS_SAFE.test(section.id) || ids.has(section.id)) {
+      throw new Error(`${what}: the section id ${JSON.stringify(section.id)} is missing, repeated or not address-safe`);
+    }
+    ids.add(section.id);
+    if (typeof section.title !== "string" || section.title === "" || !Array.isArray(section.guides) || section.guides.length === 0) {
+      throw new Error(`${what}: the section "${section.id}" has no title or no guides`);
+    }
+    const guides = section.guides.map((guide) => {
+      for (const field of ["title", "path", "summary"]) {
+        if (typeof guide[field] !== "string" || guide[field] === "") {
+          throw new Error(`${what}: a guide in "${section.id}" has no ${field}`);
+        }
+      }
+      if (!isRepositoryFile(guide.path)) {
+        throw new Error(`${what}: the guide "${guide.title}" names ${guide.path}, which is not a file in the repository`);
+      }
+      return [
+        "          <li>",
+        `            <a href="${escapeHtml(`${REPOSITORY}/blob/${release.releaseTag}/${guide.path}`)}">${escapeHtml(guide.title)}</a>`,
+        `            <p>${escapeHtml(guide.summary)}</p>`,
+        "          </li>",
+      ].join("\n");
+    });
+    return [
+      `      <section class="docs-section" id="${section.id}" aria-labelledby="${section.id}-title">`,
+      `        <h2 id="${section.id}-title">${escapeHtml(section.title)}</h2>`,
+      ...(section.intro ? [`        <p class="docs-section-intro">${escapeHtml(section.intro)}</p>`] : []),
+      '        <ul class="docs-guides">',
+      ...guides,
+      "        </ul>",
+      "      </section>",
+    ].join("\n");
+  });
+
+  const base = "../";
+  return render(
+    template,
+    {
+      themeInit: partial("theme-init.html", {}),
+      siteHeader: partial("site-header.html", { base }),
+      siteFooter: partial("site-footer.html", { releaseTag: release.releaseTag }),
+      themeToggle: partial("theme-toggle.html", {}),
+      base,
+      canonical: escapeHtml(`${SITE}documentation/`),
+      description: escapeHtml(
+        `The GraphCompose guides at ${release.releaseTag}: ${sections.map((section) => section.title).join(", ")}.`
+      ),
+      releaseTag: escapeHtml(release.releaseTag),
+      sections: rendered.join("\n\n"),
+    },
+    "web-src/pages/documentation.html"
+  );
+}
+
+/**
  * The generated pages, as `web/`-relative path → content.
  *
  * `sources` substitutes an input instead of reading it from disk. Only the test harness
@@ -573,6 +667,7 @@ export function build(sources = {}) {
   const manifest = sources.manifest ?? readJson("web", "examples.json");
   const release = sources.release ?? readJson("web-src", "data", "release.json");
   const featured = sources.featured ?? readJson("web-src", "data", "featured.json");
+  const documentation = sources.documentation ?? readJson("web-src", "data", "documentation.json");
   const gallery = loadGallery();
   const { byId, places, viewerCatalogue } = catalogue(manifest);
 
@@ -581,7 +676,7 @@ export function build(sources = {}) {
     {
       themeInit: partial("theme-init.html", {}),
       siteHeader: partial("site-header.html", { base: "" }),
-      siteFooter: partial("site-footer.html", {}),
+      siteFooter: partial("site-footer.html", { releaseTag: release.releaseTag }),
       themeToggle: partial("theme-toggle.html", {}),
       stableVersion: release.stableVersion,
       releaseTag: release.releaseTag,
@@ -604,7 +699,15 @@ export function build(sources = {}) {
     "web-src/pages/sitemap.xml"
   );
 
-  const pages = { "index.html": index, "sitemap.xml": sitemap };
+  const pages = {
+    "index.html": index,
+    "sitemap.xml": sitemap,
+    "documentation/index.html": documentationPage({
+      template: lf(readText("web-src", "pages", "documentation.html")),
+      documentation,
+      release,
+    }),
+  };
   const template = lf(readText("web-src", "pages", "document.html"));
   const sizes = new Map();
   const sizeOf = (sitePath, what) => {
@@ -625,11 +728,13 @@ export function build(sources = {}) {
 }
 
 /**
- * Every page under the site root the build wrote where it sits, as root-relative paths: an
- * `index.html` that carries GENERATOR_MARK and names its own directory as its canonical address.
- * Both, because the mark alone travels with a copy — a generated page copied to
- * `web/guides/start/` to begin a page by hand still carries it, and deleting that would destroy
- * work the build never did. `showcase/` is never walked: it holds the catalogue's files, not
+ * Every card page under the site root the build wrote where it sits, as root-relative paths: an
+ * `index.html` three directories down, `<category>/<group>/<id>/`, that carries GENERATOR_MARK and
+ * names its own directory as its canonical address. All three, because the mark alone travels with
+ * a copy — a generated page copied to `web/guides/start/`, or the documentation page copied to
+ * begin another page of the same shape, still carries it, and deleting that would destroy work the
+ * build never did. Card pages are the only pages that come and go with the catalogue; the build
+ * writes its other pages by name. `showcase/` is never walked: it holds the catalogue's files, not
  * pages, and it is most of the tree. `site` is web/ except in the test harness, which proves the
  * rule on a directory of its own.
  */
@@ -640,7 +745,7 @@ export function ownedPages(site = webRoot) {
       const name = relative ? `${relative}/${entry.name}` : entry.name;
       if (entry.isDirectory()) {
         if (name !== "showcase") walk(path.join(directory, entry.name), name);
-      } else if (entry.isFile() && entry.name === "index.html" && relative) {
+      } else if (entry.isFile() && entry.name === "index.html" && relative.split("/").length === 3) {
         const text = fs.readFileSync(path.join(directory, entry.name), "utf8");
         if (text.includes(GENERATOR_MARK) && text.includes(`<link rel="canonical" href="${SITE}${relative}/">`)) {
           found.push(name);

@@ -35,6 +35,11 @@
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
+  <url>
+    <loc>https://demchaav.github.io/GraphCompose/documentation/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
 
   <!-- One page for every document in the catalogue -->
 {{documentPages}}

@@ -35,6 +35,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * to literal text the way GitHub does. {@link #require(String)} is the strict
  * variant. Parsed icons are cached per codepoint; the instance is thread-safe.</p>
  *
+ * <p>Every resolved icon states the emoji it depicts as its
+ * {@link SvgIcon#text() text}, spelled from the glyph's codepoints in the fully
+ * qualified form — with the U+FE0F the set's file names leave out put back — so
+ * a page that draws the glyph can still hand a reader the emoji itself.</p>
+ *
  * @author Artem Demchyshyn
  * @since 1.9.0
  */
@@ -144,7 +149,7 @@ public final class EmojiLibrary {
                 throw new UncheckedIOException("Failed to read emoji glyph for codepoint " + cp, e);
             }
             try {
-                return SvgIcon.parse(xml);
+                return SvgIcon.parse(xml).withText(EmojiSequences.fullyQualified(cp));
             } catch (RuntimeException e) {
                 // A real-world glyph may use an SVG feature the parser rejects;
                 // treat it as unresolved rather than failing the whole render.

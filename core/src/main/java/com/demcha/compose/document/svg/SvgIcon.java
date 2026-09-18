@@ -62,6 +62,12 @@ import java.util.Objects;
  * The XML reader refuses DOCTYPEs, so external-entity tricks cannot reach the
  * file system.</p>
  *
+ * <p>An icon drawn inline in text can also state the text it stands for —
+ * {@link #withText(String)} — so a reader that extracts the page's text gets
+ * a character where the icon sits rather than a gap: a colour emoji resolved
+ * by {@code EmojiLibrary} carries its emoji this way, and a check-mark icon
+ * can carry {@code "✓"}.</p>
+ *
  * <pre>{@code
  * SvgIcon logo = SvgIcon.read(Path.of("assets/logo.svg"));
  * flow.addSvgIcon(logo, 48);          // flow sugar
@@ -76,11 +82,17 @@ public final class SvgIcon {
     private final List<Layer> layers;
     private final double sourceWidth;
     private final double sourceHeight;
+    private final String text;
 
     SvgIcon(List<Layer> layers, double sourceWidth, double sourceHeight) {
+        this(layers, sourceWidth, sourceHeight, null);
+    }
+
+    private SvgIcon(List<Layer> layers, double sourceWidth, double sourceHeight, String text) {
         this.layers = List.copyOf(layers);
         this.sourceWidth = sourceWidth;
         this.sourceHeight = sourceHeight;
+        this.text = text;
     }
 
     /**
@@ -145,6 +157,44 @@ public final class SvgIcon {
      */
     public double aspectRatio() {
         return sourceWidth / sourceHeight;
+    }
+
+    /**
+     * Returns the text this icon stands for when the page is read as text.
+     *
+     * <p>A drawing has no characters, so a reader that copies, searches or
+     * extracts a page finds nothing where an icon sits. This is what it should
+     * find instead: the emoji a colour-emoji glyph depicts, or the character a
+     * symbol icon replaces. It says nothing about how the icon looks.</p>
+     *
+     * <p>The text belongs to an icon drawn inline in text
+     * ({@code RichText.svgIcon}, {@code ParagraphBuilder.inlineSvgIcon}, emoji).
+     * A block icon — {@code addSvgIcon} or {@link #node(double)} — does not
+     * carry it.</p>
+     *
+     * @return the text, or {@code null} when the icon states none
+     * @since 2.5.0
+     */
+    public String text() {
+        return text;
+    }
+
+    /**
+     * Returns a copy of this icon that stands for {@code text} when the page is
+     * read as text — see {@link #text()}. The layers and frame are shared; this
+     * icon is unchanged.
+     *
+     * <pre>{@code
+     * SvgIcon check = SvgIcon.read(Path.of("icons/check.svg")).withText("✓");
+     * }</pre>
+     *
+     * @param text the text the icon stands for; {@code null} or blank clears it
+     * @return an icon with the same drawing and the given text
+     * @since 2.5.0
+     */
+    public SvgIcon withText(String text) {
+        String normalized = text == null || text.isBlank() ? null : text;
+        return new SvgIcon(layers, sourceWidth, sourceHeight, normalized);
     }
 
     /**

@@ -5,6 +5,23 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.4.1 — Planned
 
+### Public API
+
+- **An inline SVG icon can state the text it stands for.** `SvgIcon.withText(String)` returns
+  a copy of the icon carrying that text, read back with `SvgIcon.text()`: what a reader that
+  copies, searches or extracts the page should find where the icon is drawn in a line of text,
+  since a drawing has no characters of its own — `"✓"` for a check-mark icon. The drawing is
+  untouched; `null` or blank clears the text. A block icon (`addSvgIcon`, `SvgIcon.node`)
+  does not carry it.
+  <br><br>
+  Every icon `EmojiLibrary` resolves now carries the emoji it depicts, so `:rocket:` states
+  `🚀` and `:woman_technologist:` its whole ZWJ sequence. The emoji set's file names drop
+  U+FE0F, and a text-default character without it can paste as a plain black symbol — `:heart:`
+  as `❤` rather than `❤️` — so the text is spelled in the fully-qualified form of UTS #51,
+  U+FE0F restored after every character whose default presentation is text. That needs no new
+  emoji-set release: the published `graph-compose-emoji` 1.0.0 resolves to the same text.
+  Nothing renders differently yet; the PDF backend reads the text in a following change.
+
 ### Performance
 
 - **A barcode is drawn as vector shapes, not as an image, in PDF and PPTX.**
@@ -47,6 +64,13 @@ follow semantic versioning; release dates are ISO 8601.
   the QR code off it, with an opaque and with a transparent foreground, checks a translucent
   foreground composites with the slide, and checks the background shape lands on the
   fragment box.
+- `EmojiSequencesTest` pins the fully-qualified spelling — a text-default character gains
+  U+FE0F, an emoji-presentation one does not, a skin-tone modifier or a selector already in
+  the key suppresses it, a keycap base is qualified before U+20E3 — and compares the table of
+  text-default emoji with the running JDK's Unicode data on JDK 21 and later.
+  `EmojiLibraryTest` checks resolved emoji carry their text and a glyph named by anything
+  but codepoints resolves without one; `SvgIconTextTest` checks `withText` copies the icon
+  and leaves the original as it was.
 
 ## v2.4.0 — 2026-09-14
 

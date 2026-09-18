@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.1-SNAPSHOT
 
-Types: 237 · methods: 2123 · constants: 236 · compiler-generated members: 1129
+Types: 237 · methods: 2125 · constants: 236 · compiler-generated members: 1129
 
 ## com.demcha.compose
 
@@ -2403,6 +2403,8 @@ Types: 237 · methods: 2123 · constants: 236 · compiler-generated members: 112
 - `double sourceWidth()`
 - `double sourceHeight()`
 - `double aspectRatio()`
+- `String text()`
+- `SvgIcon withText(String text)`
 - `LayerStackNode node(double width)`
 
 ### SvgIcon.Layer (record)

@@ -57,7 +57,7 @@ matrix.
 > Geometry identity with the PDF backend is a design invariant and will not
 > change; the API shape around it may still move in a minor release.
 >
-> Six members of the otherwise-Stable **PDF backend** also carry `@Beta`. The
+> Seven members of the otherwise-Stable **PDF backend** also carry `@Beta`. The
 > package is not Experimental — these are:
 > `PdfFixedLayoutBackend.renderSections` / `writeSections`, the low-level seam
 > that concatenates several sections into one document, where
@@ -67,12 +67,16 @@ matrix.
 > `CreationDate` / `ModDate` and derives the `/ID` from metadata so a document
 > renders byte-identically across runs. Determinism is off by default, and what
 > reproducible builds depend on is the *behaviour* — it is the shape of the
-> opt-in that may still move; and
+> opt-in that may still move;
 > `PdfRenderEnvironment.letterSpacedFont` with its result record
 > `PdfRenderEnvironment.LetterSpacedFont`, the seam a render handler uses to
 > draw tracked text with the spacing in the glyph widths rather than in `Tc`
 > gaps. The glyph positions and text layer it produces are settled; the shape of
-> the call — a nullable result, a face bound to one size — may still move.
+> the call — a nullable result, a face bound to one size — may still move; and
+> `PdfRenderEnvironment.writeTextLayer`, the seam a render handler uses to put
+> the text a drawing stands for — an inline emoji's character — in the page's
+> text layer as an invisible glyph. The text layer it writes is settled; the
+> shape of the call may still move.
 
 ### What each tier promises
 

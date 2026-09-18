@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.1-SNAPSHOT
 
-Types: 70 · methods: 375 · constants: 18 · compiler-generated members: 192
+Types: 70 · methods: 376 · constants: 18 · compiler-generated members: 192
 
 ## com.demcha.compose.document.backend.fixed
 
@@ -116,6 +116,7 @@ Types: 70 · methods: 375 · constants: 18 · compiler-generated members: 192
 
 ### PdfRenderEnvironment (class)
 - `PdfRenderEnvironment.LetterSpacedFont letterSpacedFont(PDFont font, double fontSize, double letterSpacing, String text)   [beta]`
+- `void writeTextLayer(PDPageContentStream stream, String text, double x, double baselineY, double width, double height)   [beta]`
 - `PDDocument document()`
 - `FontLibrary fonts()`
 - `PDPageContentStream pageSurface(int pageIndex)`

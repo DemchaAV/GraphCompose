@@ -128,6 +128,15 @@ both take `alignment` / `baselineOffset` / link overloads and a clickable
 form via `DocumentLinkOptions`. `SvgIcon.parse(String)` reads inline SVG
 markup; `SvgIcon.read(Path)` loads it from a file.
 
+An icon is a drawing, so copying the line out of the PDF skips it. When the
+icon stands for a character, say which with `withText` — the PDF then carries
+that text where the icon sits, invisible, and a copy, a search or a text
+extractor reads it:
+
+```java
+SvgIcon check = SvgIcon.read(Path.of("icons/check.svg")).withText("✓");
+```
+
 ## Emoji / shortcodes
 
 `emoji(":code:")` resolves a GitHub-style shortcode to an inline colour
@@ -147,6 +156,11 @@ On `ParagraphBuilder` the call is `inlineEmoji(":code:", size)`. Glyphs ship
 in the optional, independently-versioned `graph-compose-emoji` companion
 artifact (Noto Emoji, SIL OFL 1.1) — add it to the classpath to resolve
 shortcodes; the engine itself carries no emoji art.
+
+Each resolved emoji states its own text, so a line copied out of the PDF
+pastes with the emoji in it — `:rocket:` as 🚀, `:heart:` as ❤️ — into a
+messenger, a search box or a text extractor. PPTX and DOCX exports do not
+carry it yet.
 
 ## Inline shapes and checkboxes
 

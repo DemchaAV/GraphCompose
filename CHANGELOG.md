@@ -20,7 +20,20 @@ follow semantic versioning; release dates are ISO 8601.
   as `❤` rather than `❤️` — so the text is spelled in the fully-qualified form of UTS #51,
   U+FE0F restored after every character whose default presentation is text. That needs no new
   emoji-set release: the published `graph-compose-emoji` 1.0.0 resolves to the same text.
-  Nothing renders differently yet; the PDF backend reads the text in a following change.
+
+- **A PDF carries the text of an inline icon, so a copied line keeps its emoji.** An inline
+  SVG icon is drawn from paths, so the page had no character where it sat: a line with
+  `:rocket:` in it, copied out of a PDF into a messenger, arrived without the rocket.
+  `PdfParagraphFragmentRenderHandler` now writes the text an icon states into the page's text
+  layer, through `PdfRenderEnvironment.writeTextLayer` (`@Beta`): one invisible glyph over the
+  icon, on the line's baseline, whose advance spans the icon. The glyph comes from a Type 3
+  font of empty glyphs whose `ToUnicode` map states each text, a whole ZWJ sequence included,
+  shown in rendering mode 3 so nothing is painted; one such font serves a document, and a new
+  one starts after 255 distinct texts. `ActualText` around the paths was tried first; PDFBox,
+  poppler, pdf.js and MuPDF extract nothing from it, because it replaces the text of the
+  glyphs it covers and a drawing has none.
+  The rendered page is unchanged pixel for pixel. PPTX and DOCX exports do not carry the text
+  yet. The committed `emoji-shortcodes.pdf` preview is re-rendered: its emoji now copy out.
 
 ### Performance
 
@@ -71,6 +84,20 @@ follow semantic versioning; release dates are ISO 8601.
   `EmojiLibraryTest` checks resolved emoji carry their text and a glyph named by anything
   but codepoints resolves without one; `SvgIconTextTest` checks `withText` copies the icon
   and leaves the original as it was.
+- `PdfTextLayerTest` extracts `Launch 🚀 by 👩‍💻 with ❤️ done.` from a rendered line, codepoint
+  for codepoint; renders the same icon with and without text and compares the pages pixel for
+  pixel, which also fails if the invisible rendering mode leaks onto the words after the icon;
+  checks an icon given `withText("✓")` copies as `✓` and one without text adds no font; fills
+  one font with 255 texts and starts a second (each text used twice, one code each), its
+  `ToUnicode` in blocks of at most 100; keeps one font across the sections of a multi-section
+  document; writes a 256-unit text but not a 257-unit one; gives a 2:1 icon after a word
+  tracked in `Tc` a glyph exactly as wide as the icon, on the baseline, so neither the
+  horizontal scaling nor the spacing and rise left by the run before can go astray; keeps
+  `deterministic(true)` output byte-identical; fails a call made inside an open text object
+  with nothing written, and closes the glyph's text object and saved state when writing fails
+  half-way. In right-to-left Hebrew and Arabic lines it places the emoji's glyph between the
+  words it was written between and keeps a ZWJ sequence and a U+FE0F on one glyph each; a
+  left-to-right sentence with a Hebrew word reads back in written order.
 
 ## v2.4.0 — 2026-09-14
 

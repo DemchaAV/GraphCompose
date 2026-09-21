@@ -194,7 +194,7 @@ Add the testing artifact at test scope:
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-testing</artifactId>
-    <version>2.3.0</version>
+    <version>2.4.0</version>
     <scope>test</scope>
 </dependency>
 ```

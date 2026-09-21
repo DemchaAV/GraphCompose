@@ -8,10 +8,11 @@ import java.awt.Color;
 import java.util.Objects;
 
 /**
- * Content component that carries the data needed to generate a barcode image.
+ * Content component that carries the data needed to draw a barcode.
  *
- * <p>This is a backend-neutral marker attached to an entity. The actual bitmap
- * generation is deferred to the PDF render handler at draw time.</p>
+ * <p>This is a backend-neutral marker attached to an entity. Encoding the
+ * symbol and drawing it are deferred to each backend's render handler at draw
+ * time.</p>
  *
  * @author Artem Demchyshyn
  */

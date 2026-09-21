@@ -1,10 +1,24 @@
 {
   "schemaVersion": 2,
-  "verifiedAgainst": "2.4.0",
+  "verifiedAgainst": "2.4.1-SNAPSHOT",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "note": "Public types and members deliberately kept out of every surface. An exclusion nobody can see is indistinguishable from a bug, so each one records why.",
-  "count": 183,
+  "count": 185,
   "excluded": [
+    {
+      "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.BarcodeMatrices",
+      "package": "com.demcha.compose.document.backend.fixed.pdf.handlers",
+      "kind": "class",
+      "artifact": "graph-compose-render-pdf",
+      "reason": "type @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.BarcodeRuns",
+      "package": "com.demcha.compose.document.backend.fixed.pdf.handlers",
+      "kind": "class",
+      "artifact": "graph-compose-render-pdf",
+      "reason": "type @Internal"
+    },
     {
       "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxChromeRenderer",
       "package": "com.demcha.compose.document.backend.fixed.pptx.handlers",

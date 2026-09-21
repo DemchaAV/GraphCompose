@@ -15,14 +15,14 @@
               "tags": ["cv", "banner", "blue"],
               "pdf": "showcase/pdf/templates/cv/cv-blue-banner-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-blue-banner-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvBlueBannerExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvBlueBannerExample.java",
               "ats": {
                 "status": "ATS_CERTIFIED",
                 "badge": true,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": [],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -32,14 +32,14 @@
               "tags": ["cv", "structured"],
               "pdf": "showcase/pdf/templates/cv/cv-boxed-sections-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-boxed-sections-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvBoxedV2Example.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvBoxedV2Example.java",
               "ats": {
                 "status": "ATS_CERTIFIED",
                 "badge": true,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": [],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -49,14 +49,14 @@
               "tags": ["cv", "centered"],
               "pdf": "showcase/pdf/templates/cv/cv-centered-headline-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-centered-headline-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvCenteredHeadlineExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvCenteredHeadlineExample.java",
               "ats": {
                 "status": "ATS_CERTIFIED",
                 "badge": true,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": [],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -66,14 +66,14 @@
               "tags": ["cv", "sidebar", "photo", "gold"],
               "pdf": "showcase/pdf/templates/cv/cv-charcoal-gold-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-charcoal-gold-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CharcoalGoldExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CharcoalGoldExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["ATS Reader interleaves the sidebar with the main column, so its reading order fails and it misses the Experience heading.", "All three parsers read only the first line of the two-line name."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -83,14 +83,14 @@
               "tags": ["cv", "serif", "two-page"],
               "pdf": "showcase/pdf/templates/cv/cv-classic-serif-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-classic-serif-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvClassicSerifExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvClassicSerifExample.java",
               "ats": {
                 "status": "ATS_CERTIFIED",
                 "badge": true,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": [],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -100,14 +100,14 @@
               "tags": ["cv", "compact", "mono"],
               "pdf": "showcase/pdf/templates/cv/cv-compact-mono-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-compact-mono-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvCompactMonoExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvCompactMonoExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["ATS Reader interleaves the skills rail with the body, so its reading order fails and it misses the Experience and Skills headings.", "OpenResume reads only the first word of the name."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -117,14 +117,14 @@
               "tags": ["cv", "editorial", "blue"],
               "pdf": "showcase/pdf/templates/cv/cv-editorial-blue-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-editorial-blue-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvEditorialBlueExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvEditorialBlueExample.java",
               "ats": {
                 "status": "ATS_CERTIFIED",
                 "badge": true,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": [],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -134,14 +134,14 @@
               "tags": ["cv", "tech"],
               "pdf": "showcase/pdf/templates/cv/cv-engineering-resume-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-engineering-resume-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvEngineeringResumeExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvEngineeringResumeExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["ATS Reader merges the name with the contact stack beside it and reads a contact line as the name.", "ATS Reader interleaves the two body columns, so its reading order fails and it misses the Education heading."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -151,14 +151,14 @@
               "tags": ["cv", "executive"],
               "pdf": "showcase/pdf/templates/cv/cv-executive-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-executive-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvExecutiveExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvExecutiveExample.java",
               "ats": {
                 "status": "ATS_CERTIFIED",
                 "badge": true,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": [],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -168,14 +168,14 @@
               "tags": ["cv", "sidebar", "monogram", "navy"],
               "pdf": "showcase/pdf/templates/cv/cv-midnight-navy-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-midnight-navy-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/MidnightNavyExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/MidnightNavyExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["OpenResume and ATS Reader read the monogram letter as the name.", "The navy plate is stored before the body, so all three parsers read part of the page out of order."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -185,14 +185,14 @@
               "tags": ["cv", "minimal"],
               "pdf": "showcase/pdf/templates/cv/cv-minimal-underlined-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-minimal-underlined-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMinimalUnderlinedExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMinimalUnderlinedExample.java",
               "ats": {
                 "status": "ATS_CERTIFIED",
                 "badge": true,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": [],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -202,14 +202,14 @@
               "tags": ["cv", "editorial", "mint"],
               "pdf": "showcase/pdf/templates/cv/cv-mint-editorial-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-mint-editorial-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMintEditorialExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMintEditorialExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["The two columns interleave, so reading order fails in all three parsers and ATS Reader misses the Experience and Skills headings.", "resume-parser-ats reads the degree line under Education as a heading and drops Education.", "OpenResume reads the role line as the name."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -219,14 +219,14 @@
               "tags": ["cv", "editorial", "mint"],
               "pdf": "showcase/pdf/templates/cv/cv-mint-editorial-v2-custom.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-mint-editorial-v2-custom.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMintEditorialCustomExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMintEditorialCustomExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["The two columns interleave, so reading order fails in all three parsers and ATS Reader misses the Experience and Skills headings.", "resume-parser-ats reads the degree line under Education as a heading and drops Education.", "OpenResume reads the role line as the name."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -236,14 +236,14 @@
               "tags": ["cv", "minimal"],
               "pdf": "showcase/pdf/templates/cv/cv-modern-professional-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-modern-professional-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvModernV2Example.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvModernV2Example.java",
               "ats": {
                 "status": "ATS_COMPATIBLE_WITH_KNOWN_PARSER_LIMITATIONS",
                 "badge": true,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["ATS Reader does not recognise the multi-word headings \"Professional Experience\" and \"Technical Skills\"; OpenResume and resume-parser-ats do."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -253,14 +253,14 @@
               "tags": ["cv", "sidebar", "monogram"],
               "pdf": "showcase/pdf/templates/cv/cv-monogram-sidebar-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-monogram-sidebar-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMonogramSidebarExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvMonogramSidebarExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["OpenResume reads the monogram as the name, and resume-parser-ats the sidebar's contact heading.", "ATS Reader interleaves the sidebar with the body, so its reading order fails."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -270,14 +270,14 @@
               "tags": ["cv", "sidebar", "navy", "portrait"],
               "pdf": "showcase/pdf/templates/cv/cv-navy-sidebar-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-navy-sidebar-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/NavySidebarExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/NavySidebarExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["OpenResume reads the sidebar's contact heading as the name.", "ATS Reader interleaves the sidebar with the body, so its reading order fails."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -287,14 +287,14 @@
               "tags": ["cv", "sidebar"],
               "pdf": "showcase/pdf/templates/cv/cv-nordic-clean-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-nordic-clean-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvNordicCleanExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvNordicCleanExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["ATS Reader merges the name with the contact stack beside it and reads a contact line as the name.", "ATS Reader interleaves the columns, so its reading order fails."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -304,14 +304,14 @@
               "tags": ["cv", "sidebar", "metrics", "orange"],
               "pdf": "showcase/pdf/templates/cv/cv-orange-ops-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-orange-ops-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/OrangeOpsExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/OrangeOpsExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["ATS Reader interleaves the aside with the main column, so its reading order fails and it misses the Education and Skills headings."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -321,14 +321,14 @@
               "tags": ["cv", "panel"],
               "pdf": "showcase/pdf/templates/cv/cv-panel-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-panel-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvPanelExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvPanelExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["ATS Reader interleaves the side-by-side panel content, so its reading order fails and it misses the Experience heading."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -338,14 +338,14 @@
               "tags": ["cv", "sidebar", "navy"],
               "pdf": "showcase/pdf/templates/cv/cv-professional-sidebar-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-professional-sidebar-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/ProfessionalSidebarExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/ProfessionalSidebarExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["OpenResume and resume-parser-ats read the sidebar's contact heading as the name.", "ATS Reader interleaves the sidebar with the body, so its reading order fails."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -355,14 +355,14 @@
               "tags": ["cv", "serif", "two-column"],
               "pdf": "showcase/pdf/templates/cv/cv-serif-headline-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-serif-headline-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/SerifHeadlineExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/SerifHeadlineExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["The two body columns interleave, so reading order fails in all three parsers and ATS Reader misses the Experience and Education headings.", "OpenResume and resume-parser-ats read the first skill-group caption as a new heading, which leaves Skills empty."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -372,14 +372,14 @@
               "tags": ["cv", "sidebar", "portrait"],
               "pdf": "showcase/pdf/templates/cv/cv-sidebar-portrait-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-sidebar-portrait-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvSidebarPortraitExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvSidebarPortraitExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["ATS Reader interleaves the portrait sidebar with the body, so its reading order fails."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -389,14 +389,14 @@
               "tags": ["cv", "sidebar", "masthead", "orange"],
               "pdf": "showcase/pdf/templates/cv/cv-slate-orange-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-slate-orange-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/SlateOrangeExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/SlateOrangeExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["The Education and Certifications headings sit side by side and fuse into one line, so two of the three parsers miss Education.", "ATS Reader interleaves the two body columns, so its reading order fails and it misses the Experience and Skills headings."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -406,14 +406,14 @@
               "tags": ["cv", "clinical", "badges", "teal"],
               "pdf": "showcase/pdf/templates/cv/cv-teal-pulse-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-teal-pulse-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/TealPulseExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/TealPulseExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["OpenResume reads the role line as the name, and the skill \"Patient Education\" as the Education heading.", "ATS Reader interleaves the competencies column with the body, so its reading order fails and it misses the Education heading."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -423,14 +423,14 @@
               "tags": ["cv", "sidebar", "monogram", "terracotta"],
               "pdf": "showcase/pdf/templates/cv/cv-terracotta-rail-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-terracotta-rail-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/TerracottaRailExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/TerracottaRailExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["OpenResume and resume-parser-ats read the monogram as the name.", "ATS Reader interleaves the sidebar with the body, so its reading order fails and it misses the Education and Skills headings."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -440,14 +440,14 @@
               "tags": ["cv", "timeline"],
               "pdf": "showcase/pdf/templates/cv/cv-timeline-minimal-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-timeline-minimal-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvTimelineMinimalExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/CvTimelineMinimalExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["OpenResume and ATS Reader read the role line as the name.", "ATS Reader interleaves the columns, so its reading order fails and it misses the Education heading."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             },
             {
@@ -457,14 +457,14 @@
               "tags": ["cv", "single-column", "grid", "violet"],
               "pdf": "showcase/pdf/templates/cv/cv-violet-grid-v2.pdf",
               "screenshot": "showcase/screenshots/templates/cv/cv-violet-grid-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/cv/v2/VioletGridExample.java",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/cv/v2/VioletGridExample.java",
               "ats": {
                 "status": "DESIGN_FIRST",
                 "badge": false,
                 "tested": ["OpenResume parser (pdf.js 3.7.107)", "ATS Reader (pdfplumber 0.11.10)", "resume-parser-ats 1.2.3 (pdf-parse 1.1.4, pdf.js 1.10.100)"],
                 "lastValidated": "2026-09-14",
                 "knownLimitations": ["The Education and Languages headings sit side by side and fuse into one line, so no parser finds Education.", "The skills grid and the side-by-side band interleave, so reading order fails in all three parsers.", "ATS Reader merges the name with the contact list beside it and reads a contact line as the name."],
-                "details": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
+                "details": "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/using-templates.md#ats-friendly-presets"
               }
             }
           ]
@@ -480,7 +480,7 @@
               "tags": ["proposal", "cinematic"],
               "pdf": "showcase/pdf/templates/proposal/project-proposal-cinematic.pdf",
               "screenshot": "showcase/screenshots/templates/proposal/project-proposal-cinematic.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java"
             },
             {
               "id": "proposal-cinematic",
@@ -489,7 +489,7 @@
               "tags": ["proposal", "cinematic"],
               "pdf": "showcase/pdf/templates/proposal/proposal-cinematic.pdf",
               "screenshot": "showcase/screenshots/templates/proposal/proposal-cinematic.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java"
             },
             {
               "id": "proposal-editorial-v2",
@@ -498,7 +498,7 @@
               "tags": ["proposal"],
               "pdf": "showcase/pdf/templates/proposal/proposal-editorial-v2.pdf",
               "screenshot": "showcase/screenshots/templates/proposal/proposal-editorial-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/proposal/v2/EditorialProposalV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/v2/EditorialProposalV2Example.java"
             },
             {
               "id": "proposal-modern-v2",
@@ -507,7 +507,7 @@
               "tags": ["proposal"],
               "pdf": "showcase/pdf/templates/proposal/proposal-modern-v2.pdf",
               "screenshot": "showcase/screenshots/templates/proposal/proposal-modern-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/proposal/v2/ModernProposalV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/v2/ModernProposalV2Example.java"
             },
             {
               "id": "proposal-northline-v2",
@@ -516,7 +516,7 @@
               "tags": ["proposal"],
               "pdf": "showcase/pdf/templates/proposal/proposal-northline-v2.pdf",
               "screenshot": "showcase/screenshots/templates/proposal/proposal-northline-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/proposal/v2/NorthlineProposalV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/v2/NorthlineProposalV2Example.java"
             }
           ]
         },
@@ -531,7 +531,7 @@
               "tags": ["invoice", "cinematic"],
               "pdf": "showcase/pdf/templates/invoice/invoice-cinematic.pdf",
               "screenshot": "showcase/screenshots/templates/invoice/invoice-cinematic.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java"
             },
             {
               "id": "invoice-classic-v2",
@@ -540,7 +540,7 @@
               "tags": ["invoice"],
               "pdf": "showcase/pdf/templates/invoice/invoice-classic-v2.pdf",
               "screenshot": "showcase/screenshots/templates/invoice/invoice-classic-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/invoice/v2/ClassicInvoiceV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/ClassicInvoiceV2Example.java"
             },
             {
               "id": "invoice-consulting-v2",
@@ -549,7 +549,7 @@
               "tags": ["invoice"],
               "pdf": "showcase/pdf/templates/invoice/invoice-consulting-v2.pdf",
               "screenshot": "showcase/screenshots/templates/invoice/invoice-consulting-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/invoice/v2/ConsultingInvoiceV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/ConsultingInvoiceV2Example.java"
             },
             {
               "id": "invoice-luma-studio-v2",
@@ -558,7 +558,7 @@
               "tags": ["invoice"],
               "pdf": "showcase/pdf/templates/invoice/invoice-luma-studio-v2.pdf",
               "screenshot": "showcase/screenshots/templates/invoice/invoice-luma-studio-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/invoice/v2/LumaStudioInvoiceV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/LumaStudioInvoiceV2Example.java"
             },
             {
               "id": "invoice-modern-v2",
@@ -567,7 +567,7 @@
               "tags": ["invoice"],
               "pdf": "showcase/pdf/templates/invoice/invoice-modern-v2.pdf",
               "screenshot": "showcase/screenshots/templates/invoice/invoice-modern-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/invoice/v2/ModernInvoiceV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/ModernInvoiceV2Example.java"
             },
             {
               "id": "invoice-payments-v2",
@@ -576,7 +576,7 @@
               "tags": ["invoice"],
               "pdf": "showcase/pdf/templates/invoice/invoice-payments-v2.pdf",
               "screenshot": "showcase/screenshots/templates/invoice/invoice-payments-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/invoice/v2/PaymentsInvoiceV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/PaymentsInvoiceV2Example.java"
             },
             {
               "id": "invoice-workspace-v2",
@@ -585,7 +585,7 @@
               "tags": ["invoice"],
               "pdf": "showcase/pdf/templates/invoice/invoice-workspace-v2.pdf",
               "screenshot": "showcase/screenshots/templates/invoice/invoice-workspace-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/invoice/v2/WorkspaceInvoiceV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/WorkspaceInvoiceV2Example.java"
             }
           ]
         },
@@ -600,7 +600,7 @@
               "tags": ["schedule", "table"],
               "pdf": "showcase/pdf/templates/schedule/weekly-schedule.pdf",
               "screenshot": "showcase/screenshots/templates/schedule/weekly-schedule.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java"
             }
           ]
         },
@@ -615,7 +615,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java"
             },
             {
               "id": "cover-letter-blue-banner-v2",
@@ -624,7 +624,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-blue-banner-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-blue-banner-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvBlueBannerLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvBlueBannerLetterV2Example.java"
             },
             {
               "id": "cover-letter-boxed-sections-v2",
@@ -633,7 +633,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-boxed-sections-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-boxed-sections-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvBoxedSectionsLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvBoxedSectionsLetterV2Example.java"
             },
             {
               "id": "cover-letter-centered-headline-v2",
@@ -642,7 +642,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-centered-headline-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-centered-headline-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvCenteredHeadlineLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvCenteredHeadlineLetterV2Example.java"
             },
             {
               "id": "cover-letter-classic-serif-v2",
@@ -651,7 +651,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-classic-serif-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-classic-serif-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvClassicSerifLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvClassicSerifLetterV2Example.java"
             },
             {
               "id": "cover-letter-compact-mono-v2",
@@ -660,7 +660,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-compact-mono-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-compact-mono-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvCompactMonoLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvCompactMonoLetterV2Example.java"
             },
             {
               "id": "cover-letter-editorial-blue-v2",
@@ -669,7 +669,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-editorial-blue-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-editorial-blue-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvEditorialBlueLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvEditorialBlueLetterV2Example.java"
             },
             {
               "id": "cover-letter-engineering-resume-v2",
@@ -678,7 +678,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-engineering-resume-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-engineering-resume-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvEngineeringResumeLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvEngineeringResumeLetterV2Example.java"
             },
             {
               "id": "cover-letter-executive-v2",
@@ -687,7 +687,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-executive-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-executive-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvExecutiveLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvExecutiveLetterV2Example.java"
             },
             {
               "id": "cover-letter-mint-editorial-v2",
@@ -696,7 +696,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-mint-editorial-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-mint-editorial-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvMintEditorialLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvMintEditorialLetterV2Example.java"
             },
             {
               "id": "cover-letter-modern-professional-v2",
@@ -705,7 +705,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-modern-professional-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-modern-professional-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvModernProfessionalLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvModernProfessionalLetterV2Example.java"
             },
             {
               "id": "cover-letter-monogram-sidebar-v2",
@@ -714,7 +714,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-monogram-sidebar-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-monogram-sidebar-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvMonogramSidebarLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvMonogramSidebarLetterV2Example.java"
             },
             {
               "id": "cover-letter-nordic-clean-v2",
@@ -723,7 +723,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-nordic-clean-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-nordic-clean-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvNordicCleanLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvNordicCleanLetterV2Example.java"
             },
             {
               "id": "cover-letter-panel-v2",
@@ -732,7 +732,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-panel-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-panel-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvPanelLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvPanelLetterV2Example.java"
             },
             {
               "id": "cover-letter-sidebar-portrait-v2",
@@ -741,7 +741,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-sidebar-portrait-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-sidebar-portrait-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvSidebarPortraitLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvSidebarPortraitLetterV2Example.java"
             },
             {
               "id": "cover-letter-timeline-minimal-v2",
@@ -750,7 +750,7 @@
               "tags": ["letter"],
               "pdf": "showcase/pdf/templates/coverletter/cover-letter-timeline-minimal-v2.pdf",
               "screenshot": "showcase/screenshots/templates/coverletter/cover-letter-timeline-minimal-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvTimelineMinimalLetterV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/coverletter/v2/CvTimelineMinimalLetterV2Example.java"
             }
           ]
         },
@@ -765,7 +765,7 @@
               "tags": ["receipt", "qr"],
               "pdf": "showcase/pdf/templates/receipt/receipt-modern.pdf",
               "screenshot": "showcase/screenshots/templates/receipt/receipt-modern.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/templates/receipt/ModernReceiptExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/receipt/ModernReceiptExample.java"
             }
           ]
         }
@@ -786,7 +786,7 @@
               "tags": ["canvas", "v1.6", "absolute"],
               "pdf": "showcase/pdf/features/canvas/canvas-layer-showcase.pdf",
               "screenshot": "showcase/screenshots/features/canvas/canvas-layer-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java"
             }
           ]
         },
@@ -801,7 +801,7 @@
               "tags": ["tables", "v1.6"],
               "pdf": "showcase/pdf/features/tables/composed-table-cell-showcase.pdf",
               "screenshot": "showcase/screenshots/features/tables/composed-table-cell-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java"
             },
             {
               "id": "inline-code-column-wrap",
@@ -810,7 +810,7 @@
               "tags": ["tables", "text"],
               "pdf": "showcase/pdf/features/tables/inline-code-column-wrap.pdf",
               "screenshot": "showcase/screenshots/features/tables/inline-code-column-wrap.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/tables/InlineCodeColumnWrapExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/tables/InlineCodeColumnWrapExample.java"
             },
             {
               "id": "table-advanced",
@@ -819,7 +819,7 @@
               "tags": ["tables", "pagination"],
               "pdf": "showcase/pdf/features/tables/table-advanced.pdf",
               "screenshot": "showcase/screenshots/features/tables/table-advanced.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java"
             }
           ]
         },
@@ -834,7 +834,7 @@
               "tags": ["lists", "v1.6"],
               "pdf": "showcase/pdf/features/lists/nested-list-showcase.pdf",
               "screenshot": "showcase/screenshots/features/lists/nested-list-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/lists/NestedListExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/lists/NestedListExample.java"
             }
           ]
         },
@@ -849,7 +849,7 @@
               "tags": ["shapes", "lines", "v1.9"],
               "pdf": "showcase/pdf/features/shapes/line-cap.pdf",
               "screenshot": "showcase/screenshots/features/shapes/line-cap.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/shapes/LineCapExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/LineCapExample.java"
             },
             {
               "id": "line-fill",
@@ -858,7 +858,7 @@
               "tags": ["shapes", "layout", "v1.9"],
               "pdf": "showcase/pdf/features/shapes/line-fill.pdf",
               "screenshot": "showcase/screenshots/features/shapes/line-fill.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/shapes/LineFillExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/LineFillExample.java"
             },
             {
               "id": "photo-clip",
@@ -867,7 +867,7 @@
               "tags": ["shapes", "clip", "v1.8"],
               "pdf": "showcase/pdf/features/shapes/photo-clip.pdf",
               "screenshot": "showcase/screenshots/features/shapes/photo-clip.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/shapes/PhotoClipExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/PhotoClipExample.java"
             },
             {
               "id": "shape-container",
@@ -876,7 +876,7 @@
               "tags": ["shapes", "clip"],
               "pdf": "showcase/pdf/features/shapes/shape-container.pdf",
               "screenshot": "showcase/screenshots/features/shapes/shape-container.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java"
             },
             {
               "id": "vector-path",
@@ -885,7 +885,7 @@
               "tags": ["shapes", "bezier", "v1.8"],
               "pdf": "showcase/pdf/features/shapes/vector-path.pdf",
               "screenshot": "showcase/screenshots/features/shapes/vector-path.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java"
             }
           ]
         },
@@ -900,7 +900,7 @@
               "tags": ["transforms", "layers"],
               "pdf": "showcase/pdf/features/transforms/transforms.pdf",
               "screenshot": "showcase/screenshots/features/transforms/transforms.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/transforms/TransformsExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/transforms/TransformsExample.java"
             }
           ]
         },
@@ -915,7 +915,7 @@
               "tags": ["text", "rtl", "arabic", "v2.2"],
               "pdf": "showcase/pdf/features/text/arabic-article.pdf",
               "screenshot": "showcase/screenshots/features/text/arabic-article.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/ArabicArticleExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/ArabicArticleExample.java"
             },
             {
               "id": "emoji-clip-path",
@@ -924,7 +924,7 @@
               "tags": ["text", "emoji", "inline", "v1.9"],
               "pdf": "showcase/pdf/features/text/emoji-clip-path.pdf",
               "screenshot": "showcase/screenshots/features/text/emoji-clip-path.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/EmojiClipPathReportExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/EmojiClipPathReportExample.java"
             },
             {
               "id": "emoji-gallery",
@@ -933,7 +933,7 @@
               "tags": ["text", "emoji", "inline", "v1.9"],
               "pdf": "showcase/pdf/features/text/emoji-gallery.pdf",
               "screenshot": "showcase/screenshots/features/text/emoji-gallery.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/EmojiGalleryExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/EmojiGalleryExample.java"
             },
             {
               "id": "emoji-shortcodes",
@@ -942,7 +942,7 @@
               "tags": ["text", "emoji", "inline", "v1.9"],
               "pdf": "showcase/pdf/features/text/emoji-shortcodes.pdf",
               "screenshot": "showcase/screenshots/features/text/emoji-shortcodes.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/EmojiShortcodeExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/EmojiShortcodeExample.java"
             },
             {
               "id": "emoji-svg-vs-png",
@@ -951,7 +951,7 @@
               "tags": ["text", "emoji", "inline", "v1.9"],
               "pdf": "showcase/pdf/features/text/emoji-svg-vs-png.pdf",
               "screenshot": "showcase/screenshots/features/text/emoji-svg-vs-png.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/EmojiSvgVsPngExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/EmojiSvgVsPngExample.java"
             },
             {
               "id": "hebrew-invoice",
@@ -960,7 +960,7 @@
               "tags": ["text", "rtl", "hebrew", "v2.2"],
               "pdf": "showcase/pdf/features/text/hebrew-invoice.pdf",
               "screenshot": "showcase/screenshots/features/text/hebrew-invoice.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/HebrewInvoiceExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/HebrewInvoiceExample.java"
             },
             {
               "id": "inline-highlight-chips",
@@ -969,7 +969,7 @@
               "tags": ["text", "inline", "richtext", "v1.9"],
               "pdf": "showcase/pdf/features/text/inline-highlight-chips.pdf",
               "screenshot": "showcase/screenshots/features/text/inline-highlight-chips.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/InlineHighlightExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/InlineHighlightExample.java"
             },
             {
               "id": "inline-shapes",
@@ -978,7 +978,7 @@
               "tags": ["text", "inline", "richtext", "v1.7"],
               "pdf": "showcase/pdf/features/text/inline-shapes.pdf",
               "screenshot": "showcase/screenshots/features/text/inline-shapes.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/InlineShapesExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/InlineShapesExample.java"
             },
             {
               "id": "inline-svg-icons",
@@ -987,7 +987,7 @@
               "tags": ["text", "v1.9", "inline", "svg"],
               "pdf": "showcase/pdf/features/text/inline-svg-icons.pdf",
               "screenshot": "showcase/screenshots/features/text/inline-svg-icons.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java"
             },
             {
               "id": "letter-spacing",
@@ -996,7 +996,7 @@
               "tags": ["text", "typography", "v2.4"],
               "pdf": "showcase/pdf/features/text/letter-spacing.pdf",
               "screenshot": "showcase/screenshots/features/text/letter-spacing.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/LetterSpacingExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/LetterSpacingExample.java"
             },
             {
               "id": "rich-text-showcase",
@@ -1005,7 +1005,7 @@
               "tags": ["text", "rich"],
               "pdf": "showcase/pdf/features/text/rich-text-showcase.pdf",
               "screenshot": "showcase/screenshots/features/text/rich-text-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java"
             },
             {
               "id": "section-presets",
@@ -1014,7 +1014,7 @@
               "tags": ["text", "sections"],
               "pdf": "showcase/pdf/features/text/section-presets.pdf",
               "screenshot": "showcase/screenshots/features/text/section-presets.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java"
             },
             {
               "id": "text-direction",
@@ -1023,7 +1023,7 @@
               "tags": ["text", "rtl", "v2.2"],
               "pdf": "showcase/pdf/features/text/text-direction.pdf",
               "screenshot": "showcase/screenshots/features/text/text-direction.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/TextDirectionExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/TextDirectionExample.java"
             },
             {
               "id": "world-scripts",
@@ -1032,7 +1032,7 @@
               "tags": ["text", "fonts", "v2.2"],
               "pdf": "showcase/pdf/features/text/world-scripts.pdf",
               "screenshot": "showcase/screenshots/features/text/world-scripts.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/text/WorldScriptsExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/WorldScriptsExample.java"
             }
           ]
         },
@@ -1047,7 +1047,7 @@
               "tags": ["barcodes", "qr"],
               "pdf": "showcase/pdf/features/barcodes/barcode-showcase.pdf",
               "screenshot": "showcase/screenshots/features/barcodes/barcode-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java"
             }
           ]
         },
@@ -1062,7 +1062,7 @@
               "tags": ["chrome", "footer", "v1.9"],
               "pdf": "showcase/pdf/features/chrome/page-numbering.pdf",
               "screenshot": "showcase/screenshots/features/chrome/page-numbering.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java"
             },
             {
               "id": "page-zone",
@@ -1071,7 +1071,7 @@
               "tags": ["chrome", "footer", "v2.3.0"],
               "pdf": "showcase/pdf/features/chrome/page-zone.pdf",
               "screenshot": "showcase/screenshots/features/chrome/page-zone.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/chrome/PageZoneExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/chrome/PageZoneExample.java"
             },
             {
               "id": "pdf-chrome",
@@ -1080,7 +1080,7 @@
               "tags": ["chrome", "metadata", "watermark"],
               "pdf": "showcase/pdf/features/chrome/pdf-chrome.pdf",
               "screenshot": "showcase/screenshots/features/chrome/pdf-chrome.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java"
             },
             {
               "id": "viewer-preferences",
@@ -1089,7 +1089,7 @@
               "tags": ["chrome", "v1.9"],
               "pdf": "showcase/pdf/features/chrome/viewer-preferences.pdf",
               "screenshot": "showcase/screenshots/features/chrome/viewer-preferences.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/chrome/ViewerPreferencesExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/chrome/ViewerPreferencesExample.java"
             }
           ]
         },
@@ -1104,7 +1104,7 @@
               "tags": ["streaming", "http"],
               "pdf": "showcase/pdf/features/streaming/invoice-http-stream.pdf",
               "screenshot": "showcase/screenshots/features/streaming/invoice-http-stream.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java"
             }
           ]
         },
@@ -1119,7 +1119,7 @@
               "tags": ["snapshots", "testing"],
               "pdf": "showcase/pdf/features/snapshots/invoice-snapshot-regression.pdf",
               "screenshot": "showcase/screenshots/features/snapshots/invoice-snapshot-regression.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java"
             }
           ]
         },
@@ -1134,7 +1134,7 @@
               "tags": ["charts", "data-viz", "v1.9"],
               "pdf": "showcase/pdf/features/charts/chart-showcase.pdf",
               "screenshot": "showcase/screenshots/features/charts/chart-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java"
             }
           ]
         },
@@ -1149,7 +1149,7 @@
               "tags": ["debug", "labels", "v1.8"],
               "pdf": "showcase/pdf/features/debug/debug-overlay.pdf",
               "screenshot": "showcase/screenshots/features/debug/debug-overlay.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/debug/DebugOverlayExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/debug/DebugOverlayExample.java"
             }
           ]
         },
@@ -1164,7 +1164,7 @@
               "tags": ["docx", "word", "export"],
               "pdf": "showcase/pdf/features/docx/word-export-companion.pdf",
               "screenshot": "showcase/screenshots/features/docx/word-export-companion.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/docx/WordExportExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/docx/WordExportExample.java"
             }
           ]
         },
@@ -1179,7 +1179,7 @@
               "tags": ["layout", "align", "v1.8"],
               "pdf": "showcase/pdf/features/layout/block-align.pdf",
               "screenshot": "showcase/screenshots/features/layout/block-align.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java"
             },
             {
               "id": "content-bleed",
@@ -1188,7 +1188,7 @@
               "tags": ["layout", "v1.9", "bleed"],
               "pdf": "showcase/pdf/features/layout/content-bleed.pdf",
               "screenshot": "showcase/screenshots/features/layout/content-bleed.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/layout/BleedExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/BleedExample.java"
             },
             {
               "id": "per-page-margin",
@@ -1197,7 +1197,7 @@
               "tags": ["layout", "v1.9"],
               "pdf": "showcase/pdf/features/layout/per-page-margin.pdf",
               "screenshot": "showcase/screenshots/features/layout/per-page-margin.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/layout/PerPageMarginExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/PerPageMarginExample.java"
             },
             {
               "id": "row-columns",
@@ -1206,7 +1206,7 @@
               "tags": ["layout", "v1.9", "rows"],
               "pdf": "showcase/pdf/features/layout/row-columns.pdf",
               "screenshot": "showcase/screenshots/features/layout/row-columns.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/layout/RowColumnsExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/RowColumnsExample.java"
             },
             {
               "id": "row-flex",
@@ -1215,7 +1215,7 @@
               "tags": ["layout", "v1.9", "row"],
               "pdf": "showcase/pdf/features/layout/row-flex.pdf",
               "screenshot": "showcase/screenshots/features/layout/row-flex.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/layout/RowFlexExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/RowFlexExample.java"
             },
             {
               "id": "row-vertical-align",
@@ -1224,7 +1224,7 @@
               "tags": ["layout", "v1.9"],
               "pdf": "showcase/pdf/features/layout/row-vertical-align.pdf",
               "screenshot": "showcase/screenshots/features/layout/row-vertical-align.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/layout/RowVerticalAlignExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/RowVerticalAlignExample.java"
             }
           ]
         },
@@ -1239,7 +1239,7 @@
               "tags": ["navigation", "structure", "v1.9"],
               "pdf": "showcase/pdf/features/navigation/container-bookmark.pdf",
               "screenshot": "showcase/screenshots/features/navigation/container-bookmark.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/navigation/ContainerBookmarkExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/navigation/ContainerBookmarkExample.java"
             },
             {
               "id": "in-pdf-navigation",
@@ -1248,7 +1248,7 @@
               "tags": ["navigation", "v1.9", "links"],
               "pdf": "showcase/pdf/features/navigation/in-pdf-navigation.pdf",
               "screenshot": "showcase/screenshots/features/navigation/in-pdf-navigation.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java"
             },
             {
               "id": "page-reference",
@@ -1257,7 +1257,7 @@
               "tags": ["navigation", "v1.9", "structure"],
               "pdf": "showcase/pdf/features/navigation/page-reference.pdf",
               "screenshot": "showcase/screenshots/features/navigation/page-reference.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java"
             },
             {
               "id": "table-of-contents",
@@ -1266,7 +1266,7 @@
               "tags": ["navigation", "structure", "v1.9"],
               "pdf": "showcase/pdf/features/navigation/table-of-contents.pdf",
               "screenshot": "showcase/screenshots/features/navigation/table-of-contents.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/navigation/TocExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/navigation/TocExample.java"
             }
           ]
         },
@@ -1281,7 +1281,7 @@
               "tags": ["structure", "v1.9"],
               "pdf": "showcase/pdf/features/structure/multi-section-document.pdf",
               "screenshot": "showcase/screenshots/features/structure/multi-section-document.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/structure/MultiSectionExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/structure/MultiSectionExample.java"
             }
           ]
         },
@@ -1296,7 +1296,7 @@
               "tags": ["svg", "icons", "v1.8"],
               "pdf": "showcase/pdf/features/svg/svg-icon-gallery.pdf",
               "screenshot": "showcase/screenshots/features/svg/svg-icon-gallery.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/svg/SvgIconGalleryExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/svg/SvgIconGalleryExample.java"
             }
           ]
         },
@@ -1311,7 +1311,7 @@
               "tags": ["title", "book", "toc", "v1.9"],
               "pdf": "showcase/pdf/features/title/book-template.pdf",
               "screenshot": "showcase/screenshots/features/title/book-template.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/title/BookTemplateExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/title/BookTemplateExample.java"
             },
             {
               "id": "poetry-title",
@@ -1320,7 +1320,7 @@
               "tags": ["title"],
               "pdf": "showcase/pdf/features/title/poetry-title.pdf",
               "screenshot": "showcase/screenshots/features/title/poetry-title.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/features/title/PoetryTitlePageExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/title/PoetryTitlePageExample.java"
             }
           ]
         }
@@ -1342,7 +1342,7 @@
               "pdf": "showcase/pdf/flagships/default/business-report.pdf",
               "pptx": "showcase/pptx/flagships/default/business-report.pptx",
               "screenshot": "showcase/screenshots/flagships/default/business-report.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/flagships/BusinessReportExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/BusinessReportExample.java"
             },
             {
               "id": "engine-deck",
@@ -1352,7 +1352,7 @@
               "pdf": "showcase/pdf/flagships/default/engine-deck.pdf",
               "pptx": "showcase/pptx/flagships/default/engine-deck.pptx",
               "screenshot": "showcase/screenshots/flagships/default/engine-deck.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/flagships/EngineDeckExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/EngineDeckExample.java"
             },
             {
               "id": "engine-deck-v2",
@@ -1361,7 +1361,7 @@
               "tags": ["flagship", "showcase"],
               "pdf": "showcase/pdf/flagships/default/engine-deck-v2.pdf",
               "screenshot": "showcase/screenshots/flagships/default/engine-deck-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/flagships/EngineDeckV2Example.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/EngineDeckV2Example.java"
             },
             {
               "id": "feature-catalog",
@@ -1370,7 +1370,7 @@
               "tags": ["flagship", "showcase"],
               "pdf": "showcase/pdf/flagships/default/feature-catalog.pdf",
               "screenshot": "showcase/screenshots/flagships/default/feature-catalog.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/flagships/FeatureCatalogExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/FeatureCatalogExample.java"
             },
             {
               "id": "financial-report",
@@ -1380,7 +1380,7 @@
               "pdf": "showcase/pdf/flagships/default/financial-report.pdf",
               "pptx": "showcase/pptx/flagships/default/financial-report.pptx",
               "screenshot": "showcase/screenshots/flagships/default/financial-report.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/flagships/FinancialReportExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/FinancialReportExample.java"
             },
             {
               "id": "linkedin-carousel",
@@ -1390,7 +1390,7 @@
               "pdf": "showcase/pdf/flagships/default/linkedin-carousel.pdf",
               "pptx": "showcase/pptx/flagships/default/linkedin-carousel.pptx",
               "screenshot": "showcase/screenshots/flagships/default/linkedin-carousel.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/flagships/LinkedInCarouselExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/LinkedInCarouselExample.java"
             },
             {
               "id": "master-showcase",
@@ -1400,7 +1400,7 @@
               "pdf": "showcase/pdf/flagships/default/master-showcase.pdf",
               "pptx": "showcase/pptx/flagships/default/master-showcase.pptx",
               "screenshot": "showcase/screenshots/flagships/default/master-showcase.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java"
             },
             {
               "id": "maven-banner",
@@ -1410,7 +1410,7 @@
               "pdf": "showcase/pdf/flagships/default/maven-banner.pdf",
               "pptx": "showcase/pptx/flagships/default/maven-banner.pptx",
               "screenshot": "showcase/screenshots/flagships/default/maven-banner.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/flagships/MavenBannerPptxExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/MavenBannerPptxExample.java"
             },
             {
               "id": "module-first-profile",
@@ -1419,7 +1419,7 @@
               "tags": ["flagship", "authoring"],
               "pdf": "showcase/pdf/flagships/default/module-first-profile.pdf",
               "screenshot": "showcase/screenshots/flagships/default/module-first-profile.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java"
             },
             {
               "id": "social-card",
@@ -1429,7 +1429,7 @@
               "pdf": "showcase/pdf/flagships/default/social-card.pdf",
               "pptx": "showcase/pptx/flagships/default/social-card.pptx",
               "screenshot": "showcase/screenshots/flagships/default/social-card.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/flagships/SocialCardExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/SocialCardExample.java"
             },
             {
               "id": "twin-output",
@@ -1439,7 +1439,7 @@
               "pdf": "showcase/pdf/flagships/default/twin-output.pdf",
               "pptx": "showcase/pptx/flagships/default/twin-output.pptx",
               "screenshot": "showcase/screenshots/flagships/default/twin-output.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.4.0/examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java"
             }
           ]
         }

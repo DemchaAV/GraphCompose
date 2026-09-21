@@ -754,16 +754,22 @@ function Update-ReadmeInstallVersion($readmePath, $newVersion) {
     # tag is cut from, so a new user who copy-pastes the README resolves
     # the version this release actually publishes (Phase 2.3 of the
     # release skill: README version flips at release-execution time,
-    # never earlier). Two snippets carry it:
-    #   Maven:  <artifactId>graphcompose</artifactId><version>X.Y.Z</version>
-    #   Gradle: implementation("io.github.demchaav:graphcompose:X.Y.Z")
+    # never earlier). Every train coordinate the page names carries it, in both
+    # forms:
+    #   Maven:  <artifactId>graph-compose[-module]</artifactId><version>X.Y.Z</version>
+    #   Gradle: implementation("io.github.demchaav:graph-compose[-module]:X.Y.Z")
+    # That is graph-compose itself and any module the README tells a reader to add
+    # beside it — graph-compose-testing at test scope, for one. Matching the bare
+    # coordinate alone left that snippet a release behind on v2.4.0. As in
+    # Update-ModuleReadmeInstallVersion, graph-compose-fonts and graph-compose-emoji
+    # are excluded: they ship on their own fonts-v* / emoji-v* tags.
     # Lookbehind/lookahead so only the version token is rewritten. A
     # secondary fallback handles the legacy JitPack format
     # (<artifactId>GraphCompose</artifactId> / GraphCompose:vX.Y.Z) so
     # the script still works if a future change re-introduces a JitPack
     # snippet for documentation purposes.
-    $mavenCentralRegex = [regex]'(?<=<artifactId>graph-compose</artifactId>\s*<version>)v?[\w\.\-]+(?=</version>)'
-    $afterMaven = $mavenCentralRegex.Replace($content, $newVersion, 1)
+    $mavenCentralRegex = [regex]'(?<=<artifactId>graph-compose(?!-fonts|-emoji)[\w\-]*</artifactId>\s*<version>)v?[\w\.\-]+(?=</version>)'
+    $afterMaven = $mavenCentralRegex.Replace($content, $newVersion)
     if ($content -ne $afterMaven) {
         $content = $afterMaven
         $changed = $true
@@ -778,8 +784,8 @@ function Update-ReadmeInstallVersion($readmePath, $newVersion) {
         }
     }
 
-    $gradleCentralRegex = [regex]'(?<=io\.github\.demchaav:graph-compose:)v?[\w\.\-]+(?=")'
-    $afterGradle = $gradleCentralRegex.Replace($content, $newVersion, 1)
+    $gradleCentralRegex = [regex]'(?<=io\.github\.demchaav:graph-compose(?!-fonts|-emoji)[\w\-]*:)v?[\w\.\-]+(?=")'
+    $afterGradle = $gradleCentralRegex.Replace($content, $newVersion)
     if ($content -ne $afterGradle) {
         $content = $afterGradle
         $changed = $true

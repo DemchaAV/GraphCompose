@@ -5,28 +5,24 @@ import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.BarcodeFragmentPayload;
 import com.demcha.compose.engine.components.content.barcode.BarcodeData;
-import com.demcha.compose.engine.components.content.barcode.BarcodeType;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.EncodeHintType;
-import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
-import com.google.zxing.datamatrix.DataMatrixWriter;
-import com.google.zxing.oned.*;
-import com.google.zxing.pdf417.PDF417Writer;
-import com.google.zxing.qrcode.QRCodeWriter;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.util.Matrix;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
+import java.awt.Color;
 import java.io.IOException;
-import java.util.EnumMap;
-import java.util.Map;
 
 /**
- * Renders semantic barcode fragments by generating a barcode bitmap with ZXing
- * and drawing it into the resolved fragment box.
+ * Renders semantic barcode fragments as vector paths.
+ *
+ * <p>ZXing encodes the content into a bit matrix (see {@link BarcodeMatrices}); the
+ * handler fills the background over the fragment box and then fills the dark cells,
+ * merged into rectangles, as one path. The matrix is stretched over the box exactly
+ * as a bitmap of it would be, so each symbology keeps the placement ZXing gives it,
+ * while the edges stay sharp at any zoom and no image is encoded. As in a bitmap,
+ * each cell is either foreground or background: when the foreground is not opaque,
+ * the background is cut away beneath the dark cells, so the foreground composites
+ * with whatever lies under the barcode.</p>
  */
 public final class PdfBarcodeFragmentRenderHandler
         implements PdfFragmentRenderHandler<BarcodeFragmentPayload> {
@@ -50,73 +46,91 @@ public final class PdfBarcodeFragmentRenderHandler
             return;
         }
 
-        BufferedImage barcodeImage = generateBarcodeImage(payload.barcodeData(), (int) fragment.width(), (int) fragment.height());
-        PDImageXObject image = createXObject(environment, barcodeImage);
+        BarcodeData data = payload.barcodeData();
+        Color background = data.getBackground();
+        Color foreground = data.getForeground();
+        if (background.getAlpha() == 0 && foreground.getAlpha() == 0) {
+            return;
+        }
+        BitMatrix matrix = BarcodeMatrices.encode(data, (int) fragment.width(), (int) fragment.height());
+        BarcodeRuns runs = BarcodeRuns.of(matrix);
         PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
-        stream.drawImage(image, (float) fragment.x(), (float) fragment.y(), (float) fragment.width(), (float) fragment.height());
-    }
-
-    private BufferedImage generateBarcodeImage(BarcodeData data, int width, int height) throws IOException {
+        stream.saveGraphicsState();
         try {
-            Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
-            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
-            if (data.getMargin() >= 0) {
-                hints.put(EncodeHintType.MARGIN, data.getMargin());
-            }
-
-            int renderWidth = Math.max(width * 2, 200);
-            int renderHeight = Math.max(height * 2, 200);
-            BitMatrix matrix = createWriter(data.getType()).encode(
-                    data.getContent(),
-                    mapFormat(data.getType()),
-                    renderWidth,
-                    renderHeight,
-                    hints);
-
-            BufferedImage image = new BufferedImage(matrix.getWidth(), matrix.getHeight(), BufferedImage.TYPE_INT_ARGB);
-            int fgRgb = data.getForeground().getRGB();
-            int bgRgb = data.getBackground().getRGB();
-            for (int py = 0; py < matrix.getHeight(); py++) {
-                for (int px = 0; px < matrix.getWidth(); px++) {
-                    image.setRGB(px, py, matrix.get(px, py) ? fgRgb : bgRgb);
-                }
-            }
-            return image;
-        } catch (WriterException ex) {
-            throw new IOException("Failed to generate barcode for type " + data.getType(), ex);
+            // One transform to matrix cells, so every rectangle is written as whole numbers.
+            stream.transform(matrixToBox(matrix, fragment.x(), fragment.y(), fragment.width(), fragment.height()));
+            fillBackground(stream, environment, matrix, runs, background, foreground.getAlpha() < 255);
+            fillCells(stream, environment, runs, foreground);
+        } finally {
+            stream.restoreGraphicsState();
         }
     }
 
-    private PDImageXObject createXObject(PdfRenderEnvironment environment, BufferedImage image) throws IOException {
-        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            ImageIO.write(image, "PNG", output);
-            return PDImageXObject.createFromByteArray(environment.document(), output.toByteArray(), "barcode");
+    private static void fillBackground(PDPageContentStream stream,
+                                       PdfRenderEnvironment environment,
+                                       BitMatrix matrix,
+                                       BarcodeRuns runs,
+                                       Color background,
+                                       boolean cutOutCells) throws IOException {
+        if (background.getAlpha() == 0) {
+            return;
+        }
+        // Its own graphics state, so a translucent background's alpha does not
+        // carry over to the cells drawn after it.
+        stream.saveGraphicsState();
+        try {
+            PdfAlphaSupport.applyFillAlpha(environment, stream, background);
+            stream.setNonStrokingColor(background);
+            stream.addRect(0, 0, matrix.getWidth(), matrix.getHeight());
+            if (cutOutCells) {
+                // Each cell is either foreground or background, as in a bitmap of the
+                // matrix: a foreground that is not opaque composites with whatever lies
+                // under the barcode, so the background is cut away beneath the dark cells.
+                addRuns(stream, runs);
+                stream.fillEvenOdd();
+            } else {
+                stream.fill();
+            }
+        } finally {
+            stream.restoreGraphicsState();
         }
     }
 
-    private com.google.zxing.Writer createWriter(BarcodeType type) {
-        return switch (type) {
-            case QR_CODE -> new QRCodeWriter();
-            case CODE_128 -> new Code128Writer();
-            case CODE_39 -> new Code39Writer();
-            case EAN_13 -> new EAN13Writer();
-            case EAN_8 -> new EAN8Writer();
-            case UPC_A -> new UPCAWriter();
-            case PDF_417 -> new PDF417Writer();
-            case DATA_MATRIX -> new DataMatrixWriter();
-        };
+    private static void fillCells(PDPageContentStream stream,
+                                  PdfRenderEnvironment environment,
+                                  BarcodeRuns runs,
+                                  Color foreground) throws IOException {
+        if (foreground.getAlpha() == 0 || runs.count() == 0) {
+            return;
+        }
+        PdfAlphaSupport.applyFillAlpha(environment, stream, foreground);
+        stream.setNonStrokingColor(foreground);
+        // One path and one fill, so no seam shows where rectangles meet.
+        addRuns(stream, runs);
+        stream.fill();
     }
 
-    private BarcodeFormat mapFormat(BarcodeType type) {
-        return switch (type) {
-            case QR_CODE -> BarcodeFormat.QR_CODE;
-            case CODE_128 -> BarcodeFormat.CODE_128;
-            case CODE_39 -> BarcodeFormat.CODE_39;
-            case EAN_13 -> BarcodeFormat.EAN_13;
-            case EAN_8 -> BarcodeFormat.EAN_8;
-            case UPC_A -> BarcodeFormat.UPC_A;
-            case PDF_417 -> BarcodeFormat.PDF_417;
-            case DATA_MATRIX -> BarcodeFormat.DATA_MATRIX;
-        };
+    private static void addRuns(PDPageContentStream stream, BarcodeRuns runs) throws IOException {
+        for (int i = 0; i < runs.count(); i++) {
+            stream.addRect(runs.x(i), runs.y(i), runs.width(i), runs.height(i));
+        }
+    }
+
+    /**
+     * Maps matrix cells onto the fragment box: the matrix spans the box on both axes,
+     * and its first row is the top of the box, where PDF user space grows upwards.
+     *
+     * @param matrix barcode matrix
+     * @param x      box left edge in points
+     * @param y      box bottom edge in points
+     * @param width  box width in points
+     * @param height box height in points
+     * @return the transform from cell coordinates to page coordinates
+     */
+    static Matrix matrixToBox(BitMatrix matrix, double x, double y, double width, double height) {
+        return new Matrix(
+                (float) (width / matrix.getWidth()), 0,
+                0, (float) (-height / matrix.getHeight()),
+                (float) x, (float) (y + height));
     }
 }

@@ -1,39 +1,30 @@
 package com.demcha.compose.document.backend.fixed.pptx.handlers;
 
+import com.demcha.compose.document.backend.fixed.pdf.handlers.BarcodeMatrices;
+import com.demcha.compose.document.backend.fixed.pdf.handlers.BarcodeRuns;
 import com.demcha.compose.document.backend.fixed.pptx.PptxCoordinates;
 import com.demcha.compose.document.backend.fixed.pptx.PptxFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.PptxRenderEnvironment;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.BarcodeFragmentPayload;
 import com.demcha.compose.engine.components.content.barcode.BarcodeData;
-import com.demcha.compose.engine.components.content.barcode.BarcodeType;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.EncodeHintType;
-import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
-import com.google.zxing.datamatrix.DataMatrixWriter;
-import com.google.zxing.oned.Code128Writer;
-import com.google.zxing.oned.Code39Writer;
-import com.google.zxing.oned.EAN13Writer;
-import com.google.zxing.oned.EAN8Writer;
-import com.google.zxing.oned.UPCAWriter;
-import com.google.zxing.pdf417.PDF417Writer;
-import com.google.zxing.qrcode.QRCodeWriter;
-import org.apache.poi.sl.usermodel.PictureData;
-import org.apache.poi.xslf.usermodel.XSLFPictureShape;
+import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
 
-import javax.imageio.ImageIO;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
+import java.awt.Color;
+import java.awt.geom.Path2D;
 import java.io.IOException;
-import java.util.EnumMap;
-import java.util.Map;
 
 /**
- * Renders semantic barcode fragments with the same ZXing raster the PDF
- * handler produces — identical writer, hints, oversampled render size, and
- * pixel colors — placed as a picture on the fragment box.
+ * Renders semantic barcode fragments as native freeform shapes.
+ *
+ * <p>The bit matrix is the one the PDF handler draws (see {@link BarcodeMatrices}),
+ * stretched over the fragment box the same way, so both formats place the symbol
+ * alike. The background is one freeform over the box and the dark cells, merged into
+ * rectangles, are a second one, so the barcode stays sharp at any zoom and editable
+ * as two shapes rather than a picture. As in a bitmap, each cell is either foreground
+ * or background: when the foreground is not opaque, the dark cells are cut out of the
+ * background, so the foreground composites with whatever lies under the barcode.</p>
  *
  * @since 2.1.0
  */
@@ -58,78 +49,65 @@ public final class PptxBarcodeFragmentRenderHandler
         if (fragment.width() <= 0 || fragment.height() <= 0) {
             return;
         }
-        BufferedImage barcode = generateBarcodeImage(
-                payload.barcodeData(), (int) fragment.width(), (int) fragment.height());
-        byte[] png;
-        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            ImageIO.write(barcode, "PNG", output);
-            png = output.toByteArray();
+        BarcodeData data = payload.barcodeData();
+        Color background = data.getBackground();
+        Color foreground = data.getForeground();
+        if (background.getAlpha() == 0 && foreground.getAlpha() == 0) {
+            return;
         }
-        XSLFPictureShape picture = environment.surface(fragment.pageIndex())
-                .createPicture(environment.slideShow().addPicture(png, PictureData.PictureType.PNG));
-        picture.setAnchor(new Rectangle2D.Double(
+        BitMatrix matrix = BarcodeMatrices.encode(data, (int) fragment.width(), (int) fragment.height());
+        BarcodeRuns runs = BarcodeRuns.of(matrix);
+        Cells cells = new Cells(
                 fragment.x(),
                 PptxCoordinates.topY(environment.canvasHeight(), fragment.y(), fragment.height()),
-                fragment.width(),
-                fragment.height()));
-    }
+                fragment.width() / matrix.getWidth(),
+                fragment.height() / matrix.getHeight());
+        XSLFShapeContainer surface = environment.surface(fragment.pageIndex());
 
-    /**
-     * Mirrors the PDF handler's raster generation exactly: same oversampling,
-     * hints, and per-pixel foreground/background mapping, so both formats
-     * carry the same barcode bitmap.
-     */
-    private static BufferedImage generateBarcodeImage(BarcodeData data,
-                                                      int width,
-                                                      int height) throws IOException {
-        try {
-            Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
-            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
-            if (data.getMargin() >= 0) {
-                hints.put(EncodeHintType.MARGIN, data.getMargin());
+        if (background.getAlpha() > 0) {
+            Path2D.Double path = new Path2D.Double();
+            cells.addRect(path, 0, 0, matrix.getWidth(), matrix.getHeight(), true);
+            if (foreground.getAlpha() < 255) {
+                // Each cell is either foreground or background, as in a bitmap of the
+                // matrix: a foreground that is not opaque composites with whatever lies
+                // under the barcode, so the dark cells are holes in the background. The
+                // holes wind against the outline, so they stay open under either fill rule.
+                addRuns(path, cells, runs, false);
             }
-            int renderWidth = Math.max(width * 2, 200);
-            int renderHeight = Math.max(height * 2, 200);
-            BitMatrix matrix = createWriter(data.getType()).encode(
-                    data.getContent(), mapFormat(data.getType()), renderWidth, renderHeight, hints);
-            BufferedImage image = new BufferedImage(
-                    matrix.getWidth(), matrix.getHeight(), BufferedImage.TYPE_INT_ARGB);
-            int foreground = data.getForeground().getRGB();
-            int background = data.getBackground().getRGB();
-            for (int py = 0; py < matrix.getHeight(); py++) {
-                for (int px = 0; px < matrix.getWidth(); px++) {
-                    image.setRGB(px, py, matrix.get(px, py) ? foreground : background);
-                }
-            }
-            return image;
-        } catch (WriterException ex) {
-            throw new IOException("Failed to generate barcode for type " + data.getType(), ex);
+            PptxInlineGeometry.drawPath(surface, path, background, null);
+        }
+        if (foreground.getAlpha() > 0 && runs.count() > 0) {
+            Path2D.Double path = new Path2D.Double();
+            addRuns(path, cells, runs, true);
+            PptxInlineGeometry.drawPath(surface, path, foreground, null);
         }
     }
 
-    private static com.google.zxing.Writer createWriter(BarcodeType type) {
-        return switch (type) {
-            case QR_CODE -> new QRCodeWriter();
-            case CODE_128 -> new Code128Writer();
-            case CODE_39 -> new Code39Writer();
-            case EAN_13 -> new EAN13Writer();
-            case EAN_8 -> new EAN8Writer();
-            case UPC_A -> new UPCAWriter();
-            case PDF_417 -> new PDF417Writer();
-            case DATA_MATRIX -> new DataMatrixWriter();
-        };
+    private static void addRuns(Path2D.Double path, Cells cells, BarcodeRuns runs, boolean clockwise) {
+        for (int i = 0; i < runs.count(); i++) {
+            cells.addRect(path, runs.x(i), runs.y(i), runs.width(i), runs.height(i), clockwise);
+        }
     }
 
-    private static BarcodeFormat mapFormat(BarcodeType type) {
-        return switch (type) {
-            case QR_CODE -> BarcodeFormat.QR_CODE;
-            case CODE_128 -> BarcodeFormat.CODE_128;
-            case CODE_39 -> BarcodeFormat.CODE_39;
-            case EAN_13 -> BarcodeFormat.EAN_13;
-            case EAN_8 -> BarcodeFormat.EAN_8;
-            case UPC_A -> BarcodeFormat.UPC_A;
-            case PDF_417 -> BarcodeFormat.PDF_417;
-            case DATA_MATRIX -> BarcodeFormat.DATA_MATRIX;
-        };
+    /** Maps matrix cells, first row at the top, onto the slide box, whose y grows downwards. */
+    private record Cells(double left, double top, double cellWidth, double cellHeight) {
+
+        void addRect(Path2D.Double path, int x, int y, int width, int height, boolean clockwise) {
+            double x0 = left + x * cellWidth;
+            double y0 = top + y * cellHeight;
+            double x1 = left + (x + width) * cellWidth;
+            double y1 = top + (y + height) * cellHeight;
+            path.moveTo(x0, y0);
+            if (clockwise) {
+                path.lineTo(x1, y0);
+                path.lineTo(x1, y1);
+                path.lineTo(x0, y1);
+            } else {
+                path.lineTo(x0, y1);
+                path.lineTo(x1, y1);
+                path.lineTo(x1, y0);
+            }
+            path.closePath();
+        }
     }
 }

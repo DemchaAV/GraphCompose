@@ -1652,6 +1652,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>Used where the table is a carrier for a side-by-side layout rather than
      * something the author asked to see ruled.</p>
+     *
+     * <p>Each edge is replaced rather than appended to. POI's {@code createTable} already
+     * writes a full set of single-line borders, and {@code addNew*} on top of them leaves
+     * two elements per edge where {@code CT_TblBorders} permits one. Word reads the last
+     * and draws nothing, which is why the output looked right, but the part is invalid
+     * against the schema either way.</p>
      */
     private static void hideTableGrid(XWPFTable table) {
         CTTblPr properties = table.getCTTbl().getTblPr() != null
@@ -1660,12 +1666,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTTblBorders borders = properties.isSetTblBorders()
                 ? properties.getTblBorders()
                 : properties.addNewTblBorders();
-        paintEdge(borders.addNewTop(), STBorder.NONE, null, null);
-        paintEdge(borders.addNewBottom(), STBorder.NONE, null, null);
-        paintEdge(borders.addNewLeft(), STBorder.NONE, null, null);
-        paintEdge(borders.addNewRight(), STBorder.NONE, null, null);
-        paintEdge(borders.addNewInsideH(), STBorder.NONE, null, null);
-        paintEdge(borders.addNewInsideV(), STBorder.NONE, null, null);
+        paintEdge(borders.isSetTop() ? borders.getTop() : borders.addNewTop(),
+                STBorder.NONE, null, null);
+        paintEdge(borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom(),
+                STBorder.NONE, null, null);
+        paintEdge(borders.isSetLeft() ? borders.getLeft() : borders.addNewLeft(),
+                STBorder.NONE, null, null);
+        paintEdge(borders.isSetRight() ? borders.getRight() : borders.addNewRight(),
+                STBorder.NONE, null, null);
+        paintEdge(borders.isSetInsideH() ? borders.getInsideH() : borders.addNewInsideH(),
+                STBorder.NONE, null, null);
+        paintEdge(borders.isSetInsideV() ? borders.getInsideV() : borders.addNewInsideV(),
+                STBorder.NONE, null, null);
     }
 
     /**

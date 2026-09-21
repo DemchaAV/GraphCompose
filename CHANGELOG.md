@@ -5,7 +5,6 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.5.0 — Planned
 
-
 ### Public API
 
 - **A container's fill and borders now reach the DOCX export.** A `SectionNode` or
@@ -228,6 +227,43 @@ follow semantic versioning; release dates are ISO 8601.
   a preview by URL. `twitter:card` stays `summary_large_image`, and both tags now declare the
   size and an alt text. A document's own page keeps its own preview: there the document is the
   subject.
+
+- **The DOCX export now takes line height and column widths from the resolved layout, and
+  carries the space around a block.** _(The layout opt-in is experimental — see
+  [API stability](docs/api-stability.md).)_ Two of the things that decide how an exported
+  document looks are measurements over the font — how tall a line of text is, and how wide
+  a column came out — and a semantic backend has no font runtime, so both were Word's to
+  decide. Measured against the reference render, Word set a body line at 13.9pt where the
+  document says 9.7 (LibreOffice: 12.1), so everything below the first paragraph sat lower
+  than it should and the gap grew with every line. The export now asks for the layout the
+  engine already compiled: the line height is written as `w:spacing w:lineRule="exact"` on
+  every paragraph, table cells and list items included, and a table's columns come from
+  the resolved cells with `w:tblLayout` fixed so Word does not re-fit them. A row's
+  columns come from where the layout placed its children — only their starts, since a
+  placed child is as wide as its own content and its width says nothing about where its
+  column ends.
+  <br><br>
+  The space a block holds above and below itself is not a measurement and was missing too.
+  A paragraph's `margin` and `padding` now become `w:spacing` before and after, and a
+  container — which is not a Word object, its children written where it stood — hands its
+  top edge to the first paragraph inside it and its bottom edge to the last. Both add to
+  what a paragraph asks for itself, so a card inside a section sums the way the page does.
+  A container that begins or ends with a table leaves that edge unwritten rather than
+  parking it on whatever paragraph comes next: Word has no space-before on a table, and an
+  empty paragraph would add a line the document never asked for. The horizontal half of
+  that box still has no paragraph-level equivalent and is still dropped.
+  <br><br>
+  Measured through Word 16.0 on the two-page probe: the body now starts at 65.5pt against
+  the reference's 65.2 and sets lines at 9.8 against 9.7; the worst grid cell falls from
+  78.9% to 52.1%; and the largest landmark drift down the first page falls from 44pt to
+  20pt. Editing is unchanged at 7 of 7 scenarios.
+  <br><br>
+  Asking for the layout costs a measurement and pagination pass over the document — the
+  same work a PDF render does — and reads each image a second time. A document the
+  fixed-layout pipeline refuses still exports: the failure is logged once and the writer
+  falls back to what the document itself states, which writes a table width only when the
+  author stated one or every column is fixed, a row's columns only when they are weights,
+  an even split or fixed, and no line height at all.
 
 ## v2.4.1 — 2026-09-21
 
@@ -2717,7 +2753,6 @@ follow semantic versioning; release dates are ISO 8601.
   build until it is marked. Annotation and documentation only; no signature or behaviour
   changed.
 
-
 ## v2.2.2 — 2026-08-27
 
 ### Public API
@@ -2805,7 +2840,6 @@ follow semantic versioning; release dates are ISO 8601.
   for exactly this reason.
 
   No rendered output changed, and no layout, pagination or render behaviour changed.
-
 
 ## v2.2.1 — 2026-08-25
 
@@ -3889,7 +3923,6 @@ follow semantic versioning; release dates are ISO 8601.
   test — both the rule and the donut default itself, since the rule alone would not
   catch the site going back. Three rendered documents change — the engine
   deck, the feature catalogue and the chart showcase. ([#451](https://github.com/DemchaAV/GraphCompose/issues/451))
-
 
 - **A heading no longer strands above a block that was asked to stay whole.**
   `keepWithNext()` decides by asking whether the heading plus the *first line* of

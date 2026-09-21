@@ -53,6 +53,27 @@ PDF never pull POI.
 Page geometry (size and margins) and session metadata (title, author,
 subject, keywords) carry into the Word document as well.
 
+## Measured geometry
+
+The export asks the session for the resolved layout and writes three things from it that
+it cannot work out for itself:
+
+| What | Where it lands |
+|---|---|
+| Line height | `w:spacing w:lineRule="exact"` on every paragraph, cells and list items included — the height the engine measured, not a multiple Word would measure again against a substituted font |
+| Table columns | the resolved cell widths as `w:gridCol`, with `w:tblLayout` fixed so Word does not re-fit them |
+| Row columns | where the layout placed each child, with the row's gap and padding folded into the neighbouring column and taken back out as that cell's margin |
+
+The space a block holds above and below itself needs no measuring and is written from the
+document: a paragraph's `margin` and `padding` become `w:spacing` before and after, and a
+container hands its top edge to the first paragraph inside it and its bottom edge to the
+last, since a container is not a Word object. Both add to what a paragraph asks for
+itself, so nesting sums the way the page does. The horizontal half of that box has no
+paragraph-level equivalent and is still dropped — see "What a panel keeps and loses".
+
+Asking for the layout costs a measurement and pagination pass over the document, the same
+work a PDF render does, and it reads each image a second time.
+
 ## Named styles, so the document can be restyled
 
 The export writes a styles part whose `Normal` carries the document's own body text —
@@ -123,14 +144,16 @@ Not representable, and left undone rather than approximated:
 
 ## What falls back
 
-- **An `auto` column's width → Word's own sizing.** A table with no stated width is as
-  wide as its columns naturally need, and an `auto` column's natural width is its widest
-  unwrapped cell. That is a measurement, and this backend has no font runtime to make it,
-  so such a table is left to Word's autofit rather than given a guessed width — writing
-  the content width instead would be right for a table whose text fills the line and
-  wrong for one holding three short values. A row divides the same way: an `auto` column,
-  a non-`START` arrangement or a grow spacer all ask what a child's content measures, so
-  those rows keep Word's split too. State a width, or fixed columns, to pin either.
+- **A document the engine cannot lay out → the same export, without measured geometry.**
+  The export asks the session for the resolved layout (see "Measured geometry" above). A
+  document that the fixed-layout pipeline refuses — a list item made of inline runs
+  without marker geometry, for instance — still exports: the failure is logged once and
+  the writer falls back to what the document itself states. In that fallback a table's
+  width is written only when the author stated one or every column is fixed, a row's
+  columns only when they are weights, an even split or fixed, and no line height is
+  written at all. An `auto` column and the flex path are measurements, and a guess in
+  their place would be right for a table whose text fills the line and wrong for one
+  holding three short values.
 
 - **Charts → data table.** The semantic export has no layout pass, so a
   chart's compiled vector geometry does not exist here. Its *semantic*

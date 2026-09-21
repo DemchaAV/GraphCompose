@@ -73,7 +73,10 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.STStyleType;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFonts;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblBorders;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblGrid;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblWidth;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcBorders;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
@@ -1304,6 +1307,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // cell is one cell carrying a span, not several, so a row's physical count is not
         // the column count.
         XWPFTable table = document.createTable(rowCount, 1);
+        applyTableWidth(table, node, columnCount);
         for (int rowIdx = 0; rowIdx < rowCount; rowIdx++) {
             XWPFTableRow row = table.getRow(rowIdx);
             List<TableGrid.Placement> physical = new ArrayList<>();
@@ -1512,6 +1516,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // a header pair, a label beside a value — exported with visible rules the PDF
         // never draws.
         hideTableGrid(table);
+        // A row occupies the whole width it is offered — NodeDefinitionSupport.measureRow
+        // returns the available width unconditionally, whatever its children measure — so
+        // the table carrying it has to as well. Left at POI's size-to-content default the
+        // pair collapses around its text and both columns stop sitting where the PDF puts
+        // them. How the width divides between them is still Word's to decide here.
+        if (Double.isFinite(contentWidth) && contentWidth > 0) {
+            setTableWidth(table, contentWidth);
+        }
         XWPFTableRow row = table.getRow(0);
         // A row inside a panel is still inside it. Its paragraphs live in table cells and
         // so cannot carry the paint themselves; without shading the cells the band breaks
@@ -1533,6 +1545,106 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void writeRowCellChild(XWPFTableCell cell, DocumentNode child) throws Exception {
         writeCellBody(cell, child);
+    }
+
+    /**
+     * Gives a table the width the fixed-layout render gives it, in the cases where that
+     * width can be known without measuring anything.
+     *
+     * <p>Nothing used to write a width at all, so Word sized every table to its own
+     * content while the reference spans much more — the single largest visual difference
+     * between the two renders. But "as wide as the page" is not the rule the engine
+     * follows either. A table with no stated width comes out as wide as its columns
+     * naturally need ({@code TableLayoutSupport.resolveFinalColumnWidths}), which for an
+     * {@code auto} column is the width of its widest unwrapped cell — a measurement, and
+     * measuring is what this backend has no font runtime for. Writing the content width
+     * there would be right for a table whose text fills the line and wrong for a table of
+     * short values, in the same way the old shrink-to-fit was wrong in the other
+     * direction.</p>
+     *
+     * <p>So a width is written when it is knowable and not otherwise: the width the
+     * author stated, or the sum of the columns when every one of them is fixed. Both are
+     * numbers the document already carries. A table with an {@code auto} column and no
+     * stated width keeps Word's own sizing until resolved layout can supply the measured
+     * widths.</p>
+     */
+    private void applyTableWidth(XWPFTable table, TableNode node, int columnCount) {
+        Double authored = node.width() != null && node.width() > 0 ? node.width() : null;
+        List<Double> fixedColumns = fixedColumnWidths(node, columnCount);
+
+        if (fixedColumns == null) {
+            // One of the columns is as wide as its content needs. The split is Word's,
+            // and so is the total unless the author stated one.
+            if (authored != null) {
+                setTableWidth(table, authored);
+            }
+            return;
+        }
+
+        double natural = fixedColumns.stream().mapToDouble(Double::doubleValue).sum();
+        double width = authored != null ? Math.max(authored, natural) : natural;
+        setTableWidth(table, width);
+
+        CTTblGrid grid = table.getCTTbl().getTblGrid() != null
+                ? table.getCTTbl().getTblGrid()
+                : table.getCTTbl().addNewTblGrid();
+        while (grid.sizeOfGridColArray() > 0) {
+            grid.removeGridCol(0);
+        }
+        for (int index = 0; index < fixedColumns.size(); index++) {
+            // With no auto column to absorb it, the engine hands a stated width's surplus
+            // to the last column. Splitting it evenly instead would put every column edge
+            // but the first in a different place than the PDF draws it.
+            double column = fixedColumns.get(index);
+            if (index == fixedColumns.size() - 1) {
+                column += width - natural;
+            }
+            grid.addNewGridCol().setW(BigInteger.valueOf(Math.round(column * POINT_TO_TWIP)));
+        }
+    }
+
+    /**
+     * States a table's width in points, replacing the size-to-content default.
+     *
+     * <p>POI's {@code createTable} writes {@code w:tblW} as {@code w=0, type=auto}, which
+     * is Word's instruction to shrink the table around whatever it holds. That is why an
+     * exported table of short values came out narrow while the reference spans the text
+     * column, and it applies equally to a row carried as a one-row table.</p>
+     */
+    private static void setTableWidth(XWPFTable table, double points) {
+        CTTblPr properties = table.getCTTbl().getTblPr() != null
+                ? table.getCTTbl().getTblPr()
+                : table.getCTTbl().addNewTblPr();
+        CTTblWidth width = properties.isSetTblW()
+                ? properties.getTblW()
+                : properties.addNewTblW();
+        width.setType(STTblWidth.DXA);
+        width.setW(BigInteger.valueOf(Math.round(points * POINT_TO_TWIP)));
+    }
+
+    /**
+     * Every column's width in points, or {@code null} when one of them is not fixed.
+     *
+     * @param node        the table being written
+     * @param columnCount positions the resolved grid actually has
+     * @return the widths, or null when the split needs measuring
+     */
+    private static List<Double> fixedColumnWidths(TableNode node, int columnCount) {
+        List<com.demcha.compose.document.table.DocumentTableColumn> columns = node.columns();
+        // A grid position with no declared column has no width to write, so a table whose
+        // spans reach past its column list is one of the cases Word has to divide itself.
+        if (columns.size() != columnCount) {
+            return null;
+        }
+        List<Double> widths = new ArrayList<>(columnCount);
+        for (var column : columns) {
+            if (column.type() != com.demcha.compose.document.table.DocumentTableColumn.Type.FIXED
+                || column.fixedWidth() == null) {
+                return null;
+            }
+            widths.add(column.fixedWidth());
+        }
+        return widths;
     }
 
     /**

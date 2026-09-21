@@ -2,6 +2,7 @@ package com.demcha.compose.document.backend.semantic;
 
 import com.demcha.compose.document.layout.DocumentGraph;
 import com.demcha.compose.document.layout.LayoutCanvas;
+import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.output.DocumentOutputOptions;
 import org.junit.jupiter.api.Test;
 
@@ -74,6 +75,28 @@ class SemanticExportContextTest {
         assertThatThrownBy(context::requireLayoutGraph)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("requiresResolvedLayout");
+    }
+
+    @Test
+    void askingForALayoutThatWasSuppliedShouldHandItBack() {
+        // The throwing path was covered and the returning one was not, so the method
+        // could have been gutted to `return null` with nothing going red.
+        LayoutGraph layout = new LayoutGraph(CANVAS, 1, List.of(), List.of());
+        SemanticExportContext context = new SemanticExportContext(
+                CANVAS, List.of(), null, DocumentOutputOptions.EMPTY, layout);
+
+        assertThat(context.requireLayoutGraph()).isSameAs(layout);
+    }
+
+    @Test
+    void nullOutputOptionsShouldStillBecomeTheEmptyBundle() {
+        // The three-argument constructor passes EMPTY itself, so this normalisation was
+        // never exercised: a caller writing null explicitly would have handed a backend
+        // outputOptions() == null and it would have failed inside the backend.
+        SemanticExportContext context = new SemanticExportContext(
+                CANVAS, List.of(), null, null, null);
+
+        assertThat(context.outputOptions()).isSameAs(DocumentOutputOptions.EMPTY);
     }
 
     @Test

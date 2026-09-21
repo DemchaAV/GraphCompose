@@ -123,6 +123,25 @@ class SemanticExportLayoutContextTest {
     }
 
     @Test
+    void anEmptyDocumentShouldStillExportForABackendThatAsksForALayout() throws Exception {
+        // A semantic export of an empty document is legitimate and always worked — the
+        // path never touched layout. Asking for one sends it somewhere it has never been:
+        // the render methods refuse an empty document outright, and a layout-aware
+        // semantic export must not inherit that refusal, nor fail compiling nothing.
+        RecordingBackend backend = new RecordingBackend(true);
+
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+            assertThat(session.export(backend)).isEqualTo("layout-aware");
+        }
+
+        assertThat(backend.layouts.get(0)).isNotNull();
+        assertThat(backend.layouts.get(0).fragments()).isEmpty();
+    }
+
+    @Test
     void theLayoutShouldDescribeTheSameCanvasTheContextCarries() throws Exception {
         RecordingBackend backend = new RecordingBackend(true);
 

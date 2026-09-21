@@ -21,10 +21,14 @@ public interface SemanticBackend<R> {
      *
      * <p>A semantic backend walks the authored tree and needs no geometry, which is why
      * the default is {@code false} and why the session does not compile a layout for one.
-     * That matters beyond the wasted work: compiling a layout measures text, and
-     * measurement needs a font runtime the core does not ship — so resolving it for every
-     * semantic export would make a render backend a hard requirement of exports that do
-     * not render.</p>
+     * Compiling one runs measurement and pagination over the whole document — work that
+     * grows with the document and that an export ignoring geometry has no use for.</p>
+     *
+     * <p>It does <em>not</em> save the render-module dependency, and this flag should not
+     * be described as if it did: {@code DocumentSession} resolves a
+     * {@code FontMetricsProvider} in its constructor, only
+     * {@code graph-compose-render-pdf} registers one, and a session cannot be created
+     * without it whatever a backend later asks for.</p>
      *
      * <p>A backend that answers {@code true} is handed the same session's compiled layout
      * in {@link SemanticExportContext#layoutGraph()}. It is for reading what the engine

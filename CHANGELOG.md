@@ -15,15 +15,27 @@ follow semantic versioning; release dates are ISO 8601.
   `true` is handed the same session's layout in `SemanticExportContext.layoutGraph()`,
   compiled from the graph passed to the same `export` call.
   <br><br>
-  The default matters as much as the option. Compiling a layout measures text, and
-  measurement needs a font runtime that lives in a render module — so resolving one for
-  every semantic export would quietly make a render backend a hard requirement of exports
-  that do not render. A backend that does not ask causes no layout to be compiled, and the
-  published `SemanticExportContext` constructors keep working unchanged: the four-argument
-  one is written out by hand rather than left to the record, since adding the component
-  moved the canonical constructor to five arguments and callers compiled against the
-  published descriptor would otherwise stop linking. `requireLayoutGraph()` is there for a
-  backend that asked and wants the absence to say why rather than hand back `null`.
+  The default matters as much as the option: compiling a layout runs measurement and
+  pagination over the whole document, work that grows with the document and that an export
+  ignoring geometry has no use for. A backend that does not ask causes none of it. It does
+  not save the render-module dependency — `DocumentSession` resolves a `FontMetricsProvider`
+  in its constructor and only `graph-compose-render-pdf` registers one, so a session cannot
+  be created without it whatever a backend later asks for.
+  <br><br>
+  Binary compatibility is preserved: the four-argument `SemanticExportContext` constructor
+  is written out by hand rather than left to the record, since adding the component moved
+  the canonical constructor to five arguments and callers compiled against the published
+  descriptor would otherwise stop linking. **Source compatibility is not**, in two narrow
+  ways — a record pattern that destructures the four-component form
+  (`case SemanticExportContext(var canvas, var fonts, var out, var opts)`) no longer
+  compiles, and `getRecordComponents().length` is 5 rather than 4. `requireLayoutGraph()`
+  is there for a backend that asked and wants the absence to say why rather than hand back
+  `null`.
+  <br><br>
+  One consequence worth knowing before putting a context in a collection or a log line:
+  the record's `equals`, `hashCode` and `toString` now traverse the layout, so on a long
+  document they walk every placed node and fragment. The four original components are
+  unchanged.
 
 - **An inline SVG icon can state the text it stands for.** `SvgIcon.withText(String)` returns
   a copy of the icon carrying that text, read back with `SvgIcon.text()`: what a reader that

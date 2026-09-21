@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
  */
 final class DocumentRenderingFacade {
     private static final Logger LIFECYCLE_LOG = LoggerFactory.getLogger("com.demcha.compose.document.lifecycle");
+    private static final Logger LOG = LoggerFactory.getLogger(DocumentRenderingFacade.class);
 
     /** Provider format keys for the fixed-layout convenience paths. */
     private static final String PDF = "pdf";
@@ -96,7 +97,7 @@ final class DocumentRenderingFacade {
         // needed a FontMetricsProvider to be constructed at all.
         // The graph, the canvas and the layout all come off the same session state, so a
         // backend given both is given a layout compiled from the graph beside it.
-        LayoutGraph resolvedLayout = backend.requiresResolvedLayout() ? context.layoutGraph() : null;
+        LayoutGraph resolvedLayout = backend.requiresResolvedLayout() ? compiledLayout(backend) : null;
         return backend.export(context.documentGraph(),
                 new SemanticExportContext(
                         context.canvas(),
@@ -104,6 +105,35 @@ final class DocumentRenderingFacade {
                         outputFile,
                         context.outputOptions(),
                         resolvedLayout));
+    }
+
+    /**
+     * Compiles the layout for a backend that asked for it, or hands it nothing.
+     *
+     * <p>A semantic export is defined over the authored tree, and some documents export
+     * from it that the fixed-layout pipeline refuses — a list item made of inline runs
+     * without the marker geometry that resolving one needs, for instance, exports as an
+     * ordinary Word list item and cannot be laid out at all. Before a backend could ask
+     * for the layout that difference never came up; letting the request turn such a
+     * document from "exports" into "throws" would take something away that worked, in
+     * exchange for a number the backend only wanted as an improvement.</p>
+     *
+     * <p>So the layout is offered rather than imposed: what compiles is handed over, what
+     * does not is reported once and the export continues without it.
+     * {@code SemanticExportContext.layoutGraph()} is nullable for exactly this, and a
+     * backend that cannot proceed without it says so through
+     * {@code requireLayoutGraph()}.</p>
+     */
+    private LayoutGraph compiledLayout(SemanticBackend<?> backend) {
+        try {
+            return context.layoutGraph();
+        } catch (RuntimeException failure) {
+            LOG.warn("Backend '{}' asked for the resolved layout and this document cannot be "
+                     + "laid out ({}); exporting without it — measured geometry is unavailable, "
+                     + "so the export falls back to what the document itself states",
+                    backend.name(), failure.toString());
+            return null;
+        }
     }
 
     byte[] toPdfBytes() throws Exception {

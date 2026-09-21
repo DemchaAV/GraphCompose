@@ -118,6 +118,13 @@ class DocxHangingIndentIsIgnoredTest {
         // flag.
         assertThat(listTexts(l -> l.noMarker().hangingIndent(true).markerGap(16).items("Alpha")))
                 .containsExactly("Alpha");
+        try (XWPFDocument document = export(flow -> flow.addList(
+                l -> l.noMarker().hangingIndent(true).markerGap(16).items("Alpha")))) {
+            assertThat(document.getNumbering())
+                    .as("opting into the geometry does not turn a markerless list into a "
+                        + "numbered one, which would add the very indent it declined")
+                    .isNull();
+        }
 
         // The flat path drops a blank item whatever its marker — that is the
         // legacy rule, and opting in does not change the DOCX side of it.

@@ -122,6 +122,29 @@ class DocxContainerPaintTest {
                 .isTrue();
     }
 
+    @Test
+    void aRowInsideAPanelShouldNotBreakTheBandIntoStripes() throws Exception {
+        // A row is carried as a one-row table, so its paragraphs live in cells and cannot
+        // carry the paint themselves. Without shading the cells the panel renders as a
+        // band, a white stripe where the row sits, and a band again.
+        byte[] docx = exportBytes(page -> page.addSection("Card", card -> card
+                .fillColor(SURFACE)
+                .addParagraph(p -> p.text("Above"))
+                .addRow(r -> r
+                        .addParagraph(p -> p.text("Left"))
+                        .addParagraph(p -> p.text("Right")))
+                .addParagraph(p -> p.text("Below"))));
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            assertThat(document.getTables()).hasSize(1);
+            for (var cell : document.getTables().get(0).getRow(0).getTableCells()) {
+                assertThat(hex(cell.getCTTc().getTcPr().getShd().getFill()))
+                        .as("the row's cells continue the panel")
+                        .isEqualTo("EEF3F9");
+            }
+        }
+    }
+
     private static String shadingFill(XWPFParagraph paragraph) {
         CTPPr properties = paragraph.getCTP().getPPr();
         if (properties == null || !properties.isSetShd()) {
@@ -150,6 +173,17 @@ class DocxContainerPaintTest {
             return out.toString();
         }
         return String.valueOf(value);
+    }
+
+    private static byte[] exportBytes(
+            Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content) throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 400)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.pageFlow(content::accept);
+            return session.export(new DocxSemanticBackend());
+        }
     }
 
     private static List<XWPFParagraph> bodyOf(

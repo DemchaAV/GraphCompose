@@ -37,6 +37,7 @@ import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableStyle;
+import com.demcha.compose.font.FontName;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.BreakType;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
@@ -69,7 +70,10 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyle;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyles;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STStyleType;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFonts;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblBorders;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcBorders;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
@@ -117,6 +121,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final String NORMAL_STYLE_ID = "Normal";
     /** Word measures tab stops in twentieths of a point. */
     private static final double TWIPS_PER_POINT = 20.0;
+    /** {@code w:sz} and {@code w:szCs} count half-points. */
+    private static final double HALF_POINTS_PER_POINT = 2.0;
     private static final double POINT_TO_TWIP = 20.0;
     private static final Logger LOG = LoggerFactory.getLogger(DocxSemanticBackend.class);
     // The page's content width, so an image is held to the same bound layout holds it to.
@@ -278,7 +284,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph para = target.createParagraph();
         para.setSpacingBefore(0);
         para.setSpacingAfter(0);
-        CTTabStop tab = para.getCTP().addNewPPr().addNewTabs().addNewTab();
+        // Reuse the properties the spacing calls above already created. addNewPPr() would
+        // append a second w:pPr, and Word reads the first — the tab stop would be in the
+        // file and ignored, so the page number fell back to Word's default half-inch grid
+        // instead of sitting at the right margin.
+        CTPPr properties = para.getCTP().isSetPPr()
+                ? para.getCTP().getPPr()
+                : para.getCTP().addNewPPr();
+        CTTabStop tab = properties.addNewTabs().addNewTab();
         tab.setVal(STTabJc.RIGHT);
         tab.setPos(java.math.BigInteger.valueOf(Math.round(contentWidth * TWIPS_PER_POINT)));
 
@@ -410,6 +423,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final int LIST_NESTING_STEP_TWIPS = 120;
 
     /**
+     * Levels one Word list definition may hold.
+     *
+     * <p>{@code CT_AbstractNum/lvl} is {@code maxOccurs="9"} — Word has nine list levels
+     * and {@code w:ilvl} runs 0..8. Writing a tenth produces a part that POI saves without
+     * complaint and Word refuses to open, so a list nested deeper keeps its markers as
+     * text rather than shipping a document that cannot be opened at all.</p>
+     */
+    private static final int MAX_LIST_LEVELS = 9;
+
+    /**
      * Gives a list a real Word list definition, when it is one Word can express.
      *
      * <p>A marker written into the run text looks like a list and is not one: pressing
@@ -472,7 +495,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static List<String> markerPerDepth(com.demcha.compose.document.node.ListNode list) {
         java.util.Map<Integer, String> perDepth = new java.util.TreeMap<>();
-        if (!list.items().isEmpty()) {
+        // Seeded from the flat items only when one of them survives normalization. A list
+        // whose flat items are all blank writes no paragraph for them, so claiming depth
+        // zero for their marker would either reject a uniform nested list whose own depth
+        // zero differs, or mint a definition nothing references.
+        if (list.items().stream().anyMatch(item -> !com.demcha.compose.document.node.ListMarker
+                .normalizeItemText(item, list.normalizeMarkers()).isBlank())) {
             if (!isPlainVisible(list.marker())) {
                 return null;
             }
@@ -483,7 +511,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 return null;
             }
         }
-        if (perDepth.isEmpty()) {
+        if (perDepth.isEmpty() || perDepth.size() > MAX_LIST_LEVELS) {
             return null;
         }
         // Depths must be contiguous from zero; a definition cannot skip a level.
@@ -782,7 +810,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private static void applyDefaultRunProperties(CTRPr properties, DocumentTextStyle defaults) {
         if (defaults.fontName() != null) {
-            properties.addNewRFonts().setAscii(defaults.fontName().name());
+            // All four slots, exactly as XWPFRun.setFontFamily writes them on a run.
+            // w:ascii alone covers only ASCII: High-ANSI characters read w:hAnsi, Hebrew
+            // and Arabic read w:cs, CJK reads w:eastAsia. Naming one and suppressing the
+            // run's own rFonts would send every accented letter and every complex script
+            // to Word's theme font while the rest of the line kept the asked-for family.
+            String family = defaults.fontName().name();
+            CTFonts fonts = properties.addNewRFonts();
+            fonts.setAscii(family);
+            fonts.setHAnsi(family);
+            fonts.setCs(family);
+            fonts.setEastAsia(family);
         }
         if (defaults.size() > 0) {
             // w:sz counts half-points, and w:szCs carries the same for complex scripts.
@@ -806,27 +844,65 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @return the dominant style, or {@code null} when the graph carries no text
      */
     private static DocumentTextStyle dominantTextStyle(DocumentGraph graph) {
-        java.util.Map<DocumentTextStyle, Long> weights = new java.util.HashMap<>();
+        java.util.Map<StyleKey, Long> weights = new java.util.HashMap<>();
+        java.util.Map<StyleKey, DocumentTextStyle> byKey = new java.util.HashMap<>();
         for (DocumentNode root : graph.roots()) {
-            weighTextStyles(root, weights);
+            weighTextStyles(root, weights, byKey);
         }
         return weights.entrySet().stream()
                 .max(java.util.Map.Entry.comparingByValue())
-                .map(java.util.Map.Entry::getKey)
+                .map(entry -> byKey.get(entry.getKey()))
                 .orElse(null);
     }
 
     private static void weighTextStyles(DocumentNode node,
-                                        java.util.Map<DocumentTextStyle, Long> weights) {
+                                        java.util.Map<StyleKey, Long> weights,
+                                        java.util.Map<StyleKey, DocumentTextStyle> byKey) {
         if (node instanceof ParagraphNode paragraph && paragraph.textStyle() != null) {
-            weights.merge(paragraph.textStyle(), textWeight(paragraph.text()), Long::sum);
+            weigh(paragraph.textStyle(), textWeight(paragraph.text()), weights, byKey);
         } else if (node instanceof com.demcha.compose.document.node.ListNode list
                    && list.textStyle() != null) {
             long weight = list.items().stream().mapToLong(DocxSemanticBackend::textWeight).sum();
-            weights.merge(list.textStyle(), weight, Long::sum);
+            weigh(list.textStyle(), weight, weights, byKey);
         }
         for (DocumentNode child : node.children()) {
-            weighTextStyles(child, weights);
+            weighTextStyles(child, weights, byKey);
+        }
+    }
+
+    private static void weigh(DocumentTextStyle style,
+                              long weight,
+                              java.util.Map<StyleKey, Long> weights,
+                              java.util.Map<StyleKey, DocumentTextStyle> byKey) {
+        StyleKey key = StyleKey.of(style);
+        weights.merge(key, weight, Long::sum);
+        byKey.putIfAbsent(key, style);
+    }
+
+    /**
+     * What makes two text styles the same for the purpose of electing a document default.
+     *
+     * <p>{@code DocumentTextStyle} cannot be the key. It is a record, so its equality is
+     * its components', and {@code DocumentColor} defines no {@code equals} — two colours
+     * built from the same channels are unequal unless they are the same instance. Styles
+     * built inline per paragraph, which is ordinary authoring, would each weigh alone and
+     * the body's characters would never add up, electing whichever style happened to be
+     * reused instead.</p>
+     *
+     * <p>The components are the three the styles part actually writes, compared as they
+     * are written: the family by name, the size in half-points, the colour as packed
+     * RGB.</p>
+     *
+     * @param fontName   the family, or {@code null} when the style names none
+     * @param halfPoints the size as {@code w:sz} counts it
+     * @param colour     packed RGB, or {@code null} when the style names no colour
+     */
+    private record StyleKey(FontName fontName, long halfPoints, Integer colour) {
+
+        static StyleKey of(DocumentTextStyle style) {
+            return new StyleKey(style.fontName(),
+                    Math.round(style.size() * HALF_POINTS_PER_POINT),
+                    style.color() == null ? null : style.color().color().getRGB());
         }
     }
 
@@ -878,8 +954,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Creates a body paragraph already wearing the panel it sits in.
      *
-     * <p>Every body paragraph goes through here, so a container's paint cannot be
-     * forgotten by a writer that creates its paragraph directly.</p>
+     * <p>Every paragraph written straight into the body goes through here, so a
+     * container's paint cannot be forgotten by a writer that creates its own. Three
+     * writers create paragraphs elsewhere on purpose: a page break, which would draw a
+     * band across the page; a table cell, which carries the author's own cell paint; and
+     * a row's cells, which take the paint on the cell instead, since a paragraph inside a
+     * table cannot reach the band the container is drawing.</p>
      */
     private XWPFParagraph newBodyParagraph(XWPFDocument document) {
         XWPFParagraph para = document.createParagraph();
@@ -1427,10 +1507,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         XWPFTable table = document.createTable(1, node.children().size());
+        // A row is a layout device, not a table anybody asked to see. POI's createTable
+        // ships Word's default single-line grid, so without this every two-column block —
+        // a header pair, a label beside a value — exported with visible rules the PDF
+        // never draws.
+        hideTableGrid(table);
         XWPFTableRow row = table.getRow(0);
+        // A row inside a panel is still inside it. Its paragraphs live in table cells and
+        // so cannot carry the paint themselves; without shading the cells the band breaks
+        // into stripes wherever a two-column block sits in a filled container.
+        ContainerPaint paint = containerPaint.peek();
         for (int i = 0; i < node.children().size(); i++) {
             XWPFTableCell cell = row.getCell(i);
             cell.removeParagraph(0);
+            if (paint != null && paint.fill() != null) {
+                CTShd shading = cellProperties(cell).addNewShd();
+                shading.setVal(STShd.CLEAR);
+                shading.setColor("auto");
+                shading.setFill(toHexColor(paint.fill().color()));
+            }
             DocumentNode child = node.children().get(i);
             writeRowCellChild(cell, child);
         }
@@ -1438,6 +1533,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void writeRowCellChild(XWPFTableCell cell, DocumentNode child) throws Exception {
         writeCellBody(cell, child);
+    }
+
+    /**
+     * Turns off a table's own grid, leaving each cell free to state its borders.
+     *
+     * <p>Used where the table is a carrier for a side-by-side layout rather than
+     * something the author asked to see ruled.</p>
+     */
+    private static void hideTableGrid(XWPFTable table) {
+        CTTblPr properties = table.getCTTbl().getTblPr() != null
+                ? table.getCTTbl().getTblPr()
+                : table.getCTTbl().addNewTblPr();
+        CTTblBorders borders = properties.isSetTblBorders()
+                ? properties.getTblBorders()
+                : properties.addNewTblBorders();
+        paintEdge(borders.addNewTop(), STBorder.NONE, null, null);
+        paintEdge(borders.addNewBottom(), STBorder.NONE, null, null);
+        paintEdge(borders.addNewLeft(), STBorder.NONE, null, null);
+        paintEdge(borders.addNewRight(), STBorder.NONE, null, null);
+        paintEdge(borders.addNewInsideH(), STBorder.NONE, null, null);
+        paintEdge(borders.addNewInsideV(), STBorder.NONE, null, null);
     }
 
     /**
@@ -1615,7 +1731,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         // Complex-script size rides along with the ordinary one, so it is skipped for the
         // same reason when the style already carries it.
-        boolean sizeComesFromTheStyle = defaults != null && style.size() == defaults.size();
+        // Compared as they are written, in half-points, rather than as raw doubles: two
+        // sizes Word cannot tell apart must not produce a redundant direct w:sz.
+        boolean sizeComesFromTheStyle = defaults != null
+                && Math.round(style.size() * HALF_POINTS_PER_POINT)
+                   == Math.round(defaults.size() * HALF_POINTS_PER_POINT);
         if (style.size() > 0 && !sizeComesFromTheStyle) {
             // Passed as a double, because w:sz counts half-points and rounding to whole
             // points first throws away a precision the format has: the timeline's 8.5pt
@@ -1635,7 +1755,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                              DocumentTextStyle style,
                                              DocumentTextStyle defaults) {
         if (style.color() != null
-            && (defaults == null || !style.color().equals(defaults.color()))) {
+            && (defaults == null || defaults.color() == null
+                // By channel, not by instance: DocumentColor defines no equals, so two
+                // colours built from the same channels are unequal unless they are the
+                // same object, and a style built inline per paragraph would keep writing
+                // a colour the Normal style already says.
+                || style.color().color().getRGB() != defaults.color().color().getRGB())) {
             run.setColor(toHexColor(style.color().color()));
         }
         if (style.decoration() != null) {

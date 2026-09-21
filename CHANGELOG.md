@@ -20,6 +20,16 @@ follow semantic versioning; release dates are ISO 8601.
   container, which keeps its own cell paint. A container with no paint exports exactly as
   before.
 
+- **A row no longer exports with visible table rules, and a page-number footer sits at the
+  right margin again.** Two defects the render made obvious. A `RowNode` is carried as a
+  one-row table so editors keep the side-by-side layout, but POI ships Word's default
+  single-line grid and nothing turned it off, so every two-column block exported ruled
+  where the PDF draws nothing. And the header/footer writer added its right tab stop
+  through `addNewPPr()` after the spacing calls had already created the paragraph
+  properties — a second `w:pPr` that Word ignores in favour of the first, so the tab fell
+  back to Word's default half-inch grid and the page number sat near the left margin.
+  Both are fixed; a table an author asked for keeps its own borders.
+
 - **A DOCX list is now a real Word list.** The export wrote the marker into the item's
   run text and indented nesting with two spaces per level, which looks like a list and is
   not one: measured in Word 16.0, `ListFormat.ListType` came back as "no numbering", so
@@ -50,7 +60,13 @@ follow semantic versioning; release dates are ISO 8601.
   14pt left the body at 10.5pt. The export now writes a styles part whose document
   defaults and `Normal` carry the document's dominant text style, chosen by how many
   characters are set in it rather than by how many nodes use it, since headings are
-  numerous and short while body text is long. A run that only restates that style writes
+  numerous and short while body text is long. Styles are weighed by what the styles part
+  writes — family, half-points, packed RGB — rather than by `DocumentTextStyle` equality:
+  that record's equality is its components', `DocumentColor` defines no `equals`, and
+  styles built inline per paragraph would each weigh alone, electing whichever style
+  happened to be reused. Measured before the fix: six body paragraphs against three
+  headings elected the heading, and restyling Normal moved the headings instead of the
+  body. A run that only restates that style writes
   no `w:rFonts`, `w:sz`, `w:szCs` or `w:color`, so the style reaches it; a run that
   differs still says so. Complex-script sizing is unchanged in effect — `w:szCs` moves to
   the style along with `w:sz`, so Hebrew and Arabic still read a size rather than falling

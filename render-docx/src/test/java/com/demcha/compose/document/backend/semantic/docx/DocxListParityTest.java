@@ -50,8 +50,9 @@ class DocxListParityTest {
                         .markerFor(1, ListMarker.custom("→"))
                         .addItem("alpha", l1 -> l1.addItem("beta"))));
 
-        assertThat(markers.get(1)).isEqualTo("→");
-        assertThat(markers.get(1)).isNotEqualTo("◦");
+        assertThat(markers.get(1))
+                .as("the override wins over the cascade's ◦ at this depth")
+                .isEqualTo("→");
     }
 
     @Test
@@ -79,10 +80,12 @@ class DocxListParityTest {
                 .addList("kept", "", "   "));
 
         assertThat(texts).contains("kept");
-        // No empty list items for the blank ones: a numbered empty paragraph would draw
-        // a marker with nothing beside it, the same defect the old marker-only paragraph
-        // was.
-        assertThat(texts.stream().filter(t -> !t.isBlank()).toList()).containsExactly("kept");
+        // Counted as list items, not as text: a numbered empty paragraph draws a marker
+        // with nothing beside it — the same defect the marker-only paragraph used to be —
+        // and filtering blank text before asserting would step right over it.
+        assertThat(listItemCount(flow -> flow.addList("kept", "", "   ")))
+                .as("one item survives; the blank ones leave no marker behind")
+                .isEqualTo(1);
     }
 
     @Test
@@ -119,6 +122,16 @@ class DocxListParityTest {
                     .stream()
                     .map(level -> level.getLvlText().getVal())
                     .toList();
+        }
+    }
+
+    /** How many paragraphs Word will draw a marker beside, whatever their text says. */
+    private static long listItemCount(
+            Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> author) throws Exception {
+        try (XWPFDocument document = export(author)) {
+            return document.getParagraphs().stream()
+                    .filter(p -> p.getCTP().getPPr() != null && p.getCTP().getPPr().isSetNumPr())
+                    .count();
         }
     }
 

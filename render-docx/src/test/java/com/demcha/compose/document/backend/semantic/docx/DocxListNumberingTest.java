@@ -162,6 +162,106 @@ class DocxListNumberingTest {
         }
     }
 
+    @Test
+    void theDefinitionAnItemPointsAtShouldBeTheOneCarryingItsMarker() throws Exception {
+        // Every other assertion here reads abstract definition zero directly. That would
+        // still pass if the item's w:numPr pointed at a different definition, or at one
+        // that does not exist — the marker would be right in the file and wrong on the
+        // page. This resolves the item's own numId through w:num to its abstract id.
+        try (XWPFDocument document = export(flow -> flow
+                .addList(list -> list.name("Ticks").marker(ListMarker.custom("✓"))
+                        .items("done")))) {
+
+            BigInteger numId = items(document).get(0).getNumID();
+            assertThat(numId).isNotNull();
+            var num = document.getNumbering().getNum(numId);
+            assertThat(num).as("the item points at a definition that exists").isNotNull();
+            BigInteger abstractId = num.getCTNum().getAbstractNumId().getVal();
+            var levels = document.getNumbering()
+                    .getAbstractNum(abstractId).getAbstractNum().getLvlArray(0);
+            assertThat(levels.getLvlText().getVal()).isEqualTo("✓");
+        }
+    }
+
+    @Test
+    void twoListsShouldGetTwoDefinitionsAndEachItemShouldPointAtItsOwn() throws Exception {
+        // One definition per list, so the second list must not inherit the first's
+        // marker — the failure a single shared abstract id would produce.
+        try (XWPFDocument document = export(flow -> {
+            flow.addList(list -> list.name("Ticks").marker(ListMarker.custom("✓"))
+                    .items("first"));
+            flow.addList(list -> list.name("Crosses").marker(ListMarker.custom("✗"))
+                    .items("second"));
+        })) {
+            List<XWPFParagraph> items = items(document);
+            assertThat(items).hasSize(2);
+            assertThat(markerOf(document, items.get(0))).isEqualTo("✓");
+            assertThat(markerOf(document, items.get(1))).isEqualTo("✗");
+            assertThat(items.get(0).getNumID()).isNotEqualTo(items.get(1).getNumID());
+        }
+    }
+
+    @Test
+    void aListNestedPastWordsNineLevelsShouldStayText() throws Exception {
+        // CT_AbstractNum/lvl is maxOccurs="9". POI saves a tenth without complaint and
+        // Word then refuses to open the file, so a list this deep keeps the text form
+        // rather than shipping a document nobody can open.
+        try (XWPFDocument document = export(flow -> flow.add(nested(10)))) {
+            assertThat(document.getNumbering())
+                    .as("ten levels cannot be a Word list definition")
+                    .isNull();
+            assertThat(items(document)).hasSize(10);
+        }
+    }
+
+    @Test
+    void aListNestedToWordsNinthLevelShouldStillBeAList() throws Exception {
+        try (XWPFDocument document = export(flow -> flow.add(nested(9)))) {
+            assertThat(document.getNumbering()).isNotNull();
+            assertThat(document.getNumbering()
+                    .getAbstractNum(BigInteger.ZERO).getAbstractNum().getLvlList())
+                    .as("nine is the deepest Word holds")
+                    .hasSize(9);
+        }
+    }
+
+    @Test
+    void aListWhoseFlatItemsAreAllBlankShouldNotClaimTheFirstLevel() throws Exception {
+        // Blank flat items write no paragraph, so seeding depth zero from their marker
+        // would reject a perfectly uniform nested list whose own depth zero differs.
+        ListNode list = new ListNode("Mixed", List.of("", "   "),
+                List.of(new ListItem("alpha", ListMarker.bullet(), List.of())),
+                ListMarker.dash(), DocumentTextStyle.DEFAULT, TextAlign.LEFT,
+                0, 0, "", true, DocumentInsets.zero(), DocumentInsets.zero());
+
+        try (XWPFDocument document = export(flow -> flow.add(list))) {
+            assertThat(document.getNumbering())
+                    .as("the surviving item's own marker defines level zero")
+                    .isNotNull();
+            assertThat(items(document)).hasSize(1);
+            assertThat(markerOf(document, items(document).get(0))).isEqualTo("•");
+        }
+    }
+
+    /** A chain of single children {@code depth} levels deep, markers left to the cascade. */
+    private static ListNode nested(int depth) {
+        ListItem item = new ListItem("level " + (depth - 1), null, List.of());
+        for (int level = depth - 2; level >= 0; level--) {
+            item = new ListItem("level " + level, null, List.of(item));
+        }
+        return new ListNode("Deep", List.of(), List.of(item),
+                ListMarker.bullet(), DocumentTextStyle.DEFAULT, TextAlign.LEFT,
+                0, 0, "", true, DocumentInsets.zero(), DocumentInsets.zero());
+    }
+
+    /** The marker Word will draw beside this item, resolved through its own numbering id. */
+    private static String markerOf(XWPFDocument document, XWPFParagraph item) {
+        BigInteger abstractId = document.getNumbering().getNum(item.getNumID())
+                .getCTNum().getAbstractNumId().getVal();
+        return document.getNumbering().getAbstractNum(abstractId).getAbstractNum()
+                .getLvlArray(item.getNumIlvl().intValue()).getLvlText().getVal();
+    }
+
     private static List<XWPFParagraph> items(XWPFDocument document) {
         return document.getParagraphs().stream()
                 .filter(p -> !p.getText().isBlank())

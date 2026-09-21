@@ -106,6 +106,53 @@ class DocxDocumentStyleTest {
     }
 
     @Test
+    void stylesThatOnlyDifferByColourIdentityShouldWeighAsOne() throws Exception {
+        // DocumentColor has no value equality and DocumentTextStyle is a record, so two
+        // styles built the same way with separately-constructed colours are unequal.
+        // Building the style inline per paragraph is ordinary authoring, and if each one
+        // becomes its own weight the body's characters never add up: here six body
+        // paragraphs of ten characters would weigh ten each, losing to three headings
+        // sharing one instance, and the document default would come out the heading's.
+        try (XWPFDocument document = exported(page -> {
+            for (int i = 0; i < 3; i++) {
+                page.addParagraph(p -> p.text("Heading of twenty ch").textStyle(HEADING));
+            }
+            for (int i = 0; i < 6; i++) {
+                page.addParagraph(p -> p.text("Body line.").textStyle(DocumentTextStyle.builder()
+                        .fontName(FontName.HELVETICA)
+                        .size(10.5)
+                        .color(DocumentColor.rgb(24, 28, 38))
+                        .build()));
+            }
+        })) {
+            CTRPr defaults = document.getStyles().getCtStyles().getDocDefaults()
+                    .getRPrDefault().getRPr();
+            assertThat(defaults.getSzArray(0).getVal().toString())
+                    .as("sixty characters of body outweigh sixty of heading only if the "
+                        + "body's styles weigh as one")
+                    .isEqualTo("21");
+        }
+    }
+
+    @Test
+    void theStyleShouldNameTheFamilyForEveryCharacterRangeNotJustAscii() throws Exception {
+        // A run suppressed in favour of Normal carries no rFonts at all, and w:ascii only
+        // covers ASCII: High-ANSI letters read w:hAnsi, Hebrew and Arabic read w:cs, CJK
+        // reads w:eastAsia. Naming one slot would send every accented letter and every
+        // complex script to Word's theme font while the rest of the line stayed correct.
+        try (XWPFDocument document = exported(page ->
+                page.addParagraph(p -> p.text(LONG_BODY).textStyle(BODY)))) {
+
+            var fonts = document.getStyles().getCtStyles().getDocDefaults()
+                    .getRPrDefault().getRPr().getRFontsArray(0);
+            assertThat(fonts.getAscii()).isEqualTo("Helvetica");
+            assertThat(fonts.getHAnsi()).as("High-ANSI, e.g. é").isEqualTo("Helvetica");
+            assertThat(fonts.getCs()).as("complex script, e.g. Hebrew").isEqualTo("Helvetica");
+            assertThat(fonts.getEastAsia()).as("CJK").isEqualTo("Helvetica");
+        }
+    }
+
+    @Test
     void aDocumentWithoutTextShouldNotInventAStyle() throws Exception {
         try (XWPFDocument document = exported(page -> page.spacer(10, 10))) {
             assertThat(document.getStyles())

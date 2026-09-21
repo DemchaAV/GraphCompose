@@ -42,7 +42,7 @@ PDF never pull POI.
 | Document node | DOCX output |
 |---|---|
 | Paragraphs | Word paragraphs with alignment, font, size, colour, bold/italic/underline; inline runs preserved |
-| Lists | Marker-prefixed paragraphs in the list's text style; nested items indent per depth and keep their own markers |
+| Lists | Real Word lists: a `numbering.xml` definition per list, `w:numPr` on each item, and the authored marker as the level's text. Nesting is a list level, so Enter continues the list and Tab demotes an item. See "What a list becomes" below for the kinds that stay plain paragraphs |
 | Tables | Word tables, one cell per cell |
 | Images | Embedded pictures at the node's declared size |
 | Rows | A one-row table, so editors keep the side-by-side layout (cell content limited to atomic children) |
@@ -64,6 +64,34 @@ accents are unaffected.
 There is one `Normal` and no generated heading styles yet: a heading still carries its
 own direct formatting rather than a named `Heading 1`. Restyling the body works; restyling
 "all headings" in one go does not.
+
+## What a list becomes
+
+A list exports as a list Word owns: a `numbering.xml` definition, `w:numPr` on each item,
+and the authored marker as the level's text. That is what makes Enter continue the list
+and Tab demote an item, instead of producing a plain paragraph beside a bullet character
+that only looked like one.
+
+Nesting is a level rather than padding, so no indent characters reach the text, and the
+`ListMarker.defaultForDepth` cascade the PDF path uses becomes the levels' markers —
+`markerFor(depth, ...)` still chooses a level's own.
+
+Four kinds of list stay plain paragraphs, because Word could not express them without
+changing what was asked for:
+
+- **A markerless list.** Numbering always draws something and indents; a list that asked
+  for neither would gain both.
+- **A drawn marker** — one made of runs, an icon or a disc. It has no Word list analogue,
+  so the item keeps the run path it already used.
+- **A list whose siblings at one depth carry different markers.** A Word list definition
+  names one marker per level, and silently replacing one of them with the other would be
+  worse than writing both as text.
+- **Rich items**, whose runs the numbered path does not write.
+
+The marker column is a stated constant — 180 twips, plus 120 for each nesting level —
+chosen near the single space the old text form left. It is a convention, not a
+measurement: measuring the marker needs a font runtime this backend does not have, which
+is the same reason `markerGap` is unrepresentable here.
 
 ## What a panel keeps and loses
 
@@ -105,11 +133,10 @@ Not representable, and left undone rather than approximated:
   inline, in source order, without the outline frame and without clipping
   — again with one warning per export.
 - **`hangingIndent(true)` → the ordinary list form.** A list that opts
-  into marker/content geometry exports exactly as one that did not: one
-  paragraph per item, the marker in the item's text, two spaces per
-  nesting depth. Nothing is lost — same paragraphs, same text, same
-  nesting — but wrapped lines align the way Word aligns them rather than
-  the way the PDF does, and `markerGap` has no effect here.
+  into marker/content geometry exports exactly as one that did not: the
+  same Word list, the same levels, the same markers. Nothing is lost —
+  same items, same text, same nesting — but the marker column is the
+  level's own and `markerGap` has no effect here.
 
   This is a decision rather than an omission. Word places content at
   absolute indents and has no way to be told "start the text one marker

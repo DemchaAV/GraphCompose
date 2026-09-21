@@ -56,6 +56,13 @@ import java.util.Set;
  * are known to be distinct, which is how the probe fixtures are written. Nothing in this
  * class may be promoted; it is a measuring instrument that gets thrown away.</p>
  *
+ * <p><strong>Superseded.</strong> Word answered yes to all three, and
+ * {@code DocxSemanticBackend} now writes the styles part, the numbering part and the
+ * container's paint itself. Augmenting an export that already has them is a no-op for the
+ * panel and the styles, and adds a second, redundant list definition. It is kept only so
+ * the measurement that justified those three can be reproduced against an older build;
+ * once nothing needs that comparison, delete it rather than maintaining it.</p>
+ *
  * @author Artem Demchyshyn
  */
 public final class EditableExportPrototype {

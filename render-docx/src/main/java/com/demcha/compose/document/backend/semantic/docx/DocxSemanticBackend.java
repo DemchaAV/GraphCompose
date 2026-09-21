@@ -61,6 +61,9 @@ import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTRelativeRect;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBorder;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTAbstractNum;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTInd;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTLvl;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPBdr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyle;
@@ -75,6 +78,8 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STJc;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STNumberFormat;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STShd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 import org.slf4j.Logger;
@@ -132,6 +137,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The text style the document is mostly written in, promoted to Word's Normal style.
     // Null until an export computes it, and when the graph carries no text at all.
     private DocumentTextStyle documentDefaultStyle;
+    // One Word list definition per ListNode that can be one, keyed by identity because
+    // two lists reading the same are still two lists.
+    private final java.util.Map<com.demcha.compose.document.node.ListNode, BigInteger>
+            listNumbering = new java.util.IdentityHashMap<>();
 
     /**
      * A container's paint, reduced to what a Word paragraph can carry.
@@ -165,6 +174,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         containerRadiusWarned.set(false);
         warnedNodeKinds.clear();
         containerPaint.clear();
+        listNumbering.clear();
         documentDefaultStyle = dominantTextStyle(graph);
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
         try (XWPFDocument document = new XWPFDocument()) {
@@ -389,6 +399,143 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Word''s marker column, in twips. Chosen to sit close to the single space the text
+     * path used rather than to Word''s much wider default, and stated as the convention it
+     * is: measuring the marker would need a font runtime, which is the same thing
+     * {@code hangingIndent} is missing and the reason its gap is unrepresentable here.
+     */
+    private static final int LIST_HANGING_TWIPS = 180;
+
+    /** Added per nesting level, approximating the two spaces the text path indented by. */
+    private static final int LIST_NESTING_STEP_TWIPS = 120;
+
+    /**
+     * Gives a list a real Word list definition, when it is one Word can express.
+     *
+     * <p>A marker written into the run text looks like a list and is not one: pressing
+     * Enter yields a plain paragraph rather than the next item, which is the contract
+     * failure this repairs. Attaching {@code w:numPr} makes Word own the marker, so the
+     * list continues, renumbers and demotes the way a reader expects.</p>
+     *
+     * <p>This does not fix {@code markerGap}, and does not claim to. Word places content
+     * at an absolute indent and cannot be told "one marker width plus a gap from here";
+     * real numbering was measured against that requirement and rejected for it, and it is
+     * still rejected. What it buys is behaviour, and it costs geometry: the marker column
+     * is a stated constant rather than the measured gap.</p>
+     *
+     * @return the list definition to attach, or {@code null} when the list has to stay
+     *         marker-prefixed text
+     */
+    private BigInteger numberingFor(XWPFDocument document,
+                                    com.demcha.compose.document.node.ListNode list) {
+        BigInteger existing = listNumbering.get(list);
+        if (existing != null) {
+            return existing;
+        }
+        List<String> levels = markerPerDepth(list);
+        if (levels == null) {
+            return null;
+        }
+        CTAbstractNum abstractNum = CTAbstractNum.Factory.newInstance();
+        abstractNum.setAbstractNumId(BigInteger.valueOf(listNumbering.size()));
+        for (int depth = 0; depth < levels.size(); depth++) {
+            CTLvl level = abstractNum.addNewLvl();
+            level.setIlvl(BigInteger.valueOf(depth));
+            level.addNewStart().setVal(BigInteger.ONE);
+            // Every marker this export can carry is a literal, so the format is BULLET
+            // even when the literal is a digit: Word must draw the marker the author
+            // wrote, not one it derives from the item''s position.
+            level.addNewNumFmt().setVal(STNumberFormat.BULLET);
+            level.addNewLvlText().setVal(levels.get(depth));
+            level.addNewLvlJc().setVal(STJc.LEFT);
+            CTInd indent = level.addNewPPr().addNewInd();
+            indent.setLeft(BigInteger.valueOf(
+                    (long) LIST_HANGING_TWIPS + (long) LIST_NESTING_STEP_TWIPS * depth));
+            indent.setHanging(BigInteger.valueOf(LIST_HANGING_TWIPS));
+        }
+        BigInteger abstractId = document.createNumbering()
+                .addAbstractNum(new org.apache.poi.xwpf.usermodel.XWPFAbstractNum(abstractNum));
+        BigInteger numId = document.getNumbering().addNum(abstractId);
+        listNumbering.put(list, numId);
+        return numId;
+    }
+
+    /**
+     * The one marker each nesting depth uses, or {@code null} when the list cannot be a
+     * Word list.
+     *
+     * <p>A Word list definition names one marker per level, so a list whose items at the
+     * same depth carry different markers has no definition to be given and keeps writing
+     * its markers as text. So does a list with a drawn marker, which has no Word analogue
+     * at all, one with no marker, where numbering would add an indent the author did not
+     * ask for, and one with rich items, whose runs the numbered path does not write.</p>
+     */
+    private static List<String> markerPerDepth(com.demcha.compose.document.node.ListNode list) {
+        java.util.Map<Integer, String> perDepth = new java.util.TreeMap<>();
+        if (!list.items().isEmpty()) {
+            if (!isPlainVisible(list.marker())) {
+                return null;
+            }
+            perDepth.put(0, levelText(list.marker()));
+        }
+        for (com.demcha.compose.document.node.ListItem item : list.nestedItems()) {
+            if (!collectMarkers(item, 0, perDepth)) {
+                return null;
+            }
+        }
+        if (perDepth.isEmpty()) {
+            return null;
+        }
+        // Depths must be contiguous from zero; a definition cannot skip a level.
+        for (int depth = 0; depth < perDepth.size(); depth++) {
+            if (!perDepth.containsKey(depth)) {
+                return null;
+            }
+        }
+        return List.copyOf(perDepth.values());
+    }
+
+    private static boolean collectMarkers(com.demcha.compose.document.node.ListItem item,
+                                          int depth,
+                                          java.util.Map<Integer, String> perDepth) {
+        if (item.isRich()) {
+            return false;
+        }
+        com.demcha.compose.document.node.ListMarker marker =
+                item.marker() != null
+                        ? item.marker()
+                        : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth);
+        if (!isPlainVisible(marker)) {
+            return false;
+        }
+        String existing = perDepth.putIfAbsent(depth, levelText(marker));
+        if (existing != null && !existing.equals(levelText(marker))) {
+            return false;
+        }
+        for (com.demcha.compose.document.node.ListItem child : item.children()) {
+            if (!collectMarkers(child, depth + 1, perDepth)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isPlainVisible(com.demcha.compose.document.node.ListMarker marker) {
+        return !marker.isRich() && marker.isVisible() && !marker.value().isBlank();
+    }
+
+    /**
+     * The marker as Word's {@code w:lvlText} wants it: the glyph alone.
+     *
+     * <p>A marker's own value carries the separating space the text path needed, because
+     * there it was concatenated straight onto the item. Word puts the gap there itself
+     * from the level's indent, so the space would be drawn twice.</p>
+     */
+    private static String levelText(com.demcha.compose.document.node.ListMarker marker) {
+        return marker.value().strip();
+    }
+
+    /**
      * Semantic list mapping: each item becomes a marker-prefixed paragraph in
      * the list's text style. Flat items run through the same
      * {@code ListMarker.normalizeItemText} step as fixed-layout rendering
@@ -398,6 +545,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeList(XWPFDocument document,
                            com.demcha.compose.document.node.ListNode list) {
+        BigInteger numId = numberingFor(document, list);
         for (String item : list.items()) {
             // Same normalization as the fixed-layout pipeline: strip an
             // author-typed leading marker and skip items with no content.
@@ -411,20 +559,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // any row with runs in it is; its item is still just a label.
                 writeRichListLine(document, list.textStyle(), list.marker(),
                         com.demcha.compose.document.node.ListItem.of(normalized), 0);
+            } else if (numId != null) {
+                // Word draws the marker, so the text is the item and nothing else.
+                writeListLine(document, list.textStyle(), normalized, 0, numId);
             } else {
                 writeListLine(document, list.textStyle(),
-                        list.marker().prefix() + normalized, 0);
+                        list.marker().prefix() + normalized, 0, null);
             }
         }
         for (com.demcha.compose.document.node.ListItem item : list.nestedItems()) {
-            writeNestedItem(document, list, item, 0);
+            writeNestedItem(document, list, item, 0, numId);
         }
     }
 
     private void writeNestedItem(XWPFDocument document,
                                  com.demcha.compose.document.node.ListNode list,
                                  com.demcha.compose.document.node.ListItem item,
-                                 int depth) {
+                                 int depth,
+                                 BigInteger numId) {
         // prefix() carries its own trailing space (and is empty for
         // markerless lists). Items without an explicit (or markerFor-baked)
         // marker fall back to the same depth cascade the fixed-layout
@@ -435,20 +587,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth);
         if (item.isRich() || marker.isRich()) {
             writeRichListLine(document, list.textStyle(), marker, item, depth);
+        } else if (numId != null) {
+            writeListLine(document, list.textStyle(), item.label(), depth, numId);
         } else {
-            writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth);
+            writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth, null);
         }
         for (com.demcha.compose.document.node.ListItem child : item.children()) {
-            writeNestedItem(document, list, child, depth + 1);
+            writeNestedItem(document, list, child, depth + 1, numId);
         }
     }
 
+    /**
+     * Writes one item, either as a real Word list paragraph or as the marker-prefixed
+     * text the export used before Word numbering existed here.
+     *
+     * @param numId the list definition to attach, or {@code null} to write the marker
+     *              and the nesting indent as characters
+     */
     private void writeListLine(XWPFDocument document, DocumentTextStyle style,
-                               String text, int depth) {
+                               String text, int depth, BigInteger numId) {
         XWPFParagraph para = newBodyParagraph(document);
+        if (numId != null) {
+            para.setNumID(numId);
+            para.setNumILvl(BigInteger.valueOf(depth));
+        }
         XWPFRun run = para.createRun();
         applyStyle(run, style);
-        run.setText("  ".repeat(depth) + text);
+        run.setText(numId != null ? text : "  ".repeat(depth) + text);
     }
 
     /**

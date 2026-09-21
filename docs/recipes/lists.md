@@ -94,7 +94,9 @@ inside the content column and leave the marker where it is.
 
 It is off by default and stays off; existing lists are untouched.
 
-> **Fixed-layout only.** PDF and PPTX honour this. The semantic DOCX
+> **Fixed-layout only.** PDF and PPTX honour this. A DOCX list is a real
+> Word list either way — same levels, same markers — but the marker column
+> is the level's own rather than the gap configured here. The semantic DOCX
 > export writes one Word paragraph per item and lets Word lay it out, so
 > it keeps the marker in the text and exports the same either way — same
 > paragraphs, same text, same nesting. See

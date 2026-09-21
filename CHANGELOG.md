@@ -20,6 +20,28 @@ follow semantic versioning; release dates are ISO 8601.
   container, which keeps its own cell paint. A container with no paint exports exactly as
   before.
 
+- **A DOCX list is now a real Word list.** The export wrote the marker into the item's
+  run text and indented nesting with two spaces per level, which looks like a list and is
+  not one: measured in Word 16.0, `ListFormat.ListType` came back as "no numbering", so
+  pressing Enter produced a plain paragraph instead of the next item. A list now gets a
+  `numbering.xml` definition, `w:numPr` on each item, and the authored marker as the
+  level's text, with nesting as a level rather than padding characters. The
+  `ListMarker.defaultForDepth` cascade becomes the levels' markers and
+  `markerFor(depth, ...)` still chooses a level's own.
+  <br><br>
+  Four kinds of list deliberately keep the plain-paragraph form, because Word cannot hold
+  them without changing what was asked for: a markerless list, which would gain a marker
+  and an indent it declined; a drawn marker, which has no Word list analogue; a list whose
+  siblings at one depth carry different markers, since a definition names one marker per
+  level; and rich items, whose runs the numbered path does not write.
+  <br><br>
+  This does not make `markerGap` work and does not claim to — real Word numbering was
+  measured against that requirement and rejected for it, and it is still rejected. The
+  level's marker column is a stated constant, 180 twips plus 120 per nesting level,
+  chosen near the single space the text form used. What changes is behaviour: the list
+  continues, renumbers and demotes. What it costs is that the marker column is a
+  convention rather than the configured gap.
+
 - **A DOCX export now names its own body text as Word's Normal style.** The package
   carried no styles part at all, so Word invented a latent `Normal` that no run referred
   to, and every run spelled out its own font and size. A direct run property beats a

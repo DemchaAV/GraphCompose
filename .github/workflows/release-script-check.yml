@@ -530,6 +530,50 @@ jobs:
           if (git status --porcelain -- web) { throw 'the probe left the web/ tree changed' }
           Write-Host 'page staging: the documentation page and a rewritten, a deleted and an added card page are staged, and nothing under web/showcase/.'
 
+      - name: The cut stages the showcase assets its own regeneration rewrote
+        shell: pwsh
+        run: |
+          # The step above proves the page globs are right on their own - which they were
+          # throughout. This one proves the list they used to stand in stages what it names.
+          # Get-ReleaseCommitPathspecs builds every path of the release commit bar the pages, and
+          # goes to one `git add`. The page globs carry :(exclude)web/showcase, and git applies an
+          # exclude to the WHOLE invocation rather than to the pathspecs beside it: while the two
+          # lists were one, the exclude cancelled the explicit web/showcase entry, and the v2.4.1
+          # release commit carried none of the 133 showcase files its own Step 4c had just
+          # rewritten. Lifted by AST and run for real - a list that stages nothing under
+          # web/showcase fails here, before a cut can tag it.
+          $path = (Resolve-Path scripts/cut-release.ps1).Path
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
+          $fn = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-ReleaseCommitPathspecs'
+            }, $true) | Select-Object -First 1
+          if (-not $fn) { throw 'cut-release.ps1 no longer defines Get-ReleaseCommitPathspecs' }
+          Invoke-Expression $fn.Extent.Text
+          $repoRoot = (Get-Location).Path
+          $list = @(Get-ReleaseCommitPathspecs $true $false)
+
+          # An exclude anywhere in this list reaches every path in the same add, whatever it was
+          # written to narrow, so none may stand in it at all.
+          $excludes = @($list | Where-Object { $_ -like '*:(exclude*' -or $_ -like ':!*' })
+          if ($excludes) { throw "the release staging list carries an exclude pathspec: $($excludes -join ', ')" }
+          if ($list -notcontains 'web/showcase') { throw 'the release staging list no longer names web/showcase' }
+
+          $showcaseFile = @(git ls-files -- web/showcase)[0]
+          if (-not $showcaseFile) { throw 'expected committed files under web/showcase' }
+          try {
+            Add-Content -Path $showcaseFile -Value 'touched'
+            $staged = @(git add --dry-run -- @($list))
+            if ($LASTEXITCODE -ne 0) { throw 'git add --dry-run refused the release staging list' }
+            if (-not ($staged -contains "add '$showcaseFile'")) {
+              throw "the release staging list leaves $showcaseFile out; a regenerated showcase would miss the release commit"
+            }
+          } finally {
+            git checkout -- $showcaseFile
+          }
+          if (git status --porcelain -- web/showcase) { throw 'the probe left web/showcase changed' }
+          Write-Host 'release staging: a rewritten showcase file is staged, and the list carries no exclude pathspec.'
+
       - name: Unit-check the roadmap promotion (refusals and the real rewrite)
         shell: pwsh
         run: |

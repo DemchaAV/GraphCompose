@@ -43,9 +43,9 @@ PDF never pull POI.
 |---|---|
 | Paragraphs | Word paragraphs with alignment, font, size, colour, bold/italic/underline; inline runs preserved |
 | Lists | Real Word lists: a `numbering.xml` definition per list, `w:numPr` on each item, and the authored marker as the level's text. Nesting is a list level, so Enter continues the list and Tab demotes an item. See "What a list becomes" below for the kinds that stay plain paragraphs |
-| Tables | Word tables, one cell per cell |
+| Tables | Word tables, one cell per cell. The width is written when the document states one or every column is fixed; otherwise Word sizes the table — see "What falls back" |
 | Images | Embedded pictures at the node's declared size |
-| Rows | A one-row table, so editors keep the side-by-side layout (cell content limited to atomic children) |
+| Rows | A one-row table spanning the content width, so editors keep the side-by-side layout. The row's slots become the column grid when they are weights, an even split or fixed columns; the gap and the row's padding ride in the neighbouring column and come back out as that cell's margin (cell content limited to atomic children) |
 | Sections / containers | Children written in order; a fill, per-side borders or a uniform stroke travel to each paragraph inside as `w:shd` and `w:pBdr`, so a card keeps its panel — see "What a panel keeps and loses" below |
 | Spacers | Empty paragraphs carrying the vertical gap as spacing-after |
 | Page breaks | Explicit Word page breaks |
@@ -122,6 +122,15 @@ Not representable, and left undone rather than approximated:
   rather than inheriting the band.
 
 ## What falls back
+
+- **An `auto` column's width → Word's own sizing.** A table with no stated width is as
+  wide as its columns naturally need, and an `auto` column's natural width is its widest
+  unwrapped cell. That is a measurement, and this backend has no font runtime to make it,
+  so such a table is left to Word's autofit rather than given a guessed width — writing
+  the content width instead would be right for a table whose text fills the line and
+  wrong for one holding three short values. A row divides the same way: an `auto` column,
+  a non-`START` arrangement or a grow spacer all ask what a child's content measures, so
+  those rows keep Word's split too. State a width, or fixed columns, to pin either.
 
 - **Charts → data table.** The semantic export has no layout pass, so a
   chart's compiled vector geometry does not exist here. Its *semantic*

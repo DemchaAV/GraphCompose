@@ -72,6 +72,42 @@ follow semantic versioning; release dates are ISO 8601.
   the style along with `w:sz`, so Hebrew and Arabic still read a size rather than falling
   back to Word's default. A document with no text writes no styles part.
 
+- **A DOCX table and row now state the width the layout gives them, where that width can
+  be known.** POI's `createTable` writes `w:tblW` as `w=0, type=auto` — Word's instruction
+  to shrink a table around its own content — and nothing overrode it, so every exported
+  table sized itself to its text and a row carried as a one-row table collapsed around a
+  label. A row takes the whole width it is offered whatever its children measure, so its
+  carrier gets the content width. A table's own width is written only where it needs no
+  measuring: the width the author stated, and the column grid when every column is fixed,
+  with a stated width's surplus going to the last column as the layout gives it. A table
+  with an `auto` column and no stated width keeps Word's sizing — the layout would give it
+  the sum of its natural column widths, and an `auto` column's natural width is its widest
+  unwrapped cell, which is a measurement this backend has no font runtime to make. Writing
+  the content width there would be right for a table whose text fills the line and wrong
+  for one holding three short values.
+  <br><br>
+  A row's slots are arithmetic for three of the four ways it can divide: weights, an even
+  split and fixed columns are shares of what is left after the gaps, and those are now
+  written as the grid. Word has no inter-column gap, so the gap and the row's padding ride
+  in the neighbouring column's width and come back out as that cell's margin — the text
+  box is exactly the slot and each column starts exactly where its slot does. Cell margins
+  are written even when they are zero, because Word's own default is not, and the carrier
+  is marked fixed-layout, without which the grid is a starting suggestion Word re-fits to
+  the content. An `auto` column and the flex path — a non-START arrangement or a grow
+  spacer — ask what a child's content naturally measures, and stay Word's.
+  <br><br>
+  A row carrier also wrote each of its six borders twice, because POI ships a full
+  single-line set and turning them off added to it rather than replacing it, leaving a
+  `w:tblBorders` that `CT_TblBorders` does not allow. Word read the last element and drew
+  nothing, so the render looked right while the part was invalid.
+  <br><br>
+  Measured through Word 16.0 and LibreOffice Writer against the reference render, this
+  moves the columns onto the layout's and uncovers a larger drift that had been partly
+  cancelling it: Word starts the body 12.8pt lower than the reference and sets each body
+  line at 13.9pt against 9.7pt (LibreOffice: 12.1pt), so a row that came out one line too
+  short had been pulling the page back up. Line height is measured from the font, so
+  closing that needs resolved layout rather than arithmetic.
+
 ### Performance
 
 - **A barcode is drawn as vector shapes, not as an image, in PDF and PPTX.**

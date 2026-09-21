@@ -916,50 +916,89 @@ function Update-ReleaseSmokeDefaultVersion($repoRoot, $newVersion) {
     }
 }
 
-function Update-IndexHtmlVersion($indexHtmlPath, $newVersion) {
-    if (-not (Test-Path $indexHtmlPath)) {
-        Note "skip (no file): $indexHtmlPath"
+function Update-SiteReleaseData($releaseDataPath, $newVersion) {
+    if (-not (Test-Path $releaseDataPath)) {
+        Note "skip (no file): $releaseDataPath"
         return
     }
-    $content = Get-Content $indexHtmlPath -Raw
+    $content = Get-Content $releaseDataPath -Raw
     $tag = "v$newVersion"
     $changed = $false
 
-    # The GitHub Pages showcase (web/index.html) hardcodes the version in
-    # several spots that do NOT inherit from the pom — they previously sat at
-    # v1.6.1 while the library shipped v1.6.4. VersionConsistencyGuardTest
-    # fails the verify gate if any lags, so flip them all in lockstep with the
-    # README + poms. The Maven Central format coordinates use bare semver
-    # ($newVersion), the hero badge keeps the v-prefix ($tag), and the
-    # downloadUrl points at the Central artefact page. Lookbehind/lookahead
-    # so only the version token is rewritten.
+    # web/index.html is generated (scripts/site/build.mjs renders web-src/), so the version can
+    # no longer be rewritten in the page: the next build would overwrite the release's own edit
+    # with whatever the source still said, and the drift check would go red on main immediately
+    # after the cut. It is written down once, here, and the build injects it into the seven spots
+    # that do NOT inherit from the pom — the release-context block the page itself reads, the
+    # JSON-LD a crawler reads, and the hero badge and both install snippets a visitor reads. They
+    # once sat at v1.6.1 while the library shipped v1.6.4, and VersionConsistencyGuardTest still
+    # holds every occurrence of all seven in the built page.
+    #
+    # Two values carry all of them: the bare semver the Maven Central coordinates use, and the
+    # v-prefixed tag the badge and the release tag use. EVERY occurrence of each pattern moves,
+    # and a pattern matching nothing stops the cut — a spot that quietly stops matching used to
+    # leave this function reporting success while publishing the previous version.
     $replacements = @(
-        @{ Regex = [regex]'(?<="softwareVersion": ")v?[\w\.\-]+(?=")';                                                     Value = $newVersion; Label = 'JSON-LD softwareVersion' },
-        @{ Regex = [regex]'(?<=https://central\.sonatype\.com/artifact/io\.github\.demchaav/graph-compose/)v?[\w\.\-]+(?=")'; Value = $newVersion; Label = 'Central downloadUrl' },
-        @{ Regex = [regex]'(?<=Java &middot; )v?[\w\.\-]+(?= &middot; MIT)';                                                Value = $tag;        Label = 'hero badge' },
-        @{ Regex = [regex]'(?<=&lt;artifactId&gt;graph-compose&lt;/artifactId&gt;\s*&lt;version&gt;)v?[\w\.\-]+(?=&lt;/version&gt;)'; Value = $newVersion; Label = 'Maven Central snippet' },
-        @{ Regex = [regex]"(?<=io\.github\.demchaav:graph-compose:)v?[\w\.\-]+(?=')";                                        Value = $newVersion; Label = 'Gradle Central snippet' }
+        @{ Regex = [regex]'(?<="stableVersion": ")v?[\w\.\-]+(?=")'; Value = $newVersion; Label = 'stableVersion' },
+        @{ Regex = [regex]'(?<="releaseTag": ")v?[\w\.\-]+(?=")';    Value = $tag;        Label = 'releaseTag' }
     )
 
     foreach ($r in $replacements) {
-        $after = $r.Regex.Replace($content, $r.Value, 1)
+        $hits = $r.Regex.Matches($content)
+        if ($hits.Count -eq 0) {
+            throw ("web-src/data/release.json: nothing matches the $($r.Label) pattern. That spot has " +
+                   "moved or been renamed, and a cut that skipped it would publish a page still naming " +
+                   "the previous release. Fix the pattern or the file, then re-run.")
+        }
+        $after = $r.Regex.Replace($content, $r.Value)
         if ($content -ne $after) {
             $content = $after
             $changed = $true
-            Note "bumped index.html $($r.Label) -> $($r.Value)"
+            Note "bumped release data $($r.Label) -> $($r.Value) ($($hits.Count)x)"
         }
     }
 
     if (-not $changed) {
-        Note "no change: web/index.html version (already $tag?)"
+        # ${tag}, not $tag: PowerShell reads `$tag?` as a variable named `tag?`, so this
+        # notice spent its life telling a maintainer the page was already on nothing.
+        Note "no change: web-src/data/release.json (already ${tag}?)"
         return
     }
 
     if ($DryRun) {
-        Write-Host "    [DRY RUN] web/index.html version -> $tag" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] web-src/data/release.json version -> $tag" -ForegroundColor Yellow
     } else {
-        [System.IO.File]::WriteAllText($indexHtmlPath, $content)
+        [System.IO.File]::WriteAllText($releaseDataPath, $content)
     }
+}
+
+function Build-ShowcaseSite {
+    # The site's pages — web/index.html, web/sitemap.xml, the documentation page and a page per
+    # catalogue card — are generated from web-src/ AND from the catalogue, so they are rebuilt once
+    # both have settled: after the version data moved, and after the showcase sync rewrote
+    # web/examples.json. Building earlier renders them from a catalogue the cut then replaces, which
+    # ships an index missing whatever the sync added and no page for it. Skipped on a tree with no
+    # site source: the 1.x line has none.
+    $build = Join-Path $repoRoot 'scripts/site/build.mjs'
+    if (-not (Test-Path $build)) {
+        Note 'skip (no site build): scripts/site/build.mjs'
+        return
+    }
+    Run "node `"$build`""
+}
+
+function Get-GeneratedPagePathspecs {
+    # The pages the site build writes beyond web/index.html and web/sitemap.xml, as the pathspecs
+    # that stage them: the documentation page at web/documentation/index.html, and one page per
+    # catalogue card at web/<category>/<group>/<id>/index.html. A glob stages a page the build
+    # added, rewrote or deleted alike. web/showcase/ is excluded outright rather than trusted to hold
+    # no index.html at those depths: its churn is what the cut restores, never what it commits here.
+    # Empty on a tree with no site build: a pathspec that matches nothing fails `git add`, and
+    # Invoke-Git stops the cut on it.
+    if (Test-Path (Join-Path $repoRoot 'scripts/site/build.mjs')) {
+        return @(':(glob)web/*/index.html', ':(glob)web/*/*/*/index.html', ':(exclude)web/showcase')
+    }
+    return @()
 }
 
 function Update-ShowcaseGhBase($newRef) {
@@ -1331,6 +1370,10 @@ if ($PostReleaseOnly) {
         if ($showcaseChanged -or $DryRun) {
             Step 2 "Regenerate web/examples.json with $Branch links"
             Run-ShowcaseSync
+            # The pages are generated from that manifest, so the flip back to /blob/<branch>
+            # has to reach them too — otherwise develop carries a page built from the tag's
+            # catalogue and the site's own drift check fails on the next push.
+            Build-ShowcaseSite
         } else {
             Note "GH_BASE already points to $Branch."
         }
@@ -1439,7 +1482,10 @@ if ($PostReleaseOnly) {
         # Commit whatever changed: the bumped poms + regenerated knowledge
         # surfaces, and/or the restored showcase files.
         $filesToCommit = @()
-        if ($showcaseChanged -or $DryRun) { $filesToCommit += @($showcaseMetadata, 'web/examples.json') }
+        if ($showcaseChanged -or $DryRun) {
+            $filesToCommit += @($showcaseMetadata, 'web/examples.json', 'web/index.html', 'web/sitemap.xml')
+            $filesToCommit += @(Get-GeneratedPagePathspecs)
+        }
         $filesToCommit += $bumpedPoms
         # The surfaces Step 3c regenerated at the new SNAPSHOT ride in the same
         # commit as the bump they track — left behind, they are the follow-up
@@ -1629,7 +1675,10 @@ try {
         foreach ($docPage in @('docs/troubleshooting.md')) {
             Update-ModuleReadmeInstallVersion (Join-Path $repoRoot $docPage) $Version
         }
-        Update-IndexHtmlVersion (Join-Path $repoRoot 'web/index.html') $Version
+        Update-SiteReleaseData (Join-Path $repoRoot 'web-src/data/release.json') $Version
+        # The page is REBUILT in Step 4d, not here: it is generated from web/examples.json too,
+        # and Step 4c regenerates that. Building now would render the page from the catalogue the
+        # cut is about to replace, and ship an index missing whatever 4c added.
         # The smoke harness's default version must follow the release, or the
         # post-release run silently re-verifies the previous one.
         Update-ReleaseSmokeDefaultVersion $repoRoot $Version
@@ -1708,6 +1757,12 @@ try {
     } else {
         Step "4c" "Skipped web/showcase sync (-SkipShowcase)"
     }
+
+    # After 4c either way: the version data moved in Step 1, and that alone is a reason to
+    # rebuild even when the sync was skipped. Before Step 5, so the verify gate's site guards
+    # read the pages this release actually publishes.
+    Step "4d" "Rebuild the site's pages from web-src/"
+    Build-ShowcaseSite
 
     if (-not $SkipVerify) {
         Step 5 "Run mvnw clean verify (sanity check)"
@@ -1822,7 +1877,12 @@ try {
         'README.md',
         'ROADMAP.md',
         'CHANGELOG.md',
+        # The generated page and the data it is generated from. Staging only the page would tag
+        # a release whose source still names the previous one; staging only the data would tag
+        # one whose published page does.
         'web/index.html',
+        'web/sitemap.xml',
+        'web-src/data/release.json',
         # Bumped by Update-ReleaseSmokeDefaultVersion so the post-release smoke run
         # defaults to the version just published, not the previous one.
         'scripts/release-smoke/run.sh',
@@ -1830,6 +1890,10 @@ try {
         'scripts/release-smoke/README.md',
         '.github/workflows/release-smoke.yml'
     )
+    # The documentation page and the document pages name the release too — in their guide links
+    # and their coordinates — so they ride with the page and the data above, a page per card
+    # included, and any page the rebuild deleted.
+    $commitFiles += @(Get-GeneratedPagePathspecs)
     # qa + coverage exist only in the 2.0 aggregator layout; add them to the commit
     # only when present so the script stays layout-agnostic (the 1.x single-artifact
     # tree has neither) — mirroring Update-PomVersion's skip-if-absent guard. On a 2.0

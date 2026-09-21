@@ -1,0 +1,147 @@
+{
+  "sections": [
+    {
+      "id": "start",
+      "title": "Start here",
+      "guides": [
+        {
+          "title": "Your first document",
+          "path": "docs/first-document.md",
+          "summary": "The five-minute path from an empty project to a rendered PDF."
+        },
+        {
+          "title": "Getting started",
+          "path": "docs/getting-started.md",
+          "summary": "Composing with the DSL or filling a template, a first render walked through, and how to choose between them."
+        },
+        {
+          "title": "Capabilities",
+          "path": "docs/capabilities.md",
+          "summary": "Every feature at a glance, with its stability tier and the guide that covers it."
+        },
+        {
+          "title": "Troubleshooting",
+          "path": "docs/troubleshooting.md",
+          "summary": "Symptom-first fixes: stray ? glyphs, content Word leaves out, a missing optional dependency."
+        }
+      ]
+    },
+    {
+      "id": "templates",
+      "title": "Templates",
+      "guides": [
+        {
+          "title": "Templates overview",
+          "path": "docs/templates/README.md",
+          "summary": "All six shipped families, the data each one takes, and which guide to open next."
+        },
+        {
+          "title": "Templates quickstart",
+          "path": "docs/templates/v2-layered/quickstart.md",
+          "summary": "Five minutes: how the layered templates are built, and a working example that renders a CV."
+        },
+        {
+          "title": "Business templates",
+          "path": "docs/templates/business-templates.md",
+          "summary": "Invoices and proposals rendered from data, end to end."
+        },
+        {
+          "title": "Authoring a preset",
+          "path": "docs/templates/v2-layered/authoring-presets.md",
+          "summary": "A CV style of your own, composed from the shipped widgets without subclassing."
+        },
+        {
+          "title": "Adding a template family",
+          "path": "docs/templates/v2-layered/contributor-guide.md",
+          "summary": "A new kind of document, from its data model to its presets and tests."
+        }
+      ]
+    },
+    {
+      "id": "building",
+      "title": "Building a document",
+      "guides": [
+        {
+          "title": "Recipes",
+          "path": "docs/recipes.md",
+          "summary": "Text, lists, tables, charts, images, barcodes, layout, headers and footers, links and bookmarks: where each one fits."
+        }
+      ]
+    },
+    {
+      "id": "formats",
+      "title": "Output formats",
+      "guides": [
+        {
+          "title": "Backend capability matrix",
+          "path": "docs/architecture/backend-capability-matrix.md",
+          "summary": "What PDF, PowerPoint and Word each support, capability by capability."
+        },
+        {
+          "title": "PowerPoint backend",
+          "path": "render-pptx/README.md",
+          "summary": "graph-compose-render-pptx, in Beta: an editable deck from the same session that prints the PDF."
+        },
+        {
+          "title": "Word backend",
+          "path": "render-docx/README.md",
+          "summary": "graph-compose-render-docx: a semantic Word export, with partial coverage and no PDF parity."
+        }
+      ]
+    },
+    {
+      "id": "production",
+      "title": "Testing and production",
+      "guides": [
+        {
+          "title": "Testing your document",
+          "path": "docs/operations/test-your-document.md",
+          "summary": "Smoke tests, layout snapshots and visual diffs that keep a document from changing unnoticed."
+        },
+        {
+          "title": "Production rendering",
+          "path": "docs/operations/production-rendering.md",
+          "summary": "Rendering on a server: streaming, concurrency and failure handling."
+        }
+      ]
+    },
+    {
+      "id": "versions",
+      "title": "Versions and upgrades",
+      "guides": [
+        {
+          "title": "API stability",
+          "path": "docs/api-stability.md",
+          "summary": "The stability tier of each package, and what each tier promises."
+        },
+        {
+          "title": "Migrating to 2.0",
+          "path": "docs/migration/v2.0.0-modules.md",
+          "summary": "The 1.x to 2.x module split and the API changes that came with it; the changelog holds the full list."
+        },
+        {
+          "title": "Changelog",
+          "path": "CHANGELOG.md",
+          "summary": "The notable changes, release by release."
+        }
+      ]
+    },
+    {
+      "id": "internals",
+      "title": "Changing GraphCompose itself",
+      "intro": "Not needed to write a document.",
+      "guides": [
+        {
+          "title": "Architecture overview",
+          "path": "docs/architecture/overview.md",
+          "summary": "The engine, the DSL, the templates and the backends, and how they fit together."
+        },
+        {
+          "title": "Extension guide",
+          "path": "docs/contributing/extension-guide.md",
+          "summary": "Add a semantic node, a builder setter, a render handler or a whole backend, without reaching into the engine."
+        }
+      ]
+    }
+  ]
+}

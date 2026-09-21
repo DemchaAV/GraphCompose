@@ -31,6 +31,7 @@ import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -60,6 +61,11 @@ import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTRelativeRect;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBorder;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPBdr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyle;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyles;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STStyleType;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcBorders;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
@@ -102,6 +108,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
+    /** Word''s built-in default paragraph style; the name is fixed by the format. */
+    private static final String NORMAL_STYLE_ID = "Normal";
     /** Word measures tab stops in twentieths of a point. */
     private static final double TWIPS_PER_POINT = 20.0;
     private static final double POINT_TO_TWIP = 20.0;
@@ -117,6 +125,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // Geometry-only node kinds already warned about this export pass.
     private final java.util.Set<String> warnedNodeKinds =
             java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private final AtomicBoolean containerRadiusWarned = new AtomicBoolean(false);
+    // Fills and borders of the containers currently being written into, innermost first.
+    // A paragraph carries the innermost one, because that is the panel it sits in.
+    private final java.util.Deque<ContainerPaint> containerPaint = new java.util.ArrayDeque<>();
+    // The text style the document is mostly written in, promoted to Word's Normal style.
+    // Null until an export computes it, and when the graph carries no text at all.
+    private DocumentTextStyle documentDefaultStyle;
+
+    /**
+     * A container's paint, reduced to what a Word paragraph can carry.
+     *
+     * @param fill    background, written as {@code w:shd}
+     * @param borders per-side strokes, written as {@code w:pBdr}
+     */
+    private record ContainerPaint(DocumentColor fill, DocumentBorders borders) {
+
+        /** @return true when there is nothing for a paragraph to carry */
+        boolean isEmpty() {
+            return fill == null && borders == null;
+        }
+    }
 
     /**
      * Creates a DOCX semantic backend.
@@ -133,10 +162,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     public byte[] export(DocumentGraph graph, SemanticExportContext context) throws Exception {
         shapeContainerWarned.set(false);
         chartWarned.set(false);
+        containerRadiusWarned.set(false);
         warnedNodeKinds.clear();
+        containerPaint.clear();
+        documentDefaultStyle = dominantTextStyle(graph);
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
         try (XWPFDocument document = new XWPFDocument()) {
             applyPageGeometry(document, context.canvas());
+            writeStylesPart(document);
             applyOutputOptions(document, context.outputOptions());
             for (DocumentNode root : graph.roots()) {
                 writeNode(document, root);
@@ -308,9 +341,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // Overlay/positioned wrappers have no DOCX analogue for their
             // geometry, but their children can be semantic (text, images) —
             // render them sequentially rather than dropping the subtree.
-            for (DocumentNode child : node.children()) {
-                writeNode(document, child);
-            }
+            // A fill or a border is the exception: Word paragraphs carry both, so a
+            // panel travels with the paragraphs inside it instead of disappearing.
+            writeContainerChildren(document, node);
         } else {
             // Geometry-only node kinds (line, ellipse, shape, path, polygon,
             // barcode) have no semantic Word analogue. Warn once per kind so a
@@ -412,7 +445,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void writeListLine(XWPFDocument document, DocumentTextStyle style,
                                String text, int depth) {
-        XWPFParagraph para = document.createParagraph();
+        XWPFParagraph para = newBodyParagraph(document);
         XWPFRun run = para.createRun();
         applyStyle(run, style);
         run.setText("  ".repeat(depth) + text);
@@ -443,7 +476,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                    int depth) {
         warnDroppedInlineRuns(marker.runs());
         warnDroppedInlineRuns(item.runs());
-        XWPFParagraph para = document.createParagraph();
+        XWPFParagraph para = newBodyParagraph(document);
         XWPFRun leading = para.createRun();
         applyStyle(leading, style);
         leading.setText("  ".repeat(depth) + (marker.isRich() ? "" : marker.prefix()));
@@ -519,6 +552,220 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         writeTable(document, table.build());
     }
 
+    /**
+     * Writes a wrapper's children, carrying its fill and borders down to each paragraph.
+     *
+     * <p>Word has no box to put around a run of paragraphs, but it does shade and border
+     * each one, and consecutive paragraphs sharing a fill render as a single band. That is
+     * close enough to a panel to be worth having, and much better than what this exporter
+     * used to do, which was to drop the paint without saying so.</p>
+     *
+     * <p>What does not survive: the corner radius, because Word paragraph shading is
+     * rectangular, and the container's padding, because a paragraph's shading hugs its own
+     * text. The radius is warned about once per export rather than pretended away.</p>
+     */
+    private void writeContainerChildren(XWPFDocument document, DocumentNode node) throws Exception {
+        ContainerPaint paint = paintOf(node);
+        if (paint.isEmpty()) {
+            for (DocumentNode child : node.children()) {
+                writeNode(document, child);
+            }
+            return;
+        }
+        warnContainerRadiusDropped(node);
+        containerPaint.push(paint);
+        try {
+            for (DocumentNode child : node.children()) {
+                writeNode(document, child);
+            }
+        } finally {
+            containerPaint.pop();
+        }
+    }
+
+    private static boolean hasRadius(com.demcha.compose.document.style.DocumentCornerRadius radius) {
+        return radius != null && !radius.isZero();
+    }
+
+    /**
+     * Gives the package a styles part naming the document''s own body text as Normal.
+     *
+     * <p>Without one Word invents a latent Normal that no run refers to, so a reader who
+     * restyles the document changes nothing: every run carries its own size and font, and a
+     * direct property beats a style. Writing the part and leaving those runs silent is what
+     * makes "change the Normal style" behave the way a Word user expects.</p>
+     *
+     * <p>Nothing is written when the graph carries no text to take a default from.</p>
+     */
+    private void writeStylesPart(XWPFDocument document) {
+        DocumentTextStyle defaults = documentDefaultStyle;
+        if (defaults == null) {
+            return;
+        }
+        CTStyles styles = CTStyles.Factory.newInstance();
+        applyDefaultRunProperties(styles.addNewDocDefaults().addNewRPrDefault().addNewRPr(), defaults);
+
+        CTStyle normal = styles.addNewStyle();
+        normal.setType(STStyleType.PARAGRAPH);
+        normal.setStyleId(NORMAL_STYLE_ID);
+        normal.setDefault(true);
+        normal.addNewName().setVal(NORMAL_STYLE_ID);
+        applyDefaultRunProperties(normal.addNewRPr(), defaults);
+
+        document.createStyles().setStyles(styles);
+    }
+
+    private static void applyDefaultRunProperties(CTRPr properties, DocumentTextStyle defaults) {
+        if (defaults.fontName() != null) {
+            properties.addNewRFonts().setAscii(defaults.fontName().name());
+        }
+        if (defaults.size() > 0) {
+            // w:sz counts half-points, and w:szCs carries the same for complex scripts.
+            BigInteger halfPoints = BigInteger.valueOf(Math.round(defaults.size() * 2));
+            properties.addNewSz().setVal(halfPoints);
+            properties.addNewSzCs().setVal(halfPoints);
+        }
+        if (defaults.color() != null) {
+            properties.addNewColor().setVal(toHexColor(defaults.color().color()));
+        }
+    }
+
+    /**
+     * The text style the document is mostly written in.
+     *
+     * <p>Weighted by characters rather than by how many nodes use a style: headings are
+     * numerous and short while body text is long, so counting nodes elects the heading
+     * style as the document default and leaves every body run carrying a direct size.</p>
+     *
+     * @param graph the document being exported
+     * @return the dominant style, or {@code null} when the graph carries no text
+     */
+    private static DocumentTextStyle dominantTextStyle(DocumentGraph graph) {
+        java.util.Map<DocumentTextStyle, Long> weights = new java.util.HashMap<>();
+        for (DocumentNode root : graph.roots()) {
+            weighTextStyles(root, weights);
+        }
+        return weights.entrySet().stream()
+                .max(java.util.Map.Entry.comparingByValue())
+                .map(java.util.Map.Entry::getKey)
+                .orElse(null);
+    }
+
+    private static void weighTextStyles(DocumentNode node,
+                                        java.util.Map<DocumentTextStyle, Long> weights) {
+        if (node instanceof ParagraphNode paragraph && paragraph.textStyle() != null) {
+            weights.merge(paragraph.textStyle(), textWeight(paragraph.text()), Long::sum);
+        } else if (node instanceof com.demcha.compose.document.node.ListNode list
+                   && list.textStyle() != null) {
+            long weight = list.items().stream().mapToLong(DocxSemanticBackend::textWeight).sum();
+            weights.merge(list.textStyle(), weight, Long::sum);
+        }
+        for (DocumentNode child : node.children()) {
+            weighTextStyles(child, weights);
+        }
+    }
+
+    /** At least one, so a style used only by empty text still counts as used. */
+    private static long textWeight(String text) {
+        return text == null ? 1L : Math.max(1L, text.length());
+    }
+
+    /** Reads the fill and borders off whichever wrapper kind this is, or an empty paint. */
+    private static ContainerPaint paintOf(DocumentNode node) {
+        if (node instanceof SectionNode section) {
+            return new ContainerPaint(section.fillColor(),
+                    bordersOf(section.borders(), section.stroke()));
+        }
+        if (node instanceof ContainerNode container) {
+            return new ContainerPaint(container.fillColor(),
+                    bordersOf(container.borders(), container.stroke()));
+        }
+        return new ContainerPaint(null, null);
+    }
+
+    /**
+     * Per-side borders win; a uniform stroke stands in for all four when they are absent,
+     * which is how the node model says "one outline round the whole box".
+     */
+    private static DocumentBorders bordersOf(DocumentBorders borders, DocumentStroke stroke) {
+        if (borders != null && !DocumentBorders.NONE.equals(borders)) {
+            return borders;
+        }
+        if (stroke != null && stroke.width() > 0) {
+            return DocumentBorders.all(stroke);
+        }
+        return null;
+    }
+
+    /** One warning per export for the part of a container's design Word cannot hold. */
+    private void warnContainerRadiusDropped(DocumentNode node) {
+        boolean rounded = node instanceof SectionNode section
+                ? hasRadius(section.cornerRadius())
+                : node instanceof ContainerNode container && hasRadius(container.cornerRadius());
+        if (rounded && containerRadiusWarned.compareAndSet(false, true)) {
+            LOG.warn("docx.export.container-radius-dropped node='{}' — Word paragraph shading "
+                     + "is rectangular, so the panel renders with square corners. "
+                     + "(One warning per export; use the PDF backend for the rounded form.)",
+                    node.nodeKind());
+        }
+    }
+
+    /**
+     * Creates a body paragraph already wearing the panel it sits in.
+     *
+     * <p>Every body paragraph goes through here, so a container's paint cannot be
+     * forgotten by a writer that creates its paragraph directly.</p>
+     */
+    private XWPFParagraph newBodyParagraph(XWPFDocument document) {
+        XWPFParagraph para = document.createParagraph();
+        ContainerPaint paint = containerPaint.peek();
+        if (paint != null) {
+            applyContainerPaint(para, paint);
+        }
+        return para;
+    }
+
+    private static void applyContainerPaint(XWPFParagraph para, ContainerPaint paint) {
+        CTPPr properties = para.getCTP().isSetPPr()
+                ? para.getCTP().getPPr()
+                : para.getCTP().addNewPPr();
+        if (paint.fill() != null) {
+            CTShd shading = properties.isSetShd() ? properties.getShd() : properties.addNewShd();
+            shading.setVal(STShd.CLEAR);
+            shading.setColor("auto");
+            shading.setFill(toHexColor(paint.fill().color()));
+        }
+        DocumentBorders borders = paint.borders();
+        if (borders == null) {
+            return;
+        }
+        CTPBdr edges = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
+        paintParagraphEdge(borders.top(), edges::isSetTop, edges::getTop, edges::addNewTop);
+        paintParagraphEdge(borders.bottom(), edges::isSetBottom, edges::getBottom, edges::addNewBottom);
+        paintParagraphEdge(borders.left(), edges::isSetLeft, edges::getLeft, edges::addNewLeft);
+        paintParagraphEdge(borders.right(), edges::isSetRight, edges::getRight, edges::addNewRight);
+    }
+
+    /**
+     * Writes one paragraph border edge, reusing whichever edge element is already there.
+     *
+     * <p>A stroke of no width is how this codebase says "no border", the same predicate the
+     * table painter reads, so such a side is left unwritten rather than drawn hairline.</p>
+     */
+    private static void paintParagraphEdge(DocumentStroke stroke,
+                                           java.util.function.BooleanSupplier isSet,
+                                           java.util.function.Supplier<CTBorder> get,
+                                           java.util.function.Supplier<CTBorder> add) {
+        if (stroke == null || stroke.width() <= 0) {
+            return;
+        }
+        // w:sz counts eighths of a point, rounded to at least one so a hairline the author
+        // asked for stays a line rather than vanishing.
+        BigInteger eighths = BigInteger.valueOf(Math.max(1, Math.round(stroke.width() * 8.0)));
+        paintEdge(isSet.getAsBoolean() ? get.get() : add.get(),
+                STBorder.SINGLE, eighths, toHexColor(stroke.color().color()));
+    }
+
     private void writeShapeContainer(XWPFDocument document, ShapeContainerNode node) throws Exception {
         // POI/DOCX has no portable equivalent of a graphics-state path clip.
         // The fallback rule (recorded in docs/canonical-legacy-parity.md) is
@@ -540,7 +787,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
-        XWPFParagraph para = document.createParagraph();
+        XWPFParagraph para = newBodyParagraph(document);
         boolean rightToLeft = applyParagraphProperties(para, node);
         writeParagraphRuns(para, node, rightToLeft);
     }
@@ -684,7 +931,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             drawHeight = sourceHeight * scale;
         }
 
-        XWPFParagraph para = document.createParagraph();
+        XWPFParagraph para = newBodyParagraph(document);
         XWPFRun run = para.createRun();
         try (InputStream stream = new java.io.ByteArrayInputStream(bytes)) {
             XWPFPicture picture = run.addPicture(stream,
@@ -1099,7 +1346,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeSpacer(XWPFDocument document, SpacerNode node) {
-        XWPFParagraph para = document.createParagraph();
+        XWPFParagraph para = newBodyParagraph(document);
         para.createRun().setText("");
         if (node.height() > 0) {
             para.setSpacingAfter((int) Math.round(node.height() * POINT_TO_TWIP));
@@ -1192,10 +1439,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (style == null) {
             return;
         }
-        if (style.fontName() != null) {
+        // A run that only restates the Normal style is left saying nothing, so Word's own
+        // "change the Normal style" reaches it. Written out, the direct property wins over
+        // the style and a global restyle silently does nothing — which is what this
+        // exporter used to produce for every run in every document.
+        DocumentTextStyle defaults = documentDefaultStyle;
+        if (style.fontName() != null
+            && (defaults == null || !style.fontName().equals(defaults.fontName()))) {
             run.setFontFamily(style.fontName().name());
         }
-        if (style.size() > 0) {
+        // Complex-script size rides along with the ordinary one, so it is skipped for the
+        // same reason when the style already carries it.
+        boolean sizeComesFromTheStyle = defaults != null && style.size() == defaults.size();
+        if (style.size() > 0 && !sizeComesFromTheStyle) {
             // Passed as a double, because w:sz counts half-points and rounding to whole
             // points first throws away a precision the format has: the timeline's 8.5pt
             // label was being written as 9pt.
@@ -1206,7 +1462,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             run.setComplexScriptFontSize(style.size());
         }
         applyLetterSpacing(run, style);
-        if (style.color() != null) {
+        applyRunColourAndDecoration(run, style, defaults);
+    }
+
+    /** Colour and face, with the colour skipped when the Normal style already says it. */
+    private void applyRunColourAndDecoration(XWPFRun run,
+                                             DocumentTextStyle style,
+                                             DocumentTextStyle defaults) {
+        if (style.color() != null
+            && (defaults == null || !style.color().equals(defaults.color()))) {
             run.setColor(toHexColor(style.color().color()));
         }
         if (style.decoration() != null) {

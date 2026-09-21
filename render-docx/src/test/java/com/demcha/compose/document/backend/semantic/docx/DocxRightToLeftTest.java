@@ -112,7 +112,10 @@ class DocxRightToLeftTest {
 
     @Test
     void theRequestedSizeReachesTheComplexScriptCharacters() throws Exception {
-        XWPFParagraph paragraph = onlyParagraph(HEBREW, TextDirection.RTL, null);
+        // The Hebrew run is deliberately not the document's dominant style here: a run
+        // that differs from Normal keeps its own size, and this is the case that says
+        // w:szCs is written beside w:sz rather than forgotten.
+        XWPFParagraph paragraph = hebrewBesideALongerLatinBody();
         var properties = paragraph.getRuns().get(0).getCTR().getRPr();
 
         assertThat(halfPoints(properties.getSzArray(0).getVal()))
@@ -122,6 +125,74 @@ class DocxRightToLeftTest {
                 .describedAs("Hebrew takes its size from here and nowhere else, so a missing "
                         + "value draws it at Word's default rather than the asked 15pt")
                 .isEqualTo(30);
+    }
+
+    @Test
+    void complexScriptSizeShouldTravelWithTheStyleWhenTheRunInheritsIt() throws Exception {
+        // When the Hebrew run *is* the document's body style, its size moves to Normal so
+        // a reader can restyle the document. The guarantee is unchanged — Hebrew still has
+        // a w:szCs to read — but it now lives on the style, and this asserts it is there
+        // rather than lost on the way.
+        byte[] docx = exportOneParagraph(HEBREW, 15);
+        try (XWPFDocument word = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            var runProperties = word.getParagraphs().get(0).getRuns().get(0).getCTR().getRPr();
+            assertThat(runProperties == null || runProperties.sizeOfSzCsArray() == 0)
+                    .describedAs("the run leaves its size to Normal")
+                    .isTrue();
+
+            var styleDefaults = word.getStyles().getCtStyles().getDocDefaults()
+                    .getRPrDefault().getRPr();
+            assertThat(halfPoints(styleDefaults.getSzCsArray(0).getVal()))
+                    .describedAs("and Normal carries the complex-script size Hebrew reads")
+                    .isEqualTo(30);
+        }
+    }
+
+    /**
+     * A document whose body is a long Latin paragraph, with a shorter Hebrew one beside
+     * it, so the Hebrew run differs from the document default and keeps direct formatting.
+     *
+     * @return the Hebrew paragraph
+     */
+    private static XWPFParagraph hebrewBesideALongerLatinBody() throws Exception {
+        DocumentTextStyle hebrew = DocumentTextStyle.builder()
+                .fontName(FontName.DAVID_LIBRE).size(15).build();
+        DocumentTextStyle latin = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA).size(11).build();
+        String body = "A Latin body paragraph long enough to outweigh the Hebrew line and "
+                      + "become the document's own default text style.";
+
+        byte[] docx;
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(400, 200)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            document.pageFlow(page -> {
+                page.addParagraph(p -> p.text(body).textStyle(latin));
+                page.addParagraph(p -> p.text(HEBREW)
+                        .direction(TextDirection.RTL).textStyle(hebrew));
+            });
+            docx = document.export(new DocxSemanticBackend());
+        }
+        try (XWPFDocument word = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            return word.getParagraphs().stream()
+                    .filter(p -> p.getText().contains(HEBREW))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("the Hebrew paragraph is missing"));
+        }
+    }
+
+    private static byte[] exportOneParagraph(String text, double size) throws Exception {
+        DocumentTextStyle style = DocumentTextStyle.builder()
+                .fontName(FontName.DAVID_LIBRE).size(size).build();
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(400, 200)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            document.pageFlow(page -> page.addParagraph(p -> p.text(text)
+                    .direction(TextDirection.RTL).textStyle(style)));
+            return document.export(new DocxSemanticBackend());
+        }
     }
 
     @Test

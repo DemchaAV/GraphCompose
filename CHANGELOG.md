@@ -5,6 +5,35 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.4.1 — Planned
 
+### Public API
+
+- **A container's fill and borders now reach the DOCX export.** A `SectionNode` or
+  `ContainerNode` carrying a `fillColor`, per-side `borders` or a uniform `stroke` was
+  treated as a transparent wrapper: its children were written and its paint was dropped
+  with nothing in the log to say so, which is why a card exported as bare text. Each
+  paragraph the container wraps now carries the fill as `w:shd` and the borders as
+  `w:pBdr`; consecutive shaded paragraphs render in Word as one band, nested containers
+  resolve innermost-first, and the paint stops where the container does. Three things are
+  still not representable and are documented rather than approximated: the corner radius,
+  since Word paragraph shading is rectangular — dropped with one warning per export; the
+  container's `padding`, so the band hugs its text; and a table inside a painted
+  container, which keeps its own cell paint. A container with no paint exports exactly as
+  before.
+
+- **A DOCX export now names its own body text as Word's Normal style.** The package
+  carried no styles part at all, so Word invented a latent `Normal` that no run referred
+  to, and every run spelled out its own font and size. A direct run property beats a
+  style, so "change the Normal style" — the ordinary way a person restyles a Word
+  document — was accepted and then did nothing; measured in Word 16.0, setting Normal to
+  14pt left the body at 10.5pt. The export now writes a styles part whose document
+  defaults and `Normal` carry the document's dominant text style, chosen by how many
+  characters are set in it rather than by how many nodes use it, since headings are
+  numerous and short while body text is long. A run that only restates that style writes
+  no `w:rFonts`, `w:sz`, `w:szCs` or `w:color`, so the style reaches it; a run that
+  differs still says so. Complex-script sizing is unchanged in effect — `w:szCs` moves to
+  the style along with `w:sz`, so Hebrew and Arabic still read a size rather than falling
+  back to Word's default. A document with no text writes no styles part.
+
 ### Performance
 
 - **A barcode is drawn as vector shapes, not as an image, in PDF and PPTX.**

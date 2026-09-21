@@ -46,12 +46,52 @@ PDF never pull POI.
 | Tables | Word tables, one cell per cell |
 | Images | Embedded pictures at the node's declared size |
 | Rows | A one-row table, so editors keep the side-by-side layout (cell content limited to atomic children) |
-| Sections / containers | Children written in order |
+| Sections / containers | Children written in order; a fill, per-side borders or a uniform stroke travel to each paragraph inside as `w:shd` and `w:pBdr`, so a card keeps its panel — see "What a panel keeps and loses" below |
 | Spacers | Empty paragraphs carrying the vertical gap as spacing-after |
 | Page breaks | Explicit Word page breaks |
 
 Page geometry (size and margins) and session metadata (title, author,
 subject, keywords) carry into the Word document as well.
+
+## Named styles, so the document can be restyled
+
+The export writes a styles part whose `Normal` carries the document's own body text —
+the style the most characters are set in, not the one the most nodes use. Runs that only
+restate it stay silent, so changing `Normal` in Word changes the body the way a reader
+expects. A run whose font, size or colour differs keeps saying so, so headings, chips and
+accents are unaffected.
+
+There is one `Normal` and no generated heading styles yet: a heading still carries its
+own direct formatting rather than a named `Heading 1`. Restyling the body works; restyling
+"all headings" in one go does not.
+
+## What a panel keeps and loses
+
+Word has no element that wraps a run of paragraphs, but it shades and borders each one,
+and consecutive paragraphs sharing a fill render as a single band. So a container's paint
+travels with the paragraphs inside it:
+
+```java
+page.addSection("Notice", card -> card
+        .softPanel(surface, 8, 14)     // fill lands; radius and padding do not
+        .accentLeft(accent, 3)         // lands as a left w:pBdr
+        .addParagraph(p -> p.text("The band grows with this text when it is edited.")));
+```
+
+Kept: the fill, per-side borders, and a uniform stroke standing in for all four sides.
+Nested containers resolve innermost-first, and the paint stops where the container does.
+The band is a property of the paragraphs, so it grows and reflows as the text is edited —
+which is the point of exporting DOCX rather than PDF.
+
+Not representable, and left undone rather than approximated:
+
+- **The corner radius.** Word paragraph shading is rectangular. The panel renders with
+  square corners and the export logs one warning per document.
+- **The container's padding.** A paragraph's shading hugs its own text, so the band does
+  not inset its content the way the PDF does. Add spacing inside the container if the
+  breathing room matters in Word.
+- **A table inside a painted container.** The table keeps its own cell fills and borders
+  rather than inheriting the band.
 
 ## What falls back
 

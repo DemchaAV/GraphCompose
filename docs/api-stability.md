@@ -57,6 +57,15 @@ matrix.
 > Geometry identity with the PDF backend is a design invariant and will not
 > change; the API shape around it may still move in a minor release.
 >
+> Three members of the otherwise-Stable **semantic export SPI** carry `@Beta`, new
+> in 2.5.0: `SemanticBackend.requiresResolvedLayout`, the `layoutGraph` component of
+> `SemanticExportContext`, and `SemanticExportContext.requireLayoutGraph`. They let a
+> semantic backend be handed the compiled layout beside the graph — geometry it reads
+> rather than places. The seam is marked Experimental because what a semantic backend
+> should be *given* is still settling: a later minor may narrow it to the measurements
+> a backend actually needs instead of the whole graph. Backends that do not ask are
+> unaffected, and the published `SemanticExportContext` constructors keep working.
+>
 > Seven members of the otherwise-Stable **PDF backend** also carry `@Beta`. The
 > package is not Experimental — these are:
 > `PdfFixedLayoutBackend.renderSections` / `writeSections`, the low-level seam

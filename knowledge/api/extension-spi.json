@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 9,
-    "methods": 26,
+    "methods": 27,
     "constants": 0,
-    "generated": 26
+    "generated": 27
   },
   "packages": [
     {
@@ -365,6 +365,16 @@
               "typeParameters": null,
               "returns": "String",
               "params": []
+            },
+            {
+              "kind": "method",
+              "name": "requiresResolvedLayout",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": [],
+              "stability": "beta"
             },
             {
               "kind": "method",

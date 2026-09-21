@@ -90,12 +90,19 @@ final class DocumentRenderingFacade {
     <R> R export(SemanticBackend<R> backend, Path outputFile) throws Exception {
         context.ensureOpen();
         Objects.requireNonNull(backend, "backend");
+        // Compiled only for a backend that asked. Compiling measures text, and measurement
+        // needs a font runtime the core does not ship, so resolving it unconditionally
+        // would make a render backend a hard requirement of every semantic export.
+        // The graph, the canvas and the layout all come off the same session state, so a
+        // backend given both is given a layout compiled from the graph beside it.
+        LayoutGraph resolvedLayout = backend.requiresResolvedLayout() ? context.layoutGraph() : null;
         return backend.export(context.documentGraph(),
                 new SemanticExportContext(
                         context.canvas(),
                         context.customFontFamilies(),
                         outputFile,
-                        context.outputOptions()));
+                        context.outputOptions(),
+                        resolvedLayout));
     }
 
     byte[] toPdfBytes() throws Exception {

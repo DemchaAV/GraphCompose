@@ -7,6 +7,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A semantic export backend can ask for the compiled layout.** _(Experimental — see
+  [API stability](docs/api-stability.md).)_ A semantic backend walks the authored tree and
+  gets no geometry, which is right for most of them and wrong for the ones that need a
+  number the engine already worked out — a resolved column width, a settled page count.
+  `SemanticBackend.requiresResolvedLayout()` defaults to `false`; a backend that returns
+  `true` is handed the same session's layout in `SemanticExportContext.layoutGraph()`,
+  compiled from the graph passed to the same `export` call.
+  <br><br>
+  The default matters as much as the option. Compiling a layout measures text, and
+  measurement needs a font runtime that lives in a render module — so resolving one for
+  every semantic export would quietly make a render backend a hard requirement of exports
+  that do not render. A backend that does not ask causes no layout to be compiled, and the
+  published `SemanticExportContext` constructors keep working unchanged: the four-argument
+  one is written out by hand rather than left to the record, since adding the component
+  moved the canonical constructor to five arguments and callers compiled against the
+  published descriptor would otherwise stop linking. `requireLayoutGraph()` is there for a
+  backend that asked and wants the absence to say why rather than hand back `null`.
+
 - **An inline SVG icon can state the text it stands for.** `SvgIcon.withText(String)` returns
   a copy of the icon carrying that text, read back with `SvgIcon.text()`: what a reader that
   copies, searches or extracts the page should find where the icon is drawn in a line of text,

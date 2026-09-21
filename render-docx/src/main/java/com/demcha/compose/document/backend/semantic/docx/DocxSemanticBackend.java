@@ -24,6 +24,7 @@ import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextDirection;
+import com.demcha.compose.document.node.RowArrangement;
 import com.demcha.compose.document.node.RowNode;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import com.demcha.compose.document.node.SectionNode;
@@ -33,6 +34,7 @@ import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
@@ -74,6 +76,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFonts;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblBorders;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblGrid;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblLayoutType;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblWidth;
@@ -82,7 +85,9 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblLayoutType;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STJc;
@@ -1516,14 +1521,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // a header pair, a label beside a value — exported with visible rules the PDF
         // never draws.
         hideTableGrid(table);
-        // A row occupies the whole width it is offered — NodeDefinitionSupport.measureRow
-        // returns the available width unconditionally, whatever its children measure — so
-        // the table carrying it has to as well. Left at POI's size-to-content default the
-        // pair collapses around its text and both columns stop sitting where the PDF puts
-        // them. How the width divides between them is still Word's to decide here.
-        if (Double.isFinite(contentWidth) && contentWidth > 0) {
-            setTableWidth(table, contentWidth);
-        }
+        applyRowGeometry(table, node);
         XWPFTableRow row = table.getRow(0);
         // A row inside a panel is still inside it. Its paragraphs live in table cells and
         // so cannot carry the paint themselves; without shading the cells the band breaks
@@ -1545,6 +1543,162 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void writeRowCellChild(XWPFTableCell cell, DocumentNode child) throws Exception {
         writeCellBody(cell, child);
+    }
+
+    /**
+     * Gives the carrier the row's width, and its cells the row's slots.
+     *
+     * <p>A row occupies the whole width it is offered — {@code measureRow} returns the
+     * available width unconditionally, whatever its children measure — so the carrier
+     * gets the content width. Left at POI's size-to-content default the pair collapses
+     * around its text instead.</p>
+     *
+     * <p>How that width divides is arithmetic the document already carries, for every
+     * distribution except one. Weights, an even split and fixed columns are shares of the
+     * width left after the gaps; only an {@code auto} column and the flex path ask what a
+     * child's content naturally measures, which is the question this backend cannot
+     * answer. So the grid is written for the first three and left to Word for the
+     * others.</p>
+     *
+     * <p>The gap and the row's padding are not columns, and Word has nowhere to put them:
+     * a table has no inter-column gap. They are folded into the neighbouring column's
+     * width and taken back out as that cell's margin, so each cell's text box is exactly
+     * its slot and starts exactly where the slot starts. The margins are written even
+     * when they are zero, because Word's own default is not.</p>
+     *
+     * <p>The width used is the page's, not the row's parent's. A row inside a padded panel
+     * is offered less than the page in the fixed-layout render — but the panel's padding
+     * is not exported either, so in the file being written the row really does have the
+     * whole width. The slots match the document this backend produces rather than the one
+     * it was given.</p>
+     */
+    private void applyRowGeometry(XWPFTable table, RowNode node) {
+        if (!Double.isFinite(contentWidth) || contentWidth <= 0) {
+            return;
+        }
+        setTableWidth(table, contentWidth);
+
+        double[] slots = resolveRowSlots(node, contentWidth);
+        if (slots == null) {
+            return;
+        }
+
+        CTTblGrid grid = table.getCTTbl().getTblGrid() != null
+                ? table.getCTTbl().getTblGrid()
+                : table.getCTTbl().addNewTblGrid();
+        while (grid.sizeOfGridColArray() > 0) {
+            grid.removeGridCol(0);
+        }
+        for (int index = 0; index < slots.length; index++) {
+            double leading = index == 0 ? node.padding().left() : 0.0;
+            double trailing = index == slots.length - 1 ? node.padding().right() : node.gap();
+            double column = slots[index] + leading + trailing;
+            grid.addNewGridCol().setW(BigInteger.valueOf(Math.round(column * POINT_TO_TWIP)));
+
+            CTTcPr properties = cellProperties(table.getRow(0).getCell(index));
+            CTTblWidth cellWidth = properties.isSetTcW() ? properties.getTcW() : properties.addNewTcW();
+            cellWidth.setType(STTblWidth.DXA);
+            cellWidth.setW(BigInteger.valueOf(Math.round(column * POINT_TO_TWIP)));
+            CTTcMar margins = properties.isSetTcMar() ? properties.getTcMar() : properties.addNewTcMar();
+            setCellMargin(margins.isSetLeft() ? margins.getLeft() : margins.addNewLeft(), leading);
+            setCellMargin(margins.isSetRight() ? margins.getRight() : margins.addNewRight(), trailing);
+        }
+
+        // Without this Word treats the grid as a starting suggestion and re-fits the
+        // columns to their content, which is the behaviour being replaced.
+        CTTblPr properties = table.getCTTbl().getTblPr();
+        CTTblLayoutType layout = properties.isSetTblLayout()
+                ? properties.getTblLayout()
+                : properties.addNewTblLayout();
+        layout.setType(STTblLayoutType.FIXED);
+    }
+
+    /**
+     * The width of each of a row's slots, or {@code null} when one of them is content's.
+     *
+     * <p>Mirrors {@code NodeDefinitionSupport.measureRow}: the gaps and the row's padding
+     * come off the top, and what is left is split by columns, by weights, or evenly. The
+     * two branches that measure — a non-START arrangement or a grow spacer, and an
+     * {@code auto} column — return nothing instead.</p>
+     *
+     * @param node       the row being carried
+     * @param outerWidth the width the row is laid out in
+     * @return one width per child, or null when the split needs measuring
+     */
+    private static double[] resolveRowSlots(RowNode node, double outerWidth) {
+        int count = node.children().size();
+        if (count == 0) {
+            return null;
+        }
+        if (node.arrangement() != RowArrangement.START || hasGrowChild(node)) {
+            // The flex path gives every child without a grow factor its natural width.
+            return null;
+        }
+        double inner = Math.max(0.0, outerWidth - node.padding().horizontal());
+        double slotsTotal = Math.max(0.0, inner - node.gap() * Math.max(0, count - 1));
+        double[] slots = new double[count];
+
+        List<DocumentRowColumn> columns = node.columns();
+        if (!columns.isEmpty()) {
+            double used = 0.0;
+            double totalWeight = 0.0;
+            for (int index = 0; index < count; index++) {
+                DocumentRowColumn column = columns.get(index);
+                switch (column.type()) {
+                    case FIXED -> {
+                        slots[index] = column.value();
+                        used += slots[index];
+                    }
+                    case WEIGHT -> totalWeight += column.value();
+                    case AUTO -> {
+                        return null;
+                    }
+                    default -> {
+                        return null;
+                    }
+                }
+            }
+            double remaining = Math.max(0.0, slotsTotal - used);
+            if (totalWeight > 0.0) {
+                for (int index = 0; index < count; index++) {
+                    if (columns.get(index).type() == DocumentRowColumn.Type.WEIGHT) {
+                        slots[index] = remaining * (columns.get(index).value() / totalWeight);
+                    }
+                }
+            }
+            return slots;
+        }
+
+        List<Double> weights = node.weights();
+        if (weights.isEmpty()) {
+            for (int index = 0; index < count; index++) {
+                slots[index] = slotsTotal / count;
+            }
+            return slots;
+        }
+        double total = 0.0;
+        for (Double weight : weights) {
+            total += weight;
+        }
+        for (int index = 0; index < count; index++) {
+            slots[index] = total > 0.0 ? slotsTotal * (weights.get(index) / total) : slotsTotal / count;
+        }
+        return slots;
+    }
+
+    private static boolean hasGrowChild(RowNode node) {
+        for (DocumentNode child : node.children()) {
+            if (child instanceof SpacerNode spacer && spacer.grow() > 0.0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** States one cell margin in points, so Word's own default does not apply instead. */
+    private static void setCellMargin(CTTblWidth margin, double points) {
+        margin.setType(STTblWidth.DXA);
+        margin.setW(BigInteger.valueOf(Math.round(Math.max(0.0, points) * POINT_TO_TWIP)));
     }
 
     /**

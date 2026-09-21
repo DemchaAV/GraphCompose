@@ -1,7 +1,10 @@
 package com.demcha.compose.document.backend.semantic.docx.probe;
 
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.backend.semantic.SemanticBackend;
+import com.demcha.compose.document.backend.semantic.SemanticExportContext;
 import com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend;
+import com.demcha.compose.document.layout.DocumentGraph;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -81,10 +84,20 @@ class EditableExportProbeTest {
         Path docxFile = OUTPUT.resolve(id + ".docx");
 
         byte[] docx;
+        byte[] prototype;
+        EditableExportPrototype.Applied[] applied = new EditableExportPrototype.Applied[1];
         try (DocumentSession session = fixture.apply(pdfFile)) {
             session.buildPdf();
             docx = session.export(new DocxSemanticBackend(), docxFile);
+            // The same document, not a re-authored one: the prototype reads the tree the
+            // export just walked, so a difference between the two files can only come
+            // from the constructs the prototype adds. Null output: this writes nothing.
+            DocumentGraph graph = session.export(new GraphCapture(), null);
+            prototype = EditableExportPrototype.augment(docx, graph, applied);
         }
+        Path prototypeFile = OUTPUT.resolve(id + "-prototype.docx");
+        Files.write(prototypeFile, prototype);
+        DocxShape prototypeShape = shapeOf(prototype);
 
         int pdfPages;
         try (PDDocument pdf = Loader.loadPDF(pdfFile.toFile())) {
@@ -121,6 +134,12 @@ class EditableExportProbeTest {
                                 "numberedParagraphs": %d, "paragraphShading": %d,
                                 "paragraphBorders": %d, "embeddedFontFaces": %d,
                                 "declaredFonts": [%s] },
+                      "prototype": { "file": "%s-prototype.docx",
+                                "hasStylesPart": %b, "hasNumberingPart": %b,
+                                "numberedParagraphs": %d, "paragraphShading": %d,
+                                "paragraphBorders": %d, "textBoxes": %d,
+                                "runsFreedToFollowTheStyle": %d,
+                                "paragraphsNumbered": %d, "paragraphsShaded": %d },
                       "initialFidelity": "see fidelity.json",
                       "editability": "see edit/edit-protocol.json"
                     }"""
@@ -132,7 +151,12 @@ class EditableExportProbeTest {
                         shape.hasStylesPart(), shape.hasNumberingPart(),
                         shape.numberedParagraphs(), shape.paragraphShading(),
                         shape.paragraphBorders(), shape.embeddedFontFaces(),
-                        quoted(shape.declaredFonts()))
+                        quoted(shape.declaredFonts()),
+                        id, prototypeShape.hasStylesPart(), prototypeShape.hasNumberingPart(),
+                        prototypeShape.numberedParagraphs(), prototypeShape.paragraphShading(),
+                        prototypeShape.paragraphBorders(), prototypeShape.textBoxes(),
+                        applied[0].styledRuns(), applied[0].numberedParagraphs(),
+                        applied[0].shadedParagraphs())
                 .indent(2).stripTrailing();
     }
 
@@ -202,6 +226,25 @@ class EditableExportProbeTest {
             count++;
         }
         return count;
+    }
+
+    /**
+     * Hands back the very tree the export was given.
+     *
+     * <p>There is no public way to ask a session for its node tree, and the prototype has
+     * to read the same one the exporter walked — re-authoring the fixture would compare
+     * two documents rather than two exports of one.</p>
+     */
+    private static final class GraphCapture implements SemanticBackend<DocumentGraph> {
+        @Override
+        public String name() {
+            return "graph-capture";
+        }
+
+        @Override
+        public DocumentGraph export(DocumentGraph graph, SemanticExportContext context) {
+            return graph;
+        }
     }
 
     private static String quoted(Set<String> values) {

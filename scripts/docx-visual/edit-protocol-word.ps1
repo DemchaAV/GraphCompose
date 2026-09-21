@@ -213,7 +213,35 @@ try {
         }
     }
 
-    # 6. Save and reopen with no edit at all. A package that needs repairing fails
+    # 6. Continue a list with Enter. This is a question about the mechanism, not the
+    #    look: marker characters typed into ordinary paragraphs look exactly like a
+    #    list until somebody presses Enter and gets a blank line instead of an item.
+    #    wdListNoNumbering is 0, so anything else means Word sees a real list.
+    $scenarios += Invoke-Scenario -Name 'continue-a-list' -Suffix 'list-continued' -Edit {
+        param($doc)
+        $item = $doc.Paragraphs | Where-Object { $_.Range.Text -like '*Storage growth reviewed*' } | Select-Object -First 1
+        if (-not $item) { throw 'the checklist item was not found in the export' }
+        $script:listTypeBefore = $item.Range.ListFormat.ListType
+        $range = $item.Range
+        $range.InsertParagraphAfter()
+        $range.InsertAfter('An item the protocol added by continuing the list.')
+    } -Verify {
+        param($doc, $before, $after)
+        $added = $doc.Paragraphs | Where-Object { $_.Range.Text -like '*continuing the list*' } | Select-Object -First 1
+        if (-not $added) {
+            return New-Result 'continue-a-list' 'FAIL' 'the new item did not survive the save'
+        }
+        $listTypeAfter = $added.Range.ListFormat.ListType
+        if ($script:listTypeBefore -ne 0 -and $listTypeAfter -ne 0) {
+            New-Result 'continue-a-list' 'PASS' "Word reads the block as a real list (ListType $($script:listTypeBefore)) and the new paragraph joined it as an item (ListType $listTypeAfter)"
+        } elseif ($script:listTypeBefore -eq 0) {
+            New-Result 'continue-a-list' 'FAIL' 'Word sees no list here: the markers are characters in ordinary paragraphs, so Enter produces a plain paragraph rather than the next item'
+        } else {
+            New-Result 'continue-a-list' 'FAIL' "the block is a list (ListType $($script:listTypeBefore)) but the new paragraph did not join it (ListType $listTypeAfter)"
+        }
+    }
+
+    # 7. Save and reopen with no edit at all. A package that needs repairing fails
     #    here before any editing question is asked.
     $scenarios += Invoke-Scenario -Name 'round-trip-without-editing' -Suffix 'roundtrip' -Edit {
         param($doc)

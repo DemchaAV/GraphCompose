@@ -41,6 +41,9 @@ class EditableExportFidelityTest {
     private static final Path PROBE = Path.of("target", "docx-probe");
     private static final String[] FIXTURES = {"mixed-two-pager", "boundary-cases"};
 
+    /** Suffixes of the exports compared against one reference: the shipped one, and the probe's. */
+    private static final String[] VARIANTS = {"", "-prototype"};
+
     @Test
     void editorRenderShouldKeepPaginationAndRecordEveryRegionItLoses() throws Exception {
         Path wordDir = PROBE.resolve("word");
@@ -50,37 +53,48 @@ class EditableExportFidelityTest {
         List<String> entries = new ArrayList<>();
         for (String fixture : FIXTURES) {
             Path reference = PROBE.resolve(fixture + ".pdf");
-            Path candidate = wordDir.resolve(fixture + ".pdf");
-            if (!Files.exists(reference) || !Files.exists(candidate)) {
+            if (!Files.exists(reference)) {
                 continue;
             }
+            // Both exports of the same document are measured against the one reference,
+            // so the two numbers are comparable by construction. A prototype that scored
+            // well against its own render would be scoring nothing.
+            for (String variant : VARIANTS) {
+                String id = fixture + variant;
+                Path candidate = wordDir.resolve(id + ".pdf");
+                if (!Files.exists(candidate)) {
+                    continue;
+                }
 
-            PdfRegionDiff.Report report = PdfRegionDiff.compare(
-                    reference, candidate, PROBE.resolve("diff").resolve(fixture));
+                PdfRegionDiff.Report report = PdfRegionDiff.compare(
+                        reference, candidate, PROBE.resolve("diff").resolve(id));
 
-            assertThat(report.pageCountMatches())
-                    .as("%s: reference has %d pages, the editor's render has %d",
-                            fixture, report.referencePages(), report.candidatePages())
-                    .isTrue();
-            assertThat(report.sizeMismatches())
-                    .as("%s: page sizes must survive the round trip", fixture)
-                    .isEmpty();
+                assertThat(report.pageCountMatches())
+                        .as("%s: reference has %d pages, the editor's render has %d",
+                                id, report.referencePages(), report.candidatePages())
+                        .isTrue();
+                assertThat(report.sizeMismatches())
+                        .as("%s: page sizes must survive the round trip", id)
+                        .isEmpty();
 
-            entries.add("""
-                        {
-                          "id": "%s",
-                          "pages": %d,
-                          "worstCellDifferingFraction": %.4f,
-                          "cellsOver10pct": %d,
-                          "cellsOver25pct": %d,
-                          "baselineLostRegions": %d,
-                          "lostRegionCells": [%s],
-                          "verdict": "BASELINE_RECORDED"
-                        }"""
-                    .formatted(fixture, report.referencePages(), report.worstCell(),
-                            report.over(0.10).size(), report.over(0.25).size(),
-                            report.lostContent().size(), describe(report.lostContent()))
-                    .indent(2).stripTrailing());
+                entries.add("""
+                            {
+                              "id": "%s",
+                              "export": "%s",
+                              "pages": %d,
+                              "worstCellDifferingFraction": %.4f,
+                              "cellsOver10pct": %d,
+                              "cellsOver25pct": %d,
+                              "lostRegions": %d,
+                              "lostRegionCells": [%s],
+                              "verdict": "MEASURED_NO_BUDGET_AGREED"
+                            }"""
+                        .formatted(fixture, variant.isEmpty() ? "semantic-backend" : "prototype",
+                                report.referencePages(), report.worstCell(),
+                                report.over(0.10).size(), report.over(0.25).size(),
+                                report.lostContent().size(), describe(report.lostContent()))
+                        .indent(2).stripTrailing());
+            }
         }
 
         Files.writeString(PROBE.resolve("fidelity.json"),

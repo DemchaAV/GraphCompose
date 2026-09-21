@@ -74,6 +74,8 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyles;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STStyleType;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFonts;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSpacing;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblBorders;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblGrid;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblLayoutType;
@@ -155,6 +157,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // two lists reading the same are still two lists.
     private final java.util.Map<com.demcha.compose.document.node.ListNode, BigInteger>
             listNumbering = new java.util.IdentityHashMap<>();
+    // What the engine already measured for the nodes being written: line heights and
+    // resolved column widths. Empty when the export was handed no layout.
+    private DocxLayoutMetrics layout = DocxLayoutMetrics.EMPTY;
+    // The vertical edge of a container whose children have not been written yet, waiting
+    // for the first paragraph inside it — a container is not a Word object, so the space it
+    // holds above itself has to be carried by something that is.
+    private double carriedSpacingBefore;
+    // The last paragraph written into the body, so a container can hand it the space it
+    // holds below itself once its children are done.
+    private XWPFParagraph lastBodyParagraph;
 
     /**
      * A container's paint, reduced to what a Word paragraph can carry.
@@ -181,6 +193,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return "docx-semantic";
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This backend asks for the layout, and pays the measurement and pagination pass for
+     * it. Two of the things that decide how the file looks are measurements over the font —
+     * how tall a line of text is, and how wide an {@code auto} column came out — and this
+     * backend has no font runtime of its own. The engine made both already; without them
+     * the export hands the questions to Word, whose answers are its own: measured against
+     * the reference render, Word set each body line at 13.9pt where the document says 9.7,
+     * and sized a table to its text rather than to the width the layout gave it.</p>
+     *
+     * <p>Nothing here depends on the layout being present. An export handed none still
+     * writes a complete document: every place that reads a measured number falls back to
+     * what the document itself states, and states what that costs.</p>
+     */
+    @Override
+    public boolean requiresResolvedLayout() {
+        return true;
+    }
+
     @Override
     public byte[] export(DocumentGraph graph, SemanticExportContext context) throws Exception {
         shapeContainerWarned.set(false);
@@ -190,6 +222,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         containerPaint.clear();
         listNumbering.clear();
         documentDefaultStyle = dominantTextStyle(graph);
+        layout = DocxLayoutMetrics.of(graph, context.layoutGraph());
+        carriedSpacingBefore = 0;
+        lastBodyParagraph = null;
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
         try (XWPFDocument document = new XWPFDocument()) {
             applyPageGeometry(document, context.canvas());
@@ -590,17 +625,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (normalized.isBlank()) {
                 continue;
             }
+            java.util.OptionalDouble lineHeight = layout.lineHeight(list);
             if (list.marker().isRich()) {
                 // A drawn marker's pieces are runs, so the row is written the way
                 // any row with runs in it is; its item is still just a label.
                 writeRichListLine(document, list.textStyle(), list.marker(),
-                        com.demcha.compose.document.node.ListItem.of(normalized), 0);
+                        com.demcha.compose.document.node.ListItem.of(normalized), 0, lineHeight);
             } else if (numId != null) {
                 // Word draws the marker, so the text is the item and nothing else.
-                writeListLine(document, list.textStyle(), normalized, 0, numId);
+                writeListLine(document, list.textStyle(), normalized, 0, numId, lineHeight);
             } else {
                 writeListLine(document, list.textStyle(),
-                        list.marker().prefix() + normalized, 0, null);
+                        list.marker().prefix() + normalized, 0, null, lineHeight);
             }
         }
         for (com.demcha.compose.document.node.ListItem item : list.nestedItems()) {
@@ -621,12 +657,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 item.marker() != null
                         ? item.marker()
                         : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth);
+        java.util.OptionalDouble lineHeight = layout.lineHeight(list);
         if (item.isRich() || marker.isRich()) {
-            writeRichListLine(document, list.textStyle(), marker, item, depth);
+            writeRichListLine(document, list.textStyle(), marker, item, depth, lineHeight);
         } else if (numId != null) {
-            writeListLine(document, list.textStyle(), item.label(), depth, numId);
+            writeListLine(document, list.textStyle(), item.label(), depth, numId, lineHeight);
         } else {
-            writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth, null);
+            writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth, null,
+                    lineHeight);
         }
         for (com.demcha.compose.document.node.ListItem child : item.children()) {
             writeNestedItem(document, list, child, depth + 1, numId);
@@ -641,8 +679,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *              and the nesting indent as characters
      */
     private void writeListLine(XWPFDocument document, DocumentTextStyle style,
-                               String text, int depth, BigInteger numId) {
+                               String text, int depth, BigInteger numId,
+                               java.util.OptionalDouble lineHeight) {
         XWPFParagraph para = newBodyParagraph(document);
+        applyLineHeight(para, lineHeight);
         if (numId != null) {
             para.setNumID(numId);
             para.setNumILvl(BigInteger.valueOf(depth));
@@ -674,10 +714,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeRichListLine(XWPFDocument document, DocumentTextStyle style,
                                    com.demcha.compose.document.node.ListMarker marker,
                                    com.demcha.compose.document.node.ListItem item,
-                                   int depth) {
+                                   int depth,
+                                   java.util.OptionalDouble lineHeight) {
         warnDroppedInlineRuns(marker.runs());
         warnDroppedInlineRuns(item.runs());
         XWPFParagraph para = newBodyParagraph(document);
+        applyLineHeight(para, lineHeight);
         XWPFRun leading = para.createRun();
         applyStyle(leading, style);
         leading.setText("  ".repeat(depth) + (marker.isRich() ? "" : marker.prefix()));
@@ -768,20 +810,48 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeContainerChildren(XWPFDocument document, DocumentNode node) throws Exception {
         ContainerPaint paint = paintOf(node);
         if (paint.isEmpty()) {
-            for (DocumentNode child : node.children()) {
-                writeNode(document, child);
-            }
+            writeContainerBody(document, node);
             return;
         }
         warnContainerRadiusDropped(node);
         containerPaint.push(paint);
         try {
-            for (DocumentNode child : node.children()) {
-                writeNode(document, child);
-            }
+            writeContainerBody(document, node);
         } finally {
             containerPaint.pop();
         }
+    }
+
+    /**
+     * Writes a container's children, carrying the container's own vertical box with them.
+     *
+     * <p>A container is not a Word object — its children are written where it stood — so
+     * the space it holds above and below itself had nowhere to go and was dropped. Word has
+     * that space on a paragraph and only on a paragraph, so the top goes to the first
+     * paragraph written inside and the bottom to the last, which is where a reader sees it
+     * either way.</p>
+     *
+     * <p>Both are added to whatever that paragraph asks for itself, and both survive
+     * nesting: a card inside a section hands its top to the same first paragraph, which
+     * ends up carrying the sum — the same sum the page shows.</p>
+     *
+     * <p>A container that begins or ends with a table keeps that edge unwritten. Word has
+     * no space-before on a table, and the alternatives — an empty paragraph, a floating
+     * table's {@code w:tblpPr} — either add a line the document never asked for or move the
+     * table out of the flow it is in.</p>
+     */
+    private void writeContainerBody(XWPFDocument document, DocumentNode node) throws Exception {
+        carriedSpacingBefore += node.margin().top() + node.padding().top();
+        for (DocumentNode child : node.children()) {
+            writeNode(document, child);
+        }
+        double after = node.margin().bottom() + node.padding().bottom();
+        if (after > 0 && lastBodyParagraph != null) {
+            addSpacing(lastBodyParagraph, 0, after);
+        }
+        // Nothing inside took the top edge — a container of tables, or an empty one — so it
+        // is not left waiting to land on whatever paragraph comes next.
+        carriedSpacingBefore = 0;
     }
 
     private static boolean hasRadius(com.demcha.compose.document.style.DocumentCornerRadius radius) {
@@ -975,7 +1045,42 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (paint != null) {
             applyContainerPaint(para, paint);
         }
+        if (carriedSpacingBefore > 0) {
+            addSpacing(para, carriedSpacingBefore, 0);
+            carriedSpacingBefore = 0;
+        }
+        lastBodyParagraph = para;
         return para;
+    }
+
+    /**
+     * Adds to the space above and below a paragraph, rather than replacing it.
+     *
+     * <p>Two things state it — the paragraph's own box, and the vertical edge of every
+     * container it sits at the start or the end of — and on the page a reader sees their
+     * sum. Setting it would mean whichever ran last silently won.</p>
+     *
+     * @param para   the Word paragraph
+     * @param before points to add above, zero to leave it alone
+     * @param after  points to add below, zero to leave it alone
+     */
+    private static void addSpacing(XWPFParagraph para, double before, double after) {
+        CTPPr properties = para.getCTP().isSetPPr()
+                ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        if (before > 0) {
+            spacing.setBefore(BigInteger.valueOf(
+                    twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null) + toTwips(before)));
+        }
+        if (after > 0) {
+            spacing.setAfter(BigInteger.valueOf(
+                    twipsOf(spacing.isSetAfter() ? spacing.getAfter() : null) + toTwips(after)));
+        }
+    }
+
+    /** Reads a twip measure back, treating an unset one as zero. */
+    private static long twipsOf(Object measure) {
+        return measure == null ? 0 : Long.parseLong(String.valueOf(measure));
     }
 
     private static void applyContainerPaint(XWPFParagraph para, ContainerPaint paint) {
@@ -1046,12 +1151,42 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Sets the paragraph's lines to the height the engine measured them at.
+     *
+     * <p>A line's height is the font's, and Word uses its own — measured against the
+     * reference render, Word set a body line at 13.9pt and LibreOffice at 12.1 where the
+     * document says 9.7. Over a page that difference is the largest single reason an
+     * exported document stops matching: everything below the first paragraph sits lower
+     * than it should, and the gap grows with every line.</p>
+     *
+     * <p>Written as {@code w:lineRule="exact"} rather than as a multiple: the number is a
+     * measurement in points, and a multiple would be measured again by Word against
+     * whichever font it substituted. Exact is also the only rule that can make a line
+     * shorter than the font would like — which is the direction this always moves, since
+     * the engine's line box is the face's ascent plus descent with no leading.</p>
+     *
+     * @param para   the Word paragraph
+     * @param height the measured line height in points, empty when nothing measured it
+     */
+    private static void applyLineHeight(XWPFParagraph para, java.util.OptionalDouble height) {
+        if (height.isEmpty()) {
+            return;
+        }
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        spacing.setLineRule(STLineSpacingRule.EXACT);
+        spacing.setLine(BigInteger.valueOf(Math.round(height.getAsDouble() * POINT_TO_TWIP)));
+    }
+
+    /**
      * Writes the properties a paragraph carries whatever it sits in.
      *
      * <p>One place on purpose. These were written where a paragraph is a document child
      * and not where it is a table cell's, which is how every right-to-left invoice line
      * came out undeclared; splitting them again would set the next property up for the
-     * same fate.</p>
+     * same fate. The measured line height is the next property, and it went the same way
+     * once before landing here: written beside the call rather than inside it, it reached
+     * the body and not the two columns of a row, whose paragraphs are a cell's.</p>
      *
      * <p>{@link TextDirection#AUTO} is resolved here rather than passed on. Leaving it
      * unwritten was leaving Word to guess, and Word guessing is the thing {@code w:bidi}
@@ -1065,11 +1200,38 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param source the node it was written from
      * @return whether the paragraph runs right to left, for its runs to declare too
      */
-    private static boolean applyParagraphProperties(XWPFParagraph target, ParagraphNode source) {
+    private boolean applyParagraphProperties(XWPFParagraph target, ParagraphNode source) {
         boolean rightToLeft = ParagraphDirection.resolve(source) == TextDirection.RTL;
         target.setAlignment(toAlignment(source.align(), rightToLeft));
         applyDirection(target, rightToLeft);
+        applyLineHeight(target, layout.lineHeight(source));
+        applyVerticalSpacing(target, source);
         return rightToLeft;
+    }
+
+    /**
+     * Carries the space a paragraph holds above and below itself.
+     *
+     * <p>A paragraph's own {@code margin} and {@code padding} are what separate one block
+     * from the next, and none of it was written: every exported document ran its blocks
+     * together and leaned on whatever Word puts between paragraphs instead. That was
+     * invisible while the line height was Word's too — the lines were tall enough to stand
+     * in for the gaps — and became the largest remaining difference the moment the lines
+     * were right.</p>
+     *
+     * <p>Vertical space is one of the few pieces of a node's box Word holds natively, which
+     * is why this is written and the horizontal half is not: {@code w:spacing} is the gap
+     * above and below a paragraph, while the left and right insets of a shaded block have
+     * no paragraph-level equivalent at all.</p>
+     *
+     * <p>Margin and padding are added together. They are different things to the engine —
+     * one outside the box, one inside it — but Word has one gap, and a reader looking at
+     * the page sees their sum.</p>
+     */
+    private static void applyVerticalSpacing(XWPFParagraph target, DocumentNode source) {
+        addSpacing(target,
+                source.margin().top() + source.padding().top(),
+                source.margin().bottom() + source.padding().bottom());
     }
 
     /**
@@ -1573,44 +1735,137 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * it was given.</p>
      */
     private void applyRowGeometry(XWPFTable table, RowNode node) {
+        double[] starts = layout.rowChildStarts(node);
+        if (starts != null) {
+            // The layout placed each child, so every way a row can divide — the two that
+            // measure their children included — is already answered.
+            setTableWidth(table, starts[0]);
+            writeRowColumns(table, placedColumns(node, starts));
+            return;
+        }
+
         if (!Double.isFinite(contentWidth) || contentWidth <= 0) {
             return;
         }
         setTableWidth(table, contentWidth);
-
         double[] slots = resolveRowSlots(node, contentWidth);
         if (slots == null) {
             return;
         }
+        writeRowColumns(table, statedColumns(node, slots));
+    }
 
+    /**
+     * One column of a row's carrier: the text box, and what sits either side of it inside
+     * the same cell.
+     *
+     * @param width    the grid column's full width in points
+     * @param leading  space before the text box, written as the cell's left margin
+     * @param trailing space after it, written as the cell's right margin
+     */
+    private record CellColumn(double width, double leading, double trailing) {
+    }
+
+    /**
+     * Columns from where the layout started each child.
+     *
+     * <p>A slot runs from its child's start to the next child's, less the gap the row puts
+     * between them; the last runs to the row's edge, less its padding. That is the same
+     * shape {@link #statedColumns} builds — the difference is only where the starts come
+     * from, and these were measured rather than worked out.</p>
+     */
+    private static List<CellColumn> placedColumns(RowNode node, double[] starts) {
+        int count = starts.length - 1;
+        double rowWidth = starts[0];
+        List<CellColumn> columns = new ArrayList<>(count);
+        for (int index = 0; index < count; index++) {
+            double x = starts[1 + index];
+            double columnStart = index == 0 ? 0.0 : x;
+            double columnEnd = index == count - 1 ? rowWidth : starts[2 + index];
+            double trailing = index == count - 1 ? node.padding().right() : node.gap();
+            columns.add(new CellColumn(columnEnd - columnStart, x - columnStart,
+                    Math.max(0.0, Math.min(trailing, columnEnd - x))));
+        }
+        return columns;
+    }
+
+    /** Columns from the row's own arithmetic: the slot, plus the gap and padding beside it. */
+    private static List<CellColumn> statedColumns(RowNode node, double[] slots) {
+        List<CellColumn> columns = new ArrayList<>(slots.length);
+        for (int index = 0; index < slots.length; index++) {
+            double leading = index == 0 ? node.padding().left() : 0.0;
+            double trailing = index == slots.length - 1 ? node.padding().right() : node.gap();
+            columns.add(new CellColumn(slots[index] + leading + trailing, leading, trailing));
+        }
+        return columns;
+    }
+
+    /**
+     * Writes a row carrier's grid, and the cell margins that hold its text box in place.
+     *
+     * <p>Word has no inter-column gap and no row padding, so both ride in the neighbouring
+     * column's width and are taken back out as that cell's margin. The margins are written
+     * even when they are zero: Word's own default is not.</p>
+     */
+    private static void writeRowColumns(XWPFTable table, List<CellColumn> columns) {
         CTTblGrid grid = table.getCTTbl().getTblGrid() != null
                 ? table.getCTTbl().getTblGrid()
                 : table.getCTTbl().addNewTblGrid();
         while (grid.sizeOfGridColArray() > 0) {
             grid.removeGridCol(0);
         }
-        for (int index = 0; index < slots.length; index++) {
-            double leading = index == 0 ? node.padding().left() : 0.0;
-            double trailing = index == slots.length - 1 ? node.padding().right() : node.gap();
-            double column = slots[index] + leading + trailing;
-            grid.addNewGridCol().setW(BigInteger.valueOf(Math.round(column * POINT_TO_TWIP)));
+        for (int index = 0; index < columns.size(); index++) {
+            CellColumn column = columns.get(index);
+            grid.addNewGridCol().setW(BigInteger.valueOf(Math.round(column.width() * POINT_TO_TWIP)));
 
             CTTcPr properties = cellProperties(table.getRow(0).getCell(index));
             CTTblWidth cellWidth = properties.isSetTcW() ? properties.getTcW() : properties.addNewTcW();
             cellWidth.setType(STTblWidth.DXA);
-            cellWidth.setW(BigInteger.valueOf(Math.round(column * POINT_TO_TWIP)));
+            cellWidth.setW(BigInteger.valueOf(Math.round(column.width() * POINT_TO_TWIP)));
             CTTcMar margins = properties.isSetTcMar() ? properties.getTcMar() : properties.addNewTcMar();
-            setCellMargin(margins.isSetLeft() ? margins.getLeft() : margins.addNewLeft(), leading);
-            setCellMargin(margins.isSetRight() ? margins.getRight() : margins.addNewRight(), trailing);
+            setCellMargin(margins.isSetLeft() ? margins.getLeft() : margins.addNewLeft(),
+                    column.leading());
+            setCellMargin(margins.isSetRight() ? margins.getRight() : margins.addNewRight(),
+                    column.trailing());
         }
+        setFixedLayout(table);
+    }
 
-        // Without this Word treats the grid as a starting suggestion and re-fits the
-        // columns to their content, which is the behaviour being replaced.
-        CTTblPr properties = table.getCTTbl().getTblPr();
-        CTTblLayoutType layout = properties.isSetTblLayout()
+    /** Replaces a table's grid with the given column widths. */
+    private static void writeGrid(XWPFTable table, double[] widths) {
+        CTTblGrid grid = table.getCTTbl().getTblGrid() != null
+                ? table.getCTTbl().getTblGrid()
+                : table.getCTTbl().addNewTblGrid();
+        while (grid.sizeOfGridColArray() > 0) {
+            grid.removeGridCol(0);
+        }
+        for (double width : widths) {
+            grid.addNewGridCol().setW(BigInteger.valueOf(Math.round(width * POINT_TO_TWIP)));
+        }
+    }
+
+    /**
+     * Makes the grid the answer rather than a suggestion.
+     *
+     * <p>Left to its default Word re-fits a table's columns to their content, which is the
+     * behaviour every written grid exists to replace.</p>
+     */
+    private static void setFixedLayout(XWPFTable table) {
+        CTTblPr properties = table.getCTTbl().getTblPr() != null
+                ? table.getCTTbl().getTblPr()
+                : table.getCTTbl().addNewTblPr();
+        CTTblLayoutType type = properties.isSetTblLayout()
                 ? properties.getTblLayout()
                 : properties.addNewTblLayout();
-        layout.setType(STTblLayoutType.FIXED);
+        type.setType(STTblLayoutType.FIXED);
+    }
+
+    private static double sum(double[] values) {
+        double total = 0;
+        for (double value : values) {
+            total += value;
+        }
+        return total;
     }
 
     /**
@@ -1723,6 +1978,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * widths.</p>
      */
     private void applyTableWidth(XWPFTable table, TableNode node, int columnCount) {
+        double[] measured = layout.tableColumns(node);
+        if (measured != null && measured.length > 0) {
+            // The layout resolved every column, an auto one included, so there is nothing
+            // left to decide: write the widths it arrived at and stop Word re-fitting them.
+            writeGrid(table, measured);
+            setTableWidth(table, sum(measured));
+            setFixedLayout(table);
+            return;
+        }
+
         Double authored = node.width() != null && node.width() > 0 ? node.width() : null;
         List<Double> fixedColumns = fixedColumnWidths(node, columnCount);
 
@@ -1739,22 +2004,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double width = authored != null ? Math.max(authored, natural) : natural;
         setTableWidth(table, width);
 
-        CTTblGrid grid = table.getCTTbl().getTblGrid() != null
-                ? table.getCTTbl().getTblGrid()
-                : table.getCTTbl().addNewTblGrid();
-        while (grid.sizeOfGridColArray() > 0) {
-            grid.removeGridCol(0);
+        double[] columns = new double[fixedColumns.size()];
+        for (int index = 0; index < columns.length; index++) {
+            columns[index] = fixedColumns.get(index);
         }
-        for (int index = 0; index < fixedColumns.size(); index++) {
-            // With no auto column to absorb it, the engine hands a stated width's surplus
-            // to the last column. Splitting it evenly instead would put every column edge
-            // but the first in a different place than the PDF draws it.
-            double column = fixedColumns.get(index);
-            if (index == fixedColumns.size() - 1) {
-                column += width - natural;
-            }
-            grid.addNewGridCol().setW(BigInteger.valueOf(Math.round(column * POINT_TO_TWIP)));
-        }
+        // With no auto column to absorb it, the engine hands a stated width's surplus to
+        // the last column. Splitting it evenly instead would put every column edge but the
+        // first in a different place than the PDF draws it.
+        columns[columns.length - 1] += width - natural;
+        writeGrid(table, columns);
     }
 
     /**

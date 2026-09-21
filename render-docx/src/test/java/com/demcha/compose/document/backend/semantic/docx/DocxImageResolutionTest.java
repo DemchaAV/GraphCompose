@@ -43,37 +43,57 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DocxImageResolutionTest {
 
     @Test
-    void anImageIsResolvedOncePerExport(@TempDir Path dir) throws Exception {
+    void theWriterResolvesAnImageOnce(@TempDir Path dir) throws Exception {
         Path png = dir.resolve("probe.png");
         ImageIO.write(new BufferedImage(40, 20, BufferedImage.TYPE_INT_RGB), "png", png.toFile());
 
+        assertThat(resolutionsOf(png, false))
+                .describedAs("one image, one resolution — the sizing pass takes the data the "
+                        + "writer already holds instead of resolving it again")
+                .hasSize(1);
+    }
+
+    @Test
+    void askingForTheLayoutResolvesItAgain(@TempDir Path dir) throws Exception {
+        // Worth stating rather than discovering: the export asks for the compiled layout,
+        // and compiling one measures every image for itself. The writer's own share is
+        // still the single resolution above — this is what the request costs on top, and
+        // it is the same work a PDF render of the document does.
+        Path png = dir.resolve("probe.png");
+        ImageIO.write(new BufferedImage(40, 20, BufferedImage.TYPE_INT_RGB), "png", png.toFile());
+
+        assertThat(resolutionsOf(png, true))
+                .describedAs("the writer's one, plus the layout's own")
+                .hasSizeGreaterThan(1);
+    }
+
+    /**
+     * How many times exporting that image reads it.
+     *
+     * @param png         the image the document carries
+     * @param withSession true to export through a session, which compiles a layout first
+     */
+    private static List<String> resolutionsOf(Path png, boolean withSession) throws Exception {
         Logger logger = (Logger) LoggerFactory.getLogger(
                 "com.demcha.compose.engine.components.content.ImageData");
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
         logger.addAppender(appender);
         try {
-            try (DocumentSession document = GraphCompose.document()
-                    .pageSize(400, 200)
-                    .margin(DocumentInsets.of(20))
-                    .create()) {
-                document.pageFlow(page -> page.addImage(image -> image
-                        .source(DocumentImageData.fromPath(png))
-                        .width(100)));
-                document.export(new DocxSemanticBackend());
+            java.util.function.Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content =
+                    page -> page.addImage(image -> image
+                            .source(DocumentImageData.fromPath(png))
+                            .width(100));
+            if (withSession) {
+                DocxExports.withLayout(400, 200, 20, content).close();
+            } else {
+                DocxExports.withoutLayout(400, 200, 20, content).close();
             }
-
-            List<String> arrivals = appender.list.stream()
+            return appender.list.stream()
                     .map(ILoggingEvent::getFormattedMessage)
                     .filter(message -> message.contains("Create an image from path")
                             && message.contains(png.getFileName().toString()))
                     .toList();
-
-            assertThat(arrivals)
-                    .describedAs("one image, one resolution — the sizing pass takes the data "
-                            + "the writer already holds instead of resolving it again; "
-                            + "messages were %s", arrivals)
-                    .hasSize(1);
         } finally {
             logger.detachAppender(appender);
             appender.stop();

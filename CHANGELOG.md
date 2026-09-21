@@ -3,6 +3,46 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.4.2 — Planned
+
+### Documentation
+
+- **A card of a preset shows the code that draws that preset.** The catalogue carries one
+  compiled block per family — the CVs' builds `BoxedSections`, the invoices' `ModernInvoice` —
+  and every other card of the family was shown it under a caption saying it came from the
+  documentation. The caption was true and the code under it still drew a different document,
+  which is what a reader copies. Those cards now carry the smallest block that draws the preset
+  they are looking at, built from what the card already states: the preset it composes and the
+  record that preset takes, written the way the preset's own runnable example writes it — the
+  no-argument `create()`, which carries the preset's theme rather than another preset's. The
+  family's block stays on the one card it composes, and the link to the page it is published on
+  stays on all of them. It is not that block with its composing line rewritten, because the
+  invoices rule that out: `ConsultingInvoice` takes `StructuredInvoiceDocumentSpec` where the
+  block builds `InvoiceDocumentSpec`, so a rewrite would hand a reader a record the preset does
+  not accept.
+
+- **The catalogue comes before the install instructions.** A visitor scrolling the home page met
+  the Maven coordinates and a format-by-format comparison before seeing anything the library
+  draws. The gallery now follows the opening block directly: choose the result, then wire the
+  library up. Every id and anchor is unchanged, so existing links and shared viewer addresses
+  still land where they did.
+
+- **The line above the catalogue says what clicking a preview does.** It promised the rendered
+  PDF; a viewer opens, which pages through the document, moves across the rest of its family and
+  links the PDF, the source and what reproducing it takes.
+
+- **The site has a link preview drawn for the shape a link preview is.** `og:image` and
+  `twitter:image` named a portrait page of one proposal, 893 by 1263, so a large-image card —
+  which is landscape — published a band cropped out of its middle: a paragraph of a document
+  nobody had asked about, under a link about the library. `SiteSocialCoverRenderer` composes a
+  cover at 1200 by 630 with GraphCompose itself, in the site's own palette, carrying the
+  wordmark, what the library does, and three documents read from the previews the catalogue
+  publishes. It states no version and no measured figure, so it outlives the release that
+  published it, and it is published under a name of its own because Slack, X and LinkedIn cache
+  a preview by URL. `twitter:card` stays `summary_large_image`, and both tags now declare the
+  size and an alt text. A document's own page keeps its own preview: there the document is the
+  subject.
+
 ## v2.4.1 — 2026-09-21
 
 ### Performance

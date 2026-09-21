@@ -129,53 +129,13 @@
         <p class="reproduce-row"><span class="reproduce-label">Preset</span> <code class="reproduce-value">com.demcha.compose.document.templates.invoice.presets.WorkspaceInvoice</code></p>
         <p class="reproduce-row"><span class="reproduce-label">Data model</span> <code class="reproduce-value">com.demcha.compose.document.templates.data.invoice.StructuredInvoiceData</code></p>
         <figure class="reproduce-listing">
-          <figcaption class="reproduce-label">From the docs</figcaption>
-          <pre class="reproduce-code"><code>import com.demcha.compose.GraphCompose;
-import com.demcha.compose.document.api.DocumentPageSize;
-import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
-import com.demcha.compose.document.templates.invoice.presets.ModernInvoice;
+          <figcaption class="reproduce-label">Compose this preset</figcaption>
+          <pre class="reproduce-code"><code>import com.demcha.compose.document.templates.invoice.presets.WorkspaceInvoice;
 
-import java.nio.file.Path;
+DocumentTemplate&lt;StructuredInvoiceData&gt; template = WorkspaceInvoice.create();
 
-InvoiceDocumentSpec invoice = InvoiceDocumentSpec.builder()
-        .title(&quot;Invoice&quot;)
-        .invoiceNumber(&quot;GC-2026-041&quot;)
-        .issueDate(&quot;25 Jun 2026&quot;)
-        .dueDate(&quot;25 Jul 2026&quot;)
-        .reference(&quot;GraphCompose implementation&quot;)
-        .status(&quot;Due&quot;)
-        .fromParty(party -&gt; party
-                .name(&quot;GraphCompose Studio&quot;)
-                .addressLines(&quot;10 Example Street&quot;, &quot;London&quot;)
-                .email(&quot;billing@example.com&quot;)
-                .phone(&quot;+44 20 0000 0000&quot;)
-                .taxId(&quot;VAT GB000000000&quot;))
-        .billToParty(party -&gt; party
-                .name(&quot;Client Ltd&quot;)
-                .addressLines(&quot;22 Client Road&quot;, &quot;Manchester&quot;)
-                .email(&quot;accounts@client.example&quot;))
-        .lineItem(&quot;Document engine integration&quot;, &quot;Implementation and support&quot;,
-                &quot;1&quot;, &quot;4,800.00&quot;, &quot;4,800.00&quot;)
-        .summaryRow(&quot;Subtotal&quot;, &quot;4,800.00&quot;)
-        .summaryRow(&quot;VAT&quot;, &quot;960.00&quot;)
-        .totalRow(&quot;Total&quot;, &quot;5,760.00&quot;)
-        .paymentTerm(&quot;Payment due within 30 days.&quot;)
-        .footerNote(&quot;Thank you for your business.&quot;)
-        .build();
-
-BrandTheme theme = BrandTheme.invoiceModern();
-DocumentTemplate&lt;InvoiceDocumentSpec&gt; template = ModernInvoice.create(theme);
-
-float margin = (float) ModernInvoice.RECOMMENDED_MARGIN;
-try (DocumentSession document = GraphCompose.document(Path.of(&quot;invoice.pdf&quot;))
-        .pageSize(DocumentPageSize.A4)
-        .pageBackground(theme.palette().mainFill())
-        .margin(margin, margin, margin, margin)
-        .create()) {
-    template.compose(document, invoice);
+try (DocumentSession document = GraphCompose.document(Path.of(&quot;invoice-workspace-v2.pdf&quot;)).create()) {
+    template.compose(document, data);   // data: StructuredInvoiceData
     document.buildPdf();
 }</code></pre>
         </figure>

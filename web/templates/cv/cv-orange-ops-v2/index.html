@@ -129,21 +129,13 @@
         <p class="reproduce-row"><span class="reproduce-label">Preset</span> <code class="reproduce-value">com.demcha.compose.document.templates.cv.presets.OrangeOps</code></p>
         <p class="reproduce-row"><span class="reproduce-label">Data model</span> <code class="reproduce-value">com.demcha.compose.document.templates.cv.data.CvDocument</code></p>
         <figure class="reproduce-listing">
-          <figcaption class="reproduce-label">From the docs</figcaption>
-          <pre class="reproduce-code"><code>CvIdentity identity = CvIdentity.builder()
-        .name(&quot;Jane&quot;, &quot;Doe&quot;)
-        .jobTitle(&quot;Backend Engineer&quot;)
-        .contact(&quot;+44 20 7946 0958&quot;, &quot;jane.doe@example.com&quot;, &quot;London, UK&quot;)
-        .build();
+          <figcaption class="reproduce-label">Compose this preset</figcaption>
+          <pre class="reproduce-code"><code>import com.demcha.compose.document.templates.cv.presets.OrangeOps;
 
-CvDocument cv = CvDocument.ofMainSections(identity, List.of(
-        new ParagraphSection(&quot;Profile&quot;, &quot;Ten years building document pipelines.&quot;)));
+DocumentTemplate&lt;CvDocument&gt; template = OrangeOps.create();
 
-BrandTheme theme = BrandTheme.boxedClassic();          // optional override
-DocumentTemplate&lt;CvDocument&gt; template = BoxedSections.create(theme);
-
-try (DocumentSession document = GraphCompose.document(Path.of(&quot;cv.pdf&quot;)).create()) {
-    template.compose(document, cv);
+try (DocumentSession document = GraphCompose.document(Path.of(&quot;cv-orange-ops-v2.pdf&quot;)).create()) {
+    template.compose(document, data);   // data: CvDocument
     document.buildPdf();
 }</code></pre>
         </figure>

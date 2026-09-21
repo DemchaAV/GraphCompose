@@ -129,6 +129,17 @@
         <p class="reproduce-row"><span class="reproduce-label">Preset</span> <code class="reproduce-value">com.demcha.compose.document.templates.coverletter.presets.TimelineMinimalLetter</code></p>
         <p class="reproduce-row"><span class="reproduce-label">Data model</span> <code class="reproduce-value">com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument</code></p>
         <figure class="reproduce-listing">
+          <figcaption class="reproduce-label">Compose this preset</figcaption>
+          <pre class="reproduce-code"><code>import com.demcha.compose.document.templates.coverletter.presets.TimelineMinimalLetter;
+
+DocumentTemplate&lt;CoverLetterDocument&gt; template = TimelineMinimalLetter.create();
+
+try (DocumentSession document = GraphCompose.document(Path.of(&quot;cover-letter-timeline-minimal-v2.pdf&quot;)).create()) {
+    template.compose(document, data);   // data: CoverLetterDocument
+    document.buildPdf();
+}</code></pre>
+        </figure>
+        <figure class="reproduce-listing">
           <figcaption class="reproduce-label">Run the example</figcaption>
           <pre class="reproduce-code"><code>./mvnw -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.templates.coverletter.v2.CvTimelineMinimalLetterV2Example</code></pre>
         </figure>

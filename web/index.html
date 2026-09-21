@@ -31,17 +31,25 @@
   <meta property="og:site_name" content="GraphCompose">
   <meta property="og:title" content="GraphCompose &mdash; Java PDF layout engine for structured business documents">
   <meta property="og:description" content="Declarative semantic PDF generation for Java. CVs, invoices, proposals, reports — composed from ParagraphNode, TableNode, SectionNode. Every example runnable, every PDF real.">
-  <meta property="og:image" content="https://demchaav.github.io/GraphCompose/showcase/screenshots/templates/proposal/project-proposal-cinematic.png">
-  <meta property="og:image:alt" content="GraphCompose-rendered project proposal PDF preview">
-  <meta property="og:image:width" content="893">
-  <meta property="og:image:height" content="1263">
+  <!-- A large-image card is landscape. This used to be a portrait page of one proposal at
+       893x1263, so a feed cropped a band out of its middle and published a paragraph of a
+       document nobody had asked about. The cover is drawn for the shape, at the 1200x630 every
+       platform crops least, and carries no version or figure so it outlives the release that
+       published it. Document pages keep their own preview: there the document IS the subject.
+       Renamed rather than overwritten - Slack, X and LinkedIn cache by URL. -->
+  <meta property="og:image" content="https://demchaav.github.io/GraphCompose/assets/social/graphcompose-cover-2026-09.png">
+  <meta property="og:image:alt" content="GraphCompose: document generation for Java, beside a CV, an invoice and a proposal the library rendered">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:locale" content="en_US">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="GraphCompose &mdash; Java PDF layout engine">
   <meta name="twitter:description" content="Declarative semantic PDF generation for Java. CVs, invoices, proposals, reports — composed from ParagraphNode, TableNode, SectionNode.">
-  <meta name="twitter:image" content="https://demchaav.github.io/GraphCompose/showcase/screenshots/templates/proposal/project-proposal-cinematic.png">
+  <meta name="twitter:image" content="https://demchaav.github.io/GraphCompose/assets/social/graphcompose-cover-2026-09.png">
+  <meta name="twitter:image:alt" content="GraphCompose: document generation for Java, beside a CV, an invoice and a proposal the library rendered">
 
   <!-- Structured data: SoftwareApplication + SoftwareSourceCode -->
   <!-- The one place the site's version is written down. The JSON-LD below and the install
@@ -242,116 +250,11 @@
       </div>
     </section>
 
-    <section class="section-shell" id="install" aria-labelledby="install-title">
-      <div class="section-heading">
-        <p class="section-label">Get started</p>
-        <h2 id="install-title">Maven Central. Add what you are building.</h2>
-        <p class="section-text">Every coordinate below is the v2.4.1 release. The fonts and emoji have version numbers of their own, and the bundle pins them for you.</p>
-      </div>
-      <div class="install-blocks install-scenarios">
-        <article class="install-block">
-          <h3>PDF from your own layout</h3>
-          <p>The engine and its PDF backend.</p>
-          <p class="install-form">Maven</p>
-<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
-  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
-  &lt;artifactId&gt;graph-compose&lt;/artifactId&gt;
-  &lt;version&gt;2.4.1&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-          <p class="install-form">Gradle (Groovy DSL)</p>
-<pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose:2.4.1'</code></pre>
-        </article>
-        <article class="install-block">
-          <h3>Ready-made templates</h3>
-          <p>One coordinate for the engine and its PDF backend, the CV, cover letter, invoice, proposal, receipt and rota templates, the bundled fonts many of them are drawn in, and colour emoji, at versions that work together.</p>
-          <p class="install-form">Maven</p>
-<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
-  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
-  &lt;artifactId&gt;graph-compose-bundle&lt;/artifactId&gt;
-  &lt;version&gt;2.4.1&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-          <p class="install-form">Gradle (Groovy DSL)</p>
-<pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose-bundle:2.4.1'</code></pre>
-        </article>
-        <article class="install-block">
-          <h3>An editable PowerPoint deck <span class="install-badge">Beta</span></h3>
-          <p>Add it beside <code>graph-compose</code> or the bundle: the layout of the PDF, as shapes on slides.</p>
-          <p class="install-form">Maven</p>
-<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
-  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
-  &lt;artifactId&gt;graph-compose-render-pptx&lt;/artifactId&gt;
-  &lt;version&gt;2.4.1&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-          <p class="install-form">Gradle (Groovy DSL)</p>
-<pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose-render-pptx:2.4.1'</code></pre>
-        </article>
-        <article class="install-block">
-          <h3>A Word document</h3>
-          <p>Add it beside <code>graph-compose</code> or the bundle: a semantic export, laid out by Word itself.</p>
-          <p class="install-form">Maven</p>
-<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
-  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
-  &lt;artifactId&gt;graph-compose-render-docx&lt;/artifactId&gt;
-  &lt;version&gt;2.4.1&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-          <p class="install-form">Gradle (Groovy DSL)</p>
-<pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose-render-docx:2.4.1'</code></pre>
-        </article>
-        <div class="install-block install-hello">
-          <h3>30-second hello world</h3>
-<pre class="language-java"><code class="language-java">try (var doc = GraphCompose
-        .document(out).create()) {
-  doc.pageFlow()
-     .addParagraph("Hello, GraphCompose")
-     .addList(l -&gt; l.items(
-         "PDF", "DOCX", "Tables"))
-     .build();
-  doc.buildPdf();
-}</code></pre>
-        </div>
-      </div>
-    </section>
-
-    <section class="section-shell" id="formats" aria-labelledby="formats-title">
-      <div class="section-heading">
-        <p class="section-label">Output formats</p>
-        <h2 id="formats-title">One document, three kinds of file.</h2>
-        <p class="section-text">PDF and PowerPoint are drawn from the same resolved layout; Word receives the document's structure and lays it out itself. What each format keeps, capability by capability, is in the <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/architecture/backend-capability-matrix.md">backend capability matrix</a>.</p>
-      </div>
-      <div class="feature-grid">
-        <article class="feature-card">
-          <h3>PDF</h3>
-          <p><code>graph-compose</code></p>
-          <p>The reference output. Fonts you register or take from the bundle are embedded and subset; the standard fonts, the default Helvetica among them, are not. Links, bookmarks and metadata are written, a document can be encrypted, and a deterministic mode renders byte-identical files.</p>
-        </article>
-        <article class="feature-card">
-          <h3>PowerPoint <span class="install-badge">Beta</span></h3>
-          <p><code>graph-compose-render-pptx</code></p>
-          <p>Geometry-identical to the PDF, with text, panels and most vector drawing as editable shapes.</p>
-          <ul class="format-limits">
-            <li>A clip that would cut into content, and inline SVG with clips, exact stroke styles or art outside its view box, become pictures.</li>
-            <li>Distinct per-corner radii, numeric dash patterns and radial gradients are approximated.</li>
-            <li>No encryption; the first bookmark on a slide names it, and the rest are dropped.</li>
-          </ul>
-        </article>
-        <article class="feature-card">
-          <h3>Word</h3>
-          <p><code>graph-compose-render-docx</code></p>
-          <p>Paragraphs, tables and block images become Word content, and page zones become real headers and footers with live page numbers.</p>
-          <ul class="format-limits">
-            <li>The text header and footer (<code>DocumentHeaderFooter</code>) are not written; a page zone is.</li>
-            <li>Shapes, lines, barcodes, inline images, links and watermarks are not written.</li>
-            <li>Fonts are named, not embedded, and list hanging indents are ignored.</li>
-          </ul>
-        </article>
-      </div>
-    </section>
-
     <section class="section-shell" id="showcase" aria-labelledby="showcase-title">
       <div class="section-heading">
         <p class="section-label">Catalogue</p>
         <h2 id="showcase-title">Generated PDFs you can inspect.</h2>
-        <p class="section-text">Every example below is a real, runnable Java file. Click the preview to open the rendered PDF, or jump straight into the source.</p>
+        <p class="section-text">Every document below is drawn by a real, runnable Java file. Click a preview to open the viewer: it pages through the whole document, moves across the rest of its family, and links the PDF, the source and what reproducing it takes.</p>
       </div>
 
       <div class="showcase-controls" role="search">
@@ -598,6 +501,111 @@
           <p>Source for every example lives under <a href="https://github.com/DemchaAV/GraphCompose/tree/v2.4.1/examples/src/main/java/com/demcha/examples"><code>examples/src/main/java/com/demcha/examples</code></a> on GitHub.</p>
         </div>
       </noscript>
+    </section>
+
+    <section class="section-shell" id="install" aria-labelledby="install-title">
+      <div class="section-heading">
+        <p class="section-label">Get started</p>
+        <h2 id="install-title">Maven Central. Add what you are building.</h2>
+        <p class="section-text">Every coordinate below is the v2.4.1 release. The fonts and emoji have version numbers of their own, and the bundle pins them for you.</p>
+      </div>
+      <div class="install-blocks install-scenarios">
+        <article class="install-block">
+          <h3>PDF from your own layout</h3>
+          <p>The engine and its PDF backend.</p>
+          <p class="install-form">Maven</p>
+<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
+  &lt;artifactId&gt;graph-compose&lt;/artifactId&gt;
+  &lt;version&gt;2.4.1&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+          <p class="install-form">Gradle (Groovy DSL)</p>
+<pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose:2.4.1'</code></pre>
+        </article>
+        <article class="install-block">
+          <h3>Ready-made templates</h3>
+          <p>One coordinate for the engine and its PDF backend, the CV, cover letter, invoice, proposal, receipt and rota templates, the bundled fonts many of them are drawn in, and colour emoji, at versions that work together.</p>
+          <p class="install-form">Maven</p>
+<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
+  &lt;artifactId&gt;graph-compose-bundle&lt;/artifactId&gt;
+  &lt;version&gt;2.4.1&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+          <p class="install-form">Gradle (Groovy DSL)</p>
+<pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose-bundle:2.4.1'</code></pre>
+        </article>
+        <article class="install-block">
+          <h3>An editable PowerPoint deck <span class="install-badge">Beta</span></h3>
+          <p>Add it beside <code>graph-compose</code> or the bundle: the layout of the PDF, as shapes on slides.</p>
+          <p class="install-form">Maven</p>
+<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
+  &lt;artifactId&gt;graph-compose-render-pptx&lt;/artifactId&gt;
+  &lt;version&gt;2.4.1&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+          <p class="install-form">Gradle (Groovy DSL)</p>
+<pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose-render-pptx:2.4.1'</code></pre>
+        </article>
+        <article class="install-block">
+          <h3>A Word document</h3>
+          <p>Add it beside <code>graph-compose</code> or the bundle: a semantic export, laid out by Word itself.</p>
+          <p class="install-form">Maven</p>
+<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
+  &lt;artifactId&gt;graph-compose-render-docx&lt;/artifactId&gt;
+  &lt;version&gt;2.4.1&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+          <p class="install-form">Gradle (Groovy DSL)</p>
+<pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose-render-docx:2.4.1'</code></pre>
+        </article>
+        <div class="install-block install-hello">
+          <h3>30-second hello world</h3>
+<pre class="language-java"><code class="language-java">try (var doc = GraphCompose
+        .document(out).create()) {
+  doc.pageFlow()
+     .addParagraph("Hello, GraphCompose")
+     .addList(l -&gt; l.items(
+         "PDF", "DOCX", "Tables"))
+     .build();
+  doc.buildPdf();
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-shell" id="formats" aria-labelledby="formats-title">
+      <div class="section-heading">
+        <p class="section-label">Output formats</p>
+        <h2 id="formats-title">One document, three kinds of file.</h2>
+        <p class="section-text">PDF and PowerPoint are drawn from the same resolved layout; Word receives the document's structure and lays it out itself. What each format keeps, capability by capability, is in the <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/architecture/backend-capability-matrix.md">backend capability matrix</a>.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <h3>PDF</h3>
+          <p><code>graph-compose</code></p>
+          <p>The reference output. Fonts you register or take from the bundle are embedded and subset; the standard fonts, the default Helvetica among them, are not. Links, bookmarks and metadata are written, a document can be encrypted, and a deterministic mode renders byte-identical files.</p>
+        </article>
+        <article class="feature-card">
+          <h3>PowerPoint <span class="install-badge">Beta</span></h3>
+          <p><code>graph-compose-render-pptx</code></p>
+          <p>Geometry-identical to the PDF, with text, panels and most vector drawing as editable shapes.</p>
+          <ul class="format-limits">
+            <li>A clip that would cut into content, and inline SVG with clips, exact stroke styles or art outside its view box, become pictures.</li>
+            <li>Distinct per-corner radii, numeric dash patterns and radial gradients are approximated.</li>
+            <li>No encryption; the first bookmark on a slide names it, and the rest are dropped.</li>
+          </ul>
+        </article>
+        <article class="feature-card">
+          <h3>Word</h3>
+          <p><code>graph-compose-render-docx</code></p>
+          <p>Paragraphs, tables and block images become Word content, and page zones become real headers and footers with live page numbers.</p>
+          <ul class="format-limits">
+            <li>The text header and footer (<code>DocumentHeaderFooter</code>) are not written; a page zone is.</li>
+            <li>Shapes, lines, barcodes, inline images, links and watermarks are not written.</li>
+            <li>Fonts are named, not embedded, and list hanging indents are ignored.</li>
+          </ul>
+        </article>
+      </div>
     </section>
 
     <section class="architecture section-shell" id="architecture" aria-labelledby="architecture-title">

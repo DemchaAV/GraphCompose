@@ -599,11 +599,25 @@ check("with no release context the panel names no coordinates rather than guessi
 
 check("the panel shows the family's compiled block, as the manifest carries it", () => {
   const page = viewerHarness();
-  page.viewer.open({ category: "templates", group: "cv", id: "cv-blue-banner-v2" }, { history: "push" });
+  page.viewer.open({ category: "templates", group: "cv", id: "cv-boxed-sections-v2" }, { history: "push" });
   page.click(page.parts.panelToggle);
   const code = manifest.snippets.cv.code;
   assert.ok(code && code.length > 0, "the manifest carries a CV snippet for the panel to show");
   assert.ok(page.panelText().includes(code), "the block is shown as it stands, not paraphrased");
+});
+
+check("a preset the family's block does not compose is given a block of its own", () => {
+  const page = viewerHarness();
+  page.viewer.open({ category: "templates", group: "cv", id: "cv-blue-banner-v2" }, { history: "push" });
+  page.click(page.parts.panelToggle);
+  const said = page.panelText();
+  assert.ok(!said.includes(manifest.snippets.cv.code),
+    "the family's block composes BoxedSections: shown on Blue Banner it is code that draws a "
+    + "different CV, and a caption saying so does not stop it being copied");
+  assert.ok(said.includes("BlueBanner.create()"),
+    "the block a reader can copy here has to compose the preset they are looking at");
+  assert.ok(!said.includes("BoxedSections"), "and nothing of the preset it does not");
+  assert.ok(said.includes("CvDocument"), "named with the record this preset takes");
 });
 
 check("a family with no compiled block shows no snippet rather than another family's", () => {
@@ -685,26 +699,39 @@ check("the panel model runs with no DOM at all", () => {
   assert.ok(model.items.length > 0 && model.links.length > 0);
 });
 
-check("the family's block is called the document's own only on the card of the preset it composes", () => {
-  const labelOf = (id) => {
+check("the family's block is shown only on the card of the preset it composes", () => {
+  const familyBlockOf = (id) => {
     const home = catalogue.get(id);
     const block = catalogue.snippets[home.groupId].code;
-    const listing = gallery.panelModel(home.example, catalogue, RELEASE).items.find((item) => item.code === block);
-    assert.ok(listing, "fixture: the panel of " + id + " shows its family's block");
-    return listing.label;
+    return gallery.panelModel(home.example, catalogue, RELEASE).items.find((item) => item.code === block);
+  };
+  const presetBlockOf = (id) => {
+    const home = catalogue.get(id);
+    return gallery.panelModel(home.example, catalogue, RELEASE).items
+      .find((item) => item.label === "Compose this preset");
   };
   assert.match(manifest.snippets.cv.code, /\bBoxedSections\.create\(/, "fixture: the CV block composes BoxedSections");
-  assert.equal(labelOf("cv-boxed-sections-v2"), "Compose it");
-  assert.equal(labelOf("cv-blue-banner-v2"), "From the docs",
-    "the CV block builds BoxedSections; labelled 'Compose it' on Blue Banner it promises a document it does not build");
-  assert.equal(labelOf("invoice-modern-v2"), "Compose it");
-  assert.equal(labelOf("invoice-classic-v2"), "From the docs");
-  assert.equal(labelOf("project-proposal-cinematic"), "From the docs", "a card that builds no preset");
 
-  // Matched as a whole name: a preset called Sections does not compose BoxedSections.
+  assert.equal(familyBlockOf("cv-boxed-sections-v2").label, "Compose it");
+  assert.equal(familyBlockOf("invoice-modern-v2").label, "Compose it");
+  assert.equal(familyBlockOf("project-proposal-cinematic").label, "From the docs",
+    "a card that builds no preset has no preset block to be given instead");
+
+  // Every other preset of the family gets its own block rather than the family's. The caption
+  // was honest before and the code under it still drew another design, which is what a reader
+  // copies. ConsultingInvoice is why the block is not the family's with one line rewritten: it
+  // takes StructuredInvoiceDocumentSpec where that block builds InvoiceDocumentSpec.
+  for (const [id, preset] of [["cv-blue-banner-v2", "BlueBanner"], ["invoice-classic-v2", "ClassicInvoice"]]) {
+    assert.equal(familyBlockOf(id), undefined, id + " is still shown a block composing another preset");
+    assert.match(presetBlockOf(id).code, new RegExp("\\b" + preset + "\\.create\\(\\)"));
+  }
+
+  // Matched as a whole name: a preset called Sections does not compose BoxedSections, so it is
+  // given its own block rather than told the family's is its own.
   const card = { id: "sections", kind: "PRESET", presetClass: "com.example.presets.Sections" };
   const fixture = { snippets: { cv: { code: manifest.snippets.cv.code } }, get: () => ({ groupId: "cv", example: card }) };
-  assert.equal(gallery.panelModel(card, fixture, RELEASE).items.find((item) => "code" in item).label, "From the docs");
+  assert.equal(gallery.panelModel(card, fixture, RELEASE).items.find((item) => "code" in item).label,
+    "Compose this preset");
 });
 
 check("a listing that is not on the family guide's page links the page it is on", () => {

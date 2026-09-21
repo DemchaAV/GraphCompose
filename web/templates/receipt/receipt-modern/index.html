@@ -134,6 +134,17 @@ implementation 'io.github.demchaav:graph-compose-templates:2.4.1'</code></pre>
         <p class="reproduce-row"><span class="reproduce-label">Preset</span> <code class="reproduce-value">com.demcha.compose.document.templates.receipt.presets.ModernReceipt</code></p>
         <p class="reproduce-row"><span class="reproduce-label">Data model</span> <code class="reproduce-value">com.demcha.compose.document.templates.data.receipt.ReceiptDocumentSpec</code></p>
         <figure class="reproduce-listing">
+          <figcaption class="reproduce-label">Compose this preset</figcaption>
+          <pre class="reproduce-code"><code>import com.demcha.compose.document.templates.receipt.presets.ModernReceipt;
+
+DocumentTemplate&lt;ReceiptDocumentSpec&gt; template = ModernReceipt.create();
+
+try (DocumentSession document = GraphCompose.document(Path.of(&quot;receipt-modern.pdf&quot;)).create()) {
+    template.compose(document, data);   // data: ReceiptDocumentSpec
+    document.buildPdf();
+}</code></pre>
+        </figure>
+        <figure class="reproduce-listing">
           <figcaption class="reproduce-label">Run the example</figcaption>
           <pre class="reproduce-code"><code>./mvnw -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.templates.receipt.ModernReceiptExample</code></pre>
         </figure>

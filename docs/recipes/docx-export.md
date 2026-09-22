@@ -223,9 +223,12 @@ which phrase lost what.
 
 A `w:shd` fill is opaque, so a translucent chip — `inlineCode(...)` is a fifth-opacity
 grey — is flattened first against what the export wrote underneath it: the paragraph's own
-shading, the cell's, or the page. That is the same composite the PDF makes, so the two
-agree instead of one of them guessing; written at full strength the default code chip
-would be a solid slab where the page has a tint.
+shading, the cell's, or the page. Written at full strength the default code chip would be
+a solid slab where the page has a tint; flattened, it is the colour the PDF shows. The
+chip agrees with the file it is in rather than with the page the PDF drew — a translucent
+*container* fill lands opaque too, and a chip on it composites over that. And the chip
+stops being translucent: shade that paragraph another colour in Word and it keeps the
+tint it was flattened to. Recorded, like the other two.
 
 ## What falls back
 

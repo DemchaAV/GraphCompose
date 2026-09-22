@@ -25,8 +25,10 @@ follow semantic versioning; release dates are ISO 8601.
   A `w:shd` fill is opaque, and the chip this DSL reaches for most — `inlineCode(...)` — is
   a fifth-opacity grey. Written at full strength it is a solid slab where the page has a
   tint, so a translucent fill is flattened first against what the export itself wrote
-  underneath it: the paragraph's shading, the cell's, or the page. That is the composite
-  the PDF makes of the same chip, so the two agree rather than one of them guessing.
+  underneath it: the paragraph's shading, the cell's, or the page. The chip then agrees
+  with the file it is in, which on a white page is the composite the PDF makes of the same
+  chip. What it stops being is translucent — recolour what is under it in Word and the
+  chip no longer follows — so that is recorded too.
 
 - **An exported Word document has an outline.** A reader opened a twenty-page export and
   found one flat run of paragraphs: nothing in the Navigation Pane, nothing in the outline

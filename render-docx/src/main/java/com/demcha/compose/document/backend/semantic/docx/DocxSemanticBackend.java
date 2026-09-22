@@ -1586,29 +1586,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A {@code w:shd} fill is opaque, and the chip this sugar reaches for most —
      * {@code code(...)} — is a fifth-opacity grey. Written at full strength it is a solid
      * slab where the page has a tint, so a translucent fill is flattened first against what
-     * Word paints underneath it: the paragraph's own shading, the cell's, or the page. That
-     * is the same composite the PDF makes, so the two agree rather than one of them
-     * guessing.</p>
+     * Word paints underneath it: the paragraph's own shading, the cell's, or the page. The
+     * chip then agrees with the file it is in — including where that file already differs
+     * from the page, since a translucent <em>container</em> fill lands opaque too. What it
+     * stops being is translucent: recoloured underneath in Word, the chip no longer
+     * follows.</p>
      *
      * <p>What Word cannot express is the chip's <em>shape</em>. Shading covers the glyph
      * box, so the rounded corners and the padding that widens the run on the page are not
-     * in the file. Both are recorded rather than quietly approximated.</p>
+     * in the file. All three are recorded rather than quietly approximated.</p>
      */
     private void applyInlineBackground(XWPFRun run, InlineBackground background, String path) {
-        if (background == null || background.fill() == null) {
+        if (background == null) {
             return;
         }
         CTRPr properties = run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr();
-        // Run properties are a repeating choice in the schema, so this is an array and
-        // addNewShd() appends rather than replacing: asked twice, a run would carry two
-        // shadings and Word would read whichever it met first.
+        // w:shd sits in a repeating choice in the schema, so the accessor is an array and
+        // addNewShd() appends rather than replaces — a run carrying two shadings leaves
+        // Word reading whichever it meets first.
         CTShd shading = properties.sizeOfShdArray() > 0
                 ? properties.getShdArray(0)
                 : properties.addNewShd();
         shading.setVal(STShd.CLEAR);
         shading.setColor("auto");
         shading.setFill(toHexColor(flatten(background.fill().color(), colourUnder(run))));
-        String lost = chipShapeLost(background);
+        String lost = chipLost(background);
         if (lost != null) {
             if (warnedNodeKinds.add("inline-background")) {
                 LOG.warn("DocxSemanticBackend: an inline chip keeps its fill as run shading, "
@@ -1620,14 +1622,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /** What a chip loses on the way to run shading, or null when the mapping is exact. */
-    private static String chipShapeLost(InlineBackground background) {
-        List<String> lost = new ArrayList<>(2);
+    private static String chipLost(InlineBackground background) {
+        List<String> lost = new ArrayList<>(3);
         if (background.cornerRadius() > 0) {
             lost.add("its rounded corners are square");
         }
-        if (background.padding() != null
-            && (background.padding().horizontal() > 0 || background.padding().vertical() > 0)) {
+        if (background.padding().horizontal() > 0 || background.padding().vertical() > 0) {
             lost.add("its padding is not in the file");
+        }
+        if (background.fill().color().getAlpha() < 255) {
+            // The colour on the page is right. What is gone is the translucency itself:
+            // shade the paragraph a different colour in Word and a chip that was a tint
+            // over it stays the tint it was flattened to.
+            lost.add("its fill is flattened against what sits under it, because run "
+                     + "shading is opaque");
         }
         return lost.isEmpty() ? null : String.join(", ", lost);
     }
@@ -1637,20 +1645,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * on the run's paragraph or on the cell holding it, and otherwise the page's white.
      *
      * <p>Read back from the file being written rather than tracked in a field, so it is
-     * whatever was actually written and cannot drift from it.</p>
+     * whatever was actually written and cannot drift from it. Read, and only read:
+     * {@code cellProperties} would create the {@code w:tcPr} it cannot find, so an
+     * unstyled cell holding a chip would come away carrying an empty one.</p>
      */
     private java.awt.Color colourUnder(XWPFRun run) {
         XWPFParagraph para = run.getParagraph();
-        java.awt.Color paragraphFill = para == null || !para.getCTP().isSetPPr()
+        CTPPr paragraphProperties = para == null || !para.getCTP().isSetPPr()
                 ? null
-                : hexFillOf(para.getCTP().getPPr().isSetShd() ? para.getCTP().getPPr().getShd() : null);
+                : para.getCTP().getPPr();
+        java.awt.Color paragraphFill = shadingFillOf(
+                paragraphProperties != null && paragraphProperties.isSetShd()
+                        ? paragraphProperties.getShd() : null);
         if (paragraphFill != null) {
             return paragraphFill;
         }
-        java.awt.Color cellFill = currentCell == null
+        CTTcPr cellProperties = currentCell == null || !currentCell.getCTTc().isSetTcPr()
                 ? null
-                : hexFillOf(cellProperties(currentCell).isSetShd()
-                        ? cellProperties(currentCell).getShd() : null);
+                : currentCell.getCTTc().getTcPr();
+        java.awt.Color cellFill = shadingFillOf(
+                cellProperties != null && cellProperties.isSetShd() ? cellProperties.getShd() : null);
         return cellFill != null ? cellFill : java.awt.Color.WHITE;
     }
 
@@ -1661,7 +1675,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * three bytes rather than as the string it was set from — read as text it is an array's
      * identity, which parses as no colour at all and silently flattens against white.</p>
      */
-    private static java.awt.Color hexFillOf(CTShd shading) {
+    private static java.awt.Color shadingFillOf(CTShd shading) {
         Object fill = shading == null ? null : shading.getFill();
         if (fill == null) {
             return null;

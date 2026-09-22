@@ -24,6 +24,7 @@ import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextDirection;
+import com.demcha.compose.document.node.RowArrangement;
 import com.demcha.compose.document.node.RowNode;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import com.demcha.compose.document.node.SectionNode;
@@ -31,11 +32,14 @@ import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableStyle;
+import com.demcha.compose.font.FontName;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.BreakType;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
@@ -60,15 +64,34 @@ import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTRelativeRect;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBorder;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTAbstractNum;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTInd;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTLvl;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPBdr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyle;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyles;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STStyleType;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFonts;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblBorders;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblGrid;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblLayoutType;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblWidth;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcBorders;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblLayoutType;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STJc;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STNumberFormat;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STShd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 import org.slf4j.Logger;
@@ -102,8 +125,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
+    /** Word''s built-in default paragraph style; the name is fixed by the format. */
+    private static final String NORMAL_STYLE_ID = "Normal";
     /** Word measures tab stops in twentieths of a point. */
     private static final double TWIPS_PER_POINT = 20.0;
+    /** {@code w:sz} and {@code w:szCs} count half-points. */
+    private static final double HALF_POINTS_PER_POINT = 2.0;
     private static final double POINT_TO_TWIP = 20.0;
     private static final Logger LOG = LoggerFactory.getLogger(DocxSemanticBackend.class);
     // The page's content width, so an image is held to the same bound layout holds it to.
@@ -117,6 +144,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // Geometry-only node kinds already warned about this export pass.
     private final java.util.Set<String> warnedNodeKinds =
             java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private final AtomicBoolean containerRadiusWarned = new AtomicBoolean(false);
+    // Fills and borders of the containers currently being written into, innermost first.
+    // A paragraph carries the innermost one, because that is the panel it sits in.
+    private final java.util.Deque<ContainerPaint> containerPaint = new java.util.ArrayDeque<>();
+    // The text style the document is mostly written in, promoted to Word's Normal style.
+    // Null until an export computes it, and when the graph carries no text at all.
+    private DocumentTextStyle documentDefaultStyle;
+    // One Word list definition per ListNode that can be one, keyed by identity because
+    // two lists reading the same are still two lists.
+    private final java.util.Map<com.demcha.compose.document.node.ListNode, BigInteger>
+            listNumbering = new java.util.IdentityHashMap<>();
+
+    /**
+     * A container's paint, reduced to what a Word paragraph can carry.
+     *
+     * @param fill    background, written as {@code w:shd}
+     * @param borders per-side strokes, written as {@code w:pBdr}
+     */
+    private record ContainerPaint(DocumentColor fill, DocumentBorders borders) {
+
+        /** @return true when there is nothing for a paragraph to carry */
+        boolean isEmpty() {
+            return fill == null && borders == null;
+        }
+    }
 
     /**
      * Creates a DOCX semantic backend.
@@ -133,10 +185,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     public byte[] export(DocumentGraph graph, SemanticExportContext context) throws Exception {
         shapeContainerWarned.set(false);
         chartWarned.set(false);
+        containerRadiusWarned.set(false);
         warnedNodeKinds.clear();
+        containerPaint.clear();
+        listNumbering.clear();
+        documentDefaultStyle = dominantTextStyle(graph);
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
         try (XWPFDocument document = new XWPFDocument()) {
             applyPageGeometry(document, context.canvas());
+            writeStylesPart(document);
             applyOutputOptions(document, context.outputOptions());
             for (DocumentNode root : graph.roots()) {
                 writeNode(document, root);
@@ -235,7 +292,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph para = target.createParagraph();
         para.setSpacingBefore(0);
         para.setSpacingAfter(0);
-        CTTabStop tab = para.getCTP().addNewPPr().addNewTabs().addNewTab();
+        // Reuse the properties the spacing calls above already created. addNewPPr() would
+        // append a second w:pPr, and Word reads the first — the tab stop would be in the
+        // file and ignored, so the page number fell back to Word's default half-inch grid
+        // instead of sitting at the right margin.
+        CTPPr properties = para.getCTP().isSetPPr()
+                ? para.getCTP().getPPr()
+                : para.getCTP().addNewPPr();
+        CTTabStop tab = properties.addNewTabs().addNewTab();
         tab.setVal(STTabJc.RIGHT);
         tab.setPos(java.math.BigInteger.valueOf(Math.round(contentWidth * TWIPS_PER_POINT)));
 
@@ -308,9 +372,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // Overlay/positioned wrappers have no DOCX analogue for their
             // geometry, but their children can be semantic (text, images) —
             // render them sequentially rather than dropping the subtree.
-            for (DocumentNode child : node.children()) {
-                writeNode(document, child);
-            }
+            // A fill or a border is the exception: Word paragraphs carry both, so a
+            // panel travels with the paragraphs inside it instead of disappearing.
+            writeContainerChildren(document, node);
         } else {
             // Geometry-only node kinds (line, ellipse, shape, path, polygon,
             // barcode) have no semantic Word analogue. Warn once per kind so a
@@ -356,6 +420,158 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Word''s marker column, in twips. Chosen to sit close to the single space the text
+     * path used rather than to Word''s much wider default, and stated as the convention it
+     * is: measuring the marker would need a font runtime, which is the same thing
+     * {@code hangingIndent} is missing and the reason its gap is unrepresentable here.
+     */
+    private static final int LIST_HANGING_TWIPS = 180;
+
+    /** Added per nesting level, approximating the two spaces the text path indented by. */
+    private static final int LIST_NESTING_STEP_TWIPS = 120;
+
+    /**
+     * Levels one Word list definition may hold.
+     *
+     * <p>{@code CT_AbstractNum/lvl} is {@code maxOccurs="9"} — Word has nine list levels
+     * and {@code w:ilvl} runs 0..8. Writing a tenth produces a part that POI saves without
+     * complaint and Word refuses to open, so a list nested deeper keeps its markers as
+     * text rather than shipping a document that cannot be opened at all.</p>
+     */
+    private static final int MAX_LIST_LEVELS = 9;
+
+    /**
+     * Gives a list a real Word list definition, when it is one Word can express.
+     *
+     * <p>A marker written into the run text looks like a list and is not one: pressing
+     * Enter yields a plain paragraph rather than the next item, which is the contract
+     * failure this repairs. Attaching {@code w:numPr} makes Word own the marker, so the
+     * list continues, renumbers and demotes the way a reader expects.</p>
+     *
+     * <p>This does not fix {@code markerGap}, and does not claim to. Word places content
+     * at an absolute indent and cannot be told "one marker width plus a gap from here";
+     * real numbering was measured against that requirement and rejected for it, and it is
+     * still rejected. What it buys is behaviour, and it costs geometry: the marker column
+     * is a stated constant rather than the measured gap.</p>
+     *
+     * @return the list definition to attach, or {@code null} when the list has to stay
+     *         marker-prefixed text
+     */
+    private BigInteger numberingFor(XWPFDocument document,
+                                    com.demcha.compose.document.node.ListNode list) {
+        BigInteger existing = listNumbering.get(list);
+        if (existing != null) {
+            return existing;
+        }
+        List<String> levels = markerPerDepth(list);
+        if (levels == null) {
+            return null;
+        }
+        CTAbstractNum abstractNum = CTAbstractNum.Factory.newInstance();
+        abstractNum.setAbstractNumId(BigInteger.valueOf(listNumbering.size()));
+        for (int depth = 0; depth < levels.size(); depth++) {
+            CTLvl level = abstractNum.addNewLvl();
+            level.setIlvl(BigInteger.valueOf(depth));
+            level.addNewStart().setVal(BigInteger.ONE);
+            // Every marker this export can carry is a literal, so the format is BULLET
+            // even when the literal is a digit: Word must draw the marker the author
+            // wrote, not one it derives from the item''s position.
+            level.addNewNumFmt().setVal(STNumberFormat.BULLET);
+            level.addNewLvlText().setVal(levels.get(depth));
+            level.addNewLvlJc().setVal(STJc.LEFT);
+            CTInd indent = level.addNewPPr().addNewInd();
+            indent.setLeft(BigInteger.valueOf(
+                    (long) LIST_HANGING_TWIPS + (long) LIST_NESTING_STEP_TWIPS * depth));
+            indent.setHanging(BigInteger.valueOf(LIST_HANGING_TWIPS));
+        }
+        BigInteger abstractId = document.createNumbering()
+                .addAbstractNum(new org.apache.poi.xwpf.usermodel.XWPFAbstractNum(abstractNum));
+        BigInteger numId = document.getNumbering().addNum(abstractId);
+        listNumbering.put(list, numId);
+        return numId;
+    }
+
+    /**
+     * The one marker each nesting depth uses, or {@code null} when the list cannot be a
+     * Word list.
+     *
+     * <p>A Word list definition names one marker per level, so a list whose items at the
+     * same depth carry different markers has no definition to be given and keeps writing
+     * its markers as text. So does a list with a drawn marker, which has no Word analogue
+     * at all, one with no marker, where numbering would add an indent the author did not
+     * ask for, and one with rich items, whose runs the numbered path does not write.</p>
+     */
+    private static List<String> markerPerDepth(com.demcha.compose.document.node.ListNode list) {
+        java.util.Map<Integer, String> perDepth = new java.util.TreeMap<>();
+        // Seeded from the flat items only when one of them survives normalization. A list
+        // whose flat items are all blank writes no paragraph for them, so claiming depth
+        // zero for their marker would either reject a uniform nested list whose own depth
+        // zero differs, or mint a definition nothing references.
+        if (list.items().stream().anyMatch(item -> !com.demcha.compose.document.node.ListMarker
+                .normalizeItemText(item, list.normalizeMarkers()).isBlank())) {
+            if (!isPlainVisible(list.marker())) {
+                return null;
+            }
+            perDepth.put(0, levelText(list.marker()));
+        }
+        for (com.demcha.compose.document.node.ListItem item : list.nestedItems()) {
+            if (!collectMarkers(item, 0, perDepth)) {
+                return null;
+            }
+        }
+        if (perDepth.isEmpty() || perDepth.size() > MAX_LIST_LEVELS) {
+            return null;
+        }
+        // Depths must be contiguous from zero; a definition cannot skip a level.
+        for (int depth = 0; depth < perDepth.size(); depth++) {
+            if (!perDepth.containsKey(depth)) {
+                return null;
+            }
+        }
+        return List.copyOf(perDepth.values());
+    }
+
+    private static boolean collectMarkers(com.demcha.compose.document.node.ListItem item,
+                                          int depth,
+                                          java.util.Map<Integer, String> perDepth) {
+        if (item.isRich()) {
+            return false;
+        }
+        com.demcha.compose.document.node.ListMarker marker =
+                item.marker() != null
+                        ? item.marker()
+                        : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth);
+        if (!isPlainVisible(marker)) {
+            return false;
+        }
+        String existing = perDepth.putIfAbsent(depth, levelText(marker));
+        if (existing != null && !existing.equals(levelText(marker))) {
+            return false;
+        }
+        for (com.demcha.compose.document.node.ListItem child : item.children()) {
+            if (!collectMarkers(child, depth + 1, perDepth)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isPlainVisible(com.demcha.compose.document.node.ListMarker marker) {
+        return !marker.isRich() && marker.isVisible() && !marker.value().isBlank();
+    }
+
+    /**
+     * The marker as Word's {@code w:lvlText} wants it: the glyph alone.
+     *
+     * <p>A marker's own value carries the separating space the text path needed, because
+     * there it was concatenated straight onto the item. Word puts the gap there itself
+     * from the level's indent, so the space would be drawn twice.</p>
+     */
+    private static String levelText(com.demcha.compose.document.node.ListMarker marker) {
+        return marker.value().strip();
+    }
+
+    /**
      * Semantic list mapping: each item becomes a marker-prefixed paragraph in
      * the list's text style. Flat items run through the same
      * {@code ListMarker.normalizeItemText} step as fixed-layout rendering
@@ -365,6 +581,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeList(XWPFDocument document,
                            com.demcha.compose.document.node.ListNode list) {
+        BigInteger numId = numberingFor(document, list);
         for (String item : list.items()) {
             // Same normalization as the fixed-layout pipeline: strip an
             // author-typed leading marker and skip items with no content.
@@ -378,20 +595,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // any row with runs in it is; its item is still just a label.
                 writeRichListLine(document, list.textStyle(), list.marker(),
                         com.demcha.compose.document.node.ListItem.of(normalized), 0);
+            } else if (numId != null) {
+                // Word draws the marker, so the text is the item and nothing else.
+                writeListLine(document, list.textStyle(), normalized, 0, numId);
             } else {
                 writeListLine(document, list.textStyle(),
-                        list.marker().prefix() + normalized, 0);
+                        list.marker().prefix() + normalized, 0, null);
             }
         }
         for (com.demcha.compose.document.node.ListItem item : list.nestedItems()) {
-            writeNestedItem(document, list, item, 0);
+            writeNestedItem(document, list, item, 0, numId);
         }
     }
 
     private void writeNestedItem(XWPFDocument document,
                                  com.demcha.compose.document.node.ListNode list,
                                  com.demcha.compose.document.node.ListItem item,
-                                 int depth) {
+                                 int depth,
+                                 BigInteger numId) {
         // prefix() carries its own trailing space (and is empty for
         // markerless lists). Items without an explicit (or markerFor-baked)
         // marker fall back to the same depth cascade the fixed-layout
@@ -402,20 +623,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth);
         if (item.isRich() || marker.isRich()) {
             writeRichListLine(document, list.textStyle(), marker, item, depth);
+        } else if (numId != null) {
+            writeListLine(document, list.textStyle(), item.label(), depth, numId);
         } else {
-            writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth);
+            writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth, null);
         }
         for (com.demcha.compose.document.node.ListItem child : item.children()) {
-            writeNestedItem(document, list, child, depth + 1);
+            writeNestedItem(document, list, child, depth + 1, numId);
         }
     }
 
+    /**
+     * Writes one item, either as a real Word list paragraph or as the marker-prefixed
+     * text the export used before Word numbering existed here.
+     *
+     * @param numId the list definition to attach, or {@code null} to write the marker
+     *              and the nesting indent as characters
+     */
     private void writeListLine(XWPFDocument document, DocumentTextStyle style,
-                               String text, int depth) {
-        XWPFParagraph para = document.createParagraph();
+                               String text, int depth, BigInteger numId) {
+        XWPFParagraph para = newBodyParagraph(document);
+        if (numId != null) {
+            para.setNumID(numId);
+            para.setNumILvl(BigInteger.valueOf(depth));
+        }
         XWPFRun run = para.createRun();
         applyStyle(run, style);
-        run.setText("  ".repeat(depth) + text);
+        run.setText(numId != null ? text : "  ".repeat(depth) + text);
     }
 
     /**
@@ -443,7 +677,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                    int depth) {
         warnDroppedInlineRuns(marker.runs());
         warnDroppedInlineRuns(item.runs());
-        XWPFParagraph para = document.createParagraph();
+        XWPFParagraph para = newBodyParagraph(document);
         XWPFRun leading = para.createRun();
         applyStyle(leading, style);
         leading.setText("  ".repeat(depth) + (marker.isRich() ? "" : marker.prefix()));
@@ -519,6 +753,272 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         writeTable(document, table.build());
     }
 
+    /**
+     * Writes a wrapper's children, carrying its fill and borders down to each paragraph.
+     *
+     * <p>Word has no box to put around a run of paragraphs, but it does shade and border
+     * each one, and consecutive paragraphs sharing a fill render as a single band. That is
+     * close enough to a panel to be worth having, and much better than what this exporter
+     * used to do, which was to drop the paint without saying so.</p>
+     *
+     * <p>What does not survive: the corner radius, because Word paragraph shading is
+     * rectangular, and the container's padding, because a paragraph's shading hugs its own
+     * text. The radius is warned about once per export rather than pretended away.</p>
+     */
+    private void writeContainerChildren(XWPFDocument document, DocumentNode node) throws Exception {
+        ContainerPaint paint = paintOf(node);
+        if (paint.isEmpty()) {
+            for (DocumentNode child : node.children()) {
+                writeNode(document, child);
+            }
+            return;
+        }
+        warnContainerRadiusDropped(node);
+        containerPaint.push(paint);
+        try {
+            for (DocumentNode child : node.children()) {
+                writeNode(document, child);
+            }
+        } finally {
+            containerPaint.pop();
+        }
+    }
+
+    private static boolean hasRadius(com.demcha.compose.document.style.DocumentCornerRadius radius) {
+        return radius != null && !radius.isZero();
+    }
+
+    /**
+     * Gives the package a styles part naming the document''s own body text as Normal.
+     *
+     * <p>Without one Word invents a latent Normal that no run refers to, so a reader who
+     * restyles the document changes nothing: every run carries its own size and font, and a
+     * direct property beats a style. Writing the part and leaving those runs silent is what
+     * makes "change the Normal style" behave the way a Word user expects.</p>
+     *
+     * <p>Nothing is written when the graph carries no text to take a default from.</p>
+     */
+    private void writeStylesPart(XWPFDocument document) {
+        DocumentTextStyle defaults = documentDefaultStyle;
+        if (defaults == null) {
+            return;
+        }
+        CTStyles styles = CTStyles.Factory.newInstance();
+        applyDefaultRunProperties(styles.addNewDocDefaults().addNewRPrDefault().addNewRPr(), defaults);
+
+        CTStyle normal = styles.addNewStyle();
+        normal.setType(STStyleType.PARAGRAPH);
+        normal.setStyleId(NORMAL_STYLE_ID);
+        normal.setDefault(true);
+        normal.addNewName().setVal(NORMAL_STYLE_ID);
+        applyDefaultRunProperties(normal.addNewRPr(), defaults);
+
+        document.createStyles().setStyles(styles);
+    }
+
+    private static void applyDefaultRunProperties(CTRPr properties, DocumentTextStyle defaults) {
+        if (defaults.fontName() != null) {
+            // All four slots, exactly as XWPFRun.setFontFamily writes them on a run.
+            // w:ascii alone covers only ASCII: High-ANSI characters read w:hAnsi, Hebrew
+            // and Arabic read w:cs, CJK reads w:eastAsia. Naming one and suppressing the
+            // run's own rFonts would send every accented letter and every complex script
+            // to Word's theme font while the rest of the line kept the asked-for family.
+            String family = defaults.fontName().name();
+            CTFonts fonts = properties.addNewRFonts();
+            fonts.setAscii(family);
+            fonts.setHAnsi(family);
+            fonts.setCs(family);
+            fonts.setEastAsia(family);
+        }
+        if (defaults.size() > 0) {
+            // w:sz counts half-points, and w:szCs carries the same for complex scripts.
+            BigInteger halfPoints = BigInteger.valueOf(Math.round(defaults.size() * 2));
+            properties.addNewSz().setVal(halfPoints);
+            properties.addNewSzCs().setVal(halfPoints);
+        }
+        if (defaults.color() != null) {
+            properties.addNewColor().setVal(toHexColor(defaults.color().color()));
+        }
+    }
+
+    /**
+     * The text style the document is mostly written in.
+     *
+     * <p>Weighted by characters rather than by how many nodes use a style: headings are
+     * numerous and short while body text is long, so counting nodes elects the heading
+     * style as the document default and leaves every body run carrying a direct size.</p>
+     *
+     * @param graph the document being exported
+     * @return the dominant style, or {@code null} when the graph carries no text
+     */
+    private static DocumentTextStyle dominantTextStyle(DocumentGraph graph) {
+        java.util.Map<StyleKey, Long> weights = new java.util.HashMap<>();
+        java.util.Map<StyleKey, DocumentTextStyle> byKey = new java.util.HashMap<>();
+        for (DocumentNode root : graph.roots()) {
+            weighTextStyles(root, weights, byKey);
+        }
+        return weights.entrySet().stream()
+                .max(java.util.Map.Entry.comparingByValue())
+                .map(entry -> byKey.get(entry.getKey()))
+                .orElse(null);
+    }
+
+    private static void weighTextStyles(DocumentNode node,
+                                        java.util.Map<StyleKey, Long> weights,
+                                        java.util.Map<StyleKey, DocumentTextStyle> byKey) {
+        if (node instanceof ParagraphNode paragraph && paragraph.textStyle() != null) {
+            weigh(paragraph.textStyle(), textWeight(paragraph.text()), weights, byKey);
+        } else if (node instanceof com.demcha.compose.document.node.ListNode list
+                   && list.textStyle() != null) {
+            long weight = list.items().stream().mapToLong(DocxSemanticBackend::textWeight).sum();
+            weigh(list.textStyle(), weight, weights, byKey);
+        }
+        for (DocumentNode child : node.children()) {
+            weighTextStyles(child, weights, byKey);
+        }
+    }
+
+    private static void weigh(DocumentTextStyle style,
+                              long weight,
+                              java.util.Map<StyleKey, Long> weights,
+                              java.util.Map<StyleKey, DocumentTextStyle> byKey) {
+        StyleKey key = StyleKey.of(style);
+        weights.merge(key, weight, Long::sum);
+        byKey.putIfAbsent(key, style);
+    }
+
+    /**
+     * What makes two text styles the same for the purpose of electing a document default.
+     *
+     * <p>{@code DocumentTextStyle} cannot be the key. It is a record, so its equality is
+     * its components', and {@code DocumentColor} defines no {@code equals} — two colours
+     * built from the same channels are unequal unless they are the same instance. Styles
+     * built inline per paragraph, which is ordinary authoring, would each weigh alone and
+     * the body's characters would never add up, electing whichever style happened to be
+     * reused instead.</p>
+     *
+     * <p>The components are the three the styles part actually writes, compared as they
+     * are written: the family by name, the size in half-points, the colour as packed
+     * RGB.</p>
+     *
+     * @param fontName   the family, or {@code null} when the style names none
+     * @param halfPoints the size as {@code w:sz} counts it
+     * @param colour     packed RGB, or {@code null} when the style names no colour
+     */
+    private record StyleKey(FontName fontName, long halfPoints, Integer colour) {
+
+        static StyleKey of(DocumentTextStyle style) {
+            return new StyleKey(style.fontName(),
+                    Math.round(style.size() * HALF_POINTS_PER_POINT),
+                    style.color() == null ? null : style.color().color().getRGB());
+        }
+    }
+
+    /** At least one, so a style used only by empty text still counts as used. */
+    private static long textWeight(String text) {
+        return text == null ? 1L : Math.max(1L, text.length());
+    }
+
+    /** Reads the fill and borders off whichever wrapper kind this is, or an empty paint. */
+    private static ContainerPaint paintOf(DocumentNode node) {
+        if (node instanceof SectionNode section) {
+            return new ContainerPaint(section.fillColor(),
+                    bordersOf(section.borders(), section.stroke()));
+        }
+        if (node instanceof ContainerNode container) {
+            return new ContainerPaint(container.fillColor(),
+                    bordersOf(container.borders(), container.stroke()));
+        }
+        return new ContainerPaint(null, null);
+    }
+
+    /**
+     * Per-side borders win; a uniform stroke stands in for all four when they are absent,
+     * which is how the node model says "one outline round the whole box".
+     */
+    private static DocumentBorders bordersOf(DocumentBorders borders, DocumentStroke stroke) {
+        if (borders != null && !DocumentBorders.NONE.equals(borders)) {
+            return borders;
+        }
+        if (stroke != null && stroke.width() > 0) {
+            return DocumentBorders.all(stroke);
+        }
+        return null;
+    }
+
+    /** One warning per export for the part of a container's design Word cannot hold. */
+    private void warnContainerRadiusDropped(DocumentNode node) {
+        boolean rounded = node instanceof SectionNode section
+                ? hasRadius(section.cornerRadius())
+                : node instanceof ContainerNode container && hasRadius(container.cornerRadius());
+        if (rounded && containerRadiusWarned.compareAndSet(false, true)) {
+            LOG.warn("docx.export.container-radius-dropped node='{}' — Word paragraph shading "
+                     + "is rectangular, so the panel renders with square corners. "
+                     + "(One warning per export; use the PDF backend for the rounded form.)",
+                    node.nodeKind());
+        }
+    }
+
+    /**
+     * Creates a body paragraph already wearing the panel it sits in.
+     *
+     * <p>Every paragraph written straight into the body goes through here, so a
+     * container's paint cannot be forgotten by a writer that creates its own. Three
+     * writers create paragraphs elsewhere on purpose: a page break, which would draw a
+     * band across the page; a table cell, which carries the author's own cell paint; and
+     * a row's cells, which take the paint on the cell instead, since a paragraph inside a
+     * table cannot reach the band the container is drawing.</p>
+     */
+    private XWPFParagraph newBodyParagraph(XWPFDocument document) {
+        XWPFParagraph para = document.createParagraph();
+        ContainerPaint paint = containerPaint.peek();
+        if (paint != null) {
+            applyContainerPaint(para, paint);
+        }
+        return para;
+    }
+
+    private static void applyContainerPaint(XWPFParagraph para, ContainerPaint paint) {
+        CTPPr properties = para.getCTP().isSetPPr()
+                ? para.getCTP().getPPr()
+                : para.getCTP().addNewPPr();
+        if (paint.fill() != null) {
+            CTShd shading = properties.isSetShd() ? properties.getShd() : properties.addNewShd();
+            shading.setVal(STShd.CLEAR);
+            shading.setColor("auto");
+            shading.setFill(toHexColor(paint.fill().color()));
+        }
+        DocumentBorders borders = paint.borders();
+        if (borders == null) {
+            return;
+        }
+        CTPBdr edges = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
+        paintParagraphEdge(borders.top(), edges::isSetTop, edges::getTop, edges::addNewTop);
+        paintParagraphEdge(borders.bottom(), edges::isSetBottom, edges::getBottom, edges::addNewBottom);
+        paintParagraphEdge(borders.left(), edges::isSetLeft, edges::getLeft, edges::addNewLeft);
+        paintParagraphEdge(borders.right(), edges::isSetRight, edges::getRight, edges::addNewRight);
+    }
+
+    /**
+     * Writes one paragraph border edge, reusing whichever edge element is already there.
+     *
+     * <p>A stroke of no width is how this codebase says "no border", the same predicate the
+     * table painter reads, so such a side is left unwritten rather than drawn hairline.</p>
+     */
+    private static void paintParagraphEdge(DocumentStroke stroke,
+                                           java.util.function.BooleanSupplier isSet,
+                                           java.util.function.Supplier<CTBorder> get,
+                                           java.util.function.Supplier<CTBorder> add) {
+        if (stroke == null || stroke.width() <= 0) {
+            return;
+        }
+        // w:sz counts eighths of a point, rounded to at least one so a hairline the author
+        // asked for stays a line rather than vanishing.
+        BigInteger eighths = BigInteger.valueOf(Math.max(1, Math.round(stroke.width() * 8.0)));
+        paintEdge(isSet.getAsBoolean() ? get.get() : add.get(),
+                STBorder.SINGLE, eighths, toHexColor(stroke.color().color()));
+    }
+
     private void writeShapeContainer(XWPFDocument document, ShapeContainerNode node) throws Exception {
         // POI/DOCX has no portable equivalent of a graphics-state path clip.
         // The fallback rule (recorded in docs/canonical-legacy-parity.md) is
@@ -540,7 +1040,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
-        XWPFParagraph para = document.createParagraph();
+        XWPFParagraph para = newBodyParagraph(document);
         boolean rightToLeft = applyParagraphProperties(para, node);
         writeParagraphRuns(para, node, rightToLeft);
     }
@@ -684,7 +1184,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             drawHeight = sourceHeight * scale;
         }
 
-        XWPFParagraph para = document.createParagraph();
+        XWPFParagraph para = newBodyParagraph(document);
         XWPFRun run = para.createRun();
         try (InputStream stream = new java.io.ByteArrayInputStream(bytes)) {
             XWPFPicture picture = run.addPicture(stream,
@@ -812,6 +1312,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // cell is one cell carrying a span, not several, so a row's physical count is not
         // the column count.
         XWPFTable table = document.createTable(rowCount, 1);
+        applyTableWidth(table, node, columnCount);
         for (int rowIdx = 0; rowIdx < rowCount; rowIdx++) {
             XWPFTableRow row = table.getRow(rowIdx);
             List<TableGrid.Placement> physical = new ArrayList<>();
@@ -1015,10 +1516,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         XWPFTable table = document.createTable(1, node.children().size());
+        // A row is a layout device, not a table anybody asked to see. POI's createTable
+        // ships Word's default single-line grid, so without this every two-column block —
+        // a header pair, a label beside a value — exported with visible rules the PDF
+        // never draws.
+        hideTableGrid(table);
+        applyRowGeometry(table, node);
         XWPFTableRow row = table.getRow(0);
+        // A row inside a panel is still inside it. Its paragraphs live in table cells and
+        // so cannot carry the paint themselves; without shading the cells the band breaks
+        // into stripes wherever a two-column block sits in a filled container.
+        ContainerPaint paint = containerPaint.peek();
         for (int i = 0; i < node.children().size(); i++) {
             XWPFTableCell cell = row.getCell(i);
             cell.removeParagraph(0);
+            if (paint != null && paint.fill() != null) {
+                CTShd shading = cellProperties(cell).addNewShd();
+                shading.setVal(STShd.CLEAR);
+                shading.setColor("auto");
+                shading.setFill(toHexColor(paint.fill().color()));
+            }
             DocumentNode child = node.children().get(i);
             writeRowCellChild(cell, child);
         }
@@ -1026,6 +1543,295 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void writeRowCellChild(XWPFTableCell cell, DocumentNode child) throws Exception {
         writeCellBody(cell, child);
+    }
+
+    /**
+     * Gives the carrier the row's width, and its cells the row's slots.
+     *
+     * <p>A row occupies the whole width it is offered — {@code measureRow} returns the
+     * available width unconditionally, whatever its children measure — so the carrier
+     * gets the content width. Left at POI's size-to-content default the pair collapses
+     * around its text instead.</p>
+     *
+     * <p>How that width divides is arithmetic the document already carries, for every
+     * distribution except one. Weights, an even split and fixed columns are shares of the
+     * width left after the gaps; only an {@code auto} column and the flex path ask what a
+     * child's content naturally measures, which is the question this backend cannot
+     * answer. So the grid is written for the first three and left to Word for the
+     * others.</p>
+     *
+     * <p>The gap and the row's padding are not columns, and Word has nowhere to put them:
+     * a table has no inter-column gap. They are folded into the neighbouring column's
+     * width and taken back out as that cell's margin, so each cell's text box is exactly
+     * its slot and starts exactly where the slot starts. The margins are written even
+     * when they are zero, because Word's own default is not.</p>
+     *
+     * <p>The width used is the page's, not the row's parent's. A row inside a padded panel
+     * is offered less than the page in the fixed-layout render — but the panel's padding
+     * is not exported either, so in the file being written the row really does have the
+     * whole width. The slots match the document this backend produces rather than the one
+     * it was given.</p>
+     */
+    private void applyRowGeometry(XWPFTable table, RowNode node) {
+        if (!Double.isFinite(contentWidth) || contentWidth <= 0) {
+            return;
+        }
+        setTableWidth(table, contentWidth);
+
+        double[] slots = resolveRowSlots(node, contentWidth);
+        if (slots == null) {
+            return;
+        }
+
+        CTTblGrid grid = table.getCTTbl().getTblGrid() != null
+                ? table.getCTTbl().getTblGrid()
+                : table.getCTTbl().addNewTblGrid();
+        while (grid.sizeOfGridColArray() > 0) {
+            grid.removeGridCol(0);
+        }
+        for (int index = 0; index < slots.length; index++) {
+            double leading = index == 0 ? node.padding().left() : 0.0;
+            double trailing = index == slots.length - 1 ? node.padding().right() : node.gap();
+            double column = slots[index] + leading + trailing;
+            grid.addNewGridCol().setW(BigInteger.valueOf(Math.round(column * POINT_TO_TWIP)));
+
+            CTTcPr properties = cellProperties(table.getRow(0).getCell(index));
+            CTTblWidth cellWidth = properties.isSetTcW() ? properties.getTcW() : properties.addNewTcW();
+            cellWidth.setType(STTblWidth.DXA);
+            cellWidth.setW(BigInteger.valueOf(Math.round(column * POINT_TO_TWIP)));
+            CTTcMar margins = properties.isSetTcMar() ? properties.getTcMar() : properties.addNewTcMar();
+            setCellMargin(margins.isSetLeft() ? margins.getLeft() : margins.addNewLeft(), leading);
+            setCellMargin(margins.isSetRight() ? margins.getRight() : margins.addNewRight(), trailing);
+        }
+
+        // Without this Word treats the grid as a starting suggestion and re-fits the
+        // columns to their content, which is the behaviour being replaced.
+        CTTblPr properties = table.getCTTbl().getTblPr();
+        CTTblLayoutType layout = properties.isSetTblLayout()
+                ? properties.getTblLayout()
+                : properties.addNewTblLayout();
+        layout.setType(STTblLayoutType.FIXED);
+    }
+
+    /**
+     * The width of each of a row's slots, or {@code null} when one of them is content's.
+     *
+     * <p>Mirrors {@code NodeDefinitionSupport.measureRow}: the gaps and the row's padding
+     * come off the top, and what is left is split by columns, by weights, or evenly. The
+     * two branches that measure — a non-START arrangement or a grow spacer, and an
+     * {@code auto} column — return nothing instead.</p>
+     *
+     * @param node       the row being carried
+     * @param outerWidth the width the row is laid out in
+     * @return one width per child, or null when the split needs measuring
+     */
+    private static double[] resolveRowSlots(RowNode node, double outerWidth) {
+        int count = node.children().size();
+        if (count == 0) {
+            return null;
+        }
+        if (node.arrangement() != RowArrangement.START || hasGrowChild(node)) {
+            // The flex path gives every child without a grow factor its natural width.
+            return null;
+        }
+        double inner = Math.max(0.0, outerWidth - node.padding().horizontal());
+        double slotsTotal = Math.max(0.0, inner - node.gap() * Math.max(0, count - 1));
+        double[] slots = new double[count];
+
+        List<DocumentRowColumn> columns = node.columns();
+        if (!columns.isEmpty()) {
+            double used = 0.0;
+            double totalWeight = 0.0;
+            for (int index = 0; index < count; index++) {
+                DocumentRowColumn column = columns.get(index);
+                switch (column.type()) {
+                    case FIXED -> {
+                        slots[index] = column.value();
+                        used += slots[index];
+                    }
+                    case WEIGHT -> totalWeight += column.value();
+                    case AUTO -> {
+                        return null;
+                    }
+                    default -> {
+                        return null;
+                    }
+                }
+            }
+            double remaining = Math.max(0.0, slotsTotal - used);
+            if (totalWeight > 0.0) {
+                for (int index = 0; index < count; index++) {
+                    if (columns.get(index).type() == DocumentRowColumn.Type.WEIGHT) {
+                        slots[index] = remaining * (columns.get(index).value() / totalWeight);
+                    }
+                }
+            }
+            return slots;
+        }
+
+        List<Double> weights = node.weights();
+        if (weights.isEmpty()) {
+            for (int index = 0; index < count; index++) {
+                slots[index] = slotsTotal / count;
+            }
+            return slots;
+        }
+        double total = 0.0;
+        for (Double weight : weights) {
+            total += weight;
+        }
+        for (int index = 0; index < count; index++) {
+            slots[index] = total > 0.0 ? slotsTotal * (weights.get(index) / total) : slotsTotal / count;
+        }
+        return slots;
+    }
+
+    private static boolean hasGrowChild(RowNode node) {
+        for (DocumentNode child : node.children()) {
+            if (child instanceof SpacerNode spacer && spacer.grow() > 0.0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** States one cell margin in points, so Word's own default does not apply instead. */
+    private static void setCellMargin(CTTblWidth margin, double points) {
+        margin.setType(STTblWidth.DXA);
+        margin.setW(BigInteger.valueOf(Math.round(Math.max(0.0, points) * POINT_TO_TWIP)));
+    }
+
+    /**
+     * Gives a table the width the fixed-layout render gives it, in the cases where that
+     * width can be known without measuring anything.
+     *
+     * <p>Nothing used to write a width at all, so Word sized every table to its own
+     * content while the reference spans much more — the single largest visual difference
+     * between the two renders. But "as wide as the page" is not the rule the engine
+     * follows either. A table with no stated width comes out as wide as its columns
+     * naturally need ({@code TableLayoutSupport.resolveFinalColumnWidths}), which for an
+     * {@code auto} column is the width of its widest unwrapped cell — a measurement, and
+     * measuring is what this backend has no font runtime for. Writing the content width
+     * there would be right for a table whose text fills the line and wrong for a table of
+     * short values, in the same way the old shrink-to-fit was wrong in the other
+     * direction.</p>
+     *
+     * <p>So a width is written when it is knowable and not otherwise: the width the
+     * author stated, or the sum of the columns when every one of them is fixed. Both are
+     * numbers the document already carries. A table with an {@code auto} column and no
+     * stated width keeps Word's own sizing until resolved layout can supply the measured
+     * widths.</p>
+     */
+    private void applyTableWidth(XWPFTable table, TableNode node, int columnCount) {
+        Double authored = node.width() != null && node.width() > 0 ? node.width() : null;
+        List<Double> fixedColumns = fixedColumnWidths(node, columnCount);
+
+        if (fixedColumns == null) {
+            // One of the columns is as wide as its content needs. The split is Word's,
+            // and so is the total unless the author stated one.
+            if (authored != null) {
+                setTableWidth(table, authored);
+            }
+            return;
+        }
+
+        double natural = fixedColumns.stream().mapToDouble(Double::doubleValue).sum();
+        double width = authored != null ? Math.max(authored, natural) : natural;
+        setTableWidth(table, width);
+
+        CTTblGrid grid = table.getCTTbl().getTblGrid() != null
+                ? table.getCTTbl().getTblGrid()
+                : table.getCTTbl().addNewTblGrid();
+        while (grid.sizeOfGridColArray() > 0) {
+            grid.removeGridCol(0);
+        }
+        for (int index = 0; index < fixedColumns.size(); index++) {
+            // With no auto column to absorb it, the engine hands a stated width's surplus
+            // to the last column. Splitting it evenly instead would put every column edge
+            // but the first in a different place than the PDF draws it.
+            double column = fixedColumns.get(index);
+            if (index == fixedColumns.size() - 1) {
+                column += width - natural;
+            }
+            grid.addNewGridCol().setW(BigInteger.valueOf(Math.round(column * POINT_TO_TWIP)));
+        }
+    }
+
+    /**
+     * States a table's width in points, replacing the size-to-content default.
+     *
+     * <p>POI's {@code createTable} writes {@code w:tblW} as {@code w=0, type=auto}, which
+     * is Word's instruction to shrink the table around whatever it holds. That is why an
+     * exported table of short values came out narrow while the reference spans the text
+     * column, and it applies equally to a row carried as a one-row table.</p>
+     */
+    private static void setTableWidth(XWPFTable table, double points) {
+        CTTblPr properties = table.getCTTbl().getTblPr() != null
+                ? table.getCTTbl().getTblPr()
+                : table.getCTTbl().addNewTblPr();
+        CTTblWidth width = properties.isSetTblW()
+                ? properties.getTblW()
+                : properties.addNewTblW();
+        width.setType(STTblWidth.DXA);
+        width.setW(BigInteger.valueOf(Math.round(points * POINT_TO_TWIP)));
+    }
+
+    /**
+     * Every column's width in points, or {@code null} when one of them is not fixed.
+     *
+     * @param node        the table being written
+     * @param columnCount positions the resolved grid actually has
+     * @return the widths, or null when the split needs measuring
+     */
+    private static List<Double> fixedColumnWidths(TableNode node, int columnCount) {
+        List<com.demcha.compose.document.table.DocumentTableColumn> columns = node.columns();
+        // A grid position with no declared column has no width to write, so a table whose
+        // spans reach past its column list is one of the cases Word has to divide itself.
+        if (columns.size() != columnCount) {
+            return null;
+        }
+        List<Double> widths = new ArrayList<>(columnCount);
+        for (var column : columns) {
+            if (column.type() != com.demcha.compose.document.table.DocumentTableColumn.Type.FIXED
+                || column.fixedWidth() == null) {
+                return null;
+            }
+            widths.add(column.fixedWidth());
+        }
+        return widths;
+    }
+
+    /**
+     * Turns off a table's own grid, leaving each cell free to state its borders.
+     *
+     * <p>Used where the table is a carrier for a side-by-side layout rather than
+     * something the author asked to see ruled.</p>
+     *
+     * <p>Each edge is replaced rather than appended to. POI's {@code createTable} already
+     * writes a full set of single-line borders, and {@code addNew*} on top of them leaves
+     * two elements per edge where {@code CT_TblBorders} permits one. Word reads the last
+     * and draws nothing, which is why the output looked right, but the part is invalid
+     * against the schema either way.</p>
+     */
+    private static void hideTableGrid(XWPFTable table) {
+        CTTblPr properties = table.getCTTbl().getTblPr() != null
+                ? table.getCTTbl().getTblPr()
+                : table.getCTTbl().addNewTblPr();
+        CTTblBorders borders = properties.isSetTblBorders()
+                ? properties.getTblBorders()
+                : properties.addNewTblBorders();
+        paintEdge(borders.isSetTop() ? borders.getTop() : borders.addNewTop(),
+                STBorder.NONE, null, null);
+        paintEdge(borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom(),
+                STBorder.NONE, null, null);
+        paintEdge(borders.isSetLeft() ? borders.getLeft() : borders.addNewLeft(),
+                STBorder.NONE, null, null);
+        paintEdge(borders.isSetRight() ? borders.getRight() : borders.addNewRight(),
+                STBorder.NONE, null, null);
+        paintEdge(borders.isSetInsideH() ? borders.getInsideH() : borders.addNewInsideH(),
+                STBorder.NONE, null, null);
+        paintEdge(borders.isSetInsideV() ? borders.getInsideV() : borders.addNewInsideV(),
+                STBorder.NONE, null, null);
     }
 
     /**
@@ -1099,7 +1905,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeSpacer(XWPFDocument document, SpacerNode node) {
-        XWPFParagraph para = document.createParagraph();
+        XWPFParagraph para = newBodyParagraph(document);
         para.createRun().setText("");
         if (node.height() > 0) {
             para.setSpacingAfter((int) Math.round(node.height() * POINT_TO_TWIP));
@@ -1192,10 +1998,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (style == null) {
             return;
         }
-        if (style.fontName() != null) {
+        // A run that only restates the Normal style is left saying nothing, so Word's own
+        // "change the Normal style" reaches it. Written out, the direct property wins over
+        // the style and a global restyle silently does nothing — which is what this
+        // exporter used to produce for every run in every document.
+        DocumentTextStyle defaults = documentDefaultStyle;
+        if (style.fontName() != null
+            && (defaults == null || !style.fontName().equals(defaults.fontName()))) {
             run.setFontFamily(style.fontName().name());
         }
-        if (style.size() > 0) {
+        // Complex-script size rides along with the ordinary one, so it is skipped for the
+        // same reason when the style already carries it.
+        // Compared as they are written, in half-points, rather than as raw doubles: two
+        // sizes Word cannot tell apart must not produce a redundant direct w:sz.
+        boolean sizeComesFromTheStyle = defaults != null
+                && Math.round(style.size() * HALF_POINTS_PER_POINT)
+                   == Math.round(defaults.size() * HALF_POINTS_PER_POINT);
+        if (style.size() > 0 && !sizeComesFromTheStyle) {
             // Passed as a double, because w:sz counts half-points and rounding to whole
             // points first throws away a precision the format has: the timeline's 8.5pt
             // label was being written as 9pt.
@@ -1206,7 +2025,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             run.setComplexScriptFontSize(style.size());
         }
         applyLetterSpacing(run, style);
-        if (style.color() != null) {
+        applyRunColourAndDecoration(run, style, defaults);
+    }
+
+    /** Colour and face, with the colour skipped when the Normal style already says it. */
+    private void applyRunColourAndDecoration(XWPFRun run,
+                                             DocumentTextStyle style,
+                                             DocumentTextStyle defaults) {
+        if (style.color() != null
+            && (defaults == null || defaults.color() == null
+                // By channel, not by instance: DocumentColor defines no equals, so two
+                // colours built from the same channels are unequal unless they are the
+                // same object, and a style built inline per paragraph would keep writing
+                // a colour the Normal style already says.
+                || style.color().color().getRGB() != defaults.color().color().getRGB())) {
             run.setColor(toHexColor(style.color().color()));
         }
         if (style.decoration() != null) {

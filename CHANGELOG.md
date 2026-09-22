@@ -8,6 +8,107 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A container's fill and borders now reach the DOCX export.** A `SectionNode` or
+  `ContainerNode` carrying a `fillColor`, per-side `borders` or a uniform `stroke` was
+  treated as a transparent wrapper: its children were written and its paint was dropped
+  with nothing in the log to say so, which is why a card exported as bare text. Each
+  paragraph the container wraps now carries the fill as `w:shd` and the borders as
+  `w:pBdr`; consecutive shaded paragraphs render in Word as one band, nested containers
+  resolve innermost-first, and the paint stops where the container does. Three things are
+  still not representable and are documented rather than approximated: the corner radius,
+  since Word paragraph shading is rectangular — dropped with one warning per export; the
+  container's `padding`, so the band hugs its text; and a table inside a painted
+  container, which keeps its own cell paint. A container with no paint exports exactly as
+  before.
+
+- **A row no longer exports with visible table rules, and a page-number footer sits at the
+  right margin again.** Two defects the render made obvious. A `RowNode` is carried as a
+  one-row table so editors keep the side-by-side layout, but POI ships Word's default
+  single-line grid and nothing turned it off, so every two-column block exported ruled
+  where the PDF draws nothing. And the header/footer writer added its right tab stop
+  through `addNewPPr()` after the spacing calls had already created the paragraph
+  properties — a second `w:pPr` that Word ignores in favour of the first, so the tab fell
+  back to Word's default half-inch grid and the page number sat near the left margin.
+  Both are fixed; a table an author asked for keeps its own borders.
+
+- **A DOCX list is now a real Word list.** The export wrote the marker into the item's
+  run text and indented nesting with two spaces per level, which looks like a list and is
+  not one: measured in Word 16.0, `ListFormat.ListType` came back as "no numbering", so
+  pressing Enter produced a plain paragraph instead of the next item. A list now gets a
+  `numbering.xml` definition, `w:numPr` on each item, and the authored marker as the
+  level's text, with nesting as a level rather than padding characters. The
+  `ListMarker.defaultForDepth` cascade becomes the levels' markers and
+  `markerFor(depth, ...)` still chooses a level's own.
+  <br><br>
+  Four kinds of list deliberately keep the plain-paragraph form, because Word cannot hold
+  them without changing what was asked for: a markerless list, which would gain a marker
+  and an indent it declined; a drawn marker, which has no Word list analogue; a list whose
+  siblings at one depth carry different markers, since a definition names one marker per
+  level; and rich items, whose runs the numbered path does not write.
+  <br><br>
+  This does not make `markerGap` work and does not claim to — real Word numbering was
+  measured against that requirement and rejected for it, and it is still rejected. The
+  level's marker column is a stated constant, 180 twips plus 120 per nesting level,
+  chosen near the single space the text form used. What changes is behaviour: the list
+  continues, renumbers and demotes. What it costs is that the marker column is a
+  convention rather than the configured gap.
+
+- **A DOCX export now names its own body text as Word's Normal style.** The package
+  carried no styles part at all, so Word invented a latent `Normal` that no run referred
+  to, and every run spelled out its own font and size. A direct run property beats a
+  style, so "change the Normal style" — the ordinary way a person restyles a Word
+  document — was accepted and then did nothing; measured in Word 16.0, setting Normal to
+  14pt left the body at 10.5pt. The export now writes a styles part whose document
+  defaults and `Normal` carry the document's dominant text style, chosen by how many
+  characters are set in it rather than by how many nodes use it, since headings are
+  numerous and short while body text is long. Styles are weighed by what the styles part
+  writes — family, half-points, packed RGB — rather than by `DocumentTextStyle` equality:
+  that record's equality is its components', `DocumentColor` defines no `equals`, and
+  styles built inline per paragraph would each weigh alone, electing whichever style
+  happened to be reused. Measured before the fix: six body paragraphs against three
+  headings elected the heading, and restyling Normal moved the headings instead of the
+  body. A run that only restates that style writes
+  no `w:rFonts`, `w:sz`, `w:szCs` or `w:color`, so the style reaches it; a run that
+  differs still says so. Complex-script sizing is unchanged in effect — `w:szCs` moves to
+  the style along with `w:sz`, so Hebrew and Arabic still read a size rather than falling
+  back to Word's default. A document with no text writes no styles part.
+
+- **A DOCX table and row now state the width the layout gives them, where that width can
+  be known.** POI's `createTable` writes `w:tblW` as `w=0, type=auto` — Word's instruction
+  to shrink a table around its own content — and nothing overrode it, so every exported
+  table sized itself to its text and a row carried as a one-row table collapsed around a
+  label. A row takes the whole width it is offered whatever its children measure, so its
+  carrier gets the content width. A table's own width is written only where it needs no
+  measuring: the width the author stated, and the column grid when every column is fixed,
+  with a stated width's surplus going to the last column as the layout gives it. A table
+  with an `auto` column and no stated width keeps Word's sizing — the layout would give it
+  the sum of its natural column widths, and an `auto` column's natural width is its widest
+  unwrapped cell, which is a measurement this backend has no font runtime to make. Writing
+  the content width there would be right for a table whose text fills the line and wrong
+  for one holding three short values.
+  <br><br>
+  A row's slots are arithmetic for three of the four ways it can divide: weights, an even
+  split and fixed columns are shares of what is left after the gaps, and those are now
+  written as the grid. Word has no inter-column gap, so the gap and the row's padding ride
+  in the neighbouring column's width and come back out as that cell's margin — the text
+  box is exactly the slot and each column starts exactly where its slot does. Cell margins
+  are written even when they are zero, because Word's own default is not, and the carrier
+  is marked fixed-layout, without which the grid is a starting suggestion Word re-fits to
+  the content. An `auto` column and the flex path — a non-START arrangement or a grow
+  spacer — ask what a child's content naturally measures, and stay Word's.
+  <br><br>
+  A row carrier also wrote each of its six borders twice, because POI ships a full
+  single-line set and turning them off added to it rather than replacing it, leaving a
+  `w:tblBorders` that `CT_TblBorders` does not allow. Word read the last element and drew
+  nothing, so the render looked right while the part was invalid.
+  <br><br>
+  Measured through Word 16.0 and LibreOffice Writer against the reference render, this
+  moves the columns onto the layout's and uncovers a larger drift that had been partly
+  cancelling it: Word starts the body 12.8pt lower than the reference and sets each body
+  line at 13.9pt against 9.7pt (LibreOffice: 12.1pt), so a row that came out one line too
+  short had been pulling the page back up. Line height is measured from the font, so
+  closing that needs resolved layout rather than arithmetic.
+
 - **A semantic export backend can ask for the compiled layout.** _(Experimental — see
   [API stability](docs/api-stability.md).)_ A semantic backend walks the authored tree and
   gets no geometry, which is right for most of them and wrong for the ones that need a

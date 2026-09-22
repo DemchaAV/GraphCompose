@@ -64,7 +64,7 @@ class DocxSemanticBackendTest {
     }
 
     @Test
-    void listsExportAsMarkerPrefixedParagraphs() throws Exception {
+    void listsExportAsWordListItems() throws Exception {
         byte[] docxBytes;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(595, 842)
@@ -79,13 +79,15 @@ class DocxSemanticBackendTest {
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
             List<String> texts = document.getParagraphs().stream()
                     .map(XWPFParagraph::getText).toList();
-            assertThat(texts).anyMatch(t -> t.endsWith("First") && t.length() > "First".length());
-            assertThat(texts).anyMatch(t -> t.endsWith("Second"));
+            // Word owns the marker now, so the item's text is the item and nothing more;
+            // that the paragraph is a list item is asserted through w:numPr, in
+            // DocxListNumberingTest.
+            assertThat(texts).contains("First", "Second");
         }
     }
 
     @Test
-    void nestedListItemsIndentTwoSpacesPerDepth() throws Exception {
+    void nestedListItemsUseListLevelsRatherThanIndentCharacters() throws Exception {
         byte[] docxBytes;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(595, 842)
@@ -104,13 +106,11 @@ class DocxSemanticBackendTest {
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
             List<String> texts = document.getParagraphs().stream()
                     .map(XWPFParagraph::getText).toList();
-            // Two spaces of indent per depth; without per-item markers the
-            // semantic export falls back to the same depth cascade the
-            // fixed-layout pipeline uses (• ◦ ▪), so PDF and DOCX agree.
-            assertThat(texts).contains(
-                    "• Level zero",
-                    "  ◦ Level one",
-                    "    ▪ Level two");
+            // Nesting is a list level rather than padding characters, so no indent
+            // reaches the text. Without per-item markers the export still falls back to
+            // the same depth cascade the fixed-layout pipeline uses (• ◦ ▪) — that it
+            // does is asserted on the level definitions in DocxListNumberingTest.
+            assertThat(texts).contains("Level zero", "Level one", "Level two");
         }
     }
 
@@ -133,13 +133,17 @@ class DocxSemanticBackendTest {
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
             List<String> texts = document.getParagraphs().stream()
                     .map(XWPFParagraph::getText).toList();
-            // The per-depth override survives; the flat-list marker("→") does
-            // not leak into nested fallbacks — depth 0 takes the cascade
-            // bullet exactly as fixed-layout rendering does (markerFor(0, ...)
-            // is the way to control depth 0).
-            assertThat(texts).contains(
-                    "• Root",
-                    "  ‣ Child");
+            assertThat(texts).contains("Root", "Child");
+
+            // The claim is about which marker each depth gets, and the markers now live
+            // in the list definition rather than in the text. The per-depth override
+            // survives; the flat-list marker("→") does not leak into nested fallbacks —
+            // depth 0 takes the cascade bullet exactly as fixed-layout rendering does
+            // (markerFor(0, ...) is the way to control depth 0).
+            var levels = document.getNumbering()
+                    .getAbstractNum(java.math.BigInteger.ZERO).getAbstractNum().getLvlList();
+            assertThat(levels.get(0).getLvlText().getVal()).isEqualTo("•");
+            assertThat(levels.get(1).getLvlText().getVal()).isEqualTo("‣");
         }
     }
 
@@ -266,7 +270,7 @@ class DocxSemanticBackendTest {
                     .map(XWPFParagraph::getText).toList();
             // writeNode recurses through section/container wrappers, so the
             // nested list is not dropped.
-            assertThat(texts).contains("• Inside section");
+            assertThat(texts).contains("Inside section");
         }
     }
 

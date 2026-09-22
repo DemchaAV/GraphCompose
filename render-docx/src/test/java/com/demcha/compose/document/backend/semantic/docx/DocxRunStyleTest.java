@@ -106,7 +106,13 @@ class DocxRunStyleTest {
                 .inlineCode("run()")));
 
         assertThat(runs).hasSize(2);
-        assertThat(runs.get(0).getFontFamily()).isEqualTo("Helvetica");
+        // The surrounding text is the document's own body style, so its face comes from
+        // Normal and the run says nothing — that is what lets a reader restyle the
+        // document. The claim this test makes is about the chip, and it is unchanged: the
+        // chip's face differs, so it is still written on the run itself.
+        assertThat(runs.get(0).getFontFamily())
+                .describedAs("plain text takes its face from the Normal style")
+                .isNull();
         assertThat(runs.get(1).getText(0)).isEqualTo("run()");
         assertThat(runs.get(1).getFontFamily()).isEqualTo("Courier");
     }

@@ -53,6 +53,27 @@ PDF never pull POI.
 Page geometry (size and margins) and session metadata (title, author,
 subject, keywords) carry into the Word document as well.
 
+## Finding out what the export could not carry
+
+The export says what it drops — but it says it to the log, which a service generating
+documents for other people cannot read. Pass a sink and the same information arrives as a
+value:
+
+```java
+var notes = new ArrayList<DocxExportReport.Note>();
+session.export(new DocxSemanticBackend(report -> notes.addAll(report.notes())));
+```
+
+Each note carries a severity, what it was about, the authored node's path, and what it
+means for the document. `DROPPED` means the page draws it and the document does not carry
+it; `APPROXIMATED` means it is in the document as the nearest thing Word owns — a panel
+that keeps its fill and loses its rounded corners. Neither is an error: an export that
+cannot proceed throws, and the report is not how you find that out.
+
+The sink is called once, after the bytes are complete. The convenience methods
+(`buildDocx`, `writeDocx`, `toDocxBytes`) build their own backend and so have no sink —
+use `session.export(...)` when you need the report.
+
 ## Measured geometry
 
 The export asks the session for the resolved layout and writes three things from it that

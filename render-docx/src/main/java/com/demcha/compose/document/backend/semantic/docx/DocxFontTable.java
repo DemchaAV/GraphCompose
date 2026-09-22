@@ -83,12 +83,14 @@ final class DocxFontTable {
      * @param document  the document being written
      * @param graph     the document's own tree, read for the faces it names
      * @param custom    families the session registered, which win over the bundled ones
+     * @param report    where a face that may not travel is recorded
      * @throws IOException if a part cannot be written
      */
     static void write(XWPFDocument document,
                       DocumentGraph graph,
-                      Collection<FontFamilyDefinition> custom) throws IOException {
-        List<Embedded> embedded = resolve(graph, custom);
+                      Collection<FontFamilyDefinition> custom,
+                      DocxExportReport.Builder report) throws IOException {
+        List<Embedded> embedded = resolve(graph, custom, report);
         if (embedded.isEmpty()) {
             return;
         }
@@ -175,7 +177,9 @@ final class DocxFontTable {
      * asks for the Helvetica family, which is a name rather than a file and ships
      * nothing.</p>
      */
-    private static List<Embedded> resolve(DocumentGraph graph, Collection<FontFamilyDefinition> custom) {
+    private static List<Embedded> resolve(DocumentGraph graph,
+                                          Collection<FontFamilyDefinition> custom,
+                                          DocxExportReport.Builder report) {
         Map<FontName, Set<Slot>> used = new LinkedHashMap<>();
         for (DocumentNode root : graph.roots()) {
             collectFonts(root, used);
@@ -193,7 +197,7 @@ final class DocxFontTable {
                 // A standard-14 name, or one nothing registered: there is no file to ship.
                 continue;
             }
-            List<Face> faces = facesOf(family, entry.getValue());
+            List<Face> faces = facesOf(family, entry.getValue(), report);
             if (!faces.isEmpty()) {
                 embedded.add(new Embedded(family.wordFamily(), faces));
             }
@@ -245,14 +249,15 @@ final class DocxFontTable {
      * later bolds a word gets whatever their machine does for a missing bold face, which is
      * what happens in any document that does not carry one.</p>
      */
-    private static List<Face> facesOf(FontFamilyDefinition family, Set<Slot> slots) {
+    private static List<Face> facesOf(FontFamilyDefinition family, Set<Slot> slots,
+                                      DocxExportReport.Builder report) {
         FontFamilyDefinition.FontSourceSet sources = family.fontSourceSet().orElseThrow();
         List<Face> faces = new ArrayList<>(slots.size());
         for (Slot slot : Slot.values()) {
             if (!slots.contains(slot)) {
                 continue;
             }
-            addFace(faces, family, slot, switch (slot) {
+            addFace(faces, family, slot, report, switch (slot) {
                 case REGULAR -> sources.regular();
                 case BOLD -> sources.bold();
                 case ITALIC -> sources.italic();
@@ -265,6 +270,7 @@ final class DocxFontTable {
     private static void addFace(List<Face> faces,
                                 FontFamilyDefinition family,
                                 Slot slot,
+                                DocxExportReport.Builder report,
                                 FontFamilyDefinition.FontBinarySource source) {
         if (source == null) {
             return;
@@ -276,6 +282,10 @@ final class DocxFontTable {
             LOG.warn("DocxSemanticBackend: '{}' face of '{}' could not be read ({}); the "
                      + "document declares the family and ships this face without it",
                     slot.element(), family.wordFamily(), failure.toString());
+            report.add(DocxExportReport.Severity.DROPPED, "embedded font", null,
+                    "the " + slot.element() + " face of '" + family.wordFamily()
+                    + "' could not be read (" + failure + "), so a reader without it "
+                    + "installed sees a substituted face");
             return;
         }
         switch (DocxFontEmbedding.permissionOf(bytes)) {
@@ -283,12 +293,18 @@ final class DocxFontTable {
                 LOG.warn("DocxSemanticBackend: '{}' does not permit embedding (OS/2 fsType), so "
                          + "it is named but not shipped; a reader without it installed sees a "
                          + "substituted face", family.wordFamily());
+                report.add(DocxExportReport.Severity.DROPPED, "embedded font", null,
+                        "'" + family.wordFamily() + "' does not permit embedding (OS/2 fsType), "
+                        + "so a reader without it installed sees a substituted face");
                 return;
             }
             case PREVIEW_ONLY -> {
                 LOG.warn("DocxSemanticBackend: '{}' permits embedding for reading and printing "
                          + "only, which a document meant to be edited cannot rely on, so it is "
                          + "named but not shipped", family.wordFamily());
+                report.add(DocxExportReport.Severity.DROPPED, "embedded font", null,
+                        "'" + family.wordFamily() + "' permits embedding for reading and "
+                        + "printing only, which a document meant to be edited cannot rely on");
                 return;
             }
             default -> {

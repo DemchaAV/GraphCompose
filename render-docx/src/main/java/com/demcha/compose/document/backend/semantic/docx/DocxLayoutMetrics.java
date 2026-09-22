@@ -64,12 +64,17 @@ final class DocxLayoutMetrics {
      * @return an index, or {@link #EMPTY} when there is no layout to index
      */
     static DocxLayoutMetrics of(DocumentGraph graph, LayoutGraph layout) {
-        if (graph == null || layout == null) {
+        if (graph == null) {
             return EMPTY;
         }
         Map<DocumentNode, String> paths = new IdentityHashMap<>();
         for (int index = 0; index < graph.roots().size(); index++) {
             indexPaths(graph.roots().get(index), null, index, paths);
+        }
+        if (layout == null) {
+            // No measurements, but the paths still name the nodes — which is what a
+            // diagnostic note needs to say where in the document it came from.
+            return new DocxLayoutMetrics(paths, Map.of(), Map.of());
         }
         Map<String, List<PlacedFragment>> fragments = new HashMap<>();
         for (PlacedFragment fragment : layout.fragments()) {
@@ -110,6 +115,17 @@ final class DocxLayoutMetrics {
     /** @return true when there is no layout behind this index */
     boolean isEmpty() {
         return fragments.isEmpty();
+    }
+
+    /**
+     * The path the layout graph addresses a node by, for a note that has to say where in
+     * the document it came from.
+     *
+     * @param node any authored node
+     * @return its path, or null when this index was built from no graph at all
+     */
+    String pathOf(DocumentNode node) {
+        return node == null ? null : paths.get(node);
     }
 
     /**

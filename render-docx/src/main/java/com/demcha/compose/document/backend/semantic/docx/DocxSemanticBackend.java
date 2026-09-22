@@ -172,6 +172,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // Every family this export can name, by the logical name a style asks for. The
     // session's own registrations win over the bundled ones, the way they do everywhere.
     private java.util.Map<FontName, FontFamilyDefinition> wordFamilies = java.util.Map.of();
+    // What this export could not carry as authored. Collected whether or not anyone asked
+    // for it: building it costs a list, and deciding later that nobody wanted it is not
+    // something the writers can do halfway through.
+    private DocxExportReport.Builder report = new DocxExportReport.Builder();
+    // Where the finished report goes, when the caller configured somewhere for it to go.
+    private final java.util.function.Consumer<DocxExportReport> reportSink;
 
     /**
      * A container's paint, reduced to what a Word paragraph can carry.
@@ -191,6 +197,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Creates a DOCX semantic backend.
      */
     public DocxSemanticBackend() {
+        this(null);
+    }
+
+    /**
+     * Creates a backend that hands its report to {@code reportSink} when an export ends.
+     *
+     * <p>A Word document cannot hold everything a page can draw, and this export says so
+     * rather than approximating in silence — but it said so to the log, which a service
+     * generating documents for other people has no way to read. Configure a sink and the
+     * same information arrives as a {@link DocxExportReport}: what was dropped, what was
+     * approximated, and the path of the node each came from.</p>
+     *
+     * <p>The sink is called once per export, after the bytes are complete, and only for an
+     * export that finished — an export that fails throws, and a report is not a way to
+     * discover that it did.</p>
+     *
+     * @param reportSink where the report goes, or null to keep the log as the only channel
+     * @since 2.5.0
+     */
+    public DocxSemanticBackend(java.util.function.Consumer<DocxExportReport> reportSink) {
+        this.reportSink = reportSink;
     }
 
     @Override
@@ -226,16 +253,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         warnedNodeKinds.clear();
         containerPaint.clear();
         listNumbering.clear();
+        report = new DocxExportReport.Builder();
         wordFamilies = DocxFontTable.familiesByName(context.customFontFamilies());
         documentDefaultStyle = dominantTextStyle(graph);
         layout = DocxLayoutMetrics.of(graph, context.layoutGraph());
+        if (layout.isEmpty()) {
+            // Said once, for the whole export: without measurements the line height is
+            // Word's and so is every auto column, and a caller comparing this file against
+            // the rendered page deserves to know that before they look.
+            report.add(DocxExportReport.Severity.APPROXIMATED, "measured geometry", null,
+                    "this document could not be laid out, so line heights and auto column "
+                    + "widths are the editor's rather than the engine's");
+        }
         carriedSpacingBefore = 0;
         lastBodyParagraph = null;
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
         try (XWPFDocument document = new XWPFDocument()) {
             applyPageGeometry(document, context.canvas());
             writeStylesPart(document);
-            DocxFontTable.write(document, graph, context.customFontFamilies());
+            DocxFontTable.write(document, graph, context.customFontFamilies(), report);
             applyOutputOptions(document, context.outputOptions());
             for (DocumentNode root : graph.roots()) {
                 writeNode(document, root);
@@ -245,6 +281,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 byte[] bytes = output.toByteArray();
                 if (context.outputFile() != null) {
                     Files.write(context.outputFile(), bytes);
+                }
+                // Handed over once the bytes exist, so a caller is never told what an
+                // export lost by an export that did not finish.
+                if (reportSink != null) {
+                    reportSink.accept(report.build());
                 }
                 return bytes;
             }
@@ -427,12 +468,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
-    /** One warning per dropped node kind, deduplicated across the export. */
+    /**
+     * One warning per dropped node kind, deduplicated across the export.
+     *
+     * <p>The report is told about every one of them, not one per kind: a caller asking
+     * what the document lost wants the three charts it lost, and which three. The log is
+     * the summary and the report is the record.</p>
+     */
     private void warnUnsupported(DocumentNode node) {
         if (warnedNodeKinds.add(node.nodeKind())) {
             LOG.warn("DocxSemanticBackend: dropping '{}' node(s) — geometry has no semantic "
                      + "Word analogue; use the PDF backend for pixel-perfect output", node.nodeKind());
         }
+        report.add(DocxExportReport.Severity.DROPPED, node.nodeKind(), layout.pathOf(node),
+                "geometry has no semantic Word analogue, so it is not in the document at all");
     }
 
     /**
@@ -444,10 +493,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * no signal at all, weaker than the block-level drop path.
      */
     private void warnDroppedInlineRuns(ParagraphNode node) {
-        warnDroppedInlineRuns(node.inlineRuns());
+        warnDroppedInlineRuns(node.inlineRuns(), layout.pathOf(node));
     }
 
-    private void warnDroppedInlineRuns(List<InlineRun> runs) {
+    private void warnDroppedInlineRuns(List<InlineRun> runs, String path) {
         for (InlineRun run : runs) {
             if (run instanceof InlineTextRun || run instanceof InlineHighlightRun) {
                 continue;
@@ -458,6 +507,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                          + "analogue; the paragraph text renders without them, use the PDF "
                          + "backend for full fidelity", kind);
             }
+            report.add(DocxExportReport.Severity.DROPPED, "inline " + kind, path,
+                    "no semantic Word analogue; the paragraph's text is written without it");
         }
     }
 
@@ -637,7 +688,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // A drawn marker's pieces are runs, so the row is written the way
                 // any row with runs in it is; its item is still just a label.
                 writeRichListLine(document, list.textStyle(), list.marker(),
-                        com.demcha.compose.document.node.ListItem.of(normalized), 0, lineHeight);
+                        com.demcha.compose.document.node.ListItem.of(normalized), 0, lineHeight,
+                        layout.pathOf(list));
             } else if (numId != null) {
                 // Word draws the marker, so the text is the item and nothing else.
                 writeListLine(document, list.textStyle(), normalized, 0, numId, lineHeight);
@@ -666,7 +718,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth);
         java.util.OptionalDouble lineHeight = layout.lineHeight(list);
         if (item.isRich() || marker.isRich()) {
-            writeRichListLine(document, list.textStyle(), marker, item, depth, lineHeight);
+            writeRichListLine(document, list.textStyle(), marker, item, depth, lineHeight,
+                    layout.pathOf(list));
         } else if (numId != null) {
             writeListLine(document, list.textStyle(), item.label(), depth, numId, lineHeight);
         } else {
@@ -722,9 +775,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                    com.demcha.compose.document.node.ListMarker marker,
                                    com.demcha.compose.document.node.ListItem item,
                                    int depth,
-                                   java.util.OptionalDouble lineHeight) {
-        warnDroppedInlineRuns(marker.runs());
-        warnDroppedInlineRuns(item.runs());
+                                   java.util.OptionalDouble lineHeight,
+                                   String path) {
+        warnDroppedInlineRuns(marker.runs(), path);
+        warnDroppedInlineRuns(item.runs(), path);
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
         XWPFRun leading = para.createRun();
@@ -772,6 +826,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * fixed-layout backend, where charts compile into ordinary primitives.
      */
     private void writeChartFallback(XWPFDocument document, ChartNode node) throws Exception {
+        report.add(DocxExportReport.Severity.APPROXIMATED, "chart", layout.pathOf(node),
+                "exported as its data table — a categories-by-series table in the chart's own "
+                + "value format — because the drawn chart is layout geometry");
         if (chartWarned.compareAndSet(false, true)) {
             LOG.warn("docx.export.chart-fallback kind={} — the semantic DOCX export has no "
                     + "layout pass, so charts are exported as their data table. "
@@ -1064,6 +1121,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean rounded = node instanceof SectionNode section
                 ? hasRadius(section.cornerRadius())
                 : node instanceof ContainerNode container && hasRadius(container.cornerRadius());
+        if (rounded) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "corner radius", layout.pathOf(node),
+                    "Word paragraph shading is rectangular, so the panel keeps its fill and "
+                    + "loses its rounded corners");
+        }
         if (rounded && containerRadiusWarned.compareAndSet(false, true)) {
             LOG.warn("docx.export.container-radius-dropped node='{}' — Word paragraph shading "
                      + "is rectangular, so the panel renders with square corners. "
@@ -1174,6 +1236,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // the outline frame and without clipping. The resulting Word document
         // shows the layer content but not the shape boundary — authors who
         // need the boundary must export to PDF.
+        report.add(DocxExportReport.Severity.APPROXIMATED, "clipped shape container",
+                layout.pathOf(node),
+                "DOCX has no graphics-state clip, so the layers are written inline, in source "
+                + "order, without the outline and without being clipped to it");
         if (shapeContainerWarned.compareAndSet(false, true)) {
             LOG.warn("docx.export.shape-container-fallback "
                     + "outline='{}' clipPolicy={} — DOCX has no graphics-state clip; "

@@ -77,6 +77,15 @@ matrix.
 > generalise against. Constructing `DocxSemanticBackend` and calling
 > `session.export(backend, path)` stays the Stable path and is unaffected.
 >
+> The **DOCX export report** is Experimental in 2.5.0: the `DocxExportReport` type and
+> the `DocxSemanticBackend(Consumer<DocxExportReport>)` constructor, which hand the
+> calling program what the export dropped or approximated and the path of the node each
+> came from — the same information the export has always written to the log, where a
+> service generating documents for other people cannot read it. It is marked
+> Experimental because what a report should carry is still growing: coverage of what
+> *was* written is not in it yet, and adding that will move the shape. The no-argument
+> constructor and the log are unaffected.
+>
 > Seven members of the otherwise-Stable **PDF backend** also carry `@Beta`. The
 > package is not Experimental — these are:
 > `PdfFixedLayoutBackend.renderSections` / `writeSections`, the low-level seam

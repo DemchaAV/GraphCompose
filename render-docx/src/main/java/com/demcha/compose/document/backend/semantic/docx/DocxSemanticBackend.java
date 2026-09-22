@@ -174,6 +174,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // for the first paragraph inside it — a container is not a Word object, so the space it
     // holds above itself has to be carried by something that is.
     private double carriedSpacingBefore;
+
+    /** Space the last body paragraph holds below itself, not yet written — see {@link #owePendingSpacingAfter}. */
+    private double pendingSpacingAfter;
     // The last paragraph written into the body, so a container can hand it the space it
     // holds below itself once its children are done.
     private XWPFParagraph lastBodyParagraph;
@@ -290,6 +293,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     + "widths are the editor's rather than the engine's");
         }
         carriedSpacingBefore = 0;
+        pendingSpacingAfter = 0;
         lastBodyParagraph = null;
         currentCell = null;
         currentCellWidth = Double.NaN;
@@ -302,6 +306,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             for (DocumentNode root : graph.roots()) {
                 writeNode(document, root);
             }
+            // Nothing follows the last root to carry what it holds below itself.
+            flushSpacingAfter();
             try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
                 document.write(output);
                 byte[] bytes = output.toByteArray();
@@ -925,27 +931,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A container is not a Word object — its children are written where it stood — so
      * the space it holds above and below itself had nowhere to go and was dropped. Word has
      * that space on a paragraph and only on a paragraph, so the top goes to the first
-     * paragraph written inside and the bottom to the last, which is where a reader sees it
-     * either way.</p>
+     * paragraph written inside and the bottom joins the space owed below the container,
+     * which the next paragraph writes above itself (see {@link #owePendingSpacingAfter}).</p>
      *
      * <p>Both are added to whatever that paragraph asks for itself, and both survive
      * nesting: a card inside a section hands its top to the same first paragraph, which
      * ends up carrying the sum — the same sum the page shows.</p>
      *
-     * <p>A container that begins or ends with a table keeps that edge unwritten. Word has
-     * no space-before on a table, and the alternatives — an empty paragraph, a floating
+     * <p>A container that begins with a table keeps that edge unwritten. Word has no
+     * space-before on a table, and the alternatives — an empty paragraph, a floating
      * table's {@code w:tblpPr} — either add a line the document never asked for or move the
-     * table out of the flow it is in.</p>
+     * table out of the flow it is in. The edge below it is not lost the same way: the gap
+     * under a table is the space above whatever follows, and that is a paragraph.</p>
      */
     private void writeContainerBody(XWPFDocument document, DocumentNode node) throws Exception {
         carriedSpacingBefore += node.margin().top() + node.padding().top();
         for (DocumentNode child : node.children()) {
             writeNode(document, child);
         }
-        double after = node.margin().bottom() + node.padding().bottom();
-        if (after > 0 && lastBodyParagraph != null) {
-            addSpacing(lastBodyParagraph, 0, after);
-        }
+        owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
         // Nothing inside took the top edge — a container of tables, or an empty one — so it
         // is not left waiting to land on whatever paragraph comes next.
         carriedSpacingBefore = 0;
@@ -1283,12 +1287,48 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (paint != null) {
             applyContainerPaint(para, paint);
         }
-        if (carriedSpacingBefore > 0) {
-            addSpacing(para, carriedSpacingBefore, 0);
-            carriedSpacingBefore = 0;
+        // Everything owed above this paragraph — the space the one before it holds below
+        // itself, and any container edge — is written here, on one side of the gap.
+        double above = carriedSpacingBefore + pendingSpacingAfter;
+        if (above > 0) {
+            addSpacing(para, above, 0);
         }
+        carriedSpacingBefore = 0;
+        pendingSpacingAfter = 0;
         lastBodyParagraph = para;
         return para;
+    }
+
+    /**
+     * Holds the space below a paragraph until it is known what follows.
+     *
+     * <p>A gap between two blocks is one distance, and the exporter wrote it as two —
+     * {@code w:after} on the block above and {@code w:before} on the one below — which is
+     * only the same thing in an editor that adds them. LibreOffice takes the larger:
+     * measured on the probe, a card holding 20pt below itself followed by a heading asking
+     * for 16pt above rendered 20pt where the page shows 36, and the whole document below
+     * it sat 16pt high.</p>
+     *
+     * <p>So the space is owed rather than written, and {@link #newBodyParagraph} pays it as
+     * the next paragraph's {@code w:before} together with whatever that paragraph asks for
+     * itself. One number on one side: an editor that adds and an editor that takes the
+     * maximum then agree, because there is nothing to add it to.</p>
+     *
+     * <p>{@link #flushSpacingAfter} pays it the other way when what comes next is not a
+     * paragraph — a table has no space above it in Word — or when nothing comes at all.</p>
+     */
+    private void owePendingSpacingAfter(double points) {
+        if (points > 0) {
+            pendingSpacingAfter += points;
+        }
+    }
+
+    /** Writes the owed space onto the paragraph that owes it, for want of a later one. */
+    private void flushSpacingAfter() {
+        if (pendingSpacingAfter > 0 && lastBodyParagraph != null) {
+            addSpacing(lastBodyParagraph, 0, pendingSpacingAfter);
+        }
+        pendingSpacingAfter = 0;
     }
 
     /**
@@ -1472,11 +1512,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Margin and padding are added together. They are different things to the engine —
      * one outside the box, one inside it — but Word has one gap, and a reader looking at
      * the page sees their sum.</p>
+     *
+     * <p>Only the space above is written here. The space below is owed until it is known
+     * what follows it, so that one gap is written once rather than from both sides —
+     * {@link #owePendingSpacingAfter} says why that matters.</p>
      */
-    private static void applyVerticalSpacing(XWPFParagraph target, DocumentNode source) {
-        addSpacing(target,
-                source.margin().top() + source.padding().top(),
-                source.margin().bottom() + source.padding().bottom());
+    private void applyVerticalSpacing(XWPFParagraph target, DocumentNode source) {
+        addSpacing(target, source.margin().top() + source.padding().top(), 0);
+        owePendingSpacingAfter(source.margin().bottom() + source.padding().bottom());
     }
 
     /**
@@ -2683,6 +2726,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private XWPFTable newTable(XWPFDocument document, int rows, int columns) {
+        // Word has no space above a table, so the paragraph before it has to carry it.
+        flushSpacingAfter();
         if (currentCell == null) {
             return document.createTable(rows, columns);
         }
@@ -2710,24 +2755,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the outer one writing into the body.</p>
      */
     private void writeCellNode(XWPFTableCell cell, DocumentNode child) throws Exception {
-        XWPFTableCell previous = currentCell;
+        XWPFTableCell previousCell = currentCell;
+        XWPFParagraph previousParagraph = lastBodyParagraph;
+        double previousCarried = carriedSpacingBefore;
+        double previousOwed = pendingSpacingAfter;
         currentCell = cell;
+        lastBodyParagraph = null;
+        carriedSpacingBefore = 0;
+        pendingSpacingAfter = 0;
         try {
             writeNode(cell.getXWPFDocument(), child);
+            // A cell ends where it ends: its last gap cannot land on whatever the body
+            // writes next, and the body's cannot land inside it.
+            flushSpacingAfter();
         } finally {
-            currentCell = previous;
+            currentCell = previousCell;
+            lastBodyParagraph = previousParagraph;
+            carriedSpacingBefore = previousCarried;
+            pendingSpacingAfter = previousOwed;
         }
     }
 
     private void writeSpacer(XWPFDocument document, SpacerNode node) {
         XWPFParagraph para = newBodyParagraph(document);
         para.createRun().setText("");
-        if (node.height() > 0) {
-            para.setSpacingAfter((int) Math.round(node.height() * POINT_TO_TWIP));
-        }
+        owePendingSpacingAfter(node.height());
     }
 
     private void writePageBreak(XWPFDocument document) {
+        flushSpacingAfter();
         XWPFParagraph para = document.createParagraph();
         XWPFRun run = para.createRun();
         run.addBreak(BreakType.PAGE);

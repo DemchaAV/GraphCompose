@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A gap between two blocks in an exported Word file is one gap.** It was written from both
+  sides — `w:after` on the block above and `w:before` on the one below — which is the same
+  distance only in an editor that adds them. LibreOffice takes the larger: measured on the
+  probe corpus, a card holding 20pt below itself followed by a heading asking for 16pt above
+  rendered 20pt where the page shows 36, and every block under it sat 16pt too high. The
+  space a block holds below itself is now written on the paragraph that follows, as part of
+  the one number above it, so an editor that adds and an editor that takes the maximum agree —
+  there is nothing left to add it to.
+  <br><br>
+  It goes back to the block above only where nothing below can carry it: before a table,
+  which has no space above it in Word, before a page break, at the end of a table cell, and
+  at the end of the document. A cell keeps its own: a gap at the end of one no longer travels
+  out and lands on whatever the body writes next. A container of tables now hands its bottom
+  edge to the paragraph after it rather than dropping it — the gap under a table is the space
+  above what follows, and that is a paragraph.
+
 - **An inline chip keeps its fill in the exported Word file.** A status badge and an
   inline `code()` span both came out as bare text: the reduction every backend shares keeps
   a chip's glyphs and drops its background, and nothing downstream put it back — so a red

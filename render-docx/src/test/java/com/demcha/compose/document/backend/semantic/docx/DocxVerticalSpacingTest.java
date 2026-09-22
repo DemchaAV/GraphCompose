@@ -1,6 +1,8 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -92,20 +94,102 @@ class DocxVerticalSpacingTest {
     }
 
     @Test
-    void aContainerWithNoParagraphLeavesNothingBehindForTheNextOne() throws Exception {
+    void aContainerOfTablesHandsOnItsBottomEdgeAndDropsItsTop() throws Exception {
         // A container of tables has nowhere to put its top edge — Word has no space-before
-        // on a table. What must not happen is the edge waiting around and landing on
-        // whatever paragraph comes next, which would put it somewhere the document never
-        // asked for.
+        // on a table, and a top edge that waited would land below the table instead of
+        // above it, which is somewhere the document never asked for. Its bottom edge has
+        // somewhere to go: the gap under the table is the space above what follows, and
+        // that is a paragraph. The two are told apart by asking for different numbers.
         List<XWPFParagraph> paragraphs = bodyOf(page -> page
                 .addSection("TablesOnly", section -> section
-                        .padding(DocumentInsets.symmetric(30, 0))
+                        .padding(new DocumentInsets(30, 0, 8, 0))
                         .addTable(t -> t.autoColumns(2).row("A", "B")))
                 .addParagraph(p -> p.text("After")));
 
         assertThat(before(paragraphs.get(paragraphs.size() - 1)))
-                .as("the section's 30pt did not follow the table out")
+                .as("the bottom edge, and only it — the top one did not follow the table out")
+                .isEqualTo(160L);
+    }
+
+    @Test
+    void oneGapIsWrittenOnceRatherThanFromBothSides() throws Exception {
+        // A gap between two blocks is one distance, and it used to be written as two: after
+        // on the block above and before on the one below. That is the same thing only in an
+        // editor that adds them — LibreOffice takes the larger, so 20 below and 16 above
+        // rendered as 20 where the page shows 36, and everything under it sat 16pt high.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addParagraph(p -> p.text("Above").margin(DocumentInsets.bottom(20)))
+                .addParagraph(p -> p.text("Below").padding(DocumentInsets.top(16))));
+
+        assertThat(before(paragraphs.get(1)))
+                .as("the whole gap, on the side that can hold it")
+                .isEqualTo(Math.round(36 * TWIPS_PER_POINT));
+        assertThat(after(paragraphs.get(0)))
+                .as("and nothing on the other, so adding and taking the maximum agree")
                 .isZero();
+    }
+
+    @Test
+    void aCardsBottomEdgeAndTheNextHeadingsTopAreOneGap() throws Exception {
+        // The measured case: a shaded card holding 20pt below itself, then a heading asking
+        // for 16pt above it.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addSection("Card", card -> card
+                        .fillColor(SURFACE)
+                        .padding(DocumentInsets.of(14))
+                        .margin(DocumentInsets.symmetric(6, 0))
+                        .addParagraph(p -> p.text("Inside")))
+                .addParagraph(p -> p.text("Heading").padding(DocumentInsets.top(16))));
+
+        assertThat(after(paragraphs.get(0)))
+                .as("the card's last paragraph hands its edge on")
+                .isZero();
+        assertThat(before(paragraphs.get(1)))
+                .as("14 padding + 6 margin below the card, 16 above the heading")
+                .isEqualTo(Math.round(36 * TWIPS_PER_POINT));
+    }
+
+    @Test
+    void theGapAboveATableIsWrittenOnTheParagraphBeforeIt() throws Exception {
+        // Word has no space above a table, so this is the one gap the block above has to
+        // carry itself.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addParagraph(p -> p.text("Lead").margin(DocumentInsets.bottom(12)))
+                .addTable(t -> t.autoColumns(2).row("A", "B")));
+
+        assertThat(after(paragraphs.get(0))).isEqualTo(Math.round(12 * TWIPS_PER_POINT));
+    }
+
+    @Test
+    void aGapInsideACellStaysInsideIt() throws Exception {
+        // A cell is its own stream of paragraphs. Its last gap must not travel out and land
+        // on whatever the body writes next, which is a page away from where it belongs.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addTable(t -> t.autoColumns(2)
+                        .rowCells(DocumentTableCell.text("Plain"),
+                                DocumentTableCell.node(new ParagraphBuilder()
+                                        .name("Padded")
+                                        .text("Inside")
+                                        .margin(DocumentInsets.bottom(24))
+                                        .build())))
+                .addParagraph(p -> p.text("After the table")));
+
+        assertThat(before(paragraphs.get(paragraphs.size() - 1)))
+                .as("the cell's own 24pt did not follow it out")
+                .isZero();
+    }
+
+    @Test
+    void theGapBeforeAPageBreakIsWrittenOnTheParagraphThatHoldsIt() throws Exception {
+        // A page break is a paragraph of its own, written outside the body-paragraph path,
+        // so a gap waiting for "the next paragraph" would land after the break.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addParagraph(p -> p.text("Last on the page").margin(DocumentInsets.bottom(10)))
+                .addPageBreak(b -> b.name("toSecond"))
+                .addParagraph(p -> p.text("First on the next")));
+
+        assertThat(after(paragraphs.get(0))).isEqualTo(Math.round(10 * TWIPS_PER_POINT));
+        assertThat(before(paragraphs.get(paragraphs.size() - 1))).isZero();
     }
 
     @Test

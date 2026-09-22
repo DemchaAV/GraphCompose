@@ -119,7 +119,7 @@ class DocxInlineBackgroundTest {
                     .as("nothing underneath it, so the page's white")
                     .isEqualTo("EFF1F3");
             assertThat(document.getTables().get(0).getRow(0).getTableCells().stream()
-                    .noneMatch(cell -> cell.getCTTc().isSetTcPr()))
+                    .noneMatch(cell -> cell.getCTTc().getTcPr().isSetShd()))
                     .as("a cell nobody painted stays unpainted")
                     .isTrue();
         }

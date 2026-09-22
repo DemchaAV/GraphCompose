@@ -43,7 +43,7 @@ PDF never pull POI.
 |---|---|
 | Paragraphs | Word paragraphs with alignment, font, size, colour, bold/italic/underline; inline runs preserved |
 | Lists | Real Word lists: a `numbering.xml` definition per list, `w:numPr` on each item, and the authored marker as the level's text. Nesting is a list level, so Enter continues the list and Tab demotes an item. See "What a list becomes" below for the kinds that stay plain paragraphs |
-| Tables | Word tables, one cell per cell. The width is written when the document states one or every column is fixed; otherwise Word sizes the table — see "What falls back" |
+| Tables | Word tables, one cell per cell. Each cell states its own padding as `w:tcMar`, on all four sides, so a row is as tall as the page draws it. The width is written when the document states one or every column is fixed; otherwise Word sizes the table — see "What falls back" |
 | Composed cells (`DocumentTableCell.node(...)`) | Written by the same writers that write that node anywhere else, so a cell built from an image, a list or a table carries it. A nested table is a real `w:tbl` followed by the paragraph Word requires a cell to end with, and takes the width of the column it sits in — the column's, not the one the page gives it, because the layout reports a composed cell's content under the owner's path |
 | Inline chips (`inlineCode(...)`, `inlineChip(...)`, `highlight(...)`) | The chip's fill becomes the run's own `w:shd`, in a paragraph and in a list item alike. Its shape does not travel — see "What a chip keeps and loses" below |
 | Images | Embedded pictures at the node's declared size |

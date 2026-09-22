@@ -47,8 +47,12 @@ class DocxTablePaintTest {
                 .build());
 
         assertThat(shadingFill(table.getRow(0).getCell(0))).isEqualToIgnoringCase("14505F");
-        // A cell nothing painted keeps Word's default rather than being filled with black.
-        assertThat(table.getRow(0).getCell(1).getCTTc().getTcPr()).isNull();
+        // A cell nothing painted is not painted. It still carries properties — every cell
+        // states its own margins — so the question is whether it has shading, not whether
+        // it has a w:tcPr.
+        assertThat(table.getRow(0).getCell(1).getCTTc().getTcPr().isSetShd())
+                .as("a cell nothing painted keeps Word's default rather than being filled with black")
+                .isFalse();
     }
 
     @Test

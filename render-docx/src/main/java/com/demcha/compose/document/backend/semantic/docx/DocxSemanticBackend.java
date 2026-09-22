@@ -39,6 +39,7 @@ import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -2027,6 +2028,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 applyCellPaint(cell,
                         resolveCellValue(node, placement, DocumentTableStyle::fillColor),
                         resolveCellValue(node, placement, DocumentTableStyle::stroke));
+                applyCellPadding(cell, resolveCellPadding(node, placement));
                 if (placement.row() != rowIdx) {
                     // A covered position carries the merge marker and no content of its own.
                     continue;
@@ -2110,6 +2112,70 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             edge.setColor(colour);
         }
     }
+
+    /**
+     * Keeps a cell's own space clear inside its edges.
+     *
+     * <p>A table's rows came out shorter than the page draws them: measured on the probe
+     * corpus, every row of a five-row table was 8.1pt short, because the cell padding the
+     * engine lays out with was never written and Word used its own — 5.4pt at each side and
+     * <em>nothing</em> above or below. Word holds this natively as {@code w:tcMar}, so it
+     * is a mapping rather than an approximation.</p>
+     *
+     * <p>All four sides are written, and written even when they are zero, because Word's
+     * default is not zero: a table that asked for no padding would otherwise export with
+     * Word's side margins and read wider than it is. The vertical pair is what a reader
+     * sees as the row's height, since Word grows a row to fit its content and this is part
+     * of that content's box.</p>
+     */
+    private static void applyCellPadding(XWPFTableCell cell, DocumentInsets padding) {
+        CTTcPr properties = cellProperties(cell);
+        CTTcMar margins = properties.isSetTcMar() ? properties.getTcMar() : properties.addNewTcMar();
+        setCellMargin(margins.isSetTop() ? margins.getTop() : margins.addNewTop(), padding.top());
+        setCellMargin(margins.isSetBottom() ? margins.getBottom() : margins.addNewBottom(),
+                padding.bottom());
+        setCellMargin(margins.isSetLeft() ? margins.getLeft() : margins.addNewLeft(), padding.left());
+        setCellMargin(margins.isSetRight() ? margins.getRight() : margins.addNewRight(),
+                padding.right());
+    }
+
+    /**
+     * The padding a cell resolves to, most specific wins, with the engine's own default
+     * underneath.
+     *
+     * <p>The default is the last step of the same cascade the layout pipeline runs, where
+     * {@code TableCellLayoutStyle.DEFAULT} sits under the authored styles — so a table that
+     * states no padding is laid out with 4pt and has to be written with 4pt.
+     * {@code DocxCellPaddingTest} pins the two together, because the engine's copy is
+     * internal and cannot be read from here.</p>
+     */
+    private DocumentInsets resolveCellPadding(TableNode node, TableGrid.Placement placement) {
+        DocumentInsets authored = resolveCellValue(node, placement, DocumentTableStyle::padding);
+        return authored != null ? authored : DocumentInsets.of(ENGINE_DEFAULT_CELL_PADDING_POINTS);
+    }
+
+    /** What the engine lays a cell out with when nothing states otherwise. */
+    static final double ENGINE_DEFAULT_CELL_PADDING_POINTS = 4.0;
+
+    /** The left and right margins written on a cell, or Word's own default for an unwritten one. */
+    private static double horizontalMarginsOf(XWPFTableCell cell) {
+        CTTcPr properties = cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : null;
+        CTTcMar margins = properties != null && properties.isSetTcMar() ? properties.getTcMar() : null;
+        if (margins == null) {
+            return 2 * WORD_DEFAULT_CELL_MARGIN_POINTS;
+        }
+        return marginPoints(margins.isSetLeft() ? margins.getLeft() : null)
+               + marginPoints(margins.isSetRight() ? margins.getRight() : null);
+    }
+
+    private static double marginPoints(CTTblWidth margin) {
+        return margin == null || margin.getW() == null
+                ? WORD_DEFAULT_CELL_MARGIN_POINTS
+                : Long.parseLong(String.valueOf(margin.getW())) / POINT_TO_TWIP;
+    }
+
+    /** Word keeps this much clear inside every cell edge unless a table says otherwise. */
+    private static final double WORD_DEFAULT_CELL_MARGIN_POINTS = 5.4;
 
     private static CTTcPr cellProperties(XWPFTableCell cell) {
         return cell.getCTTc().isSetTcPr()
@@ -2687,14 +2753,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param columns  column count of the first row
      * @return the created table, already attached where it belongs
      */
-    /** Word keeps this much clear inside every cell edge unless a table says otherwise. */
-    private static final double DEFAULT_CELL_MARGIN_POINTS = 5.4;
-
     /**
-     * How wide content can be inside one cell: the columns it spans, less Word's margins.
+     * How wide content can be inside one cell: the columns it spans, less its own margins.
      *
-     * <p>Read back from the grid this export just wrote rather than recomputed, so a cell
-     * cannot disagree with the table it is in.</p>
+     * <p>Both are read back from what this export just wrote — the grid for the width and
+     * {@code w:tcMar} for the margins — so a cell cannot disagree with the table it is in,
+     * and a table whose padding the document stated is not measured against Word's.</p>
      *
      * @return the usable width in points, or {@code NaN} when the table has no written grid
      */
@@ -2708,7 +2772,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (int index = placement.column(); index < last; index++) {
             twips += Long.parseLong(String.valueOf(grid.getGridColArray(index).getW()));
         }
-        double points = twips / POINT_TO_TWIP - 2 * DEFAULT_CELL_MARGIN_POINTS;
+        double points = twips / POINT_TO_TWIP - horizontalMarginsOf(cell);
         return points > 0 ? points : Double.NaN;
     }
 

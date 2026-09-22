@@ -160,24 +160,42 @@ final class DocxLayoutMetrics {
      * @param node the table being written
      * @return one width per column in order, or {@code null} when the table laid out nothing
      */
-    double[] tableColumns(DocumentNode node) {
-        List<TableResolvedCell> cells = new ArrayList<>();
-        double rightEdge = 0;
-        for (PlacedFragment fragment : fragmentsOf(node)) {
-            if (fragment.payload() instanceof TableRowFragmentPayload row) {
-                cells.addAll(row.cells());
-            }
-        }
-        if (cells.isEmpty()) {
+    double[] tableColumns(DocumentNode node, int columnCount) {
+        PlacedNode placedTable = placedFor(node);
+        if (placedTable == null || placedTable.placementWidth() <= 0) {
             return null;
         }
+        double width = placedTable.placementWidth();
+
         TreeSet<Double> boundaries = new TreeSet<>();
-        for (TableResolvedCell cell : cells) {
-            boundaries.add(round(cell.x()));
-            rightEdge = Math.max(rightEdge, cell.x() + cell.width());
+        for (PlacedFragment fragment : fragmentsOf(node)) {
+            if (!(fragment.payload() instanceof TableRowFragmentPayload row) || row.cells().isEmpty()) {
+                continue;
+            }
+            // A table whose cell is built from another table emits that inner table's rows
+            // under the *owner's* path, so the fragments at one path are not all one
+            // table's. A row of this table spans this table; a nested one stops short, and
+            // mixing the two produced a grid with more columns than the table has.
+            double rowRight = 0;
+            for (TableResolvedCell cell : row.cells()) {
+                rowRight = Math.max(rowRight, cell.x() + cell.width());
+            }
+            if (Math.abs(rowRight - width) > 0.5) {
+                continue;
+            }
+            for (TableResolvedCell cell : row.cells()) {
+                boundaries.add(round(cell.x()));
+            }
         }
-        boundaries.add(round(rightEdge));
-        return widthsBetween(new ArrayList<>(boundaries));
+        if (boundaries.isEmpty()) {
+            return null;
+        }
+        boundaries.add(round(width));
+        double[] widths = widthsBetween(new ArrayList<>(boundaries));
+        // The grid has to be the table's own. A column count that disagrees with the one
+        // the table resolves means something else contributed a boundary, and a wrong grid
+        // is worse than none: Word would place every column edge where it was told.
+        return widths != null && widths.length == columnCount ? widths : null;
     }
 
     /**

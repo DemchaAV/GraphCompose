@@ -468,13 +468,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else if (node instanceof ImageNode image) {
             writeImage(document, image);
         } else if (node instanceof TableNode table) {
-            writeTable(document, table);
+            writeTableWithItsOwnSpacing(document, table);
         } else if (node instanceof SpacerNode spacer) {
             writeSpacer(document, spacer);
         } else if (node instanceof PageBreakNode) {
             writePageBreak(document);
         } else if (node instanceof RowNode row) {
-            writeRow(document, row);
+            writeTableWithItsOwnSpacing(document, row);
         } else if (node instanceof ShapeContainerNode shapeContainer) {
             writeShapeContainer(document, shapeContainer);
         } else if (node instanceof ChartNode chart) {
@@ -1978,6 +1978,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * {@code w:vMerge} restarts on the cell that owns a vertical span and continues on the
      * ones it covers.</p>
      */
+    /**
+     * Writes a table-shaped node with the space it holds above and below itself.
+     *
+     * <p>A table is the one block whose own box had nowhere to go. Word has no space above
+     * a table and none below one, so a table's {@code margin} and {@code padding} were
+     * dropped — and a {@code RowNode} is exported as a table, so a row's padding went the
+     * same way. Measured on the probe corpus, that is a row's 14pt lost twice over, once at
+     * each edge, and the 6pt a billing table holds above itself.</p>
+     *
+     * <p>Neither edge needs an element of its own: the space above a table is the space
+     * below the paragraph before it, and the space below one is the space above the
+     * paragraph after. Both go through the debt every other gap goes through
+     * ({@link #owePendingSpacingAfter}), so a table between two paragraphs reads the same as
+     * two paragraphs with a gap between them — and a table with nothing above it loses that
+     * edge, which is the one thing Word genuinely cannot hold.</p>
+     */
+    private void writeTableWithItsOwnSpacing(XWPFDocument document, DocumentNode node)
+            throws Exception {
+        owePendingSpacingAfter(node.margin().top() + node.padding().top());
+        if (node instanceof RowNode row) {
+            writeRow(document, row);
+        } else {
+            writeTable(document, (TableNode) node);
+        }
+        owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
+    }
+
     private void writeTable(XWPFDocument document, TableNode node) throws Exception {
         if (node.rows().isEmpty()) {
             return;

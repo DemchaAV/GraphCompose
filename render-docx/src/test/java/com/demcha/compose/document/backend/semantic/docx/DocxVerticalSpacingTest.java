@@ -193,6 +193,55 @@ class DocxVerticalSpacingTest {
     }
 
     @Test
+    void aTableHoldsItsOwnSpaceAboveAndBelow() throws Exception {
+        // Word has no space above a table and none below one, so a table's own box used to
+        // be dropped: measured on the probe corpus, a billing table lost the 6pt it holds
+        // above itself. Neither edge needs an element of its own — the space above a table
+        // is the space below the paragraph before it.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addParagraph(p -> p.text("Lead"))
+                .addTable(t -> t.autoColumns(2).row("A", "B")
+                        .margin(new DocumentInsets(9, 0, 12, 0)))
+                .addParagraph(p -> p.text("After")));
+
+        assertThat(after(paragraphs.get(0)))
+                .as("the table's top edge, on the paragraph above it")
+                .isEqualTo(Math.round(9 * TWIPS_PER_POINT));
+        assertThat(before(paragraphs.get(1)))
+                .as("its bottom edge, on the paragraph below it")
+                .isEqualTo(Math.round(12 * TWIPS_PER_POINT));
+    }
+
+    @Test
+    void aRowHoldsItsOwnPaddingTheSameWay() throws Exception {
+        // A row is exported as a one-row table, so its padding went the same way a table's
+        // did — 14pt lost at each edge on the probe.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addParagraph(p -> p.text("Lead"))
+                .addRow("Pair", r -> r.padding(DocumentInsets.symmetric(14, 0))
+                        .addParagraph(p -> p.text("Left"))
+                        .addParagraph(p -> p.text("Right")))
+                .addParagraph(p -> p.text("After")));
+
+        assertThat(after(paragraphs.get(0))).isEqualTo(Math.round(14 * TWIPS_PER_POINT));
+        assertThat(before(paragraphs.get(1))).isEqualTo(Math.round(14 * TWIPS_PER_POINT));
+    }
+
+    @Test
+    void aTableWithNothingAboveItLosesThatEdgeAndKeepsTheOther() throws Exception {
+        // The one edge Word genuinely cannot hold: there is no paragraph to carry it, and
+        // an empty one would be a line the document never asked for.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addTable(t -> t.autoColumns(2).row("A", "B")
+                        .margin(new DocumentInsets(9, 0, 12, 0)))
+                .addParagraph(p -> p.text("After")));
+
+        assertThat(before(paragraphs.get(0)))
+                .as("the bottom edge and only it — the top had nothing to land on")
+                .isEqualTo(Math.round(12 * TWIPS_PER_POINT));
+    }
+
+    @Test
     void aBlockThatAsksForNothingCarriesNoSpacingAtAll() throws Exception {
         List<XWPFParagraph> paragraphs = bodyOf(page -> page.addParagraph(p -> p.text("Plain")));
 

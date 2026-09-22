@@ -94,6 +94,11 @@ its top edge to the first paragraph inside it and its bottom edge to the last, s
 container is not a Word object. Everything meeting at one gap adds up, the way the page
 sums it.
 
+A table holds its own space the same way. Word has no space above a table and none below
+one, so a table's or a row's `margin` and `padding` travel to the paragraphs around it —
+the space above a table is the space below the paragraph before it. A table with no
+paragraph above it loses that edge, which is the one gap Word has nowhere to put.
+
 A gap is written **once, above**. The space a block holds below itself waits for the next
 paragraph and is written there as `w:before`, together with whatever that paragraph asks
 for itself — rather than as `w:after` on one paragraph and `w:before` on the next. Editors

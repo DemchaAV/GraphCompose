@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A table keeps the space it holds above and below itself.** Word has no space above a
+  table and none below one, so a table's `margin` and `padding` were dropped — and a row is
+  exported as a one-row table, so a row's padding went the same way. Measured on the probe
+  corpus through LibreOffice, that was a row's 14pt lost twice over, once at each edge, plus
+  the 6pt a billing table holds above itself.
+  <br><br>
+  Neither edge needs an element of its own: the space above a table is the space below the
+  paragraph before it, and the space below one is the space above the paragraph after. Both
+  now go through the same gap the rest of the document goes through, so a table between two
+  paragraphs reads as two paragraphs with a gap between them. What Word genuinely cannot
+  hold is the top edge of a table with no paragraph above it, and that one is still dropped
+  rather than approximated with an empty line.
+  <br><br>
+  With this and the two changes before it, the first page of the probe corpus renders within
+  **1.2pt** of the reference PDF everywhere, against 87pt of accumulated drift before.
+
 - **A table cell keeps the space the document put inside its edges.** It was never written,
   so Word used its own — 5.4pt at each side and *nothing* above or below. A row's height in
   Word is its content's box, so every row came out shorter than the page draws it: measured

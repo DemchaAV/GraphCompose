@@ -5,6 +5,7 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.5.0 — Planned
 
+
 ### Public API
 
 - **A semantic export backend can ask for the compiled layout.** _(Experimental — see
@@ -88,8 +89,6 @@ follow semantic versioning; release dates are ISO 8601.
   half-way. In right-to-left Hebrew and Arabic lines it places the emoji's glyph between the
   words it was written between and keeps a ZWJ sequence and a U+FE0F on one glyph each; a
   left-to-right sentence with a Hebrew word reads back in written order.
-
-## v2.4.2 — Planned
 
 ### Documentation
 

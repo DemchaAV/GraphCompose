@@ -183,6 +183,10 @@ class ReleaseAssetStepGuardTest {
 
         int regen = script.indexOf("Step \"5c\" \"Regenerate the knowledge pack surfaces");
         int staged = script.indexOf("$commitFiles += 'knowledge'");
+        // The list is built by Get-ReleaseCommitPathspecs, declared with the other functions near
+        // the top of the script, so where the literal above sits no longer says when the staging
+        // happens — its call does. Read against that call, this is the order the cut executes in.
+        int stagingCall = script.indexOf("$commitFiles = @(Get-ReleaseCommitPathspecs");
 
         assertThat(regen)
                 .describedAs("the cut no longer regenerates the knowledge surfaces, so the release "
@@ -193,10 +197,14 @@ class ReleaseAssetStepGuardTest {
                 .describedAs("the release commit no longer stages knowledge/, so a regen would happen "
                         + "and never reach the tag")
                 .isNotNegative();
+        assertThat(stagingCall)
+                .describedAs("the release commit no longer builds its staging list through "
+                        + "Get-ReleaseCommitPathspecs, so this ordering reads nothing")
+                .isNotNegative();
         assertThat(regen)
                 .describedAs("the surfaces are regenerated after the commit that stages them, so the "
                         + "tag carries the previous version's pack")
-                .isLessThan(staged);
+                .isLessThan(stagingCall);
     }
 
     @Test

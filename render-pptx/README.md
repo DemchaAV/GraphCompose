@@ -149,12 +149,12 @@ Same version as the rest of the GraphCompose train (lockstep):
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-render-pptx</artifactId>
-    <version>2.4.0</version>
+    <version>2.4.1</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose-render-pptx:2.4.0") }
+dependencies { implementation("io.github.demchaav:graph-compose-render-pptx:2.4.1") }
 ```
 
 The full "which artifact?" table: [root README → Output formats and optional modules](../README.md#which-artifact).

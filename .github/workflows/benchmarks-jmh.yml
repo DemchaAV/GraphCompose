@@ -83,3 +83,9 @@ jobs:
           name: jmh-results-${{ github.run_id }}
           path: benchmarks/target/jmh-result.json
           if-no-files-found: warn
+          # A single JSON report, ~10 KB, from a weekly or hand-dispatched run. Same
+          # reasoning as benchmark-full in ci.yml: this is the strict-JMH trend
+          # series, it is the only record a forked run leaves behind, and at a weekly
+          # cadence anything shorter than the full 90 days throws away the history
+          # that makes the numbers worth reading.
+          retention-days: 90

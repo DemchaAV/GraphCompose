@@ -1,0 +1,24 @@
+{
+  "hero": [
+    { "id": "invoice-cinematic", "label": "Invoice" },
+    { "id": "cv-sidebar-portrait-v2", "label": "CV" },
+    { "id": "project-proposal-cinematic", "label": "Proposal" },
+    { "id": "business-report", "label": "Report" }
+  ],
+  "structuredData": [
+    { "id": "project-proposal-cinematic", "name": "Cinematic Project Proposal" },
+    { "id": "invoice-cinematic", "name": "Cinematic Invoice" },
+    { "id": "cv-modern-professional-v2", "name": "Modern Professional CV" },
+    { "id": "cv-sidebar-portrait-v2", "name": "Sidebar Portrait CV" },
+    { "id": "cv-monogram-sidebar-v2", "name": "Monogram Sidebar CV" },
+    { "id": "master-showcase", "name": "Master Showcase" },
+    { "id": "business-report", "name": "Business Report" }
+  ],
+  "sitemapDocuments": [
+    "project-proposal-cinematic",
+    "invoice-cinematic",
+    "cv-modern-professional-v2",
+    "master-showcase",
+    "business-report"
+  ]
+}

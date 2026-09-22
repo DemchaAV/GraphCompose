@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v2.4.1 — Planned
+## v2.5.0 — Planned
 
 ### Public API
 
@@ -65,6 +65,72 @@ follow semantic versioning; release dates are ISO 8601.
   The rendered page is unchanged pixel for pixel. PPTX and DOCX exports do not carry the text
   yet. The committed `emoji-shortcodes.pdf` preview is re-rendered: its emoji now copy out.
 
+### Tests
+
+- `EmojiSequencesTest` pins the fully-qualified spelling — a text-default character gains
+  U+FE0F, an emoji-presentation one does not, a skin-tone modifier or a selector already in
+  the key suppresses it, a keycap base is qualified before U+20E3 — and compares the table of
+  text-default emoji with the running JDK's Unicode data on JDK 21 and later.
+  `EmojiLibraryTest` checks resolved emoji carry their text and a glyph named by anything
+  but codepoints resolves without one; `SvgIconTextTest` checks `withText` copies the icon
+  and leaves the original as it was.
+- `PdfTextLayerTest` extracts `Launch 🚀 by 👩‍💻 with ❤️ done.` from a rendered line, codepoint
+  for codepoint; renders the same icon with and without text and compares the pages pixel for
+  pixel, which also fails if the invisible rendering mode leaks onto the words after the icon;
+  checks an icon given `withText("✓")` copies as `✓` and one without text adds no font; fills
+  one font with 255 texts and starts a second (each text used twice, one code each), its
+  `ToUnicode` in blocks of at most 100; keeps one font across the sections of a multi-section
+  document; writes a 256-unit text but not a 257-unit one; gives a 2:1 icon after a word
+  tracked in `Tc` a glyph exactly as wide as the icon, on the baseline, so neither the
+  horizontal scaling nor the spacing and rise left by the run before can go astray; keeps
+  `deterministic(true)` output byte-identical; fails a call made inside an open text object
+  with nothing written, and closes the glyph's text object and saved state when writing fails
+  half-way. In right-to-left Hebrew and Arabic lines it places the emoji's glyph between the
+  words it was written between and keeps a ZWJ sequence and a U+FE0F on one glyph each; a
+  left-to-right sentence with a Hebrew word reads back in written order.
+
+## v2.4.2 — Planned
+
+### Documentation
+
+- **A card of a preset shows the code that draws that preset.** The catalogue carries one
+  compiled block per family — the CVs' builds `BoxedSections`, the invoices' `ModernInvoice` —
+  and every other card of the family was shown it under a caption saying it came from the
+  documentation. The caption was true and the code under it still drew a different document,
+  which is what a reader copies. Those cards now carry the smallest block that draws the preset
+  they are looking at, built from what the card already states: the preset it composes and the
+  record that preset takes, written the way the preset's own runnable example writes it — the
+  no-argument `create()`, which carries the preset's theme rather than another preset's. The
+  family's block stays on the one card it composes, and the link to the page it is published on
+  stays on all of them. It is not that block with its composing line rewritten, because the
+  invoices rule that out: `ConsultingInvoice` takes `StructuredInvoiceDocumentSpec` where the
+  block builds `InvoiceDocumentSpec`, so a rewrite would hand a reader a record the preset does
+  not accept.
+
+- **The catalogue comes before the install instructions.** A visitor scrolling the home page met
+  the Maven coordinates and a format-by-format comparison before seeing anything the library
+  draws. The gallery now follows the opening block directly: choose the result, then wire the
+  library up. Every id and anchor is unchanged, so existing links and shared viewer addresses
+  still land where they did.
+
+- **The line above the catalogue says what clicking a preview does.** It promised the rendered
+  PDF; a viewer opens, which pages through the document, moves across the rest of its family and
+  links the PDF, the source and what reproducing it takes.
+
+- **The site has a link preview drawn for the shape a link preview is.** `og:image` and
+  `twitter:image` named a portrait page of one proposal, 893 by 1263, so a large-image card —
+  which is landscape — published a band cropped out of its middle: a paragraph of a document
+  nobody had asked about, under a link about the library. `SiteSocialCoverRenderer` composes a
+  cover at 1200 by 630 with GraphCompose itself, in the site's own palette, carrying the
+  wordmark, what the library does, and three documents read from the previews the catalogue
+  publishes. It states no version and no measured figure, so it outlives the release that
+  published it, and it is published under a name of its own because Slack, X and LinkedIn cache
+  a preview by URL. `twitter:card` stays `summary_large_image`, and both tags now declare the
+  size and an alt text. A document's own page keeps its own preview: there the document is the
+  subject.
+
+## v2.4.1 — 2026-09-21
+
 ### Performance
 
 - **A barcode is drawn as vector shapes, not as an image, in PDF and PPTX.**
@@ -107,27 +173,212 @@ follow semantic versioning; release dates are ISO 8601.
   the QR code off it, with an opaque and with a transparent foreground, checks a translucent
   foreground composites with the slide, and checks the background shape lands on the
   fragment box.
-- `EmojiSequencesTest` pins the fully-qualified spelling — a text-default character gains
-  U+FE0F, an emoji-presentation one does not, a skin-tone modifier or a selector already in
-  the key suppresses it, a keycap base is qualified before U+20E3 — and compares the table of
-  text-default emoji with the running JDK's Unicode data on JDK 21 and later.
-  `EmojiLibraryTest` checks resolved emoji carry their text and a glyph named by anything
-  but codepoints resolves without one; `SvgIconTextTest` checks `withText` copies the icon
-  and leaves the original as it was.
-- `PdfTextLayerTest` extracts `Launch 🚀 by 👩‍💻 with ❤️ done.` from a rendered line, codepoint
-  for codepoint; renders the same icon with and without text and compares the pages pixel for
-  pixel, which also fails if the invisible rendering mode leaks onto the words after the icon;
-  checks an icon given `withText("✓")` copies as `✓` and one without text adds no font; fills
-  one font with 255 texts and starts a second (each text used twice, one code each), its
-  `ToUnicode` in blocks of at most 100; keeps one font across the sections of a multi-section
-  document; writes a 256-unit text but not a 257-unit one; gives a 2:1 icon after a word
-  tracked in `Tc` a glyph exactly as wide as the icon, on the baseline, so neither the
-  horizontal scaling nor the spacing and rise left by the run before can go astray; keeps
-  `deterministic(true)` output byte-identical; fails a call made inside an open text object
-  with nothing written, and closes the glyph's text object and saved state when writing fails
-  half-way. In right-to-left Hebrew and Arabic lines it places the emoji's glyph between the
-  words it was written between and keeps a ZWJ sequence and a U+FE0F on one glyph each; a
-  left-to-right sentence with a Hebrew word reads back in written order.
+
+### Build
+
+- **A CI artifact expires on a schedule that matches what it is for.** No
+  `actions/upload-artifact` step declared `retention-days`, so all seven inherited the
+  repository default of 90 days — the ceiling. Artifact storage is billed and capped per
+  account rather than per repository, and this repository had grown to 10.7 GB across some
+  2968 live artifacts, which exhausted the shared quota; the failure surfaced where it could
+  not be diagnosed from, in another repository whose unrelated uploads began failing with
+  `Artifact storage quota has been hit`. Two families were nearly the whole bill —
+  `examples-pdfs` at 7.57 GB over 1009 artifacts and `coverage-core-aggregate` at 2.66 GB
+  over 837 — and nothing downstream reads any of them: there is no `actions/download-artifact`
+  anywhere in `.github/workflows/`, so each exists for a person to open, and the right window
+  is however long a person plausibly wants it. Those two now keep 7 days, the span of a
+  review. `japicmp-report` keeps 30, because it answers "when did this signature move, and
+  against which baseline" during release prep rather than during the pull request.
+  `benchmark-smoke` and `benchmark-gate-reports` keep 14 days together, deliberately the same
+  number, since the gate verdict in one explains the numbers in the other and a shorter window
+  on either would leave an investigation holding half a pair. The two weekly trend series,
+  `benchmark-full` and `jmh-results`, keep the full 90: at one run a week a short window holds
+  a point or two and shows no trend at all, and they cost tens of KB each. What proves a render
+  weeks later is the committed layout-snapshot and visual baselines, not a retained artifact.
+
+- **Build and test dependencies move with the `maven-minor-patch` group.** `exec-maven-plugin`
+  3.6.3 → 3.6.4 in `benchmarks/` and `examples/`, `maven-install-plugin` and
+  `maven-deploy-plugin` 3.1.4 → 3.2.0, and the test-scope `byte-buddy` pin 1.18.13 → 1.18.14
+  in `core/`. Every one is build- or test-scope, so the dependency set a consumer inherits
+  from a published artifact is what it was in v2.4.0.
+
+### Documentation
+
+- **The showcase site's menu and section links reach the gallery, and its pages link
+  only to files the site publishes.** A category section is rendered only while its
+  filter is shown, so after picking *Features* the *Templates* menu link changed the
+  address and moved nothing. A gallery anchor now selects its filter, whether it is
+  followed from the menu, reached with Back or Forward, or opened directly, and the
+  filter pills keep the address in step. The no-JavaScript index linked to three PDFs
+  the site does not publish, and two featured ids named no card, so the featured strip
+  showed six of its eight tiles without a sign. `ShowcaseSiteGuardTest` fails the build
+  on a featured id that is not a card, a card file missing from `showcase/`, a page link
+  to a site file that does not exist, and an anchor or filter pill that names nothing
+  the page shows. The structured data said JVM 21+ where every module targets Java 17,
+  the page counted 16 CV presets where 26 ship, and the template-authoring links
+  pointed at `develop` instead of the released docs on `main`.
+
+- **The gallery shows each document's whole first page.** A card cropped its preview to a
+  248-pixel band, so a page was judged by its header and a wide slide lost its sides.
+  The preview now shrinks into a fixed-height box at its own aspect ratio, featured
+  tiles use the same fit instead of an A4-shaped frame, and the image tags no longer
+  declare an A4 size that was wrong for 26 of the 117 previews.
+
+- **The gallery opens a viewer that pages through one family at a time.** A card, a
+  featured tile or a family tile opens its family (CV, cover letters, invoices and so on)
+  in a viewer that shows the whole first page, moves with Previous, Next and the arrow
+  keys, shows where it is in the family, and links the PDF and source of the document
+  shown. A switch moves to the other families of the category, and each reopens on the
+  document it was left on. The address `#/<category>/<family>/<id>` reopens the same
+  document on a reload or from a shared link and follows Back and Forward. The viewer
+  replaces the zoom lightbox. A drag across the page moves between documents on a touch
+  screen, a strip under the page holds every document of the family and marks the one on
+  screen, and the pages either side are fetched before they are asked for. A reader who
+  has asked to save data gets neither: no strip of page-sized previews, and nothing fetched
+  ahead. `ShowcaseSiteGuardTest` now also requires unique, address-safe card and family ids,
+  and holds any viewer address written into a page to a family and document that exist;
+  `scripts/site/gallery-viewer.test.mjs` tests the addresses, the navigation and the dialog
+  in CI.
+
+- **The catalogue says what each document is, and the gallery stops jumping as it loads.**
+  `web/examples.json` carries a `schemaVersion`, and every card now carries the preset it
+  renders and the model that preset composes, the artifacts a reader needs to run it, the
+  path to its source, its page count, and the pixel size of its preview — so the image
+  reserves its slot at the right shape instead of appearing out of nothing, and no single
+  size stands in for previews that are not all A4. The viewer's strip and the family tiles
+  read thumbnails generated at 320px rather than whole pages: opening the CV family fetches
+  1.4 MiB of strip images where it fetched 5.2 MiB. `ShowcasePresetRegistrationTest` holds
+  each card's preset and model to the example that builds them — it found two feature cards
+  asking a reader for the engine alone while rendering a template preset — and
+  `ShowcaseSiteGuardTest` fails the build on a manifest without a `schemaVersion`, a card
+  whose measurements are not its preview's, a page count below one, a thumbnail that is not
+  published, or a preset count in the page copy the catalogue does not hold.
+
+- **The version the showcase shows is written down once, and a release moves every copy of
+  it.** The published site stated the release in five places that inherit from no pom, and
+  the cut rewrote the first match of each — so a page carrying a second install snippet
+  kept it a release behind while every check passed, and a spot that stopped matching was
+  skipped in silence, leaving the cut to report success on a page still naming the previous
+  release. An inline `release-context` block now holds `stableVersion`, `releaseTag` and
+  `javaMinimum`. The JSON-LD, the Maven Central download link, the hero badge and the
+  install snippets still repeat the version, because a crawler and a reader with no
+  JavaScript both have to see the right release — but each is now a copy of that block, and
+  `VersionConsistencyGuardTest` holds every occurrence of all seven spots equal to it,
+  including the download link it never read before. A pattern that matches nothing stops the
+  cut and names the spot, rather than leaving it behind.
+
+- **Every document in the gallery shows what reproducing it takes — and 53 of them were
+  asking readers for a dependency set that cannot render them.** Under the document, the
+  viewer now shows the Maven and Gradle coordinates at the release the page names, the
+  preset class and the record it composes, its family's worked snippet, the command that
+  runs the example, and the runnable source and family guide at the release tag. Building
+  that panel exposed a defect in the catalogue it reads: a document drawn in a bundled face
+  — PT Serif and the rest left the engine in v1.8.0 — cannot be reproduced from
+  `graph-compose` + `graph-compose-templates`, which compiles and then throws
+  `Bundled font resource not found` at the first glyph, and the artifact carrying those
+  faces is versioned independently of the release, so naming it at the release version is a
+  404 on Maven Central. Those cards now send a reader to `graph-compose-bundle`, the one
+  published coordinate that carries the faces at the release's own version. Whether a
+  document needs them is measured from the PDF rather than declared, because it differs card
+  by card inside a single family: 25 of 27 CVs embed a face, 4 of 7 invoices do. The
+  snippets are the blocks `DocumentationSnippetCompileTest` already compiles, copied into
+  the manifest because the site is served from `web/` alone and cannot reach a page under
+  `docs/`.
+
+  Fonts were not the only thing the catalogue left out. Ten cards reach a second backend and
+  asked a reader for the engine alone, which compiles and then throws
+  `MissingBackendException` at render. Two name the DOCX backend in an import. Nine need the
+  PPTX one, which is discovered by format and so appears in no source at all: eight publish a
+  deck beside their PDF — four of those rendered by a sibling class, so not even their own
+  example mentions it — and one renders a deck it does not publish. The requirement now
+  follows from what a card publishes as well as from what its example names, and where a
+  document also needs the bundled faces the aggregate stands in for the engine and templates
+  without swallowing the backend beside it. Two more cards (`table-advanced`, `transforms`) have no `main` of their own —
+  `GenerateAllExamples` renders them — and were being offered an `exec:java` command that
+  answers "doesn't contain a main method"; they now say what does render them.
+
+  Each claim is checked against the example's own source or its rendered document:
+  `ShowcaseBundledFontClaimTest` holds every font claim in both directions,
+  `ShowcaseCardInstructionsTest` holds the backends and the run command the same way,
+  `ShowcaseSnippetScopeTest` holds every published snippet inside the set of pages the
+  compile gate actually scans, and `ShowcaseSiteGuardTest` fails on a snippet that is no
+  longer the block it was compiled from, on a preset card missing anything the panel shows,
+  and on a family guide the panel links that is no longer a page. A consumer project renders
+  a CV from the published aggregate with nothing else installed, which is how the first of
+  these defects surfaced.
+
+- **The showcase site's pages are generated from its catalogue.** `web/index.html` and
+  `web/sitemap.xml` are rendered from `web-src/` by `scripts/site/build.mjs` and committed;
+  GitHub Pages still serves `web/` exactly as committed and runs no build of its own. The index
+  a visitor without JavaScript gets named 38 of the 117 documents the site publishes, and the
+  preset counts and structured data were hand-copied beside a catalogue that already knew them.
+  That index now names every document, under its category and group, and the counts are computed
+  from the catalogue by the same rule the guard checks them against. The release the pages
+  advertise is written down once, in `web-src/data/release.json`, and the build injects it into
+  the seven spots that inherit from no pom; the release cut moves those two values and rebuilds
+  the pages after the catalogue sync instead of editing them, so a later build cannot undo the
+  release's own version. `scripts/site/build.test.mjs` fails when what is committed under `web/`
+  is not what `web-src/` builds, and the build refuses rather than publishes when a template
+  token, a featured id or a card's title has gone.
+
+- **The showcase home page leads with a result, and the catalogue uses words a newcomer knows.**
+  The menu is Templates, Examples, Documentation, Releases and GitHub, with a Get started button.
+  The hero shows one whole document with an Invoice / CV / Proposal / Report switch — each a real
+  catalogue document that opens as a PDF or as its own page — where it used to fan out
+  three cropped previews; a phone now gets one compact document instead of none, and the heading
+  stays within two lines at every width from 320 to 1440 pixels. The feature demonstrations are listed as *Examples* and the
+  large complete documents as *Showcase*, instead of *Features* and *Flagships*. Category ids and
+  every published URL are unchanged, so existing links and shared viewer addresses keep working.
+  The template-authoring guide moved from the top of the page into a Documentation block.
+
+- **The showcase says what to install for what you are building, and what each output format
+  keeps.** The install section offers four scenarios where it used to offer the engine alone: a PDF
+  from your own layout (`graph-compose`), ready-made templates (`graph-compose-bundle`, which pins
+  the independently versioned fonts and emoji for you), an editable PowerPoint deck
+  (`graph-compose-render-pptx`, Beta) and a Word document (`graph-compose-render-docx`), each at the
+  release the page names. A new block sets PDF, PowerPoint and Word side by side with their limits,
+  taken from the backend capability matrix it links to. Muted text in the light theme sat at
+  4.45:1, under the 4.5:1 minimum for body text, and now reads at 6:1; the featured tiles no longer
+  skip a heading level; and a menu link to a section lands with its heading below the sticky header,
+  which on a phone used to cover it.
+
+- **Every document in the catalogue has a page of its own.** Each of the 117 documents gets a
+  generated page at `<category>/<family>/<id>/` — the same three segments as its viewer address —
+  that works without JavaScript and that a crawler can read: every page of the document, each
+  linking into the PDF; the PDF, and the deck where one is published; what reproducing it takes;
+  and the other documents of its family. Each page has a canonical address, a description, link
+  preview tags and structured data, and the sitemap lists them all. The no-JavaScript index, the
+  hero and a new Details link in the viewer lead there. What a page tells a reader to add, run and
+  read is not written a second time: the viewer's panel became a pure model in `gallery-viewer.js`
+  that the build loads to render the page, and `scripts/site/build.test.mjs` holds every page's
+  section to that model and to nothing besides it. Building the pages exposed a label that was
+  wrong in the viewer too: a family's worked snippet composes one preset — the CV block builds
+  `BoxedSections` — yet it was captioned "Compose it" on every card of the family, promising Blue
+  Banner's reader code that builds a different CV. Only the card of the preset the snippet composes
+  says so now; the others say the snippet comes from the docs, and where it is published on a page
+  other than the family guide — the CV block is on `using-templates.md`, the family starts at the
+  quickstart — they link that page. The build owns only the pages it wrote where they sit: a page
+  no card builds any more is deleted, `--check` fails on a page that is missing, stale or orphaned,
+  and the release cut stages the pages a rebuild added or deleted along with the ones it rewrote.
+  `ShowcaseSiteGuardTest` finds the generated pages and checks their links and anchors from each
+  page's own directory. The viewer also stops captioning every document "First page shown", which
+  was untrue of the 33 documents it pages through.
+
+- **The showcase has a Documentation page, and the site reads its guides at the release it names.**
+  The menu's Documentation used to scroll to a block on the home page that linked three template
+  guides. It now opens a page that gathers the guides already in the repository — a first document,
+  templates, recipes, output formats, testing and production, versions and upgrades, and the
+  internals for changing GraphCompose itself — each with a line on what it covers, checked against
+  the guide itself, and each linked at the release tag. No guide is copied, so there is no second
+  version of one to fall behind, and a guide path that is not a file in the repository, spelled as
+  GitHub serves it, stops the site build. The rest of the site's repository links follow: the home
+  page's authoring guides, the capability matrix, the Changelog, the migration guide and the examples
+  tree used `main`, beside panels that already linked the release, and now name the release too; only
+  the licence stays on `main`. Text set in the accent colour — section labels, the hero's links, tags,
+  the footer's links, the ghost button — read at 3.7 to 4.2:1 in both themes, under the 4.5:1 minimum
+  for text its size; it now reads at 5.3:1 at worst, taken over the page's background glow. And the
+  gallery's Show all button, which turned a pale blue on hover and focus, no longer all but vanishes
+  (1.05:1) when a keyboard focuses it in the light theme.
 
 ## v2.4.0 — 2026-09-14
 

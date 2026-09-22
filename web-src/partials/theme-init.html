@@ -1,0 +1,10 @@
+  <!-- Apply the saved theme before first paint to avoid a flash. Dark is the default. -->
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('gc-theme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) {}
+    })();
+  </script>

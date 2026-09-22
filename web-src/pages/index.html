@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="GraphCompose: Java PDF layout engine for structured business documents. Browse the runnable example catalogue — CV, invoice and proposal templates, and every supported feature.">
+  <meta name="keywords" content="Java, PDF, PDF library, PDF layout, document generation, declarative PDF, PDFBox, business documents, Java template engine, CV PDF, invoice PDF, proposal PDF">
+  <meta name="author" content="Artem Demchyshyn">
+  <title>GraphCompose &mdash; Java PDF layout engine for structured business documents</title>
+  <link rel="canonical" href="https://demchaav.github.io/GraphCompose/">
+  <link rel="icon" href="assets/logo/graphcompose-logo.png">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+{{themeInit}}
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://demchaav.github.io/GraphCompose/">
+  <meta property="og:site_name" content="GraphCompose">
+  <meta property="og:title" content="GraphCompose &mdash; Java PDF layout engine for structured business documents">
+  <meta property="og:description" content="Declarative semantic PDF generation for Java. CVs, invoices, proposals, reports — composed from ParagraphNode, TableNode, SectionNode. Every example runnable, every PDF real.">
+  <!-- A large-image card is landscape. This used to be a portrait page of one proposal at
+       893x1263, so a feed cropped a band out of its middle and published a paragraph of a
+       document nobody had asked about. The cover is drawn for the shape, at the 1200x630 every
+       platform crops least, and carries no version or figure so it outlives the release that
+       published it. Document pages keep their own preview: there the document IS the subject.
+       Renamed rather than overwritten - Slack, X and LinkedIn cache by URL. -->
+  <meta property="og:image" content="https://demchaav.github.io/GraphCompose/assets/social/graphcompose-cover-2026-09.png">
+  <meta property="og:image:alt" content="GraphCompose: document generation for Java, beside a CV, an invoice and a proposal the library rendered">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="GraphCompose &mdash; Java PDF layout engine">
+  <meta name="twitter:description" content="Declarative semantic PDF generation for Java. CVs, invoices, proposals, reports — composed from ParagraphNode, TableNode, SectionNode.">
+  <meta name="twitter:image" content="https://demchaav.github.io/GraphCompose/assets/social/graphcompose-cover-2026-09.png">
+  <meta name="twitter:image:alt" content="GraphCompose: document generation for Java, beside a CV, an invoice and a proposal the library rendered">
+
+  <!-- Structured data: SoftwareApplication + SoftwareSourceCode -->
+  <!-- The one place the site's version is written down. The JSON-LD below and the install
+       snippets further down repeat it, because a crawler and a reader with no JavaScript
+       both have to see the right release; VersionConsistencyGuardTest holds every copy
+       equal to this one, and the release cut rewrites all of them together. -->
+  <script type="application/json" id="release-context">
+    {
+      "stableVersion": "{{stableVersion}}",
+      "releaseTag": "{{releaseTag}}",
+      "javaMinimum": "{{javaMinimum}}"
+    }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "GraphCompose",
+        "alternateName": "GraphCompose Java PDF engine",
+        "description": "Declarative Java PDF layout engine for structured business documents — CVs, invoices, proposals, reports. Compose ParagraphNode, TableNode, SectionNode, LayerStackNode; the engine handles measurement, pagination, fonts, and PDFBox rendering.",
+        "applicationCategory": "DeveloperApplication",
+        "applicationSubCategory": "Library",
+        "operatingSystem": "Cross-platform (JVM {{javaMinimum}}+)",
+        "programmingLanguage": "Java",
+        "softwareVersion": "{{stableVersion}}",
+        "url": "https://demchaav.github.io/GraphCompose/",
+        "downloadUrl": "https://central.sonatype.com/artifact/io.github.demchaav/graph-compose/{{stableVersion}}",
+        "image": "https://demchaav.github.io/GraphCompose/assets/logo/graphcompose-logo.png",
+        "license": "https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE",
+        "author": {
+          "@type": "Person",
+          "name": "Artem Demchyshyn",
+          "url": "https://github.com/DemchaAV"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "keywords": "Java, PDF, layout engine, declarative, business documents, PDFBox, document generation",
+        "featureList": [
+          "Semantic node tree DSL (ParagraphNode, TableNode, SectionNode, LayerStackNode, CanvasLayerNode)",
+          "Atomic pagination with row-by-row table splitting",
+          "{{cvPresetCount}} CV presets and {{letterCount}} matching cover letters out of the box",
+          "Theme tokens via BrandTheme.modernProfessional() / executive() / boxedClassic()",
+          "Markdown-aware bodies (bold, italic) in every paragraph and list block",
+          "PDFBox-backed render pipeline, an editable PowerPoint backend geometry-identical to the PDF, and a semantic DOCX backend",
+          "Full-reactor verify gate with layout snapshots and pixel-diff visual parity"
+        ]
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "name": "GraphCompose",
+        "codeRepository": "https://github.com/DemchaAV/GraphCompose",
+        "programmingLanguage": "Java",
+        "runtimePlatform": "JVM {{javaMinimum}}+",
+        "license": "https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE"
+      },
+      {
+        "@type": "ItemList",
+        "name": "GraphCompose showcase examples",
+        "description": "Runnable Java examples that produce real PDFs — CV templates, cover letters, invoices, proposals, schedules, plus every supported feature.",
+        "itemListElement": [
+{{jsonLdItemList}}
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+{{siteHeader}}
+
+  <main id="top">
+    <section class="hero section-shell" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Java {{javaMinimum}}+ &middot; {{releaseTag}} &middot; MIT</p>
+        <h1 id="hero-title">Business documents, composed in Java.</h1>
+        <p class="hero-lead">A layout engine that measures, paginates and renders structured PDFs &mdash; with ready-made templates for CVs, invoices and proposals.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#install">Get started</a>
+          <a class="button button-secondary" href="#templates-section">Browse templates</a>
+        </div>
+      </div>
+
+{{heroDocument}}
+    </section>
+
+    <section class="value-prop section-shell" aria-labelledby="value-title">
+      <h2 id="value-title" class="visually-hidden">What you get</h2>
+      <div class="value-grid">
+        <div>
+          <h3>30 lines &rarr; one invoice</h3>
+          <p>The whole stack &mdash; theme tokens, table, totals, chrome &mdash; behind one fluent DSL.</p>
+        </div>
+        <div>
+          <h3>Atomic pagination</h3>
+          <p>Tables split row-by-row, rows are atomic, layer stacks atomic. No manual page math.</p>
+        </div>
+        <div>
+          <h3>{{cvPresetCount}} CV presets, {{letterCount}} matching letters</h3>
+          <p>Every preset is one final class with a one-liner <code>create()</code> factory.</p>
+        </div>
+        <div>
+          <h3>Tested at every layer</h3>
+          <p>A full-reactor verify gate on every push: layout snapshots per preset, pixel-diff visual parity, public-API leak guards.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-shell" id="showcase" aria-labelledby="showcase-title">
+      <div class="section-heading">
+        <p class="section-label">Catalogue</p>
+        <h2 id="showcase-title">Generated PDFs you can inspect.</h2>
+        <p class="section-text">Every document below is drawn by a real, runnable Java file. Click a preview to open the viewer: it pages through the whole document, moves across the rest of its family, and links the PDF, the source and what reproducing it takes.</p>
+      </div>
+
+      <div class="showcase-controls" role="search">
+        <input type="search" id="showcase-search" placeholder="Search by title, tag, or keyword..." aria-label="Search the catalogue">
+        <div class="showcase-filters" id="showcase-filters" role="tablist" aria-label="Filter by category">
+          <button class="filter-pill is-active" data-category="all" type="button">All</button>
+          <button class="filter-pill" data-category="templates" type="button">Templates</button>
+          <button class="filter-pill" data-category="features" type="button">Examples</button>
+          <button class="filter-pill" data-category="flagships" type="button">Showcase</button>
+        </div>
+      </div>
+
+      <div id="showcase-content" class="showcase-content" aria-live="polite">
+        <p class="showcase-loading">Loading examples...</p>
+      </div>
+
+      <noscript>
+        <div class="showcase-noscript">
+          <p><strong>JavaScript is disabled.</strong> The full searchable gallery requires JS. Below is every document in the catalogue, each linking to a page of its own with the PDF, every page and how to reproduce it.</p>
+
+{{noscriptCatalogue}}
+
+          <p>Source for every example lives under <a href="https://github.com/DemchaAV/GraphCompose/tree/{{releaseTag}}/examples/src/main/java/com/demcha/examples"><code>examples/src/main/java/com/demcha/examples</code></a> on GitHub.</p>
+        </div>
+      </noscript>
+    </section>
+
+    <section class="section-shell" id="install" aria-labelledby="install-title">
+      <div class="section-heading">
+        <p class="section-label">Get started</p>
+        <h2 id="install-title">Maven Central. Add what you are building.</h2>
+        <p class="section-text">Every coordinate below is the {{releaseTag}} release. The fonts and emoji have version numbers of their own, and the bundle pins them for you.</p>
+      </div>
+      <div class="install-blocks install-scenarios">
+        <article class="install-block">
+          <h3>PDF from your own layout</h3>
+          <p>The engine and its PDF backend.</p>
+          <p class="install-form">Maven</p>
+<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
+  &lt;artifactId&gt;graph-compose&lt;/artifactId&gt;
+  &lt;version&gt;{{stableVersion}}&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+          <p class="install-form">Gradle (Groovy DSL)</p>
+<pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose:{{stableVersion}}'</code></pre>
+        </article>
+        <article class="install-block">
+          <h3>Ready-made templates</h3>
+          <p>One coordinate for the engine and its PDF backend, the CV, cover letter, invoice, proposal, receipt and rota templates, the bundled fonts many of them are drawn in, and colour emoji, at versions that work together.</p>
+          <p class="install-form">Maven</p>
+<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
+  &lt;artifactId&gt;graph-compose-bundle&lt;/artifactId&gt;
+  &lt;version&gt;{{stableVersion}}&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+          <p class="install-form">Gradle (Groovy DSL)</p>
+<pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose-bundle:{{stableVersion}}'</code></pre>
+        </article>
+        <article class="install-block">
+          <h3>An editable PowerPoint deck <span class="install-badge">Beta</span></h3>
+          <p>Add it beside <code>graph-compose</code> or the bundle: the layout of the PDF, as shapes on slides.</p>
+          <p class="install-form">Maven</p>
+<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
+  &lt;artifactId&gt;graph-compose-render-pptx&lt;/artifactId&gt;
+  &lt;version&gt;{{stableVersion}}&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+          <p class="install-form">Gradle (Groovy DSL)</p>
+<pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose-render-pptx:{{stableVersion}}'</code></pre>
+        </article>
+        <article class="install-block">
+          <h3>A Word document</h3>
+          <p>Add it beside <code>graph-compose</code> or the bundle: a semantic export, laid out by Word itself.</p>
+          <p class="install-form">Maven</p>
+<pre class="language-xml"><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
+  &lt;artifactId&gt;graph-compose-render-docx&lt;/artifactId&gt;
+  &lt;version&gt;{{stableVersion}}&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+          <p class="install-form">Gradle (Groovy DSL)</p>
+<pre class="language-groovy"><code class="language-groovy">implementation 'io.github.demchaav:graph-compose-render-docx:{{stableVersion}}'</code></pre>
+        </article>
+        <div class="install-block install-hello">
+          <h3>30-second hello world</h3>
+<pre class="language-java"><code class="language-java">try (var doc = GraphCompose
+        .document(out).create()) {
+  doc.pageFlow()
+     .addParagraph("Hello, GraphCompose")
+     .addList(l -&gt; l.items(
+         "PDF", "DOCX", "Tables"))
+     .build();
+  doc.buildPdf();
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-shell" id="formats" aria-labelledby="formats-title">
+      <div class="section-heading">
+        <p class="section-label">Output formats</p>
+        <h2 id="formats-title">One document, three kinds of file.</h2>
+        <p class="section-text">PDF and PowerPoint are drawn from the same resolved layout; Word receives the document's structure and lays it out itself. What each format keeps, capability by capability, is in the <a href="https://github.com/DemchaAV/GraphCompose/blob/{{releaseTag}}/docs/architecture/backend-capability-matrix.md">backend capability matrix</a>.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <h3>PDF</h3>
+          <p><code>graph-compose</code></p>
+          <p>The reference output. Fonts you register or take from the bundle are embedded and subset; the standard fonts, the default Helvetica among them, are not. Links, bookmarks and metadata are written, a document can be encrypted, and a deterministic mode renders byte-identical files.</p>
+        </article>
+        <article class="feature-card">
+          <h3>PowerPoint <span class="install-badge">Beta</span></h3>
+          <p><code>graph-compose-render-pptx</code></p>
+          <p>Geometry-identical to the PDF, with text, panels and most vector drawing as editable shapes.</p>
+          <ul class="format-limits">
+            <li>A clip that would cut into content, and inline SVG with clips, exact stroke styles or art outside its view box, become pictures.</li>
+            <li>Distinct per-corner radii, numeric dash patterns and radial gradients are approximated.</li>
+            <li>No encryption; the first bookmark on a slide names it, and the rest are dropped.</li>
+          </ul>
+        </article>
+        <article class="feature-card">
+          <h3>Word</h3>
+          <p><code>graph-compose-render-docx</code></p>
+          <p>Paragraphs, tables and block images become Word content, and page zones become real headers and footers with live page numbers.</p>
+          <ul class="format-limits">
+            <li>The text header and footer (<code>DocumentHeaderFooter</code>) are not written; a page zone is.</li>
+            <li>Shapes, lines, barcodes, inline images, links and watermarks are not written.</li>
+            <li>Fonts are named, not embedded, and list hanging indents are ignored.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="architecture section-shell" id="architecture" aria-labelledby="architecture-title">
+      <div class="section-heading">
+        <p class="section-label">Architecture</p>
+        <h2 id="architecture-title">Author intent stays separate from PDF rendering.</h2>
+      </div>
+      <ol class="pipeline" aria-label="Document pipeline">
+        <li><strong>Semantic DSL.</strong> You build a tree of <code>ParagraphNode</code>, <code>TableNode</code>, <code>SectionNode</code>, <code>LayerStackNode</code>, <code>CanvasLayerNode</code>.</li>
+        <li><strong>Layout pass.</strong> The engine resolves measurements, pagination, decoration, overlays. Output is a <code>LayoutGraph</code> &mdash; geometry only, no draw calls.</li>
+        <li><strong>Render backend.</strong> The <code>FixedLayoutBackend</code> consumes placed fragments. Default: <code>PdfFixedLayoutBackend</code> via PDFBox. <code>PptxFixedLayoutBackend</code> consumes the same fragments, so a deck is geometry-identical to the PDF by construction. A semantic DOCX backend maps the node tree instead, with much narrower coverage.</li>
+      </ol>
+    </section>
+
+    <section class="section-shell" aria-labelledby="why-title">
+      <div class="section-heading">
+        <p class="section-label">Why GraphCompose</p>
+        <h2 id="why-title">For services that produce structured PDFs at scale.</h2>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <h3>Stream straight into HTTP responses</h3>
+          <p><code>session.writePdf(OutputStream)</code> writes incrementally with no in-memory buffering. Spring Boot, Quarkus, Micronaut, or plain Java HTTP.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Snapshot-tested layouts</h3>
+          <p>Every preset has a layout-graph JSON baseline plus a pixel-diff visual parity baseline. Regressions surface on the first run.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Theme tokens, not magic numbers</h3>
+          <p><code>BrandTheme.modernProfessional()</code> / <code>.executive()</code> / <code>.boxedClassic()</code> set palette, typography, table styles. Override one or all. Ships in <code>graph-compose-templates</code>.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Markdown-aware bodies</h3>
+          <p>Inline <code>**bold**</code>, <code>*italic*</code>, <code>_italic_</code> markers parsed in every paragraph and list block automatically.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-shell docs-block" id="documentation" aria-labelledby="documentation-title">
+      <div class="section-heading">
+        <p class="section-label">Documentation</p>
+        <h2 id="documentation-title">Building your own templates?</h2>
+        <p class="section-text">The <strong>layered architecture</strong> guide walks through the five-folder pattern &mdash; <code>data</code> / <code>theme</code> / <code>components</code> / <code>widgets</code> / <code>presets</code> &mdash; with a worked CV example, a widget cookbook and a contributor checklist.</p>
+      </div>
+      <div class="layered-actions">
+        <a class="button button-primary" href="https://github.com/DemchaAV/GraphCompose/blob/{{releaseTag}}/docs/templates/v2-layered/quickstart.md">Quickstart (5 min)</a>
+        <a class="button button-secondary" href="https://github.com/DemchaAV/GraphCompose/blob/{{releaseTag}}/docs/templates/v2-layered/authoring-presets.md">Author a preset</a>
+        <a class="button button-ghost" href="https://github.com/DemchaAV/GraphCompose/blob/{{releaseTag}}/docs/templates/v2-layered/contributor-guide.md">Add a template family</a>
+      </div>
+      <p class="docs-more"><a href="documentation/">All documentation</a> &middot; latest release <a href="https://github.com/DemchaAV/GraphCompose/releases/tag/{{releaseTag}}">{{releaseTag}}</a> &middot; <a href="https://github.com/DemchaAV/GraphCompose/blob/{{releaseTag}}/CHANGELOG.md">Changelog</a></p>
+    </section>
+  </main>
+
+{{siteFooter}}
+
+  <dialog class="gallery-viewer" id="gallery-viewer" aria-labelledby="gallery-viewer-title">
+    <div class="gallery-viewer-frame">
+      <header class="gallery-viewer-header">
+        <div class="gallery-viewer-families" data-viewer="families" role="group" aria-label="Document families"></div>
+        <button type="button" class="gallery-viewer-close" data-viewer-close autofocus aria-label="Close the viewer">&times;</button>
+      </header>
+      <div class="gallery-viewer-body">
+        <button type="button" class="gallery-viewer-step" data-viewer="previous" data-viewer-step="-1" aria-label="Previous document">&#x2039;</button>
+        <figure class="gallery-viewer-stage" data-viewer="stage">
+          <img class="gallery-viewer-image" data-viewer="image" alt="" hidden>
+          <div class="gallery-viewer-notice" data-viewer="notice" hidden></div>
+        </figure>
+        <button type="button" class="gallery-viewer-step" data-viewer="next" data-viewer-step="1" aria-label="Next document">&#x203A;</button>
+      </div>
+      <div class="gallery-viewer-pages" data-viewer="pages" hidden>
+        <button type="button" class="gallery-viewer-page-step" data-viewer="page-previous"
+                data-viewer-page="-1" aria-label="Previous page">&#x2039;</button>
+        <span class="gallery-viewer-page-label" data-viewer="page-label" aria-live="polite"></span>
+        <button type="button" class="gallery-viewer-page-step" data-viewer="page-next"
+                data-viewer-page="1" aria-label="Next page">&#x203A;</button>
+      </div>
+      <nav class="gallery-viewer-thumbs" data-viewer="thumbnails" aria-label="Documents in this family"></nav>
+      <footer class="gallery-viewer-footer">
+        <div class="gallery-viewer-meta">
+          <h2 class="gallery-viewer-title" id="gallery-viewer-title" data-viewer="title" aria-live="polite"></h2>
+          <p class="gallery-viewer-counter" data-viewer="counter" aria-live="polite"></p>
+          <p class="gallery-viewer-description" data-viewer="description"></p>
+        </div>
+        <div class="gallery-viewer-actions">
+          <a class="example-action" data-viewer="pdf" target="_blank" rel="noopener">Open PDF</a>
+          <a class="example-action example-action-ghost" data-viewer="details">Details</a>
+          <a class="example-action example-action-ghost" data-viewer="code" target="_blank" rel="noopener">View code</a>
+        </div>
+      </footer>
+      <button type="button" class="gallery-viewer-panel-toggle" id="gallery-viewer-panel-toggle"
+              data-viewer="panel-toggle" data-viewer-toggle
+              aria-expanded="false" aria-controls="gallery-viewer-panel" hidden></button>
+      <section class="gallery-viewer-panel" id="gallery-viewer-panel" data-viewer="panel"
+               aria-labelledby="gallery-viewer-panel-toggle" hidden></section>
+    </div>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-java.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-groovy.min.js"></script>
+{{themeToggle}}
+  <script src="gallery-viewer.js"></script>
+  <script src="examples.js"></script>
+  <script src="home.js"></script>
+</body>
+</html>

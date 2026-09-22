@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="GraphCompose site build">
+  <meta name="description" content="The ModernInvoice preset composed straight from an InvoiceDocumentSpec — line items, totals and payment block driven by the BrandTheme rather than per-document styling.">
+  <title>Modern Invoice · Invoice · GraphCompose</title>
+  <link rel="canonical" href="https://demchaav.github.io/GraphCompose/templates/invoice/invoice-modern-v2/">
+  <link rel="icon" href="../../../assets/logo/graphcompose-logo.png">
+  <link rel="stylesheet" href="../../../styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+  <!-- Apply the saved theme before first paint to avoid a flash. Dark is the default. -->
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('gc-theme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://demchaav.github.io/GraphCompose/templates/invoice/invoice-modern-v2/">
+  <meta property="og:site_name" content="GraphCompose">
+  <meta property="og:title" content="Modern Invoice · Invoice · GraphCompose">
+  <meta property="og:description" content="The ModernInvoice preset composed straight from an InvoiceDocumentSpec — line items, totals and payment block driven by the BrandTheme rather than per-document styling.">
+  <meta property="og:image" content="https://demchaav.github.io/GraphCompose/showcase/screenshots/templates/invoice/invoice-modern-v2.png">
+  <meta property="og:image:width" content="892">
+  <meta property="og:image:height" content="1262">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Modern Invoice",
+    "description": "The ModernInvoice preset composed straight from an InvoiceDocumentSpec — line items, totals and payment block driven by the BrandTheme rather than per-document styling.",
+    "url": "https://demchaav.github.io/GraphCompose/templates/invoice/invoice-modern-v2/",
+    "primaryImageOfPage": {
+      "@type": "ImageObject",
+      "url": "https://demchaav.github.io/GraphCompose/showcase/screenshots/templates/invoice/invoice-modern-v2.png",
+      "width": 892,
+      "height": 1262
+    },
+    "mainEntity": {
+      "@type": "DigitalDocument",
+      "name": "Modern Invoice",
+      "encodingFormat": "application/pdf",
+      "url": "https://demchaav.github.io/GraphCompose/showcase/pdf/templates/invoice/invoice-modern-v2.pdf"
+    },
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "GraphCompose",
+      "url": "https://demchaav.github.io/GraphCompose/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../../../#top" aria-label="GraphCompose home">
+      <img src="../../../assets/logo/graphcompose-logo.png" alt="" width="40" height="40">
+      <span>GraphCompose</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="../../../#templates-section">Templates</a>
+      <a href="../../../#features-section">Examples</a>
+      <a href="../../../documentation/">Documentation</a>
+      <a href="https://github.com/DemchaAV/GraphCompose/releases">Releases</a>
+      <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a>
+      <a class="nav-cta" href="../../../#install">Get started</a>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark theme" title="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+      </button>
+    </nav>
+  </header>
+
+  <main id="top" class="document-page section-shell">
+    <nav class="document-breadcrumb" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="../../../">Home</a></li>
+        <li><a href="../../../#templates-section">Templates</a></li>
+        <li><a href="../../../#/templates/invoice">Invoice</a></li>
+        <li aria-current="page">Modern Invoice</li>
+      </ol>
+    </nav>
+
+    <div class="document-layout">
+      <header class="document-intro">
+        <h1>Modern Invoice</h1>
+        <p class="document-lead">The ModernInvoice preset composed straight from an InvoiceDocumentSpec — line items, totals and payment block driven by the BrandTheme rather than per-document styling.</p>
+        <p class="document-facts">1 page</p>
+        <div class="document-actions">
+          <a class="button button-primary" href="../../../showcase/pdf/templates/invoice/invoice-modern-v2.pdf">Open PDF</a>
+        </div>
+      </header>
+
+      <div class="document-pages">
+        <figure class="document-page-image">
+          <a href="../../../showcase/pdf/templates/invoice/invoice-modern-v2.pdf#page=1">
+            <img src="../../../showcase/screenshots/templates/invoice/invoice-modern-v2.png" width="892" height="1262"
+                 alt="Modern Invoice, page 1 of 1" fetchpriority="high">
+            <span class="visually-hidden">(opens the PDF)</span>
+          </a>
+        </figure>
+      </div>
+
+      <section class="document-reproduce" aria-labelledby="reproduce-title">
+        <h2 id="reproduce-title">Use this template</h2>
+        <figure class="reproduce-listing">
+          <figcaption class="reproduce-label">Maven</figcaption>
+          <pre class="reproduce-code"><code>&lt;dependency&gt;
+  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
+  &lt;artifactId&gt;graph-compose&lt;/artifactId&gt;
+  &lt;version&gt;2.4.1&lt;/version&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+  &lt;groupId&gt;io.github.demchaav&lt;/groupId&gt;
+  &lt;artifactId&gt;graph-compose-templates&lt;/artifactId&gt;
+  &lt;version&gt;2.4.1&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+        </figure>
+        <figure class="reproduce-listing">
+          <figcaption class="reproduce-label">Gradle</figcaption>
+          <pre class="reproduce-code"><code>implementation 'io.github.demchaav:graph-compose:2.4.1'
+implementation 'io.github.demchaav:graph-compose-templates:2.4.1'</code></pre>
+        </figure>
+        <p class="reproduce-row"><span class="reproduce-label">Java</span> <span class="reproduce-value">17 or newer</span></p>
+        <p class="reproduce-row"><span class="reproduce-label">Preset</span> <code class="reproduce-value">com.demcha.compose.document.templates.invoice.presets.ModernInvoice</code></p>
+        <p class="reproduce-row"><span class="reproduce-label">Data model</span> <code class="reproduce-value">com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec</code></p>
+        <figure class="reproduce-listing">
+          <figcaption class="reproduce-label">Compose it</figcaption>
+          <pre class="reproduce-code"><code>import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentPageSize;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.templates.invoice.presets.ModernInvoice;
+
+import java.nio.file.Path;
+
+InvoiceDocumentSpec invoice = InvoiceDocumentSpec.builder()
+        .title(&quot;Invoice&quot;)
+        .invoiceNumber(&quot;GC-2026-041&quot;)
+        .issueDate(&quot;25 Jun 2026&quot;)
+        .dueDate(&quot;25 Jul 2026&quot;)
+        .reference(&quot;GraphCompose implementation&quot;)
+        .status(&quot;Due&quot;)
+        .fromParty(party -&gt; party
+                .name(&quot;GraphCompose Studio&quot;)
+                .addressLines(&quot;10 Example Street&quot;, &quot;London&quot;)
+                .email(&quot;billing@example.com&quot;)
+                .phone(&quot;+44 20 0000 0000&quot;)
+                .taxId(&quot;VAT GB000000000&quot;))
+        .billToParty(party -&gt; party
+                .name(&quot;Client Ltd&quot;)
+                .addressLines(&quot;22 Client Road&quot;, &quot;Manchester&quot;)
+                .email(&quot;accounts@client.example&quot;))
+        .lineItem(&quot;Document engine integration&quot;, &quot;Implementation and support&quot;,
+                &quot;1&quot;, &quot;4,800.00&quot;, &quot;4,800.00&quot;)
+        .summaryRow(&quot;Subtotal&quot;, &quot;4,800.00&quot;)
+        .summaryRow(&quot;VAT&quot;, &quot;960.00&quot;)
+        .totalRow(&quot;Total&quot;, &quot;5,760.00&quot;)
+        .paymentTerm(&quot;Payment due within 30 days.&quot;)
+        .footerNote(&quot;Thank you for your business.&quot;)
+        .build();
+
+BrandTheme theme = BrandTheme.invoiceModern();
+DocumentTemplate&lt;InvoiceDocumentSpec&gt; template = ModernInvoice.create(theme);
+
+float margin = (float) ModernInvoice.RECOMMENDED_MARGIN;
+try (DocumentSession document = GraphCompose.document(Path.of(&quot;invoice.pdf&quot;))
+        .pageSize(DocumentPageSize.A4)
+        .pageBackground(theme.palette().mainFill())
+        .margin(margin, margin, margin, margin)
+        .create()) {
+    template.compose(document, invoice);
+    document.buildPdf();
+}</code></pre>
+        </figure>
+        <figure class="reproduce-listing">
+          <figcaption class="reproduce-label">Run the example</figcaption>
+          <pre class="reproduce-code"><code>./mvnw -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.templates.invoice.v2.ModernInvoiceV2Example</code></pre>
+        </figure>
+        <p class="reproduce-row"><span class="reproduce-label">Writes</span> <code class="reproduce-value">examples/target/generated-pdfs/templates/invoice/invoice-modern-v2.pdf</code></p>
+        <p class="reproduce-links">
+          <a class="button button-secondary button-small" href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/examples/src/main/java/com/demcha/examples/templates/invoice/v2/ModernInvoiceV2Example.java">Example source</a>
+          <a class="button button-secondary button-small" href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/templates/business-templates.md">Family guide</a>
+        </p>
+      </section>
+    </div>
+
+    <section class="document-related" aria-labelledby="related-title">
+      <h2 id="related-title">More in Invoice</h2>
+      <ul class="document-related-list">
+        <li>
+          <a href="../../../templates/invoice/invoice-cinematic/">
+            <img src="../../../showcase/thumbnails/templates/invoice/invoice-cinematic.png" width="320" height="453" alt="" loading="lazy" decoding="async">
+            <span>Cinematic Invoice</span>
+          </a>
+        </li>
+        <li>
+          <a href="../../../templates/invoice/invoice-classic-v2/">
+            <img src="../../../showcase/thumbnails/templates/invoice/invoice-classic-v2.png" width="320" height="453" alt="" loading="lazy" decoding="async">
+            <span>Classic Invoice</span>
+          </a>
+        </li>
+        <li>
+          <a href="../../../templates/invoice/invoice-consulting-v2/">
+            <img src="../../../showcase/thumbnails/templates/invoice/invoice-consulting-v2.png" width="320" height="453" alt="" loading="lazy" decoding="async">
+            <span>Consulting Invoice</span>
+          </a>
+        </li>
+        <li>
+          <a href="../../../templates/invoice/invoice-luma-studio-v2/">
+            <img src="../../../showcase/thumbnails/templates/invoice/invoice-luma-studio-v2.png" width="320" height="453" alt="" loading="lazy" decoding="async">
+            <span>Luma Studio Invoice</span>
+          </a>
+        </li>
+        <li>
+          <a href="../../../templates/invoice/invoice-payments-v2/">
+            <img src="../../../showcase/thumbnails/templates/invoice/invoice-payments-v2.png" width="320" height="453" alt="" loading="lazy" decoding="async">
+            <span>Payments Invoice</span>
+          </a>
+        </li>
+        <li>
+          <a href="../../../templates/invoice/invoice-workspace-v2/">
+            <img src="../../../showcase/thumbnails/templates/invoice/invoice-workspace-v2.png" width="320" height="453" alt="" loading="lazy" decoding="async">
+            <span>Workspace Invoice</span>
+          </a>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>GraphCompose &mdash; Java declarative PDF engine. <a href="https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE">MIT-licensed</a>.</p>
+    <p>
+      <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a> &middot;
+      <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/CHANGELOG.md">Changelog</a> &middot;
+      <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/migration/v2.0.0-modules.md">Migrating to 2.0</a>
+    </p>
+  </footer>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var light = document.documentElement.getAttribute('data-theme') === 'light';
+        if (light) {
+          document.documentElement.removeAttribute('data-theme');
+          try { localStorage.setItem('gc-theme', 'dark'); } catch (e) {}
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+          try { localStorage.setItem('gc-theme', 'light'); } catch (e) {}
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

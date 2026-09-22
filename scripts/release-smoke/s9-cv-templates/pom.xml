@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Standalone consumer smoke project: no <parent>, never part of the
+         GraphCompose reactor. The two coordinates the showcase panel gives a
+         reader for a CV preset card, resolved from Central like any consumer. -->
+    <groupId>com.demcha.smoke</groupId>
+    <artifactId>graph-compose-smoke-cv</artifactId>
+    <version>1.0.0</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>17</maven.compiler.release>
+        <gc.version>2.4.1</gc.version>
+        <junit.version>6.1.3</junit.version>
+        <assertj.version>3.27.7</assertj.version>
+        <surefire.version>3.6.0</surefire.version>
+    </properties>
+
+    <dependencies>
+        <!-- The aggregate, not the wrapper + templates pair that s4 uses.
+             The CV presets set PT Serif in their theme, and the bundled Google faces
+             have shipped in a separate artifact since v1.8.0, so `graph-compose` +
+             `graph-compose-templates` compiles and then fails at render on a missing
+             font resource. That companion is versioned independently of the release
+             (1.1.0 while the engine is at 2.4.0), so the aggregate is the single
+             coordinate that carries it at the release's own version. s4 needs none of
+             this: the invoice theme is Helvetica, which is Standard-14. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-bundle</artifactId>
+            <version>${gc.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

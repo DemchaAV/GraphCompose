@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="GraphCompose site build">
+  <meta name="description" content="The GraphCompose guides at v2.4.1: Start here, Templates, Building a document, Output formats, Testing and production, Versions and upgrades, Changing GraphCompose itself.">
+  <title>Documentation · GraphCompose</title>
+  <link rel="canonical" href="https://demchaav.github.io/GraphCompose/documentation/">
+  <link rel="icon" href="../assets/logo/graphcompose-logo.png">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+  <!-- Apply the saved theme before first paint to avoid a flash. Dark is the default. -->
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('gc-theme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://demchaav.github.io/GraphCompose/documentation/">
+  <meta property="og:site_name" content="GraphCompose">
+  <meta property="og:title" content="Documentation · GraphCompose">
+  <meta property="og:description" content="The GraphCompose guides at v2.4.1: Start here, Templates, Building a document, Output formats, Testing and production, Versions and upgrades, Changing GraphCompose itself.">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../#top" aria-label="GraphCompose home">
+      <img src="../assets/logo/graphcompose-logo.png" alt="" width="40" height="40">
+      <span>GraphCompose</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="../#templates-section">Templates</a>
+      <a href="../#features-section">Examples</a>
+      <a href="../documentation/">Documentation</a>
+      <a href="https://github.com/DemchaAV/GraphCompose/releases">Releases</a>
+      <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a>
+      <a class="nav-cta" href="../#install">Get started</a>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark theme" title="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+      </button>
+    </nav>
+  </header>
+
+  <main id="top" class="docs-page section-shell">
+    <div class="section-heading">
+      <p class="section-label">Documentation</p>
+      <h1>The guides for v2.4.1</h1>
+      <p class="section-text">Every guide below opens in the repository at v2.4.1, the release this site's install snippets name, so what it describes is what they install. <a href="https://github.com/DemchaAV/GraphCompose/releases/tag/v2.4.1">Release notes for v2.4.1</a> &middot; <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/README.md">the full documentation index</a></p>
+    </div>
+
+    <div class="docs-sections">
+      <section class="docs-section" id="start" aria-labelledby="start-title">
+        <h2 id="start-title">Start here</h2>
+        <ul class="docs-guides">
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/first-document.md">Your first document</a>
+            <p>The five-minute path from an empty project to a rendered PDF.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/getting-started.md">Getting started</a>
+            <p>Composing with the DSL or filling a template, a first render walked through, and how to choose between them.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/capabilities.md">Capabilities</a>
+            <p>Every feature at a glance, with its stability tier and the guide that covers it.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/troubleshooting.md">Troubleshooting</a>
+            <p>Symptom-first fixes: stray ? glyphs, content Word leaves out, a missing optional dependency.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="docs-section" id="templates" aria-labelledby="templates-title">
+        <h2 id="templates-title">Templates</h2>
+        <ul class="docs-guides">
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/templates/README.md">Templates overview</a>
+            <p>All six shipped families, the data each one takes, and which guide to open next.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/templates/v2-layered/quickstart.md">Templates quickstart</a>
+            <p>Five minutes: how the layered templates are built, and a working example that renders a CV.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/templates/business-templates.md">Business templates</a>
+            <p>Invoices and proposals rendered from data, end to end.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/templates/v2-layered/authoring-presets.md">Authoring a preset</a>
+            <p>A CV style of your own, composed from the shipped widgets without subclassing.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/templates/v2-layered/contributor-guide.md">Adding a template family</a>
+            <p>A new kind of document, from its data model to its presets and tests.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="docs-section" id="building" aria-labelledby="building-title">
+        <h2 id="building-title">Building a document</h2>
+        <ul class="docs-guides">
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/recipes.md">Recipes</a>
+            <p>Text, lists, tables, charts, images, barcodes, layout, headers and footers, links and bookmarks: where each one fits.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="docs-section" id="formats" aria-labelledby="formats-title">
+        <h2 id="formats-title">Output formats</h2>
+        <ul class="docs-guides">
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/architecture/backend-capability-matrix.md">Backend capability matrix</a>
+            <p>What PDF, PowerPoint and Word each support, capability by capability.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/render-pptx/README.md">PowerPoint backend</a>
+            <p>graph-compose-render-pptx, in Beta: an editable deck from the same session that prints the PDF.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/render-docx/README.md">Word backend</a>
+            <p>graph-compose-render-docx: a semantic Word export, with partial coverage and no PDF parity.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="docs-section" id="production" aria-labelledby="production-title">
+        <h2 id="production-title">Testing and production</h2>
+        <ul class="docs-guides">
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/operations/test-your-document.md">Testing your document</a>
+            <p>Smoke tests, layout snapshots and visual diffs that keep a document from changing unnoticed.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/operations/production-rendering.md">Production rendering</a>
+            <p>Rendering on a server: streaming, concurrency and failure handling.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="docs-section" id="versions" aria-labelledby="versions-title">
+        <h2 id="versions-title">Versions and upgrades</h2>
+        <ul class="docs-guides">
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/api-stability.md">API stability</a>
+            <p>The stability tier of each package, and what each tier promises.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/migration/v2.0.0-modules.md">Migrating to 2.0</a>
+            <p>The 1.x to 2.x module split and the API changes that came with it; the changelog holds the full list.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/CHANGELOG.md">Changelog</a>
+            <p>The notable changes, release by release.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="docs-section" id="internals" aria-labelledby="internals-title">
+        <h2 id="internals-title">Changing GraphCompose itself</h2>
+        <p class="docs-section-intro">Not needed to write a document.</p>
+        <ul class="docs-guides">
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/architecture/overview.md">Architecture overview</a>
+            <p>The engine, the DSL, the templates and the backends, and how they fit together.</p>
+          </li>
+          <li>
+            <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/contributing/extension-guide.md">Extension guide</a>
+            <p>Add a semantic node, a builder setter, a render handler or a whole backend, without reaching into the engine.</p>
+          </li>
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>GraphCompose &mdash; Java declarative PDF engine. <a href="https://github.com/DemchaAV/GraphCompose/blob/main/LICENSE">MIT-licensed</a>.</p>
+    <p>
+      <a href="https://github.com/DemchaAV/GraphCompose">GitHub</a> &middot;
+      <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/CHANGELOG.md">Changelog</a> &middot;
+      <a href="https://github.com/DemchaAV/GraphCompose/blob/v2.4.1/docs/migration/v2.0.0-modules.md">Migrating to 2.0</a>
+    </p>
+  </footer>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var light = document.documentElement.getAttribute('data-theme') === 'light';
+        if (light) {
+          document.documentElement.removeAttribute('data-theme');
+          try { localStorage.setItem('gc-theme', 'dark'); } catch (e) {}
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+          try { localStorage.setItem('gc-theme', 'light'); } catch (e) {}
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

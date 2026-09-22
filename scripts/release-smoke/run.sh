@@ -13,7 +13,7 @@
 # release.
 #
 # Usage:
-#   ./scripts/release-smoke/run.sh                 # isolated, tests gc.version=2.4.0
+#   ./scripts/release-smoke/run.sh                 # isolated, tests gc.version=2.4.1
 #   ./scripts/release-smoke/run.sh --version 2.0.1 # test a different published version
 #   ./scripts/release-smoke/run.sh --warm          # keep everything cached (fast dev iteration)
 #
@@ -24,12 +24,12 @@ REPO_ROOT="$(cd "$HERE/../.." && pwd)"
 MVNW="$REPO_ROOT/mvnw"
 SETTINGS="$HERE/settings.xml"
 
-SCENARIOS=(s1-graph-compose s2-core-only s3-core-render-pdf s4-templates s5-testing s6-bundle s7-core-render-pptx s8-core-render-docx)
+SCENARIOS=(s1-graph-compose s2-core-only s3-core-render-pdf s4-templates s5-testing s6-bundle s7-core-render-pptx s8-core-render-docx s9-cv-templates)
 REPO="$REPO_ROOT/target/release-smoke-m2/repo"
 
 # Default version under test: the currently published release. Release smoke must
 # test PUBLISHED artifacts — never a -SNAPSHOT.
-GC_VERSION="2.4.0"
+GC_VERSION="2.4.1"
 WARM=0
 while [ $# -gt 0 ]; do
   case "$1" in

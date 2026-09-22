@@ -12,7 +12,7 @@
     release.
 
     Usage:
-      pwsh ./scripts/release-smoke/run.ps1                  # isolated, tests 2.4.0
+      pwsh ./scripts/release-smoke/run.ps1                  # isolated, tests 2.4.1
       pwsh ./scripts/release-smoke/run.ps1 -Version 2.0.1   # test a different published version
       pwsh ./scripts/release-smoke/run.ps1 -Warm            # keep everything cached (fast dev iteration)
 #>
@@ -20,7 +20,7 @@ param(
     [switch]$Warm,
     # Default version under test: the currently published release. Release smoke
     # must test PUBLISHED artifacts — never a -SNAPSHOT.
-    [string]$Version = '2.4.0'
+    [string]$Version = '2.4.1'
 )
 
 $ErrorActionPreference = 'Continue'
@@ -29,7 +29,7 @@ $repoRoot = (Resolve-Path (Join-Path $here '..\..')).Path
 $mvnw = Join-Path $repoRoot 'mvnw.cmd'
 $settings = Join-Path $here 'settings.xml'
 
-$scenarios = @('s1-graph-compose', 's2-core-only', 's3-core-render-pdf', 's4-templates', 's5-testing', 's6-bundle', 's7-core-render-pptx', 's8-core-render-docx')
+$scenarios = @('s1-graph-compose', 's2-core-only', 's3-core-render-pdf', 's4-templates', 's5-testing', 's6-bundle', 's7-core-render-pptx', 's8-core-render-docx', 's9-cv-templates')
 $repo = Join-Path $repoRoot 'target\release-smoke-m2\repo'
 New-Item -ItemType Directory -Force -Path $repo | Out-Null
 

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="GraphCompose site build">
+  <meta name="description" content="{{description}}">
+  <title>{{pageTitle}}</title>
+  <link rel="canonical" href="{{canonical}}">
+  <link rel="icon" href="{{base}}assets/logo/graphcompose-logo.png">
+  <link rel="stylesheet" href="{{base}}styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+{{themeInit}}
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{canonical}}">
+  <meta property="og:site_name" content="GraphCompose">
+  <meta property="og:title" content="{{pageTitle}}">
+  <meta property="og:description" content="{{description}}">
+  <meta property="og:image" content="{{previewUrl}}">
+  <meta property="og:image:width" content="{{previewWidth}}">
+  <meta property="og:image:height" content="{{previewHeight}}">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+{{structuredData}}
+  </script>
+</head>
+<body>
+{{siteHeader}}
+
+  <main id="top" class="document-page section-shell">
+    <nav class="document-breadcrumb" aria-label="Breadcrumb">
+      <ol>
+{{breadcrumb}}
+      </ol>
+    </nav>
+
+    <div class="document-layout">
+      <header class="document-intro">
+        <h1>{{title}}</h1>
+        <p class="document-lead">{{description}}</p>
+        <p class="document-facts">{{facts}}</p>
+        <div class="document-actions">
+{{actions}}
+        </div>
+      </header>
+
+      <div class="document-pages">
+{{pageImages}}
+      </div>
+
+      <section class="document-reproduce" aria-labelledby="reproduce-title">
+        <h2 id="reproduce-title">{{action}}</h2>
+{{panel}}
+      </section>
+    </div>
+{{related}}
+  </main>
+
+{{siteFooter}}
+
+{{themeToggle}}
+</body>
+</html>

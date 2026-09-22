@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="GraphCompose site build">
+  <meta name="description" content="{{description}}">
+  <title>Documentation · GraphCompose</title>
+  <link rel="canonical" href="{{canonical}}">
+  <link rel="icon" href="{{base}}assets/logo/graphcompose-logo.png">
+  <link rel="stylesheet" href="{{base}}styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+{{themeInit}}
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{canonical}}">
+  <meta property="og:site_name" content="GraphCompose">
+  <meta property="og:title" content="Documentation · GraphCompose">
+  <meta property="og:description" content="{{description}}">
+</head>
+<body>
+{{siteHeader}}
+
+  <main id="top" class="docs-page section-shell">
+    <div class="section-heading">
+      <p class="section-label">Documentation</p>
+      <h1>The guides for {{releaseTag}}</h1>
+      <p class="section-text">Every guide below opens in the repository at {{releaseTag}}, the release this site's install snippets name, so what it describes is what they install. <a href="https://github.com/DemchaAV/GraphCompose/releases/tag/{{releaseTag}}">Release notes for {{releaseTag}}</a> &middot; <a href="https://github.com/DemchaAV/GraphCompose/blob/{{releaseTag}}/docs/README.md">the full documentation index</a></p>
+    </div>
+
+    <div class="docs-sections">
+{{sections}}
+    </div>
+  </main>
+
+{{siteFooter}}
+
+{{themeToggle}}
+</body>
+</html>

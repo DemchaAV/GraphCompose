@@ -8,6 +8,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A table cell keeps the space the document put inside its edges.** It was never written,
+  so Word used its own — 5.4pt at each side and *nothing* above or below. A row's height in
+  Word is its content's box, so every row came out shorter than the page draws it: measured
+  on the probe corpus through LibreOffice, each row of a five-row table sat 8.1pt short, and
+  the table's last row 40pt above where the page puts it. The padding a cell resolves to —
+  the table's default, then the column's, then the row's, then the cell's own — is now
+  written as `w:tcMar`, and the same table's rows land within 0.1pt of the page.
+  <br><br>
+  All four sides are written, and written even when they are zero, because Word's default is
+  not zero: a table that asked for no padding would otherwise export with Word's side
+  margins and read wider than it is. A table that states no padding at all is written with
+  the padding the engine lays it out with rather than with Word's, and a test pins the two
+  together so the export cannot quietly draw rows of a height nothing asked for.
+
 - **A gap between two blocks in an exported Word file is one gap.** It was written from both
   sides — `w:after` on the block above and `w:before` on the one below — which is the same
   distance only in an editor that adds them. LibreOffice takes the larger: measured on the

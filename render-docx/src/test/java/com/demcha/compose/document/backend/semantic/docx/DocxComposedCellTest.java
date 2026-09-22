@@ -109,8 +109,9 @@ class DocxComposedCellTest {
         assertThat(cell.getTables().get(0).getCTTbl().getTblPr().getTblW().getType().toString())
                 .as("stated, not left to Word")
                 .isEqualTo("dxa");
-        // The column less the margins Word keeps inside every cell edge: 5.4pt a side.
-        assertThat(nested).isEqualTo(column - 2 * 108);
+        // The column less the margins the cell itself states: the engine's own default
+        // cell padding, 4pt a side, which this export writes as w:tcMar.
+        assertThat(nested).isEqualTo(column - 2 * 80);
     }
 
     @Test

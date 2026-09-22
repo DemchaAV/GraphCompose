@@ -94,6 +94,15 @@ sees the document rather than a substitution. What is shipped is narrow on purpo
 Each face is stored the way Word stores one: the font with its first 32 bytes scrambled
 against a key the font table states beside it.
 
+A run names the **family**, not the face. `FontName.HELVETICA_BOLD` is a face, and Word
+resolves families and takes the weight from `w:b`; asked for a family by that name it finds
+none and substitutes. The face is resolved to its family exactly as the layout resolves it,
+through `FontLibrary.resolveFamily`, and the name written is that family's `wordFamily()`.
+The weight is not read from the face name, because the engine does not read it either — a
+style naming `HELVETICA_BOLD` and setting no `decoration` lays out regular, so writing
+`w:b` would make Word bolder than the page it is matching. Set `decoration(BOLD)` to get
+bold in both.
+
 ## Named styles, so the document can be restyled
 
 The export writes a styles part whose `Normal` carries the document's own body text —

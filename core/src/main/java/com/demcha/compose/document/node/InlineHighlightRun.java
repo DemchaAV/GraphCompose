@@ -11,8 +11,10 @@ import java.util.Objects;
  * a GitHub-style inline {@code code} span or a status badge.
  *
  * <p>Unlike the image/shape/SVG runs it is <em>text</em>: it wraps with the
- * surrounding line. The background is a PDF decoration — text-only backends keep
- * the text and drop the fill (see {@link ParagraphNode#inlineTextRuns()}).</p>
+ * surrounding line. Its background is drawn where a backend can draw one and
+ * written as run shading where a backend has that instead; the reduction to text
+ * runs keeps only what every backend can write, which is the text
+ * (see {@link ParagraphNode#inlineTextRuns()}).</p>
  *
  * @param text       visible text for the run
  * @param textStyle  style for the glyphs; falls back to the paragraph style when {@code null}

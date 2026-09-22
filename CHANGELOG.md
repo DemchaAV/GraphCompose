@@ -8,6 +8,28 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **An inline chip keeps its fill in the exported Word file.** A status badge and an
+  inline `code()` span both came out as bare text: the reduction every backend shares keeps
+  a chip's glyphs and drops its background, and nothing downstream put it back — so a red
+  badge reading "overdue" was the same colour as the sentence around it, and the document
+  lost the part of itself that was doing the talking. The fill is now the run's own
+  `w:shd`, which takes any RGB, in a paragraph and inside a list item alike. Word's
+  highlighter pen was the other candidate and quantizes to sixteen named colours, which is
+  not a brand palette.
+  <br><br>
+  What Word has no way to say is the chip's *shape*: shading covers the glyph box, so the
+  corner radius is square and the padding that widens the run on the page is not in the
+  file. Both are recorded in the export report, per chip, and a chip that loses neither
+  reports nothing — a record of loss that lists what did not lose anything cannot be read.
+  <br><br>
+  A `w:shd` fill is opaque, and the chip this DSL reaches for most — `inlineCode(...)` — is
+  a fifth-opacity grey. Written at full strength it is a solid slab where the page has a
+  tint, so a translucent fill is flattened first against what the export itself wrote
+  underneath it: the paragraph's shading, the cell's, or the page. The chip then agrees
+  with the file it is in, which on a white page is the composite the PDF makes of the same
+  chip. What it stops being is translucent — recolour what is under it in Word and the
+  chip no longer follows — so that is recorded too.
+
 - **An exported Word document has an outline.** A reader opened a twenty-page export and
   found one flat run of paragraphs: nothing in the Navigation Pane, nothing in the outline
   view, and a generated table of contents that came back empty. Word builds all three from

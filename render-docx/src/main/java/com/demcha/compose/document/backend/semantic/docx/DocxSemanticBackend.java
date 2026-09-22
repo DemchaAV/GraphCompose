@@ -42,6 +42,7 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.font.FontFamilyDefinition;
@@ -810,7 +811,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyStyle(leading, style);
         leading.setText("  ".repeat(depth) + (marker.isRich() ? "" : marker.prefix()));
         if (marker.isRich()) {
-            writeInlineTextRuns(para, style, marker.runs());
+            writeInlineTextRuns(para, style, marker.runs(), path);
             // The gap after a marker is markerGap, which is geometry and so not
             // available here; a space is what separates a marker from its item on
             // the text path, and it separates them here for the same reason.
@@ -821,7 +822,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         if (item.isRich()) {
-            writeInlineTextRuns(para, style, item.runs());
+            writeInlineTextRuns(para, style, item.runs(), path);
         } else {
             XWPFRun label = para.createRun();
             applyStyle(label, style);
@@ -831,14 +832,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Appends one Word run per text-carrying inline run, each in its own style
-     * and falling back to {@code style} when it has none.
+     * and falling back to {@code style} when it has none — and, for a chip, on the
+     * fill it was given: a badge inside a list item is a badge for the same reason
+     * it is one inside a paragraph.
      */
     private void writeInlineTextRuns(XWPFParagraph para, DocumentTextStyle style,
-                                     List<InlineRun> runs) {
-        for (InlineTextRun run : com.demcha.compose.document.node.InlineRun.textRuns(runs)) {
+                                     List<InlineRun> runs, String path) {
+        for (InlineRun run : runs) {
+            InlineTextRun text = textOf(run);
+            if (text == null) {
+                continue;
+            }
             XWPFRun docRun = para.createRun();
-            applyStyle(docRun, run.textStyle() == null ? style : run.textStyle());
-            docRun.setText(run.text() == null ? "" : run.text());
+            applyStyle(docRun, text.textStyle() == null ? style : text.textStyle());
+            applyInlineBackground(docRun, backgroundOf(run), path);
+            docRun.setText(text.text() == null ? "" : text.text());
         }
     }
 
@@ -1508,29 +1516,197 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>Runs win over {@code text} when both are present, matching how a paragraph is
      * rendered elsewhere. Nothing is lost by preferring them: when {@code text} is left
-     * blank {@code ParagraphNode} fills it by concatenating exactly the runs
-     * {@code inlineTextRuns()} returns, highlight chips included.</p>
+     * blank {@code ParagraphNode} fills it by concatenating exactly the runs that carry
+     * text, highlight chips included. A paragraph whose only runs carry no text — an image,
+     * a shape — still falls back to {@code text}, which is the whole of what it reads.</p>
+     *
+     * <p>The runs are walked as the document authored them rather than as the reduction to
+     * text runs hands them back: the reduction answers what to write, and a chip is more
+     * than its text. Its fill is read from the authored run beside the reduced one.</p>
      */
     private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node, boolean rightToLeft) {
         warnDroppedInlineRuns(node);
-        List<InlineTextRun> runs = node.inlineTextRuns();
-        if (runs.isEmpty()) {
+        String path = layout.pathOf(node);
+        boolean wroteARun = false;
+        for (InlineRun run : node.inlineRuns()) {
+            InlineTextRun text = textOf(run);
+            if (text == null) {
+                continue;
+            }
+            // A run's own link wins over the paragraph's: a sentence with one linked phrase
+            // in it is the ordinary case, and the paragraph's link is the fallback for the
+            // rest of that sentence rather than something the phrase overrides away.
+            DocumentLinkTarget target = text.linkTarget() != null ? text.linkTarget() : node.linkTarget();
+            XWPFRun docRun = newRun(para, target);
+            applyStyle(docRun, text.textStyle() == null ? node.textStyle() : text.textStyle());
+            applyRunDirection(docRun, rightToLeft);
+            applyInlineBackground(docRun, backgroundOf(run), path);
+            docRun.setText(text.text() == null ? "" : text.text());
+            wroteARun = true;
+        }
+        if (!wroteARun) {
             XWPFRun docRun = newRun(para, node.linkTarget());
             applyStyle(docRun, node.textStyle());
             applyRunDirection(docRun, rightToLeft);
             docRun.setText(node.text() == null ? "" : node.text());
+        }
+    }
+
+    /**
+     * The text-carrying form of one inline run, or null for a run that carries no text.
+     *
+     * <p>Asks the one reduction — {@link InlineRun#textRuns} — about a single run rather
+     * than repeating its rules here, so a chip's text arrives normalized exactly as it is
+     * everywhere else. The runs are walked in their authored form because the reduction
+     * answers what to <em>write</em> and drops what only the chip knows: its fill.</p>
+     */
+    private static InlineTextRun textOf(InlineRun run) {
+        List<InlineTextRun> lowered = InlineRun.textRuns(List.of(run));
+        return lowered.isEmpty() ? null : lowered.get(0);
+    }
+
+    /** The chip behind a run, or null for a run that is not one. */
+    private static InlineBackground backgroundOf(InlineRun run) {
+        return run instanceof InlineHighlightRun highlight ? highlight.background() : null;
+    }
+
+    /**
+     * Shades a run with the chip its author put behind it.
+     *
+     * <p>An inline {@code code} span and a status badge both exported as bare text: the
+     * reduction to text runs keeps the glyphs and drops the fill, and nothing downstream
+     * put it back. A chip that carries meaning — a red badge reading "overdue" — came out
+     * the same colour as the sentence around it.</p>
+     *
+     * <p>Word shades a run with {@code w:shd}, which takes any RGB. Its highlighter pen
+     * ({@code w:highlight}) is the other candidate and takes one of sixteen named colours,
+     * which no brand palette is a member of — a chip written with it is whichever of the
+     * sixteen was nearest, and reads as text someone marked up rather than as design.</p>
+     *
+     * <p>A {@code w:shd} fill is opaque, and the chip this sugar reaches for most —
+     * {@code code(...)} — is a fifth-opacity grey. Written at full strength it is a solid
+     * slab where the page has a tint, so a translucent fill is flattened first against what
+     * Word paints underneath it: the paragraph's own shading, the cell's, or the page. The
+     * chip then agrees with the file it is in — including where that file already differs
+     * from the page, since a translucent <em>container</em> fill lands opaque too. What it
+     * stops being is translucent: recoloured underneath in Word, the chip no longer
+     * follows.</p>
+     *
+     * <p>What Word cannot express is the chip's <em>shape</em>. Shading covers the glyph
+     * box, so the rounded corners and the padding that widens the run on the page are not
+     * in the file. All three are recorded rather than quietly approximated.</p>
+     */
+    private void applyInlineBackground(XWPFRun run, InlineBackground background, String path) {
+        if (background == null) {
             return;
         }
-        for (InlineTextRun run : runs) {
-            // A run's own link wins over the paragraph's: a sentence with one linked phrase
-            // in it is the ordinary case, and the paragraph's link is the fallback for the
-            // rest of that sentence rather than something the phrase overrides away.
-            DocumentLinkTarget target = run.linkTarget() != null ? run.linkTarget() : node.linkTarget();
-            XWPFRun docRun = newRun(para, target);
-            applyStyle(docRun, run.textStyle() == null ? node.textStyle() : run.textStyle());
-            applyRunDirection(docRun, rightToLeft);
-            docRun.setText(run.text() == null ? "" : run.text());
+        CTRPr properties = run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr();
+        // w:shd sits in a repeating choice in the schema, so the accessor is an array and
+        // addNewShd() appends rather than replaces — a run carrying two shadings leaves
+        // Word reading whichever it meets first.
+        CTShd shading = properties.sizeOfShdArray() > 0
+                ? properties.getShdArray(0)
+                : properties.addNewShd();
+        shading.setVal(STShd.CLEAR);
+        shading.setColor("auto");
+        shading.setFill(toHexColor(flatten(background.fill().color(), colourUnder(run))));
+        String lost = chipLost(background);
+        if (lost != null) {
+            if (warnedNodeKinds.add("inline-background")) {
+                LOG.warn("DocxSemanticBackend: an inline chip keeps its fill as run shading, "
+                         + "but Word shades the glyph box — {}. (One warning per export.)", lost);
+            }
+            report.add(DocxExportReport.Severity.APPROXIMATED, "inline chip", path,
+                    "the fill is written as run shading; " + lost);
         }
+    }
+
+    /** What a chip loses on the way to run shading, or null when the mapping is exact. */
+    private static String chipLost(InlineBackground background) {
+        List<String> lost = new ArrayList<>(3);
+        if (background.cornerRadius() > 0) {
+            lost.add("its rounded corners are square");
+        }
+        if (background.padding().horizontal() > 0 || background.padding().vertical() > 0) {
+            lost.add("its padding is not in the file");
+        }
+        if (background.fill().color().getAlpha() < 255) {
+            // The colour on the page is right. What is gone is the translucency itself:
+            // shade the paragraph a different colour in Word and a chip that was a tint
+            // over it stays the tint it was flattened to.
+            lost.add("its fill is flattened against what sits under it, because run "
+                     + "shading is opaque");
+        }
+        return lost.isEmpty() ? null : String.join(", ", lost);
+    }
+
+    /**
+     * The colour Word will paint under {@code run} — the shading this export itself wrote
+     * on the run's paragraph or on the cell holding it, and otherwise the page's white.
+     *
+     * <p>Read back from the file being written rather than tracked in a field, so it is
+     * whatever was actually written and cannot drift from it. Read, and only read:
+     * {@code cellProperties} would create the {@code w:tcPr} it cannot find, so an
+     * unstyled cell holding a chip would come away carrying an empty one.</p>
+     */
+    private java.awt.Color colourUnder(XWPFRun run) {
+        XWPFParagraph para = run.getParagraph();
+        CTPPr paragraphProperties = para == null || !para.getCTP().isSetPPr()
+                ? null
+                : para.getCTP().getPPr();
+        java.awt.Color paragraphFill = shadingFillOf(
+                paragraphProperties != null && paragraphProperties.isSetShd()
+                        ? paragraphProperties.getShd() : null);
+        if (paragraphFill != null) {
+            return paragraphFill;
+        }
+        CTTcPr cellProperties = currentCell == null || !currentCell.getCTTc().isSetTcPr()
+                ? null
+                : currentCell.getCTTc().getTcPr();
+        java.awt.Color cellFill = shadingFillOf(
+                cellProperties != null && cellProperties.isSetShd() ? cellProperties.getShd() : null);
+        return cellFill != null ? cellFill : java.awt.Color.WHITE;
+    }
+
+    /**
+     * A shading's fill as a colour, or null when it is unset or Word's own {@code auto}.
+     *
+     * <p>The schema's hex colour is a union, and XmlBeans hands a written one back as the
+     * three bytes rather than as the string it was set from — read as text it is an array's
+     * identity, which parses as no colour at all and silently flattens against white.</p>
+     */
+    private static java.awt.Color shadingFillOf(CTShd shading) {
+        Object fill = shading == null ? null : shading.getFill();
+        if (fill == null) {
+            return null;
+        }
+        String hex = fill instanceof byte[] bytes
+                ? java.util.HexFormat.of().formatHex(bytes)
+                : String.valueOf(fill).trim();
+        if (!hex.matches("(?i)[0-9a-f]{6}")) {
+            return null;
+        }
+        return new java.awt.Color(Integer.parseInt(hex, 16));
+    }
+
+    /**
+     * Composites a colour over what sits beneath it, so a translucent fill survives a
+     * format that has no alpha. An opaque colour is returned untouched.
+     */
+    private static java.awt.Color flatten(java.awt.Color colour, java.awt.Color under) {
+        int alpha = colour.getAlpha();
+        if (alpha >= 255) {
+            return colour;
+        }
+        double weight = alpha / 255.0;
+        return new java.awt.Color(
+                blend(colour.getRed(), under.getRed(), weight),
+                blend(colour.getGreen(), under.getGreen(), weight),
+                blend(colour.getBlue(), under.getBlue(), weight));
+    }
+
+    private static int blend(int over, int under, double weight) {
+        return (int) Math.round(over * weight + under * (1 - weight));
     }
 
     /**

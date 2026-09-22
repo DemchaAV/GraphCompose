@@ -45,6 +45,7 @@ PDF never pull POI.
 | Lists | Real Word lists: a `numbering.xml` definition per list, `w:numPr` on each item, and the authored marker as the level's text. Nesting is a list level, so Enter continues the list and Tab demotes an item. See "What a list becomes" below for the kinds that stay plain paragraphs |
 | Tables | Word tables, one cell per cell. The width is written when the document states one or every column is fixed; otherwise Word sizes the table — see "What falls back" |
 | Composed cells (`DocumentTableCell.node(...)`) | Written by the same writers that write that node anywhere else, so a cell built from an image, a list or a table carries it. A nested table is a real `w:tbl` followed by the paragraph Word requires a cell to end with, and takes the width of the column it sits in — the column's, not the one the page gives it, because the layout reports a composed cell's content under the owner's path |
+| Inline chips (`inlineCode(...)`, `inlineChip(...)`, `highlight(...)`) | The chip's fill becomes the run's own `w:shd`, in a paragraph and in a list item alike. Its shape does not travel — see "What a chip keeps and loses" below |
 | Images | Embedded pictures at the node's declared size |
 | Links and anchors | A `linkTarget` becomes a `w:hyperlink` — a relationship for an address, `w:anchor` for one of the document's own anchors — and a run's own link wins over the paragraph's. An `anchor(...)` becomes a bookmark wrapping that paragraph's text, named as Word requires. A `bookmark(...)` outline level becomes Word's own `HeadingN` style, which is what puts the paragraph in the Navigation Pane, the outline view and a generated table of contents. The style states the outline level and nothing else, so the paragraph keeps its own formatting. The role comes from what the document declared, never from how big the text is |
 | Rows | A one-row table spanning the content width, so editors keep the side-by-side layout. The row's slots become the column grid when they are weights, an even split or fixed columns; the gap and the row's padding ride in the neighbouring column and come back out as that cell's margin (cell content limited to atomic children) |
@@ -197,6 +198,37 @@ Not representable, and left undone rather than approximated:
   breathing room matters in Word.
 - **A table inside a painted container.** The table keeps its own cell fills and borders
   rather than inheriting the band.
+
+## What a chip keeps and loses
+
+A chip is a fill behind a phrase, and Word has one: `w:shd` on the run, taking any RGB.
+So a status badge still reads as a badge and an inline `code()` span still reads as code,
+in a paragraph and inside a list item alike.
+
+```java
+page.addParagraph(p -> p
+        .inlineText("Invoice ")
+        .inlineChip("overdue", DocumentColor.WHITE, accent)   // fill lands
+        .inlineText(" — settle by Friday."));
+```
+
+What Word has no way to say is the chip's *shape*. Shading covers the glyph box, so:
+
+- **The corner radius** is square in Word.
+- **The padding** that widens the run on the page is not in the file, so the fill hugs
+  the glyphs and the line is fractionally shorter than the PDF's.
+
+Both are recorded as `APPROXIMATED` in the export report, per chip, so a caller can see
+which phrase lost what.
+
+A `w:shd` fill is opaque, so a translucent chip — `inlineCode(...)` is a fifth-opacity
+grey — is flattened first against what the export wrote underneath it: the paragraph's own
+shading, the cell's, or the page. Written at full strength the default code chip would be
+a solid slab where the page has a tint; flattened, it is the colour the PDF shows. The
+chip agrees with the file it is in rather than with the page the PDF drew — a translucent
+*container* fill lands opaque too, and a chip on it composites over that. And the chip
+stops being translucent: shade that paragraph another colour in Word and it keeps the
+tint it was flattened to. Recorded, like the other two.
 
 ## What falls back
 

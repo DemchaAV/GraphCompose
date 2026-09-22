@@ -8,6 +8,23 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A composed table cell carries whatever it was built from.** `DocumentTableCell.node(...)`
+  lets a cell hold anything the document can hold, and the export wrote paragraphs out of it
+  and nothing else: a cell built from an image, a list or a table came out empty — content
+  the page draws simply missing from the file, with one line in a log to say so. A cell is
+  now a destination the ordinary writers point at rather than a place with a writer of its
+  own, so everything that can be written anywhere is written there too. A nested table is a
+  real `w:tbl` followed by the paragraph Word requires a cell to end with.
+  <br><br>
+  Reading a table's columns back from the layout was wrong wherever a cell was composed: a
+  table whose cell holds another table emits that inner table's rows under the *owner's*
+  path, so a two-column table came out with a three-column grid and Word placed every edge
+  where it was told. Only rows that span the table are read now, and the derived count must
+  match the one the table resolves. A nested table is given the width of the column it sits
+  in, less the margins Word keeps inside a cell — not the width the page gives it, which the
+  layout does not report separately, but with no width at all Word squeezes a nested table
+  to about one character a line.
+
 - **A container's fill and borders now reach the DOCX export.** A `SectionNode` or
   `ContainerNode` carrying a `fillColor`, per-side `borders` or a uniform `stroke` was
   treated as a transparent wrapper: its children were written and its paint was dropped

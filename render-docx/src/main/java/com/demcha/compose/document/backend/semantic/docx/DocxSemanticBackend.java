@@ -169,6 +169,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The last paragraph written into the body, so a container can hand it the space it
     // holds below itself once its children are done.
     private XWPFParagraph lastBodyParagraph;
+    // The cell being filled, when one is. A composed cell is written by the ordinary
+    // writers pointed at it rather than by a second set that knows about cells: the first
+    // arrangement only ever learned about paragraphs, so a cell built from an image or a
+    // list came out empty.
+    private XWPFTableCell currentCell;
+    // How wide content may be inside that cell, so a table nested in it gets a width
+    // instead of being squeezed by Word to a character a line.
+    private double currentCellWidth = Double.NaN;
     // Every family this export can name, by the logical name a style asks for. The
     // session's own registrations win over the bundled ones, the way they do everywhere.
     private java.util.Map<FontName, FontFamilyDefinition> wordFamilies = java.util.Map.of();
@@ -267,6 +275,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         carriedSpacingBefore = 0;
         lastBodyParagraph = null;
+        currentCell = null;
+        currentCellWidth = Double.NaN;
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
         try (XWPFDocument document = new XWPFDocument()) {
             applyPageGeometry(document, context.canvas());
@@ -1145,7 +1155,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * table cannot reach the band the container is drawing.</p>
      */
     private XWPFParagraph newBodyParagraph(XWPFDocument document) {
-        XWPFParagraph para = document.createParagraph();
+        XWPFParagraph para = currentCell != null ? currentCell.addParagraph() : document.createParagraph();
         ContainerPaint paint = containerPaint.peek();
         if (paint != null) {
             applyContainerPaint(para, paint);
@@ -1565,7 +1575,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // to place anything in. Word still needs a cell in a table, so write the empty
             // one this used to produce — widening the count instead would leave a position
             // no placement covers, and reading it back is a crash rather than an empty cell.
-            document.createTable(rowCount, 1);
+            newTable(document, rowCount, 1);
             return;
         }
         TableGrid.Placement[][] cover = new TableGrid.Placement[rowCount][columnCount];
@@ -1582,7 +1592,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // One cell per row to start with, then as many as that row actually needs: a merged
         // cell is one cell carrying a span, not several, so a row's physical count is not
         // the column count.
-        XWPFTable table = document.createTable(rowCount, 1);
+        XWPFTable table = newTable(document, rowCount, 1);
         applyTableWidth(table, node, columnCount);
         for (int rowIdx = 0; rowIdx < rowCount; rowIdx++) {
             XWPFTableRow row = table.getRow(rowIdx);
@@ -1700,7 +1710,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (source.content() != null) {
             // A composed cell keeps its node and leaves lines() empty, so reading lines()
             // exported it as an empty cell.
-            writeCellBody(cell, source.content());
+            double previous = currentCellWidth;
+            currentCellWidth = usableWidthOf(cell, placement);
+            try {
+                writeCellBody(cell, source.content());
+            } finally {
+                currentCellWidth = previous;
+            }
             return;
         }
         XWPFParagraph para = cell.addParagraph();
@@ -1786,7 +1802,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (node.children().isEmpty()) {
             return;
         }
-        XWPFTable table = document.createTable(1, node.children().size());
+        XWPFTable table = newTable(document, 1, node.children().size());
         // A row is a layout device, not a table anybody asked to see. POI's createTable
         // ships Word's default single-line grid, so without this every two-column block —
         // a header pair, a label beside a value — exported with visible rules the PDF
@@ -2087,7 +2103,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * widths.</p>
      */
     private void applyTableWidth(XWPFTable table, TableNode node, int columnCount) {
-        double[] measured = layout.tableColumns(node);
+        double[] measured = layout.tableColumns(node, columnCount);
         if (measured != null && measured.length > 0) {
             // The layout resolved every column, an auto one included, so there is nothing
             // left to decide: write the widths it arrived at and stop Word re-fitting them.
@@ -2101,10 +2117,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         List<Double> fixedColumns = fixedColumnWidths(node, columnCount);
 
         if (fixedColumns == null) {
-            // One of the columns is as wide as its content needs. The split is Word's,
-            // and so is the total unless the author stated one.
+            // One of the columns is as wide as its content needs. The split is Word's, and
+            // so is the total unless the author stated one — or unless this table sits in a
+            // cell, where leaving the total to Word is not neutral: it squeezes a nested
+            // table to about one character a line.
             if (authored != null) {
                 setTableWidth(table, authored);
+            } else if (Double.isFinite(nestedTableWidth())) {
+                setTableWidth(table, nestedTableWidth());
             }
             return;
         }
@@ -2241,33 +2261,91 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                || node instanceof com.demcha.compose.document.node.AlignNode;
     }
 
+    /**
+     * Creates a table where the writer is currently pointing — the body, or a cell.
+     *
+     * <p>A table inside a cell is a real nested {@code w:tbl}, not a flattened copy of its
+     * text. Word requires a cell to end with a paragraph, and a table is not one, so an
+     * empty paragraph follows it: without that the cell is malformed and Word refuses the
+     * file rather than showing the table.</p>
+     *
+     * @param document the document being written
+     * @param rows     row count
+     * @param columns  column count of the first row
+     * @return the created table, already attached where it belongs
+     */
+    /** Word keeps this much clear inside every cell edge unless a table says otherwise. */
+    private static final double DEFAULT_CELL_MARGIN_POINTS = 5.4;
+
+    /**
+     * How wide content can be inside one cell: the columns it spans, less Word's margins.
+     *
+     * <p>Read back from the grid this export just wrote rather than recomputed, so a cell
+     * cannot disagree with the table it is in.</p>
+     *
+     * @return the usable width in points, or {@code NaN} when the table has no written grid
+     */
+    private static double usableWidthOf(XWPFTableCell cell, TableGrid.Placement placement) {
+        CTTblGrid grid = cell.getTableRow().getTable().getCTTbl().getTblGrid();
+        if (grid == null || grid.sizeOfGridColArray() == 0) {
+            return Double.NaN;
+        }
+        double twips = 0;
+        int last = Math.min(placement.column() + placement.colSpan(), grid.sizeOfGridColArray());
+        for (int index = placement.column(); index < last; index++) {
+            twips += Long.parseLong(String.valueOf(grid.getGridColArray(index).getW()));
+        }
+        double points = twips / POINT_TO_TWIP - 2 * DEFAULT_CELL_MARGIN_POINTS;
+        return points > 0 ? points : Double.NaN;
+    }
+
+    /**
+     * The width a table nested in the current cell may take, or {@code NaN} outside a cell.
+     *
+     * <p>The column it sits in, less the margins Word keeps inside every cell. It is not
+     * the width the page gives that table — the layout reports a composed cell's content
+     * under the owner's path, so which measured row belongs to which nested table cannot be
+     * told apart there — but it is a width, and a nested table without one is squeezed by
+     * Word to about one character per line, which is not a document anybody can read.</p>
+     */
+    private double nestedTableWidth() {
+        return currentCellWidth;
+    }
+
+    private XWPFTable newTable(XWPFDocument document, int rows, int columns) {
+        if (currentCell == null) {
+            return document.createTable(rows, columns);
+        }
+        XWPFTable nested = new XWPFTable(currentCell.getCTTc().addNewTbl(), currentCell, rows, columns);
+        // The XML already carries the table; this is what tells the cell's own lists about
+        // it, so reading the cell back finds it. getTables() is unmodifiable on purpose —
+        // adding to it throws rather than quietly leaving the model and the XML disagreeing.
+        currentCell.insertTable(currentCell.getBodyElements().size(), nested);
+        currentCell.addParagraph();
+        return nested;
+    }
+
+    /**
+     * Writes one node into a cell, through the same writers that write it anywhere else.
+     *
+     * <p>A cell used to have a dispatcher of its own, and it had learned about paragraphs
+     * and about the wrappers a paragraph can sit in — so a cell built from an image or a
+     * list was warned about and left empty, silently losing content the page draws. The
+     * cell is now a <em>destination</em> instead: {@link #newBodyParagraph} points at it,
+     * and {@link #writeNode} does the rest, which is how everything that can be written at
+     * all can be written here.</p>
+     *
+     * <p>The destination is restored afterwards rather than cleared, because a cell can
+     * hold a table whose cells hold their own content, and the inner one must not leave
+     * the outer one writing into the body.</p>
+     */
     private void writeCellNode(XWPFTableCell cell, DocumentNode child) throws Exception {
-        if (child instanceof ParagraphNode paragraph) {
-            // Same walk as writeParagraph, all of it: a cell paragraph keeps per-run
-            // styling instead of being flattened into one style — and its alignment and
-            // direction too. Writing only the runs left every right-to-left paragraph
-            // inside a table undeclared, which is where an invoice keeps its line items.
-            XWPFParagraph cellParagraph = cell.addParagraph();
-            boolean cellRightToLeft = applyParagraphProperties(cellParagraph, paragraph);
-            writeParagraphRuns(cellParagraph, paragraph, cellRightToLeft);
-        } else if (child instanceof ContainerNode container) {
-            for (DocumentNode grandChild : container.children()) {
-                writeCellNode(cell, grandChild);
-            }
-        } else if (child instanceof SectionNode section) {
-            for (DocumentNode grandChild : section.children()) {
-                writeCellNode(cell, grandChild);
-            }
-        } else if (isSemanticallyTransparent(child)) {
-            for (DocumentNode grandChild : child.children()) {
-                writeCellNode(cell, grandChild);
-            }
-        } else if (child instanceof SpacerNode) {
-            cell.addParagraph();
-        } else {
-            warnUnsupported(child);
-            // Unsupported cell content gets an empty paragraph placeholder.
-            cell.addParagraph();
+        XWPFTableCell previous = currentCell;
+        currentCell = cell;
+        try {
+            writeNode(cell.getXWPFDocument(), child);
+        } finally {
+            currentCell = previous;
         }
     }
 

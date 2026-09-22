@@ -134,9 +134,13 @@ restate it stay silent, so changing `Normal` in Word changes the body the way a 
 expects. A run whose font, size or colour differs keeps saying so, so headings, chips and
 accents are unaffected.
 
-There is one `Normal` and no generated heading styles yet: a heading still carries its
-own direct formatting rather than a named `Heading 1`. Restyling the body works; restyling
-"all headings" in one go does not.
+A paragraph that declared an outline level — `bookmark(new DocumentBookmarkOptions(name,
+level))` — also carries Word's own `HeadingN` style, which is what fills the Navigation
+Pane, the outline view and a generated table of contents. The style states the outline
+level and no formatting, so the paragraph keeps the look its author gave it and "restyle
+all headings" in Word still reaches it. Only the levels the document uses are defined, and
+a level past Word's nine is clamped. A heading is never inferred from type size: a large
+first line claims nothing about structure.
 
 ## What a list becomes
 

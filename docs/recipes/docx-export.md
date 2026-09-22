@@ -296,8 +296,14 @@ tint it was flattened to. Recorded, like the other two.
 
 Lines, ellipses, standalone shapes, and barcodes are **silently skipped**
 — they are pure fixed-layout geometry with no semantic equivalent.
-Headers/footers, watermarks, and protection options are also ignored by
-the current exporter.
+The text header and footer slots, watermarks, and protection options are
+also ignored by the current exporter.
+
+A page zone (`session.chrome().zone(...)`) is not: it exports as a real
+Word header or footer part, with the page number as a live field, and it
+sits as far from its page edge as the page puts it — the distance is read
+from where the zone's content landed in the resolved layout and written as
+`w:pgMar/@w:header` or `@w:footer`, rather than left to Word's 36pt.
 
 The rule of thumb: if the document leans on geometry — shapes, layered
 designs, precise placement — export PDF for the reader and DOCX only as

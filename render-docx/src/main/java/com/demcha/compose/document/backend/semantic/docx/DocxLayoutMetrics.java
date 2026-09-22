@@ -118,6 +118,44 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * How far a page zone's content sits from the page edge it belongs to, as laid out on
+     * the first page.
+     *
+     * <p>Word places a footer by the distance from the page's bottom edge to the bottom of
+     * the footer, and a header by the distance from the top edge to the top of the header.
+     * The engine does not state either: a zone is a band of a given height against the
+     * edge, and its content is laid out inside it from the top. So the distance is read
+     * from where the content actually landed — the lowest edge of a footer's fragments, the
+     * highest edge of a header's — rather than rebuilt from the band's parts.</p>
+     *
+     * <p>Zone fragments are spliced into the graph under {@code @page-zone[page][index]},
+     * outside the node paths this index is built from, so they are found by that prefix.</p>
+     *
+     * @param zoneIndex  the zone's position in the session's zone list
+     * @param header     whether it is a header, measured from the top edge
+     * @param pageHeight the page's height in points
+     * @return the distance in points, or empty when the layout carries no such zone
+     */
+    OptionalDouble zoneDistanceFromEdge(int zoneIndex, boolean header, double pageHeight) {
+        String prefix = "@page-zone[0][" + zoneIndex + "]";
+        double lowest = Double.POSITIVE_INFINITY;
+        double highest = Double.NEGATIVE_INFINITY;
+        for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
+            if (!entry.getKey().startsWith(prefix)) {
+                continue;
+            }
+            for (PlacedFragment fragment : entry.getValue()) {
+                lowest = Math.min(lowest, fragment.y());
+                highest = Math.max(highest, fragment.y() + fragment.height());
+            }
+        }
+        if (lowest == Double.POSITIVE_INFINITY) {
+            return OptionalDouble.empty();
+        }
+        return OptionalDouble.of(header ? pageHeight - highest : lowest);
+    }
+
+    /**
      * The path the layout graph addresses a node by, for a note that has to say where in
      * the document it came from.
      *

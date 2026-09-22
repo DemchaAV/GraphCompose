@@ -8,6 +8,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A header or footer sits as far from its page edge as the page puts it.** Nothing was
+  written, so Word used its own distance — 36pt — and the probe corpus's footer sat 14.5pt
+  higher than the page draws it, on every page. The engine does not state the distance
+  either: a zone is a band of a given height against the edge, with its content laid out
+  inside it from the top, so the distance is read from where the zone's content actually
+  landed in the resolved layout and written as `w:pgMar/@w:header` or `@w:footer`. Measured
+  through LibreOffice, the footer now lands within 0.6pt of the page; without a layout the
+  zone's own padding on that edge stands in.
+
 - **A picture and a list keep the space they hold around themselves.** Neither wrote its own
   box, so on the probe corpus an image holding 12pt at each edge ran straight into the
   heading under it, and a four-item checklist came out 13pt short of the page —

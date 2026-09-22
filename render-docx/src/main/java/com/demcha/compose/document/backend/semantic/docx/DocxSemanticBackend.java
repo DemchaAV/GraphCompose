@@ -117,6 +117,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalDouble;
 import java.util.function.Function;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -384,7 +385,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (policy == null) {
             policy = document.createHeaderFooterPolicy();
         }
-        for (DocumentPageZone zone : zones) {
+        for (int index = 0; index < zones.size(); index++) {
+            DocumentPageZone zone = zones.get(index);
             if (zone.getAppliesTo() != null) {
                 LOG.warn("docx.zone.pagePredicate zone={} — appliesTo cannot be evaluated in a"
                         + " semantic export: Word paginates the document, so there is no page to"
@@ -397,10 +399,45 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (content == null) {
                 continue;
             }
-            XWPFHeaderFooter target = zone.getZone() == DocumentHeaderFooterZone.HEADER
+            boolean header = zone.getZone() == DocumentHeaderFooterZone.HEADER;
+            XWPFHeaderFooter target = header
                     ? policy.createHeader(XWPFHeaderFooterPolicy.DEFAULT)
                     : policy.createFooter(XWPFHeaderFooterPolicy.DEFAULT);
             writeZoneLine(target, content);
+            placeZone(document, zone, index, header);
+        }
+    }
+
+    /**
+     * Puts a header or footer as far from its page edge as the page puts it.
+     *
+     * <p>Nothing was written, so Word used its own distance — 36pt — and the probe's footer
+     * sat 14.5pt higher than the page draws it, on every page. Word holds the distance as
+     * {@code w:pgMar/@w:header} and {@code @w:footer}, so this is a mapping.</p>
+     *
+     * <p>The distance is where the zone's content landed in the resolved layout, which is
+     * the number the page was drawn with. Without a layout it falls back to the zone's own
+     * padding on that edge — a band's content is laid from its top, so for a footer that is
+     * the nearer estimate rather than the exact one, and it is only reached when the
+     * document could not be laid out at all.</p>
+     */
+    private void placeZone(XWPFDocument document, DocumentPageZone zone, int index, boolean header) {
+        CTSectPr sectPr = document.getDocument().getBody().isSetSectPr()
+                ? document.getDocument().getBody().getSectPr()
+                : document.getDocument().getBody().addNewSectPr();
+        CTPageMar margin = sectPr.isSetPgMar() ? sectPr.getPgMar() : sectPr.addNewPgMar();
+        double pageHeight = sectPr.isSetPgSz() && sectPr.getPgSz().getH() != null
+                ? Long.parseLong(String.valueOf(sectPr.getPgSz().getH())) / POINT_TO_TWIP
+                : Double.NaN;
+        OptionalDouble measured = Double.isNaN(pageHeight)
+                ? OptionalDouble.empty()
+                : layout.zoneDistanceFromEdge(index, header, pageHeight);
+        DocumentInsets padding = zone.getPadding() == null ? DocumentInsets.zero() : zone.getPadding();
+        double distance = measured.orElse(header ? padding.top() : padding.bottom());
+        if (header) {
+            margin.setHeader(BigInteger.valueOf(toTwips(distance)));
+        } else {
+            margin.setFooter(BigInteger.valueOf(toTwips(distance)));
         }
     }
 

@@ -8,6 +8,28 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A link in the document is a link in the exported Word file.** Every one was dropped: a
+  reader opened an export, found the text of a link with nothing behind it, and a reference
+  to another section that went nowhere — which is most of the point of handing a document
+  over editable rather than as a PDF. A `linkTarget` now becomes a `w:hyperlink`: a
+  relationship carrying the address for an external one, `w:anchor` for one of the
+  document's own anchors. A run's own link wins over the paragraph's, so a sentence with one
+  linked phrase in it exports as one. An `anchor(...)` becomes a `w:bookmarkStart` /
+  `w:bookmarkEnd` pair wrapping that paragraph's text rather than sitting before it, so a
+  reader following the link lands on the paragraph.
+  <br><br>
+  Word takes far less of a name than a document gives: letters, digits and underscores,
+  starting with a letter, forty characters. A name it dislikes is not a broken link but a
+  file it refuses to open, so names are cleaned once and remembered — `Terms & conditions`
+  becomes `Terms_conditions` on both sides — and two anchors that clean to one name stay two
+  bookmarks rather than collapsing onto each other. Forward references need nothing extra:
+  neither side resolves anything at write time.
+  <br><br>
+  Measured by opening the export in Word 16.0: its own PDF carries two live links, one to
+  the address and one jumping within the document. What is **not** written is the outline —
+  `bookmarkOptions` builds a PDF outline tree, and Word's Navigation Pane comes from heading
+  styles, so promoting an anchored paragraph to a heading would restyle the document.
+
 - **A composed table cell carries whatever it was built from.** `DocumentTableCell.node(...)`
   lets a cell hold anything the document can hold, and the export wrote paragraphs out of it
   and nothing else: a cell built from an image, a list or a table came out empty — content

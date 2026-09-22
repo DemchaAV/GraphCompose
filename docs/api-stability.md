@@ -66,6 +66,17 @@ matrix.
 > a backend actually needs instead of the whole graph. Backends that do not ask are
 > unaffected, and the published `SemanticExportContext` constructors keep working.
 >
+> **Semantic backend discovery** is Experimental in 2.5.0: the `SemanticBackendProvider`
+> and `SemanticBackendProviders` types, and the DOCX convenience methods on
+> `DocumentSession` (`toDocxBytes`, `writeDocx`, `buildDocx`). They are the semantic
+> half of the `ServiceLoader` path the fixed-layout backends have had since 2.0, so an
+> artifact on the classpath is enough to export — no naming the backend in code. The
+> shape is marked Experimental because it is deliberately narrower than the
+> fixed-layout locator (no default-format lookup, no per-backend configuration through
+> the provider) and a later minor may widen it once a second semantic format exists to
+> generalise against. Constructing `DocxSemanticBackend` and calling
+> `session.export(backend, path)` stays the Stable path and is unaffected.
+>
 > Seven members of the otherwise-Stable **PDF backend** also carry `@Beta`. The
 > package is not Experimental — these are:
 > `PdfFixedLayoutBackend.renderSections` / `writeSections`, the low-level seam

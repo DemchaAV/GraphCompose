@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 70,
-    "methods": 379,
+    "types": 73,
+    "methods": 386,
     "constants": 18,
-    "generated": 193
+    "generated": 195
   },
   "packages": [
     {
@@ -5958,6 +5958,63 @@
       "name": "com.demcha.compose.document.backend.semantic",
       "types": [
         {
+          "name": "SemanticBackendProvider",
+          "binaryName": "com.demcha.compose.document.backend.semantic.SemanticBackendProvider",
+          "kind": "interface",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "method",
+              "name": "format",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "SemanticBackend<byte[]>",
+              "params": [],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "SemanticBackendProviders",
+          "binaryName": "com.demcha.compose.document.backend.semantic.SemanticBackendProviders",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "method",
+              "name": "forFormat",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "SemanticBackendProvider",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "format"
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
           "name": "SemanticExportContext",
           "binaryName": "com.demcha.compose.document.backend.semantic.SemanticExportContext",
           "kind": "record",
@@ -6181,6 +6238,44 @@
       "name": "com.demcha.compose.document.backend.semantic.docx",
       "types": [
         {
+          "name": "DocxBackendProvider",
+          "binaryName": "com.demcha.compose.document.backend.semantic.docx.DocxBackendProvider",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-docx",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "DocxBackendProvider",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "format",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "SemanticBackend<byte[]>",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "DocxSemanticBackend",
           "binaryName": "com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend",
           "kind": "class",
@@ -6205,6 +6300,15 @@
               "origin": "source",
               "typeParameters": null,
               "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "requiresResolvedLayout",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
               "params": []
             },
             {

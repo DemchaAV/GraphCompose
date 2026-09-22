@@ -4,6 +4,7 @@ import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
+import com.demcha.compose.document.backend.semantic.SemanticBackendProviders;
 import com.demcha.compose.document.backend.semantic.SemanticExportContext;
 import com.demcha.compose.document.layout.DocumentGraph;
 import com.demcha.compose.document.layout.LayoutCanvas;
@@ -146,6 +147,65 @@ final class DocumentRenderingFacade {
 
     void buildPdf(Path outputFile) throws Exception {
         buildFixedLayout(PDF, outputFile);
+    }
+
+    /**
+     * Exports through the semantic backend registered for {@code format}.
+     *
+     * <p>{@code ensureRenderable()} is deliberately not called: a semantic export is
+     * defined over the authored tree, and a document the fixed-layout pipeline refuses can
+     * still export from it. Refusing here would take that away for no gain.</p>
+     */
+    byte[] toSemanticBytes(String format) throws Exception {
+        context.ensureOpen();
+        long startNanos = System.nanoTime();
+        LIFECYCLE_LOG.debug("document.{}.bytes.start sessionId={} revision={} roots={}",
+                format, context.sessionId(), context.revision(), context.rootCount());
+        try {
+            byte[] bytes = export(SemanticBackendProviders.forFormat(format).create(), null);
+            LIFECYCLE_LOG.debug(
+                    "document.{}.bytes.end sessionId={} revision={} byteCount={} durationMs={}",
+                    format, context.sessionId(), context.revision(), bytes.length,
+                    elapsedMillis(startNanos));
+            return bytes;
+        } catch (Exception ex) {
+            LIFECYCLE_LOG.error("document.{}.bytes.failed sessionId={} revision={} errorType={}",
+                    format, context.sessionId(), context.revision(),
+                    ex.getClass().getSimpleName(), ex);
+            throw ex;
+        }
+    }
+
+    /**
+     * Writes the export to a stream the caller owns and keeps open.
+     *
+     * <p>The bytes are produced in full before any of them are written. The format is a ZIP
+     * package whose directory is written last, so an export that fails part-way would
+     * otherwise leave a truncated archive on a stream nobody can rewind.</p>
+     */
+    void writeSemantic(String format, OutputStream output) throws Exception {
+        Objects.requireNonNull(output, "output");
+        output.write(toSemanticBytes(format));
+        output.flush();
+    }
+
+    /** Writes the export to a file, replacing it only once the whole export succeeded. */
+    void buildSemantic(String format, Path outputFile) throws Exception {
+        Path target = Objects.requireNonNull(outputFile, "outputFile");
+        long startNanos = System.nanoTime();
+        LIFECYCLE_LOG.debug("document.{}.build.start sessionId={} revision={} roots={}",
+                format, context.sessionId(), context.revision(), context.rootCount());
+        try {
+            byte[] bytes = toSemanticBytes(format);
+            AtomicFileOutput.write(target, output -> output.write(bytes));
+            LIFECYCLE_LOG.debug("document.{}.build.end sessionId={} revision={} durationMs={}",
+                    format, context.sessionId(), context.revision(), elapsedMillis(startNanos));
+        } catch (Exception ex) {
+            LIFECYCLE_LOG.error("document.{}.build.failed sessionId={} revision={} errorType={}",
+                    format, context.sessionId(), context.revision(),
+                    ex.getClass().getSimpleName(), ex);
+            throw ex;
+        }
     }
 
     byte[] toPptxBytes() throws Exception {

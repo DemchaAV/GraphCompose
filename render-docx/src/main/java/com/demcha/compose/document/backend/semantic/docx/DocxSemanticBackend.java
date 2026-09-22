@@ -16,6 +16,7 @@ import com.demcha.compose.document.node.ChartNode;
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.output.DocumentOutputOptions;
+import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ExternalLinkTarget;
@@ -75,6 +76,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTInd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTLvl;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPBdr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTString;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyle;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyles;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STStyleType;
@@ -192,6 +194,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The Word names this export gave the document's anchors, so a link and the bookmark
     // it points at agree.
     private DocxBookmarkNames bookmarkNames = new DocxBookmarkNames();
+    // The outline levels this document asks for, so the styles part defines those and no
+    // others. Filled before the styles part is written, which comes before the body.
+    private java.util.Set<Integer> headingLevels = java.util.Set.of();
     // Where the finished report goes, when the caller configured somewhere for it to go.
     private final java.util.function.Consumer<DocxExportReport> reportSink;
 
@@ -271,6 +276,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         listNumbering.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
+        headingLevels = headingLevelsIn(graph);
         wordFamilies = DocxFontTable.familiesByName(context.customFontFamilies());
         documentDefaultStyle = dominantTextStyle(graph);
         layout = DocxLayoutMetrics.of(graph, context.layoutGraph());
@@ -966,7 +972,38 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         normal.addNewName().setVal(NORMAL_STYLE_ID);
         applyDefaultRunProperties(normal.addNewRPr(), defaults);
 
+        headingLevels.stream().sorted().forEach(level -> writeHeadingStyle(styles, level));
+
         document.createStyles().setStyles(styles);
+    }
+
+    /**
+     * Defines one of Word's heading styles, as a role and nothing else.
+     *
+     * <p>The style carries an outline level and no formatting at all. That is the point: a
+     * heading in this export is a <em>statement about structure</em>, made by the document
+     * when it asked for an outline entry, and the paragraph already carries the look its
+     * author gave it. A heading style that also set a font and a size would restyle every
+     * heading in the document on the way out — the export would be redesigning the page
+     * rather than describing it.</p>
+     *
+     * <p>Word recognises its built-in headings by the pair: the id {@code HeadingN} and the
+     * name {@code heading N}. Written with only one of them, the style is a custom style
+     * that happens to be called Heading, the Navigation Pane stays empty, and "promote to
+     * heading 2" in Word does something else.</p>
+     *
+     * @param styles the styles part being built
+     * @param level  the zero-based outline level, as the document states it
+     */
+    private static void writeHeadingStyle(CTStyles styles, int level) {
+        int ordinal = level + 1;
+        CTStyle heading = styles.addNewStyle();
+        heading.setType(STStyleType.PARAGRAPH);
+        heading.setStyleId("Heading" + ordinal);
+        heading.addNewName().setVal("heading " + ordinal);
+        heading.addNewBasedOn().setVal(NORMAL_STYLE_ID);
+        heading.addNewQFormat();
+        heading.addNewPPr().addNewOutlineLvl().setVal(BigInteger.valueOf(level));
     }
 
     private void applyDefaultRunProperties(CTRPr properties, DocumentTextStyle defaults) {
@@ -1024,6 +1061,75 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         FontName family = FontLibrary.resolveFamily(fontName);
         FontFamilyDefinition definition = wordFamilies.get(family);
         return definition == null ? family.name() : definition.wordFamily();
+    }
+
+    /** Word has nine heading levels; a document asking for a tenth is clamped to the ninth. */
+    private static final int MAX_HEADING_LEVEL = 8;
+
+    /**
+     * Gives a paragraph the heading role the document asked for, and only the role.
+     *
+     * <p>Word builds its Navigation Pane, its table of contents and its outline view from
+     * heading <em>styles</em>, not from bookmarks — so an export that wrote a bookmark and
+     * stopped there produced a document that could be jumped to by name and had no
+     * structure at all to move around in.</p>
+     *
+     * <p>The role comes from the outline level the document stated when it declared the
+     * bookmark. It is never inferred from how the paragraph looks: a heading guessed from
+     * font size turns a large first line into a chapter and a small real heading into body
+     * text, and both are wrong in a document a person then edits.</p>
+     *
+     * <p>The paragraph keeps its own formatting. The style it points at carries an outline
+     * level and nothing else, so what changes is what Word knows about the paragraph, not
+     * how it is drawn.</p>
+     */
+    private void applyHeadingRole(XWPFParagraph para, ParagraphNode node) {
+        Integer level = headingLevelOf(node);
+        if (level == null) {
+            return;
+        }
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        CTString style = properties.isSetPStyle() ? properties.getPStyle() : properties.addNewPStyle();
+        style.setVal("Heading" + (level + 1));
+    }
+
+    /**
+     * The outline levels this document actually asks for.
+     *
+     * <p>Collected before the styles part is written, because that part comes first in the
+     * package and a style a paragraph refers to has to exist. Only the levels in use are
+     * defined: nine heading styles in a document with two headings is nine entries in
+     * Word's style gallery that nothing in the document uses.</p>
+     *
+     * <p>A heading is read from what the document <em>states</em> — the outline level it
+     * asked for when it declared a bookmark — and never inferred from how big the text is.
+     * A large paragraph is a large paragraph; a document that never asked for an outline
+     * does not get one invented from its typography.</p>
+     */
+    private static java.util.Set<Integer> headingLevelsIn(DocumentGraph graph) {
+        java.util.Set<Integer> levels = new java.util.TreeSet<>();
+        for (DocumentNode root : graph.roots()) {
+            collectHeadingLevels(root, levels);
+        }
+        return levels;
+    }
+
+    private static void collectHeadingLevels(DocumentNode node, java.util.Set<Integer> levels) {
+        if (node instanceof ParagraphNode paragraph) {
+            Integer level = headingLevelOf(paragraph);
+            if (level != null) {
+                levels.add(level);
+            }
+        }
+        for (DocumentNode child : node.children()) {
+            collectHeadingLevels(child, levels);
+        }
+    }
+
+    /** @return the paragraph's outline level, clamped to Word's nine, or null when it is not a heading */
+    private static Integer headingLevelOf(ParagraphNode node) {
+        DocumentBookmarkOptions bookmark = node.bookmarkOptions();
+        return bookmark == null ? null : Math.min(bookmark.level(), MAX_HEADING_LEVEL);
     }
 
     /**
@@ -1275,6 +1381,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
         XWPFParagraph para = newBodyParagraph(document);
         boolean rightToLeft = applyParagraphProperties(para, node);
+        applyHeadingRole(para, node);
         int anchor = openAnchor(para, node.anchor());
         writeParagraphRuns(para, node, rightToLeft);
         closeAnchor(para, anchor);

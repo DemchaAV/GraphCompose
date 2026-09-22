@@ -8,6 +8,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **An exported Word document has an outline.** A reader opened a twenty-page export and
+  found one flat run of paragraphs: nothing in the Navigation Pane, nothing in the outline
+  view, and a generated table of contents that came back empty. Word builds all three from
+  heading *styles*, and the export wrote none. The outline level a document states when it
+  declares a bookmark now becomes Word's own `HeadingN` style — verified through Word 16.0's
+  own heading enumeration, which lists the document's chapters and their nesting.
+  <br><br>
+  The style carries the outline level and nothing else. The paragraph already has the look
+  its author gave it, and a heading style that also set a font and a size would restyle every
+  heading on the way out — describing the page is the job, not redesigning it. Word knows its
+  built-in headings by the pair `HeadingN` and `heading N`, so both are written: with one of
+  them it is a custom style that happens to be called Heading and the Navigation Pane stays
+  empty. Only the levels a document uses are defined, and a level past Word's nine is clamped
+  rather than written as a style that does not exist.
+  <br><br>
+  The role is read from what the document declared and never inferred from type size. A
+  heading guessed from a large first line turns a subtitle into a chapter and leaves a small
+  real heading as body text, and both are wrong in a document someone then edits.
+
 - **A link in the document is a link in the exported Word file.** Every one was dropped: a
   reader opened an export, found the text of a link with nothing behind it, and a reference
   to another section that went nowhere — which is most of the point of handing a document
@@ -26,9 +45,7 @@ follow semantic versioning; release dates are ISO 8601.
   neither side resolves anything at write time.
   <br><br>
   Measured by opening the export in Word 16.0: its own PDF carries two live links, one to
-  the address and one jumping within the document. What is **not** written is the outline —
-  `bookmarkOptions` builds a PDF outline tree, and Word's Navigation Pane comes from heading
-  styles, so promoting an anchored paragraph to a heading would restyle the document.
+  the address and one jumping within the document.
 
 - **A composed table cell carries whatever it was built from.** `DocumentTableCell.node(...)`
   lets a cell hold anything the document can hold, and the export wrote paragraphs out of it

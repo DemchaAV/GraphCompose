@@ -16,16 +16,20 @@ import com.demcha.compose.document.node.ChartNode;
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.output.DocumentOutputOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.ExternalLinkTarget;
 import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.PageBreakNode;
 import com.demcha.compose.document.node.InlineHighlightRun;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
+import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.node.RowArrangement;
 import com.demcha.compose.document.node.RowNode;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTHyperlink;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.ShapeContainerNode;
@@ -74,6 +78,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyle;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyles;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STStyleType;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBookmark;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFonts;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSpacing;
@@ -184,6 +189,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // for it: building it costs a list, and deciding later that nobody wanted it is not
     // something the writers can do halfway through.
     private DocxExportReport.Builder report = new DocxExportReport.Builder();
+    // The Word names this export gave the document's anchors, so a link and the bookmark
+    // it points at agree.
+    private DocxBookmarkNames bookmarkNames = new DocxBookmarkNames();
     // Where the finished report goes, when the caller configured somewhere for it to go.
     private final java.util.function.Consumer<DocxExportReport> reportSink;
 
@@ -262,6 +270,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         containerPaint.clear();
         listNumbering.clear();
         report = new DocxExportReport.Builder();
+        bookmarkNames = new DocxBookmarkNames();
         wordFamilies = DocxFontTable.familiesByName(context.customFontFamilies());
         documentDefaultStyle = dominantTextStyle(graph);
         layout = DocxLayoutMetrics.of(graph, context.layoutGraph());
@@ -1266,7 +1275,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
         XWPFParagraph para = newBodyParagraph(document);
         boolean rightToLeft = applyParagraphProperties(para, node);
+        int anchor = openAnchor(para, node.anchor());
         writeParagraphRuns(para, node, rightToLeft);
+        closeAnchor(para, anchor);
     }
 
     /**
@@ -1397,17 +1408,93 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         warnDroppedInlineRuns(node);
         List<InlineTextRun> runs = node.inlineTextRuns();
         if (runs.isEmpty()) {
-            XWPFRun docRun = para.createRun();
+            XWPFRun docRun = newRun(para, node.linkTarget());
             applyStyle(docRun, node.textStyle());
             applyRunDirection(docRun, rightToLeft);
             docRun.setText(node.text() == null ? "" : node.text());
             return;
         }
         for (InlineTextRun run : runs) {
-            XWPFRun docRun = para.createRun();
+            // A run's own link wins over the paragraph's: a sentence with one linked phrase
+            // in it is the ordinary case, and the paragraph's link is the fallback for the
+            // rest of that sentence rather than something the phrase overrides away.
+            DocumentLinkTarget target = run.linkTarget() != null ? run.linkTarget() : node.linkTarget();
+            XWPFRun docRun = newRun(para, target);
             applyStyle(docRun, run.textStyle() == null ? node.textStyle() : run.textStyle());
             applyRunDirection(docRun, rightToLeft);
             docRun.setText(run.text() == null ? "" : run.text());
+        }
+    }
+
+    /**
+     * A run, inside a hyperlink when the thing being written is one.
+     *
+     * <p>Every link the document carried was dropped: a reader opened an exported document
+     * and found the text of a link with nothing behind it, and a reference to another
+     * section that went nowhere. Word owns both — {@code w:hyperlink} with a relationship
+     * for an address, or with {@code w:anchor} for a bookmark in the same document — so
+     * this is a mapping rather than an approximation.</p>
+     *
+     * <p>An external address goes through POI's own {@code createHyperlinkRun}, which makes
+     * the external relationship the part needs. An internal one is built here: POI has no
+     * helper for an anchor, and the run it would hand back is registered in a list this
+     * export never reads — what matters is the XML, and reading the file back gives POI's
+     * own hyperlink run either way.</p>
+     *
+     * @param para   the paragraph being filled
+     * @param target the link this run carries, or null for ordinary text
+     * @return the run to write text into
+     */
+    private XWPFRun newRun(XWPFParagraph para, DocumentLinkTarget target) {
+        if (target instanceof ExternalLinkTarget external
+            && external.options() != null && external.options().uri() != null
+            && !external.options().uri().isBlank()) {
+            return para.createHyperlinkRun(external.options().uri());
+        }
+        if (target instanceof InternalLinkTarget internal) {
+            String name = bookmarkNames.nameFor(internal.anchor());
+            if (name != null) {
+                CTHyperlink link = para.getCTP().addNewHyperlink();
+                link.setAnchor(name);
+                return new XWPFRun(link.addNewR(), para);
+            }
+        }
+        return para.createRun();
+    }
+
+    /**
+     * Marks the anchor a node declares, so a link can point at it.
+     *
+     * <p>Written as a bookmark around the paragraph rather than as an empty one before it:
+     * a reader following the link lands on the text, and Word's own "go to bookmark" shows
+     * the paragraph rather than an insertion point above it.</p>
+     *
+     * <p>A bookmark is not an outline entry. Word builds its Navigation Pane from heading
+     * styles, and nothing here promotes an anchored paragraph to one — an anchor says where
+     * a link goes, and inventing a heading from it would restyle the document.</p>
+     */
+    private int openAnchor(XWPFParagraph para, String anchor) {
+        String name = bookmarkNames.nameFor(anchor);
+        if (name == null) {
+            return -1;
+        }
+        int id = bookmarkNames.nextId();
+        CTBookmark start = para.getCTP().addNewBookmarkStart();
+        start.setId(BigInteger.valueOf(id));
+        start.setName(name);
+        return id;
+    }
+
+    /**
+     * Closes the bookmark {@link #openAnchor} opened, after the paragraph's runs.
+     *
+     * <p>Opened and closed in two calls on purpose: both elements append to the end of the
+     * paragraph, so opening and closing in one leaves a bookmark wrapping nothing, and a
+     * reader following the link lands before the text rather than on it.</p>
+     */
+    private static void closeAnchor(XWPFParagraph para, int id) {
+        if (id >= 0) {
+            para.getCTP().addNewBookmarkEnd().setId(BigInteger.valueOf(id));
         }
     }
 

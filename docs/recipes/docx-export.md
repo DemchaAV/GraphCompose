@@ -74,6 +74,26 @@ paragraph-level equivalent and is still dropped — see "What a panel keeps and 
 Asking for the layout costs a measurement and pagination pass over the document, the same
 work a PDF render does, and it reads each image a second time.
 
+## Fonts travel with the document
+
+The package carries the faces the document is set in, so a reader without them installed
+sees the document rather than a substitution. What is shipped is narrow on purpose:
+
+- **Only families with a file behind them** — the bundled ones and whatever the session
+  registered. The standard PDF faces are names rather than files: nothing bundles
+  Helvetica, and a reader gets the editor's substitution for it, the same one a PDF viewer
+  applies.
+- **Only the faces the document uses.** One family's four faces are about 2.5 MB, so the
+  face is chosen from each style's decoration. A reader who later bolds a word gets
+  whatever their machine does for a missing bold face.
+- **Only what the face permits.** An OpenType face states its terms in `OS/2`, and the
+  format distinguishes embedding for reading and printing from embedding in a document
+  someone will edit. A face that allows only the first is named but not shipped, with one
+  warning naming the family.
+
+Each face is stored the way Word stores one: the font with its first 32 bytes scrambled
+against a key the font table states beside it.
+
 ## Named styles, so the document can be restyled
 
 The export writes a styles part whose `Normal` carries the document's own body text —

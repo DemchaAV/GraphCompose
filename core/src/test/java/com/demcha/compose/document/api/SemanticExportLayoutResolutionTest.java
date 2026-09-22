@@ -53,12 +53,32 @@ class SemanticExportLayoutResolutionTest {
                 .isEqualTo(1);
     }
 
+    @Test
+    void aDocumentThatCannotBeLaidOutShouldStillExport() throws Exception {
+        // A semantic export is defined over the authored tree, and some documents export
+        // from it that the fixed-layout pipeline refuses — a list item made of inline runs
+        // without marker geometry is one. Asking for the layout must not turn those from
+        // "exports" into "throws": the request is for an improvement, not a precondition.
+        CountingContext context = new CountingContext();
+        context.failure = new IllegalStateException("this document cannot be laid out");
+        ProbeBackend backend = new ProbeBackend(true);
+
+        LayoutGraph handedOver = new DocumentRenderingFacade(context).export(backend, null);
+
+        assertThat(context.layoutRequests).as("it did try").isEqualTo(1);
+        assertThat(handedOver)
+                .as("and handed the backend nothing rather than failing the export")
+                .isNull();
+    }
+
     /** Answers whatever it is asked, and counts how often the layout is wanted. */
     private static final class CountingContext implements DocumentRenderingFacade.Context {
 
         private final LayoutCanvas canvas = LayoutCanvas.from(595, 842, Margin.of(36));
         private final DocumentGraph graph = new DocumentGraph(List.of());
         private int layoutRequests;
+        /** Set to make compiling a layout fail the way an unlayoutable document does. */
+        private RuntimeException failure;
 
         @Override
         public void ensureOpen() {
@@ -96,6 +116,9 @@ class SemanticExportLayoutResolutionTest {
         @Override
         public LayoutGraph layoutGraph() {
             layoutRequests++;
+            if (failure != null) {
+                throw failure;
+            }
             return new LayoutGraph(canvas, 1, List.of(), List.of());
         }
 

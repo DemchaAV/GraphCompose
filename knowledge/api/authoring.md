@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.5.0-SNAPSHOT
 
-Types: 237 · methods: 2125 · constants: 236 · compiler-generated members: 1129
+Types: 237 · methods: 2128 · constants: 236 · compiler-generated members: 1129
 
 ## com.demcha.compose
 
@@ -120,6 +120,9 @@ Types: 237 · methods: 2125 · constants: 236 · compiler-generated members: 112
 - `void writePdf(OutputStream output)`
 - `void buildPdf()`
 - `void buildPdf(Path outputFile)`
+- `byte[] toDocxBytes()   [beta]`
+- `void writeDocx(OutputStream output)   [beta]`
+- `void buildDocx(Path outputFile)   [beta]`
 - `byte[] toPptxBytes()   [beta]`
 - `void writePptx(OutputStream output)   [beta]`
 - `void buildPptx(Path outputFile)   [beta]`

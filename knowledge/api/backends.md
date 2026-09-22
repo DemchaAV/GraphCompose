@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.5.0-SNAPSHOT
 
-Types: 70 · methods: 379 · constants: 18 · compiler-generated members: 193
+Types: 76 · methods: 397 · constants: 21 · compiler-generated members: 205
 
 ## com.demcha.compose.document.backend.fixed
 
@@ -537,6 +537,13 @@ Types: 70 · methods: 379 · constants: 18 · compiler-generated members: 193
 
 ## com.demcha.compose.document.backend.semantic
 
+### SemanticBackendProvider (interface)   [beta]
+- `String format()   [beta]`
+- `SemanticBackend<byte[]> create()   [beta]`
+
+### SemanticBackendProviders (class)   [beta]
+- `SemanticBackendProvider forFormat(String format)   [beta]`
+
 ### SemanticExportContext (record)
 - `new SemanticExportContext(LayoutCanvas, Collection<FontFamilyDefinition>, Path, DocumentOutputOptions, LayoutGraph)`
 - `new SemanticExportContext(LayoutCanvas canvas, Collection<FontFamilyDefinition> customFontFamilies, Path outputFile, DocumentOutputOptions outputOptions)`
@@ -557,9 +564,34 @@ Types: 70 · methods: 379 · constants: 18 · compiler-generated members: 193
 
 ## com.demcha.compose.document.backend.semantic.docx
 
+### DocxBackendProvider (class)
+- `new DocxBackendProvider()`
+- `String format()`
+- `SemanticBackend<byte[]> create()`
+
+### DocxExportReport (record)   [beta]
+- `new DocxExportReport(List<DocxExportReport.Note>)   [beta]`
+- `boolean isEmpty()   [beta]`
+- `long count(DocxExportReport.Severity severity)   [beta]`
+- `Map<String, List<DocxExportReport.Note>> bySubject()   [beta]`
+- `List<DocxExportReport.Note> notes()   [beta]`
+- constants: `EMPTY`
+
+### DocxExportReport.Note (record)
+- `new Note(DocxExportReport.Severity, String, String, String)`
+- `DocxExportReport.Severity severity()`
+- `String subject()`
+- `String path()`
+- `String detail()`
+
+### DocxExportReport.Severity (enum)
+- constants: `DROPPED`, `APPROXIMATED`
+
 ### DocxSemanticBackend (class)
 - `new DocxSemanticBackend()`
+- `new DocxSemanticBackend(Consumer<DocxExportReport> reportSink)`
 - `String name()`
+- `boolean requiresResolvedLayout()`
 - `byte[] export(DocumentGraph graph, SemanticExportContext context)`
 - `Object export(DocumentGraph graph, SemanticExportContext context)`
 

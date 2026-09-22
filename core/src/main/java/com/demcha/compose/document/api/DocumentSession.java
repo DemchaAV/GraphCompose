@@ -56,7 +56,10 @@ import java.util.function.Consumer;
  *   <li>inspect {@link #layoutGraph()} / {@link #layoutSnapshot()} as needed</li>
  *   <li>render with {@link #writePdf(OutputStream)}, {@link #toPdfBytes()}, {@link #buildPdf()},
  *       their PPTX counterparts ({@link #writePptx(OutputStream)}, {@link #toPptxBytes()},
- *       {@link #buildPptx(Path)}), or a custom backend</li>
+ *       {@link #buildPptx(Path)}), or a custom backend — or export an editable Word
+ *       document with {@link #buildDocx(Path)}, {@link #writeDocx(OutputStream)} and
+ *       {@link #toDocxBytes()}, which write the document's structure rather than its
+ *       pixels and let Word lay it out</li>
  * </ol>
  *
  * <p><b>Thread-safety:</b> this type is mutable and not thread-safe.</p>
@@ -65,6 +68,9 @@ import java.util.function.Consumer;
  * @since 1.0.0
  */
 public final class DocumentSession implements AutoCloseable {
+
+    /** Provider format key for the Word export path. */
+    private static final String DOCX = "docx";
     private static final Logger LIFECYCLE_LOG = LoggerFactory.getLogger("com.demcha.compose.document.lifecycle");
 
     private final String sessionId = Integer.toHexString(System.identityHashCode(this));
@@ -1050,6 +1056,76 @@ public final class DocumentSession implements AutoCloseable {
     public void buildPdf(Path outputFile) throws DocumentRenderingException {
         wrapRendering("build PDF at '" + outputFile + "'", () -> {
             renderingFacade.buildPdf(outputFile);
+            return null;
+        });
+    }
+
+    /**
+     * Exports the current session as an editable Word document and returns the bytes.
+     *
+     * <p>Unlike a PDF render, this is an export: the document's structure is written as
+     * Word's own paragraphs, tables and lists, and Word lays the result out itself. A
+     * reader can edit it the way they edit any document — lengthen a sentence and the
+     * paragraph reflows, insert a table row and the table grows. What the export cannot
+     * carry, it says so about rather than approximating; the
+     * <a href="https://github.com/DemchaAV/GraphCompose/blob/develop/docs/recipes/docx-export.md">DOCX
+     * recipe</a> lists what maps, what falls back and what is deliberately left out.</p>
+     *
+     * <p>Requires {@code io.github.demchaav:graph-compose-render-docx} on the classpath;
+     * without it the export fails with a {@link com.demcha.compose.document.exceptions.MissingBackendException} naming the
+     * artifact. The returned array is not cached by the session, so code that can stream
+     * should prefer {@link #writeDocx(OutputStream)}.</p>
+     *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
+     *
+     * @return the exported .docx bytes
+     * @throws DocumentRenderingException if the export fails
+     * @since 2.5.0
+     */
+    @Beta
+    public byte[] toDocxBytes() throws DocumentRenderingException {
+        return wrapRendering("export DOCX bytes", () -> renderingFacade.toSemanticBytes(DOCX));
+    }
+
+    /**
+     * Streams the current session's Word export to a stream the caller owns.
+     *
+     * <p>GraphCompose writes the bytes and does not close the stream, which makes this
+     * suitable for an HTTP response or an upload. The export is produced in full before
+     * anything is written: a {@code .docx} is a ZIP whose directory comes last, so a
+     * half-written one is not a shorter document but an unreadable file.</p>
+     *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
+     *
+     * @param output destination stream that receives the exported bytes
+     * @throws DocumentRenderingException if the export fails
+     * @since 2.5.0
+     */
+    @Beta
+    public void writeDocx(OutputStream output) throws DocumentRenderingException {
+        wrapRendering("write DOCX to stream", () -> {
+            renderingFacade.writeSemantic(DOCX, output);
+            return null;
+        });
+    }
+
+    /**
+     * Exports the current session into the supplied file.
+     *
+     * <p>Written through the same atomic path as {@link #buildPdf(Path)}: an export that
+     * fails leaves whatever was there before, rather than a partial file that opens as a
+     * damaged document.</p>
+     *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
+     *
+     * @param outputFile destination .docx path
+     * @throws DocumentRenderingException if the export fails
+     * @since 2.5.0
+     */
+    @Beta
+    public void buildDocx(Path outputFile) throws DocumentRenderingException {
+        wrapRendering("build DOCX at '" + outputFile + "'", () -> {
+            renderingFacade.buildSemantic(DOCX, outputFile);
             return null;
         });
     }

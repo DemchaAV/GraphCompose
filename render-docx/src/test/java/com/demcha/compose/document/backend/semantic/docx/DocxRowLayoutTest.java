@@ -149,6 +149,39 @@ class DocxRowLayoutTest {
         assertThat(layoutType(table)).isNull();
     }
 
+    @Test
+    void theMeasuredSplitAgreesWithTheStatedOneWhereBothCanAnswer() throws Exception {
+        // Weights are arithmetic either way, so the two paths have to arrive at the same
+        // columns — if they ever part, one of them is reading the row wrong.
+        Consumer<PageFlowBuilder> weighted = page -> page.addRow(r -> r
+                .gap(20)
+                .weights(3, 2)
+                .addParagraph(p -> p.text("Scope"))
+                .addParagraph(p -> p.text("Period")));
+
+        assertThat(gridTwips(measuredTable(weighted)))
+                .isEqualTo(gridTwips(onlyTable(weighted)))
+                .containsExactly(4480L, 2720L);
+    }
+
+    @Test
+    void theLayoutAnswersTheSplitTheRowCannotStateItself() throws Exception {
+        // The case the stated path declines: an auto column is as wide as its content, and
+        // the layout is where that width was worked out.
+        Consumer<PageFlowBuilder> mixed = page -> page.addRow(r -> r
+                .columns(DocumentRowColumn.fixed(100), DocumentRowColumn.auto())
+                .addParagraph(p -> p.text("Label"))
+                .addParagraph(p -> p.text("Value")));
+
+        assertThat(gridTwips(onlyTable(mixed))).as("nothing to write").isEmpty();
+        List<Long> measured = gridTwips(measuredTable(mixed));
+        assertThat(measured).hasSize(2);
+        assertThat(measured.get(0)).as("the fixed column, exactly").isEqualTo(2000L);
+        assertThat(sum(measured))
+                .as("and the pair still tiles the row")
+                .isEqualTo(Math.round(CONTENT_WIDTH * TWIPS_PER_POINT));
+    }
+
     /** Grid column widths in twips, empty when the export wrote no grid. */
     private static List<Long> gridTwips(XWPFTable table) {
         CTTblGrid grid = table.getCTTbl().getTblGrid();
@@ -188,16 +221,17 @@ class DocxRowLayoutTest {
         return count;
     }
 
+    /** The carrier as written with nothing measured behind it. */
     private static XWPFTable onlyTable(Consumer<PageFlowBuilder> content) throws Exception {
-        byte[] docx;
-        try (DocumentSession session = GraphCompose.document()
-                .pageSize(400, 600)
-                .margin(DocumentInsets.of(20))
-                .create()) {
-            session.pageFlow(content::accept);
-            docx = session.export(new DocxSemanticBackend());
+        try (XWPFDocument document = DocxExports.withoutLayout(400, 600, 20, content)) {
+            assertThat(document.getTables()).hasSize(1);
+            return document.getTables().get(0);
         }
-        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+    }
+
+    /** The carrier as written when the compiled layout is there to read. */
+    private static XWPFTable measuredTable(Consumer<PageFlowBuilder> content) throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
             assertThat(document.getTables()).hasSize(1);
             return document.getTables().get(0);
         }

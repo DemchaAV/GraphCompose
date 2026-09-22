@@ -82,7 +82,15 @@ class DocxDocumentStyleTest {
             assertThat(heading).isNotNull();
             // 18pt in half-points. A heading must not be swallowed by the body style.
             assertThat(heading.getSzArray(0).getVal().toString()).isEqualTo("36");
-            assertThat(heading.getRFontsArray(0).getAscii()).isEqualTo("Helvetica-Bold");
+            // The font is where it stops differing. This heading names the face
+            // Helvetica-Bold and the body names Helvetica, but a face resolves to its
+            // family and takes its weight from the decoration — neither of these carries
+            // one, so the page draws both in Helvetica regular at different sizes. Writing
+            // the face name made the run look different in the file while being identical
+            // on the page, and sent Word looking for a family it does not have.
+            assertThat(heading.sizeOfRFontsArray())
+                    .as("the same family as the body, so the Normal style already says it")
+                    .isZero();
         }
     }
 

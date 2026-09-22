@@ -109,6 +109,102 @@ follow semantic versioning; release dates are ISO 8601.
   short had been pulling the page back up. Line height is measured from the font, so
   closing that needs resolved layout rather than arithmetic.
 
+- **The DOCX export now takes line height and column widths from the resolved layout, and
+  carries the space around a block.** _(The layout opt-in is experimental — see
+  [API stability](docs/api-stability.md).)_ Two of the things that decide how an exported
+  document looks are measurements over the font — how tall a line of text is, and how wide
+  a column came out — and a semantic backend has no font runtime, so both were Word's to
+  decide. Measured against the reference render, Word set a body line at 13.9pt where the
+  document says 9.7 (LibreOffice: 12.1), so everything below the first paragraph sat lower
+  than it should and the gap grew with every line. The export now asks for the layout the
+  engine already compiled: the line height is written as `w:spacing w:lineRule="exact"` on
+  every paragraph, table cells and list items included, and a table's columns come from
+  the resolved cells with `w:tblLayout` fixed so Word does not re-fit them. A row's
+  columns come from where the layout placed its children — only their starts, since a
+  placed child is as wide as its own content and its width says nothing about where its
+  column ends.
+  <br><br>
+  The space a block holds above and below itself is not a measurement and was missing too.
+  A paragraph's `margin` and `padding` now become `w:spacing` before and after, and a
+  container — which is not a Word object, its children written where it stood — hands its
+  top edge to the first paragraph inside it and its bottom edge to the last. Both add to
+  what a paragraph asks for itself, so a card inside a section sums the way the page does.
+  A container that begins or ends with a table leaves that edge unwritten rather than
+  parking it on whatever paragraph comes next: Word has no space-before on a table, and an
+  empty paragraph would add a line the document never asked for. The horizontal half of
+  that box still has no paragraph-level equivalent and is still dropped.
+  <br><br>
+  Measured through Word 16.0 on the two-page probe: the body now starts at 65.5pt against
+  the reference's 65.2 and sets lines at 9.8 against 9.7; the worst grid cell falls from
+  78.9% to 52.1%; and the largest landmark drift down the first page falls from 44pt to
+  20pt. Editing is unchanged at 7 of 7 scenarios.
+  <br><br>
+  Asking for the layout costs a measurement and pagination pass over the document — the
+  same work a PDF render does — and reads each image a second time. A document the
+  fixed-layout pipeline refuses still exports: the failure is logged once and the writer
+  falls back to what the document itself states, which writes a table width only when the
+  author stated one or every column is fixed, a row's columns only when they are weights,
+  an even split or fixed, and no line height at all.
+
+- **A session can export Word without naming the backend, and can be told what the export
+  could not carry.** _(Experimental — see [API stability](docs/api-stability.md).)_ Reaching
+  the Word export meant constructing `DocxSemanticBackend`, which means importing the render
+  artifact in the code that builds the document and carrying that dependency wherever
+  documents are built. A render backend has not needed that since 2.0, and now neither does
+  this one: `session.buildDocx(path)`, `session.writeDocx(stream)` and
+  `session.toDocxBytes()` find the backend through a new `SemanticBackendProvider` /
+  `SemanticBackendProviders` pair — the semantic half of the `ServiceLoader` path, with the
+  fixed-layout locator's rules, since a classpath behaves the same way whichever backend is
+  on it. One rule is deliberately not copied: there is no default-format lookup, because
+  "render this document" has an obvious answer worth defaulting to and "export it
+  semantically" does not. The stream stays the caller's and is not closed; the bytes are
+  produced in full before any are written, since a `.docx` is a ZIP whose directory comes
+  last; a file is written through the same atomic path as `buildPdf`, so a failed export
+  leaves the previous file rather than a damaged one.
+  <br><br>
+  What the export cannot carry, it has always said — to the log, one line per kind, which a
+  service generating documents for other people has no way to read. A backend built with
+  `new DocxSemanticBackend(report -> ...)` now hands over a `DocxExportReport` once the
+  bytes are complete: every dropped node and every approximation, each with the path of the
+  authored node it came from, and each marked `DROPPED` (the page draws it, the document
+  does not carry it) or `APPROXIMATED` (it is there as the nearest thing Word owns). Errors
+  do not travel this way — an export that cannot proceed throws. The log keeps saying it
+  once per kind; the report records every one, because a caller asking what the document
+  lost wants the three charts it lost and which three.
+
+- **A DOCX export now ships the faces the document is set in.** A face was named and never
+  shipped: the export declared `Lato` on its runs and embedded nothing, so on a machine
+  without Lato installed Word substituted another face — and a substituted face has
+  different glyph widths, so every line breaks somewhere else and the geometry above it
+  stops meaning anything. The package now carries a font table and one obfuscated font
+  part per face, for every family the document names that has a file behind it: the
+  bundled families and whatever the session registered. The standard PDF faces are never
+  written, and not because of their terms — they are names rather than files, and a reader
+  gets the editor's substitution for them, the same one a PDF viewer applies.
+  <br><br>
+  Only the faces the document uses travel: a family's four faces are about 2.5 MB, so the
+  face is chosen from each style's decoration, and a reader who later bolds a word gets
+  whatever their machine does for a missing bold face. And only what the face permits: an
+  OpenType face states its terms in `OS/2`, and the format distinguishes embedding for
+  reading and printing from embedding in a document someone will edit — a face that allows
+  only the first is named but not shipped, with one warning naming the family.
+  <br><br>
+  Measured through Word 16.0 on a machine where Lato is not installed: the exported
+  document reports `Lato` in the render rather than a substitution, and its Lato paragraph
+  breaks at the same word as the reference, ending within 2.3pt over a 489pt line. The
+  two-page probe's file grows from 366 KB with one face to 2.9 MB if all four are written,
+  which is why the slot is read from the style.
+  <br><br>
+  A run also names the family rather than the face. `FontName.HELVETICA_BOLD` is a face,
+  and it was written where Word expects a family: Word resolves a family and takes the
+  weight from `w:b`, so asked for a family by that name it found none and substituted —
+  which is how a document naming its headings by face came out set in something else. The
+  face is now resolved to its family exactly as the layout resolves it, through
+  `FontLibrary.resolveFamily`, and the name written is that family's `wordFamily()`. The
+  weight is deliberately not read from the face name, because the engine does not read it
+  either: a style naming `HELVETICA_BOLD` with no `decoration` lays out regular, and
+  writing `w:b` would make Word bolder than the page it matches. Two names for one family
+  now also weigh as one style when `Normal` is chosen, since they are written identically.
 - **A semantic export backend can ask for the compiled layout.** _(Experimental — see
   [API stability](docs/api-stability.md).)_ A semantic backend walks the authored tree and
   gets no geometry, which is right for most of them and wrong for the ones that need a

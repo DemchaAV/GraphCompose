@@ -53,6 +53,77 @@ PDF never pull POI.
 Page geometry (size and margins) and session metadata (title, author,
 subject, keywords) carry into the Word document as well.
 
+## Finding out what the export could not carry
+
+The export says what it drops — but it says it to the log, which a service generating
+documents for other people cannot read. Pass a sink and the same information arrives as a
+value:
+
+```java
+var notes = new ArrayList<DocxExportReport.Note>();
+session.export(new DocxSemanticBackend(report -> notes.addAll(report.notes())));
+```
+
+Each note carries a severity, what it was about, the authored node's path, and what it
+means for the document. `DROPPED` means the page draws it and the document does not carry
+it; `APPROXIMATED` means it is in the document as the nearest thing Word owns — a panel
+that keeps its fill and loses its rounded corners. Neither is an error: an export that
+cannot proceed throws, and the report is not how you find that out.
+
+The sink is called once, after the bytes are complete. The convenience methods
+(`buildDocx`, `writeDocx`, `toDocxBytes`) build their own backend and so have no sink —
+use `session.export(...)` when you need the report.
+
+## Measured geometry
+
+The export asks the session for the resolved layout and writes three things from it that
+it cannot work out for itself:
+
+| What | Where it lands |
+|---|---|
+| Line height | `w:spacing w:lineRule="exact"` on every paragraph, cells and list items included — the height the engine measured, not a multiple Word would measure again against a substituted font |
+| Table columns | the resolved cell widths as `w:gridCol`, with `w:tblLayout` fixed so Word does not re-fit them |
+| Row columns | where the layout placed each child, with the row's gap and padding folded into the neighbouring column and taken back out as that cell's margin |
+
+The space a block holds above and below itself needs no measuring and is written from the
+document: a paragraph's `margin` and `padding` become `w:spacing` before and after, and a
+container hands its top edge to the first paragraph inside it and its bottom edge to the
+last, since a container is not a Word object. Both add to what a paragraph asks for
+itself, so nesting sums the way the page does. The horizontal half of that box has no
+paragraph-level equivalent and is still dropped — see "What a panel keeps and loses".
+
+Asking for the layout costs a measurement and pagination pass over the document, the same
+work a PDF render does, and it reads each image a second time.
+
+## Fonts travel with the document
+
+The package carries the faces the document is set in, so a reader without them installed
+sees the document rather than a substitution. What is shipped is narrow on purpose:
+
+- **Only families with a file behind them** — the bundled ones and whatever the session
+  registered. The standard PDF faces are names rather than files: nothing bundles
+  Helvetica, and a reader gets the editor's substitution for it, the same one a PDF viewer
+  applies.
+- **Only the faces the document uses.** One family's four faces are about 2.5 MB, so the
+  face is chosen from each style's decoration. A reader who later bolds a word gets
+  whatever their machine does for a missing bold face.
+- **Only what the face permits.** An OpenType face states its terms in `OS/2`, and the
+  format distinguishes embedding for reading and printing from embedding in a document
+  someone will edit. A face that allows only the first is named but not shipped, with one
+  warning naming the family.
+
+Each face is stored the way Word stores one: the font with its first 32 bytes scrambled
+against a key the font table states beside it.
+
+A run names the **family**, not the face. `FontName.HELVETICA_BOLD` is a face, and Word
+resolves families and takes the weight from `w:b`; asked for a family by that name it finds
+none and substitutes. The face is resolved to its family exactly as the layout resolves it,
+through `FontLibrary.resolveFamily`, and the name written is that family's `wordFamily()`.
+The weight is not read from the face name, because the engine does not read it either — a
+style naming `HELVETICA_BOLD` and setting no `decoration` lays out regular, so writing
+`w:b` would make Word bolder than the page it is matching. Set `decoration(BOLD)` to get
+bold in both.
+
 ## Named styles, so the document can be restyled
 
 The export writes a styles part whose `Normal` carries the document's own body text —
@@ -123,14 +194,16 @@ Not representable, and left undone rather than approximated:
 
 ## What falls back
 
-- **An `auto` column's width → Word's own sizing.** A table with no stated width is as
-  wide as its columns naturally need, and an `auto` column's natural width is its widest
-  unwrapped cell. That is a measurement, and this backend has no font runtime to make it,
-  so such a table is left to Word's autofit rather than given a guessed width — writing
-  the content width instead would be right for a table whose text fills the line and
-  wrong for one holding three short values. A row divides the same way: an `auto` column,
-  a non-`START` arrangement or a grow spacer all ask what a child's content measures, so
-  those rows keep Word's split too. State a width, or fixed columns, to pin either.
+- **A document the engine cannot lay out → the same export, without measured geometry.**
+  The export asks the session for the resolved layout (see "Measured geometry" above). A
+  document that the fixed-layout pipeline refuses — a list item made of inline runs
+  without marker geometry, for instance — still exports: the failure is logged once and
+  the writer falls back to what the document itself states. In that fallback a table's
+  width is written only when the author stated one or every column is fixed, a row's
+  columns only when they are weights, an even split or fixed, and no line height is
+  written at all. An `auto` column and the flex path are measurements, and a guess in
+  their place would be right for a table whose text fills the line and wrong for one
+  holding three short values.
 
 - **Charts → data table.** The semantic export has no layout pass, so a
   chart's compiled vector geometry does not exist here. Its *semantic*

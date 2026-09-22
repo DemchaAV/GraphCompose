@@ -83,7 +83,10 @@ class DocxLetterSpacingTest {
         byte[] docx = render(NAME, style(DocumentLetterSpacing.NONE, 20));
 
         assertThat(spacingOf(docx)).isEmpty();
-        assertThat(xmlOf(docx)).doesNotContain("<w:spacing");
+        // Named where it lives: w:spacing is a run property here and a paragraph property
+        // for line height, and a paragraph does carry the second. Looking for the element
+        // anywhere in the part could not tell the two apart.
+        assertThat(xmlOf(docx)).doesNotContain("<w:rPr><w:spacing");
         assertThat(runsOf(docx)).isNotEmpty();
     }
 

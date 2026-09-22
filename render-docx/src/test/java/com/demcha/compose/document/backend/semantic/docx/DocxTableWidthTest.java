@@ -14,19 +14,20 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A table is as wide as the document says — in the cases where the document says.
+ * A table is as wide as the document says — and, when a layout was compiled, as wide as it
+ * came out.
  *
- * <p>Nothing used to write a width at all, so Word sized every table to its own content
- * and a table of short values came out far narrower than the reference draws it. But the
- * fix is not "as wide as the page": with no stated width the engine gives a table the sum
- * of its natural column widths, and an {@code auto} column's natural width is its widest
- * unwrapped cell. That is a measurement, and this backend has no font runtime to make it,
- * so the content width would be a guess that happens to be right for a table whose text
- * fills the line and wrong for one with three short values in it.</p>
+ * <p>These pin the export with nothing measured behind it, which is what a caller holding
+ * a graph and a canvas gets, and what a document the engine cannot lay out falls back to.
+ * There the rule is: write what is knowable and nothing else. A width the author stated and
+ * a grid of fixed columns are the document's own numbers; an {@code auto} column's width is
+ * its widest unwrapped cell, and measuring is what this backend has no font runtime for. So
+ * "as wide as the page" is not a fallback — it would be right for a table whose text fills
+ * the line and wrong for one holding three short values, which is how the old
+ * shrink-to-content was wrong in the other direction.</p>
  *
- * <p>What is knowable without measuring is written: a width the author stated, and the
- * column widths when every column is fixed. What is not stays Word's until resolved
- * layout can supply the measured widths.</p>
+ * <p>{@link #aMeasuredTableTakesEveryColumnFromTheLayout()} is the other half: given the
+ * layout, the same table stops guessing entirely.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -125,6 +126,39 @@ class DocxTableWidthTest {
     }
 
     @Test
+    void aMeasuredTableTakesEveryColumnFromTheLayout() throws Exception {
+        // The same table the first case leaves to Word. Given the layout there is nothing
+        // to decide: the resolved cells carry the width each column came out at, auto
+        // included, and the grid is written from them.
+        XWPFTable table = measuredTable(page -> page.addTable(t -> t
+                .autoColumns(3)
+                .headerRow("Item", "Qty", "Amount")
+                .row("Platform subscription", "12", "1 440.00")));
+
+        var grid = table.getCTTbl().getTblGrid();
+        assertThat(grid).isNotNull();
+        assertThat(grid.sizeOfGridColArray()).isEqualTo(3);
+        assertThat(twips(grid.getGridColArray(0).getW()))
+                .as("the widest column is the one holding the longest text")
+                .isGreaterThan(twips(grid.getGridColArray(1).getW()));
+        assertThat(sumOfColumns(table))
+                .as("the columns tile the table exactly")
+                .isEqualTo(widthTwips(table));
+        assertThat(widthTwips(table))
+                .as("and the table is narrower than the page, because its content is")
+                .isLessThan(Math.round(CONTENT_WIDTH * TWIPS_PER_POINT));
+        assertThat(table.getCTTbl().getTblPr().getTblLayout().getType().toString())
+                .as("fixed, so Word does not re-fit what was measured")
+                .isEqualTo("fixed");
+    }
+
+    private static long sumOfColumns(XWPFTable table) {
+        return table.getCTTbl().getTblGrid().getGridColList().stream()
+                .mapToLong(column -> twips(column.getW()))
+                .sum();
+    }
+
+    @Test
     void aRowCarriedAsATableSpansTheContentWidth() throws Exception {
         // A row takes the whole width it is offered whatever its children measure —
         // measureRow returns the available width unconditionally — so this one needs no
@@ -154,17 +188,19 @@ class DocxTableWidthTest {
         return Long.parseLong(String.valueOf(measure));
     }
 
+    /** The table as written with nothing measured behind it. */
     private static XWPFTable onlyTable(
             Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content) throws Exception {
-        byte[] docx;
-        try (DocumentSession session = GraphCompose.document()
-                .pageSize(PAGE_WIDTH, 600)
-                .margin(DocumentInsets.of(MARGIN))
-                .create()) {
-            session.pageFlow(content::accept);
-            docx = session.export(new DocxSemanticBackend());
+        try (XWPFDocument document = DocxExports.withoutLayout(PAGE_WIDTH, 600, MARGIN, content)) {
+            assertThat(document.getTables()).hasSize(1);
+            return document.getTables().get(0);
         }
-        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+    }
+
+    /** The table as written when the compiled layout is there to read. */
+    private static XWPFTable measuredTable(
+            Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content) throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, content)) {
             assertThat(document.getTables()).hasSize(1);
             return document.getTables().get(0);
         }

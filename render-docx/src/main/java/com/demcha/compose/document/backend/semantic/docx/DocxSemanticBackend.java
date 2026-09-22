@@ -229,6 +229,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         try (XWPFDocument document = new XWPFDocument()) {
             applyPageGeometry(document, context.canvas());
             writeStylesPart(document);
+            DocxFontTable.write(document, graph, context.customFontFamilies());
             applyOutputOptions(document, context.outputOptions());
             for (DocumentNode root : graph.roots()) {
                 writeNode(document, root);

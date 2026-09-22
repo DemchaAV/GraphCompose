@@ -3,6 +3,7 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.table.DocumentTableCell;
+import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -242,6 +243,55 @@ class DocxVerticalSpacingTest {
     }
 
     @Test
+    void aPictureKeepsItsOwnMargin() throws Exception {
+        // A picture is a block like any other, and its paragraph is its block. Measured on
+        // the probe corpus, an image holding 12pt at each edge ran straight into the
+        // heading under it, 24pt short of the page.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addParagraph(p -> p.text("Above"))
+                .addImage(image -> image
+                        .name("Plate")
+                        .source(DocumentImageData.fromBytes(pngBytes()))
+                        .width(40)
+                        .height(20)
+                        .margin(DocumentInsets.symmetric(12, 0)))
+                .addParagraph(p -> p.text("Below")));
+
+        // The picture's own paragraph carries no text, so it is not in bodyOf's list: its
+        // top edge is on it and its bottom edge lands on the paragraph after.
+        assertThat(before(paragraphs.get(paragraphs.size() - 1)))
+                .as("the picture's bottom edge reaches the block under it")
+                .isEqualTo(Math.round(12 * TWIPS_PER_POINT));
+    }
+
+    @Test
+    void aListKeepsItsOwnBoxAndTheSpaceBetweenItsItems() throws Exception {
+        // A list is not a Word object either — its items are paragraphs written where it
+        // stood — so its edges went the way a container's did, and itemSpacing with them.
+        // Measured on the probe corpus, a four-item checklist ran 13pt short of the page.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addParagraph(p -> p.text("Lead"))
+                .addList(list -> list
+                        .name("Checklist")
+                        .itemSpacing(3)
+                        .padding(DocumentInsets.top(4))
+                        .margin(DocumentInsets.bottom(10))
+                        .items("First", "Second", "Third"))
+                .addParagraph(p -> p.text("After")));
+
+        assertThat(before(paragraphs.get(1)))
+                .as("the list's top edge, above its first item, and no item gap yet")
+                .isEqualTo(Math.round(4 * TWIPS_PER_POINT));
+        assertThat(before(paragraphs.get(2)))
+                .as("the gap between two items")
+                .isEqualTo(Math.round(3 * TWIPS_PER_POINT));
+        assertThat(before(paragraphs.get(3))).isEqualTo(Math.round(3 * TWIPS_PER_POINT));
+        assertThat(before(paragraphs.get(4)))
+                .as("the list's bottom edge, on the paragraph after it")
+                .isEqualTo(Math.round(10 * TWIPS_PER_POINT));
+    }
+
+    @Test
     void aBlockThatAsksForNothingCarriesNoSpacingAtAll() throws Exception {
         List<XWPFParagraph> paragraphs = bodyOf(page -> page.addParagraph(p -> p.text("Plain")));
 
@@ -250,6 +300,17 @@ class DocxVerticalSpacingTest {
                    || (!properties.getSpacing().isSetBefore() && !properties.getSpacing().isSetAfter()))
                 .as("no w:before and no w:after, rather than zeros")
                 .isTrue();
+    }
+
+    private static byte[] pngBytes() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(
+                    new java.awt.image.BufferedImage(40, 20,
+                            java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static long before(XWPFParagraph paragraph) {

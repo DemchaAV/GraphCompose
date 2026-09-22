@@ -178,6 +178,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** Space the last body paragraph holds below itself, not yet written — see {@link #owePendingSpacingAfter}. */
     private double pendingSpacingAfter;
+
+    /** The gap the list being written puts between its items. */
+    private double pendingItemSpacing;
+
+    /** Whether the list being written has an item above the one about to be written. */
+    private boolean anItemWasWritten;
     // The last paragraph written into the body, so a container can hand it the space it
     // holds below itself once its children are done.
     private XWPFParagraph lastBodyParagraph;
@@ -295,6 +301,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
+        pendingItemSpacing = 0;
+        anItemWasWritten = false;
         lastBodyParagraph = null;
         currentCell = null;
         currentCellWidth = Double.NaN;
@@ -708,6 +716,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeList(XWPFDocument document,
                            com.demcha.compose.document.node.ListNode list) {
         BigInteger numId = numberingFor(document, list);
+        // The list's own box, and the space it puts between its items. A list is not a Word
+        // object either — its items are paragraphs written where it stood — so its edges go
+        // where every other block's go, and itemSpacing becomes the gap above each item
+        // after the first.
+        carriedSpacingBefore += list.margin().top() + list.padding().top();
+        double previousItemSpacing = pendingItemSpacing;
+        pendingItemSpacing = list.itemSpacing();
+        boolean previousItemWritten = anItemWasWritten;
+        anItemWasWritten = false;
+        try {
+            writeListItems(document, list, numId);
+        } finally {
+            pendingItemSpacing = previousItemSpacing;
+            anItemWasWritten = previousItemWritten;
+        }
+        owePendingSpacingAfter(list.margin().bottom() + list.padding().bottom());
+    }
+
+    /** The gap above the next item, which is nothing at all above the first. */
+    private void spaceBeforeTheNextItem() {
+        if (anItemWasWritten) {
+            owePendingSpacingAfter(pendingItemSpacing);
+        }
+        anItemWasWritten = true;
+    }
+
+    private void writeListItems(XWPFDocument document,
+                                com.demcha.compose.document.node.ListNode list,
+                                BigInteger numId) {
         for (String item : list.items()) {
             // Same normalization as the fixed-layout pipeline: strip an
             // author-typed leading marker and skip items with no content.
@@ -774,6 +811,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeListLine(XWPFDocument document, DocumentTextStyle style,
                                String text, int depth, BigInteger numId,
                                java.util.OptionalDouble lineHeight) {
+        spaceBeforeTheNextItem();
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
         if (numId != null) {
@@ -812,6 +850,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                    String path) {
         warnDroppedInlineRuns(marker.runs(), path);
         warnDroppedInlineRuns(item.runs(), path);
+        spaceBeforeTheNextItem();
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
         XWPFRun leading = para.createRun();
@@ -1871,6 +1910,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
         DocumentImageFitMode fitMode =
                 node.fitMode() == null ? DocumentImageFitMode.STRETCH : node.fitMode();
+
         double drawWidth = box.width();
         double drawHeight = box.height();
         if (fitMode == DocumentImageFitMode.CONTAIN) {
@@ -1880,6 +1920,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
 
         XWPFParagraph para = newBodyParagraph(document);
+        // A picture is a block: the space the node holds above and below itself is written
+        // on the paragraph carrying it, the same as any other block's. Without it the
+        // probe's image ran straight into the heading under it, 24pt short of the page.
+        applyVerticalSpacing(para, node);
         XWPFRun run = para.createRun();
         try (InputStream stream = new java.io.ByteArrayInputStream(bytes)) {
             XWPFPicture picture = run.addPicture(stream,

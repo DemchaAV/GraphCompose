@@ -94,6 +94,10 @@ its top edge to the first paragraph inside it and its bottom edge to the last, s
 container is not a Word object. Everything meeting at one gap adds up, the way the page
 sums it.
 
+An image and a list hold their own space the same way a paragraph does — a picture's
+paragraph is the picture's block, and a list's edges go to the paragraphs around it, with
+`itemSpacing` as the gap above each item after the first.
+
 A table holds its own space the same way. Word has no space above a table and none below
 one, so a table's or a row's `margin` and `padding` travel to the paragraphs around it —
 the space above a table is the space below the paragraph before it. A table with no

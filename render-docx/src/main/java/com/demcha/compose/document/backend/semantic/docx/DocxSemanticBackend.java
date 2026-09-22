@@ -39,6 +39,8 @@ import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableStyle;
+import com.demcha.compose.font.FontFamilyDefinition;
+import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.font.FontName;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.BreakType;
@@ -167,6 +169,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The last paragraph written into the body, so a container can hand it the space it
     // holds below itself once its children are done.
     private XWPFParagraph lastBodyParagraph;
+    // Every family this export can name, by the logical name a style asks for. The
+    // session's own registrations win over the bundled ones, the way they do everywhere.
+    private java.util.Map<FontName, FontFamilyDefinition> wordFamilies = java.util.Map.of();
 
     /**
      * A container's paint, reduced to what a Word paragraph can carry.
@@ -221,6 +226,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         warnedNodeKinds.clear();
         containerPaint.clear();
         listNumbering.clear();
+        wordFamilies = DocxFontTable.familiesByName(context.customFontFamilies());
         documentDefaultStyle = dominantTextStyle(graph);
         layout = DocxLayoutMetrics.of(graph, context.layoutGraph());
         carriedSpacingBefore = 0;
@@ -887,14 +893,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         document.createStyles().setStyles(styles);
     }
 
-    private static void applyDefaultRunProperties(CTRPr properties, DocumentTextStyle defaults) {
+    private void applyDefaultRunProperties(CTRPr properties, DocumentTextStyle defaults) {
         if (defaults.fontName() != null) {
             // All four slots, exactly as XWPFRun.setFontFamily writes them on a run.
             // w:ascii alone covers only ASCII: High-ANSI characters read w:hAnsi, Hebrew
             // and Arabic read w:cs, CJK reads w:eastAsia. Naming one and suppressing the
             // run's own rFonts would send every accented letter and every complex script
             // to Word's theme font while the rest of the line kept the asked-for family.
-            String family = defaults.fontName().name();
+            String family = wordFamilyOf(defaults.fontName());
             CTFonts fonts = properties.addNewRFonts();
             fonts.setAscii(family);
             fonts.setHAnsi(family);
@@ -910,6 +916,38 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (defaults.color() != null) {
             properties.addNewColor().setVal(toHexColor(defaults.color().color()));
         }
+    }
+
+    /**
+     * The family name to write for a style's font, as Word understands families.
+     *
+     * <p>A {@link FontName} can name a face rather than a family — {@code Helvetica-Bold}
+     * is one — and the two are not interchangeable here. Word resolves a family and takes
+     * the weight from {@code w:b}; asked for a family called "Helvetica-Bold" it finds
+     * none and substitutes, which is how a document that named its headings by face came
+     * out set in something else entirely.</p>
+     *
+     * <p>The face is resolved to its family exactly as the layout resolves it, through
+     * {@link FontLibrary#resolveFamily(FontName)}, so both renders are set in the same
+     * family. The weight is deliberately <em>not</em> taken from the face name: the engine
+     * does not take it either — a style naming {@code Helvetica-Bold} with no decoration
+     * lays out regular — and writing {@code w:b} here would make Word bolder than the page
+     * it is meant to match.</p>
+     *
+     * <p>The name itself comes from the family's own {@code wordFamily()}, which is what
+     * that field is for, so a registered family can carry a Word name that differs from
+     * its logical one.</p>
+     *
+     * @param fontName the style's font, possibly null or a face alias
+     * @return the family name to write, or null when the style named no font
+     */
+    private String wordFamilyOf(FontName fontName) {
+        if (fontName == null) {
+            return null;
+        }
+        FontName family = FontLibrary.resolveFamily(fontName);
+        FontFamilyDefinition definition = wordFamilies.get(family);
+        return definition == null ? family.name() : definition.wordFamily();
     }
 
     /**
@@ -979,7 +1017,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private record StyleKey(FontName fontName, long halfPoints, Integer colour) {
 
         static StyleKey of(DocumentTextStyle style) {
-            return new StyleKey(style.fontName(),
+            // By family, not by the name the style used: Helvetica and Helvetica-Bold are
+            // written identically — the second resolves to the first and takes its weight
+            // from the decoration — so weighing them apart would split one body style in
+            // two and could elect the lighter half as Normal.
+            return new StyleKey(FontLibrary.resolveFamily(style.fontName()),
                     Math.round(style.size() * HALF_POINTS_PER_POINT),
                     style.color() == null ? null : style.color().color().getRGB());
         }
@@ -2262,9 +2304,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // the style and a global restyle silently does nothing — which is what this
         // exporter used to produce for every run in every document.
         DocumentTextStyle defaults = documentDefaultStyle;
-        if (style.fontName() != null
-            && (defaults == null || !style.fontName().equals(defaults.fontName()))) {
-            run.setFontFamily(style.fontName().name());
+        String family = wordFamilyOf(style.fontName());
+        if (family != null
+            && (defaults == null || !family.equals(wordFamilyOf(defaults.fontName())))) {
+            run.setFontFamily(family);
         }
         // Complex-script size rides along with the ordinary one, so it is skipped for the
         // same reason when the style already carries it.

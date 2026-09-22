@@ -13,6 +13,7 @@ import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.font.FontFamilyDefinition;
+import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.font.FontName;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
@@ -115,6 +116,28 @@ final class DocxFontTable {
         }
     }
 
+    /**
+     * Every family an export can name, by the logical name a style asks for.
+     *
+     * <p>A family the session registered wins over a bundled one of the same name: it was
+     * registered to be used, and the document was laid out with it.</p>
+     *
+     * @param custom families the session registered, possibly null
+     * @return the families, bundled ones first
+     */
+    static Map<FontName, FontFamilyDefinition> familiesByName(Collection<FontFamilyDefinition> custom) {
+        Map<FontName, FontFamilyDefinition> families = new LinkedHashMap<>();
+        for (FontFamilyDefinition family : DefaultFonts.bundledFamilies()) {
+            families.put(family.name(), family);
+        }
+        if (custom != null) {
+            for (FontFamilyDefinition family : custom) {
+                families.put(family.name(), family);
+            }
+        }
+        return families;
+    }
+
     /** One family that will be written, and the faces of it that may be. */
     private record Embedded(String wordFamily, List<Face> faces) {
     }
@@ -148,8 +171,9 @@ final class DocxFontTable {
     /**
      * Reads every face the document could be set in, and keeps the ones it may ship.
      *
-     * <p>A family the session registered wins over a bundled one of the same name: it was
-     * registered to be used, and the document was laid out with it.</p>
+     * <p>A face name resolves to its family first: a style naming {@code Helvetica-Bold}
+     * asks for the Helvetica family, which is a name rather than a file and ships
+     * nothing.</p>
      */
     private static List<Embedded> resolve(DocumentGraph graph, Collection<FontFamilyDefinition> custom) {
         Map<FontName, Set<Slot>> used = new LinkedHashMap<>();
@@ -160,19 +184,11 @@ final class DocxFontTable {
             return List.of();
         }
 
-        Map<FontName, FontFamilyDefinition> families = new LinkedHashMap<>();
-        for (FontFamilyDefinition family : DefaultFonts.bundledFamilies()) {
-            families.put(family.name(), family);
-        }
-        if (custom != null) {
-            for (FontFamilyDefinition family : custom) {
-                families.put(family.name(), family);
-            }
-        }
+        Map<FontName, FontFamilyDefinition> families = familiesByName(custom);
 
         List<Embedded> embedded = new ArrayList<>();
         for (Map.Entry<FontName, Set<Slot>> entry : used.entrySet()) {
-            FontFamilyDefinition family = families.get(entry.getKey());
+            FontFamilyDefinition family = families.get(FontLibrary.resolveFamily(entry.getKey()));
             if (family == null || family.fontSourceSet().isEmpty()) {
                 // A standard-14 name, or one nothing registered: there is no file to ship.
                 continue;

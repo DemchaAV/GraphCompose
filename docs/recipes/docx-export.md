@@ -89,11 +89,23 @@ it cannot work out for itself:
 | Row columns | where the layout placed each child, with the row's gap and padding folded into the neighbouring column and taken back out as that cell's margin |
 
 The space a block holds above and below itself needs no measuring and is written from the
-document: a paragraph's `margin` and `padding` become `w:spacing` before and after, and a
-container hands its top edge to the first paragraph inside it and its bottom edge to the
-last, since a container is not a Word object. Both add to what a paragraph asks for
-itself, so nesting sums the way the page does. The horizontal half of that box has no
-paragraph-level equivalent and is still dropped — see "What a panel keeps and loses".
+document: a paragraph's `margin` and `padding` become `w:spacing`, and a container hands
+its top edge to the first paragraph inside it and its bottom edge to the last, since a
+container is not a Word object. Everything meeting at one gap adds up, the way the page
+sums it.
+
+A gap is written **once, above**. The space a block holds below itself waits for the next
+paragraph and is written there as `w:before`, together with whatever that paragraph asks
+for itself — rather than as `w:after` on one paragraph and `w:before` on the next. Editors
+disagree about two adjacent gaps: measured on a card holding 20pt below itself followed by
+a heading asking for 16pt above, LibreOffice rendered 20pt where the page shows 36, taking
+the larger instead of the sum. One number on one side reads the same either way. The gap
+goes back to the paragraph above only where nothing below can hold it — before a table,
+which has no space above it in Word, before a page break, at the end of a cell, and at the
+end of the document.
+
+The horizontal half of that box has no paragraph-level equivalent and is still dropped —
+see "What a panel keeps and loses".
 
 Asking for the layout costs a measurement and pagination pass over the document, the same
 work a PDF render does, and it reads each image a second time.

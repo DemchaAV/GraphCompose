@@ -19,8 +19,8 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v2.4.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.4.0) &mdash; **a much larger template line-up**: two new families, **receipt** and **rota**, new invoice, proposal and CV presets, and every CV preset marked ATS-friendly or design-first after three resume parsers read it; plus **real letter spacing** that keeps tracked caps searchable, one continuous timeline rail, and list items with hanging indents and drawn markers. See [CHANGELOG.md](./CHANGELOG.md).
-> &nbsp;·&nbsp; 🟡 **In development**: v2.4.1 on `develop` &mdash; see [CHANGELOG.md](./CHANGELOG.md).
+> 🟢 **Latest stable**: [v2.4.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.4.1) &mdash; **a much larger template line-up**: two new families, **receipt** and **rota**, new invoice, proposal and CV presets, and every CV preset marked ATS-friendly or design-first after three resume parsers read it; plus **real letter spacing** that keeps tracked caps searchable, one continuous timeline rail, and list items with hanging indents and drawn markers. See [CHANGELOG.md](./CHANGELOG.md).
+> &nbsp;·&nbsp; 🟡 **In development**: v2.4.2 on `develop` &mdash; see [CHANGELOG.md](./CHANGELOG.md).
 
 <p align="center">
   <img src="./assets/readme/repository_showcase_render.png" alt="Documents rendered with GraphCompose" width="780"/>
@@ -82,14 +82,14 @@ Maven:
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>2.4.0</version>
+    <version>2.4.1</version>
 </dependency>
 ```
 
 Gradle:
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose:2.4.0") }
+dependencies { implementation("io.github.demchaav:graph-compose:2.4.1") }
 ```
 
 The `graph-compose` artifact already includes PDF output.
@@ -194,7 +194,7 @@ Add the testing artifact at test scope:
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-testing</artifactId>
-    <version>2.4.0</version>
+    <version>2.4.1</version>
     <scope>test</scope>
 </dependency>
 ```

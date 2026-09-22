@@ -22,17 +22,25 @@
   <meta property="og:site_name" content="GraphCompose">
   <meta property="og:title" content="GraphCompose &mdash; Java PDF layout engine for structured business documents">
   <meta property="og:description" content="Declarative semantic PDF generation for Java. CVs, invoices, proposals, reports — composed from ParagraphNode, TableNode, SectionNode. Every example runnable, every PDF real.">
-  <meta property="og:image" content="https://demchaav.github.io/GraphCompose/showcase/screenshots/templates/proposal/project-proposal-cinematic.png">
-  <meta property="og:image:alt" content="GraphCompose-rendered project proposal PDF preview">
-  <meta property="og:image:width" content="893">
-  <meta property="og:image:height" content="1263">
+  <!-- A large-image card is landscape. This used to be a portrait page of one proposal at
+       893x1263, so a feed cropped a band out of its middle and published a paragraph of a
+       document nobody had asked about. The cover is drawn for the shape, at the 1200x630 every
+       platform crops least, and carries no version or figure so it outlives the release that
+       published it. Document pages keep their own preview: there the document IS the subject.
+       Renamed rather than overwritten - Slack, X and LinkedIn cache by URL. -->
+  <meta property="og:image" content="https://demchaav.github.io/GraphCompose/assets/social/graphcompose-cover-2026-09.png">
+  <meta property="og:image:alt" content="GraphCompose: document generation for Java, beside a CV, an invoice and a proposal the library rendered">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:locale" content="en_US">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="GraphCompose &mdash; Java PDF layout engine">
   <meta name="twitter:description" content="Declarative semantic PDF generation for Java. CVs, invoices, proposals, reports — composed from ParagraphNode, TableNode, SectionNode.">
-  <meta name="twitter:image" content="https://demchaav.github.io/GraphCompose/showcase/screenshots/templates/proposal/project-proposal-cinematic.png">
+  <meta name="twitter:image" content="https://demchaav.github.io/GraphCompose/assets/social/graphcompose-cover-2026-09.png">
+  <meta name="twitter:image:alt" content="GraphCompose: document generation for Java, beside a CV, an invoice and a proposal the library rendered">
 
   <!-- Structured data: SoftwareApplication + SoftwareSourceCode -->
   <!-- The one place the site's version is written down. The JSON-LD below and the install
@@ -146,6 +154,38 @@
       </div>
     </section>
 
+    <section class="section-shell" id="showcase" aria-labelledby="showcase-title">
+      <div class="section-heading">
+        <p class="section-label">Catalogue</p>
+        <h2 id="showcase-title">Generated PDFs you can inspect.</h2>
+        <p class="section-text">Every document below is drawn by a real, runnable Java file. Click a preview to open the viewer: it pages through the whole document, moves across the rest of its family, and links the PDF, the source and what reproducing it takes.</p>
+      </div>
+
+      <div class="showcase-controls" role="search">
+        <input type="search" id="showcase-search" placeholder="Search by title, tag, or keyword..." aria-label="Search the catalogue">
+        <div class="showcase-filters" id="showcase-filters" role="tablist" aria-label="Filter by category">
+          <button class="filter-pill is-active" data-category="all" type="button">All</button>
+          <button class="filter-pill" data-category="templates" type="button">Templates</button>
+          <button class="filter-pill" data-category="features" type="button">Examples</button>
+          <button class="filter-pill" data-category="flagships" type="button">Showcase</button>
+        </div>
+      </div>
+
+      <div id="showcase-content" class="showcase-content" aria-live="polite">
+        <p class="showcase-loading">Loading examples...</p>
+      </div>
+
+      <noscript>
+        <div class="showcase-noscript">
+          <p><strong>JavaScript is disabled.</strong> The full searchable gallery requires JS. Below is every document in the catalogue, each linking to a page of its own with the PDF, every page and how to reproduce it.</p>
+
+{{noscriptCatalogue}}
+
+          <p>Source for every example lives under <a href="https://github.com/DemchaAV/GraphCompose/tree/{{releaseTag}}/examples/src/main/java/com/demcha/examples"><code>examples/src/main/java/com/demcha/examples</code></a> on GitHub.</p>
+        </div>
+      </noscript>
+    </section>
+
     <section class="section-shell" id="install" aria-labelledby="install-title">
       <div class="section-heading">
         <p class="section-label">Get started</p>
@@ -249,38 +289,6 @@
           </ul>
         </article>
       </div>
-    </section>
-
-    <section class="section-shell" id="showcase" aria-labelledby="showcase-title">
-      <div class="section-heading">
-        <p class="section-label">Catalogue</p>
-        <h2 id="showcase-title">Generated PDFs you can inspect.</h2>
-        <p class="section-text">Every example below is a real, runnable Java file. Click the preview to open the rendered PDF, or jump straight into the source.</p>
-      </div>
-
-      <div class="showcase-controls" role="search">
-        <input type="search" id="showcase-search" placeholder="Search by title, tag, or keyword..." aria-label="Search the catalogue">
-        <div class="showcase-filters" id="showcase-filters" role="tablist" aria-label="Filter by category">
-          <button class="filter-pill is-active" data-category="all" type="button">All</button>
-          <button class="filter-pill" data-category="templates" type="button">Templates</button>
-          <button class="filter-pill" data-category="features" type="button">Examples</button>
-          <button class="filter-pill" data-category="flagships" type="button">Showcase</button>
-        </div>
-      </div>
-
-      <div id="showcase-content" class="showcase-content" aria-live="polite">
-        <p class="showcase-loading">Loading examples...</p>
-      </div>
-
-      <noscript>
-        <div class="showcase-noscript">
-          <p><strong>JavaScript is disabled.</strong> The full searchable gallery requires JS. Below is every document in the catalogue, each linking to a page of its own with the PDF, every page and how to reproduce it.</p>
-
-{{noscriptCatalogue}}
-
-          <p>Source for every example lives under <a href="https://github.com/DemchaAV/GraphCompose/tree/{{releaseTag}}/examples/src/main/java/com/demcha/examples"><code>examples/src/main/java/com/demcha/examples</code></a> on GitHub.</p>
-        </div>
-      </noscript>
     </section>
 
     <section class="architecture section-shell" id="architecture" aria-labelledby="architecture-title">

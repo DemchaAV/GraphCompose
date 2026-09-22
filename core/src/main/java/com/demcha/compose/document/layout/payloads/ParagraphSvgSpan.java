@@ -17,6 +17,8 @@ import java.util.List;
  * @param alignment      vertical alignment relative to the surrounding text
  * @param baselineOffset extra vertical offset in points; positive moves up
  * @param linkTarget     optional link metadata
+ * @param text           the text the icon stands for when the page is read as
+ *                       text (its {@code SvgIcon.text()}), or {@code null}
  * @author Artem Demchyshyn
  * @since 1.9.0
  */
@@ -26,7 +28,8 @@ public record ParagraphSvgSpan(
         double height,
         InlineImageAlignment alignment,
         double baselineOffset,
-        DocumentLinkTarget linkTarget
+        DocumentLinkTarget linkTarget,
+        String text
 ) implements ParagraphSpan {
     /**
      * Copies the layer stack defensively and normalizes alignment defaults.

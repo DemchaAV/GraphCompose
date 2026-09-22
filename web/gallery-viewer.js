@@ -128,10 +128,17 @@
     }
 
     // The family's compiled block, carried in the manifest because the site is served from
-    // web/ alone and cannot reach the page it is written on.
+    // web/ alone and cannot reach the page it is written on. It composes one preset of the
+    // family, so on every other card of that family it is code that draws a different
+    // document: honest in its caption, and still the thing a reader copies. Those cards get
+    // the minimal block for the preset they are looking at instead, and keep the link to the
+    // guide for the worked version that builds the data.
     const snippet = family && hasOwn(catalogue.snippets, family) ? catalogue.snippets[family] : null;
-    if (snippet && snippet.code) {
+    const composesThisPreset = preset && snippet && snippet.code && composes(preset, snippet.code);
+    if (snippet && snippet.code && (!preset || composesThisPreset)) {
       listing(snippetLabel(preset, snippet.code), snippet.code);
+    } else if (preset) {
+      listing('Compose this preset', presetBlock(card, preset));
     }
 
     // Only a class with a main of its own can be started this way. The rest are rendered by
@@ -176,14 +183,41 @@
 
   // What the family's listing is to one card. It composes a single preset of the family —
   // BoxedSections for the CVs, ModernInvoice, ModernProposal — so "Compose it" is true on that
-  // preset's card alone: on Blue Banner's it would label code that builds a different CV. Every
-  // other card is told only that the listing comes from the documentation. The name is matched
-  // whole, so a preset called Sections is not taken for BoxedSections.
+  // preset's card alone, and on every other card of the family the listing is not shown at all.
   function snippetLabel(preset, code) {
-    const simpleName = preset ? preset.slice(preset.lastIndexOf('.') + 1) : '';
-    const composes = simpleName
-      && new RegExp('(^|[^\\w$])' + simpleName.replace(/\$/g, '\\$') + '\\.create\\(').test(code);
-    return composes ? 'Compose it' : 'From the docs';
+    return composes(preset, code) ? 'Compose it' : 'From the docs';
+  }
+
+  /** Whether a block composes this preset: `<SimpleName>.create(`, the name matched whole. */
+  function composes(preset, code) {
+    const name = simpleName(preset);
+    return !!name
+      && new RegExp('(^|[^\\w$])' + name.replace(/\$/g, '\\$') + '\\.create\\(').test(code);
+  }
+
+  function simpleName(className) {
+    return className ? className.slice(className.lastIndexOf('.') + 1) : '';
+  }
+
+  // The smallest thing that draws THIS preset, built from what the card already states: the
+  // preset it composes and the record that preset takes. Written the way the preset's own
+  // runnable example writes it — the no-argument create(), which carries the preset's theme,
+  // rather than the family block's create(theme), which would paint one preset in another's
+  // colours. Deriving it from that block instead was ruled out by the invoices: ConsultingInvoice
+  // takes StructuredInvoiceDocumentSpec where the block builds InvoiceDocumentSpec, so a rewrite
+  // of its composing line would leave a reader with a record the preset does not accept.
+  function presetBlock(card, preset) {
+    const name = simpleName(preset);
+    const record = simpleName(card.dataModel) || 'T';
+    const file = card.id + '.pdf';
+    return 'import ' + preset + ';\n'
+      + '\n'
+      + 'DocumentTemplate<' + record + '> template = ' + name + '.create();\n'
+      + '\n'
+      + 'try (DocumentSession document = GraphCompose.document(Path.of("' + file + '")).create()) {\n'
+      + '    template.compose(document, data);   // data: ' + record + '\n'
+      + '    document.buildPdf();\n'
+      + '}';
   }
 
   function hasOwn(object, key) {

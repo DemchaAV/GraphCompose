@@ -1,11 +1,11 @@
 ---
 skillId: graphcompose-api-surface
 targetLibrary: GraphCompose
-targetVersion: 2.4.x
-verifiedAgainst: 2.4.1-SNAPSHOT
+targetVersion: 2.5.x
+verifiedAgainst: 2.5.0-SNAPSHOT
 status: active
 generator: knowledge/tools/api-surface/extract-api.mjs
-generatedFrom: "io.github.demchaav:graph-compose-core:2.4.1-SNAPSHOT, io.github.demchaav:graph-compose-templates:2.4.1-SNAPSHOT, io.github.demchaav:graph-compose-render-pdf:2.4.1-SNAPSHOT, io.github.demchaav:graph-compose-render-docx:2.4.1-SNAPSHOT, io.github.demchaav:graph-compose-render-pptx:2.4.1-SNAPSHOT, io.github.demchaav:graph-compose-testing:2.4.1-SNAPSHOT"
+generatedFrom: "io.github.demchaav:graph-compose-core:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-templates:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-render-pdf:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-render-docx:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-render-pptx:2.5.0-SNAPSHOT, io.github.demchaav:graph-compose-testing:2.5.0-SNAPSHOT"
 note: "Generated from the pinned artifact's class files. Authoritative closed set: a symbol absent here does not exist for this version. Regenerate, do not hand-edit."
 ---
 
@@ -26,9 +26,9 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 > Ask it a question instead of reading it:
 > `node knowledge/tools/api-query/api-query.mjs --search <term>`.
 
-**GraphCompose version:** 2.4.1-SNAPSHOT
+**GraphCompose version:** 2.5.0-SNAPSHOT
 
-Types: 70 · methods: 375 · constants: 18 · compiler-generated members: 192
+Types: 70 · methods: 379 · constants: 18 · compiler-generated members: 193
 
 ## com.demcha.compose.document.backend.fixed
 
@@ -116,6 +116,7 @@ Types: 70 · methods: 375 · constants: 18 · compiler-generated members: 192
 
 ### PdfRenderEnvironment (class)
 - `PdfRenderEnvironment.LetterSpacedFont letterSpacedFont(PDFont font, double fontSize, double letterSpacing, String text)   [beta]`
+- `void writeTextLayer(PDPageContentStream stream, String text, double x, double baselineY, double width, double height)   [beta]`
 - `PDDocument document()`
 - `FontLibrary fonts()`
 - `PDPageContentStream pageSurface(int pageIndex)`
@@ -537,12 +538,15 @@ Types: 70 · methods: 375 · constants: 18 · compiler-generated members: 192
 ## com.demcha.compose.document.backend.semantic
 
 ### SemanticExportContext (record)
-- `new SemanticExportContext(LayoutCanvas, Collection<FontFamilyDefinition>, Path, DocumentOutputOptions)`
+- `new SemanticExportContext(LayoutCanvas, Collection<FontFamilyDefinition>, Path, DocumentOutputOptions, LayoutGraph)`
+- `new SemanticExportContext(LayoutCanvas canvas, Collection<FontFamilyDefinition> customFontFamilies, Path outputFile, DocumentOutputOptions outputOptions)`
 - `new SemanticExportContext(LayoutCanvas canvas, Collection<FontFamilyDefinition> customFontFamilies, Path outputFile)`
+- `LayoutGraph requireLayoutGraph()   [beta]`
 - `LayoutCanvas canvas()`
 - `Collection<FontFamilyDefinition> customFontFamilies()`
 - `Path outputFile()`
 - `DocumentOutputOptions outputOptions()`
+- `LayoutGraph layoutGraph()   [beta]`
 
 ### SemanticExportManifest (record)
 - `new SemanticExportManifest(String, Path, int, List<String>)`

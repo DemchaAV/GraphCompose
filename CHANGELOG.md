@@ -3,7 +3,8 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v2.4.1 — Planned
+## v2.5.0 — Planned
+
 
 ### Public API
 
@@ -108,6 +109,128 @@ follow semantic versioning; release dates are ISO 8601.
   short had been pulling the page back up. Line height is measured from the font, so
   closing that needs resolved layout rather than arithmetic.
 
+- **A semantic export backend can ask for the compiled layout.** _(Experimental — see
+  [API stability](docs/api-stability.md).)_ A semantic backend walks the authored tree and
+  gets no geometry, which is right for most of them and wrong for the ones that need a
+  number the engine already worked out — a resolved column width, a settled page count.
+  `SemanticBackend.requiresResolvedLayout()` defaults to `false`; a backend that returns
+  `true` is handed the same session's layout in `SemanticExportContext.layoutGraph()`,
+  compiled from the graph passed to the same `export` call.
+  <br><br>
+  The default matters as much as the option: compiling a layout runs measurement and
+  pagination over the whole document, work that grows with the document and that an export
+  ignoring geometry has no use for. A backend that does not ask causes none of it. It does
+  not save the render-module dependency — `DocumentSession` resolves a `FontMetricsProvider`
+  in its constructor and only `graph-compose-render-pdf` registers one, so a session cannot
+  be created without it whatever a backend later asks for.
+  <br><br>
+  Binary compatibility is preserved: the four-argument `SemanticExportContext` constructor
+  is written out by hand rather than left to the record, since adding the component moved
+  the canonical constructor to five arguments and callers compiled against the published
+  descriptor would otherwise stop linking. **Source compatibility is not**, in two narrow
+  ways — a record pattern that destructures the four-component form
+  (`case SemanticExportContext(var canvas, var fonts, var out, var opts)`) no longer
+  compiles, and `getRecordComponents().length` is 5 rather than 4. `requireLayoutGraph()`
+  is there for a backend that asked and wants the absence to say why rather than hand back
+  `null`.
+  <br><br>
+  One consequence worth knowing before putting a context in a collection or a log line:
+  the record's `equals`, `hashCode` and `toString` now traverse the layout, so on a long
+  document they walk every placed node and fragment. The four original components are
+  unchanged.
+
+- **An inline SVG icon can state the text it stands for.** `SvgIcon.withText(String)` returns
+  a copy of the icon carrying that text, read back with `SvgIcon.text()`: what a reader that
+  copies, searches or extracts the page should find where the icon is drawn in a line of text,
+  since a drawing has no characters of its own — `"✓"` for a check-mark icon. The drawing is
+  untouched; `null` or blank clears the text. A block icon (`addSvgIcon`, `SvgIcon.node`)
+  does not carry it.
+  <br><br>
+  Every icon `EmojiLibrary` resolves now carries the emoji it depicts, so `:rocket:` states
+  `🚀` and `:woman_technologist:` its whole ZWJ sequence. The emoji set's file names drop
+  U+FE0F, and a text-default character without it can paste as a plain black symbol — `:heart:`
+  as `❤` rather than `❤️` — so the text is spelled in the fully-qualified form of UTS #51,
+  U+FE0F restored after every character whose default presentation is text. That needs no new
+  emoji-set release: the published `graph-compose-emoji` 1.0.0 resolves to the same text.
+
+- **A PDF carries the text of an inline icon, so a copied line keeps its emoji.** An inline
+  SVG icon is drawn from paths, so the page had no character where it sat: a line with
+  `:rocket:` in it, copied out of a PDF into a messenger, arrived without the rocket.
+  `PdfParagraphFragmentRenderHandler` now writes the text an icon states into the page's text
+  layer, through `PdfRenderEnvironment.writeTextLayer` (`@Beta`): one invisible glyph over the
+  icon, on the line's baseline, whose advance spans the icon. The glyph comes from a Type 3
+  font of empty glyphs whose `ToUnicode` map states each text, a whole ZWJ sequence included,
+  shown in rendering mode 3 so nothing is painted; one such font serves a document, and a new
+  one starts after 255 distinct texts. `ActualText` around the paths was tried first; PDFBox,
+  poppler, pdf.js and MuPDF extract nothing from it, because it replaces the text of the
+  glyphs it covers and a drawing has none.
+  The rendered page is unchanged pixel for pixel. PPTX and DOCX exports do not carry the text
+  yet. The committed `emoji-shortcodes.pdf` preview is re-rendered: its emoji now copy out.
+
+### Tests
+
+- `EmojiSequencesTest` pins the fully-qualified spelling — a text-default character gains
+  U+FE0F, an emoji-presentation one does not, a skin-tone modifier or a selector already in
+  the key suppresses it, a keycap base is qualified before U+20E3 — and compares the table of
+  text-default emoji with the running JDK's Unicode data on JDK 21 and later.
+  `EmojiLibraryTest` checks resolved emoji carry their text and a glyph named by anything
+  but codepoints resolves without one; `SvgIconTextTest` checks `withText` copies the icon
+  and leaves the original as it was.
+- `PdfTextLayerTest` extracts `Launch 🚀 by 👩‍💻 with ❤️ done.` from a rendered line, codepoint
+  for codepoint; renders the same icon with and without text and compares the pages pixel for
+  pixel, which also fails if the invisible rendering mode leaks onto the words after the icon;
+  checks an icon given `withText("✓")` copies as `✓` and one without text adds no font; fills
+  one font with 255 texts and starts a second (each text used twice, one code each), its
+  `ToUnicode` in blocks of at most 100; keeps one font across the sections of a multi-section
+  document; writes a 256-unit text but not a 257-unit one; gives a 2:1 icon after a word
+  tracked in `Tc` a glyph exactly as wide as the icon, on the baseline, so neither the
+  horizontal scaling nor the spacing and rise left by the run before can go astray; keeps
+  `deterministic(true)` output byte-identical; fails a call made inside an open text object
+  with nothing written, and closes the glyph's text object and saved state when writing fails
+  half-way. In right-to-left Hebrew and Arabic lines it places the emoji's glyph between the
+  words it was written between and keeps a ZWJ sequence and a U+FE0F on one glyph each; a
+  left-to-right sentence with a Hebrew word reads back in written order.
+
+### Documentation
+
+- **A card of a preset shows the code that draws that preset.** The catalogue carries one
+  compiled block per family — the CVs' builds `BoxedSections`, the invoices' `ModernInvoice` —
+  and every other card of the family was shown it under a caption saying it came from the
+  documentation. The caption was true and the code under it still drew a different document,
+  which is what a reader copies. Those cards now carry the smallest block that draws the preset
+  they are looking at, built from what the card already states: the preset it composes and the
+  record that preset takes, written the way the preset's own runnable example writes it — the
+  no-argument `create()`, which carries the preset's theme rather than another preset's. The
+  family's block stays on the one card it composes, and the link to the page it is published on
+  stays on all of them. It is not that block with its composing line rewritten, because the
+  invoices rule that out: `ConsultingInvoice` takes `StructuredInvoiceDocumentSpec` where the
+  block builds `InvoiceDocumentSpec`, so a rewrite would hand a reader a record the preset does
+  not accept.
+
+- **The catalogue comes before the install instructions.** A visitor scrolling the home page met
+  the Maven coordinates and a format-by-format comparison before seeing anything the library
+  draws. The gallery now follows the opening block directly: choose the result, then wire the
+  library up. Every id and anchor is unchanged, so existing links and shared viewer addresses
+  still land where they did.
+
+- **The line above the catalogue says what clicking a preview does.** It promised the rendered
+  PDF; a viewer opens, which pages through the document, moves across the rest of its family and
+  links the PDF, the source and what reproducing it takes.
+
+- **The site has a link preview drawn for the shape a link preview is.** `og:image` and
+  `twitter:image` named a portrait page of one proposal, 893 by 1263, so a large-image card —
+  which is landscape — published a band cropped out of its middle: a paragraph of a document
+  nobody had asked about, under a link about the library. `SiteSocialCoverRenderer` composes a
+  cover at 1200 by 630 with GraphCompose itself, in the site's own palette, carrying the
+  wordmark, what the library does, and three documents read from the previews the catalogue
+  publishes. It states no version and no measured figure, so it outlives the release that
+  published it, and it is published under a name of its own because Slack, X and LinkedIn cache
+  a preview by URL. `twitter:card` stays `summary_large_image`, and both tags now declare the
+  size and an alt text. A document's own page keeps its own preview: there the document is the
+  subject.
+
+## v2.4.1 — 2026-09-21
+
 ### Performance
 
 - **A barcode is drawn as vector shapes, not as an image, in PDF and PPTX.**
@@ -150,6 +273,34 @@ follow semantic versioning; release dates are ISO 8601.
   the QR code off it, with an opaque and with a transparent foreground, checks a translucent
   foreground composites with the slide, and checks the background shape lands on the
   fragment box.
+
+### Build
+
+- **A CI artifact expires on a schedule that matches what it is for.** No
+  `actions/upload-artifact` step declared `retention-days`, so all seven inherited the
+  repository default of 90 days — the ceiling. Artifact storage is billed and capped per
+  account rather than per repository, and this repository had grown to 10.7 GB across some
+  2968 live artifacts, which exhausted the shared quota; the failure surfaced where it could
+  not be diagnosed from, in another repository whose unrelated uploads began failing with
+  `Artifact storage quota has been hit`. Two families were nearly the whole bill —
+  `examples-pdfs` at 7.57 GB over 1009 artifacts and `coverage-core-aggregate` at 2.66 GB
+  over 837 — and nothing downstream reads any of them: there is no `actions/download-artifact`
+  anywhere in `.github/workflows/`, so each exists for a person to open, and the right window
+  is however long a person plausibly wants it. Those two now keep 7 days, the span of a
+  review. `japicmp-report` keeps 30, because it answers "when did this signature move, and
+  against which baseline" during release prep rather than during the pull request.
+  `benchmark-smoke` and `benchmark-gate-reports` keep 14 days together, deliberately the same
+  number, since the gate verdict in one explains the numbers in the other and a shorter window
+  on either would leave an investigation holding half a pair. The two weekly trend series,
+  `benchmark-full` and `jmh-results`, keep the full 90: at one run a week a short window holds
+  a point or two and shows no trend at all, and they cost tens of KB each. What proves a render
+  weeks later is the committed layout-snapshot and visual baselines, not a retained artifact.
+
+- **Build and test dependencies move with the `maven-minor-patch` group.** `exec-maven-plugin`
+  3.6.3 → 3.6.4 in `benchmarks/` and `examples/`, `maven-install-plugin` and
+  `maven-deploy-plugin` 3.1.4 → 3.2.0, and the test-scope `byte-buddy` pin 1.18.13 → 1.18.14
+  in `core/`. Every one is build- or test-scope, so the dependency set a consumer inherits
+  from a published artifact is what it was in v2.4.0.
 
 ### Documentation
 

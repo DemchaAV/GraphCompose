@@ -2,16 +2,16 @@
   "schemaVersion": 2,
   "targetLibrary": "GraphCompose",
   "surface": "backends",
-  "targetVersion": "2.4.x",
-  "verifiedAgainst": "2.4.1-SNAPSHOT",
+  "targetVersion": "2.5.x",
+  "verifiedAgainst": "2.5.0-SNAPSHOT",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "generatedFrom": [
-    "io.github.demchaav:graph-compose-core:2.4.1-SNAPSHOT",
-    "io.github.demchaav:graph-compose-templates:2.4.1-SNAPSHOT",
-    "io.github.demchaav:graph-compose-render-pdf:2.4.1-SNAPSHOT",
-    "io.github.demchaav:graph-compose-render-docx:2.4.1-SNAPSHOT",
-    "io.github.demchaav:graph-compose-render-pptx:2.4.1-SNAPSHOT",
-    "io.github.demchaav:graph-compose-testing:2.4.1-SNAPSHOT"
+    "io.github.demchaav:graph-compose-core:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-templates:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pdf:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-docx:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pptx:2.5.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-testing:2.5.0-SNAPSHOT"
   ],
   "parameterNamesFrom": [
     "graph-compose-core:sources",
@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 70,
-    "methods": 375,
+    "methods": 379,
     "constants": 18,
-    "generated": 192
+    "generated": 193
   },
   "packages": [
     {
@@ -1056,6 +1056,41 @@
                 {
                   "type": "String",
                   "name": "text"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "writeTextLayer",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PDPageContentStream",
+                  "name": "stream"
+                },
+                {
+                  "type": "String",
+                  "name": "text"
+                },
+                {
+                  "type": "double",
+                  "name": "x"
+                },
+                {
+                  "type": "double",
+                  "name": "baselineY"
+                },
+                {
+                  "type": "double",
+                  "name": "width"
+                },
+                {
+                  "type": "double",
+                  "name": "height"
                 }
               ],
               "stability": "beta"
@@ -5954,6 +5989,36 @@
                 {
                   "type": "DocumentOutputOptions",
                   "name": null
+                },
+                {
+                  "type": "LayoutGraph",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "SemanticExportContext",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "LayoutCanvas",
+                  "name": "canvas"
+                },
+                {
+                  "type": "Collection<FontFamilyDefinition>",
+                  "name": "customFontFamilies"
+                },
+                {
+                  "type": "Path",
+                  "name": "outputFile"
+                },
+                {
+                  "type": "DocumentOutputOptions",
+                  "name": "outputOptions"
                 }
               ]
             },
@@ -5978,6 +6043,16 @@
                   "name": "outputFile"
                 }
               ]
+            },
+            {
+              "kind": "method",
+              "name": "requireLayoutGraph",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "LayoutGraph",
+              "params": [],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6014,6 +6089,16 @@
               "typeParameters": null,
               "returns": "DocumentOutputOptions",
               "params": []
+            },
+            {
+              "kind": "method",
+              "name": "layoutGraph",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "LayoutGraph",
+              "params": [],
+              "stability": "beta"
             }
           ]
         },

@@ -876,7 +876,8 @@ final class ParagraphWrapping {
                         svgToken.height(),
                         svgToken.alignment(),
                         svgToken.baselineOffset(),
-                        svgToken.linkTarget()));
+                        svgToken.linkTarget(),
+                        svgToken.text()));
                 width += svgToken.width();
                 tokenIndex++;
             } else {

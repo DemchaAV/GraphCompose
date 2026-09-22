@@ -8,7 +8,7 @@ The live threads are tracked in [issues](https://github.com/DemchaAV/GraphCompos
 
 ## Current stable — 2.4
 
-**2.4.0** is the current release. It leads with a **much larger template line-up**. Two
+**2.4.1** is the current release. It leads with a **much larger template line-up**. Two
 families join invoice, proposal, CV and cover letter: **receipt**, for payment
 confirmations (`ModernReceipt`), and **rota**, a staff shift schedule (`CobaltRota`) on a
 new `templates.data.rota` model that replaces the `data.schedule` records nothing rendered.

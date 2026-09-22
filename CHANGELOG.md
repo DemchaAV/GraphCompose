@@ -8,6 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A picture and a list keep the space they hold around themselves.** Neither wrote its own
+  box, so on the probe corpus an image holding 12pt at each edge ran straight into the
+  heading under it, and a four-item checklist came out 13pt short of the page —
+  `itemSpacing` and the list's own padding both went unwritten. A picture's paragraph is the
+  picture's block and now carries its spacing; a list hands its edges to the paragraphs
+  around it the way a container does, and the gap it puts between items becomes the space
+  above each item after the first.
+  <br><br>
+  With this, the probe corpus's second page renders within **0.4pt** of the reference PDF,
+  against 37pt before, and the first within 2pt.
+
 - **A table keeps the space it holds above and below itself.** Word has no space above a
   table and none below one, so a table's `margin` and `padding` were dropped — and a row is
   exported as a one-row table, so a row's padding went the same way. Measured on the probe

@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.1-SNAPSHOT
 
-Types: 9 · methods: 26 · constants: 0 · compiler-generated members: 26
+Types: 9 · methods: 27 · constants: 0 · compiler-generated members: 27
 
 ## com.demcha.compose.document.backend.fixed
 
@@ -70,6 +70,7 @@ Types: 9 · methods: 26 · constants: 0 · compiler-generated members: 26
 
 ### SemanticBackend (interface)
 - `String name()`
+- `boolean requiresResolvedLayout()   [beta]`
 - `R export(DocumentGraph, SemanticExportContext)`
 
 ## com.demcha.compose.document.layout

@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 70,
-    "methods": 376,
+    "methods": 379,
     "constants": 18,
-    "generated": 192
+    "generated": 193
   },
   "packages": [
     {
@@ -5989,6 +5989,36 @@
                 {
                   "type": "DocumentOutputOptions",
                   "name": null
+                },
+                {
+                  "type": "LayoutGraph",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "SemanticExportContext",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "LayoutCanvas",
+                  "name": "canvas"
+                },
+                {
+                  "type": "Collection<FontFamilyDefinition>",
+                  "name": "customFontFamilies"
+                },
+                {
+                  "type": "Path",
+                  "name": "outputFile"
+                },
+                {
+                  "type": "DocumentOutputOptions",
+                  "name": "outputOptions"
                 }
               ]
             },
@@ -6013,6 +6043,16 @@
                   "name": "outputFile"
                 }
               ]
+            },
+            {
+              "kind": "method",
+              "name": "requireLayoutGraph",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "LayoutGraph",
+              "params": [],
+              "stability": "beta"
             },
             {
               "kind": "method",
@@ -6049,6 +6089,16 @@
               "typeParameters": null,
               "returns": "DocumentOutputOptions",
               "params": []
+            },
+            {
+              "kind": "method",
+              "name": "layoutGraph",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "LayoutGraph",
+              "params": [],
+              "stability": "beta"
             }
           ]
         },

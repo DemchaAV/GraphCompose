@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.1-SNAPSHOT
 
-Types: 70 · methods: 376 · constants: 18 · compiler-generated members: 192
+Types: 70 · methods: 379 · constants: 18 · compiler-generated members: 193
 
 ## com.demcha.compose.document.backend.fixed
 
@@ -538,12 +538,15 @@ Types: 70 · methods: 376 · constants: 18 · compiler-generated members: 192
 ## com.demcha.compose.document.backend.semantic
 
 ### SemanticExportContext (record)
-- `new SemanticExportContext(LayoutCanvas, Collection<FontFamilyDefinition>, Path, DocumentOutputOptions)`
+- `new SemanticExportContext(LayoutCanvas, Collection<FontFamilyDefinition>, Path, DocumentOutputOptions, LayoutGraph)`
+- `new SemanticExportContext(LayoutCanvas canvas, Collection<FontFamilyDefinition> customFontFamilies, Path outputFile, DocumentOutputOptions outputOptions)`
 - `new SemanticExportContext(LayoutCanvas canvas, Collection<FontFamilyDefinition> customFontFamilies, Path outputFile)`
+- `LayoutGraph requireLayoutGraph()   [beta]`
 - `LayoutCanvas canvas()`
 - `Collection<FontFamilyDefinition> customFontFamilies()`
 - `Path outputFile()`
 - `DocumentOutputOptions outputOptions()`
+- `LayoutGraph layoutGraph()   [beta]`
 
 ### SemanticExportManifest (record)
 - `new SemanticExportManifest(String, Path, int, List<String>)`

@@ -90,12 +90,20 @@ final class DocumentRenderingFacade {
     <R> R export(SemanticBackend<R> backend, Path outputFile) throws Exception {
         context.ensureOpen();
         Objects.requireNonNull(backend, "backend");
+        // Compiled only for a backend that asked: compiling runs measurement and
+        // pagination over the whole document, which an export that ignores geometry has
+        // no use for. It does not save the render-module dependency — the session already
+        // needed a FontMetricsProvider to be constructed at all.
+        // The graph, the canvas and the layout all come off the same session state, so a
+        // backend given both is given a layout compiled from the graph beside it.
+        LayoutGraph resolvedLayout = backend.requiresResolvedLayout() ? context.layoutGraph() : null;
         return backend.export(context.documentGraph(),
                 new SemanticExportContext(
                         context.canvas(),
                         context.customFontFamilies(),
                         outputFile,
-                        context.outputOptions()));
+                        context.outputOptions(),
+                        resolvedLayout));
     }
 
     byte[] toPdfBytes() throws Exception {

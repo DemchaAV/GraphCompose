@@ -918,7 +918,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // the node's text style like any other run — Word keeps a field result's
         // formatting when it repaints it, so an unstyled placeholder would snap
         // a styled page number back to the document default.
-        XWPFRun run = new XWPFRun(simple.addNewR(), para);
+        XWPFRun run = new XWPFRun(simple.addNewR(), (IRunBody) para);
         applyStyle(run, field.textStyle());
         run.setText(fieldPlaceholder(field.kind()));
     }
@@ -2186,7 +2186,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else {
             CTSimpleField field = para.getCTP().addNewFldSimple();
             field.setInstr(" PAGEREF " + bookmark + " \\h ");
-            run = new XWPFRun(field.addNewR(), para);
+            run = new XWPFRun(field.addNewR(), (IRunBody) para);
         }
         applyStyle(run, node.textStyle());
         run.setText(shown);

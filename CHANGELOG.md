@@ -487,6 +487,31 @@ follow semantic versioning; release dates are ISO 8601.
   words it was written between and keeps a ZWJ sequence and a U+FE0F on one glyph each; a
   left-to-right sentence with a Hebrew word reads back in written order.
 
+### Performance
+
+- **A large table's DOCX export is linear in its size again.** Writing each text cell's line
+  height looked the cell up by scanning every row of its table, so a table's export grew with
+  the square of its cells: measured, doubling a 1000-row table's rows took its export from
+  545ms to 1463ms. Each table's cells are now indexed once, on first use. JMH on the same
+  machine, a 1000-row, five-column table exported through a session: **527 ± 247 → 257 ± 43
+  ms/op**; the other shapes measured move within noise, and allocation is unchanged — the
+  cost removed was comparison, not memory.
+- **What a DOCX export costs is now measured.** `DocxExportJmhBenchmark` (in `benchmarks`)
+  exports four shapes of document through a session — one small page, a report of about
+  twenty pages, a thousand-row table, twenty repetitions of one image — beside the PDF render
+  of each, so the numbers read as a ratio rather than as absolutes on one machine. The
+  baseline, one machine, 5 iterations, 1 fork, `-prof gc`:
+
+  | shape | DOCX ms/op | PDF ms/op | DOCX alloc/op | PDF alloc/op |
+  |---|---|---|---|---|
+  | small | 3.2 ± 2.6 | 2.2 ± 0.2 | 1.35 MB | 0.36 MB |
+  | report20 | 10.7 ± 3.6 | 5.1 ± 0.4 | 5.7 MB | 2.9 MB |
+  | table1000 | 257 ± 43 | 296 ± 8 | 116 MB | 39 MB |
+  | images20 | 4.3 ± 3.6 | 1.0 ± 0.1 | 2.8 MB | 0.38 MB |
+
+  Twenty identical images are stored once — one media part — and an embedded font once per
+  face, so neither grows the package with repetition.
+
 ### Documentation
 
 - **A card of a preset shows the code that draws that preset.** The catalogue carries one

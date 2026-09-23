@@ -84,7 +84,6 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBorder;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTAbstractNum;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTInd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTLvl;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPBdr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTString;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyle;
@@ -178,11 +177,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private final java.util.Set<String> warnedNodeKinds =
             java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final AtomicBoolean containerRadiusWarned = new AtomicBoolean(false);
-    // Fills and borders of the containers currently being written into, innermost first.
-    // A paragraph carries the innermost one, because that is the panel it sits in.
-    private final java.util.Deque<ContainerPaint> containerPaint = new java.util.ArrayDeque<>();
-    // How many of those were open when the cell being written began; see newBodyParagraph.
-    private int cellPaintDepth;
+    // The fill of the panel being written into, or null: a table cell with no fill of its own
+    // is drawn white by the engine, and inside a filled panel has to say so rather than let the
+    // panel's colour through.
+    private DocumentColor surfaceBehind;
     // How far the containers being written hold their content in from each side, in points:
     // every enclosing margin and padding, counted from the page margin or the cell's edge.
     private double insetLeft;
@@ -219,6 +217,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The last paragraph written into the body, so a container can hand it the space it
     // holds below itself once its children are done.
     private XWPFParagraph lastBodyParagraph;
+    // The empty paragraph closing the last table written into the cell being filled, while
+    // nothing has been written after it; see newTable.
+    private XWPFParagraph tableCloser;
     // The cell being filled, when one is. A composed cell is written by the ordinary
     // writers pointed at it rather than by a second set that knows about cells: the first
     // arrangement only ever learned about paragraphs, so a cell built from an image or a
@@ -251,23 +252,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final Instant DEFAULT_DETERMINISTIC_INSTANT = Instant.parse("2000-01-01T00:00:00Z");
 
     /**
-     * A container's paint, reduced to what a Word paragraph can carry.
+     * A container's paint: what makes it a panel, written as a one-cell table.
      *
-     * @param fill    background, written as {@code w:shd}
-     * @param borders per-side strokes, written as {@code w:pBdr}
+     * @param fill    background, written as the cell's {@code w:shd}
+     * @param borders per-side strokes, written as the cell's {@code w:tcBorders}
      */
-    /**
-     * A panel's paint, and where its edges sit: the inset of its outer edge from the page
-     * margin or the cell's edge, recorded as the panel is entered.
-     */
-    private record ContainerPaint(DocumentColor fill, DocumentBorders borders,
-                                  double edgeLeft, double edgeRight) {
+    private record ContainerPaint(DocumentColor fill, DocumentBorders borders) {
 
-        ContainerPaint at(double left, double right) {
-            return new ContainerPaint(fill, borders, left, right);
-        }
-
-        /** @return true when there is nothing for a paragraph to carry */
+        /** @return true when there is nothing to paint, so the container is written as its content */
         boolean isEmpty() {
             return fill == null && borders == null;
         }
@@ -462,8 +454,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         chartWarned.set(false);
         containerRadiusWarned.set(false);
         warnedNodeKinds.clear();
-        containerPaint.clear();
-        cellPaintDepth = 0;
+        surfaceBehind = null;
         insetLeft = 0;
         insetRight = 0;
         listNumbering.clear();
@@ -974,10 +965,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeNodeContent(document, node);
             return;
         }
-        int first = document.getBodyElements().size();
+        // What the block writes lands where writing is going on — the body, or the cell being
+        // filled. Read off the body alone, a block inside a card wrote nothing, and its
+        // anchor and its keeps were silently dropped.
+        XWPFTableCell destination = currentCell;
+        java.util.function.Supplier<List<IBodyElement>> elements = destination == null
+                ? document::getBodyElements
+                : destination::getBodyElements;
+        int first = elements.get().size();
+        // The paragraph closing a table above, if the block takes it over, is the block's.
+        XWPFParagraph closer = cellEndsWithItsTableCloser() ? tableCloser : null;
         writeNodeContent(document, node);
-        List<IBodyElement> written =
-                document.getBodyElements().subList(first, document.getBodyElements().size());
+        if (closer != null && tableCloser != closer) {
+            first--;
+        }
+        List<IBodyElement> written = elements.get().subList(first, elements.get().size());
         if (keepTogether || keepWithNext) {
             keepOnOnePage(written, keepWithNext);
         }
@@ -1047,7 +1049,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         last.getCTP().addNewBookmarkEnd().setId(BigInteger.valueOf(id));
     }
 
-    /** The first paragraph of a table's first cell, or the last of its last cell. */
+    /**
+     * The first paragraph of a table's first cell, or the last of its last cell — inside the
+     * table that cell opens with, for a card whose first block is a table.
+     */
     private static XWPFParagraph edgeParagraph(XWPFTable table, boolean opening) {
         List<XWPFTableRow> rows = table.getRows();
         if (rows.isEmpty()) {
@@ -1058,11 +1063,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (cells.isEmpty()) {
             return null;
         }
-        List<XWPFParagraph> paragraphs = cells.get(opening ? 0 : cells.size() - 1).getParagraphs();
-        if (paragraphs.isEmpty()) {
+        List<IBodyElement> inside = cells.get(opening ? 0 : cells.size() - 1).getBodyElements();
+        if (inside.isEmpty()) {
             return null;
         }
-        return paragraphs.get(opening ? 0 : paragraphs.size() - 1);
+        IBodyElement edge = inside.get(opening ? 0 : inside.size() - 1);
+        if (edge instanceof XWPFTable nested) {
+            return edgeParagraph(nested, opening);
+        }
+        return edge instanceof XWPFParagraph paragraph ? paragraph : null;
     }
 
     /**
@@ -1165,8 +1174,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // Overlay/positioned wrappers have no DOCX analogue for their
             // geometry, but their children can be semantic (text, images) —
             // render them sequentially rather than dropping the subtree.
-            // A fill or a border is the exception: Word paragraphs carry both, so a
-            // panel travels with the paragraphs inside it instead of disappearing.
+            // A fill or a border is the exception: the container is then a panel, written
+            // as a one-cell table carrying both, instead of disappearing.
             writeContainerChildren(document, node);
         } else {
             // Geometry-only node kinds (line, ellipse, shape, path, polygon,
@@ -1498,12 +1507,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>A paragraph's own {@code w:ind} replaces its numbering level's, so the container's
      * inset written on it would drop the level's hanging indent and the marker would run into
-     * the text. The level's indent is added back on top of the inset. A panel border on the
-     * item's left is spaced out by how far the level's first line — where the marker starts,
-     * and where the editor measures a hanging paragraph's border from — sits inside the
-     * inset: nothing on the first level, one nesting step per level below it. Measured in
-     * LibreOffice, spacing it by the whole level indent put the accent bar 9pt outside the
-     * panel on every item.</p>
+     * the text. The level's indent is added back on top of the inset.</p>
      */
     private void indentListItemInside(XWPFParagraph para, int depth) {
         CTPPr properties = para.getCTP().getPPr();
@@ -1515,15 +1519,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             CTInd indent = properties.getInd();
             indent.setLeft(BigInteger.valueOf(toTwips(insetLeft) + levelLeft));
             indent.setHanging(BigInteger.valueOf(LIST_HANGING_TWIPS));
-        }
-        // Without an inset the level's own indent applies, and its first line is the same
-        // nesting step inside the panel's edge, so the border moves out by it all the same.
-        if (depth > 0 && properties.isSetPBdr() && properties.getPBdr().isSetLeft()) {
-            CTBorder left = properties.getPBdr().getLeft();
-            Long space = left.isSetSpace() ? writtenTwips(left.getSpace()) : null;
-            long firstLineInside = (long) LIST_NESTING_STEP_TWIPS * depth;
-            long points = (space == null ? 0 : space) + Math.round(firstLineInside / POINT_TO_TWIP);
-            left.setSpace(BigInteger.valueOf(Math.min(MAX_BORDER_SPACE_POINTS, points)));
         }
     }
 
@@ -1646,17 +1641,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Writes a wrapper's children, carrying its fill and borders down to each paragraph.
+     * Writes a wrapper's children — inside a one-cell table when it paints a panel.
      *
-     * <p>Word has no box to put around a run of paragraphs, but it does shade and border
-     * each one, and consecutive paragraphs sharing a fill render as a single band. That is
-     * close enough to a panel to be worth having, and much better than what this exporter
-     * used to do, which was to drop the paint without saying so.</p>
+     * <p>A container with no fill and no border is not a Word object: its children are
+     * written where it stood, held in by its sides (see {@link #writeContainerBody}).</p>
      *
-     * <p>What does not survive: the corner radius, because Word paragraph shading is
-     * rectangular, and the padding above and below, which is space outside a paragraph's
-     * shading. The radius is warned about once per export rather than pretended away. The
-     * sides do survive — see {@link #applyContainerPaint} and {@link #applyInset}.</p>
+     * <p>A container that paints — a card, a callout, an outlined box — is written as a
+     * table of one cell, which is how a panel is built in Word by hand. Word has no element
+     * that wraps a run of paragraphs, and painting each paragraph instead left the panel in
+     * pieces: measured in LibreOffice, the accent bar broke beside every row and table inside
+     * the card, the band had white gaps where the space between blocks sat and none under a
+     * table, and the padding above and below lay outside it. A cell holds all of it: its
+     * shading is the fill behind everything inside, its borders are the card's edges at the
+     * card's full height, and its margins are the padding on all four sides. What is inside
+     * is written by the same writers that write a composed table cell, so it stays paragraphs,
+     * lists, rows and tables a reader edits as usual.</p>
+     *
+     * <p>What does not survive is the corner radius, since a cell is rectangular; it is
+     * warned about once per export rather than pretended away.</p>
      */
     private void writeContainerChildren(XWPFDocument document, DocumentNode node) throws Exception {
         ContainerPaint paint = paintOf(node);
@@ -1665,13 +1667,198 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         warnContainerRadiusDropped(node);
-        // The panel's edge is its margin box's inner side: past its margin, before its padding.
-        containerPaint.push(paint.at(insetLeft + node.margin().left(), insetRight + node.margin().right()));
-        try {
-            writeContainerBody(document, node);
-        } finally {
-            containerPaint.pop();
+        writePanel(document, node, paint);
+    }
+
+    /**
+     * Writes a painting container as a one-cell table; see {@link #writeContainerChildren}.
+     *
+     * <p>The geometry is the page's, translated. The page centres a panel's border on its
+     * edge and measures the padding from the edge; the editor keeps a cell's border inside
+     * the cell and starts the cell's margin after it. So each margin is the padding less half
+     * that side's border, and the table is wider than the panel by half of each side border:
+     * the text then lands the padding in from the panel's edge, and the border straddles the
+     * edge, as on the page. Measured in LibreOffice against the engine's render, the band, the
+     * accent bar and the text of a card with a 3pt accent land on the page's pixels.</p>
+     *
+     * <p>The table sits where the container's margin box starts, the enclosing insets and its
+     * own left margin in. A table in the body is placed by its first cell's text, so its
+     * {@code w:tblInd} is where the text starts; a table nested in a cell is placed by its
+     * outer edge, so there it is where the border's outer edge is. Measured, a nested panel
+     * indented like a body one sat its whole padding right of the page. Its top and bottom
+     * margins are the space around the table, owed like any block's. A container kept
+     * together that the layout held on one page is a row that may not break.</p>
+     *
+     * <p>Word breaks no page inside a table cell, so a page break among the panel's children
+     * closes the panel there and opens it again after the break, on the next page — the way
+     * the page draws a card a break runs through. Inside a cell there is no page to break,
+     * and the panel is written whole.</p>
+     */
+    private void writePanel(XWPFDocument document, DocumentNode node, ContainerPaint paint) throws Exception {
+        List<List<DocumentNode>> pieces = new ArrayList<>();
+        pieces.add(new ArrayList<>());
+        for (DocumentNode child : node.children()) {
+            if (child instanceof PageBreakNode && currentCell == null) {
+                pieces.add(new ArrayList<>());
+            } else {
+                pieces.get(pieces.size() - 1).add(child);
+            }
         }
+        for (int index = 0; index < pieces.size(); index++) {
+            if (index > 0) {
+                writePageBreak(document);
+            }
+            writePanelPiece(document, node, paint, pieces.get(index), index == 0, index == pieces.size() - 1);
+        }
+    }
+
+    /** Writes one table of a panel: the whole panel, or the part of it between page breaks. */
+    private void writePanelPiece(XWPFDocument document, DocumentNode node, ContainerPaint paint,
+                                 List<DocumentNode> children, boolean first, boolean last) throws Exception {
+        DocumentInsets margin = node.margin();
+        DocumentInsets padding = node.padding();
+        DocumentBorders borders = paint.borders() == null ? DocumentBorders.NONE : paint.borders();
+        double halfLeft = strokeWidth(borders.left()) / 2;
+        double halfRight = strokeWidth(borders.right()) / 2;
+        // Whatever edge an enclosing container is still holding above its first paragraph is
+        // space above this table too, and a table carries no space above itself.
+        owePendingSpacingAfter(carriedSpacingBefore + (first ? margin.top() : 0));
+        carriedSpacingBefore = 0;
+        holdTheSpaceAboveATable(document);
+        double width = panelWidth(node);
+
+        XWPFTable table = newTable(document, 1, 1);
+        hideTableGrid(table);
+        XWPFTableCell cell = table.getRow(0).getCell(0);
+        if (Double.isFinite(width) && width > 0) {
+            double outer = width + halfLeft + halfRight;
+            setTableWidth(table, outer);
+            writeGrid(table, new double[]{outer});
+            CTTcPr properties = cellProperties(cell);
+            CTTblWidth cellWidth = properties.isSetTcW() ? properties.getTcW() : properties.addNewTcW();
+            cellWidth.setType(STTblWidth.DXA);
+            cellWidth.setW(BigInteger.valueOf(toTwips(outer)));
+        }
+        applyCellPaint(cell, paint.fill(), null);
+        paintCellSides(cell, paint.borders());
+        applyCellPadding(cell, insideTheBorders(padding, borders));
+        if (node.keepTogether() && layout.onOnePage(node)) {
+            table.getRow(0).setCantSplitRow(true);
+        }
+
+        cell.removeParagraph(0);
+        DocumentColor outerSurface = surfaceBehind;
+        double outerCellWidth = currentCellWidth;
+        if (paint.fill() != null) {
+            surfaceBehind = paint.fill();
+        }
+        currentCellWidth = Double.isFinite(width) ? width - padding.left() - padding.right() : Double.NaN;
+        try {
+            writeCellNodes(cell, children);
+        } finally {
+            surfaceBehind = outerSurface;
+            currentCellWidth = outerCellWidth;
+        }
+        if (cell.getParagraphs().isEmpty()) {
+            // A panel with nothing Word can hold inside is its padding tall on the page, not a
+            // line of text taller.
+            holdToHairline(cell.addParagraph());
+        }
+
+        double edge = insetLeft + margin.left();
+        double indent = currentCell == null ? edge + padding.left() - halfLeft : edge - halfLeft;
+        if (indent != 0) {
+            CTTblPr tableProperties = table.getCTTbl().getTblPr();
+            CTTblWidth tableIndent = tableProperties.isSetTblInd()
+                    ? tableProperties.getTblInd()
+                    : tableProperties.addNewTblInd();
+            tableIndent.setType(STTblWidth.DXA);
+            // Signed: a nested panel with no margin starts half its border left of the cell.
+            tableIndent.setW(BigInteger.valueOf(Math.round(indent * POINT_TO_TWIP)));
+        }
+        if (last) {
+            owePendingSpacingAfter(margin.bottom());
+        }
+    }
+
+    /**
+     * Gives the space owed above a table somewhere to go when nothing above it can hold it.
+     *
+     * <p>Word has no space above a table, so the paragraph before it carries it — and at the
+     * top of the document or of a cell there is none, and the space was lost: a card's top
+     * margin, or the padding of a section it opens. A paragraph a tenth of a point tall holds
+     * it instead. After a table the separator between the two already does.</p>
+     */
+    private void holdTheSpaceAboveATable(XWPFDocument document) {
+        boolean tableAbove = currentCell == null
+                ? endsWithATable(document.getBodyElements())
+                : cellEndsWithItsTableCloser();
+        if (pendingSpacingAfter > 0 && lastBodyParagraph == null && !tableAbove) {
+            holdToHairline(newBodyParagraph(document));
+        }
+    }
+
+    /**
+     * How wide a panel is: as the layout placed it, or else what is left where it is written,
+     * less its own side margins — or unknown, left to the editor, where neither is known: no
+     * canvas, or a cell whose width this export did not write.
+     */
+    private double panelWidth(DocumentNode node) {
+        boolean known = currentCell != null ? Double.isFinite(currentCellWidth) : contentWidth < Double.MAX_VALUE;
+        double available = known
+                ? availableWidth() - node.margin().left() - node.margin().right()
+                : Double.NaN;
+        java.util.OptionalDouble placed = layout.placedWidth(node);
+        if (placed.isEmpty()) {
+            return available;
+        }
+        // A panel sized round its content is exactly as wide as its longest line, which an
+        // editor setting the text in its own face can push onto a second line; it gets the
+        // slack an auto column gets, where there is room for it.
+        double room = Double.isFinite(available) ? available - placed.getAsDouble() : EDITOR_COLUMN_SLACK_POINTS;
+        return placed.getAsDouble() + Math.max(0, Math.min(EDITOR_COLUMN_SLACK_POINTS, room));
+    }
+
+    /**
+     * A panel's padding as a cell's margins: less half the border on each side, the half that
+     * lies inside the panel on the page and inside the cell's margin in the editor (see
+     * {@link #writePanel}).
+     */
+    private static DocumentInsets insideTheBorders(DocumentInsets padding, DocumentBorders borders) {
+        return new DocumentInsets(
+                Math.max(0, padding.top() - strokeWidth(borders.top()) / 2),
+                Math.max(0, padding.right() - strokeWidth(borders.right()) / 2),
+                Math.max(0, padding.bottom() - strokeWidth(borders.bottom()) / 2),
+                Math.max(0, padding.left() - strokeWidth(borders.left()) / 2));
+    }
+
+    private static double strokeWidth(DocumentStroke stroke) {
+        return stroke == null ? 0 : Math.max(0, stroke.width());
+    }
+
+    /**
+     * Writes a panel's borders on its cell, side by side; a side the panel does not draw is
+     * stated as none, so the cell carries no border the page does not show.
+     */
+    private static void paintCellSides(XWPFTableCell cell, DocumentBorders borders) {
+        CTTcPr properties = cellProperties(cell);
+        CTTcBorders edges = properties.isSetTcBorders() ? properties.getTcBorders() : properties.addNewTcBorders();
+        DocumentBorders sides = borders == null ? DocumentBorders.NONE : borders;
+        paintCellSide(edges.isSetTop() ? edges.getTop() : edges.addNewTop(), sides.top());
+        paintCellSide(edges.isSetBottom() ? edges.getBottom() : edges.addNewBottom(), sides.bottom());
+        paintCellSide(edges.isSetLeft() ? edges.getLeft() : edges.addNewLeft(), sides.left());
+        paintCellSide(edges.isSetRight() ? edges.getRight() : edges.addNewRight(), sides.right());
+    }
+
+    private static void paintCellSide(CTBorder edge, DocumentStroke stroke) {
+        if (stroke == null || stroke.width() <= 0) {
+            paintEdge(edge, STBorder.NIL, null, null);
+            return;
+        }
+        // w:sz counts eighths of a point, rounded to at least one so a hairline the author
+        // asked for stays a line rather than vanishing.
+        paintEdge(edge, STBorder.SINGLE, BigInteger.valueOf(Math.max(1, Math.round(stroke.width() * 8.0))),
+                toHexColor(stroke.color().color()));
     }
 
     /**
@@ -2010,13 +2197,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static ContainerPaint paintOf(DocumentNode node) {
         if (node instanceof SectionNode section) {
             return new ContainerPaint(section.fillColor(),
-                    bordersOf(section.borders(), section.stroke()), 0, 0);
+                    bordersOf(section.borders(), section.stroke()));
         }
         if (node instanceof ContainerNode container) {
             return new ContainerPaint(container.fillColor(),
-                    bordersOf(container.borders(), container.stroke()), 0, 0);
+                    bordersOf(container.borders(), container.stroke()));
         }
-        return new ContainerPaint(null, null, 0, 0);
+        return new ContainerPaint(null, null);
     }
 
     /**
@@ -2040,11 +2227,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 : node instanceof ContainerNode container && hasRadius(container.cornerRadius());
         if (rounded) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "corner radius", layout.pathOf(node),
-                    "Word paragraph shading is rectangular, so the panel keeps its fill and "
+                    "a Word table cell is rectangular, so the panel keeps its fill and "
                     + "loses its rounded corners");
         }
         if (rounded && containerRadiusWarned.compareAndSet(false, true)) {
-            LOG.warn("docx.export.container-radius-dropped node='{}' — Word paragraph shading "
+            LOG.warn("docx.export.container-radius-dropped node='{}' — a Word table cell "
                      + "is rectangular, so the panel renders with square corners. "
                      + "(One warning per export; use the PDF backend for the rounded form.)",
                     node.nodeKind());
@@ -2052,32 +2239,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Creates a body paragraph already wearing the panel it sits in.
-     *
-     * <p>Every paragraph written straight into the body goes through here, so a
-     * container's paint cannot be forgotten by a writer that creates its own. Three
-     * writers create paragraphs elsewhere on purpose: a page break, which would draw a
-     * band across the page; a table cell, which carries the author's own cell paint; and
-     * a row's cells, which take the paint on the cell instead, since a paragraph inside a
-     * table cannot reach the band the container is drawing.</p>
+     * Creates a body paragraph where content is being written — the body, or the cell being
+     * filled — held in by the containers around it and carrying the space owed above it.
      */
-    /**
-     * The panel whatever is written now sits in, or null.
-     *
-     * <p>Inside a cell, only a container opened inside that cell counts. One the table sits
-     * in is carried by the cell's own shading, and painting inside the cell as well laid the
-     * card's colour over the cell's — a zebra stripe came out in the card's colour wherever a
-     * cell was built from a node, a row's included.</p>
-     */
-    private ContainerPaint paintHere() {
-        return containerPaint.size() > cellPaintDepth ? containerPaint.peek() : null;
-    }
-
     private XWPFParagraph newBodyParagraph(XWPFDocument document) {
-        XWPFParagraph para = currentCell != null ? currentCell.addParagraph() : document.createParagraph();
-        ContainerPaint paint = paintHere();
-        if (paint != null) {
-            applyContainerPaint(para, paint);
+        XWPFParagraph para;
+        if (cellEndsWithItsTableCloser()) {
+            // The paragraph closing the table above is where this one goes: a second one
+            // would leave the closer as a gap the page does not have.
+            para = tableCloser;
+            para.getCTP().getPPr().getSpacing().unsetLineRule();
+            para.getCTP().getPPr().getSpacing().unsetLine();
+            tableCloser = null;
+        } else {
+            para = currentCell != null ? currentCell.addParagraph() : document.createParagraph();
         }
         applyInset(para);
         // Everything owed above this paragraph — the space the one before it holds below
@@ -2168,77 +2343,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Paints a paragraph with the panel it sits in: the fill, and the borders at the panel's
-     * edges rather than at the text's.
-     *
-     * <p>Word draws a paragraph's side border its {@code w:space} outside the text and shades
-     * the paragraph out to that border. The text is indented by every enclosing inset (see
-     * {@link #applyInset}); the panel's edge sits where it recorded on the way in, so a side
-     * border spaced by the distance between the two lands where the page draws the edge, and
-     * the fill reaches it — for the panel's own paragraphs and for those of a padded section
-     * inside it alike. A filled panel with no border on a side still needs one there to carry
-     * the fill out past the text, so it gets a hairline in the fill's own colour. Measured in
-     * LibreOffice, this puts the accent bar, the band and the text where the page has them.
-     * {@code w:space} stops at 31pt, so a wider distance brings the band's edge in by the
-     * difference.</p>
-     */
-    private void applyContainerPaint(XWPFParagraph para, ContainerPaint paint) {
-        CTPPr properties = para.getCTP().isSetPPr()
-                ? para.getCTP().getPPr()
-                : para.getCTP().addNewPPr();
-        if (paint.fill() != null) {
-            CTShd shading = properties.isSetShd() ? properties.getShd() : properties.addNewShd();
-            shading.setVal(STShd.CLEAR);
-            shading.setColor("auto");
-            shading.setFill(toHexColor(paint.fill().color()));
-        }
-        DocumentBorders borders = paint.borders();
-        double spaceLeft = Math.max(0, insetLeft - paint.edgeLeft());
-        double spaceRight = Math.max(0, insetRight - paint.edgeRight());
-        boolean carryFillLeft = paint.fill() != null && spaceLeft > 0;
-        boolean carryFillRight = paint.fill() != null && spaceRight > 0;
-        if (borders == null && !carryFillLeft && !carryFillRight) {
-            return;
-        }
-        CTPBdr edges = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
-        if (borders != null) {
-            paintParagraphEdge(borders.top(), edges::isSetTop, edges::getTop, edges::addNewTop);
-            paintParagraphEdge(borders.bottom(), edges::isSetBottom, edges::getBottom, edges::addNewBottom);
-            paintParagraphEdge(borders.left(), edges::isSetLeft, edges::getLeft, edges::addNewLeft);
-            paintParagraphEdge(borders.right(), edges::isSetRight, edges::getRight, edges::addNewRight);
-        }
-        String fillHex = paint.fill() == null ? null : toHexColor(paint.fill().color());
-        if (carryFillLeft && !edges.isSetLeft()) {
-            paintEdge(edges.addNewLeft(), STBorder.SINGLE, FILL_EDGE_EIGHTHS, fillHex);
-        }
-        if (carryFillRight && !edges.isSetRight()) {
-            paintEdge(edges.addNewRight(), STBorder.SINGLE, FILL_EDGE_EIGHTHS, fillHex);
-        }
-        if (edges.isSetLeft() && spaceLeft > 0) {
-            edges.getLeft().setSpace(BigInteger.valueOf(borderSpace(spaceLeft)));
-        }
-        if (edges.isSetRight() && spaceRight > 0) {
-            edges.getRight().setSpace(BigInteger.valueOf(borderSpace(spaceRight)));
-        }
-    }
-
-    /** The narrowest border Word draws, for an edge that exists only to carry a fill. */
-    private static final BigInteger FILL_EDGE_EIGHTHS = BigInteger.TWO;
-
-    /** Word's {@code w:space} on a border, in whole points and no more than it allows. */
-    private static long borderSpace(double points) {
-        return Math.max(0, Math.min(MAX_BORDER_SPACE_POINTS, Math.round(points)));
-    }
-
-    private static final long MAX_BORDER_SPACE_POINTS = 31;
-
-    /**
-     * The width content has where it is being written: the page's, less what the containers
-     * around it hold in from each side. A picture or a row sized to the page's full width
-     * would run past the right margin once the containers push it in.
+     * The width content has where it is being written: the page's, or the cell's when a cell
+     * of known width is being filled, less what the containers around it hold in from each
+     * side. A picture or a row sized to the page's full width would run past the right margin
+     * once the containers push it in, and past the edge of a card it sits in.
      */
     private double availableWidth() {
-        return Double.isFinite(contentWidth) ? contentWidth - insetLeft - insetRight : contentWidth;
+        double width = currentCell != null && Double.isFinite(currentCellWidth) ? currentCellWidth : contentWidth;
+        return Double.isFinite(width) ? width - insetLeft - insetRight : width;
     }
 
     /**
@@ -2259,26 +2371,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (insetRight > 0) {
             indent.setRight(BigInteger.valueOf(toTwips(insetRight)));
         }
-    }
-
-    /**
-     * Writes one paragraph border edge, reusing whichever edge element is already there.
-     *
-     * <p>A stroke of no width is how this codebase says "no border", the same predicate the
-     * table painter reads, so such a side is left unwritten rather than drawn hairline.</p>
-     */
-    private static void paintParagraphEdge(DocumentStroke stroke,
-                                           java.util.function.BooleanSupplier isSet,
-                                           java.util.function.Supplier<CTBorder> get,
-                                           java.util.function.Supplier<CTBorder> add) {
-        if (stroke == null || stroke.width() <= 0) {
-            return;
-        }
-        // w:sz counts eighths of a point, rounded to at least one so a hairline the author
-        // asked for stays a line rather than vanishing.
-        BigInteger eighths = BigInteger.valueOf(Math.max(1, Math.round(stroke.width() * 8.0)));
-        paintEdge(isSet.getAsBoolean() ? get.get() : add.get(),
-                STBorder.SINGLE, eighths, toHexColor(stroke.color().color()));
     }
 
     private void writeShapeContainer(XWPFDocument document, ShapeContainerNode node) throws Exception {
@@ -2604,7 +2696,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * The colour Word will paint under {@code run} — the shading this export itself wrote
-     * on the run's paragraph or on the cell holding it, and otherwise the page's white.
+     * on the run's paragraph or on the cell holding it, then the fill of the panel around an
+     * unshaded cell, and otherwise the page's white.
      *
      * <p>Read back from the file being written rather than tracked in a field, so it is
      * whatever was actually written and cannot drift from it. Read, and only read:
@@ -2627,7 +2720,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 : currentCell.getCTTc().getTcPr();
         java.awt.Color cellFill = shadingFillOf(
                 cellProperties != null && cellProperties.isSetShd() ? cellProperties.getShd() : null);
-        return cellFill != null ? cellFill : java.awt.Color.WHITE;
+        if (cellFill != null) {
+            return cellFill;
+        }
+        // A cell with no shading of its own — a row's, inside a card — shows the panel's.
+        return surfaceBehind != null ? surfaceBehind.color() : java.awt.Color.WHITE;
     }
 
     /**
@@ -2973,16 +3070,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 applySpans(cell, placement, rowIdx);
                 // The covered positions of a merge take the paint too, so a merged
                 // region reads as one cell rather than as a striped run of them.
-                applyCellPaint(cell,
-                        resolveCellValue(node, placement, DocumentTableStyle::fillColor),
-                        resolveCellValue(node, placement, DocumentTableStyle::stroke));
+                DocumentColor fill = resolveCellFill(node, placement);
+                applyCellPaint(cell, fill, resolveCellValue(node, placement, DocumentTableStyle::stroke));
                 applyCellPadding(cell, resolveCellPadding(node, placement));
                 if (placement.row() != rowIdx) {
                     // A covered position carries the merge marker and no content of its own.
                     continue;
                 }
                 cell.removeParagraph(0);
-                writeCellContent(cell, placement, node);
+                // What the cell holds sits on the cell's fill — a stripe, not the card around
+                // the table — wherever it has no shading of its own.
+                DocumentColor outerSurface = surfaceBehind;
+                if (fill != null) {
+                    surfaceBehind = fill;
+                }
+                try {
+                    writeCellContent(cell, placement, node);
+                } finally {
+                    surfaceBehind = outerSurface;
+                }
             }
         }
         breakRowsWhereTheLayoutDoes(table, node);
@@ -3154,6 +3260,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** What the engine lays a cell out with when nothing states otherwise. */
     static final double ENGINE_DEFAULT_CELL_PADDING_POINTS = 4.0;
+
+    /**
+     * The fill a cell resolves to, with the engine's own default underneath where it shows.
+     *
+     * <p>The engine paints a cell no style fills in white. On a page that is invisible, and a
+     * cell written with no shading looks the same, so nothing is written. On a filled panel,
+     * or in a filled cell, it is not: an unshaded cell shows that colour through it, where the
+     * page draws a white cell. There the default is written. {@code DocxContainerPaintTest}
+     * pins it to the engine's, whose copy is internal.</p>
+     */
+    private DocumentColor resolveCellFill(TableNode node, TableGrid.Placement placement) {
+        DocumentColor authored = resolveCellValue(node, placement, DocumentTableStyle::fillColor);
+        return authored != null || surfaceBehind == null ? authored : ENGINE_DEFAULT_CELL_FILL;
+    }
+
+    /** What the engine fills a cell with when nothing states otherwise. */
+    static final DocumentColor ENGINE_DEFAULT_CELL_FILL = DocumentColor.WHITE;
 
     /** The left and right margins written on a cell, or Word's own default for an unwritten one. */
     private static double horizontalMarginsOf(XWPFTableCell cell) {
@@ -3329,21 +3452,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (layout.placed(node)) {
             row.setCantSplitRow(true);
         }
-        // A row inside a panel is still inside it. Its paragraphs live in table cells and
-        // so cannot carry the paint themselves; without shading the cells the band breaks
-        // into stripes wherever a two-column block sits in a filled container.
-        ContainerPaint paint = paintHere();
+        // A row has no fill of its own: inside a panel it is a table nested in the panel's
+        // cell, and a cell with no shading shows the panel's through it.
         for (int i = 0; i < node.children().size(); i++) {
             XWPFTableCell cell = row.getCell(i);
             cell.removeParagraph(0);
-            if (paint != null && paint.fill() != null) {
-                CTShd shading = cellProperties(cell).addNewShd();
-                shading.setVal(STShd.CLEAR);
-                shading.setColor("auto");
-                shading.setFill(toHexColor(paint.fill().color()));
-            }
             DocumentNode child = node.children().get(i);
-            writeRowCellChild(cell, child);
+            // What the cell holds is sized to the cell, not to whatever surrounds the row.
+            double previous = currentCellWidth;
+            currentCellWidth = usableWidthOf(cell, i, 1);
+            try {
+                writeRowCellChild(cell, child);
+            } finally {
+                currentCellWidth = previous;
+            }
         }
         indentTable(table);
     }
@@ -3855,19 +3977,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @return the usable width in points, or {@code NaN} when the table has no written grid
      */
     private static double usableWidthOf(XWPFTableCell cell, TableGrid.Placement placement) {
+        return usableWidthOf(cell, placement.column(), placement.colSpan());
+    }
+
+    private static double usableWidthOf(XWPFTableCell cell, int column, int span) {
         CTTblGrid grid = cell.getTableRow().getTable().getCTTbl().getTblGrid();
         if (grid == null || grid.sizeOfGridColArray() == 0) {
             return Double.NaN;
         }
         double twips = 0;
-        int last = Math.min(placement.column() + placement.colSpan(), grid.sizeOfGridColArray());
-        for (int index = placement.column(); index < last; index++) {
-            Long column = writtenTwips(grid.getGridColArray(index).getW());
-            if (column == null) {
+        int last = Math.min(column + span, grid.sizeOfGridColArray());
+        for (int index = column; index < last; index++) {
+            Long written = writtenTwips(grid.getGridColArray(index).getW());
+            if (written == null) {
                 // A column this export did not write as plain twips has no width to add up.
                 return Double.NaN;
             }
-            twips += column;
+            twips += written;
         }
         double points = twips / POINT_TO_TWIP - horizontalMarginsOf(cell);
         return points > 0 ? points : Double.NaN;
@@ -3887,7 +4013,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private XWPFTable newTable(XWPFDocument document, int rows, int columns) {
-        if (currentCell == null && endsWithATable(document.getBodyElements())) {
+        if (currentCell == null ? endsWithATable(document.getBodyElements()) : cellEndsWithItsTableCloser()) {
             separateFromTheTableAbove(document);
         }
         // Word has no space above a table, so the paragraph before it has to carry it.
@@ -3907,8 +4033,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         currentCell.insertTable(currentCell.getBodyElements().size(), nested);
         // Word ends a cell with a paragraph, so one follows the nested table — and being below
         // it, it is where space owed after the table goes: a padded card ending in a nested
-        // table keeps its bottom padding inside the cell, as the page does.
-        lastBodyParagraph = currentCell.addParagraph();
+        // table keeps its bottom padding inside the cell, as the page does. It holds no text,
+        // and at a line's height it put an empty line under every table in a card, so it is
+        // a hairline; the paragraph written next in the cell takes it over (see
+        // newBodyParagraph), and a table written next makes it the separator between the two.
+        XWPFParagraph closer = currentCell.addParagraph();
+        holdToHairline(closer);
+        tableCloser = closer;
+        lastBodyParagraph = closer;
         return nested;
     }
 
@@ -3925,14 +4057,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * inside a cell the inset is always zero.</p>
      */
     private void indentTable(XWPFTable table) {
-        if (currentCell != null || insetLeft <= 0 || table.getRows().isEmpty()
-            || table.getRow(0).getTableCells().isEmpty()) {
+        if (insetLeft <= 0 || table.getRows().isEmpty() || table.getRow(0).getTableCells().isEmpty()) {
             return;
         }
         XWPFTableCell first = table.getRow(0).getCell(0);
         CTTcPr cellProperties = first.getCTTc().isSetTcPr() ? first.getCTTc().getTcPr() : null;
         CTTcMar margins = cellProperties != null && cellProperties.isSetTcMar() ? cellProperties.getTcMar() : null;
-        double firstCellMargin = margins == null
+        // A table nested in a cell is placed by its edge, so nothing is added there.
+        double firstCellMargin = currentCell != null
+                ? 0
+                : margins == null
                 ? WORD_DEFAULT_CELL_MARGIN_POINTS
                 : marginPoints(margins.isSetLeft() ? margins.getLeft() : null);
         var properties = table.getCTTbl().getTblPr() != null
@@ -3962,28 +4096,49 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * touching tables than a tenth of a point does; below that the height stops mattering.
      * Word may hold a line that short to its own minimum, which is still under a point.</p>
      *
-     * <p>It belongs to the gap, not to either table, and is written that way: it takes a
-     * panel's fill so the band is not broken, but not the panel's borders, which on a lone
-     * paragraph between two tables would draw a rule across the card at every junction; and it
-     * keeps with the next table, so a page never breaks between the gap and what it opens — a
-     * block kept with the table below it stays kept, and a bookmark opened on the separator
-     * counts the page the table lands on.</p>
+     * <p>It keeps with the next table, so a page never breaks between the gap and what it
+     * opens — a block kept with the table below it stays kept, and a bookmark opened on the
+     * separator counts the page the table lands on.</p>
+     *
+     * <p>In a cell the paragraph is already there: the one closing the table above (see
+     * {@link #newTable}), which becomes the separator.</p>
      */
     private void separateFromTheTableAbove(XWPFDocument document) {
         pendingSpacingAfter = Math.max(0, pendingSpacingAfter - SEPARATOR_POINTS);
-        XWPFParagraph separator = newBodyParagraph(document);
+        XWPFParagraph separator;
+        if (currentCell != null) {
+            separator = tableCloser;
+            tableCloser = null;
+        } else {
+            separator = newBodyParagraph(document);
+            holdToHairline(separator);
+        }
         CTPPr properties = separator.getCTP().isSetPPr()
                 ? separator.getCTP().getPPr()
                 : separator.getCTP().addNewPPr();
-        if (properties.isSetPBdr()) {
-            properties.unsetPBdr();
-        }
         if (!properties.isSetKeepNext()) {
             properties.addNewKeepNext();
         }
+    }
+
+    /** Makes a paragraph that holds no text as short as a separator between tables. */
+    private static void holdToHairline(XWPFParagraph para) {
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
         spacing.setLineRule(STLineSpacingRule.EXACT);
         spacing.setLine(BigInteger.valueOf(Math.round(SEPARATOR_POINTS * POINT_TO_TWIP)));
+    }
+
+    /**
+     * Whether the cell being filled ends with the paragraph that closes its last table, so the
+     * next thing written there follows the table directly.
+     */
+    private boolean cellEndsWithItsTableCloser() {
+        if (currentCell == null || tableCloser == null) {
+            return false;
+        }
+        List<IBodyElement> elements = currentCell.getBodyElements();
+        return !elements.isEmpty() && elements.get(elements.size() - 1) == tableCloser;
     }
 
     /** How tall the paragraph keeping two tables apart is. */
@@ -4004,24 +4159,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the outer one writing into the body.</p>
      */
     private void writeCellNode(XWPFTableCell cell, DocumentNode child) throws Exception {
+        writeCellNodes(cell, List.of(child));
+    }
+
+    /** Writes several nodes into a cell, one after another, as a block of the cell's own. */
+    private void writeCellNodes(XWPFTableCell cell, List<DocumentNode> children) throws Exception {
         XWPFTableCell previousCell = currentCell;
         XWPFParagraph previousParagraph = lastBodyParagraph;
         double previousCarried = carriedSpacingBefore;
         double previousOwed = pendingSpacingAfter;
-        int previousPaintDepth = cellPaintDepth;
         double previousInsetLeft = insetLeft;
         double previousInsetRight = insetRight;
+        XWPFParagraph previousCloser = tableCloser;
         currentCell = cell;
         lastBodyParagraph = null;
+        tableCloser = null;
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
-        cellPaintDepth = containerPaint.size();
         // A cell's content is measured from the cell's own edge, which its margins already
         // keep clear of the border; the containers around the table have nothing to add.
         insetLeft = 0;
         insetRight = 0;
         try {
-            writeNode(cell.getXWPFDocument(), child);
+            for (DocumentNode child : children) {
+                writeNode(cell.getXWPFDocument(), child);
+            }
             // A cell ends where it ends: its last gap cannot land on whatever the body
             // writes next, and the body's cannot land inside it.
             flushSpacingAfter();
@@ -4030,9 +4192,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             lastBodyParagraph = previousParagraph;
             carriedSpacingBefore = previousCarried;
             pendingSpacingAfter = previousOwed;
-            cellPaintDepth = previousPaintDepth;
             insetLeft = previousInsetLeft;
             insetRight = previousInsetRight;
+            tableCloser = previousCloser;
         }
     }
 

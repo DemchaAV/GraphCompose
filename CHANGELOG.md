@@ -8,26 +8,38 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
-- **A card's text sits inside the card in Word.** The DOCX export never wrote a container's
-  sides: a card's text ran flush with the page margin, touching the card's edge, with the
-  accent bar against it. Every paragraph is now indented by each enclosing container's margin
-  and padding, and a panel's side borders are spaced by its padding, so the accent bar and the
-  band sit at the card's edge and the text inside it, as on the page — measured in
-  LibreOffice against the page's own render. A filled side with no border gets a hairline in
-  the fill's colour so the band reaches the edge; a numbered list inside keeps its hanging
-  indent, and a padded section inside the card keeps the card's bar at the card's edge. Rows
-  and tables are moved in the same way (`w:tblInd`, measured to their edge), and pictures
-  are sized to the width left between the insets. The top and bottom padding stay outside
-  the shading.
+- **A card is a card in Word.** The DOCX export painted a container's fill and borders onto
+  each paragraph inside it, and Word has no element that wraps a run of paragraphs, so in an
+  editor the card came apart: the accent bar broke beside every row and table inside it, the
+  band had white gaps where the space between blocks sat, and the padding above and below
+  lay outside it. A container that paints is now a table of one cell, the way a panel is
+  built in Word by hand: the shading is the fill behind everything inside, the borders run
+  the card's full height, and the padding is the cell's margins on all four sides. The page
+  centres a border on the card's edge and Word keeps it inside the cell, so each margin is the
+  padding less half the border and the table is half a border wider on each side — measured
+  in LibreOffice against the engine's render at 96 dpi, the band, a 3pt accent bar and the
+  text land within a pixel of the page's. The table takes the width the layout placed the
+  card at, plus a point of slack for the editor's face, so a card sized round a short line
+  is as narrow as on the page. Panels, rows and tables inside are tables in the cell; a
+  table cell no style fills is written white, as the page draws it on the card, and a
+  composed cell keeps its own fill. A `keepTogether()` card the layout held on one page is a
+  row Word may not split, and the anchors and keeps of the blocks inside it still carry. A
+  page break inside a card closes it and opens it again after the break, since Word breaks
+  no page inside a cell. The corner radius is still dropped, with one warning per export.
 
-- **A table inside a filled card keeps its own cell colours in Word.** A cell built from a
-  node (`DocumentTableCell.node(...)`) wrote its paragraphs through the same path as the body,
-  so they took the card's fill and border as paragraph shading: in a zebra table inside a
-  filled card the composed cell came out in the card's colour over its stripe, and a bordered
-  card boxed the paragraphs inside its cells. A paragraph in a cell — and a row built into a
-  cell — now takes paint only from a container opened inside that cell; the card's paint stays
-  on the card's own paragraphs. A row placed directly in a bordered card keeps its cells shaded
-  and no longer draws the card's outline around the text of each cell.
+- **A container's content sits inside its margin and padding in Word.** The DOCX export
+  never wrote a container's sides: its text ran flush with the page margin. Outside a
+  painted card, every paragraph is now indented by each enclosing container's margin and
+  padding, a numbered list inside keeps its hanging indent, rows and tables move in the same
+  way (`w:tblInd`), and pictures are sized to the width left between the insets — or to the
+  cell they are in, a row's columns included, where a picture used to take the page's
+  width.
+
+- **No empty line under a table inside a cell.** Word requires a cell to end with a
+  paragraph, so one follows every table nested in a cell, and it was a full line tall: a
+  composed cell or a card showed an empty line under each table. It is now a tenth of a
+  point tall; the paragraph written next in the cell takes it over, and a second table
+  written next makes it the separator between the two.
 
 - **Two tables in a row stay two tables in Word.** Word and LibreOffice join two tables
   with nothing between them into one and lay the second one's rows on the first one's
@@ -35,9 +47,8 @@ follow semantic versioning; release dates are ISO 8601.
   at half its width with its text broken letter by letter — and a row (`addRow`) is carried
   as a table, so two rows in a row were joined the same way. A paragraph a tenth of a point
   tall (measured in LibreOffice; Word may hold it to its own minimum, still under a point) now
-  separates them, carrying the rest of the gap the layout keeps between them and a panel's
-  fill — not its borders, which would rule a line across the card — and keeping with the
-  table below it, so a block kept with that table stays kept. Space owed below a table no
+  separates them, carrying the rest of the gap the layout keeps between them and keeping
+  with the table below it, so a block kept with that table stays kept. Space owed below a table no
   longer lands on the paragraph above it: a card ending in a table opened its bottom padding
   between its title and its table, and after a table nested in a cell the space now goes to
   the paragraph that closes the cell.

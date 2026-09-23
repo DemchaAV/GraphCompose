@@ -54,6 +54,18 @@ final class DocxExports {
         return new XWPFDocument(new ByteArrayInputStream(docx));
     }
 
+    /** Exports with neither a layout nor a canvas, as a caller holding only the graph does. */
+    static XWPFDocument withoutCanvas(Consumer<PageFlowBuilder> content) throws Exception {
+        Captured captured = new Captured();
+        byte[] docx;
+        try (DocumentSession session = session(595, 842, 36, content)) {
+            session.export(captured);
+            docx = new DocxSemanticBackend().export(captured.graph,
+                    new SemanticExportContext(null, List.of(), null, null));
+        }
+        return new XWPFDocument(new ByteArrayInputStream(docx));
+    }
+
     private static DocumentSession session(double pageWidth, double pageHeight, double margin,
                                            Consumer<PageFlowBuilder> content) {
         DocumentSession session = GraphCompose.document()

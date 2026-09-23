@@ -360,6 +360,19 @@ sits as far from its page edge as the page puts it — the distance is read
 from where the zone's content landed in the resolved layout and written as
 `w:pgMar/@w:header` or `@w:footer`, rather than left to Word's 36pt.
 
+A zone drawn on some pages only (`appliesTo(...)`) lands on the same pages when Word can
+say so. Word has a header and footer for the first page, for even pages and for the rest,
+so the predicate is asked over sample pages and sorted into those kinds:
+
+| Predicate | In Word |
+|---|---|
+| `PageContext::isFirst` | the section's first-page header, with a title page stated |
+| `page -> !page.isFirst()` | the ordinary header, and an empty one on the first page |
+| even or odd page numbers | the even-page header or the ordinary one, with different even and odd pages stated for the whole document |
+
+A predicate that picks pages within a kind — the last page, the third — has no Word part.
+Such a zone is written on every page and the export report says so.
+
 The rule of thumb: if the document leans on geometry — shapes, layered
 designs, precise placement — export PDF for the reader and DOCX only as
 an editable companion.

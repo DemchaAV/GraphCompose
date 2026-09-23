@@ -242,7 +242,7 @@ final class DocxLayoutMetrics {
 
     /**
      * How far a page zone's content sits from the page edge it belongs to, as laid out on
-     * the first page.
+     * the pages it is drawn on.
      *
      * <p>Word places a footer by the distance from the page's bottom edge to the bottom of
      * the footer, and a header by the distance from the top edge to the top of the header.
@@ -252,7 +252,9 @@ final class DocxLayoutMetrics {
      * highest edge of a header's — rather than rebuilt from the band's parts.</p>
      *
      * <p>Zone fragments are spliced into the graph under {@code @page-zone[page][index]},
-     * outside the node paths this index is built from, so they are found by that prefix.</p>
+     * outside the node paths this index is built from, so they are found by that prefix — on
+     * any page, because a zone that skips the first page has nothing on it. A band sits at the
+     * same place on every page it is drawn on, so every page gives the same distance.</p>
      *
      * @param zoneIndex  the zone's position in the session's zone list
      * @param header     whether it is a header, measured from the top edge
@@ -260,11 +262,12 @@ final class DocxLayoutMetrics {
      * @return the distance in points, or empty when the layout carries no such zone
      */
     OptionalDouble zoneDistanceFromEdge(int zoneIndex, boolean header, double pageHeight) {
-        String prefix = "@page-zone[0][" + zoneIndex + "]";
+        java.util.regex.Pattern zone =
+                java.util.regex.Pattern.compile("^@page-zone\\[\\d+]\\[" + zoneIndex + "]");
         double lowest = Double.POSITIVE_INFINITY;
         double highest = Double.NEGATIVE_INFINITY;
         for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
-            if (!entry.getKey().startsWith(prefix)) {
+            if (!zone.matcher(entry.getKey()).find()) {
                 continue;
             }
             for (PlacedFragment fragment : entry.getValue()) {

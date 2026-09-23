@@ -8,6 +8,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A picture or an icon in a line reaches Word.** The DOCX export dropped every inline
+  image, SVG icon and emoji, so a contact line lost its phone and mail icons and a sentence
+  its emoji, with a report entry and nothing else. Each is now a picture in its own run
+  between the words, at its size, inside its link, raised or lowered by `w:position` to
+  where the page's alignment puts it; a line holding a picture taller than its text keeps
+  the height the layout gave it, since Word clips a picture to an exact line height. An SVG
+  icon is drawn into a transparent picture from the layers the layout resolves, by the
+  raster the PPTX backend's fallback uses — now shared as `InlineSvgRasters` in the PDF
+  module, with the layout's lowering callable as `InlineSvgLayers`, both internal — so an
+  icon is the same picture on a slide and in a document. The text an icon stands for (an
+  emoji's) is the picture's description, reported `APPROXIMATED`. Measured in LibreOffice
+  against the engine's render, icons, emoji and a centred and a baseline picture sit within
+  2px of the page. Inline shapes — `dot(...)`, arrows, chevrons — are still dropped and
+  reported.
+
 - **A rule reaches Word as Word's own.** The DOCX export dropped every `LineNode` and
   standalone `ShapeNode`, so the rules a template draws under a heading or between entries —
   `addLine(...)` and `addDivider(...)`, together among the most common drawing in the

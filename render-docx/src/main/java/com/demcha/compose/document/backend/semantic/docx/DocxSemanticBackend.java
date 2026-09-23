@@ -25,6 +25,9 @@ import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.PageBreakNode;
 import com.demcha.compose.document.node.InlineHighlightRun;
 import com.demcha.compose.document.node.InlineRun;
+import com.demcha.compose.document.node.InlineImageAlignment;
+import com.demcha.compose.document.node.InlineImageRun;
+import com.demcha.compose.document.node.InlineSvgRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.node.ParagraphNode;
@@ -1270,7 +1273,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void warnDroppedInlineRuns(List<InlineRun> runs, String path) {
         for (InlineRun run : runs) {
-            if (run instanceof InlineTextRun || run instanceof InlineHighlightRun) {
+            if (run instanceof InlineTextRun || run instanceof InlineHighlightRun
+                || run instanceof InlineImageRun || run instanceof InlineSvgRun) {
                 continue;
             }
             String kind = run.getClass().getSimpleName();
@@ -1639,6 +1643,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (InlineRun run : runs) {
             InlineTextRun text = textOf(run);
             if (text == null) {
+                writeInlinePicture(para, run, null, path, java.util.Optional.empty());
                 continue;
             }
             // A list item's run can carry a link, and it used to be written as plain text:
@@ -2643,10 +2648,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node, boolean rightToLeft) {
         warnDroppedInlineRuns(node);
         String path = layout.pathOf(node);
+        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(node);
         boolean wroteARun = false;
+        boolean wroteAPicture = false;
         for (InlineRun run : node.inlineRuns()) {
             InlineTextRun text = textOf(run);
             if (text == null) {
+                if (writeInlinePicture(para, run, node.linkTarget(), path, line)) {
+                    wroteARun = true;
+                    wroteAPicture = true;
+                }
                 continue;
             }
             // A run's own link wins over the paragraph's: a sentence with one linked phrase
@@ -2666,6 +2677,103 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             applyRunDirection(docRun, rightToLeft);
             docRun.setText(node.text() == null ? "" : node.text());
         }
+        if (wroteAPicture) {
+            // The lines are set to an exact height, and Word clips a picture taller than its
+            // line: a line holding one is as tall as the layout made it for the picture.
+            java.util.OptionalDouble tallest = layout.tallestLine(node);
+            java.util.OptionalDouble text = layout.lineHeight(node);
+            if (tallest.isPresent() && (text.isEmpty() || tallest.getAsDouble() > text.getAsDouble())) {
+                applyLineHeight(para, tallest);
+            }
+        }
+    }
+
+    /**
+     * Writes an inline picture or icon where it sits in the line, as a picture in its own run.
+     *
+     * <p>Both were dropped, so a contact line lost its phone and mail icons and a sentence its
+     * emoji. A picture is written from its bytes; an SVG icon is drawn into a transparent
+     * picture from the same layers the layout resolves ({@link
+     * com.demcha.compose.document.layout.InlineSvgLayers}) by the raster the PPTX backend uses
+     * ({@link com.demcha.compose.document.backend.fixed.pdf.handlers.InlineSvgRasters}), so it
+     * looks as it does on the page; the text an icon stands for — an emoji's — is the picture's
+     * description, and the report says it is a picture rather than a character. A picture
+     * stands on the line's baseline in Word, so it is raised or lowered to where the page's
+     * alignment puts it, from the layout's measure of the line.</p>
+     *
+     * @return whether a picture was written; {@code false} for a run this does not draw
+     */
+    private boolean writeInlinePicture(XWPFParagraph para, InlineRun run, DocumentLinkTarget fallbackLink,
+                                       String path,
+                                       java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line) {
+        byte[] bytes;
+        double width;
+        double height;
+        InlineImageAlignment alignment;
+        double baselineOffset;
+        DocumentLinkTarget link;
+        String description = null;
+        if (run instanceof InlineImageRun image) {
+            bytes = NodeDefinitionSupport.toImageData(image.imageData()).getBytes();
+            width = image.width();
+            height = image.height();
+            alignment = image.alignment();
+            baselineOffset = image.baselineOffset();
+            link = image.linkTarget();
+        } else if (run instanceof InlineSvgRun svg) {
+            bytes = com.demcha.compose.document.backend.fixed.pdf.handlers.InlineSvgRasters.rasterize(
+                    com.demcha.compose.document.layout.InlineSvgLayers.of(svg.icon(), svg.width()),
+                    svg.width(), svg.height()).getBytes();
+            width = svg.width();
+            height = svg.height();
+            alignment = svg.alignment();
+            baselineOffset = svg.baselineOffset();
+            link = svg.linkTarget();
+            description = svg.icon().text();
+        } else {
+            return false;
+        }
+        if (bytes.length == 0) {
+            return false;
+        }
+        XWPFRun picture = newRun(para, link != null ? link : fallbackLink);
+        try (InputStream stream = new java.io.ByteArrayInputStream(bytes)) {
+            picture.addPicture(stream, pictureType(bytes), "inline",
+                    Units.toEMU(width), Units.toEMU(height));
+        } catch (Exception failure) {
+            throw new IllegalStateException("could not write an inline picture", failure);
+        }
+        if (description != null && !description.isBlank()) {
+            picture.getCTR().getDrawingArray(0).getInlineArray(0).getDocPr().setDescr(description);
+            report.add(DocxExportReport.Severity.APPROXIMATED, "inline icon", path,
+                    "drawn as a picture, as on the page; the text it stands for (" + description
+                    + ") is the picture's description rather than a character in the line");
+        }
+        if (line.isPresent()) {
+            long raise = Math.round(inlineBottomFromBaseline(alignment, baselineOffset, height, line.get()) * 2);
+            if (raise != 0) {
+                CTRPr properties = picture.getCTR().isSetRPr() ? picture.getCTR().getRPr() : picture.getCTR().addNewRPr();
+                properties.addNewPosition().setVal(BigInteger.valueOf(raise));
+            }
+        }
+        return true;
+    }
+
+    /**
+     * How far above the line's baseline the page puts an inline picture's bottom edge — the
+     * rule {@code PdfParagraphFragmentRenderHandler} draws by, measured from the baseline,
+     * which is where Word stands the picture before {@code w:position} moves it.
+     */
+    static double inlineBottomFromBaseline(InlineImageAlignment alignment, double baselineOffset, double height,
+                                           com.demcha.compose.document.layout.payloads.ParagraphLine line) {
+        double descent = line.baselineOffsetFromBottom();
+        double bottom = switch (alignment == null ? InlineImageAlignment.CENTER : alignment) {
+            case BASELINE -> 0;
+            case CENTER -> (line.lineHeight() - height) / 2.0 - descent;
+            case TEXT_TOP -> line.textAscent() - height;
+            case TEXT_BOTTOM -> -descent;
+        };
+        return bottom + baselineOffset;
     }
 
     /**

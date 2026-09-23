@@ -6,7 +6,6 @@ import ch.qos.logback.core.read.ListAppender;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.svg.SvgIcon;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,11 +26,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * per node kind; without the inline mirror the only observable difference
  * between "rendered" and "lost" was opening the file. The warning is the
  * whole of what makes the inline drop visible, which makes it worth a test.</p>
+ *
+ * <p>Pictures and SVG icons are written now (see {@code DocxInlinePictureTest}); an inline
+ * shape — a dot, an arrow — is what is still dropped.</p>
  */
 class DocxInlineRunDropWarningTest {
-
-    private static final String ICON = """
-            <svg viewBox="0 0 10 10"><rect width="10" height="10" fill="#ff0000"/></svg>""";
 
     private ListAppender<ILoggingEvent> appender;
     private ch.qos.logback.classic.Logger logger;
@@ -58,8 +57,8 @@ class DocxInlineRunDropWarningTest {
     }
 
     @Test
-    void droppedInlineSvgRunsWarnOncePerExportAndKeepTheText() throws Exception {
-        SvgIcon icon = SvgIcon.parse(ICON);
+    void droppedInlineShapeRunsWarnOncePerExportAndKeepTheText() throws Exception {
+        com.demcha.compose.document.style.DocumentColor ink = com.demcha.compose.document.style.DocumentColor.rgb(255, 0, 0);
         byte[] docx;
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(400, 200)
@@ -68,18 +67,18 @@ class DocxInlineRunDropWarningTest {
             document.pageFlow(page -> {
                 page.addParagraph(p -> p
                         .inlineText("before ")
-                        .inlineSvgIcon(icon, 10)
+                        .dot(6, ink)
                         .inlineText(" after"));
                 page.addParagraph(p -> p
                         .inlineText("second ")
-                        .inlineSvgIcon(icon, 10));
+                        .dot(6, ink));
             });
             docx = document.export(new DocxSemanticBackend());
         }
 
         List<String> warned = inlineDropWarnings();
         assertThat(warned).hasSize(1);
-        assertThat(warned.get(0)).contains("InlineSvgRun");
+        assertThat(warned.get(0)).contains("InlineShapeRun");
 
         try (XWPFDocument opened = new XWPFDocument(new ByteArrayInputStream(docx))) {
             String text = opened.getParagraphs().stream()

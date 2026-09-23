@@ -316,6 +316,34 @@ Not representable, and left undone rather than approximated:
 - **The corner radius.** A cell is rectangular. The panel renders with square corners and
   the export logs one warning per document.
 
+## Pictures and icons in a line
+
+A picture, an SVG icon or an emoji in a line of text is a picture in Word, in its own run
+between the words around it, at its size:
+
+```java
+page.addParagraph(p -> p
+        .inlineSvgIcon(phone, 12, InlineImageAlignment.CENTER)
+        .inlineText(" +44 20 7946 0000 ")
+        .inlineEmoji(":rocket:", 14));
+```
+
+- **Where it sits.** Word stands a picture on the line's baseline; the page centres it on
+  the line, or sets it on the baseline or at the text's top or bottom. The picture is
+  raised or lowered by `w:position` to where the page's alignment and `baselineOffset`
+  put it, from the layout's measure of the paragraph's first line. A line holding a
+  picture taller than its text is written at the height the layout gave it, since Word
+  clips a picture to an exact line height.
+- **What an icon is.** An SVG icon — an emoji among them — is drawn into a transparent
+  picture from the same layers the page draws, by the raster the PPTX export falls back
+  to, so it looks as it does on the page. The text it stands for is the picture's
+  description, which a screen reader reads; it is not a character a reader copies or
+  searches, and the report says so.
+- **Links.** A picture carrying a link, or in a linked paragraph, is inside the link.
+
+An inline shape — a `dot(...)`, an arrow, a chevron — is not written yet, and the report
+names each one.
+
 ## What a chip keeps and loses
 
 A chip is a fill behind a phrase, and Word has one: `w:shd` on the run, taking any RGB.

@@ -11,10 +11,12 @@ import com.demcha.compose.engine.components.content.table.TableResolvedCell;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;
+import java.util.Set;
 import java.util.TreeSet;
 
 /**
@@ -49,6 +51,8 @@ final class DocxLayoutMetrics {
     private final Map<String, PlacedNode> placed;
     // A table's measured cells by name, filled on first use — see cellLineHeightsOf.
     private final Map<DocumentNode, Map<String, Double>> cellLineHeights = new IdentityHashMap<>();
+    // The rows of a table the layout placed, by index, filled on first use — see placedRowsOf.
+    private final Map<DocumentNode, Set<String>> placedRows = new IdentityHashMap<>();
 
     private DocxLayoutMetrics(Map<DocumentNode, String> paths,
                               Map<String, List<PlacedFragment>> fragments,
@@ -164,6 +168,56 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * Whether the layout placed one of a table's rows.
+     *
+     * <p>A row is found by the name its cells carry — the table's name, or its node kind when
+     * it has none, then {@code __row_} and the row's index in the table — and only among the
+     * table's own rows (see {@link #ownRows}), because a nested table with no name of its own
+     * carries the same kind as the owner.</p>
+     *
+     * @param table the table node
+     * @param row   the row's index in the table
+     * @return true when the layout carries a placement for that row
+     */
+    boolean placedRow(DocumentNode table, int row) {
+        return placedRowsOf(table).contains(String.valueOf(row));
+    }
+
+    /**
+     * The index part of each placed row's name, kept as the text the layout wrote rather than
+     * parsed: a row is looked up by writing its index the same way, so a name that only
+     * resembles the pattern matches nothing instead of failing the export.
+     */
+    private Set<String> placedRowsOf(DocumentNode table) {
+        return placedRows.computeIfAbsent(table, node -> {
+            Set<String> rows = new HashSet<>();
+            String prefix = (node.name() == null || node.name().isBlank()
+                    ? node.nodeKind()
+                    : node.name()) + "__row_";
+            for (PlacedFragment fragment : ownRows(node)) {
+                String name = ((TableRowFragmentPayload) fragment.payload()).cells().get(0).name();
+                int end = name == null || !name.startsWith(prefix)
+                        ? -1
+                        : name.indexOf("__cell_", prefix.length());
+                if (end >= 0) {
+                    rows.add(name.substring(prefix.length(), end));
+                }
+            }
+            return rows;
+        });
+    }
+
+    /**
+     * Whether the layout placed a node at all.
+     *
+     * @param node any authored node
+     * @return true when the layout carries a placement for it
+     */
+    boolean placed(DocumentNode node) {
+        return placedFor(node) != null;
+    }
+
+    /**
      * How far a page zone's content sits from the page edge it belongs to, as laid out on
      * the first page.
      *
@@ -252,22 +306,8 @@ final class DocxLayoutMetrics {
         double width = placedTable.placementWidth();
 
         TreeSet<Double> boundaries = new TreeSet<>();
-        for (PlacedFragment fragment : fragmentsOf(node)) {
-            if (!(fragment.payload() instanceof TableRowFragmentPayload row) || row.cells().isEmpty()) {
-                continue;
-            }
-            // A table whose cell is built from another table emits that inner table's rows
-            // under the *owner's* path, so the fragments at one path are not all one
-            // table's. A row of this table spans this table; a nested one stops short, and
-            // mixing the two produced a grid with more columns than the table has.
-            double rowRight = 0;
-            for (TableResolvedCell cell : row.cells()) {
-                rowRight = Math.max(rowRight, cell.x() + cell.width());
-            }
-            if (Math.abs(rowRight - width) > 0.5) {
-                continue;
-            }
-            for (TableResolvedCell cell : row.cells()) {
+        for (PlacedFragment fragment : ownRows(node)) {
+            for (TableResolvedCell cell : ((TableRowFragmentPayload) fragment.payload()).cells()) {
                 boundaries.add(round(cell.x()));
             }
         }
@@ -318,6 +358,36 @@ final class DocxLayoutMetrics {
             starts[1 + index] = child.placementX() - rowNode.placementX();
         }
         return starts;
+    }
+
+    /**
+     * The row fragments that belong to the table itself, each carrying at least one cell.
+     *
+     * <p>A table whose cell is built from another table emits that inner table's rows under
+     * the <em>owner's</em> path, so the fragments at one path are not all one table's. A row
+     * of this table spans this table; a nested one stops short, and mixing the two produced a
+     * grid with more columns than the table has.</p>
+     */
+    private List<PlacedFragment> ownRows(DocumentNode table) {
+        PlacedNode placedTable = placedFor(table);
+        if (placedTable == null || placedTable.placementWidth() <= 0) {
+            return List.of();
+        }
+        double width = placedTable.placementWidth();
+        List<PlacedFragment> rows = new ArrayList<>();
+        for (PlacedFragment fragment : fragmentsOf(table)) {
+            if (!(fragment.payload() instanceof TableRowFragmentPayload row) || row.cells().isEmpty()) {
+                continue;
+            }
+            double rowRight = 0;
+            for (TableResolvedCell cell : row.cells()) {
+                rowRight = Math.max(rowRight, cell.x() + cell.width());
+            }
+            if (Math.abs(rowRight - width) <= 0.5) {
+                rows.add(fragment);
+            }
+        }
+        return rows;
     }
 
     private List<PlacedFragment> fragmentsOf(DocumentNode node) {

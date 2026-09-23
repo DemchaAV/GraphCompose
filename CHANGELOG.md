@@ -14,6 +14,16 @@ follow semantic versioning; release dates are ISO 8601.
   shape and printed on its side. A page wider than it is tall is now stated as landscape; a
   square page stays portrait, as Word itself treats one.
 
+- **A DOCX table breaks across pages where the page breaks it.** The layout splits a table
+  only between rows, repeats its `repeatHeader(n)` rows at the top of every page it continues
+  on, and never leaves those rows at the foot of a page with nothing under them. The export
+  stated none of it, so Word broke rows mid-line wherever its own page ended and printed a
+  long table's header once. Every row the layout placed is now kept whole (`w:cantSplit`), a
+  repeated header is Word's header row (`w:tblHeader`), and its paragraphs keep with the next
+  row. A row of blocks is kept whole the same way. A document that could not be laid out
+  keeps its rows free to break: the layout refuses a row taller than a page, and no page
+  holds such a row whole.
+
 - **The same document exports to the same DOCX bytes, when asked to.** Measured on the probe
   corpus, three things made two exports of one document differ: the package's created /
   modified dates, every zip entry's timestamp, and each embedded font's obfuscation key,

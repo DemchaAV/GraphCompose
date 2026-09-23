@@ -331,15 +331,16 @@ page.addParagraph(p -> p
 - **Where it sits.** Word stands a picture on the line's baseline; the page centres it on
   the line, or sets it on the baseline or at the text's top or bottom. The picture is
   raised or lowered by `w:position` to where the page's alignment and `baselineOffset`
-  put it, from the layout's measure of the paragraph's (or list's) first line. Word honours
-  that on a picture; LibreOffice does not — measured, a picture written at 0, −2, −10 and
-  +10pt stood in the same place — so there a picture always stands on the baseline, off by
-  whatever the page's alignment moved it: an icon the page centres on its line sits about
-  the text's descent higher than on the page.
+  put it, from the layout's measure of the paragraph's first line — in a list, the list's
+  text on a line as tall as the item's own tallest picture. Word honours that on a picture;
+  LibreOffice does not — measured, a picture written at 0, −2, −10 and +10pt stood in the
+  same place — so there a picture always stands on the baseline, higher than on the page by
+  as much as the page lowers it: up to the text's descent for a centred icon as tall as its
+  line.
 - **Line height.** Lines are written at an exact height, and the editor clips a picture
   to it — where in that height it puts the baseline is its own, so no fixed room is
   enough: measured in LibreOffice, a 14pt icon centred over 9pt text lost its top up to
-  a 17.5pt line. A paragraph holding a picture that rises above its text's ascent or hangs
+  a 17.6pt line. A paragraph holding a picture that rises above its text's ascent or hangs
   below its descent — where Word puts it, or on the baseline where LibreOffice does — is
   written with its lines *at least* the height the picture reaches instead, so the editor
   grows the line to the picture rather than clip it. Word has one line height for a

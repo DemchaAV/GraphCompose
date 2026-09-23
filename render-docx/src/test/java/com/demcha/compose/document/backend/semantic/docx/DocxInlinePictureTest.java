@@ -80,6 +80,9 @@ class DocxInlinePictureTest {
 
             assertThat(picture.getEmbeddedPictures()).hasSize(1);
             assertThat(description).isEqualTo("🚀");
+            assertThat(picture.getEmbeddedPictures().get(0).getCTPicture().getNvPicPr().getCNvPr().getDescr())
+                    .as("the picture's own name for it, which some readers take instead")
+                    .isEqualTo("🚀");
             assertThat(report.get().bySubject()).containsKey("inline icon");
             assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isZero();
         }
@@ -170,6 +173,55 @@ class DocxInlinePictureTest {
             assertThat(spacing.getLineRule()).isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.AT_LEAST);
             assertThat(DocxTwips.of(spacing.getLine())).isGreaterThanOrEqualTo(14 * 20L);
         }
+    }
+
+    @Test
+    void eachListItemPlacesItsIconByItsOwnLineNotTheFirstItems() throws Exception {
+        // The first item's 30pt picture makes its line 30pt; the second item's line is its
+        // own 12pt icon's, and the icon is centred on that — as it is in a list of it alone.
+        try (XWPFDocument both = export(page -> page.addList(l -> l.hangingIndent(true)
+                .textStyle(com.demcha.compose.document.style.DocumentTextStyle.builder().size(9).build())
+                .addItem(item -> item.plain("Logo ").svgIcon(ICON, 30))
+                .addItem(item -> item.plain("Call ").svgIcon(ICON, 12))));
+             XWPFDocument alone = export(page -> page.addList(l -> l.hangingIndent(true)
+                     .textStyle(com.demcha.compose.document.style.DocumentTextStyle.builder().size(9).build())
+                     .addItem(item -> item.plain("Call ").svgIcon(ICON, 12))))) {
+            List<Integer> positions = picturePositions(both);
+
+            assertThat(positions).hasSize(2);
+            assertThat(positions.get(1)).isEqualTo(picturePositions(alone).get(0)).isNegative();
+        }
+    }
+
+    @Test
+    void anItemsLineIsAsTallAsItsTextOrItsTallestGraphic() {
+        ParagraphLine listLine = new ParagraphLine("x", 10, 30, 10.4, 7, 2, List.of(), List.of());
+
+        assertThat(DocxSemanticBackend.itemLine(listLine, List.of()).lineHeight()).isEqualTo(10.4);
+        ParagraphLine iconed = DocxSemanticBackend.itemLine(listLine, List.of(
+                new com.demcha.compose.document.node.InlineSvgRun(ICON, 12, 12, InlineImageAlignment.CENTER, 0,
+                        (com.demcha.compose.document.node.DocumentLinkTarget) null)));
+        assertThat(iconed.lineHeight()).isEqualTo(12);
+        assertThat(iconed.textAscent()).isEqualTo(7);
+        assertThat(iconed.baselineOffsetFromBottom()).isEqualTo(2);
+    }
+
+    @Test
+    void aParagraphLeavesItsTextWhenAnyOfItsPicturesDoes() {
+        var inside = new DocxSemanticBackend.PictureReach(10, false);
+        var leaving = new DocxSemanticBackend.PictureReach(8, true);
+
+        assertThat(inside.max(leaving)).isEqualTo(new DocxSemanticBackend.PictureReach(10, true));
+        assertThat(leaving.max(inside)).isEqualTo(new DocxSemanticBackend.PictureReach(10, true));
+    }
+
+    private static List<Integer> picturePositions(XWPFDocument document) {
+        return document.getParagraphs().stream()
+                .flatMap(paragraph -> paragraph.getRuns().stream())
+                .filter(run -> !run.getEmbeddedPictures().isEmpty())
+                .map(run -> run.getCTR().isSetRPr() && run.getCTR().getRPr().sizeOfPositionArray() > 0
+                        ? ((Number) run.getCTR().getRPr().getPositionArray(0).getVal()).intValue() : 0)
+                .toList();
     }
 
     @Test

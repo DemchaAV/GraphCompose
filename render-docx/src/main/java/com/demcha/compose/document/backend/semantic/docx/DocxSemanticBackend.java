@@ -1609,6 +1609,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                    String path) {
         warnDroppedInlineRuns(marker.runs(), path);
         warnDroppedInlineRuns(item.runs(), path);
+        line = line.map(listLine -> itemLine(listLine, item.runs()));
         spaceBeforeTheNextItem();
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
@@ -2699,9 +2700,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * picture that rises above the text is written with its lines <em>at least</em> the
      * height the picture reaches instead: the editor then grows the line to the picture rather
      * than clip it, whichever editor it is and wherever it puts its baseline, and where the
-     * picture fits the line is the page's. What that costs is the editor's own measure of the
-     * text on such a paragraph's lines, which in LibreOffice is taller than the page's; and
-     * Word has one line height for a paragraph, so every line of it is measured that way —
+     * picture fits the line is the page's. What that costs: Word has one line height for a
+     * paragraph, so every line of it is then at least the picture's reach, and otherwise the
+     * editor's own measure of its text, which in LibreOffice is taller than the page's —
      * where the page makes only the line holding the picture taller. A paragraph written with
      * no exact height — a page zone's, one with no layout — grows to its pictures on its own
      * and is left alone.</p>
@@ -2859,6 +2860,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             case TEXT_BOTTOM -> -descent;
         };
         return bottom + baselineOffset;
+    }
+
+    /**
+     * One list item's first line, from the list's.
+     *
+     * <p>The layout measures a list's lines, and the export reads the first, so every item
+     * would otherwise be placed by the first item's line height — which the first item's
+     * pictures set. The text's metrics are the list's; the height is the one the layout gives
+     * a line, the taller of the text's and the item's tallest inline graphic.</p>
+     */
+    static com.demcha.compose.document.layout.payloads.ParagraphLine itemLine(
+            com.demcha.compose.document.layout.payloads.ParagraphLine listLine, List<InlineRun> runs) {
+        double height = listLine.textLineHeight();
+        for (InlineRun run : runs) {
+            if (run instanceof InlineImageRun image) {
+                height = Math.max(height, image.height());
+            } else if (run instanceof InlineSvgRun svg) {
+                height = Math.max(height, svg.height());
+            } else if (run instanceof com.demcha.compose.document.node.InlineShapeRun shape) {
+                height = Math.max(height, shape.height());
+            }
+        }
+        return new com.demcha.compose.document.layout.payloads.ParagraphLine(listLine.text(), listLine.width(),
+                height, listLine.textLineHeight(), listLine.textAscent(), listLine.baselineOffsetFromBottom(),
+                listLine.spans(), listLine.visualOrder());
     }
 
     /**

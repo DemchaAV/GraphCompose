@@ -66,7 +66,9 @@ classpath that has the PDF backend. The message names that artifact instead.
 
 The exception message names the exact artifact to add. Plain `graph-compose` and
 `graph-compose-bundle` both include the PDF backend out of the box — only a deliberately
-lean `graph-compose-core` needs this.
+lean `graph-compose-core` needs this. So does `graph-compose-core` +
+`graph-compose-render-docx` on 2.4.x and earlier; from 2.5.0 the DOCX module brings the
+PDF backend itself.
 
 ## `NoClassDefFoundError` at runtime
 

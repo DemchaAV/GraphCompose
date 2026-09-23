@@ -24,7 +24,7 @@ ships them differs.
 | `graph-compose-core` | The lean engine: `com.demcha.compose`, the canonical `document.*` authoring surface (`api` / `dsl` / `node` / `style` / `table` / `snapshot`), `document.showcase` (`FontShowcase`), the `document.backend.fixed` SPI seam, the public `document.backend.fixed.pdf.options` records, `document.layout`, `font.*`, and the internal `engine.*` foundation. |
 | `graph-compose-render-pdf` | The PDFBox backend: `document.backend.fixed.pdf.**` (the `PdfFixedLayoutBackend` impl + handlers) and the `engine.render.pdf.**` render tree. Registers the PDF `FixedLayoutBackendProvider` / `FontMetricsProvider`. |
 | `graph-compose-render-pptx` | The POI XSLF backend: `document.backend.fixed.pptx.**` (the `PptxFixedLayoutBackend` impl + handlers), registering the `"pptx"` `FixedLayoutBackendProvider`. Also carries the older `document.backend.semantic.pptx` manifest exporter. Depends on `graph-compose-render-pdf` for shared font measurement and the clip raster pass. |
-| `graph-compose-render-docx` | The POI semantic exporter — `document.backend.semantic.docx`. |
+| `graph-compose-render-docx` | The POI semantic exporter — `document.backend.semantic.docx`. Brings `graph-compose-render-pdf` at runtime scope, because opening a session needs its font-metrics provider. |
 | `graph-compose-templates` | The built-in preset families — `document.templates.**`. |
 | `graph-compose-testing` | Consumer test support — `com.demcha.compose.testing.**`. |
 | `graph-compose` | Back-compat wrapper: an empty jar over `graph-compose-core` + `graph-compose-render-pdf`. |

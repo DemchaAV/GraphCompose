@@ -452,6 +452,21 @@ follow semantic versioning; release dates are ISO 8601.
   The rendered page is unchanged pixel for pixel. PPTX and DOCX exports do not carry the text
   yet. The committed `emoji-shortcodes.pdf` preview is re-rendered: its emoji now copy out.
 
+### Packaging
+
+- **`graph-compose-render-docx` is enough on its own.** Opening a `DocumentSession`
+  resolves a font-metrics provider, and `graph-compose-render-pdf` is the only artifact that
+  publishes one — but the DOCX module declared it at test scope, so an application depending
+  on `graph-compose-core` + `graph-compose-render-docx` failed at `create()` with
+  `MissingBackendException` before it could export anything, and the class javadoc said the
+  opposite. The PDF backend is now a `runtime` dependency of the DOCX module, the way the
+  PPTX module already brings it: nothing compiles against it through this module, and an
+  application that declared it by hand resolves the same version. Checked with three
+  consumer applications built outside the reactor against the installed artifacts — DOCX
+  alone, PDF + DOCX, PDF + PPTX + DOCX: each exports, and each resolves one Apache POI
+  (5.5.1, `poi-ooxml-lite`, never `-full`), one XMLBeans (5.3.0) and one PDFBox (3.0.8), so
+  the three office backends share one schema set.
+
 ### Tests
 
 - **One DOCX export's state stays in that export — now pinned.** The backend keeps what an

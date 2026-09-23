@@ -10,11 +10,15 @@ The semantic DOCX export backend for GraphCompose, backed by Apache POI. It carr
 Add it (at compile scope) only when you export `.docx`. It is **not** included by
 `graph-compose`, `graph-compose-core`, or `graph-compose-bundle` — DOCX is opt-in.
 
-**It is not sufficient on its own.** Opening a `DocumentSession` resolves a
-`FontMetricsProvider` so text can be measured, and `graph-compose-render-pdf` is the
-only artifact that publishes one. A classpath of `graph-compose-core` +
-`graph-compose-render-docx` fails at `create()` with `MissingBackendException` before
-any export happens. Add the PDF backend alongside it — or depend on `graph-compose`,
+**From 2.5.0 it is sufficient on its own.** Opening a `DocumentSession` resolves a
+`FontMetricsProvider` so text can be measured, and `graph-compose-render-pdf` is the only
+artifact that publishes one — so this module brings it at `runtime` scope. A classpath of
+`graph-compose-core` + `graph-compose-render-docx` opens a session and exports `.docx`;
+you never compile against the PDF backend through it.
+
+**On 2.4.x and earlier it was not.** Those versions declared the PDF backend at test scope
+only, and core + render-docx failed at `create()` with `MissingBackendException` before any
+export happened. Add the PDF backend alongside it there — or depend on `graph-compose`,
 which is core + render-pdf already:
 
 ```xml
@@ -22,6 +26,21 @@ which is core + render-pdf already:
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-render-pdf</artifactId>
     <version>2.4.1</version>
+    <scope>runtime</scope>
+</dependency>
+```
+
+**Logging.** Apache POI logs through the Log4j API. Without a Log4j provider on the
+classpath it prints one line at the first export —
+`ERROR Log4j API could not find a logging provider.` — which is a notice, not a failure.
+To send POI's messages where the rest of your logging goes, add the bridge at the same
+version as the `log4j-api` POI brings (see `mvn dependency:tree`):
+
+```xml
+<dependency>
+    <groupId>org.apache.logging.log4j</groupId>
+    <artifactId>log4j-to-slf4j</artifactId>
+    <version>2.24.3</version>
     <scope>runtime</scope>
 </dependency>
 ```

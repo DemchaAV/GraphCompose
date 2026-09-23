@@ -634,6 +634,12 @@ jobs:
         # build resolves it.
         run: ./mvnw -B -ntp -f render-pdf/pom.xml -DskipTests install
 
+      - name: Install graph-compose-render-docx (consumed by the benchmarks module)
+        # DocxExportJmhBenchmark measures the DOCX export beside the PDF render, so the
+        # benchmarks module depends on render-docx; install it after render-pdf, which
+        # its tests resolve.
+        run: ./mvnw -B -ntp -f render-docx/pom.xml -DskipTests install
+
       - name: Install graph-compose-templates (consumed by the benchmarks module)
         run: ./mvnw -B -ntp -f templates/pom.xml -DskipTests install
 
@@ -748,6 +754,12 @@ jobs:
         # it depends on render-pdf; install it after the core, before the benchmarks
         # build resolves it.
         run: ./mvnw -B -ntp -f render-pdf/pom.xml -DskipTests install
+
+      - name: Install graph-compose-render-docx (consumed by the benchmarks module)
+        # DocxExportJmhBenchmark measures the DOCX export beside the PDF render, so the
+        # benchmarks module depends on render-docx; install it after render-pdf, which
+        # its tests resolve.
+        run: ./mvnw -B -ntp -f render-docx/pom.xml -DskipTests install
 
       - name: Install graph-compose-templates (consumed by the benchmarks module)
         run: ./mvnw -B -ntp -f templates/pom.xml -DskipTests install

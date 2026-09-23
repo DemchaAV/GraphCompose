@@ -218,6 +218,17 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * Whether the layout placed a node, and placed all of it on one page.
+     *
+     * @param node any authored node
+     * @return true when the node starts and ends on the same page
+     */
+    boolean onOnePage(DocumentNode node) {
+        PlacedNode placedNode = placedFor(node);
+        return placedNode != null && placedNode.startPage() == placedNode.endPage();
+    }
+
+    /**
      * How far a page zone's content sits from the page edge it belongs to, as laid out on
      * the first page.
      *

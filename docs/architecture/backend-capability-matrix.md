@@ -108,6 +108,7 @@ honour an option ignores it (documented contract).
 | Protection / encryption | ✅ `PdfDocumentPostProcessor` | ❌ (ignored with a one-time warning — no OOXML encryption support planned) | ❌ |
 | Viewer preferences | ✅ `applyViewerPreferences` in `PdfFixedLayoutBackend` | ❌ (ignored with a one-time warning — PDF-viewer concept) | n/a |
 | Debug guide lines / node labels | ✅ `PdfGuideLinesRenderer`, `PdfNodeLabelRenderer` | ❌ (ignored with a one-time warning — render through the PDF backend to see overlays) | n/a |
+| Keep a block on one page (`keepTogether()`, `keepWithNext()`) | ✅ resolved by `LayoutCompiler` before any backend runs | ✅ same — the slides are the laid-out pages | ✅ `DocxSemanticBackend.keepOnOnePage` — Word re-paginates, so a block the layout placed on one page is told to stay there: `w:keepLines` on each of its paragraphs and `w:keepNext` on every one but the last (on the last too for `keepWithNext`), a table inside it chained row by row. A block that ran over a page break in the layout is taller than a page and is left to flow, as the layout left it |
 
 ## Output surface and lifecycle
 

@@ -86,6 +86,14 @@ matrix.
 > *was* written is not in it yet, and adding that will move the shape. The no-argument
 > constructor and the log are unaffected.
 >
+> The **DOCX backend builder** is Experimental in 2.5.0: `DocxSemanticBackend.builder()`
+> and `DocxSemanticBackend.Builder` — `reportSink`, and `deterministic` in both overloads,
+> which pins the package's created / modified dates and every zip entry's time so a
+> document exports byte-identically across runs. It takes the PDF and PPTX backends'
+> contract and default instant; determinism is off by default, and as there, it is the
+> shape of the opt-in that may still move rather than the behaviour. Both constructors
+> are unaffected.
+>
 > Seven members of the otherwise-Stable **PDF backend** also carry `@Beta`. The
 > package is not Experimental — these are:
 > `PdfFixedLayoutBackend.renderSections` / `writeSections`, the low-level seam

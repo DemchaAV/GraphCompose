@@ -121,6 +121,7 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalDouble;
@@ -220,6 +221,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private java.util.Set<Integer> headingLevels = java.util.Set.of();
     // Where the finished report goes, when the caller configured somewhere for it to go.
     private final java.util.function.Consumer<DocxExportReport> reportSink;
+    // The instant every clock in the package is pinned to, or null for live timestamps.
+    private final Instant deterministicTimestamp;
+
+    /** The instant deterministic output pins to by default — the PDF and PPTX backends' own. */
+    private static final Instant DEFAULT_DETERMINISTIC_INSTANT = Instant.parse("2000-01-01T00:00:00Z");
 
     /**
      * A container's paint, reduced to what a Word paragraph can carry.
@@ -239,7 +245,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Creates a DOCX semantic backend.
      */
     public DocxSemanticBackend() {
-        this(null);
+        this((java.util.function.Consumer<DocxExportReport>) null);
     }
 
     /**
@@ -260,6 +266,95 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     public DocxSemanticBackend(java.util.function.Consumer<DocxExportReport> reportSink) {
         this.reportSink = reportSink;
+        this.deterministicTimestamp = null;
+    }
+
+    private DocxSemanticBackend(Builder builder) {
+        this.reportSink = builder.reportSink;
+        this.deterministicTimestamp = builder.deterministicTimestamp;
+    }
+
+    /**
+     * Starts a backend configured beyond what the constructors say.
+     *
+     * @return a new builder
+     * @since 2.5.0
+     */
+    @com.demcha.compose.document.api.Beta
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Configures a {@link DocxSemanticBackend}. Each call replaces what it sets, and
+     * {@link #build()} can be called more than once.
+     *
+     * @since 2.5.0
+     */
+    @com.demcha.compose.document.api.Beta
+    public static final class Builder {
+
+        private java.util.function.Consumer<DocxExportReport> reportSink;
+        private Instant deterministicTimestamp;
+
+        private Builder() {
+        }
+
+        /**
+         * Where the export's {@link DocxExportReport} goes when an export ends. See
+         * {@link DocxSemanticBackend#DocxSemanticBackend(java.util.function.Consumer)}.
+         *
+         * @param reportSink the sink, or null to keep the log as the only channel
+         * @return this builder
+         */
+        public Builder reportSink(java.util.function.Consumer<DocxExportReport> reportSink) {
+            this.reportSink = reportSink;
+            return this;
+        }
+
+        /**
+         * Enables (or disables) deterministic output. When enabled, the package's OPC
+         * created / modified core properties are pinned to a fixed default timestamp and
+         * every zip entry's modification time is normalized, so the same document exports to
+         * byte-identical output across runs — for reproducible builds and byte-level output
+         * tests. Disabled by default, the same contract the PDF and PPTX backends keep.
+         *
+         * <p>Embedded fonts are deterministic either way: each font's obfuscation key is
+         * derived from the font rather than drawn at random.</p>
+         *
+         * @param enabled {@code true} to pin output at the default timestamp,
+         *                {@code false} to keep POI's live timestamps
+         * @return this builder
+         */
+        public Builder deterministic(boolean enabled) {
+            this.deterministicTimestamp = enabled ? DEFAULT_DETERMINISTIC_INSTANT : null;
+            return this;
+        }
+
+        /**
+         * Enables deterministic output with an explicit timestamp. See
+         * {@link #deterministic(boolean)}.
+         *
+         * <p>The instant is truncated to whole seconds up front: zip DOS times carry
+         * two-second resolution and OPC dates whole seconds, so truncating keeps every
+         * serialized clock in agreement for sub-second inputs.</p>
+         *
+         * @param timestamp the instant to pin the package's clocks to
+         * @return this builder
+         * @throws NullPointerException if {@code timestamp} is null
+         */
+        public Builder deterministic(Instant timestamp) {
+            this.deterministicTimestamp = java.util.Objects.requireNonNull(timestamp, "timestamp")
+                    .truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+            return this;
+        }
+
+        /**
+         * @return a backend with this configuration
+         */
+        public DocxSemanticBackend build() {
+            return new DocxSemanticBackend(this);
+        }
     }
 
     @Override
@@ -328,9 +423,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             // Nothing follows the last root to carry what it holds below itself.
             flushSpacingAfter();
+            if (deterministicTimestamp != null) {
+                DocxDeterminism.pinCoreProperties(document, deterministicTimestamp);
+            }
             try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
                 document.write(output);
-                byte[] bytes = output.toByteArray();
+                byte[] bytes = deterministicTimestamp == null
+                        ? output.toByteArray()
+                        : DocxDeterminism.normalizeZipEntries(output.toByteArray(), deterministicTimestamp);
                 if (context.outputFile() != null) {
                     Files.write(context.outputFile(), bytes);
                 }

@@ -37,6 +37,23 @@ the two-argument overload targets an explicit path.
 transitively. Add that one dependency to export DOCX — consumers who only render
 PDF never pull POI.
 
+### Byte-identical output
+
+For reproducible builds and byte-level tests, pin the package's clocks:
+
+```java
+byte[] docx = session.export(DocxSemanticBackend.builder()
+        .deterministic(true)                  // or deterministic(Instant) for your own date
+        .reportSink(report -> System.out.println(report.notes()))
+        .build());
+```
+
+The package's created / modified dates and every zip entry's time are pinned, so the same
+document exports to the same bytes on every run and machine — the contract the PDF and PPTX
+backends keep, with the same default instant. Embedded fonts are deterministic either way:
+their obfuscation keys are derived from the font. Off by default, because a document's
+creation date is real metadata.
+
 ## What maps 1:1
 
 | Document node | DOCX output |

@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.5.0-SNAPSHOT
 
-Types: 76 · methods: 397 · constants: 21 · compiler-generated members: 205
+Types: 77 · methods: 402 · constants: 21 · compiler-generated members: 205
 
 ## com.demcha.compose.document.backend.fixed
 
@@ -590,10 +590,17 @@ Types: 76 · methods: 397 · constants: 21 · compiler-generated members: 205
 ### DocxSemanticBackend (class)
 - `new DocxSemanticBackend()`
 - `new DocxSemanticBackend(Consumer<DocxExportReport> reportSink)`
+- `DocxSemanticBackend.Builder builder()   [beta]`
 - `String name()`
 - `boolean requiresResolvedLayout()`
 - `byte[] export(DocumentGraph graph, SemanticExportContext context)`
 - `Object export(DocumentGraph graph, SemanticExportContext context)`
+
+### DocxSemanticBackend.Builder (class)   [beta]
+- `DocxSemanticBackend.Builder reportSink(Consumer<DocxExportReport> reportSink)   [beta]`
+- `DocxSemanticBackend.Builder deterministic(boolean enabled)   [beta]`
+- `DocxSemanticBackend.Builder deterministic(Instant timestamp)   [beta]`
+- `DocxSemanticBackend build()   [beta]`
 
 ## com.demcha.compose.document.backend.semantic.pptx
 

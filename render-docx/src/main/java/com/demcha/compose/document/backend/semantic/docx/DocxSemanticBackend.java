@@ -3748,8 +3748,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private XWPFTable newTable(XWPFDocument document, int rows, int columns) {
+        if (currentCell == null && endsWithATable(document.getBodyElements())) {
+            separateFromTheTableAbove(document);
+        }
         // Word has no space above a table, so the paragraph before it has to carry it.
         flushSpacingAfter();
+        // Nor can that paragraph carry the space below the table: it sits above it. Space
+        // owed once the table is written goes to whatever paragraph follows, as space above
+        // it — and nowhere, if nothing follows — rather than back above the table, which is
+        // where it used to land: a card's bottom padding opened a gap over its last table.
+        lastBodyParagraph = null;
         if (currentCell == null) {
             return document.createTable(rows, columns);
         }
@@ -3761,6 +3769,40 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         currentCell.addParagraph();
         return nested;
     }
+
+    private static boolean endsWithATable(List<IBodyElement> elements) {
+        return !elements.isEmpty() && elements.get(elements.size() - 1) instanceof XWPFTable;
+    }
+
+    /**
+     * Puts a paragraph between a table and the one about to follow it.
+     *
+     * <p>Two tables with nothing between them are one table to Word and to LibreOffice: the
+     * editor joins them, and the second table's rows are laid out on the first one's column
+     * grid. Measured in LibreOffice, a zebra table followed by a narrower one came out at half
+     * its width, its text broken letter by letter. A table, or a row carried as one, is often
+     * followed by another, and on the page there is a gap between them.</p>
+     *
+     * <p>So the gap is written as a paragraph: a tenth of a point tall, with the rest of the
+     * space the layout keeps between the two above it, so the second table starts where the
+     * page starts it. It is an ordinary body paragraph, so a panel the tables sit in shades it
+     * and the band stays unbroken. Measured in LibreOffice, a one-point separator put 0.9pt
+     * more between two touching tables than a tenth of a point does; below that the height
+     * stops mattering.</p>
+     */
+    private void separateFromTheTableAbove(XWPFDocument document) {
+        pendingSpacingAfter = Math.max(0, pendingSpacingAfter - SEPARATOR_POINTS);
+        XWPFParagraph separator = newBodyParagraph(document);
+        CTPPr properties = separator.getCTP().isSetPPr()
+                ? separator.getCTP().getPPr()
+                : separator.getCTP().addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        spacing.setLineRule(STLineSpacingRule.EXACT);
+        spacing.setLine(BigInteger.valueOf(Math.round(SEPARATOR_POINTS * POINT_TO_TWIP)));
+    }
+
+    /** How tall the paragraph keeping two tables apart is. */
+    private static final double SEPARATOR_POINTS = 0.1;
 
     /**
      * Writes one node into a cell, through the same writers that write it anywhere else.

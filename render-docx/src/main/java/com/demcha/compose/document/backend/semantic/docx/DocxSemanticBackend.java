@@ -52,6 +52,7 @@ import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
+import com.demcha.compose.document.table.DocumentTableTextAnchor;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.font.FontName;
@@ -3073,6 +3074,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 DocumentColor fill = resolveCellFill(node, placement);
                 applyCellPaint(cell, fill, resolveCellValue(node, placement, DocumentTableStyle::stroke));
                 applyCellPadding(cell, resolveCellPadding(node, placement));
+                applyVerticalAnchor(cell, resolveCellAnchor(node, placement));
                 if (placement.row() != rowIdx) {
                     // A covered position carries the merge marker and no content of its own.
                     continue;
@@ -3327,6 +3329,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // edge. So the cell is told, and the text goes over untouched.
         boolean rightToLeft = resolveCellDirection(node, placement, lines);
         applyDirection(para, rightToLeft);
+        ParagraphAlignment alignment = toAlignment(horizontalOf(resolveCellAnchor(node, placement, rightToLeft)),
+                rightToLeft);
+        if (alignment != ParagraphAlignment.LEFT) {
+            // LEFT is where Word starts the line anyway, in either direction.
+            para.setAlignment(alignment);
+        }
         // The height the row was sized with. Without it Word sets the cell at its own
         // spacing for the font — measured on the probe corpus, a totals row whose style
         // states a 14pt face came out 3pt taller than the page draws it.
@@ -3341,6 +3349,59 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             run.setText(lines.get(i) == null ? "" : lines.get(i), i);
         }
+    }
+
+    /**
+     * Where the page places a cell's content inside its box, most specific style wins.
+     *
+     * <p>The same cascade the layout merges, and the same default when none states one: the
+     * engine's cell style sets text at the vertical middle, on the left — or on the right for
+     * a right-to-left cell, which the layout gives {@code CENTER_RIGHT} the same way. Word's
+     * default is the top left, so a cell left to it put a single line at the top of a row a
+     * taller neighbour had stretched, and an amount column the page right-aligns flush left.</p>
+     */
+    private DocumentTableTextAnchor resolveCellAnchor(TableNode node, TableGrid.Placement placement,
+                                                      boolean rightToLeft) {
+        DocumentTableTextAnchor authored = resolveCellValue(node, placement, DocumentTableStyle::textAnchor);
+        if (authored != null) {
+            return authored;
+        }
+        return rightToLeft ? DocumentTableTextAnchor.CENTER_RIGHT : DocumentTableTextAnchor.CENTER_LEFT;
+    }
+
+    /** The anchor for the vertical half, where direction does not matter. */
+    private DocumentTableTextAnchor resolveCellAnchor(TableNode node, TableGrid.Placement placement) {
+        return resolveCellAnchor(node, placement, false);
+    }
+
+    /**
+     * Writes where a cell's content sits vertically.
+     *
+     * <p>{@code DEFAULT} is the bottom edge, as the page places it: the engine maps it to
+     * {@code Anchor.defaultAnchor()}, whose vertical half the cell renderer and the composed
+     * cell both treat as the bottom. Top is Word's own default and is not written.</p>
+     */
+    private static void applyVerticalAnchor(XWPFTableCell cell, DocumentTableTextAnchor anchor) {
+        XWPFTableCell.XWPFVertAlign vertical = switch (anchor) {
+            case TOP_LEFT, TOP_RIGHT -> null;
+            case CENTER_LEFT, CENTER, CENTER_RIGHT -> XWPFTableCell.XWPFVertAlign.CENTER;
+            case BOTTOM_LEFT, BOTTOM_RIGHT, DEFAULT -> XWPFTableCell.XWPFVertAlign.BOTTOM;
+        };
+        if (vertical != null) {
+            cell.setVerticalAlignment(vertical);
+        }
+    }
+
+    /**
+     * The horizontal half of a cell's anchor, as the alignment the page draws a line with.
+     * {@code DEFAULT} is the left, as the cell renderer places it.
+     */
+    private static TextAlign horizontalOf(DocumentTableTextAnchor anchor) {
+        return switch (anchor) {
+            case CENTER -> TextAlign.CENTER;
+            case CENTER_RIGHT, TOP_RIGHT, BOTTOM_RIGHT -> TextAlign.RIGHT;
+            case CENTER_LEFT, TOP_LEFT, BOTTOM_LEFT, DEFAULT -> TextAlign.LEFT;
+        };
     }
 
     /**

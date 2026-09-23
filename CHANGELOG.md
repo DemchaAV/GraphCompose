@@ -8,6 +8,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A table cell's alignment reaches Word.** The DOCX export read neither half of a cell's
+  `textAnchor`: every column a template right-aligns or centres — amounts, quantities,
+  totals — came out flush left, and since Word's default is the top of the cell while the
+  engine's is the vertical middle, a single line beside a taller neighbour sat at the top of
+  its row. The anchor, cascaded as the layout cascades it, is now `w:vAlign` on every cell
+  and `w:jc` on a text cell's paragraph, with the engine's default when none is stated
+  (middle left, middle right for a right-to-left cell) and `DEFAULT` at the bottom left as
+  the renderer draws it. A composed cell takes the vertical half only, as the engine places
+  it. Measured in LibreOffice against the engine's render: a centred quantity, a
+  right-aligned amount and a bottom-right cell beside a three-line cell land as on the page,
+  and a right-to-left cell starts on the right.
+
 - **A card is a card in Word.** The DOCX export painted a container's fill and borders onto
   each paragraph inside it, and Word has no element that wraps a run of paragraphs, so in an
   editor the card came apart: the accent bar broke beside every row and table inside it, the

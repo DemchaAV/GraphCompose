@@ -37,6 +37,14 @@ the two-argument overload targets an explicit path.
 transitively. Add that one dependency to export DOCX — consumers who only render
 PDF never pull POI.
 
+### Reusing a backend, and threads
+
+A `DocxSemanticBackend` starts every export from nothing, so one instance can export any
+number of documents one after another — including after an export that threw. It holds the
+running export's state in its own fields, so it is not for two threads at once: create one
+per thread. `session.buildDocx(...)`, `writeDocx(...)` and `toDocxBytes()` take a new backend
+for every export and need nothing.
+
 ### Byte-identical output
 
 For reproducible builds and byte-level tests, pin the package's clocks:

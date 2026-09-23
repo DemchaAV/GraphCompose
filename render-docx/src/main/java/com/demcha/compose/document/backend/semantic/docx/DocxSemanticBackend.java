@@ -142,6 +142,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * {@code org.apache.poi:poi-ooxml} transitively — adding that one artifact is
  * all a DOCX consumer needs.</p>
  *
+ * <p><b>Threads:</b> an instance holds the state of the export it is running — the spacing
+ * still owed, the bookmark names handed out, the list definitions written — and starts every
+ * export from nothing, including one that follows an export that threw. So one instance can
+ * be used for any number of exports one after another, but not by two threads at once.
+ * Create one per thread; the session's {@code buildDocx} / {@code writeDocx} /
+ * {@code toDocxBytes} already do, taking a new backend for every export.</p>
+ *
  * @author Artem Demchyshyn
  */
 public final class DocxSemanticBackend implements SemanticBackend<byte[]> {

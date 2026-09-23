@@ -17,6 +17,19 @@ follow semantic versioning; release dates are ISO 8601.
   on the card's own paragraphs. A row placed directly in a bordered card keeps its cells shaded
   and no longer draws the card's outline around the text of each cell.
 
+- **Two tables in a row stay two tables in Word.** Word and LibreOffice join two tables
+  with nothing between them into one and lay the second one's rows on the first one's
+  column grid; measured in LibreOffice, a zebra table followed by a narrower one came out
+  at half its width with its text broken letter by letter — and a row (`addRow`) is carried
+  as a table, so two rows in a row were joined the same way. A paragraph a tenth of a point
+  tall (measured in LibreOffice; Word may hold it to its own minimum, still under a point) now
+  separates them, carrying the rest of the gap the layout keeps between them and a panel's
+  fill — not its borders, which would rule a line across the card — and keeping with the
+  table below it, so a block kept with that table stays kept. Space owed below a table no
+  longer lands on the paragraph above it: a card ending in a table opened its bottom padding
+  between its title and its table, and after a table nested in a cell the space now goes to
+  the paragraph that closes the cell.
+
 - **A table of contents keeps its page numbers in Word, and they stay right.** The DOCX export
   dropped every page reference, so `addTableOfContents(...)` reached Word with its entries and
   no numbers, and `addPageReference(...)` wrote nothing. Each is now Word's own `PAGEREF`

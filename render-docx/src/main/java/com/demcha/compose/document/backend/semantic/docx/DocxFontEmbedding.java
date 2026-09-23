@@ -152,11 +152,15 @@ final class DocxFontEmbedding {
      * @return the key the first bytes of the font are exclusive-ored against
      */
     static byte[] keyOf(UUID uuid) {
-        String hex = uuid.toString().replace("-", "");
+        // The GUID's digits read backwards by pair are its sixteen bytes read backwards: the
+        // low half's least significant byte first. Taken from the bits rather than from the
+        // printed form, so there is no text to parse.
+        long most = uuid.getMostSignificantBits();
+        long least = uuid.getLeastSignificantBits();
         byte[] key = new byte[16];
-        for (int index = 0; index < key.length; index++) {
-            int at = hex.length() - 2 - index * 2;
-            key[index] = (byte) Integer.parseInt(hex.substring(at, at + 2), 16);
+        for (int index = 0; index < 8; index++) {
+            key[index] = (byte) (least >>> (8 * index));
+            key[8 + index] = (byte) (most >>> (8 * index));
         }
         return key;
     }

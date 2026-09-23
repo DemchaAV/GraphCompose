@@ -78,17 +78,17 @@ class DocxPageZonePositionTest {
 
     private static long footerDistance(DocumentPageZone zone) throws Exception {
         CTPageMar margin = marginOf(exportWithLayout(zone));
-        return margin.getFooter() == null ? -1 : Long.parseLong(String.valueOf(margin.getFooter()));
+        return margin.getFooter() == null ? -1 : DocxTwips.of(margin.getFooter());
     }
 
     private static long headerDistance(DocumentPageZone zone) throws Exception {
         CTPageMar margin = marginOf(exportWithLayout(zone));
-        return margin.getHeader() == null ? -1 : Long.parseLong(String.valueOf(margin.getHeader()));
+        return margin.getHeader() == null ? -1 : DocxTwips.of(margin.getHeader());
     }
 
     private static long footerDistanceWithoutLayout(DocumentPageZone zone) throws Exception {
         CTPageMar margin = marginOf(exportWithoutLayout(zone));
-        return margin.getFooter() == null ? -1 : Long.parseLong(String.valueOf(margin.getFooter()));
+        return margin.getFooter() == null ? -1 : DocxTwips.of(margin.getFooter());
     }
 
     private static CTPageMar marginOf(byte[] docx) throws Exception {

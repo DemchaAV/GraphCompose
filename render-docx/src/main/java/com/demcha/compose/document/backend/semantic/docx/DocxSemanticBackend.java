@@ -51,6 +51,7 @@ import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.font.FontName;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.BreakType;
+import org.apache.poi.xwpf.usermodel.IRunBody;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import com.demcha.compose.document.node.PageFieldKind;
 import com.demcha.compose.document.node.PageFieldNode;
@@ -1787,7 +1788,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * unstyled cell holding a chip would come away carrying an empty one.</p>
      */
     private java.awt.Color colourUnder(XWPFRun run) {
-        XWPFParagraph para = run.getParagraph();
+        XWPFParagraph para = run.getParent() instanceof XWPFParagraph parent ? parent : null;
         CTPPr paragraphProperties = para == null || !para.getCTP().isSetPPr()
                 ? null
                 : para.getCTP().getPPr();
@@ -1813,17 +1814,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * identity, which parses as no colour at all and silently flattens against white.</p>
      */
     private static java.awt.Color shadingFillOf(CTShd shading) {
+        // A written RGB comes back as its three bytes. Anything else — Word's "auto", or a
+        // value this export did not write — is no colour it can composite against.
         Object fill = shading == null ? null : shading.getFill();
-        if (fill == null) {
+        if (!(fill instanceof byte[] rgb) || rgb.length != 3) {
             return null;
         }
-        String hex = fill instanceof byte[] bytes
-                ? java.util.HexFormat.of().formatHex(bytes)
-                : String.valueOf(fill).trim();
-        if (!hex.matches("(?i)[0-9a-f]{6}")) {
-            return null;
-        }
-        return new java.awt.Color(Integer.parseInt(hex, 16));
+        return new java.awt.Color(rgb[0] & 0xFF, rgb[1] & 0xFF, rgb[2] & 0xFF);
     }
 
     /**
@@ -1876,7 +1873,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (name != null) {
                 CTHyperlink link = para.getCTP().addNewHyperlink();
                 link.setAnchor(name);
-                return new XWPFRun(link.addNewR(), para);
+                // Through the IRunBody constructor: the XWPFParagraph overload is deprecated,
+                // and an unqualified paragraph argument would pick it.
+                return new XWPFRun(link.addNewR(), (IRunBody) para);
             }
         }
         return para.createRun();

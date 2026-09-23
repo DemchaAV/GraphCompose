@@ -185,7 +185,7 @@ class DocxTableWidthTest {
 
     /** {@code ST_TwipsMeasure} is an xmlbeans union, so the accessor is typed Object. */
     private static long twips(Object measure) {
-        return Long.parseLong(String.valueOf(measure));
+        return DocxTwips.of(measure);
     }
 
     /** The table as written with nothing measured behind it. */

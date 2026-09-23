@@ -94,7 +94,7 @@ public final class EditableExportFixtures {
 
         session.chrome().zone(DocumentPageZone.footer(30, page -> new RowBuilder()
                 .name("FooterZone")
-                .gap(8)
+                .spacing(8)
                 .addParagraph(p -> p.text("Editable export probe").textStyle(CHROME))
                 .flexSpacer()
                 .add(page.pageNumber(CHROME))
@@ -123,7 +123,7 @@ public final class EditableExportFixtures {
 
             // Two columns of unequal length: the row must keep them side by side and
             // must not lose the longer column's tail at a page boundary.
-            page.addRow("TwoColumns", r -> r.gap(18).columns(weight(3), weight(2))
+            page.addRow("TwoColumns", r -> r.spacing(18).columns(weight(3), weight(2))
                     .padding(DocumentInsets.symmetric(14, 0))
                     .addSection(left -> left
                             .addParagraph(p -> p.text("Scope").textStyle(HEADING))

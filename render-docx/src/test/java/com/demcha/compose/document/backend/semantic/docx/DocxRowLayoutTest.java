@@ -83,7 +83,7 @@ class DocxRowLayoutTest {
         // column's width and comes back out as that cell's right margin: the text box is
         // the slot, and the second column starts exactly where the second slot does.
         XWPFTable table = onlyTable(page -> page.addRow(r -> r
-                .gap(20)
+                .spacing(20)
                 .weights(3, 2)
                 .addParagraph(p -> p.text("Scope"))
                 .addParagraph(p -> p.text("Period"))));
@@ -154,7 +154,7 @@ class DocxRowLayoutTest {
         // Weights are arithmetic either way, so the two paths have to arrive at the same
         // columns — if they ever part, one of them is reading the row wrong.
         Consumer<PageFlowBuilder> weighted = page -> page.addRow(r -> r
-                .gap(20)
+                .spacing(20)
                 .weights(3, 2)
                 .addParagraph(p -> p.text("Scope"))
                 .addParagraph(p -> p.text("Period")));
@@ -210,7 +210,7 @@ class DocxRowLayoutTest {
 
     /** {@code ST_TwipsMeasure} is an xmlbeans union, so the accessor is typed Object. */
     private static long twips(Object measure) {
-        return Long.parseLong(String.valueOf(measure));
+        return DocxTwips.of(measure);
     }
 
     private static int occurrences(String haystack, String needle) {

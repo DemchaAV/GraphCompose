@@ -60,6 +60,12 @@
             <artifactId>graph-compose-render-pdf</artifactId>
             <version>${graphcompose.version}</version>
         </dependency>
+        <!-- The DOCX export, measured against the PDF render of the same documents. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-docx</artifactId>
+            <version>${graphcompose.version}</version>
+        </dependency>
         <!-- The built-in templates (benchmarked alongside the raw engine) and their
              tests-classifier jar for the template data fixtures. -->
         <dependency>

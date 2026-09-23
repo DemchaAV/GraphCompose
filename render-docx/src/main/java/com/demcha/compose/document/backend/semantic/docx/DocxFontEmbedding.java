@@ -124,7 +124,10 @@ final class DocxFontEmbedding {
      * @return the part's bytes and the key that unscrambles them
      */
     static Obfuscated obfuscate(byte[] font) {
-        return obfuscate(font, UUID.randomUUID());
+        // Derived from the font rather than drawn at random. The key only has to be a
+        // GUID — it is not a secret, and nothing requires it to differ between documents —
+        // and a random one made every export of the same document different bytes.
+        return obfuscate(font, UUID.nameUUIDFromBytes(font));
     }
 
     /**

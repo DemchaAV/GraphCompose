@@ -8,6 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **The same document exports to the same DOCX bytes, when asked to.** Measured on the probe
+  corpus, three things made two exports of one document differ: the package's created /
+  modified dates, every zip entry's timestamp, and each embedded font's obfuscation key,
+  which was a random GUID. `DocxSemanticBackend.builder().deterministic(true)` — or
+  `deterministic(Instant)` — pins the first two, taking the PDF and PPTX backends' contract
+  and their default instant, `2000-01-01T00:00:00Z`; off by default, because a document's
+  creation date is meaningful metadata. The third needs no option: a font's key only has to
+  be a GUID — it is not a secret, and nothing requires it to differ between documents — so it
+  is now derived from the font, and embedded fonts come out the same bytes every time. The
+  builder also takes the report sink the existing constructor does; both constructors stay.
+
 - **A table cell with no style of its own is written in the face the page draws it in.**
   With nothing in its cascade stating a face, a cell was written with no run properties and
   took the document's Normal — 10.5pt on the probe corpus — while the engine draws it in its

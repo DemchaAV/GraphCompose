@@ -22,8 +22,8 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 76,
-    "methods": 397,
+    "types": 77,
+    "methods": 402,
     "constants": 21,
     "generated": 205
   },
@@ -6487,6 +6487,16 @@
             },
             {
               "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocxSemanticBackend.Builder",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
               "name": "name",
               "static": false,
               "origin": "source",
@@ -6538,6 +6548,73 @@
                   "name": "context"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "name": "DocxSemanticBackend.Builder",
+          "binaryName": "com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend$Builder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-docx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "method",
+              "name": "reportSink",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocxSemanticBackend.Builder",
+              "params": [
+                {
+                  "type": "Consumer<DocxExportReport>",
+                  "name": "reportSink"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "deterministic",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocxSemanticBackend.Builder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": "enabled"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "deterministic",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocxSemanticBackend.Builder",
+              "params": [
+                {
+                  "type": "Instant",
+                  "name": "timestamp"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocxSemanticBackend",
+              "params": [],
+              "stability": "beta"
             }
           ]
         }

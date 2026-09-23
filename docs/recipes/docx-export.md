@@ -190,8 +190,9 @@ goes back to the paragraph above only where nothing below can hold it — before
 which has no space above it in Word, before a page break, at the end of a cell, and at the
 end of the document.
 
-The horizontal half of that box has no paragraph-level equivalent and is still dropped —
-see "What a panel keeps and loses".
+The horizontal half is carried as an indent: every paragraph by each enclosing container's
+margin and padding, a row or a table by the same amount as `w:tblInd` — see "What a panel
+keeps and loses".
 
 Asking for the layout costs a measurement and pagination pass over the document, the same
 work a PDF render does, and it reads each image a second time.

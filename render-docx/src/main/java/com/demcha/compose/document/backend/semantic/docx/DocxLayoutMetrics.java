@@ -52,7 +52,7 @@ final class DocxLayoutMetrics {
     // A table's measured cells by name, filled on first use — see cellLineHeightsOf.
     private final Map<DocumentNode, Map<String, Double>> cellLineHeights = new IdentityHashMap<>();
     // The rows of a table the layout placed, by index, filled on first use — see placedRowsOf.
-    private final Map<DocumentNode, Set<Integer>> placedRows = new IdentityHashMap<>();
+    private final Map<DocumentNode, Set<String>> placedRows = new IdentityHashMap<>();
 
     private DocxLayoutMetrics(Map<DocumentNode, String> paths,
                               Map<String, List<PlacedFragment>> fragments,
@@ -180,12 +180,17 @@ final class DocxLayoutMetrics {
      * @return true when the layout carries a placement for that row
      */
     boolean placedRow(DocumentNode table, int row) {
-        return placedRowsOf(table).contains(row);
+        return placedRowsOf(table).contains(String.valueOf(row));
     }
 
-    private Set<Integer> placedRowsOf(DocumentNode table) {
+    /**
+     * The index part of each placed row's name, kept as the text the layout wrote rather than
+     * parsed: a row is looked up by writing its index the same way, so a name that only
+     * resembles the pattern matches nothing instead of failing the export.
+     */
+    private Set<String> placedRowsOf(DocumentNode table) {
         return placedRows.computeIfAbsent(table, node -> {
-            Set<Integer> rows = new HashSet<>();
+            Set<String> rows = new HashSet<>();
             String prefix = (node.name() == null || node.name().isBlank()
                     ? node.nodeKind()
                     : node.name()) + "__row_";
@@ -195,7 +200,7 @@ final class DocxLayoutMetrics {
                         ? -1
                         : name.indexOf("__cell_", prefix.length());
                 if (end >= 0) {
-                    rows.add(Integer.parseInt(name.substring(prefix.length(), end)));
+                    rows.add(name.substring(prefix.length(), end));
                 }
             }
             return rows;

@@ -164,6 +164,39 @@ class DocxLineHeightTest {
         }
     }
 
+    @Test
+    void aCellWithNoAuthoredFaceIsWrittenInTheEnginesDefaultCellFace() throws Exception {
+        // With nothing in its cascade stating a face, a cell was written with no run
+        // properties and took the document's Normal — 10.5pt here — while the page draws it
+        // in the engine's default cell face, 14pt. The row was the right height and the text
+        // in it visibly smaller than the page's.
+        try (XWPFDocument document = withLayout(page -> page
+                .addParagraph(p -> p.text("Body text sets the document's Normal.")
+                        .textStyle(DocumentTextStyle.DEFAULT.withSize(10.5)))
+                .addTable(t -> t.name("Plain").autoColumns(1).row("Cell")))) {
+
+            org.apache.poi.xwpf.usermodel.XWPFRun run = document.getTables().get(0)
+                    .getRow(0).getCell(0).getParagraphs().get(0).getRuns().get(0);
+            assertThat(run.getFontSizeAsDouble()).isEqualTo(14.0);
+        }
+    }
+
+    @Test
+    void aCellsAuthoredFaceStillWins() throws Exception {
+        try (XWPFDocument document = withLayout(page -> page
+                .addParagraph(p -> p.text("Body").textStyle(DocumentTextStyle.DEFAULT.withSize(10.5)))
+                .addTable(t -> t.name("Styled").autoColumns(1)
+                        .defaultCellStyle(com.demcha.compose.document.table.DocumentTableStyle.builder()
+                                .textStyle(DocumentTextStyle.DEFAULT.withSize(9))
+                                .build())
+                        .row("Cell")))) {
+
+            org.apache.poi.xwpf.usermodel.XWPFRun run = document.getTables().get(0)
+                    .getRow(0).getCell(0).getParagraphs().get(0).getRuns().get(0);
+            assertThat(run.getFontSizeAsDouble()).isEqualTo(9.0);
+        }
+    }
+
     private static XWPFDocument withLayout(Consumer<PageFlowBuilder> content) throws Exception {
         return DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, content);
     }

@@ -8,6 +8,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A table cell with no style of its own is written in the face the page draws it in.**
+  With nothing in its cascade stating a face, a cell was written with no run properties and
+  took the document's Normal — 10.5pt on the probe corpus — while the engine draws it in its
+  default cell face, 14pt Helvetica. The row was the right height and the text in it visibly
+  smaller than the page's. The fallback is now read from the engine's own
+  `TableCellLayoutStyle.DEFAULT`, the last step of the cascade the layout runs.
+  <br><br>
+  Writing the true size exposed a second thing: an auto column is exactly as wide as its
+  widest unwrapped cell, with no slack, because the page needs none. An editor does — it sets
+  the text in its own substitute for the face and keeps a border's width clear inside the
+  cell — and measured through LibreOffice the billing table's widest item wrapped and its row
+  doubled. Each auto column now gets a point more in Word than on the page, only where it costs
+  nothing the document stated: a table with an authored width keeps it exactly, a fixed column
+  keeps its size, and the slack never takes a table past the width it sits in.
+
 - **A table cell carries the line height its row was sized with.** The layout measured the
   height of a line of a cell's text to size the row, then dropped it: the PDF and PPTX
   renderers measured it again when drawing, and the DOCX export — which has no font runtime —

@@ -43,8 +43,13 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.engine.components.content.text.TextDecoration;
+import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
 import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.table.DocumentTableCell;
+import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontLibrary;
@@ -2374,7 +2379,41 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * column's, then the row's, then the cell's own.</p>
      */
     private DocumentTextStyle resolveCellTextStyle(TableNode node, TableGrid.Placement placement) {
-        return resolveCellValue(node, placement, DocumentTableStyle::textStyle);
+        DocumentTextStyle authored = resolveCellValue(node, placement, DocumentTableStyle::textStyle);
+        return authored != null ? authored : DEFAULT_CELL_FACE;
+    }
+
+    /**
+     * The face a table cell is drawn in when nothing in its cascade states one.
+     *
+     * <p>Without it a cell with no authored text style was written with no run properties
+     * at all and took the document's Normal — 10.5pt on the probe corpus — while the page
+     * draws the same cell in the engine's default cell face, 14pt Helvetica. The row came
+     * out the right height and the text in it visibly smaller than the page's.</p>
+     *
+     * <p>Read from the engine's own {@code TableCellLayoutStyle.DEFAULT}, the last step of
+     * the cascade the layout runs, rather than restated here — so the two cannot drift.</p>
+     */
+    private static final DocumentTextStyle DEFAULT_CELL_FACE =
+            documentFaceOf(TableCellLayoutStyle.DEFAULT.textStyle());
+
+    private static DocumentTextStyle documentFaceOf(TextStyle face) {
+        return DocumentTextStyle.builder()
+                .fontName(face.fontName())
+                .size(face.size())
+                .decoration(documentDecorationOf(face.decoration()))
+                .color(DocumentColor.of(face.color()))
+                .build();
+    }
+
+    /** The document twin of an engine decoration, by name; plain text when there is none. */
+    private static DocumentTextDecoration documentDecorationOf(TextDecoration decoration) {
+        for (DocumentTextDecoration candidate : DocumentTextDecoration.values()) {
+            if (decoration != null && candidate.name().equals(decoration.name())) {
+                return candidate;
+            }
+        }
+        return DocumentTextDecoration.DEFAULT;
     }
 
     /**
@@ -2715,9 +2754,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double[] measured = layout.tableColumns(node, columnCount);
         if (measured != null && measured.length > 0) {
             // The layout resolved every column, an auto one included, so there is nothing
-            // left to decide: write the widths it arrived at and stop Word re-fitting them.
-            writeGrid(table, measured);
-            setTableWidth(table, sum(measured));
+            // left to decide: write the widths it arrived at and stop Word re-fitting them —
+            // with the editor's margin on the columns sized to their content.
+            double[] columns = withEditorSlack(node, measured);
+            writeGrid(table, columns);
+            setTableWidth(table, sum(columns));
             setFixedLayout(table);
             return;
         }
@@ -2752,6 +2793,56 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         columns[columns.length - 1] += width - natural;
         writeGrid(table, columns);
     }
+
+    /**
+     * Widens the columns sized to their content by a point, where there is room for it.
+     *
+     * <p>An auto column is exactly as wide as its widest unwrapped cell: the engine gives it
+     * no slack, because on the page it needs none. An editor does. It sets the text in its
+     * own substitute for the face and keeps a border's width clear inside the cell, and
+     * either is enough to push the widest cell of a zero-slack column onto a second line —
+     * measured on the probe corpus through LibreOffice, a billing table's widest item
+     * wrapped and its row doubled the moment its cells were written at their true 14pt.</p>
+     *
+     * <p>So each auto column gets {@value #EDITOR_COLUMN_SLACK_POINTS}pt more than the page
+     * gave it — below anything a reader compares by eye, and what keeps the page's line
+     * breaks. Only where it costs nothing the document stated: a table with an authored
+     * width keeps that width exactly, a fixed column keeps its size, and the slack never
+     * takes the table past the width it sits in.</p>
+     */
+    private double[] withEditorSlack(TableNode node, double[] measured) {
+        if (node.width() != null) {
+            return measured;
+        }
+        List<DocumentTableColumn> specs = node.columns();
+        int autoColumns = 0;
+        for (int index = 0; index < measured.length; index++) {
+            if (isAutoColumn(specs, index)) {
+                autoColumns++;
+            }
+        }
+        double available = Double.isFinite(nestedTableWidth()) ? nestedTableWidth() : contentWidth;
+        double room = available - node.padding().horizontal() - sum(measured);
+        if (autoColumns == 0 || !(room > 0)) {
+            return measured;
+        }
+        double slack = Math.min(EDITOR_COLUMN_SLACK_POINTS, room / autoColumns);
+        double[] columns = measured.clone();
+        for (int index = 0; index < columns.length; index++) {
+            if (isAutoColumn(specs, index)) {
+                columns[index] += slack;
+            }
+        }
+        return columns;
+    }
+
+    /** A column the author did not size is sized to its content — see {@code TableLayoutSupport}. */
+    private static boolean isAutoColumn(List<DocumentTableColumn> specs, int index) {
+        return index >= specs.size() || specs.get(index).type() == DocumentTableColumn.Type.AUTO;
+    }
+
+    /** The margin an editor needs on a column sized exactly to its widest cell. */
+    static final double EDITOR_COLUMN_SLACK_POINTS = 1.0;
 
     /**
      * States a table's width in points, replacing the size-to-content default.

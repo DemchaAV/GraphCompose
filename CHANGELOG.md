@@ -8,6 +8,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A card's text sits inside the card in Word.** The DOCX export never wrote a container's
+  sides: a card's text ran flush with the page margin, touching the card's edge, with the
+  accent bar against it. Every paragraph is now indented by each enclosing container's margin
+  and padding, and a panel's side borders are spaced by its padding, so the accent bar and the
+  band sit at the card's edge and the text inside it, as on the page — measured in
+  LibreOffice against the page's own render. A filled side with no border gets a hairline in
+  the fill's colour so the band reaches the edge; a numbered list inside keeps its hanging
+  indent, with the accent bar still at the edge. The top and bottom padding stay outside the
+  shading.
+
 - **A table inside a filled card keeps its own cell colours in Word.** A cell built from a
   node (`DocumentTableCell.node(...)`) wrote its paragraphs through the same path as the body,
   so they took the card's fill and border as paragraph shading: in a zebra table inside a

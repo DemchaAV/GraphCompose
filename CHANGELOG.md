@@ -454,6 +454,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **One DOCX export's state stays in that export — now pinned.** The backend keeps what an
+  export is in the middle of in its own fields, and starts each export from nothing.
+  `DocxExportIsolationTest` holds that to the byte on deterministic output: a backend used
+  for other documents first — one with a bookmark, a list, a chart and a dropped line —
+  exports each document exactly as a fresh backend does; an export that throws halfway, with
+  spacing still owed and a section's top edge still waiting, leaves nothing for the next one;
+  a reused backend reports what its own export lost; and eight sessions exporting at the same
+  moment produce the bytes one export alone does. Each reset it relies on was removed in turn
+  to confirm a test fails without it. The threading contract — reusable one export at a time,
+  not by two threads at once — is written on the class and in the DOCX recipe.
+
 - `EmojiSequencesTest` pins the fully-qualified spelling — a text-default character gains
   U+FE0F, an emoji-presentation one does not, a skin-tone modifier or a selector already in
   the key suppresses it, a keycap base is qualified before U+20E3 — and compares the table of

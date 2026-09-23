@@ -8,6 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A barcode reaches Word, and scans.** The DOCX export dropped a `BarcodeNode` with the
+  geometry-only nodes, so a receipt or a shipping label lost the code a reader scans. It is
+  now a PNG picture of the same ZXing matrix the PDF and PPTX backends draw
+  (`BarcodeMatrices`), one pixel a cell in the symbol's two colours with their alpha, encoded
+  in memory, at the node's size, with its margin as the space around it, its `anchor` as a
+  bookmark and its data as the picture's description. Decoded back from the picture, a QR
+  code and a Code 128 return their data. The data is part of the picture rather than
+  editable in Word, and the report says so (`APPROXIMATED`), naming a link or a transform
+  on the barcode as not carried. Outside the body — in a page zone — a barcode is still
+  skipped. The PDF backend comes in at compile scope for this; see Packaging.
+
 - **A table cell's alignment reaches Word.** The DOCX export read neither half of a cell's
   `textAnchor`: every column a template right-aligns or centres — amounts, quantities,
   totals — came out flush left, and since Word's default is the top of the cell while the
@@ -591,9 +602,9 @@ follow semantic versioning; release dates are ISO 8601.
   publishes one — but the DOCX module declared it at test scope, so an application depending
   on `graph-compose-core` + `graph-compose-render-docx` failed at `create()` with
   `MissingBackendException` before it could export anything, and the class javadoc said the
-  opposite. The PDF backend is now a `runtime` dependency of the DOCX module, the way the
-  PPTX module already brings it: nothing compiles against it through this module, and an
-  application that declared it by hand resolves the same version. Checked with three
+  opposite. The PDF backend is now a dependency of the DOCX module at compile scope, the way
+  the PPTX module already brings it — the DOCX module draws a barcode with its matrix encoder
+  — and an application that declared it by hand resolves the same version. Checked with three
   consumer applications built outside the reactor against the installed artifacts — DOCX
   alone, PDF + DOCX, PDF + PPTX + DOCX: each exports, and each resolves one Apache POI
   (5.5.1, `poi-ooxml-lite`, never `-full`), one XMLBeans (5.3.0) and one PDFBox (3.0.8), so

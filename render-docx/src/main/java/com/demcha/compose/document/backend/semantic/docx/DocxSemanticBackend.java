@@ -143,8 +143,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p><b>Dependencies:</b> this backend ships in
  * {@code io.github.demchaav:graph-compose-render-docx}, which brings
  * {@code org.apache.poi:poi-ooxml} transitively, and
- * {@code graph-compose-render-pdf} at runtime scope — opening a session resolves
- * the font-metrics provider only that module publishes. Adding that one artifact
+ * {@code graph-compose-render-pdf} — opening a session resolves the font-metrics
+ * provider only that module publishes, and a barcode is drawn with its matrix encoder,
+ * so it is carried at compile scope, as the PPTX module carries it. Adding that one artifact
  * to {@code graph-compose-core} is all a DOCX consumer needs.</p>
  *
  * <p><b>Threads:</b> an instance holds the state of the export it is running — the spacing
@@ -1010,6 +1011,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (node instanceof ImageNode image) {
             return image.anchor();
         }
+        if (node instanceof com.demcha.compose.document.node.BarcodeNode barcode) {
+            return barcode.anchor();
+        }
         return null;
     }
 
@@ -1154,6 +1158,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writePageReference(document, reference);
         } else if (node instanceof ImageNode image) {
             writeImage(document, image);
+        } else if (node instanceof com.demcha.compose.document.node.BarcodeNode barcode) {
+            writeBarcode(document, barcode);
         } else if (node instanceof TableNode table) {
             writeTableWithItsOwnSpacing(document, table);
         } else if (node instanceof SpacerNode spacer) {
@@ -1179,8 +1185,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // as a one-cell table carrying both, instead of disappearing.
             writeContainerChildren(document, node);
         } else {
-            // Geometry-only node kinds (line, ellipse, shape, path, polygon,
-            // barcode) have no semantic Word analogue. Warn once per kind so a
+            // Geometry-only node kinds (line, ellipse, shape, path, polygon)
+            // have no semantic Word analogue. Warn once per kind so a
             // dropped chart-line or icon is visible in the log instead of
             // silently missing; authors needing pixel-perfect output use the
             // PDF fixed-layout backend.
@@ -2910,6 +2916,44 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 applyCoverCrop(picture, sourceWidth, sourceHeight, box);
             }
         }
+    }
+
+    /**
+     * Writes a barcode as a picture of the symbol at the size the page draws it.
+     *
+     * <p>It was dropped with the geometry-only nodes, so a receipt or a shipping label lost
+     * the code a reader scans. The picture carries the same matrix the page draws (see
+     * {@link DocxBarcodePictures}); what it does not carry is the data, which in Word is part
+     * of a picture rather than something to edit, so the report says so — and says so of a
+     * link or a transform on it too, which the picture does not carry either.</p>
+     *
+     * <p>A symbol drawn in two transparent colours is still written: it holds its space on the
+     * page, and an anchor on it has to land somewhere.</p>
+     */
+    private void writeBarcode(XWPFDocument document, com.demcha.compose.document.node.BarcodeNode node)
+            throws Exception {
+        com.demcha.compose.engine.components.content.barcode.BarcodeData data =
+                NodeDefinitionSupport.toBarcodeData(node.barcodeOptions());
+        byte[] png = DocxBarcodePictures.png(data, node.width(), node.height());
+        XWPFParagraph para = newBodyParagraph(document);
+        applyVerticalSpacing(para, node);
+        XWPFRun run = para.createRun();
+        try (InputStream stream = new java.io.ByteArrayInputStream(png)) {
+            run.addPicture(stream, PictureType.PNG, "barcode",
+                    Units.toEMU(node.width()), Units.toEMU(node.height()));
+        }
+        // A reader's screen reader has only the picture's description to go on: the data is it.
+        run.getCTR().getDrawingArray(0).getInlineArray(0).getDocPr().setDescr(data.getContent());
+        StringBuilder message = new StringBuilder(
+                "written as a picture of the symbol at its size, which scans as the page's does; "
+                + "its data is part of the picture and is not editable in Word");
+        if (node.linkTarget() != null) {
+            message.append("; its link is not carried");
+        }
+        if (node.transform() != null && !node.transform().isIdentity()) {
+            message.append("; its transform is not carried, so it is drawn upright at its size");
+        }
+        report.add(DocxExportReport.Severity.APPROXIMATED, "barcode", layout.pathOf(node), message.toString());
     }
 
     /**

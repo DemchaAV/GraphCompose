@@ -87,17 +87,17 @@
             <artifactId>poi-ooxml</artifactId>
             <version>${poi.version}</version>
         </dependency>
-        <!-- Runtime, not test. Opening a DocumentSession resolves a FontMetricsProvider,
-             and graph-compose-render-pdf is the only artifact that publishes one, so a
+        <!-- Not test. Opening a DocumentSession resolves a FontMetricsProvider, and
+             graph-compose-render-pdf is the only artifact that publishes one, so a
              classpath of core + render-docx alone failed at create() before any export —
-             there is no working DOCX export without it. Carried at runtime scope so a
-             consumer never compiles against the PDF backend through this module; the PPTX
-             backend already brings it the same way. -->
+             there is no working DOCX export without it. Compile scope, as the PPTX backend
+             carries it: a barcode is written as a picture of the same ZXing matrix the PDF
+             and PPTX backends draw, through render-pdf's BarcodeMatrices, so the three
+             cannot encode one symbol differently. -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-render-pdf</artifactId>
             <version>${project.version}</version>
-            <scope>runtime</scope>
         </dependency>
 
         <!-- Test dependencies -->

@@ -390,8 +390,14 @@ tint it was flattened to. Recorded, like the other two.
 
 ## What is skipped
 
-Lines, ellipses, standalone shapes, and barcodes are **silently skipped**
-— they are pure fixed-layout geometry with no semantic equivalent.
+Lines, ellipses and standalone shapes are **skipped**, and the report names
+each one — they are pure fixed-layout geometry with no semantic equivalent.
+
+A barcode in the body is not skipped: it exports as a picture of the symbol at
+its size, the same matrix the PDF draws, so it scans, with its data as the
+picture's description. Its data is part of the picture — changing it means
+exporting again — and the report says so, and names a link or a transform on it
+as not carried. In a page zone a barcode is still skipped.
 The text header and footer slots, watermarks, and protection options are
 also ignored by the current exporter.
 

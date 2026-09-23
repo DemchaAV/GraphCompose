@@ -25,13 +25,15 @@ bullet `•` (U+2022) **is** in WinAnsi, but the larger black circle `●`
 
 Full detail and the coverage table: [font coverage and glyph fallback](font-coverage.md).
 
-## DOCX export is missing shapes, lines, ellipses, or barcodes
+## DOCX export is missing shapes, lines, or ellipses
 
 **Cause.** The DOCX backend (`DocxSemanticBackend`, Apache POI) is a
 **semantic** exporter. POI cannot express fixed-layout graphics, so
-`shape`, `line`, `ellipse`, and `barcode` nodes are **dropped silently**,
-and `ShapeContainerNode` clipping / `DocumentTransform` rotation + scale
-fall back to inline content with a one-time capability warning.
+`shape`, `line`, and `ellipse` nodes are **dropped** — logged once per kind and
+named in the export report — and `ShapeContainerNode` clipping /
+`DocumentTransform` rotation + scale fall back to inline content with a
+one-time capability warning. A `barcode` is not dropped: it is written as a
+picture of the symbol, which scans but whose data is not editable in Word.
 
 **Fix.** Export those documents to **PDF** (the full-fidelity backend).
 Use DOCX only for paragraph / list / table / image / section content.

@@ -100,6 +100,59 @@ class DocxAdjacentTablesTest {
     }
 
     @Test
+    void theSeparatorTakesAPanelsFillButNotItsBorders() throws Exception {
+        // On a lone paragraph between two tables the panel's borders would draw a rule across
+        // the card at every junction.
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addSection(s -> s.fillColor(DocumentColor.rgb(238, 243, 249))
+                        .stroke(com.demcha.compose.document.style.DocumentStroke.of(DocumentColor.rgb(26, 86, 148), 1))
+                        .addParagraph(p -> p.text("Title"))
+                        .addTable(t -> t.autoColumns(1).row("Above"))
+                        .addTable(t -> t.autoColumns(1).row("Below"))))) {
+            XWPFParagraph separator = (XWPFParagraph) document.getBodyElements().get(2);
+
+            assertThat(separator.getCTP().getPPr().isSetShd()).isTrue();
+            assertThat(separator.getCTP().getPPr().isSetPBdr()).isFalse();
+            assertThat(document.getParagraphs().get(0).getCTP().getPPr().isSetPBdr())
+                    .as("the panel's own paragraphs keep its borders")
+                    .isTrue();
+        }
+    }
+
+    @Test
+    void theSeparatorKeepsWithTheTableItOpens() throws Exception {
+        // A block kept with what follows it, ending in a table: its last row keeps with the
+        // separator, so the separator has to keep with the next table or the chain breaks.
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addSection(s -> s.keepWithNext().addTable(t -> t.autoColumns(1).row("Kept")))
+                .addTable(t -> t.autoColumns(1).row("Next")))) {
+            XWPFParagraph separator = (XWPFParagraph) document.getBodyElements().get(1);
+
+            assertThat(separator.getCTP().getPPr().isSetKeepNext()).isTrue();
+        }
+    }
+
+    @Test
+    void spaceOwedAfterANestedTableStaysInsideTheCell() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addTable(t -> t.autoColumns(1).rowCells(
+                        com.demcha.compose.document.table.DocumentTableCell.node(
+                                new com.demcha.compose.document.dsl.SectionBuilder()
+                                        .padding(com.demcha.compose.document.style.DocumentInsets.of(8))
+                                        .addParagraph(p -> p.text("Totals"))
+                                        .addTable(inner -> inner.autoColumns(1).row("100"))
+                                        .build()))))) {
+            var cell = document.getTables().get(0).getRow(0).getCell(0);
+            List<XWPFParagraph> paragraphs = cell.getParagraphs();
+            XWPFParagraph afterNested = paragraphs.get(paragraphs.size() - 1);
+
+            assertThat(DocxTwips.of(afterNested.getCTP().getPPr().getSpacing().getAfter()))
+                    .as("the padding below the nested table is written below it, inside the cell")
+                    .isEqualTo(8 * 20L);
+        }
+    }
+
+    @Test
     void theSeparatorInsideAPanelKeepsTheBandUnbroken() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
                 .addSection(s -> s.fillColor(DocumentColor.rgb(238, 243, 249))

@@ -3766,7 +3766,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // it, so reading the cell back finds it. getTables() is unmodifiable on purpose —
         // adding to it throws rather than quietly leaving the model and the XML disagreeing.
         currentCell.insertTable(currentCell.getBodyElements().size(), nested);
-        currentCell.addParagraph();
+        // Word ends a cell with a paragraph, so one follows the nested table — and being below
+        // it, it is where space owed after the table goes: a padded card ending in a nested
+        // table keeps its bottom padding inside the cell, as the page does.
+        lastBodyParagraph = currentCell.addParagraph();
         return nested;
     }
 
@@ -3785,10 +3788,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>So the gap is written as a paragraph: a tenth of a point tall, with the rest of the
      * space the layout keeps between the two above it, so the second table starts where the
-     * page starts it. It is an ordinary body paragraph, so a panel the tables sit in shades it
-     * and the band stays unbroken. Measured in LibreOffice, a one-point separator put 0.9pt
-     * more between two touching tables than a tenth of a point does; below that the height
-     * stops mattering.</p>
+     * page starts it. Measured in LibreOffice, a one-point separator put 0.9pt more between two
+     * touching tables than a tenth of a point does; below that the height stops mattering.
+     * Word may hold a line that short to its own minimum, which is still under a point.</p>
+     *
+     * <p>It belongs to the gap, not to either table, and is written that way: it takes a
+     * panel's fill so the band is not broken, but not the panel's borders, which on a lone
+     * paragraph between two tables would draw a rule across the card at every junction; and it
+     * keeps with the next table, so a page never breaks between the gap and what it opens — a
+     * block kept with the table below it stays kept, and a bookmark opened on the separator
+     * counts the page the table lands on.</p>
      */
     private void separateFromTheTableAbove(XWPFDocument document) {
         pendingSpacingAfter = Math.max(0, pendingSpacingAfter - SEPARATOR_POINTS);
@@ -3796,6 +3805,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTPPr properties = separator.getCTP().isSetPPr()
                 ? separator.getCTP().getPPr()
                 : separator.getCTP().addNewPPr();
+        if (properties.isSetPBdr()) {
+            properties.unsetPBdr();
+        }
+        if (!properties.isSetKeepNext()) {
+            properties.addNewKeepNext();
+        }
         CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
         spacing.setLineRule(STLineSpacingRule.EXACT);
         spacing.setLine(BigInteger.valueOf(Math.round(SEPARATOR_POINTS * POINT_TO_TWIP)));

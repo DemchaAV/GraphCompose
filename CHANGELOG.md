@@ -8,6 +8,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A table cell carries the line height its row was sized with.** The layout measured the
+  height of a line of a cell's text to size the row, then dropped it: the PDF and PPTX
+  renderers measured it again when drawing, and the DOCX export — which has no font runtime —
+  could not measure it at all, so Word set a cell's text at its own spacing for the font.
+  Measured on the probe corpus, a totals row whose style states a 14pt face came out 3pt
+  taller in Word than the page draws it. `TableResolvedCell.lineHeight()` now carries the
+  measurement from the layout; both fixed-layout renderers read it rather than measuring
+  again — the same number, since both paths end in the font's vertical metrics, and no
+  committed PDF preview moved — and the DOCX export writes it as the cell paragraph's exact
+  line height. A cell built through the record's previous constructor states `NaN`, and a
+  renderer reading one measures the line itself, as before.
+
 - **A link inside a list item exports as a link.** A list item made of runs is written by its
   own path, which had learned run styles and chips but not links — so a phrase linked with
   `link(...)` or `linkTo(...)` inside a bullet came out as plain text, while the same phrase

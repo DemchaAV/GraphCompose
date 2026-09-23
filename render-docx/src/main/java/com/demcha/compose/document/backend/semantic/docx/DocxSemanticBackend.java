@@ -2333,6 +2333,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // edge. So the cell is told, and the text goes over untouched.
         boolean rightToLeft = resolveCellDirection(node, placement, lines);
         applyDirection(para, rightToLeft);
+        // The height the row was sized with. Without it Word sets the cell at its own
+        // spacing for the font — measured on the probe corpus, a totals row whose style
+        // states a 14pt face came out 3pt taller than the page draws it.
+        applyLineHeight(para, layout.cellLineHeight(node, placement.row(), placement.column()));
         XWPFRun run = para.createRun();
         applyStyle(run, resolveCellTextStyle(node, placement));
         applyRunDirection(run, rightToLeft);

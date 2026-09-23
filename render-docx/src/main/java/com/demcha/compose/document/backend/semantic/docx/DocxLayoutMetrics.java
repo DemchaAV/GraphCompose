@@ -313,6 +313,28 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * The text a node laid out as paragraph lines, as the layout wrote it.
+     *
+     * <p>A page reference's number is known only once the document is paginated, so the
+     * layout resolves it and lays out the number as text; this reads that text back rather
+     * than resolving the page a second time.</p>
+     *
+     * @param node any node that lays out as paragraph lines
+     * @return the laid-out text, or empty when the node laid out nothing
+     */
+    java.util.Optional<String> laidOutText(DocumentNode node) {
+        for (PlacedFragment fragment : fragmentsOf(node)) {
+            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph
+                && !paragraph.lines().isEmpty()) {
+                StringBuilder text = new StringBuilder();
+                paragraph.lines().forEach(line -> text.append(line.text()));
+                return java.util.Optional.of(text.toString());
+            }
+        }
+        return java.util.Optional.empty();
+    }
+
+    /**
      * The resolved width of every column of a table.
      *
      * <p>Derived from the cells rather than from the column specs, because that is where

@@ -234,6 +234,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The outline levels this document asks for, so the styles part defines those and no
     // others. Filled before the styles part is written, which comes before the body.
     private java.util.Set<Integer> headingLevels = java.util.Set.of();
+    // Anchors this export writes a bookmark for, so a page reference knows it has a target.
+    private java.util.Set<String> bookmarkedAnchors = java.util.Set.of();
     // Where the finished report goes, when the caller configured somewhere for it to go.
     private final java.util.function.Consumer<DocxExportReport> reportSink;
     // The instant every clock in the package is pinned to, or null for live timestamps.
@@ -450,6 +452,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
         headingLevels = headingLevelsIn(whole);
+        bookmarkedAnchors = bookmarkedAnchorsIn(whole);
         wordFamilies = DocxFontTable.familiesByName(fonts);
         documentDefaultStyle = dominantTextStyle(whole);
         currentCell = null;
@@ -1119,6 +1122,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeNodeContent(XWPFDocument document, DocumentNode node) throws Exception {
         if (node instanceof ParagraphNode paragraph) {
             writeParagraph(document, paragraph);
+        } else if (node instanceof com.demcha.compose.document.node.PageReferenceNode reference) {
+            writePageReference(document, reference);
         } else if (node instanceof ImageNode image) {
             writeImage(document, image);
         } else if (node instanceof TableNode table) {
@@ -1807,6 +1812,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * A large paragraph is a large paragraph; a document that never asked for an outline
      * does not get one invented from its typography.</p>
      */
+    /**
+     * Every anchor this export writes a bookmark for: a paragraph's, and a block's the export
+     * writes (see {@link #blockAnchorOf}). A page reference is a live field only when its
+     * anchor is one of these.
+     */
+    private static java.util.Set<String> bookmarkedAnchorsIn(DocumentGraph graph) {
+        java.util.Set<String> anchors = new java.util.HashSet<>();
+        java.util.ArrayDeque<DocumentNode> pending = new java.util.ArrayDeque<>(graph.roots());
+        while (!pending.isEmpty()) {
+            DocumentNode node = pending.pop();
+            String anchor = node instanceof ParagraphNode paragraph ? paragraph.anchor() : blockAnchorOf(node);
+            if (anchor != null && !anchor.isBlank()) {
+                anchors.add(anchor.trim());
+            }
+            pending.addAll(node.children());
+        }
+        return anchors;
+    }
+
     private static java.util.Set<Integer> headingLevelsIn(DocumentGraph graph) {
         java.util.Set<Integer> levels = new java.util.TreeSet<>();
         for (DocumentNode root : graph.roots()) {
@@ -2126,6 +2150,46 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (DocumentNode child : node.children()) {
             writeNode(document, child);
         }
+    }
+
+    /**
+     * Writes a page reference — a table of contents' page number, a "see page N" — as Word's
+     * own {@code PAGEREF} field on the anchor's bookmark.
+     *
+     * <p>The export dropped the node, so a table of contents reached Word with its entries
+     * and without a single page number. A number written as text would be right until the
+     * reader edits the document; the field is the page Word counts, a hyperlink to it
+     * ({@code \h}) as the entry's label already is. What it reads before an editor updates it
+     * is the page the layout resolved, so the file opens showing the numbers the PDF does.</p>
+     *
+     * <p>A reference whose anchor this export writes no bookmark for is written as its text
+     * alone: Word turns a {@code PAGEREF} to a missing bookmark into "Error! Bookmark not
+     * defined." the first time the field updates, which is worse than a number that does not
+     * move.</p>
+     */
+    private void writePageReference(XWPFDocument document,
+                                    com.demcha.compose.document.node.PageReferenceNode node) {
+        String shown = layout.laidOutText(node).orElse(node.placeholderText());
+        // The layout lays a page reference out as this paragraph, so its properties are
+        // written exactly as that paragraph's would be.
+        ParagraphNode asLaidOut = new ParagraphNode(node.name(), shown, node.textStyle(), node.align(),
+                0.0, node.padding(), node.margin());
+        XWPFParagraph para = newBodyParagraph(document);
+        applyParagraphProperties(para, asLaidOut);
+        applyLineHeight(para, layout.lineHeight(node));
+        String bookmark = bookmarkedAnchors.contains(node.anchor())
+                ? bookmarkNames.nameFor(node.anchor())
+                : null;
+        XWPFRun run;
+        if (bookmark == null) {
+            run = para.createRun();
+        } else {
+            CTSimpleField field = para.getCTP().addNewFldSimple();
+            field.setInstr(" PAGEREF " + bookmark + " \\h ");
+            run = new XWPFRun(field.addNewR(), para);
+        }
+        applyStyle(run, node.textStyle());
+        run.setText(shown);
     }
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {

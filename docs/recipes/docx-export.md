@@ -82,6 +82,28 @@ Page geometry (size, margins and orientation — a page wider than it is tall is
 landscape) and session metadata (title, author, subject, keywords) carry into the Word
 document as well.
 
+## Fields, and when they update
+
+Everything that states a page number is a Word field rather than text, so it stays right
+when the reader edits the document:
+
+| Where | Field | Updated by |
+|---|---|---|
+| a page zone's `pageNumber()` | `PAGE` | the editor, every time it lays the pages out |
+| a page zone's `pageTotal()` | `NUMPAGES`, or `SECTIONPAGES` in a multi-section document | the editor, every time it lays the pages out — except LibreOffice, which does not update `SECTIONPAGES` |
+| a table of contents' page numbers, `addPageReference(...)` | `PAGEREF` to the anchor's bookmark, as a hyperlink | LibreOffice on every layout (measured: a field whose stored number was replaced by 99 showed the real page); Word when fields are updated — F9, or printing with field updates on |
+
+Each field also stores a result, which is what a reader sees before an editor updates it
+and what a text extractor finds: the page the layout resolved, and for a page total the
+number of pages it laid out. A file therefore opens reading the same numbers as the PDF.
+
+The export does not set `w:updateFields`. It would make Word ask, on every open, whether to
+update fields — to recompute numbers that already read correctly.
+
+A page reference to an anchor the document does not bookmark is written as its text, the
+placeholder the page prints: Word turns a `PAGEREF` to a missing bookmark into "Error!
+Bookmark not defined." the first time it updates.
+
 ## Several sections in one document
 
 A `MultiSectionDocument` — a cover in one page size, a body in another — exports to Word

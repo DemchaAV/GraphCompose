@@ -948,14 +948,120 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeNode(XWPFDocument document, DocumentNode node) throws Exception {
         boolean keepTogether = node.keepTogether() && layout.onOnePage(node);
         boolean keepWithNext = node.keepWithNext() && layout.onOnePage(node);
-        if (!keepTogether && !keepWithNext) {
+        String anchor = blockAnchorOf(node);
+        if (!keepTogether && !keepWithNext && anchor == null) {
             writeNodeContent(document, node);
             return;
         }
         int first = document.getBodyElements().size();
         writeNodeContent(document, node);
-        keepOnOnePage(document.getBodyElements().subList(first, document.getBodyElements().size()),
-                keepWithNext);
+        List<IBodyElement> written =
+                document.getBodyElements().subList(first, document.getBodyElements().size());
+        if (keepTogether || keepWithNext) {
+            keepOnOnePage(written, keepWithNext);
+        }
+        if (anchor != null) {
+            bookmarkAround(written, anchor);
+        }
+    }
+
+    /**
+     * The anchor of a block that writes more than one paragraph, or none.
+     *
+     * <p>A paragraph wraps its own text in its bookmark as it writes it. Every other node
+     * that can carry an anchor and reaches Word — a section, a container, a table, an
+     * image — had none, so an internal link to it went nowhere and a page reference to it
+     * had nothing to count.</p>
+     */
+    private static String blockAnchorOf(DocumentNode node) {
+        if (node instanceof SectionNode section) {
+            return section.anchor();
+        }
+        if (node instanceof ContainerNode container) {
+            return container.anchor();
+        }
+        if (node instanceof TableNode table) {
+            return table.anchor();
+        }
+        if (node instanceof ImageNode image) {
+            return image.anchor();
+        }
+        return null;
+    }
+
+    /**
+     * Wraps what a block wrote in the bookmark its anchor names.
+     *
+     * <p>The bookmark opens at the start of the first paragraph the block wrote and closes
+     * at the end of the last — the first and last cell's, for a block that begins or ends
+     * with a table — so a link lands on the block's first line and a page reference counts
+     * the page it starts on. A block that wrote nothing has nothing to mark.</p>
+     */
+    private void bookmarkAround(List<IBodyElement> written, String anchor) {
+        XWPFParagraph first = null;
+        XWPFParagraph last = null;
+        for (IBodyElement element : written) {
+            XWPFParagraph opening = element instanceof XWPFTable table
+                    ? edgeParagraph(table, true)
+                    : element instanceof XWPFParagraph paragraph ? paragraph : null;
+            XWPFParagraph closing = element instanceof XWPFTable table
+                    ? edgeParagraph(table, false)
+                    : opening;
+            if (first == null) {
+                first = opening;
+            }
+            if (closing != null) {
+                last = closing;
+            }
+        }
+        String name = first == null || last == null ? null : bookmarkNames.nameFor(anchor);
+        if (name == null) {
+            return;
+        }
+        int id = bookmarkNames.nextId();
+        CTBookmark start = first.getCTP().addNewBookmarkStart();
+        start.setId(BigInteger.valueOf(id));
+        start.setName(name);
+        moveToParagraphStart(first.getCTP(), start);
+        last.getCTP().addNewBookmarkEnd().setId(BigInteger.valueOf(id));
+    }
+
+    /** The first paragraph of a table's first cell, or the last of its last cell. */
+    private static XWPFParagraph edgeParagraph(XWPFTable table, boolean opening) {
+        List<XWPFTableRow> rows = table.getRows();
+        if (rows.isEmpty()) {
+            return null;
+        }
+        XWPFTableRow row = rows.get(opening ? 0 : rows.size() - 1);
+        List<XWPFTableCell> cells = row.getTableCells();
+        if (cells.isEmpty()) {
+            return null;
+        }
+        List<XWPFParagraph> paragraphs = cells.get(opening ? 0 : cells.size() - 1).getParagraphs();
+        if (paragraphs.isEmpty()) {
+            return null;
+        }
+        return paragraphs.get(opening ? 0 : paragraphs.size() - 1);
+    }
+
+    /**
+     * Moves an element added at the end of a paragraph to the start of its content, just after
+     * its properties — where a bookmark has to open for a link to land on the first word.
+     */
+    private static void moveToParagraphStart(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP paragraph,
+                                             org.apache.xmlbeans.XmlObject element) {
+        try (org.apache.xmlbeans.XmlCursor source = element.newCursor();
+             org.apache.xmlbeans.XmlCursor target = paragraph.newCursor()) {
+            if (!target.toFirstChild()) {
+                return;
+            }
+            if (paragraph.isSetPPr() && !target.toNextSibling()) {
+                return;
+            }
+            if (!target.isAtSamePositionAs(source)) {
+                source.moveXml(target);
+            }
+        }
     }
 
     /**

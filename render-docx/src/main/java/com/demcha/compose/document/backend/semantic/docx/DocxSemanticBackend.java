@@ -3340,7 +3340,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTPageSz pageSize = sectPr.isSetPgSz() ? sectPr.getPgSz() : sectPr.addNewPgSz();
         pageSize.setW(BigInteger.valueOf(toTwips(canvas.width())));
         pageSize.setH(BigInteger.valueOf(toTwips(canvas.height())));
-        pageSize.setOrient(STPageOrientation.PORTRAIT);
+        // Word draws the page from w and h, but reads the orientation from w:orient — for
+        // Page Setup, for printing, for the paper tray. A landscape page stated as portrait
+        // opens the right shape and prints on its side. A square page is portrait, as Word
+        // itself treats one.
+        pageSize.setOrient(canvas.width() > canvas.height()
+                ? STPageOrientation.LANDSCAPE
+                : STPageOrientation.PORTRAIT);
 
         CTPageMar margin = sectPr.isSetPgMar() ? sectPr.getPgMar() : sectPr.addNewPgMar();
         margin.setTop(BigInteger.valueOf(toTwips(canvas.margin().top())));

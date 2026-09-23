@@ -78,8 +78,9 @@ creation date is real metadata.
 | Spacers | Empty paragraphs carrying the vertical gap as spacing-after |
 | Page breaks | Explicit Word page breaks |
 
-Page geometry (size and margins) and session metadata (title, author,
-subject, keywords) carry into the Word document as well.
+Page geometry (size, margins and orientation — a page wider than it is tall is stated as
+landscape) and session metadata (title, author, subject, keywords) carry into the Word
+document as well.
 
 ## Finding out what the export could not carry
 

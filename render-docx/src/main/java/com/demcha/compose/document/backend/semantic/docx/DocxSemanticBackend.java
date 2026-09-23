@@ -3419,7 +3419,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (declared == null) {
             return false;
         }
-        return ParagraphDirection.resolve(String.join("\n", lines), declared) == TextDirection.RTL;
+        // Read the lines as the layout reads them, a break inside a line flattened to a
+        // space, so the two decide the same direction from the same text.
+        List<String> asLaidOut = new ArrayList<>(lines.size());
+        for (String line : lines) {
+            asLaidOut.add(line == null ? "" : line.replace('\r', ' ').replace('\n', ' '));
+        }
+        return ParagraphDirection.resolve(String.join("\n", asLaidOut), declared) == TextDirection.RTL;
     }
 
     /**

@@ -76,6 +76,73 @@ class DocxCellAnchorTest {
     }
 
     @Test
+    void aRowsAnchorBeatsItsColumns() throws Exception {
+        XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .columnStyle(0, DocumentTableStyle.builder().textAnchor(DocumentTableTextAnchor.CENTER_RIGHT).build())
+                .rowStyle(0, DocumentTableStyle.builder().textAnchor(DocumentTableTextAnchor.TOP_LEFT).build())
+                .row("Heading")
+                .row("120.00")));
+        try (document) {
+            var table = document.getTables().get(0);
+            XWPFTableCell heading = table.getRow(0).getCell(0);
+
+            assertThat(heading.getVerticalAlignment()).as("the row's top").isNull();
+            assertThat(heading.getParagraphs().get(0).getCTP().getPPr().isSetJc()).as("the row's left").isFalse();
+            assertThat(table.getRow(1).getCell(0).getParagraphs().get(0).getAlignment())
+                    .as("the column's, where no row says otherwise")
+                    .isEqualTo(ParagraphAlignment.RIGHT);
+        }
+    }
+
+    @Test
+    void aCellSpanningRowsCarriesItsAnchorOnEveryRowItCovers() throws Exception {
+        // Word takes a merged region's alignment from its first cell; the engine places the
+        // text in the whole region's height. Both covered positions say the same.
+        XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .rowCells(DocumentTableCell.text("Spans").rowSpan(2).withStyle(DocumentTableStyle.builder()
+                                .textAnchor(DocumentTableTextAnchor.BOTTOM_LEFT).build()),
+                        DocumentTableCell.text("First"))
+                .rowCells(DocumentTableCell.text("Second"))));
+        try (document) {
+            var table = document.getTables().get(0);
+
+            assertThat(table.getRow(0).getCell(0).getVerticalAlignment()).isEqualTo(XWPFTableCell.XWPFVertAlign.BOTTOM);
+            assertThat(table.getRow(1).getCell(0).getVerticalAlignment()).isEqualTo(XWPFTableCell.XWPFVertAlign.BOTTOM);
+        }
+    }
+
+    @Test
+    void aRightToLeftCellAnchoredAtDefaultSitsBottomLeftAsThePageDrawsIt() throws Exception {
+        // DEFAULT is authored, so the right-to-left default does not replace it, and the
+        // renderer puts its horizontal half on the physical left — the end of the flow.
+        XWPFTableCell cell = firstCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .direction(TextDirection.RTL)
+                        .textAnchor(DocumentTableTextAnchor.DEFAULT).build())
+                .row("שלום")));
+
+        assertThat(cell.getVerticalAlignment()).isEqualTo(XWPFTableCell.XWPFVertAlign.BOTTOM);
+        assertThat(cell.getParagraphs().get(0).getAlignment()).isEqualTo(ParagraphAlignment.RIGHT);
+    }
+
+    @Test
+    void anAutoCellReadsItsDirectionFromTheTextAsTheLayoutDoes() throws Exception {
+        // The layout flattens a break inside a line to a space before it looks for the first
+        // strong character, so this line opens on digits and then Hebrew: right to left.
+        XWPFTableCell cell = firstCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder().direction(TextDirection.AUTO).build())
+                .rowCells(DocumentTableCell.lines("123\nשלום"))));
+        var properties = cell.getParagraphs().get(0).getCTP().getPPr();
+
+        assertThat(properties.isSetBidi()).as("a right-to-left paragraph").isTrue();
+        assertThat(properties.isSetJc()).as("starting on the right, its default").isFalse();
+    }
+
+    @Test
     void aRightToLeftCellStartsOnTheRightAndAnAuthoredLeftIsItsEnd() throws Exception {
         // Word reads jc left/right as the start and end of a bidi paragraph's flow. The
         // engine's default for a right-to-left cell is the right, which is that flow's start.

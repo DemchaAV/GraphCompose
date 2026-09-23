@@ -56,6 +56,7 @@ import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.font.FontName;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.BreakType;
+import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.IRunBody;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import com.demcha.compose.document.node.PageFieldKind;
@@ -627,6 +628,71 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNode(XWPFDocument document, DocumentNode node) throws Exception {
+        boolean keepTogether = node.keepTogether() && layout.onOnePage(node);
+        boolean keepWithNext = node.keepWithNext() && layout.onOnePage(node);
+        if (!keepTogether && !keepWithNext) {
+            writeNodeContent(document, node);
+            return;
+        }
+        int first = document.getBodyElements().size();
+        writeNodeContent(document, node);
+        keepOnOnePage(document.getBodyElements().subList(first, document.getBodyElements().size()),
+                keepWithNext);
+    }
+
+    /**
+     * Tells Word to keep together what the layout kept together.
+     *
+     * <p>{@code keepTogether()} moves a block to the next page whole rather than letting it
+     * run over the break, and {@code keepWithNext()} does the same for a block and the first
+     * line of the one after it. Word re-paginates on its own and was told neither, so a card
+     * the page held together split across Word's break, and a heading the page moved down
+     * with its body was left at the foot of the page above it.</p>
+     *
+     * <p>Word says both with two paragraph properties: {@code w:keepLines} keeps a paragraph's
+     * own lines on one page, and {@code w:keepNext} keeps it on the page of whatever follows.
+     * Every paragraph the block wrote gets the first and every one but the last the second,
+     * which chains the block into one unit; a block kept with the next gives its last
+     * paragraph {@code w:keepNext} as well. A table inside the block takes part row by row,
+     * because Word reads keep-with-next on a row's paragraphs as keeping the row with the
+     * next one.</p>
+     *
+     * <p>Only a block the layout placed on one page is kept. The layout keeps a block together
+     * only when a page can hold it and lets a taller one flow, and a block that ran over a
+     * page break is exactly that; without a layout there is nothing to say either way.</p>
+     */
+    private static void keepOnOnePage(List<IBodyElement> written, boolean withNext) {
+        List<List<XWPFParagraph>> units = new ArrayList<>();
+        for (IBodyElement element : written) {
+            if (element instanceof XWPFParagraph paragraph) {
+                units.add(List.of(paragraph));
+            } else if (element instanceof XWPFTable table) {
+                for (XWPFTableRow row : table.getRows()) {
+                    List<XWPFParagraph> paragraphs = new ArrayList<>();
+                    for (XWPFTableCell cell : row.getTableCells()) {
+                        paragraphs.addAll(cell.getParagraphs());
+                    }
+                    units.add(paragraphs);
+                }
+            }
+        }
+        for (int index = 0; index < units.size(); index++) {
+            boolean last = index == units.size() - 1;
+            for (XWPFParagraph paragraph : units.get(index)) {
+                CTPPr properties = paragraph.getCTP().isSetPPr()
+                        ? paragraph.getCTP().getPPr()
+                        : paragraph.getCTP().addNewPPr();
+                if (!properties.isSetKeepLines()) {
+                    properties.addNewKeepLines();
+                }
+                if ((!last || withNext) && !properties.isSetKeepNext()) {
+                    properties.addNewKeepNext();
+                }
+            }
+        }
+    }
+
+    private void writeNodeContent(XWPFDocument document, DocumentNode node) throws Exception {
         if (node instanceof ParagraphNode paragraph) {
             writeParagraph(document, paragraph);
         } else if (node instanceof ImageNode image) {

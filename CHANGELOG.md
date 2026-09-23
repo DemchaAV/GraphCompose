@@ -8,6 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A block kept together in the layout is kept together in Word.** `keepTogether()` moves a
+  block to the next page whole, and `keepWithNext()` moves a block down with the first line
+  of the one after it. The DOCX export said neither, and Word re-paginates on its own, so a
+  card split across Word's page break and a heading could be left at the foot of the page
+  above its body. A block the layout placed on one page now gives each of its paragraphs
+  `w:keepLines` and every one but the last `w:keepNext` — the last as well when it is kept
+  with the next — and a table inside it takes part row by row. A block taller than a page,
+  which the layout lets flow, is left to flow. Converted in LibreOffice, a six-line card that
+  the page moves whole split 4 + 2 across the break before and lands whole on the next page
+  after.
+
 - **A landscape page exports as landscape.** Word draws a page from its width and height but
   reads the orientation from `w:orient` — for Page Setup, for printing, for the paper tray —
   and the DOCX export wrote portrait for every page. A landscape document opened the right

@@ -110,7 +110,7 @@ class DocxCellPaddingTest {
     private static long width(CTTblWidth margin) {
         return margin == null || margin.getW() == null
                 ? -1
-                : Long.parseLong(String.valueOf(margin.getW()));
+                : DocxTwips.of(margin.getW());
     }
 
     private static XWPFTableCell firstCell(Consumer<PageFlowBuilder> content) throws Exception {

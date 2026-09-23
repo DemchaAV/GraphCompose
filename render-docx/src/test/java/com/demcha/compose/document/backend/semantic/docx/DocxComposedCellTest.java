@@ -101,10 +101,10 @@ class DocxComposedCellTest {
                 .rowCells(DocumentTableCell.text("Breakdown"),
                         DocumentTableCell.node(innerTable()))));
 
-        long column = Long.parseLong(String.valueOf(cell.getTableRow().getTable()
-                .getCTTbl().getTblGrid().getGridColArray(1).getW()));
-        long nested = Long.parseLong(String.valueOf(cell.getTables().get(0)
-                .getCTTbl().getTblPr().getTblW().getW()));
+        long column = DocxTwips.of(cell.getTableRow().getTable()
+                .getCTTbl().getTblGrid().getGridColArray(1).getW());
+        long nested = DocxTwips.of(cell.getTables().get(0)
+                .getCTTbl().getTblPr().getTblW().getW());
 
         assertThat(cell.getTables().get(0).getCTTbl().getTblPr().getTblW().getType().toString())
                 .as("stated, not left to Word")

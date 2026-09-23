@@ -127,7 +127,7 @@ class DocxListGeometryFreezeTest {
      * {@code Object} and hands back whichever member matched.</p>
      */
     private static int twips(Object measure) {
-        return Integer.parseInt(String.valueOf(measure));
+        return (int) DocxTwips.of(measure);
     }
 
     /** True when a line begins with an ASCII space or carries a non-breaking one. */

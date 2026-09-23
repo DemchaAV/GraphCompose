@@ -128,7 +128,7 @@ class DocxLineHeightTest {
     }
 
     private static long lineTwips(XWPFParagraph paragraph) {
-        return Long.parseLong(String.valueOf(paragraph.getCTP().getPPr().getSpacing().getLine()));
+        return DocxTwips.of(paragraph.getCTP().getPPr().getSpacing().getLine());
     }
 
     private static String lineRule(XWPFParagraph paragraph) {

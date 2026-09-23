@@ -234,7 +234,7 @@ class DocxHangingIndentIsIgnoredTest {
      * {@code Object} and hands back whichever member matched.</p>
      */
     private static int twips(Object measure) {
-        return Integer.parseInt(String.valueOf(measure));
+        return (int) DocxTwips.of(measure);
     }
 
     private static XWPFDocument export(Consumer<PageFlowBuilder> author) throws Exception {

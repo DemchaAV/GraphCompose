@@ -318,7 +318,7 @@ class DocxVerticalSpacingTest {
         if (properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetBefore()) {
             return 0;
         }
-        return Long.parseLong(String.valueOf(properties.getSpacing().getBefore()));
+        return DocxTwips.of(properties.getSpacing().getBefore());
     }
 
     private static long after(XWPFParagraph paragraph) {
@@ -326,7 +326,7 @@ class DocxVerticalSpacingTest {
         if (properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetAfter()) {
             return 0;
         }
-        return Long.parseLong(String.valueOf(properties.getSpacing().getAfter()));
+        return DocxTwips.of(properties.getSpacing().getAfter());
     }
 
     private static List<XWPFParagraph> bodyOf(Consumer<PageFlowBuilder> content) throws Exception {

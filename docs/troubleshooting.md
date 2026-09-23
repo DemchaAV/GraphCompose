@@ -33,7 +33,9 @@ Full detail and the coverage table: [font coverage and glyph fallback](font-cove
 named in the export report — and `ShapeContainerNode` clipping /
 `DocumentTransform` rotation + scale fall back to inline content with a
 one-time capability warning. A `barcode` is not dropped: it is written as a
-picture of the symbol, which scans but whose data is not editable in Word.
+picture of the symbol, which scans but whose data is not editable in Word. Nor
+is a horizontal line or a thin filled bar (a divider): it is written as Word's
+own rule, a paragraph's bottom border.
 
 **Fix.** Export those documents to **PDF** (the full-fidelity backend).
 Use DOCX only for paragraph / list / table / image / section content.

@@ -84,6 +84,7 @@ import org.openxmlformats.schemas.drawingml.x2006.main.CTRelativeRect;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBorder;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTAbstractNum;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTInd;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPBdr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTLvl;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTString;
@@ -1014,6 +1015,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (node instanceof com.demcha.compose.document.node.BarcodeNode barcode) {
             return barcode.anchor();
         }
+        // Only a drawing that reaches Word as a rule has a paragraph to hold its bookmark.
+        if (node instanceof com.demcha.compose.document.node.LineNode line && DocxRules.of(line) != null) {
+            return line.anchor();
+        }
+        if (node instanceof com.demcha.compose.document.node.ShapeNode shape && DocxRules.of(shape) != null) {
+            return shape.anchor();
+        }
         return null;
     }
 
@@ -1160,6 +1168,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeImage(document, image);
         } else if (node instanceof com.demcha.compose.document.node.BarcodeNode barcode) {
             writeBarcode(document, barcode);
+        } else if (DocxRules.of(node) != null) {
+            writeRule(document, node, DocxRules.of(node));
         } else if (node instanceof TableNode table) {
             writeTableWithItsOwnSpacing(document, table);
         } else if (node instanceof SpacerNode spacer) {
@@ -2954,6 +2964,72 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             message.append("; its transform is not carried, so it is drawn upright at its size");
         }
         report.add(DocxExportReport.Severity.APPROXIMATED, "barcode", layout.pathOf(node), message.toString());
+    }
+
+    /**
+     * Writes a horizontal rule as Word's own: an empty paragraph whose bottom border is the
+     * rule (see {@link DocxRules}).
+     *
+     * <p>Lines and dividers were dropped with the rest of the drawing, so every rule a
+     * template draws under a heading or between entries was missing from the Word file.
+     * The paragraph is placed where the rule's box is: the space above the stroke is the
+     * paragraph's height, held to a tenth of a point when there is none, the space below is
+     * owed to what follows, and the rule's two ends are the paragraph's indents. Word draws
+     * a border in its own dash lengths, so a dashed rule keeps its dash and not the pattern's
+     * lengths, and the report says so.</p>
+     */
+    private void writeRule(XWPFDocument document, DocumentNode node, DocxRules.Rule rule) {
+        double sideLeft = node.margin().left() + node.padding().left();
+        double sideRight = node.margin().right() + node.padding().right();
+        java.util.OptionalDouble placed = layout.placedWidth(node);
+        double boxWidth = placed.isPresent()
+                ? placed.getAsDouble() - node.padding().horizontal()
+                : rule.fillsWidth() ? availableWidth() - sideLeft - sideRight : rule.boxWidth();
+        double from = Math.max(0, rule.startX());
+        double to = rule.fillsWidth() ? boxWidth : Math.min(rule.endX(), boxWidth);
+
+        XWPFParagraph para = newBodyParagraph(document);
+        applyVerticalSpacing(para, node);
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
+        indent.setLeft(BigInteger.valueOf(toTwips(insetLeft + sideLeft + from)));
+        double available = availableWidth();
+        if (Double.isFinite(available) && available < Double.MAX_VALUE / 2) {
+            double rightGap = available - sideLeft - to;
+            indent.setRight(BigInteger.valueOf(toTwips(insetRight + Math.max(0, rightGap))));
+        }
+
+        double above = Math.max(0, rule.centreFromTop() - rule.thickness() / 2);
+        double below = Math.max(0, rule.boxHeight() - rule.centreFromTop() - rule.thickness() / 2);
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        spacing.setLineRule(STLineSpacingRule.EXACT);
+        spacing.setLine(BigInteger.valueOf(Math.max(Math.round(SEPARATOR_POINTS * POINT_TO_TWIP), toTwips(above))));
+        owePendingSpacingAfter(below);
+
+        CTPBdr borders = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
+        CTBorder bottom = borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom();
+        paintEdge(bottom, dashOf(rule), BigInteger.valueOf(ruleEighths(rule.thickness())),
+                toHexColor(rule.colour().color()));
+        bottom.setSpace(BigInteger.ZERO);
+        if (rule.dashed() != null) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "dash pattern", layout.pathOf(node),
+                    "drawn in Word's own dash for a border, which keeps the rule dashed but not "
+                    + "the pattern's lengths");
+        }
+    }
+
+    /** Word's border for a rule's dash: dots where the dashes are no longer than the stroke. */
+    private static STBorder.Enum dashOf(DocxRules.Rule rule) {
+        if (rule.dashed() == null) {
+            return STBorder.SINGLE;
+        }
+        double on = rule.dashed().get(0);
+        return on <= rule.thickness() * 1.5 ? STBorder.DOTTED : STBorder.DASHED;
+    }
+
+    /** A rule's thickness as {@code w:sz}: eighths of a point, from Word's thinnest to its thickest. */
+    private static long ruleEighths(double thickness) {
+        return Math.max(2, Math.min(Math.round(DocxRules.MAX_RULE_POINTS * 8), Math.round(thickness * 8)));
     }
 
     /**

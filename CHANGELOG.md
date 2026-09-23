@@ -8,6 +8,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A rule reaches Word as Word's own.** The DOCX export dropped every `LineNode` and
+  standalone `ShapeNode`, so the rules a template draws under a heading or between entries —
+  `addLine(...)` and `addDivider(...)`, together among the most common drawing in the
+  templates — were missing. A horizontal line, and a filled bar no taller than Word's thickest
+  border (12pt) with no stroke, radius, gradient or transform, are now an empty paragraph
+  whose bottom border is the stroke: its colour, its thickness in eighths of a point, its
+  ends as the paragraph's indents, and the space above and below the stroke in its box kept,
+  so the rule flows with the text and a reader moves or deletes it as a line of the
+  document. A dash becomes Word's dashed or dotted border, reported `APPROXIMATED`. Measured
+  in LibreOffice against the engine's render: a full-width rule, a 200pt divider, a dashed
+  line, a rule in a 12pt box and a rule inside a card land within 2px of the page, their
+  lengths within 2px. Vertical and slanted lines and other shapes are still dropped and
+  reported.
+
 - **A barcode reaches Word, and scans.** The DOCX export dropped a `BarcodeNode` with the
   geometry-only nodes, so a receipt or a shipping label lost the code a reader scans. It is
   now a PNG picture of the same ZXing matrix the PDF and PPTX backends draw

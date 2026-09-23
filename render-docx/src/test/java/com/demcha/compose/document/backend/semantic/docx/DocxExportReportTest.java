@@ -42,14 +42,14 @@ class DocxExportReportTest {
     void aDroppedNodeIsNamedWithItsPath() throws Exception {
         DocxExportReport report = reportOf(page -> page
                 .addParagraph(p -> p.text("Before"))
-                .addLine(line -> line.name("Divider").thickness(1)));
+                .addLine(line -> line.name("Rail").vertical(40).thickness(1)));
 
         List<DocxExportReport.Note> notes = report.notes();
         assertThat(notes).hasSize(1);
         assertThat(notes.get(0).severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
         assertThat(notes.get(0).path())
                 .as("the path the layout graph addresses that node by, so it can be traced back")
-                .contains("Divider");
+                .contains("Rail");
         assertThat(notes.get(0).detail()).isNotEmpty();
     }
 
@@ -58,9 +58,9 @@ class DocxExportReportTest {
         // The log is the summary and the report is the record: a caller asking what the
         // document lost wants the three it lost, not the fact that it lost a kind.
         DocxExportReport report = reportOf(page -> page
-                .addLine(line -> line.name("First").thickness(1))
-                .addLine(line -> line.name("Second").thickness(1))
-                .addLine(line -> line.name("Third").thickness(1)));
+                .addLine(line -> line.name("First").vertical(40).thickness(1))
+                .addLine(line -> line.name("Second").vertical(40).thickness(1))
+                .addLine(line -> line.name("Third").vertical(40).thickness(1)));
 
         assertThat(report.count(DocxExportReport.Severity.DROPPED)).isEqualTo(3);
         assertThat(report.notes()).extracting(DocxExportReport.Note::path)

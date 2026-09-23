@@ -284,6 +284,9 @@ page.addSection("Notice", card -> card
 
 Kept: the fill, per-side borders, and a uniform stroke standing in for all four sides.
 Nested containers resolve innermost-first, and the paint stops where the container does.
+A table inside a panel keeps its own cell paint: the panel does not reach the paragraphs in
+its cells, so a zebra stripe or a cell fill shows as the page draws it — only a container
+opened inside a cell paints that cell's paragraphs.
 The band is a property of the paragraphs, so it grows and reflows as the text is edited —
 which is the point of exporting DOCX rather than PDF.
 

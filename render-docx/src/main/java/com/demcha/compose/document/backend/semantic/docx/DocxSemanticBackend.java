@@ -181,6 +181,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // Fills and borders of the containers currently being written into, innermost first.
     // A paragraph carries the innermost one, because that is the panel it sits in.
     private final java.util.Deque<ContainerPaint> containerPaint = new java.util.ArrayDeque<>();
+    // How many of those were open when the cell being written began; see newBodyParagraph.
+    private int cellPaintDepth;
     // The text style the document is mostly written in, promoted to Word's Normal style.
     // Null until an export computes it, and when the graph carries no text at all.
     private DocumentTextStyle documentDefaultStyle;
@@ -448,6 +450,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         containerRadiusWarned.set(false);
         warnedNodeKinds.clear();
         containerPaint.clear();
+        cellPaintDepth = 0;
         listNumbering.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
@@ -1996,7 +1999,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private XWPFParagraph newBodyParagraph(XWPFDocument document) {
         XWPFParagraph para = currentCell != null ? currentCell.addParagraph() : document.createParagraph();
-        ContainerPaint paint = containerPaint.peek();
+        // Inside a cell, only a container opened inside that cell paints the paragraph. One
+        // the table sits in is carried by the cell's own shading, and painting the paragraph
+        // as well laid the card's colour over the cell's — a zebra stripe came out in the
+        // card's colour wherever a cell was composed.
+        ContainerPaint paint = containerPaint.size() > cellPaintDepth ? containerPaint.peek() : null;
         if (paint != null) {
             applyContainerPaint(para, paint);
         }
@@ -3766,10 +3773,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph previousParagraph = lastBodyParagraph;
         double previousCarried = carriedSpacingBefore;
         double previousOwed = pendingSpacingAfter;
+        int previousPaintDepth = cellPaintDepth;
         currentCell = cell;
         lastBodyParagraph = null;
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
+        cellPaintDepth = containerPaint.size();
         try {
             writeNode(cell.getXWPFDocument(), child);
             // A cell ends where it ends: its last gap cannot land on whatever the body
@@ -3780,6 +3789,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             lastBodyParagraph = previousParagraph;
             carriedSpacingBefore = previousCarried;
             pendingSpacingAfter = previousOwed;
+            cellPaintDepth = previousPaintDepth;
         }
     }
 

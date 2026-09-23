@@ -145,6 +145,56 @@ class DocxContainerPaintTest {
         }
     }
 
+    @Test
+    void aComposedCellInAPanelShowsItsOwnFillNotThePanels() throws Exception {
+        // The cell carries its own fill — a zebra stripe here — and a paragraph inside it
+        // painted with the panel's colour laid that colour over the stripe, wherever the
+        // cell was built from a node rather than from text.
+        byte[] docx = exportBytes(page -> page.addSection("Card", card -> card
+                .fillColor(SURFACE)
+                .stroke(DocumentStroke.of(ACCENT, 1))
+                .addTable(t -> t.autoColumns(2)
+                        .zebra(DocumentColor.rgb(255, 255, 255), DocumentColor.rgb(200, 200, 200))
+                        .row("First", "1")
+                        .rowCells(com.demcha.compose.document.table.DocumentTableCell.text("Second"),
+                                com.demcha.compose.document.table.DocumentTableCell.node(
+                                        new com.demcha.compose.document.dsl.ParagraphBuilder()
+                                                .text("Composed").build())))));
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            var composed = document.getTables().get(0).getRow(1).getCell(1);
+            XWPFParagraph paragraph = composed.getParagraphs().get(0);
+
+            assertThat(hex(composed.getCTTc().getTcPr().getShd().getFill())).isEqualTo("C8C8C8");
+            assertThat(shadingFill(paragraph))
+                    .as("the stripe shows, not the panel over it")
+                    .isNull();
+            assertThat(paragraph.getCTP().getPPr() == null || !paragraph.getCTP().getPPr().isSetPBdr())
+                    .as("nor does the panel's border box the paragraph inside a cell")
+                    .isTrue();
+        }
+    }
+
+    @Test
+    void aPanelInsideACellStillPaintsItsOwnParagraphs() throws Exception {
+        byte[] docx = exportBytes(page -> page.addSection("Card", card -> card
+                .fillColor(SURFACE)
+                .addTable(t -> t.autoColumns(1)
+                        .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(
+                                new com.demcha.compose.document.dsl.SectionBuilder()
+                                        .fillColor(ACCENT)
+                                        .addParagraph(p -> p.text("Inner"))
+                                        .build())))));
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            XWPFParagraph inner = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
+
+            assertThat(shadingFill(inner))
+                    .as("a container opened inside the cell is the cell's content, and paints it")
+                    .isEqualTo("1A5694");
+        }
+    }
+
     private static String shadingFill(XWPFParagraph paragraph) {
         CTPPr properties = paragraph.getCTP().getPPr();
         if (properties == null || !properties.isSetShd()) {

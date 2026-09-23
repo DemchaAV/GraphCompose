@@ -12,9 +12,10 @@ Add it (at compile scope) only when you export `.docx`. It is **not** included b
 
 **From 2.5.0 it is sufficient on its own.** Opening a `DocumentSession` resolves a
 `FontMetricsProvider` so text can be measured, and `graph-compose-render-pdf` is the only
-artifact that publishes one — so this module brings it at `runtime` scope. A classpath of
-`graph-compose-core` + `graph-compose-render-docx` opens a session and exports `.docx`;
-you never compile against the PDF backend through it.
+artifact that publishes one — so this module brings it, at compile scope, as the PPTX
+module does: a barcode is written as a picture of the same matrix the PDF backend draws,
+through that module's encoder. A classpath of `graph-compose-core` +
+`graph-compose-render-docx` opens a session and exports `.docx`.
 
 **On 2.4.x and earlier it was not.** Those versions declared the PDF backend at test scope
 only, and core + render-docx failed at `create()` with `MissingBackendException` before any

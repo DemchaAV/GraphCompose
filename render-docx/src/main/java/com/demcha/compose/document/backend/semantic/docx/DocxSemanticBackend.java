@@ -139,8 +139,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * <p><b>Dependencies:</b> this backend ships in
  * {@code io.github.demchaav:graph-compose-render-docx}, which brings
- * {@code org.apache.poi:poi-ooxml} transitively — adding that one artifact is
- * all a DOCX consumer needs.</p>
+ * {@code org.apache.poi:poi-ooxml} transitively, and
+ * {@code graph-compose-render-pdf} at runtime scope — opening a session resolves
+ * the font-metrics provider only that module publishes. Adding that one artifact
+ * to {@code graph-compose-core} is all a DOCX consumer needs.</p>
  *
  * <p><b>Threads:</b> an instance holds the state of the export it is running — the spacing
  * still owed, the bookmark names handed out, the list definitions written — and starts every

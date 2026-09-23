@@ -8,6 +8,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A table of contents keeps its page numbers in Word, and they stay right.** The DOCX export
+  dropped every page reference, so `addTableOfContents(...)` reached Word with its entries and
+  no numbers, and `addPageReference(...)` wrote nothing. Each is now Word's own `PAGEREF`
+  field to the anchor's bookmark, as a hyperlink, storing the page the layout resolved — so
+  the file opens reading the PDF's numbers, and the editor recomputes them as the document
+  changes. Measured in LibreOffice: with the stored numbers replaced by 99, the table of
+  contents still showed pages 2, 3 and 5. A reference to an anchor the document has no
+  bookmark for is written as its placeholder text rather than a field Word would turn into
+  "Error! Bookmark not defined.". The export does not set `w:updateFields`, which would make
+  Word ask on every open to recompute numbers that already read correctly; the recipe states
+  which field each page number is and what updates it.
+
 - **A link to a section, table or image reaches it in Word.** The DOCX export wrote a
   bookmark only for a paragraph's `anchor(...)`; an anchor on a section, container, table or
   image was dropped, so an internal link to it went nowhere in Word. Such a block's anchor is

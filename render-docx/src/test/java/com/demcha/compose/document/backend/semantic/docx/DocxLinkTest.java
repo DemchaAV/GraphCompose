@@ -142,6 +142,46 @@ class DocxLinkTest {
         }
     }
 
+    @Test
+    void aLinkInsideAListItemIsStillALink() throws Exception {
+        // A list item made of runs is written by its own path, which learned styles and
+        // chips but not links: the same phrase was a link in a sentence and dead text in a
+        // bullet. hangingIndent, because an item made of runs is laid out only with it.
+        try (XWPFDocument document = exported(page -> page
+                .addList(list -> list
+                        .bullet()
+                        .hangingIndent(true)
+                        .addItem(rich -> rich.plain("Read the ")
+                                .link("guide", "https://graphcompose.dev/guide")
+                                .plain(" first"))))) {
+
+            XWPFHyperlinkRun link = onlyHyperlink(document);
+            assertThat(link.text()).isEqualTo("guide");
+            assertThat(addressOf(document, link)).isEqualTo("https://graphcompose.dev/guide");
+            assertThat(document.getParagraphs().get(0).getText())
+                    .as("the rest of the item is still there, around the link")
+                    .contains("Read the guide first");
+        }
+    }
+
+    @Test
+    void anInternalLinkInsideAListItemPointsAtItsBookmark() throws Exception {
+        try (XWPFDocument document = exported(page -> page
+                .addList(list -> list
+                        .bullet()
+                        .hangingIndent(true)
+                        .addItem(rich -> rich.plain("See ").linkTo("terms", "terms")))
+                .addParagraph(p -> p.text("Terms").anchor("terms")))) {
+
+            List<String> anchors = document.getParagraphs().stream()
+                    .flatMap(p -> p.getCTP().getHyperlinkList().stream())
+                    .map(hyperlink -> hyperlink.getAnchor())
+                    .toList();
+            assertThat(anchors).containsExactly("terms");
+            assertThat(bookmarkNames(document)).contains("terms");
+        }
+    }
+
     private static XWPFHyperlinkRun onlyHyperlink(XWPFDocument document) {
         List<XWPFHyperlinkRun> links = document.getParagraphs().stream()
                 .flatMap(p -> p.getRuns().stream())

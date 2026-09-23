@@ -931,7 +931,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (text == null) {
                 continue;
             }
-            XWPFRun docRun = para.createRun();
+            // A list item's run can carry a link, and it used to be written as plain text:
+            // the paragraph path learned links and this one did not, so the same phrase was
+            // a link in a sentence and dead text in a bullet.
+            XWPFRun docRun = newRun(para, text.linkTarget());
             applyStyle(docRun, text.textStyle() == null ? style : text.textStyle());
             applyInlineBackground(docRun, backgroundOf(run), path);
             docRun.setText(text.text() == null ? "" : text.text());

@@ -8,6 +8,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A link inside a list item exports as a link.** A list item made of runs is written by its
+  own path, which had learned run styles and chips but not links — so a phrase linked with
+  `link(...)` or `linkTo(...)` inside a bullet came out as plain text, while the same phrase
+  in a sentence was a working hyperlink. List-item runs now go through the same writer a
+  paragraph's do: an address becomes a `w:hyperlink` with its relationship, an internal link
+  points at the bookmark its anchor became.
+
 - **A header or footer sits as far from its page edge as the page puts it.** Nothing was
   written, so Word used its own distance — 36pt — and the probe corpus's footer sat 14.5pt
   higher than the page draws it, on every page. The engine does not state the distance

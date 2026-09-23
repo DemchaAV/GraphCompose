@@ -100,7 +100,7 @@ before you promise a `.docx` to a reader:
 
 Multi-section documents export through `MultiSectionDocument.toDocxBytes()`,
 `writeDocx(...)` and `buildDocx(...)` (Experimental): each section becomes a Word section
-with its own page size, orientation, margins, header and footer — see the
+with its own page size, orientation, margins and page-zone header and footer — see the
 [DOCX recipe](../docs/recipes/docx-export.md#several-sections-in-one-document).
 
 Per-capability detail, with the implementing class for every supported cell:

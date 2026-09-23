@@ -15,7 +15,8 @@ follow semantic versioning; release dates are ISO 8601.
   `SemanticBackend.exportSections(List<SemanticSection>)` and the `SemanticSection` record
   (all `@Beta`). The default refuses more than one section rather than running them together
   on the first section's page. `DocxSemanticBackend` writes a Word section per section, with
-  its own page size, orientation, margins, header and footer; page numbers restart at 1 and a
+  its own page size, orientation, margins and page-zone header and footer (the text header /
+  footer slots and the watermark are not written, as for one document); page numbers restart at 1 and a
   zone's total is the section's (`SECTIONPAGES`), as the PDF counts them; a section without a
   zone gets an empty one instead of Word's inherited header or footer; styles, fonts and
   bookmarks are shared, so a link in one section reaches an anchor in another. A page total

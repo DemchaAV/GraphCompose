@@ -4,13 +4,16 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.MultiSectionDocument;
 import com.demcha.compose.document.dsl.RowBuilder;
+import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.output.DocumentPageZone;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.apache.poi.ooxml.POIXMLDocumentPart;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFFooter;
+import org.apache.poi.xwpf.usermodel.XWPFHeader;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBookmark;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTHdrFtrRef;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTHyperlink;
@@ -19,10 +22,14 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSimpleField;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 /**
  * Several sessions export as one Word document, a Word section per session.
@@ -144,6 +151,100 @@ class DocxMultiSectionTest {
                     .as("the table comes first, and the section ends after it")
                     .isSameAs(document.getTables().get(0));
             assertThat(carrier.getCTP().getPPr().isSetSectPr()).isTrue();
+            assertThat(DocxTwips.of(carrier.getCTP().getPPr().getSpacing().getLine()))
+                    .as("a point tall, so a table filling its page does not spill the carrier onto another")
+                    .isEqualTo(20L);
+        }
+    }
+
+    @Test
+    void aSectionThatWritesNothingStillEndsAsItsOwnSection() throws Exception {
+        // An empty session writes no body element, so the last paragraph is still the one
+        // closing the cover; handing it the empty section's properties would fold the cover
+        // into it and leave two Word sections where there are three.
+        DocumentSession empty = session(200, 200, 10);
+        try (XWPFDocument document = export(cover(), empty, landscapeBody())) {
+            List<CTSectPr> sections = sectionsOf(document);
+
+            assertThat(sections).hasSize(3);
+            assertThat(DocxTwips.of(sections.get(0).getPgSz().getW())).isEqualTo(300 * 20L);
+            assertThat(DocxTwips.of(sections.get(1).getPgSz().getW())).isEqualTo(200 * 20L);
+            assertThat(DocxTwips.of(sections.get(2).getPgSz().getW())).isEqualTo(500 * 20L);
+        }
+    }
+
+    @Test
+    void aSectionWithoutAHeaderGetsAnEmptyOneThatTakesNoRoom() throws Exception {
+        DocumentSession headed = session(300, 400, 24);
+        headed.chrome().zone(DocumentPageZone.header(30, page -> new RowBuilder()
+                .addParagraph(p -> p.text("Report"))
+                .build()));
+        headed.pageFlow(page -> page.addParagraph("Body"));
+        try (XWPFDocument document = export(headed, cover())) {
+            CTSectPr coverSection = sectionsOf(document).get(1);
+            assertThat(coverSection.getHeaderReferenceList()).hasSize(1);
+            XWPFHeader blank = (XWPFHeader) document.getRelationById(
+                    coverSection.getHeaderReferenceList().get(0).getId());
+
+            assertThat(blank.getText()).isBlank();
+            assertThat(DocxTwips.of(coverSection.getPgMar().getHeader()))
+                    .as("against the page edge, so a narrow margin is not pushed down")
+                    .isZero();
+            assertThat(DocxTwips.of(blank.getParagraphs().get(0).getCTP().getPPr().getSpacing().getLine()))
+                    .isEqualTo(20L);
+        }
+    }
+
+    @Test
+    void theMetadataIsTheFirstSectionsThatStatesAny() throws Exception {
+        DocumentSession body = landscapeBody();
+        body.metadata(DocumentMetadata.builder().title("Annual report").build());
+        try (XWPFDocument document = export(cover(), body)) {
+            assertThat(document.getProperties().getCoreProperties().getTitle()).isEqualTo("Annual report");
+        }
+    }
+
+    @Test
+    void theFileAndStreamFormsWriteTheSameDocument(@TempDir Path directory) throws Exception {
+        Path file = directory.resolve("sections.docx");
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        try (MultiSectionDocument document = GraphCompose.documents()
+                .section(cover())
+                .section(landscapeBody())
+                .create()) {
+            document.buildDocx(file);
+            document.writeDocx(stream);
+        }
+        for (byte[] bytes : List.of(Files.readAllBytes(file), stream.toByteArray())) {
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(bytes))) {
+                assertThat(sectionsOf(document)).hasSize(2);
+            }
+        }
+    }
+
+    @Test
+    void aClosedDocumentDoesNotExport() {
+        MultiSectionDocument document = GraphCompose.documents().section(cover()).create();
+        document.close();
+
+        assertThatIllegalStateException().isThrownBy(document::toDocxBytes);
+    }
+
+    @Test
+    void aSingleDocumentsPageTotalReadsItsLaidOutCountToo() throws Exception {
+        try (DocumentSession body = landscapeBody()) {
+            body.pageFlow(page -> {
+                for (int line = 0; line < 30; line++) {
+                    int number = line;
+                    page.addParagraph(p -> p.text("Body line " + number));
+                }
+            });
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(body.toDocxBytes()))) {
+                XWPFFooter footer = document.getFooterList().get(0);
+
+                assertThat(fieldInstructions(footer)).contains("NUMPAGES");
+                assertThat(footer.getText().strip()).isEqualTo("Body\t12");
+            }
         }
     }
 

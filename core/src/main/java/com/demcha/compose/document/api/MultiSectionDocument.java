@@ -25,7 +25,8 @@ import java.util.Objects;
  * <p>The same sections also export as one editable Word document, through
  * {@link #toDocxBytes()}, {@link #writeDocx(OutputStream)}, {@link #buildDocx(Path)} or
  * any semantic backend given to {@link #export(SemanticBackend)}: each section becomes a
- * section of the Word document, with its own page, margins, header and footer.</p>
+ * section of the Word document, with its own page, margins, and the header and footer its
+ * page zones describe.</p>
  *
  * <p>The sections are concatenated <em>inside the engine</em> — there is no
  * external PDF merge — so anchors, internal links, and the bookmark outline
@@ -183,7 +184,8 @@ public final class MultiSectionDocument implements AutoCloseable {
 
     /**
      * Exports the sections as one editable Word document and returns the bytes: each
-     * section becomes a Word section with its own page size, margins, header and footer.
+     * section becomes a Word section with its own page size, margins, and the header and
+     * footer its page zones describe.
      *
      * <p>Requires {@code io.github.demchaav:graph-compose-render-docx} on the classpath;
      * without it the export fails with a

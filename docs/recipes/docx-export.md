@@ -96,7 +96,9 @@ try (MultiSectionDocument document = GraphCompose.documents()
 }
 ```
 
-Each section keeps its own page size, orientation, margins, header and footer. Where Word
+Each section keeps its own page size, orientation, margins, and the header and footer its
+page zones (`session.chrome().zone(...)`) describe — the text header and footer slots are
+not written, in a section or in a single document (see below). Where Word
 would behave differently left to itself, the export tells it what the PDF does:
 
 - page numbers start again at 1 in every section, and a zone's `pageTotal()` is the

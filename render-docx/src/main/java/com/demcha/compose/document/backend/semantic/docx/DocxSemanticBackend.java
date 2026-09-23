@@ -463,25 +463,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 if (index > 0) {
                     endSection(document);
                 }
-                beginSection(section);
+                beginSection(section, index);
                 applyPageGeometry(document, context.canvas());
                 if (index == 0) {
                     writeStylesPart(document);
                     DocxFontTable.write(document, whole, fonts, report);
                     applyMetadata(document, metadataOf(sections));
                 }
-                XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, bodySectPr(document));
                 java.util.Set<DocumentHeaderFooterZone> written =
-                        applyPageZones(document, policy, context.outputOptions().zones());
+                        applyPageZones(document, context.outputOptions().zones());
                 boolean header = written.contains(DocumentHeaderFooterZone.HEADER);
                 boolean footer = written.contains(DocumentHeaderFooterZone.FOOTER);
                 // Word repeats the previous section's header and footer in a section that has
                 // none of its own; the page this section draws has none, so it says so.
                 if (!header && anEarlierHeader) {
-                    policy.createHeader(XWPFHeaderFooterPolicy.DEFAULT).createParagraph();
+                    blankZone(document, true);
                 }
                 if (!footer && anEarlierFooter) {
-                    policy.createFooter(XWPFHeaderFooterPolicy.DEFAULT).createParagraph();
+                    blankZone(document, false);
                 }
                 anEarlierHeader |= header;
                 anEarlierFooter |= footer;
@@ -516,15 +515,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Resets what a section starts from: its own measurements, page width and height, and no
      * spacing carried in from the section before it.
      */
-    private void beginSection(SemanticSection section) {
+    private void beginSection(SemanticSection section, int index) {
         SemanticExportContext context = section.context();
         layout = DocxLayoutMetrics.of(section.graph(), context.layoutGraph());
         if (layout.isEmpty()) {
-            // Said once per section: without measurements the line height is Word's and so is
-            // every auto column, and a caller comparing this file against the rendered page
-            // deserves to know that before they look.
-            report.add(DocxExportReport.Severity.APPROXIMATED, "measured geometry", null,
-                    "this document could not be laid out, so line heights and auto column "
+            // Said once per section, naming it when there are several: without measurements
+            // the line height is Word's and so is every auto column, and a caller comparing
+            // this file against the rendered page deserves to know that before they look.
+            report.add(DocxExportReport.Severity.APPROXIMATED, "measured geometry",
+                    sectioned ? "section " + (index + 1) : null,
+                    (sectioned ? "this section" : "this document")
+                    + " could not be laid out, so line heights and auto column "
                     + "widths are the editor's rather than the engine's");
         }
         carriedSpacingBefore = 0;
@@ -541,9 +542,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>Word keeps a section's properties on the last paragraph of that section, and the
      * body's own properties belong to the last section alone. So the properties written for
-     * this section move onto its last paragraph and the body starts again empty. When the
-     * section ends in a table there is no paragraph to carry them, and an empty one is
-     * added: Word does not end a section on a table.</p>
+     * this section move onto its last paragraph and the body starts again empty.</p>
+     *
+     * <p>Two endings have no paragraph of their own to carry them, and get an added one:
+     * a section that ends in a table, since Word does not end a section on a table, and a
+     * section that wrote nothing into the body at all — an empty session, or one of shapes
+     * this export drops — whose last paragraph is still the one closing the section before
+     * it. Handing that paragraph these properties would overwrite the earlier section's,
+     * folding two sections into one. The added paragraph is one invisible point tall, so it
+     * cannot push a full page onto a page of its own.</p>
      */
     private void endSection(XWPFDocument document) {
         CTBody body = document.getDocument().getBody();
@@ -551,13 +558,51 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         List<IBodyElement> elements = document.getBodyElements();
         XWPFParagraph carrier = !elements.isEmpty()
                                 && elements.get(elements.size() - 1) instanceof XWPFParagraph last
+                                && !(last.getCTP().isSetPPr() && last.getCTP().getPPr().isSetSectPr())
                 ? last
-                : document.createParagraph();
+                : collapsed(document.createParagraph());
         CTPPr properties = carrier.getCTP().isSetPPr()
                 ? carrier.getCTP().getPPr()
                 : carrier.getCTP().addNewPPr();
         properties.setSectPr(finished);
         body.unsetSectPr();
+    }
+
+    /**
+     * An empty header or footer for a section that has none of its own, so Word does not
+     * repeat the previous section's there.
+     *
+     * <p>Its one paragraph is a point tall and sits against the page edge. Left at Normal's
+     * size and Word's default distance it would reach past a narrow margin, and Word would
+     * push the body down to make room for a header the page does not draw.</p>
+     */
+    private static void blankZone(XWPFDocument document, boolean header) {
+        CTSectPr sectPr = bodySectPr(document);
+        XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, sectPr);
+        XWPFHeaderFooter blank = header
+                ? policy.createHeader(XWPFHeaderFooterPolicy.DEFAULT)
+                : policy.createFooter(XWPFHeaderFooterPolicy.DEFAULT);
+        collapsed(blank.createParagraph());
+        if (sectPr.isSetPgMar()) {
+            if (header) {
+                sectPr.getPgMar().setHeader(BigInteger.ZERO);
+            } else {
+                sectPr.getPgMar().setFooter(BigInteger.ZERO);
+            }
+        }
+    }
+
+    /** Makes a paragraph that exists only for Word's structure take a single point. */
+    private static XWPFParagraph collapsed(XWPFParagraph paragraph) {
+        CTPPr properties = paragraph.getCTP().isSetPPr()
+                ? paragraph.getCTP().getPPr()
+                : paragraph.getCTP().addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        spacing.setBefore(BigInteger.ZERO);
+        spacing.setAfter(BigInteger.ZERO);
+        spacing.setLineRule(STLineSpacingRule.EXACT);
+        spacing.setLine(BigInteger.valueOf(Math.round(POINT_TO_TWIP)));
+        return paragraph;
     }
 
     private static CTSectPr bodySectPr(XWPFDocument document) {
@@ -636,7 +681,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @return the kinds of zone written, so a later section knows what it has to blank out
      */
     private java.util.Set<DocumentHeaderFooterZone> applyPageZones(XWPFDocument document,
-                                                                  XWPFHeaderFooterPolicy policy,
                                                                   List<DocumentPageZone> zones) {
         // The page height the zones are measured against is the canvas's, which is what the
         // page geometry was written from — not a value parsed back out of the XML.
@@ -645,6 +689,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (zones == null || zones.isEmpty()) {
             return written;
         }
+        // Bound to the section being written, whose properties are the body's until it ends.
+        XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, bodySectPr(document));
         for (int index = 0; index < zones.size(); index++) {
             DocumentPageZone zone = zones.get(index);
             if (zone.getAppliesTo() != null) {

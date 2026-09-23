@@ -68,6 +68,7 @@ public interface SemanticBackend<R> {
      *
      * @param sections the sections in document order; never empty
      * @return backend-specific export result for the whole document
+     * @throws NullPointerException          if {@code sections} is null
      * @throws IllegalArgumentException      if {@code sections} is empty
      * @throws UnsupportedOperationException if this backend cannot combine sections and more
      *                                       than one was given

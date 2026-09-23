@@ -390,8 +390,28 @@ tint it was flattened to. Recorded, like the other two.
 
 ## What is skipped
 
-Lines, ellipses and standalone shapes are **skipped**, and the report names
-each one — they are pure fixed-layout geometry with no semantic equivalent.
+A horizontal rule is not skipped. A horizontal line, or a filled bar no taller
+than 12pt — what `addDivider` draws — is Word's own rule: an empty paragraph
+whose bottom border is the stroke, in its colour and thickness, from where the
+line starts to where it ends, with the space above and below the stroke kept.
+It flows with the text, and a reader moves or deletes it as a line of the
+document. A dashed line keeps a dash, in Word's own lengths; a translucent one is
+flattened against what lies under it, since a border is opaque. Three limits:
+
+- A line laid over something else — a layer in a layer stack or a canvas, such as
+  a skill meter's track and the fill over it — is not a rule in the flow, and is
+  dropped and reported like other drawing.
+- A rule in a page zone is not written, as a zone takes paragraphs, fields and
+  spacers.
+- Word draws one border for consecutive paragraphs whose borders and indents are
+  the same, whatever the space between them, so two identical rules with no other
+  paragraph between them show as one.
+
+The placement was measured in LibreOffice; Word has not been measured yet.
+
+Vertical and slanted lines, ellipses and other standalone shapes are
+**skipped**, and the report names each one — they are pure fixed-layout
+geometry with no semantic equivalent.
 
 A barcode in the body is not skipped: it exports as a picture of the symbol at
 its size, the same matrix the PDF draws, so it scans, with its data as the

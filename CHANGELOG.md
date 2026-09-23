@@ -12,8 +12,18 @@ follow semantic versioning; release dates are ISO 8601.
   image, SVG icon and emoji, so a contact line lost its phone and mail icons and a sentence
   its emoji, with a report entry and nothing else. Each is now a picture in its own run
   between the words, at its size, inside its link, raised or lowered by `w:position` to
-  where the page's alignment puts it; a line holding a picture taller than its text keeps
-  the height the layout gave it, since Word clips a picture to an exact line height. An SVG
+  where the page's alignment puts it — in a paragraph and in a list item alike (Word honours
+  that on a picture; LibreOffice does not, so there a picture stands on the baseline and a
+  centred icon sits about the text's descent higher than on the page). The editor
+  clips a picture to an exact line height and places the baseline in it by its own rule
+  (measured in LibreOffice: a 14pt icon centred over 9pt text lost its top up to a 17.5pt
+  line), so a paragraph holding a picture that leaves its text — past the ascent or the
+  descent, where Word puts it or on the baseline — has its lines written *at least* the
+  height the picture reaches, and the editor grows them rather than clip. Word has one line
+  height for a paragraph, so every line of it is then as tall as the editor's font makes it
+  — for 14pt text about 2.5pt taller than the page's in LibreOffice. A picture inside its
+  text in both editors keeps the exact height. A picture's description is the text it stands for, or empty,
+  never the file name. An SVG
   icon is drawn into a transparent picture from the layers the layout resolves, by the
   raster the PPTX backend's fallback uses — now shared as `InlineSvgRasters` in the PDF
   module, with the layout's lowering callable as `InlineSvgLayers`, both internal — so an

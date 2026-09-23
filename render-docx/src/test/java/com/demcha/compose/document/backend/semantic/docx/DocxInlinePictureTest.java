@@ -108,13 +108,26 @@ class DocxInlinePictureTest {
     }
 
     @Test
-    void aLineHoldingAPictureTallerThanItsTextIsAsTallAsTheLayoutMadeIt() throws Exception {
+    void aLineHoldingAPictureTallerThanItsTextGrowsToIt() throws Exception {
         try (XWPFDocument document = export(page -> page.addParagraph(p -> p
                 .inlineText("Tall ").inlineImage(DocumentImageData.fromBytes(png(30, 30)), 30, 30)))) {
-            long line = DocxTwips.of(document.getParagraphs().get(0).getCTP().getPPr().getSpacing().getLine());
+            var spacing = document.getParagraphs().get(0).getCTP().getPPr().getSpacing();
 
-            assertThat(line).as("not the text's 12pt or so, which Word would clip the picture to")
-                    .isGreaterThanOrEqualTo(30 * 20L);
+            assertThat(spacing.getLineRule())
+                    .as("at least, so the editor grows the line rather than clip the picture")
+                    .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.AT_LEAST);
+            assertThat(DocxTwips.of(spacing.getLine())).isGreaterThanOrEqualTo(30 * 20L);
+        }
+    }
+
+    @Test
+    void anIconAsTallAsItsTextGrowsTheLineForTheEditorThatStandsItOnTheBaseline() throws Exception {
+        // A 12pt icon the page centres on a 14pt line: under the text's ascent where Word
+        // lowers it, above it where LibreOffice stands it on the baseline — and clipped there.
+        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
+                .inlineSvgIcon(ICON, 12).inlineText(" +44 20 7946 0000")))) {
+            assertThat(document.getParagraphs().get(0).getCTP().getPPr().getSpacing().getLineRule())
+                    .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.AT_LEAST);
         }
     }
 
@@ -140,6 +153,68 @@ class DocxInlinePictureTest {
 
             assertThat(pictured).isTrue();
         }
+    }
+
+    @Test
+    void anIconRisingAboveAListsTextIsCentredOnALineThatGrowsToIt() throws Exception {
+        // 9pt text, a 14pt icon: at an exact height the editor clipped the icon's top, so the
+        // line is at least the height the icon reaches, and the icon is lowered to the centre.
+        try (XWPFDocument document = export(page -> page.addList(l -> l.hangingIndent(true)
+                .textStyle(com.demcha.compose.document.style.DocumentTextStyle.builder().size(9).build())
+                .addItem(item -> item.plain("Call ").svgIcon(ICON, 14))))) {
+            XWPFParagraph item = document.getParagraphs().get(0);
+            XWPFRun picture = item.getRuns().stream().filter(r -> !r.getEmbeddedPictures().isEmpty()).findFirst().orElseThrow();
+            var spacing = item.getCTP().getPPr().getSpacing();
+
+            assertThat(((Number) picture.getCTR().getRPr().getPositionArray(0).getVal()).intValue()).isNegative();
+            assertThat(spacing.getLineRule()).isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.AT_LEAST);
+            assertThat(DocxTwips.of(spacing.getLine())).isGreaterThanOrEqualTo(14 * 20L);
+        }
+    }
+
+    @Test
+    void anIconWithinTheTextsHeightLeavesTheLineAlone() throws Exception {
+        try (XWPFDocument plain = export(page -> page.addParagraph(p -> p.inlineText("Call +44 20 7946 0000")));
+             XWPFDocument iconed = export(page -> page.addParagraph(p -> p
+                     .inlineSvgIcon(ICON, 8).inlineText(" +44 20 7946 0000")))) {
+            var spacing = iconed.getParagraphs().get(0).getCTP().getPPr().getSpacing();
+            assertThat(DocxTwips.of(spacing.getLine()))
+                    .isEqualTo(DocxTwips.of(plain.getParagraphs().get(0).getCTP().getPPr().getSpacing().getLine()));
+            assertThat(spacing.getLineRule())
+                    .as("still the page's exact height")
+                    .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
+        }
+    }
+
+    @Test
+    void aPictureHasNoDescriptionButTheTextItStandsFor() throws Exception {
+        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
+                .inlineText("A ").inlineImage(DocumentImageData.fromBytes(png(10, 10)), 10, 10)))) {
+            XWPFRun run = document.getParagraphs().get(0).getRuns().get(1);
+
+            assertThat(run.getCTR().getDrawingArray(0).getInlineArray(0).getDocPr().getDescr()).isEmpty();
+            assertThat(run.getEmbeddedPictures().get(0).getCTPicture().getNvPicPr().getCNvPr().getDescr())
+                    .as("not the file name POI hands it, which a screen reader would read")
+                    .isEmpty();
+        }
+    }
+
+    @Test
+    void aPictureLeavesTheTextWhenEitherEditorPutsItPastTheAscentOrTheDescent() {
+        // A line with a 9pt ascent and a 2pt descent.
+        ParagraphLine line = new ParagraphLine("x", 10, 14, 12, 9, 2, List.of(), List.of());
+
+        // Lowered 2pt, an 8pt picture tops out at 6pt in Word and at 8pt on LibreOffice's
+        // baseline: within the ascent either way, reaching 2 + 8.
+        assertThat(DocxSemanticBackend.PictureReach.of(-2, 8, line))
+                .isEqualTo(new DocxSemanticBackend.PictureReach(10, false));
+        // A 10pt one tops out at 8pt in Word, inside, but at 10pt on the baseline, outside.
+        assertThat(DocxSemanticBackend.PictureReach.of(-2, 10, line))
+                .isEqualTo(new DocxSemanticBackend.PictureReach(12, true));
+        // A 14pt one is outside in both.
+        assertThat(DocxSemanticBackend.PictureReach.of(-2, 14, line).overText()).isTrue();
+        // One lowered 4pt hangs past the 2pt descent in Word.
+        assertThat(DocxSemanticBackend.PictureReach.of(-4, 5, line).overText()).isTrue();
     }
 
     @Test

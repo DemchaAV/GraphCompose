@@ -342,25 +342,6 @@ final class DocxLayoutMetrics {
     }
 
     /**
-     * The height of the tallest line a node laid out, which a line holding a picture taller
-     * than its text is.
-     *
-     * @param node any node that lays out as paragraph lines
-     * @return the height in points, or empty when the node laid out nothing
-     */
-    OptionalDouble tallestLine(DocumentNode node) {
-        double tallest = 0;
-        for (PlacedFragment fragment : fragmentsOf(node)) {
-            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
-                for (var line : paragraph.lines()) {
-                    tallest = Math.max(tallest, line.lineHeight());
-                }
-            }
-        }
-        return tallest > 0 ? OptionalDouble.of(tallest) : OptionalDouble.empty();
-    }
-
-    /**
      * The text a node laid out as paragraph lines, as the layout wrote it.
      *
      * <p>A page reference's number is known only once the document is paginated, so the

@@ -331,9 +331,23 @@ page.addParagraph(p -> p
 - **Where it sits.** Word stands a picture on the line's baseline; the page centres it on
   the line, or sets it on the baseline or at the text's top or bottom. The picture is
   raised or lowered by `w:position` to where the page's alignment and `baselineOffset`
-  put it, from the layout's measure of the paragraph's first line. A line holding a
-  picture taller than its text is written at the height the layout gave it, since Word
-  clips a picture to an exact line height.
+  put it, from the layout's measure of the paragraph's (or list's) first line. Word honours
+  that on a picture; LibreOffice does not — measured, a picture written at 0, −2, −10 and
+  +10pt stood in the same place — so there a picture always stands on the baseline, off by
+  whatever the page's alignment moved it: an icon the page centres on its line sits about
+  the text's descent higher than on the page.
+- **Line height.** Lines are written at an exact height, and the editor clips a picture
+  to it — where in that height it puts the baseline is its own, so no fixed room is
+  enough: measured in LibreOffice, a 14pt icon centred over 9pt text lost its top up to
+  a 17.5pt line. A paragraph holding a picture that rises above its text's ascent or hangs
+  below its descent — where Word puts it, or on the baseline where LibreOffice does — is
+  written with its lines *at least* the height the picture reaches instead, so the editor
+  grows the line to the picture rather than clip it. Word has one line height for a
+  paragraph, so every line of it is then at least that reach and otherwise as tall as the
+  editor's own font makes it — for 14pt text, about 2.5pt taller than the page's in
+  LibreOffice. A picture that stays inside the text in both editors keeps the exact
+  height; a 12pt icon on a line of 14pt text does not, since on the baseline it rises past
+  the ascent.
 - **What an icon is.** An SVG icon — an emoji among them — is drawn into a transparent
   picture from the same layers the page draws, by the raster the PPTX export falls back
   to, so it looks as it does on the page. The text it stands for is the picture's

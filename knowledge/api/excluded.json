@@ -3,7 +3,7 @@
   "verifiedAgainst": "2.5.0-SNAPSHOT",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "note": "Public types and members deliberately kept out of every surface. An exclusion nobody can see is indistinguishable from a bug, so each one records why.",
-  "count": 185,
+  "count": 187,
   "excluded": [
     {
       "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.BarcodeMatrices",
@@ -14,6 +14,13 @@
     },
     {
       "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.BarcodeRuns",
+      "package": "com.demcha.compose.document.backend.fixed.pdf.handlers",
+      "kind": "class",
+      "artifact": "graph-compose-render-pdf",
+      "reason": "type @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.InlineSvgRasters",
       "package": "com.demcha.compose.document.backend.fixed.pdf.handlers",
       "kind": "class",
       "artifact": "graph-compose-render-pdf",
@@ -415,6 +422,13 @@
       "binaryName": "com.demcha.compose.document.layout.HorizontalBandsNode",
       "package": "com.demcha.compose.document.layout",
       "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.InlineSvgLayers",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
       "artifact": "graph-compose-core",
       "reason": "package @Internal (com.demcha.compose.document.layout)"
     },

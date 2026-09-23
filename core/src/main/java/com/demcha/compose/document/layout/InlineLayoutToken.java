@@ -158,19 +158,10 @@ record InlineSvgToken(
     }
 
     static InlineSvgToken of(InlineSvgRun run) {
-        // Lower each SVG layer to an engine-ready span. Geometry (and the clip
-        // region) stay normalized to the unit box and scale at render; the
-        // stroke width and dash lengths are in SVG user units, so scale them to
-        // points here (scale = target width / source frame width) — the same
-        // arithmetic SvgIcon.node(double) does, but carrying the clip through.
+        // Lower each SVG layer to an engine-ready span; see InlineSvgLayers.
         SvgIcon icon = run.icon();
-        double scale = run.width() / icon.sourceWidth();
-        List<ResolvedSvgLayer> resolved = new ArrayList<>(icon.layers().size());
-        for (SvgIcon.Layer layer : icon.layers()) {
-            resolved.add(toResolvedSvgLayer(layer, scale));
-        }
         return new InlineSvgToken(
-                List.copyOf(resolved),
+                InlineSvgLayers.of(icon, run.width()),
                 run.width(),
                 run.height(),
                 run.alignment(),

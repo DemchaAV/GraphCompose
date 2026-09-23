@@ -8,6 +8,12 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A landscape page exports as landscape.** Word draws a page from its width and height but
+  reads the orientation from `w:orient` — for Page Setup, for printing, for the paper tray —
+  and the DOCX export wrote portrait for every page. A landscape document opened the right
+  shape and printed on its side. A page wider than it is tall is now stated as landscape; a
+  square page stays portrait, as Word itself treats one.
+
 - **The same document exports to the same DOCX bytes, when asked to.** Measured on the probe
   corpus, three things made two exports of one document differ: the package's created /
   modified dates, every zip entry's timestamp, and each embedded font's obfuscation key,

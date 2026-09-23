@@ -180,6 +180,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** Space the last body paragraph holds below itself, not yet written — see {@link #owePendingSpacingAfter}. */
     private double pendingSpacingAfter;
 
+    /** The page's height in points, or {@code NaN} when the export has no canvas. */
+    private double canvasHeight = Double.NaN;
+
     /** The gap the list being written puts between its items. */
     private double pendingItemSpacing;
 
@@ -308,6 +311,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         currentCell = null;
         currentCellWidth = Double.NaN;
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
+        canvasHeight = context.canvas() == null ? Double.NaN : context.canvas().height();
         try (XWPFDocument document = new XWPFDocument()) {
             applyPageGeometry(document, context.canvas());
             writeStylesPart(document);
@@ -378,6 +382,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * absence, and the export says on the log what it could not honor.</p>
      */
     private void applyPageZones(XWPFDocument document, List<DocumentPageZone> zones) {
+        // The page height the zones are measured against is the canvas's, which is what the
+        // page geometry was written from — not a value parsed back out of the XML.
         if (zones == null || zones.isEmpty()) {
             return;
         }
@@ -426,9 +432,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 ? document.getDocument().getBody().getSectPr()
                 : document.getDocument().getBody().addNewSectPr();
         CTPageMar margin = sectPr.isSetPgMar() ? sectPr.getPgMar() : sectPr.addNewPgMar();
-        double pageHeight = sectPr.isSetPgSz() && sectPr.getPgSz().getH() != null
-                ? Long.parseLong(String.valueOf(sectPr.getPgSz().getH())) / POINT_TO_TWIP
-                : Double.NaN;
+        double pageHeight = canvasHeight;
         OptionalDouble measured = Double.isNaN(pageHeight)
                 ? OptionalDouble.empty()
                 : layout.zoneDistanceFromEdge(index, header, pageHeight);
@@ -1435,7 +1439,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** Reads a twip measure back, treating an unset one as zero. */
     private static long twipsOf(Object measure) {
-        return measure == null ? 0 : Long.parseLong(String.valueOf(measure));
+        Long twips = writtenTwips(measure);
+        return twips == null ? 0 : twips;
+    }
+
+    /**
+     * A twip value this export wrote, read back — or null when it is not a plain number.
+     *
+     * <p>XmlBeans hands a measure back as the schema's union, and a measure may legally be a
+     * string with a unit ({@code 1in}) or a percentage. This export only ever writes plain
+     * twips, which come back as a number; anything else is not one of its own values and is
+     * reported as unknown rather than parsed and thrown on.</p>
+     */
+    private static Long writtenTwips(Object measure) {
+        return measure instanceof Number number ? number.longValue() : null;
     }
 
     private static void applyContainerPaint(XWPFParagraph para, ContainerPaint paint) {
@@ -2277,9 +2294,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private static double marginPoints(CTTblWidth margin) {
-        return margin == null || margin.getW() == null
-                ? WORD_DEFAULT_CELL_MARGIN_POINTS
-                : Long.parseLong(String.valueOf(margin.getW())) / POINT_TO_TWIP;
+        Long twips = margin == null ? null : writtenTwips(margin.getW());
+        return twips == null ? WORD_DEFAULT_CELL_MARGIN_POINTS : twips / POINT_TO_TWIP;
     }
 
     /** Word keeps this much clear inside every cell edge unless a table says otherwise. */
@@ -2878,7 +2894,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double twips = 0;
         int last = Math.min(placement.column() + placement.colSpan(), grid.sizeOfGridColArray());
         for (int index = placement.column(); index < last; index++) {
-            twips += Long.parseLong(String.valueOf(grid.getGridColArray(index).getW()));
+            Long column = writtenTwips(grid.getGridColArray(index).getW());
+            if (column == null) {
+                // A column this export did not write as plain twips has no width to add up.
+                return Double.NaN;
+            }
+            twips += column;
         }
         double points = twips / POINT_TO_TWIP - horizontalMarginsOf(cell);
         return points > 0 ? points : Double.NaN;

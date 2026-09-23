@@ -123,6 +123,47 @@ class DocxLineHeightTest {
         }
     }
 
+    @Test
+    void aTableCellCarriesTheHeightItsRowWasSizedWith() throws Exception {
+        // A text cell's paragraph was written with no line height at all, so Word set it at
+        // its own spacing for the font: a totals row whose style states a 14pt face came out
+        // 3pt taller than the page draws it. The layout now carries the measurement on the
+        // resolved cell, and the cell's paragraph states it exactly.
+        try (XWPFDocument document = withLayout(page -> page.addTable(t -> t
+                .name("Billing")
+                .autoColumns(2)
+                .row("Item", "Amount")
+                .totalRow("Total", "2 726.00")))) {
+
+            XWPFParagraph body = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
+            XWPFParagraph totals = document.getTables().get(0).getRow(1).getCell(0).getParagraphs().get(0);
+
+            assertThat(lineRule(body)).isEqualTo("exact");
+            assertThat(lineRule(totals)).isEqualTo("exact");
+            // 14pt of Helvetica measures 12.95pt from ascent to descent — the table's default
+            // cell face and the totals row's alike.
+            assertThat(lineTwips(body)).isEqualTo(259L);
+            assertThat(lineTwips(totals)).isEqualTo(259L);
+        }
+    }
+
+    @Test
+    void aCellWhoseStyleStatesALargerFaceGetsATallerLine() throws Exception {
+        try (XWPFDocument document = withLayout(page -> page.addTable(t -> t
+                .name("Sized")
+                .autoColumns(1)
+                .row("Body")
+                .row("Large")
+                .rowStyle(1, com.demcha.compose.document.table.DocumentTableStyle.builder()
+                        .textStyle(DocumentTextStyle.builder().size(20).build())
+                        .build())))) {
+
+            long body = lineTwips(document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0));
+            long large = lineTwips(document.getTables().get(0).getRow(1).getCell(0).getParagraphs().get(0));
+            assertThat(large).isGreaterThan(body);
+        }
+    }
+
     private static XWPFDocument withLayout(Consumer<PageFlowBuilder> content) throws Exception {
         return DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, content);
     }

@@ -144,7 +144,11 @@ final class TableLayoutSupport {
                         logical.sanitizedLines(),
                         style,
                         fillInsets(stylesGrid, rowIndex, logical.startColumn(), logical.colSpan()),
-                        borderSides(stylesGrid, rowIndex, logical.startColumn(), logical.colSpan())));
+                        borderSides(stylesGrid, rowIndex, logical.startColumn(), logical.colSpan()),
+                        // The same measurement the row was sized with, carried so that a
+                        // renderer placing the text — and a semantic export that has no font
+                        // runtime at all — uses the number the page was laid out with.
+                        measurement.lineHeight(style.textStyle())));
             }
             rows.add(List.copyOf(resolved));
         }

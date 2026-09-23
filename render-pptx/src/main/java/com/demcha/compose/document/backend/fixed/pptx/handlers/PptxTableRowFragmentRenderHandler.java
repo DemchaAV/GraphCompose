@@ -188,7 +188,10 @@ public final class PptxTableRowFragmentRenderHandler
                                        double cellY,
                                        PptxRenderEnvironment environment) {
         PdfFont font = fonts.getFont(cell.style().textStyle().fontName(), PdfFont.class).orElseThrow();
-        double lineHeight = font.getLineHeight(cell.style().textStyle());
+        // The height the row was sized with, when the layout says it — see the PDF handler.
+        double lineHeight = cell.hasMeasuredLineHeight()
+                ? cell.lineHeight()
+                : font.getLineHeight(cell.style().textStyle());
         Padding padding = cell.style().padding() == null ? Padding.zero() : cell.style().padding();
         Anchor anchor = cell.style().textAnchor() == null ? Anchor.centerLeft() : cell.style().textAnchor();
 

@@ -118,6 +118,36 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * The height of one line of a table cell's text, as the layout measured it.
+     *
+     * <p>A paragraph's line height is on its own fragment; a table cell's is on the resolved
+     * cell inside its row's fragment. Cells are found by the name the layout gives them —
+     * the table's name, or its node kind when it has none, then the row and the column —
+     * because a composed cell's nested table emits its rows under the <em>owner's</em> path,
+     * so position alone would find the inner table's cells as readily as the outer's.</p>
+     *
+     * @param table  the table node
+     * @param row    the cell's logical row
+     * @param column the cell's first column
+     * @return the measured height, or empty when the layout does not carry one
+     */
+    OptionalDouble cellLineHeight(DocumentNode table, int row, int column) {
+        String owner = table.name() == null || table.name().isBlank() ? table.nodeKind() : table.name();
+        String name = owner + "__row_" + row + "__cell_" + column;
+        for (PlacedFragment fragment : fragmentsOf(table)) {
+            if (!(fragment.payload() instanceof TableRowFragmentPayload payload)) {
+                continue;
+            }
+            for (TableResolvedCell cell : payload.cells()) {
+                if (name.equals(cell.name()) && cell.hasMeasuredLineHeight()) {
+                    return OptionalDouble.of(cell.lineHeight());
+                }
+            }
+        }
+        return OptionalDouble.empty();
+    }
+
+    /**
      * How far a page zone's content sits from the page edge it belongs to, as laid out on
      * the first page.
      *

@@ -300,7 +300,12 @@ public final class PdfTableRowFragmentRenderHandler
                                                     TableResolvedCell cell,
                                                     double cellX,
                                                     double cellY) {
-        double lineHeight = font.getLineHeight(cell.style().textStyle());
+        // The height the row was sized with, when the layout says it. Measuring it again
+        // here gives the same number — both go through the font's vertical metrics — but
+        // one number read in two places cannot come apart the way two computations can.
+        double lineHeight = cell.hasMeasuredLineHeight()
+                ? cell.lineHeight()
+                : font.getLineHeight(cell.style().textStyle());
         Padding padding = cell.style().padding() == null ? Padding.zero() : cell.style().padding();
         Anchor anchor = cell.style().textAnchor() == null ? Anchor.centerLeft() : cell.style().textAnchor();
 

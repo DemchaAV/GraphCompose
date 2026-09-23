@@ -8,6 +8,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A page zone drawn on some pages only lands on the same pages in Word.** The DOCX export
+  wrote every zone on every page and warned when it had an `appliesTo` predicate, so a
+  cover-only header repeated on every page and a footer that skips the cover appeared on it.
+  The predicate is now asked over sample pages and sorted into the kinds of page Word gives a
+  header of its own: a first-page-only zone becomes the section's first-page header (with a
+  title page stated), an every-page-but-the-first zone leaves an empty first-page part, and an
+  even- or odd-page zone becomes the even-page or ordinary part (with different even and odd
+  pages stated for the document). A predicate that picks pages within a kind — the last page —
+  has no Word part; that zone is written on every page and the export report says so. A zone
+  that skips the first page is also placed by where the layout drew it, rather than by its
+  padding. Converted in LibreOffice, a three-page document with a cover header, an even-page
+  header and a not-on-the-cover footer shows the same zones on the same pages as the PDF.
+
 - **A multi-section document exports to Word, a section per section.** `MultiSectionDocument`
   rendered only to PDF: a cover in one page size and a body in another had no DOCX export at
   all. It gains `toDocxBytes()`, `writeDocx(OutputStream)`, `buildDocx(Path)` and

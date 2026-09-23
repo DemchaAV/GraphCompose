@@ -454,9 +454,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         documentDefaultStyle = dominantTextStyle(whole);
         currentCell = null;
         currentCellWidth = Double.NaN;
-        boolean anEarlierHeader = false;
-        boolean anEarlierFooter = false;
+        // Kinds of zone an earlier section wrote: Word repeats a section's header and footer
+        // in the sections after it that have none of their own.
+        java.util.Set<DocumentHeaderFooterZone> earlierZones =
+                java.util.EnumSet.noneOf(DocumentHeaderFooterZone.class);
+        boolean evenAndOdd = distinguishesEvenPages(sections);
         try (XWPFDocument document = new XWPFDocument()) {
+            if (evenAndOdd) {
+                // A document-wide setting in Word, so every section states its even pages.
+                document.setEvenAndOddHeadings(true);
+            }
             for (int index = 0; index < sections.size(); index++) {
                 SemanticSection section = sections.get(index);
                 SemanticExportContext context = section.context();
@@ -470,20 +477,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     DocxFontTable.write(document, whole, fonts, report);
                     applyMetadata(document, metadataOf(sections));
                 }
-                java.util.Set<DocumentHeaderFooterZone> written =
-                        applyPageZones(document, context.outputOptions().zones());
-                boolean header = written.contains(DocumentHeaderFooterZone.HEADER);
-                boolean footer = written.contains(DocumentHeaderFooterZone.FOOTER);
-                // Word repeats the previous section's header and footer in a section that has
-                // none of its own; the page this section draws has none, so it says so.
-                if (!header && anEarlierHeader) {
-                    blankZone(document, true);
-                }
-                if (!footer && anEarlierFooter) {
-                    blankZone(document, false);
-                }
-                anEarlierHeader |= header;
-                anEarlierFooter |= footer;
+                earlierZones.addAll(applyPageZones(document, context.outputOptions().zones(),
+                        evenAndOdd, earlierZones));
                 for (DocumentNode root : section.graph().roots()) {
                     writeNode(document, root);
                 }
@@ -569,27 +564,53 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * An empty header or footer for a section that has none of its own, so Word does not
-     * repeat the previous section's there.
+     * An empty header or footer for a kind of page the section draws none on, so Word does not
+     * put another one there — the previous section's, or the section's own for other pages.
      *
-     * <p>Its one paragraph is a point tall and sits against the page edge. Left at Normal's
-     * size and Word's default distance it would reach past a narrow margin, and Word would
-     * push the body down to make room for a header the page does not draw.</p>
+     * <p>Its one paragraph is a point tall. When the section has no zone of this kind at all,
+     * it also sits against the page edge: left at Word's default distance it would reach past
+     * a narrow margin, and Word would push the body down to make room for a header the page
+     * does not draw. A section that does draw one keeps that one's distance.</p>
      */
-    private static void blankZone(XWPFDocument document, boolean header) {
-        CTSectPr sectPr = bodySectPr(document);
-        XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, sectPr);
-        XWPFHeaderFooter blank = header
-                ? policy.createHeader(XWPFHeaderFooterPolicy.DEFAULT)
-                : policy.createFooter(XWPFHeaderFooterPolicy.DEFAULT);
+    private static void blankZone(XWPFHeaderFooterPolicy policy, CTSectPr sectPr, boolean header,
+                                  org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type,
+                                  boolean againstTheEdge) {
+        XWPFHeaderFooter blank = header ? policy.createHeader(type) : policy.createFooter(type);
         collapsed(blank.createParagraph());
-        if (sectPr.isSetPgMar()) {
+        if (againstTheEdge && sectPr.isSetPgMar()) {
             if (header) {
                 sectPr.getPgMar().setHeader(BigInteger.ZERO);
             } else {
                 sectPr.getPgMar().setFooter(BigInteger.ZERO);
             }
         }
+    }
+
+    /**
+     * Whether any section has a zone Word can only place with different even and odd pages.
+     *
+     * <p>Word turns that on for the whole document, not per section, so it is decided before
+     * any section is written.</p>
+     */
+    private static boolean distinguishesEvenPages(List<SemanticSection> sections) {
+        for (SemanticSection section : sections) {
+            List<DocumentPageZone> zones = section.context().outputOptions().zones();
+            if (zones == null) {
+                continue;
+            }
+            int pages = section.context().layoutGraph() == null
+                    ? 0
+                    : section.context().layoutGraph().totalPages();
+            for (DocumentPageZone zone : zones) {
+                java.util.Set<DocxPageClasses.PageClass> drawnOn = DocxPageClasses.of(zone, pages);
+                if (drawnOn != null
+                    && drawnOn.contains(DocxPageClasses.PageClass.EVEN)
+                       != drawnOn.contains(DocxPageClasses.PageClass.LATER_ODD)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Makes a paragraph that exists only for Word's structure take a single point. */
@@ -673,47 +694,138 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * would be right on one page and wrong on the others, so a zone that needs one
      * places {@code pageNumber()} and gets a live {@code PAGE} field instead.</p>
      *
-     * <p>A page predicate is the other fixed-layout-only piece: {@code appliesTo}
-     * tests a page, and no page exists here to test — Word owns pagination. The
-     * zone is written on every page rather than silently skipped, content beating
-     * absence, and the export says on the log what it could not honor.</p>
+     * <p>A page predicate is the other fixed-layout piece: {@code appliesTo} tests a page,
+     * and Word owns pagination, so there is no page here to test. What Word does have is a
+     * header and footer per kind of page — the first, even ones, the rest — and the
+     * predicate is asked which of those it is drawn on ({@link DocxPageClasses}). A zone
+     * on the first page only becomes the section's first-page header, with the section
+     * stating a title page; one on even pages becomes the even-page header, with the
+     * document stating different even and odd pages. A predicate that does not follow those
+     * kinds is written on every page, content beating absence, and the export reports what
+     * it could not honour.</p>
      *
-     * @return the kinds of zone written, so a later section knows what it has to blank out
+     * <p>A kind of page the section draws no zone of that kind on gets an empty part when
+     * Word would otherwise put something there: the section's own zone for other pages, or
+     * an earlier section's zone, which Word repeats in a section without one.</p>
+     *
+     * @param evenAndOdd   whether the document states different even and odd pages
+     * @param earlierZones the kinds of zone an earlier section wrote
+     * @return the kinds of zone this section wrote
      */
-    private java.util.Set<DocumentHeaderFooterZone> applyPageZones(XWPFDocument document,
-                                                                  List<DocumentPageZone> zones) {
+    private java.util.Set<DocumentHeaderFooterZone> applyPageZones(
+            XWPFDocument document,
+            List<DocumentPageZone> zones,
+            boolean evenAndOdd,
+            java.util.Set<DocumentHeaderFooterZone> earlierZones) {
         // The page height the zones are measured against is the canvas's, which is what the
         // page geometry was written from — not a value parsed back out of the XML.
         java.util.Set<DocumentHeaderFooterZone> written =
                 java.util.EnumSet.noneOf(DocumentHeaderFooterZone.class);
-        if (zones == null || zones.isEmpty()) {
+        List<DocumentPageZone> sectionZones = zones == null ? List.of() : zones;
+        if (sectionZones.isEmpty() && earlierZones.isEmpty()) {
             return written;
         }
-        // Bound to the section being written, whose properties are the body's until it ends.
-        XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, bodySectPr(document));
-        for (int index = 0; index < zones.size(); index++) {
-            DocumentPageZone zone = zones.get(index);
-            if (zone.getAppliesTo() != null) {
-                LOG.warn("docx.zone.pagePredicate zone={} — appliesTo cannot be evaluated in a"
-                        + " semantic export: Word paginates the document, so there is no page to"
-                        + " test. The zone is written on every page; per-page chrome needs a"
-                        + " fixed-layout backend.", zone.getZone());
-            }
+        List<DocumentNode> contents = new ArrayList<>();
+        List<java.util.Set<DocxPageClasses.PageClass>> drawnOn = new ArrayList<>();
+        for (DocumentPageZone zone : sectionZones) {
             DocumentNode content = zone.getContent() == null
                     ? null
                     : zone.getContent().apply(PageContext.unpaginated());
-            if (content == null) {
+            contents.add(content);
+            drawnOn.add(content == null
+                    ? java.util.EnumSet.noneOf(DocxPageClasses.PageClass.class)
+                    : pageClassesOf(zone));
+        }
+        boolean titlePage = false;
+        for (int index = 0; index < sectionZones.size(); index++) {
+            java.util.Set<DocxPageClasses.PageClass> classes = drawnOn.get(index);
+            if (contents.get(index) != null
+                && classes.contains(DocxPageClasses.PageClass.FIRST)
+                   != classes.contains(DocxPageClasses.PageClass.LATER_ODD)) {
+                titlePage = true;
+            }
+        }
+        // Bound to the section being written, whose properties are the body's until it ends.
+        CTSectPr sectPr = bodySectPr(document);
+        if (titlePage && !sectPr.isSetTitlePg()) {
+            sectPr.addNewTitlePg();
+        }
+        XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, sectPr);
+        java.util.Set<String> parts = new java.util.HashSet<>();
+        for (int index = 0; index < sectionZones.size(); index++) {
+            DocumentPageZone zone = sectionZones.get(index);
+            DocumentNode content = contents.get(index);
+            java.util.Set<DocxPageClasses.PageClass> classes = drawnOn.get(index);
+            if (content == null || classes.isEmpty()) {
                 continue;
             }
             boolean header = zone.getZone() == DocumentHeaderFooterZone.HEADER;
-            XWPFHeaderFooter target = header
-                    ? policy.createHeader(XWPFHeaderFooterPolicy.DEFAULT)
-                    : policy.createFooter(XWPFHeaderFooterPolicy.DEFAULT);
-            writeZoneLine(target, content);
+            for (org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type
+                    : partTypes(titlePage, evenAndOdd)) {
+                if (classes.contains(pageClassOf(type))) {
+                    writeZoneLine(header ? policy.createHeader(type) : policy.createFooter(type), content);
+                    parts.add(zone.getZone() + "/" + type);
+                }
+            }
             placeZone(document, zone, index, header);
             written.add(zone.getZone());
         }
+        for (DocumentHeaderFooterZone kind : DocumentHeaderFooterZone.values()) {
+            if (!written.contains(kind) && !earlierZones.contains(kind)) {
+                continue;
+            }
+            for (org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type
+                    : partTypes(titlePage, evenAndOdd)) {
+                if (!parts.contains(kind + "/" + type)) {
+                    blankZone(policy, sectPr, kind == DocumentHeaderFooterZone.HEADER, type,
+                            !written.contains(kind));
+                }
+            }
+        }
         return written;
+    }
+
+    /**
+     * The kinds of page a zone is drawn on — every kind when its predicate does not follow
+     * them, which is written down as what the export could not honour.
+     */
+    private java.util.Set<DocxPageClasses.PageClass> pageClassesOf(DocumentPageZone zone) {
+        java.util.Set<DocxPageClasses.PageClass> classes = DocxPageClasses.of(zone, layout.pageCount());
+        if (classes != null) {
+            return classes;
+        }
+        LOG.warn("docx.zone.pagePredicate zone={} — its appliesTo predicate does not follow Word's"
+                + " first, even and odd pages, so the zone is written on every page; per-page"
+                + " chrome of that kind needs a fixed-layout backend.", zone.getZone());
+        report.add(DocxExportReport.Severity.APPROXIMATED, "page zone", null,
+                "its page predicate picks pages Word has no header or footer for — only the first,"
+                + " even and odd pages can differ — so it is written on every page");
+        return java.util.EnumSet.allOf(DocxPageClasses.PageClass.class);
+    }
+
+    /** The header and footer kinds the section uses: the default, and the ones it states. */
+    private static List<org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum> partTypes(
+            boolean titlePage, boolean evenAndOdd) {
+        List<org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum> types = new ArrayList<>(3);
+        types.add(XWPFHeaderFooterPolicy.DEFAULT);
+        if (titlePage) {
+            types.add(XWPFHeaderFooterPolicy.FIRST);
+        }
+        if (evenAndOdd) {
+            types.add(XWPFHeaderFooterPolicy.EVEN);
+        }
+        return types;
+    }
+
+    /** The kind of page a Word header or footer type is shown on. */
+    private static DocxPageClasses.PageClass pageClassOf(
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type) {
+        if (type == XWPFHeaderFooterPolicy.FIRST) {
+            return DocxPageClasses.PageClass.FIRST;
+        }
+        return type == XWPFHeaderFooterPolicy.EVEN
+                ? DocxPageClasses.PageClass.EVEN
+                : DocxPageClasses.PageClass.LATER_ODD;
     }
 
     /**

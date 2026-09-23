@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pptx.handlers;
 
+import com.demcha.compose.document.backend.fixed.pdf.handlers.InlineSvgRasters;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.document.style.ShapePoint;
@@ -61,7 +62,7 @@ final class PptxInlineGeometry {
     }
 
     static Path2D path(List<DocumentPathSegment> segments, Rectangle2D box) {
-        return com.demcha.compose.document.backend.fixed.pdf.handlers.InlineSvgRasters.path(segments, box);
+        return InlineSvgRasters.path(segments, box);
     }
 
     /** Draws a normalized vertex ring scaled to the box as a closed freeform. */

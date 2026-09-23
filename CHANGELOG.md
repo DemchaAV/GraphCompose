@@ -8,6 +8,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A link to a section, table or image reaches it in Word.** The DOCX export wrote a
+  bookmark only for a paragraph's `anchor(...)`; an anchor on a section, container, table or
+  image was dropped, so an internal link to it went nowhere in Word. Such a block's anchor is
+  now a bookmark around everything the block wrote — opening before the first word of its
+  first paragraph (its first cell's, when it starts with a table) and closing after its last.
+  Converted in LibreOffice, a link on page 1 to a section on page 2 jumps to page 2.
+
 - **A page zone drawn on some pages only lands on the same pages in Word.** The DOCX export
   wrote every zone on every page and warned when it had an `appliesTo` predicate, so a
   cover-only header repeated on every page and a footer that skips the cover appeared on it.

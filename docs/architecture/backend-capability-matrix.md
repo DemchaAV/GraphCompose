@@ -92,7 +92,7 @@ Payload records live in `core` under
 | Capability | PDF (fixed) | PPTX (fixed) | DOCX (semantic) |
 |---|---|---|---|
 | External hyperlinks (fragment- and run-level) | ✅ `PdfLinkAnnotationWriter` + link rects in `PdfFixedLayoutBackend` | ✅ `PptxNavigationWriter` (transparent hotspots for measured span, line, and fragment rectangles, emitted above all content after the fragment pass) | ❌ |
-| Internal links (anchor jump, forward references) | ✅ `PdfInternalLinkWriter` (two-pass) | ✅ `PptxNavigationWriter` (deferred slide-jump hyperlinks, resolved after all fragments — including across sections) | ❌ |
+| Internal links (anchor jump, forward references) | ✅ `PdfInternalLinkWriter` (two-pass) | ✅ `PptxNavigationWriter` (deferred slide-jump hyperlinks, resolved after all fragments — including across sections) | ✅ `DocxSemanticBackend` — an internal `linkTarget` is a `w:hyperlink` with `w:anchor`, and every anchor the export writes is a bookmark: a paragraph's around its text, a section's, container's, table's or image's around everything the block wrote (`bookmarkAround`). An anchor on a node the export drops (a shape, a barcode) has nothing to mark |
 | Document outline / bookmarks tree | ✅ `PdfBookmarkOutlineWriter` | ⚠️ `PptxNavigationWriter` (no PPTX outline concept — slide names where 1:1, extra bookmarks dropped with a note) | ❌ |
 
 ## Document chrome and output options

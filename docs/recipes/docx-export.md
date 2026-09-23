@@ -190,8 +190,9 @@ goes back to the paragraph above only where nothing below can hold it — before
 which has no space above it in Word, before a page break, at the end of a cell, and at the
 end of the document.
 
-The horizontal half of that box has no paragraph-level equivalent and is still dropped —
-see "What a panel keeps and loses".
+The horizontal half is carried as an indent: every paragraph by each enclosing container's
+margin and padding, a row or a table by the same amount as `w:tblInd` — see "What a panel
+keeps and loses".
 
 Asking for the layout costs a measurement and pagination pass over the document, the same
 work a PDF render does, and it reads each image a second time.
@@ -277,7 +278,7 @@ travels with the paragraphs inside it:
 
 ```java
 page.addSection("Notice", card -> card
-        .softPanel(surface, 8, 14)     // fill lands; radius and padding do not
+        .softPanel(surface, 8, 14)     // fill and side padding land; the radius does not
         .accentLeft(accent, 3)         // lands as a left w:pBdr
         .addParagraph(p -> p.text("The band grows with this text when it is edited.")));
 ```
@@ -294,9 +295,14 @@ Not representable, and left undone rather than approximated:
 
 - **The corner radius.** Word paragraph shading is rectangular. The panel renders with
   square corners and the export logs one warning per document.
-- **The container's padding.** A paragraph's shading hugs its own text, so the band does
-  not inset its content the way the PDF does. Add spacing inside the container if the
-  breathing room matters in Word.
+- **The container's padding above and below.** The sides are carried: every paragraph is
+  indented by each enclosing container's margin and padding, and a panel's side borders are
+  spaced by its padding — Word draws a side border that far outside the text and shades out
+  to it, and a filled side with no border gets a hairline in the fill's colour to carry the
+  band there — so the text sits inside the card and the band and accent at its edges.
+  `w:space` stops at 31pt, so a wider padding brings the band's edge in by the difference.
+  The top and bottom padding are the space above the first paragraph and below the last,
+  outside the shading, so the band hugs the text vertically.
 - **A table inside a painted container.** The table keeps its own cell fills and borders
   rather than inheriting the band.
 

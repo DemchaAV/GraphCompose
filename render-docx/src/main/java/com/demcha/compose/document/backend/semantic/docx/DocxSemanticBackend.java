@@ -183,6 +183,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private final java.util.Deque<ContainerPaint> containerPaint = new java.util.ArrayDeque<>();
     // How many of those were open when the cell being written began; see newBodyParagraph.
     private int cellPaintDepth;
+    // How far the containers being written hold their content in from each side, in points:
+    // every enclosing margin and padding, counted from the page margin or the cell's edge.
+    private double insetLeft;
+    private double insetRight;
     // The text style the document is mostly written in, promoted to Word's Normal style.
     // Null until an export computes it, and when the graph carries no text at all.
     private DocumentTextStyle documentDefaultStyle;
@@ -252,7 +256,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param fill    background, written as {@code w:shd}
      * @param borders per-side strokes, written as {@code w:pBdr}
      */
-    private record ContainerPaint(DocumentColor fill, DocumentBorders borders) {
+    /**
+     * A panel's paint, and where its edges sit: the inset of its outer edge from the page
+     * margin or the cell's edge, recorded as the panel is entered.
+     */
+    private record ContainerPaint(DocumentColor fill, DocumentBorders borders,
+                                  double edgeLeft, double edgeRight) {
+
+        ContainerPaint at(double left, double right) {
+            return new ContainerPaint(fill, borders, left, right);
+        }
 
         /** @return true when there is nothing for a paragraph to carry */
         boolean isEmpty() {
@@ -451,6 +464,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         warnedNodeKinds.clear();
         containerPaint.clear();
         cellPaintDepth = 0;
+        insetLeft = 0;
+        insetRight = 0;
         listNumbering.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
@@ -1471,10 +1486,45 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (numId != null) {
             para.setNumID(numId);
             para.setNumILvl(BigInteger.valueOf(depth));
+            indentListItemInside(para, depth);
         }
         XWPFRun run = para.createRun();
         applyStyle(run, style);
         run.setText(numId != null ? text : "  ".repeat(depth) + text);
+    }
+
+    /**
+     * Keeps a numbered item's own indent when it sits inside a padded container.
+     *
+     * <p>A paragraph's own {@code w:ind} replaces its numbering level's, so the container's
+     * inset written on it would drop the level's hanging indent and the marker would run into
+     * the text. The level's indent is added back on top of the inset. A panel border on the
+     * item's left is spaced out by how far the level's first line — where the marker starts,
+     * and where the editor measures a hanging paragraph's border from — sits inside the
+     * inset: nothing on the first level, one nesting step per level below it. Measured in
+     * LibreOffice, spacing it by the whole level indent put the accent bar 9pt outside the
+     * panel on every item.</p>
+     */
+    private void indentListItemInside(XWPFParagraph para, int depth) {
+        CTPPr properties = para.getCTP().getPPr();
+        if (properties == null) {
+            return;
+        }
+        if (properties.isSetInd()) {
+            long levelLeft = (long) LIST_HANGING_TWIPS + (long) LIST_NESTING_STEP_TWIPS * depth;
+            CTInd indent = properties.getInd();
+            indent.setLeft(BigInteger.valueOf(toTwips(insetLeft) + levelLeft));
+            indent.setHanging(BigInteger.valueOf(LIST_HANGING_TWIPS));
+        }
+        // Without an inset the level's own indent applies, and its first line is the same
+        // nesting step inside the panel's edge, so the border moves out by it all the same.
+        if (depth > 0 && properties.isSetPBdr() && properties.getPBdr().isSetLeft()) {
+            CTBorder left = properties.getPBdr().getLeft();
+            Long space = left.isSetSpace() ? writtenTwips(left.getSpace()) : null;
+            long firstLineInside = (long) LIST_NESTING_STEP_TWIPS * depth;
+            long points = (space == null ? 0 : space) + Math.round(firstLineInside / POINT_TO_TWIP);
+            left.setSpace(BigInteger.valueOf(Math.min(MAX_BORDER_SPACE_POINTS, points)));
+        }
     }
 
     /**
@@ -1604,8 +1654,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * used to do, which was to drop the paint without saying so.</p>
      *
      * <p>What does not survive: the corner radius, because Word paragraph shading is
-     * rectangular, and the container's padding, because a paragraph's shading hugs its own
-     * text. The radius is warned about once per export rather than pretended away.</p>
+     * rectangular, and the padding above and below, which is space outside a paragraph's
+     * shading. The radius is warned about once per export rather than pretended away. The
+     * sides do survive — see {@link #applyContainerPaint} and {@link #applyInset}.</p>
      */
     private void writeContainerChildren(XWPFDocument document, DocumentNode node) throws Exception {
         ContainerPaint paint = paintOf(node);
@@ -1614,7 +1665,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         warnContainerRadiusDropped(node);
-        containerPaint.push(paint);
+        // The panel's edge is its margin box's inner side: past its margin, before its padding.
+        containerPaint.push(paint.at(insetLeft + node.margin().left(), insetRight + node.margin().right()));
         try {
             writeContainerBody(document, node);
         } finally {
@@ -1643,8 +1695,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeContainerBody(XWPFDocument document, DocumentNode node) throws Exception {
         carriedSpacingBefore += node.margin().top() + node.padding().top();
-        for (DocumentNode child : node.children()) {
-            writeNode(document, child);
+        // The sides are carried the same way, as the indent of every paragraph inside: a
+        // container's content starts inside its margin and its padding on the page, and was
+        // written flush with the page margin, the card's text touching the card's edge.
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
+        insetLeft += node.margin().left() + node.padding().left();
+        insetRight += node.margin().right() + node.padding().right();
+        try {
+            for (DocumentNode child : node.children()) {
+                writeNode(document, child);
+            }
+        } finally {
+            insetLeft = outerLeft;
+            insetRight = outerRight;
         }
         owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
         // Nothing inside took the top edge — a container of tables, or an empty one — so it
@@ -1946,13 +2010,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static ContainerPaint paintOf(DocumentNode node) {
         if (node instanceof SectionNode section) {
             return new ContainerPaint(section.fillColor(),
-                    bordersOf(section.borders(), section.stroke()));
+                    bordersOf(section.borders(), section.stroke()), 0, 0);
         }
         if (node instanceof ContainerNode container) {
             return new ContainerPaint(container.fillColor(),
-                    bordersOf(container.borders(), container.stroke()));
+                    bordersOf(container.borders(), container.stroke()), 0, 0);
         }
-        return new ContainerPaint(null, null);
+        return new ContainerPaint(null, null, 0, 0);
     }
 
     /**
@@ -2015,6 +2079,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (paint != null) {
             applyContainerPaint(para, paint);
         }
+        applyInset(para);
         // Everything owed above this paragraph — the space the one before it holds below
         // itself, and any container edge — is written here, on one side of the gap.
         double above = carriedSpacingBefore + pendingSpacingAfter;
@@ -2102,7 +2167,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return measure instanceof Number number ? number.longValue() : null;
     }
 
-    private static void applyContainerPaint(XWPFParagraph para, ContainerPaint paint) {
+    /**
+     * Paints a paragraph with the panel it sits in: the fill, and the borders at the panel's
+     * edges rather than at the text's.
+     *
+     * <p>Word draws a paragraph's side border its {@code w:space} outside the text and shades
+     * the paragraph out to that border. The text is indented by every enclosing inset (see
+     * {@link #applyInset}); the panel's edge sits where it recorded on the way in, so a side
+     * border spaced by the distance between the two lands where the page draws the edge, and
+     * the fill reaches it — for the panel's own paragraphs and for those of a padded section
+     * inside it alike. A filled panel with no border on a side still needs one there to carry
+     * the fill out past the text, so it gets a hairline in the fill's own colour. Measured in
+     * LibreOffice, this puts the accent bar, the band and the text where the page has them.
+     * {@code w:space} stops at 31pt, so a wider distance brings the band's edge in by the
+     * difference.</p>
+     */
+    private void applyContainerPaint(XWPFParagraph para, ContainerPaint paint) {
         CTPPr properties = para.getCTP().isSetPPr()
                 ? para.getCTP().getPPr()
                 : para.getCTP().addNewPPr();
@@ -2113,14 +2193,72 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             shading.setFill(toHexColor(paint.fill().color()));
         }
         DocumentBorders borders = paint.borders();
-        if (borders == null) {
+        double spaceLeft = Math.max(0, insetLeft - paint.edgeLeft());
+        double spaceRight = Math.max(0, insetRight - paint.edgeRight());
+        boolean carryFillLeft = paint.fill() != null && spaceLeft > 0;
+        boolean carryFillRight = paint.fill() != null && spaceRight > 0;
+        if (borders == null && !carryFillLeft && !carryFillRight) {
             return;
         }
         CTPBdr edges = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
-        paintParagraphEdge(borders.top(), edges::isSetTop, edges::getTop, edges::addNewTop);
-        paintParagraphEdge(borders.bottom(), edges::isSetBottom, edges::getBottom, edges::addNewBottom);
-        paintParagraphEdge(borders.left(), edges::isSetLeft, edges::getLeft, edges::addNewLeft);
-        paintParagraphEdge(borders.right(), edges::isSetRight, edges::getRight, edges::addNewRight);
+        if (borders != null) {
+            paintParagraphEdge(borders.top(), edges::isSetTop, edges::getTop, edges::addNewTop);
+            paintParagraphEdge(borders.bottom(), edges::isSetBottom, edges::getBottom, edges::addNewBottom);
+            paintParagraphEdge(borders.left(), edges::isSetLeft, edges::getLeft, edges::addNewLeft);
+            paintParagraphEdge(borders.right(), edges::isSetRight, edges::getRight, edges::addNewRight);
+        }
+        String fillHex = paint.fill() == null ? null : toHexColor(paint.fill().color());
+        if (carryFillLeft && !edges.isSetLeft()) {
+            paintEdge(edges.addNewLeft(), STBorder.SINGLE, FILL_EDGE_EIGHTHS, fillHex);
+        }
+        if (carryFillRight && !edges.isSetRight()) {
+            paintEdge(edges.addNewRight(), STBorder.SINGLE, FILL_EDGE_EIGHTHS, fillHex);
+        }
+        if (edges.isSetLeft() && spaceLeft > 0) {
+            edges.getLeft().setSpace(BigInteger.valueOf(borderSpace(spaceLeft)));
+        }
+        if (edges.isSetRight() && spaceRight > 0) {
+            edges.getRight().setSpace(BigInteger.valueOf(borderSpace(spaceRight)));
+        }
+    }
+
+    /** The narrowest border Word draws, for an edge that exists only to carry a fill. */
+    private static final BigInteger FILL_EDGE_EIGHTHS = BigInteger.TWO;
+
+    /** Word's {@code w:space} on a border, in whole points and no more than it allows. */
+    private static long borderSpace(double points) {
+        return Math.max(0, Math.min(MAX_BORDER_SPACE_POINTS, Math.round(points)));
+    }
+
+    private static final long MAX_BORDER_SPACE_POINTS = 31;
+
+    /**
+     * The width content has where it is being written: the page's, less what the containers
+     * around it hold in from each side. A picture or a row sized to the page's full width
+     * would run past the right margin once the containers push it in.
+     */
+    private double availableWidth() {
+        return Double.isFinite(contentWidth) ? contentWidth - insetLeft - insetRight : contentWidth;
+    }
+
+    /**
+     * Holds the paragraph in from the sides by every enclosing container's margin and padding.
+     *
+     * <p>Only the sides a container asked for are written, and none when no container asked,
+     * so a paragraph outside any padded container is written as it always was.</p>
+     */
+    private void applyInset(XWPFParagraph para) {
+        if (insetLeft <= 0 && insetRight <= 0) {
+            return;
+        }
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
+        if (insetLeft > 0) {
+            indent.setLeft(BigInteger.valueOf(toTwips(insetLeft)));
+        }
+        if (insetRight > 0) {
+            indent.setRight(BigInteger.valueOf(toTwips(insetRight)));
+        }
     }
 
     /**
@@ -2645,7 +2783,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // sizing pass repeated the copy and the whole-array hash behind
         // ImageSourceCache.fromBytes, so one image cost two of each on the way out.
         NodeDefinitionSupport.ImageDimensions box =
-                NodeDefinitionSupport.resolveImageDimensions(node, contentWidth, resolved);
+                NodeDefinitionSupport.resolveImageDimensions(node, availableWidth(), resolved);
 
         DocumentImageFitMode fitMode =
                 node.fitMode() == null ? DocumentImageFitMode.STRETCH : node.fitMode();
@@ -2848,6 +2986,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         breakRowsWhereTheLayoutDoes(table, node);
+        indentTable(table);
     }
 
     /**
@@ -3206,6 +3345,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             DocumentNode child = node.children().get(i);
             writeRowCellChild(cell, child);
         }
+        indentTable(table);
     }
 
     private void writeRowCellChild(XWPFTableCell cell, DocumentNode child) throws Exception {
@@ -3233,11 +3373,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * its slot and starts exactly where the slot starts. The margins are written even
      * when they are zero, because Word's own default is not.</p>
      *
-     * <p>The width used is the page's, not the row's parent's. A row inside a padded panel
-     * is offered less than the page in the fixed-layout render — but the panel's padding
-     * is not exported either, so in the file being written the row really does have the
-     * whole width. The slots match the document this backend produces rather than the one
-     * it was given.</p>
+     * <p>The width used is the row's own when the layout placed it, and otherwise what the
+     * containers around it leave of the page ({@link #availableWidth}); the row is moved in
+     * by the same containers ({@link #indentTable}), so it starts where their text does.</p>
      */
     private void applyRowGeometry(XWPFTable table, RowNode node) {
         double[] starts = layout.rowChildStarts(node);
@@ -3249,11 +3387,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
 
-        if (!Double.isFinite(contentWidth) || contentWidth <= 0) {
+        double available = availableWidth();
+        if (!Double.isFinite(available) || available <= 0) {
             return;
         }
-        setTableWidth(table, contentWidth);
-        double[] slots = resolveRowSlots(node, contentWidth);
+        setTableWidth(table, available);
+        double[] slots = resolveRowSlots(node, available);
         if (slots == null) {
             return;
         }
@@ -3553,7 +3692,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 autoColumns++;
             }
         }
-        double available = Double.isFinite(nestedTableWidth()) ? nestedTableWidth() : contentWidth;
+        double available = Double.isFinite(nestedTableWidth()) ? nestedTableWidth() : availableWidth();
         double room = available - node.padding().horizontal() - sum(measured);
         if (autoColumns == 0 || !(room > 0)) {
             return measured;
@@ -3773,6 +3912,37 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return nested;
     }
 
+    /**
+     * Moves a table in from the page margin by what the containers around it hold in, as
+     * its paragraphs are: a row or a table inside a padded section starts where the
+     * section's text starts, not at the page margin beside it.
+     *
+     * <p>Called once the table is written, because the editor measures {@code w:tblInd} to
+     * the first cell's text rather than to the table's edge: measured in LibreOffice, a
+     * table indented by the inset alone drew its border the first cell's margin short of the
+     * section's text. So the first cell's written margin is added, and the border lands at
+     * the inset, where the page draws it. A cell's own content is not indented this way —
+     * inside a cell the inset is always zero.</p>
+     */
+    private void indentTable(XWPFTable table) {
+        if (currentCell != null || insetLeft <= 0 || table.getRows().isEmpty()
+            || table.getRow(0).getTableCells().isEmpty()) {
+            return;
+        }
+        XWPFTableCell first = table.getRow(0).getCell(0);
+        CTTcPr cellProperties = first.getCTTc().isSetTcPr() ? first.getCTTc().getTcPr() : null;
+        CTTcMar margins = cellProperties != null && cellProperties.isSetTcMar() ? cellProperties.getTcMar() : null;
+        double firstCellMargin = margins == null
+                ? WORD_DEFAULT_CELL_MARGIN_POINTS
+                : marginPoints(margins.isSetLeft() ? margins.getLeft() : null);
+        var properties = table.getCTTbl().getTblPr() != null
+                ? table.getCTTbl().getTblPr()
+                : table.getCTTbl().addNewTblPr();
+        CTTblWidth indent = properties.isSetTblInd() ? properties.getTblInd() : properties.addNewTblInd();
+        indent.setType(STTblWidth.DXA);
+        indent.setW(BigInteger.valueOf(toTwips(insetLeft + firstCellMargin)));
+    }
+
     private static boolean endsWithATable(List<IBodyElement> elements) {
         return !elements.isEmpty() && elements.get(elements.size() - 1) instanceof XWPFTable;
     }
@@ -3839,11 +4009,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double previousCarried = carriedSpacingBefore;
         double previousOwed = pendingSpacingAfter;
         int previousPaintDepth = cellPaintDepth;
+        double previousInsetLeft = insetLeft;
+        double previousInsetRight = insetRight;
         currentCell = cell;
         lastBodyParagraph = null;
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
         cellPaintDepth = containerPaint.size();
+        // A cell's content is measured from the cell's own edge, which its margins already
+        // keep clear of the border; the containers around the table have nothing to add.
+        insetLeft = 0;
+        insetRight = 0;
         try {
             writeNode(cell.getXWPFDocument(), child);
             // A cell ends where it ends: its last gap cannot land on whatever the body
@@ -3855,6 +4031,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             carriedSpacingBefore = previousCarried;
             pendingSpacingAfter = previousOwed;
             cellPaintDepth = previousPaintDepth;
+            insetLeft = previousInsetLeft;
+            insetRight = previousInsetRight;
         }
     }
 

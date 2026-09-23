@@ -176,6 +176,67 @@ class DocxContainerPaintTest {
     }
 
     @Test
+    void aRowBuiltIntoACellDoesNotRepaintTheCellInThePanelsColour() throws Exception {
+        byte[] docx = exportBytes(page -> page.addSection("Card", card -> card
+                .fillColor(SURFACE)
+                .addTable(t -> t.autoColumns(1)
+                        .zebra(DocumentColor.rgb(255, 255, 255), DocumentColor.rgb(200, 200, 200))
+                        .row("First")
+                        .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(
+                                new com.demcha.compose.document.dsl.RowBuilder()
+                                        .addParagraph(p -> p.text("Left"))
+                                        .addParagraph(p -> p.text("Right"))
+                                        .build())))));
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            var outer = document.getTables().get(0).getRow(1).getCell(0);
+            var nested = outer.getTables().get(0).getRow(0);
+
+            assertThat(hex(outer.getCTTc().getTcPr().getShd().getFill())).isEqualTo("C8C8C8");
+            for (var cell : nested.getTableCells()) {
+                var properties = cell.getCTTc().getTcPr();
+                assertThat(properties == null || !properties.isSetShd())
+                        .as("the row inside the stripe shows the stripe, not the panel over it")
+                        .isTrue();
+            }
+        }
+    }
+
+    @Test
+    void aRowInABorderedPanelKeepsItsCellsShadedAndItsTextUnboxed() throws Exception {
+        byte[] docx = exportBytes(page -> page.addSection("Card", card -> card
+                .fillColor(SURFACE)
+                .stroke(DocumentStroke.of(ACCENT, 1))
+                .addRow(r -> r
+                        .addParagraph(p -> p.text("Left"))
+                        .addParagraph(p -> p.text("Right")))));
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            for (var cell : document.getTables().get(0).getRow(0).getTableCells()) {
+                assertThat(hex(cell.getCTTc().getTcPr().getShd().getFill())).isEqualTo("EEF3F9");
+                CTPPr properties = cell.getParagraphs().get(0).getCTP().getPPr();
+                assertThat(properties == null || !properties.isSetPBdr())
+                        .as("the panel's outline is not drawn again around the text of each cell")
+                        .isTrue();
+            }
+        }
+    }
+
+    @Test
+    void thePanelPaintsItsParagraphsAgainOnceTheTableIsWritten() throws Exception {
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page.addSection("Card", card -> card
+                .fillColor(SURFACE)
+                .addTable(t -> t.autoColumns(1)
+                        .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(
+                                new com.demcha.compose.document.dsl.ParagraphBuilder().text("In a cell").build())))
+                .addParagraph(p -> p.text("After the table"))));
+
+        assertThat(shadingFill(paragraphs.get(paragraphs.size() - 1)))
+                .as("leaving the cell restores the panel for the paragraphs after it")
+                .isEqualTo("EEF3F9");
+    }
+
+    @Test
     void aPanelInsideACellStillPaintsItsOwnParagraphs() throws Exception {
         byte[] docx = exportBytes(page -> page.addSection("Card", card -> card
                 .fillColor(SURFACE)

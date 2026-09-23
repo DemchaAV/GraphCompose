@@ -12,8 +12,10 @@ follow semantic versioning; release dates are ISO 8601.
   node (`DocumentTableCell.node(...)`) wrote its paragraphs through the same path as the body,
   so they took the card's fill and border as paragraph shading: in a zebra table inside a
   filled card the composed cell came out in the card's colour over its stripe, and a bordered
-  card boxed the paragraphs inside its cells. A paragraph in a cell now takes paint only from
-  a container opened inside that cell; the card's paint stays on the card's own paragraphs.
+  card boxed the paragraphs inside its cells. A paragraph in a cell — and a row built into a
+  cell — now takes paint only from a container opened inside that cell; the card's paint stays
+  on the card's own paragraphs. A row placed directly in a bordered card keeps its cells shaded
+  and no longer draws the card's outline around the text of each cell.
 
 - **A table of contents keeps its page numbers in Word, and they stay right.** The DOCX export
   dropped every page reference, so `addTableOfContents(...)` reached Word with its entries and

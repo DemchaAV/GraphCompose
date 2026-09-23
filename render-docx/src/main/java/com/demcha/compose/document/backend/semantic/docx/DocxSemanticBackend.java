@@ -1997,13 +1997,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * a row's cells, which take the paint on the cell instead, since a paragraph inside a
      * table cannot reach the band the container is drawing.</p>
      */
+    /**
+     * The panel whatever is written now sits in, or null.
+     *
+     * <p>Inside a cell, only a container opened inside that cell counts. One the table sits
+     * in is carried by the cell's own shading, and painting inside the cell as well laid the
+     * card's colour over the cell's — a zebra stripe came out in the card's colour wherever a
+     * cell was built from a node, a row's included.</p>
+     */
+    private ContainerPaint paintHere() {
+        return containerPaint.size() > cellPaintDepth ? containerPaint.peek() : null;
+    }
+
     private XWPFParagraph newBodyParagraph(XWPFDocument document) {
         XWPFParagraph para = currentCell != null ? currentCell.addParagraph() : document.createParagraph();
-        // Inside a cell, only a container opened inside that cell paints the paragraph. One
-        // the table sits in is carried by the cell's own shading, and painting the paragraph
-        // as well laid the card's colour over the cell's — a zebra stripe came out in the
-        // card's colour wherever a cell was composed.
-        ContainerPaint paint = containerPaint.size() > cellPaintDepth ? containerPaint.peek() : null;
+        ContainerPaint paint = paintHere();
         if (paint != null) {
             applyContainerPaint(para, paint);
         }
@@ -3185,7 +3193,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // A row inside a panel is still inside it. Its paragraphs live in table cells and
         // so cannot carry the paint themselves; without shading the cells the band breaks
         // into stripes wherever a two-column block sits in a filled container.
-        ContainerPaint paint = containerPaint.peek();
+        ContainerPaint paint = paintHere();
         for (int i = 0; i < node.children().size(); i++) {
             XWPFTableCell cell = row.getCell(i);
             cell.removeParagraph(0);

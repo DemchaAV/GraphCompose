@@ -16,11 +16,15 @@ follow semantic versioning; release dates are ISO 8601.
   whose bottom border is the stroke: its colour, its thickness in eighths of a point, its
   ends as the paragraph's indents, and the space above and below the stroke in its box kept,
   so the rule flows with the text and a reader moves or deletes it as a line of the
-  document. A dash becomes Word's dashed or dotted border, reported `APPROXIMATED`. Measured
-  in LibreOffice against the engine's render: a full-width rule, a 200pt divider, a dashed
-  line, a rule in a 12pt box and a rule inside a card land within 2px of the page, their
-  lengths within 2px. Vertical and slanted lines and other shapes are still dropped and
-  reported.
+  document. A dash becomes Word's dashed or dotted border, reported `APPROXIMATED`, and a
+  translucent rule is flattened against what lies under it. A stroke thicker than its box —
+  `horizontal()` sizes the box from the stroke set before it — spills out of the box on the
+  page and takes no room, so the room it takes in Word comes off the space below it.
+  Measured in LibreOffice against the engine's render: a full-width rule, a 200pt divider,
+  a dashed line, a rule in a 12pt box and a rule inside a card land within 3px of the page,
+  their lengths within 2px; Word has not been measured. A line laid over something else in
+  a layer stack or a canvas is not a rule in the flow, and vertical and slanted lines and
+  other shapes are still dropped and reported, as is a rule in a page zone.
 
 - **A barcode reaches Word, and scans.** The DOCX export dropped a `BarcodeNode` with the
   geometry-only nodes, so a receipt or a shipping label lost the code a reader scans. It is

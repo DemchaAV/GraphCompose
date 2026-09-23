@@ -5,6 +5,7 @@ import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentDashPattern;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentTransform;
 
 import java.util.List;
@@ -19,13 +20,14 @@ import java.util.List;
  *
  * <ul>
  *   <li>a {@link LineNode} whose two ends sit at one height, with no transform; and</li>
- *   <li>a {@link ShapeNode} that is only a fill — no stroke, no rounded corners, no gradient,
- *       no transform — and no taller than Word's thickest border, which is how
- *       {@code addDivider} draws one.</li>
+ *   <li>a {@link ShapeNode} that is only a fill — a colour or a solid paint; no stroke, no
+ *       rounded corners, no gradient, no transform — and no taller than Word's thickest
+ *       border, which is how {@code addDivider} draws one.</li>
  * </ul>
  *
  * <p>Anything else drawn — a vertical or slanted line, a box, a circle — is not a rule, and
- * this returns {@code null} for it.</p>
+ * this returns {@code null} for it. Neither is a rule laid over something else in a layer
+ * stack; the backend asks only for nodes in the flow.</p>
  */
 final class DocxRules {
 
@@ -83,13 +85,24 @@ final class DocxRules {
     private static Rule ofShape(ShapeNode shape) {
         boolean stroked = shape.stroke() != null && shape.stroke().width() > 0;
         boolean rounded = shape.cornerRadius() != null && !shape.cornerRadius().isZero();
-        if (shape.fillColor() == null || shape.fillPaint() != null || stroked || rounded
-            || transformed(shape.transform())
+        DocumentColor fill = solidFillOf(shape);
+        if (fill == null || stroked || rounded || transformed(shape.transform())
             || !(shape.height() > 0) || shape.height() > MAX_RULE_POINTS || !(shape.width() > 0)) {
             return null;
         }
         return new Rule(shape.width(), false, shape.height(), 0, shape.width(),
-                shape.height() / 2.0, shape.height(), shape.fillColor(), null);
+                shape.height() / 2.0, shape.height(), fill, null);
+    }
+
+    /**
+     * The one colour a shape is filled with, or {@code null}: a plain fill colour, or a paint
+     * that is solid — which the layout turns into the same fill — but not a gradient.
+     */
+    private static DocumentColor solidFillOf(ShapeNode shape) {
+        if (shape.fillPaint() == null) {
+            return shape.fillColor();
+        }
+        return shape.fillPaint() instanceof DocumentPaint.Solid solid ? solid.color() : null;
     }
 
     private static boolean transformed(DocumentTransform transform) {

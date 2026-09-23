@@ -152,6 +152,94 @@ class DocxRuleTest {
     }
 
     @Test
+    void linesLaidOverEachOtherInALayerStackAreNotRulesInTheFlow() throws Exception {
+        // A skill meter: a track and the fill laid over it. As rules they came out as two bars,
+        // one under the other.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        XWPFDocument document = withReport(report, page -> page.addLayerStack(stack -> {
+            stack.layer(new com.demcha.compose.document.dsl.LineBuilder().name("Track")
+                    .horizontal(120).stroke(DocumentStroke.of(DocumentColor.rgb(200, 200, 200), 3)).anchor("track").build());
+            stack.layer(new com.demcha.compose.document.dsl.LineBuilder().name("Filled")
+                    .horizontal(80).stroke(DocumentStroke.of(ACCENT, 3)).build());
+        }).addPageReference("track"));
+        try (document) {
+            assertThat(document.getParagraphs()).noneMatch(p -> p.getCTP().getPPr() != null
+                                                               && p.getCTP().getPPr().isSetPBdr());
+            assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isEqualTo(2);
+            assertThat(document.getParagraphs())
+                    .as("the dropped line has no bookmark, so no field may point at one")
+                    .noneMatch(p -> p.getCTP().xmlText().contains("PAGEREF"));
+        }
+    }
+
+    @Test
+    void aTranslucentRuleIsFlattenedAgainstWhatIsUnderIt() throws Exception {
+        try (XWPFDocument document = export(page -> page
+                .addLine(l -> l.horizontal(100).stroke(DocumentStroke.of(DocumentColor.rgba(0, 0, 0, 128), 1))))) {
+            // Half-opaque black over white.
+            assertThat(hex(bottomOf(document, 0).getColor())).isEqualTo("7F7F7F");
+        }
+    }
+
+    @Test
+    void anInvisibleRuleKeepsItsPlaceAndDrawsNothing() throws Exception {
+        try (XWPFDocument document = export(page -> page
+                .addLine(l -> l.horizontal(100).stroke(DocumentStroke.of(DocumentColor.rgba(0, 0, 0, 0), 1)))
+                .addParagraph(p -> p.text("After")))) {
+            CTPPr rule = document.getParagraphs().get(0).getCTP().getPPr();
+
+            assertThat(rule.isSetPBdr()).isFalse();
+            assertThat(rule.getSpacing().isSetLine()).isTrue();
+        }
+    }
+
+    @Test
+    void aStrokeThickerThanItsBoxTakesItsExtraFromTheSpaceBelow() throws Exception {
+        // horizontal() sizes the box from the stroke set before it: a 1pt box, a 3pt stroke. On
+        // the page the stroke spills out of the box; in Word it takes room, so the room comes
+        // off the 10pt margin below.
+        try (XWPFDocument document = export(page -> page
+                .addLine(l -> l.horizontal(100).stroke(DocumentStroke.of(ACCENT, 3)).margin(DocumentInsets.bottom(10)))
+                .addParagraph(p -> p.text("After")))) {
+            CTPPr after = document.getParagraphs().get(1).getCTP().getPPr();
+
+            // Box 1pt; Word takes 0.1 + 3: 2.1pt comes off the 10pt.
+            assertThat(DocxTwips.of(after.getSpacing().getBefore())).isEqualTo(158L);
+        }
+    }
+
+    @Test
+    void aRuleInAPaddedSectionStartsAndEndsInsideIt() throws Exception {
+        try (XWPFDocument document = export(page -> page.addSection("Plain", s -> s
+                .padding(DocumentInsets.of(20))
+                .addLine(l -> l.horizontal(100).stroke(DocumentStroke.of(ACCENT, 1)).fill())))) {
+            CTPPr properties = document.getParagraphs().get(0).getCTP().getPPr();
+
+            assertThat(DocxTwips.of(properties.getInd().getLeft())).isEqualTo(20 * 20L);
+            assertThat(DocxTwips.of(properties.getInd().getRight())).isEqualTo(20 * 20L);
+        }
+    }
+
+    @Test
+    void aSolidPaintedBarIsARuleToo() throws Exception {
+        try (XWPFDocument document = export(page -> page
+                .addShape(s -> s.size(100, 2).fill(com.demcha.compose.document.style.DocumentPaint.solid(ACCENT))))) {
+            assertThat(hex(bottomOf(document, 0).getColor())).isEqualTo("1A5694");
+        }
+    }
+
+    @Test
+    void aLinkOnARuleIsReportedAsNotCarried() throws Exception {
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        XWPFDocument document = withReport(report, page -> page
+                .addParagraph(p -> p.text("Top").anchor("top"))
+                .addLine(l -> l.horizontal(100).stroke(DocumentStroke.of(ACCENT, 1)).linkTo("top")));
+        try (document) {
+            assertThat(report.get().bySubject()).containsKey("rule link");
+        }
+    }
+
+    @Test
     void theStrokeIsPlacedFromTheTopOfTheBoxAsThePageMeasuresItFromTheBottom() {
         var node = new com.demcha.compose.document.dsl.LineBuilder()
                 .size(100, 10).from(0, 8).to(100, 8)

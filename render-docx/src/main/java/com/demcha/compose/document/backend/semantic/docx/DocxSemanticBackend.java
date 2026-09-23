@@ -184,6 +184,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // is drawn white by the engine, and inside a filled panel has to say so rather than let the
     // panel's colour through.
     private DocumentColor surfaceBehind;
+    // How many overlays — layer stacks, canvases, shape containers — the node being written sits in.
+    private int overlayDepth;
     // How far the containers being written hold their content in from each side, in points:
     // every enclosing margin and padding, counted from the page margin or the cell's edge.
     private double insetLeft;
@@ -458,6 +460,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         containerRadiusWarned.set(false);
         warnedNodeKinds.clear();
         surfaceBehind = null;
+        overlayDepth = 0;
         insetLeft = 0;
         insetRight = 0;
         listNumbering.clear();
@@ -963,7 +966,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeNode(XWPFDocument document, DocumentNode node) throws Exception {
         boolean keepTogether = node.keepTogether() && layout.onOnePage(node);
         boolean keepWithNext = node.keepWithNext() && layout.onOnePage(node);
-        String anchor = blockAnchorOf(node);
+        String anchor = blockAnchorOf(node, overlayDepth == 0);
         if (!keepTogether && !keepWithNext && anchor == null) {
             writeNodeContent(document, node);
             return;
@@ -999,7 +1002,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * image — had none, so an internal link to it went nowhere and a page reference to it
      * had nothing to count.</p>
      */
-    private static String blockAnchorOf(DocumentNode node) {
+    private static String blockAnchorOf(DocumentNode node, boolean inFlow) {
         if (node instanceof SectionNode section) {
             return section.anchor();
         }
@@ -1016,10 +1019,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return barcode.anchor();
         }
         // Only a drawing that reaches Word as a rule has a paragraph to hold its bookmark.
-        if (node instanceof com.demcha.compose.document.node.LineNode line && DocxRules.of(line) != null) {
+        if (inFlow && node instanceof com.demcha.compose.document.node.LineNode line && DocxRules.of(line) != null) {
             return line.anchor();
         }
-        if (node instanceof com.demcha.compose.document.node.ShapeNode shape && DocxRules.of(shape) != null) {
+        if (inFlow && node instanceof com.demcha.compose.document.node.ShapeNode shape && DocxRules.of(shape) != null) {
             return shape.anchor();
         }
         return null;
@@ -1160,6 +1163,39 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNodeContent(XWPFDocument document, DocumentNode node) throws Exception {
+        boolean overlay = isOverlay(node);
+        if (overlay) {
+            overlayDepth++;
+        }
+        try {
+            dispatchNode(document, node);
+        } finally {
+            if (overlay) {
+                overlayDepth--;
+            }
+        }
+    }
+
+    /**
+     * Whether a node lays its children over one another rather than one after another.
+     *
+     * <p>Its children are still written, in order, for the text in them; but a drawn rule
+     * among them is part of a picture — a skill meter's track and the fill laid over it — and
+     * written as rules in the flow they came out as two bars one under the other.</p>
+     */
+    private static boolean isOverlay(DocumentNode node) {
+        return node instanceof com.demcha.compose.document.node.LayerStackNode
+               || node instanceof com.demcha.compose.document.node.CanvasLayerNode
+               || node instanceof ShapeContainerNode;
+    }
+
+    /** The rule a node is in the flow, or {@code null} — over something else it is not one. */
+    private DocxRules.Rule ruleOf(DocumentNode node) {
+        return overlayDepth == 0 ? DocxRules.of(node) : null;
+    }
+
+    private void dispatchNode(XWPFDocument document, DocumentNode node) throws Exception {
+        DocxRules.Rule rule = ruleOf(node);
         if (node instanceof ParagraphNode paragraph) {
             writeParagraph(document, paragraph);
         } else if (node instanceof com.demcha.compose.document.node.PageReferenceNode reference) {
@@ -1168,8 +1204,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeImage(document, image);
         } else if (node instanceof com.demcha.compose.document.node.BarcodeNode barcode) {
             writeBarcode(document, barcode);
-        } else if (DocxRules.of(node) != null) {
-            writeRule(document, node, DocxRules.of(node));
+        } else if (rule != null) {
+            writeRule(document, node, rule);
         } else if (node instanceof TableNode table) {
             writeTableWithItsOwnSpacing(document, table);
         } else if (node instanceof SpacerNode spacer) {
@@ -2090,14 +2126,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static java.util.Set<String> bookmarkedAnchorsIn(DocumentGraph graph) {
         java.util.Set<String> anchors = new java.util.HashSet<>();
-        java.util.ArrayDeque<DocumentNode> pending = new java.util.ArrayDeque<>(graph.roots());
+        // Each node with whether it lies in an overlay, which decides whether a rule is written.
+        java.util.ArrayDeque<java.util.Map.Entry<DocumentNode, Boolean>> pending = new java.util.ArrayDeque<>();
+        for (DocumentNode root : graph.roots()) {
+            pending.push(java.util.Map.entry(root, false));
+        }
         while (!pending.isEmpty()) {
-            DocumentNode node = pending.pop();
-            String anchor = node instanceof ParagraphNode paragraph ? paragraph.anchor() : blockAnchorOf(node);
+            java.util.Map.Entry<DocumentNode, Boolean> next = pending.pop();
+            DocumentNode node = next.getKey();
+            boolean overlaid = next.getValue();
+            String anchor = node instanceof ParagraphNode paragraph ? paragraph.anchor() : blockAnchorOf(node, !overlaid);
             if (anchor != null && !anchor.isBlank()) {
                 anchors.add(anchor.trim());
             }
-            pending.addAll(node.children());
+            boolean childrenOverlaid = overlaid || isOverlay(node);
+            for (DocumentNode child : node.children()) {
+                pending.push(java.util.Map.entry(child, childrenOverlaid));
+            }
         }
         return anchors;
     }
@@ -2985,32 +3030,55 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double boxWidth = placed.isPresent()
                 ? placed.getAsDouble() - node.padding().horizontal()
                 : rule.fillsWidth() ? availableWidth() - sideLeft - sideRight : rule.boxWidth();
-        double from = Math.max(0, rule.startX());
         double to = rule.fillsWidth() ? boxWidth : Math.min(rule.endX(), boxWidth);
+        double from = Math.min(Math.max(0, rule.startX()), Math.max(0, to));
 
         XWPFParagraph para = newBodyParagraph(document);
         applyVerticalSpacing(para, node);
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
         indent.setLeft(BigInteger.valueOf(toTwips(insetLeft + sideLeft + from)));
-        double available = availableWidth();
-        if (Double.isFinite(available) && available < Double.MAX_VALUE / 2) {
-            double rightGap = available - sideLeft - to;
+        // The right end is placed against the width the rule is written in, when that width is
+        // known: a cell whose grid this export did not write has none, and measuring against the
+        // page there put the rule's end past the cell's.
+        boolean widthKnown = currentCell != null ? Double.isFinite(currentCellWidth) : contentWidth < Double.MAX_VALUE;
+        if (widthKnown) {
+            double rightGap = availableWidth() - sideLeft - to;
             indent.setRight(BigInteger.valueOf(toTwips(insetRight + Math.max(0, rightGap))));
         }
 
+        // Word stacks the paragraph's line, then the border, then the space after; the page
+        // draws the stroke across its box. A stroke thicker than its box — horizontal() sizes
+        // the box from the stroke set before it, so a 2pt stroke set after sits in a 1pt box —
+        // spills out of it on the page and takes no room, so the room it takes in Word comes
+        // off the space owed below, where there is any.
         double above = Math.max(0, rule.centreFromTop() - rule.thickness() / 2);
         double below = Math.max(0, rule.boxHeight() - rule.centreFromTop() - rule.thickness() / 2);
+        double line = Math.max(SEPARATOR_POINTS, above);
         CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
         spacing.setLineRule(STLineSpacingRule.EXACT);
-        spacing.setLine(BigInteger.valueOf(Math.max(Math.round(SEPARATOR_POINTS * POINT_TO_TWIP), toTwips(above))));
+        spacing.setLine(BigInteger.valueOf(Math.round(line * POINT_TO_TWIP)));
         owePendingSpacingAfter(below);
+        double excess = line + rule.thickness() + below - rule.boxHeight();
+        if (excess > 0) {
+            pendingSpacingAfter = Math.max(0, pendingSpacingAfter - excess);
+        }
 
-        CTPBdr borders = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
-        CTBorder bottom = borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom();
-        paintEdge(bottom, dashOf(rule), BigInteger.valueOf(ruleEighths(rule.thickness())),
-                toHexColor(rule.colour().color()));
-        bottom.setSpace(BigInteger.ZERO);
+        // A border is opaque, so a translucent rule is flattened against what lies under it, as a
+        // chip is; one that is not drawn at all keeps its place and draws nothing.
+        java.awt.Color colour = rule.colour().color();
+        if (colour.getAlpha() > 0) {
+            CTPBdr borders = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
+            CTBorder bottom = borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom();
+            java.awt.Color under = surfaceBehind != null ? surfaceBehind.color() : java.awt.Color.WHITE;
+            paintEdge(bottom, dashOf(rule), BigInteger.valueOf(ruleEighths(rule.thickness())),
+                    toHexColor(flatten(colour, under)));
+            bottom.setSpace(BigInteger.ZERO);
+        }
+        if (node instanceof com.demcha.compose.document.node.LineNode lineNode && lineNode.linkTarget() != null) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "rule link", layout.pathOf(node),
+                    "the rule is written as a paragraph border, which carries no link");
+        }
         if (rule.dashed() != null) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "dash pattern", layout.pathOf(node),
                     "drawn in Word's own dash for a border, which keeps the rule dashed but not "

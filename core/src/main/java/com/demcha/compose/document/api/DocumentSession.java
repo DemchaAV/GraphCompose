@@ -1413,6 +1413,20 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * Captures this session as one section of a multi-section semantic export: its graph
+     * and the context it would be exported with on its own, the resolved layout included
+     * when the backend asks for one. Package-private — used only by
+     * {@link MultiSectionDocument}.
+     *
+     * @param backend the backend the section is being exported through
+     * @return this session as a semantic section
+     */
+    com.demcha.compose.document.backend.semantic.SemanticSection toSemanticSection(
+            SemanticBackend<?> backend) {
+        return renderingFacade.semanticSection(backend, null);
+    }
+
+    /**
      * Inner adapter exposing session-private state to {@link DocumentRenderingFacade}
      * without making the corresponding session methods public.
      */

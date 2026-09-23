@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 9,
-    "methods": 27,
+    "methods": 28,
     "constants": 0,
-    "generated": 27
+    "generated": 28
   },
   "packages": [
     {
@@ -393,6 +393,21 @@
                   "name": null
                 }
               ]
+            },
+            {
+              "kind": "method",
+              "name": "exportSections",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "R",
+              "params": [
+                {
+                  "type": "List<SemanticSection>",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
             }
           ]
         }

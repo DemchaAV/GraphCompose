@@ -23,7 +23,7 @@
   ],
   "counts": {
     "types": 237,
-    "methods": 2128,
+    "methods": 2132,
     "constants": 236,
     "generated": 1129
   },
@@ -1453,6 +1453,61 @@
                   "name": "outputFile"
                 }
               ]
+            },
+            {
+              "kind": "method",
+              "name": "export",
+              "static": false,
+              "origin": "source",
+              "typeParameters": "<R>",
+              "returns": "R",
+              "params": [
+                {
+                  "type": "SemanticBackend<R>",
+                  "name": "backend"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "toDocxBytes",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "writeDocx",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "OutputStream",
+                  "name": "output"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "buildDocx",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "Path",
+                  "name": "outputFile"
+                }
+              ],
+              "stability": "beta"
             },
             {
               "kind": "method",

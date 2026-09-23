@@ -82,6 +82,33 @@ Page geometry (size, margins and orientation — a page wider than it is tall is
 landscape) and session metadata (title, author, subject, keywords) carry into the Word
 document as well.
 
+## Several sections in one document
+
+A `MultiSectionDocument` — a cover in one page size, a body in another — exports to Word
+the way it renders to PDF, one section of the file per session:
+
+```java
+try (MultiSectionDocument document = GraphCompose.documents()
+        .section(cover)
+        .section(body)
+        .create()) {
+    document.buildDocx(Path.of("out/report.docx"));
+}
+```
+
+Each section keeps its own page size, orientation, margins, header and footer. Where Word
+would behave differently left to itself, the export tells it what the PDF does:
+
+- page numbers start again at 1 in every section, and a zone's `pageTotal()` is the
+  section's page count (`SECTIONPAGES`), not the document's;
+- a section with no header or footer of its own gets an empty one, since Word would
+  otherwise repeat the previous section's;
+- the metadata is the first section's that states any.
+
+Styles, fonts and bookmark names are shared across the document, so a link in the cover
+reaches an anchor in the body. `export(backend)` takes any semantic backend; one that
+cannot combine sections refuses more than one.
+
 ## Finding out what the export could not carry
 
 The export says what it drops — but it says it to the log, which a service generating

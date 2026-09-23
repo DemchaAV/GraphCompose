@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 77,
-    "methods": 402,
+    "types": 78,
+    "methods": 407,
     "constants": 21,
-    "generated": 205
+    "generated": 209
   },
   "packages": [
     {
@@ -6231,6 +6231,57 @@
               "params": []
             }
           ]
+        },
+        {
+          "name": "SemanticSection",
+          "binaryName": "com.demcha.compose.document.backend.semantic.SemanticSection",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "SemanticSection",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "DocumentGraph",
+                  "name": null
+                },
+                {
+                  "type": "SemanticExportContext",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "graph",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentGraph",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "context",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "SemanticExportContext",
+              "params": [],
+              "stability": "beta"
+            }
+          ]
         }
       ]
     },
@@ -6528,6 +6579,34 @@
                 {
                   "type": "SemanticExportContext",
                   "name": "context"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "exportSections",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": [
+                {
+                  "type": "List<SemanticSection>",
+                  "name": "sections"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "exportSections",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Object",
+              "params": [
+                {
+                  "type": "List",
+                  "name": null
                 }
               ]
             },

@@ -34,9 +34,10 @@ Backends:
 
 Reading the DOCX column: a row is `n/a` only when the capability is
 declared on the fixed-layout SPI and can never reach a semantic backend —
-`SemanticBackend` carries just `name()` and `export(DocumentGraph,
-SemanticExportContext)`, so `renderSections`, `renderToImages` and the
-raster-slide builder option are not questions it can be asked. Drawing
+`SemanticBackend` carries `name()`, `export(DocumentGraph,
+SemanticExportContext)` and `exportSections(List<SemanticSection>)`, so
+`renderToImages` and the raster-slide builder option are not questions it
+can be asked. Drawing
 nodes are a different case: `ShapeNode`, `LineNode`, `EllipseNode`,
 `PolygonNode`, `PathNode` and `BarcodeNode` all reach
 `DocxSemanticBackend.writeNode` and are dropped there with a logged
@@ -117,7 +118,7 @@ honour an option ignores it (documented contract).
 | Render to bytes / stream / file (`FixedLayoutRenderer`) | ✅ `PdfFixedLayoutBackend` | ✅ `PptxFixedLayoutBackend` | ✅ `DocxSemanticBackend` (`SemanticBackend<byte[]>`) |
 | Render to images (`renderToImages`) | ✅ PDFBox `PDFRenderer` | ❌ (throws with a pointer to the PDF backend — POI's slide rasterizer cannot honour embedded fonts, and the PDF raster of the same graph is the canonical image output) | n/a (a `FixedLayoutRenderer` surface; the semantic SPI has no raster output) |
 | Raster-slide mode — every page as one full-slide picture, pixel-exact to the PDF/PNG output (`Builder.rasterSlides(dpi)`) | n/a (the PDF raster is the source) | ✅ `PptxFixedLayoutBackend` | n/a (a fixed-layout backend builder option) |
-| Multi-section documents (`renderSections`, per-section chrome, cross-section links) | ✅ `buildSectionsDocument` in `PdfFixedLayoutBackend` | ⚠️ `renderSections` in `PptxFixedLayoutBackend` (a deck carries one slide size, so every section must share the same page canvas — differing sizes throw) | n/a (`renderSections` is declared on `FixedLayoutRenderer`; `MultiSectionDocument` drives fixed-layout backends only) |
+| Multi-section documents (`renderSections`, per-section chrome, cross-section links) | ✅ `buildSectionsDocument` in `PdfFixedLayoutBackend` | ⚠️ `renderSections` in `PptxFixedLayoutBackend` (a deck carries one slide size, so every section must share the same page canvas — differing sizes throw) | ✅ `DocxSemanticBackend.exportSections`, reached through `MultiSectionDocument.export` / `toDocxBytes` — a Word section per section, each with its own page size, orientation, margins, header and footer. Page numbers restart at 1 in every section and a zone's total is `SECTIONPAGES`, as the PDF counts; a section with no zone of its own gets an empty header or footer rather than Word's inherited one; styles, fonts and bookmark names are shared, so links cross sections |
 | Deterministic output (render twice → identical bytes) | ✅ `PdfDeterminismWriter` | ✅ `PptxDeterminismWriter` (pinned OPC created/modified + zip entry-time normalization) | ❌ |
 | ServiceLoader discovery (`FixedLayoutBackendProvider`) | ✅ `PdfFixedLayoutBackendProvider` (`format() == "pdf"`) | ✅ `PptxFixedLayoutBackendProvider` (`format() == "pptx"`) | n/a (semantic SPI: `SemanticBackend`) |
 | `DocumentSession` convenience methods | ✅ `buildPdf` / `writePdf` / `toPdfBytes` / `toImages` | ✅ `buildPptx` / `writePptx` / `toPptxBytes` (resolved via `BackendProviders.fixedLayout("pptx")`; session chrome applies; fails with `MissingBackendException` naming `graph-compose-render-pptx` when the backend is absent) | ✅ `session.export(new DocxSemanticBackend(...), target)` — the semantic backend is named directly rather than discovered |

@@ -86,6 +86,17 @@ matrix.
 > *was* written is not in it yet, and adding that will move the shape. The no-argument
 > constructor and the log are unaffected.
 >
+> **Multi-section semantic export** is Experimental in 2.5.0: the `SemanticSection`
+> record, `SemanticBackend.exportSections`, and on `MultiSectionDocument` the
+> `export(SemanticBackend)` method with the DOCX convenience methods `toDocxBytes`,
+> `writeDocx` and `buildDocx`. They are the semantic counterpart of the fixed-layout
+> `renderSections`: each section is handed over as its own graph and context, and a
+> backend that can write a sectioned document — DOCX writes a Word section per section —
+> overrides `exportSections`, while the default exports a single section and refuses
+> several. It is marked Experimental because it takes the same shape the single-document
+> seam may still narrow, and a section can only carry what a `SemanticExportContext`
+> carries. `MultiSectionDocument`'s PDF methods are unaffected.
+>
 > The **DOCX backend builder** is Experimental in 2.5.0: `DocxSemanticBackend.builder()`
 > and `DocxSemanticBackend.Builder` — `reportSink`, and `deterministic` in both overloads,
 > which pins the package's created / modified dates and every zip entry's time so a

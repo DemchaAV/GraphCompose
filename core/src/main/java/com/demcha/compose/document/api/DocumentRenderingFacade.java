@@ -6,6 +6,7 @@ import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
 import com.demcha.compose.document.backend.semantic.SemanticBackendProviders;
 import com.demcha.compose.document.backend.semantic.SemanticExportContext;
+import com.demcha.compose.document.backend.semantic.SemanticSection;
 import com.demcha.compose.document.layout.DocumentGraph;
 import com.demcha.compose.document.layout.LayoutCanvas;
 import com.demcha.compose.document.layout.LayoutGraph;
@@ -90,6 +91,15 @@ final class DocumentRenderingFacade {
     }
 
     <R> R export(SemanticBackend<R> backend, Path outputFile) throws Exception {
+        SemanticSection section = semanticSection(backend, outputFile);
+        return backend.export(section.graph(), section.context());
+    }
+
+    /**
+     * What a semantic backend is handed for this session: its graph and the context to export
+     * it with — on its own, or as one section of a multi-section document.
+     */
+    SemanticSection semanticSection(SemanticBackend<?> backend, Path outputFile) {
         context.ensureOpen();
         Objects.requireNonNull(backend, "backend");
         // Compiled only for a backend that asked: compiling runs measurement and
@@ -99,7 +109,7 @@ final class DocumentRenderingFacade {
         // The graph, the canvas and the layout all come off the same session state, so a
         // backend given both is given a layout compiled from the graph beside it.
         LayoutGraph resolvedLayout = backend.requiresResolvedLayout() ? compiledLayout(backend) : null;
-        return backend.export(context.documentGraph(),
+        return new SemanticSection(context.documentGraph(),
                 new SemanticExportContext(
                         context.canvas(),
                         context.customFontFamilies(),

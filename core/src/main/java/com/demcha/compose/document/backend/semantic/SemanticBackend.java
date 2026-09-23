@@ -53,6 +53,43 @@ public interface SemanticBackend<R> {
      * @throws Exception if export fails
      */
     R export(DocumentGraph graph, SemanticExportContext context) throws Exception;
+
+    /**
+     * Exports several sections into one document, each keeping its own page size, margins
+     * and chrome — the semantic counterpart of a fixed-layout backend's
+     * {@code renderSections}, and what a
+     * {@link com.demcha.compose.document.api.MultiSectionDocument} calls.
+     *
+     * <p>A backend that can write a sectioned document overrides this. The default exports a
+     * single section the way {@link #export} would, and refuses more than one: joining the
+     * sections by simply concatenating their contents would give the whole document the
+     * first section's page, which is the one thing a multi-section document exists to
+     * avoid.</p>
+     *
+     * @param sections the sections in document order; never empty
+     * @return backend-specific export result for the whole document
+     * @throws NullPointerException          if {@code sections} is null
+     * @throws IllegalArgumentException      if {@code sections} is empty
+     * @throws UnsupportedOperationException if this backend cannot combine sections and more
+     *                                       than one was given
+     * @throws Exception                     if export fails
+     * @since 2.5.0
+     */
+    @com.demcha.compose.document.api.Beta
+    default R exportSections(java.util.List<SemanticSection> sections) throws Exception {
+        java.util.Objects.requireNonNull(sections, "sections");
+        if (sections.isEmpty()) {
+            throw new IllegalArgumentException("A document needs at least one section to export.");
+        }
+        if (sections.size() == 1) {
+            SemanticSection only = sections.get(0);
+            return export(only.graph(), only.context());
+        }
+        throw new UnsupportedOperationException(
+                "Backend '" + name() + "' exports one document at a time and cannot combine "
+                + sections.size() + " sections into one. Export each section on its own, or use a "
+                + "backend that overrides exportSections.");
+    }
 }
 
 

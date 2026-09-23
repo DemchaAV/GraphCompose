@@ -2,6 +2,7 @@ package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
 import com.demcha.compose.document.backend.semantic.SemanticExportContext;
+import com.demcha.compose.document.backend.semantic.SemanticSection;
 import com.demcha.compose.document.chart.ChartData;
 import com.demcha.compose.document.chart.NumberFormatSpec;
 import com.demcha.compose.document.dsl.TableBuilder;
@@ -103,6 +104,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblWidth;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcBorders;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBody;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcMar;
@@ -199,6 +201,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** The page's height in points, or {@code NaN} when the export has no canvas. */
     private double canvasHeight = Double.NaN;
+
+    /** Whether this export writes more than one section — see {@link #exportSections}. */
+    private boolean sectioned;
 
     /** The gap the list being written puts between its items. */
     private double pendingItemSpacing;
@@ -394,6 +399,48 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     @Override
     public byte[] export(DocumentGraph graph, SemanticExportContext context) throws Exception {
+        return write(List.of(new SemanticSection(graph, context)), context.outputFile());
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Each section becomes a Word section: its page size, orientation and margins, and its
+     * own header and footer. Word ends a section at the paragraph that carries its section
+     * properties, so every section but the last hands its properties to its last paragraph —
+     * or to an empty one when it ends in a table — and the last keeps the document's.</p>
+     *
+     * <p>Three things follow what a multi-section PDF does, where Word would do otherwise
+     * left alone:</p>
+     * <ul>
+     *   <li>page numbers start again at 1 in every section, and a zone's page total is the
+     *       section's ({@code SECTIONPAGES}) rather than the document's;</li>
+     *   <li>a section with no header or footer of its own gets an empty one, because Word
+     *       would otherwise repeat the previous section's;</li>
+     *   <li>metadata is taken from the first section that declares it.</li>
+     * </ul>
+     *
+     * <p>Everything that belongs to the document rather than to a page is shared: one
+     * styles part, whose Normal is the text style the whole document is mostly written in,
+     * one font table holding every section's families (the first definition of a family
+     * wins, as it does in the PDF), and one set of bookmark names, so a link in one section
+     * reaches an anchor in another.</p>
+     */
+    @Override
+    public byte[] exportSections(List<SemanticSection> sections) throws Exception {
+        java.util.Objects.requireNonNull(sections, "sections");
+        if (sections.isEmpty()) {
+            throw new IllegalArgumentException("A document needs at least one section to export.");
+        }
+        return write(sections, null);
+    }
+
+    private byte[] write(List<SemanticSection> sections, Path outputFile) throws Exception {
+        sectioned = sections.size() > 1;
+        DocumentGraph whole = sectioned ? wholeDocument(sections) : sections.get(0).graph();
+        java.util.Collection<FontFamilyDefinition> fonts = sectioned
+                ? fontsOf(sections)
+                : sections.get(0).context().customFontFamilies();
         shapeContainerWarned.set(false);
         chartWarned.set(false);
         containerRadiusWarned.set(false);
@@ -402,37 +449,47 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         listNumbering.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
-        headingLevels = headingLevelsIn(graph);
-        wordFamilies = DocxFontTable.familiesByName(context.customFontFamilies());
-        documentDefaultStyle = dominantTextStyle(graph);
-        layout = DocxLayoutMetrics.of(graph, context.layoutGraph());
-        if (layout.isEmpty()) {
-            // Said once, for the whole export: without measurements the line height is
-            // Word's and so is every auto column, and a caller comparing this file against
-            // the rendered page deserves to know that before they look.
-            report.add(DocxExportReport.Severity.APPROXIMATED, "measured geometry", null,
-                    "this document could not be laid out, so line heights and auto column "
-                    + "widths are the editor's rather than the engine's");
-        }
-        carriedSpacingBefore = 0;
-        pendingSpacingAfter = 0;
-        pendingItemSpacing = 0;
-        anItemWasWritten = false;
-        lastBodyParagraph = null;
+        headingLevels = headingLevelsIn(whole);
+        wordFamilies = DocxFontTable.familiesByName(fonts);
+        documentDefaultStyle = dominantTextStyle(whole);
         currentCell = null;
         currentCellWidth = Double.NaN;
-        contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
-        canvasHeight = context.canvas() == null ? Double.NaN : context.canvas().height();
+        boolean anEarlierHeader = false;
+        boolean anEarlierFooter = false;
         try (XWPFDocument document = new XWPFDocument()) {
-            applyPageGeometry(document, context.canvas());
-            writeStylesPart(document);
-            DocxFontTable.write(document, graph, context.customFontFamilies(), report);
-            applyOutputOptions(document, context.outputOptions());
-            for (DocumentNode root : graph.roots()) {
-                writeNode(document, root);
+            for (int index = 0; index < sections.size(); index++) {
+                SemanticSection section = sections.get(index);
+                SemanticExportContext context = section.context();
+                if (index > 0) {
+                    endSection(document);
+                }
+                beginSection(section, index);
+                applyPageGeometry(document, context.canvas());
+                if (index == 0) {
+                    writeStylesPart(document);
+                    DocxFontTable.write(document, whole, fonts, report);
+                    applyMetadata(document, metadataOf(sections));
+                }
+                java.util.Set<DocumentHeaderFooterZone> written =
+                        applyPageZones(document, context.outputOptions().zones());
+                boolean header = written.contains(DocumentHeaderFooterZone.HEADER);
+                boolean footer = written.contains(DocumentHeaderFooterZone.FOOTER);
+                // Word repeats the previous section's header and footer in a section that has
+                // none of its own; the page this section draws has none, so it says so.
+                if (!header && anEarlierHeader) {
+                    blankZone(document, true);
+                }
+                if (!footer && anEarlierFooter) {
+                    blankZone(document, false);
+                }
+                anEarlierHeader |= header;
+                anEarlierFooter |= footer;
+                for (DocumentNode root : section.graph().roots()) {
+                    writeNode(document, root);
+                }
+                // Nothing follows the last root to carry what it holds below itself.
+                flushSpacingAfter();
             }
-            // Nothing follows the last root to carry what it holds below itself.
-            flushSpacingAfter();
             if (deterministicTimestamp != null) {
                 DocxDeterminism.pinCoreProperties(document, deterministicTimestamp);
             }
@@ -441,8 +498,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 byte[] bytes = deterministicTimestamp == null
                         ? output.toByteArray()
                         : DocxDeterminism.normalizeZipEntries(output.toByteArray(), deterministicTimestamp);
-                if (context.outputFile() != null) {
-                    Files.write(context.outputFile(), bytes);
+                if (outputFile != null) {
+                    Files.write(outputFile, bytes);
                 }
                 // Handed over once the bytes exist, so a caller is never told what an
                 // export lost by an export that did not finish.
@@ -454,11 +511,137 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
-    private void applyOutputOptions(XWPFDocument document, DocumentOutputOptions options) {
-        if (options == null) {
-            return;
+    /**
+     * Resets what a section starts from: its own measurements, page width and height, and no
+     * spacing carried in from the section before it.
+     */
+    private void beginSection(SemanticSection section, int index) {
+        SemanticExportContext context = section.context();
+        layout = DocxLayoutMetrics.of(section.graph(), context.layoutGraph());
+        if (layout.isEmpty()) {
+            // Said once per section, naming it when there are several: without measurements
+            // the line height is Word's and so is every auto column, and a caller comparing
+            // this file against the rendered page deserves to know that before they look.
+            report.add(DocxExportReport.Severity.APPROXIMATED, "measured geometry",
+                    sectioned ? "section " + (index + 1) : null,
+                    (sectioned ? "this section" : "this document")
+                    + " could not be laid out, so line heights and auto column "
+                    + "widths are the editor's rather than the engine's");
         }
-        DocumentMetadata metadata = options.metadata();
+        carriedSpacingBefore = 0;
+        pendingSpacingAfter = 0;
+        pendingItemSpacing = 0;
+        anItemWasWritten = false;
+        lastBodyParagraph = null;
+        contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
+        canvasHeight = context.canvas() == null ? Double.NaN : context.canvas().height();
+    }
+
+    /**
+     * Ends the section written so far, so the next one starts with a page of its own.
+     *
+     * <p>Word keeps a section's properties on the last paragraph of that section, and the
+     * body's own properties belong to the last section alone. So the properties written for
+     * this section move onto its last paragraph and the body starts again empty.</p>
+     *
+     * <p>Two endings have no paragraph of their own to carry them, and get an added one:
+     * a section that ends in a table, since Word does not end a section on a table, and a
+     * section that wrote nothing into the body at all — an empty session, or one of shapes
+     * this export drops — whose last paragraph is still the one closing the section before
+     * it. Handing that paragraph these properties would overwrite the earlier section's,
+     * folding two sections into one. The added paragraph is one invisible point tall, so it
+     * cannot push a full page onto a page of its own.</p>
+     */
+    private void endSection(XWPFDocument document) {
+        CTBody body = document.getDocument().getBody();
+        CTSectPr finished = (CTSectPr) bodySectPr(document).copy();
+        List<IBodyElement> elements = document.getBodyElements();
+        XWPFParagraph carrier = !elements.isEmpty()
+                                && elements.get(elements.size() - 1) instanceof XWPFParagraph last
+                                && !(last.getCTP().isSetPPr() && last.getCTP().getPPr().isSetSectPr())
+                ? last
+                : collapsed(document.createParagraph());
+        CTPPr properties = carrier.getCTP().isSetPPr()
+                ? carrier.getCTP().getPPr()
+                : carrier.getCTP().addNewPPr();
+        properties.setSectPr(finished);
+        body.unsetSectPr();
+    }
+
+    /**
+     * An empty header or footer for a section that has none of its own, so Word does not
+     * repeat the previous section's there.
+     *
+     * <p>Its one paragraph is a point tall and sits against the page edge. Left at Normal's
+     * size and Word's default distance it would reach past a narrow margin, and Word would
+     * push the body down to make room for a header the page does not draw.</p>
+     */
+    private static void blankZone(XWPFDocument document, boolean header) {
+        CTSectPr sectPr = bodySectPr(document);
+        XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, sectPr);
+        XWPFHeaderFooter blank = header
+                ? policy.createHeader(XWPFHeaderFooterPolicy.DEFAULT)
+                : policy.createFooter(XWPFHeaderFooterPolicy.DEFAULT);
+        collapsed(blank.createParagraph());
+        if (sectPr.isSetPgMar()) {
+            if (header) {
+                sectPr.getPgMar().setHeader(BigInteger.ZERO);
+            } else {
+                sectPr.getPgMar().setFooter(BigInteger.ZERO);
+            }
+        }
+    }
+
+    /** Makes a paragraph that exists only for Word's structure take a single point. */
+    private static XWPFParagraph collapsed(XWPFParagraph paragraph) {
+        CTPPr properties = paragraph.getCTP().isSetPPr()
+                ? paragraph.getCTP().getPPr()
+                : paragraph.getCTP().addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        spacing.setBefore(BigInteger.ZERO);
+        spacing.setAfter(BigInteger.ZERO);
+        spacing.setLineRule(STLineSpacingRule.EXACT);
+        spacing.setLine(BigInteger.valueOf(Math.round(POINT_TO_TWIP)));
+        return paragraph;
+    }
+
+    private static CTSectPr bodySectPr(XWPFDocument document) {
+        CTBody body = document.getDocument().getBody();
+        return body.isSetSectPr() ? body.getSectPr() : body.addNewSectPr();
+    }
+
+    /** Every section's roots, in order: what the document as a whole is written in. */
+    private static DocumentGraph wholeDocument(List<SemanticSection> sections) {
+        List<DocumentNode> roots = new ArrayList<>();
+        for (SemanticSection section : sections) {
+            roots.addAll(section.graph().roots());
+        }
+        return new DocumentGraph(roots);
+    }
+
+    /** Every section's font families, the first definition of a family winning. */
+    private static List<FontFamilyDefinition> fontsOf(List<SemanticSection> sections) {
+        java.util.Map<FontName, FontFamilyDefinition> byName = new java.util.LinkedHashMap<>();
+        for (SemanticSection section : sections) {
+            for (FontFamilyDefinition family : section.context().customFontFamilies()) {
+                byName.putIfAbsent(family.name(), family);
+            }
+        }
+        return new ArrayList<>(byName.values());
+    }
+
+    /** The first section's metadata that states any, as a multi-section PDF takes it. */
+    private static DocumentMetadata metadataOf(List<SemanticSection> sections) {
+        for (SemanticSection section : sections) {
+            DocumentMetadata metadata = section.context().outputOptions().metadata();
+            if (metadata != null) {
+                return metadata;
+            }
+        }
+        return null;
+    }
+
+    private void applyMetadata(XWPFDocument document, DocumentMetadata metadata) {
         if (metadata != null) {
             org.apache.poi.ooxml.POIXMLProperties props = document.getProperties();
             if (metadata.getTitle() != null) {
@@ -474,12 +657,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 props.getCoreProperties().setKeywords(metadata.getKeywords());
             }
         }
-        applyPageZones(document, options.zones());
-
         // The text header/footer, watermark and protection are still ignored: the
         // three text slots and their placeholder tokens describe a painted band
         // rather than content Word can own. A page zone does describe content, so
-        // that is the one that maps.
+        // that is the one that maps — see applyPageZones.
     }
 
     /**
@@ -496,17 +677,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * tests a page, and no page exists here to test — Word owns pagination. The
      * zone is written on every page rather than silently skipped, content beating
      * absence, and the export says on the log what it could not honor.</p>
+     *
+     * @return the kinds of zone written, so a later section knows what it has to blank out
      */
-    private void applyPageZones(XWPFDocument document, List<DocumentPageZone> zones) {
+    private java.util.Set<DocumentHeaderFooterZone> applyPageZones(XWPFDocument document,
+                                                                  List<DocumentPageZone> zones) {
         // The page height the zones are measured against is the canvas's, which is what the
         // page geometry was written from — not a value parsed back out of the XML.
+        java.util.Set<DocumentHeaderFooterZone> written =
+                java.util.EnumSet.noneOf(DocumentHeaderFooterZone.class);
         if (zones == null || zones.isEmpty()) {
-            return;
+            return written;
         }
-        XWPFHeaderFooterPolicy policy = document.getHeaderFooterPolicy();
-        if (policy == null) {
-            policy = document.createHeaderFooterPolicy();
-        }
+        // Bound to the section being written, whose properties are the body's until it ends.
+        XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, bodySectPr(document));
         for (int index = 0; index < zones.size(); index++) {
             DocumentPageZone zone = zones.get(index);
             if (zone.getAppliesTo() != null) {
@@ -527,7 +711,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     : policy.createFooter(XWPFHeaderFooterPolicy.DEFAULT);
             writeZoneLine(target, content);
             placeZone(document, zone, index, header);
+            written.add(zone.getZone());
         }
+        return written;
     }
 
     /**
@@ -608,7 +794,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void appendPageField(XWPFParagraph para, PageFieldNode field) {
         CTSimpleField simple = para.getCTP().addNewFldSimple();
-        simple.setInstr(field.kind() == PageFieldKind.TOTAL ? " NUMPAGES " : " PAGE ");
+        // A multi-section document numbers each section from 1, so the total a zone states is
+        // its section's; in a document of one section the two are the same count.
+        String total = sectioned ? " SECTIONPAGES " : " NUMPAGES ";
+        simple.setInstr(field.kind() == PageFieldKind.TOTAL ? total : " PAGE ");
         // Word repaints the field on open; the placeholder run is what a reader
         // sees before that happens, and what a text extractor finds. It carries
         // the node's text style like any other run — Word keeps a field result's
@@ -616,7 +805,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // a styled page number back to the document default.
         XWPFRun run = new XWPFRun(simple.addNewR(), para);
         applyStyle(run, field.textStyle());
-        run.setText("1");
+        run.setText(fieldPlaceholder(field.kind()));
+    }
+
+    /**
+     * What a page field reads before an editor updates it.
+     *
+     * <p>A page number is written as 1: a header or footer is one definition for every page,
+     * so no single number is right. A total is one number, and the layout already counted
+     * it — the section's pages, which is what {@code SECTIONPAGES} and, in a document of one
+     * section, {@code NUMPAGES} will come to. Not every editor updates the field: measured in
+     * LibreOffice, a {@code SECTIONPAGES} total stays at the text written here, so a
+     * placeholder of 1 showed "page 2 of 1".</p>
+     */
+    private String fieldPlaceholder(PageFieldKind kind) {
+        if (kind == PageFieldKind.TOTAL && layout.pageCount() > 0) {
+            return Integer.toString(layout.pageCount());
+        }
+        return "1";
     }
 
     private void warnUnsupportedZoneNode(DocumentNode node) {
@@ -3451,12 +3657,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void applyPageGeometry(XWPFDocument document, LayoutCanvas canvas) {
+        if (sectioned) {
+            // Each section of a multi-section document counts its pages from 1, as the
+            // section's own footer does on the page; Word would otherwise carry the count on.
+            bodySectPr(document).addNewPgNumType().setStart(BigInteger.ONE);
+        }
         if (canvas == null) {
             return;
         }
-        CTSectPr sectPr = document.getDocument().getBody().isSetSectPr()
-                ? document.getDocument().getBody().getSectPr()
-                : document.getDocument().getBody().addNewSectPr();
+        CTSectPr sectPr = bodySectPr(document);
         CTPageSz pageSize = sectPr.isSetPgSz() ? sectPr.getPgSz() : sectPr.addNewPgSz();
         pageSize.setW(BigInteger.valueOf(toTwips(canvas.width())));
         pageSize.setH(BigInteger.valueOf(toTwips(canvas.height())));

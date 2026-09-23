@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A multi-section document exports to Word, a section per section.** `MultiSectionDocument`
+  rendered only to PDF: a cover in one page size and a body in another had no DOCX export at
+  all. It gains `toDocxBytes()`, `writeDocx(OutputStream)`, `buildDocx(Path)` and
+  `export(SemanticBackend)`, and the semantic SPI gains what they call —
+  `SemanticBackend.exportSections(List<SemanticSection>)` and the `SemanticSection` record
+  (all `@Beta`). The default refuses more than one section rather than running them together
+  on the first section's page. `DocxSemanticBackend` writes a Word section per section, with
+  its own page size, orientation, margins and page-zone header and footer (the text header /
+  footer slots and the watermark are not written, as for one document); page numbers restart at 1 and a
+  zone's total is the section's (`SECTIONPAGES`), as the PDF counts them; a section without a
+  zone gets an empty one instead of Word's inherited header or footer; styles, fonts and
+  bookmarks are shared, so a link in one section reaches an anchor in another. A page total
+  now reads the laid-out page count before an editor updates it — measured in LibreOffice,
+  which does not update `SECTIONPAGES`, the old placeholder of 1 read "page 2 of 1". One
+  section exports byte-identically to its session.
+
 - **A block kept together in the layout is kept together in Word.** `keepTogether()` moves a
   block to the next page whole, and `keepWithNext()` moves a block down with the first line
   of the one after it. The DOCX export said neither, and Word re-paginates on its own, so a

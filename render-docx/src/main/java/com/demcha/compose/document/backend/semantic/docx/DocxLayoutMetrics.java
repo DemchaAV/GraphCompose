@@ -44,11 +44,12 @@ final class DocxLayoutMetrics {
 
     /** What an export with no compiled layout uses: every question answers "unknown". */
     static final DocxLayoutMetrics EMPTY =
-            new DocxLayoutMetrics(new IdentityHashMap<>(), Map.of(), Map.of());
+            new DocxLayoutMetrics(new IdentityHashMap<>(), Map.of(), Map.of(), 0);
 
     private final Map<DocumentNode, String> paths;
     private final Map<String, List<PlacedFragment>> fragments;
     private final Map<String, PlacedNode> placed;
+    private final int pageCount;
     // A table's measured cells by name, filled on first use — see cellLineHeightsOf.
     private final Map<DocumentNode, Map<String, Double>> cellLineHeights = new IdentityHashMap<>();
     // The rows of a table the layout placed, by index, filled on first use — see placedRowsOf.
@@ -56,10 +57,12 @@ final class DocxLayoutMetrics {
 
     private DocxLayoutMetrics(Map<DocumentNode, String> paths,
                               Map<String, List<PlacedFragment>> fragments,
-                              Map<String, PlacedNode> placed) {
+                              Map<String, PlacedNode> placed,
+                              int pageCount) {
         this.paths = paths;
         this.fragments = fragments;
         this.placed = placed;
+        this.pageCount = pageCount;
     }
 
     /**
@@ -80,7 +83,7 @@ final class DocxLayoutMetrics {
         if (layout == null) {
             // No measurements, but the paths still name the nodes — which is what a
             // diagnostic note needs to say where in the document it came from.
-            return new DocxLayoutMetrics(paths, Map.of(), Map.of());
+            return new DocxLayoutMetrics(paths, Map.of(), Map.of(), 0);
         }
         Map<String, List<PlacedFragment>> fragments = new HashMap<>();
         for (PlacedFragment fragment : layout.fragments()) {
@@ -90,7 +93,16 @@ final class DocxLayoutMetrics {
         for (PlacedNode node : layout.nodes()) {
             placed.putIfAbsent(node.path(), node);
         }
-        return new DocxLayoutMetrics(paths, fragments, placed);
+        return new DocxLayoutMetrics(paths, fragments, placed, layout.totalPages());
+    }
+
+    /**
+     * How many pages the layout ran to.
+     *
+     * @return the page count, or 0 when there is no layout behind this index
+     */
+    int pageCount() {
+        return pageCount;
     }
 
     /**

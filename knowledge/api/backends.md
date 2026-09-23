@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.5.0-SNAPSHOT
 
-Types: 77 · methods: 402 · constants: 21 · compiler-generated members: 205
+Types: 78 · methods: 407 · constants: 21 · compiler-generated members: 209
 
 ## com.demcha.compose.document.backend.fixed
 
@@ -562,6 +562,11 @@ Types: 77 · methods: 402 · constants: 21 · compiler-generated members: 205
 - `int rootCount()`
 - `List<String> nodeKinds()`
 
+### SemanticSection (record)   [beta]
+- `new SemanticSection(DocumentGraph, SemanticExportContext)   [beta]`
+- `DocumentGraph graph()   [beta]`
+- `SemanticExportContext context()   [beta]`
+
 ## com.demcha.compose.document.backend.semantic.docx
 
 ### DocxBackendProvider (class)
@@ -594,6 +599,8 @@ Types: 77 · methods: 402 · constants: 21 · compiler-generated members: 205
 - `String name()`
 - `boolean requiresResolvedLayout()`
 - `byte[] export(DocumentGraph graph, SemanticExportContext context)`
+- `byte[] exportSections(List<SemanticSection> sections)`
+- `Object exportSections(List)`
 - `Object export(DocumentGraph graph, SemanticExportContext context)`
 
 ### DocxSemanticBackend.Builder (class)   [beta]

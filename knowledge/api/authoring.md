@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.5.0-SNAPSHOT
 
-Types: 237 · methods: 2128 · constants: 236 · compiler-generated members: 1129
+Types: 237 · methods: 2132 · constants: 236 · compiler-generated members: 1129
 
 ## com.demcha.compose
 
@@ -140,6 +140,10 @@ Types: 237 · methods: 2128 · constants: 236 · compiler-generated members: 112
 - `void writePdf(FixedLayoutRenderer backend, OutputStream output)`
 - `void buildPdf()`
 - `void buildPdf(Path outputFile)`
+- `<R> R export(SemanticBackend<R> backend)   [beta]`
+- `byte[] toDocxBytes()   [beta]`
+- `void writeDocx(OutputStream output)   [beta]`
+- `void buildDocx(Path outputFile)   [beta]`
 - `List<LayoutSnapshot> sectionSnapshots()`
 - `void close()`
 

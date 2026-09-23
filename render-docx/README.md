@@ -98,9 +98,10 @@ before you promise a `.docx` to a reader:
   — a chip's text is exported with its own styling, but not its background.
 - **Output is not byte-deterministic**: rendering twice does not produce identical files.
 
-Multi-section documents are a separate case: `renderSections` is declared on the
-fixed-layout SPI, and `SemanticBackend` carries only `name()` and `export(...)`, so a
-multi-section export runs through the PDF or PPTX backend rather than this one.
+Multi-section documents export through `MultiSectionDocument.toDocxBytes()`,
+`writeDocx(...)` and `buildDocx(...)` (Experimental): each section becomes a Word section
+with its own page size, orientation, margins and page-zone header and footer — see the
+[DOCX recipe](../docs/recipes/docx-export.md#several-sections-in-one-document).
 
 Per-capability detail, with the implementing class for every supported cell:
 [backend capability matrix](../docs/architecture/backend-capability-matrix.md).

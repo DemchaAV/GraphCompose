@@ -79,14 +79,28 @@ class DocxInlineBackgroundTest {
     @Test
     void aChipInsideAShadedCardIsFlattenedAgainstTheCard() throws Exception {
         // Flattening against the page would be flattening against something that is not
-        // under it: this export writes the card's fill as the paragraph's own shading, and
-        // Word paints the run's over that.
+        // under it: the card is a cell shaded with its fill, and Word paints the run's over it.
         try (XWPFDocument document = exported(page -> page
                 .addSection("Card", card -> card
                         .fillColor(SURFACE)
                         .addParagraph(p -> p.inlineText("Call ").inlineCode("render()"))))) {
 
             // 175/184/193 at 20% over 238/243/249 is 225/231/238.
+            assertThat(fillOf(runReading(document, "render()"))).isEqualTo("E1E7EE");
+        }
+    }
+
+    @Test
+    void aChipInARowInsideAShadedCardIsFlattenedAgainstTheCard() throws Exception {
+        // The row's cells carry no shading, so the cell the chip is in says nothing about
+        // what is under it: the card's fill shows through them.
+        try (XWPFDocument document = exported(page -> page
+                .addSection("Card", card -> card
+                        .fillColor(SURFACE)
+                        .addRow(r -> r
+                                .addParagraph(p -> p.inlineText("Call ").inlineCode("render()"))
+                                .addParagraph(p -> p.text("Beside")))))) {
+
             assertThat(fillOf(runReading(document, "render()"))).isEqualTo("E1E7EE");
         }
     }
@@ -282,14 +296,20 @@ class DocxInlineBackgroundTest {
     /** Body paragraphs and the ones inside table cells, which the body list leaves out. */
     private static List<XWPFParagraph> everyParagraph(XWPFDocument document) {
         List<XWPFParagraph> paragraphs = new ArrayList<>(document.getParagraphs());
-        for (XWPFTable table : document.getTables()) {
+        addTableParagraphs(document.getTables(), paragraphs);
+        return paragraphs;
+    }
+
+    /** A card is a table, and what it holds can be a table in its cell, so this descends. */
+    private static void addTableParagraphs(List<XWPFTable> tables, List<XWPFParagraph> into) {
+        for (XWPFTable table : tables) {
             for (XWPFTableRow row : table.getRows()) {
                 for (XWPFTableCell cell : row.getTableCells()) {
-                    paragraphs.addAll(cell.getParagraphs());
+                    into.addAll(cell.getParagraphs());
+                    addTableParagraphs(cell.getTables(), into);
                 }
             }
         }
-        return paragraphs;
     }
 
     private static XWPFDocument exported(Consumer<PageFlowBuilder> content) throws Exception {

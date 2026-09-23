@@ -69,12 +69,12 @@ creation date is real metadata.
 | Paragraphs | Word paragraphs with alignment, font, size, colour, bold/italic/underline; inline runs preserved |
 | Lists | Real Word lists: a `numbering.xml` definition per list, `w:numPr` on each item, and the authored marker as the level's text. Nesting is a list level, so Enter continues the list and Tab demotes an item. See "What a list becomes" below for the kinds that stay plain paragraphs |
 | Tables | Word tables, one cell per cell. Each cell states its own padding as `w:tcMar`, on all four sides, so a row is as tall as the page draws it, and a cell with no style of its own is set in the engine's default cell face rather than the document's Normal. A column sized to its content gets a point more than the page gives it, so the editor's font substitute cannot wrap its widest cell. The width is written when the document states one or every column is fixed; otherwise Word sizes the table — see "What falls back". A table breaks across pages where the layout breaks it: every row the layout placed is kept whole (`w:cantSplit`), `repeatHeader(n)` rows repeat on each page (`w:tblHeader`) and stay with the row under them. Two tables in a row — rows included, since a row is carried as a table — are kept apart by a paragraph a tenth of a point tall, holding the rest of the gap between them: an editor joins two tables with nothing between them into one |
-| Composed cells (`DocumentTableCell.node(...)`) | Written by the same writers that write that node anywhere else, so a cell built from an image, a list or a table carries it. A nested table is a real `w:tbl` followed by the paragraph Word requires a cell to end with, and takes the width of the column it sits in — the column's, not the one the page gives it, because the layout reports a composed cell's content under the owner's path |
+| Composed cells (`DocumentTableCell.node(...)`) | Written by the same writers that write that node anywhere else, so a cell built from an image, a list or a table carries it. A nested table is a real `w:tbl` followed by the paragraph Word requires a cell to end with — a hairline, which the paragraph written next in the cell takes over, so no empty line opens under the table — and takes the width of the column it sits in — the column's, not the one the page gives it, because the layout reports a composed cell's content under the owner's path |
 | Inline chips (`inlineCode(...)`, `inlineChip(...)`, `highlight(...)`) | The chip's fill becomes the run's own `w:shd`, in a paragraph and in a list item alike. Its shape does not travel — see "What a chip keeps and loses" below |
 | Images | Embedded pictures at the node's declared size |
 | Links and anchors | A `linkTarget` becomes a `w:hyperlink` — a relationship for an address, `w:anchor` for one of the document's own anchors — and a run's own link wins over the paragraph's — in a list item as much as in a paragraph. An `anchor(...)` becomes a bookmark wrapping that paragraph's text, named as Word requires; on a section, container, table or image it wraps everything the block wrote, from the start of its first paragraph to the end of its last, so a link to a block lands on its first line. A `bookmark(...)` outline level becomes Word's own `HeadingN` style, which is what puts the paragraph in the Navigation Pane, the outline view and a generated table of contents. The style states the outline level and nothing else, so the paragraph keeps its own formatting. The role comes from what the document declared, never from how big the text is |
 | Rows | A one-row table spanning the content width, so editors keep the side-by-side layout. The row's slots become the column grid when they are weights, an even split or fixed columns; the gap and the row's padding ride in the neighbouring column and come back out as that cell's margin (cell content limited to atomic children). The row is kept whole across a page break, as the layout keeps it |
-| Sections / containers | Children written in order; a fill, per-side borders or a uniform stroke travel to each paragraph inside as `w:shd` and `w:pBdr`, so a card keeps its panel — see "What a panel keeps and loses" below. A `keepTogether()` or `keepWithNext()` block the layout placed on one page stays on one page in Word too (`w:keepLines` + `w:keepNext`) |
+| Sections / containers | Children written in order. A container with a fill, per-side borders or a uniform stroke is a one-cell table carrying them, its padding as the cell's margins, so a card keeps its panel — see "What a panel keeps and loses" below. A `keepTogether()` or `keepWithNext()` block the layout placed on one page stays on one page in Word too (`w:keepLines` + `w:keepNext`, and a row that may not split for a panel) |
 | Spacers | Empty paragraphs carrying the vertical gap as spacing-after |
 | Page breaks | Explicit Word page breaks |
 
@@ -190,7 +190,7 @@ goes back to the paragraph above only where nothing below can hold it — before
 which has no space above it in Word, before a page break, at the end of a cell, and at the
 end of the document.
 
-The horizontal half is carried as an indent: every paragraph by each enclosing container's
+The horizontal half is carried as an indent: outside any panel, every paragraph by each enclosing container's
 margin and padding, a row or a table by the same amount as `w:tblInd` — see "What a panel
 keeps and loses".
 
@@ -272,39 +272,49 @@ is the same reason `markerGap` is unrepresentable here.
 
 ## What a panel keeps and loses
 
-Word has no element that wraps a run of paragraphs, but it shades and borders each one,
-and consecutive paragraphs sharing a fill render as a single band. So a container's paint
-travels with the paragraphs inside it:
+A container that paints — a fill, per-side borders, a uniform stroke — exports as a table of
+one cell, which is how a panel is built in Word by hand. Word has no element that wraps a
+run of paragraphs, and a cell holds everything a card needs: its shading is the fill behind
+whatever is inside, its borders are the card's edges at the card's full height, and its
+margins are the padding on all four sides.
 
 ```java
 page.addSection("Notice", card -> card
-        .softPanel(surface, 8, 14)     // fill and side padding land; the radius does not
-        .accentLeft(accent, 3)         // lands as a left w:pBdr
-        .addParagraph(p -> p.text("The band grows with this text when it is edited.")));
+        .softPanel(surface, 8, 14)     // fill and padding land; the radius does not
+        .accentLeft(accent, 3)         // the cell's left border
+        .addParagraph(p -> p.text("The panel grows with this text when it is edited.")));
 ```
 
-Kept: the fill, per-side borders, and a uniform stroke standing in for all four sides.
-Nested containers resolve innermost-first, and the paint stops where the container does.
-A table inside a panel keeps its own cell paint: the panel does not reach the paragraphs in
-its cells, so a zebra stripe or a cell fill shows as the page draws it — only a container
-opened inside a cell paints that cell's paragraphs.
-The band is a property of the paragraphs, so it grows and reflows as the text is edited —
-which is the point of exporting DOCX rather than PDF.
+What is inside is written by the same writers as anywhere else, so it stays paragraphs,
+lists, rows, tables and pictures a reader edits as usual, and the panel grows as they do —
+which is the point of exporting DOCX rather than PDF. A container with no paint is not a
+table: its children are written where it stood, indented by its margin and padding.
+
+How it lands:
+
+- **Width.** The table is as wide as the layout placed the container, which is as wide as
+  its content when the content is short, plus a point of slack so an editor setting the
+  text in its own face keeps the page's line breaks.
+- **Borders.** The page centres a border on the panel's edge; Word keeps a cell's border
+  inside the cell. Half of each border comes off that side's margin and the table widens
+  by the other half, so the text and the border land where the page draws them. Measured
+  in LibreOffice against the engine's render at 96 dpi, the band, a 3pt accent bar and the
+  text of a card land within a pixel of the page's.
+- **Nesting.** A panel inside a panel is a table inside its cell. So is a row, with no fill
+  of its own, so the panel shows through it. A table keeps its own cell fills, and a cell
+  no style fills is written white, as the page draws it on the card.
+- **Keeping together.** A `keepTogether()` panel the layout placed on one page is a row
+  Word may not split. Anchors and keeps on the blocks inside a panel carry as they do
+  anywhere else.
+- **Page breaks.** Word breaks no page inside a table cell, so a page break among a
+  panel's children closes the panel there and opens it again after the break.
+- **Measured in LibreOffice.** Word has not been measured yet; where it places a nested
+  table differently, a panel inside a panel may sit a few points off.
 
 Not representable, and left undone rather than approximated:
 
-- **The corner radius.** Word paragraph shading is rectangular. The panel renders with
-  square corners and the export logs one warning per document.
-- **The container's padding above and below.** The sides are carried: every paragraph is
-  indented by each enclosing container's margin and padding, and a panel's side borders are
-  spaced by its padding — Word draws a side border that far outside the text and shades out
-  to it, and a filled side with no border gets a hairline in the fill's colour to carry the
-  band there — so the text sits inside the card and the band and accent at its edges.
-  `w:space` stops at 31pt, so a wider padding brings the band's edge in by the difference.
-  The top and bottom padding are the space above the first paragraph and below the last,
-  outside the shading, so the band hugs the text vertically.
-- **A table inside a painted container.** The table keeps its own cell fills and borders
-  rather than inheriting the band.
+- **The corner radius.** A cell is rectangular. The panel renders with square corners and
+  the export logs one warning per document.
 
 ## What a chip keeps and loses
 

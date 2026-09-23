@@ -4,7 +4,6 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.image.DocumentImageData;
-import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
@@ -35,7 +34,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DocxVerticalSpacingTest {
 
     private static final double TWIPS_PER_POINT = 20.0;
-    private static final DocumentColor SURFACE = DocumentColor.rgb(238, 243, 249);
 
     @Test
     void aParagraphCarriesItsOwnMarginAndPadding() throws Exception {
@@ -63,7 +61,6 @@ class DocxVerticalSpacingTest {
     @Test
     void aContainersEdgesGoToItsFirstAndLastParagraph() throws Exception {
         List<XWPFParagraph> paragraphs = bodyOf(page -> page.addSection("Card", card -> card
-                .fillColor(SURFACE)
                 .padding(DocumentInsets.symmetric(14, 0))
                 .margin(DocumentInsets.symmetric(6, 0))
                 .addParagraph(p -> p.text("First"))
@@ -132,11 +129,10 @@ class DocxVerticalSpacingTest {
 
     @Test
     void aCardsBottomEdgeAndTheNextHeadingsTopAreOneGap() throws Exception {
-        // The measured case: a shaded card holding 20pt below itself, then a heading asking
+        // The measured case: a section holding 20pt below itself, then a heading asking
         // for 16pt above it.
         List<XWPFParagraph> paragraphs = bodyOf(page -> page
                 .addSection("Card", card -> card
-                        .fillColor(SURFACE)
                         .padding(DocumentInsets.of(14))
                         .margin(DocumentInsets.symmetric(6, 0))
                         .addParagraph(p -> p.text("Inside")))

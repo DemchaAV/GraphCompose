@@ -2278,6 +2278,55 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 writeCellContent(cell, placement, node);
             }
         }
+        breakRowsWhereTheLayoutDoes(table, node);
+    }
+
+    /**
+     * Lets Word break a table across pages only where the layout would.
+     *
+     * <p>The layout never breaks a row: a table splits between rows, and a row that does not
+     * fit what is left of a page moves to the next one whole. It repeats the table's header
+     * rows at the top of every page the table continues on, and it never leaves them at the
+     * foot of a page with nothing under them. The export said none of this, so Word split
+     * rows mid-line wherever its own page ended, and a long table's header appeared once.</p>
+     *
+     * <p>Word holds all three: {@code w:cantSplit} keeps a row whole, {@code w:tblHeader}
+     * repeats a leading row, and keep-with-next on a row's paragraphs keeps it on the page of
+     * the row after it.</p>
+     *
+     * <p>A row is kept whole only where the layout placed it. The layout refuses a row taller
+     * than a page, so a placed row is one a page can hold; a document it could not lay out is
+     * exported without one, and there a row may be taller than a page — which no page holds
+     * whole, however Word is told to keep it.</p>
+     */
+    private void breakRowsWhereTheLayoutDoes(XWPFTable table, TableNode node) {
+        int rowCount = table.getRows().size();
+        int headerRows = Math.min(node.repeatedHeaderRowCount(), rowCount);
+        for (int index = 0; index < rowCount; index++) {
+            XWPFTableRow row = table.getRow(index);
+            if (layout.placedRow(node, index)) {
+                row.setCantSplitRow(true);
+            }
+            if (index < headerRows) {
+                row.setRepeatHeader(true);
+                if (headerRows < rowCount) {
+                    keepRowWithTheNext(row);
+                }
+            }
+        }
+    }
+
+    private static void keepRowWithTheNext(XWPFTableRow row) {
+        for (XWPFTableCell cell : row.getTableCells()) {
+            for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                CTPPr properties = paragraph.getCTP().isSetPPr()
+                        ? paragraph.getCTP().getPPr()
+                        : paragraph.getCTP().addNewPPr();
+                if (!properties.isSetKeepNext()) {
+                    properties.addNewKeepNext();
+                }
+            }
+        }
     }
 
     private void applySpans(XWPFTableCell cell, TableGrid.Placement placement, int rowIdx) {
@@ -2567,6 +2616,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         hideTableGrid(table);
         applyRowGeometry(table, node);
         XWPFTableRow row = table.getRow(0);
+        // A row is laid out as one piece, never across a page break, so Word keeps it whole
+        // too, where the layout placed it; see breakRowsWhereTheLayoutDoes.
+        if (layout.placed(node)) {
+            row.setCantSplitRow(true);
+        }
         // A row inside a panel is still inside it. Its paragraphs live in table cells and
         // so cannot carry the paint themselves; without shading the cells the band breaks
         // into stripes wherever a two-column block sits in a filled container.

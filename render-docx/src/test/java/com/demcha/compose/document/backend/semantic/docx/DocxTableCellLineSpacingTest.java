@@ -4,6 +4,8 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
+import com.demcha.compose.document.table.DocumentTableTextAnchor;
+import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
@@ -50,6 +52,27 @@ class DocxTableCellLineSpacingTest {
 
             assertThat(lines).hasSize(1);
             assertThat(lines.get(0).getRuns().get(0).getCTR().sizeOfBrArray()).isEqualTo(2);
+        }
+    }
+
+    @Test
+    void theCellsOwnStyleSetsItThroughTheCascadeAndEveryLineKeepsTheCellsAlignment() throws Exception {
+        // The table default states no spacing; the cell's own style does, and aligns right.
+        // The layout resolves it through the same cascade, so the export has to as well.
+        DocumentTableStyle ownStyle = DocumentTableStyle.builder()
+                .lineSpacing(4)
+                .textAnchor(DocumentTableTextAnchor.CENTER_RIGHT)
+                .build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(table -> table
+                .columns(DocumentTableColumn.fixed(200))
+                .defaultCellStyle(DocumentTableStyle.builder().padding(DocumentInsets.of(4)).build())
+                .rowCells(new DocumentTableCell(List.of("10.00", "hrs"), ownStyle))))) {
+            List<XWPFParagraph> lines = onlyCell(document).getParagraphs();
+
+            assertThat(lines).hasSize(2);
+            assertThat(afterTwips(lines.get(0))).isEqualTo(80);
+            assertThat(lines).extracting(XWPFParagraph::getAlignment)
+                    .containsOnly(ParagraphAlignment.RIGHT);
         }
     }
 

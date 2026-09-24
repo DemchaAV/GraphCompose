@@ -82,6 +82,28 @@ class TimelineRailAcrossBackendsTest {
     }
 
     @Test
+    void docxKeepsTheContentOfATimelineWithItsMarkersOnTheRail() throws Exception {
+        // On the rail, each entry's header row is wrapped to publish its columns and the body
+        // is laid out in the content column below it: two wrappers the export once dropped,
+        // entries and all.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(360, 260).margin(DocumentInsets.of(20)).create()) {
+            PageFlowBuilder flow = session.pageFlow();
+            flow.addTimeline(t -> t
+                    .markerOnRail()
+                    .connector(RAIL, 1.5)
+                    .entry(TimelineMarker.dot(8, INK), e -> e
+                            .title("Senior Engineer").meta("2023 - Present")
+                            .body("Led the layout engine rewrite.")));
+            flow.build();
+
+            assertThat(docxText(session))
+                    .contains("Senior Engineer").contains("2023 - Present")
+                    .contains("Led the layout engine rewrite.");
+        }
+    }
+
+    @Test
     void theTextExtractorItselfSeesARowsCells() throws Exception {
         // The control. A RowNode exports as a one-row table, so document.getParagraphs()
         // alone cannot see anything laid out in a row — a timeline's title and meta among

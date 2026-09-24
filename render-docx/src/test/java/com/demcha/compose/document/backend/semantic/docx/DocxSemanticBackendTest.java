@@ -182,7 +182,7 @@ class DocxSemanticBackendTest {
     }
 
     @Test
-    void aDrawnListMarkerDropsAndATextMarkerKeepsItsOwnStyle() throws Exception {
+    void aDrawnListMarkerIsItsPictureAndATextMarkerKeepsItsOwnStyle() throws Exception {
         byte[] docxBytes;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(595, 842)
@@ -207,9 +207,12 @@ class DocxSemanticBackendTest {
                     .toList();
             assertThat(paragraphs).hasSize(2);
 
-            // A disc has no Word analogue, so it drops — and drops rather than
-            // being replaced by a bullet nobody asked for. The item survives.
-            assertThat(paragraphs.get(0).getText()).isEqualTo("Drawn marker item");
+            // A disc is the picture it draws — not a bullet nobody asked for — followed by
+            // the space a text marker gets, so the item does not run into it.
+            XWPFParagraph drawn = paragraphs.get(0);
+            assertThat(drawn.getText()).isEqualTo(" Drawn marker item");
+            assertThat(drawn.getRuns().stream().filter(run -> !run.getEmbeddedPictures().isEmpty()))
+                    .as("the disc").hasSize(1);
 
             // A marker written as text keeps the colour it was given, because a
             // run colour is something Word holds.

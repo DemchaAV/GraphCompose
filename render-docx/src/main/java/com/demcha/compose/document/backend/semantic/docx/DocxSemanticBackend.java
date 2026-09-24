@@ -29,6 +29,7 @@ import com.demcha.compose.document.node.InlineHighlightRun;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineImageRun;
+import com.demcha.compose.document.node.InlineShapeRun;
 import com.demcha.compose.document.node.InlineSvgRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.InternalLinkTarget;
@@ -1265,10 +1266,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * One warning per dropped inline-run kind, deduplicated across the
      * export — the inline mirror of {@link #warnUnsupported(DocumentNode)}.
-     * {@code inlineTextRuns()} keeps text and highlight chips but drops
-     * image / shape / SVG runs (emoji lower to SVG runs, so they drop too);
-     * without this the paragraph text survives while its icons vanish with
-     * no signal at all, weaker than the block-level drop path.
+     * Every kind the model has is written today — text and chips as runs,
+     * pictures, icons, emoji and shapes as pictures — so this speaks only for a
+     * kind added later and not yet taught to this export, which would otherwise
+     * vanish from the paragraph with no signal at all.
      */
     private void warnDroppedInlineRuns(ParagraphNode node) {
         warnDroppedInlineRuns(node.inlineRuns(), layout.pathOf(node));
@@ -1277,7 +1278,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void warnDroppedInlineRuns(List<InlineRun> runs, String path) {
         for (InlineRun run : runs) {
             if (run instanceof InlineTextRun || run instanceof InlineHighlightRun
-                || run instanceof InlineImageRun || run instanceof InlineSvgRun) {
+                || run instanceof InlineImageRun || run instanceof InlineSvgRun
+                || run instanceof InlineShapeRun) {
                 continue;
             }
             String kind = run.getClass().getSimpleName();
@@ -1597,9 +1599,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>The same is true of a marker. A marker written as text keeps the colour
      * and face it was given, because those are run properties Word has. A marker
-     * that draws a disc or an icon has no Word analogue at all, so it drops with
-     * the export's usual per-kind warning and its item is written unmarked —
-     * rather than substituting a glyph the author did not ask for.</p>
+     * that draws a disc or an icon is written as the picture it draws, the way a
+     * shape or an icon in a line is, rather than as a glyph the author did not ask
+     * for — and is followed by the same space as a text marker.</p>
      */
     private void writeRichListLine(XWPFDocument document, DocumentTextStyle style,
                                    com.demcha.compose.document.node.ListMarker marker,
@@ -1623,7 +1625,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // The gap after a marker is markerGap, which is geometry and so not
             // available here; a space is what separates a marker from its item on
             // the text path, and it separates them here for the same reason.
-            if (!com.demcha.compose.document.node.InlineRun.plainText(marker.runs()).isBlank()) {
+            // A marker that drew a picture separates the same way; one whose picture had no
+            // data drew nothing, and gets no space either.
+            if (!com.demcha.compose.document.node.InlineRun.plainText(marker.runs()).isBlank()
+                || pictures.reach() > 0) {
                 XWPFRun gap = para.createRun();
                 applyStyle(gap, style);
                 gap.setText(" ");
@@ -2735,9 +2740,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * com.demcha.compose.document.layout.InlineSvgLayers}) by the raster the PPTX backend uses
      * ({@link com.demcha.compose.document.backend.fixed.pdf.handlers.InlineSvgRasters}), so it
      * looks as it does on the page; the text an icon stands for — an emoji's — is the picture's
-     * description, and the report says it is a picture rather than a character. A picture
-     * stands on the line's baseline in Word, so it is raised or lowered to where the page's
-     * alignment puts it, from the layout's measure of the line.</p>
+     * description, and the report says it is a picture rather than a character. An inline
+     * shape — a dot, an arrow, a checkbox — is drawn by the same raster ({@link
+     * DocxShapePictures}), and is larger than its box by as far as its ink reaches past it
+     * and a pixel, so it stands that much lower. A picture stands on the line's
+     * baseline in Word, so it is raised or lowered by {@code w:position} to where the page's
+     * alignment puts it, from the layout's measure of the line — except a picture this export
+     * drew itself and the page raises, which carries the rise as transparent rows ({@link
+     * DocxPictureLift}) because LibreOffice ignores {@code w:position} on a picture.</p>
      *
      * @return how far above the line's bottom the picture reaches — its height where the line
      *         is unmeasured — or {@code null} for a run this does not draw
@@ -2752,10 +2762,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double baselineOffset;
         DocumentLinkTarget link;
         String description = null;
-        if (run instanceof InlineImageRun image) {
+        // The height of the box the page places, and how far below it the picture reaches — a
+        // shape's stroke and frame — and so how much lower than that box's bottom it stands.
+        double placedHeight;
+        double below = 0;
+        // The empty margin a drawn shape keeps around its ink.
+        double frame = 0;
+        if (run instanceof InlineShapeRun shape) {
+            DocxShapePictures.Picture drawn = DocxShapePictures.of(shape);
+            bytes = drawn.png();
+            width = drawn.width();
+            height = drawn.height();
+            placedHeight = shape.height();
+            below = drawn.below();
+            frame = DocxShapePictures.EDGE;
+            alignment = shape.alignment();
+            baselineOffset = shape.baselineOffset();
+            link = shape.linkTarget();
+        } else if (run instanceof InlineImageRun image) {
             bytes = NodeDefinitionSupport.toImageData(image.imageData()).getBytes();
             width = image.width();
             height = image.height();
+            placedHeight = height;
             alignment = image.alignment();
             baselineOffset = image.baselineOffset();
             link = image.linkTarget();
@@ -2764,6 +2792,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     svg.width(), svg.height()).getBytes();
             width = svg.width();
             height = svg.height();
+            placedHeight = height;
             alignment = svg.alignment();
             baselineOffset = svg.baselineOffset();
             link = svg.linkTarget();
@@ -2775,6 +2804,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             report.add(DocxExportReport.Severity.DROPPED, "inline image", path,
                     "the picture's data is empty, so there is nothing to write");
             return null;
+        }
+        // Where the picture's bottom stands, from the baseline: the page's placement of its box,
+        // less what the picture reaches past it.
+        double bottom = line.isEmpty() ? 0
+                : inlineBottomFromBaseline(alignment, baselineOffset, placedHeight, line.get()) - below;
+        if (bottom > 0 && !(run instanceof InlineImageRun)) {
+            // A picture the page raises stands on the baseline in LibreOffice, which ignores
+            // w:position on one. A picture this export drew carries the rise itself instead,
+            // as transparent space below what it shows, so it stands where the page puts it
+            // in either editor; an author's own picture is written as it was given.
+            DocxPictureLift.Lifted lifted = DocxPictureLift.lift(bytes, height, bottom);
+            bytes = lifted.png();
+            height = lifted.height();
+            bottom -= lifted.lift();
         }
         XWPFRun picture = newRun(para, link != null ? link : fallbackLink);
         try (InputStream stream = new java.io.ByteArrayInputStream(bytes)) {
@@ -2796,13 +2839,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (line.isEmpty()) {
             return new PictureReach(height, false);
         }
-        double bottom = inlineBottomFromBaseline(alignment, baselineOffset, height, line.get());
         long raise = Math.round(bottom * 2);
         if (raise != 0) {
             CTRPr properties = picture.getCTR().isSetRPr() ? picture.getCTR().getRPr() : picture.getCTR().addNewRPr();
             properties.addNewPosition().setVal(BigInteger.valueOf(raise));
         }
-        return PictureReach.of(bottom, height, line.get());
+        // The room the line owes is what the picture shows: a shape's transparent frame is not
+        // ink, and counted as such it would take a shape that stays inside the text past it.
+        return PictureReach.of(bottom, height, line.get(), frame);
     }
 
     /**
@@ -2833,10 +2877,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
         static PictureReach of(double bottomFromBaseline, double height,
                                com.demcha.compose.document.layout.payloads.ParagraphLine line) {
+            return of(bottomFromBaseline, height, line, 0);
+        }
+
+        /**
+         * The reach of a picture whose ink is inset from its edges by an empty frame.
+         *
+         * <p>Either editor moves the whole picture, frame and all: Word by its position,
+         * LibreOffice onto the baseline. The frame is not ink, so what reaches past the text
+         * is the picture less its frame, wherever the editor stood it.</p>
+         */
+        static PictureReach of(double bottomFromBaseline, double height,
+                               com.demcha.compose.document.layout.payloads.ParagraphLine line,
+                               double inset) {
             double descent = line.baselineOffsetFromBottom();
             // Word's placement, and LibreOffice's on the baseline.
-            double top = Math.max(bottomFromBaseline + height, height);
-            boolean passes = top > line.textAscent() || -bottomFromBaseline > descent;
+            double top = Math.max(bottomFromBaseline + height, height) - inset;
+            boolean passes = top > line.textAscent() || -(bottomFromBaseline + inset) > descent;
             return new PictureReach(descent + top, passes);
         }
 
@@ -2879,7 +2936,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 height = Math.max(height, image.height());
             } else if (run instanceof InlineSvgRun svg) {
                 height = Math.max(height, svg.height());
-            } else if (run instanceof com.demcha.compose.document.node.InlineShapeRun shape) {
+            } else if (run instanceof InlineShapeRun shape) {
                 height = Math.max(height, shape.height());
             }
         }

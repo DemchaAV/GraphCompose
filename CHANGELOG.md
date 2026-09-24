@@ -132,6 +132,16 @@ follow semantic versioning; release dates are ISO 8601.
   Word ask on every open to recompute numbers that already read correctly; the recipe states
   which field each page number is and what updates it.
 
+- **A table of contents' labels stay whole in the editor.** A row's column sized to its content
+  (`DocumentRowColumn.auto()`) was written exactly as wide as the layout placed it, and an
+  editor setting the text in its own substitute for the face wrapped it: measured in
+  LibreOffice, `addTableOfContents(...)` labels broke mid-word — "Intr" over "o", "Term" over
+  "s", "Appendi" over "x". A row's auto column now gets the point a table's already did, taken
+  from the row's weight columns so the row keeps the width the layout gave it; ten labels from
+  "Q" to "Appendix A - Pricing schedule" stay on one line in LibreOffice; Word was not
+  measured. A row with no auto column, no weight column, or no stated columns is written as
+  placed.
+
 - **A link to a section, table or image reaches it in Word.** The DOCX export wrote a
   bookmark only for a paragraph's `anchor(...)`; an anchor on a section, container, table or
   image was dropped, so an internal link to it went nowhere in Word. Such a block's anchor is

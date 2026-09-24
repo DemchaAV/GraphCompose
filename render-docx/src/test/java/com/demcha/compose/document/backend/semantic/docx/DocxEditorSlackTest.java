@@ -3,8 +3,11 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.RowBuilder;
+import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.engine.components.content.table.TableResolvedCell;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -68,6 +71,124 @@ class DocxEditorSlackTest {
                 .row("A", "B")));
 
         assertThat(exported.gridTwips(0) + exported.gridTwips(1)).isEqualTo(Math.round(200 * 20.0));
+    }
+
+    @Test
+    void aRowsAutoColumnsTakeTheirPointFromTheWeightColumnBetweenThem() throws Exception {
+        // A table of contents' entry: label, leader, page number. Measured through LibreOffice,
+        // with the columns as placed the label wrapped mid-word ("Intr" / "o").
+        ExportedRow exported = exportRow(row -> row
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1), DocumentRowColumn.auto())
+                .addParagraph("Intro").addParagraph("…").addParagraph("12"));
+
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0) + SLACK_TWIPS);
+        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1) - 2 * SLACK_TWIPS);
+        assertThat(exported.gridTwips(2)).isEqualTo(exported.placedTwips(2) + SLACK_TWIPS);
+        assertThat(exported.gridTwips(0) + exported.gridTwips(1) + exported.gridTwips(2))
+                .as("the row keeps the width the layout placed it at")
+                .isEqualTo(exported.placedTwips(0) + exported.placedTwips(1) + exported.placedTwips(2));
+    }
+
+    @Test
+    void aRowWithNoAutoColumnIsWrittenAsPlaced() throws Exception {
+        ExportedRow exported = exportRow(row -> row
+                .columns(DocumentRowColumn.fixed(80), DocumentRowColumn.weight(1))
+                .addParagraph("Label").addParagraph("Value"));
+
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0));
+        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1));
+    }
+
+    @Test
+    void aRowWithNoWeightColumnHasNoPointToGiveAndIsWrittenAsPlaced() throws Exception {
+        ExportedRow exported = exportRow(row -> row
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.fixed(80))
+                .addParagraph("Label").addParagraph("Value"));
+
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0));
+        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1));
+    }
+
+    @Test
+    void aFixedColumnBesideThemKeepsItsSize() throws Exception {
+        ExportedRow exported = exportRow(row -> row
+                .columns(DocumentRowColumn.fixed(60), DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addParagraph("Invoice").addParagraph("No. 2041").addParagraph("…"));
+
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0));
+        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1) + SLACK_TWIPS);
+        assertThat(exported.gridTwips(2)).isEqualTo(exported.placedTwips(2) - SLACK_TWIPS);
+    }
+
+    @Test
+    void twoWeightColumnsGiveThePointInProportionToTheirTextBoxes() throws Exception {
+        // A wide gap, so a split by column width — the middle column carries the gap after it
+        // as its right margin, the last none — lands whole twips away from one by text box.
+        ExportedRow exported = exportRow(row -> row
+                .spacing(60)
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1), DocumentRowColumn.weight(3))
+                .addParagraph("Intro").addParagraph("a").addParagraph("b"));
+
+        double first = exported.placed()[1] - 60;
+        double second = exported.placed()[2];
+        double point = DocxSemanticBackend.EDITOR_COLUMN_SLACK_POINTS;
+        assertThat(exported.gridTwips(1))
+                .isEqualTo(Math.round((exported.placed()[1] - point * first / (first + second)) * 20.0));
+        assertThat(exported.gridTwips(2))
+                .isEqualTo(Math.round((exported.placed()[2] - point * second / (first + second)) * 20.0));
+    }
+
+    @Test
+    void aRowOfWeightsWithNoStatedColumnsIsWrittenAsPlaced() throws Exception {
+        ExportedRow exported = exportRow(row -> row
+                .weights(1, 2)
+                .addParagraph("Label").addParagraph("Value"));
+
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0));
+        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1));
+    }
+
+    /** A row exported through a session, with the column spans the layout placed it at. */
+    private record ExportedRow(XWPFTable table, double[] placed) {
+
+        long gridTwips(int column) {
+            return DocxTwips.of(table.getCTTbl().getTblGrid().getGridColArray(column).getW());
+        }
+
+        long placedTwips(int column) {
+            return Math.round(placed[column] * 20.0);
+        }
+    }
+
+    private static ExportedRow exportRow(Consumer<RowBuilder> content) throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(420, 600)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.pageFlow(page -> page.addRow(row -> content.accept(row.name("Entry").spacing(6))));
+            List<PlacedNode> nodes = session.layoutGraph().nodes();
+            PlacedNode row = nodes.stream()
+                    .filter(node -> "Entry".equals(node.semanticName()))
+                    .findFirst()
+                    .orElseThrow();
+            List<PlacedNode> children = nodes.stream()
+                    .filter(node -> row.path().equals(node.parentPath()))
+                    .sorted(java.util.Comparator.comparingInt(PlacedNode::childIndex))
+                    .toList();
+            // A column runs from its child's start to the next child's; the first from the
+            // row's edge, the last to it — the gap and padding ride inside the column.
+            double[] placed = new double[children.size()];
+            for (int index = 0; index < placed.length; index++) {
+                double start = index == 0 ? row.placementX() : children.get(index).placementX();
+                double end = index == placed.length - 1
+                        ? row.placementX() + row.placementWidth()
+                        : children.get(index + 1).placementX();
+                placed[index] = end - start;
+            }
+            byte[] docx = session.export(new DocxSemanticBackend());
+            XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx));
+            return new ExportedRow(document.getTables().get(0), placed);
+        }
     }
 
     /** A table exported through a session, with the layout the session sized it with. */

@@ -1177,8 +1177,8 @@ public ResponseEntity<StreamingResponseBody> invoice(@PathVariable Long id) {
 ### Word export (DOCX)
 
 The semantic backend walks the document graph and writes **editable
-Word content** — no layout pass, no PDF chrome. One session, two
-outputs:
+Word content**, which Word paginates and re-flows after an edit. One
+session, two outputs:
 
 <!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java

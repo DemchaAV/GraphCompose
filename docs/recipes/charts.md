@@ -376,7 +376,7 @@ The run's minimum maps to the bottom of the box and its maximum to the top;
 
 Any fixed-layout backend (PDF today) renders charts for free — they are
 ordinary primitives by the time rendering starts. The semantic DOCX export
-has no layout pass, so it writes the chart's **data table**
+does not draw vector geometry, so it writes the chart's **data table**
 (categories × series) with a one-time capability warning.
 
 Unsupported combinations fail fast with `UnsupportedOperationException`

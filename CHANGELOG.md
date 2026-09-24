@@ -752,6 +752,15 @@ follow semantic versioning; release dates are ISO 8601.
   size and an alt text. A document's own page keeps its own preview: there the document is the
   subject.
 
+- **The DOCX module's README says what the export writes today.** It listed as missing what the
+  export has since learned to write — links, bookmarks and the navigation outline, headers and
+  footers, barcodes, pictures in a line, a chip's fill, composed cells with an image or a list,
+  byte-identical output — and said the page geometry was ignored, where line heights and column
+  widths now come from the layout. It now lists what is written and what is not: other drawing,
+  inline shapes, positions and clips in a layer stack or canvas, a barcode or rule in a page
+  zone, the text header and footer slots, watermarks and `markerGap`. The DOCX recipe, the
+  charts recipe and the examples README no longer say the export has no layout pass.
+
 ## v2.4.1 — 2026-09-21
 
 ### Performance

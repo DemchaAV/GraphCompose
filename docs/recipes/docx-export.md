@@ -2,8 +2,9 @@
 
 PDF is GraphCompose's fixed-layout output — every fragment lands at exact
 coordinates. DOCX is different on purpose: it is a **semantic export** that
-walks the document graph and writes editable Word content, skipping the
-layout pass entirely (no per-page pagination, no PDF chrome). Use it when
+walks the document graph and writes editable Word content — Word paginates
+it, and re-flows it after an edit. It reads the resolved layout only for
+what Word cannot work out itself (see "Measured geometry"). Use it when
 the recipient needs to *edit* the document; use PDF when pixels must match.
 
 ## Exporting a session
@@ -403,8 +404,8 @@ tint it was flattened to. Recorded, like the other two.
   their place would be right for a table whose text fills the line and wrong for one
   holding three short values.
 
-- **Charts → data table.** The semantic export has no layout pass, so a
-  chart's compiled vector geometry does not exist here. Its *semantic*
+- **Charts → data table.** A chart compiles to vector geometry, which this
+  export does not draw. Its *semantic*
   content is its data, so the backend writes a categories-by-series table
   (values formatted with the chart's own axis format) and logs **one
   capability warning per export**. See [charts.md](charts.md).
@@ -424,9 +425,8 @@ tint it was flattened to. Recorded, like the other two.
   would — a hanging indent, a hanging indent with a tab stop, real Word
   numbering — leaves a distance beside the marker equal to the column
   minus the marker's own width, a number only Word knows. Honouring the
-  gap would mean measuring the marker, and this backend has no font
-  runtime to measure with: its dependencies are the core model and POI,
-  and keeping them that way is the point of a semantic backend. The
+  gap would mean knowing the marker's width as the reader's editor sets
+  it, in whatever font it substitutes — which the export cannot know. The
   approximations were built and rendered through Word before being
   rejected — a reserved column renders a gap that is not the one
   configured, and a marker wider than the column misaligns outright.

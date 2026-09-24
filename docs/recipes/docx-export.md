@@ -195,6 +195,14 @@ The horizontal half is carried as an indent: outside any panel, every paragraph 
 margin and padding, a row or a table by the same amount as `w:tblInd` — see "What a panel
 keeps and loses".
 
+A right-to-left paragraph has its two indents written the other way round. In a `w:bidi`
+paragraph Word and LibreOffice read `w:ind`'s `left` and `right` as the start and end of
+the flow, as they read `w:jc`, so `left` is the right-hand side; `w:start` and `w:end` read
+the same in both. A Hebrew paragraph in a section padded on the left, or a timeline body
+indented to its column, therefore carries the page's left inset as `w:right`, and ends at
+the edge the page ends it at. Tables are not turned: the export writes no `w:bidiVisual`,
+so a table runs left to right and its `w:tblInd` and cell margins are page sides.
+
 Asking for the layout costs a measurement and pagination pass over the document, the same
 work a PDF render does, and it reads each image a second time.
 

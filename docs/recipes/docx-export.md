@@ -357,8 +357,13 @@ page.addParagraph(p -> p
   searches, and the report says so.
 - **Links.** A picture carrying a link, or in a linked paragraph, is inside the link.
 
-An inline shape — a `dot(...)`, an arrow, a chevron — is not written yet, and the report
-names each one.
+- **What a shape is.** An inline shape — a `dot(...)`, an arrow, a chevron, a checkbox,
+  any `shape(...)` — is drawn into a transparent picture the same way, from the outline,
+  fill and stroke the page draws, each layer centred in the run's box as the page centres a
+  checkmark in its frame. The page draws a stroke centred on the outline, so half of it lies
+  outside the run's box; the picture takes that half on every side and is lowered by it, so
+  the outline stands where the page has it and a stroked shape takes its stroke's width more
+  room in the line than on the page.
 
 ## What a chip keeps and loses
 

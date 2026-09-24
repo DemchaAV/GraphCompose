@@ -83,9 +83,9 @@ What maps:
 - **Rows** are a one-row table whose columns are where the layout placed each child.
 - **Panels.** A container with a fill or a border is a one-cell table carrying them; rounded
   corners come out square, and the report says so.
-- **Images.** A block image keeps its size and fit mode. Pictures, SVG icons and emoji in a
-  line are inline pictures, placed where the page's alignment puts them; an icon's text is
-  the picture's description. Code and badge chips keep their fill as run shading, without
+- **Images.** A block image keeps its size and fit mode. Pictures, SVG icons, emoji and
+  shapes — dots, arrows, chevrons, checkboxes — in a line are inline pictures, placed where
+  the page's alignment puts them; an icon's text is the picture's description. Code and badge chips keep their fill as run shading, without
   the shape.
 - **Links and navigation.** A link is a `w:hyperlink`, to an address or to one of the
   document's anchors; an `anchor(...)` is a bookmark; a `bookmark(...)` outline level is
@@ -103,7 +103,6 @@ What is not written — each one is named in the export report
 
 - **Other drawing**: vertical and slanted lines, ellipses, polygons, paths, filled shapes
   other than a thin bar, and a line laid over something else in a layer stack or canvas.
-- **Inline shapes** in a line of text — `dot(...)`, arrows, chevrons.
 - **Positioning and effects.** A layer stack, a canvas or a clipped container writes its
   children in order, without their positions and without the clip; a rotation or scale is
   not carried.

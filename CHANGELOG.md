@@ -45,8 +45,18 @@ follow semantic versioning; release dates are ISO 8601.
   icon is the same picture on a slide and in a document. The text an icon stands for (an
   emoji's) is the picture's description, reported `APPROXIMATED`. Measured in LibreOffice
   against the engine's render, icons, emoji and a centred and a baseline picture sit within
-  2px of the page. Inline shapes — `dot(...)`, arrows, chevrons — are still dropped and
-  reported.
+  2px of the page. Inline shapes follow in their own entry.
+
+- **A dot, an arrow or a checkbox in a line reaches Word.** The DOCX export dropped every
+  inline shape with a report entry, so a status line lost its coloured dots, a contact line
+  the separators between its cities, a step list its arrows and chevrons, and a form its
+  checkboxes. Each is now a picture in its own run, drawn by the same raster as an icon from
+  the outline, fill and stroke the page draws — every outline kind, each layer centred in
+  the run's box as a checkmark sits in its frame — and placed where the page's alignment
+  puts it. The page draws a stroke centred on the outline, half of it outside the run's box,
+  so the picture takes that half on every side and is lowered by it: the outline stands
+  where the page has it, and a stroked shape takes its stroke's width more room in the line.
+  No inline run the model has is dropped by the export any longer.
 
 - **A rule reaches Word as Word's own.** The DOCX export dropped every `LineNode` and
   standalone `ShapeNode`, so the rules a template draws under a heading or between entries —

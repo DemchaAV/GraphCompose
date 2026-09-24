@@ -29,6 +29,7 @@ import com.demcha.compose.document.node.InlineHighlightRun;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineImageRun;
+import com.demcha.compose.document.node.InlineShapeRun;
 import com.demcha.compose.document.node.InlineSvgRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.InternalLinkTarget;
@@ -1277,7 +1278,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void warnDroppedInlineRuns(List<InlineRun> runs, String path) {
         for (InlineRun run : runs) {
             if (run instanceof InlineTextRun || run instanceof InlineHighlightRun
-                || run instanceof InlineImageRun || run instanceof InlineSvgRun) {
+                || run instanceof InlineImageRun || run instanceof InlineSvgRun
+                || run instanceof InlineShapeRun) {
                 continue;
             }
             String kind = run.getClass().getSimpleName();
@@ -2735,9 +2737,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * com.demcha.compose.document.layout.InlineSvgLayers}) by the raster the PPTX backend uses
      * ({@link com.demcha.compose.document.backend.fixed.pdf.handlers.InlineSvgRasters}), so it
      * looks as it does on the page; the text an icon stands for — an emoji's — is the picture's
-     * description, and the report says it is a picture rather than a character. A picture
-     * stands on the line's baseline in Word, so it is raised or lowered to where the page's
-     * alignment puts it, from the layout's measure of the line.</p>
+     * description, and the report says it is a picture rather than a character. An inline
+     * shape — a dot, an arrow, a checkbox — is drawn by the same raster ({@link
+     * DocxShapePictures}), and is larger than its box by the half-stroke the page draws
+     * outside the outline, so it stands that much lower. A picture stands on the line's
+     * baseline in Word, so it is raised or lowered to where the page's alignment puts it,
+     * from the layout's measure of the line.</p>
      *
      * @return how far above the line's bottom the picture reaches — its height where the line
      *         is unmeasured — or {@code null} for a run this does not draw
@@ -2752,7 +2757,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double baselineOffset;
         DocumentLinkTarget link;
         String description = null;
-        if (run instanceof InlineImageRun image) {
+        // How far the picture reaches past the box the page places — a shape's half-stroke —
+        // and so how much lower than that box's bottom it stands.
+        double overhang = 0;
+        if (run instanceof InlineShapeRun shape) {
+            DocxShapePictures.Picture drawn = DocxShapePictures.of(shape);
+            bytes = drawn.png();
+            width = drawn.width();
+            height = drawn.height();
+            overhang = drawn.overhang();
+            alignment = shape.alignment();
+            baselineOffset = shape.baselineOffset();
+            link = shape.linkTarget();
+        } else if (run instanceof InlineImageRun image) {
             bytes = NodeDefinitionSupport.toImageData(image.imageData()).getBytes();
             width = image.width();
             height = image.height();
@@ -2796,7 +2813,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (line.isEmpty()) {
             return new PictureReach(height, false);
         }
-        double bottom = inlineBottomFromBaseline(alignment, baselineOffset, height, line.get());
+        double bottom = inlineBottomFromBaseline(alignment, baselineOffset, height - 2 * overhang, line.get())
+                        - overhang;
         long raise = Math.round(bottom * 2);
         if (raise != 0) {
             CTRPr properties = picture.getCTR().isSetRPr() ? picture.getCTR().getRPr() : picture.getCTR().addNewRPr();
@@ -2879,7 +2897,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 height = Math.max(height, image.height());
             } else if (run instanceof InlineSvgRun svg) {
                 height = Math.max(height, svg.height());
-            } else if (run instanceof com.demcha.compose.document.node.InlineShapeRun shape) {
+            } else if (run instanceof InlineShapeRun shape) {
                 height = Math.max(height, shape.height());
             }
         }

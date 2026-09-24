@@ -8,6 +8,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A table cell's `lineSpacing` is space between its lines.** The layout sized a row with
+  it — `lines × lineHeight + (lines − 1) × lineSpacing` — and the PDF and PPTX renderers set
+  the lines a line height apart regardless, so the row came out taller than its text by the
+  spacing it never showed, and the text sat in the leftover wherever the anchor put it. The
+  weekly schedule's day notes drew their lines touching inside rows sized to hold them apart.
+  Both renderers now put the spacing between the lines, so the text fills the height the row
+  was sized for; the DOCX export writes a cell whose spacing is above zero as a paragraph per
+  line with the spacing after each but the last, and in LibreOffice its lines stand the same
+  distance apart as on the page. A cell without line spacing is drawn and written as before.
+  Among the presets, `PlatformInvoice`'s quantity-and-unit cells and `ConsultingInvoice`'s
+  quantity cells set spacing, and their two lines now stand it apart — each line moves under
+  a point. Two committed previews move — `invoice-consulting-v2.pdf` and
+  `weekly-schedule.pdf` — and are re-rendered.
+
 - **A picture or an icon in a line reaches Word.** The DOCX export dropped every inline
   image, SVG icon and emoji, so a contact line lost its phone and mail icons and a sentence
   its emoji, with a report entry and nothing else. Each is now a picture in its own run

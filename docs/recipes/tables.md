@@ -67,6 +67,10 @@ exactly one. Use `lines(...)` when the break is part of the content,
 or `node(...)` when the cell needs styling, markdown, or structure
 around it.
 
+The lines of a `lines(...)` cell stand one line height apart, plus the
+cell style's `lineSpacing(...)` between each pair: the row is sized for
+that space, and PDF, PPTX and DOCX all draw it.
+
 Paragraph content is a different story: `ParagraphNode` **does** treat
 `\n` as a hard line break, inside a cell exactly as it does anywhere
 else on the page. So a composed cell built from a paragraph whose text

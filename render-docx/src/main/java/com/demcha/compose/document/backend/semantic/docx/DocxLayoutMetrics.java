@@ -326,6 +326,22 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * The first line a node laid out as paragraph lines: its height, its text's ascent and
+     * how far its baseline sits above its bottom.
+     *
+     * @param node any node that lays out as paragraph lines
+     * @return the line, or empty when the node laid out nothing
+     */
+    java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> firstLine(DocumentNode node) {
+        for (PlacedFragment fragment : fragmentsOf(node)) {
+            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph && !paragraph.lines().isEmpty()) {
+                return java.util.Optional.of(paragraph.lines().get(0));
+            }
+        }
+        return java.util.Optional.empty();
+    }
+
+    /**
      * The text a node laid out as paragraph lines, as the layout wrote it.
      *
      * <p>A page reference's number is known only once the document is paginated, so the

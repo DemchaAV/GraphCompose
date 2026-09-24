@@ -8,6 +8,32 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A picture or an icon in a line reaches Word.** The DOCX export dropped every inline
+  image, SVG icon and emoji, so a contact line lost its phone and mail icons and a sentence
+  its emoji, with a report entry and nothing else. Each is now a picture in its own run
+  between the words, at its size, inside its link, raised or lowered by `w:position` to
+  where the page's alignment puts it — in a paragraph and in a list item alike, each item by
+  its own line's height. Word honours that on a picture; LibreOffice does not, so there a
+  picture stands on the baseline, higher than on the page by as much as the page lowers it
+  — up to the text's descent for a centred icon as tall as its line. The editor clips a
+  picture to an exact line height and places the baseline in it by its own rule (measured
+  in LibreOffice: a 14pt icon centred over 9pt text lost its top up to a 17.6pt line), so a
+  paragraph holding a picture that leaves its text — past the ascent or the descent, where
+  Word puts it or on the baseline — has its lines written *at least* the height the picture
+  reaches, and the editor grows them rather than clip. Word has one line height for a
+  paragraph, so every line of it is then at least that reach and otherwise as tall as the
+  editor's font makes it — for 14pt text about 2.5pt taller than the page's in LibreOffice.
+  A picture inside its text in both editors keeps the exact height. A picture's description
+  is the text it stands for, or empty, never the file name. An SVG
+  icon is drawn into a transparent picture from the layers the layout resolves, by the
+  raster the PPTX backend's fallback uses — now shared as `InlineSvgRasters` in the PDF
+  module, with the layout's lowering callable as `InlineSvgLayers`, both internal — so an
+  icon is the same picture on a slide and in a document. The text an icon stands for (an
+  emoji's) is the picture's description, reported `APPROXIMATED`. Measured in LibreOffice
+  against the engine's render, icons, emoji and a centred and a baseline picture sit within
+  2px of the page. Inline shapes — `dot(...)`, arrows, chevrons — are still dropped and
+  reported.
+
 - **A rule reaches Word as Word's own.** The DOCX export dropped every `LineNode` and
   standalone `ShapeNode`, so the rules a template draws under a heading or between entries —
   `addLine(...)` and `addDivider(...)`, together among the most common drawing in the

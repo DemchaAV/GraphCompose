@@ -316,6 +316,49 @@ Not representable, and left undone rather than approximated:
 - **The corner radius.** A cell is rectangular. The panel renders with square corners and
   the export logs one warning per document.
 
+## Pictures and icons in a line
+
+A picture, an SVG icon or an emoji in a line of text is a picture in Word, in its own run
+between the words around it, at its size:
+
+```java
+page.addParagraph(p -> p
+        .inlineSvgIcon(phone, 12, InlineImageAlignment.CENTER)
+        .inlineText(" +44 20 7946 0000 ")
+        .inlineEmoji(":rocket:", 14));
+```
+
+- **Where it sits.** Word stands a picture on the line's baseline; the page centres it on
+  the line, or sets it on the baseline or at the text's top or bottom. The picture is
+  raised or lowered by `w:position` to where the page's alignment and `baselineOffset`
+  put it, from the layout's measure of the paragraph's first line — in a list, the list's
+  text on a line as tall as the item's own tallest picture. Word honours that on a picture;
+  LibreOffice does not — measured, a picture written at 0, −2, −10 and +10pt stood in the
+  same place — so there a picture always stands on the baseline, higher than on the page by
+  as much as the page lowers it: up to the text's descent for a centred icon as tall as its
+  line.
+- **Line height.** Lines are written at an exact height, and the editor clips a picture
+  to it — where in that height it puts the baseline is its own, so no fixed room is
+  enough: measured in LibreOffice, a 14pt icon centred over 9pt text lost its top up to
+  a 17.6pt line. A paragraph holding a picture that rises above its text's ascent or hangs
+  below its descent — where Word puts it, or on the baseline where LibreOffice does — is
+  written with its lines *at least* the height the picture reaches instead, so the editor
+  grows the line to the picture rather than clip it. Word has one line height for a
+  paragraph, so every line of it is then at least that reach and otherwise as tall as the
+  editor's own font makes it — for 14pt text, about 2.5pt taller than the page's in
+  LibreOffice. A picture that stays inside the text in both editors keeps the exact
+  height; a 12pt icon on a line of 14pt text does not, since on the baseline it rises past
+  the ascent.
+- **What an icon is.** An SVG icon — an emoji among them — is drawn into a transparent
+  picture from the same layers the page draws, by the raster the PPTX export falls back
+  to, so it looks as it does on the page. The text it stands for is the picture's
+  description, which a screen reader reads; it is not a character a reader copies or
+  searches, and the report says so.
+- **Links.** A picture carrying a link, or in a linked paragraph, is inside the link.
+
+An inline shape — a `dot(...)`, an arrow, a chevron — is not written yet, and the report
+names each one.
+
 ## What a chip keeps and loses
 
 A chip is a fill behind a phrase, and Word has one: `w:shd` on the run, taking any RGB.

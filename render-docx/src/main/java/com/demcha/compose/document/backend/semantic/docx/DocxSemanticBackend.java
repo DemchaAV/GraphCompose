@@ -8,7 +8,9 @@ import com.demcha.compose.document.chart.NumberFormatSpec;
 import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.engine.components.content.ImageData;
+import com.demcha.compose.document.backend.fixed.pdf.handlers.InlineSvgRasters;
 import com.demcha.compose.document.layout.DocumentGraph;
+import com.demcha.compose.document.layout.InlineSvgLayers;
 import com.demcha.compose.document.layout.LayoutCanvas;
 import com.demcha.compose.document.layout.ParagraphDirection;
 import com.demcha.compose.document.layout.NodeDefinitionSupport;
@@ -25,6 +27,9 @@ import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.PageBreakNode;
 import com.demcha.compose.document.node.InlineHighlightRun;
 import com.demcha.compose.document.node.InlineRun;
+import com.demcha.compose.document.node.InlineImageAlignment;
+import com.demcha.compose.document.node.InlineImageRun;
+import com.demcha.compose.document.node.InlineSvgRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.node.ParagraphNode;
@@ -1270,7 +1275,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void warnDroppedInlineRuns(List<InlineRun> runs, String path) {
         for (InlineRun run : runs) {
-            if (run instanceof InlineTextRun || run instanceof InlineHighlightRun) {
+            if (run instanceof InlineTextRun || run instanceof InlineHighlightRun
+                || run instanceof InlineImageRun || run instanceof InlineSvgRun) {
                 continue;
             }
             String kind = run.getClass().getSimpleName();
@@ -1489,7 +1495,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // A drawn marker's pieces are runs, so the row is written the way
                 // any row with runs in it is; its item is still just a label.
                 writeRichListLine(document, list.textStyle(), list.marker(),
-                        com.demcha.compose.document.node.ListItem.of(normalized), 0, lineHeight,
+                        com.demcha.compose.document.node.ListItem.of(normalized), 0, lineHeight, layout.firstLine(list),
                         layout.pathOf(list));
             } else if (numId != null) {
                 // Word draws the marker, so the text is the item and nothing else.
@@ -1519,7 +1525,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth);
         java.util.OptionalDouble lineHeight = layout.lineHeight(list);
         if (item.isRich() || marker.isRich()) {
-            writeRichListLine(document, list.textStyle(), marker, item, depth, lineHeight,
+            writeRichListLine(document, list.textStyle(), marker, item, depth, lineHeight, layout.firstLine(list),
                     layout.pathOf(list));
         } else if (numId != null) {
             writeListLine(document, list.textStyle(), item.label(), depth, numId, lineHeight);
@@ -1599,17 +1605,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                    com.demcha.compose.document.node.ListItem item,
                                    int depth,
                                    java.util.OptionalDouble lineHeight,
+                                   java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line,
                                    String path) {
         warnDroppedInlineRuns(marker.runs(), path);
         warnDroppedInlineRuns(item.runs(), path);
+        line = line.map(listLine -> itemLine(listLine, item.runs()));
         spaceBeforeTheNextItem();
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
         XWPFRun leading = para.createRun();
         applyStyle(leading, style);
         leading.setText("  ".repeat(depth) + (marker.isRich() ? "" : marker.prefix()));
+        PictureReach pictures = PictureReach.NONE;
         if (marker.isRich()) {
-            writeInlineTextRuns(para, style, marker.runs(), path);
+            pictures = writeInlineTextRuns(para, style, marker.runs(), path, line);
             // The gap after a marker is markerGap, which is geometry and so not
             // available here; a space is what separates a marker from its item on
             // the text path, and it separates them here for the same reason.
@@ -1620,25 +1629,32 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         if (item.isRich()) {
-            writeInlineTextRuns(para, style, item.runs(), path);
+            pictures = pictures.max(writeInlineTextRuns(para, style, item.runs(), path, line));
         } else {
             XWPFRun label = para.createRun();
             applyStyle(label, style);
             label.setText(item.label());
         }
+        makeRoomForPictures(para, pictures);
     }
 
     /**
      * Appends one Word run per text-carrying inline run, each in its own style
      * and falling back to {@code style} when it has none — and, for a chip, on the
      * fill it was given: a badge inside a list item is a badge for the same reason
-     * it is one inside a paragraph.
+     * it is one inside a paragraph. A picture or an icon among them is placed as it is in a
+     * paragraph, from the list's measure of its line.
+     *
+     * @return how far the pictures written reach, or {@link PictureReach#NONE}
      */
-    private void writeInlineTextRuns(XWPFParagraph para, DocumentTextStyle style,
-                                     List<InlineRun> runs, String path) {
+    private PictureReach writeInlineTextRuns(XWPFParagraph para, DocumentTextStyle style,
+                                       List<InlineRun> runs, String path,
+                                       java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line) {
+        PictureReach pictures = PictureReach.NONE;
         for (InlineRun run : runs) {
             InlineTextRun text = textOf(run);
             if (text == null) {
+                pictures = pictures.max(writeInlinePicture(para, run, null, path, line));
                 continue;
             }
             // A list item's run can carry a link, and it used to be written as plain text:
@@ -1649,6 +1665,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             applyInlineBackground(docRun, backgroundOf(run), path);
             docRun.setText(text.text() == null ? "" : text.text());
         }
+        return pictures;
     }
 
     /**
@@ -2643,10 +2660,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node, boolean rightToLeft) {
         warnDroppedInlineRuns(node);
         String path = layout.pathOf(node);
+        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(node);
         boolean wroteARun = false;
+        PictureReach pictures = PictureReach.NONE;
         for (InlineRun run : node.inlineRuns()) {
             InlineTextRun text = textOf(run);
             if (text == null) {
+                PictureReach reach = writeInlinePicture(para, run, node.linkTarget(), path, line);
+                if (reach != null) {
+                    wroteARun = true;
+                    pictures = pictures.max(reach);
+                }
                 continue;
             }
             // A run's own link wins over the paragraph's: a sentence with one linked phrase
@@ -2666,6 +2690,201 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             applyRunDirection(docRun, rightToLeft);
             docRun.setText(node.text() == null ? "" : node.text());
         }
+        makeRoomForPictures(para, pictures);
+    }
+
+    /**
+     * Lets a line hold the pictures in it (see {@link PictureReach}).
+     *
+     * <p>A paragraph whose pictures stay within its text keeps its exact height. One holding a
+     * picture that rises above the text is written with its lines <em>at least</em> the
+     * height the picture reaches instead: the editor then grows the line to the picture rather
+     * than clip it, whichever editor it is and wherever it puts its baseline, and where the
+     * picture fits the line is the page's. What that costs: Word has one line height for a
+     * paragraph, so every line of it is then at least the picture's reach, and otherwise the
+     * editor's own measure of its text, which in LibreOffice is taller than the page's —
+     * where the page makes only the line holding the picture taller. A paragraph written with
+     * no exact height — a page zone's, one with no layout — grows to its pictures on its own
+     * and is left alone.</p>
+     */
+    private static void makeRoomForPictures(XWPFParagraph para, PictureReach pictures) {
+        CTPPr properties = para.getCTP().getPPr();
+        if (pictures == null || !(pictures.reach() > 0) || properties == null || !properties.isSetSpacing()) {
+            return;
+        }
+        CTSpacing spacing = properties.getSpacing();
+        if (!spacing.isSetLineRule() || spacing.getLineRule() != STLineSpacingRule.EXACT) {
+            return;
+        }
+        Long current = writtenTwips(spacing.getLine());
+        long wanted = Math.round(pictures.reach() * POINT_TO_TWIP);
+        long line = current == null ? wanted : Math.max(current, wanted);
+        if (pictures.overText()) {
+            spacing.setLineRule(STLineSpacingRule.AT_LEAST);
+        }
+        spacing.setLine(BigInteger.valueOf(line));
+    }
+
+    /**
+     * Writes an inline picture or icon where it sits in the line, as a picture in its own run.
+     *
+     * <p>Both were dropped, so a contact line lost its phone and mail icons and a sentence its
+     * emoji. A picture is written from its bytes; an SVG icon is drawn into a transparent
+     * picture from the same layers the layout resolves ({@link
+     * com.demcha.compose.document.layout.InlineSvgLayers}) by the raster the PPTX backend uses
+     * ({@link com.demcha.compose.document.backend.fixed.pdf.handlers.InlineSvgRasters}), so it
+     * looks as it does on the page; the text an icon stands for — an emoji's — is the picture's
+     * description, and the report says it is a picture rather than a character. A picture
+     * stands on the line's baseline in Word, so it is raised or lowered to where the page's
+     * alignment puts it, from the layout's measure of the line.</p>
+     *
+     * @return how far above the line's bottom the picture reaches — its height where the line
+     *         is unmeasured — or {@code null} for a run this does not draw
+     */
+    private PictureReach writeInlinePicture(XWPFParagraph para, InlineRun run, DocumentLinkTarget fallbackLink,
+                                      String path,
+                                      java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line) {
+        byte[] bytes;
+        double width;
+        double height;
+        InlineImageAlignment alignment;
+        double baselineOffset;
+        DocumentLinkTarget link;
+        String description = null;
+        if (run instanceof InlineImageRun image) {
+            bytes = NodeDefinitionSupport.toImageData(image.imageData()).getBytes();
+            width = image.width();
+            height = image.height();
+            alignment = image.alignment();
+            baselineOffset = image.baselineOffset();
+            link = image.linkTarget();
+        } else if (run instanceof InlineSvgRun svg) {
+            bytes = InlineSvgRasters.rasterize(InlineSvgLayers.of(svg.icon(), svg.width()),
+                    svg.width(), svg.height()).getBytes();
+            width = svg.width();
+            height = svg.height();
+            alignment = svg.alignment();
+            baselineOffset = svg.baselineOffset();
+            link = svg.linkTarget();
+            description = svg.icon().text();
+        } else {
+            return null;
+        }
+        if (bytes.length == 0) {
+            report.add(DocxExportReport.Severity.DROPPED, "inline image", path,
+                    "the picture's data is empty, so there is nothing to write");
+            return null;
+        }
+        XWPFRun picture = newRun(para, link != null ? link : fallbackLink);
+        try (InputStream stream = new java.io.ByteArrayInputStream(bytes)) {
+            picture.addPicture(stream, pictureType(bytes), "inline",
+                    Units.toEMU(width), Units.toEMU(height));
+        } catch (Exception failure) {
+            throw new IllegalStateException("could not write an inline picture", failure);
+        }
+        // POI describes a picture by the file name it is handed, which a screen reader then
+        // reads out; the description is the text the icon stands for, or nothing.
+        String alt = description == null ? "" : description;
+        picture.getCTR().getDrawingArray(0).getInlineArray(0).getDocPr().setDescr(alt);
+        picture.getEmbeddedPictures().get(0).getCTPicture().getNvPicPr().getCNvPr().setDescr(alt);
+        if (description != null && !description.isBlank()) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "inline icon", path,
+                    "drawn as a picture, as on the page; the text it stands for (" + description
+                    + ") is the picture's description rather than a character in the line");
+        }
+        if (line.isEmpty()) {
+            return new PictureReach(height, false);
+        }
+        double bottom = inlineBottomFromBaseline(alignment, baselineOffset, height, line.get());
+        long raise = Math.round(bottom * 2);
+        if (raise != 0) {
+            CTRPr properties = picture.getCTR().isSetRPr() ? picture.getCTR().getRPr() : picture.getCTR().addNewRPr();
+            properties.addNewPosition().setVal(BigInteger.valueOf(raise));
+        }
+        return PictureReach.of(bottom, height, line.get());
+    }
+
+    /**
+     * How far a line's pictures reach above its bottom, and whether any leaves its text.
+     *
+     * <p>A picture within the text's height sits inside the line as the page measured it and
+     * needs nothing. One that rises above the text's ascent, or hangs below its descent, is
+     * where an exact line clips: the editor sets its own descent and line gap below the
+     * baseline and cuts what passes the line's edges. Measured in LibreOffice, a 14pt icon
+     * centred in a list line over 9pt text lost its top at the page's 14pt and at 16.35pt and
+     * met the line's top only at 17.6pt — each point of line height raising it 0.8pt, a rule of
+     * the editor's own and not one to guess at.</p>
+     *
+     * <p>Where the picture stands is not the same in both editors: Word moves it by
+     * {@code w:position}, and LibreOffice ignores that on a picture and stands it on the
+     * baseline — measured, a picture written at 0, −2, −10 and +10pt stood in one place. So
+     * its top is taken as the higher of the two, and a 12pt icon the page centres on a 14pt
+     * line — below the text's ascent where Word puts it, above it on the baseline — counts as
+     * rising: in LibreOffice it lost 1.7pt of its top at the exact height.</p>
+     *
+     * @param reach    how far above the line's bottom the highest picture reaches, in points
+     * @param overText whether a picture passes the text's ascent or descent
+     */
+    record PictureReach(double reach, boolean overText) {
+
+        /** No picture written. */
+        static final PictureReach NONE = new PictureReach(0, false);
+
+        static PictureReach of(double bottomFromBaseline, double height,
+                               com.demcha.compose.document.layout.payloads.ParagraphLine line) {
+            double descent = line.baselineOffsetFromBottom();
+            // Word's placement, and LibreOffice's on the baseline.
+            double top = Math.max(bottomFromBaseline + height, height);
+            boolean passes = top > line.textAscent() || -bottomFromBaseline > descent;
+            return new PictureReach(descent + top, passes);
+        }
+
+        PictureReach max(PictureReach other) {
+            return other == null ? this
+                    : new PictureReach(Math.max(reach, other.reach), overText || other.overText);
+        }
+    }
+
+    /**
+     * How far above the line's baseline the page puts an inline picture's bottom edge — the
+     * rule {@code PdfParagraphFragmentRenderHandler} draws by, measured from the baseline,
+     * which is where Word stands the picture before {@code w:position} moves it.
+     */
+    static double inlineBottomFromBaseline(InlineImageAlignment alignment, double baselineOffset, double height,
+                                           com.demcha.compose.document.layout.payloads.ParagraphLine line) {
+        double descent = line.baselineOffsetFromBottom();
+        double bottom = switch (alignment == null ? InlineImageAlignment.CENTER : alignment) {
+            case BASELINE -> 0;
+            case CENTER -> (line.lineHeight() - height) / 2.0 - descent;
+            case TEXT_TOP -> line.textAscent() - height;
+            case TEXT_BOTTOM -> -descent;
+        };
+        return bottom + baselineOffset;
+    }
+
+    /**
+     * One list item's first line, from the list's.
+     *
+     * <p>The layout measures a list's lines, and the export reads the first, so every item
+     * would otherwise be placed by the first item's line height — which the first item's
+     * pictures set. The text's metrics are the list's; the height is the one the layout gives
+     * a line, the taller of the text's and the item's tallest inline graphic.</p>
+     */
+    static com.demcha.compose.document.layout.payloads.ParagraphLine itemLine(
+            com.demcha.compose.document.layout.payloads.ParagraphLine listLine, List<InlineRun> runs) {
+        double height = listLine.textLineHeight();
+        for (InlineRun run : runs) {
+            if (run instanceof InlineImageRun image) {
+                height = Math.max(height, image.height());
+            } else if (run instanceof InlineSvgRun svg) {
+                height = Math.max(height, svg.height());
+            } else if (run instanceof com.demcha.compose.document.node.InlineShapeRun shape) {
+                height = Math.max(height, shape.height());
+            }
+        }
+        return new com.demcha.compose.document.layout.payloads.ParagraphLine(listLine.text(), listLine.width(),
+                height, listLine.textLineHeight(), listLine.textAscent(), listLine.baselineOffsetFromBottom(),
+                listLine.spans(), listLine.visualOrder());
     }
 
     /**

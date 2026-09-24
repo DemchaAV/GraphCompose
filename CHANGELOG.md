@@ -28,8 +28,10 @@ follow semantic versioning; release dates are ISO 8601.
   between the words, at its size, inside its link, raised or lowered by `w:position` to
   where the page's alignment puts it — in a paragraph and in a list item alike, each item by
   its own line's height. Word honours that on a picture; LibreOffice does not, so there a
-  picture stands on the baseline, higher than on the page by as much as the page lowers it
-  — up to the text's descent for a centred icon as tall as its line. The editor clips a
+  picture stands on the baseline, off by as much as the page moves it — up to the text's
+  descent for a centred icon as tall as its line — except an icon or emoji the page raises,
+  which carries the rise itself (below); an author's own picture is always moved by
+  `w:position`. The editor clips a
   picture to an exact line height and places the baseline in it by its own rule (measured
   in LibreOffice: a 14pt icon centred over 9pt text lost its top up to a 17.6pt line), so a
   paragraph holding a picture that leaves its text — past the ascent or the descent, where
@@ -54,9 +56,22 @@ follow semantic versioning; release dates are ISO 8601.
   the outline, fill and stroke the page draws — every outline kind, each layer centred in
   the run's box as a checkmark sits in its frame — and placed where the page's alignment
   puts it. The page draws a stroke centred on the outline, half of it outside the run's box,
-  so the picture takes that half on every side and is lowered by it: the outline stands
-  where the page has it, and a stroked shape takes its stroke's width more room in the line.
-  No inline run the model has is dropped by the export any longer.
+  and the pixels that smooth an edge lie just past it, so the picture takes that half-stroke
+  and a pixel on every side and is lowered by it: the outline stands where the page has it
+  and no edge is cut — a 10pt chevron had come out 9.96pt tall in LibreOffice. The margin is
+  measured on the stroked ink, so a sharp corner's miter, which reaches past half the
+  stroke, is kept too. A list marker that draws a disc is its picture, followed by the space
+  a text marker gets. No kind of inline run is dropped by the export any longer.
+
+- **A drawn picture the page raises stands where the page puts it in LibreOffice too.**
+  LibreOffice ignores `w:position` on a picture and stands it on the baseline, so a 3pt
+  separator dot the page centres two points above the baseline came out on it. A picture the
+  export draws itself — a shape, an SVG icon, an emoji — now carries such a rise as
+  transparent rows below what it shows and is written with no `w:position`, so it stands
+  where the page puts it in either editor: measured in LibreOffice, the separator within
+  0.06pt of the page and a 6pt status dot within 0.06pt. One the page lowers below the
+  baseline keeps `w:position`, which only Word honours; an author's own picture is written
+  as given.
 
 - **A rule reaches Word as Word's own.** The DOCX export dropped every `LineNode` and
   standalone `ShapeNode`, so the rules a template draws under a heading or between entries —

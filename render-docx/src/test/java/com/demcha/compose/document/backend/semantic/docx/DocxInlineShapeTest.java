@@ -39,7 +39,9 @@ class DocxInlineShapeTest {
 
             assertThat(runs).extracting(XWPFRun::text).containsExactly("Open", "", "Paid");
             XWPFPicture dot = runs.get(1).getEmbeddedPictures().get(0);
-            assertThat(dot.getCTPicture().getSpPr().getXfrm().getExt().getCx()).isEqualTo(Units.toEMU(6));
+            assertThat(dot.getCTPicture().getSpPr().getXfrm().getExt().getCx())
+                    .as("the dot and a pixel's room either side, so its rim is not cut")
+                    .isEqualTo(Units.toEMU(6 + 2 * DocxShapePictures.EDGE));
             BufferedImage image = pixels(dot);
             assertThat(image.getRGB(0, 0) >>> 24).as("the corner outside the circle shows the page").isZero();
             assertThat(image.getRGB(image.getWidth() / 2, image.getHeight() / 2) & 0xFFFFFF).isEqualTo(0x1A5694);
@@ -59,18 +61,112 @@ class DocxInlineShapeTest {
     }
 
     @Test
-    void aStrokedShapeIsAsLargeAsItsStrokeAndStandsWhereThePageDrawsItsOutline() throws Exception {
+    void aStrokedShapeIsAsWideAsItsStroke() throws Exception {
         // The page draws a stroke centred on the outline, half of it outside the run's box: the
-        // picture takes that half on every side and is lowered by it, so the outline stays put.
-        try (XWPFDocument plain = export(page -> page.addParagraph(p -> p.inlineText("A ").dot(8, INK)));
-             XWPFDocument stroked = export(page -> page.addParagraph(p -> p
-                     .inlineText("A ").dot(8, INK, DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 2))))) {
-            XWPFRun plainDot = plain.getParagraphs().get(0).getRuns().get(1);
-            XWPFRun strokedDot = stroked.getParagraphs().get(0).getRuns().get(1);
+        // picture takes that half on every side, so the ring is not cut.
+        try (XWPFDocument stroked = export(page -> page.addParagraph(p -> p
+                .inlineText("A ").dot(8, INK, DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 2))))) {
+            XWPFPicture ring = stroked.getParagraphs().get(0).getRuns().get(1).getEmbeddedPictures().get(0);
 
-            assertThat(strokedDot.getEmbeddedPictures().get(0).getCTPicture().getSpPr().getXfrm().getExt().getCy())
-                    .isEqualTo(Units.toEMU(10));
-            assertThat(position(strokedDot)).as("a point lower, in half-points").isEqualTo(position(plainDot) - 2);
+            assertThat(ring.getCTPicture().getSpPr().getXfrm().getExt().getCx())
+                    .isEqualTo(Units.toEMU(10 + 2 * DocxShapePictures.EDGE));
+        }
+    }
+
+    @Test
+    void aShapeThePageRaisesCarriesTheRiseAndNeedsNoPosition() throws Exception {
+        // A separator dot centred on a line sits above the baseline. LibreOffice stands every
+        // picture on the baseline, ignoring w:position, so the rise is empty rows under the dot.
+        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
+                .inlineText("London").dot(3, INK).inlineText("Berlin")))) {
+            XWPFRun separator = document.getParagraphs().get(0).getRuns().get(1);
+            XWPFPicture dot = separator.getEmbeddedPictures().get(0);
+            BufferedImage image = pixels(dot);
+
+            assertThat(Math.abs(position(separator))).as("a rounding at most").isLessThanOrEqualTo(1);
+            assertThat(Units.toPoints(dot.getCTPicture().getSpPr().getXfrm().getExt().getCy()))
+                    .as("taller than the dot by its rise")
+                    .isGreaterThan(3 + 2 * DocxShapePictures.EDGE + 1);
+            assertThat(image.getRGB(image.getWidth() / 2, image.getHeight() - 1) >>> 24)
+                    .as("the rise is empty").isZero();
+            int dotMiddle = (int) Math.round((DocxShapePictures.EDGE + 1.5) * image.getHeight()
+                    / Units.toPoints(dot.getCTPicture().getSpPr().getXfrm().getExt().getCy()));
+            assertThat(image.getRGB(image.getWidth() / 2, dotMiddle) & 0xFFFFFF)
+                    .as("the dot, at the top of the picture").isEqualTo(0x1A5694);
+        }
+    }
+
+    @Test
+    void anIconThePageRaisesCarriesTheRiseToo() throws Exception {
+        com.demcha.compose.document.svg.SvgIcon icon = com.demcha.compose.document.svg.SvgIcon.parse(
+                "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='12'/></svg>");
+        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
+                .inlineText("Call ").inlineSvgIcon(icon, 4).inlineText(" now")))) {
+            XWPFRun run = document.getParagraphs().get(0).getRuns().get(1);
+
+            assertThat(Math.abs(position(run))).isLessThanOrEqualTo(1);
+            assertThat(Units.toPoints(run.getEmbeddedPictures().get(0).getCTPicture().getSpPr().getXfrm().getExt().getCy()))
+                    .isGreaterThan(4 + 1);
+        }
+    }
+
+    @Test
+    void aShapeInsideItsTextLeavesTheLineExactThoughItsPictureHasAFrame() throws Exception {
+        // Set on the text's bottom, a small dot is inside the text; the pixel of empty frame
+        // around it is not ink, and counted as ink it had put the line at "at least".
+        try (XWPFDocument plain = export(page -> page.addParagraph(p -> p.inlineText("Plain text")));
+             XWPFDocument dotted = export(page -> page.addParagraph(p -> p
+                     .inlineText("Plain ")
+                     .shape(ShapeOutline.circle(4), INK, null,
+                             com.demcha.compose.document.node.InlineImageAlignment.TEXT_BOTTOM, 0, null)
+                     .inlineText(" text")))) {
+            var spacing = dotted.getParagraphs().get(0).getCTP().getPPr().getSpacing();
+
+            assertThat(spacing.getLineRule())
+                    .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
+            assertThat(DocxTwips.of(spacing.getLine()))
+                    .isEqualTo(DocxTwips.of(plain.getParagraphs().get(0).getCTP().getPPr().getSpacing().getLine()));
+        }
+    }
+
+    @Test
+    void aSharpStrokedCornerReachesFartherThanHalfItsStroke() {
+        // The miter join runs out to a star's point, so half the stroke would cut its tips.
+        var star = new com.demcha.compose.document.node.ShapeLayer(ShapeOutline.star(10, 10), null,
+                DocumentStroke.of(INK, 2));
+        var circle = new com.demcha.compose.document.node.ShapeLayer(ShapeOutline.circle(10), null,
+                DocumentStroke.of(INK, 2));
+
+        assertThat(DocxShapePictures.reachPastTheBox(star, 10, 10)).isGreaterThan(1.5);
+        assertThat(DocxShapePictures.reachPastTheBox(circle, 10, 10)).isCloseTo(1.0,
+                org.assertj.core.api.Assertions.within(0.01));
+    }
+
+    @Test
+    void aShapeThePageLowersKeepsItsPositionAndCarriesNothing() throws Exception {
+        // A checkbox taller than its text reaches below the baseline, where no empty rows
+        // can take it: Word moves it by w:position, and the picture is its own size.
+        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
+                .checkbox(16, true, INK).inlineText(" Signed")))) {
+            XWPFRun box = document.getParagraphs().get(0).getRuns().get(0);
+
+            assertThat(position(box)).isNegative();
+            assertThat(Units.toPoints(box.getEmbeddedPictures().get(0).getCTPicture().getSpPr().getXfrm().getExt().getCy()))
+                    .isLessThan(16 + 3);
+        }
+    }
+
+    @Test
+    void anAuthorsOwnPictureIsWrittenAsGivenAndMovedByPosition() throws Exception {
+        byte[] png = pngOf(new BufferedImage(8, 8, BufferedImage.TYPE_INT_RGB));
+        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
+                .inlineText("A ")
+                .inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png), 4, 4,
+                        com.demcha.compose.document.node.InlineImageAlignment.BASELINE, 3, null)))) {
+            XWPFRun picture = document.getParagraphs().get(0).getRuns().get(1);
+
+            assertThat(position(picture)).isEqualTo(6);
+            assertThat(picture.getEmbeddedPictures().get(0).getPictureData().getData()).isEqualTo(png);
         }
     }
 
@@ -82,7 +178,8 @@ class DocxInlineShapeTest {
                 .inlineText("A ")
                 .shape(ShapeOutline.circle(8), INK, DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 2),
                         com.demcha.compose.document.node.InlineImageAlignment.BASELINE, 0, null)))) {
-            assertThat(position(document.getParagraphs().get(0).getRuns().get(1))).isEqualTo(-2);
+            assertThat(position(document.getParagraphs().get(0).getRuns().get(1)))
+                    .isEqualTo(Math.round(-(1 + DocxShapePictures.EDGE) * 2));
         }
     }
 
@@ -111,6 +208,19 @@ class DocxInlineShapeTest {
                 .startsWith(DocumentPathSegment.moveTo(0.2, 0));
         assertThat(DocxShapePictures.unitSegments(ShapeOutline.triangle(10, 10)))
                 .last().isEqualTo(DocumentPathSegment.close());
+        // Each corner by its own radius: bottom-left 1 of 10 wide, bottom-right 3.
+        assertThat(DocxShapePictures.unitSegments(new ShapeOutline.RoundedRectanglePerCorner(10, 10,
+                new com.demcha.compose.document.style.DocumentCornerRadius(0, 0, 3, 1))))
+                .startsWith(DocumentPathSegment.moveTo(0.1, 0), DocumentPathSegment.lineTo(0.7, 0));
+        List<DocumentPathSegment> drawn = List.of(DocumentPathSegment.moveTo(0, 0),
+                DocumentPathSegment.lineTo(1, 1), DocumentPathSegment.close());
+        assertThat(DocxShapePictures.unitSegments(new ShapeOutline.Path(10, 10, drawn))).isEqualTo(drawn);
+    }
+
+    private static byte[] pngOf(BufferedImage image) throws Exception {
+        java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+        ImageIO.write(image, "png", bytes);
+        return bytes.toByteArray();
     }
 
     private static BufferedImage pixels(XWPFPicture picture) throws Exception {

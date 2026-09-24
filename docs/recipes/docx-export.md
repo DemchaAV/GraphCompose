@@ -335,9 +335,14 @@ page.addParagraph(p -> p
   put it, from the layout's measure of the paragraph's first line — in a list, the list's
   text on a line as tall as the item's own tallest picture. Word honours that on a picture;
   LibreOffice does not — measured, a picture written at 0, −2, −10 and +10pt stood in the
-  same place — so there a picture always stands on the baseline, higher than on the page by
-  as much as the page lowers it: up to the text's descent for a centred icon as tall as its
-  line.
+  same place, on the baseline. So a picture this export draws itself — an icon, an emoji, a
+  shape — that the page raises above the baseline carries the rise as transparent rows
+  below what it shows and needs no `w:position`: it stands where the page puts it in both
+  editors (measured in LibreOffice, a 3pt separator dot within 0.06pt of the page). One the
+  page lowers below the baseline — an arrow or a checkbox as tall as its line, a 12pt icon
+  on a line of 14pt text — keeps `w:position`, and in LibreOffice stands on the baseline,
+  higher than on the page by as much as the page lowers it: 1.5 to 3pt for those. An
+  author's own picture is written as given and always moved by `w:position`.
 - **Line height.** Lines are written at an exact height, and the editor clips a picture
   to it — where in that height it puts the baseline is its own, so no fixed room is
   enough: measured in LibreOffice, a 14pt icon centred over 9pt text lost its top up to
@@ -361,9 +366,12 @@ page.addParagraph(p -> p
   any `shape(...)` — is drawn into a transparent picture the same way, from the outline,
   fill and stroke the page draws, each layer centred in the run's box as the page centres a
   checkmark in its frame. The page draws a stroke centred on the outline, so half of it lies
-  outside the run's box; the picture takes that half on every side and is lowered by it, so
-  the outline stands where the page has it and a stroked shape takes its stroke's width more
-  room in the line than on the page.
+  outside the run's box — more at a sharp corner, where the miter runs out to the point —
+  and the pixels that smooth an edge lie just past it; the picture takes as far as that ink
+  reaches, and a pixel (a quarter point), on every side and is lowered by it, so the
+  outline stands where the page has it, no edge is cut, and a shape takes that much more
+  room in the line than on the page. A list marker that draws a disc is written the same
+  way, followed by the space a text marker gets.
 
 ## What a chip keeps and loses
 

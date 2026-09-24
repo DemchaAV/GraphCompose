@@ -10,6 +10,9 @@ import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.document.style.ShapePoint;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 
+import java.awt.BasicStroke;
+import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,15 +25,24 @@ import java.util.List;
  * path segments, and each layer is centred in the run's box, as the page centres a checkmark
  * inside its checkbox.</p>
  *
- * <p>The page draws a stroke centred on the outline, so half of it lies outside the run's
- * box. A picture is clipped to its own edges, so it is that half-stroke larger on every
- * side; the caller lowers it by the same amount, keeping the outline where the page has
- * it.</p>
+ * <p>The page draws a stroke centred on the outline, so part of it lies outside the run's
+ * box — half its width past an edge, more at a sharp corner — and the pixels that smooth an
+ * edge lie just past that. A picture is clipped to its own edges, so it is as much larger on
+ * every side as its ink reaches ({@link #reachPastTheBox}) and a pixel more; the caller
+ * lowers it by the same amount, keeping the outline where the page has it.</p>
  */
 final class DocxShapePictures {
 
     /** Where a quarter circle's control points sit, as a fraction of its radius. */
     private static final double KAPPA = 0.5522847498;
+
+    /**
+     * Empty room around the drawing, in points — a pixel of the raster, which draws four a
+     * point. A shape reaches its box's edges, and the raster clips to them, so the shaded
+     * pixels that smooth an edge were cut off: measured in LibreOffice, a 10pt chevron came
+     * out 9.96pt tall and a dot's rim flattened where it met the picture's edge.
+     */
+    static final double EDGE = 0.25;
 
     private DocxShapePictures() {
     }
@@ -41,7 +53,8 @@ final class DocxShapePictures {
      * @param png      the picture
      * @param width    its width in points, the run's and the overhang either side
      * @param height   its height in points, the same
-     * @param overhang how far the widest stroke reaches past the run's box, in points
+     * @param overhang how far the picture reaches past the run's box, in points — the farthest
+     *                 its ink reaches and {@link #EDGE}
      */
     record Picture(byte[] png, double width, double height, double overhang) {
     }
@@ -57,10 +70,9 @@ final class DocxShapePictures {
         double height = run.height();
         double overhang = 0;
         for (ShapeLayer layer : run.layers()) {
-            if (layer.stroke() != null) {
-                overhang = Math.max(overhang, layer.stroke().width() / 2.0);
-            }
+            overhang = Math.max(overhang, reachPastTheBox(layer, width, height));
         }
+        overhang += EDGE;
         double boxWidth = width + 2 * overhang;
         double boxHeight = height + 2 * overhang;
         List<ResolvedSvgLayer> layers = new ArrayList<>(run.layers().size());
@@ -79,6 +91,31 @@ final class DocxShapePictures {
         }
         byte[] png = InlineSvgRasters.rasterize(layers, boxWidth, boxHeight).getBytes();
         return new Picture(png, boxWidth, boxHeight, overhang);
+    }
+
+    /**
+     * How far a layer's ink reaches past the run's box, in points, on its farthest side.
+     *
+     * <p>Measured on the ink the raster draws rather than worked out: half a stroke past a
+     * straight edge, but further at a sharp corner, where the page's miter join runs out to
+     * the corner's point — a stroked star's tip reaches over twice as far — and wherever a
+     * path's curves leave the box its points are drawn in.</p>
+     */
+    static double reachPastTheBox(ShapeLayer layer, double width, double height) {
+        ShapeOutline outline = layer.outline();
+        Path2D path = InlineSvgRasters.path(unitSegments(outline),
+                new Rectangle2D.Double(0, 0, outline.width(), outline.height()));
+        Rectangle2D ink = path.getBounds2D();
+        if (layer.stroke() != null && layer.stroke().width() > 0) {
+            // The join, cap and miter limit the raster strokes with.
+            ink = new BasicStroke((float) layer.stroke().width(), BasicStroke.CAP_BUTT,
+                    BasicStroke.JOIN_MITER, 10.0f).createStrokedShape(path).getBounds2D();
+        }
+        double left = (width - outline.width()) / 2.0;
+        double top = (height - outline.height()) / 2.0;
+        return Math.max(0, Math.max(
+                Math.max(-(left + ink.getMinX()), left + ink.getMaxX() - width),
+                Math.max(-(top + ink.getMinY()), top + ink.getMaxY() - height)));
     }
 
     /**

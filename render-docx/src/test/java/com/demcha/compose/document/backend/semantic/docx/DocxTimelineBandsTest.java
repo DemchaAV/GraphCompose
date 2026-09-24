@@ -57,6 +57,79 @@ class DocxTimelineBandsTest {
     }
 
     @Test
+    void everyEntrysBodyIsIndentedAndWhatFollowsTheTimelineIsNot() throws Exception {
+        // The indent belongs to the body alone: the second entry's body takes it too, and the
+        // paragraph after the timeline is back at the page's edge.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(360, 400)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.pageFlow(flow -> flow
+                    .addTimeline(t -> t
+                            .markerOnRail()
+                            .entry(TimelineMarker.dot(8, DocumentColor.rgb(0x1A, 0x56, 0x94)), e -> e
+                                    .title("First").body("First body."))
+                            .entry(TimelineMarker.dot(8, DocumentColor.rgb(0x1A, 0x56, 0x94)), e -> e
+                                    .title("Second").body("Second body.")))
+                    .addParagraph("After the timeline."));
+            byte[] docx = session.export(new DocxSemanticBackend());
+
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+                assertThat(leftIndent(document, "Second body."))
+                        .isEqualTo(leftIndent(document, "First body.")).isPositive();
+                assertThat(rightIndent(document, "First body.")).as("the column runs to the page's edge").isZero();
+                assertThat(leftIndent(document, "After the timeline.")).isZero();
+            }
+        }
+    }
+
+    @Test
+    void aTimelineInsideAPanelIndentsItsBodiesWithinThePanel() throws Exception {
+        // In a panel the text is written in the panel's cell, whose own margin is the panel's
+        // padding; the body is indented from there by the same column offset.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(360, 400)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.pageFlow(flow -> flow.addSection(panel -> panel
+                    .fillColor(DocumentColor.rgb(0xF4, 0xF4, 0xF4))
+                    .padding(DocumentInsets.of(8))
+                    .addTimeline(t -> t
+                            .markerOnRail()
+                            .entry(TimelineMarker.dot(8, DocumentColor.rgb(0x1A, 0x56, 0x94)), e -> e
+                                    .title("Senior Engineer").body("Led the layout engine rewrite.")))));
+            byte[] docx = session.export(new DocxSemanticBackend());
+
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx));
+                 XWPFWordExtractor extractor = new XWPFWordExtractor(document)) {
+                assertThat(extractor.getText()).contains("Senior Engineer").contains("Led the layout engine rewrite.");
+                var cellBody = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().stream()
+                        .filter(paragraph -> paragraph.getText().contains("Led the layout"))
+                        .findFirst().orElseThrow();
+                assertThat(DocxTwips.of(cellBody.getCTP().getPPr().getInd().getLeft())).isPositive();
+            }
+        }
+    }
+
+    private static long leftIndent(XWPFDocument document, String text) {
+        var ind = paragraphWith(document, text).getCTP().getPPr() == null ? null
+                : paragraphWith(document, text).getCTP().getPPr().getInd();
+        return ind == null || !ind.isSetLeft() ? 0 : DocxTwips.of(ind.getLeft());
+    }
+
+    private static long rightIndent(XWPFDocument document, String text) {
+        var ind = paragraphWith(document, text).getCTP().getPPr() == null ? null
+                : paragraphWith(document, text).getCTP().getPPr().getInd();
+        return ind == null || !ind.isSetRight() ? 0 : DocxTwips.of(ind.getRight());
+    }
+
+    private static org.apache.poi.xwpf.usermodel.XWPFParagraph paragraphWith(XWPFDocument document, String text) {
+        return document.getParagraphs().stream()
+                .filter(paragraph -> paragraph.getText().contains(text))
+                .findFirst().orElseThrow();
+    }
+
+    @Test
     void anEntrysBodyIsIndentedToTheColumnThePageLaysItOutIn() throws Exception {
         double margin = 20;
         try (DocumentSession session = GraphCompose.document()

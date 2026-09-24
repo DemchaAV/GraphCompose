@@ -4579,11 +4579,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Whether a node exists only to say something about geometry, and so has nothing of its
      * own to write here.
      *
-     * <p>A layout anchor reports where its child landed and an alignment says where in the
-     * available width to put it. Word lays text out itself, so neither has an analogue —
-     * but both have exactly one child, and dropping a wrapper takes the content with it.
-     * The two walkers below ask this rather than each keeping its own list, because a
-     * wrapper missing from one of them loses a subtree the other would have kept.</p>
+     * <p>A layout anchor reports where its child landed, an alignment says where in the
+     * available width to put it, and a horizontal-bands wrapper publishes the columns of the
+     * row it holds. Word lays text out itself, so none has an analogue — but each has exactly
+     * one child, and dropping a wrapper takes the content with it: a timeline with its
+     * markers on the rail lost every entry's header that way.</p>
      *
      * @param node the node being written
      * @return true when the node itself writes nothing and its children should be written

@@ -18,6 +18,18 @@ follow semantic versioning; release dates are ISO 8601.
   the column the page lays it out in, within 0.1pt. The rail and the markers are drawing,
   and are still not written.
 
+- **A right-to-left paragraph in a padded container is held in on the page's sides in
+  Word.** The DOCX export wrote a container's margin and padding, and a rail timeline
+  body's column, as `w:ind` `left` and `right` whatever the paragraph's direction, and in a
+  `w:bidi` paragraph Word and LibreOffice read those as the start and end of the flow — the
+  same reading they give `w:jc`. A Hebrew paragraph in a section padded 90pt on the left
+  ended 90pt short of the right margin in both editors, and a rail timeline's Hebrew body
+  stopped short of it by the rail's column. The two sides are now swapped for a
+  right-to-left paragraph, and measured glyph by glyph against the page the text lands
+  within 0.15pt in both LibreOffice and Word. A left-to-right paragraph is written
+  byte for byte as before; tables, whose `w:tblInd` and cell margins are page sides in a
+  table the export always lays out left to right, are unchanged.
+
 - **A table cell's `lineSpacing` is space between its lines.** The layout sized a row with
   it — `lines × lineHeight + (lines − 1) × lineSpacing` — and the PDF and PPTX renderers set
   the lines a line height apart regardless, so the row came out taller than its text by the

@@ -2445,6 +2445,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>Only the sides a container asked for are written, and none when no container asked,
      * so a paragraph outside any padded container is written as it always was.</p>
+     *
+     * <p>The sides are written as the page's. A right-to-left paragraph has them turned to
+     * its flow when its direction is written, in {@link #applyDirection}.</p>
      */
     private void applyInset(XWPFParagraph para) {
         if (insetLeft <= 0 && insetRight <= 0) {
@@ -2633,6 +2636,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * is settled by {@link #applyParagraphProperties}, so the mark and the alignment are
      * decided from one answer rather than two.</p>
      *
+     * <p>The mark also changes what the paragraph's indents mean, so they are turned round
+     * with it. Word and LibreOffice both read {@code w:ind}'s {@code left} and {@code right}
+     * as the start and end of the flow, as they read {@code w:jc}: in a {@code w:bidi}
+     * paragraph {@code left} is the right-hand side. The containers around the paragraph
+     * hold it in by page sides, and {@link #applyInset} writes them as it finds them, so a
+     * right-to-left paragraph in a section padded on the left came out pushed in from the
+     * right — the text short of the edge the page runs it to, by exactly that padding, in
+     * both editors. {@code w:start} and {@code w:end} are no way out: both editors read them
+     * as {@code left} and {@code right}, measured. The sides are turned once, as the mark is
+     * added, so every indent a paragraph carries has to be on it by then — the inset is,
+     * since a body paragraph is created with it.</p>
+     *
      * @param para        the Word paragraph
      * @param rightToLeft whether the page laid the paragraph out right to left
      */
@@ -2643,6 +2658,30 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         if (!properties.isSetBidi()) {
             properties.addNewBidi();
+            if (properties.isSetInd()) {
+                turnSidesToTheFlow(properties.getInd());
+            }
+        }
+    }
+
+    /**
+     * Swaps an indent written by page side into the start and end of a right-to-left flow.
+     *
+     * <p>Only the two sides move. A first-line or hanging indent is measured from the start
+     * of the flow already, and stays where it is.</p>
+     */
+    private static void turnSidesToTheFlow(CTInd indent) {
+        Object left = indent.isSetLeft() ? indent.getLeft() : null;
+        Object right = indent.isSetRight() ? indent.getRight() : null;
+        if (right != null) {
+            indent.setLeft(right);
+        } else if (left != null) {
+            indent.unsetLeft();
+        }
+        if (left != null) {
+            indent.setRight(left);
+        } else if (right != null) {
+            indent.unsetRight();
         }
     }
 

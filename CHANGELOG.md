@@ -8,6 +8,23 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
+  out as the layers of one stack, each inset to its band, so the name is drawn before the
+  sidebar. The DOCX export wrote the layers one after the other: the main column began below
+  the whole sidebar, and `CharcoalGold` ran to three pages in LibreOffice. A stack whose
+  layers are plain containers at its top-left corner, in bands that are either the same or
+  apart, is now written as one table row with a cell per band. Layers that share a band
+  follow one another in its cell, in the stack's order. A spacer placed level with content of
+  another layer of the same band only keeps that content's place, and is left out. The space
+  above a later layer's first block is the gap the page shows below the content before it,
+  not that layer's own padding a second time. In a column the layers no longer overlap
+  anything, so a divider in one is written as a rule. Measured in LibreOffice:
+  `CharcoalGold` (three pages before), `SidebarPortrait` and `SlateOrange` (two before) are
+  one page, as in the PDF. What the page draws inside another layer's fill comes after that
+  fill in Word: `SidebarPortrait`'s subtitle sits under its name strip rather than in it.
+  `NavySidebar` runs one line onto a second page: its experience entries put the date on a
+  line of its own.
+
 - **Page backgrounds reach Word.** `DocumentSession.pageBackgrounds(...)` paints fills under
   every page — a sidebar CV's dark column, an invoice's tinted band — and the DOCX export
   wrote none of them, so fourteen presets lost their page colour and a sidebar's white text

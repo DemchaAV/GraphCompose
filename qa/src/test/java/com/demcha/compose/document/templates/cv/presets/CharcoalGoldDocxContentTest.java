@@ -6,8 +6,13 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.IBody;
+import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -41,9 +46,11 @@ class CharcoalGoldDocxContentTest {
             }
             String word;
             try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
-                    session.export(new DocxSemanticBackend())));
-                 XWPFWordExtractor extractor = new XWPFWordExtractor(document)) {
-                word = extractor.getText();
+                    session.export(new DocxSemanticBackend())))) {
+                StringBuilder text = new StringBuilder(textOf(document));
+                document.getHeaderList().forEach(header -> text.append(textOf(header)));
+                document.getFooterList().forEach(footer -> text.append(textOf(footer)));
+                word = text.toString();
             }
 
             Set<String> missing = new LinkedHashSet<>(Arrays.asList(page.split("\\s+")));
@@ -51,5 +58,56 @@ class CharcoalGoldDocxContentTest {
             missing.removeIf(token -> token.codePoints().noneMatch(Character::isLetterOrDigit));
             assertThat(missing).as("words on the page and not in the Word file").isEmpty();
         }
+    }
+
+    /**
+     * The sidebar and the main column stand side by side, as the cells of one row.
+     *
+     * <p>The columns are the layers of one stack, drawn name first for the reading order. Written
+     * one after the other, the main column began below the whole sidebar and the one-page CV ran
+     * to three pages in LibreOffice. The name, drawn in a layer of its own, opens the main
+     * column's cell, and the stand-ins that keep its place on the page are not written.</p>
+     */
+    @Test
+    void theSidebarAndTheMainColumnAreTheCellsOfOneRow() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(DocumentPageSize.A4)
+                .margin(0f, 0f, 0f, 0f)
+                .create()) {
+            CharcoalGold.create().compose(session, CharcoalGoldFixtures.canonicalCv());
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                    session.export(new DocxSemanticBackend())))) {
+                var columns = document.getTables().get(0).getRow(0).getTableCells();
+
+                assertThat(columns).hasSize(2);
+                assertThat(textOf(columns.get(0))).contains("CONTACT", "EDUCATION")
+                        .doesNotContain("EXPERIENCE");
+                assertThat(textOf(columns.get(1))).startsWith("ANASTASIA")
+                        .contains("EXPERIENCE").doesNotContain("CONTACT");
+            }
+        }
+    }
+
+    /**
+     * The text of every paragraph in a body, a header or a footer, tables nested in cells
+     * included.
+     *
+     * <p>{@code XWPFWordExtractor} reads a cell's own paragraphs and not the tables nested in
+     * it, and in a column cell the section headings and the language rows are such tables.</p>
+     */
+    private static String textOf(IBody body) {
+        StringBuilder text = new StringBuilder();
+        for (IBodyElement element : body.getBodyElements()) {
+            if (element instanceof XWPFParagraph paragraph) {
+                text.append(paragraph.getText()).append('\n');
+            } else if (element instanceof XWPFTable table) {
+                for (XWPFTableRow row : table.getRows()) {
+                    for (XWPFTableCell cell : row.getTableCells()) {
+                        text.append(textOf(cell));
+                    }
+                }
+            }
+        }
+        return text.toString();
     }
 }

@@ -60,6 +60,28 @@ class DocxRowLayoutTest {
     }
 
     @Test
+    void theRowsVerticalAlignmentIsEveryCellsAndTheTopIsLeftToWord() throws Exception {
+        // A table of contents aligns its entries to the bottom so the leader, a line a point
+        // tall, sits on the text's baseline; in a cell left at Word's top it rode at the top.
+        for (var align : com.demcha.compose.document.node.RowVerticalAlign.values()) {
+            XWPFTable table = onlyTable(page -> page.addRow(r -> r
+                    .verticalAlign(align)
+                    .addParagraph(p -> p.text("Intro"))
+                    .addLine(line -> line.horizontal(100))));
+
+            for (var cell : table.getRow(0).getTableCells()) {
+                assertThat(cell.getVerticalAlignment())
+                        .as("%s", align)
+                        .isEqualTo(switch (align) {
+                            case TOP -> null;
+                            case CENTER -> org.apache.poi.xwpf.usermodel.XWPFTableCell.XWPFVertAlign.CENTER;
+                            case BOTTOM -> org.apache.poi.xwpf.usermodel.XWPFTableCell.XWPFVertAlign.BOTTOM;
+                        });
+            }
+        }
+    }
+
+    @Test
     void twoChildrenWithNothingStatedSplitTheWidthEvenly() throws Exception {
         // measureRow gives each child slotsTotal / n when there are neither columns nor
         // weights, whatever the children contain. Word's autofit instead sizes them to

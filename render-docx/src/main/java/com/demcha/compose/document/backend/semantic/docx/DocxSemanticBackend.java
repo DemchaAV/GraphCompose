@@ -36,6 +36,7 @@ import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.node.RowArrangement;
 import com.demcha.compose.document.node.RowNode;
+import com.demcha.compose.document.node.RowVerticalAlign;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTHyperlink;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import com.demcha.compose.document.node.SectionNode;
@@ -3940,8 +3941,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             } finally {
                 currentCellWidth = previous;
             }
+            applyRowVerticalAlign(cell, node.verticalAlign());
         }
         indentTable(table);
+    }
+
+    /**
+     * Writes where a row's children sit in its height.
+     *
+     * <p>The layout places a child shorter than its row at the row's top, middle or bottom,
+     * and a cell holds its content at the top unless told otherwise. A table of contents
+     * aligns its entries to the bottom so the leader — a line a point tall beside a line of
+     * text — sits on the text's baseline; without it the leader rode at the top of the
+     * entry. Top is Word's own default and is not written.</p>
+     */
+    private static void applyRowVerticalAlign(XWPFTableCell cell, RowVerticalAlign align) {
+        if (align == RowVerticalAlign.CENTER) {
+            cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
+        } else if (align == RowVerticalAlign.BOTTOM) {
+            cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.BOTTOM);
+        }
     }
 
     private void writeRowCellChild(XWPFTableCell cell, DocumentNode child) throws Exception {

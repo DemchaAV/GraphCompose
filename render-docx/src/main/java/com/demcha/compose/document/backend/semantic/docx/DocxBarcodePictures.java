@@ -4,14 +4,10 @@ import com.demcha.compose.document.backend.fixed.pdf.handlers.BarcodeMatrices;
 import com.demcha.compose.engine.components.content.barcode.BarcodeData;
 import com.google.zxing.common.BitMatrix;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.MemoryCacheImageOutputStream;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
 import java.awt.image.WritableRaster;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
@@ -54,7 +50,7 @@ final class DocxBarcodePictures {
             }
             raster.setPixels(0, y, row.length, 1, row);
         }
-        return encode(image);
+        return DocxPng.encode(image);
     }
 
     /** Index 0 is the background, index 1 the foreground, alpha included. */
@@ -64,18 +60,5 @@ final class DocxBarcodePictures {
                 new byte[]{(byte) background.getGreen(), (byte) foreground.getGreen()},
                 new byte[]{(byte) background.getBlue(), (byte) foreground.getBlue()},
                 new byte[]{(byte) background.getAlpha(), (byte) foreground.getAlpha()});
-    }
-
-    private static byte[] encode(BufferedImage image) throws IOException {
-        ImageWriter writer = ImageIO.getImageWritersByFormatName("png").next();
-        try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-             MemoryCacheImageOutputStream out = new MemoryCacheImageOutputStream(bytes)) {
-            writer.setOutput(out);
-            writer.write(image);
-            out.flush();
-            return bytes.toByteArray();
-        } finally {
-            writer.dispose();
-        }
     }
 }

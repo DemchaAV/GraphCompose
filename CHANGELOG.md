@@ -8,6 +8,26 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A container's `spacing` reaches Word, and a spacer is its height alone.** The layout puts
+  a section's or a container's `spacing` between each two of its children, and the DOCX
+  export wrote none of it, so a CV sidebar laid out with 9pt between its blocks came out
+  with them touching. It is now the space below one child and above the next. Before a page
+  break none is written, as the page ends there. After one the next page starts that far
+  down, which is where the layout starts it. A spacer was an empty paragraph at Word's own
+  line height, a line of text tall on top of the spacer's height: between two CV entries
+  held apart by a 4.5pt spacer, the page shows 16pt and LibreOffice drew 23. It is now held
+  to a tenth of a point.
+  - Measured in LibreOffice against the PDF over the sixteen CV presets and four sidebar
+    CVs, the mean vertical distance of a line from its place on the page falls from 105pt
+    to 2.9pt on `BoxedSections`, from 100 to 3.4 on `ClassicSerif`, from 118 to 7.3 on
+    `TimelineMinimal`, and from 130 to 47 on `SidebarPortrait`. Every preset but three now
+    has the PDF's page count.
+  - `MonogramSidebar` runs two lines onto a second page. Its monogram is a drawing and is
+    not written, and the letters in it stand about 60pt lower than on the page, a
+    difference that was there before this change and that the missing gaps used to hide.
+  - `CharcoalGold` stays at two pages because its sidebar's skill rows stand taller than on
+    the page. `NavySidebar` stays at two because its entries put the date on a line of its own.
+
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the
   sidebar. The DOCX export wrote the layers one after the other: the main column began below

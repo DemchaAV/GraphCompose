@@ -1916,7 +1916,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         currentCellWidth = Double.isFinite(width) ? width - padding.left() - padding.right() : Double.NaN;
         try {
-            writeCellNodes(cell, children);
+            writeInCell(cell, () -> writeChildren(cell.getXWPFDocument(), children, spacingOf(node)));
         } finally {
             surfaceBehind = outerSurface;
             currentCellWidth = outerCellWidth;
@@ -2042,6 +2042,40 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * table out of the flow it is in. The edge below it is not lost the same way: the gap
      * under a table is the space above whatever follows, and that is a paragraph.</p>
      */
+    /**
+     * Writes a container's children one after another, with the container's spacing between
+     * each two of them.
+     *
+     * <p>The layout puts a container's {@code spacing} between every two neighbouring
+     * children, whatever they are, and the export left it out: a sidebar laid out with 9pt
+     * between its blocks came out with its blocks touching. It is space below the child above,
+     * owed like any other, so it lands above whatever the next child writes first — a
+     * paragraph's space above, or the paragraph before a table. Before a page break it is
+     * not owed, as the page ends there; after one it is, as the layout starts the next page
+     * that far down.</p>
+     */
+    private void writeChildren(XWPFDocument document, List<DocumentNode> children, double spacing)
+            throws Exception {
+        for (int index = 0; index < children.size(); index++) {
+            DocumentNode child = children.get(index);
+            if (index > 0 && spacing > 0 && !(child instanceof PageBreakNode)) {
+                owePendingSpacingAfter(spacing);
+            }
+            writeNode(document, child);
+        }
+    }
+
+    /** The space a container puts between its children, zero for any other node. */
+    private static double spacingOf(DocumentNode node) {
+        if (node instanceof SectionNode section) {
+            return section.spacing();
+        }
+        if (node instanceof ContainerNode container) {
+            return container.spacing();
+        }
+        return 0;
+    }
+
     private void writeContainerBody(XWPFDocument document, DocumentNode node) throws Exception {
         double carriedFromOutside = carriedSpacingBefore;
         long blocksBefore = blocksWritten;
@@ -2054,9 +2088,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         insetLeft += node.margin().left() + node.padding().left();
         insetRight += node.margin().right() + node.padding().right();
         try {
-            for (DocumentNode child : node.children()) {
-                writeNode(document, child);
-            }
+            writeChildren(document, node.children(), spacingOf(node));
         } finally {
             insetLeft = outerLeft;
             insetRight = outerRight;
@@ -4226,9 +4258,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                 pendingSpacingAfter = 0;
                                 resumeSpacing = plan.resume(node);
                             }
-                            for (DocumentNode child : node.children()) {
-                                writeNode(document, child);
-                            }
+                            writeChildren(document, node.children(), spacingOf(node));
                             if (layer == layers.size() - 1) {
                                 owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
                             }
@@ -5115,6 +5145,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         XWPFParagraph para = newBodyParagraph(document);
         para.createRun().setText("");
+        // The spacer is its height and nothing more. An empty paragraph at Word's own line
+        // height is a line of text tall, and it stood on top of that height: between two CV
+        // entries held apart by a 4.5pt spacer, the page shows 16pt and LibreOffice drew 23.
+        holdToHairline(para);
         owePendingSpacingAfter(node.height());
     }
 

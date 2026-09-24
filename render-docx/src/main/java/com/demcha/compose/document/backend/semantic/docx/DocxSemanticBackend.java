@@ -239,6 +239,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** The gap the list being written puts between its items. */
     private double pendingItemSpacing;
+    // The gap between the wrapped lines of the list being written, 0 when no item wraps.
+    private double listLineGap;
 
     /** Whether the list being written has an item above the one about to be written. */
     private boolean anItemWasWritten;
@@ -1551,13 +1553,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pendingItemSpacing = list.itemSpacing();
         boolean previousItemWritten = anItemWasWritten;
         anItemWasWritten = false;
+        double previousLineGap = listLineGap;
+        // The list's lineSpacing stands between the lines of an item that wraps; it is put
+        // into the items' lines only when some item does (see applyLineGap).
+        listLineGap = layout.lineCount(list) > itemCount(list) ? layout.lineGap(list) : 0;
         try {
             writeListItems(document, list, numId);
         } finally {
             pendingItemSpacing = previousItemSpacing;
             anItemWasWritten = previousItemWritten;
+            listLineGap = previousLineGap;
         }
         owePendingSpacingAfter(list.margin().bottom() + list.padding().bottom());
+    }
+
+    /** How many items a list writes, nested ones included: one laid-out line each at least. */
+    private static int itemCount(com.demcha.compose.document.node.ListNode list) {
+        int count = 0;
+        for (String item : list.items()) {
+            if (!com.demcha.compose.document.node.ListMarker.normalizeItemText(item, list.normalizeMarkers()).isBlank()) {
+                count++;
+            }
+        }
+        java.util.ArrayDeque<com.demcha.compose.document.node.ListItem> nested = new java.util.ArrayDeque<>(list.nestedItems());
+        while (!nested.isEmpty()) {
+            com.demcha.compose.document.node.ListItem item = nested.pop();
+            count++;
+            nested.addAll(item.children());
+        }
+        return count;
     }
 
     /** The gap above the next item, which is nothing at all above the first. */
@@ -1640,6 +1664,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         spaceBeforeTheNextItem();
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
+        applyLineGap(para, listLineGap);
         if (numId != null) {
             para.setNumID(numId);
             para.setNumILvl(BigInteger.valueOf(depth));
@@ -1702,6 +1727,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         spaceBeforeTheNextItem();
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
+        applyLineGap(para, listLineGap);
         XWPFRun leading = para.createRun();
         applyStyle(leading, style);
         leading.setText("  ".repeat(depth) + (marker.isRich() ? "" : marker.prefix()));
@@ -2744,7 +2770,48 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyDirection(target, rightToLeft);
         applyLineHeight(target, layout.lineHeight(source));
         applyVerticalSpacing(target, source);
+        if (layout.lineCount(source) > 1) {
+            applyLineGap(target, layout.lineGap(source));
+        }
         return rightToLeft;
+    }
+
+    /**
+     * Puts the layout's gap between a paragraph's lines, which Word has no word for.
+     *
+     * <p>The page sets each line after the one above it at the line's height plus the
+     * paragraph's {@code lineSpacing}; the export wrote the line's height alone, so every
+     * wrapped line of a CV's body text stood a point or two higher than on the page, and a
+     * section of entries ran several points short. Word has one line height for a paragraph
+     * and no space between its lines, so the gap goes into the line — and one line of it is
+     * then space the page does not have, since the page puts the gap only between lines: that
+     * much comes off the space above the paragraph. The editor puts most of an exact line's
+     * spare height above its text (measured in LibreOffice: 8pt of 10 above), so taking it
+     * from above keeps the first line nearly where the page sets it and the paragraph its
+     * height. A paragraph with nothing above it to take from keeps the gap.</p>
+     */
+    private static void applyLineGap(XWPFParagraph target, double gap) {
+        if (!(gap > 0)) {
+            return;
+        }
+        CTPPr properties = target.getCTP().getPPr();
+        if (properties == null || !properties.isSetSpacing()) {
+            return;
+        }
+        CTSpacing spacing = properties.getSpacing();
+        if (!spacing.isSetLineRule() || spacing.getLineRule() != STLineSpacingRule.EXACT) {
+            return;
+        }
+        Long line = writtenTwips(spacing.getLine());
+        if (line == null) {
+            return;
+        }
+        long twips = toTwips(gap);
+        spacing.setLine(BigInteger.valueOf(line + twips));
+        long before = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null);
+        if (before > 0) {
+            spacing.setBefore(BigInteger.valueOf(Math.max(0, before - twips)));
+        }
     }
 
     /**

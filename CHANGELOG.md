@@ -57,6 +57,17 @@ follow semantic versioning; release dates are ISO 8601.
   in LibreOffice. `MonogramSidebar`'s median line moves from 14.5pt to 11.4pt in Word.
   Every other preset stays within a point of where it was.
 
+- **The gap between a paragraph's wrapped lines reaches Word.** A paragraph's or a list's
+  `lineSpacing`, which the page puts between two wrapped lines, was not written at all. Every
+  wrapped line of a CV's body text stood a point or so higher than on the page, and a CV's
+  entries crept up the page one after another. Measured in LibreOffice, `CompactMono`'s
+  entries rose 2.2pt each. Word has one line height for a paragraph and no gap between its
+  lines, so a paragraph that wraps now has the gap in its lines. The one gap the page does
+  not have, above the first line, comes off the space above the paragraph. A list holds it
+  in every item when any item wraps. Together with the other DOCX layout fixes of this
+  release, the drift from entry to entry is gone: `BlueBanner` stands within 0.4pt of the
+  page at every entry, `NordicClean` within 0.6pt and `ClassicSerif` within 1.1pt.
+
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the
   sidebar. The DOCX export wrote the layers one after the other: the main column began below

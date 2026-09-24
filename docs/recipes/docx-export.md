@@ -195,6 +195,12 @@ one, so a table's or a row's `margin` and `padding` travel to the paragraphs aro
 the space above a table is the space below the paragraph before it. A table with no
 paragraph above it loses that edge, which is the one gap Word has nowhere to put.
 
+A paragraph's or a list's `lineSpacing` — the gap the page puts between two wrapped lines —
+goes into the line: Word has one line height for a paragraph and no gap between its lines,
+so a paragraph that wraps is written with its lines that much taller, and the one gap the
+page does not have, above the first line, comes off the space above the paragraph. A list
+holds it in every item when any item wraps. A paragraph on one line has no gap to hold.
+
 A gap is written **once, above**. The space a block holds below itself waits for the next
 paragraph and is written there as `w:before`, together with whatever that paragraph asks
 for itself — rather than as `w:after` on one paragraph and `w:before` on the next. Editors

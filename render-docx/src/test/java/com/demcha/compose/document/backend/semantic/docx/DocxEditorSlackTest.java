@@ -109,6 +109,45 @@ class DocxEditorSlackTest {
         assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1));
     }
 
+    @Test
+    void aFixedColumnBesideThemKeepsItsSize() throws Exception {
+        ExportedRow exported = exportRow(row -> row
+                .columns(DocumentRowColumn.fixed(60), DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addParagraph("Invoice").addParagraph("No. 2041").addParagraph("…"));
+
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0));
+        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1) + SLACK_TWIPS);
+        assertThat(exported.gridTwips(2)).isEqualTo(exported.placedTwips(2) - SLACK_TWIPS);
+    }
+
+    @Test
+    void twoWeightColumnsGiveThePointInProportionToTheirTextBoxes() throws Exception {
+        // A wide gap, so a split by column width — the middle column carries the gap after it
+        // as its right margin, the last none — lands whole twips away from one by text box.
+        ExportedRow exported = exportRow(row -> row
+                .spacing(60)
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1), DocumentRowColumn.weight(3))
+                .addParagraph("Intro").addParagraph("a").addParagraph("b"));
+
+        double first = exported.placed()[1] - 60;
+        double second = exported.placed()[2];
+        double point = DocxSemanticBackend.EDITOR_COLUMN_SLACK_POINTS;
+        assertThat(exported.gridTwips(1))
+                .isEqualTo(Math.round((exported.placed()[1] - point * first / (first + second)) * 20.0));
+        assertThat(exported.gridTwips(2))
+                .isEqualTo(Math.round((exported.placed()[2] - point * second / (first + second)) * 20.0));
+    }
+
+    @Test
+    void aRowOfWeightsWithNoStatedColumnsIsWrittenAsPlaced() throws Exception {
+        ExportedRow exported = exportRow(row -> row
+                .weights(1, 2)
+                .addParagraph("Label").addParagraph("Value"));
+
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0));
+        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1));
+    }
+
     /** A row exported through a session, with the column spans the layout placed it at. */
     private record ExportedRow(XWPFTable table, double[] placed) {
 

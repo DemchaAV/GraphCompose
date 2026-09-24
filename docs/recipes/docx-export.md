@@ -164,7 +164,7 @@ it cannot work out for itself:
 |---|---|
 | Line height | `w:spacing w:lineRule="exact"` on every paragraph, cells and list items included — the height the engine measured, not a multiple Word would measure again against a substituted font |
 | Table columns | the resolved cell widths as `w:gridCol`, with `w:tblLayout` fixed so Word does not re-fit them |
-| Row columns | where the layout placed each child, with the row's gap and padding folded into the neighbouring column and taken back out as that cell's margin. A column sized to its content (`DocumentRowColumn.auto()`) gets a point more, taken from the row's weight columns so the row keeps its width, for the reason a table's does: the editor's substitute font would wrap it — a table of contents' labels broke mid-word ("Intr" / "o") in LibreOffice without it. A row with no weight column is written as placed |
+| Row columns | where the layout placed each child, with the row's gap and padding folded into the neighbouring column and taken back out as that cell's margin. A column sized to its content (`DocumentRowColumn.auto()`) gets a point more, taken from the row's weight columns so the row keeps its width, for the reason a table's does: the editor's substitute font would wrap it — a table of contents' labels broke mid-word ("Intr" / "o") in LibreOffice without it. A row with no auto column, no weight column, or no stated columns (weights, an even split) is written as placed |
 
 The space a block holds above and below itself needs no measuring and is written from the
 document: a paragraph's `margin` and `padding` become `w:spacing`, and a container hands

@@ -4041,8 +4041,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A row is as wide as the layout placed it, so the point comes out of the weight
      * columns, which on the page take whatever the others leave: the row keeps its width, and
      * a fixed column its size. Each weight column gives in proportion to its text box and
-     * never more than it has. A row with no auto column, or none to take the point from, is
-     * written as placed.</p>
+     * never more than it has. Written as placed: a row with no auto column or no weight
+     * column, and one with no stated columns — weights or an even split. A row cannot state
+     * columns and be laid out as flex; {@code RowNode} refuses the pair.</p>
+     *
+     * <p>The point comes out of the weight column's text box, not only its empty part —
+     * which the layout does not report, as a paragraph or a line fills its slot. Weight
+     * columns in a row with auto columns hold leaders, rules and spacers; one holding text
+     * that fills it to the point could wrap a line sooner in the editor.</p>
      */
     private static List<CellColumn> withRowEditorSlack(RowNode node, List<CellColumn> columns) {
         List<DocumentRowColumn> specs = node.columns();

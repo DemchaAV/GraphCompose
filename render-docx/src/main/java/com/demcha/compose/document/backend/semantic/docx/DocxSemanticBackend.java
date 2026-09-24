@@ -536,8 +536,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 for (DocumentNode root : section.graph().roots()) {
                     writeNode(document, root);
                 }
-                // Nothing follows the last root to carry what it holds below itself.
-                flushSpacingAfter();
+                dropTheSpaceAtTheEnd(document);
             }
             if (deterministicTimestamp != null) {
                 DocxDeterminism.pinCoreProperties(document, deterministicTimestamp);
@@ -2541,6 +2540,42 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pendingSpacingAfter = 0;
         lastBodyParagraph = para;
         return para;
+    }
+
+    /**
+     * Leaves out the space a section still holds below its last block.
+     *
+     * <p>A section ends its page, so nothing below the last block needs the space the block
+     * holds under itself: it is blank paper either way. Written, it can only push that block
+     * onto a page of its own. A two-column CV whose column ends with 36.5pt of padding runs
+     * its last line exactly to the page's foot on the page; LibreOffice set the line 0.9pt
+     * lower, found no room for the line and its space together, and moved the line to a
+     * second page. So the space owed at the end is dropped, and so is the space held below the
+     * last line of each cell in the last row of a table the section ends with — unless the
+     * cell is painted, where that space is part of the panel the reader sees.</p>
+     */
+    private void dropTheSpaceAtTheEnd(XWPFDocument document) {
+        pendingSpacingAfter = 0;
+        carriedSpacingBefore = 0;
+        List<IBodyElement> body = document.getBodyElements();
+        if (body.isEmpty() || !(body.get(body.size() - 1) instanceof XWPFTable table)
+            || table.getRows().isEmpty()) {
+            return;
+        }
+        for (XWPFTableCell cell : table.getRow(table.getRows().size() - 1).getTableCells()) {
+            CTTcPr properties = cell.getCTTc().getTcPr();
+            if (properties != null && properties.isSetShd()) {
+                continue;
+            }
+            List<XWPFParagraph> paragraphs = cell.getParagraphs();
+            if (paragraphs.isEmpty()) {
+                continue;
+            }
+            CTPPr last = paragraphs.get(paragraphs.size() - 1).getCTP().getPPr();
+            if (last != null && last.isSetSpacing() && last.getSpacing().isSetAfter()) {
+                last.getSpacing().unsetAfter();
+            }
+        }
     }
 
     /**

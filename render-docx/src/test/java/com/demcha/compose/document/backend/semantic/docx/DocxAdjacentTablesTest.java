@@ -121,7 +121,10 @@ class DocxAdjacentTablesTest {
                                         .padding(com.demcha.compose.document.style.DocumentInsets.of(8))
                                         .addParagraph(p -> p.text("Totals"))
                                         .addTable(inner -> inner.autoColumns(1).row("100"))
-                                        .build()))))) {
+                                        .build())))
+                // Something after the table, so it is not the document's last block, whose
+                // cells hold no space at their foot (see DocxVerticalSpacingTest).
+                .addParagraph(p -> p.text("After")))) {
             var cell = document.getTables().get(0).getRow(0).getCell(0);
             List<XWPFParagraph> paragraphs = cell.getParagraphs();
             XWPFParagraph afterNested = paragraphs.get(paragraphs.size() - 1);

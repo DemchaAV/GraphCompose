@@ -76,6 +76,16 @@ follow semantic versioning; release dates are ISO 8601.
   `TimelineMinimal`'s columns stand 10.5pt low from top to bottom below contact lines that
   are 2.2pt taller each, and `EditorialBlue` ends its first page one entry sooner.
 
+- **No space is written below the last line of a Word document.** The DOCX export wrote the
+  space the last block holds below itself as `w:after` on its last paragraph, and the space
+  at the foot of each cell as `w:after` on the cell's last paragraph. At the end of a
+  section the page ends, so that space holds nothing up; written, it can only push the last
+  line onto a page of its own. `NavySidebar`'s columns end with 36.5pt of padding and run
+  exactly to the page's foot. LibreOffice set the last line 0.9pt lower, found no room for
+  the line and its space together, and moved the line to a second page. At a section's end
+  that space is now left out, and so is the space below the last line of each unpainted
+  cell of a table the section ends with.
+
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the
   sidebar. The DOCX export wrote the layers one after the other: the main column began below

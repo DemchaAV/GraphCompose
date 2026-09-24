@@ -3979,7 +3979,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // The layout placed each child, so every way a row can divide — the two that
             // measure their children included — is already answered.
             setTableWidth(table, starts[0]);
-            writeRowColumns(table, placedColumns(node, starts));
+            writeRowColumns(table, withRowEditorSlack(node, placedColumns(node, starts)));
             return;
         }
 
@@ -4027,6 +4027,58 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     Math.max(0.0, Math.min(trailing, columnEnd - x))));
         }
         return columns;
+    }
+
+    /**
+     * Widens a row's auto columns by a point, taken from its weight columns.
+     *
+     * <p>An auto column is exactly as wide as its child's unwrapped content, and an editor
+     * setting that content in its own substitute for the face wraps it — the reason a table's
+     * auto columns get {@value #EDITOR_COLUMN_SLACK_POINTS}pt (see {@link #withEditorSlack}).
+     * Measured through LibreOffice, a table of contents — auto label, weight leader, auto page
+     * number — broke "Intro" into "Intr" and "o".</p>
+     *
+     * <p>A row is as wide as the layout placed it, so the point comes out of the weight
+     * columns, which on the page take whatever the others leave: the row keeps its width, and
+     * a fixed column its size. Each weight column gives in proportion to its text box and
+     * never more than it has. A row with no auto column, or none to take the point from, is
+     * written as placed.</p>
+     */
+    private static List<CellColumn> withRowEditorSlack(RowNode node, List<CellColumn> columns) {
+        List<DocumentRowColumn> specs = node.columns();
+        if (specs.size() != columns.size()) {
+            return columns;
+        }
+        int autoColumns = 0;
+        double spare = 0;
+        for (int index = 0; index < columns.size(); index++) {
+            DocumentRowColumn.Type type = specs.get(index).type();
+            if (type == DocumentRowColumn.Type.AUTO) {
+                autoColumns++;
+            } else if (type == DocumentRowColumn.Type.WEIGHT) {
+                spare += textBoxOf(columns.get(index));
+            }
+        }
+        if (autoColumns == 0 || !(spare > 0)) {
+            return columns;
+        }
+        double slack = Math.min(EDITOR_COLUMN_SLACK_POINTS, spare / autoColumns);
+        double taken = slack * autoColumns;
+        List<CellColumn> widened = new ArrayList<>(columns.size());
+        for (int index = 0; index < columns.size(); index++) {
+            CellColumn column = columns.get(index);
+            DocumentRowColumn.Type type = specs.get(index).type();
+            double change = type == DocumentRowColumn.Type.AUTO ? slack
+                    : type == DocumentRowColumn.Type.WEIGHT ? -taken * textBoxOf(column) / spare
+                    : 0;
+            widened.add(new CellColumn(column.width() + change, column.leading(), column.trailing()));
+        }
+        return widened;
+    }
+
+    /** The width a row column leaves its content, between its margins. */
+    private static double textBoxOf(CellColumn column) {
+        return Math.max(0, column.width() - column.leading() - column.trailing());
     }
 
     /** Columns from the row's own arithmetic: the slot, plus the gap and padding beside it. */

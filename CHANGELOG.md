@@ -28,6 +28,18 @@ follow semantic versioning; release dates are ISO 8601.
   - `CharcoalGold` stays at two pages because its sidebar's skill rows stand taller than on
     the page. `NavySidebar` stays at two because its entries put the date on a line of its own.
 
+- **Word no longer adds 8pt under every paragraph.** Word fills what a document leaves
+  unsaid from its own new-document template: 8pt after a paragraph and lines 1.08 tall. The
+  DOCX export writes the space around a block only where the page has some, so every
+  paragraph written without a `w:after` — the last line of each table cell among them — got
+  8pt in Word, and none in LibreOffice. A section heading in a shaded box stood 8pt taller in
+  Word with its title at the top, `SlateOrange` ran to four pages and `Panel` to two. The
+  styles part now states the defaults: no space after a paragraph, single lines, and it is
+  written even when the document has no text to take a default face from. Measured in
+  Word 16 on twenty CV presets: every preset has as many pages as in LibreOffice, and the
+  median line stands within 0.3pt of where LibreOffice puts it in thirteen of them, within
+  2.2pt in the other seven. `SlateOrange` and `Panel` are one page, as in the PDF.
+
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the
   sidebar. The DOCX export wrote the layers one after the other: the main column began below

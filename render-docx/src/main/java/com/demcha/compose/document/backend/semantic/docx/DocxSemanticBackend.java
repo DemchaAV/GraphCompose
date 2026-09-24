@@ -2116,15 +2116,30 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * direct property beats a style. Writing the part and leaving those runs silent is what
      * makes "change the Normal style" behave the way a Word user expects.</p>
      *
-     * <p>Nothing is written when the graph carries no text to take a default from.</p>
+     * <p>The part also states the paragraph defaults: no space after a paragraph, single
+     * lines. The export writes the space around a block only where the page has some, and
+     * Word fills whatever a document leaves unsaid from its own new-document template —
+     * 8pt after every paragraph and lines 1.08 tall. That put 8pt under each paragraph
+     * written without a {@code w:after}, the last line of every table cell among them, in
+     * Word only: LibreOffice reads the missing value as none, as the page does.</p>
+     *
+     * <p>When the graph carries no text to take a default from, the part holds the
+     * paragraph defaults alone.</p>
      */
     private void writeStylesPart(XWPFDocument document) {
+        CTStyles styles = CTStyles.Factory.newInstance();
+        var docDefaults = styles.addNewDocDefaults();
+        CTSpacing spacing = docDefaults.addNewPPrDefault().addNewPPr().addNewSpacing();
+        spacing.setAfter(BigInteger.ZERO);
+        spacing.setLine(BigInteger.valueOf(240));
+        spacing.setLineRule(STLineSpacingRule.AUTO);
+
         DocumentTextStyle defaults = documentDefaultStyle;
         if (defaults == null) {
+            document.createStyles().setStyles(styles);
             return;
         }
-        CTStyles styles = CTStyles.Factory.newInstance();
-        applyDefaultRunProperties(styles.addNewDocDefaults().addNewRPrDefault().addNewRPr(), defaults);
+        applyDefaultRunProperties(docDefaults.addNewRPrDefault().addNewRPr(), defaults);
 
         CTStyle normal = styles.addNewStyle();
         normal.setType(STStyleType.PARAGRAPH);

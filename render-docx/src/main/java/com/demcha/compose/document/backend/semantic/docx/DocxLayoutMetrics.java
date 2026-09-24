@@ -472,6 +472,34 @@ final class DocxLayoutMetrics {
         return path == null ? List.of() : fragments.getOrDefault(path, List.of());
     }
 
+    /**
+     * How far inside its parent's content box the layout placed a node, on the left and on
+     * the right, in points.
+     *
+     * <p>For content laid out in a column another node resolved — a timeline entry's body in
+     * the header row's content column — whose place across the page is the layout's and not
+     * the tree's.</p>
+     *
+     * @param node a placed node
+     * @return {@code {left, right}}, never negative, or {@code null} when the node or its
+     *         parent was not placed
+     */
+    double[] insideParent(DocumentNode node) {
+        PlacedNode box = placedFor(node);
+        if (box == null || box.parentPath() == null) {
+            return null;
+        }
+        PlacedNode parent = placed.get(box.parentPath());
+        if (parent == null) {
+            return null;
+        }
+        double contentLeft = parent.placementX() + parent.padding().left();
+        double contentRight = parent.placementX() + parent.placementWidth() - parent.padding().right();
+        return new double[]{
+                Math.max(0, box.placementX() - contentLeft),
+                Math.max(0, contentRight - (box.placementX() + box.placementWidth()))};
+    }
+
     /** The placed node for a semantic node, or null when this index knows neither. */
     private PlacedNode placedFor(DocumentNode node) {
         String path = paths.get(node);

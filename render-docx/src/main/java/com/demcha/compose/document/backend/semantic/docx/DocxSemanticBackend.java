@@ -1227,6 +1227,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeChartFallback(document, chart);
         } else if (node instanceof com.demcha.compose.document.node.ListNode list) {
             writeList(document, list);
+        } else if (node instanceof com.demcha.compose.document.layout.HorizontalBandContentNode band) {
+            writeInBand(document, band);
         } else if (node instanceof ContainerNode || node instanceof SectionNode
                    || node instanceof com.demcha.compose.document.node.LayerStackNode
                    || node instanceof com.demcha.compose.document.node.CanvasLayerNode
@@ -4588,7 +4590,36 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static boolean isSemanticallyTransparent(DocumentNode node) {
         return node instanceof com.demcha.compose.document.layout.LayoutAnchorNode
-               || node instanceof com.demcha.compose.document.node.AlignNode;
+               || node instanceof com.demcha.compose.document.node.AlignNode
+               || node instanceof com.demcha.compose.document.layout.HorizontalBandsNode;
+    }
+
+    /**
+     * Writes content the layout laid out inside a column another node resolved.
+     *
+     * <p>A timeline whose markers sit on the rail wraps each entry's header row so its columns
+     * are published, and lays the entry's body out in the content column, below the row
+     * rather than in it — a row cannot cross a page, and a body can be longer than one. Both
+     * wrappers were unknown here and dropped as drawing, taking the entries' titles, dates and
+     * text with them. The row is written as the row it wraps; the body is written in the flow
+     * and indented to its column, where the layout placed it, as an enclosing container's
+     * margin indents what is inside it.</p>
+     */
+    private void writeInBand(XWPFDocument document,
+                             com.demcha.compose.document.layout.HorizontalBandContentNode band) throws Exception {
+        double[] sides = layout.insideParent(band);
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
+        if (sides != null) {
+            insetLeft += sides[0];
+            insetRight += sides[1];
+        }
+        try {
+            writeNode(document, band.child());
+        } finally {
+            insetLeft = outerLeft;
+            insetRight = outerRight;
+        }
     }
 
     /**

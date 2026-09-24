@@ -8,6 +8,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A timeline with its markers on the rail keeps its entries in Word.** With
+  `markerOnRail()`, a timeline wraps each entry's header row so the columns it resolves are
+  published, and lays the entry's body out in the content column below it — two engine
+  wrappers the DOCX export did not know and dropped as drawing, taking every entry's title,
+  dates and text with them. Measured on the `CharcoalGold` CV, 78 of the page's 290 words —
+  its whole experience section — were missing from the Word file; one remains, a separator
+  glyph. The row is now written as the row it wraps, and the body in the flow, indented to
+  the column the page lays it out in, within 0.1pt. The rail and the markers are drawing,
+  and are still not written.
+
 - **A table cell's `lineSpacing` is space between its lines.** The layout sized a row with
   it — `lines × lineHeight + (lines − 1) × lineSpacing` — and the PDF and PPTX renderers set
   the lines a line height apart regardless, so the row came out taller than its text by the

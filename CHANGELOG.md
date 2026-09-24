@@ -55,13 +55,14 @@ follow semantic versioning; release dates are ISO 8601.
   checkboxes. Each is now a picture in its own run, drawn by the same raster as an icon from
   the outline, fill and stroke the page draws — every outline kind, each layer centred in
   the run's box as a checkmark sits in its frame — and placed where the page's alignment
-  puts it. The page draws a stroke centred on the outline, half of it outside the run's box,
-  and the pixels that smooth an edge lie just past it, so the picture takes that half-stroke
-  and a pixel on every side and is lowered by it: the outline stands where the page has it
-  and no edge is cut — a 10pt chevron had come out 9.96pt tall in LibreOffice. The margin is
-  measured on the stroked ink, so a sharp corner's miter, which reaches past half the
-  stroke, is kept too. A list marker that draws a disc is its picture, followed by the space
-  a text marker gets. No kind of inline run is dropped by the export any longer.
+  puts it. The page draws a stroke centred on the outline, part of it outside the run's box,
+  and the pixels that smooth an edge lie just past it, so the picture takes, on each side,
+  as far as the stroked ink reaches there — half the stroke on an edge, further at a sharp
+  corner's miter or where a path's curve leaves the box — and a pixel, and is lowered by
+  what it takes below: the outline stands where the page has it and no edge is cut — a 10pt
+  chevron had come out 9.96pt tall in LibreOffice. A list marker that draws a disc is its
+  picture, followed by the space a text marker gets. An inline run is now dropped only when
+  its picture has no data.
 
 - **A drawn picture the page raises stands where the page puts it in LibreOffice too.**
   LibreOffice ignores `w:position` on a picture and stands it on the baseline, so a 3pt
@@ -69,9 +70,10 @@ follow semantic versioning; release dates are ISO 8601.
   export draws itself — a shape, an SVG icon, an emoji — now carries such a rise as
   transparent rows below what it shows and is written with no `w:position`, so it stands
   where the page puts it in either editor: measured in LibreOffice, the separator within
-  0.06pt of the page and a 6pt status dot within 0.06pt. One the page lowers below the
-  baseline keeps `w:position`, which only Word honours; an author's own picture is written
-  as given.
+  0.06pt of the page and a 6pt status dot within 0.06pt. One whose picture reaches below
+  the baseline — lowered by the page, or a stroked shape raised by less than its stroke's
+  reach — keeps `w:position`, which only Word honours; an author's own picture is written as
+  given.
 
 - **A rule reaches Word as Word's own.** The DOCX export dropped every `LineNode` and
   standalone `ShapeNode`, so the rules a template draws under a heading or between entries —

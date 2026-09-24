@@ -367,8 +367,9 @@ page.addParagraph(p -> p
   fill and stroke the page draws, each layer centred in the run's box as the page centres a
   checkmark in its frame. The page draws a stroke centred on the outline, so half of it lies
   outside the run's box — more at a sharp corner, where the miter runs out to the point —
-  and the pixels that smooth an edge lie just past it; the picture takes as far as that ink
-  reaches, and a pixel (a quarter point), on every side and is lowered by it, so the
+  and the pixels that smooth an edge lie just past it; the picture takes, on each side, as
+  far as that ink reaches there, and a pixel of the raster (a quarter point, at its four
+  pixels a point), and is lowered by what it takes below, so the
   outline stands where the page has it, no edge is cut, and a shape takes that much more
   room in the line than on the page. A list marker that draws a disc is written the same
   way, followed by the space a text marker gets.

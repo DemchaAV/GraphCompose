@@ -11,7 +11,8 @@ import com.demcha.compose.document.style.ShapePoint;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 
 import java.awt.BasicStroke;
-import java.awt.geom.Path2D;
+import java.awt.Shape;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +28,9 @@ import java.util.List;
  *
  * <p>The page draws a stroke centred on the outline, so part of it lies outside the run's
  * box — half its width past an edge, more at a sharp corner — and the pixels that smooth an
- * edge lie just past that. A picture is clipped to its own edges, so it is as much larger on
- * every side as its ink reaches ({@link #reachPastTheBox}) and a pixel more; the caller
- * lowers it by the same amount, keeping the outline where the page has it.</p>
+ * edge lie just past that. A picture is clipped to its own edges, so it is larger on each
+ * side by as far as its ink reaches there ({@link #overhang}) and a pixel more; the caller
+ * lowers it by what it reaches below, keeping the outline where the page has it.</p>
  */
 final class DocxShapePictures {
 
@@ -50,38 +51,63 @@ final class DocxShapePictures {
     /**
      * An inline shape drawn as a picture.
      *
-     * @param png      the picture
-     * @param width    its width in points, the run's and the overhang either side
-     * @param height   its height in points, the same
-     * @param overhang how far the picture reaches past the run's box, in points — the farthest
-     *                 its ink reaches and {@link #EDGE}
+     * @param png    the picture
+     * @param width  its width in points: the run's, and the overhang either side
+     * @param height its height in points: the run's, and the overhang above and below
+     * @param below  how far the picture reaches below the run's box, in points — the ink's
+     *               reach there and {@link #EDGE}; the caller lowers it by this much
      */
-    record Picture(byte[] png, double width, double height, double overhang) {
+    record Picture(byte[] png, double width, double height, double below) {
+    }
+
+    /**
+     * How far ink reaches past the run's box on each side, in points, never less than zero.
+     *
+     * @param left   past the left edge
+     * @param right  past the right edge
+     * @param top    past the top edge
+     * @param bottom past the bottom edge
+     */
+    record Overhang(double left, double right, double top, double bottom) {
+
+        static final Overhang NONE = new Overhang(0, 0, 0, 0);
+
+        Overhang max(Overhang other) {
+            return new Overhang(Math.max(left, other.left), Math.max(right, other.right),
+                    Math.max(top, other.top), Math.max(bottom, other.bottom));
+        }
+
+        double farthest() {
+            return Math.max(Math.max(left, right), Math.max(top, bottom));
+        }
     }
 
     /**
      * Draws an inline shape as a picture.
      *
      * @param run the shape
-     * @return the picture, the run's size plus the stroke's overhang
+     * @return the picture: the run's box, its ink's overhang on each side, and a pixel
      */
     static Picture of(InlineShapeRun run) {
         double width = run.width();
         double height = run.height();
-        double overhang = 0;
+        Overhang ink = Overhang.NONE;
         for (ShapeLayer layer : run.layers()) {
-            overhang = Math.max(overhang, reachPastTheBox(layer, width, height));
+            ink = ink.max(overhang(layer, width, height));
         }
-        overhang += EDGE;
-        double boxWidth = width + 2 * overhang;
-        double boxHeight = height + 2 * overhang;
+        double left = ink.left() + EDGE;
+        double right = ink.right() + EDGE;
+        double top = ink.top() + EDGE;
+        double below = ink.bottom() + EDGE;
+        double boxWidth = width + left + right;
+        double boxHeight = height + top + below;
         List<ResolvedSvgLayer> layers = new ArrayList<>(run.layers().size());
         for (ShapeLayer layer : run.layers()) {
             ShapeOutline outline = layer.outline();
-            double left = overhang + (width - outline.width()) / 2.0;
-            double bottom = overhang + (height - outline.height()) / 2.0;
+            double layerLeft = left + (width - outline.width()) / 2.0;
+            double layerBottom = below + (height - outline.height()) / 2.0;
             List<DocumentPathSegment> segments = place(unitSegments(outline),
-                    left / boxWidth, bottom / boxHeight,
+                    layerLeft / boxWidth, layerBottom / boxHeight,
                     outline.width() / boxWidth, outline.height() / boxHeight);
             Stroke stroke = layer.stroke() == null ? null
                     : new Stroke(layer.stroke().color().color(), layer.stroke().width());
@@ -90,33 +116,63 @@ final class DocxShapePictures {
                     null, stroke, null, null, null, null, null));
         }
         byte[] png = InlineSvgRasters.rasterize(layers, boxWidth, boxHeight).getBytes();
-        return new Picture(png, boxWidth, boxHeight, overhang);
+        return new Picture(png, boxWidth, boxHeight, below);
     }
 
     /**
-     * How far a layer's ink reaches past the run's box, in points, on its farthest side.
+     * How far a layer's ink reaches past the run's box on each side, in points.
      *
      * <p>Measured on the ink the raster draws rather than worked out: half a stroke past a
      * straight edge, but further at a sharp corner, where the page's miter join runs out to
      * the corner's point — a stroked star's tip reaches over twice as far — and wherever a
-     * path's curves leave the box its points are drawn in.</p>
+     * path's curves leave the box. Each side is its own: a stroked arrow's tip reaches three
+     * points past its box on the right and under one on the left, and a picture as wide on
+     * both sides would push the next word over and stand higher than the page puts it.</p>
      */
-    static double reachPastTheBox(ShapeLayer layer, double width, double height) {
+    static Overhang overhang(ShapeLayer layer, double width, double height) {
         ShapeOutline outline = layer.outline();
-        Path2D path = InlineSvgRasters.path(unitSegments(outline),
+        Shape ink = InlineSvgRasters.path(unitSegments(outline),
                 new Rectangle2D.Double(0, 0, outline.width(), outline.height()));
-        Rectangle2D ink = path.getBounds2D();
         if (layer.stroke() != null && layer.stroke().width() > 0) {
             // The join, cap and miter limit the raster strokes with.
             ink = new BasicStroke((float) layer.stroke().width(), BasicStroke.CAP_BUTT,
-                    BasicStroke.JOIN_MITER, 10.0f).createStrokedShape(path).getBounds2D();
+                    BasicStroke.JOIN_MITER, 10.0f).createStrokedShape(ink);
         }
+        Rectangle2D bounds = inkBounds(ink);
+        // The layer is centred in the run's box; the path's y grows downwards.
         double left = (width - outline.width()) / 2.0;
         double top = (height - outline.height()) / 2.0;
-        return Math.max(0, Math.max(
-                Math.max(-(left + ink.getMinX()), left + ink.getMaxX() - width),
-                Math.max(-(top + ink.getMinY()), top + ink.getMaxY() - height)));
+        return new Overhang(
+                Math.max(0, -(left + bounds.getMinX())),
+                Math.max(0, left + bounds.getMaxX() - width),
+                Math.max(0, -(top + bounds.getMinY())),
+                Math.max(0, top + bounds.getMaxY() - height));
     }
+
+    /**
+     * The bounds of what a shape paints, its curves flattened first. {@code getBounds2D}
+     * counts a curve's control points on some Java releases and not on others, so the same
+     * path measured a picture several points larger on Java 17 than on Java 24.
+     */
+    private static Rectangle2D inkBounds(Shape shape) {
+        double minX = Double.POSITIVE_INFINITY;
+        double minY = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
+        double maxY = Double.NEGATIVE_INFINITY;
+        double[] point = new double[6];
+        for (PathIterator it = shape.getPathIterator(null, FLATNESS); !it.isDone(); it.next()) {
+            if (it.currentSegment(point) != PathIterator.SEG_CLOSE) {
+                minX = Math.min(minX, point[0]);
+                minY = Math.min(minY, point[1]);
+                maxX = Math.max(maxX, point[0]);
+                maxY = Math.max(maxY, point[1]);
+            }
+        }
+        return minX > maxX ? new Rectangle2D.Double() : new Rectangle2D.Double(minX, minY, maxX - minX, maxY - minY);
+    }
+
+    /** How far a flattened curve may stray from the true one, in points. */
+    private static final double FLATNESS = 0.01;
 
     /**
      * An outline as path segments in the unit box, y growing upwards — the convention of a

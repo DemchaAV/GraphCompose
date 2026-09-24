@@ -2045,12 +2045,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             insetRight = outerRight;
         }
         owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
-        // Nothing inside took the top edge — a container of tables — so it is not left
-        // waiting to land on whatever paragraph comes next, below the tables it stood above.
-        // A container that wrote nothing at all — empty, or holding only a drawing the export
-        // drops — stood above nothing, and the containers around it are still waiting for
-        // their first paragraph: only its own edge goes, and theirs is handed back. Dropping
-        // theirs too lost a sidebar's top padding under the portrait that opened it.
+        // A container that wrote something has had its top edge taken — by its first
+        // paragraph, or dropped by its first table (see newTable) — and none of it is left
+        // waiting. A container that wrote nothing at all — empty, or holding only a drawing
+        // the export drops — stood above nothing, and the containers around it are still
+        // waiting for their first paragraph: only its own edge goes, and theirs is handed
+        // back. Dropping theirs too lost a sidebar's top padding under the portrait that
+        // opened it.
         carriedSpacingBefore = blocksWritten == blocksBefore ? carriedFromOutside : 0;
     }
 
@@ -4804,6 +4805,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // it — and nowhere, if nothing follows — rather than back above the table, which is
         // where it used to land: a card's bottom padding opened a gap over its last table.
         lastBodyParagraph = null;
+        // A container edge still waiting for a paragraph stood above this table, and a table
+        // carries no space above itself. Left waiting, it landed on the paragraph below the
+        // table instead, a gap the page does not have.
+        carriedSpacingBefore = 0;
         blocksWritten++;
         if (currentCell == null) {
             return document.createTable(rows, columns);

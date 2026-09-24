@@ -150,6 +150,35 @@ class DocxVerticalSpacingTest {
     }
 
     @Test
+    void aTableDropsTheEdgeItStoodBelow() throws Exception {
+        // A section opening with a table: its top edge stood above the table, so it does not
+        // wait for the paragraph under it — nor pass through a drawn-only divider on the way.
+        List<XWPFParagraph> direct = bodyOf(page -> page
+                .addSection("Outer", outer -> outer
+                        .padding(DocumentInsets.top(30))
+                        .addTable(t -> t.autoColumns(2).row("A", "B"))
+                        .addParagraph(p -> p.text("After"))));
+        List<XWPFParagraph> pastADivider = bodyOf(page -> page
+                .addSection("Outer", outer -> outer
+                        .padding(DocumentInsets.top(30))
+                        .addTable(t -> t.autoColumns(2).row("A", "B"))
+                        .addLayerStack(stack -> stack
+                                .name("Divider")
+                                .layer(new com.demcha.compose.document.dsl.PathBuilder()
+                                        .name("Stroke").size(40, 4)
+                                        .moveTo(0, 0).lineTo(1, 0).lineTo(1, 1).closePath()
+                                        .build()))
+                        .addParagraph(p -> p.text("After"))));
+
+        assertThat(before(direct.get(direct.size() - 1)))
+                .as("the outer 30pt did not land under the table")
+                .isZero();
+        assertThat(before(pastADivider.get(pastADivider.size() - 1)))
+                .as("nor was it handed on by the divider the export drops")
+                .isZero();
+    }
+
+    @Test
     void oneGapIsWrittenOnceRatherThanFromBothSides() throws Exception {
         // A gap between two blocks is one distance, and it used to be written as two: after
         // on the block above and before on the one below. That is the same thing only in an

@@ -3728,7 +3728,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             return;
         }
-        XWPFParagraph para = cell.addParagraph();
         List<String> lines = source.lines();
         // Word has a bidirectional engine of its own: it reorders the line and joins the
         // Arabic itself, given the text as written. What it cannot work out is the base
@@ -3736,27 +3735,57 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // cell's trailing punctuation on the wrong side and starts the line at the wrong
         // edge. So the cell is told, and the text goes over untouched.
         boolean rightToLeft = resolveCellDirection(node, placement, lines);
-        applyDirection(para, rightToLeft);
         ParagraphAlignment alignment = toAlignment(horizontalOf(resolveCellAnchor(node, placement, rightToLeft)),
                 rightToLeft);
+        // The height the row was sized with. Without it Word sets the cell at its own
+        // spacing for the font — measured on the probe corpus, a totals row whose style
+        // states a 14pt face came out 3pt taller than the page draws it.
+        java.util.OptionalDouble lineHeight = layout.cellLineHeight(node, placement.row(), placement.column());
+        DocumentTextStyle textStyle = resolveCellTextStyle(node, placement);
+        // The layout sizes the row with the cell's line spacing between its lines. Word holds
+        // no space between the lines of one paragraph but a taller line, which would add it
+        // above the first line too and grow the row; so a cell whose lines stand apart is a
+        // paragraph per line, with the spacing after each but the last.
+        Double spacing = resolveCellValue(node, placement, DocumentTableStyle::lineSpacing);
+        double lineSpacing = spacing == null ? 0.0 : spacing;
+        boolean paragraphPerLine = lineSpacing > 0 && lines.size() > 1;
+        XWPFParagraph para = newCellLine(cell, rightToLeft, alignment, lineHeight);
+        XWPFRun run = newCellRun(para, textStyle, rightToLeft);
+        int inRun = 0;
+        for (int i = 0; i < lines.size(); i++) {
+            if (i > 0 && paragraphPerLine) {
+                addSpacing(para, 0, lineSpacing);
+                para = newCellLine(cell, rightToLeft, alignment, lineHeight);
+                run = newCellRun(para, textStyle, rightToLeft);
+                inRun = 0;
+            } else if (i > 0) {
+                // A joined "\n" is not a line break in Word; it renders as one line.
+                run.addBreak();
+            }
+            run.setText(lines.get(i) == null ? "" : lines.get(i), inRun++);
+        }
+    }
+
+    /** A paragraph of a text cell: its direction, its alignment and its line height. */
+    private static XWPFParagraph newCellLine(XWPFTableCell cell, boolean rightToLeft,
+                                             ParagraphAlignment alignment,
+                                             java.util.OptionalDouble lineHeight) {
+        XWPFParagraph para = cell.addParagraph();
+        applyDirection(para, rightToLeft);
         if (alignment != ParagraphAlignment.LEFT) {
             // LEFT is where Word starts the line anyway, in either direction.
             para.setAlignment(alignment);
         }
-        // The height the row was sized with. Without it Word sets the cell at its own
-        // spacing for the font — measured on the probe corpus, a totals row whose style
-        // states a 14pt face came out 3pt taller than the page draws it.
-        applyLineHeight(para, layout.cellLineHeight(node, placement.row(), placement.column()));
+        applyLineHeight(para, lineHeight);
+        return para;
+    }
+
+    /** The run a text cell's words go in, in the cell's face and direction. */
+    private XWPFRun newCellRun(XWPFParagraph para, DocumentTextStyle textStyle, boolean rightToLeft) {
         XWPFRun run = para.createRun();
-        applyStyle(run, resolveCellTextStyle(node, placement));
+        applyStyle(run, textStyle);
         applyRunDirection(run, rightToLeft);
-        for (int i = 0; i < lines.size(); i++) {
-            if (i > 0) {
-                // A joined "\n" is not a line break in Word; it renders as one line.
-                run.addBreak();
-            }
-            run.setText(lines.get(i) == null ? "" : lines.get(i), i);
-        }
+        return run;
     }
 
     /**

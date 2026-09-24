@@ -83,6 +83,13 @@ Page geometry (size, margins and orientation — a page wider than it is tall is
 landscape) and session metadata (title, author, subject, keywords) carry into the Word
 document as well.
 
+Page backgrounds (`session.pageBackgrounds(...)` — a full-page tint, a sidebar column, a
+band) are painted behind the text of every page. Word colours a page in one colour only, so
+each fill is a rectangle anchored to the page in the section's header, behind the text —
+Word draws a header's shapes on every page that header is shown on, and the rectangle is in
+each header the section has, the first page's and even pages' included. A section without a
+header gets an empty one, against the page edge, to carry them.
+
 ## Fields, and when they update
 
 Everything that states a page number is a Word field rather than text, so it stays right

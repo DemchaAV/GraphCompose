@@ -196,6 +196,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // How far the containers being written hold their content in from each side, in points:
     // every enclosing margin and padding, counted from the page margin or the cell's edge.
     private double insetLeft;
+    // Identifiers for the shapes this export draws itself, kept clear of the ones POI numbers
+    // its pictures with: a drawing's id has to be unique in the document.
+    private long nextDrawingId;
     private double insetRight;
     // The text style the document is mostly written in, promoted to Word's Normal style.
     // Null until an export computes it, and when the graph carries no text at all.
@@ -470,6 +473,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         overlayDepth = 0;
         insetLeft = 0;
         insetRight = 0;
+        nextDrawingId = 100_000;
         listNumbering.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
@@ -504,6 +508,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
                 earlierZones.addAll(applyPageZones(document, context.outputOptions().zones(),
                         evenAndOdd, earlierZones));
+                applyPageBackgrounds(document, context.layoutGraph(), evenAndOdd);
                 for (DocumentNode root : section.graph().roots()) {
                     writeNode(document, root);
                 }
@@ -829,6 +834,52 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /** The header and footer kinds the section uses: the default, and the ones it states. */
+    /**
+     * Paints the section's page backgrounds behind the text of every page it has.
+     *
+     * <p>Each fill is a shape anchored to the page in the section's headers — every kind of
+     * header it shows, first page and even pages included — so it is drawn on each page
+     * whichever header that page takes (see {@link DocxPageBackgrounds}). A section without a
+     * header gets an empty one against the page edge to carry them, the way a section with
+     * no zone of a kind gets one that shows nothing.</p>
+     */
+    private void applyPageBackgrounds(XWPFDocument document,
+                                      com.demcha.compose.document.layout.LayoutGraph graph,
+                                      boolean evenAndOdd) {
+        List<DocxPageBackgrounds.Fill> fills = DocxPageBackgrounds.of(graph);
+        if (fills.isEmpty()) {
+            return;
+        }
+        CTSectPr sectPr = bodySectPr(document);
+        XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, sectPr);
+        boolean hasHeader = policy.getDefaultHeader() != null || policy.getFirstPageHeader() != null
+                            || policy.getEvenPageHeader() != null;
+        for (org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type
+                : partTypes(sectPr.isSetTitlePg(), evenAndOdd)) {
+            if (headerOf(policy, type) == null) {
+                blankZone(policy, sectPr, true, type, !hasHeader);
+            }
+            org.apache.poi.xwpf.usermodel.XWPFHeader header = headerOf(policy, type);
+            XWPFParagraph carrier = header.getParagraphs().isEmpty()
+                    ? collapsed(header.createParagraph())
+                    : header.getParagraphs().get(0);
+            XWPFRun run = carrier.createRun();
+            for (int order = 0; order < fills.size(); order++) {
+                run.getCTR().addNewDrawing().set(
+                        DocxPageBackgrounds.drawing(fills.get(order), nextDrawingId++, order));
+            }
+        }
+    }
+
+    private static org.apache.poi.xwpf.usermodel.XWPFHeader headerOf(
+            XWPFHeaderFooterPolicy policy,
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type) {
+        if (type == XWPFHeaderFooterPolicy.FIRST) {
+            return policy.getFirstPageHeader();
+        }
+        return type == XWPFHeaderFooterPolicy.EVEN ? policy.getEvenPageHeader() : policy.getDefaultHeader();
+    }
+
     private static List<org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum> partTypes(
             boolean titlePage, boolean evenAndOdd) {
         List<org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum> types = new ArrayList<>(3);

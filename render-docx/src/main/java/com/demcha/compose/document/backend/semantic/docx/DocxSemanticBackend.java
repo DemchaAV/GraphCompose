@@ -3909,8 +3909,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void writeRow(XWPFDocument document, RowNode node) throws Exception {
         // Represent rows as a single one-row table so downstream editors get a
-        // visual side-by-side layout. Cell content is restricted to atomic
-        // children; richer composition is scheduled for a follow-up release.
+        // visual side-by-side layout; each cell holds its child as it is written
+        // anywhere else (writeCellBody).
         if (node.children().isEmpty()) {
             return;
         }

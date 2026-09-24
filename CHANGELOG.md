@@ -411,9 +411,10 @@ follow semantic versioning; release dates are ISO 8601.
   never reached Word, so every cell held its content at the top: a table of contents, which
   aligns its entries to the bottom so the leader sits on the entry's baseline, exported with
   the dots riding at the top of each entry — measured in LibreOffice, 9pt above where the page
-  draws them. `CENTER` and `BOTTOM` are now each cell's `w:vAlign`, and the leader lands 0.6pt
-  above the baseline where the page puts it 0.4pt above. `TOP`, the default, is Word's own and
-  is not written, so a row that never asked stays as it was.
+  draws them. `CENTER` and `BOTTOM` are now each cell's `w:vAlign`, and in LibreOffice the
+  leader lands 0.6pt above the baseline where the page puts it 0.4pt above; Word was not
+  measured. `TOP`, the default, is Word's own and is not written, so a row that never asked
+  stays as it was.
 
 - **A DOCX list is now a real Word list.** The export wrote the marker into the item's
   run text and indented nesting with two spaces per level, which looks like a list and is

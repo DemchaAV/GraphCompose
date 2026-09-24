@@ -8,6 +8,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Page backgrounds reach Word.** `DocumentSession.pageBackgrounds(...)` paints fills under
+  every page — a sidebar CV's dark column, an invoice's tinted band — and the DOCX export
+  wrote none of them, so fourteen presets lost their page colour and a sidebar's white text
+  stood on a white page, all but unreadable. Word colours a page in one colour only, so each
+  fill is now a rectangle anchored to the page in the section's headers, behind the text:
+  Word draws a header's shapes on every page that header is shown on, and the rectangle is
+  in each header the section has. A section without a header gets an empty one against the
+  page edge to carry them, and the section after it gets an empty one of its own, so it does
+  not show the fills of the section before. Measured in LibreOffice, not in Word: on the
+  `CharcoalGold` CV the charcoal column is back behind the sidebar on every page. On a page
+  with no top margin the empty header pushes the first line down about 3pt. A two-column
+  preset still flows its columns one after the other in Word, so a column fill can stand
+  beside text that is not its column's.
+
 - **A timeline with its markers on the rail keeps its entries in Word.** With
   `markerOnRail()`, a timeline wraps each entry's header row so the columns it resolves are
   published, and lays the entry's body out in the content column below it — two engine

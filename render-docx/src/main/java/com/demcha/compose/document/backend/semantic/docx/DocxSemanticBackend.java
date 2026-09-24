@@ -197,6 +197,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // every enclosing margin and padding, counted from the page margin or the cell's edge.
     private double insetLeft;
     private double insetRight;
+    // Identifiers for the shapes this export draws itself, kept clear of the ones POI numbers
+    // its pictures with: a drawing's id has to be unique in the document.
+    private long nextDrawingId;
     // The text style the document is mostly written in, promoted to Word's Normal style.
     // Null until an export computes it, and when the graph carries no text at all.
     private DocumentTextStyle documentDefaultStyle;
@@ -470,6 +473,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         overlayDepth = 0;
         insetLeft = 0;
         insetRight = 0;
+        nextDrawingId = 100_000;
         listNumbering.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
@@ -504,6 +508,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
                 earlierZones.addAll(applyPageZones(document, context.outputOptions().zones(),
                         evenAndOdd, earlierZones));
+                if (applyPageBackgrounds(document, context.layoutGraph(), evenAndOdd)) {
+                    earlierZones.add(DocumentHeaderFooterZone.HEADER);
+                }
                 for (DocumentNode root : section.graph().roots()) {
                     writeNode(document, root);
                 }
@@ -826,6 +833,60 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 "its page predicate picks pages Word has no header or footer for — only the first,"
                 + " even and odd pages can differ — so it is written on every page");
         return java.util.EnumSet.allOf(DocxPageClasses.PageClass.class);
+    }
+
+    /**
+     * Paints the section's page backgrounds behind the text of every page it has.
+     *
+     * <p>Each fill is a shape anchored to the page in the section's headers — every kind of
+     * header it shows, first page and even pages included — so it is drawn on each page
+     * whichever header that page takes (see {@link DocxPageBackgrounds}). A section without a
+     * header gets an empty one against the page edge to carry them, the way a section with
+     * no zone of a kind gets one that shows nothing.</p>
+     *
+     * <p>Word shows a section with no header of its own the header of the section before it,
+     * shapes and all, so a header written here counts as one the section wrote: a later
+     * section without backgrounds then gets an empty header of its own, rather than the
+     * cover's colour behind its text.</p>
+     *
+     * @return whether the section now has headers carrying its backgrounds
+     */
+    private boolean applyPageBackgrounds(XWPFDocument document,
+                                         com.demcha.compose.document.layout.LayoutGraph graph,
+                                         boolean evenAndOdd) {
+        List<DocxPageBackgrounds.Fill> fills = DocxPageBackgrounds.of(graph);
+        if (fills.isEmpty()) {
+            return false;
+        }
+        CTSectPr sectPr = bodySectPr(document);
+        XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, sectPr);
+        boolean hasHeader = policy.getDefaultHeader() != null || policy.getFirstPageHeader() != null
+                            || policy.getEvenPageHeader() != null;
+        for (org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type
+                : partTypes(sectPr.isSetTitlePg(), evenAndOdd)) {
+            if (headerOf(policy, type) == null) {
+                blankZone(policy, sectPr, true, type, !hasHeader);
+            }
+            org.apache.poi.xwpf.usermodel.XWPFHeader header = headerOf(policy, type);
+            XWPFParagraph carrier = header.getParagraphs().isEmpty()
+                    ? collapsed(header.createParagraph())
+                    : header.getParagraphs().get(0);
+            XWPFRun run = carrier.createRun();
+            for (int order = 0; order < fills.size(); order++) {
+                run.getCTR().addNewDrawing().set(
+                        DocxPageBackgrounds.drawing(fills.get(order), nextDrawingId++, order));
+            }
+        }
+        return true;
+    }
+
+    private static org.apache.poi.xwpf.usermodel.XWPFHeader headerOf(
+            XWPFHeaderFooterPolicy policy,
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type) {
+        if (type == XWPFHeaderFooterPolicy.FIRST) {
+            return policy.getFirstPageHeader();
+        }
+        return type == XWPFHeaderFooterPolicy.EVEN ? policy.getEvenPageHeader() : policy.getDefaultHeader();
     }
 
     /** The header and footer kinds the section uses: the default, and the ones it states. */

@@ -126,7 +126,7 @@ class DocxEditorSlackTest {
                 .pageSize(420, 600)
                 .margin(DocumentInsets.of(20))
                 .create()) {
-            session.pageFlow(page -> page.addRow(row -> content.accept(row.name("Entry").gap(6))));
+            session.pageFlow(page -> page.addRow(row -> content.accept(row.name("Entry").spacing(6))));
             List<PlacedNode> nodes = session.layoutGraph().nodes();
             PlacedNode row = nodes.stream()
                     .filter(node -> "Entry".equals(node.semanticName()))

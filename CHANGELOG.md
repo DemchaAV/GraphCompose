@@ -91,6 +91,19 @@ follow semantic versioning; release dates are ISO 8601.
   `NavySidebar` and `MonogramSidebar` still run onto a second page, by more than the space
   left out.
 
+- **A title at the left and dates at the right of one band stay on one line in Word.** A CV
+  entry's head band holds its title and its dates as two layers of one container, and the
+  DOCX export wrote layers one after the other, so the dates took a line of their own under
+  every title. A container or layer stack holding exactly two single-line paragraphs, level
+  and apart across the page, is now one Word paragraph: the left one's runs, a tab, the right
+  one's, with a right-aligned tab stop where the right text ends. The line runs from the top
+  of the higher text to the bottom of the lower. Text standing out of its band — a title
+  pulled up to centre on a marker smaller than its line — takes that much from the gap on
+  that side, as it does on the page. `NavySidebar`'s entries and its language rows are
+  written this way. Measured in LibreOffice together with the changes that write a
+  container's spacing and take a line's height from its text, its main column ends within
+  1pt of where the page puts it, against 9pt without this change.
+
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the
   sidebar. The DOCX export wrote the layers one after the other: the main column began below

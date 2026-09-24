@@ -243,6 +243,16 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * Where the layout placed a node's box.
+     *
+     * @param node any authored node
+     * @return the placement, or {@code null} when the layout placed nothing for it
+     */
+    PlacedNode placement(DocumentNode node) {
+        return placedFor(node);
+    }
+
+    /**
      * Whether the layout placed a node, and placed all of it on one page.
      *
      * @param node any authored node

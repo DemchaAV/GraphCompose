@@ -441,6 +441,15 @@ tint it was flattened to. Recorded, like the other two.
   content is its data, so the backend writes a categories-by-series table
   (values formatted with the chart's own axis format) and logs **one
   capability warning per export**. See [charts.md](charts.md).
+- **Columns drawn as layers → one table row.** A two-column page can lay its
+  columns out as the layers of one stack, each inset to its band, so the name
+  is drawn before the sidebar. Word has no layers. When every layer is a plain
+  container at the stack's top-left corner, and the bands their padding leaves
+  are either the same or apart, the stack is written as one row with a cell per
+  band. Layers sharing a band follow one another in its cell. A spacer that only
+  keeps another layer's place is not written, and the space above a later
+  layer's first block is the gap the page shows. Any other layer stack writes
+  its layers one after the other, without their positions.
 - **Shape containers → inline layers.** DOCX has no portable equivalent
   of a graphics-state path clip, so the container's layers are written
   inline, in source order, without the outline frame and without clipping

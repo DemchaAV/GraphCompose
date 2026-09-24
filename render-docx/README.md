@@ -105,7 +105,8 @@ What is not written — each one is named in the export report
   other than a thin bar, and a line laid over something else in a layer stack or canvas.
 - **Positioning and effects.** A layer stack, a canvas or a clipped container writes its
   children in order, without their positions and without the clip; a rotation or scale is
-  not carried.
+  not carried. A layer stack whose layers are side-by-side columns is the exception: it is
+  written as one table row, a cell per column.
 - **In a page zone**, a barcode or a rule.
 - **The text header and footer slots**, watermarks and protection options.
 - **`markerGap`** on a hanging-indent list: Word places the item text at its own indent.

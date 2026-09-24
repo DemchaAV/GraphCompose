@@ -193,6 +193,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private DocumentColor surfaceBehind;
     // How many overlays — layer stacks, canvases, shape containers — the node being written sits in.
     private int overlayDepth;
+    // The spacers that keep the place of another column layer's content, left out while the
+    // layer stack they sit in is written as columns (DocxLayerColumns).
+    private final java.util.Set<DocumentNode> standIns =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // The space above the next block, in points, in place of everything owed above it: set
+    // when a column layer follows another in its cell, NaN otherwise.
+    private double resumeSpacing = Double.NaN;
     // How far the containers being written hold their content in from each side, in points:
     // every enclosing margin and padding, counted from the page margin or the cell's edge.
     private double insetLeft;
@@ -1237,6 +1244,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNodeContent(XWPFDocument document, DocumentNode node) throws Exception {
+        if (node instanceof com.demcha.compose.document.node.LayerStackNode stack) {
+            DocxLayerColumns.Plan columns = DocxLayerColumns.of(stack, layout,
+                    candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
+                                 && paintOf(candidate).isEmpty());
+            if (columns != null) {
+                // Side by side, nothing in the stack overlaps: it is not an overlay.
+                writeLayerColumns(document, stack, columns);
+                return;
+            }
+        }
         boolean overlay = isOverlay(node);
         if (overlay) {
             overlayDepth++;
@@ -2404,6 +2421,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * filled — held in by the containers around it and carrying the space owed above it.
      */
     private XWPFParagraph newBodyParagraph(XWPFDocument document) {
+        resumeHere();
         XWPFParagraph para;
         if (cellEndsWithItsTableCloser()) {
             // The paragraph closing the table above is where this one goes: a second one
@@ -2427,6 +2445,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pendingSpacingAfter = 0;
         lastBodyParagraph = para;
         return para;
+    }
+
+    /**
+     * Makes the space owed above the block about to be written the resumed one, when a
+     * column layer has just started after another in its cell (see {@link #writeLayerColumns}).
+     */
+    private void resumeHere() {
+        if (!Double.isNaN(resumeSpacing)) {
+            carriedSpacingBefore = 0;
+            pendingSpacingAfter = resumeSpacing;
+            resumeSpacing = Double.NaN;
+        }
     }
 
     /**
@@ -4149,6 +4179,69 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Writes a layer stack whose layers are side-by-side columns as a one-row table.
+     *
+     * <p>Each column is a cell as wide as its band, and holds the content of its layers — the
+     * layers' own padding is the band, so it is not written again. A gap between two bands is
+     * the next cell's left margin, and whatever the last band leaves on the right is its
+     * cell's right margin. The row may break across pages, as a column longer than a page
+     * does. See {@link DocxLayerColumns}.</p>
+     */
+    private void writeLayerColumns(XWPFDocument document,
+                                   com.demcha.compose.document.node.LayerStackNode stack,
+                                   DocxLayerColumns.Plan plan) throws Exception {
+        owePendingSpacingAfter(stack.margin().top() + stack.padding().top());
+        List<DocxLayerColumns.Column> columns = plan.columns();
+        XWPFTable table = newTable(document, 1, columns.size());
+        hideTableGrid(table);
+        setTableWidth(table, plan.width());
+        List<CellColumn> cells = new ArrayList<>(columns.size());
+        for (int index = 0; index < columns.size(); index++) {
+            DocxLayerColumns.Column column = columns.get(index);
+            double start = index == 0 ? 0.0 : columns.get(index - 1).right();
+            double end = index == columns.size() - 1 ? plan.width() : column.right();
+            cells.add(new CellColumn(end - start, column.left() - start, end - column.right()));
+        }
+        writeRowColumns(table, cells);
+        standIns.addAll(plan.standIns());
+        try {
+            XWPFTableRow row = table.getRow(0);
+            for (int index = 0; index < columns.size(); index++) {
+                XWPFTableCell cell = row.getCell(index);
+                cell.removeParagraph(0);
+                List<DocumentNode> layers = columns.get(index).layers();
+                double previous = currentCellWidth;
+                currentCellWidth = usableWidthOf(cell, index, 1);
+                try {
+                    writeInCell(cell, () -> {
+                        for (int layer = 0; layer < layers.size(); layer++) {
+                            if (layer > 0) {
+                                // What the layers above still owe below themselves is space
+                                // the page does not have: the gap to this one is the page's.
+                                pendingSpacingAfter = 0;
+                                resumeSpacing = plan.resume(layers.get(layer));
+                            }
+                            for (DocumentNode child : layers.get(layer).children()) {
+                                writeNode(document, child);
+                            }
+                        }
+                    });
+                } finally {
+                    currentCellWidth = previous;
+                    resumeSpacing = Double.NaN;
+                }
+                if (cell.getParagraphs().isEmpty()) {
+                    cell.addParagraph();
+                }
+            }
+        } finally {
+            standIns.removeAll(plan.standIns());
+        }
+        indentTable(table);
+        owePendingSpacingAfter(stack.margin().bottom() + stack.padding().bottom());
+    }
+
+    /**
      * Writes where a row's children sit in its height.
      *
      * <p>The layout places a child shorter than its row at the row's top, middle or bottom,
@@ -4795,6 +4888,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private XWPFTable newTable(XWPFDocument document, int rows, int columns) {
+        resumeHere();
         if (currentCell == null ? endsWithATable(document.getBodyElements()) : cellEndsWithItsTableCloser()) {
             separateFromTheTableAbove(document);
         }
@@ -4951,6 +5045,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** Writes several nodes into a cell, one after another, as a block of the cell's own. */
     private void writeCellNodes(XWPFTableCell cell, List<DocumentNode> children) throws Exception {
+        writeInCell(cell, () -> {
+            for (DocumentNode child : children) {
+                writeNode(cell.getXWPFDocument(), child);
+            }
+        });
+    }
+
+    /** Something written into a cell. */
+    @FunctionalInterface
+    private interface CellContent {
+        void write() throws Exception;
+    }
+
+    /** Writes into a cell as a block of the cell's own, the writer's place kept around it. */
+    private void writeInCell(XWPFTableCell cell, CellContent content) throws Exception {
         XWPFTableCell previousCell = currentCell;
         XWPFParagraph previousParagraph = lastBodyParagraph;
         double previousCarried = carriedSpacingBefore;
@@ -4968,9 +5077,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         insetLeft = 0;
         insetRight = 0;
         try {
-            for (DocumentNode child : children) {
-                writeNode(cell.getXWPFDocument(), child);
-            }
+            content.write();
             // A cell ends where it ends: its last gap cannot land on whatever the body
             // writes next, and the body's cannot land inside it.
             flushSpacingAfter();
@@ -4986,6 +5093,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeSpacer(XWPFDocument document, SpacerNode node) {
+        if (standIns.contains(node)) {
+            return;
+        }
         XWPFParagraph para = newBodyParagraph(document);
         para.createRun().setText("");
         owePendingSpacingAfter(node.height());

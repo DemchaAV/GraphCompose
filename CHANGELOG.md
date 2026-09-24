@@ -109,6 +109,20 @@ follow semantic versioning; release dates are ISO 8601.
   in LibreOffice (22.2pt). Its entries still sit 4.5pt lower each than the one above: a title
   raised out of its band at the top of a table cell cannot reach above the cell in Word.
 
+- **Overlapping layers keep the page's distances in Word.** A layer stack that is not
+  columns was written layer after layer, each starting again at the top. `MonogramSidebar`
+  opens its sidebar with a badge: a spacer as tall as the badge keeps its place in the flow,
+  and the badge, a drawn ring with the initials centred in it, is laid over the spacer. Word
+  put the initials after the spacer's full height, about 100pt below where the page draws them,
+  and the whole sidebar with them. Such a stack is now one band. A spacer level with another
+  layer's content is a stand-in and is not written. The space above the first block written
+  and below the last is the page's distance from the stack's edges. A later layer resumes
+  the page's distance below the blocks above it. Drawing is not written and does not count
+  as content. Measured in LibreOffice together with the other DOCX layout fixes of this
+  release, `MonogramSidebar` is one page, as in the PDF. The mean distance of a line from its
+  place on the page falls from 74pt to 7.5pt, and every one of the sixteen CV presets and
+  four sidebar CVs has the PDF's page count.
+
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the
   sidebar. The DOCX export wrote the layers one after the other: the main column began below

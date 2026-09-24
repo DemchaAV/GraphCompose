@@ -1269,6 +1269,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 writeLayerColumns(document, stack, columns);
                 return;
             }
+            DocxLayerColumns.Band band = DocxLayerColumns.band(stack, layout, DocxSemanticBackend::isDrawing);
+            if (band != null) {
+                writeOverlayBand(document, stack, band);
+                return;
+            }
         }
         if (node instanceof com.demcha.compose.document.node.LayerStackNode
             || node instanceof ShapeContainerNode) {
@@ -4576,6 +4581,67 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             insetLeft = outerLeft;
         }
         owePendingSpacingAfter(stack.margin().bottom() + stack.padding().bottom());
+    }
+
+    /**
+     * Writes a stack of overlapping layers one after the other, as the page places their
+     * content (see {@link DocxLayerColumns#band}).
+     *
+     * <p>The space above the first block written is the page's distance from the stack's
+     * top, together with whatever was owed above the stack; each later layer resumes the
+     * page's distance below the blocks above it; and the space owed below is the page's
+     * distance from the last block to the stack's bottom. Each replaces what the containers
+     * in between would have carried, which on the page is space the other layers already
+     * take. A later layer that follows only layers that wrote nothing keeps the space the
+     * stack opened with. Drawing among the layers is not written, as in any overlay.</p>
+     */
+    private void writeOverlayBand(XWPFDocument document,
+                                  com.demcha.compose.document.node.LayerStackNode stack,
+                                  DocxLayerColumns.Band band) throws Exception {
+        // A band inside a band that has written nothing yet: the outer band measured its space
+        // to the first block written, which is this one's first too, so that space stands.
+        if (Double.isNaN(resumeSpacing)) {
+            resumeSpacing = carriedSpacingBefore + pendingSpacingAfter + stack.margin().top() + band.above();
+        }
+        carriedSpacingBefore = 0;
+        pendingSpacingAfter = 0;
+        standIns.addAll(band.standIns());
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
+        insetLeft += stack.margin().left() + stack.padding().left();
+        insetRight += stack.margin().right() + stack.padding().right();
+        overlayDepth++;
+        try {
+            List<DocumentNode> layers = band.layers();
+            for (int index = 0; index < layers.size(); index++) {
+                double resume = band.resume(layers.get(index));
+                if (index > 0 && !Double.isNaN(resume) && Double.isNaN(resumeSpacing)) {
+                    pendingSpacingAfter = 0;
+                    carriedSpacingBefore = 0;
+                    resumeSpacing = resume;
+                }
+                writeNode(document, layers.get(index));
+            }
+        } finally {
+            overlayDepth--;
+            insetLeft = outerLeft;
+            insetRight = outerRight;
+            standIns.removeAll(band.standIns());
+        }
+        // Nothing was written after all: the space the stack opened with is still owed.
+        double unwritten = Double.isNaN(resumeSpacing) ? 0 : resumeSpacing;
+        resumeSpacing = Double.NaN;
+        carriedSpacingBefore = 0;
+        pendingSpacingAfter = unwritten + band.below() + stack.margin().bottom();
+    }
+
+    /** Whether a node is drawing, which in an overlay this export does not write. */
+    private static boolean isDrawing(DocumentNode node) {
+        return node instanceof com.demcha.compose.document.node.ShapeNode
+               || node instanceof com.demcha.compose.document.node.LineNode
+               || node instanceof com.demcha.compose.document.node.EllipseNode
+               || node instanceof com.demcha.compose.document.node.PathNode
+               || node instanceof com.demcha.compose.document.node.PolygonNode;
     }
 
     /**

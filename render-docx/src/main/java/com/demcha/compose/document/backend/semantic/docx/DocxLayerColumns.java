@@ -131,31 +131,101 @@ final class DocxLayerColumns {
         }
         columns.sort(Comparator.comparingDouble(Column::left));
         Set<DocumentNode> standIns = Collections.newSetFromMap(new IdentityHashMap<>());
-        for (Column column : columns) {
-            if (column.layers().size() < 2) {
-                continue;
-            }
-            Map<DocumentNode, List<PlacedNode>> content = new IdentityHashMap<>();
-            for (DocumentNode layer : column.layers()) {
-                List<PlacedNode> leaves = new ArrayList<>();
-                collectContent(layer, layout, leaves);
-                content.put(layer, leaves);
-            }
-            for (DocumentNode layer : column.layers()) {
-                collectStandIns(layer, layer, content, layout, standIns);
-            }
-        }
         Map<DocumentNode, Double> resumes = new IdentityHashMap<>();
         for (Column column : columns) {
-            List<DocumentNode> layers = column.layers();
-            for (int index = 1; index < layers.size(); index++) {
-                double resume = resume(layers.subList(0, index), layers.get(index), layout, standIns);
-                if (!Double.isNaN(resume)) {
-                    resumes.put(layers.get(index), resume);
-                }
-            }
+            flow(column.layers(), layout, node -> false, standIns, resumes);
         }
         return new Plan(width, List.copyOf(columns), standIns, resumes);
+    }
+
+    /**
+     * A stack whose layers overlap, written as one band: layer after layer, as the page
+     * places their content.
+     *
+     * @param layers   the stack's layers, in its order
+     * @param standIns the spacers that hold another layer's place, to be left out
+     * @param resumes  for each layer after the first, the space above its first block
+     * @param above    from the stack's top to its first written block, that block's own margin
+     *                 aside
+     * @param below    from the text of its lowest written block to the stack's bottom
+     */
+    record Band(List<DocumentNode> layers, Set<DocumentNode> standIns, Map<DocumentNode, Double> resumes,
+                double above, double below) {
+
+        /** @see Plan#resume(DocumentNode) */
+        double resume(DocumentNode layer) {
+            Double points = resumes.get(layer);
+            return points == null ? Double.NaN : points;
+        }
+    }
+
+    /**
+     * A stack of overlapping layers as one band, or {@code null} when it has fewer than two
+     * layers or nothing written in it.
+     *
+     * <p>Word has no layers, so an overlay's layers are written one after the other, and each
+     * one starts again at the top: what one layer holds the place of with a spacer — a badge's
+     * circle kept in the flow while the badge is drawn over it — came out twice as tall, the
+     * spacer's height and then the badge's text below it. As a band, a spacer level with
+     * another layer's content is a stand-in and is left out, the space above the first block
+     * and below the last is the page's, and a later layer resumes the page's distance below
+     * the blocks above it. Drawing is not written and is not content here: a circle's box
+     * would otherwise decide where the text in it starts.</p>
+     *
+     * @param stack   the stack
+     * @param layout  where the layout placed the stack and its layers
+     * @param drawing whether a leaf is drawing this export does not write
+     * @return the band, or {@code null}
+     */
+    static Band band(LayerStackNode stack, DocxLayoutMetrics layout, Predicate<DocumentNode> drawing) {
+        PlacedNode box = layout.placement(stack);
+        if (box == null || stack.layers().size() < 2) {
+            return null;
+        }
+        List<DocumentNode> layers = stack.children();
+        Set<DocumentNode> standIns = Collections.newSetFromMap(new IdentityHashMap<>());
+        Map<DocumentNode, Double> resumes = new IdentityHashMap<>();
+        flow(layers, layout, drawing, standIns, resumes);
+        DocumentNode first = null;
+        PlacedNode lowest = null;
+        for (DocumentNode layer : layers) {
+            if (first == null) {
+                first = firstLeaf(layer, layout, standIns, drawing);
+            }
+            lowest = lowestLeaf(layer, layout, standIns, drawing, lowest);
+        }
+        if (first == null || lowest == null) {
+            return null;
+        }
+        PlacedNode top = layout.placement(first);
+        double above = box.placementY() + box.placementHeight()
+                       - (top.placementY() + top.placementHeight()) - first.margin().top();
+        double below = lowest.placementY() + lowest.padding().bottom() - box.placementY();
+        return new Band(layers, standIns, resumes, Math.max(0, above), Math.max(0, below));
+    }
+
+    /** The stand-ins among layers that share a band, and each later layer's resume. */
+    private static void flow(List<DocumentNode> layers, DocxLayoutMetrics layout,
+                             Predicate<DocumentNode> drawing,
+                             Set<DocumentNode> standIns, Map<DocumentNode, Double> resumes) {
+        if (layers.size() < 2) {
+            return;
+        }
+        Map<DocumentNode, List<PlacedNode>> content = new IdentityHashMap<>();
+        for (DocumentNode layer : layers) {
+            List<PlacedNode> leaves = new ArrayList<>();
+            collectContent(layer, layout, drawing, leaves);
+            content.put(layer, leaves);
+        }
+        for (DocumentNode layer : layers) {
+            collectStandIns(layer, layer, content, layout, standIns);
+        }
+        for (int index = 1; index < layers.size(); index++) {
+            double resume = resume(layers.subList(0, index), layers.get(index), layout, standIns, drawing);
+            if (!Double.isNaN(resume)) {
+                resumes.put(layers.get(index), resume);
+            }
+        }
     }
 
     /**
@@ -170,12 +240,13 @@ final class DocxLayerColumns {
      * layer's first block, less that block's margin, which the block writes itself.</p>
      */
     private static double resume(List<DocumentNode> above, DocumentNode layer,
-                                 DocxLayoutMetrics layout, Set<DocumentNode> standIns) {
+                                 DocxLayoutMetrics layout, Set<DocumentNode> standIns,
+                                 Predicate<DocumentNode> drawing) {
         PlacedNode lowest = null;
         for (DocumentNode earlier : above) {
-            lowest = lowestLeaf(earlier, layout, standIns, lowest);
+            lowest = lowestLeaf(earlier, layout, standIns, drawing, lowest);
         }
-        DocumentNode first = firstLeaf(layer, layout, standIns);
+        DocumentNode first = firstLeaf(layer, layout, standIns, drawing);
         if (lowest == null || first == null) {
             return Double.NaN;
         }
@@ -191,26 +262,28 @@ final class DocxLayerColumns {
      * not written itself.
      */
     private static PlacedNode lowestLeaf(DocumentNode node, DocxLayoutMetrics layout,
-                                         Set<DocumentNode> standIns, PlacedNode lowest) {
+                                         Set<DocumentNode> standIns, Predicate<DocumentNode> drawing,
+                                         PlacedNode lowest) {
         if (node.children().isEmpty()) {
-            PlacedNode placed = standIns.contains(node) ? null : layout.placement(node);
+            PlacedNode placed = standIns.contains(node) || drawing.test(node) ? null : layout.placement(node);
             return placed != null && (lowest == null || placed.placementY() < lowest.placementY())
                     ? placed : lowest;
         }
         for (DocumentNode child : node.children()) {
-            lowest = lowestLeaf(child, layout, standIns, lowest);
+            lowest = lowestLeaf(child, layout, standIns, drawing, lowest);
         }
         return lowest;
     }
 
-    /** The first placed leaf under {@code node}, in reading order, that is not a stand-in. */
+    /** The first placed leaf under {@code node}, in reading order, that is written. */
     private static DocumentNode firstLeaf(DocumentNode node, DocxLayoutMetrics layout,
-                                          Set<DocumentNode> standIns) {
+                                          Set<DocumentNode> standIns, Predicate<DocumentNode> drawing) {
         if (node.children().isEmpty()) {
-            return standIns.contains(node) || layout.placement(node) == null ? null : node;
+            return standIns.contains(node) || drawing.test(node) || layout.placement(node) == null
+                    ? null : node;
         }
         for (DocumentNode child : node.children()) {
-            DocumentNode first = firstLeaf(child, layout, standIns);
+            DocumentNode first = firstLeaf(child, layout, standIns, drawing);
             if (first != null) {
                 return first;
             }
@@ -218,17 +291,18 @@ final class DocxLayerColumns {
         return null;
     }
 
-    /** Collects the placed leaves under {@code node} that are content: every one but a spacer. */
-    private static void collectContent(DocumentNode node, DocxLayoutMetrics layout, List<PlacedNode> leaves) {
+    /** Collects the placed leaves under {@code node} that are content: every one but a spacer or drawing. */
+    private static void collectContent(DocumentNode node, DocxLayoutMetrics layout,
+                                       Predicate<DocumentNode> drawing, List<PlacedNode> leaves) {
         if (node.children().isEmpty()) {
             PlacedNode placed = layout.placement(node);
-            if (placed != null && !(node instanceof SpacerNode)) {
+            if (placed != null && !(node instanceof SpacerNode) && !drawing.test(node)) {
                 leaves.add(placed);
             }
             return;
         }
         for (DocumentNode child : node.children()) {
-            collectContent(child, layout, leaves);
+            collectContent(child, layout, drawing, leaves);
         }
     }
 

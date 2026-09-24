@@ -59,45 +59,57 @@ try (var doc = GraphCompose.document().create()) {
 
 ## What it maps, and what it does not
 
-DOCX walks the **semantic node graph**, not the fixed PDF layout — Word owns the flow, so
-the page geometry the PDF backend resolves is deliberately ignored. Drawing nodes — shape,
-line, ellipse, polygon, path, barcode — do reach the backend, and are dropped there with one
-logged warning per kind; a clip or transform container renders its children inline, without
-the boundary and without the transform. A document that draws exports its text and tables,
-not its drawing.
+DOCX walks the **semantic node graph** in the order the document was written and produces
+editable Word content — real paragraphs, runs, lists and tables — so Word owns the flow
+once a reader edits it. What Word cannot work out for itself it takes from the session's
+resolved layout: each line's height, table and row column widths, and how far a header or
+footer sits from its page edge
+([measured geometry](../docs/recipes/docx-export.md#measured-geometry)).
 
-What maps: paragraphs, lists, block images, tables, and document metadata (title, author,
-subject, keywords). Run styling carries font family, size, colour, bold, italic,
-underline and strikethrough, per run rather than per paragraph. A block image is sized by
-the rule layout uses — `width` / `height` / `scale`, the aspect ratio filling in whichever
-is missing, and a clamp to the page's content width — and honours its fit mode: `CONTAIN`
-is embedded at its fitted size, `COVER` fills the box and the overflow is cropped out of
-the picture source rather than clipped, which Word has no way to express for an inline
-picture.
+What maps:
 
-What maps only in part:
+- **Text.** Paragraphs keep their alignment and their runs; a run carries its font family,
+  size, colour, bold, italic, underline and strikethrough. A block's margin and padding
+  become paragraph spacing. The fonts the document is set in are embedded, where there is a
+  file behind them.
+- **Lists** are real Word lists — a numbering definition, one level per nesting depth, the
+  authored marker as the level's text.
+- **Tables.** `colSpan` and `rowSpan` map to `w:gridSpan` and `w:vMerge`; fill, borders
+  and text style take the most specific value in the table / column / row / cell cascade;
+  padding becomes the cell's margins and `textAnchor` its alignment; header rows repeat on
+  each page and every row is kept whole. A composed cell is written by the same writers as
+  anywhere else, so it can hold an image, a list or a nested table. A fill is opaque in
+  Word.
+- **Rows** are a one-row table whose columns are where the layout placed each child.
+- **Panels.** A container with a fill or a border is a one-cell table carrying them; rounded
+  corners come out square, and the report says so.
+- **Images.** A block image keeps its size and fit mode. Pictures, SVG icons and emoji in a
+  line are inline pictures, placed where the page's alignment puts them; an icon's text is
+  the picture's description. Code and badge chips keep their fill as run shading, without
+  the shape.
+- **Links and navigation.** A link is a `w:hyperlink`, to an address or to one of the
+  document's anchors; an `anchor(...)` is a bookmark; a `bookmark(...)` outline level is
+  Word's `HeadingN` style, so the paragraph is in the Navigation Pane.
+- **Horizontal rules.** A horizontal line or an `addDivider` bar is a paragraph border.
+- **Barcodes and QR codes** are pictures of the same matrix the PDF draws, so they scan.
+- **Charts** are a table of their data.
+- **Pages.** Page size, margins and orientation; page zones (`session.chrome().zone(...)`)
+  as real Word headers and footers with live page-number fields; document metadata (title,
+  author, subject, keywords).
+- **Byte-identical output** with `DocxSemanticBackend.builder().deterministic(true)`.
 
-- **Table cells keep their structure and their paint.** `colSpan` and `rowSpan` map to
-  Word's own `w:gridSpan` and `w:vMerge`; a cell's fill maps to `w:shd` and its stroke to
-  `w:tcBorders`; and text, fill and stroke each take the most specific value in the
-  table / column / row / cell cascade, resolved per field, so a table-wide rule survives a
-  row that only overrides the fill. A stroke of no width is read as "no border" and says so
-  in the file, so a deliberately borderless design does not inherit the grid Word puts on a
-  table; a table that says nothing about borders keeps that grid, Word owning the look it
-  was not given. What a fill loses is its opacity — `w:shd` is opaque,
-  and blending it would need a background Word owns rather than this backend. A composed
-  cell writes the shapes a cell can hold — paragraphs, and the wrappers around them — so
-  one built from an image or a list still lands empty.
+What is not written — each one is named in the export report
+([finding out what the export could not carry](../docs/recipes/docx-export.md#finding-out-what-the-export-could-not-carry)):
 
-These are **not implemented** even though Word itself can express them — check the list
-before you promise a `.docx` to a reader:
-
-- **Hyperlinks are dropped**, external and internal alike; the link text survives as plain text.
-- **No bookmarks and no navigation outline.**
-- **No repeating headers or footers**, and no watermark layer.
-- **No barcodes or QR codes**, and no inline images or code/badge chips inside a paragraph
-  — a chip's text is exported with its own styling, but not its background.
-- **Output is not byte-deterministic**: rendering twice does not produce identical files.
+- **Other drawing**: vertical and slanted lines, ellipses, polygons, paths, filled shapes
+  other than a thin bar, and a line laid over something else in a layer stack or canvas.
+- **Inline shapes** in a line of text — `dot(...)`, arrows, chevrons.
+- **Positioning and effects.** A layer stack, a canvas or a clipped container writes its
+  children in order, without their positions and without the clip; a rotation or scale is
+  not carried.
+- **In a page zone**, a barcode or a rule.
+- **The text header and footer slots**, watermarks and protection options.
+- **`markerGap`** on a hanging-indent list: Word places the item text at its own indent.
 
 Multi-section documents export through `MultiSectionDocument.toDocxBytes()`,
 `writeDocx(...)` and `buildDocx(...)` (Experimental): each section becomes a Word section

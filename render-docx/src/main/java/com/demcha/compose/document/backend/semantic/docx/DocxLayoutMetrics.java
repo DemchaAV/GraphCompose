@@ -318,18 +318,35 @@ final class DocxLayoutMetrics {
     /**
      * The height of one line of the paragraph's text, as the engine measured it.
      *
+     * <p>The height of the text on the laid-out lines — the tallest of them, since Word has
+     * one height for a paragraph and a shorter one would clip the rest — rather than the
+     * paragraph's own style's. The two are the same while every run is set in the
+     * paragraph's style. They part when the runs carry a style of their own: a skill rating
+     * of dots with a 7.8pt space between each, in a paragraph left at the default size, is a
+     * 9.4pt line on the page, and the style's 13pt made every skill row of a CV sidebar
+     * 3.6pt taller in Word. An inline picture's height is not text's; the lines that hold
+     * one are made room for separately ({@code makeRoomForPictures}).</p>
+     *
      * <p>Read from the first fragment the node emitted: a paragraph split across a page
-     * boundary emits one fragment per page and every one of them carries the same line
-     * height, which is a property of the text style rather than of the split.</p>
+     * boundary emits one fragment per page, and the lines of the first are the ones the
+     * paragraph opens with.</p>
      *
      * @param node any node that lays its text out as paragraph lines
      * @return the line height in points, or empty when the node laid out nothing
      */
     OptionalDouble lineHeight(DocumentNode node) {
         for (PlacedFragment fragment : fragmentsOf(node)) {
-            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph
-                && paragraph.lineHeight() > 0) {
-                return OptionalDouble.of(paragraph.lineHeight());
+            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
+                double text = 0;
+                for (com.demcha.compose.document.layout.payloads.ParagraphLine line : paragraph.lines()) {
+                    text = Math.max(text, line.textLineHeight());
+                }
+                if (text > 0) {
+                    return OptionalDouble.of(text);
+                }
+                if (paragraph.lineHeight() > 0) {
+                    return OptionalDouble.of(paragraph.lineHeight());
+                }
             }
         }
         return OptionalDouble.empty();

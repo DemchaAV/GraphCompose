@@ -43,6 +43,16 @@ follow semantic versioning; release dates are ISO 8601.
   before; `CharcoalGold`, `NavySidebar` and `MonogramSidebar` run to a second page in both
   editors.
 
+- **A paragraph's line in Word is as tall as the text on it.** The DOCX export set each
+  paragraph's exact line height from the paragraph's own style, while the page sets a line
+  by the runs on it. The two differ when the runs carry a style of their own. A skill
+  rating of dots, with a 7.8pt space between each, in a paragraph left at the default size,
+  is a 9.4pt line on the page and was a 13pt line in Word, so every skill row of
+  `CharcoalGold`'s sidebar stood 3.6pt taller. The line is now the tallest text line the
+  layout measured. Inline pictures still make their own room. Measured in LibreOffice,
+  `CharcoalGold` is back to one page, as in the PDF, and its mean distance of a text line
+  from its place on the page falls from 19.7pt to 5.9pt.
+
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the
   sidebar. The DOCX export wrote the layers one after the other: the main column began below

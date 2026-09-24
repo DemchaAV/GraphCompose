@@ -106,6 +106,23 @@ class DocxLineHeightTest {
     }
 
     @Test
+    void aParagraphsLineIsTheHeightOfTheRunsItHoldsNotOfItsOwnStyle() throws Exception {
+        // A skill rating: dots with a small space between each, in a paragraph left at the
+        // default size. The page sets the line by the runs on it; the paragraph's own style
+        // would make it the default's height and every such row taller in Word.
+        DocumentTextStyle small = DocumentTextStyle.DEFAULT.withSize(7.8);
+        try (XWPFDocument document = withLayout(page -> page
+                .addParagraph(p -> p.text("Rated").textStyle(small))
+                .addParagraph(p -> p.inlineText("Rated", small)))) {
+
+            long styled = lineTwips(document.getParagraphs().get(0));
+            long runsOnly = lineTwips(document.getParagraphs().get(1));
+            assertThat(runsOnly).as("the runs' height, not the default style's").isEqualTo(styled);
+            assertThat(runsOnly).isLessThan(Math.round(DocumentTextStyle.DEFAULT.size() * TWIPS_PER_POINT));
+        }
+    }
+
+    @Test
     void withNothingMeasuredNoHeightIsInvented() throws Exception {
         // The export still writes a complete document with no layout behind it — it just
         // has no measurement to state, and Word's own line height applies as before.

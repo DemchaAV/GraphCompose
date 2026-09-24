@@ -93,6 +93,73 @@ class DocxLayerColumnsTest {
     }
 
     @Test
+    void aSpacerThatHoldsRealSpaceInAShortLayerIsKept() throws Exception {
+        // The name layer puts 12pt between the name and the title. The main layer beside it runs
+        // the whole band, so its box is level with that spacer; its content is not.
+        try (Export export = export(stack -> stack
+                .layer(column("NameLayer", SIDEBAR, 0, name -> name
+                        .addParagraph(p -> p.name("Name").text("Ada Lovelace"))
+                        .addSpacer(spacer -> spacer.name("Gap").width(100).height(12))
+                        .addParagraph("Analyst")), LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", SIDEBAR, 0, main -> main
+                        .addSpacer(spacer -> spacer.name("NamePlace").width(100).height(60))
+                        .addParagraph("Engineer")
+                        .addParagraph(LONG)), LayerAlign.TOP_LEFT))) {
+            XWPFTableCell main = export.document().getTables().get(0).getRow(0).getCell(1);
+
+            assertThat(main.getParagraphs()).extracting(XWPFParagraph::getText)
+                    .containsExactly("Ada Lovelace", "", "Analyst", "Engineer", LONG);
+        }
+    }
+
+    @Test
+    void aStandInAtTheFootOfAnEarlierLayerIsNotWhereTheGapIsMeasuredFrom() throws Exception {
+        // The name layer ends with a stand-in for the subtitle the main layer writes. The gap
+        // above the subtitle is measured from the name, not from that stand-in's foot, which is
+        // below the subtitle's top and left the subtitle no gap at all.
+        try (Export export = export(stack -> stack
+                .layer(column("NameLayer", SIDEBAR, 0, name -> name
+                        .addParagraph(p -> p.name("Name").text("Ada Lovelace"))
+                        .addSpacer(spacer -> spacer.name("SubtitlePlace").width(100).height(40))), LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", SIDEBAR, 0, main -> main
+                        .addSpacer(spacer -> spacer.name("NamePlace").width(100).height(30))
+                        .addParagraph(p -> p.name("Subtitle").text("Engineer"))
+                        .addParagraph(LONG)), LayerAlign.TOP_LEFT))) {
+            XWPFTableCell main = export.document().getTables().get(0).getRow(0).getCell(1);
+            PlacedNode name = export.placed("Name");
+            PlacedNode subtitle = export.placed("Subtitle");
+            double gap = name.placementY() - (subtitle.placementY() + subtitle.placementHeight());
+
+            assertThat(main.getParagraphs()).extracting(XWPFParagraph::getText)
+                    .containsExactly("Ada Lovelace", "Engineer", LONG);
+            assertThat(gap).isGreaterThan(5);
+            assertThat(spacingBefore(main.getParagraphs().get(1)))
+                    .isCloseTo(Math.round(gap * 20), org.assertj.core.data.Offset.offset(1L));
+        }
+    }
+
+    @Test
+    void theFirstLayerKeepsItsTopEdgeAndTheStackItsLeftOne() throws Exception {
+        // A layer's side padding is its band; its top padding is space above its content. The
+        // bands are measured inside the stack's own padding, so the table starts there too.
+        try (Export export = export(stack -> stack
+                .padding(new DocumentInsets(0, 0, 0, 16))
+                .layer(new SectionBuilder().name("Sidebar").spacing(0)
+                        .padding(new DocumentInsets(25, MAIN - 16, 0, 0))
+                        .addParagraph("Contact").build(), LayerAlign.TOP_LEFT)
+                .layer(column("Main", SIDEBAR, 0, main -> main.addParagraph("Experience")
+                        .addParagraph(LONG)), LayerAlign.TOP_LEFT))) {
+            XWPFTable table = export.document().getTables().get(0);
+
+            assertThat(spacingBefore(table.getRow(0).getCell(0).getParagraphs().get(0))).isEqualTo(25 * 20L);
+            assertThat(table.getCTTbl().getTblPr().isSetTblInd()).as("the table is indented").isTrue();
+            assertThat(DocxTwips.of(table.getCTTbl().getTblPr().getTblInd().getW())).isEqualTo(16 * 20L);
+        }
+    }
+
+    @Test
     void layersWhoseBandsOverlapAreStillWrittenOneAfterTheOther() throws Exception {
         try (Export export = export(stack -> stack
                 .layer(column("Wide", 0, 0, wide -> wide.addParagraph("Behind")), LayerAlign.TOP_LEFT)

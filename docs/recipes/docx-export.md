@@ -447,8 +447,9 @@ tint it was flattened to. Recorded, like the other two.
   container at the stack's top-left corner, and the bands their padding leaves
   are either the same or apart, the stack is written as one row with a cell per
   band. Layers sharing a band follow one another in its cell. A spacer that only
-  keeps another layer's place is not written, and the space above a later
-  layer's first block is the gap the page shows. Any other layer stack writes
+  keeps the place of another layer's content is not written, and the space above
+  a later layer's first block is the gap the page shows. What the page draws
+  inside another layer's fill comes after that fill. Any other layer stack writes
   its layers one after the other, without their positions.
 - **Shape containers → inline layers.** DOCX has no portable equivalent
   of a graphics-state path clip, so the container's layers are written

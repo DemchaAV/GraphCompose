@@ -4182,10 +4182,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Writes a layer stack whose layers are side-by-side columns as a one-row table.
      *
      * <p>Each column is a cell as wide as its band, and holds the content of its layers — the
-     * layers' own padding is the band, so it is not written again. A gap between two bands is
+     * layers' side padding is the band, so it is not written again; the first layer's top
+     * edge and the last one's bottom edge are space in the cell. A gap between two bands is
      * the next cell's left margin, and whatever the last band leaves on the right is its
-     * cell's right margin. The row may break across pages, as a column longer than a page
-     * does. See {@link DocxLayerColumns}.</p>
+     * cell's right margin. The bands are measured from the stack's content box, so the table
+     * starts inside the stack's own left margin and padding. The row may break across pages,
+     * as a column longer than a page does. See {@link DocxLayerColumns}.</p>
      */
     private void writeLayerColumns(XWPFDocument document,
                                    com.demcha.compose.document.node.LayerStackNode stack,
@@ -4215,14 +4217,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 try {
                     writeInCell(cell, () -> {
                         for (int layer = 0; layer < layers.size(); layer++) {
-                            if (layer > 0) {
+                            DocumentNode node = layers.get(layer);
+                            if (layer == 0) {
+                                carriedSpacingBefore += node.margin().top() + node.padding().top();
+                            } else {
                                 // What the layers above still owe below themselves is space
                                 // the page does not have: the gap to this one is the page's.
                                 pendingSpacingAfter = 0;
-                                resumeSpacing = plan.resume(layers.get(layer));
+                                resumeSpacing = plan.resume(node);
                             }
-                            for (DocumentNode child : layers.get(layer).children()) {
+                            for (DocumentNode child : node.children()) {
                                 writeNode(document, child);
+                            }
+                            if (layer == layers.size() - 1) {
+                                owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
                             }
                         }
                     });
@@ -4237,7 +4245,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } finally {
             standIns.removeAll(plan.standIns());
         }
-        indentTable(table);
+        double outerLeft = insetLeft;
+        insetLeft += stack.margin().left() + stack.padding().left();
+        try {
+            indentTable(table);
+        } finally {
+            insetLeft = outerLeft;
+        }
         owePendingSpacingAfter(stack.margin().bottom() + stack.padding().bottom());
     }
 

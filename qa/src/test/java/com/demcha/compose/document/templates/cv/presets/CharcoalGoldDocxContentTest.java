@@ -47,7 +47,10 @@ class CharcoalGoldDocxContentTest {
             String word;
             try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
                     session.export(new DocxSemanticBackend())))) {
-                word = textOf(document);
+                StringBuilder text = new StringBuilder(textOf(document));
+                document.getHeaderList().forEach(header -> text.append(textOf(header)));
+                document.getFooterList().forEach(footer -> text.append(textOf(footer)));
+                word = text.toString();
             }
 
             Set<String> missing = new LinkedHashSet<>(Arrays.asList(page.split("\\s+")));
@@ -86,7 +89,8 @@ class CharcoalGoldDocxContentTest {
     }
 
     /**
-     * The text of every paragraph in the file, tables nested in cells included.
+     * The text of every paragraph in a body, a header or a footer, tables nested in cells
+     * included.
      *
      * <p>{@code XWPFWordExtractor} reads a cell's own paragraphs and not the tables nested in
      * it, and in a column cell the section headings and the language rows are such tables.</p>

@@ -33,8 +33,8 @@ import java.util.function.Predicate;
  * one draws with an invisible spacer — a name drawn first for the reading order, and a stand-in
  * as tall as the name at the top of the column it belongs to. In the cell the name is written
  * before the column, and the stand-in would push the column down by the name's height a second
- * time. A spacer the layout placed level with another layer of the same band is such a stand-in,
- * and is left out.</p>
+ * time. A spacer the layout placed level with content of another layer of the same band is such
+ * a stand-in, and is left out.</p>
  */
 final class DocxLayerColumns {
 
@@ -104,9 +104,9 @@ final class DocxLayerColumns {
             }
             // A layer at the top-left corner is offered the stack's whole width, and may come
             // out narrower when its content is: the band is what it was offered, less its
-            // padding, not what it filled.
+            // margin and padding, not what it filled. Its box starts inside its left margin.
             double left = placed.placementX() + placed.padding().left() - contentLeft;
-            double right = width - placed.padding().right();
+            double right = width - placed.padding().right() - layer.node().margin().right();
             if (right - left <= EDGE) {
                 return null;
             }
@@ -132,8 +132,17 @@ final class DocxLayerColumns {
         columns.sort(Comparator.comparingDouble(Column::left));
         Set<DocumentNode> standIns = Collections.newSetFromMap(new IdentityHashMap<>());
         for (Column column : columns) {
+            if (column.layers().size() < 2) {
+                continue;
+            }
+            Map<DocumentNode, List<PlacedNode>> content = new IdentityHashMap<>();
             for (DocumentNode layer : column.layers()) {
-                collectStandIns(layer, column.layers(), layer, layout, standIns);
+                List<PlacedNode> leaves = new ArrayList<>();
+                collectContent(layer, layout, leaves);
+                content.put(layer, leaves);
+            }
+            for (DocumentNode layer : column.layers()) {
+                collectStandIns(layer, layer, content, layout, standIns);
             }
         }
         Map<DocumentNode, Double> resumes = new IdentityHashMap<>();
@@ -164,7 +173,7 @@ final class DocxLayerColumns {
                                  DocxLayoutMetrics layout, Set<DocumentNode> standIns) {
         PlacedNode lowest = null;
         for (DocumentNode earlier : above) {
-            lowest = lowestLeaf(earlier, layout, lowest);
+            lowest = lowestLeaf(earlier, layout, standIns, lowest);
         }
         DocumentNode first = firstLeaf(layer, layout, standIns);
         if (lowest == null || first == null) {
@@ -176,15 +185,20 @@ final class DocxLayerColumns {
         return Math.max(0, gap);
     }
 
-    /** The placed leaf under {@code node} whose bottom is lowest on the page. */
-    private static PlacedNode lowestLeaf(DocumentNode node, DocxLayoutMetrics layout, PlacedNode lowest) {
+    /**
+     * The placed leaf under {@code node} whose bottom is lowest on the page, stand-ins aside:
+     * a stand-in at the foot of a layer holds the place of what the next layer writes, and is
+     * not written itself.
+     */
+    private static PlacedNode lowestLeaf(DocumentNode node, DocxLayoutMetrics layout,
+                                         Set<DocumentNode> standIns, PlacedNode lowest) {
         if (node.children().isEmpty()) {
-            PlacedNode placed = layout.placement(node);
+            PlacedNode placed = standIns.contains(node) ? null : layout.placement(node);
             return placed != null && (lowest == null || placed.placementY() < lowest.placementY())
                     ? placed : lowest;
         }
         for (DocumentNode child : node.children()) {
-            lowest = lowestLeaf(child, layout, lowest);
+            lowest = lowestLeaf(child, layout, standIns, lowest);
         }
         return lowest;
     }
@@ -204,24 +218,54 @@ final class DocxLayerColumns {
         return null;
     }
 
-    /** Adds the spacers under {@code node} that sit level with another layer of the band. */
-    private static void collectStandIns(DocumentNode node, List<DocumentNode> band, DocumentNode own,
-                                        DocxLayoutMetrics layout, Set<DocumentNode> standIns) {
-        if (node instanceof SpacerNode spacer) {
-            PlacedNode placed = layout.placement(spacer);
-            if (placed != null) {
-                for (DocumentNode other : band) {
-                    if (other != own && level(placed, layout.placement(other))) {
-                        standIns.add(spacer);
-                        break;
-                    }
-                }
+    /** Collects the placed leaves under {@code node} that are content: every one but a spacer. */
+    private static void collectContent(DocumentNode node, DocxLayoutMetrics layout, List<PlacedNode> leaves) {
+        if (node.children().isEmpty()) {
+            PlacedNode placed = layout.placement(node);
+            if (placed != null && !(node instanceof SpacerNode)) {
+                leaves.add(placed);
             }
             return;
         }
         for (DocumentNode child : node.children()) {
-            collectStandIns(child, band, own, layout, standIns);
+            collectContent(child, layout, leaves);
         }
+    }
+
+    /**
+     * Adds the spacers under {@code node} that sit level with content of another layer of the
+     * band. Measured against that content rather than the layer's box: a long layer's box
+     * covers the whole band, and a spacer of a short layer beside it holds real space.
+     */
+    private static void collectStandIns(DocumentNode node, DocumentNode own,
+                                        Map<DocumentNode, List<PlacedNode>> content,
+                                        DocxLayoutMetrics layout, Set<DocumentNode> standIns) {
+        if (node instanceof SpacerNode spacer) {
+            PlacedNode placed = layout.placement(spacer);
+            if (placed != null && levelWithAnother(placed, own, content)) {
+                standIns.add(spacer);
+            }
+            return;
+        }
+        for (DocumentNode child : node.children()) {
+            collectStandIns(child, own, content, layout, standIns);
+        }
+    }
+
+    /** Whether a box sits level with content of any layer but {@code own}. */
+    private static boolean levelWithAnother(PlacedNode box, DocumentNode own,
+                                            Map<DocumentNode, List<PlacedNode>> content) {
+        for (Map.Entry<DocumentNode, List<PlacedNode>> layer : content.entrySet()) {
+            if (layer.getKey() == own) {
+                continue;
+            }
+            for (PlacedNode leaf : layer.getValue()) {
+                if (level(box, leaf)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Whether two boxes share a page and some of their height on it. */

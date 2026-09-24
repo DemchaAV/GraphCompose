@@ -2046,7 +2046,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
         // A container that wrote something has had its top edge taken — by its first
-        // paragraph, or dropped by its first table (see newTable) — and none of it is left
+        // paragraph, or owed above its first table (see newTable) — and none of it is left
         // waiting. A container that wrote nothing at all — empty, or holding only a drawing
         // the export drops — stood above nothing, and the containers around it are still
         // waiting for their first paragraph: only its own edge goes, and theirs is handed
@@ -4798,6 +4798,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (currentCell == null ? endsWithATable(document.getBodyElements()) : cellEndsWithItsTableCloser()) {
             separateFromTheTableAbove(document);
         }
+        // A container edge still waiting for a paragraph stood above this table, and a table
+        // carries no space above itself: it is owed with the rest of the space above, which
+        // the paragraph before the table holds below itself. Left waiting, it landed on the
+        // paragraph below the table instead, a gap the page does not have; dropped, it took
+        // the space out of the page and everything below the table moved up.
+        owePendingSpacingAfter(carriedSpacingBefore);
+        carriedSpacingBefore = 0;
         // Word has no space above a table, so the paragraph before it has to carry it.
         flushSpacingAfter();
         // Nor can that paragraph carry the space below the table: it sits above it. Space
@@ -4805,10 +4812,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // it — and nowhere, if nothing follows — rather than back above the table, which is
         // where it used to land: a card's bottom padding opened a gap over its last table.
         lastBodyParagraph = null;
-        // A container edge still waiting for a paragraph stood above this table, and a table
-        // carries no space above itself. Left waiting, it landed on the paragraph below the
-        // table instead, a gap the page does not have.
-        carriedSpacingBefore = 0;
         blocksWritten++;
         if (currentCell == null) {
             return document.createTable(rows, columns);
@@ -4997,6 +5000,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         blocksWritten++;
         XWPFRun run = para.createRun();
         run.addBreak(BreakType.PAGE);
+        // Space owed from here on is above what the next page opens with. The paragraph before
+        // the break is on the page before, and space written below it would stay there.
+        lastBodyParagraph = null;
     }
 
     /**

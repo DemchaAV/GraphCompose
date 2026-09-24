@@ -76,7 +76,7 @@ creation date is real metadata.
 | Links and anchors | A `linkTarget` becomes a `w:hyperlink` — a relationship for an address, `w:anchor` for one of the document's own anchors — and a run's own link wins over the paragraph's — in a list item as much as in a paragraph. An `anchor(...)` becomes a bookmark wrapping that paragraph's text, named as Word requires; on a section, container, table or image it wraps everything the block wrote, from the start of its first paragraph to the end of its last, so a link to a block lands on its first line. A `bookmark(...)` outline level becomes Word's own `HeadingN` style, which is what puts the paragraph in the Navigation Pane, the outline view and a generated table of contents. The style states the outline level and nothing else, so the paragraph keeps its own formatting. The role comes from what the document declared, never from how big the text is |
 | Rows | A one-row table spanning the content width, so editors keep the side-by-side layout. The row's slots become the column grid when they are weights, an even split or fixed columns; the gap and the row's padding ride in the neighbouring column and come back out as that cell's margin; a cell holds whatever its child is, written as it is anywhere else. The row's `verticalAlign` is every cell's `w:vAlign`, so a child shorter than the row sits at its middle or bottom as on the page — a table of contents' leader on its entry's baseline. The row is kept whole across a page break, as the layout keeps it |
 | Sections / containers | Children written in order. A timeline with its markers on the rail (`markerOnRail()`) lays each entry's body out in the header row's content column, below the row; the body is written in the flow, indented to that column where the page puts it. A container with a fill, per-side borders or a uniform stroke is a one-cell table carrying them, its padding as the cell's margins, so a card keeps its panel — see "What a panel keeps and loses" below. A `keepTogether()` or `keepWithNext()` block the layout placed on one page stays on one page in Word too (`w:keepLines` + `w:keepNext`, and a row that may not split for a panel) |
-| Spacers | Empty paragraphs carrying the vertical gap as spacing-after |
+| Spacers | An empty paragraph a tenth of a point tall; the spacer's height is the space above the next block, or below this paragraph when a table follows |
 | Page breaks | Explicit Word page breaks |
 
 Page geometry (size, margins and orientation — a page wider than it is tall is stated as
@@ -184,7 +184,11 @@ sums it.
 
 An image and a list hold their own space the same way a paragraph does — a picture's
 paragraph is the picture's block, and a list's edges go to the paragraphs around it, with
-`itemSpacing` as the gap above each item after the first.
+`itemSpacing` as the gap above each item after the first. A section's or a container's
+`spacing` is the gap between each two of its children, owed below one and written above
+the next; before a page break there is none, as the page ends there, and after one the next
+page starts that far down, as the layout starts it. A spacer is its height alone: its empty
+paragraph is held to a tenth of a point, so it adds no line of text to the gap it carries.
 
 A table holds its own space the same way. Word has no space above a table and none below
 one, so a table's or a row's `margin` and `padding` travel to the paragraphs around it —

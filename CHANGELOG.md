@@ -22,6 +22,21 @@ follow semantic versioning; release dates are ISO 8601.
   preset still flows its columns one after the other in Word, so a column fill can stand
   beside text that is not its column's.
 
+- **A container that writes nothing in Word keeps the space above it waiting.** A
+  container is not a Word object, so the DOCX export carries its top margin and padding to
+  the first paragraph written inside it, together with those of every container it opens.
+  A container that wrote nothing — empty, or holding only a drawing the export drops —
+  cleared all of it, its own edge and the ones around it alike. `SidebarPortrait`'s sidebar
+  opens with a portrait drawn as paths, so its 54pt of top padding was lost, and the contact
+  lines were written 20pt below where the sidebar starts in Word — the portrait's 17pt
+  bottom margin and the first line's own 3pt. Such a container now drops only its own top
+  edge and hands the others on, and the contact lines are written 74pt below it. A table
+  drops the edges waiting above it rather than letting them through: a section padded 30pt
+  that opened with a table put those 30pt under the table, on the paragraph after it. The
+  portrait's own 98pt is still not held, and Word still writes the sidebar after the name
+  strip rather than beside it, so the contact lines stand 51pt lower than on the page in
+  LibreOffice, where they stood 3pt higher by coincidence before.
+
 - **A timeline with its markers on the rail keeps its entries in Word.** With
   `markerOnRail()`, a timeline wraps each entry's header row so the columns it resolves are
   published, and lays the entry's body out in the content column below it — two engine

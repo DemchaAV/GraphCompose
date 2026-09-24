@@ -110,6 +110,75 @@ class DocxVerticalSpacingTest {
     }
 
     @Test
+    void aContainerThatWritesNothingHandsBackTheEdgesAroundIt() throws Exception {
+        // A portrait opening a padded sidebar: a layer stack holding only a path, which the
+        // export drops. It stood above nothing, so the sidebar's top padding is still waiting
+        // for the first paragraph — the stack drops only its own top edge, and its bottom
+        // edge is owed below it as any container's is.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addSection("Sidebar", sidebar -> sidebar
+                        .padding(DocumentInsets.top(30))
+                        .addLayerStack(stack -> stack
+                                .name("Portrait")
+                                .margin(new DocumentInsets(5, 0, 7, 0))
+                                .layer(new com.demcha.compose.document.dsl.PathBuilder()
+                                        .name("Silhouette").size(40, 40)
+                                        .moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1).closePath()
+                                        .build()))
+                        .addParagraph(p -> p.text("Contact"))));
+
+        assertThat(paragraphs).hasSize(1);
+        assertThat(before(paragraphs.get(0)))
+                .as("the sidebar's 30pt of padding and the portrait's 7pt below it, not its 5pt above")
+                .isEqualTo(Math.round(37 * TWIPS_PER_POINT));
+    }
+
+    @Test
+    void aContainerOfTablesStillDropsTheEdgesAroundIt() throws Exception {
+        // The counterpart: the tables were written, and the outer section's top edge stood
+        // above them. Handed back, it would land below them on the paragraph that follows.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addSection("Outer", outer -> outer
+                        .padding(DocumentInsets.top(30))
+                        .addSection("TablesOnly", section -> section
+                                .addTable(t -> t.autoColumns(2).row("A", "B")))
+                        .addParagraph(p -> p.text("After"))));
+
+        assertThat(before(paragraphs.get(paragraphs.size() - 1)))
+                .as("the outer 30pt did not follow the table out")
+                .isZero();
+    }
+
+    @Test
+    void aTableDropsTheEdgeItStoodBelow() throws Exception {
+        // A section opening with a table: its top edge stood above the table, so it does not
+        // wait for the paragraph under it — nor pass through a drawn-only divider on the way.
+        List<XWPFParagraph> direct = bodyOf(page -> page
+                .addSection("Outer", outer -> outer
+                        .padding(DocumentInsets.top(30))
+                        .addTable(t -> t.autoColumns(2).row("A", "B"))
+                        .addParagraph(p -> p.text("After"))));
+        List<XWPFParagraph> pastADivider = bodyOf(page -> page
+                .addSection("Outer", outer -> outer
+                        .padding(DocumentInsets.top(30))
+                        .addTable(t -> t.autoColumns(2).row("A", "B"))
+                        .addLayerStack(stack -> stack
+                                .name("Divider")
+                                .layer(new com.demcha.compose.document.dsl.PathBuilder()
+                                        .name("Stroke").size(40, 4)
+                                        .moveTo(0, 0).lineTo(1, 0).lineTo(1, 1).closePath()
+                                        .build()))
+                        .addParagraph(p -> p.text("After"))));
+
+        assertThat(before(direct.get(direct.size() - 1)))
+                .as("the outer 30pt did not land under the table")
+                .isZero();
+        assertThat(before(pastADivider.get(pastADivider.size() - 1)))
+                .as("nor was it handed on by the divider the export drops")
+                .isZero();
+    }
+
+    @Test
     void oneGapIsWrittenOnceRatherThanFromBothSides() throws Exception {
         // A gap between two blocks is one distance, and it used to be written as two: after
         // on the block above and before on the one below. That is the same thing only in an

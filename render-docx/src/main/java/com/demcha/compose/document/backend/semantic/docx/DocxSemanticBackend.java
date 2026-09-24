@@ -215,6 +215,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // holds above itself has to be carried by something that is.
     private double carriedSpacingBefore;
 
+    /**
+     * Paragraphs and tables written so far, counted only to tell whether a container wrote
+     * anything at all — see {@link #writeContainerBody}.
+     */
+    private long blocksWritten;
+
     /** Space the last body paragraph holds below itself, not yet written — see {@link #owePendingSpacingAfter}. */
     private double pendingSpacingAfter;
 
@@ -2020,6 +2026,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * under a table is the space above whatever follows, and that is a paragraph.</p>
      */
     private void writeContainerBody(XWPFDocument document, DocumentNode node) throws Exception {
+        double carriedFromOutside = carriedSpacingBefore;
+        long blocksBefore = blocksWritten;
         carriedSpacingBefore += node.margin().top() + node.padding().top();
         // The sides are carried the same way, as the indent of every paragraph inside: a
         // container's content starts inside its margin and its padding on the page, and was
@@ -2037,9 +2045,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             insetRight = outerRight;
         }
         owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
-        // Nothing inside took the top edge — a container of tables, or an empty one — so it
-        // is not left waiting to land on whatever paragraph comes next.
-        carriedSpacingBefore = 0;
+        // A container that wrote something has had its top edge taken — by its first
+        // paragraph, or dropped by its first table (see newTable) — and none of it is left
+        // waiting. A container that wrote nothing at all — empty, or holding only a drawing
+        // the export drops — stood above nothing, and the containers around it are still
+        // waiting for their first paragraph: only its own edge goes, and theirs is handed
+        // back. Dropping theirs too lost a sidebar's top padding under the portrait that
+        // opened it.
+        carriedSpacingBefore = blocksWritten == blocksBefore ? carriedFromOutside : 0;
     }
 
     private static boolean hasRadius(com.demcha.compose.document.style.DocumentCornerRadius radius) {
@@ -2402,6 +2415,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else {
             para = currentCell != null ? currentCell.addParagraph() : document.createParagraph();
         }
+        blocksWritten++;
         applyInset(para);
         // Everything owed above this paragraph — the space the one before it holds below
         // itself, and any container edge — is written here, on one side of the gap.
@@ -4791,6 +4805,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // it — and nowhere, if nothing follows — rather than back above the table, which is
         // where it used to land: a card's bottom padding opened a gap over its last table.
         lastBodyParagraph = null;
+        // A container edge still waiting for a paragraph stood above this table, and a table
+        // carries no space above itself. Left waiting, it landed on the paragraph below the
+        // table instead, a gap the page does not have.
+        carriedSpacingBefore = 0;
+        blocksWritten++;
         if (currentCell == null) {
             return document.createTable(rows, columns);
         }
@@ -4975,6 +4994,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writePageBreak(XWPFDocument document) {
         flushSpacingAfter();
         XWPFParagraph para = document.createParagraph();
+        blocksWritten++;
         XWPFRun run = para.createRun();
         run.addBreak(BreakType.PAGE);
     }

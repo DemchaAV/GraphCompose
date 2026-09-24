@@ -15,7 +15,6 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSpacing;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule;
 
 import java.io.ByteArrayInputStream;
-import java.util.List;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -166,6 +165,7 @@ class DocxDocumentStyleTest {
     @Test
     void aDocumentWithoutTextShouldNotInventAStyle() throws Exception {
         try (XWPFDocument document = exported(page -> page.spacer(10, 10))) {
+            assertThat(document.getStyles()).as("the part holds the paragraph defaults").isNotNull();
             var styles = document.getStyles().getCtStyles();
             assertThat(styles.getStyleList())
                     .as("nothing to take a default from, so no Normal is written")
@@ -180,18 +180,29 @@ class DocxDocumentStyleTest {
     void aParagraphWithoutSpaceOfItsOwnShouldHaveNoneInWord() throws Exception {
         // Word fills what a document leaves unsaid from its new-document template: 8pt after
         // every paragraph, lines 1.08 tall. The page has neither, so the defaults say so.
-        for (Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content : List.<Consumer<
-                com.demcha.compose.document.dsl.PageFlowBuilder>>of(
-                page -> page.addParagraph(p -> p.text(LONG_BODY).textStyle(BODY)),
-                page -> page.spacer(10, 10))) {
-            try (XWPFDocument document = exported(content)) {
-                CTSpacing spacing = document.getStyles().getCtStyles().getDocDefaults()
-                        .getPPrDefault().getPPr().getSpacing();
-                assertThat(DocxTwips.of(spacing.getAfter())).as("no space after").isZero();
-                assertThat(DocxTwips.of(spacing.getLine())).as("single lines").isEqualTo(240);
-                assertThat(spacing.getLineRule()).isEqualTo(STLineSpacingRule.AUTO);
-            }
+        try (XWPFDocument document = exported(page -> page.addParagraph(p -> p.text(LONG_BODY).textStyle(BODY)))) {
+            assertNoSpaceAfterAndSingleLines(document);
         }
+    }
+
+    @Test
+    void aDocumentWithoutTextShouldStillHaveNoSpaceAfterItsParagraphs() throws Exception {
+        // Spacers and tables still leave empty paragraphs behind, and Word would give each 8pt.
+        try (XWPFDocument document = exported(page -> page.spacer(10, 10))) {
+            assertNoSpaceAfterAndSingleLines(document);
+        }
+    }
+
+    private static void assertNoSpaceAfterAndSingleLines(XWPFDocument document) {
+        assertThat(document.getStyles()).as("a styles part exists").isNotNull();
+        var defaults = document.getStyles().getCtStyles().getDocDefaults();
+        assertThat(defaults != null && defaults.isSetPPrDefault())
+                .as("the paragraph defaults are stated, not left to Word's template")
+                .isTrue();
+        CTSpacing spacing = defaults.getPPrDefault().getPPr().getSpacing();
+        assertThat(DocxTwips.of(spacing.getAfter())).as("no space after").isZero();
+        assertThat(DocxTwips.of(spacing.getLine())).as("single lines").isEqualTo(240);
+        assertThat(spacing.getLineRule()).isEqualTo(STLineSpacingRule.AUTO);
     }
 
     private static CTRPr runProperties(XWPFDocument document, String text) {

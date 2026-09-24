@@ -417,6 +417,15 @@ follow semantic versioning; release dates are ISO 8601.
   back to Word's default half-inch grid and the page number sat near the left margin.
   Both are fixed; a table an author asked for keeps its own borders.
 
+- **A row's children sit where the page puts them in its height.** A row's `verticalAlign`
+  never reached Word, so every cell held its content at the top: a table of contents, which
+  aligns its entries to the bottom so the leader sits on the entry's baseline, exported with
+  the dots riding at the top of each entry — measured in LibreOffice, 9pt above where the page
+  draws them. `CENTER` and `BOTTOM` are now each cell's `w:vAlign`, and in LibreOffice the
+  leader lands 0.6pt above the baseline where the page puts it 0.4pt above; Word was not
+  measured. `TOP`, the default, is Word's own and is not written, so a row that never asked
+  stays as it was.
+
 - **A DOCX list is now a real Word list.** The export wrote the marker into the item's
   run text and indented nesting with two spaces per level, which looks like a list and is
   not one: measured in Word 16.0, `ListFormat.ListType` came back as "no numbering", so

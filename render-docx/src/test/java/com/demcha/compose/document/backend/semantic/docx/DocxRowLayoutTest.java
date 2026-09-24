@@ -4,10 +4,13 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.node.RowArrangement;
+import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell.XWPFVertAlign;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblGrid;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPr;
@@ -57,6 +60,43 @@ class DocxRowLayoutTest {
         assertThat(borders)
                 .as("and the one that survives is the one that hides the grid")
                 .doesNotContain("single");
+    }
+
+    @Test
+    void theRowsVerticalAlignmentIsEveryCellsAndTheTopIsLeftToWord() throws Exception {
+        // A table of contents aligns its entries to the bottom so the leader, a line a point
+        // tall, sits on the text's baseline; in a cell left at Word's top it rode at the top.
+        for (RowVerticalAlign align : RowVerticalAlign.values()) {
+            XWPFTable table = onlyTable(page -> page.addRow(r -> r
+                    .verticalAlign(align)
+                    .addParagraph(p -> p.text("Intro"))
+                    .addLine(line -> line.horizontal(100))));
+
+            for (XWPFTableCell cell : table.getRow(0).getTableCells()) {
+                assertThat(cell.getVerticalAlignment())
+                        .as("%s", align)
+                        .isEqualTo(switch (align) {
+                            case TOP -> null;
+                            case CENTER -> XWPFVertAlign.CENTER;
+                            case BOTTOM -> XWPFVertAlign.BOTTOM;
+                        });
+            }
+        }
+    }
+
+    @Test
+    void aTableOfContentsEntryHoldsItsLeaderAtTheBottomOfTheEntry() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addTableOfContents(toc -> toc.entry("Intro", "intro").entry("Terms", "terms"))
+                .addParagraph(p -> p.text("Intro body").anchor("intro"))
+                .addParagraph(p -> p.text("Terms body").anchor("terms")))) {
+            assertThat(document.getTables()).hasSize(2);
+            for (XWPFTable entry : document.getTables()) {
+                assertThat(entry.getRow(0).getTableCells())
+                        .extracting(XWPFTableCell::getVerticalAlignment)
+                        .containsOnly(XWPFVertAlign.BOTTOM);
+            }
+        }
     }
 
     @Test

@@ -150,6 +150,36 @@ class DocxVerticalSpacingTest {
     }
 
     @Test
+    void theEdgeATableStandsBelowIsHeldAboveIt() throws Exception {
+        // A padded section opening with a row, after a paragraph: the page has the section's
+        // top edge between the paragraph and the row. The paragraph above holds it below
+        // itself; it neither lands under the row nor goes missing.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addParagraph(p -> p.text("Before"))
+                .addSection("Entry", entry -> entry
+                        .padding(DocumentInsets.top(30))
+                        .addTable(t -> t.autoColumns(2).row("Title", "2024"))
+                        .addParagraph(p -> p.text("After"))));
+
+        assertThat(after(paragraphs.get(0))).as("above the table").isEqualTo(Math.round(30 * TWIPS_PER_POINT));
+        assertThat(before(paragraphs.get(paragraphs.size() - 1))).as("not under it").isZero();
+    }
+
+    @Test
+    void spaceOwedAfterAPageBreakStaysOffThePageBeforeIt() throws Exception {
+        // The break paragraph closes the page; space owed after it belongs to the next page,
+        // not below the last paragraph of the one before.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addParagraph(p -> p.text("Before"))
+                .addPageBreak(b -> b.name("Break"))
+                .addSection("Entry", entry -> entry
+                        .padding(DocumentInsets.top(30))
+                        .addTable(t -> t.autoColumns(2).row("Title", "2024"))));
+
+        assertThat(after(paragraphs.get(0))).isZero();
+    }
+
+    @Test
     void aTableDropsTheEdgeItStoodBelow() throws Exception {
         // A section opening with a table: its top edge stood above the table, so it does not
         // wait for the paragraph under it — nor pass through a drawn-only divider on the way.

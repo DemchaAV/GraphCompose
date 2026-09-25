@@ -4686,8 +4686,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (placed == null) {
             return false;
         }
-        // It stands where a block would: the container edges waiting above it are above it,
-        // and the containers around it have had their top edge taken, as by any block.
+        // It stands where a block would: a column layer it opens resumes above it, the
+        // container edges waiting above it are above it, and the containers around it have had
+        // their top edge taken, as by any block.
+        resumeHere();
         owePendingSpacingAfter(carriedSpacingBefore);
         carriedSpacingBefore = 0;
         owePendingSpacingAfter(node.margin().top() + placed.placementHeight() + node.margin().bottom());

@@ -186,13 +186,21 @@ final class DocxLayerColumns {
         Set<DocumentNode> standIns = Collections.newSetFromMap(new IdentityHashMap<>());
         Map<DocumentNode, Double> resumes = new IdentityHashMap<>();
         flow(layers, layout, drawing, standIns, resumes);
+        // A stack nested in a layer is a band of its own, and its stand-ins are not written
+        // either: the band's first and lowest blocks are measured past them too, or a badge's
+        // place-holding spacer would set where the initials over it start.
+        Set<DocumentNode> measured = Collections.newSetFromMap(new IdentityHashMap<>());
+        measured.addAll(standIns);
+        for (DocumentNode layer : layers) {
+            nestedStandIns(layer, layout, drawing, measured);
+        }
         DocumentNode first = null;
         PlacedNode lowest = null;
         for (DocumentNode layer : layers) {
             if (first == null) {
-                first = firstLeaf(layer, layout, standIns, drawing);
+                first = firstLeaf(layer, layout, measured, drawing);
             }
-            lowest = lowestLeaf(layer, layout, standIns, drawing, lowest);
+            lowest = lowestLeaf(layer, layout, measured, drawing, lowest);
         }
         if (first == null || lowest == null) {
             return null;
@@ -202,6 +210,17 @@ final class DocxLayerColumns {
                        - (top.placementY() + top.placementHeight()) - first.margin().top();
         double below = lowest.placementY() + lowest.padding().bottom() - box.placementY();
         return new Band(layers, standIns, resumes, Math.max(0, above), Math.max(0, below));
+    }
+
+    /** Adds the stand-ins of every layer stack under {@code node}, each as a band of its own. */
+    private static void nestedStandIns(DocumentNode node, DocxLayoutMetrics layout,
+                                       Predicate<DocumentNode> drawing, Set<DocumentNode> standIns) {
+        if (node instanceof LayerStackNode nested) {
+            flow(nested.children(), layout, drawing, standIns, new IdentityHashMap<>());
+        }
+        for (DocumentNode child : node.children()) {
+            nestedStandIns(child, layout, drawing, standIns);
+        }
     }
 
     /** The stand-ins among layers that share a band, and each later layer's resume. */

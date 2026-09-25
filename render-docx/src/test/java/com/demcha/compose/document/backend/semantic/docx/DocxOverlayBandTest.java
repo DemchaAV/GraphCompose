@@ -56,6 +56,37 @@ class DocxOverlayBandTest {
     }
 
     @Test
+    void aBandNestedUnderADrawingIsMeasuredPastItsOwnPlaceHolder() throws Exception {
+        // A background drawn behind the frame: the outer band's first block is the initials,
+        // not the spacer that holds the badge's place in the frame.
+        DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> page
+                .addParagraph(p -> p.text("Above").margin(DocumentInsets.bottom(6)))
+                .addLayerStack(outer -> outer
+                        .name("Outer")
+                        .back(new com.demcha.compose.document.dsl.ShapeBuilder().name("Backdrop").size(200, BADGE).build())
+                        .layer(frame(), LayerAlign.TOP_LEFT))
+                .addParagraph(p -> p.text("Below")));
+        try (session; XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                session.export(new DocxSemanticBackend())))) {
+            List<XWPFParagraph> paragraphs = document.getParagraphs();
+            PlacedNode stack = session.layoutGraph().nodes().stream()
+                    .filter(node -> "Outer".equals(node.semanticName())).findFirst().orElseThrow();
+            PlacedNode initials = session.layoutGraph().nodes().stream()
+                    .filter(node -> "Initials".equals(node.semanticName())).findFirst().orElseThrow();
+            double above = (stack.placementY() + stack.placementHeight())
+                           - (initials.placementY() + initials.placementHeight());
+            double below = initials.placementY() - stack.placementY();
+
+            assertThat(paragraphs).extracting(XWPFParagraph::getText).containsExactly("Above", "JR", "Below");
+            assertThat(before(paragraphs.get(1))).as("the initials where the ring centres them")
+                    .isCloseTo(Math.round((6 + above) * 20), org.assertj.core.data.Offset.offset(2L));
+            assertThat(before(paragraphs.get(2))).as("and the badge's height below them")
+                    .isCloseTo(Math.round(below * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
     void aDrawingThatIsNotWrittenStillTakesItsRoom() throws Exception {
         // A portrait drawn as a path, in the flow and inside a layer stack alike: none of it
         // reaches the file, and its height is still space above what follows.
@@ -104,6 +135,22 @@ class DocxOverlayBandTest {
             return 0;
         }
         return DocxTwips.of(properties.getSpacing().getBefore());
+    }
+
+    /** The badge over the spacer that keeps its place: a band of its own. */
+    private static LayerStackNode frame() {
+        LayerStackNode badge = new LayerStackBuilder()
+                .name("Badge")
+                .back(new EllipseBuilder().name("Ring").size(BADGE, BADGE)
+                        .stroke(DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 1)).build())
+                .layer(new ParagraphBuilder().name("Initials").text("JR")
+                        .textStyle(DocumentTextStyle.DEFAULT.withSize(28)).build(), LayerAlign.CENTER)
+                .build();
+        return new LayerStackBuilder()
+                .name("Frame")
+                .back(new SpacerNode("Space", 200, BADGE, DocumentInsets.zero(), DocumentInsets.zero()))
+                .layer(badge, LayerAlign.TOP_CENTER)
+                .build();
     }
 
     private static Export export() throws Exception {

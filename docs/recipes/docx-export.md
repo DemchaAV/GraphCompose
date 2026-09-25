@@ -473,6 +473,16 @@ tint it was flattened to. Recorded, like the other two.
   a later layer's first block is the gap the page shows. What the page draws
   inside another layer's fill comes after that fill. Any other layer stack writes
   its layers one after the other, without their positions.
+- **Text at the left and the right of one band → one line with a right tab.** A
+  container or a layer stack holding exactly two single-line paragraphs, level with
+  one another and apart across the page — a CV entry's title and its dates — is one
+  Word paragraph: the left paragraph's runs, a tab, the right one's, with a
+  right-aligned tab stop where the right text ends on the page. Its line runs from the
+  top of the higher text to the bottom of the lower; text standing out of its band
+  takes that much from the gap on that side, as it does on the page — except above
+  the top of a table cell, which a Word paragraph cannot reach past. Each paragraph
+  keeps its bookmark and outline level. Two texts closer than 4pt stay one after the
+  other. Drawing in the band is not written.
 - **Shape containers → inline layers.** DOCX has no portable equivalent
   of a graphics-state path clip, so the container's layers are written
   inline, in source order, without the outline frame and without clipping

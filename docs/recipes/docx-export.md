@@ -494,8 +494,10 @@ tint it was flattened to. Recorded, like the other two.
   Word paragraph: the left paragraph's runs, a tab, the right one's, with a
   right-aligned tab stop where the right text ends on the page. Its line runs from the
   top of the higher text to the bottom of the lower; text standing out of its band
-  takes that much from the gap on that side, as it does on the page — except above
-  the top of a table cell, which a Word paragraph cannot reach past. Each paragraph
+  takes that much from the gap on that side, as it does on the page. A Word paragraph
+  cannot reach above its cell, so text standing above a cell of a table's first row
+  lifts the table by that much out of the gap above it, and the row's other cells start
+  that much lower inside. Each paragraph
   keeps its bookmark and outline level. Two texts closer than 4pt stay one after the
   other. Drawing in the band is not written.
 - **Shape containers → inline layers.** DOCX has no portable equivalent

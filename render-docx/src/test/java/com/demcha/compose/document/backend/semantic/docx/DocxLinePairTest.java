@@ -92,6 +92,29 @@ class DocxLinePairTest {
     }
 
     @Test
+    void aTitleRaisedAboveTheTopOfItsCellLiftsTheRow() throws Exception {
+        // An entry laid out as a row: a marker beside the entry's head band, whose title stands
+        // above the band. A Word paragraph cannot reach above its cell, so the row is lifted by
+        // that much out of the gap above it, and the marker's cell starts that much lower.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .addRow(row -> row
+                        .addParagraph(p -> p.text("*"))
+                        .addSection("Entry", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            XWPFParagraph before = document.getParagraphs().stream()
+                    .filter(paragraph -> "Before".equals(paragraph.getText())).findFirst().orElseThrow();
+            var row = document.getTables().get(0).getRow(0);
+            XWPFParagraph marker = row.getCell(0).getParagraphs().get(0);
+            XWPFParagraph title = row.getCell(1).getParagraphs().get(0);
+            long lifted = 12L * 20 - after(before);
+
+            assertThat(lifted).as("the row stands higher, into the gap above it").isPositive();
+            assertThat(before(marker)).as("the marker keeps its place").isEqualTo(lifted);
+            assertThat(before(title)).as("the title stands out by what the row was lifted").isZero();
+        }
+    }
+
+    @Test
     void theHangReachesTheNextBlockOnlyNotThePageAfterABreak() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
                 .add(band(6, 4))
@@ -222,6 +245,14 @@ class DocxLinePairTest {
         return document.getParagraphs().stream()
                 .filter(paragraph -> !paragraph.getText().isBlank() && !"Before".equals(paragraph.getText()))
                 .toList();
+    }
+
+    private static long after(XWPFParagraph paragraph) {
+        CTPPr properties = paragraph.getCTP().getPPr();
+        if (properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetAfter()) {
+            return 0;
+        }
+        return DocxTwips.of(properties.getSpacing().getAfter());
     }
 
     private static long before(XWPFParagraph paragraph) {

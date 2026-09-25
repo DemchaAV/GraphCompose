@@ -106,8 +106,17 @@ follow semantic versioning; release dates are ISO 8601.
   `NavySidebar`'s entries and its language rows are written this way. Measured in Word 16
   and LibreOffice on twenty CV presets, `NavySidebar` is one page, as in the PDF, two
   before, and its median line stands 3.5pt from the page in Word (20.4pt before) and 5.3pt
-  in LibreOffice (22.2pt). Its entries still sit 4.5pt lower each than the one above: a title
-  raised out of its band at the top of a table cell cannot reach above the cell in Word.
+  in LibreOffice (22.2pt).
+
+- **A title raised above the top of its row lifts the row in Word.** A CV entry laid out as
+  a row — a timeline marker beside the entry — raises its title out of its head band to
+  centre it on the marker, so on the page the title stands above the row. A Word paragraph
+  cannot reach above its cell, so the title stood that much lower, and each entry after it
+  lower again: 4.5pt an entry on `NavySidebar`. When the text that opens a cell of a
+  table's first row stands above it, the table is now lifted by that much out of the gap
+  held above it, and every other cell of the row starts that much lower inside, so only the
+  title stands out, as on the page. Measured in LibreOffice on `NavySidebar`, each entry
+  stands where the one above it does, 5.5pt from the page, against 10, 14 and 19pt before.
 
 - **Overlapping layers keep the page's distances in Word.** A layer stack that is not
   columns was written layer after layer, each starting again at the top. `MonogramSidebar`

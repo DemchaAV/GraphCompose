@@ -92,6 +92,96 @@ class DocxLinePairTest {
     }
 
     @Test
+    void aTitleRaisedAboveTheTopOfItsCellLiftsTheRow() throws Exception {
+        // An entry laid out as a row: a marker beside the entry's head band, whose title stands
+        // above the band. A Word paragraph cannot reach above its cell, so the row is lifted by
+        // that much out of the gap above it, and the marker's cell starts that much lower.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .addRow(row -> row
+                        .addParagraph(p -> p.text("*"))
+                        .addSection("Entry", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            XWPFParagraph before = document.getParagraphs().stream()
+                    .filter(paragraph -> "Before".equals(paragraph.getText())).findFirst().orElseThrow();
+            var row = document.getTables().get(0).getRow(0);
+            XWPFParagraph marker = row.getCell(0).getParagraphs().get(0);
+            XWPFParagraph title = row.getCell(1).getParagraphs().get(0);
+            long lifted = 12L * 20 - after(before);
+
+            assertThat(lifted).as("the row stands higher, into the gap above it").isPositive();
+            assertThat(before(marker)).as("the marker keeps its place").isEqualTo(lifted);
+            assertThat(before(title)).as("the title stands out by what the row was lifted").isZero();
+        }
+    }
+
+    @Test
+    void aTitleRaisedInsideAPaddedCardTakesThePaddingAndLeavesTheCardWhereItIs() throws Exception {
+        // On the page the title rises into the card's padding; the fill and its edge stay put.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .addSection("Card", card -> card
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 230, 230))
+                        .padding(DocumentInsets.of(10))
+                        .add(band(6, -4, CONTENT - 20))))) {
+            XWPFParagraph before = document.getParagraphs().stream()
+                    .filter(paragraph -> "Before".equals(paragraph.getText())).findFirst().orElseThrow();
+            var cell = document.getTables().get(0).getRow(0).getCell(0);
+            long padding = DocxTwips.of(cell.getCTTc().getTcPr().getTcMar().getTop().getW());
+
+            assertThat(after(before)).as("the card is not lifted").isEqualTo(12L * 20);
+            assertThat(padding).as("the title takes its rise out of the padding").isLessThan(10L * 20);
+        }
+    }
+
+    @Test
+    void aCardWhosePaddingCannotTakeTheRiseStaysWhereItIs() throws Exception {
+        // 1pt of padding against a rise of several: the rest stays low, the box does not move.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .addSection("Card", card -> card
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 230, 230))
+                        .padding(DocumentInsets.of(1))
+                        .add(band(6, -4, CONTENT - 2))))) {
+            XWPFParagraph before = document.getParagraphs().stream()
+                    .filter(paragraph -> "Before".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(after(before)).as("the card is not lifted").isEqualTo(12L * 20);
+        }
+    }
+
+    @Test
+    void aRuleAboveARaisedRowKeepsItsPlace() throws Exception {
+        // An empty paragraph above the row that draws a line is not a separator to lift into.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before"))
+                .addLine(line -> line.horizontal(CONTENT).thickness(1).margin(DocumentInsets.top(8)))
+                .addRow(row -> row.addParagraph(p -> p.text("*"))
+                        .addSection("Entry", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            XWPFParagraph rule = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetPBdr())
+                    .findFirst().orElseThrow();
+
+            assertThat(before(rule)).as("the space above the line stays").isGreaterThanOrEqualTo(8L * 20 - 2);
+        }
+    }
+
+    @Test
+    void aRowAfterARowIsLiftedOutOfTheSeparatorBetweenThem() throws Exception {
+        // Two entries back to back: the gap between the tables is held above the separator.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row.addParagraph(p -> p.text("*"))
+                        .addSection("First", entry -> entry.add(band(6, -4, CONTENT))))
+                .addRow(row -> row.margin(DocumentInsets.top(12)).addParagraph(p -> p.text("*"))
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            var second = document.getTables().get(1).getRow(0);
+
+            assertThat(before(second.getCell(0).getParagraphs().get(0)))
+                    .as("the second row's marker starts lower, as the row was lifted")
+                    .isPositive();
+        }
+    }
+
+    @Test
     void theHangReachesTheNextBlockOnlyNotThePageAfterABreak() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
                 .add(band(6, 4))
@@ -222,6 +312,14 @@ class DocxLinePairTest {
         return document.getParagraphs().stream()
                 .filter(paragraph -> !paragraph.getText().isBlank() && !"Before".equals(paragraph.getText()))
                 .toList();
+    }
+
+    private static long after(XWPFParagraph paragraph) {
+        CTPPr properties = paragraph.getCTP().getPPr();
+        if (properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetAfter()) {
+            return 0;
+        }
+        return DocxTwips.of(properties.getSpacing().getAfter());
     }
 
     private static long before(XWPFParagraph paragraph) {

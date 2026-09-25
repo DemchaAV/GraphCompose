@@ -240,6 +240,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** The gap the list being written puts between its items. */
     private double pendingItemSpacing;
 
+    /** The gap between the wrapped lines of an item of the list being written. */
+    private double listLineGap;
+
+    /**
+     * How many lines each item of the list being written still to come was laid out on,
+     * first item first; empty when they cannot be told apart, and then no item gets the gap.
+     */
+    private java.util.ArrayDeque<Integer> listItemLines = new java.util.ArrayDeque<>();
+
     /** Whether the list being written has an item above the one about to be written. */
     private boolean anItemWasWritten;
     // The last paragraph written into the body, so a container can hand it the space it
@@ -1551,13 +1560,51 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pendingItemSpacing = list.itemSpacing();
         boolean previousItemWritten = anItemWasWritten;
         anItemWasWritten = false;
+        double previousLineGap = listLineGap;
+        java.util.ArrayDeque<Integer> previousItemLines = listItemLines;
+        // The list's lineSpacing stands between the lines of an item that wraps, and only
+        // there: each item is a paragraph of its own, so each is given it by its own lines
+        // (see applyLineGap). The items are matched to the layout's in order; where the
+        // two do not count the same items, none is given it.
+        listLineGap = layout.lineGap(list);
+        List<Integer> laidOut = layout.itemLineCounts(list);
+        listItemLines = laidOut.size() == itemCount(list)
+                ? new java.util.ArrayDeque<>(laidOut)
+                : new java.util.ArrayDeque<>();
         try {
             writeListItems(document, list, numId);
         } finally {
             pendingItemSpacing = previousItemSpacing;
             anItemWasWritten = previousItemWritten;
+            listLineGap = previousLineGap;
+            listItemLines = previousItemLines;
         }
         owePendingSpacingAfter(list.margin().bottom() + list.padding().bottom());
+    }
+
+    /** Puts the list's gap between the lines of the item just started, if it wraps. */
+    private void applyItemLineGap(XWPFParagraph item) {
+        Integer lines = listItemLines.poll();
+        if (lines != null) {
+            applyLineGap(item, listLineGap, lines);
+        }
+    }
+
+    /** How many items a list writes, nested ones included. */
+    private static int itemCount(com.demcha.compose.document.node.ListNode list) {
+        int count = 0;
+        for (String item : list.items()) {
+            if (!com.demcha.compose.document.node.ListMarker.normalizeItemText(item, list.normalizeMarkers()).isBlank()) {
+                count++;
+            }
+        }
+        java.util.ArrayDeque<com.demcha.compose.document.node.ListItem> nested = new java.util.ArrayDeque<>(list.nestedItems());
+        while (!nested.isEmpty()) {
+            com.demcha.compose.document.node.ListItem item = nested.pop();
+            count++;
+            nested.addAll(item.children());
+        }
+        return count;
     }
 
     /** The gap above the next item, which is nothing at all above the first. */
@@ -1640,6 +1687,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         spaceBeforeTheNextItem();
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
+        applyItemLineGap(para);
         if (numId != null) {
             para.setNumID(numId);
             para.setNumILvl(BigInteger.valueOf(depth));
@@ -1702,6 +1750,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         spaceBeforeTheNextItem();
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
+        applyItemLineGap(para);
         XWPFRun leading = para.createRun();
         applyStyle(leading, style);
         leading.setText("  ".repeat(depth) + (marker.isRich() ? "" : marker.prefix()));
@@ -2744,7 +2793,57 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyDirection(target, rightToLeft);
         applyLineHeight(target, layout.lineHeight(source));
         applyVerticalSpacing(target, source);
+        applyLineGap(target, layout.lineGap(source), layout.lineCount(source));
         return rightToLeft;
+    }
+
+    /**
+     * Puts the layout's gap between a paragraph's lines, which Word has no word for.
+     *
+     * <p>The page sets each line after the one above it at the line's height plus the
+     * paragraph's {@code lineSpacing}; the export wrote the line's height alone, so every
+     * wrapped line of a CV's body text stood a point or two higher than on the page, and a
+     * section of entries ran several points short. Word has one line height for a paragraph
+     * and no space between its lines, so the gap goes into the line.</p>
+     *
+     * <p>A paragraph of {@code n} lines has {@code n - 1} gaps on the page and would get
+     * {@code n} in Word; the one too many comes off the space above the paragraph. The
+     * editor puts most of an exact line's spare height above its text (measured in
+     * LibreOffice: 8pt of 10 above), so taking it from above keeps the first line nearly
+     * where the page sets it. Where the space above is less than a gap — a paragraph opening
+     * a cell, or right under the block before it — what it cannot give is not put into the
+     * lines at all: the {@code n - 1} gaps are shared out over {@code n} lines, so the
+     * paragraph is as tall as on the page, its lines a little closer than there.</p>
+     *
+     * @param target the Word paragraph, its line height and space above already written
+     * @param gap    the gap between two of its lines on the page, in points
+     * @param lines  how many lines the page set it on
+     */
+    private void applyLineGap(XWPFParagraph target, double gap, int lines) {
+        if (!(gap > 0) || lines < 2) {
+            return;
+        }
+        CTPPr properties = target.getCTP().getPPr();
+        if (properties == null || !properties.isSetSpacing()) {
+            return;
+        }
+        CTSpacing spacing = properties.getSpacing();
+        if (!spacing.isSetLineRule() || spacing.getLineRule() != STLineSpacingRule.EXACT) {
+            return;
+        }
+        Long line = writtenTwips(spacing.getLine());
+        if (line == null) {
+            return;
+        }
+        long twips = toTwips(gap);
+        long before = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null);
+        long taken = Math.min(before, twips);
+        if (taken > 0) {
+            spacing.setBefore(BigInteger.valueOf(before - taken));
+        }
+        // n lines of (line + extra), less what came off above, are n lines and n - 1 gaps.
+        long extra = Math.round(((lines - 1) * (double) twips + taken) / lines);
+        spacing.setLine(BigInteger.valueOf(line + extra));
     }
 
     /**

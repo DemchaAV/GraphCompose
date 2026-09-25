@@ -123,6 +123,26 @@ class DocxLineHeightTest {
     }
 
     @Test
+    void theGapBetweenAParagraphsLinesIsInItsLinesAndTakenOnceFromAboveIt() throws Exception {
+        // The page sets each wrapped line the line's height plus lineSpacing below the one
+        // above it; Word has one line height and no gap, so the gap goes into the line and the
+        // one line of it the page does not have comes off the space above.
+        DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
+        try (XWPFDocument plain = withLayout(page -> page
+                .addParagraph(p -> p.text("Above").margin(com.demcha.compose.document.style.DocumentInsets.bottom(10)))
+                .addParagraph(p -> p.text(LONG).textStyle(body)));
+             XWPFDocument gapped = withLayout(page -> page
+                .addParagraph(p -> p.text("Above").margin(com.demcha.compose.document.style.DocumentInsets.bottom(10)))
+                .addParagraph(p -> p.text(LONG).textStyle(body).lineSpacing(4)))) {
+            XWPFParagraph without = plain.getParagraphs().get(1);
+            XWPFParagraph with = gapped.getParagraphs().get(1);
+
+            assertThat(lineTwips(with)).isEqualTo(lineTwips(without) + 4 * 20L);
+            assertThat(before(with)).isEqualTo(before(without) - 4 * 20L);
+        }
+    }
+
+    @Test
     void theTallestLineSetsTheHeightWhereverItFalls() throws Exception {
         // Word has one height for a paragraph. Small runs wrap onto a second line that also
         // holds a larger one: the first line's height would clip it.
@@ -137,6 +157,94 @@ class DocxLineHeightTest {
             long mixed = lineTwips(document.getParagraphs().get(1));
             assertThat(mixed).as("the second line's larger run, not the first line's").isEqualTo(large16);
         }
+    }
+
+    @Test
+    void aOneLineParagraphHasNoGapToHold() throws Exception {
+        DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
+        try (XWPFDocument plain = withLayout(page -> page.addParagraph(p -> p.text("Short").textStyle(body)));
+             XWPFDocument gapped = withLayout(page -> page.addParagraph(p -> p.text("Short").textStyle(body)
+                     .lineSpacing(4)))) {
+            assertThat(lineTwips(gapped.getParagraphs().get(0))).isEqualTo(lineTwips(plain.getParagraphs().get(0)));
+        }
+    }
+
+    @Test
+    void aListItemThatWrapsHoldsTheGapAndOneThatDoesNotHasNone() throws Exception {
+        // Each item is a paragraph of its own, and the page puts lineSpacing only between the
+        // lines of one item: a one-line item next to a wrapped one has none to hold.
+        DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
+        try (XWPFDocument plain = withLayout(page -> page
+                     .addParagraph(p -> p.text("Above").margin(com.demcha.compose.document.style.DocumentInsets.bottom(10)))
+                     .addList(l -> l.bullet().textStyle(body).items(LONG, "Short")));
+             XWPFDocument gapped = withLayout(page -> page
+                     .addParagraph(p -> p.text("Above").margin(com.demcha.compose.document.style.DocumentInsets.bottom(10)))
+                     .addList(l -> l.bullet().textStyle(body).lineSpacing(4).items(LONG, "Short")))) {
+            assertThat(lineTwips(gapped.getParagraphs().get(1))).as("the wrapped item")
+                    .isEqualTo(lineTwips(plain.getParagraphs().get(1)) + 4 * 20L);
+            assertThat(lineTwips(gapped.getParagraphs().get(2))).as("the one-line item")
+                    .isEqualTo(lineTwips(plain.getParagraphs().get(2)));
+        }
+    }
+
+    @Test
+    void aHangingListWhoseItemsDoNotWrapHasNoGapToHold() throws Exception {
+        // Such a list lays each marker out beside its item as a line of its own: it is not a
+        // second line of the item.
+        DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
+        try (XWPFDocument plain = withLayout(page -> page.addList(l -> l.bullet().hangingIndent(true)
+                     .textStyle(body).items("One", "Two", "Three")));
+             XWPFDocument gapped = withLayout(page -> page.addList(l -> l.bullet().hangingIndent(true)
+                     .textStyle(body).lineSpacing(4).items("One", "Two", "Three")))) {
+            for (int index = 0; index < 3; index++) {
+                assertThat(lineTwips(gapped.getParagraphs().get(index))).as("item %d", index)
+                        .isEqualTo(lineTwips(plain.getParagraphs().get(index)));
+            }
+        }
+    }
+
+    @Test
+    void withNoSpaceAboveTheGapsAreSharedOutSoTheParagraphKeepsItsHeight() throws Exception {
+        // A paragraph opening a cell, or the page, has no space above to give back the one
+        // gap too many: three lines hold two gaps between them, shared out over the three.
+        DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
+        try (XWPFDocument plain = withLayout(page -> page
+                     .addParagraph(p -> p.text("One\nTwo\nThree").textStyle(body)));
+             XWPFDocument gapped = withLayout(page -> page
+                     .addParagraph(p -> p.text("One\nTwo\nThree").textStyle(body).lineSpacing(3))
+                     .addParagraph(p -> p.text("Below").textStyle(body)))) {
+            XWPFParagraph lines = gapped.getParagraphs().get(0);
+
+            assertThat(before(lines)).as("nothing above the first paragraph to take from").isZero();
+            assertThat(lineTwips(lines)).as("two gaps of 3pt over three lines")
+                    .isEqualTo(lineTwips(plain.getParagraphs().get(0)) + 2 * 3 * 20L / 3);
+            assertThat(before(gapped.getParagraphs().get(1))).as("and nothing owed below it").isZero();
+        }
+    }
+
+    @Test
+    void aWrappedParagraphInACellLeavesTheSpaceAfterTheTableAlone() throws Exception {
+        // The paragraph opens the cell with nothing above it there: its gaps stay in the
+        // cell, and the body after the table keeps its own space.
+        DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
+        try (XWPFDocument document = withLayout(page -> page
+                .addRow(r -> r.addParagraph(p -> p.text(LONG).textStyle(body).lineSpacing(4))
+                        .addParagraph(p -> p.text("Beside")))
+                .addParagraph(p -> p.text("After").margin(com.demcha.compose.document.style.DocumentInsets.top(10))))) {
+            XWPFParagraph after = document.getParagraphs().stream()
+                    .filter(paragraph -> "After".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(before(after)).as("the space above it is its own, whole").isEqualTo(10 * 20L);
+        }
+    }
+
+    private static final String LONG = "A sentence long enough to wrap onto a second line and a third one "
+            + "in this narrow column of a small test page, which is the point of it.";
+
+    private static long before(XWPFParagraph paragraph) {
+        CTPPr properties = paragraph.getCTP().getPPr();
+        return properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetBefore()
+                ? 0 : DocxTwips.of(properties.getSpacing().getBefore());
     }
 
     @Test

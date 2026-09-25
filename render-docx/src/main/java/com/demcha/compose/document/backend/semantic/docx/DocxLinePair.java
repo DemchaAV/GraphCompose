@@ -34,6 +34,13 @@ final class DocxLinePair {
     /** How far apart two edges may be and still be the same edge, in points. */
     private static final double EDGE = 0.5;
 
+    /**
+     * The room the two texts must leave between them, in points. An editor sets text a little
+     * wider or narrower than the page does, and a right-aligned tab the left text runs past
+     * sends the right one onto a line of its own — under an exact line height, out of sight.
+     */
+    private static final double MIN_GAP = 4;
+
     private DocxLinePair() {
     }
 
@@ -102,7 +109,7 @@ final class DocxLinePair {
         boolean firstIsLeft = a[0] <= b[0];
         double[] left = firstIsLeft ? a : b;
         double[] right = firstIsLeft ? b : a;
-        if (left[1] > right[0] + EDGE) {
+        if (left[1] + MIN_GAP > right[0]) {
             return null;
         }
         // Placements measure up from the page's foot.

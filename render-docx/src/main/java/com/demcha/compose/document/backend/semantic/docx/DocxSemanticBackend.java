@@ -499,9 +499,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         warnedNodeKinds.clear();
         surfaceBehind = null;
         overlayDepth = 0;
-        hangingBelow = 0;
-        hangingOver = null;
-        hangingOverBy = 0;
+        forgetTheHang();
         insetLeft = 0;
         insetRight = 0;
         nextDrawingId = 100_000;
@@ -589,6 +587,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pendingSpacingAfter = 0;
         pendingItemSpacing = 0;
         anItemWasWritten = false;
+        forgetTheHang();
         lastBodyParagraph = null;
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
         canvasHeight = context.canvas() == null ? Double.NaN : context.canvas().height();
@@ -2655,6 +2654,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             carriedSpacingBefore = 0;
             pendingSpacingAfter = resumeSpacing;
             resumeSpacing = Double.NaN;
+            forgetTheHang();
         }
     }
 
@@ -2805,9 +2805,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTTabStop tab = (properties.isSetTabs() ? properties.getTabs() : properties.addNewTabs()).addNewTab();
         tab.setVal(STTabJc.RIGHT);
         tab.setPos(BigInteger.valueOf(toTwips(lineStart + pair.tabStop())));
+        // Each half is still the paragraph it was: its outline level, its bookmark around its
+        // own text, and whether it keeps with what follows.
+        applyHeadingRole(para, headingLevelOf(pair.left()) != null ? pair.left() : pair.right());
+        int leftAnchor = openAnchor(para, pair.left().anchor());
         writeParagraphRuns(para, pair.left(), false);
+        closeAnchor(para, leftAnchor);
         para.createRun().addTab();
+        int rightAnchor = openAnchor(para, pair.right().anchor());
         writeParagraphRuns(para, pair.right(), false);
+        closeAnchor(para, rightAnchor);
+        if ((pair.left().keepWithNext() && layout.onOnePage(pair.left()))
+            || (pair.right().keepWithNext() && layout.onOnePage(pair.right()))) {
+            para.setKeepNext(true);
+        }
         double below = overlay.margin().bottom() + pair.below();
         if (below >= 0) {
             owePendingSpacingAfter(below);
@@ -5396,6 +5407,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph previousParagraph = lastBodyParagraph;
         double previousCarried = carriedSpacingBefore;
         double previousOwed = pendingSpacingAfter;
+        double previousHangingBelow = hangingBelow;
+        XWPFParagraph previousHangingOver = hangingOver;
+        double previousHangingOverBy = hangingOverBy;
         double previousInsetLeft = insetLeft;
         double previousInsetRight = insetRight;
         XWPFParagraph previousCloser = tableCloser;
@@ -5404,6 +5418,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         tableCloser = null;
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
+        forgetTheHang();
         // A cell's content is measured from the cell's own edge, which its margins already
         // keep clear of the border; the containers around the table have nothing to add.
         insetLeft = 0;
@@ -5418,6 +5433,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             lastBodyParagraph = previousParagraph;
             carriedSpacingBefore = previousCarried;
             pendingSpacingAfter = previousOwed;
+            hangingBelow = previousHangingBelow;
+            hangingOver = previousHangingOver;
+            hangingOverBy = previousHangingOverBy;
             insetLeft = previousInsetLeft;
             insetRight = previousInsetRight;
             tableCloser = previousCloser;
@@ -5434,7 +5452,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // height is a line of text tall, and it stood on top of that height: between two CV
         // entries held apart by a 4.5pt spacer, the page shows 16pt and LibreOffice drew 23.
         holdToHairline(para);
-        owePendingSpacingAfter(node.height());
+        // Text that hung below the band above takes its place out of this height first.
+        double height = node.height();
+        if (hangingOver == para) {
+            height = Math.max(0, height - hangingOverBy);
+            forgetTheHang();
+        }
+        owePendingSpacingAfter(height);
+    }
+
+    /** Clears the text hanging below a band: it reaches the next block only (see {@link #writeLinePair}). */
+    private void forgetTheHang() {
+        hangingBelow = 0;
+        hangingOver = null;
+        hangingOverBy = 0;
     }
 
     private void writePageBreak(XWPFDocument document) {
@@ -5444,8 +5475,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFRun run = para.createRun();
         run.addBreak(BreakType.PAGE);
         // Space owed from here on is above what the next page opens with. The paragraph before
-        // the break is on the page before, and space written below it would stay there.
+        // the break is on the page before, and space written below it would stay there; so is
+        // text hanging below a band there.
         lastBodyParagraph = null;
+        forgetTheHang();
     }
 
     /**

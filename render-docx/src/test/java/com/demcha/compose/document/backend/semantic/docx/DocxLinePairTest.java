@@ -78,6 +78,61 @@ class DocxLinePairTest {
     }
 
     @Test
+    void theHangReachesTheNextBlockOnlyNotThePageAfterABreak() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
+                .add(band(6, 4))
+                .addPageBreak(b -> { })
+                .addParagraph(p -> p.text("After").margin(DocumentInsets.top(10))))) {
+            XWPFParagraph after = document.getParagraphs().stream()
+                    .filter(paragraph -> "After".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(before(after)).as("a new page: its 10pt whole").isEqualTo(10L * 20);
+        }
+    }
+
+    @Test
+    void theHangStaysInTheCellItHangsIn() throws Exception {
+        // The band ends one column of a row; the column beside it starts its own flow.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row
+                        .addSection("Left", left -> left.add(band(6, 4, CONTENT)))
+                        .addSection("Right", right -> right
+                                .addParagraph(p -> p.text("Beside").margin(DocumentInsets.top(10))))))) {
+            XWPFParagraph beside = document.getTables().get(0).getRow(0).getCell(1).getParagraphs().stream()
+                    .filter(paragraph -> "Beside".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(before(beside)).as("its 10pt whole").isEqualTo(10L * 20);
+        }
+    }
+
+    @Test
+    void eachHalfKeepsItsBookmarkAndTheTitleItsHeadingRole() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("See the role").linkTo("role"))
+                .addParagraph(p -> p.text("See the dates").linkTo("dates"))
+                .add(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                        .name("EntryHead")
+                        .rectangle(CONTENT, 20)
+                        .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                        .position(new ParagraphBuilder().name("Title").text("MARKETING MANAGER").anchor("role")
+                                .bookmark(new com.demcha.compose.document.node.DocumentBookmarkOptions("Role", 0))
+                                .textStyle(DocumentTextStyle.DEFAULT.withSize(12)).build(), 0, 0, LayerAlign.CENTER_LEFT)
+                        .position(new ParagraphBuilder().text("Jan 2022 - Present").anchor("dates")
+                                .align(TextAlign.RIGHT).textStyle(DocumentTextStyle.DEFAULT.withSize(9)).build(),
+                                0, 0, LayerAlign.CENTER_RIGHT)
+                        .build()))) {
+            XWPFParagraph line = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().startsWith("MARKETING")).findFirst().orElseThrow();
+
+            assertThat(line.getCTP().getBookmarkStartList())
+                    .extracting(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBookmark::getName)
+                    .as("a bookmark for each half, so the links reach them")
+                    .hasSize(2);
+            assertThat(line.getStyleID()).as("the title's outline level").isEqualTo("Heading1");
+        }
+    }
+
+    @Test
     void threeParagraphsInABandStayOneAfterTheOther() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
                 .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
@@ -89,7 +144,36 @@ class DocxLinePairTest {
                         .position(paragraph("Middle", TextAlign.CENTER), 0, 0, LayerAlign.CENTER)
                         .position(paragraph("Right", TextAlign.RIGHT), 0, 0, LayerAlign.CENTER_RIGHT)))) {
             assertThat(written(document)).extracting(XWPFParagraph::getText)
-                    .contains("Left", "Middle", "Right");
+                    .containsExactly("Left", "Middle", "Right");
+        }
+    }
+
+    @Test
+    void textsThatNearlyMeetStayOneAfterTheOther() throws Exception {
+        // An editor sets text a little wider than the page: a tab the left text reaches would
+        // put the dates on a line of their own, out of sight under an exact line.
+        double texts = textWidth("MARKETING MANAGER", 12) + textWidth("Jan 2022 - Present", 9);
+        try (XWPFDocument close = export(band(20, 0, texts + 2));
+             XWPFDocument apart = export(band(20, 0, texts + 8))) {
+            assertThat(written(close)).as("2pt between them").hasSize(2);
+            assertThat(written(apart)).as("8pt between them").hasSize(1);
+        }
+    }
+
+    /** How wide the page sets a line of text, as the layout measured it. */
+    private static double textWidth(String text, double size) {
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(PAGE_WIDTH, 600).margin(DocumentInsets.of(MARGIN)).create()) {
+            session.pageFlow(page -> page.addParagraph(p -> p.text(text)
+                    .textStyle(DocumentTextStyle.DEFAULT.withSize(size))));
+            return session.layoutGraph().fragments().stream()
+                    .map(com.demcha.compose.document.layout.PlacedFragment::payload)
+                    .filter(com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload.class::isInstance)
+                    .map(com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload.class::cast)
+                    .mapToDouble(payload -> payload.lines().get(0).width())
+                    .findFirst().orElseThrow();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
         }
     }
 
@@ -101,9 +185,13 @@ class DocxLinePairTest {
 
     /** A head band: the title at the left, the dates at the right, both pulled by {@code pull}. */
     private static DocumentNode band(double height, double pull) {
+        return band(height, pull, CONTENT);
+    }
+
+    private static DocumentNode band(double height, double pull, double width) {
         return new com.demcha.compose.document.dsl.ShapeContainerBuilder()
                 .name("EntryHead")
-                .rectangle(CONTENT, height)
+                .rectangle(width, height)
                 .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                 .position(new ParagraphBuilder().name("Title").text("MARKETING MANAGER")
                         .textStyle(DocumentTextStyle.DEFAULT.withSize(12)).build(), 0, pull, LayerAlign.CENTER_LEFT)

@@ -257,6 +257,12 @@ restate it stay silent, so changing `Normal` in Word changes the body the way a 
 expects. A run whose font, size or colour differs keeps saying so, so headings, chips and
 accents are unaffected.
 
+The part also states the paragraph defaults — no space after a paragraph, single lines —
+because Word otherwise takes them from its own new-document template, 8pt after every
+paragraph and lines 1.08 tall, and the page has neither. A paragraph's space around it is
+written where the page has some. A reader who wants Word's airier defaults back can set
+them on `Normal`.
+
 A paragraph that declared an outline level — `bookmark(new DocumentBookmarkOptions(name,
 level))` — also carries Word's own `HeadingN` style, which is what fills the Navigation
 Pane, the outline view and a generated table of contents. The style states the outline

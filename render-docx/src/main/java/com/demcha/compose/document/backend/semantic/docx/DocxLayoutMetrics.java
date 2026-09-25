@@ -5,6 +5,7 @@ import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.engine.components.content.table.TableResolvedCell;
@@ -318,21 +319,41 @@ final class DocxLayoutMetrics {
     /**
      * The height of one line of the paragraph's text, as the engine measured it.
      *
-     * <p>Read from the first fragment the node emitted: a paragraph split across a page
-     * boundary emits one fragment per page and every one of them carries the same line
-     * height, which is a property of the text style rather than of the split.</p>
+     * <p>The height of the text on the laid-out lines — the tallest of them, since Word has
+     * one height for a paragraph and a shorter one would clip the rest — rather than the
+     * paragraph's own style's. The two are the same while every run is set in the
+     * paragraph's style. They part when the runs carry a style of their own: a skill rating
+     * of dots with a 7.8pt space between each, in a paragraph left at the default size, is a
+     * 9.4pt line on the page, and the style's 13pt made every skill row of a CV sidebar
+     * 3.6pt taller in Word. Runs larger than the style make the line taller the same way,
+     * where the style's height clipped them. An inline picture does not count; the lines
+     * that hold one are made room for separately ({@code makeRoomForPictures}). A line with
+     * no text at all — an empty line, one holding only a picture — has the style's height,
+     * and counts with it.</p>
+     *
+     * <p>Read from every fragment the node emitted: a paragraph split across a page boundary
+     * emits one fragment per page, and its tallest line may be on any of them.</p>
      *
      * @param node any node that lays its text out as paragraph lines
      * @return the line height in points, or empty when the node laid out nothing
      */
     OptionalDouble lineHeight(DocumentNode node) {
+        double text = 0;
+        double style = 0;
         for (PlacedFragment fragment : fragmentsOf(node)) {
-            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph
-                && paragraph.lineHeight() > 0) {
-                return OptionalDouble.of(paragraph.lineHeight());
+            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
+                for (ParagraphLine line : paragraph.lines()) {
+                    text = Math.max(text, line.textLineHeight());
+                }
+                if (style <= 0) {
+                    style = paragraph.lineHeight();
+                }
             }
         }
-        return OptionalDouble.empty();
+        if (text > 0) {
+            return OptionalDouble.of(text);
+        }
+        return style > 0 ? OptionalDouble.of(style) : OptionalDouble.empty();
     }
 
     /**
@@ -342,7 +363,7 @@ final class DocxLayoutMetrics {
      * @param node any node that lays out as paragraph lines
      * @return the line, or empty when the node laid out nothing
      */
-    java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> firstLine(DocumentNode node) {
+    java.util.Optional<ParagraphLine> firstLine(DocumentNode node) {
         for (PlacedFragment fragment : fragmentsOf(node)) {
             if (fragment.payload() instanceof ParagraphFragmentPayload paragraph && !paragraph.lines().isEmpty()) {
                 return java.util.Optional.of(paragraph.lines().get(0));

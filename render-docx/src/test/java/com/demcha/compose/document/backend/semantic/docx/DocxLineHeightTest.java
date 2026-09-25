@@ -174,14 +174,16 @@ class DocxLineHeightTest {
         // Each item is a paragraph of its own, and the page puts lineSpacing only between the
         // lines of one item: a one-line item next to a wrapped one has none to hold.
         DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
-        try (XWPFDocument plain = withLayout(page -> page.addList(l -> l.bullet().textStyle(body)
-                     .items(LONG, "Short")));
-             XWPFDocument gapped = withLayout(page -> page.addList(l -> l.bullet().textStyle(body).lineSpacing(4)
-                     .items(LONG, "Short")))) {
-            assertThat(lineTwips(gapped.getParagraphs().get(0))).as("the wrapped item")
-                    .isEqualTo(lineTwips(plain.getParagraphs().get(0)) + 4 * 20L);
-            assertThat(lineTwips(gapped.getParagraphs().get(1))).as("the one-line item")
-                    .isEqualTo(lineTwips(plain.getParagraphs().get(1)));
+        try (XWPFDocument plain = withLayout(page -> page
+                     .addParagraph(p -> p.text("Above").margin(com.demcha.compose.document.style.DocumentInsets.bottom(10)))
+                     .addList(l -> l.bullet().textStyle(body).items(LONG, "Short")));
+             XWPFDocument gapped = withLayout(page -> page
+                     .addParagraph(p -> p.text("Above").margin(com.demcha.compose.document.style.DocumentInsets.bottom(10)))
+                     .addList(l -> l.bullet().textStyle(body).lineSpacing(4).items(LONG, "Short")))) {
+            assertThat(lineTwips(gapped.getParagraphs().get(1))).as("the wrapped item")
+                    .isEqualTo(lineTwips(plain.getParagraphs().get(1)) + 4 * 20L);
+            assertThat(lineTwips(gapped.getParagraphs().get(2))).as("the one-line item")
+                    .isEqualTo(lineTwips(plain.getParagraphs().get(2)));
         }
     }
 
@@ -202,27 +204,28 @@ class DocxLineHeightTest {
     }
 
     @Test
-    void theGapTheSpaceAboveCannotGiveComesOffTheSpaceBelow() throws Exception {
-        // A wrapped item right under the one before it has no space above to give: the line of
-        // gap it holds that the page does not have comes off the gap under it instead.
+    void withNoSpaceAboveTheGapsAreSharedOutSoTheParagraphKeepsItsHeight() throws Exception {
+        // A paragraph opening a cell, or the page, has no space above to give back the one
+        // gap too many: three lines hold two gaps between them, shared out over the three.
         DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
-        try (XWPFDocument document = withLayout(page -> page
-                .addParagraph(p -> p.text(LONG).textStyle(body).lineSpacing(4)
-                        .margin(com.demcha.compose.document.style.DocumentInsets.bottom(10)))
-                .addParagraph(p -> p.text("Below").textStyle(body)))) {
-            XWPFParagraph wrapped = document.getParagraphs().get(0);
-            XWPFParagraph below = document.getParagraphs().get(1);
+        try (XWPFDocument plain = withLayout(page -> page
+                     .addParagraph(p -> p.text("One\nTwo\nThree").textStyle(body)));
+             XWPFDocument gapped = withLayout(page -> page
+                     .addParagraph(p -> p.text("One\nTwo\nThree").textStyle(body).lineSpacing(3))
+                     .addParagraph(p -> p.text("Below").textStyle(body)))) {
+            XWPFParagraph lines = gapped.getParagraphs().get(0);
 
-            assertThat(before(wrapped)).as("nothing above the first paragraph to take from").isZero();
-            assertThat(before(below)).as("10pt below it, less the 4pt it stands taller")
-                    .isEqualTo(6 * 20L);
+            assertThat(before(lines)).as("nothing above the first paragraph to take from").isZero();
+            assertThat(lineTwips(lines)).as("two gaps of 3pt over three lines")
+                    .isEqualTo(lineTwips(plain.getParagraphs().get(0)) + 2 * 3 * 20L / 3);
+            assertThat(before(gapped.getParagraphs().get(1))).as("and nothing owed below it").isZero();
         }
     }
 
     @Test
-    void anOverrunInACellStaysInTheCell() throws Exception {
-        // The paragraph opens the cell with nothing above or below it there: the cell is
-        // taller, and the body after the table keeps its own space.
+    void aWrappedParagraphInACellLeavesTheSpaceAfterTheTableAlone() throws Exception {
+        // The paragraph opens the cell with nothing above it there: its gaps stay in the
+        // cell, and the body after the table keeps its own space.
         DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
         try (XWPFDocument document = withLayout(page -> page
                 .addRow(r -> r.addParagraph(p -> p.text(LONG).textStyle(body).lineSpacing(4))

@@ -60,13 +60,21 @@ follow semantic versioning; release dates are ISO 8601.
 - **The gap between a paragraph's wrapped lines reaches Word.** A paragraph's or a list's
   `lineSpacing`, which the page puts between two wrapped lines, was not written at all. Every
   wrapped line of a CV's body text stood a point or so higher than on the page, and a CV's
-  entries crept up the page one after another. Measured in LibreOffice, `CompactMono`'s
-  entries rose 2.2pt each. Word has one line height for a paragraph and no gap between its
-  lines, so a paragraph that wraps now has the gap in its lines. The one gap the page does
-  not have, above the first line, comes off the space above the paragraph. A list holds it
-  in every item when any item wraps. Together with the other DOCX layout fixes of this
-  release, the drift from entry to entry is gone: `BlueBanner` stands within 0.4pt of the
-  page at every entry, `NordicClean` within 0.6pt and `ClassicSerif` within 1.1pt.
+  entries crept up the page one after another. Word has one line height for a paragraph and
+  no gap between its lines, so a paragraph that wraps now has the gap in its lines. Of the
+  one gap too many that gives it, what the space above the paragraph can spare comes off
+  that space; the rest is shared out over the lines, so the paragraph is as tall as on the
+  page even where nothing stands above it, as in a cell it opens. Each item of a list is
+  a paragraph of its own and holds the gap only when it wraps; a list whose markers stand
+  in their own column no longer counts a marker as a second line. Measured in Word 16 and
+  in LibreOffice on twenty CV presets, the median line comes to within 0.5pt of the page in
+  `BlueBanner`, `CenteredHeadline`, `ClassicSerif`, `Executive`, `MintEditorial` and
+  `NordicClean` (3–9pt before), and `Panel` from 13.5pt to 3.1pt in Word. In four presets
+  the median moves away, because the missing gaps had been hiding other differences:
+  `NavySidebar`'s entries each stand 4.5pt lower where a title and its dates share a line,
+  `EngineeringResume`'s profile wraps onto a line more in the editors than on the page,
+  `TimelineMinimal`'s columns stand 10.5pt low from top to bottom below contact lines that
+  are 2.2pt taller each, and `EditorialBlue` ends its first page one entry sooner.
 
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the

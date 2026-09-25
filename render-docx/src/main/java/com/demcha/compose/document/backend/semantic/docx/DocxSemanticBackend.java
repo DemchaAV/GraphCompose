@@ -249,12 +249,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private java.util.ArrayDeque<Integer> listItemLines = new java.util.ArrayDeque<>();
 
-    /**
-     * How much taller than on the page the last paragraph stands in Word, to come off the
-     * space below it — see {@link #applyLineGap}.
-     */
-    private double overrunBelow;
-
     /** Whether the list being written has an item above the one about to be written. */
     private boolean anItemWasWritten;
     // The last paragraph written into the body, so a container can hand it the space it
@@ -587,7 +581,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pendingSpacingAfter = 0;
         pendingItemSpacing = 0;
         anItemWasWritten = false;
-        overrunBelow = 0;
         lastBodyParagraph = null;
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
         canvasHeight = context.canvas() == null ? Double.NaN : context.canvas().height();
@@ -1589,10 +1582,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         owePendingSpacingAfter(list.margin().bottom() + list.padding().bottom());
     }
 
-    /** The gap between the lines of the list item about to be written: none unless it wraps. */
-    private double nextItemLineGap() {
+    /** Puts the list's gap between the lines of the item just started, if it wraps. */
+    private void applyItemLineGap(XWPFParagraph item) {
         Integer lines = listItemLines.poll();
-        return lines != null && lines > 1 ? listLineGap : 0;
+        if (lines != null) {
+            applyLineGap(item, listLineGap, lines);
+        }
     }
 
     /** How many items a list writes, nested ones included. */
@@ -1692,7 +1687,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         spaceBeforeTheNextItem();
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
-        applyLineGap(para, nextItemLineGap());
+        applyItemLineGap(para);
         if (numId != null) {
             para.setNumID(numId);
             para.setNumILvl(BigInteger.valueOf(depth));
@@ -1755,7 +1750,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         spaceBeforeTheNextItem();
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
-        applyLineGap(para, nextItemLineGap());
+        applyItemLineGap(para);
         XWPFRun leading = para.createRun();
         applyStyle(leading, style);
         leading.setText("  ".repeat(depth) + (marker.isRich() ? "" : marker.prefix()));
@@ -2538,7 +2533,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyInset(para);
         // Everything owed above this paragraph — the space the one before it holds below
         // itself, and any container edge — is written here, on one side of the gap.
-        double above = lessTheOverrun(carriedSpacingBefore + pendingSpacingAfter);
+        double above = carriedSpacingBefore + pendingSpacingAfter;
         if (above > 0) {
             addSpacing(para, above, 0);
         }
@@ -2556,7 +2551,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!Double.isNaN(resumeSpacing)) {
             carriedSpacingBefore = 0;
             pendingSpacingAfter = resumeSpacing;
-            overrunBelow = 0;
             resumeSpacing = Double.NaN;
         }
     }
@@ -2587,9 +2581,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** Writes the owed space onto the paragraph that owes it, for want of a later one. */
     private void flushSpacingAfter() {
-        double owed = lessTheOverrun(pendingSpacingAfter);
-        if (owed > 0 && lastBodyParagraph != null) {
-            addSpacing(lastBodyParagraph, 0, owed);
+        if (pendingSpacingAfter > 0 && lastBodyParagraph != null) {
+            addSpacing(lastBodyParagraph, 0, pendingSpacingAfter);
         }
         pendingSpacingAfter = 0;
     }
@@ -2800,9 +2793,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyDirection(target, rightToLeft);
         applyLineHeight(target, layout.lineHeight(source));
         applyVerticalSpacing(target, source);
-        if (layout.lineCount(source) > 1) {
-            applyLineGap(target, layout.lineGap(source));
-        }
+        applyLineGap(target, layout.lineGap(source), layout.lineCount(source));
         return rightToLeft;
     }
 
@@ -2813,17 +2804,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * paragraph's {@code lineSpacing}; the export wrote the line's height alone, so every
      * wrapped line of a CV's body text stood a point or two higher than on the page, and a
      * section of entries ran several points short. Word has one line height for a paragraph
-     * and no space between its lines, so the gap goes into the line — and one line of it is
-     * then space the page does not have, since the page puts the gap only between lines: that
-     * much comes off the space above the paragraph. The editor puts most of an exact line's
-     * spare height above its text (measured in LibreOffice: 8pt of 10 above), so taking it
-     * from above keeps the first line nearly where the page sets it and the paragraph its
-     * height. What the space above cannot give — a paragraph opening a cell, or standing
-     * right under the block before it — comes off the space below it instead
-     * ({@link #overrunBelow}); only with nothing on either side is the paragraph taller.</p>
+     * and no space between its lines, so the gap goes into the line.</p>
+     *
+     * <p>A paragraph of {@code n} lines has {@code n - 1} gaps on the page and would get
+     * {@code n} in Word; the one too many comes off the space above the paragraph. The
+     * editor puts most of an exact line's spare height above its text (measured in
+     * LibreOffice: 8pt of 10 above), so taking it from above keeps the first line nearly
+     * where the page sets it. Where the space above is less than a gap — a paragraph opening
+     * a cell, or right under the block before it — what it cannot give is not put into the
+     * lines at all: the {@code n - 1} gaps are shared out over {@code n} lines, so the
+     * paragraph is as tall as on the page, its lines a little closer than there.</p>
+     *
+     * @param target the Word paragraph, its line height and space above already written
+     * @param gap    the gap between two of its lines on the page, in points
+     * @param lines  how many lines the page set it on
      */
-    private void applyLineGap(XWPFParagraph target, double gap) {
-        if (!(gap > 0)) {
+    private void applyLineGap(XWPFParagraph target, double gap, int lines) {
+        if (!(gap > 0) || lines < 2) {
             return;
         }
         CTPPr properties = target.getCTP().getPPr();
@@ -2839,26 +2836,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         long twips = toTwips(gap);
-        spacing.setLine(BigInteger.valueOf(line + twips));
         long before = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null);
         long taken = Math.min(before, twips);
         if (taken > 0) {
             spacing.setBefore(BigInteger.valueOf(before - taken));
         }
-        overrunBelow += (twips - taken) / POINT_TO_TWIP;
-    }
-
-    /**
-     * The part of a gap about to be written that is still space in Word, once the paragraph
-     * above it has taken back what it stands taller than on the page.
-     *
-     * @param owed the gap in points
-     * @return what is left of it, never below 0
-     */
-    private double lessTheOverrun(double owed) {
-        double left = Math.max(0, owed - overrunBelow);
-        overrunBelow = 0;
-        return left;
+        // n lines of (line + extra), less what came off above, are n lines and n - 1 gaps.
+        long extra = Math.round(((lines - 1) * (double) twips + taken) / lines);
+        spacing.setLine(BigInteger.valueOf(line + extra));
     }
 
     /**
@@ -5240,7 +5225,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph previousParagraph = lastBodyParagraph;
         double previousCarried = carriedSpacingBefore;
         double previousOwed = pendingSpacingAfter;
-        double previousOverrun = overrunBelow;
         double previousInsetLeft = insetLeft;
         double previousInsetRight = insetRight;
         XWPFParagraph previousCloser = tableCloser;
@@ -5249,7 +5233,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         tableCloser = null;
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
-        overrunBelow = 0;
         // A cell's content is measured from the cell's own edge, which its margins already
         // keep clear of the border; the containers around the table have nothing to add.
         insetLeft = 0;
@@ -5264,7 +5247,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             lastBodyParagraph = previousParagraph;
             carriedSpacingBefore = previousCarried;
             pendingSpacingAfter = previousOwed;
-            overrunBelow = previousOverrun;
             insetLeft = previousInsetLeft;
             insetRight = previousInsetRight;
             tableCloser = previousCloser;

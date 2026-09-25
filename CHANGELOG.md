@@ -113,10 +113,12 @@ follow semantic versioning; release dates are ISO 8601.
   centre it on the marker, so on the page the title stands above the row. A Word paragraph
   cannot reach above its cell, so the title stood that much lower, and each entry after it
   lower again: 4.5pt an entry on `NavySidebar`. When the text that opens a cell of a
-  table's first row stands above it, the table is now lifted by that much out of the gap
-  held above it, and every other cell of the row starts that much lower inside, so only the
-  title stands out, as on the page. Measured in LibreOffice on `NavySidebar`, each entry
-  stands where the one above it does, 5.5pt from the page, against 10, 14 and 19pt before.
+  table's first row stands above it, it first takes that much out of the cell's own top
+  padding, as the page takes it out of a card's, and the card stays where it is; what is
+  left lifts the table out of the gap held above it, as far as that gap goes, and the row's
+  other cells start that much lower inside, so only the title stands out, as on the page.
+  Measured in LibreOffice on `NavySidebar`, each entry stands where the one above it does,
+  5.5pt from the page, against 10, 14 and 19pt before. Not yet measured in Word.
 
 - **Overlapping layers keep the page's distances in Word.** A layer stack that is not
   columns was written layer after layer, each starting again at the top. `MonogramSidebar`

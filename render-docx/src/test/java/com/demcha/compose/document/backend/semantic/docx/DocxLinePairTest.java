@@ -115,6 +115,41 @@ class DocxLinePairTest {
     }
 
     @Test
+    void aTitleRaisedInsideAPaddedCardTakesThePaddingAndLeavesTheCardWhereItIs() throws Exception {
+        // On the page the title rises into the card's padding; the fill and its edge stay put.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .addSection("Card", card -> card
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 230, 230))
+                        .padding(DocumentInsets.of(10))
+                        .add(band(6, -4, CONTENT - 20))))) {
+            XWPFParagraph before = document.getParagraphs().stream()
+                    .filter(paragraph -> "Before".equals(paragraph.getText())).findFirst().orElseThrow();
+            var cell = document.getTables().get(0).getRow(0).getCell(0);
+            long padding = DocxTwips.of(cell.getCTTc().getTcPr().getTcMar().getTop().getW());
+
+            assertThat(after(before)).as("the card is not lifted").isEqualTo(12L * 20);
+            assertThat(padding).as("the title takes its rise out of the padding").isLessThan(10L * 20);
+        }
+    }
+
+    @Test
+    void aRowAfterARowIsLiftedOutOfTheSeparatorBetweenThem() throws Exception {
+        // Two entries back to back: the gap between the tables is held above the separator.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row.addParagraph(p -> p.text("*"))
+                        .addSection("First", entry -> entry.add(band(6, -4, CONTENT))))
+                .addRow(row -> row.margin(DocumentInsets.top(12)).addParagraph(p -> p.text("*"))
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            var second = document.getTables().get(1).getRow(0);
+
+            assertThat(before(second.getCell(0).getParagraphs().get(0)))
+                    .as("the second row's marker starts lower, as the row was lifted")
+                    .isPositive();
+        }
+    }
+
+    @Test
     void theHangReachesTheNextBlockOnlyNotThePageAfterABreak() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
                 .add(band(6, 4))

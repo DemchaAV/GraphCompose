@@ -2693,7 +2693,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * again.</p>
      */
     private void standsAboveItsCell(double points) {
-        if (currentCell == null || !currentCell.getBodyElements().isEmpty()) {
+        if (!(points > 0) || currentCell == null || !currentCell.getBodyElements().isEmpty()) {
+            return;
+        }
+        // A padded cell — a card's — has the room above its text inside it, and the page takes
+        // the text up into that padding while the box stays where it is: so does the cell.
+        CTTcPr cellProperties = currentCell.getCTTc().isSetTcPr() ? currentCell.getCTTc().getTcPr() : null;
+        if (cellProperties != null && cellProperties.isSetTcMar() && cellProperties.getTcMar().isSetTop()) {
+            var top = cellProperties.getTcMar().getTop();
+            long padding = twipsOf(top.getW());
+            long taken = Math.min(padding, toTwips(points));
+            if (taken > 0) {
+                top.setW(BigInteger.valueOf(padding - taken));
+                points -= taken / POINT_TO_TWIP;
+            }
+        }
+        if (!(points > 0.01)) {
             return;
         }
         XWPFTableRow row = currentCell.getTableRow();
@@ -2706,9 +2721,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Lifts each noted table's first row by what its highest text stands above it: the gap
-     * above the table gives that much, where the paragraph before the table holds it, and every
-     * cell of the row starts that much lower inside, less what its own text stands out by.
+     * Lifts each noted table's first row by what its highest text stands above it, as far as
+     * the gap above the table allows: that gap is held by the paragraph just before the table —
+     * below it, or above it when it is an empty separator, as between two tables. Every other
+     * cell of the row then starts that much lower inside, and the cell whose text stood out
+     * by less than the lift starts lower by the difference.
      */
     private void raiseRows() {
         for (java.util.Map.Entry<XWPFTable, java.util.Map<XWPFTableCell, Double>> noted : raisedRows.entrySet()) {
@@ -2719,13 +2736,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 continue;
             }
             CTPPr properties = above.getCTP().getPPr();
-            long after = properties != null && properties.isSetSpacing() && properties.getSpacing().isSetAfter()
-                    ? twipsOf(properties.getSpacing().getAfter()) : 0;
-            long lift = Math.min(after, toTwips(java.util.Collections.max(noted.getValue().values())));
+            if (properties == null || !properties.isSetSpacing()) {
+                continue;
+            }
+            CTSpacing gap = properties.getSpacing();
+            long after = gap.isSetAfter() ? twipsOf(gap.getAfter()) : 0;
+            long before = above.getText().isEmpty() && gap.isSetBefore() ? twipsOf(gap.getBefore()) : 0;
+            long lift = Math.min(after + before, toTwips(java.util.Collections.max(noted.getValue().values())));
             if (lift <= 0) {
                 continue;
             }
-            properties.getSpacing().setAfter(BigInteger.valueOf(after - lift));
+            long fromAfter = Math.min(after, lift);
+            if (fromAfter > 0) {
+                gap.setAfter(BigInteger.valueOf(after - fromAfter));
+            }
+            if (lift > fromAfter) {
+                gap.setBefore(BigInteger.valueOf(before - (lift - fromAfter)));
+            }
             for (XWPFTableCell cell : table.getRow(0).getTableCells()) {
                 long own = Math.min(lift, toTwips(noted.getValue().getOrDefault(cell, 0.0)));
                 if (lift - own > 0 && !cell.getBodyElements().isEmpty()

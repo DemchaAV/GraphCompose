@@ -34,15 +34,14 @@ follow semantic versioning; release dates are ISO 8601.
   paragraph written without a `w:after` — the last paragraph of each table cell among them,
   and the paragraphs of headers and footers — got 8pt in Word, and none in LibreOffice. A
   section heading in a shaded box stood 8pt taller in Word with its title at the top,
-  `SlateOrange` ran to four pages and `Panel` to two. The styles part now states the
-  defaults: no space after a paragraph, single lines, and it is written even when the
-  document has no text to take a default face from. Measured in Word 16 on twenty CV
-  presets: every preset has as many pages as in LibreOffice, and the median line stands
-  within 0.3pt of where LibreOffice puts it in thirteen of them, within 2.2pt in the other
-  seven. `SlateOrange` and `Panel` are one page, as in the PDF. `BlueBanner`,
-  `ModernProfessional` and `TimelineMinimal` go from two pages to one, as in LibreOffice,
-  where the PDF has two: the 8pt Word added stood in for space between a container's
-  children that the export does not write yet.
+  `SlateOrange` ran to four pages, `TimelineMinimal` to three and `Panel` to two. The
+  styles part now states the defaults: no space after a paragraph, single lines, and it is
+  written even when the document has no text to take a default face from. Measured in
+  Word 16 on twenty CV presets: every preset has as many pages as in LibreOffice, and the
+  median line stands within 0.1pt of where LibreOffice puts it in thirteen of them, within
+  2.2pt in the other seven. Seventeen presets have as many pages as the PDF, fourteen
+  before; `CharcoalGold`, `NavySidebar` and `MonogramSidebar` run to a second page in both
+  editors.
 
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the

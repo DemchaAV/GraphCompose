@@ -170,17 +170,68 @@ class DocxLineHeightTest {
     }
 
     @Test
-    void aListWhoseItemsWrapHoldsItsGapInEveryItem() throws Exception {
+    void aListItemThatWrapsHoldsTheGapAndOneThatDoesNotHasNone() throws Exception {
+        // Each item is a paragraph of its own, and the page puts lineSpacing only between the
+        // lines of one item: a one-line item next to a wrapped one has none to hold.
         DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
         try (XWPFDocument plain = withLayout(page -> page.addList(l -> l.bullet().textStyle(body)
                      .items(LONG, "Short")));
              XWPFDocument gapped = withLayout(page -> page.addList(l -> l.bullet().textStyle(body).lineSpacing(4)
                      .items(LONG, "Short")))) {
-            for (int index = 0; index < 2; index++) {
-                assertThat(lineTwips(gapped.getParagraphs().get(index)))
-                        .as("item %d", index)
-                        .isEqualTo(lineTwips(plain.getParagraphs().get(index)) + 4 * 20L);
+            assertThat(lineTwips(gapped.getParagraphs().get(0))).as("the wrapped item")
+                    .isEqualTo(lineTwips(plain.getParagraphs().get(0)) + 4 * 20L);
+            assertThat(lineTwips(gapped.getParagraphs().get(1))).as("the one-line item")
+                    .isEqualTo(lineTwips(plain.getParagraphs().get(1)));
+        }
+    }
+
+    @Test
+    void aHangingListWhoseItemsDoNotWrapHasNoGapToHold() throws Exception {
+        // Such a list lays each marker out beside its item as a line of its own: it is not a
+        // second line of the item.
+        DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
+        try (XWPFDocument plain = withLayout(page -> page.addList(l -> l.bullet().hangingIndent(true)
+                     .textStyle(body).items("One", "Two", "Three")));
+             XWPFDocument gapped = withLayout(page -> page.addList(l -> l.bullet().hangingIndent(true)
+                     .textStyle(body).lineSpacing(4).items("One", "Two", "Three")))) {
+            for (int index = 0; index < 3; index++) {
+                assertThat(lineTwips(gapped.getParagraphs().get(index))).as("item %d", index)
+                        .isEqualTo(lineTwips(plain.getParagraphs().get(index)));
             }
+        }
+    }
+
+    @Test
+    void theGapTheSpaceAboveCannotGiveComesOffTheSpaceBelow() throws Exception {
+        // A wrapped item right under the one before it has no space above to give: the line of
+        // gap it holds that the page does not have comes off the gap under it instead.
+        DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
+        try (XWPFDocument document = withLayout(page -> page
+                .addParagraph(p -> p.text(LONG).textStyle(body).lineSpacing(4)
+                        .margin(com.demcha.compose.document.style.DocumentInsets.bottom(10)))
+                .addParagraph(p -> p.text("Below").textStyle(body)))) {
+            XWPFParagraph wrapped = document.getParagraphs().get(0);
+            XWPFParagraph below = document.getParagraphs().get(1);
+
+            assertThat(before(wrapped)).as("nothing above the first paragraph to take from").isZero();
+            assertThat(before(below)).as("10pt below it, less the 4pt it stands taller")
+                    .isEqualTo(6 * 20L);
+        }
+    }
+
+    @Test
+    void anOverrunInACellStaysInTheCell() throws Exception {
+        // The paragraph opens the cell with nothing above or below it there: the cell is
+        // taller, and the body after the table keeps its own space.
+        DocumentTextStyle body = DocumentTextStyle.DEFAULT.withSize(10);
+        try (XWPFDocument document = withLayout(page -> page
+                .addRow(r -> r.addParagraph(p -> p.text(LONG).textStyle(body).lineSpacing(4))
+                        .addParagraph(p -> p.text("Beside")))
+                .addParagraph(p -> p.text("After").margin(com.demcha.compose.document.style.DocumentInsets.top(10))))) {
+            XWPFParagraph after = document.getParagraphs().stream()
+                    .filter(paragraph -> "After".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(before(after)).as("the space above it is its own, whole").isEqualTo(10 * 20L);
         }
     }
 

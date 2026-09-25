@@ -260,6 +260,39 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * How many lines each item of a list was laid out on, in the order the items were placed.
+     *
+     * <p>A list lays each item out as a fragment of its own. A list whose markers stand in a
+     * column of their own lays the marker out as one more fragment, level with its item's
+     * text and as tall: the two are one item, and the marker's single line does not make
+     * the item a wrapped one.</p>
+     *
+     * @param list a list node
+     * @return the line count of every item, empty when the list laid out nothing
+     */
+    List<Integer> itemLineCounts(DocumentNode list) {
+        List<Integer> counts = new ArrayList<>();
+        PlacedFragment previous = null;
+        for (PlacedFragment fragment : fragmentsOf(list)) {
+            if (!(fragment.payload() instanceof ParagraphFragmentPayload paragraph)) {
+                continue;
+            }
+            int lines = paragraph.lines().size();
+            boolean sameItem = previous != null
+                               && previous.pageIndex() == fragment.pageIndex()
+                               && Math.abs(previous.y() - fragment.y()) < 0.01
+                               && Math.abs(previous.height() - fragment.height()) < 0.01;
+            if (sameItem) {
+                counts.set(counts.size() - 1, Math.max(counts.get(counts.size() - 1), lines));
+            } else {
+                counts.add(lines);
+            }
+            previous = fragment;
+        }
+        return counts;
+    }
+
+    /**
      * How many lines the layout set a node's text on, over every page it reached.
      *
      * @param node any node that lays its text out as paragraph lines

@@ -123,6 +123,23 @@ class DocxLineHeightTest {
     }
 
     @Test
+    void theTallestLineSetsTheHeightWhereverItFalls() throws Exception {
+        // Word has one height for a paragraph. Small runs wrap onto a second line that also
+        // holds a larger one: the first line's height would clip it.
+        DocumentTextStyle small = DocumentTextStyle.DEFAULT.withSize(7.8);
+        DocumentTextStyle large = DocumentTextStyle.DEFAULT.withSize(16);
+        try (XWPFDocument document = withLayout(page -> page
+                .addParagraph(p -> p.text("Large").textStyle(large))
+                .addParagraph(p -> p.inlineText("small words wrap ".repeat(12), small)
+                        .inlineText("Large", large)))) {
+
+            long large16 = lineTwips(document.getParagraphs().get(0));
+            long mixed = lineTwips(document.getParagraphs().get(1));
+            assertThat(mixed).as("the second line's larger run, not the first line's").isEqualTo(large16);
+        }
+    }
+
+    @Test
     void withNothingMeasuredNoHeightIsInvented() throws Exception {
         // The export still writes a complete document with no layout behind it — it just
         // has no measurement to state, and Word's own line height applies as before.

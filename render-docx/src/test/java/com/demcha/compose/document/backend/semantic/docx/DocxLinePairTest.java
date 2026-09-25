@@ -134,6 +134,38 @@ class DocxLinePairTest {
     }
 
     @Test
+    void aCardWhosePaddingCannotTakeTheRiseStaysWhereItIs() throws Exception {
+        // 1pt of padding against a rise of several: the rest stays low, the box does not move.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .addSection("Card", card -> card
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 230, 230))
+                        .padding(DocumentInsets.of(1))
+                        .add(band(6, -4, CONTENT - 2))))) {
+            XWPFParagraph before = document.getParagraphs().stream()
+                    .filter(paragraph -> "Before".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(after(before)).as("the card is not lifted").isEqualTo(12L * 20);
+        }
+    }
+
+    @Test
+    void aRuleAboveARaisedRowKeepsItsPlace() throws Exception {
+        // An empty paragraph above the row that draws a line is not a separator to lift into.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before"))
+                .addLine(line -> line.horizontal(CONTENT).thickness(1).margin(DocumentInsets.top(8)))
+                .addRow(row -> row.addParagraph(p -> p.text("*"))
+                        .addSection("Entry", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            XWPFParagraph rule = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetPBdr())
+                    .findFirst().orElseThrow();
+
+            assertThat(before(rule)).as("the space above the line stays").isGreaterThanOrEqualTo(8L * 20 - 2);
+        }
+    }
+
+    @Test
     void aRowAfterARowIsLiftedOutOfTheSeparatorBetweenThem() throws Exception {
         // Two entries back to back: the gap between the tables is held above the separator.
         try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page

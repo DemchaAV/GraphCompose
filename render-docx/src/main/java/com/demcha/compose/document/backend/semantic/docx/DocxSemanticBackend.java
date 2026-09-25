@@ -200,9 +200,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private XWPFParagraph hangingOver;
     private double hangingOverBy;
 
-    /** The tables whose first row text stands above, by cell — see {@link #standsAboveItsCell}. */
+    /**
+     * The tables whose first row text stands above, by cell — see {@link #standsAboveItsCell}.
+     * In the order they were written, so the output does not depend on hash order; neither
+     * POI type defines equality, so the maps key on identity.
+     */
     private final java.util.Map<XWPFTable, java.util.Map<XWPFTableCell, Double>> raisedRows =
-            new java.util.IdentityHashMap<>();
+            new java.util.LinkedHashMap<>();
     // The spacers that keep the place of another column layer's content, left out while the
     // layer stack they sit in is written as columns (DocxLayerColumns).
     private final java.util.Set<DocumentNode> standIns =
@@ -2708,7 +2712,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 points -= taken / POINT_TO_TWIP;
             }
         }
-        if (!(points > 0.01)) {
+        // A painted or framed cell is a box on the page, and the box does not move for the
+        // text in it: what its padding cannot take stays low rather than lift the box.
+        if (!(points > 0.01) || cellProperties != null && (cellProperties.isSetShd()
+                || cellProperties.isSetTcBorders() && drawn(cellProperties.getTcBorders().getTop()))) {
             return;
         }
         XWPFTableRow row = currentCell.getTableRow();
@@ -2716,7 +2723,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (table.getRow(0) != row) {
             return;
         }
-        raisedRows.computeIfAbsent(table, key -> new java.util.IdentityHashMap<>())
+        raisedRows.computeIfAbsent(table, key -> new java.util.LinkedHashMap<>())
                 .merge(currentCell, points, Math::max);
     }
 
@@ -2741,7 +2748,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             CTSpacing gap = properties.getSpacing();
             long after = gap.isSetAfter() ? twipsOf(gap.getAfter()) : 0;
-            long before = above.getText().isEmpty() && gap.isSetBefore() ? twipsOf(gap.getBefore()) : 0;
+            // An empty paragraph between two blocks is a separator, except a rule: its space
+            // above is where the page draws the line.
+            boolean separator = above.getText().isEmpty() && !properties.isSetPBdr();
+            long before = separator && gap.isSetBefore() ? twipsOf(gap.getBefore()) : 0;
             long lift = Math.min(after + before, toTwips(java.util.Collections.max(noted.getValue().values())));
             if (lift <= 0) {
                 continue;

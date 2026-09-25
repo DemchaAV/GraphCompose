@@ -55,6 +55,49 @@ class DocxOverlayBandTest {
         }
     }
 
+    @Test
+    void aDrawingThatIsNotWrittenStillTakesItsRoom() throws Exception {
+        // A portrait drawn as a path, in the flow and inside a layer stack alike: none of it
+        // reaches the file, and its height is still space above what follows.
+        DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> page
+                .addParagraph(p -> p.text("Above"))
+                // An icon is itself a stack of paths, inside the portrait's stack: held once.
+                .addLayerStack(stack -> stack.name("Portrait")
+                        .layer(new LayerStackBuilder().name("Icon")
+                                .layer(new com.demcha.compose.document.dsl.PathBuilder().name("Face").size(50, 50)
+                                        .moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1).closePath().build())
+                                .layer(new com.demcha.compose.document.dsl.PathBuilder().name("Hair").size(50, 20)
+                                        .moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1).closePath().build())
+                                .build()))
+                .addParagraph(p -> p.text("Below")));
+        try (session; XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                session.export(new DocxSemanticBackend())))) {
+            XWPFParagraph below = document.getParagraphs().stream()
+                    .filter(paragraph -> "Below".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(before(below)).isEqualTo(50L * 20);
+        }
+    }
+
+    @Test
+    void aCellOfSpaceAndDrawingKeepsItsHeight() throws Exception {
+        // A masthead's hairline column: padding round a vertical line. Nothing in it is
+        // written, and the row is as tall as it only if its space is still there.
+        try (XWPFDocument document = DocxExports.withLayout(300, 500, 20, page -> page
+                .addRow(row -> row
+                        .addSection("Hairline", cell -> cell.spacing(0)
+                                .padding(new DocumentInsets(10, 0, 10, 0))
+                                .addLine(line -> line.name("Rule").vertical(40).thickness(1)
+                                        .color(DocumentColor.rgb(0, 0, 0))))
+                        .addParagraph(p -> p.text("Beside"))))) {
+            var cell = document.getTables().get(0).getRow(0).getCell(0);
+            XWPFParagraph holder = cell.getParagraphs().get(0);
+
+            assertThat(before(holder)).as("10 above, the line's 40, 10 below").isEqualTo(60L * 20);
+        }
+    }
+
     private static long before(XWPFParagraph paragraph) {
         CTPPr properties = paragraph.getCTP().getPPr();
         if (properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetBefore()) {

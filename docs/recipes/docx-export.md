@@ -213,7 +213,9 @@ which has no space above it in Word, before a page break, and at the end of a ce
 end of a section none is written: the page ends there, and space below the last line could
 only push that line onto a page of its own. The same holds for the last line of each cell
 of a table the section ends with, and of the tables such a cell ends with, unless the cell
-is painted or has its bottom edge drawn.
+is painted or has its bottom edge drawn. A document that ends with a table ends with a
+paragraph a point tall after it: Word writes one there in any case, and its own is a line of
+text tall.
 
 The horizontal half is carried as an indent: outside any panel, every paragraph by each enclosing container's
 margin and padding, a row or a table by the same amount as `w:tblInd` — see "What a panel

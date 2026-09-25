@@ -112,6 +112,22 @@ class DocxVerticalSpacingTest {
     }
 
     @Test
+    void aDocumentThatEndsWithATableEndsWithAParagraphAPointTall() throws Exception {
+        // Word puts a paragraph after a closing table whatever the file says: left to it, that
+        // paragraph is a line of body text tall and opens a blank page under a full one.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow(row -> row.addParagraph(p -> p.text("Left")).addParagraph(p -> p.text("Right"))))) {
+            var body = document.getBodyElements();
+            assertThat(body.get(body.size() - 1)).isInstanceOf(XWPFParagraph.class);
+            XWPFParagraph last = (XWPFParagraph) body.get(body.size() - 1);
+            var spacing = last.getCTP().getPPr().getSpacing();
+            assertThat(spacing.getLineRule())
+                    .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
+            assertThat(DocxTwips.of(spacing.getLine())).as("a point").isEqualTo(20L);
+        }
+    }
+
+    @Test
     void aCellThatShowsItsSpaceKeepsItAtTheEnd() throws Exception {
         // A painted cell, or one with a bottom edge drawn, shows the space under its last line
         // as part of its box: that is not blank paper, and it stays.

@@ -80,13 +80,16 @@ follow semantic versioning; release dates are ISO 8601.
   space the last block holds below itself as `w:after` on its last paragraph, and the space
   at the foot of each cell as `w:after` on the cell's last paragraph. At the end of a
   section the page ends, so that space holds nothing up; written, it can only push the last
-  line onto a page of its own. `NavySidebar`'s columns end with 36.5pt of padding and run
-  exactly to the page's foot. LibreOffice set the last line 0.9pt lower, found no room for
-  the line and its space together, and moved the line to a second page. At a section's end
-  that space is now left out, and so is the space below the last line of each cell of a
-  table the section ends with, and of the tables such a cell ends with in turn. A cell that
-  is painted or has its bottom edge drawn keeps it: there it is part of the box the reader
-  sees. A section that ends with a spacer keeps the spacer, which is space the page has.
+  line onto a page of its own. At a section's end that space is now left out, and so is the
+  space below the last line of each cell of a table the section ends with, and of the
+  tables such a cell ends with in turn. A cell that is painted or has its bottom edge drawn
+  keeps it: there it is part of the box the reader sees. A section that ends with a spacer
+  keeps the spacer, which is space the page has. Word also puts a paragraph of its own after
+  a table that ends a document, a line of body text tall, which opens a blank page under a
+  table that reaches the page's foot; the export now writes that paragraph a point tall.
+  Measured in Word 16 and LibreOffice on twenty CV presets, no page count changes:
+  `NavySidebar` and `MonogramSidebar` still run onto a second page, by more than the space
+  left out.
 
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the

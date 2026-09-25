@@ -2561,6 +2561,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         List<IBodyElement> body = document.getBodyElements();
         if (!body.isEmpty() && body.get(body.size() - 1) instanceof XWPFTable table) {
             dropTheSpaceBelow(table);
+            // Word cannot end a section with a table: it puts a paragraph of its own after it,
+            // a line of the document's text tall, and one that finds no room under a table
+            // reaching the page's foot opens a blank page. This one is a point tall.
+            collapsed(document.createParagraph());
         }
     }
 

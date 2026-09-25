@@ -30,10 +30,12 @@ class DocxAdjacentTablesTest {
                 .addTable(t -> t.autoColumns(3).row("A", "B", "C")))) {
             List<IBodyElement> body = document.getBodyElements();
 
-            assertThat(body).hasSize(3);
+            // The last paragraph is the one Word puts after a closing table, a point tall.
+            assertThat(body).hasSize(4);
             assertThat(body.get(0)).isInstanceOf(XWPFTable.class);
             assertThat(body.get(1)).isInstanceOf(XWPFParagraph.class);
             assertThat(body.get(2)).isInstanceOf(XWPFTable.class);
+            assertThat(body.get(3)).isInstanceOf(XWPFParagraph.class);
             XWPFParagraph separator = (XWPFParagraph) body.get(1);
             assertThat(separator.getText()).isEmpty();
             assertThat(DocxTwips.of(separator.getCTP().getPPr().getSpacing().getLine()))
@@ -50,7 +52,7 @@ class DocxAdjacentTablesTest {
             List<IBodyElement> body = document.getBodyElements();
 
             assertThat(body).extracting(element -> element.getClass().getSimpleName())
-                    .containsExactly("XWPFTable", "XWPFParagraph", "XWPFTable");
+                    .containsExactly("XWPFTable", "XWPFParagraph", "XWPFTable", "XWPFParagraph");
         }
     }
 
@@ -74,8 +76,10 @@ class DocxAdjacentTablesTest {
                 .addTable(t -> t.autoColumns(1).row("Above"))
                 .addParagraph(p -> p.text("Between"))
                 .addTable(t -> t.autoColumns(1).row("Below")))) {
-            assertThat(document.getBodyElements()).hasSize(3);
-            assertThat(document.getParagraphs()).extracting(XWPFParagraph::getText).containsExactly("Between");
+            assertThat(document.getBodyElements()).hasSize(4);
+            assertThat(document.getParagraphs()).extracting(XWPFParagraph::getText)
+                    .as("and the one closing the document")
+                    .containsExactly("Between", "");
         }
     }
 

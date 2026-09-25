@@ -99,10 +99,15 @@ follow semantic versioning; release dates are ISO 8601.
   one's, with a right-aligned tab stop where the right text ends. The line runs from the top
   of the higher text to the bottom of the lower. Text standing out of its band — a title
   pulled up to centre on a marker smaller than its line — takes that much from the gap on
-  that side, as it does on the page. `NavySidebar`'s entries and its language rows are
-  written this way. Measured in LibreOffice together with the changes that write a
-  container's spacing and take a line's height from its text, its main column ends within
-  1pt of where the page puts it, against 9pt without this change.
+  that side, as it does on the page, and only on the next block of its own flow. Each
+  paragraph keeps its bookmark around its own text and its outline level, and one that
+  keeps with the next still does. Two texts closer than 4pt stay one after the other, since
+  an editor setting them a little wider would push the right one onto a line of its own.
+  `NavySidebar`'s entries and its language rows are written this way. Measured in Word 16
+  and LibreOffice on twenty CV presets, `NavySidebar` is one page, as in the PDF, two
+  before, and its median line stands 3.5pt from the page in Word (20.4pt before) and 5.3pt
+  in LibreOffice (22.2pt). Its entries still sit 4.5pt lower each than the one above: a title
+  raised out of its band at the top of a table cell cannot reach above the cell in Word.
 
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the

@@ -4,7 +4,9 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
@@ -41,10 +43,13 @@ class DocxVerticalSpacingTest {
                 .addParagraph(p -> p.text("Above"))
                 .addParagraph(p -> p.text("Spaced")
                         .padding(DocumentInsets.top(16))
-                        .margin(DocumentInsets.bottom(6))));
+                        .margin(DocumentInsets.bottom(6)))
+                .addParagraph(p -> p.text("Below")));
 
         assertThat(before(paragraphs.get(1))).isEqualTo(Math.round(16 * TWIPS_PER_POINT));
-        assertThat(after(paragraphs.get(1))).isEqualTo(Math.round(6 * TWIPS_PER_POINT));
+        assertThat(before(paragraphs.get(2)))
+                .as("the 6pt below it, written once, above what follows")
+                .isEqualTo(Math.round(6 * TWIPS_PER_POINT));
     }
 
     @Test
@@ -65,17 +70,83 @@ class DocxVerticalSpacingTest {
                 .margin(DocumentInsets.symmetric(6, 0))
                 .addParagraph(p -> p.text("First"))
                 .addParagraph(p -> p.text("Middle"))
-                .addParagraph(p -> p.text("Last"))));
+                .addParagraph(p -> p.text("Last")))
+                .addParagraph(p -> p.text("Below")));
 
-        assertThat(paragraphs).hasSize(3);
+        assertThat(paragraphs).hasSize(4);
         assertThat(before(paragraphs.get(0)))
                 .as("14pt of padding and 6pt of margin, on the paragraph that starts the card")
                 .isEqualTo(Math.round(20 * TWIPS_PER_POINT));
         assertThat(before(paragraphs.get(1))).as("nothing in the middle").isZero();
         assertThat(after(paragraphs.get(1))).isZero();
-        assertThat(after(paragraphs.get(2)))
-                .as("and the same below, on the one that ends it")
+        assertThat(before(paragraphs.get(3)))
+                .as("and the same below the one that ends it, above what follows the card")
                 .isEqualTo(Math.round(20 * TWIPS_PER_POINT));
+    }
+
+    @Test
+    void theSpaceBelowTheLastBlockIsLeftOutAtTheEnd() throws Exception {
+        // Nothing follows it: the page ends, and space written below the last line could only
+        // push that line onto a page of its own.
+        List<XWPFParagraph> paragraphs = bodyOf(page -> page
+                .addParagraph(p -> p.text("Last").margin(DocumentInsets.bottom(30))));
+
+        assertThat(after(paragraphs.get(0))).isZero();
+    }
+
+    @Test
+    void theSpaceBelowTheLastLineOfEachCellOfAClosingTableIsLeftOut() throws Exception {
+        // A two-column CV's columns end with their bottom padding; the table is the last thing
+        // on the page, so that padding holds nothing up.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow(row -> row
+                        .addSection("Left", left -> left.padding(DocumentInsets.bottom(30))
+                                .addParagraph(p -> p.text("Sidebar")))
+                        .addSection("Right", right -> right.padding(DocumentInsets.bottom(30))
+                                .addParagraph(p -> p.text("Main")))))) {
+            for (var cell : document.getTables().get(0).getRow(0).getTableCells()) {
+                XWPFParagraph last = cell.getParagraphs().get(cell.getParagraphs().size() - 1);
+                assertThat(after(last)).as("below '%s'", last.getText()).isZero();
+            }
+        }
+    }
+
+    @Test
+    void aDocumentThatEndsWithATableEndsWithAParagraphAPointTall() throws Exception {
+        // Word puts a paragraph after a closing table whatever the file says: left to it, that
+        // paragraph is a line of body text tall and opens a blank page under a full one.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow(row -> row.addParagraph(p -> p.text("Left")).addParagraph(p -> p.text("Right"))))) {
+            var body = document.getBodyElements();
+            assertThat(body.get(body.size() - 1)).isInstanceOf(XWPFParagraph.class);
+            XWPFParagraph last = (XWPFParagraph) body.get(body.size() - 1);
+            var spacing = last.getCTP().getPPr().getSpacing();
+            assertThat(spacing.getLineRule())
+                    .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
+            assertThat(DocxTwips.of(spacing.getLine())).as("a point").isEqualTo(20L);
+        }
+    }
+
+    @Test
+    void aCellThatShowsItsSpaceKeepsItAtTheEnd() throws Exception {
+        // A painted cell, or one with a bottom edge drawn, shows the space under its last line
+        // as part of its box: that is not blank paper, and it stays.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow(row -> row
+                        .addSection("Painted", left -> left.fillColor(DocumentColor.rgb(230, 230, 230))
+                                .addParagraph(p -> p.text("Painted").margin(DocumentInsets.bottom(12))))
+                        .addSection("Framed", right -> right
+                                .stroke(DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 1))
+                                .addParagraph(p -> p.text("Framed").margin(DocumentInsets.bottom(12))))))) {
+            // Each is a panel: a table of its own in the row's cell, which the end is looked
+            // into and left alone.
+            for (var column : document.getTables().get(0).getRow(0).getTableCells()) {
+                var panel = column.getTables().get(0).getRow(0).getCell(0);
+                XWPFParagraph last = panel.getParagraphs().get(panel.getParagraphs().size() - 1);
+                assertThat(after(last)).as("below '%s'", last.getText())
+                        .isEqualTo(Math.round(12 * TWIPS_PER_POINT));
+            }
+        }
     }
 
     @Test

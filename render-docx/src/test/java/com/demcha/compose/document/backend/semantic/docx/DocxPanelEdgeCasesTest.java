@@ -104,7 +104,7 @@ class DocxPanelEdgeCasesTest {
                 .addParagraph(p -> p.text("After the break"))))) {
             List<IBodyElement> body = document.getBodyElements();
 
-            assertThat(body).hasSize(3);
+            assertThat(body).as("the second card, then the paragraph closing the document").hasSize(4);
             assertThat(((XWPFTable) body.get(0)).getRow(0).getCell(0).getText()).isEqualTo("Before the break");
             assertThat(((XWPFParagraph) body.get(1)).getRuns().get(0).getCTR().getBrArray(0).getType())
                     .isEqualTo(STBrType.PAGE);

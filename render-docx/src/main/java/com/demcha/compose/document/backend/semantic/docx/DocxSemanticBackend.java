@@ -536,8 +536,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 for (DocumentNode root : section.graph().roots()) {
                     writeNode(document, root);
                 }
-                // Nothing follows the last root to carry what it holds below itself.
-                flushSpacingAfter();
+                dropTheSpaceAtTheEnd(document);
             }
             if (deterministicTimestamp != null) {
                 DocxDeterminism.pinCoreProperties(document, deterministicTimestamp);
@@ -2541,6 +2540,74 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pendingSpacingAfter = 0;
         lastBodyParagraph = para;
         return para;
+    }
+
+    /**
+     * Leaves out the space a section still holds below its last block.
+     *
+     * <p>A section ends its page, so nothing below the last block needs the space the block
+     * holds under itself: it is blank paper either way. Written, it can only push that block
+     * onto a page of its own. A two-column CV whose column ends with 36.5pt of padding runs
+     * its last line exactly to the page's foot on the page; LibreOffice set the line 0.9pt
+     * lower, found no room for the line and its space together, and moved the line to a
+     * second page. So the space owed at the end is dropped, and so is the space held below the
+     * last line of each cell in the last row of a table the section ends with, and of the
+     * tables such a cell ends with in turn — unless the cell is painted or has a bottom edge
+     * drawn, where that space is part of the box the reader sees.</p>
+     */
+    private void dropTheSpaceAtTheEnd(XWPFDocument document) {
+        pendingSpacingAfter = 0;
+        carriedSpacingBefore = 0;
+        List<IBodyElement> body = document.getBodyElements();
+        if (!body.isEmpty() && body.get(body.size() - 1) instanceof XWPFTable table) {
+            dropTheSpaceBelow(table);
+            // Word cannot end a section with a table: it puts a paragraph of its own after it,
+            // a line of the document's text tall, and one that finds no room under a table
+            // reaching the page's foot opens a blank page. This one is a point tall.
+            collapsed(document.createParagraph());
+        }
+    }
+
+    /** Leaves out the space below the last line of each cell of a table's last row that shows none of it. */
+    private static void dropTheSpaceBelow(XWPFTable table) {
+        if (table.getRows().isEmpty() || drawn(tableBottom(table))) {
+            return;
+        }
+        for (XWPFTableCell cell : table.getRow(table.getRows().size() - 1).getTableCells()) {
+            CTTcPr properties = cell.getCTTc().getTcPr();
+            if (properties != null && (properties.isSetShd()
+                    || properties.isSetTcBorders() && drawn(properties.getTcBorders().getBottom()))) {
+                continue;
+            }
+            List<IBodyElement> content = cell.getBodyElements();
+            int last = content.size() - 1;
+            if (last < 0) {
+                continue;
+            }
+            if (content.get(last) instanceof XWPFParagraph paragraph) {
+                CTPPr lastProperties = paragraph.getCTP().getPPr();
+                if (lastProperties != null && lastProperties.isSetSpacing() && lastProperties.getSpacing().isSetAfter()) {
+                    lastProperties.getSpacing().unsetAfter();
+                }
+                // A cell cannot end with a table in Word, so one it ends with is followed by
+                // the paragraph that closes it.
+                if (last > 0 && content.get(last - 1) instanceof XWPFTable inner && paragraph.getText().isEmpty()) {
+                    dropTheSpaceBelow(inner);
+                }
+            } else if (content.get(last) instanceof XWPFTable inner) {
+                dropTheSpaceBelow(inner);
+            }
+        }
+    }
+
+    private static CTBorder tableBottom(XWPFTable table) {
+        CTTblPr properties = table.getCTTbl().getTblPr();
+        return properties != null && properties.isSetTblBorders() ? properties.getTblBorders().getBottom() : null;
+    }
+
+    /** Whether a border is one the reader sees. */
+    private static boolean drawn(CTBorder border) {
+        return border != null && border.getVal() != STBorder.NONE && border.getVal() != STBorder.NIL;
     }
 
     /**

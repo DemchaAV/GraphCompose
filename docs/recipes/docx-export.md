@@ -209,8 +209,13 @@ disagree about two adjacent gaps: measured on a card holding 20pt below itself f
 a heading asking for 16pt above, LibreOffice rendered 20pt where the page shows 36, taking
 the larger instead of the sum. One number on one side reads the same either way. The gap
 goes back to the paragraph above only where nothing below can hold it — before a table,
-which has no space above it in Word, before a page break, at the end of a cell, and at the
-end of the document.
+which has no space above it in Word, before a page break, and at the end of a cell. At the
+end of a section none is written: the page ends there, and space below the last line could
+only push that line onto a page of its own. The same holds for the last line of each cell
+of a table the section ends with, and of the tables such a cell ends with, unless the cell
+is painted or has its bottom edge drawn. A document that ends with a table ends with a
+paragraph a point tall after it: Word writes one there in any case, and its own is a line of
+text tall.
 
 The horizontal half is carried as an indent: outside any panel, every paragraph by each enclosing container's
 margin and padding, a row or a table by the same amount as `w:tblInd` — see "What a panel

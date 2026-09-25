@@ -22,11 +22,11 @@ follow semantic versioning; release dates are ISO 8601.
     to 2.9pt on `BoxedSections`, from 100 to 3.4 on `ClassicSerif`, from 118 to 7.3 on
     `TimelineMinimal`, and from 130 to 47 on `SidebarPortrait`. Every preset but three now
     has the PDF's page count.
-  - `MonogramSidebar` runs two lines onto a second page. Its monogram is a drawing and is
-    not written, and the letters in it stand about 60pt lower than on the page, a
-    difference that was there before this change and that the missing gaps used to hide.
-  - `CharcoalGold` stays at two pages because its sidebar's skill rows stand taller than on
-    the page. `NavySidebar` stays at two because its entries put the date on a line of its own.
+  - `MonogramSidebar` still ran two lines onto a second page, its monogram's letters about
+    60pt lower than on the page; `CharcoalGold` stayed at two pages, its sidebar's skill rows
+    standing taller than on the page, and `NavySidebar` too, its entries putting the date on
+    a line of its own. The entries below on overlapping layers, a paragraph's line height
+    and a title with its dates on one line bring each to one page.
 
 - **Word no longer adds 8pt under every paragraph.** Word fills what a document leaves
   unsaid from its own new-document template: 8pt after a paragraph and lines 1.08 tall. The
@@ -118,10 +118,21 @@ follow semantic versioning; release dates are ISO 8601.
   layer's content is a stand-in and is not written. The space above the first block written
   and below the last is the page's distance from the stack's edges. A later layer resumes
   the page's distance below the blocks above it. Drawing is not written and does not count
-  as content. Measured in LibreOffice together with the other DOCX layout fixes of this
-  release, `MonogramSidebar` is one page, as in the PDF. The mean distance of a line from its
-  place on the page falls from 74pt to 7.5pt, and every one of the sixteen CV presets and
-  four sidebar CVs has the PDF's page count.
+  as content, and a stack nested in a layer is measured past its own stand-ins. A stack
+  holding only drawing keeps its room (below).
+
+- **A drawing the export leaves out still takes its room in Word.** A portrait drawn as
+  paths, a decorative shape in the flow, a vertical rule in a masthead's column: none of it
+  reaches the file, and neither did the space it takes, so everything under it moved up by
+  its height. Such a drawing, and a layer stack or shape container holding only drawing, now
+  owes its placed height and its margins as space above what follows, once, however deeply
+  its drawing is nested; a cell holding only such space keeps it on a paragraph a tenth of a
+  point tall. Measured in Word 16 and LibreOffice on twenty CV presets, together with the
+  entry above: `MonogramSidebar` is one page, as in the PDF, two before, and every one of the
+  twenty has the PDF's page count in both editors. The median line comes within 1.9pt of the
+  page in Word on `SlateOrange` (18.8pt before) and 0.4pt on `CompactMono` (4.0pt), and
+  moves from 21.3pt to 15.2pt on `SidebarPortrait`, whose subtitle still stands under its
+  name strip.
 
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the
@@ -169,9 +180,8 @@ follow semantic versioning; release dates are ISO 8601.
   paragraph comes before the table, the space above it is not written, as for any table.
   Space owed just after a page break no longer lands below the last paragraph of the page
   before. The
-  portrait's own 98pt is still not held, and Word still writes the sidebar after the name
-  strip rather than beside it, so the contact lines stand 51pt lower than on the page in
-  LibreOffice, where they stood 3pt higher by coincidence before.
+  portrait's own 98pt was not held until drawings kept their room (below), and Word still
+  writes the sidebar after the name strip rather than beside it.
 
 - **A timeline with its markers on the rail keeps its entries in Word.** With
   `markerOnRail()`, a timeline wraps each entry's header row so the columns it resolves are

@@ -47,6 +47,20 @@ class DocxLinePairTest {
     }
 
     @Test
+    void aPairInALayerStackIsOneLineTooNotABandOfTwo() throws Exception {
+        try (XWPFDocument document = export(new com.demcha.compose.document.dsl.LayerStackBuilder()
+                .name("EntryHead")
+                .back(new com.demcha.compose.document.dsl.ShapeBuilder().name("Band").size(CONTENT, 20).build())
+                .layer(new ParagraphBuilder().name("Title").text("MARKETING MANAGER")
+                        .textStyle(DocumentTextStyle.DEFAULT.withSize(12)).build(), LayerAlign.CENTER_LEFT)
+                .layer(paragraph("Jan 2022 - Present", TextAlign.RIGHT), LayerAlign.CENTER_RIGHT)
+                .build())) {
+            assertThat(written(document)).extracting(XWPFParagraph::getText)
+                    .containsExactly("MARKETING MANAGER\tJan 2022 - Present");
+        }
+    }
+
+    @Test
     void aTitleStandingAboveItsBandTakesThatSpaceFromTheGapAbove() throws Exception {
         // The band is shorter than the title's line and the title is pulled up to centre on it:
         // on the page the title's top stands above the band, into the gap over it.

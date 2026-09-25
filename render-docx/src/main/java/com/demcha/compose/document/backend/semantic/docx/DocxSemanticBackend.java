@@ -2187,11 +2187,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
         // A container that wrote something has had its top edge taken — by its first
         // paragraph, or owed above its first table (see newTable) — and none of it is left
-        // waiting. A container that wrote nothing at all — empty, or holding only a drawing
-        // the export drops — stood above nothing, and the containers around it are still
-        // waiting for their first paragraph: only its own edge goes, and theirs is handed
-        // back. Dropping theirs too lost a sidebar's top padding under the portrait that
-        // opened it.
+        // waiting. A container that wrote nothing at all — empty, or holding nothing but a
+        // drawing inside an overlay, where the drawing holds no room of its own — stood above
+        // nothing, and the containers around it are still waiting for their first paragraph:
+        // only its own edge goes, and theirs is handed back. Dropping theirs too lost a
+        // sidebar's top padding under the portrait that opened it. A drawing in the flow
+        // counts as a block (holdTheSpaceOf).
         carriedSpacingBefore = blocksWritten == blocksBefore ? carriedFromOutside : 0;
     }
 

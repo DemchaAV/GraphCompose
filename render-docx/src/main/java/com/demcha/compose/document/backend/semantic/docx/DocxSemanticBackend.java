@@ -2551,31 +2551,59 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * its last line exactly to the page's foot on the page; LibreOffice set the line 0.9pt
      * lower, found no room for the line and its space together, and moved the line to a
      * second page. So the space owed at the end is dropped, and so is the space held below the
-     * last line of each cell in the last row of a table the section ends with — unless the
-     * cell is painted, where that space is part of the panel the reader sees.</p>
+     * last line of each cell in the last row of a table the section ends with, and of the
+     * tables such a cell ends with in turn — unless the cell is painted or has a bottom edge
+     * drawn, where that space is part of the box the reader sees.</p>
      */
     private void dropTheSpaceAtTheEnd(XWPFDocument document) {
         pendingSpacingAfter = 0;
         carriedSpacingBefore = 0;
         List<IBodyElement> body = document.getBodyElements();
-        if (body.isEmpty() || !(body.get(body.size() - 1) instanceof XWPFTable table)
-            || table.getRows().isEmpty()) {
+        if (!body.isEmpty() && body.get(body.size() - 1) instanceof XWPFTable table) {
+            dropTheSpaceBelow(table);
+        }
+    }
+
+    /** Leaves out the space below the last line of each cell of a table's last row that shows none of it. */
+    private static void dropTheSpaceBelow(XWPFTable table) {
+        if (table.getRows().isEmpty() || drawn(tableBottom(table))) {
             return;
         }
         for (XWPFTableCell cell : table.getRow(table.getRows().size() - 1).getTableCells()) {
             CTTcPr properties = cell.getCTTc().getTcPr();
-            if (properties != null && properties.isSetShd()) {
+            if (properties != null && (properties.isSetShd()
+                    || properties.isSetTcBorders() && drawn(properties.getTcBorders().getBottom()))) {
                 continue;
             }
-            List<XWPFParagraph> paragraphs = cell.getParagraphs();
-            if (paragraphs.isEmpty()) {
+            List<IBodyElement> content = cell.getBodyElements();
+            int last = content.size() - 1;
+            if (last < 0) {
                 continue;
             }
-            CTPPr last = paragraphs.get(paragraphs.size() - 1).getCTP().getPPr();
-            if (last != null && last.isSetSpacing() && last.getSpacing().isSetAfter()) {
-                last.getSpacing().unsetAfter();
+            if (content.get(last) instanceof XWPFParagraph paragraph) {
+                CTPPr lastProperties = paragraph.getCTP().getPPr();
+                if (lastProperties != null && lastProperties.isSetSpacing() && lastProperties.getSpacing().isSetAfter()) {
+                    lastProperties.getSpacing().unsetAfter();
+                }
+                // A cell cannot end with a table in Word, so one it ends with is followed by
+                // the paragraph that closes it.
+                if (last > 0 && content.get(last - 1) instanceof XWPFTable inner && paragraph.getText().isEmpty()) {
+                    dropTheSpaceBelow(inner);
+                }
+            } else if (content.get(last) instanceof XWPFTable inner) {
+                dropTheSpaceBelow(inner);
             }
         }
+    }
+
+    private static CTBorder tableBottom(XWPFTable table) {
+        CTTblPr properties = table.getCTTbl().getTblPr();
+        return properties != null && properties.isSetTblBorders() ? properties.getTblBorders().getBottom() : null;
+    }
+
+    /** Whether a border is one the reader sees. */
+    private static boolean drawn(CTBorder border) {
+        return border != null && border.getVal() != STBorder.NONE && border.getVal() != STBorder.NIL;
     }
 
     /**

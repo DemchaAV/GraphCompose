@@ -4,7 +4,9 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
@@ -105,6 +107,28 @@ class DocxVerticalSpacingTest {
             for (var cell : document.getTables().get(0).getRow(0).getTableCells()) {
                 XWPFParagraph last = cell.getParagraphs().get(cell.getParagraphs().size() - 1);
                 assertThat(after(last)).as("below '%s'", last.getText()).isZero();
+            }
+        }
+    }
+
+    @Test
+    void aCellThatShowsItsSpaceKeepsItAtTheEnd() throws Exception {
+        // A painted cell, or one with a bottom edge drawn, shows the space under its last line
+        // as part of its box: that is not blank paper, and it stays.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow(row -> row
+                        .addSection("Painted", left -> left.fillColor(DocumentColor.rgb(230, 230, 230))
+                                .addParagraph(p -> p.text("Painted").margin(DocumentInsets.bottom(12))))
+                        .addSection("Framed", right -> right
+                                .stroke(DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 1))
+                                .addParagraph(p -> p.text("Framed").margin(DocumentInsets.bottom(12))))))) {
+            // Each is a panel: a table of its own in the row's cell, which the end is looked
+            // into and left alone.
+            for (var column : document.getTables().get(0).getRow(0).getTableCells()) {
+                var panel = column.getTables().get(0).getRow(0).getCell(0);
+                XWPFParagraph last = panel.getParagraphs().get(panel.getParagraphs().size() - 1);
+                assertThat(after(last)).as("below '%s'", last.getText())
+                        .isEqualTo(Math.round(12 * TWIPS_PER_POINT));
             }
         }
     }

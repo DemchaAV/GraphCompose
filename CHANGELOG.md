@@ -49,9 +49,13 @@ follow semantic versioning; release dates are ISO 8601.
   rating of dots, with a 7.8pt space between each, in a paragraph left at the default size,
   is a 9.4pt line on the page and was a 13pt line in Word, so every skill row of
   `CharcoalGold`'s sidebar stood 3.6pt taller. The line is now the tallest text line the
-  layout measured. Inline pictures still make their own room. Measured in LibreOffice,
-  `CharcoalGold` is back to one page, as in the PDF, and its mean distance of a text line
-  from its place on the page falls from 19.7pt to 5.9pt.
+  layout measured, on any page the paragraph reaches, so runs larger than the paragraph's
+  style also get a taller line where the style's height clipped them. Inline pictures
+  still make their own room. Measured in Word 16 and in LibreOffice on twenty CV presets:
+  `CharcoalGold` is one page, as in the PDF, two before, and the mean distance of a text
+  line from its place on the page falls from 21.5pt to 7.7pt in Word, from 21.2pt to 7.6pt
+  in LibreOffice. `MonogramSidebar`'s median line moves from 14.5pt to 11.4pt in Word.
+  Every other preset stays within a point of where it was.
 
 - **Columns drawn as layers stand side by side in Word.** A two-column CV can lay its columns
   out as the layers of one stack, each inset to its band, so the name is drawn before the

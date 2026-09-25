@@ -93,6 +93,32 @@ class DocxLayerColumnsTest {
     }
 
     @Test
+    void aDrawingThatOpensALaterLayerKeepsItsRoomBelowTheResume() throws Exception {
+        // The main layer goes on below the name with a portrait drawn as a path. The path is
+        // not written; the role under it is still the page's distance below the name.
+        try (Export export = export(stack -> stack
+                .layer(column("NameLayer", SIDEBAR, 0,
+                        name -> name.addParagraph(p -> p.name("Name").text("Ada Lovelace"))), LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", SIDEBAR, 0, main -> main
+                        .padding(DocumentInsets.top(10))
+                        .addSpacer(spacer -> spacer.name("NamePlace").width(100).height(30))
+                        .add(new com.demcha.compose.document.dsl.PathBuilder().name("Portrait").size(60, 30)
+                                .moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1).closePath().build())
+                        .addParagraph(p -> p.name("Role").text("Engineer"))), LayerAlign.TOP_LEFT))) {
+            XWPFTableCell main = export.document().getTables().get(0).getRow(0).getCell(1);
+            XWPFParagraph role = main.getParagraphs().stream()
+                    .filter(paragraph -> "Engineer".equals(paragraph.getText())).findFirst().orElseThrow();
+            PlacedNode name = export.placed("Name");
+            PlacedNode placedRole = export.placed("Role");
+            double gap = name.placementY() - (placedRole.placementY() + placedRole.placementHeight());
+
+            assertThat(gap).as("the portrait stands between them on the page").isGreaterThan(30);
+            assertThat(spacingBefore(role)).isCloseTo(Math.round(gap * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
     void aSpacerThatHoldsRealSpaceInAShortLayerIsKept() throws Exception {
         // The name layer puts 12pt between the name and the title. The main layer beside it runs
         // the whole band, so its box is level with that spacer; its content is not.

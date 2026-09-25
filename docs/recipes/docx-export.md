@@ -471,8 +471,16 @@ tint it was flattened to. Recorded, like the other two.
   band. Layers sharing a band follow one another in its cell. A spacer that only
   keeps the place of another layer's content is not written, and the space above
   a later layer's first block is the gap the page shows. What the page draws
-  inside another layer's fill comes after that fill. Any other layer stack writes
-  its layers one after the other, without their positions.
+  inside another layer's fill comes after that fill.
+- **Overlapping layers → one band.** Any other layer stack of two or more layers
+  writes them one after the other, as one band that keeps the page's distances: a
+  spacer level with another layer's content only keeps its place and is not
+  written, the space above the first block written and below the last is the
+  page's distance from the stack's edges, and a later layer resumes the page's
+  distance below the blocks above it. A badge — a ring, drawn, with initials centred
+  in it, over a spacer that keeps its place in the flow — writes its initials where
+  the ring centres them and keeps its height below them. Drawing is not written and
+  does not count as content.
 - **Text at the left and the right of one band → one line with a right tab.** A
   container or a layer stack holding exactly two single-line paragraphs, level with
   one another and apart across the page — a CV entry's title and its dates — is one
@@ -528,7 +536,11 @@ The placement was measured in LibreOffice; Word has not been measured yet.
 
 Vertical and slanted lines, ellipses and other standalone shapes are
 **skipped**, and the report names each one — they are pure fixed-layout
-geometry with no semantic equivalent.
+geometry with no semantic equivalent. In the flow such a shape still takes its room:
+its placed height and margins are owed as space above what follows, and so are
+those of a layer stack or shape container holding only drawing, counted once
+however deeply it is nested. A cell holding nothing else keeps that space on a
+paragraph a tenth of a point tall.
 
 A barcode in the body is not skipped: it exports as a picture of the symbol at
 its size, the same matrix the PDF draws, so it scans, with its data as the

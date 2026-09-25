@@ -184,8 +184,8 @@ class DocxVerticalSpacingTest {
     void aContainerThatWritesNothingHandsBackTheEdgesAroundIt() throws Exception {
         // A portrait opening a padded sidebar: a layer stack holding only a path, which the
         // export drops. It stood above nothing, so the sidebar's top padding is still waiting
-        // for the first paragraph — the stack drops only its own top edge, and its bottom
-        // edge is owed below it as any container's is.
+        // for the first paragraph; the portrait keeps its place, its margins and its 40pt, as
+        // space above that paragraph too.
         List<XWPFParagraph> paragraphs = bodyOf(page -> page
                 .addSection("Sidebar", sidebar -> sidebar
                         .padding(DocumentInsets.top(30))
@@ -200,8 +200,8 @@ class DocxVerticalSpacingTest {
 
         assertThat(paragraphs).hasSize(1);
         assertThat(before(paragraphs.get(0)))
-                .as("the sidebar's 30pt of padding and the portrait's 7pt below it, not its 5pt above")
-                .isEqualTo(Math.round(37 * TWIPS_PER_POINT));
+                .as("the sidebar's 30pt of padding, then the portrait's 5 + 40 + 7")
+                .isEqualTo(Math.round(82 * TWIPS_PER_POINT));
     }
 
     @Test
@@ -275,8 +275,8 @@ class DocxVerticalSpacingTest {
                 .as("the outer 30pt did not land under the table")
                 .isZero();
         assertThat(before(pastADivider.get(pastADivider.size() - 1)))
-                .as("nor was it handed on by the divider the export drops")
-                .isZero();
+                .as("nor was it handed on by the divider the export drops, which keeps its own 4pt")
+                .isEqualTo(Math.round(4 * TWIPS_PER_POINT));
     }
 
     @Test

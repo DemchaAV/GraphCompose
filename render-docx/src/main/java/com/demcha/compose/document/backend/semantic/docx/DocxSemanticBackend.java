@@ -1270,6 +1270,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 return;
             }
         }
+        // A title and its dates at either end of one band are one line before they are layers.
         if (node instanceof com.demcha.compose.document.node.LayerStackNode
             || node instanceof ShapeContainerNode) {
             DocxLinePair.Pair pair = DocxLinePair.of(node, layout);
@@ -1277,6 +1278,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 writeLinePair(document, node, pair);
                 return;
             }
+        }
+        if (node instanceof com.demcha.compose.document.node.LayerStackNode stack) {
+            DocxLayerColumns.Band band = DocxLayerColumns.band(stack, layout, DocxSemanticBackend::isDrawing);
+            if (band != null) {
+                writeOverlayBand(document, stack, band);
+                return;
+            }
+        }
+        // Only in the flow: inside an overlay, the overlay's own place already holds it.
+        if (overlayDepth == 0
+            && (node instanceof com.demcha.compose.document.node.LayerStackNode || node instanceof ShapeContainerNode)
+            && onlyDrawing(node) && holdTheSpaceOf(node)) {
+            // Written for what it reports: none of it reaches the file.
+            overlayDepth++;
+            try {
+                for (DocumentNode child : node.children()) {
+                    writeNode(document, child);
+                }
+            } finally {
+                overlayDepth--;
+            }
+            return;
         }
         boolean overlay = isOverlay(node);
         if (overlay) {
@@ -1354,6 +1377,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // silently missing; authors needing pixel-perfect output use the
             // PDF fixed-layout backend.
             warnUnsupported(node);
+            // In the flow it still takes its room; over something else it takes none.
+            if (overlayDepth == 0 && isDrawing(node)) {
+                holdTheSpaceOf(node);
+            }
         }
     }
 
@@ -2160,11 +2187,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
         // A container that wrote something has had its top edge taken — by its first
         // paragraph, or owed above its first table (see newTable) — and none of it is left
-        // waiting. A container that wrote nothing at all — empty, or holding only a drawing
-        // the export drops — stood above nothing, and the containers around it are still
-        // waiting for their first paragraph: only its own edge goes, and theirs is handed
-        // back. Dropping theirs too lost a sidebar's top padding under the portrait that
-        // opened it.
+        // waiting. A container that wrote nothing at all — empty, or holding nothing but a
+        // drawing inside an overlay, where the drawing holds no room of its own — stood above
+        // nothing, and the containers around it are still waiting for their first paragraph:
+        // only its own edge goes, and theirs is handed back. Dropping theirs too lost a
+        // sidebar's top padding under the portrait that opened it. A drawing in the flow
+        // counts as a block (holdTheSpaceOf).
         carriedSpacingBefore = blocksWritten == blocksBefore ? carriedFromOutside : 0;
     }
 
@@ -4579,6 +4607,107 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Writes a stack of overlapping layers one after the other, as the page places their
+     * content (see {@link DocxLayerColumns#band}).
+     *
+     * <p>The space above the first block written is the page's distance from the stack's
+     * top, together with whatever was owed above the stack; each later layer resumes the
+     * page's distance below the blocks above it; and the space owed below is the page's
+     * distance from the last block to the stack's bottom. Each replaces what the containers
+     * in between would have carried, which on the page is space the other layers already
+     * take. A later layer that follows only layers that wrote nothing keeps the space the
+     * stack opened with. Drawing among the layers is not written, as in any overlay.</p>
+     */
+    private void writeOverlayBand(XWPFDocument document,
+                                  com.demcha.compose.document.node.LayerStackNode stack,
+                                  DocxLayerColumns.Band band) throws Exception {
+        // A band inside a band that has written nothing yet: the outer band measured its space
+        // to the first block written, which is this one's first too, so that space stands.
+        if (Double.isNaN(resumeSpacing)) {
+            resumeSpacing = carriedSpacingBefore + pendingSpacingAfter + stack.margin().top() + band.above();
+        }
+        carriedSpacingBefore = 0;
+        pendingSpacingAfter = 0;
+        standIns.addAll(band.standIns());
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
+        insetLeft += stack.margin().left() + stack.padding().left();
+        insetRight += stack.margin().right() + stack.padding().right();
+        overlayDepth++;
+        try {
+            List<DocumentNode> layers = band.layers();
+            for (int index = 0; index < layers.size(); index++) {
+                double resume = band.resume(layers.get(index));
+                if (index > 0 && !Double.isNaN(resume) && Double.isNaN(resumeSpacing)) {
+                    pendingSpacingAfter = 0;
+                    carriedSpacingBefore = 0;
+                    resumeSpacing = resume;
+                }
+                writeNode(document, layers.get(index));
+            }
+        } finally {
+            overlayDepth--;
+            insetLeft = outerLeft;
+            insetRight = outerRight;
+            standIns.removeAll(band.standIns());
+        }
+        // Nothing was written after all: the space the stack opened with is still owed.
+        double unwritten = Double.isNaN(resumeSpacing) ? 0 : resumeSpacing;
+        resumeSpacing = Double.NaN;
+        carriedSpacingBefore = 0;
+        pendingSpacingAfter = unwritten + band.below() + stack.margin().bottom();
+    }
+
+    /** Whether every leaf under a node is drawing, so that nothing of it is written. */
+    private static boolean onlyDrawing(DocumentNode node) {
+        if (node.children().isEmpty()) {
+            return isDrawing(node);
+        }
+        for (DocumentNode child : node.children()) {
+            if (!onlyDrawing(child)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Keeps the place of a block this export does not write, as the space it takes on the page.
+     *
+     * <p>A portrait drawn as paths, a badge's ring, a decorative shape: none of it reaches the
+     * file, and neither did the room it takes, so everything under it moved up by its height —
+     * a sidebar opening with a 98pt portrait started its contact lines 98pt high. Its placed
+     * height and its margins are owed as space below whatever came before, where the next
+     * block written takes them.</p>
+     *
+     * @return true when the layout placed the node, so its space is known and owed
+     */
+    private boolean holdTheSpaceOf(DocumentNode node) {
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(node);
+        if (placed == null) {
+            return false;
+        }
+        // It stands where a block would: a column layer it opens resumes above it, the
+        // container edges waiting above it are above it, and the containers around it have had
+        // their top edge taken, as by any block.
+        resumeHere();
+        owePendingSpacingAfter(carriedSpacingBefore);
+        carriedSpacingBefore = 0;
+        owePendingSpacingAfter(node.margin().top() + placed.placementHeight() + node.margin().bottom());
+        blocksWritten++;
+        return true;
+    }
+
+    /** Whether a node is drawing, which in an overlay this export does not write. */
+    private static boolean isDrawing(DocumentNode node) {
+        return node instanceof com.demcha.compose.document.node.ShapeNode
+               || node instanceof com.demcha.compose.document.node.LineNode
+               || node instanceof com.demcha.compose.document.node.EllipseNode
+               || node instanceof com.demcha.compose.document.node.PathNode
+               || node instanceof com.demcha.compose.document.node.PolygonNode;
+    }
+
+    /**
      * Writes where a row's children sit in its height.
      *
      * <p>The layout places a child shorter than its row at the row's top, middle or bottom,
@@ -5425,6 +5554,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         insetRight = 0;
         try {
             content.write();
+            // A cell of space and nothing written — padding round a drawing the export keeps
+            // only the place of, as a masthead's hairline column — still has its height, and
+            // no paragraph to hold it: a hairline one holds it, or the row lost it.
+            if (lastBodyParagraph == null && !cellEndsWithItsTableCloser()
+                && carriedSpacingBefore + pendingSpacingAfter > 0 && cell.getBodyElements().isEmpty()) {
+                holdToHairline(newBodyParagraph(cell.getXWPFDocument()));
+            }
             // A cell ends where it ends: its last gap cannot land on whatever the body
             // writes next, and the body's cannot land inside it.
             flushSpacingAfter();

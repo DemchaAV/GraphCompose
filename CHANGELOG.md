@@ -8,6 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Layers laid over each other stand across where the page puts them.** The layers of an
+  overlay — a layer stack written as one band, the layers of a shape container — were written
+  one after the other, each from the stack's left edge to its right. Initials the page centres
+  in a monogram's ring stood at the left of the sidebar, and a section title set beside its
+  badge started under the badge. Each layer is now held in to its box in the stack, as the
+  layout places it, and its own alignment sets its text in that box. A few points are left
+  on the side the text does not lean on, so a word the editor sets a little wider than the
+  page does not break. Measured in LibreOffice: `MonogramSidebar`'s initials stand centred in
+  the badge and `NavySidebar`'s section titles start after their badge, as on the page; no
+  preset's median line moves.
+
 - **A container's `spacing` reaches Word, and a spacer is its height alone.** The layout puts
   a section's or a container's `spacing` between each two of its children, and the DOCX
   export wrote none of it, so a CV sidebar laid out with 9pt between its blocks came out

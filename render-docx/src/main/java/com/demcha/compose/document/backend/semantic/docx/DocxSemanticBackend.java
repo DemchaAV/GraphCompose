@@ -211,6 +211,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // layer stack they sit in is written as columns (DocxLayerColumns).
     private final java.util.Set<DocumentNode> standIns =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // What the stacks being written write in a stand-in's place instead (DocxLayerColumns.Moves),
+    // and the blocks being written there now rather than skipped in their own layer.
+    private final List<DocxLayerColumns.Moves> moves = new ArrayList<>();
+    private final java.util.Set<DocumentNode> writingInAStandIn =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // The space above the next block, in points, in place of everything owed above it: set
     // when a column layer follows another in its cell, NaN otherwise.
     private double resumeSpacing = Double.NaN;
@@ -523,6 +528,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         anchors.reset();
         currentPage = 0;
         clipContainer = null;
+        moves.clear();
+        writingInAStandIn.clear();
         listNumbering.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
@@ -1094,6 +1101,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNode(XWPFDocument document, DocumentNode node) throws Exception {
+        if (!writingInAStandIn.contains(node) && movedIntoAStandIn(node)) {
+            // Written already, in the place an earlier layer held for it.
+            return;
+        }
         com.demcha.compose.document.layout.PlacedNode placed = layout.placement(node);
         if (placed != null) {
             currentPage = placed.startPage();
@@ -1300,7 +1311,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (node instanceof com.demcha.compose.document.node.LayerStackNode stack) {
             DocxLayerColumns.Plan columns = DocxLayerColumns.of(stack, layout,
                     candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
-                                 && paintOf(candidate).isEmpty());
+                                 && paintOf(candidate).isEmpty(),
+                    candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
+                                 && !paintOf(candidate).isEmpty());
             if (columns != null) {
                 // Side by side, nothing in the stack overlaps: it is not an overlay.
                 writeLayerColumns(document, stack, columns);
@@ -4927,6 +4940,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         writeRowColumns(table, cells);
         standIns.addAll(plan.standIns());
+        moves.add(plan.moves());
         try {
             XWPFTableRow row = table.getRow(0);
             for (int index = 0; index < columns.size(); index++) {
@@ -4939,6 +4953,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     writeInCell(cell, () -> {
                         for (int layer = 0; layer < layers.size(); layer++) {
                             DocumentNode node = layers.get(layer);
+                            double owedAbove = pendingSpacingAfter;
+                            long blocksBefore = blocksWritten;
                             if (layer == 0) {
                                 carriedSpacingBefore += node.margin().top() + node.padding().top();
                             } else {
@@ -4948,6 +4964,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                 resumeSpacing = plan.resume(node);
                             }
                             writeChildren(document, node.children(), spacingOf(node));
+                            if (layer > 0 && blocksWritten == blocksBefore && holdsMovedContent(node)) {
+                                // A layer that wrote nothing — its content all written in an
+                                // earlier layer's stand-ins — owes nothing of its own: what the
+                                // layers above owed is still what the cell ends with.
+                                pendingSpacingAfter = owedAbove;
+                                resumeSpacing = Double.NaN;
+                                continue;
+                            }
                             if (layer == layers.size() - 1) {
                                 owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
                             }
@@ -4963,6 +4987,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         } finally {
             standIns.removeAll(plan.standIns());
+            moves.remove(plan.moves());
         }
         double outerLeft = insetLeft;
         insetLeft += stack.margin().left() + stack.padding().left();
@@ -5055,6 +5080,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         double contentLeft = box.placementX() + stack.padding().left();
         double contentRight = box.placementX() + box.placementWidth() - stack.padding().right();
+        holdIn(layer, placed, contentLeft, contentRight);
+    }
+
+    /**
+     * Holds a block in across, from the edges it is written between to where the layout placed
+     * it, with room to spare for a paragraph on the side its text does not lean on.
+     *
+     * @param layer        the block
+     * @param placed       where the layout placed it
+     * @param contentLeft  the page position of the left edge it is written from
+     * @param contentRight the page position of the right edge it is written to
+     */
+    private void holdIn(DocumentNode layer, com.demcha.compose.document.layout.PlacedNode placed,
+                        double contentLeft, double contentRight) {
         double left = placed.placementX() - layer.margin().left() - contentLeft;
         double right = contentRight - (placed.placementX() + placed.placementWidth() + layer.margin().right());
         if (!(left > 0.5) && !(right > 0.5)) {
@@ -5998,8 +6037,85 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
-    private void writeSpacer(XWPFDocument document, SpacerNode node) {
+    /** Whether anything under a node was written in an earlier layer's stand-in. */
+    private boolean holdsMovedContent(DocumentNode node) {
+        if (movedIntoAStandIn(node)) {
+            return true;
+        }
+        for (DocumentNode child : node.children()) {
+            if (holdsMovedContent(child)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean movedIntoAStandIn(DocumentNode node) {
+        for (DocxLayerColumns.Moves stack : moves) {
+            if (stack.moved(node)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Writes in a stand-in's place the content a later layer lays there (see
+     * {@link DocxLayerColumns.Moves}), with the page's gaps: from the stand-in's top to the
+     * first block, between the blocks, and from the last block to the stand-in's foot, each
+     * block's own margins aside, which it writes itself. The stand-in keeps its height.
+     */
+    private void writeInPlaceOf(XWPFDocument document, SpacerNode standIn) throws Exception {
+        List<DocumentNode> contents = new ArrayList<>();
+        for (DocxLayerColumns.Moves stack : moves) {
+            contents.addAll(stack.into(standIn));
+        }
+        if (contents.isEmpty()) {
+            return;
+        }
+        // Top to bottom on the page, as the gaps between them are measured.
+        contents.sort(java.util.Comparator.comparingDouble(content -> {
+            com.demcha.compose.document.layout.PlacedNode placed = layout.placement(content);
+            return placed == null ? 0 : -(placed.placementY() + placed.placementHeight());
+        }));
+        com.demcha.compose.document.layout.PlacedNode place = layout.placement(standIn);
+        double edge = place == null ? Double.NaN : place.placementY() + place.placementHeight();
+        // The edges the panel writes between, as the page places them: each block is held in to
+        // where its own layer put it, whatever that layer's padding was.
+        double[] across = layout.parentContent(standIn);
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
+        // Only these blocks are let through: a stack nested in one still skips its own moved
+        // content, which it writes in its own stand-ins.
+        writingInAStandIn.addAll(contents);
+        try {
+            for (DocumentNode content : contents) {
+                com.demcha.compose.document.layout.PlacedNode placed = layout.placement(content);
+                if (placed != null && !Double.isNaN(edge)) {
+                    owePendingSpacingAfter(Math.max(0, edge
+                            - (placed.placementY() + placed.placementHeight() + content.margin().top())));
+                    edge = placed.placementY() - content.margin().bottom();
+                }
+                insetLeft = outerLeft;
+                insetRight = outerRight;
+                if (placed != null && across != null) {
+                    holdIn(content, placed, across[0], across[1]);
+                }
+                writeNode(document, content);
+            }
+        } finally {
+            writingInAStandIn.removeAll(contents);
+            insetLeft = outerLeft;
+            insetRight = outerRight;
+        }
+        if (place != null && !Double.isNaN(edge)) {
+            owePendingSpacingAfter(Math.max(0, edge - place.placementY()));
+        }
+    }
+
+    private void writeSpacer(XWPFDocument document, SpacerNode node) throws Exception {
         if (standIns.contains(node)) {
+            writeInPlaceOf(document, node);
             return;
         }
         XWPFParagraph para = newBodyParagraph(document);

@@ -625,6 +625,24 @@ final class DocxLayoutMetrics {
      *         parent was not placed
      */
     double[] insideParent(DocumentNode node) {
+        double[] content = parentContent(node);
+        if (content == null) {
+            return null;
+        }
+        PlacedNode box = placedFor(node);
+        return new double[]{
+                Math.max(0, box.placementX() - content[0]),
+                Math.max(0, content[1] - (box.placementX() + box.placementWidth()))};
+    }
+
+    /**
+     * The left and right edges of the content box of the node a node was placed in, as page
+     * positions in points.
+     *
+     * @param node a placed node
+     * @return {@code {left, right}}, or {@code null} when the node or its parent was not placed
+     */
+    double[] parentContent(DocumentNode node) {
         PlacedNode box = placedFor(node);
         if (box == null || box.parentPath() == null) {
             return null;
@@ -633,11 +651,8 @@ final class DocxLayoutMetrics {
         if (parent == null) {
             return null;
         }
-        double contentLeft = parent.placementX() + parent.padding().left();
-        double contentRight = parent.placementX() + parent.placementWidth() - parent.padding().right();
-        return new double[]{
-                Math.max(0, box.placementX() - contentLeft),
-                Math.max(0, contentRight - (box.placementX() + box.placementWidth()))};
+        return new double[]{parent.placementX() + parent.padding().left(),
+                parent.placementX() + parent.placementWidth() - parent.padding().right()};
     }
 
     /** The placed node for a semantic node, or null when this index knows neither. */

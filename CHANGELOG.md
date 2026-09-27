@@ -8,6 +8,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A strip drawn in two layers is written as one strip.** A template that wants its name
+  read before its sidebar draws its hero strip in two layers of a column stack: the fill and
+  the name with a stand-in where the subtitle goes, then a stand-in for the name and the
+  subtitle. Written one layer after the other, the stand-in was dropped and the subtitle came
+  under the strip rather than in it, with the second layer's bottom padding and spacing under
+  it again, 20pt the page does not have. Content a later layer lays inside a stand-in in a
+  filled or bordered panel is now written in that place, its enclosing block with it — a chip
+  moves with its text — held in across to where its own layer put it and down from the
+  stand-in's top as the page has it, and the gap to what follows is measured
+  from the panel's foot, since the panel writes its padding itself. Measured in LibreOffice:
+  `SidebarPortrait`'s subtitle stands in its strip and its main column stands 2.6pt from the
+  page's where it stood 22.6pt; no other CV preset moves.
+
 - **Paths and polygons reach Word as custom geometry.** A path, a polygon, a star or chevron
   outline, the layers of an SVG icon set as a block were dropped from the DOCX export and
   reported. Each is now a DrawingML shape of custom geometry through the same points and

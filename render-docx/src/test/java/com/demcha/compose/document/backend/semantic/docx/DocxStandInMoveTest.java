@@ -32,15 +32,17 @@ import static org.assertj.core.api.Assertions.within;
 class DocxStandInMoveTest {
 
     private static final DocumentTextStyle TEXT = DocumentTextStyle.DEFAULT.withSize(12);
+    // Wider than the subtitle with room to spare, so the strip, as wide as its content, is too.
+    private static final String NAME = "Jordan Alexander Rivera";
 
     @Test
     void theSubtitleALaterLayerLaysInThePanelIsWrittenInThePanel() throws Exception {
         Export export = export(false);
         try (XWPFDocument document = export.document()) {
-            XWPFTableCell panel = cellHolding(document, "Name");
+            XWPFTableCell panel = cellHolding(document, NAME);
 
             assertThat(panel.getText()).as("the strip holds the name and the subtitle over it")
-                    .contains("Name").contains("Subtitle");
+                    .contains(NAME).contains("Subtitle");
             assertThat(allText(document).split("Subtitle", -1)).as("written once").hasSize(2);
             assertThat(panel.getText()).doesNotContain("Body");
         }
@@ -65,9 +67,9 @@ class DocxStandInMoveTest {
 
     @Test
     void aStandInTallerThanWhatMovesIntoItKeepsTheRestOfItsHeight() throws Exception {
-        Export export = export(false, 30);
+        Export export = export(false, 30, 10);
         try (XWPFDocument document = export.document()) {
-            XWPFParagraph subtitle = paragraph(cellHolding(document, "Name"), "Subtitle");
+            XWPFParagraph subtitle = paragraph(cellHolding(document, NAME), "Subtitle");
             double rest = export.node("Subtitle").placementY() - export.node("SubtitlePlace").placementY();
 
             assertThat(rest).isGreaterThan(15);
@@ -77,9 +79,24 @@ class DocxStandInMoveTest {
     }
 
     @Test
+    void aMovedBlockStandsAcrossWhereItsOwnLayerPutIt() throws Exception {
+        // The strip is padded 10pt at the sides, the layer the subtitle comes from 20pt: in the
+        // strip's cell the subtitle is held in the 10pt more its own layer gives it.
+        Export export = export(false, 0, 20);
+        try (XWPFDocument document = export.document()) {
+            XWPFParagraph subtitle = paragraph(cellHolding(document, NAME), "Subtitle");
+            double placed = export.node("Subtitle").placementX() - export.node("SubtitlePlace").placementX();
+
+            assertThat(placed).isCloseTo(10, within(0.1));
+            assertThat(DocxTwips.of(subtitle.getCTP().getPPr().getInd().getLeft()) / 20.0)
+                    .isCloseTo(placed, within(0.1));
+        }
+    }
+
+    @Test
     void aSubtitleSetInAChipMovesWithItsChip() throws Exception {
         try (XWPFDocument document = export(true).document()) {
-            XWPFTableCell panel = cellHolding(document, "Name");
+            XWPFTableCell panel = cellHolding(document, NAME);
 
             assertThat(panel.getTables()).as("the chip, a panel of its own, inside the strip").hasSize(1);
             assertThat(panel.getTables().get(0).getText()).contains("Subtitle");
@@ -93,7 +110,7 @@ class DocxStandInMoveTest {
     }
 
     private static Export export(boolean chip) throws Exception {
-        return export(chip, 0);
+        return export(chip, 0, 10);
     }
 
     /**
@@ -103,12 +120,12 @@ class DocxStandInMoveTest {
      * place with a spacer as tall as the name, then writes the subtitle, which lies inside the
      * stand-in, and after the strip, the body. The heights come from laying the strip out once.
      */
-    private static Export export(boolean chip, double extra) throws Exception {
+    private static Export export(boolean chip, double extra, double side) throws Exception {
         double[] name = new double[2];
         double[] subtitle = new double[2];
         try (DocumentSession probe = session()) {
             probe.pageFlow(page -> page.addSection("Probe", strip -> strip.padding(DocumentInsets.of(10))
-                    .addParagraph(p -> p.name("Name").text("Name").textStyle(TEXT))
+                    .addParagraph(p -> p.name("Name").text(NAME).textStyle(TEXT))
                     .addParagraph(p -> p.name("Subtitle").text("Subtitle").textStyle(TEXT))));
             for (PlacedNode node : probe.layoutGraph().nodes()) {
                 double[] box = "Name".equals(node.semanticName()) ? name
@@ -121,18 +138,18 @@ class DocxStandInMoveTest {
         }
         try (DocumentSession session = session()) {
             session.pageFlow(page -> page.addLayerStack(stack -> stack
-                    .layer(column("Sidebar", 0, 260, side -> side
+                    .layer(column("Sidebar", 0, 260, sidebar -> sidebar
                             .addParagraph(p -> p.text("Contact").textStyle(TEXT))), LayerAlign.TOP_LEFT)
                     .layer(column("StripLayer", 100, 0, main -> main.addSection("Strip", strip -> strip
                             .fillColor(DocumentColor.rgb(240, 240, 236))
                             .padding(DocumentInsets.of(10))
-                            .addParagraph(p -> p.name("Name").text("Name").textStyle(TEXT))
+                            .addParagraph(p -> p.name("Name").text(NAME).textStyle(TEXT))
                             .addSpacer(spacer -> spacer.name("SubtitlePlace")
                                     .width(subtitle[0]).height(subtitle[1] + extra)))),
                             LayerAlign.TOP_LEFT)
                     .layer(column("MainLayer", 100, 0, main -> {
                         main.addSection("Hero", hero -> {
-                            hero.padding(new DocumentInsets(10, 10, 10 + extra, 10))
+                            hero.padding(new DocumentInsets(10, side, 10 + extra, side))
                                     .addSpacer(spacer -> spacer.name("NamePlace").width(name[0]).height(name[1]));
                             if (chip) {
                                 hero.addSection("Chip", pill -> pill

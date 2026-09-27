@@ -4963,7 +4963,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                 resumeSpacing = plan.resume(node);
                             }
                             writeChildren(document, node.children(), spacingOf(node));
-                            if (layer > 0 && blocksWritten == blocksBefore) {
+                            if (layer > 0 && blocksWritten == blocksBefore && holdsMovedContent(node)) {
                                 // A layer that wrote nothing — its content all written in an
                                 // earlier layer's stand-ins — owes nothing of its own: what the
                                 // layers above owed is still what the cell ends with.
@@ -5079,6 +5079,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         double contentLeft = box.placementX() + stack.padding().left();
         double contentRight = box.placementX() + box.placementWidth() - stack.padding().right();
+        holdIn(layer, placed, contentLeft, contentRight);
+    }
+
+    /**
+     * Holds a block in across, from the edges it is written between to where the layout placed
+     * it, with room to spare for a paragraph on the side its text does not lean on.
+     *
+     * @param layer        the block
+     * @param placed       where the layout placed it
+     * @param contentLeft  the page position of the left edge it is written from
+     * @param contentRight the page position of the right edge it is written to
+     */
+    private void holdIn(DocumentNode layer, com.demcha.compose.document.layout.PlacedNode placed,
+                        double contentLeft, double contentRight) {
         double left = placed.placementX() - layer.margin().left() - contentLeft;
         double right = contentRight - (placed.placementX() + placed.placementWidth() + layer.margin().right());
         if (!(left > 0.5) && !(right > 0.5)) {
@@ -6022,6 +6036,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
+    /** Whether anything under a node was written in an earlier layer's stand-in. */
+    private boolean holdsMovedContent(DocumentNode node) {
+        if (movedIntoAStandIn(node)) {
+            return true;
+        }
+        for (DocumentNode child : node.children()) {
+            if (holdsMovedContent(child)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean movedIntoAStandIn(DocumentNode node) {
         for (DocxLayerColumns.Moves stack : moves) {
             if (stack.moved(node)) {
@@ -6045,9 +6072,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (contents.isEmpty()) {
             return;
         }
+        // Top to bottom on the page, as the gaps between them are measured.
+        contents.sort(java.util.Comparator.comparingDouble(content -> {
+            com.demcha.compose.document.layout.PlacedNode placed = layout.placement(content);
+            return placed == null ? 0 : -(placed.placementY() + placed.placementHeight());
+        }));
         com.demcha.compose.document.layout.PlacedNode place = layout.placement(standIn);
         double edge = place == null ? Double.NaN : place.placementY() + place.placementHeight();
+        // The edges the panel writes between, as the page places them: each block is held in to
+        // where its own layer put it, whatever that layer's padding was.
+        double[] across = layout.parentContent(standIn);
         boolean outer = writingInAStandIn;
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
         writingInAStandIn = true;
         try {
             for (DocumentNode content : contents) {
@@ -6057,10 +6094,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                             - (placed.placementY() + placed.placementHeight() + content.margin().top())));
                     edge = placed.placementY() - content.margin().bottom();
                 }
+                insetLeft = outerLeft;
+                insetRight = outerRight;
+                if (placed != null && across != null) {
+                    holdIn(content, placed, across[0], across[1]);
+                }
                 writeNode(document, content);
             }
         } finally {
             writingInAStandIn = outer;
+            insetLeft = outerLeft;
+            insetRight = outerRight;
         }
         if (place != null && !Double.isNaN(edge)) {
             owePendingSpacingAfter(Math.max(0, edge - place.placementY()));

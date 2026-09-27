@@ -152,8 +152,9 @@ final class DocxLayerColumns {
      * the subtitle goes, and a later layer carries a stand-in for the name and then the
      * subtitle. On the page they lie over each other as one strip. Written one layer after the
      * other, the strip lost its stand-in and the subtitle came after it, under the strip
-     * instead of in it. A leaf of a later layer whose box lies inside a stand-in of an earlier
-     * one is written in the stand-in's place, and not again in its own layer.</p>
+     * instead of in it. The outermost block of a later layer whose box lies inside a stand-in
+     * of an earlier one, in a painted panel, is written in the stand-in's place, and not again
+     * in its own layer.</p>
      */
     static final class Moves {
         private final Map<DocumentNode, List<DocumentNode>> into = new IdentityHashMap<>();
@@ -298,7 +299,8 @@ final class DocxLayerColumns {
         }
         Map<DocumentNode, List<DocumentNode>> layerStandIns = new IdentityHashMap<>();
         for (DocumentNode layer : layers) {
-            Set<DocumentNode> own = Collections.newSetFromMap(new IdentityHashMap<>());
+            // In the layer's order, so a block inside two stand-ins goes to the first.
+            List<DocumentNode> own = new ArrayList<>();
             collectStandIns(layer, layer, content, layout, own);
             standIns.addAll(own);
             layerStandIns.put(layer, new ArrayList<>(own));
@@ -311,11 +313,15 @@ final class DocxLayerColumns {
                     continue;
                 }
                 PlacedNode place = layout.placement(standIn);
+                double[] across = layout.parentContent(standIn);
+                if (place == null || across == null) {
+                    continue;
+                }
                 for (DocumentNode later : layers.subList(index + 1, layers.size())) {
                     Set<DocumentNode> laterLeaves = Collections.newSetFromMap(new IdentityHashMap<>());
                     laterLeaves.addAll(leaves.get(later));
                     for (DocumentNode child : later.children()) {
-                        moveInto(child, place, standIn, laterLeaves, layout, moves);
+                        moveInto(child, place, across, standIn, laterLeaves, layout, moves);
                     }
                 }
             }
@@ -333,17 +339,17 @@ final class DocxLayerColumns {
      * Moves into a stand-in the outermost blocks under {@code node} that lie inside its place
      * and hold content: a subtitle set in a chip moves with its chip.
      */
-    private static void moveInto(DocumentNode node, PlacedNode place, DocumentNode standIn,
+    private static void moveInto(DocumentNode node, PlacedNode place, double[] across, DocumentNode standIn,
                                  Set<DocumentNode> content, DocxLayoutMetrics layout, Moves moves) {
         if (moves.moved(node)) {
             return;
         }
-        if (inside(layout.placement(node), place) && holdsAny(node, content)) {
+        if (inside(layout.placement(node), place, across) && holdsAny(node, content)) {
             moves.move(node, standIn);
             return;
         }
         for (DocumentNode child : node.children()) {
-            moveInto(child, place, standIn, content, layout, moves);
+            moveInto(child, place, across, standIn, content, layout, moves);
         }
     }
 
@@ -371,11 +377,15 @@ final class DocxLayerColumns {
         }
     }
 
-    /** Whether a box lies inside another on the same page, edges within {@link #EDGE}. */
-    private static boolean inside(PlacedNode box, PlacedNode place) {
+    /**
+     * Whether a box lies in a stand-in's place, edges within {@link #EDGE}: between its top and
+     * its foot, and across within the edges the stand-in is written between — a spacer stands
+     * at the left of its panel, while what it holds the place of can stand anywhere across it.
+     */
+    private static boolean inside(PlacedNode box, PlacedNode place, double[] across) {
         return box != null && place != null && box.startPage() == place.startPage()
-               && box.placementX() >= place.placementX() - EDGE
-               && box.placementX() + box.placementWidth() <= place.placementX() + place.placementWidth() + EDGE
+               && box.placementX() >= across[0] - EDGE
+               && box.placementX() + box.placementWidth() <= across[1] + EDGE
                && box.placementY() >= place.placementY() - EDGE
                && box.placementY() + box.placementHeight() <= place.placementY() + place.placementHeight() + EDGE;
     }
@@ -500,7 +510,7 @@ final class DocxLayerColumns {
      */
     private static void collectStandIns(DocumentNode node, DocumentNode own,
                                         Map<DocumentNode, List<PlacedNode>> content,
-                                        DocxLayoutMetrics layout, Set<DocumentNode> standIns) {
+                                        DocxLayoutMetrics layout, java.util.Collection<DocumentNode> standIns) {
         if (node instanceof SpacerNode spacer) {
             PlacedNode placed = layout.placement(spacer);
             if (placed != null && levelWithAnother(placed, own, content)) {

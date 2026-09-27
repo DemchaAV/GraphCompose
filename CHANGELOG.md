@@ -15,7 +15,8 @@ follow semantic versioning; release dates are ISO 8601.
   under the strip rather than in it, with the second layer's bottom padding and spacing under
   it again, 20pt the page does not have. Content a later layer lays inside a stand-in in a
   filled or bordered panel is now written in that place, its enclosing block with it — a chip
-  moves with its text — at the stand-in's offsets, and the gap to what follows is measured
+  moves with its text — held in across to where its own layer put it and down from the
+  stand-in's top as the page has it, and the gap to what follows is measured
   from the panel's foot, since the panel writes its padding itself. Measured in LibreOffice:
   `SidebarPortrait`'s subtitle stands in its strip and its main column stands 2.6pt from the
   page's where it stood 22.6pt; no other CV preset moves.

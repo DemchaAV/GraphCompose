@@ -482,9 +482,13 @@ tint it was flattened to. Recorded, like the other two.
   a painted panel the block above sits in. Where a spacer inside a filled or bordered
   panel keeps the place of a later layer's content — a hero strip drawn with its name
   in one layer and its subtitle in the next — that content is written in the spacer's
-  place, inside the panel, with the block enclosing it and at the spacer's offsets,
-  and not again in its own layer. The content has to lie inside the spacer's box to
-  half a point; one that does not stays where its layer writes it.
+  place, inside the panel, with the block enclosing it, held in across to where its
+  own layer put it and at the page's distance from the spacer's top, and not again in
+  its own layer. The content has to lie between the spacer's top and foot, and across
+  within the panel's content, to half a point; one that does not stays where its
+  layer writes it. Two limits: a panel's table ends half its bottom border below the
+  panel's edge, so the gap under it is that much too tall; and an `anchor()` on the
+  later layer's container whose first block moved marks the next block written.
 - **Overlapping layers → one band.** Any other layer stack of two or more layers
   writes them one after the other, as one band that keeps the page's distances: a
   spacer level with another layer's content only keeps its place and is not

@@ -640,6 +640,26 @@ final class DocxLayoutMetrics {
                 Math.max(0, contentRight - (box.placementX() + box.placementWidth()))};
     }
 
+    /**
+     * The left and right edges of the content box of the node a node was placed in, as page
+     * positions in points.
+     *
+     * @param node a placed node
+     * @return {@code {left, right}}, or {@code null} when the node or its parent was not placed
+     */
+    double[] parentContent(DocumentNode node) {
+        PlacedNode box = placedFor(node);
+        if (box == null || box.parentPath() == null) {
+            return null;
+        }
+        PlacedNode parent = placed.get(box.parentPath());
+        if (parent == null) {
+            return null;
+        }
+        return new double[]{parent.placementX() + parent.padding().left(),
+                parent.placementX() + parent.placementWidth() - parent.padding().right()};
+    }
+
     /** The placed node for a semantic node, or null when this index knows neither. */
     private PlacedNode placedFor(DocumentNode node) {
         String path = paths.get(node);

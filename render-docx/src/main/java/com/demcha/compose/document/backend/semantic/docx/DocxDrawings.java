@@ -134,7 +134,10 @@ final class DocxDrawings {
         if (!filled && !outlined) {
             return null;
         }
-        if (shape.kind() != Kind.LINE && !(shape.width() > 0 && shape.height() > 0)) {
+        boolean hasExtent = shape.kind() == Kind.LINE
+                ? shape.width() > 0 || shape.height() > 0
+                : shape.width() > 0 && shape.height() > 0;
+        if (!hasExtent) {
             return null;
         }
         return shape;

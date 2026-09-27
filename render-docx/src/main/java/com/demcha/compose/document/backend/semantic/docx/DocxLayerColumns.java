@@ -169,7 +169,7 @@ final class DocxLayerColumns {
      * spacer's height and then the badge's text below it. As a band, a spacer level with
      * another layer's content is a stand-in and is left out, the space above the first block
      * and below the last is the page's, and a later layer resumes the page's distance below
-     * the blocks above it. Drawing is not written and is not content here: a circle's box
+     * the blocks above it. Drawing writes no paragraph and is not content here: a circle's box
      * would otherwise decide where the text in it starts.</p>
      *
      * @param stack   the stack

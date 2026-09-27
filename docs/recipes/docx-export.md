@@ -507,8 +507,9 @@ tint it was flattened to. Recorded, like the other two.
   of a graphics-state path clip, so the container's layers are written
   inline, in source order, without clipping — again with one warning per
   export. The outline, when it is an ellipse or a rectangle, is drawn as a
-  shape where the page draws it, and a picture in a container clipped to an
-  ellipse takes the ellipse's shape: a portrait is round inside its ring.
+  shape where the page draws it, and a picture that fills a container clipped
+  to an ellipse takes the ellipse's shape: a portrait is round inside its ring.
+  Any other outline is reported as dropped.
 - **`hangingIndent(true)` → the ordinary list form.** A list that opts
   into marker/content geometry exports exactly as one that did not: the
   same Word list, the same levels, the same markers. Nothing is lost —
@@ -553,11 +554,18 @@ layer stack, as a shape container's outline, or drawn by the layout itself, such
 timeline's rail — are **drawn as shapes**: each is a DrawingML shape anchored to the
 page, behind the text, at the place, size, fill and outline the layout gives it, and
 the report lists it as approximated. A shape stays where it is when the text around it
-is edited. It is anchored in a paragraph written on its page — the first, whether it
-was written before the shape or after. On a page no paragraph is written on, the last
-page gives it an empty paragraph a point tall, and an earlier page drops it and the
-report says so. The body's shapes
-stand above the page backgrounds, which LibreOffice stacks together with them.
+is edited. It is anchored at the start of the first paragraph written on its page,
+whether that was written before the shape or after — a table's row counts, on the page
+the layout put the row on. On a page no paragraph is written on, the last page gives it
+the paragraph closing the section, a point tall, and an earlier page drops it and the
+report says so. The body's shapes stand above the page backgrounds, which LibreOffice
+stacks together with them. Three limits, each named in the report:
+
+- A transform is not carried: a rotated or scaled shape is drawn upright at its size.
+- A shape inside a filled panel is written but hidden: a panel is a table cell, and both
+  editors paint a cell's shading over shapes behind the text.
+- A timeline's rail stands under every other shape on its page, where the page puts it
+  under the markers only; a filled card drawn under a timeline covers it.
 
 Paths, polygons and outlines other than an ellipse or a rectangle are **skipped**, and
 the report names each one. In the flow a drawn or skipped shape still takes its room:

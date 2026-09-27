@@ -12,12 +12,10 @@ import com.demcha.compose.engine.components.content.table.TableResolvedCell;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;
-import java.util.Set;
 import java.util.TreeSet;
 
 /**
@@ -54,7 +52,7 @@ final class DocxLayoutMetrics {
     // A table's measured cells by name, filled on first use — see cellLineHeightsOf.
     private final Map<DocumentNode, Map<String, Double>> cellLineHeights = new IdentityHashMap<>();
     // The rows of a table the layout placed, by index, filled on first use — see placedRowsOf.
-    private final Map<DocumentNode, Set<String>> placedRows = new IdentityHashMap<>();
+    private final Map<DocumentNode, Map<String, Integer>> placedRows = new IdentityHashMap<>();
 
     private DocxLayoutMetrics(Map<DocumentNode, String> paths,
                               Map<String, List<PlacedFragment>> fragments,
@@ -193,17 +191,29 @@ final class DocxLayoutMetrics {
      * @return true when the layout carries a placement for that row
      */
     boolean placedRow(DocumentNode table, int row) {
-        return placedRowsOf(table).contains(String.valueOf(row));
+        return placedRowsOf(table).containsKey(String.valueOf(row));
+    }
+
+    /**
+     * The page the layout placed one of a table's rows on, found as {@link #placedRow} finds it.
+     *
+     * @param table the table node
+     * @param row   the row's index in the table
+     * @return the page, counted within the section, or -1 when the row was not placed
+     */
+    int rowPage(DocumentNode table, int row) {
+        return placedRowsOf(table).getOrDefault(String.valueOf(row), -1);
     }
 
     /**
      * The index part of each placed row's name, kept as the text the layout wrote rather than
      * parsed: a row is looked up by writing its index the same way, so a name that only
-     * resembles the pattern matches nothing instead of failing the export.
+     * resembles the pattern matches nothing instead of failing the export. Each is kept with
+     * the page it was placed on.
      */
-    private Set<String> placedRowsOf(DocumentNode table) {
+    private Map<String, Integer> placedRowsOf(DocumentNode table) {
         return placedRows.computeIfAbsent(table, node -> {
-            Set<String> rows = new HashSet<>();
+            Map<String, Integer> rows = new HashMap<>();
             String prefix = (node.name() == null || node.name().isBlank()
                     ? node.nodeKind()
                     : node.name()) + "__row_";
@@ -213,7 +223,7 @@ final class DocxLayoutMetrics {
                         ? -1
                         : name.indexOf("__cell_", prefix.length());
                 if (end >= 0) {
-                    rows.add(name.substring(prefix.length(), end));
+                    rows.putIfAbsent(name.substring(prefix.length(), end), fragment.pageIndex());
                 }
             }
             return rows;

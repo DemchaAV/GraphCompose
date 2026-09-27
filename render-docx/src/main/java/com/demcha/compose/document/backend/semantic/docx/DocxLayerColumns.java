@@ -410,7 +410,8 @@ final class DocxLayerColumns {
         for (DocumentNode earlier : above) {
             bottom = lowestEdge(earlier, layout, written(standIns, moves, true), drawing, painted, null, bottom);
         }
-        DocumentNode first = firstLeaf(layer, layout, written(standIns, moves, false), drawing);
+        // A filled stand-in is where what fills it is written, so it counts as a first block.
+        DocumentNode first = firstLeaf(layer, layout, written(standIns, moves, true), drawing);
         if (Double.isNaN(bottom) || first == null) {
             return Double.NaN;
         }

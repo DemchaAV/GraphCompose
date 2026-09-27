@@ -212,9 +212,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private final java.util.Set<DocumentNode> standIns =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // What the stacks being written write in a stand-in's place instead (DocxLayerColumns.Moves),
-    // and whether such content is being written there now rather than skipped in its own layer.
+    // and the blocks being written there now rather than skipped in their own layer.
     private final List<DocxLayerColumns.Moves> moves = new ArrayList<>();
-    private boolean writingInAStandIn;
+    private final java.util.Set<DocumentNode> writingInAStandIn =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // The space above the next block, in points, in place of everything owed above it: set
     // when a column layer follows another in its cell, NaN otherwise.
     private double resumeSpacing = Double.NaN;
@@ -528,7 +529,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         currentPage = 0;
         clipContainer = null;
         moves.clear();
-        writingInAStandIn = false;
+        writingInAStandIn.clear();
         listNumbering.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
@@ -1100,7 +1101,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNode(XWPFDocument document, DocumentNode node) throws Exception {
-        if (!writingInAStandIn && movedIntoAStandIn(node)) {
+        if (!writingInAStandIn.contains(node) && movedIntoAStandIn(node)) {
             // Written already, in the place an earlier layer held for it.
             return;
         }
@@ -6082,10 +6083,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // The edges the panel writes between, as the page places them: each block is held in to
         // where its own layer put it, whatever that layer's padding was.
         double[] across = layout.parentContent(standIn);
-        boolean outer = writingInAStandIn;
         double outerLeft = insetLeft;
         double outerRight = insetRight;
-        writingInAStandIn = true;
+        // Only these blocks are let through: a stack nested in one still skips its own moved
+        // content, which it writes in its own stand-ins.
+        writingInAStandIn.addAll(contents);
         try {
             for (DocumentNode content : contents) {
                 com.demcha.compose.document.layout.PlacedNode placed = layout.placement(content);
@@ -6102,7 +6104,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 writeNode(document, content);
             }
         } finally {
-            writingInAStandIn = outer;
+            writingInAStandIn.removeAll(contents);
             insetLeft = outerLeft;
             insetRight = outerRight;
         }

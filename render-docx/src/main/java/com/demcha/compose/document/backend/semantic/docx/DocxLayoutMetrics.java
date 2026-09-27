@@ -625,19 +625,14 @@ final class DocxLayoutMetrics {
      *         parent was not placed
      */
     double[] insideParent(DocumentNode node) {
+        double[] content = parentContent(node);
+        if (content == null) {
+            return null;
+        }
         PlacedNode box = placedFor(node);
-        if (box == null || box.parentPath() == null) {
-            return null;
-        }
-        PlacedNode parent = placed.get(box.parentPath());
-        if (parent == null) {
-            return null;
-        }
-        double contentLeft = parent.placementX() + parent.padding().left();
-        double contentRight = parent.placementX() + parent.placementWidth() - parent.padding().right();
         return new double[]{
-                Math.max(0, box.placementX() - contentLeft),
-                Math.max(0, contentRight - (box.placementX() + box.placementWidth()))};
+                Math.max(0, box.placementX() - content[0]),
+                Math.max(0, content[1] - (box.placementX() + box.placementWidth()))};
     }
 
     /**

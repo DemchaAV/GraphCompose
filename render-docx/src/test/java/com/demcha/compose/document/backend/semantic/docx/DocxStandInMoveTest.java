@@ -94,6 +94,26 @@ class DocxStandInMoveTest {
     }
 
     @Test
+    void aBlockReachingPastTheStripAcrossStaysInItsOwnLayer() throws Exception {
+        // A strip as narrow as a short name, and a subtitle its own layer sets 10pt further in:
+        // the subtitle stands out of the strip on the page, and is not moved into it.
+        try (XWPFDocument document = export(false, 0, 20, "Name", false).document()) {
+            assertThat(cellHolding(document, "Name").getText()).doesNotContain("Subtitle");
+            assertThat(allText(document).split("Subtitle", -1)).as("written once").hasSize(2);
+        }
+    }
+
+    @Test
+    void twoBlocksInOneStandInAreWrittenInTheirOrderOnThePage() throws Exception {
+        try (XWPFDocument document = export(false, 30, 10, NAME, true).document()) {
+            assertThat(cellHolding(document, NAME).getParagraphs())
+                    .extracting(XWPFParagraph::getText)
+                    .filteredOn(text -> !text.isBlank())
+                    .containsExactly(NAME, "Subtitle", "Tagline");
+        }
+    }
+
+    @Test
     void aSubtitleSetInAChipMovesWithItsChip() throws Exception {
         try (XWPFDocument document = export(true).document()) {
             XWPFTableCell panel = cellHolding(document, NAME);
@@ -113,19 +133,25 @@ class DocxStandInMoveTest {
         return export(chip, 0, 10);
     }
 
+    private static Export export(boolean chip, double extra, double side) throws Exception {
+        return export(chip, extra, side, NAME, false);
+    }
+
     /**
      * Two columns: a sidebar, and a main column whose strip is drawn by two layers, the way
      * {@code ReadingOrderColumns} builds one. The first paints the strip with the name and a
      * stand-in under it, as tall as the subtitle plus {@code extra}; the second holds the name's
      * place with a spacer as tall as the name, then writes the subtitle, which lies inside the
      * stand-in, and after the strip, the body. The heights come from laying the strip out once.
+     * With {@code tagline}, a second line follows the subtitle, in the stand-in's extra height.
      */
-    private static Export export(boolean chip, double extra, double side) throws Exception {
+    private static Export export(boolean chip, double extra, double side, String nameText, boolean tagline)
+            throws Exception {
         double[] name = new double[2];
         double[] subtitle = new double[2];
         try (DocumentSession probe = session()) {
             probe.pageFlow(page -> page.addSection("Probe", strip -> strip.padding(DocumentInsets.of(10))
-                    .addParagraph(p -> p.name("Name").text(NAME).textStyle(TEXT))
+                    .addParagraph(p -> p.name("Name").text(nameText).textStyle(TEXT))
                     .addParagraph(p -> p.name("Subtitle").text("Subtitle").textStyle(TEXT))));
             for (PlacedNode node : probe.layoutGraph().nodes()) {
                 double[] box = "Name".equals(node.semanticName()) ? name
@@ -143,7 +169,7 @@ class DocxStandInMoveTest {
                     .layer(column("StripLayer", 100, 0, main -> main.addSection("Strip", strip -> strip
                             .fillColor(DocumentColor.rgb(240, 240, 236))
                             .padding(DocumentInsets.of(10))
-                            .addParagraph(p -> p.name("Name").text(NAME).textStyle(TEXT))
+                            .addParagraph(p -> p.name("Name").text(nameText).textStyle(TEXT))
                             .addSpacer(spacer -> spacer.name("SubtitlePlace")
                                     .width(subtitle[0]).height(subtitle[1] + extra)))),
                             LayerAlign.TOP_LEFT)
@@ -157,6 +183,9 @@ class DocxStandInMoveTest {
                                         .addParagraph(p -> p.name("Subtitle").text("Subtitle").textStyle(TEXT)));
                             } else {
                                 hero.addParagraph(p -> p.name("Subtitle").text("Subtitle").textStyle(TEXT));
+                            }
+                            if (tagline) {
+                                hero.addParagraph(p -> p.name("Tagline").text("Tagline").textStyle(TEXT));
                             }
                         });
                         main.addParagraph(p -> p.name("Body").text("Body").textStyle(TEXT));

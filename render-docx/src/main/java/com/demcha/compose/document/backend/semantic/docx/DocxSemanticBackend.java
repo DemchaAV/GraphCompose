@@ -221,6 +221,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // Identifiers for the shapes this export draws itself, kept clear of the ones POI numbers
     // its pictures with: a drawing's id has to be unique in the document.
     private long nextDrawingId;
+    // Where the shapes this export draws are anchored — see DocxDrawingAnchors.
+    private final DocxDrawingAnchors anchors = new DocxDrawingAnchors(() -> nextDrawingId++);
+    // The page the node being written starts on, as the layout placed it, counted within the
+    // section being written.
+    private int currentPage;
+    private int sectionIndex;
+    // The shape container being written that clips its content to its outline, null outside one.
+    private ShapeContainerNode clipContainer;
     // The text style the document is mostly written in, promoted to Word's Normal style.
     // Null until an export computes it, and when the graph carries no text at all.
     private DocumentTextStyle documentDefaultStyle;
@@ -512,6 +520,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         insetLeft = 0;
         insetRight = 0;
         nextDrawingId = 100_000;
+        anchors.reset();
+        currentPage = 0;
+        clipContainer = null;
         listNumbering.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
@@ -549,11 +560,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 if (applyPageBackgrounds(document, context.layoutGraph(), evenAndOdd)) {
                     earlierZones.add(DocumentHeaderFooterZone.HEADER);
                 }
+                // Drawing the layout paints in a pass of its own — a timeline's rail — belongs to
+                // no node, so it waits for the first paragraph on its page.
+                for (com.demcha.compose.document.layout.PlacedFragment pass : layout.passFragments()) {
+                    if (queueDrawing(pass)) {
+                        report.add(DocxExportReport.Severity.APPROXIMATED, "timeline rail", pass.path(),
+                                "drawn as a line anchored to the page where the layout puts it: it stays "
+                                + "there when the text around it is edited");
+                    }
+                }
                 for (DocumentNode root : section.graph().roots()) {
                     writeNode(document, root);
                 }
                 raiseRows();
-                dropTheSpaceAtTheEnd(document);
+                // The paragraph closing a section that ends with a table is also the one that
+                // carries the drawings nothing else on the last page carried.
+                reportDrawingsLeftOver(document, dropTheSpaceAtTheEnd(document));
             }
             if (deterministicTimestamp != null) {
                 DocxDeterminism.pinCoreProperties(document, deterministicTimestamp);
@@ -581,6 +603,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * spacing carried in from the section before it.
      */
     private void beginSection(SemanticSection section, int index) {
+        sectionIndex = index;
         SemanticExportContext context = section.context();
         layout = DocxLayoutMetrics.of(section.graph(), context.layoutGraph());
         if (layout.isEmpty()) {
@@ -1071,6 +1094,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNode(XWPFDocument document, DocumentNode node) throws Exception {
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(node);
+        if (placed != null) {
+            currentPage = placed.startPage();
+        }
         boolean keepTogether = node.keepTogether() && layout.onOnePage(node);
         boolean keepWithNext = node.keepWithNext() && layout.onOnePage(node);
         String anchor = blockAnchorOf(node, overlayDepth == 0);
@@ -1285,6 +1312,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             || node instanceof ShapeContainerNode) {
             DocxLinePair.Pair pair = DocxLinePair.of(node, layout);
             if (pair != null) {
+                // A pill's outline round its title and dates is drawn as writeShapeContainer draws it.
+                drawOutlineOf(node);
                 writeLinePair(document, node, pair);
                 return;
             }
@@ -1300,7 +1329,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (overlayDepth == 0
             && (node instanceof com.demcha.compose.document.node.LayerStackNode || node instanceof ShapeContainerNode)
             && onlyDrawing(node) && holdTheSpaceOf(node)) {
-            // Written for what it reports: none of it reaches the file.
+            // Its drawing is drawn and takes no room: the space held above is its room.
+            drawOutlineOf(node);
             overlayDepth++;
             try {
                 for (DocumentNode child : node.children()) {
@@ -1381,11 +1411,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // as a one-cell table carrying both, instead of disappearing.
             writeContainerChildren(document, node);
         } else {
-            // Geometry-only node kinds (line, ellipse, shape, path, polygon)
-            // have no semantic Word analogue. Warn once per kind so a
-            // dropped chart-line or icon is visible in the log instead of
-            // silently missing; authors needing pixel-perfect output use the
-            // PDF fixed-layout backend.
+            // Geometry-only node kinds (line, ellipse, shape, path, polygon) have no
+            // semantic Word analogue: what a shape can show is drawn where the page puts
+            // it, and the rest is warned about once per kind, so a dropped path or icon is
+            // visible in the log instead of silently missing.
             warnUnsupported(node);
             // In the flow it still takes its room; over something else it takes none.
             if (overlayDepth == 0 && isDrawing(node)) {
@@ -1395,19 +1424,102 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * One warning per dropped node kind, deduplicated across the export.
+     * Draws a node's drawing as shapes where the page puts it, or, when no shape can show it,
+     * drops it with one warning per kind, deduplicated across the export.
      *
      * <p>The report is told about every one of them, not one per kind: a caller asking
      * what the document lost wants the three charts it lost, and which three. The log is
      * the summary and the report is the record.</p>
      */
     private void warnUnsupported(DocumentNode node) {
+        if (drawOwnFragments(node)) {
+            return;
+        }
         if (warnedNodeKinds.add(node.nodeKind())) {
             LOG.warn("DocxSemanticBackend: dropping '{}' node(s) — geometry has no semantic "
                      + "Word analogue; use the PDF backend for pixel-perfect output", node.nodeKind());
         }
         report.add(DocxExportReport.Severity.DROPPED, node.nodeKind(), layout.pathOf(node),
                 "geometry has no semantic Word analogue, so it is not in the document at all");
+    }
+
+    /**
+     * Draws the shapes a node paints itself where the page puts them, anchored in a paragraph
+     * written on their page (see {@link DocxDrawings} and {@link DocxDrawingAnchors}).
+     *
+     * @return whether the node painted anything a shape shows
+     */
+    private boolean drawOwnFragments(DocumentNode node) {
+        boolean drew = false;
+        for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
+            drew |= queueDrawing(fragment);
+        }
+        if (drew) {
+            StringBuilder message = new StringBuilder("drawn as a shape anchored to the page where the "
+                    + "layout puts it: it stays there when the text around it is edited");
+            if (surfaceBehind != null) {
+                message.append("; the panel's shading is painted over shapes behind the text, so "
+                        + "the editors hide it");
+            }
+            com.demcha.compose.document.style.DocumentTransform transform = transformOf(node);
+            if (transform != null && !transform.isIdentity()) {
+                message.append("; its transform is not carried, so it is drawn upright at its size");
+            }
+            report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
+                    message.toString());
+        }
+        return drew;
+    }
+
+    /**
+     * Draws the outline a shape container paints round its layers, or reports it lost when no
+     * shape shows it — a path, a polygon, a star.
+     */
+    private void drawOutlineOf(DocumentNode node) {
+        if (!drawOwnFragments(node) && node instanceof ShapeContainerNode container
+            && (container.fillColor() != null || container.stroke() != null)) {
+            report.add(DocxExportReport.Severity.DROPPED, "shape container outline", layout.pathOf(node),
+                    "a " + container.outline().getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT)
+                    + " outline has no shape this export draws, so it is not in the document");
+        }
+    }
+
+    private static com.demcha.compose.document.style.DocumentTransform transformOf(DocumentNode node) {
+        if (node instanceof com.demcha.compose.document.node.ShapeNode shape) {
+            return shape.transform();
+        }
+        if (node instanceof com.demcha.compose.document.node.EllipseNode ellipse) {
+            return ellipse.transform();
+        }
+        if (node instanceof com.demcha.compose.document.node.LineNode line) {
+            return line.transform();
+        }
+        return node instanceof ShapeContainerNode container ? container.transform() : null;
+    }
+
+    private boolean queueDrawing(com.demcha.compose.document.layout.PlacedFragment fragment) {
+        if (Double.isNaN(canvasHeight)) {
+            return false;
+        }
+        List<DocxDrawings.Shape> shapes = DocxDrawings.of(fragment, canvasHeight);
+        anchors.queue(shapes);
+        return !shapes.isEmpty();
+    }
+
+    /**
+     * Anchors the drawings no paragraph on their page carried: in the paragraph closing the
+     * section, or one of their own a point tall, when their page is the section's last — where
+     * a paragraph at the end still lands. Any on an earlier page are reported.
+     *
+     * @param closer the paragraph closing a section that ends with a table, or null
+     */
+    private void reportDrawingsLeftOver(XWPFDocument document, XWPFParagraph closer) {
+        int lastPage = Math.max(0, layout.pageCount() - 1);
+        java.util.Map<Integer, Integer> dropped = anchors.endSection(lastPage,
+                () -> closer != null ? closer : collapsed(document.createParagraph()));
+        dropped.forEach((page, count) -> report.add(DocxExportReport.Severity.DROPPED, "drawing",
+                (sectioned ? "section " + (sectionIndex + 1) + ", " : "") + "page " + (page + 1),
+                count + " shape(s) on a page no paragraph was written on, so nothing carries them"));
     }
 
     /**
@@ -2602,6 +2714,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
         lastBodyParagraph = para;
+        anchors.paragraphOn(currentPage, para);
         return para;
     }
 
@@ -2617,8 +2730,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * last line of each cell in the last row of a table the section ends with, and of the
      * tables such a cell ends with in turn — unless the cell is painted or has a bottom edge
      * drawn, where that space is part of the box the reader sees.</p>
+     *
+     * @return the paragraph written to close a section that ends with a table, or null
      */
-    private void dropTheSpaceAtTheEnd(XWPFDocument document) {
+    private XWPFParagraph dropTheSpaceAtTheEnd(XWPFDocument document) {
         pendingSpacingAfter = 0;
         carriedSpacingBefore = 0;
         List<IBodyElement> body = document.getBodyElements();
@@ -2627,8 +2742,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // Word cannot end a section with a table: it puts a paragraph of its own after it,
             // a line of the document's text tall, and one that finds no room under a table
             // reaching the page's foot opens a blank page. This one is a point tall.
-            collapsed(document.createParagraph());
+            return collapsed(document.createParagraph());
         }
+        return null;
     }
 
     /** Leaves out the space below the last line of each cell of a table's last row that shows none of it. */
@@ -2906,7 +3022,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * out of the band — a title the page pulls up to centre it on a marker smaller than its
      * line — takes that much back from the gaps on either side, as it does on the page. A
      * tab stop is measured from the text area, not from the paragraph's indent. Drawing among
-     * the layers is not written, as in any overlay, and is reported the same way.</p>
+     * the layers is drawn as shapes where the page puts it, as in any overlay.</p>
      */
     private void writeLinePair(XWPFDocument document, DocumentNode overlay, DocxLinePair.Pair pair)
             throws Exception {
@@ -2970,17 +3086,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // POI/DOCX has no portable equivalent of a graphics-state path clip.
         // The fallback rule (recorded in docs/canonical-legacy-parity.md) is
         // to render the container's layers inline, in source order, without
-        // the outline frame and without clipping. The resulting Word document
-        // shows the layer content but not the shape boundary — authors who
-        // need the boundary must export to PDF.
+        // clipping; a picture clipped to an ellipse takes the ellipse's shape.
         report.add(DocxExportReport.Severity.APPROXIMATED, "clipped shape container",
                 layout.pathOf(node),
                 "DOCX has no graphics-state clip, so the layers are written inline, in source "
-                + "order, without the outline and without being clipped to it");
+                + "order, without being clipped to the outline");
+        // The outline itself is drawing — a badge's circle, a ring round a portrait — and is
+        // drawn where the page draws it, behind the layers now held in to where it sets them.
+        drawOutlineOf(node);
         if (shapeContainerWarned.compareAndSet(false, true)) {
             LOG.warn("docx.export.shape-container-fallback "
                     + "outline='{}' clipPolicy={} — DOCX has no graphics-state clip; "
-                    + "rendering layers inline without outline. "
+                    + "rendering layers inline without clipping. "
                     + "(One warning per export; use the PDF backend for full fidelity.)",
                     node.outline().getClass().getSimpleName(),
                     node.clipPolicy());
@@ -2990,6 +3107,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Its layers are measured from inside its own edges, as a band's are.
         double innerLeft = insetLeft + node.margin().left() + node.padding().left();
         double innerRight = insetRight + node.margin().right() + node.padding().right();
+        ShapeContainerNode outerClip = clipContainer;
+        if (node.clipPolicy() == com.demcha.compose.document.style.ClipPolicy.CLIP_PATH) {
+            clipContainer = node;
+        }
         try {
             for (DocumentNode child : node.children()) {
                 insetLeft = innerLeft;
@@ -3000,6 +3121,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } finally {
             insetLeft = outerLeft;
             insetRight = outerRight;
+            clipContainer = outerClip;
         }
     }
 
@@ -3860,7 +3982,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (fitMode == DocumentImageFitMode.COVER) {
                 applyCoverCrop(picture, sourceWidth, sourceHeight, box);
             }
+            // A portrait clipped to a circle: the picture takes the circle's shape, which both
+            // editors crop it to, instead of standing square over the ring drawn round it.
+            if (fillsItsEllipse(node) && picture.getCTPicture().getSpPr().isSetPrstGeom()) {
+                picture.getCTPicture().getSpPr().getPrstGeom()
+                        .setPrst(org.openxmlformats.schemas.drawingml.x2006.main.STShapeType.ELLIPSE);
+            }
         }
+    }
+
+    /**
+     * Whether a picture is what the shape container being written clips to an ellipse, filling
+     * it: the ellipse inscribed in the picture's box is then the one the page clips it to. A
+     * logo smaller than its round badge stands whole inside the circle, and stays square.
+     */
+    private boolean fillsItsEllipse(ImageNode image) {
+        if (clipContainer == null
+            || !(clipContainer.outline() instanceof com.demcha.compose.document.style.ShapeOutline.Ellipse)) {
+            return false;
+        }
+        com.demcha.compose.document.layout.PlacedNode clip = layout.placement(clipContainer);
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(image);
+        if (clip == null || placed == null) {
+            return false;
+        }
+        double tolerance = 1;
+        return Math.abs(placed.placementX() - clip.placementX()) <= tolerance
+               && Math.abs(placed.placementY() - clip.placementY()) <= tolerance
+               && Math.abs(placed.placementWidth() - clip.placementWidth()) <= tolerance
+               && Math.abs(placed.placementHeight() - clip.placementHeight()) <= tolerance;
     }
 
     /**
@@ -4173,6 +4323,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         breakRowsWhereTheLayoutDoes(table, node);
         indentTable(table);
+        carryDrawingsInRows(table, node);
+    }
+
+    /**
+     * Offers each row's first paragraph to the drawings of the page the layout put the row on:
+     * a page a long table fills holds no other paragraph to anchor them in.
+     */
+    private void carryDrawingsInRows(XWPFTable table, TableNode node) {
+        for (int index = 0; index < table.getRows().size(); index++) {
+            int page = layout.rowPage(node, index);
+            if (page < 0) {
+                continue;
+            }
+            for (XWPFTableCell cell : table.getRow(index).getTableCells()) {
+                if (!cell.getParagraphs().isEmpty()) {
+                    anchors.paragraphOn(page, cell.getParagraphs().get(0));
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -4730,7 +4900,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * distance from the last block to the stack's bottom. Each replaces what the containers
      * in between would have carried, which on the page is space the other layers already
      * take. A later layer that follows only layers that wrote nothing keeps the space the
-     * stack opened with. Drawing among the layers is not written, as in any overlay.</p>
+     * stack opened with. Drawing among the layers is drawn as shapes, as in any overlay, and
+     * writes no paragraph.</p>
      */
     private void writeOverlayBand(XWPFDocument document,
                                   com.demcha.compose.document.node.LayerStackNode stack,
@@ -4835,10 +5006,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Keeps the place of a block this export does not write, as the space it takes on the page.
+     * Keeps the place of a block this export writes no paragraph for, as the space it takes on
+     * the page.
      *
-     * <p>A portrait drawn as paths, a badge's ring, a decorative shape: none of it reaches the
-     * file, and neither did the room it takes, so everything under it moved up by its height —
+     * <p>A portrait drawn as paths, a badge's ring, a decorative shape: at most a shape anchored
+     * to the page, which takes no room in the text, and the room it took on the page was not
+     * kept, so everything under it moved up by its height —
      * a sidebar opening with a 98pt portrait started its contact lines 98pt high. Its placed
      * height and its margins are owed as space below whatever came before, where the next
      * block written takes them.</p>

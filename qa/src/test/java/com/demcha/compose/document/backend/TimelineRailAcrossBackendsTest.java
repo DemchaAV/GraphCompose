@@ -31,10 +31,9 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  *       payload is the one a section's own decoration already uses, so no handler had to
  *       be invented — which is exactly what this checks, since a payload no backend knows
  *       fails at export rather than at layout.</li>
- *   <li><b>DOCX</b> is semantic: {@code DocxSemanticBackend} never sees a layout graph, so
- *       it cannot see the rail. The contract is that the timeline's <em>content</em> still
- *       exports, that the export does not throw, and that the omission is written down —
- *       not that a warning is raised, which this architecture cannot produce.</li>
+ *   <li><b>DOCX</b> is semantic: {@code DocxSemanticBackend} walks the tree, where the rail
+ *       is not, and reads the rail from the resolved layout it is handed, drawing it as a
+ *       shape anchored to the page. The timeline's <em>content</em> exports as text.</li>
  * </ul>
  */
 class TimelineRailAcrossBackendsTest {
@@ -68,16 +67,22 @@ class TimelineRailAcrossBackendsTest {
     }
 
     @Test
-    void docxExportsTheTimelinesContentWithoutTheRailAndWithoutThrowing() throws Exception {
-        // The documented contract, asserted rather than described. DOCX walks the semantic
-        // tree; the rail is not in it, so the rail is absent by construction — and the
-        // entries' text has to be there all the same.
+    void docxExportsTheTimelinesContentAndDrawsTheRail() throws Exception {
+        // DOCX walks the semantic tree, where the rail is not; it reads the rail from the
+        // resolved layout instead and draws it as a line anchored to the page.
         try (DocumentSession session = timeline()) {
             assertThat(docxText(session))
                     .as("every entry's content survives the export")
                     .contains("Senior Engineer")
                     .contains("Engineer")
                     .contains("Led the layout engine rewrite.");
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                    session.export(new DocxSemanticBackend())))) {
+                assertThat(document.getDocument().xmlText())
+                        .as("the rail, a line in the rail's colour")
+                        .contains("prst=\"line\"")
+                        .contains("srgbClr val=\"969EAC\"");
+            }
         }
     }
 
@@ -122,7 +127,7 @@ class TimelineRailAcrossBackendsTest {
     private static String docxText(DocumentSession session) {
         byte[][] out = new byte[1][];
         assertThatCode(() -> out[0] = session.export(new DocxSemanticBackend()))
-                .as("a rail the semantic backend cannot see must not fail the export")
+                .as("a timeline must not fail the export")
                 .doesNotThrowAnyException();
         assertThat(out[0]).isNotEmpty();
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(out[0]));

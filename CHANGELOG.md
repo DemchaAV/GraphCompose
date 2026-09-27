@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Drawing reaches Word as shapes where the page draws them.** Ellipses, rectangles, rounded
+  bars, vertical and slanted lines, a timeline's rail and the ring of a monogram or a portrait
+  were missing from the DOCX export. Each is now a DrawingML shape anchored to the page,
+  behind the text, at the place, size, fill and outline the layout gives it, in a paragraph
+  written on its page — a table's row counts, on the page the layout put the row on; on a
+  last page no paragraph is written on, the paragraph closing the section carries it. It
+  stays where it is when the text around it is edited, and the export report lists it as
+  approximated. A transform is not carried, and the report says so. A picture that fills a
+  shape container clipped to an ellipse takes the ellipse's shape, so a portrait is round
+  inside its ring. Paths, polygons and outlines other than an ellipse or a rectangle are
+  still dropped and reported. A shape inside a filled panel is written but hidden: the
+  editors paint a cell's shading over shapes behind the text, and the report says so. Page
+  backgrounds are stacked below the body's shapes: LibreOffice stacks a header's shapes and
+  the body's together, and a column's fill hid what the body drew over it. Measured in LibreOffice:
+  `SlateOrange`'s monogram block and column rules, `CharcoalGold`'s timeline rail, markers and
+  portrait ring, `NavySidebar`'s round portrait and `MonogramSidebar`'s ring are drawn as on
+  the page.
+
 - **Layers laid over each other stand across where the page puts them.** The layers of an
   overlay — a layer stack written as one band, the layers of a shape container — were written
   one after the other, each from the stack's left edge to its right. Initials the page centres

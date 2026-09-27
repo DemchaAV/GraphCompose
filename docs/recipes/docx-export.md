@@ -488,8 +488,8 @@ tint it was flattened to. Recorded, like the other two.
   in it, over a spacer that keeps its place in the flow — writes its initials where
   the ring centres them and keeps its height below them. Each layer, here and in a
   shape container, is held in across to its box in the stack, with a few points to
-  spare on the side its text does not lean on. Drawing is not written and does not
-  count as content.
+  spare on the side its text does not lean on. Drawing is drawn as a shape where the
+  page draws it (see "What is skipped") and does not count as content.
 - **Text at the left and the right of one band → one line with a right tab.** A
   container or a layer stack holding exactly two single-line paragraphs, level with
   one another and apart across the page — a CV entry's title and its dates — is one
@@ -502,11 +502,14 @@ tint it was flattened to. Recorded, like the other two.
   or framed — lifts the table out of the gap above it, as far as that gap goes, and the
   row's other cells start that much lower inside. Each paragraph
   keeps its bookmark and outline level. Two texts closer than 4pt stay one after the
-  other. Drawing in the band is not written.
+  other. Drawing in the band is drawn as shapes where the page draws it.
 - **Shape containers → inline layers.** DOCX has no portable equivalent
   of a graphics-state path clip, so the container's layers are written
-  inline, in source order, without the outline frame and without clipping
-  — again with one warning per export.
+  inline, in source order, without clipping — again with one warning per
+  export. The outline, when it is an ellipse or a rectangle, is drawn as a
+  shape where the page draws it, and a picture that fills a container clipped
+  to an ellipse takes the ellipse's shape: a portrait is round inside its ring.
+  Any other outline is reported as dropped.
 - **`hangingIndent(true)` → the ordinary list form.** A list that opts
   into marker/content geometry exports exactly as one that did not: the
   same Word list, the same levels, the same markers. Nothing is lost —
@@ -537,7 +540,7 @@ flattened against what lies under it, since a border is opaque. Three limits:
 
 - A line laid over something else — a layer in a layer stack or a canvas, such as
   a skill meter's track and the fill over it — is not a rule in the flow, and is
-  dropped and reported like other drawing.
+  drawn as a shape like other drawing.
 - A rule in a page zone is not written, as a zone takes paragraphs, fields and
   spacers.
 - Word draws one border for consecutive paragraphs whose borders and indents are
@@ -546,9 +549,26 @@ flattened against what lies under it, since a border is opaque. Three limits:
 
 The placement was measured in LibreOffice; Word has not been measured yet.
 
-Vertical and slanted lines, ellipses and other standalone shapes are
-**skipped**, and the report names each one — they are pure fixed-layout
-geometry with no semantic equivalent. In the flow such a shape still takes its room:
+Vertical and slanted lines, ellipses, rectangles and rounded bars — standalone, in a
+layer stack, as a shape container's outline, or drawn by the layout itself, such as a
+timeline's rail — are **drawn as shapes**: each is a DrawingML shape anchored to the
+page, behind the text, at the place, size, fill and outline the layout gives it, and
+the report lists it as approximated. A shape stays where it is when the text around it
+is edited. It is anchored at the start of the first paragraph written on its page,
+whether that was written before the shape or after — a table's row counts, on the page
+the layout put the row on. On a page no paragraph is written on, the last page gives it
+the paragraph closing the section, a point tall, and an earlier page drops it and the
+report says so. The body's shapes stand above the page backgrounds, which LibreOffice
+stacks together with them. Three limits, each named in the report:
+
+- A transform is not carried: a rotated or scaled shape is drawn upright at its size.
+- A shape inside a filled panel is written but hidden: a panel is a table cell, and both
+  editors paint a cell's shading over shapes behind the text.
+- A timeline's rail stands under every other shape on its page, where the page puts it
+  under the markers only; a filled card drawn under a timeline covers it.
+
+Paths, polygons and outlines other than an ellipse or a rectangle are **skipped**, and
+the report names each one. In the flow a drawn or skipped shape still takes its room:
 its placed height and margins are owed as space above what follows, and so are
 those of a layer stack or shape container holding only drawing, counted once
 however deeply it is nested. A cell holding nothing else keeps that space on a

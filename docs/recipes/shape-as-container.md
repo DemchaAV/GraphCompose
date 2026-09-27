@@ -127,10 +127,13 @@ session.layoutGraph();              // → AtomicNodeTooLargeException
 ### DOCX export
 
 Apache POI cannot express a graphics-state path clip, so the
-`DocxSemanticBackend` renders the container's *layers* inline without the
-outline frame and without clipping, and logs a one-time
-`docx.export.shape-container-fallback` capability warning per export
-pass. Authors who need the outline must export to PDF.
+`DocxSemanticBackend` renders the container's *layers* inline without
+clipping, and logs a one-time `docx.export.shape-container-fallback`
+capability warning per export pass. An elliptical or rectangular outline
+is drawn as a shape anchored to the page where the page draws it, and a
+picture that fills a container clipped to an ellipse takes the ellipse's
+shape. Other outlines are not drawn and are reported; authors who need
+them must export to PDF.
 
 This is documented in [canonical-legacy-parity.md](../architecture/canonical-legacy-parity.md)
 under the "Surfaces and structure" section.

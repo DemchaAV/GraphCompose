@@ -71,6 +71,19 @@ final class DocxPageBackgrounds {
     }
 
     /**
+     * Where a fill stands among the page's: 1024 apart, and below every drawing of the body
+     * (see {@link DocxDrawings#stackHeight(int)}). Word paints a header under the body
+     * whatever the heights; LibreOffice stacks the two together by them, and reads heights as
+     * close as 1 and 2 as one place, painting a later fill under an earlier one.
+     *
+     * @param order the fill's place among the page's: a later one is drawn over an earlier one
+     * @return the value for {@code wp:anchor/@relativeHeight}
+     */
+    static long stackHeight(int order) {
+        return (order + 1L) * 1024L;
+    }
+
+    /**
      * A fill as a drawing anchored to the page, behind the text.
      *
      * @param fill  the fill
@@ -93,7 +106,7 @@ final class DocxPageBackgrounds {
                 + " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\""
                 + " xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
                 + "<wp:anchor distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" simplePos=\"0\""
-                + " relativeHeight=\"" + (order + 1) + "\" behindDoc=\"1\" locked=\"1\""
+                + " relativeHeight=\"" + stackHeight(order) + "\" behindDoc=\"1\" locked=\"1\""
                 + " layoutInCell=\"1\" allowOverlap=\"1\">"
                 + "<wp:simplePos x=\"0\" y=\"0\"/>"
                 + "<wp:positionH relativeFrom=\"page\"><wp:posOffset>" + x + "</wp:posOffset></wp:positionH>"

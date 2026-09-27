@@ -26,6 +26,12 @@ follow semantic versioning; release dates are ISO 8601.
   portrait ring, `NavySidebar`'s round portrait and `MonogramSidebar`'s ring are drawn as on
   the page.
 
+- **A block set in an alignment stands where the alignment puts it.** `addAligned(...)` was
+  written as if it were not there, so its block started at the left edge of the width it is
+  set in: `CharcoalGold`'s portrait, centred in the sidebar, stood 15.5pt left of the ring
+  drawn round it. The block is now held in to the box the layout places it in, as a layer in
+  a stack is. Measured in LibreOffice: the portrait stands in its ring; no other preset moves.
+
 - **Layers laid over each other stand across where the page puts them.** The layers of an
   overlay — a layer stack written as one band, the layers of a shape container — were written
   one after the other, each from the stack's left edge to its right. Initials the page centres

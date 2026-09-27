@@ -2300,6 +2300,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double outerRight = insetRight;
         insetLeft += node.margin().left() + node.padding().left();
         insetRight += node.margin().right() + node.padding().right();
+        // An alignment's child is narrower than the width it is set in, and stands where the
+        // alignment puts it: a portrait centred in a sidebar stood at the sidebar's left edge.
+        if (node instanceof com.demcha.compose.document.node.AlignNode align) {
+            placeAcross(align, align.child());
+        }
         try {
             writeChildren(document, node.children(), spacingOf(node));
         } finally {

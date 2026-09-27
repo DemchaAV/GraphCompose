@@ -489,7 +489,8 @@ tint it was flattened to. Recorded, like the other two.
   in it, over a spacer that keeps its place in the flow — writes its initials where
   the ring centres them and keeps its height below them. Each layer, here and in a
   shape container, is held in across to its box in the stack, with a few points to
-  spare on the side its text does not lean on. Drawing is drawn as a shape where the
+  spare on the side its text does not lean on. A block in `addAligned(...)` is held in
+  the same way, to where the alignment puts it. Drawing is drawn as a shape where the
   page draws it (see "What is skipped") and does not count as content.
 - **Text at the left and the right of one band → one line with a right tab.** A
   container or a layer stack holding exactly two single-line paragraphs, level with

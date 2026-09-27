@@ -199,6 +199,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private double hangingBelow;
     private XWPFParagraph hangingOver;
     private double hangingOverBy;
+
+    /**
+     * The tables whose first row text stands above, by cell — see {@link #standsAboveItsCell}.
+     * In the order they were written, so the output does not depend on hash order; neither
+     * POI type defines equality, so the maps key on identity.
+     */
+    private final java.util.Map<XWPFTable, java.util.Map<XWPFTableCell, Double>> raisedRows =
+            new java.util.LinkedHashMap<>();
     // The spacers that keep the place of another column layer's content, left out while the
     // layer stack they sit in is written as columns (DocxLayerColumns).
     private final java.util.Set<DocumentNode> standIns =
@@ -500,6 +508,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         surfaceBehind = null;
         overlayDepth = 0;
         forgetTheHang();
+        raisedRows.clear();
         insetLeft = 0;
         insetRight = 0;
         nextDrawingId = 100_000;
@@ -543,6 +552,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 for (DocumentNode root : section.graph().roots()) {
                     writeNode(document, root);
                 }
+                raiseRows();
                 dropTheSpaceAtTheEnd(document);
             }
             if (deterministicTimestamp != null) {
@@ -2666,11 +2676,102 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Gives back space already owed above the next block, most recent first: text standing
      * above its band took it on the page.
+     *
+     * @return what the space owed could not give, in points
      */
-    private void takeBackSpaceAbove(double points) {
+    private double takeBackSpaceAbove(double points) {
         double fromOwed = Math.min(pendingSpacingAfter, points);
         pendingSpacingAfter -= fromOwed;
-        carriedSpacingBefore = Math.max(0, carriedSpacingBefore - (points - fromOwed));
+        double fromCarried = Math.min(carriedSpacingBefore, points - fromOwed);
+        carriedSpacingBefore -= fromCarried;
+        return points - fromOwed - fromCarried;
+    }
+
+    /**
+     * Notes that text opening a cell of a table's first row stands above the cell on the page,
+     * by {@code points}, for {@link #raiseRows} to lift the row once the table is written.
+     *
+     * <p>A Word paragraph cannot reach above the top of its cell. A CV entry laid out as a row
+     * — a timeline marker beside the entry — raises its title out of its band to centre it on
+     * the marker, so the title stood that much lower in Word, and every entry after it lower
+     * again.</p>
+     */
+    private void standsAboveItsCell(double points) {
+        if (!(points > 0) || currentCell == null || !currentCell.getBodyElements().isEmpty()) {
+            return;
+        }
+        // A padded cell — a card's — has the room above its text inside it, and the page takes
+        // the text up into that padding while the box stays where it is: so does the cell.
+        CTTcPr cellProperties = currentCell.getCTTc().isSetTcPr() ? currentCell.getCTTc().getTcPr() : null;
+        if (cellProperties != null && cellProperties.isSetTcMar() && cellProperties.getTcMar().isSetTop()) {
+            var top = cellProperties.getTcMar().getTop();
+            long padding = twipsOf(top.getW());
+            long taken = Math.min(padding, toTwips(points));
+            if (taken > 0) {
+                top.setW(BigInteger.valueOf(padding - taken));
+                points -= taken / POINT_TO_TWIP;
+            }
+        }
+        // A painted or framed cell is a box on the page, and the box does not move for the
+        // text in it: what its padding cannot take stays low rather than lift the box.
+        if (!(points > 0.01) || cellProperties != null && (cellProperties.isSetShd()
+                || cellProperties.isSetTcBorders() && drawn(cellProperties.getTcBorders().getTop()))) {
+            return;
+        }
+        XWPFTableRow row = currentCell.getTableRow();
+        XWPFTable table = row.getTable();
+        if (table.getRow(0) != row) {
+            return;
+        }
+        raisedRows.computeIfAbsent(table, key -> new java.util.LinkedHashMap<>())
+                .merge(currentCell, points, Math::max);
+    }
+
+    /**
+     * Lifts each noted table's first row by what its highest text stands above it, as far as
+     * the gap above the table allows: that gap is held by the paragraph just before the table —
+     * below it, or above it when it is an empty separator, as between two tables. Every other
+     * cell of the row then starts that much lower inside, and the cell whose text stood out
+     * by less than the lift starts lower by the difference.
+     */
+    private void raiseRows() {
+        for (java.util.Map.Entry<XWPFTable, java.util.Map<XWPFTableCell, Double>> noted : raisedRows.entrySet()) {
+            XWPFTable table = noted.getKey();
+            List<IBodyElement> around = table.getBody().getBodyElements();
+            int index = around.indexOf(table);
+            if (index <= 0 || !(around.get(index - 1) instanceof XWPFParagraph above)) {
+                continue;
+            }
+            CTPPr properties = above.getCTP().getPPr();
+            if (properties == null || !properties.isSetSpacing()) {
+                continue;
+            }
+            CTSpacing gap = properties.getSpacing();
+            long after = gap.isSetAfter() ? twipsOf(gap.getAfter()) : 0;
+            // An empty paragraph between two blocks is a separator, except a rule: its space
+            // above is where the page draws the line.
+            boolean separator = above.getText().isEmpty() && !properties.isSetPBdr();
+            long before = separator && gap.isSetBefore() ? twipsOf(gap.getBefore()) : 0;
+            long lift = Math.min(after + before, toTwips(java.util.Collections.max(noted.getValue().values())));
+            if (lift <= 0) {
+                continue;
+            }
+            long fromAfter = Math.min(after, lift);
+            if (fromAfter > 0) {
+                gap.setAfter(BigInteger.valueOf(after - fromAfter));
+            }
+            if (lift > fromAfter) {
+                gap.setBefore(BigInteger.valueOf(before - (lift - fromAfter)));
+            }
+            for (XWPFTableCell cell : table.getRow(0).getTableCells()) {
+                long own = Math.min(lift, toTwips(noted.getValue().getOrDefault(cell, 0.0)));
+                if (lift - own > 0 && !cell.getBodyElements().isEmpty()
+                    && cell.getBodyElements().get(0) instanceof XWPFParagraph first) {
+                    addSpacing(first, (lift - own) / POINT_TO_TWIP, 0);
+                }
+            }
+        }
+        raisedRows.clear();
     }
 
     /**
@@ -2814,7 +2915,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (above >= 0) {
             carriedSpacingBefore += above;
         } else {
-            takeBackSpaceAbove(-above);
+            standsAboveItsCell(takeBackSpaceAbove(-above));
         }
         double outerLeft = insetLeft;
         double lineStart = outerLeft + overlay.margin().left();

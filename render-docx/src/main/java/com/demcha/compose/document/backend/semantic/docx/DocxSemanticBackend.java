@@ -3439,7 +3439,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>A paragraph whose pictures stay within its text keeps its exact height. One holding a
      * picture that rises above the text is written with its lines <em>at least</em> the
-     * height the picture reaches instead: the editor then grows the line to the picture rather
+     * height the picture reaches where Word puts it instead: the editor then grows the line to
+     * the picture rather
      * than clip it, whichever editor it is and wherever it puts its baseline, and where the
      * picture fits the line is the page's. What that costs: Word has one line height for a
      * paragraph, so every line of it is then at least the picture's reach, and otherwise the
@@ -3626,10 +3627,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                com.demcha.compose.document.layout.payloads.ParagraphLine line,
                                double inset) {
             double descent = line.baselineOffsetFromBottom();
-            // Word's placement, and LibreOffice's on the baseline.
-            double top = Math.max(bottomFromBaseline + height, height) - inset;
+            // Word's placement, and LibreOffice's on the baseline. Either one passing the text
+            // makes the line "at least": the editor then grows it to what it placed. The height
+            // asked for is Word's, where the picture is where the page puts it; asking for
+            // LibreOffice's made every such line taller than the page in Word as well.
+            double wordTop = bottomFromBaseline + height - inset;
+            double top = Math.max(wordTop, height - inset);
             boolean passes = top > line.textAscent() || -(bottomFromBaseline + inset) > descent;
-            return new PictureReach(descent + top, passes);
+            return new PictureReach(descent + wordTop, passes);
         }
 
         PictureReach max(PictureReach other) {

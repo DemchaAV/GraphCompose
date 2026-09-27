@@ -257,12 +257,13 @@ class DocxInlinePictureTest {
         ParagraphLine line = new ParagraphLine("x", 10, 14, 12, 9, 2, List.of(), List.of());
 
         // Lowered 2pt, an 8pt picture tops out at 6pt in Word and at 8pt on LibreOffice's
-        // baseline: within the ascent either way, reaching 2 + 8.
+        // baseline: within the ascent either way. The line asks for Word's reach, 2 + 6.
         assertThat(DocxSemanticBackend.PictureReach.of(-2, 8, line))
-                .isEqualTo(new DocxSemanticBackend.PictureReach(10, false));
-        // A 10pt one tops out at 8pt in Word, inside, but at 10pt on the baseline, outside.
+                .isEqualTo(new DocxSemanticBackend.PictureReach(8, false));
+        // A 10pt one tops out at 8pt in Word, inside, but at 10pt on the baseline, outside: the
+        // line is "at least" Word's 2 + 8, and LibreOffice grows it to its own placement.
         assertThat(DocxSemanticBackend.PictureReach.of(-2, 10, line))
-                .isEqualTo(new DocxSemanticBackend.PictureReach(12, true));
+                .isEqualTo(new DocxSemanticBackend.PictureReach(10, true));
         // A 14pt one is outside in both.
         assertThat(DocxSemanticBackend.PictureReach.of(-2, 14, line).overText()).isTrue();
         // One lowered 4pt hangs past the 2pt descent in Word.

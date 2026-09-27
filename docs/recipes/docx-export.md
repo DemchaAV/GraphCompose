@@ -486,8 +486,10 @@ tint it was flattened to. Recorded, like the other two.
   page's distance from the stack's edges, and a later layer resumes the page's
   distance below the blocks above it. A badge — a ring, drawn, with initials centred
   in it, over a spacer that keeps its place in the flow — writes its initials where
-  the ring centres them and keeps its height below them. Drawing is not written and
-  does not count as content.
+  the ring centres them and keeps its height below them. Each layer, here and in a
+  shape container, is held in across to its box in the stack, with a few points to
+  spare on the side its text does not lean on. Drawing is not written and does not
+  count as content.
 - **Text at the left and the right of one band → one line with a right tab.** A
   container or a layer stack holding exactly two single-line paragraphs, level with
   one another and apart across the page — a CV entry's title and its dates — is one

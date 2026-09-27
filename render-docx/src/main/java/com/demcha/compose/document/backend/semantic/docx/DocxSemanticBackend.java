@@ -2985,8 +2985,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     node.outline().getClass().getSimpleName(),
                     node.clipPolicy());
         }
-        for (DocumentNode child : node.children()) {
-            writeNode(document, child);
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
+        // Its layers are measured from inside its own edges, as a band's are.
+        double innerLeft = insetLeft + node.margin().left() + node.padding().left();
+        double innerRight = insetRight + node.margin().right() + node.padding().right();
+        try {
+            for (DocumentNode child : node.children()) {
+                insetLeft = innerLeft;
+                insetRight = innerRight;
+                placeAcross(node, child);
+                writeNode(document, child);
+            }
+        } finally {
+            insetLeft = outerLeft;
+            insetRight = outerRight;
         }
     }
 
@@ -4744,7 +4757,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     carriedSpacingBefore = 0;
                     resumeSpacing = resume;
                 }
-                writeNode(document, layers.get(index));
+                double bandLeft = insetLeft;
+                double bandRight = insetRight;
+                placeAcross(stack, layers.get(index));
+                try {
+                    writeNode(document, layers.get(index));
+                } finally {
+                    insetLeft = bandLeft;
+                    insetRight = bandRight;
+                }
             }
         } finally {
             overlayDepth--;
@@ -4757,6 +4778,47 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         resumeSpacing = Double.NaN;
         carriedSpacingBefore = 0;
         pendingSpacingAfter = unwritten + band.below() + stack.margin().bottom();
+    }
+
+    /**
+     * Holds a layer of an overlay — a band, or a shape container — in across to where the page
+     * places it inside the overlay.
+     *
+     * <p>The layers of a band are written one after the other, and each ran from the stack's left
+     * edge to its right: initials the page centres in a badge's ring stood at the left of the
+     * column, and a section's title set beside its badge started under it. The layer's box is the
+     * layout's, so the insets put it there; the paragraph's own alignment then sets its text in
+     * that box as the page does. A box a line of text fills exactly is widened by a few points on
+     * the side its text does not lean on, since an editor sets text a little wider than the page
+     * and a word that no longer fits would break across lines.</p>
+     */
+    private void placeAcross(DocumentNode stack, DocumentNode layer) {
+        com.demcha.compose.document.layout.PlacedNode box = layout.placement(stack);
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(layer);
+        if (box == null || placed == null) {
+            return;
+        }
+        double contentLeft = box.placementX() + stack.padding().left();
+        double contentRight = box.placementX() + box.placementWidth() - stack.padding().right();
+        double left = placed.placementX() - layer.margin().left() - contentLeft;
+        double right = contentRight - (placed.placementX() + placed.placementWidth() + layer.margin().right());
+        if (!(left > 0.5) && !(right > 0.5)) {
+            return;
+        }
+        // Only a paragraph's own box needs room to spare: a container's paragraphs take theirs
+        // inside it, and spare room taken at every level would add up across nested stacks.
+        double slack = layer instanceof ParagraphNode ? Math.max(2, placed.placementWidth() * 0.05) : 0;
+        TextAlign align = layer instanceof ParagraphNode paragraph ? paragraph.align() : TextAlign.LEFT;
+        if (align == TextAlign.CENTER) {
+            left -= slack / 2;
+            right -= slack / 2;
+        } else if (align == TextAlign.RIGHT) {
+            left -= slack;
+        } else {
+            right -= slack;
+        }
+        insetLeft += Math.max(0, left);
+        insetRight += Math.max(0, right);
     }
 
     /** Whether every leaf under a node is drawing, so that nothing of it is written. */

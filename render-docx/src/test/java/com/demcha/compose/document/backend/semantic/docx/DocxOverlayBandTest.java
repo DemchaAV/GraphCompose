@@ -87,6 +87,73 @@ class DocxOverlayBandTest {
     }
 
     @Test
+    void theInitialsStandAcrossWhereTheRingCentresThem() throws Exception {
+        // Written one after the other, the layers ran from the stack's left edge: the initials
+        // the page centres in the ring stood at the left of the column.
+        try (Export export = export()) {
+            XWPFParagraph initials = export.document().getParagraphs().get(1);
+            PlacedNode frame = export.placed("Frame");
+            PlacedNode placed = export.placed("Initials");
+            double fromLeft = placed.placementX() - frame.placementX();
+            double fromRight = frame.placementX() + frame.placementWidth()
+                               - (placed.placementX() + placed.placementWidth());
+            double slack = Math.max(2, placed.placementWidth() * 0.05);
+
+            // The layer centres the paragraph; its text is set from the left of its box, so the
+            // slack goes on the right and the text starts where the page starts it.
+            assertThat(DocxTwips.of(initials.getCTP().getPPr().getInd().getLeft()))
+                    .as("held in to where the ring centres the initials")
+                    .isCloseTo(Math.round(fromLeft * 20), org.assertj.core.data.Offset.offset(2L));
+            // The paragraph's own box leaves a few points to spare; the badge round it adds none.
+            assertThat(DocxTwips.of(initials.getCTP().getPPr().getInd().getRight()))
+                    .isCloseTo(Math.round((fromRight - slack) * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void aShapeContainersLayerStandsAcrossWhereThePagePutsIt() throws Exception {
+        // A section title set beside its badge: the title starts after the badge, not under it.
+        DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> page.add(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Header").rectangle(260, 24)
+                .clipPolicy(com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE)
+                .position(new ParagraphBuilder().name("Title").text("EXPERIENCE").build(), 30, 0, LayerAlign.CENTER_LEFT)
+                .build()));
+        try (session; XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                session.export(new DocxSemanticBackend())))) {
+            XWPFParagraph title = document.getParagraphs().stream()
+                    .filter(paragraph -> "EXPERIENCE".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(DocxTwips.of(title.getCTP().getPPr().getInd().getLeft()))
+                    .as("30pt in, where the page sets the title").isCloseTo(600L, org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void aShapeContainersLayerIsMeasuredFromInsideItsPadding() throws Exception {
+        DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> page.add(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Header").rectangle(240, 44).padding(DocumentInsets.of(10))
+                .clipPolicy(com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE)
+                .position(new ParagraphBuilder().name("Title").text("EXPERIENCE").build(), 30, 0, LayerAlign.CENTER_LEFT)
+                .build()));
+        try (session; XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                session.export(new DocxSemanticBackend())))) {
+            XWPFParagraph title = document.getParagraphs().stream()
+                    .filter(paragraph -> "EXPERIENCE".equals(paragraph.getText())).findFirst().orElseThrow();
+            PlacedNode header = session.layoutGraph().nodes().stream()
+                    .filter(node -> "Header".equals(node.semanticName())).findFirst().orElseThrow();
+            PlacedNode placed = session.layoutGraph().nodes().stream()
+                    .filter(node -> "Title".equals(node.semanticName())).findFirst().orElseThrow();
+
+            assertThat(DocxTwips.of(title.getCTP().getPPr().getInd().getLeft()))
+                    .as("where the page sets the title, measured from the container's own edge")
+                    .isCloseTo(Math.round((placed.placementX() - header.placementX()) * 20),
+                            org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
     void aDrawingThatIsNotWrittenStillTakesItsRoom() throws Exception {
         // A portrait drawn as a path, in the flow and inside a layer stack alike: none of it
         // reaches the file, and its height is still space above what follows.

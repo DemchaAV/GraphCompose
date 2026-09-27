@@ -508,10 +508,10 @@ tint it was flattened to. Recorded, like the other two.
 - **Shape containers → inline layers.** DOCX has no portable equivalent
   of a graphics-state path clip, so the container's layers are written
   inline, in source order, without clipping — again with one warning per
-  export. The outline, when it is an ellipse or a rectangle, is drawn as a
-  shape where the page draws it, and a picture that fills a container clipped
-  to an ellipse takes the ellipse's shape: a portrait is round inside its ring.
-  Any other outline is reported as dropped.
+  export. The outline is drawn as a shape where the page draws it — a star,
+  a diamond or a path as custom geometry — and a picture that fills a
+  container clipped to an ellipse takes the ellipse's shape: a portrait is
+  round inside its ring. An outline no shape shows is reported as dropped.
 - **`hangingIndent(true)` → the ordinary list form.** A list that opts
   into marker/content geometry exports exactly as one that did not: the
   same Word list, the same levels, the same markers. Nothing is lost —
@@ -569,8 +569,12 @@ stacks together with them. Three limits, each named in the report:
 - A timeline's rail stands under every other shape on its page, where the page puts it
   under the markers only; a filled card drawn under a timeline covers it.
 
-Paths, polygons and outlines other than an ellipse or a rectangle are **skipped**, and
-the report names each one. In the flow a drawn or skipped shape still takes its room:
+Polygons and paths — a star, a chevron, an SVG icon's layers, a portrait drawn as paths —
+are drawn the same way, as custom geometry through the same points and curves, their fill
+and stroke colours carried; the dash pattern, the caps and joins and the clip round an
+SVG icon are not. A shape filled only with a gradient paint shows nothing the export
+carries and is **skipped**, and the report names each one. In the flow a drawn or skipped
+shape still takes its room:
 its placed height and margins are owed as space above what follows, and so are
 those of a layer stack or shape container holding only drawing, counted once
 however deeply it is nested. A cell holding nothing else keeps that space on a

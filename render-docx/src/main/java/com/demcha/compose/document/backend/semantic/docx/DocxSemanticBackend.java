@@ -1465,6 +1465,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (transform != null && !transform.isIdentity()) {
                 message.append("; its transform is not carried, so it is drawn upright at its size");
             }
+            if (node instanceof com.demcha.compose.document.node.PathNode path && losesStyle(path)) {
+                message.append("; its gradient paint, dash pattern, caps and joins are not carried");
+            }
             report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
                     message.toString());
         }
@@ -1482,6 +1485,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     "a " + container.outline().getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT)
                     + " outline has no shape this export draws, so it is not in the document");
         }
+    }
+
+    /** Whether a path is painted or stroked in a way custom geometry does not say. */
+    private static boolean losesStyle(com.demcha.compose.document.node.PathNode path) {
+        return path.fillPaint() != null && !(path.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)
+               || path.strokePaint() != null
+                  && !(path.strokePaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)
+               || path.dashPattern() != null && !path.dashPattern().isSolid()
+               || path.stroke() != null
+                  && (path.lineCap() != com.demcha.compose.document.style.DocumentLineCap.BUTT
+                      || path.lineJoin() != com.demcha.compose.document.style.DocumentLineJoin.MITER);
     }
 
     private static com.demcha.compose.document.style.DocumentTransform transformOf(DocumentNode node) {

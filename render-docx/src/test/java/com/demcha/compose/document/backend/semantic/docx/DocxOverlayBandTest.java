@@ -104,9 +104,9 @@ class DocxOverlayBandTest {
             assertThat(DocxTwips.of(initials.getCTP().getPPr().getInd().getLeft()))
                     .as("held in to where the ring centres the initials")
                     .isCloseTo(Math.round(fromLeft * 20), org.assertj.core.data.Offset.offset(2L));
-            // Each box it sits in — the badge's and its own — leaves a few points to spare there.
+            // The paragraph's own box leaves a few points to spare; the badge round it adds none.
             assertThat(DocxTwips.of(initials.getCTP().getPPr().getInd().getRight()))
-                    .isBetween(Math.round((fromRight - slack - 6) * 20), Math.round((fromRight - slack) * 20));
+                    .isCloseTo(Math.round((fromRight - slack) * 20), org.assertj.core.data.Offset.offset(2L));
         }
     }
 
@@ -126,6 +126,30 @@ class DocxOverlayBandTest {
 
             assertThat(DocxTwips.of(title.getCTP().getPPr().getInd().getLeft()))
                     .as("30pt in, where the page sets the title").isCloseTo(600L, org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void aShapeContainersLayerIsMeasuredFromInsideItsPadding() throws Exception {
+        DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> page.add(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Header").rectangle(240, 44).padding(DocumentInsets.of(10))
+                .clipPolicy(com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE)
+                .position(new ParagraphBuilder().name("Title").text("EXPERIENCE").build(), 30, 0, LayerAlign.CENTER_LEFT)
+                .build()));
+        try (session; XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                session.export(new DocxSemanticBackend())))) {
+            XWPFParagraph title = document.getParagraphs().stream()
+                    .filter(paragraph -> "EXPERIENCE".equals(paragraph.getText())).findFirst().orElseThrow();
+            PlacedNode header = session.layoutGraph().nodes().stream()
+                    .filter(node -> "Header".equals(node.semanticName())).findFirst().orElseThrow();
+            PlacedNode placed = session.layoutGraph().nodes().stream()
+                    .filter(node -> "Title".equals(node.semanticName())).findFirst().orElseThrow();
+
+            assertThat(DocxTwips.of(title.getCTP().getPPr().getInd().getLeft()))
+                    .as("where the page sets the title, measured from the container's own edge")
+                    .isCloseTo(Math.round((placed.placementX() - header.placementX()) * 20),
+                            org.assertj.core.data.Offset.offset(2L));
         }
     }
 

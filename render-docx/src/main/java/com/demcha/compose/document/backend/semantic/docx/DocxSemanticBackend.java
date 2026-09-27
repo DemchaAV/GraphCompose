@@ -2987,14 +2987,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         double outerLeft = insetLeft;
         double outerRight = insetRight;
-        for (DocumentNode child : node.children()) {
-            placeAcross(node, child);
-            try {
+        // Its layers are measured from inside its own edges, as a band's are.
+        double innerLeft = insetLeft + node.margin().left() + node.padding().left();
+        double innerRight = insetRight + node.margin().right() + node.padding().right();
+        try {
+            for (DocumentNode child : node.children()) {
+                insetLeft = innerLeft;
+                insetRight = innerRight;
+                placeAcross(node, child);
                 writeNode(document, child);
-            } finally {
-                insetLeft = outerLeft;
-                insetRight = outerRight;
             }
+        } finally {
+            insetLeft = outerLeft;
+            insetRight = outerRight;
         }
     }
 
@@ -4776,7 +4781,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Holds a layer of a band in across to where the page places it in the stack.
+     * Holds a layer of an overlay — a band, or a shape container — in across to where the page
+     * places it inside the overlay.
      *
      * <p>The layers of a band are written one after the other, and each ran from the stack's left
      * edge to its right: initials the page centres in a badge's ring stood at the left of the
@@ -4799,7 +4805,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!(left > 0.5) && !(right > 0.5)) {
             return;
         }
-        double slack = Math.max(2, placed.placementWidth() * 0.05);
+        // Only a paragraph's own box needs room to spare: a container's paragraphs take theirs
+        // inside it, and spare room taken at every level would add up across nested stacks.
+        double slack = layer instanceof ParagraphNode ? Math.max(2, placed.placementWidth() * 0.05) : 0;
         TextAlign align = layer instanceof ParagraphNode paragraph ? paragraph.align() : TextAlign.LEFT;
         if (align == TextAlign.CENTER) {
             left -= slack / 2;

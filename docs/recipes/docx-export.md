@@ -395,8 +395,9 @@ page.addParagraph(p -> p
   enough: measured in LibreOffice, a 14pt icon centred over 9pt text lost its top up to
   a 17.6pt line. A paragraph holding a picture that rises above its text's ascent or hangs
   below its descent — where Word puts it, or on the baseline where LibreOffice does — is
-  written with its lines *at least* the height the picture reaches instead, so the editor
-  grows the line to the picture rather than clip it. Word has one line height for a
+  written with its lines *at least* the height the picture reaches where Word puts it
+  instead, so the editor grows the line to the picture rather than clip it: LibreOffice,
+  standing it higher, grows the line further on its own. Word has one line height for a
   paragraph, so every line of it is then at least that reach and otherwise as tall as the
   editor's own font makes it — for 14pt text, about 2.5pt taller than the page's in
   LibreOffice. A picture that stays inside the text in both editors keeps the exact

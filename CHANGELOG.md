@@ -37,6 +37,15 @@ follow semantic versioning; release dates are ISO 8601.
   the badge and `NavySidebar`'s section titles start after their badge, as on the page; no
   preset's median line moves.
 
+- **A line holding an icon asks Word for the icon's height where Word puts it.** A line whose
+  inline picture passes its text is written "at least" a height, so the editor grows it
+  rather than clip the picture. That height was the higher of Word's placement and
+  LibreOffice's, which ignores `w:position` and stands a picture on the baseline, so every
+  such line asked Word for LibreOffice's height: `TimelineMinimal`'s contact lines asked for
+  12.4pt where the page sets 9.35pt of text. The line now asks for Word's reach, and is still
+  "at least" whenever the picture passes the text in either editor, so LibreOffice grows it
+  to its own placement as before. Unchanged in LibreOffice, measured on twenty CV presets.
+
 - **A container's `spacing` reaches Word, and a spacer is its height alone.** The layout puts
   a section's or a container's `spacing` between each two of its children, and the DOCX
   export wrote none of it, so a CV sidebar laid out with 9pt between its blocks came out

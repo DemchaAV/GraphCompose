@@ -17,6 +17,16 @@ follow semantic versioning; release dates are ISO 8601.
   reported. Measured in LibreOffice: `SidebarPortrait`'s portrait, drawn as 37 paths, and
   `CharcoalGold`'s certification icons are drawn as on the page.
 
+- **A paragraph the editor sets the height of sizes its mark as its text.** The mark closing
+  a paragraph is a character on its last line and counts towards that line's height. Left
+  unsized it took the document's size, so a paragraph the layout did not measure — one in a
+  composed table cell — was never shorter than a line of body text: `SlateOrange`'s heading
+  rules under its credentials, half-point text in a filled cell, came out as 8pt bars. The
+  mark now carries the paragraph's size when it differs from the document's; a line written
+  at an exact height does not grow for the mark and is left alone. Measured in LibreOffice:
+  the rules are hairlines and the credentials below them stand 3.7pt from the page's where
+  they stood 13.9pt; no other preset moves.
+
 - **Drawing reaches Word as shapes where the page draws them.** Ellipses, rectangles, rounded
   bars, vertical and slanted lines, a timeline's rail and the ring of a monogram or a portrait
   were missing from the DOCX export. Each is now a DrawingML shape anchored to the page,

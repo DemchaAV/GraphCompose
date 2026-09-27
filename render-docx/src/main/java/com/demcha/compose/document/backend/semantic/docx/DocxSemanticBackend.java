@@ -3247,10 +3247,41 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean rightToLeft = ParagraphDirection.resolve(source) == TextDirection.RTL;
         target.setAlignment(toAlignment(source.align(), rightToLeft));
         applyDirection(target, rightToLeft);
-        applyLineHeight(target, layout.lineHeight(source));
+        java.util.OptionalDouble lineHeight = layout.lineHeight(source);
+        applyLineHeight(target, lineHeight);
+        if (lineHeight.isEmpty()) {
+            applyMarkSize(target, source.textStyle());
+        }
         applyVerticalSpacing(target, source);
         applyLineGap(target, layout.lineGap(source), layout.lineCount(source));
         return rightToLeft;
+    }
+
+    /**
+     * Sizes a paragraph's mark as its text, for a paragraph whose line height the editor sets.
+     *
+     * <p>The mark closing a paragraph is a character on its last line, and its size counts
+     * towards that line's height. Left unsized it takes the document's own, so a line of
+     * half-point text — a coloured cell a hairline tall, the way a heading rule is drawn in a
+     * table — came out as tall as a line of body text in both editors: {@code SlateOrange}'s rules
+     * under its credentials headings were 8pt bars. A line written at an exact height does not
+     * grow for the mark, so only a paragraph the layout did not measure needs it.</p>
+     */
+    private void applyMarkSize(XWPFParagraph target, DocumentTextStyle style) {
+        if (style == null || !(style.size() > 0)) {
+            return;
+        }
+        DocumentTextStyle defaults = documentDefaultStyle;
+        if (defaults != null && Math.round(style.size() * HALF_POINTS_PER_POINT)
+                                == Math.round(defaults.size() * HALF_POINTS_PER_POINT)) {
+            return;
+        }
+        CTPPr properties = target.getCTP().isSetPPr() ? target.getCTP().getPPr() : target.getCTP().addNewPPr();
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTParaRPr mark =
+                properties.isSetRPr() ? properties.getRPr() : properties.addNewRPr();
+        BigInteger halfPoints = BigInteger.valueOf(Math.max(1, Math.round(style.size() * HALF_POINTS_PER_POINT)));
+        mark.addNewSz().setVal(halfPoints);
+        mark.addNewSzCs().setVal(halfPoints);
     }
 
     /**

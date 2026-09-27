@@ -166,6 +166,22 @@ class DocxRuleTest {
     }
 
     @Test
+    void aRuleInALayerStackOfOneLayerIsARuleInTheFlow() throws Exception {
+        // One layer lays nothing over anything: its rule takes its room in the flow, where a
+        // shape anchored to the page takes none and everything below moves up by it.
+        try (XWPFDocument document = export(page -> page.addLayerStack(stack -> stack.layer(
+                new com.demcha.compose.document.dsl.SectionBuilder().name("Entries")
+                        .addParagraph(p -> p.text("First"))
+                        .addLine(l -> l.horizontal(100).stroke(DocumentStroke.of(ACCENT, 1)).fill())
+                        .addParagraph(p -> p.text("Second"))
+                        .build())))) {
+            assertThat(document.getParagraphs()).as("the rule, a paragraph's bottom border")
+                    .anyMatch(p -> p.getCTP().getPPr() != null && p.getCTP().getPPr().isSetPBdr());
+            assertThat(anchoredShapes(document)).as("not a shape as well").isEmpty();
+        }
+    }
+
+    @Test
     void linesLaidOverEachOtherInALayerStackAreNotRulesInTheFlow() throws Exception {
         // A skill meter: a track and the fill laid over it. As rules they came out as two bars,
         // one under the other.

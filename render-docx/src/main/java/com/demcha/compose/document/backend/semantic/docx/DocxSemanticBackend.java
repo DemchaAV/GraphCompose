@@ -1373,10 +1373,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Its children are still written, in order, for the text in them; but a drawn rule
      * among them is part of a picture — a skill meter's track and the fill laid over it — and
      * written as rules in the flow they came out as two bars one under the other.</p>
+     *
+     * <p>A layer stack of one layer lays nothing over anything: its layer is a flow like any
+     * other, and a rule in it is a rule. Taken for an overlay, {@code CharcoalGold}'s rules
+     * between its certifications were drawn as shapes that took no room, and each entry
+     * stood their height and the space under them too high.</p>
      */
     private static boolean isOverlay(DocumentNode node) {
-        return node instanceof com.demcha.compose.document.node.LayerStackNode
-               || node instanceof com.demcha.compose.document.node.CanvasLayerNode
+        if (node instanceof com.demcha.compose.document.node.LayerStackNode stack) {
+            return stack.layers().size() > 1;
+        }
+        return node instanceof com.demcha.compose.document.node.CanvasLayerNode
                || node instanceof ShapeContainerNode;
     }
 

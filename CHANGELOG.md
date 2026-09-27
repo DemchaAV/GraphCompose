@@ -30,9 +30,7 @@ follow semantic versioning; release dates are ISO 8601.
   written as if it were not there, so its block started at the left edge of the width it is
   set in: `CharcoalGold`'s portrait, centred in the sidebar, stood 15.5pt left of the ring
   drawn round it. The block is now held in to the box the layout places it in, as a layer in
-  a stack is. Measured in LibreOffice: the portrait stands in its ring, and `MonogramSidebar`'s
-  centred contact icons are held in too, its sidebar's lines standing 5.5pt from the page's at
-  the column's foot where they stood 12.2pt; no other preset moves.
+  a stack is. Measured in LibreOffice: the portrait stands in its ring; no other preset moves.
 
 - **Layers laid over each other stand across where the page puts them.** The layers of an
   overlay — a layer stack written as one band, the layers of a shape container — were written

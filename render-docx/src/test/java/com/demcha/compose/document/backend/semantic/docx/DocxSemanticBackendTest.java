@@ -373,13 +373,12 @@ class DocxSemanticBackendTest {
     }
 
     @Test
-    void shapeContainerExportsLayersInlineWithoutOutline() throws Exception {
+    void shapeContainerExportsLayersInline() throws Exception {
         // POI/DOCX has no portable equivalent of a graphics-state path
         // clip, so the canonical contract (canonical-legacy-parity.md)
         // is for DocxSemanticBackend to render a ShapeContainer's layers
-        // inline — the inner paragraph survives, but the circle outline
-        // is not drawn. The single capability warning is logged once per
-        // export pass.
+        // inline, unclipped — the inner paragraph survives. The single
+        // capability warning is logged once per export pass.
         ParagraphNode label = new ParagraphBuilder()
                 .text("Featured")
                 .build();

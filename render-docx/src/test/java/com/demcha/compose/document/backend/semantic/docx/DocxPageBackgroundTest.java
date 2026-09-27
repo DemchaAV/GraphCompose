@@ -56,7 +56,7 @@ class DocxPageBackgroundTest {
 
             assertThat(xml.indexOf("F4F4F4")).isLessThan(xml.indexOf("2B2F36"));
             assertThat(xml).contains("<wp:posOffset>" + Units.toEMU(100) + "</wp:posOffset>")
-                    .contains("relativeHeight=\"2\"");
+                    .contains("relativeHeight=\"" + DocxPageBackgrounds.stackHeight(1) + "\"");
         }
     }
 

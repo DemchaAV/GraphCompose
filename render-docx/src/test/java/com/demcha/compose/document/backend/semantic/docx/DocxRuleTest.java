@@ -137,18 +137,32 @@ class DocxRuleTest {
     }
 
     @Test
-    void whatIsNotARuleIsStillReportedAsDropped() throws Exception {
+    void whatIsNotARuleIsDrawnAsAShapeWhereThePagePutsIt() throws Exception {
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
         XWPFDocument document = withReport(report, page -> page
                 .addLine(l -> l.name("Rail").vertical(40).stroke(DocumentStroke.of(ACCENT, 1)))
                 .addShape(s -> s.name("Block").size(100, 30).fillColor(ACCENT))
                 .addShape(s -> s.name("Pill").size(100, 4).fillColor(ACCENT).cornerRadius(DocumentCornerRadius.of(2))));
         try (document) {
-            assertThat(document.getParagraphs()).isEmpty();
-            assertThat(report.get().count(DocxExportReport.Severity.DROPPED))
+            assertThat(document.getParagraphs()).as("no rule among them")
+                    .noneMatch(p -> p.getCTP().getPPr() != null && p.getCTP().getPPr().isSetPBdr());
+            assertThat(anchoredShapes(document))
                     .as("a vertical line, a box taller than a border, a rounded bar")
-                    .isEqualTo(3);
+                    .containsExactly("line", "rect", "roundRect");
+            assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isZero();
+            assertThat(report.get().count(DocxExportReport.Severity.APPROXIMATED)).isEqualTo(3);
         }
+    }
+
+    /** The preset geometry of every shape anchored in the body, in document order. */
+    private static java.util.List<String> anchoredShapes(XWPFDocument document) {
+        java.util.List<String> shapes = new java.util.ArrayList<>();
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("prstGeom prst=\"(\\w+)\"")
+                .matcher(document.getDocument().xmlText());
+        while (matcher.find()) {
+            shapes.add(matcher.group(1));
+        }
+        return shapes;
     }
 
     @Test
@@ -165,9 +179,10 @@ class DocxRuleTest {
         try (document) {
             assertThat(document.getParagraphs()).noneMatch(p -> p.getCTP().getPPr() != null
                                                                && p.getCTP().getPPr().isSetPBdr());
-            assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isEqualTo(2);
+            assertThat(anchoredShapes(document)).as("the track and its fill, as lines laid over each other")
+                    .containsExactly("line", "line");
             assertThat(document.getParagraphs())
-                    .as("the dropped line has no bookmark, so no field may point at one")
+                    .as("the drawn line carries no bookmark, so no field may point at one")
                     .noneMatch(p -> p.getCTP().xmlText().contains("PAGEREF"));
         }
     }

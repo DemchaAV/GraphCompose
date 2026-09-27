@@ -42,7 +42,8 @@ class DocxExportReportTest {
     void aDroppedNodeIsNamedWithItsPath() throws Exception {
         DocxExportReport report = reportOf(page -> page
                 .addParagraph(p -> p.text("Before"))
-                .addLine(line -> line.name("Rail").vertical(40).thickness(1)));
+                .addPath(path -> path.name("Rail").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
+                        .closePath().fillColor(SURFACE)));
 
         List<DocxExportReport.Note> notes = report.notes();
         assertThat(notes).hasSize(1);
@@ -58,9 +59,12 @@ class DocxExportReportTest {
         // The log is the summary and the report is the record: a caller asking what the
         // document lost wants the three it lost, not the fact that it lost a kind.
         DocxExportReport report = reportOf(page -> page
-                .addLine(line -> line.name("First").vertical(40).thickness(1))
-                .addLine(line -> line.name("Second").vertical(40).thickness(1))
-                .addLine(line -> line.name("Third").vertical(40).thickness(1)));
+                .addPath(path -> path.name("First").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
+                        .closePath().fillColor(SURFACE))
+                .addPath(path -> path.name("Second").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
+                        .closePath().fillColor(SURFACE))
+                .addPath(path -> path.name("Third").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
+                        .closePath().fillColor(SURFACE)));
 
         assertThat(report.count(DocxExportReport.Severity.DROPPED)).isEqualTo(3);
         assertThat(report.notes()).extracting(DocxExportReport.Note::path)

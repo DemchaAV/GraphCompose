@@ -569,6 +569,40 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * The fragments a node painted itself, not its children's.
+     *
+     * @param node a node of the graph
+     * @return its fragments in paint order, empty when it painted none or there is no layout
+     */
+    List<PlacedFragment> ownFragments(DocumentNode node) {
+        return fragmentsOf(node);
+    }
+
+    /**
+     * The drawing the layout paints in a pass of its own rather than for a node of the tree: a
+     * timeline's rail. The other passes are written as what they are — page backgrounds as page
+     * fills, page zones as headers and footers, page fields as fields — so only the rail is
+     * named; drawn again here, a header's band would stand in the body over the header's text.
+     *
+     * @return those fragments, by page
+     */
+    List<PlacedFragment> passFragments() {
+        List<PlacedFragment> passes = new ArrayList<>();
+        for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
+            String path = entry.getKey();
+            if (path != null && path.startsWith("@timeline-rail")) {
+                passes.addAll(entry.getValue());
+            }
+        }
+        // The index is a hash map: order by page, then path and index, so the output does not
+        // depend on hash order.
+        passes.sort(java.util.Comparator.comparingInt(PlacedFragment::pageIndex)
+                .thenComparing(PlacedFragment::path)
+                .thenComparingInt(PlacedFragment::fragmentIndex));
+        return passes;
+    }
+
+    /**
      * How far inside its parent's content box the layout placed a node, on the left and on
      * the right, in points.
      *

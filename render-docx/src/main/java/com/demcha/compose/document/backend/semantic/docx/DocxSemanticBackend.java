@@ -1874,6 +1874,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFRun run = para.createRun();
         applyStyle(run, style);
         run.setText(numId != null ? text : "  ".repeat(depth) + text);
+        styleTheMark(para, style);
     }
 
     /**
@@ -1955,6 +1956,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             label.setText(item.label());
         }
         makeRoomForPictures(para, pictures);
+        styleTheMark(para, style);
     }
 
     /**
@@ -3247,41 +3249,65 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean rightToLeft = ParagraphDirection.resolve(source) == TextDirection.RTL;
         target.setAlignment(toAlignment(source.align(), rightToLeft));
         applyDirection(target, rightToLeft);
-        java.util.OptionalDouble lineHeight = layout.lineHeight(source);
-        applyLineHeight(target, lineHeight);
-        if (lineHeight.isEmpty()) {
-            applyMarkSize(target, source.textStyle());
-        }
+        applyLineHeight(target, layout.lineHeight(source));
         applyVerticalSpacing(target, source);
         applyLineGap(target, layout.lineGap(source), layout.lineCount(source));
         return rightToLeft;
     }
 
     /**
-     * Sizes a paragraph's mark as its text, for a paragraph whose line height the editor sets.
+     * Sets a paragraph's mark in its text's size and face, where the editor may grow the line.
      *
      * <p>The mark closing a paragraph is a character on its last line, and its size counts
-     * towards that line's height. Left unsized it takes the document's own, so a line of
-     * half-point text — a coloured cell a hairline tall, the way a heading rule is drawn in a
-     * table — came out as tall as a line of body text in both editors: {@code SlateOrange}'s rules
-     * under its credentials headings were 8pt bars. A line written at an exact height does not
-     * grow for the mark, so only a paragraph the layout did not measure needs it.</p>
+     * towards that line's height. Left unstyled it takes the document's own size and face, so a
+     * line of half-point text — a coloured cell a hairline tall, the way a heading rule is drawn
+     * in a table — came out as tall as a line of body text in both editors: {@code SlateOrange}'s
+     * rules under its credentials headings were 8pt bars. A line written at an exact height
+     * does not grow for the mark and is left alone; one the layout did not measure, and one
+     * written at least a picture's height, are the ones it reaches. Called once the line's rule
+     * is settled, pictures included.</p>
+     *
+     * @param target the paragraph, its runs written
+     * @param style  the text style of the paragraph's text
      */
-    private void applyMarkSize(XWPFParagraph target, DocumentTextStyle style) {
-        if (style == null || !(style.size() > 0)) {
+    private void styleTheMark(XWPFParagraph target, DocumentTextStyle style) {
+        if (style == null || !(style.size() > 0) || hasAnExactLine(target)) {
             return;
         }
         DocumentTextStyle defaults = documentDefaultStyle;
-        if (defaults != null && Math.round(style.size() * HALF_POINTS_PER_POINT)
-                                == Math.round(defaults.size() * HALF_POINTS_PER_POINT)) {
+        boolean sameSize = defaults != null && Math.round(style.size() * HALF_POINTS_PER_POINT)
+                                               == Math.round(defaults.size() * HALF_POINTS_PER_POINT);
+        String family = wordFamilyOf(style.fontName());
+        boolean sameFace = family == null
+                           || defaults != null && family.equals(wordFamilyOf(defaults.fontName()));
+        if (sameSize && sameFace) {
             return;
         }
         CTPPr properties = target.getCTP().isSetPPr() ? target.getCTP().getPPr() : target.getCTP().addNewPPr();
         org.openxmlformats.schemas.wordprocessingml.x2006.main.CTParaRPr mark =
                 properties.isSetRPr() ? properties.getRPr() : properties.addNewRPr();
-        BigInteger halfPoints = BigInteger.valueOf(Math.max(1, Math.round(style.size() * HALF_POINTS_PER_POINT)));
-        mark.addNewSz().setVal(halfPoints);
-        mark.addNewSzCs().setVal(halfPoints);
+        if (!sameFace) {
+            // The face the runs are set in, the way applyStyle names it on them: a mark in the
+            // document's face grows the line by that face's height, not the text's.
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFonts fonts =
+                    mark.sizeOfRFontsArray() > 0 ? mark.getRFontsArray(0) : mark.addNewRFonts();
+            fonts.setAscii(family);
+            fonts.setHAnsi(family);
+            fonts.setCs(family);
+            fonts.setEastAsia(family);
+        }
+        if (!sameSize) {
+            BigInteger halfPoints = BigInteger.valueOf(Math.max(1, Math.round(style.size() * HALF_POINTS_PER_POINT)));
+            (mark.sizeOfSzArray() > 0 ? mark.getSzArray(0) : mark.addNewSz()).setVal(halfPoints);
+            (mark.sizeOfSzCsArray() > 0 ? mark.getSzCsArray(0) : mark.addNewSzCs()).setVal(halfPoints);
+        }
+    }
+
+    /** Whether a paragraph's lines are written at an exact height, which no mark changes. */
+    private static boolean hasAnExactLine(XWPFParagraph paragraph) {
+        CTPPr properties = paragraph.getCTP().getPPr();
+        return properties != null && properties.isSetSpacing() && properties.getSpacing().isSetLineRule()
+               && properties.getSpacing().getLineRule() == STLineSpacingRule.EXACT;
     }
 
     /**
@@ -3482,6 +3508,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             docRun.setText(node.text() == null ? "" : node.text());
         }
         makeRoomForPictures(para, pictures);
+        styleTheMark(para, node.textStyle());
     }
 
     /**
@@ -4650,6 +4677,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (int i = 0; i < lines.size(); i++) {
             if (i > 0 && paragraphPerLine) {
                 addSpacing(para, 0, lineSpacing);
+                styleTheMark(para, textStyle);
                 para = newCellLine(cell, rightToLeft, alignment, lineHeight);
                 run = newCellRun(para, textStyle, rightToLeft);
                 inRun = 0;
@@ -4659,6 +4687,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             run.setText(lines.get(i) == null ? "" : lines.get(i), inRun++);
         }
+        styleTheMark(para, textStyle);
     }
 
     /** A paragraph of a text cell: its direction, its alignment and its line height. */

@@ -17,15 +17,18 @@ follow semantic versioning; release dates are ISO 8601.
   reported. Measured in LibreOffice: `SidebarPortrait`'s portrait, drawn as 37 paths, and
   `CharcoalGold`'s certification icons are drawn as on the page.
 
-- **A paragraph the editor sets the height of sizes its mark as its text.** The mark closing
-  a paragraph is a character on its last line and counts towards that line's height. Left
-  unsized it took the document's size, so a paragraph the layout did not measure — one in a
-  composed table cell — was never shorter than a line of body text: `SlateOrange`'s heading
-  rules under its credentials, half-point text in a filled cell, came out as 8pt bars. The
-  mark now carries the paragraph's size when it differs from the document's; a line written
-  at an exact height does not grow for the mark and is left alone. Measured in LibreOffice:
-  the rules are hairlines and the credentials below them stand 3.7pt from the page's where
-  they stood 13.9pt; no other preset moves.
+- **A line the editor may grow sets its paragraph mark in the text's size and face.** The mark
+  closing a paragraph is a character on its last line and counts towards that line's height.
+  Left unstyled it took the document's size and face, so a paragraph the layout did not
+  measure — one in a composed table cell, or any in an export with no layout — was never
+  shorter than a line of body text, and a line written "at least" a picture's height grew to
+  it too: `SlateOrange`'s heading rules under its credentials, half-point text in a filled
+  cell, came out as 8pt bars. The mark now carries the text's size and face where they differ
+  from the document's, in paragraphs, list items and text cells; a line written at an exact
+  height does not grow for the mark and is left alone. Measured in LibreOffice on the twenty
+  CV presets: the rules are hairlines, the degree under them stands 3.7pt from the page's
+  where it stood 13.9pt and the last certification 4.6pt where it stood 21.6pt; no other line
+  moves.
 
 - **Drawing reaches Word as shapes where the page draws them.** Ellipses, rectangles, rounded
   bars, vertical and slanted lines, a timeline's rail and the ring of a monogram or a portrait

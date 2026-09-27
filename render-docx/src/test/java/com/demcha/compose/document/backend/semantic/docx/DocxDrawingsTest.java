@@ -257,6 +257,35 @@ class DocxDrawingsTest {
     }
 
     @Test
+    void aFilledPathKeepsItsCurvesAndEverySubpath() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addPath(path -> path.name("Drop").size(40, 40)
+                        .moveTo(0.5, 1).curveTo(1, 0.5, 0.75, 0, 0.5, 0).closePath()
+                        .moveTo(0.1, 0.1).lineTo(0.2, 0.1).lineTo(0.2, 0.2).closePath()
+                        .fillColor(ACCENT))))) {
+            String anchor = anchors(document.getDocument().xmlText()).get(0);
+
+            assertThat(anchor).contains("<a:cubicBezTo><a:pt x=\"100000\" y=\"50000\"/>"
+                                        + "<a:pt x=\"75000\" y=\"100000\"/><a:pt x=\"50000\" y=\"100000\"/></a:cubicBezTo>")
+                    .doesNotContain("fill=\"none\"")
+                    .contains("<a:solidFill><a:srgbClr val=\"1A5694\"/></a:solidFill>");
+            assertThat(anchor.split("<a:moveTo>", -1)).as("two subpaths").hasSize(3);
+            assertThat(anchor.split("<a:close/>", -1)).hasSize(3);
+        }
+    }
+
+    @Test
+    void theReportNamesWhatADashedPathLoses() throws Exception {
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument ignored = export(report, session -> session.pageFlow(page -> page
+                .addPath(path -> path.name("Dashed").size(40, 10).moveTo(0, 0.5).lineTo(1, 0.5)
+                        .stroke(DocumentStroke.of(ACCENT, 1)).dashed(3, 2))))) {
+            assertThat(report.get().notes()).extracting(DocxExportReport.Note::detail)
+                    .anyMatch(detail -> detail.contains("dash pattern"));
+        }
+    }
+
+    @Test
     void aPathIsDrawnThroughItsPointsWithTheBoxTurnedTheWayDrawingMlCounts() throws Exception {
         // The engine counts y up from the bottom of the box, DrawingML down from the top.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page

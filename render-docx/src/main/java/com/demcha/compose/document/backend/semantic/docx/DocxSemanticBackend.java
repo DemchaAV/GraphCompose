@@ -193,6 +193,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private DocumentColor surfaceBehind;
     // How many overlays — layer stacks, canvases, shape containers — the node being written sits in.
     private int overlayDepth;
+    // How many of those overlays are layer stacks of one layer, which lay nothing over anything.
+    private int oneLayerDepth;
     // How far the text of the band written last hangs below the band, in points: space the
     // next block's gap above already has on the page (see writeLinePair). Then the paragraph
     // that took what it could of it from the space owed, and what is left for its own margin.
@@ -520,6 +522,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         warnedNodeKinds.clear();
         surfaceBehind = null;
         overlayDepth = 0;
+        oneLayerDepth = 0;
         forgetTheHang();
         raisedRows.clear();
         insetLeft = 0;
@@ -1111,7 +1114,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         boolean keepTogether = node.keepTogether() && layout.onOnePage(node);
         boolean keepWithNext = node.keepWithNext() && layout.onOnePage(node);
-        String anchor = blockAnchorOf(node, overlayDepth == 0);
+        String anchor = blockAnchorOf(node, inTheFlow(node, overlayDepth, oneLayerDepth));
         if (!keepTogether && !keepWithNext && anchor == null) {
             writeNodeContent(document, node);
             return;
@@ -1355,14 +1358,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         boolean overlay = isOverlay(node);
+        boolean oneLayer = isOneLayer(node);
         if (overlay) {
             overlayDepth++;
+        }
+        if (oneLayer) {
+            oneLayerDepth++;
         }
         try {
             dispatchNode(document, node);
         } finally {
             if (overlay) {
                 overlayDepth--;
+            }
+            if (oneLayer) {
+                oneLayerDepth--;
             }
         }
     }
@@ -1373,23 +1383,36 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Its children are still written, in order, for the text in them; but a drawn rule
      * among them is part of a picture — a skill meter's track and the fill laid over it — and
      * written as rules in the flow they came out as two bars one under the other.</p>
-     *
-     * <p>A layer stack of one layer lays nothing over anything: its layer is a flow like any
-     * other, and a rule in it is a rule. Taken for an overlay, {@code CharcoalGold}'s rules
-     * between its certifications were drawn as shapes that took no room, and each entry
-     * stood their height and the space under them too high.</p>
      */
     private static boolean isOverlay(DocumentNode node) {
-        if (node instanceof com.demcha.compose.document.node.LayerStackNode stack) {
-            return stack.layers().size() > 1;
-        }
-        return node instanceof com.demcha.compose.document.node.CanvasLayerNode
+        return node instanceof com.demcha.compose.document.node.LayerStackNode
+               || node instanceof com.demcha.compose.document.node.CanvasLayerNode
                || node instanceof ShapeContainerNode;
+    }
+
+    /** Whether a node is a layer stack of one layer, which lays nothing over anything. */
+    private static boolean isOneLayer(DocumentNode node) {
+        return node instanceof com.demcha.compose.document.node.LayerStackNode stack && stack.layers().size() == 1;
+    }
+
+    /**
+     * Whether a drawing node stands in the flow, so that a rule is written as one.
+     *
+     * <p>Outside every overlay it does. Inside layer stacks of one layer only, a line does too:
+     * such a stack lays nothing over anything, and its lines are rules — taken for drawing,
+     * {@code CharcoalGold}'s rules between its certifications were shapes that took no room,
+     * and each entry stood their height and the space under them too high. Its other shapes
+     * stay drawing: a template wraps a row in one to nest it, and a small accent bar in that
+     * row is not a divider.</p>
+     */
+    private static boolean inTheFlow(DocumentNode node, int overlays, int oneLayerOverlays) {
+        return overlays == 0
+               || node instanceof com.demcha.compose.document.node.LineNode && overlays == oneLayerOverlays;
     }
 
     /** The rule a node is in the flow, or {@code null} — over something else it is not one. */
     private DocxRules.Rule ruleOf(DocumentNode node) {
-        return overlayDepth == 0 ? DocxRules.of(node) : null;
+        return inTheFlow(node, overlayDepth, oneLayerDepth) ? DocxRules.of(node) : null;
     }
 
     private void dispatchNode(XWPFDocument document, DocumentNode node) throws Exception {
@@ -2544,22 +2567,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static java.util.Set<String> bookmarkedAnchorsIn(DocumentGraph graph) {
         java.util.Set<String> anchors = new java.util.HashSet<>();
-        // Each node with whether it lies in an overlay, which decides whether a rule is written.
-        java.util.ArrayDeque<java.util.Map.Entry<DocumentNode, Boolean>> pending = new java.util.ArrayDeque<>();
+        // Each node with how many overlays it lies in, and how many of those are stacks of one
+        // layer, which decide whether a rule is written.
+        java.util.ArrayDeque<java.util.Map.Entry<DocumentNode, int[]>> pending = new java.util.ArrayDeque<>();
         for (DocumentNode root : graph.roots()) {
-            pending.push(java.util.Map.entry(root, false));
+            pending.push(java.util.Map.entry(root, new int[]{0, 0}));
         }
         while (!pending.isEmpty()) {
-            java.util.Map.Entry<DocumentNode, Boolean> next = pending.pop();
+            java.util.Map.Entry<DocumentNode, int[]> next = pending.pop();
             DocumentNode node = next.getKey();
-            boolean overlaid = next.getValue();
-            String anchor = node instanceof ParagraphNode paragraph ? paragraph.anchor() : blockAnchorOf(node, !overlaid);
+            int overlays = next.getValue()[0];
+            int oneLayers = next.getValue()[1];
+            String anchor = node instanceof ParagraphNode paragraph
+                    ? paragraph.anchor()
+                    : blockAnchorOf(node, inTheFlow(node, overlays, oneLayers));
             if (anchor != null && !anchor.isBlank()) {
                 anchors.add(anchor.trim());
             }
-            boolean childrenOverlaid = overlaid || isOverlay(node);
+            // As writeNodeContent counts them: a stack or a shape holding only drawing is an
+            // overlay of its own before it is a stack of one layer.
+            int[] below;
+            if (overlays == 0 && onlyDrawing(node) && !node.children().isEmpty()
+                && (node instanceof com.demcha.compose.document.node.LayerStackNode
+                    || node instanceof ShapeContainerNode)) {
+                below = new int[]{1, oneLayers};
+            } else {
+                below = new int[]{overlays + (isOverlay(node) ? 1 : 0), oneLayers + (isOneLayer(node) ? 1 : 0)};
+            }
             for (DocumentNode child : node.children()) {
-                pending.push(java.util.Map.entry(child, childrenOverlaid));
+                pending.push(java.util.Map.entry(child, below));
             }
         }
         return anchors;

@@ -182,6 +182,33 @@ class DocxRuleTest {
     }
 
     @Test
+    void anAccentBarInALayerStackOfOneLayerStaysDrawing() throws Exception {
+        // A template nests a row in a one-layer stack; a small filled bar in it is an accent
+        // beside a label, not a divider across the column.
+        try (XWPFDocument document = export(page -> page.addLayerStack(stack -> stack.layer(
+                new com.demcha.compose.document.dsl.SectionBuilder().name("Meta")
+                        .addShape(s -> s.name("Accent").size(4, 10).fillColor(ACCENT))
+                        .addParagraph(p -> p.text("Issue date"))
+                        .build())))) {
+            assertThat(document.getParagraphs())
+                    .noneMatch(p -> p.getCTP().getPPr() != null && p.getCTP().getPPr().isSetPBdr());
+            assertThat(anchoredShapes(document)).containsExactly("rect");
+        }
+    }
+
+    @Test
+    void aLineAloneInALayerStackOfOneLayerIsDrawingAndHasNoBookmarkToPointAt() throws Exception {
+        // Only drawing, the stack is drawn; a page reference to the line's anchor has no
+        // bookmark to count, and is written as text rather than as a field pointing nowhere.
+        try (XWPFDocument document = export(page -> page
+                .addLayerStack(stack -> stack.layer(new com.demcha.compose.document.dsl.LineBuilder()
+                        .name("Alone").horizontal(100).stroke(DocumentStroke.of(ACCENT, 1)).anchor("alone").build()))
+                .addPageReference("alone"))) {
+            assertThat(document.getDocument().xmlText()).doesNotContain("PAGEREF");
+        }
+    }
+
+    @Test
     void linesLaidOverEachOtherInALayerStackAreNotRulesInTheFlow() throws Exception {
         // A skill meter: a track and the fill laid over it. As rules they came out as two bars,
         // one under the other.

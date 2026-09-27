@@ -8,13 +8,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
-- **A rule in a layer stack of one layer is a rule in the flow.** Every layer stack was taken
-  for an overlay, so a line in it was drawn as a shape anchored to the page, which takes no
-  room in the text; a stack of one layer lays nothing over anything, and its lines are rules
-  like any others now. `CharcoalGold` wraps its certifications and achievements in one: each
-  entry after the first stood its rule's height and the space under it too high, the last
-  11.8pt, and they stand as the rest of the page does now. Measured in LibreOffice on the
-  twenty CV presets; no other line moves.
+- **A line among the text of a layer stack of one layer is a rule.** A line in any layer stack
+  was drawn as a shape anchored to the page, which takes no room in the text; a stack of one
+  layer lays nothing over anything, and a line among its text is a rule in the flow now. Its
+  other shapes stay drawing — a template nests a row in such a stack, and an accent bar in
+  the row is not a divider — and so does a line in a stack that holds nothing but drawing.
+  `CharcoalGold` wraps its certifications and achievements in one: each entry after the first
+  stood its rule's height and the space under it too high, the last 11.8pt, and they stand as
+  the rest of the page does now. Measured in LibreOffice on the twenty CV presets, seven
+  invoice presets and three proposal presets; no other line moves.
 
 - **A strip drawn in two layers is written as one strip.** A template that wants its name
   read before its sidebar draws its hero strip in two layers of a column stack: the fill and

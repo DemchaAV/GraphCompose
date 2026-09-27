@@ -8,6 +8,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Paths and polygons reach Word as custom geometry.** A path, a polygon, a star or chevron
+  outline, the layers of an SVG icon set as a block were dropped from the DOCX export and
+  reported. Each is now a DrawingML shape of custom geometry through the same points and
+  curves, anchored to the page as the other shapes are, in its fill and stroke colours; an
+  unfilled path is left open. The dash pattern, caps and joins, the clip round an SVG icon and
+  a gradient paint are not carried — a shape filled only with a gradient is still dropped and
+  reported. Measured in LibreOffice: `SidebarPortrait`'s portrait, drawn as 37 paths, and
+  `CharcoalGold`'s certification icons are drawn as on the page.
+
 - **Drawing reaches Word as shapes where the page draws them.** Ellipses, rectangles, rounded
   bars, vertical and slanted lines, a timeline's rail and the ring of a monogram or a portrait
   were missing from the DOCX export. Each is now a DrawingML shape anchored to the page,
@@ -17,8 +26,7 @@ follow semantic versioning; release dates are ISO 8601.
   stays where it is when the text around it is edited, and the export report lists it as
   approximated. A transform is not carried, and the report says so. A picture that fills a
   shape container clipped to an ellipse takes the ellipse's shape, so a portrait is round
-  inside its ring. Paths, polygons and outlines other than an ellipse or a rectangle are
-  still dropped and reported. A shape inside a filled panel is written but hidden: the
+  inside its ring. A shape inside a filled panel is written but hidden: the
   editors paint a cell's shading over shapes behind the text, and the report says so. Page
   backgrounds are stacked below the body's shapes: LibreOffice stacks a header's shapes and
   the body's together, and a column's fill hid what the body drew over it. Measured in LibreOffice:

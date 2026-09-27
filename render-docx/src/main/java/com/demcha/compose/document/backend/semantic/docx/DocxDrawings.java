@@ -3,9 +3,12 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
 import com.demcha.compose.document.layout.payloads.LineFragmentPayload;
+import com.demcha.compose.document.layout.payloads.PathFragmentPayload;
+import com.demcha.compose.document.layout.payloads.PolygonFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.SideBorders;
 import com.demcha.compose.document.style.DocumentCornerRadius;
+import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import org.apache.poi.util.Units;
 import org.apache.xmlbeans.XmlException;
@@ -42,7 +45,9 @@ final class DocxDrawings {
         RECT("rect"),
         ROUND_RECT("roundRect"),
         ELLIPSE("ellipse"),
-        LINE("line");
+        LINE("line"),
+        /** A path or a polygon, drawn as custom geometry (see {@link DocxCustomGeometry}). */
+        CUSTOM(null);
 
         private final String preset;
 
@@ -65,9 +70,19 @@ final class DocxDrawings {
      * @param radius      a rounded rectangle's corner radius, in points
      * @param flipH       whether a line runs from its top-right corner
      * @param page        the page the layout drew it on, from 0
+     * @param path        a custom shape's outline in its box's unit square, empty for a preset
      */
     record Shape(Kind kind, double x, double top, double width, double height, Color fill,
-                 Color stroke, double strokeWidth, double radius, boolean flipH, int page) {
+                 Color stroke, double strokeWidth, double radius, boolean flipH, int page,
+                 List<DocumentPathSegment> path) {
+        Shape {
+            path = path == null ? List.of() : List.copyOf(path);
+        }
+
+        Shape(Kind kind, double x, double top, double width, double height, Color fill,
+              Color stroke, double strokeWidth, double radius, boolean flipH, int page) {
+            this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, List.of());
+        }
     }
 
     /**
@@ -112,6 +127,14 @@ final class DocxDrawings {
             boolean flipH = (x2 - x1) * (y2 - y1) < 0;
             add(shapes, visible(new Shape(Kind.LINE, Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1),
                     Math.abs(y2 - y1), null, colourOf(line.stroke()), widthOf(line.stroke()), 0, flipH, page)));
+        } else if (fragment.payload() instanceof PathFragmentPayload path) {
+            add(shapes, visible(new Shape(Kind.CUSTOM, fragment.x(), top, fragment.width(), fragment.height(),
+                    path.fillColor(), colourOf(path.stroke()), widthOf(path.stroke()), 0, false, page,
+                    path.segments())));
+        } else if (fragment.payload() instanceof PolygonFragmentPayload polygon) {
+            add(shapes, visible(new Shape(Kind.CUSTOM, fragment.x(), top, fragment.width(), fragment.height(),
+                    polygon.fillColor(), colourOf(polygon.stroke()), widthOf(polygon.stroke()), 0, false, page,
+                    DocxCustomGeometry.ofPolygon(polygon.points()))));
         }
         return shapes;
     }
@@ -137,7 +160,7 @@ final class DocxDrawings {
         boolean hasExtent = shape.kind() == Kind.LINE
                 ? shape.width() > 0 || shape.height() > 0
                 : shape.width() > 0 && shape.height() > 0;
-        if (!hasExtent) {
+        if (!hasExtent || shape.kind() == Kind.CUSTOM && shape.path().isEmpty()) {
             return null;
         }
         return shape;
@@ -184,12 +207,15 @@ final class DocxDrawings {
     static CTDrawing drawing(Shape shape, long id, int order) {
         long cx = Units.toEMU(shape.width());
         long cy = Units.toEMU(shape.height());
-        String geometry = "<a:prstGeom prst=\"" + shape.kind().preset + "\"><a:avLst>"
-                + (shape.kind() == Kind.ROUND_RECT ? roundness(shape) : "")
-                + "</a:avLst></a:prstGeom>";
-        String fill = shape.fill() == null || shape.fill().getAlpha() == 0
-                ? "<a:noFill/>"
-                : "<a:solidFill>" + colour(shape.fill()) + "</a:solidFill>";
+        boolean filled = shape.fill() != null && shape.fill().getAlpha() > 0;
+        String geometry = shape.kind() == Kind.CUSTOM
+                ? DocxCustomGeometry.xml(shape.path(), filled)
+                : "<a:prstGeom prst=\"" + shape.kind().preset + "\"><a:avLst>"
+                  + (shape.kind() == Kind.ROUND_RECT ? roundness(shape) : "")
+                  + "</a:avLst></a:prstGeom>";
+        String fill = filled
+                ? "<a:solidFill>" + colour(shape.fill()) + "</a:solidFill>"
+                : "<a:noFill/>";
         String outline = shape.stroke() == null || shape.stroke().getAlpha() == 0 || !(shape.strokeWidth() > 0)
                 ? "<a:ln><a:noFill/></a:ln>"
                 : "<a:ln w=\"" + Units.toEMU(shape.strokeWidth()) + "\"><a:solidFill>"

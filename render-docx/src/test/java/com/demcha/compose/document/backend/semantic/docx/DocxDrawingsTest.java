@@ -242,15 +242,34 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void anOutlineNoShapeDrawsIsReportedAsDropped() throws Exception {
+    void aStarOutlineIsDrawnAsCustomGeometry() throws Exception {
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
-        try (XWPFDocument ignored = export(report, session -> session.add(new ShapeContainerBuilder()
+        try (XWPFDocument document = export(report, session -> session.add(new ShapeContainerBuilder()
                 .name("Star")
                 .star(60, 60)
                 .fillColor(ACCENT)
                 .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("New").build())
                 .build()))) {
-            assertThat(report.get().bySubject().get("shape container outline")).hasSize(1);
+            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .contains("<a:custGeom>").contains("<a:close/>").contains("srgbClr val=\"1A5694\"");
+            assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isZero();
+        }
+    }
+
+    @Test
+    void aPathIsDrawnThroughItsPointsWithTheBoxTurnedTheWayDrawingMlCounts() throws Exception {
+        // The engine counts y up from the bottom of the box, DrawingML down from the top.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addPath(path -> path.name("Triangle").size(40, 20)
+                        .moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1).closePath()
+                        .stroke(DocumentStroke.of(ACCENT, 1)))))) {
+            String anchor = anchors(document.getDocument().xmlText()).get(0);
+
+            assertThat(anchor).contains("<a:moveTo><a:pt x=\"0\" y=\"100000\"/></a:moveTo>")
+                    .contains("<a:lnTo><a:pt x=\"100000\" y=\"100000\"/></a:lnTo>")
+                    .contains("<a:lnTo><a:pt x=\"50000\" y=\"0\"/></a:lnTo>")
+                    .contains("fill=\"none\"")
+                    .contains("cx=\"" + Units.toEMU(40) + "\"");
         }
     }
 

@@ -29,6 +29,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DocxExportReportTest {
 
     private static final DocumentColor SURFACE = DocumentColor.rgb(238, 243, 249);
+    // A shape the export draws, filled with a paint it does not carry: nothing of it shows.
+    private static final com.demcha.compose.document.style.DocumentPaint GRADIENT =
+            com.demcha.compose.document.style.DocumentPaint.linear(SURFACE, DocumentColor.rgb(26, 86, 148));
 
     @Test
     void aDocumentThatLosesNothingReportsNothing() throws Exception {
@@ -43,7 +46,7 @@ class DocxExportReportTest {
         DocxExportReport report = reportOf(page -> page
                 .addParagraph(p -> p.text("Before"))
                 .addPath(path -> path.name("Rail").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
-                        .closePath().fillColor(SURFACE)));
+                        .closePath().fill(GRADIENT)));
 
         List<DocxExportReport.Note> notes = report.notes();
         assertThat(notes).hasSize(1);
@@ -60,11 +63,11 @@ class DocxExportReportTest {
         // document lost wants the three it lost, not the fact that it lost a kind.
         DocxExportReport report = reportOf(page -> page
                 .addPath(path -> path.name("First").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
-                        .closePath().fillColor(SURFACE))
+                        .closePath().fill(GRADIENT))
                 .addPath(path -> path.name("Second").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
-                        .closePath().fillColor(SURFACE))
+                        .closePath().fill(GRADIENT))
                 .addPath(path -> path.name("Third").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
-                        .closePath().fillColor(SURFACE)));
+                        .closePath().fill(GRADIENT)));
 
         assertThat(report.count(DocxExportReport.Severity.DROPPED)).isEqualTo(3);
         assertThat(report.notes()).extracting(DocxExportReport.Note::path)

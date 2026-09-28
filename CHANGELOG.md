@@ -8,14 +8,27 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Icons and shapes inside table cells reach Word.** What a table cell composes
+  (`DocumentTableCell.node(...)`) has no place of its own in the layout: its drawing is laid out
+  as the table's own. The DOCX export drew a node's fragments only, so every icon, tile and disc a
+  table's cells held was dropped — sixteen on `MeteredInvoice`, thirteen on `PaymentsInvoice`,
+  eight on `WorkspaceInvoice`, five on `PlatformInvoice`, four on `MerchantInvoice`, three on
+  `CobaltRota`. The table now draws them, anchored to the page where the layout puts them: one
+  framing text — a disc under a number — behind it, any other in front, since both editors paint
+  a cell's shading over a drawing behind the text and a cell is shaded wherever its style names a
+  fill, white included; a box framing text is left to the panel it is written as, and a box lost
+  that way is still reported. None of those templates drops a drawing any more, and
+  no page count or text line moves. `ObsidianInvoice`'s row rules now stand where the page draws
+  them, between rows whose descriptions LibreOffice already sets lower than the page.
+
 - **A filled pill inside a table cell keeps its colour in Word.** A shape container composed in a
   table cell (`DocumentTableCell.node(...)`) has no place in the layout, so the DOCX export had
   no position to draw its outline at and dropped it: `CobaltRota`'s 108 shift chips came out as
   their hours in white on nothing. A filled or outlined rectangle or rounded rectangle there is
   now written as a panel — a table of one cell in its fill and outline, its outline's width
   within the cell, with its layers inside — its corners squared and reported. A container
-  holding only drawing — an icon's tile — and another outline composed in a cell are still
-  dropped, and the report now says why. In LibreOffice the chips show in their colours, the
+  holding only drawing — an icon's tile — is not a panel: its table draws it (see above). In
+  LibreOffice the chips show in their colours, the
   rota's lines stand 1–2pt lower than before under the chips' cells, and no text line of another
   template moves.
 

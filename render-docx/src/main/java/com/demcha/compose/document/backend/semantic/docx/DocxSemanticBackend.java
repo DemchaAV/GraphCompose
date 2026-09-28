@@ -241,6 +241,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private int sectionFirstElement;
     // The shape container being written that clips its content to its outline, null outside one.
     private ShapeContainerNode clipContainer;
+    // What the tables being written drew of their composed cells (see drawCellDrawing): a drawing
+    // node inside such a cell is then drawn, not lost.
+    private CellDrawing cellDrawing = CellDrawing.NONE;
     // The text style the document is mostly written in, promoted to Word's Normal style.
     // Null until an export computes it, and when the graph carries no text at all.
     private DocumentTextStyle documentDefaultStyle;
@@ -542,6 +545,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         anchors.reset();
         currentPage = 0;
         clipContainer = null;
+        cellDrawing = CellDrawing.NONE;
         moves.clear();
         writingInAStandIn.clear();
         listNumbering.clear();
@@ -1798,7 +1802,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the summary and the report is the record.</p>
      */
     private void warnUnsupported(DocumentNode node) {
-        if (drawOwnFragments(node)) {
+        if (drawOwnFragments(node) || drawnByItsTable(node)) {
+            // Drawn: by the node, or, composed in a cell, by its table.
             return;
         }
         if (warnedNodeKinds.add(node.nodeKind())) {
@@ -1848,7 +1853,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * shape shows it — a path, a polygon, a star.
      */
     private void drawOutlineOf(DocumentNode node) {
-        if (!drawOwnFragments(node) && node instanceof ShapeContainerNode container
+        if (!drawOwnFragments(node) && !drawnByItsTable(node)
+            && node instanceof ShapeContainerNode container
             && (container.fillColor() != null || container.stroke() != null && container.stroke().width() > 0)) {
             String outline = container.outline().getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT);
             report.add(DocxExportReport.Severity.DROPPED, "shape container outline", layout.pathOf(node),
@@ -4903,6 +4909,121 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (node.rows().isEmpty()) {
             return;
         }
+        CellDrawing outerCellDrawing = cellDrawing;
+        CellDrawing drawn = drawCellDrawing(node);
+        cellDrawing = new CellDrawing(outerCellDrawing.drew() || drawn.drew(),
+                outerCellDrawing.skippedBoxes() || drawn.skippedBoxes());
+        try {
+            writeTableRows(document, node);
+        } finally {
+            cellDrawing = outerCellDrawing;
+        }
+    }
+
+    /**
+     * What the tables being written drew of their composed cells.
+     *
+     * @param drew         whether they drew anything
+     * @param skippedBoxes whether they left a box framing text to the panel it is written as
+     */
+    private record CellDrawing(boolean drew, boolean skippedBoxes) {
+        static final CellDrawing NONE = new CellDrawing(false, false);
+    }
+
+    /**
+     * Whether a node composed in a cell was drawn by its table, so that it is not lost.
+     *
+     * <p>A path, an ellipse, a polygon or a line composed in a cell is always among what its table
+     * draws once it draws anything. A box may be a box framing text left to its panel; while a
+     * table skipped any, a box node is still reported, rather than one lost in silence.</p>
+     */
+    private boolean drawnByItsTable(DocumentNode node) {
+        if (!cellDrawing.drew() || !composedInACell(node)
+            || !(isDrawing(node) || node instanceof ShapeContainerNode)) {
+            // A node kind the table's drawing does not cover is reported as ever.
+            return false;
+        }
+        if (node instanceof com.demcha.compose.document.node.PathNode path && !drawsAFlatColour(path)) {
+            // A path painted only with a gradient is no shape the table draws.
+            return false;
+        }
+        boolean box = node instanceof com.demcha.compose.document.node.ShapeNode
+                      || node instanceof ShapeContainerNode container
+                         && !(container.outline() instanceof com.demcha.compose.document.style.ShapeOutline.Ellipse);
+        return !box || !cellDrawing.skippedBoxes();
+    }
+
+    /**
+     * Whether a path's fragment carries a flat fill or a stroke. The layout turns a solid
+     * {@code fillPaint} into the flat fill and otherwise uses {@code fillColor}; a gradient fill
+     * travels as a paint only, which the drawing leaves out.
+     */
+    private static boolean drawsAFlatColour(com.demcha.compose.document.node.PathNode path) {
+        boolean flatFill = path.fillPaint() == null
+                ? path.fillColor() != null
+                : path.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid;
+        return flatFill || path.stroke() != null;
+    }
+
+    /**
+     * Draws what a table's composed cells paint — an icon, a disc, a tile — where the page draws
+     * it.
+     *
+     * <p>Content composed in a cell has no place of its own in the layout: its fragments belong
+     * to the table, so no node of the cell had any to draw, and the export dropped every icon a
+     * table's cells held — sixteen on one invoice. The table's own fragments are drawn instead,
+     * all but a box framing text or a picture: that is a panel, written as a table of one cell
+     * (see {@link #writtenAsAPanel}).</p>
+     *
+     * <p>Each is drawn behind the text or in front of it on its own account. One framing text —
+     * a disc under a number — stays behind what it frames. Any other stands in front: both
+     * editors paint a cell's shading over a drawing behind the text, and a cell is shaded
+     * wherever its style names a fill, white included — the icons of an invoice's white lines
+     * disappeared under it as surely as those of a rota's navy band. An icon in a cell stands in
+     * a place of its own there, beside its label rather than under it.</p>
+     */
+    private CellDrawing drawCellDrawing(TableNode table) {
+        List<com.demcha.compose.document.layout.PlacedFragment> fragments = layout.ownFragments(table);
+        List<com.demcha.compose.document.layout.PlacedFragment> content = fragments.stream()
+                .filter(fragment -> fragment.payload()
+                        instanceof com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload
+                        || fragment.payload()
+                        instanceof com.demcha.compose.document.layout.payloads.ImageFragmentPayload)
+                .toList();
+        boolean drew = false;
+        boolean skipped = false;
+        for (com.demcha.compose.document.layout.PlacedFragment fragment : fragments) {
+            boolean frames = framesText(fragment, content);
+            if (frames && fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload) {
+                skipped = true;
+                continue;
+            }
+            drew |= queueDrawing(fragment, !frames);
+        }
+        if (drew) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "cell drawing", layout.pathOf(table),
+                    "what its cells draw is drawn as shapes anchored to the page where the layout puts "
+                    + "it: it stays there when the text around it is edited, and a clip, a transform, a "
+                    + "gradient or a dash on it is not carried");
+        }
+        return new CellDrawing(drew, skipped);
+    }
+
+    /** Whether a box holds a line of text or a picture of its table: the centre of one stands inside it. */
+    private static boolean framesText(com.demcha.compose.document.layout.PlacedFragment box,
+                                      List<com.demcha.compose.document.layout.PlacedFragment> text) {
+        for (com.demcha.compose.document.layout.PlacedFragment line : text) {
+            double x = line.x() + line.width() / 2;
+            double y = line.y() + line.height() / 2;
+            if (line.pageIndex() == box.pageIndex()
+                && x >= box.x() && x <= box.x() + box.width() && y >= box.y() && y <= box.y() + box.height()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void writeTableRows(XWPFDocument document, TableNode node) throws Exception {
         int rowCount = node.rows().size();
         int columnCount = TableGrid.columnCount(node);
         if (columnCount == 0) {

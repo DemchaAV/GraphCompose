@@ -30,15 +30,17 @@ follow semantic versioning; release dates are ISO 8601.
   inside a painted shape container that clips it — `NavySidebar`'s section badges — as a
   paragraph of its own, which put the glyph on a line above the section title beside it, off the
   circle's middle by that line's height: up to 8.5pt in LibreOffice and more in Word. A picture
-  smaller than such a container is now drawn as a picture anchored to the page where the layout
-  puts it, over the outline; inside a filled panel, a badge holding nothing but drawing and its
-  glyph is drawn in front of the cell's shading with it. A container with text in one layer only,
-  beside drawing, is written as a layer stack's band is, so the title keeps the header's height
-  above and below it. In LibreOffice the glyphs of `NavySidebar` and `SerifHeadline` stand within
-  0.6pt of the page, and `NavySidebar`'s main column stands 2.5pt below the page instead of
-  5.6pt; `NorthlineProposal`'s body moves 5–16pt closer to the page and `EditorialProposal`'s
-  facts keep the page's spacing between them. No text line of the other twenty-five CV presets
-  or the seven invoices moves.
+  smaller than a container that clips it to its outline and holds nothing else but drawing is
+  now drawn as a picture anchored to the page where the layout puts it, over the outline. Inside
+  a filled panel it stays in the flow: both editors paint a panel's shading over a drawing behind
+  the text, and a badge drawn in front stands over any text an editor sets differently from the
+  page. A container with written content in one layer only, beside drawing, is written as a
+  layer stack's band is, so the title keeps the page's space above and below it. In LibreOffice
+  the glyphs of `NavySidebar` and `SerifHeadline` stand within 0.6pt of the page;
+  `NavySidebar`'s main column stands 2.5pt below the page instead of 5.6pt, a `TealPulse`
+  section title stands 33pt above its first line (the page's 34pt) instead of 19pt,
+  `NorthlineProposal`'s body moves 5–16pt closer to the page and `EditorialProposal`'s facts
+  keep the page's spacing between them. No shape of any template moves in front of the text.
 
 - **Shapes print whole in Word, and show in filled panels.** A drawn shape was anchored in the
   first paragraph written on its page, and on a page laid out in a table — a two-column CV is

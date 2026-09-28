@@ -1634,37 +1634,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return true;
     }
 
-    /**
-     * Whether what a node draws may stand in front of the text: as {@link #drawsInFront()}, or,
-     * inside a painted panel, when the node is a badge holding nothing but drawing and the glyphs
-     * drawn over it. Such a badge covers nothing written, whatever text stands beside it in the
-     * overlay around it — a section title set next to its badge.
-     */
-    private boolean drawsInFront(DocumentNode node) {
-        return drawsInFront()
-               || surfaceBehind != null && node instanceof ShapeContainerNode
-                  && !node.children().isEmpty() && onlyDrawn(node);
-    }
-
     private void writeNodeContentOf(XWPFDocument document, DocumentNode node) throws Exception {
         // A title and its dates at either end of one band are one line before they are layers.
         if (node instanceof com.demcha.compose.document.node.LayerStackNode
             || node instanceof ShapeContainerNode) {
             DocxLinePair.Pair pair = DocxLinePair.of(node, layout);
             if (pair != null) {
-                // A pill's outline round its title and dates is drawn as writeShapeContainer draws it,
-                // and a glyph it clips is drawn over it.
+                // A pill's outline round its title and dates is drawn as writeShapeContainer draws it.
                 drawOutlineOf(node);
-                ShapeContainerNode outerClip = clipContainer;
-                if (node instanceof ShapeContainerNode pill
-                    && pill.clipPolicy() == com.demcha.compose.document.style.ClipPolicy.CLIP_PATH) {
-                    clipContainer = pill;
-                }
-                try {
-                    writeLinePair(document, node, pair);
-                } finally {
-                    clipContainer = outerClip;
-                }
+                writeLinePair(document, node, pair);
                 return;
             }
         }
@@ -1838,7 +1816,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @return whether the node painted anything a shape shows
      */
     private boolean drawOwnFragments(DocumentNode node) {
-        boolean front = drawsInFront(node);
+        boolean front = drawsInFront();
         boolean drew = false;
         for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
             drew |= queueDrawing(fragment, front);
@@ -3548,7 +3526,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Writes a shape container's layers, drawing its outline where the page draws it. A
      * container whose one written layer is laid beside drawing is written as a band (see
      * {@link #writeOverlayBand}, {@link #writesOneLayer}): a section title beside its badge
-     * stands where the page centres it in the header, with the header's height round it.
+     * stands where the page places it in the header, with the page's space above and below it.
      *
      * @param band the container's layers as a band, or {@code null} to write them one after the
      *             other
@@ -4504,7 +4482,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             drawHeight = sourceHeight * scale;
         }
         if (drawnOverItsBadge(node, clipContainer)) {
-            drawOverTheBadge(document, node, clipContainer, bytes, sourceWidth, sourceHeight);
+            drawOverTheBadge(document, node, bytes, sourceWidth, sourceHeight);
             return;
         }
 
@@ -4556,22 +4534,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether a picture is a glyph its badge holds, drawn over the badge rather than written in
-     * the flow: a layer of a painted shape container that clips it, smaller than the badge and
-     * standing inside it on one page. Written as a paragraph of its own, the glyph took a line
-     * above the title set beside the badge, and stood that line's height and its leading off the
-     * circle's middle.
+     * the flow: a layer of a painted shape container that clips it to its outline and holds
+     * nothing else but drawing, smaller than the badge and standing inside it on one page.
+     * Written as a paragraph of its own, the glyph took a line above the title set beside the
+     * badge, and stood that line's height and its leading off the circle's middle.
      *
      * <p>A photo filling its frame or its circle is the picture the flow is written round, and
-     * stays in it; so does a picture cropped to cover its box, and one a link or a page reference
-     * lands on, whose bookmark needs a paragraph.</p>
+     * stays in it; so does a logo in a card that holds text, a picture cropped to cover its box,
+     * and one carrying an anchor, whose bookmark needs a paragraph. So does a glyph inside a
+     * painted panel: a panel is a shaded cell, and both editors paint its shading over a drawing
+     * behind the text, where the glyph would disappear; drawn in front, a badge stands over any
+     * text an editor sets differently from the page.</p>
      */
     private boolean drawnOverItsBadge(ImageNode image, ShapeContainerNode badge) {
         if (badge == null || badge.clipPolicy() != com.demcha.compose.document.style.ClipPolicy.CLIP_PATH
             || badge.fillColor() == null && badge.stroke() == null
+            || surfaceBehind != null
             || image.anchor() != null && !image.anchor().isBlank()
             || image.fitMode() == DocumentImageFitMode.COVER
             || Double.isNaN(canvasHeight)
-            || badge.children().stream().noneMatch(layer -> layer == image)) {
+            || badge.children().stream().noneMatch(layer -> layer == image)
+            || !badge.children().stream().allMatch(layer -> layer instanceof ImageNode || onlyDrawing(layer))) {
             return false;
         }
         com.demcha.compose.document.layout.PlacedNode box = layout.placement(badge);
@@ -4592,12 +4575,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Draws a badge's glyph where the page draws it, in the box the layout gave it, over the
      * badge's outline drawn before it (see {@link #drawnOverItsBadge}).
-     *
-     * <p>In a filled panel the glyph stands in front of the cell's shading whenever its badge
-     * holds nothing but drawing — the glyph covers only its badge, whatever text stands beside
-     * the badge. Behind, the shading hid it, where the paragraph it used to be written as showed.</p>
      */
-    private void drawOverTheBadge(XWPFDocument document, ImageNode image, ShapeContainerNode badge, byte[] bytes,
+    private void drawOverTheBadge(XWPFDocument document, ImageNode image, byte[] bytes,
                                   double sourceWidth, double sourceHeight) throws Exception {
         com.demcha.compose.document.layout.PlacedNode placed = layout.placement(image);
         double width = placed.placementWidth();
@@ -4612,13 +4591,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double top = canvasHeight - placed.placementY() - (placed.placementHeight() + height) / 2;
         DocxDrawings.Shape picture = DocxDrawings.Shape.picture(x, top, width, height, placed.startPage(),
                 relationship);
-        boolean inFront = drawsInFront(badge);
-        queueDrawings(List.of(picture), inFront);
+        queueDrawings(List.of(picture), false);
         report.add(DocxExportReport.Severity.APPROXIMATED, image.nodeKind(), layout.pathOf(image),
                 "drawn over the badge holding it, anchored to the page where the layout puts it: it stays "
-                + "there when the text around it is edited"
-                + (inFront ? "; in front of the text, since the panel's shading is painted over pictures behind it"
-                           : ""));
+                + "there when the text around it is edited");
     }
 
     /**
@@ -5655,7 +5631,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private boolean writesOneLayer(DocumentNode node) {
         int written = 0;
         for (DocumentNode layer : node.children()) {
-            if (!onlyDrawn(layer)) {
+            boolean drawn = layer instanceof ImageNode image && node instanceof ShapeContainerNode badge
+                    ? drawnOverItsBadge(image, badge)
+                    : onlyDrawn(layer);
+            if (!drawn) {
                 written++;
             }
         }

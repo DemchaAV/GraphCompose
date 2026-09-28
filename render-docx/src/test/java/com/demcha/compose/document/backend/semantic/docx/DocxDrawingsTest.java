@@ -126,7 +126,6 @@ class DocxDrawingsTest {
         })) {
             String body = document.getDocument().xmlText();
             List<String> anchors = anchors(body);
-            String circle = anchors.stream().filter(a -> a.contains("prst=\"ellipse\"")).findFirst().orElseThrow();
             String picture = anchors.stream().filter(a -> a.contains("<pic:pic")).findFirst().orElseThrow();
             double top = 400 - glyph.get().y() - glyph.get().height();
 
@@ -137,7 +136,8 @@ class DocxDrawingsTest {
                               + Units.toEMU(glyph.get().x()) + "</wp:posOffset>")
                     .contains("<wp:positionV relativeFrom=\"page\"><wp:posOffset>"
                               + Units.toEMU(top) + "</wp:posOffset>");
-            assertThat(relativeHeight(picture)).as("over the circle").isGreaterThan(relativeHeight(circle));
+            assertThat(relativeHeight(document, "<pic:pic")).as("over the circle")
+                    .isGreaterThan(relativeHeight(document, "prst=\"ellipse\""));
             assertThat(document.getAllPictures()).hasSize(1);
             assertThat(document.getParagraphs()).extracting(p -> p.getText()).containsSubsequence("Above", "EXPERIENCE");
             assertThat(report.get().notes()).anyMatch(note -> note.severity() == DocxExportReport.Severity.APPROXIMATED
@@ -214,20 +214,9 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void aGlyphInABadgeInAPaintedPanelIsDrawnInFrontWithIt() throws Exception {
-        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
-                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
-                        .addParagraph(p -> p.text("Profile"))
-                        .add(badge()))))) {
-            assertThat(anchors(document.getDocument().xmlText())).hasSize(2)
-                    .allMatch(anchor -> anchor.contains("behindDoc=\"0\""));
-        }
-    }
-
-    @Test
-    void aBadgeBesideItsTitleInAPaintedPanelShowsWithItsGlyph() throws Exception {
-        // The title beside the badge is text in the overlay around it, which the badge does not
-        // cover; behind the text, the cell's shading hid the circle and the glyph.
+    void aGlyphInAPaintedPanelStaysInTheFlow() throws Exception {
+        // Behind the text, the cell's shading would hide the glyph; in front, the badge would
+        // stand over any text an editor sets differently from the page.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
                         .addContainer(band -> band.name("Header").rectangle(300, 30)
@@ -235,9 +224,48 @@ class DocxDrawingsTest {
                                 .centerLeft(badge())
                                 .position(new ParagraphBuilder().name("Title").text("EXPERIENCE").build(),
                                         34, 0, LayerAlign.CENTER_LEFT)))))) {
+            String body = document.getDocument().xmlText();
+
+            assertThat(body).contains("<wp:inline");
+            assertThat(anchors(body)).singleElement().asString()
+                    .contains("prst=\"ellipse\"").contains("behindDoc=\"1\"");
+        }
+    }
+
+    @Test
+    void anIconDrawnBesideItsLabelInAPaintedPanelStaysBehindTheText() throws Exception {
+        // An icon's tile holding only drawing, set beside its label: in front, an editor that sets
+        // the label a little differently puts the tile over it.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
+                        .addContainer(row -> row.name("Fact").rectangle(300, 30)
+                                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                                .centerLeft(new ShapeContainerBuilder().name("Tile").roundedRect(27, 27, 6)
+                                        .fillColor(ACCENT)
+                                        .center(new com.demcha.compose.document.dsl.EllipseBuilder()
+                                                .circle(9).fillColor(DocumentColor.WHITE).build())
+                                        .build())
+                                .position(new ParagraphBuilder().name("Label").text("Compliant").build(),
+                                        34, 0, LayerAlign.CENTER_LEFT)))))) {
             assertThat(anchors(document.getDocument().xmlText())).hasSize(2)
-                    .allMatch(anchor -> anchor.contains("behindDoc=\"0\""));
-            assertThat(allText(document)).contains("EXPERIENCE");
+                    .allMatch(anchor -> anchor.contains("behindDoc=\"1\""));
+        }
+    }
+
+    @Test
+    void anIconInTheSameContainerAsItsTitleStaysInTheFlow() throws Exception {
+        // Not a badge: the container holds the title too, and its height is the title's line's.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .add(new ShapeContainerBuilder().name("Pill").roundedRect(200, 28, 14).fillColor(ACCENT)
+                        .centerLeft(new ImageBuilder().name("Icon").source(pngBytes()).size(16, 16).build())
+                        .position(new ParagraphBuilder().name("Title").text("Remote").build(),
+                                24, 0, LayerAlign.CENTER_LEFT)
+                        .build())
+                .addParagraph(p -> p.text("Below"))))) {
+            String body = document.getDocument().xmlText();
+
+            assertThat(body).contains("<wp:inline");
+            assertThat(anchors(body)).noneMatch(anchor -> anchor.contains("<pic:pic"));
         }
     }
 
@@ -278,18 +306,22 @@ class DocxDrawingsTest {
                 .build();
     }
 
-    private static long relativeHeight(String anchor) {
-        Matcher matcher = Pattern.compile("relativeHeight=\"(\\d+)\"").matcher(anchor);
-        assertThat(matcher.find()).isTrue();
-        String value = matcher.group(1);
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            assertThat(false)
-                    .as("Invalid relativeHeight value '%s' in anchor: %s", value, anchor)
-                    .isTrue();
-            throw e;
+    /** The stacking height of the one anchored drawing in the body whose XML carries a marker. */
+    private static long relativeHeight(XWPFDocument document, String marker) {
+        for (org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph : document.getParagraphs()) {
+            for (org.apache.poi.xwpf.usermodel.XWPFRun run : paragraph.getRuns()) {
+                for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing drawing
+                        : run.getCTR().getDrawingList()) {
+                    for (org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor anchor
+                            : drawing.getAnchorList()) {
+                        if (anchor.xmlText().contains(marker)) {
+                            return anchor.getRelativeHeight();
+                        }
+                    }
+                }
+            }
         }
+        throw new AssertionError("no anchored drawing carries " + marker);
     }
 
     @Test

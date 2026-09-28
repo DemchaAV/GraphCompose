@@ -14,10 +14,10 @@ follow semantic versioning; release dates are ISO 8601.
   table's cells held was dropped — sixteen on `MeteredInvoice`, thirteen on `PaymentsInvoice`,
   eight on `WorkspaceInvoice`, five on `PlatformInvoice`, four on `MerchantInvoice`, three on
   `CobaltRota`. The table now draws them, anchored to the page where the layout puts them: one
-  framing text — a disc under a number — behind it, any other in front where its cell is painted
-  or the table sits in a painted panel, since both editors paint shading over a drawing behind the
-  text, and behind it elsewhere; a box framing text is left to the panel it is written as, and a
-  box lost that way is still reported. None of those templates drops a drawing any more, and
+  framing text — a disc under a number — behind it, any other in front, since both editors paint
+  a cell's shading over a drawing behind the text and a cell is shaded wherever its style names a
+  fill, white included; a box framing text is left to the panel it is written as, and a box lost
+  that way is still reported. None of those templates drops a drawing any more, and
   no page count or text line moves. `ObsidianInvoice`'s row rules now stand where the page draws
   them, between rows whose descriptions LibreOffice already sets lower than the page.
 

@@ -4938,13 +4938,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * table skipped any, a box node is still reported, rather than one lost in silence.</p>
      */
     private boolean drawnByItsTable(DocumentNode node) {
-        if (!cellDrawing.drew() || !composedInACell(node)) {
+        if (!cellDrawing.drew() || !composedInACell(node)
+            || !(isDrawing(node) || node instanceof ShapeContainerNode)) {
+            // A node kind the table's drawing does not cover is reported as ever.
+            return false;
+        }
+        if (node instanceof com.demcha.compose.document.node.PathNode path && !drawsAFlatColour(path)) {
+            // A path painted only with a gradient is no shape the table draws.
             return false;
         }
         boolean box = node instanceof com.demcha.compose.document.node.ShapeNode
                       || node instanceof ShapeContainerNode container
                          && !(container.outline() instanceof com.demcha.compose.document.style.ShapeOutline.Ellipse);
         return !box || !cellDrawing.skippedBoxes();
+    }
+
+    /**
+     * Whether a path's fragment carries a flat fill or a stroke. The layout turns a solid
+     * {@code fillPaint} into the flat fill and otherwise uses {@code fillColor}; a gradient fill
+     * travels as a paint only, which the drawing leaves out.
+     */
+    private static boolean drawsAFlatColour(com.demcha.compose.document.node.PathNode path) {
+        boolean flatFill = path.fillPaint() == null
+                ? path.fillColor() != null
+                : path.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid;
+        return flatFill || path.stroke() != null;
     }
 
     /**
@@ -4958,9 +4976,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * (see {@link #writtenAsAPanel}).</p>
      *
      * <p>Each is drawn behind the text or in front of it on its own account. One framing text —
-     * a disc under a number — stays behind what it frames. Any other stands in front where the
-     * cell it lies in is painted, since both editors paint a cell's shading over a drawing behind
-     * the text — an icon in a navy band — or where the table sits in a painted panel.</p>
+     * a disc under a number — stays behind what it frames. Any other stands in front: both
+     * editors paint a cell's shading over a drawing behind the text, and a cell is shaded
+     * wherever its style names a fill, white included — the icons of an invoice's white lines
+     * disappeared under it as surely as those of a rota's navy band. An icon in a cell stands in
+     * a place of its own there, beside its label rather than under it.</p>
      */
     private CellDrawing drawCellDrawing(TableNode table) {
         List<com.demcha.compose.document.layout.PlacedFragment> fragments = layout.ownFragments(table);
@@ -4970,10 +4990,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         || fragment.payload()
                         instanceof com.demcha.compose.document.layout.payloads.ImageFragmentPayload)
                 .toList();
-        List<com.demcha.compose.document.layout.PlacedFragment> rows = fragments.stream()
-                .filter(fragment -> fragment.payload()
-                        instanceof com.demcha.compose.document.layout.payloads.TableRowFragmentPayload)
-                .toList();
         boolean drew = false;
         boolean skipped = false;
         for (com.demcha.compose.document.layout.PlacedFragment fragment : fragments) {
@@ -4982,8 +4998,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 skipped = true;
                 continue;
             }
-            boolean front = !frames && (drawsInFront() || surfaceBehind != null || inAPaintedCell(fragment, rows));
-            drew |= queueDrawing(fragment, front);
+            drew |= queueDrawing(fragment, !frames);
         }
         if (drew) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "cell drawing", layout.pathOf(table),
@@ -4992,31 +5007,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     + "gradient or a dash on it is not carried");
         }
         return new CellDrawing(drew, skipped);
-    }
-
-    /**
-     * Whether a drawing lies in a cell painted a colour other than white — white being the cell
-     * the page leaves unpainted — by the centre of the drawing.
-     */
-    private static boolean inAPaintedCell(com.demcha.compose.document.layout.PlacedFragment drawing,
-                                          List<com.demcha.compose.document.layout.PlacedFragment> rows) {
-        double x = drawing.x() + drawing.width() / 2;
-        double y = drawing.y() + drawing.height() / 2;
-        for (com.demcha.compose.document.layout.PlacedFragment row : rows) {
-            if (row.pageIndex() != drawing.pageIndex()) {
-                continue;
-            }
-            var payload = (com.demcha.compose.document.layout.payloads.TableRowFragmentPayload) row.payload();
-            for (com.demcha.compose.engine.components.content.table.TableResolvedCell cell : payload.cells()) {
-                double left = row.x() + cell.x();
-                double bottom = row.y() + cell.yOffset();
-                if (x >= left && x <= left + cell.width() && y >= bottom && y <= bottom + cell.height()) {
-                    java.awt.Color fill = cell.style().fillColor();
-                    return fill != null && fill.getAlpha() > 0 && (fill.getRGB() & 0xFFFFFF) != 0xFFFFFF;
-                }
-            }
-        }
-        return false;
     }
 
     /** Whether a box holds a line of text or a picture of its table: the centre of one stands inside it. */

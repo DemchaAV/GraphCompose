@@ -251,6 +251,21 @@ class DocxComposedCellTest {
     }
 
     @Test
+    void anIconInAWhiteCellStandsInFrontOfItsShading() throws Exception {
+        // A cell whose style names white is shaded white in Word, and the shading hid the icon.
+        com.demcha.compose.document.table.DocumentTableStyle white = com.demcha.compose.document.table.DocumentTableStyle
+                .builder().fillColor(com.demcha.compose.document.style.DocumentColor.WHITE).build();
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        String body = export(report, List.of(DocumentTableCell.node(
+                new com.demcha.compose.document.dsl.EllipseBuilder().name("Icon").circle(8)
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148)).build())
+                .withStyle(white)));
+
+        assertThat(body).contains("w:fill=\"FFFFFF\"");
+        assertThat(anchors(body)).singleElement().asString().contains("behindDoc=\"0\"");
+    }
+
+    @Test
     void aBoxLostInACellIsStillReportedWhenItsTableDrawsSomethingElse() throws Exception {
         // A rectangle framing text inside a layer stack is no panel, and its table leaves it to one.
         java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
@@ -265,6 +280,31 @@ class DocxComposedCellTest {
 
         assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).as("the box, not lost in silence")
                 .isPositive();
+    }
+
+    @Test
+    void aFlatPathInACellIsDrawnAndAGradientOneIsStillReported() throws Exception {
+        // An SVG icon carries its colour as fillColor, not as a paint; only a gradient goes undrawn.
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        String body = export(report, List.of(DocumentTableCell.node(triangle()
+                .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148)).name("Icon").build())));
+
+        assertThat(anchors(body)).singleElement().asString().contains("1A5694");
+        assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isZero();
+
+        export(report, List.of(
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.EllipseBuilder().name("Dot").circle(8)
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148)).build()),
+                DocumentTableCell.node(triangle().name("Glow").fill(com.demcha.compose.document.style.DocumentPaint.linear(
+                        com.demcha.compose.document.style.DocumentColor.WHITE,
+                        com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148))).build())));
+
+        assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).as("the gradient path").isPositive();
+    }
+
+    private static com.demcha.compose.document.dsl.PathBuilder triangle() {
+        return new com.demcha.compose.document.dsl.PathBuilder().size(10, 10)
+                .moveTo(0, 0).lineTo(10, 0).lineTo(5, 10).closePath();
     }
 
     private static String export(java.util.concurrent.atomic.AtomicReference<DocxExportReport> report,

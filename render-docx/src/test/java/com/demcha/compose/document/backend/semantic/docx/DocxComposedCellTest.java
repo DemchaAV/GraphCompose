@@ -163,10 +163,28 @@ class DocxComposedCellTest {
         assertThat(chip.getText()).contains("09:00-17:00");
         assertThat(((Number) chip.getCTTc().getTcPr().getTcW().getW()).longValue())
                 .as("as wide as its outline, and a point for the editor's face")
-                .isBetween(60L * 20, 61L * 20);
+                .isEqualTo(61L * 20);
         assertThat(chip.getVerticalAlignment()).isEqualTo(XWPFTableCell.XWPFVertAlign.CENTER);
         assertThat(cell.getTables().get(0).getRow(0).getHeight()).as("as tall as its line, not held to its outline")
                 .isZero();
+    }
+
+    @Test
+    void anOutlinedPillInACellIsAPanelWithItsBorders() throws Exception {
+        XWPFTableCell cell = onlyTableCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .rowCells(DocumentTableCell.text("Mon"), DocumentTableCell.node(
+                        new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                                .name("Soft").roundedRect(60, 14, 7)
+                                .stroke(com.demcha.compose.document.style.DocumentStroke.of(
+                                        com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1))
+                                .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("12:00").build())
+                                .build()))));
+
+        assertThat(cell.getTables()).hasSize(1);
+        XWPFTableCell chip = cell.getTables().get(0).getRow(0).getCell(0);
+        assertThat(chip.getCTTc().getTcPr().getTcBorders().getTop().xmlText()).containsIgnoringCase("1A5694");
+        assertThat(chip.getText()).contains("12:00");
     }
 
     @Test

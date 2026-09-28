@@ -2617,8 +2617,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.util.OptionalDouble placed = layout.placedWidth(node);
         if (placed.isEmpty() && node instanceof ShapeContainerNode shape) {
             // Composed in a table cell, it has no placement; its outline states its size, within
-            // the cell it is composed in.
-            return Double.isFinite(available) ? Math.min(shape.outline().width(), available) : shape.outline().width();
+            // the cell it is composed in, and it gets the same slack below.
+            placed = java.util.OptionalDouble.of(Double.isFinite(available)
+                    ? Math.min(shape.outline().width(), available)
+                    : shape.outline().width());
         }
         if (placed.isEmpty()) {
             return available;
@@ -3103,7 +3105,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean painted = node.fillColor() != null || node.stroke() != null && node.stroke().width() > 0;
         // One holding only drawing — an icon's tile — has nothing a cell can hold, and a panel
         // with nothing inside is a sliver, or, held to the tile's height, a row taller than the
-        // page's on every line: an invoice ran onto a second page. It stays unwritten.
+        // page's on every line: an invoice ran onto a second page. It stays unwritten. One holding
+        // an empty container or a spacer is a panel a hairline tall, its colour still there.
         return boxed && painted && !onlyDrawn(node) && composedInACell(node);
     }
 

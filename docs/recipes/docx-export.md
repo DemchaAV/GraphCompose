@@ -525,7 +525,7 @@ tint it was flattened to. Recorded, like the other two.
   rectangle composed inside a table cell (`DocumentTableCell.node(...)`)
   has no place in the layout to be drawn at; it is written as a panel is,
   a table of one cell in its fill and outline, its outline's width within
-  the cell, with its layers centred inside, its corners squared and
+  the cell and a point for the editor's face, with its layers inside, its corners squared and
   reported — a rota's shift chips keep their colour. A container holding
   only drawing, and another outline composed in a cell, are reported as
   dropped. A badge's glyph — a smaller picture in a filled or outlined

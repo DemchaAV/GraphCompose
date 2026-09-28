@@ -3982,6 +3982,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(node);
         boolean wroteARun = false;
         PictureReach pictures = PictureReach.NONE;
+        // The mark closes the last line, so it is sized as the text that ends it.
+        DocumentTextStyle markStyle = node.textStyle();
         for (InlineRun run : node.inlineRuns()) {
             InlineTextRun text = textOf(run);
             if (text == null) {
@@ -3997,7 +3999,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // rest of that sentence rather than something the phrase overrides away.
             DocumentLinkTarget target = text.linkTarget() != null ? text.linkTarget() : node.linkTarget();
             XWPFRun docRun = newRun(para, target);
-            applyStyle(docRun, text.textStyle() == null ? node.textStyle() : text.textStyle());
+            markStyle = text.textStyle() == null ? node.textStyle() : text.textStyle();
+            applyStyle(docRun, markStyle);
             applyRunDirection(docRun, rightToLeft);
             applyInlineBackground(docRun, backgroundOf(run), path);
             docRun.setText(text.text() == null ? "" : text.text());
@@ -4010,7 +4013,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             docRun.setText(node.text() == null ? "" : node.text());
         }
         makeRoomForPictures(para, pictures);
-        styleTheMark(para, node.textStyle());
+        styleTheMark(para, markStyle);
     }
 
     /**
@@ -5023,6 +5026,75 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return false;
     }
 
+    /**
+     * Keeps a row at least as tall as the page made it.
+     *
+     * <p>A row is as tall as its tallest cell, and a cell's padding is written with it — but a
+     * cell composed from a row or a stack carries space the cell does not: {@code MerchantInvoice}
+     * centres each line's content in a 37.7pt row through its inner row's padding, and Word,
+     * given only the content, closed every row to 31.3pt. A drawing the table anchors where the
+     * page puts it then lands a row lower each row. At least, not exactly: where Word's text
+     * needs more room than the page's, the row still grows to hold it.</p>
+     *
+     * <p>The height is written less the most any of the row's cells takes above and below its
+     * content — top and bottom margins, and a horizontal border's width. LibreOffice reads a
+     * row's height as its cells' content and adds those to it: written whole,
+     * {@code PlatformInvoice}'s 36pt rows, padded 6.1pt above and below, came out 48pt. Less
+     * them, a row is the page's height there, and no taller than its content where the height
+     * is read as the row's whole.</p>
+     */
+    private void holdRowHeight(XWPFTableRow row, TableNode node, int rowIdx) {
+        java.util.OptionalDouble height = layout.rowHeight(node, rowIdx);
+        if (height.isEmpty()) {
+            return;
+        }
+        long margins = 0;
+        for (XWPFTableCell cell : row.getTableCells()) {
+            margins = Math.max(margins, verticalMargins(cell));
+        }
+        long twips = Math.round(height.getAsDouble() * POINT_TO_TWIP) - margins;
+        if (twips <= 0) {
+            return;
+        }
+        row.setHeight((int) twips);
+        row.setHeightRule(org.apache.poi.xwpf.usermodel.TableRowHeightRule.AT_LEAST);
+    }
+
+    /**
+     * What LibreOffice adds to a row's written height for one cell, in twips: its top and bottom
+     * margins, and the width of its heavier horizontal border.
+     */
+    private static long verticalMargins(XWPFTableCell cell) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr properties = cell.getCTTc().getTcPr();
+        if (properties == null) {
+            return 0;
+        }
+        long margins = 0;
+        if (properties.isSetTcMar()) {
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcMar mar = properties.getTcMar();
+            margins = twipsOf(mar.isSetTop() ? mar.getTop() : null)
+                      + twipsOf(mar.isSetBottom() ? mar.getBottom() : null);
+        }
+        if (properties.isSetTcBorders()) {
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcBorders borders = properties.getTcBorders();
+            margins += Math.max(borderTwips(borders.isSetTop() ? borders.getTop() : null),
+                    borderTwips(borders.isSetBottom() ? borders.getBottom() : null));
+        }
+        return margins;
+    }
+
+    /** A drawn border's width in twips; its size is in eighths of a point. */
+    private static long borderTwips(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBorder border) {
+        if (!drawn(border) || !border.isSetSz() || border.getSz() == null) {
+            return 0;
+        }
+        return Math.round(border.getSz().doubleValue() * POINT_TO_TWIP / 8.0);
+    }
+
+    private static long twipsOf(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth width) {
+        return width == null || !(width.getW() instanceof Number number) ? 0 : number.longValue();
+    }
+
     private void writeTableRows(XWPFDocument document, TableNode node) throws Exception {
         int rowCount = node.rows().size();
         int columnCount = TableGrid.columnCount(node);
@@ -5088,6 +5160,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     surfaceBehind = outerSurface;
                 }
             }
+            holdRowHeight(row, node, rowIdx);
         }
         breakRowsWhereTheLayoutDoes(table, node);
         indentTable(table);

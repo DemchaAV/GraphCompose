@@ -70,15 +70,35 @@ class DocxParagraphMarkTest {
     }
 
     @Test
-    void aMarkLargerThanTheDocumentsTextIsSetInTheTextsFace() throws Exception {
-        // In the document's face, a 20pt mark grows the line by that face's height rather than
-        // the text's own.
+    void aParagraphComposedInACellIsSetAtTheLineThePageMeasured() throws Exception {
+        // Its lines are laid out among its table's fragments, not at a path of its own; without
+        // them Word set the line at its face's own height.
         DocumentTextStyle heading = DocumentTextStyle.builder()
                 .fontName(com.demcha.compose.font.FontName.TIMES_ROMAN).size(20).build();
         try (XWPFDocument document = export(page -> page
                 .addParagraph(p -> p.text("Body text sets the document's size"))
                 .addTable(t -> t.columns(DocumentTableColumn.fixed(200))
                         .rowCells(DocumentTableCell.node(new ParagraphBuilder().text("Heading")
+                                .textStyle(heading).build()))))) {
+            CTPPr properties = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0)
+                    .getCTP().getPPr();
+
+            assertThat(properties.getSpacing().getLineRule()).hasToString("exact");
+            assertThat(((Number) properties.getSpacing().getLine()).intValue()).as("the face's ascent and descent, no leading").isBetween(16 * 20, 24 * 20);
+            assertThat(properties.isSetRPr()).as("an exact line needs no mark").isFalse();
+        }
+    }
+
+    @Test
+    void aMarkLargerThanTheDocumentsTextIsSetInTheTextsFace() throws Exception {
+        // In the document's face, a 20pt mark grows the line by that face's height rather than
+        // the text's own. Blank text lays out nothing to measure the line by.
+        DocumentTextStyle heading = DocumentTextStyle.builder()
+                .fontName(com.demcha.compose.font.FontName.TIMES_ROMAN).size(20).build();
+        try (XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(200))
+                        .rowCells(DocumentTableCell.node(new ParagraphBuilder().text(" ")
                                 .textStyle(heading).build()))))) {
             org.openxmlformats.schemas.wordprocessingml.x2006.main.CTParaRPr mark = document.getTables().get(0)
                     .getRow(0).getCell(0).getParagraphs().get(0).getCTP().getPPr().getRPr();
@@ -102,6 +122,22 @@ class DocxParagraphMarkTest {
 
             assertThat(small.getSpacing().getLineRule()).hasToString("atLeast");
             assertThat(((Number) small.getRPr().getSzArray(0).getVal()).intValue()).isEqualTo(12);
+        }
+    }
+
+    @Test
+    void aMarkIsSizedAsTheTextThatEndsTheLineNotAsTheParagraphsUnusedStyle() throws Exception {
+        // A contact line: an icon and runs styled on their own, the paragraph's style left at its
+        // default. A mark in that default grew every such line in both editors.
+        try (XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addParagraph(p -> p
+                        .inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png()), 14, 14)
+                        .inlineText(" billing@example.com", DocumentTextStyle.DEFAULT.withSize(6))))) {
+            CTPPr line = document.getParagraphs().get(1).getCTP().getPPr();
+
+            assertThat(line.getSpacing().getLineRule()).hasToString("atLeast");
+            assertThat(((Number) line.getRPr().getSzArray(0).getVal()).intValue()).isEqualTo(12);
         }
     }
 

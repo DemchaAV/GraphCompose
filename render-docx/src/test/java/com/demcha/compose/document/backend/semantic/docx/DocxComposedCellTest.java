@@ -3,6 +3,7 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -300,6 +301,133 @@ class DocxComposedCellTest {
                         com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148))).build())));
 
         assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).as("the gradient path").isPositive();
+    }
+
+    @Test
+    void aRowHoldingPaddedContentKeepsTheHeightThePageGaveIt() throws Exception {
+        // The padding is the composed section's, not the cell's: Word, given only the text,
+        // closed the row round it.
+        try (XWPFDocument document = exportDocument(List.of(DocumentTableCell.node(
+                new com.demcha.compose.document.dsl.SectionBuilder()
+                        .name("Padded").padding(com.demcha.compose.document.style.DocumentInsets.of(12))
+                        .addParagraph(p -> p.text("Coastline Advanced")).build())))) {
+            assertThat(heightOf(document.getTables().get(0))).as("the text and 24pt of padding")
+                    .isGreaterThan(24 * 20 + 8 * 20);
+        }
+    }
+
+    @Test
+    void aRowsHeightIsWrittenLessTheMarginsItsCellsHold() throws Exception {
+        // Two rows the page makes equally tall: padded inside the composed content, and padded as
+        // the cell. LibreOffice adds a cell's margins to the written height, so the second row's
+        // is written less them.
+        DocumentInsets twelve = new DocumentInsets(12, 0, 12, 0);
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page
+                    .addTable(t -> t.columns(DocumentTableColumn.fixed(200))
+                            .rowCells(DocumentTableCell.node(new com.demcha.compose.document.dsl.SectionBuilder()
+                                    .name("Padded").padding(twelve)
+                                    .addParagraph(p -> p.text("Row")).build())
+                                    .withStyle(com.demcha.compose.document.table.DocumentTableStyle.builder()
+                                            .padding(DocumentInsets.zero()).build())))
+                    .addTable(t -> t.columns(DocumentTableColumn.fixed(200))
+                            .rowCells(DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder()
+                                    .text("Row").build())
+                                    .withStyle(com.demcha.compose.document.table.DocumentTableStyle.builder()
+                                            .padding(twelve).build()))));
+            byte[] docx = session.export(new DocxSemanticBackend());
+            try (XWPFDocument document = new XWPFDocument(new java.io.ByteArrayInputStream(docx))) {
+                int inside = heightOf(document.getTables().get(0));
+                int asTheCell = heightOf(document.getTables().get(1));
+
+                assertThat(inside - asTheCell).as("the second cell's 24pt of margins").isEqualTo(24 * 20);
+            }
+        }
+    }
+
+    @Test
+    void aParagraphHoldingAPictureKeepsItsOwnLineFromALaterOneOfTheSameText() throws Exception {
+        // Its laid-out text is its text runs'. Left unpaired, it left its 8pt line for the 16pt
+        // "Paid" after it, whose text was then clipped to that line.
+        try (XWPFDocument document = exportDocument(List.of(
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder()
+                        .inlineImage(DocumentImageData.fromBytes(pngBytes()), 6, 6)
+                        .inlineText("Paid", com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(8))
+                        .build()),
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Paid")
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(16)).build())))) {
+            List<org.apache.poi.xwpf.usermodel.XWPFParagraph> paid = cellParagraphs(document, "Paid");
+
+            assertThat(paid).hasSize(2);
+            assertThat(lineOf(paid.get(1))).as("a 16pt line, not the 8pt one").isGreaterThan(14 * 20);
+        }
+    }
+
+    /** A table's first row's written height, which the export writes "at least". */
+    private static int heightOf(XWPFTable table) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTrPr properties = table.getRow(0).getCtRow().getTrPr();
+        assertThat(properties).isNotNull();
+        assertThat(properties.sizeOfTrHeightArray()).isEqualTo(1);
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTHeight height = properties.getTrHeightArray(0);
+        assertThat(height.getHRule()).isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule.AT_LEAST);
+        return ((Number) height.getVal()).intValue();
+    }
+
+    /** A paragraph's written line height, in twips. */
+    private static int lineOf(org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph) {
+        return ((Number) paragraph.getCTP().getPPr().getSpacing().getLine()).intValue();
+    }
+
+    /** The paragraphs of the body's tables reading a text, in document order. */
+    private static List<org.apache.poi.xwpf.usermodel.XWPFParagraph> cellParagraphs(XWPFDocument document, String text) {
+        List<org.apache.poi.xwpf.usermodel.XWPFParagraph> found = new java.util.ArrayList<>();
+        for (XWPFTable table : document.getTables()) {
+            for (org.apache.poi.xwpf.usermodel.XWPFTableRow row : table.getRows()) {
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    for (org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph : cell.getParagraphs()) {
+                        if (paragraph.getText().equals(text)) {
+                            found.add(paragraph);
+                        }
+                    }
+                }
+            }
+        }
+        return found;
+    }
+
+    @Test
+    void theSameTextComposedTwiceTakesEachItsOwnLine() throws Exception {
+        // Paragraphs are paired with their table's fragments in the order both were laid out.
+        try (XWPFDocument document = exportDocument(List.of(
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder().text("0.00")
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(8)).build()),
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder().text("0.00")
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(16)).build())))) {
+            List<org.apache.poi.xwpf.usermodel.XWPFParagraph> amounts = cellParagraphs(document, "0.00");
+
+            assertThat(amounts).hasSize(2).allSatisfy(amount -> assertThat(
+                    amount.getCTP().getPPr().getSpacing().getLineRule()).hasToString("exact"));
+            assertThat(lineOf(amounts.get(1))).isEqualTo(2 * lineOf(amounts.get(0)));
+        }
+    }
+
+    /** The export of a table of one row: a text cell, then the composed ones. */
+    private static XWPFDocument exportDocument(List<DocumentTableCell> composed) throws Exception {
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
+            List<DocumentTableCell> cells = new java.util.ArrayList<>();
+            cells.add(DocumentTableCell.text("Mon"));
+            cells.addAll(composed);
+            List<DocumentTableColumn> columns = new java.util.ArrayList<>();
+            for (int i = 0; i < cells.size(); i++) {
+                columns.add(DocumentTableColumn.auto());
+            }
+            session.pageFlow(page -> page.addTable(t -> t
+                    .columns(columns.toArray(DocumentTableColumn[]::new))
+                    .rowCells(cells)));
+            return new XWPFDocument(new java.io.ByteArrayInputStream(session.export(new DocxSemanticBackend())));
+        }
     }
 
     private static com.demcha.compose.document.dsl.PathBuilder triangle() {

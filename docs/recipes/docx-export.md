@@ -567,16 +567,20 @@ layer stack, as a shape container's outline, or drawn by the layout itself, such
 timeline's rail — are **drawn as shapes**: each is a DrawingML shape anchored to the
 page, behind the text, at the place, size, fill and outline the layout gives it, and
 the report lists it as approximated. A shape stays where it is when the text around it
-is edited. It is anchored at the start of the first paragraph written on its page,
-whether that was written before the shape or after — a table's row counts, on the page
-the layout put the row on. On a page no paragraph is written on, the last page gives it
-the paragraph closing the section, a point tall, and an earlier page drops it and the
-report says so. The body's shapes stand above the page backgrounds, which LibreOffice
-stacks together with them. Three limits, each named in the report:
+is edited. It is anchored at the start of the first body paragraph written on its page,
+whether that was written before the shape or after — not in a table cell's, which Word
+prints the shape clipped to. A page with no body paragraph — one laid out entirely in a
+table, as a two-column CV is — gets one: on the section's first page a paragraph a
+hairline tall opens before the table; on its last, the paragraph closing the section
+carries it; on any other page, the first paragraph of a cell on it does, where Word may
+print it clipped and the report says so, and a page with no paragraph at all drops it,
+reported too. A shape inside a filled panel is drawn in front of the text rather than
+behind it, since a panel is a table cell and both editors paint a cell's shading over what
+lies behind the text — unless it is drawn with text or a picture, as a disc under its
+initials or a ring round a photo is, which stays behind what it frames and hidden. The body's shapes stand above the page backgrounds, which LibreOffice stacks together
+with them. Two limits, each named in the report:
 
 - A transform is not carried: a rotated or scaled shape is drawn upright at its size.
-- A shape inside a filled panel is written but hidden: a panel is a table cell, and both
-  editors paint a cell's shading over shapes behind the text.
 - A timeline's rail stands under every other shape on its page, where the page puts it
   under the markers only; a filled card drawn under a timeline covers it.
 

@@ -8,6 +8,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Shapes print whole in Word, and show in filled panels.** A drawn shape was anchored in the
+  first paragraph written on its page, and on a page laid out in a table — a two-column CV is
+  one row of two cells — that is a cell's. Word prints a shape anchored in a cell clipped to
+  the cell: `CharcoalGold`'s timeline rings, anchored in the sidebar, and `MonogramSidebar`'s
+  ring came out cut. A shape is now anchored in a body paragraph; a page with none gets one —
+  a hairline paragraph before the table on the section's first page, the paragraph closing
+  the section on its last — and only another page falls back to a cell's, which the export
+  report names. A shape inside a filled panel, which both editors hid under the cell's
+  shading, is drawn in front of the text when nothing it is drawn with is text or a picture;
+  a disc under its initials or a ring round a photo stays behind what it frames. In Word the
+  rings print whole and a dot in a panel shows; no line of the twenty CV presets, seven
+  invoices or three proposals moves in LibreOffice.
+
 - **A line among the text of a layer stack of one layer is a rule.** A line in any layer stack
   was drawn as a shape anchored to the page, which takes no room in the text; a stack of one
   layer lays nothing over anything, and a line among its text is a rule in the flow now. Its
@@ -62,8 +75,7 @@ follow semantic versioning; release dates are ISO 8601.
   stays where it is when the text around it is edited, and the export report lists it as
   approximated. A transform is not carried, and the report says so. A picture that fills a
   shape container clipped to an ellipse takes the ellipse's shape, so a portrait is round
-  inside its ring. A shape inside a filled panel is written but hidden: the
-  editors paint a cell's shading over shapes behind the text, and the report says so. Page
+  inside its ring. Page
   backgrounds are stacked below the body's shapes: LibreOffice stacks a header's shapes and
   the body's together, and a column's fill hid what the body drew over it. Measured in LibreOffice:
   `SlateOrange`'s monogram block and column rules, `CharcoalGold`'s timeline rail, markers and

@@ -70,6 +70,7 @@ import org.apache.poi.xwpf.usermodel.IRunBody;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import com.demcha.compose.document.node.PageFieldKind;
 import com.demcha.compose.document.node.PageFieldNode;
+import com.demcha.compose.document.output.DocumentHeaderFooter;
 import com.demcha.compose.document.output.DocumentHeaderFooterZone;
 import com.demcha.compose.document.output.DocumentPageZone;
 import com.demcha.compose.document.output.PageContext;
@@ -572,7 +573,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     applyMetadata(document, metadataOf(sections));
                 }
                 earlierZones.addAll(applyPageZones(document, context.outputOptions().zones(),
-                        evenAndOdd, earlierZones));
+                        context.outputOptions().headersAndFooters(), evenAndOdd, earlierZones));
                 if (applyPageBackgrounds(document, context.layoutGraph(), evenAndOdd)) {
                     earlierZones.add(DocumentHeaderFooterZone.HEADER);
                 }
@@ -788,10 +789,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 props.getCoreProperties().setKeywords(metadata.getKeywords());
             }
         }
-        // The text header/footer, watermark and protection are still ignored: the
-        // three text slots and their placeholder tokens describe a painted band
-        // rather than content Word can own. A page zone does describe content, so
-        // that is the one that maps — see applyPageZones.
+        // The watermark and protection are still ignored. The text header and footer are
+        // written with the page zones — see applyPageZones.
     }
 
     /**
@@ -818,6 +817,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Word would otherwise put something there: the section's own zone for other pages, or
      * an earlier section's zone, which Word repeats in a section without one.</p>
      *
+     * <p>A text band — {@link DocumentHeaderFooter}, the three slots and their page tokens — is
+     * written into the same parts (see {@link #writeBand}): Word has one header and one footer
+     * per kind of page, so a band and a page zone of one kind share it, the band's line first.</p>
+     *
+     * @param bands        the section's text headers and footers
      * @param evenAndOdd   whether the document states different even and odd pages
      * @param earlierZones the kinds of zone an earlier section wrote
      * @return the kinds of zone this section wrote
@@ -825,6 +829,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private java.util.Set<DocumentHeaderFooterZone> applyPageZones(
             XWPFDocument document,
             List<DocumentPageZone> zones,
+            List<DocumentHeaderFooter> bands,
             boolean evenAndOdd,
             java.util.Set<DocumentHeaderFooterZone> earlierZones) {
         // The page height the zones are measured against is the canvas's, which is what the
@@ -832,26 +837,37 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.util.Set<DocumentHeaderFooterZone> written =
                 java.util.EnumSet.noneOf(DocumentHeaderFooterZone.class);
         List<DocumentPageZone> sectionZones = zones == null ? List.of() : zones;
-        if (sectionZones.isEmpty() && earlierZones.isEmpty()) {
+        List<DocumentHeaderFooter> sectionBands = bands == null ? List.of() : bands;
+        if (sectionZones.isEmpty() && sectionBands.isEmpty() && earlierZones.isEmpty()) {
             return written;
         }
-        List<DocumentNode> contents = new ArrayList<>();
-        List<java.util.Set<DocxPageClasses.PageClass>> drawnOn = new ArrayList<>();
-        for (DocumentPageZone zone : sectionZones) {
+        // Text bands first: a page zone of the same kind then states the distance from the edge,
+        // since its content is what the layout measured.
+        List<ZoneWriter> writers = new ArrayList<>();
+        for (DocumentHeaderFooter band : sectionBands) {
+            // Bands of one kind stand each at its own height on the page; stacked in the part as
+            // lines, a second and a third came out above the first instead of below it.
+            boolean framed = sectionBands.stream().filter(other -> other.getZone() == band.getZone()).count() > 1;
+            writers.add(new ZoneWriter(band.getZone(), bandPageClasses(band),
+                    part -> writeBand(part, band, framed), () -> placeBand(document, band, framed)));
+        }
+        for (int index = 0; index < sectionZones.size(); index++) {
+            DocumentPageZone zone = sectionZones.get(index);
             DocumentNode content = zone.getContent() == null
                     ? null
                     : zone.getContent().apply(PageContext.unpaginated());
-            contents.add(content);
-            drawnOn.add(content == null
-                    ? java.util.EnumSet.noneOf(DocxPageClasses.PageClass.class)
-                    : pageClassesOf(zone));
+            if (content == null) {
+                continue;
+            }
+            int at = index;
+            boolean header = zone.getZone() == DocumentHeaderFooterZone.HEADER;
+            writers.add(new ZoneWriter(zone.getZone(), pageClassesOf(zone),
+                    part -> writeZoneLine(part, content), () -> placeZone(document, zone, at, header)));
         }
         boolean titlePage = false;
-        for (int index = 0; index < sectionZones.size(); index++) {
-            java.util.Set<DocxPageClasses.PageClass> classes = drawnOn.get(index);
-            if (contents.get(index) != null
-                && classes.contains(DocxPageClasses.PageClass.FIRST)
-                   != classes.contains(DocxPageClasses.PageClass.LATER_ODD)) {
+        for (ZoneWriter writer : writers) {
+            if (writer.drawnOn().contains(DocxPageClasses.PageClass.FIRST)
+                != writer.drawnOn().contains(DocxPageClasses.PageClass.LATER_ODD)) {
                 titlePage = true;
             }
         }
@@ -861,24 +877,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             sectPr.addNewTitlePg();
         }
         XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, sectPr);
-        java.util.Set<String> parts = new java.util.HashSet<>();
-        for (int index = 0; index < sectionZones.size(); index++) {
-            DocumentPageZone zone = sectionZones.get(index);
-            DocumentNode content = contents.get(index);
-            java.util.Set<DocxPageClasses.PageClass> classes = drawnOn.get(index);
-            if (content == null || classes.isEmpty()) {
+        java.util.Map<String, XWPFHeaderFooter> parts = new java.util.HashMap<>();
+        for (ZoneWriter writer : writers) {
+            if (writer.drawnOn().isEmpty()) {
                 continue;
             }
-            boolean header = zone.getZone() == DocumentHeaderFooterZone.HEADER;
+            boolean header = writer.kind() == DocumentHeaderFooterZone.HEADER;
             for (org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type
                     : partTypes(titlePage, evenAndOdd)) {
-                if (classes.contains(pageClassOf(type))) {
-                    writeZoneLine(header ? policy.createHeader(type) : policy.createFooter(type), content);
-                    parts.add(zone.getZone() + "/" + type);
+                if (writer.drawnOn().contains(pageClassOf(type))) {
+                    // A band and a zone of one kind share the part: Word has one header per page.
+                    XWPFHeaderFooter part = parts.computeIfAbsent(writer.kind() + "/" + type,
+                            key -> header ? policy.createHeader(type) : policy.createFooter(type));
+                    writer.write().accept(part);
                 }
             }
-            placeZone(document, zone, index, header);
-            written.add(zone.getZone());
+            writer.place().run();
+            written.add(writer.kind());
         }
         for (DocumentHeaderFooterZone kind : DocumentHeaderFooterZone.values()) {
             if (!written.contains(kind) && !earlierZones.contains(kind)) {
@@ -886,7 +901,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             for (org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type
                     : partTypes(titlePage, evenAndOdd)) {
-                if (!parts.contains(kind + "/" + type)) {
+                if (!parts.containsKey(kind + "/" + type)) {
                     blankZone(policy, sectPr, kind == DocumentHeaderFooterZone.HEADER, type,
                             !written.contains(kind));
                 }
@@ -911,6 +926,203 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 "its page predicate picks pages Word has no header or footer for — only the first,"
                 + " even and odd pages can differ — so it is written on every page");
         return java.util.EnumSet.allOf(DocxPageClasses.PageClass.class);
+    }
+
+    /**
+     * What a header or footer writes into a part, the kinds of page it is drawn on, and how the
+     * section places it from the page edge.
+     */
+    private record ZoneWriter(DocumentHeaderFooterZone kind,
+                              java.util.Set<DocxPageClasses.PageClass> drawnOn,
+                              java.util.function.Consumer<XWPFHeaderFooter> write,
+                              Runnable place) {
+    }
+
+    /**
+     * The kinds of page a text band is drawn on: every one, or all but the first when its
+     * numbering keeps it off the first page. A band held off more pages than the first has no
+     * Word part to say so, and is written on every page, reported.
+     */
+    private java.util.Set<DocxPageClasses.PageClass> bandPageClasses(DocumentHeaderFooter band) {
+        com.demcha.compose.document.output.DocumentPageNumbering numbering = band.getNumbering();
+        java.util.Set<DocxPageClasses.PageClass> classes = java.util.EnumSet.allOf(DocxPageClasses.PageClass.class);
+        if (numbering == null) {
+            return classes;
+        }
+        if (!numbering.isShowOnFirstPage() || numbering.getCountFrom() >= 2) {
+            classes.remove(DocxPageClasses.PageClass.FIRST);
+        }
+        String section = sectioned ? "section " + (sectionIndex + 1) : null;
+        if (numbering.getCountFrom() > 2) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "page " + zoneName(band), section,
+                    "it starts on page " + numbering.getCountFrom() + ", and Word has a separate "
+                    + "header and footer only for the first page, so it is written on every page "
+                    + "but the first");
+        }
+        if (numbering.getStartAt() != numbering.getCountFrom()) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "page " + zoneName(band), section,
+                    "its page numbers count from " + numbering.getStartAt() + " on page "
+                    + numbering.getCountFrom() + "; Word's fields number the pages from 1, and "
+                    + "its page total is off by as much");
+        }
+        return classes;
+    }
+
+    private static String zoneName(DocumentHeaderFooter band) {
+        return band.getZone() == DocumentHeaderFooterZone.HEADER ? "header" : "footer";
+    }
+
+    /**
+     * Writes a text band as one line of a Word header or footer (see {@link DocxTextBands}).
+     *
+     * <p>The export left the band out, so every invoice lost its footer — its page count, its
+     * note, its signature — and the report did not say so. The left slot starts the line, the
+     * centre slot stands at a centre tab in the middle of the margins and the right one at a
+     * right tab against the right margin, as the page sets them; {@code {page}} and
+     * {@code {pages}} are Word's page fields, and {@code {date}} is the date of the export, as the
+     * page prints the date it was rendered. The separator is the paragraph's border, below a
+     * header and above a footer, at the page's distance from the text.</p>
+     *
+     * <p>A band that shares its kind with another is framed: the page sets each at its own height
+     * from the edge, and one line after another in the part they came out stacked the other way
+     * round — an invoice's page number under its two legal lines instead of between them. Framed,
+     * each line stands at its own height on the page, where the part's flow does not move it.</p>
+     *
+     * @param framed whether the band stands in a frame at its height on the page
+     */
+    private void writeBand(XWPFHeaderFooter part, DocumentHeaderFooter band, boolean framed) {
+        XWPFParagraph para = part.createParagraph();
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        double line = DocxTextBands.lineHeight(band);
+        if (framed && !Double.isNaN(canvasHeight)) {
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFramePr frame = properties.addNewFramePr();
+            frame.setW(BigInteger.valueOf(toTwips(contentWidth)));
+            frame.setH(BigInteger.valueOf(toTwips(line)));
+            frame.setHRule(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule.EXACT);
+            frame.setHAnchor(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHAnchor.MARGIN);
+            frame.setX(BigInteger.ZERO);
+            frame.setVAnchor(org.openxmlformats.schemas.wordprocessingml.x2006.main.STVAnchor.PAGE);
+            double top = band.getZone() == DocumentHeaderFooterZone.HEADER
+                    ? DocxTextBands.distanceFromEdge(band)
+                    : canvasHeight - DocxTextBands.distanceFromEdge(band) - line;
+            frame.setY(BigInteger.valueOf(toTwips(top)));
+            frame.setWrap(org.openxmlformats.schemas.wordprocessingml.x2006.main.STWrap.AROUND);
+        }
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        spacing.setBefore(BigInteger.ZERO);
+        spacing.setAfter(BigInteger.ZERO);
+        spacing.setLineRule(STLineSpacingRule.EXACT);
+        spacing.setLine(BigInteger.valueOf(Math.round(line * POINT_TO_TWIP)));
+        boolean centre = !DocxTextBands.segments(band.getCenterText()).isEmpty();
+        boolean right = !DocxTextBands.segments(band.getRightText()).isEmpty();
+        if (centre || right) {
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTabs tabs = properties.addNewTabs();
+            if (centre) {
+                CTTabStop stop = tabs.addNewTab();
+                stop.setVal(STTabJc.CENTER);
+                stop.setPos(BigInteger.valueOf(Math.round(contentWidth / 2 * TWIPS_PER_POINT)));
+            }
+            if (right) {
+                CTTabStop stop = tabs.addNewTab();
+                stop.setVal(STTabJc.RIGHT);
+                stop.setPos(BigInteger.valueOf(Math.round(contentWidth * TWIPS_PER_POINT)));
+            }
+        }
+        DocumentTextStyle style = new DocumentTextStyle(
+                band.getFontName() == null ? FontName.HELVETICA : band.getFontName(),
+                band.getFontSize(), DocumentTextDecoration.DEFAULT,
+                band.getTextColor() == null ? DocumentColor.GRAY : band.getTextColor());
+        com.demcha.compose.document.output.DocumentPageNumberStyle numbers =
+                band.getNumbering() == null ? null : band.getNumbering().getStyle();
+        appendBandSlot(para, band.getLeftText(), style, numbers);
+        if (centre) {
+            appendTab(para, style);
+            appendBandSlot(para, band.getCenterText(), style, numbers);
+        }
+        if (right) {
+            appendTab(para, style);
+            appendBandSlot(para, band.getRightText(), style, numbers);
+        }
+        if (band.isShowSeparator() && band.getSeparatorColor() != null
+            && band.getSeparatorColor().color().getAlpha() > 0 && band.getSeparatorThickness() > 0) {
+            CTPBdr borders = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
+            CTBorder edge = band.getZone() == DocumentHeaderFooterZone.HEADER
+                    ? (borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom())
+                    : (borders.isSetTop() ? borders.getTop() : borders.addNewTop());
+            paintEdge(edge, STBorder.SINGLE, BigInteger.valueOf(ruleEighths(band.getSeparatorThickness())),
+                    toHexColor(flatten(band.getSeparatorColor().color(), java.awt.Color.WHITE)));
+            edge.setSpace(BigInteger.valueOf(Math.round(DocxTextBands.separatorSpace(band))));
+        }
+    }
+
+    private void appendTab(XWPFParagraph para, DocumentTextStyle style) {
+        XWPFRun tab = para.createRun();
+        applyStyle(tab, style);
+        tab.addTab();
+    }
+
+    /**
+     * Writes one slot's text: its literal pieces as runs, its tokens as fields, whose results read
+     * in the band's number style — an editor that does not update a field shows them as written.
+     */
+    private void appendBandSlot(XWPFParagraph para, String text, DocumentTextStyle style,
+                                com.demcha.compose.document.output.DocumentPageNumberStyle numbers) {
+        String format = DocxTextBands.numberFormat(numbers);
+        com.demcha.compose.engine.components.content.header_footer.PageNumberStyle numerals =
+                com.demcha.compose.engine.components.content.header_footer.PageNumberStyle.valueOf(
+                        (numbers == null ? com.demcha.compose.document.output.DocumentPageNumberStyle.DECIMAL : numbers)
+                                .name());
+        for (DocxTextBands.Segment segment : DocxTextBands.segments(text)) {
+            switch (segment.kind()) {
+                case TEXT -> {
+                    XWPFRun run = para.createRun();
+                    applyStyle(run, style);
+                    run.setText(segment.text());
+                }
+                case PAGE -> appendField(para, " PAGE" + format + " ", numerals.format(1), style);
+                case PAGES -> appendField(para, (sectioned ? " SECTIONPAGES" : " NUMPAGES") + format + " ",
+                        numerals.format(Math.max(1, layout.pageCount())), style);
+                case DATE -> {
+                    XWPFRun run = para.createRun();
+                    applyStyle(run, style);
+                    // The date the page prints, pinned the way the page pins it.
+                    run.setText(com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig
+                            .resolvePlaceholders("{date}", 1, 1));
+                }
+            }
+        }
+    }
+
+    /**
+     * Places a text band's paragraph as far from its page edge as the page sets its text (see
+     * {@link DocxTextBands#distanceFromEdge}).
+     */
+    private void placeBand(XWPFDocument document, DocumentHeaderFooter band, boolean framed) {
+        CTSectPr sectPr = bodySectPr(document);
+        CTPageMar margin = sectPr.isSetPgMar() ? sectPr.getPgMar() : sectPr.addNewPgMar();
+        BigInteger distance = BigInteger.valueOf(toTwips(DocxTextBands.distanceFromEdge(band)));
+        boolean header = band.getZone() == DocumentHeaderFooterZone.HEADER;
+        if (header) {
+            margin.setHeader(distance);
+        } else {
+            margin.setFooter(distance);
+        }
+        // The page lets a band reach into the body; Word moves the body clear of its header and
+        // footer instead, which can add a page. A framed band stands beside the flow and moves
+        // nothing.
+        if (framed) {
+            return;
+        }
+        BigInteger pageMargin = header ? margin.getTop() instanceof BigInteger top ? top : null
+                : margin.getBottom() instanceof BigInteger bottom ? bottom : null;
+        double reach = DocxTextBands.distanceFromEdge(band) + DocxTextBands.lineHeight(band)
+                       + (band.isShowSeparator() ? DocxTextBands.separatorSpace(band) + band.getSeparatorThickness() : 0);
+        if (pageMargin != null && toTwips(reach) > pageMargin.longValue()) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "page " + zoneName(band),
+                    sectioned ? "section " + (sectionIndex + 1) : null,
+                    "it reaches " + Math.round(reach * 10) / 10.0 + "pt from the page edge, past the "
+                    + "page margin, and Word moves the body clear of it where the page lets the two overlap");
+        }
     }
 
     /**
@@ -1069,19 +1281,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * reader adds a page or edits the document.
      */
     private void appendPageField(XWPFParagraph para, PageFieldNode field) {
-        CTSimpleField simple = para.getCTP().addNewFldSimple();
         // A multi-section document numbers each section from 1, so the total a zone states is
         // its section's; in a document of one section the two are the same count.
         String total = sectioned ? " SECTIONPAGES " : " NUMPAGES ";
-        simple.setInstr(field.kind() == PageFieldKind.TOTAL ? total : " PAGE ");
-        // Word repaints the field on open; the placeholder run is what a reader
-        // sees before that happens, and what a text extractor finds. It carries
-        // the node's text style like any other run — Word keeps a field result's
-        // formatting when it repaints it, so an unstyled placeholder would snap
-        // a styled page number back to the document default.
+        appendField(para, field.kind() == PageFieldKind.TOTAL ? total : " PAGE ",
+                fieldPlaceholder(field.kind()), field.textStyle());
+    }
+
+    /**
+     * Appends a Word field and the result it reads before an editor updates it.
+     *
+     * <p>Word repaints the field on open; the placeholder run is what a reader sees before that
+     * happens, and what a text extractor finds. It carries the text style like any other run —
+     * Word keeps a field result's formatting when it repaints it, so an unstyled placeholder
+     * would snap a styled page number back to the document default.</p>
+     */
+    private void appendField(XWPFParagraph para, String instruction, String placeholder, DocumentTextStyle style) {
+        CTSimpleField simple = para.getCTP().addNewFldSimple();
+        simple.setInstr(instruction);
         XWPFRun run = new XWPFRun(simple.addNewR(), (IRunBody) para);
-        applyStyle(run, field.textStyle());
-        run.setText(fieldPlaceholder(field.kind()));
+        applyStyle(run, style);
+        run.setText(placeholder);
     }
 
     /**

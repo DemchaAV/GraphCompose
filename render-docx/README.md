@@ -108,7 +108,8 @@ What is not written — each one is named in the export report
   not carried. A layer stack whose layers are side-by-side columns is the exception: it is
   written as one table row, a cell per column.
 - **In a page zone**, a barcode or a rule.
-- **The text header and footer slots**, watermarks and protection options.
+- **Watermarks and protection options.** The text header and footer slots are written, as a
+  line of a Word header or footer with live page fields.
 - **`markerGap`** on a hanging-indent list: Word places the item text at its own indent.
 
 Multi-section documents export through `MultiSectionDocument.toDocxBytes()`,

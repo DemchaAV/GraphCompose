@@ -15,17 +15,16 @@ follow semantic versioning; release dates are ISO 8601.
   signature with it. The band is now one line of a Word header or footer: the left slot, the
   centre slot at a centre tab and the right slot at a right tab against the margins; `{page}`
   and `{pages}` as `PAGE` and `NUMPAGES` fields (`SECTIONPAGES` per section), in the band's
-  roman or alphabetic style; `{date}` as the date of the export, as the page prints its render date; the separator as the
-  paragraph's border; the line as far from the page edge as the page sets it — in LibreOffice
-  the baseline within 0.1pt of the PDF's and the separator within 0.6pt. A band that shares its
-  kind with another band or a page zone — `MeteredInvoice`'s two legal lines and its page
-  number — stands in a frame at its own height on the page. A band kept off the first page leaves the first page's part empty; a
-  band starting after page 2, page numbers that do not count from 1 on page 1, and a band alone
-  of its kind that reaches past the page margin, which Word moves the body clear of, are
-  reported. A band and a
-  page zone of the same kind share Word's one header or footer. Across the sixty-two template
-  renders, the thirteen with a band now lose no word of it, and no page count or text line
-  elsewhere changes.
+  roman or alphabetic style; `{date}` as the date of the export, as the page prints its render
+  date; the separator as the paragraph's border; the line as far from the page edge as the page
+  sets it — in LibreOffice the baseline within 0.1pt of the PDF's and the separator within
+  0.6pt. A band that shares its kind with another band or a page zone — `MeteredInvoice`'s two
+  legal lines and its page number — stands in a frame at its own height on the page. A band kept
+  off the first page leaves the first page's part empty; a band starting after page 2, page
+  numbers that do not count from 1 on page 1, and a band alone of its kind that reaches past the
+  page margin, which Word moves the body clear of, are reported. A band and a page zone of the
+  same kind share Word's one header or footer. Across the sixty-two template renders, the
+  thirteen with a band now lose no word of it, and no page count or text line elsewhere changes.
 
 - **Shapes print whole in Word, and show in filled panels.** A drawn shape was anchored in the
   first paragraph written on its page, and on a page laid out in a table — a two-column CV is

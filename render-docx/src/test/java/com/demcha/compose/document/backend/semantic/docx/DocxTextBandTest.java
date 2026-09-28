@@ -121,7 +121,8 @@ class DocxTextBandTest {
                     .map(p -> p.getCTP().isSetPPr() && p.getCTP().getPPr().isSetFramePr())
                     .toList();
 
-            assertThat(framed).containsExactly(true, false, true);
+            assertThat(framed).as("a hairline between the two, and one closing the footer's flow")
+                    .containsExactly(true, false, true, false);
         }
     }
 
@@ -191,6 +192,28 @@ class DocxTextBandTest {
                     .height(14).fontSize(7).build();
             assertThat(page).isEqualTo(Math.round((200 - DocxTextBands.distanceFromEdge(lower)
                     - DocxTextBands.lineHeight(lower)) * 20));
+            assertThat(footer.getParagraphs()).extracting(p -> p.getCTP().isSetPPr() && p.getCTP().getPPr().isSetFramePr())
+                    .as("frames at different heights are different frames, and need no hairline between them")
+                    .containsExactly(true, true, false);
+        }
+    }
+
+    @Test
+    void aFramedSeparatorFitsInItsFrameAsTheBorderIsWritten() throws Exception {
+        try (XWPFDocument document = export(null, session -> {
+            session.footer(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.FOOTER)
+                    .height(26).fontSize(7).leftText("Legal line").showSeparator(true).separatorThickness(0.7f).build());
+            session.footer(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.FOOTER)
+                    .height(14).fontSize(7).rightText("Page {page}").build());
+        })) {
+            org.apache.poi.xwpf.usermodel.XWPFParagraph legal = only(document.getFooterList()).getParagraphs().get(0);
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBorder top = legal.getCTP().getPPr().getPBdr().getTop();
+            double border = ((Number) top.getSpace()).doubleValue() + ((Number) top.getSz()).doubleValue() / 8.0;
+            double line = 7 * DocxTextBands.LINE_FACTOR;
+
+            assertThat(((Number) legal.getCTP().getPPr().getFramePr().getH()).longValue())
+                    .as("the line and the border as written, in whole points of space and eighths of width")
+                    .isEqualTo(Math.round((line + border) * 20));
         }
     }
 

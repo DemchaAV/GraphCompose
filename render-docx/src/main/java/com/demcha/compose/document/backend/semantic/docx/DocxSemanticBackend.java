@@ -824,7 +824,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>A text band — {@link DocumentHeaderFooter}, the three slots and their page tokens — is
      * written into the same parts (see {@link #writeBand}): Word has one header and one footer
-     * per kind of page, so a band and a page zone of one kind share it, the band's line first.</p>
+     * per kind of page, so a band and a page zone of one kind share it, the band in a frame at its
+     * own height.</p>
      *
      * @param bands        the section's text headers and footers
      * @param evenAndOdd   whether the document states different even and odd pages
@@ -902,6 +903,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             writer.place().run();
             written.add(writer.kind());
+        }
+        // A part that ends in a framed band ends with a paragraph of its own flow, a point tall:
+        // the frame is placed from the paragraph that follows it.
+        for (XWPFHeaderFooter part : parts.values()) {
+            List<XWPFParagraph> paragraphs = part.getParagraphs();
+            XWPFParagraph last = paragraphs.isEmpty() ? null : paragraphs.get(paragraphs.size() - 1);
+            if (last != null && last.getCTP().isSetPPr() && last.getCTP().getPPr().isSetFramePr()) {
+                collapsed(part.createParagraph());
+            }
         }
         for (DocumentHeaderFooterZone kind : DocumentHeaderFooterZone.values()) {
             if (!written.contains(kind) && !earlierZones.contains(kind)) {
@@ -1004,19 +1014,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeBand(XWPFHeaderFooter part, DocumentHeaderFooter band, boolean framed) {
         boolean inFrame = framed && !Double.isNaN(canvasHeight);
+        double line = DocxTextBands.lineHeight(band);
+        boolean separated = band.isShowSeparator() && band.getSeparatorColor() != null
+                            && band.getSeparatorColor().color().getAlpha() > 0 && band.getSeparatorThickness() > 0;
+        // The frame holds the separator too, below a header's line and above a footer's, as the
+        // border is written: its space in whole points, its width in eighths of a point.
+        double border = separated
+                ? Math.round(DocxTextBands.separatorSpace(band)) + ruleEighths(band.getSeparatorThickness()) / 8.0
+                : 0;
+        long frameTop = toTwips(band.getZone() == DocumentHeaderFooterZone.HEADER
+                ? DocxTextBands.distanceFromEdge(band)
+                : canvasHeight - DocxTextBands.distanceFromEdge(band) - line - border);
         List<XWPFParagraph> before = part.getParagraphs();
-        if (inFrame && !before.isEmpty() && before.get(before.size() - 1).getCTP().isSetPPr()
-            && before.get(before.size() - 1).getCTP().getPPr().isSetFramePr()) {
+        if (inFrame && !before.isEmpty() && sameFrameHeight(before.get(before.size() - 1), frameTop)) {
+            // Word takes adjacent paragraphs with the same frame for one frame.
             collapsed(part.createParagraph());
         }
         XWPFParagraph para = part.createParagraph();
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
-        double line = DocxTextBands.lineHeight(band);
-        boolean separated = band.isShowSeparator() && band.getSeparatorColor() != null
-                            && band.getSeparatorColor().color().getAlpha() > 0 && band.getSeparatorThickness() > 0;
         if (inFrame) {
-            // The frame holds the separator too, below a header's line and above a footer's.
-            double border = separated ? DocxTextBands.separatorSpace(band) + band.getSeparatorThickness() : 0;
             org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFramePr frame = properties.addNewFramePr();
             frame.setW(BigInteger.valueOf(toTwips(contentWidth)));
             frame.setH(BigInteger.valueOf(toTwips(line + border)));
@@ -1024,10 +1040,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             frame.setHAnchor(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHAnchor.MARGIN);
             frame.setX(BigInteger.ZERO);
             frame.setVAnchor(org.openxmlformats.schemas.wordprocessingml.x2006.main.STVAnchor.PAGE);
-            double top = band.getZone() == DocumentHeaderFooterZone.HEADER
-                    ? DocxTextBands.distanceFromEdge(band)
-                    : canvasHeight - DocxTextBands.distanceFromEdge(band) - line - border;
-            frame.setY(BigInteger.valueOf(toTwips(top)));
+            frame.setY(BigInteger.valueOf(frameTop));
             frame.setWrap(org.openxmlformats.schemas.wordprocessingml.x2006.main.STWrap.THROUGH);
         }
         CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
@@ -1074,6 +1087,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     toHexColor(flatten(band.getSeparatorColor().color(), java.awt.Color.WHITE)));
             edge.setSpace(BigInteger.valueOf(Math.round(DocxTextBands.separatorSpace(band))));
         }
+    }
+
+    /** Whether a paragraph stands in a frame at a height from the top of the page. */
+    private static boolean sameFrameHeight(XWPFParagraph paragraph, long top) {
+        if (!paragraph.getCTP().isSetPPr() || !paragraph.getCTP().getPPr().isSetFramePr()) {
+            return false;
+        }
+        Object y = paragraph.getCTP().getPPr().getFramePr().getY();
+        return y instanceof Number number && number.longValue() == top;
     }
 
     private void appendTab(XWPFParagraph para, DocumentTextStyle style) {

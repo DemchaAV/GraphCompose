@@ -3,8 +3,11 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.ImageBuilder;
+import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.node.LayerAlign;
+import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -102,6 +105,190 @@ class DocxDrawingsTest {
                 .center(new ImageBuilder().name("Photo").source(pngBytes()).size(60, 60).build())
                 .build()))) {
             assertThat(pictureGeometry(document.getDocument().xmlText())).containsExactly("rect");
+        }
+    }
+
+    @Test
+    void aGlyphInAPaintedBadgeIsDrawnOverTheBadgeWhereThePagePutsIt() throws Exception {
+        // A section title beside its badge: written as a paragraph, the glyph took a line of its
+        // own above the title, off the circle's middle.
+        AtomicReference<PlacedFragment> glyph = new AtomicReference<>();
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = export(report, session -> {
+            session.pageFlow(page -> page
+                    .addParagraph(p -> p.text("Above"))
+                    .addContainer(band -> band.name("Header").rectangle(300, 30)
+                            .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                            .centerLeft(badge())
+                            .position(new ParagraphBuilder().name("Title").text("EXPERIENCE").build(),
+                                    34, 0, LayerAlign.CENTER_LEFT)));
+            glyph.set(fragmentNamed(session, "Glyph"));
+        })) {
+            String body = document.getDocument().xmlText();
+            List<String> anchors = anchors(body);
+            String circle = anchors.stream().filter(a -> a.contains("prst=\"ellipse\"")).findFirst().orElseThrow();
+            String picture = anchors.stream().filter(a -> a.contains("<pic:pic")).findFirst().orElseThrow();
+            double top = 400 - glyph.get().y() - glyph.get().height();
+
+            assertThat(body).as("no picture is written in the flow").doesNotContain("<wp:inline");
+            assertThat(anchors).hasSize(2);
+            assertThat(picture).contains("r:embed=\"")
+                    .contains("<wp:positionH relativeFrom=\"page\"><wp:posOffset>"
+                              + Units.toEMU(glyph.get().x()) + "</wp:posOffset>")
+                    .contains("<wp:positionV relativeFrom=\"page\"><wp:posOffset>"
+                              + Units.toEMU(top) + "</wp:posOffset>");
+            assertThat(relativeHeight(picture)).as("over the circle").isGreaterThan(relativeHeight(circle));
+            assertThat(document.getAllPictures()).hasSize(1);
+            assertThat(document.getParagraphs()).extracting(p -> p.getText()).containsSubsequence("Above", "EXPERIENCE");
+            assertThat(report.get().notes()).anyMatch(note -> note.severity() == DocxExportReport.Severity.APPROXIMATED
+                                                             && note.detail().contains("over the badge"));
+        }
+    }
+
+    @Test
+    void aTitleBesideItsBadgeStandsWhereThePageCentresItInTheHeader() throws Exception {
+        // Written after the glyph's line, the title stood at the header's top; alone, it lost the
+        // header's height round it, and everything under it moved up.
+        AtomicReference<List<com.demcha.compose.document.layout.PlacedNode>> placed = new AtomicReference<>();
+        try (XWPFDocument document = export(null, session -> {
+            session.pageFlow(page -> page
+                    .addParagraph(p -> p.name("Above").text("Above"))
+                    .addContainer(band -> band.name("Header").rectangle(300, 40)
+                            .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                            .centerLeft(badge())
+                            .position(new ParagraphBuilder().name("Title").text("EXPERIENCE").build(),
+                                    34, 0, LayerAlign.CENTER_LEFT))
+                    .addParagraph(p -> p.name("Below").text("Below")));
+            placed.set(session.layoutGraph().nodes());
+        })) {
+            var above = placedNamed(placed.get(), "Above");
+            var header = placedNamed(placed.get(), "Header");
+            var title = placedNamed(placed.get(), "Title");
+            var below = placedNamed(placed.get(), "Below");
+
+            assertThat(twipsBefore(document, "EXPERIENCE")).as("from the line above to the title, as on the page")
+                    .isCloseTo(Math.round((above.placementY() - title.placementY() - title.placementHeight()) * 20),
+                            org.assertj.core.data.Offset.offset(2L));
+            assertThat(twipsAfter(document, "EXPERIENCE") + twipsBefore(document, "Below"))
+                    .as("from the title past the header's foot to the line below, as on the page")
+                    .isCloseTo(Math.round((title.placementY() - below.placementY() - below.placementHeight()) * 20),
+                            org.assertj.core.data.Offset.offset(3L));
+            assertThat(header.placementHeight()).isEqualTo(40);
+        }
+    }
+
+    private static com.demcha.compose.document.layout.PlacedNode placedNamed(
+            List<com.demcha.compose.document.layout.PlacedNode> nodes, String name) {
+        return nodes.stream().filter(node -> name.equals(node.semanticName())).findFirst().orElseThrow();
+    }
+
+    private static long twipsBefore(XWPFDocument document, String text) {
+        return document.getParagraphs().stream().filter(p -> p.getText().equals(text)).findFirst().orElseThrow()
+                .getSpacingBefore();
+    }
+
+    private static long twipsAfter(XWPFDocument document, String text) {
+        return document.getParagraphs().stream().filter(p -> p.getText().equals(text)).findFirst().orElseThrow()
+                .getSpacingAfter();
+    }
+
+    @Test
+    void aBadgeAloneInTheFlowKeepsItsPlaceWithItsGlyphDrawnOverIt() throws Exception {
+        AtomicReference<List<com.demcha.compose.document.layout.PlacedNode>> placed = new AtomicReference<>();
+        try (XWPFDocument document = export(null, session -> {
+            session.pageFlow(page -> page
+                    .addParagraph(p -> p.name("Above").text("Above"))
+                    .add(badge())
+                    .addParagraph(p -> p.name("Below").text("Below")));
+            placed.set(session.layoutGraph().nodes());
+        })) {
+            var above = placedNamed(placed.get(), "Above");
+            var below = placedNamed(placed.get(), "Below");
+
+            assertThat(document.getDocument().xmlText()).doesNotContain("<wp:inline");
+            assertThat(twipsAfter(document, "Above") + twipsBefore(document, "Below"))
+                    .as("the badge's place, held once between the lines around it")
+                    .isCloseTo(Math.round((above.placementY() - below.placementY() - below.placementHeight()) * 20),
+                            org.assertj.core.data.Offset.offset(3L));
+        }
+    }
+
+    @Test
+    void aGlyphInABadgeInAPaintedPanelIsDrawnInFrontWithIt() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
+                        .addParagraph(p -> p.text("Profile"))
+                        .add(badge()))))) {
+            assertThat(anchors(document.getDocument().xmlText())).hasSize(2)
+                    .allMatch(anchor -> anchor.contains("behindDoc=\"0\""));
+        }
+    }
+
+    @Test
+    void aBadgeBesideItsTitleInAPaintedPanelShowsWithItsGlyph() throws Exception {
+        // The title beside the badge is text in the overlay around it, which the badge does not
+        // cover; behind the text, the cell's shading hid the circle and the glyph.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
+                        .addContainer(band -> band.name("Header").rectangle(300, 30)
+                                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                                .centerLeft(badge())
+                                .position(new ParagraphBuilder().name("Title").text("EXPERIENCE").build(),
+                                        34, 0, LayerAlign.CENTER_LEFT)))))) {
+            assertThat(anchors(document.getDocument().xmlText())).hasSize(2)
+                    .allMatch(anchor -> anchor.contains("behindDoc=\"0\""));
+            assertThat(allText(document)).contains("EXPERIENCE");
+        }
+    }
+
+    @Test
+    void aPictureTheFlowIsWrittenRoundStaysInIt() throws Exception {
+        List<com.demcha.compose.document.node.DocumentNode> kept = List.of(
+                // Cropped to cover its box.
+                new ShapeContainerBuilder().circle(22).fillColor(ACCENT).clipPolicy(ClipPolicy.CLIP_PATH)
+                        .center(new ImageBuilder().source(pngBytes()).size(11, 11)
+                                .fitMode(com.demcha.compose.document.image.DocumentImageFitMode.COVER).build())
+                        .build(),
+                // A link lands on it.
+                new ShapeContainerBuilder().circle(22).fillColor(ACCENT).clipPolicy(ClipPolicy.CLIP_PATH)
+                        .center(new ImageBuilder().source(pngBytes()).size(11, 11).anchor("logo").build())
+                        .build(),
+                // Nothing painted round it.
+                new ShapeContainerBuilder().circle(22).clipPolicy(ClipPolicy.CLIP_PATH)
+                        .center(new ImageBuilder().source(pngBytes()).size(11, 11).build())
+                        .build(),
+                // A photo filling its frame.
+                new ShapeContainerBuilder().roundedRect(60, 60, 8).stroke(DocumentStroke.of(ACCENT, 1))
+                        .clipPolicy(ClipPolicy.CLIP_PATH)
+                        .center(new ImageBuilder().source(pngBytes()).size(60, 60).build())
+                        .build());
+        for (com.demcha.compose.document.node.DocumentNode container : kept) {
+            try (XWPFDocument document = export(null, session -> session.add(container))) {
+                assertThat(document.getDocument().xmlText()).as(container.toString()).contains("<wp:inline");
+                assertThat(anchors(document.getDocument().xmlText())).noneMatch(anchor -> anchor.contains("<pic:pic"));
+            }
+        }
+    }
+
+    /** A navy disc holding an 11pt glyph, as a section title's badge. */
+    private static com.demcha.compose.document.node.DocumentNode badge() {
+        return new ShapeContainerBuilder().name("Badge").circle(22).fillColor(ACCENT)
+                .clipPolicy(ClipPolicy.CLIP_PATH)
+                .center(new ImageBuilder().name("Glyph").source(pngBytes()).size(11, 11).build())
+                .build();
+    }
+
+    private static long relativeHeight(String anchor) {
+        Matcher matcher = Pattern.compile("relativeHeight=\"(\\d+)\"").matcher(anchor);
+        assertThat(matcher.find()).isTrue();
+        String value = matcher.group(1);
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            assertThat(false)
+                    .as("Invalid relativeHeight value '%s' in anchor: %s", value, anchor)
+                    .isTrue();
+            throw e;
         }
     }
 

@@ -521,7 +521,15 @@ tint it was flattened to. Recorded, like the other two.
   export. The outline is drawn as a shape where the page draws it — a star,
   a diamond or a path as custom geometry — and a picture that fills a
   container clipped to an ellipse takes the ellipse's shape: a portrait is
-  round inside its ring. An outline no shape shows is reported as dropped.
+  round inside its ring. A smaller picture inside a filled or outlined
+  container that clips it — a badge's glyph — is drawn as a picture anchored
+  to the page over the badge, where the page draws it, rather than written as
+  a line of its own above the text beside the badge; one a link or page
+  reference lands on, or one cropped to cover its box, stays in the flow. A
+  container with text in one layer only, laid beside drawing — a section
+  title beside its badge or its icon — is written as a layer stack's band
+  is: the title stands where the page centres it, with the container's height
+  above and below it. An outline no shape shows is reported as dropped.
 - **`hangingIndent(true)` → the ordinary list form.** A list that opts
   into marker/content geometry exports exactly as one that did not: the
   same Word list, the same levels, the same markers. Nothing is lost —
@@ -578,7 +586,9 @@ print it clipped and the report says so, and a page with no paragraph at all dro
 reported too. A shape inside a filled panel is drawn in front of the text rather than
 behind it, since a panel is a table cell and both editors paint a cell's shading over what
 lies behind the text — unless it is drawn with text or a picture, as a disc under its
-initials or a ring round a photo is, which stays behind what it frames and hidden. The body's shapes stand above the page backgrounds, which LibreOffice stacks together
+initials or a ring round a photo is, which stays behind what it frames and hidden. A badge
+holding only its glyph frames nothing written: it and the glyph over it are drawn in front,
+whatever text stands beside the badge. The body's shapes stand above the page backgrounds, which LibreOffice stacks together
 with them. Two limits, each named in the report:
 
 - A transform is not carried: a rotated or scaled shape is drawn upright at its size.

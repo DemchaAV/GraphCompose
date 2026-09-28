@@ -275,6 +275,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** Space the last body paragraph holds below itself, not yet written — see {@link #owePendingSpacingAfter}. */
     private double pendingSpacingAfter;
 
+    /**
+     * How far the bottom border of the panel just written stands below its box beyond the space
+     * the panel holds under itself — taken from the space above the next panel, see
+     * {@link #writePanelPiece}.
+     */
+    private double borderBelow;
+
     /** The page's height in points, or {@code NaN} when the export has no canvas. */
     private double canvasHeight = Double.NaN;
 
@@ -654,6 +661,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
+        borderBelow = 0;
         pendingItemSpacing = 0;
         anItemWasWritten = false;
         forgetTheHang();
@@ -2618,6 +2626,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // space above this table too, and a table carries no space above itself.
         owePendingSpacingAfter(carriedSpacingBefore + (first ? margin.top() : 0));
         carriedSpacingBefore = 0;
+        if (first) {
+            // Word draws a row's top and bottom borders outside its shading, so the table is as
+            // much taller than the panel as its borders are thick. The page strokes them on the
+            // box's edge, taking no room. So the border comes out of the space above, and so
+            // does the one a panel just above could not take out of its own space below.
+            pendingSpacingAfter = Math.max(0, pendingSpacingAfter - strokeWidth(borders.top()) - borderBelow);
+            borderBelow = 0;
+        }
         holdTheSpaceAboveATable(document);
         double width = panelWidth(node);
 
@@ -2686,7 +2702,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             tableIndent.setW(BigInteger.valueOf(Math.round(indent * POINT_TO_TWIP)));
         }
         if (last) {
-            owePendingSpacingAfter(margin.bottom());
+            double below = strokeWidth(borders.bottom());
+            owePendingSpacingAfter(Math.max(0, margin.bottom() - below));
+            borderBelow = Math.max(borderBelow, Math.max(0, below - margin.bottom()));
         }
     }
 
@@ -3309,6 +3327,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
+        borderBelow = 0;
         lastBodyParagraph = para;
         anchors.paragraphOn(currentPage, para, currentCell == null);
         return para;

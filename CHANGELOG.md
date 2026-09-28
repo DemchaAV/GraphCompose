@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A badge holds its initials, and a row's drawing moves with the row.** A filled or stroked
+  shape container whose one layer is a line of a few characters — a party's initials on
+  `ObsidianInvoice`, `MerchantInvoice`'s monogram tile, `ProfessionalSidebar`'s ring, a
+  proposal's step numbers — is written as one DrawingML shape holding the text centred in it
+  (`wps:txbx`), in front of the text. Written apart, the letters stood in the flow and the
+  badge where the page puts it: `ObsidianInvoice`'s footer "K" sat below its disc's corner,
+  its party discs were hidden behind their letters under the panel's shading, and the monogram
+  tile's letter left it for the next page. What a row draws is now anchored in its own cells'
+  paragraphs, as a panel's is: a badge or an icon in a row's gutter is carried by that cell and
+  placed down from the row's top, the row held at the page's height, so it moves with the row
+  where the editor sets it lower — `NorthlineProposal`'s step numbers had stood a page above
+  their steps. Outside a painted panel such a drawing stays behind the text. What a panel or a
+  row draws is anchored in the order drawn, so a badge's glyph stands over the badge. In
+  LibreOffice `MidnightNavy` fits on one page as the page does, `ProfessionalSidebar`'s p90
+  drift falls from 69.6pt to 10.2 and `PaymentsInvoice`'s median from 6.1 to 1.3; the rows
+  now held at the page's height take `ObsidianInvoice`, `SubscriptionInvoice` and
+  `WorkspaceInvoice` — each ending within 20pt of the page's foot — onto a second page there,
+  where the rows above them already stand a few points lower than on the page.
 - **Icons inside painted panels show in Word, beside the text they belong to.** A shape drawn
   in a filled panel stayed behind the text whenever it sat in a layer beside a heading, and a
   panel is a shaded table cell, whose shading both editors paint over what lies behind the

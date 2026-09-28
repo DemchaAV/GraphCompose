@@ -79,12 +79,21 @@ final class DocxDrawings {
      * @param path        a custom shape's outline in its box's unit square, empty for a preset
      * @param front       whether it is drawn in front of the text rather than behind it
      * @param picture     a picture's relationship in the document part, {@code null} for a shape
+     * @param text        a paragraph the shape holds centred in it, as {@code w:p} markup — a
+     *                    badge's initials — or {@code null}
      */
     record Shape(Kind kind, double x, double top, double width, double height, Color fill,
                  Color stroke, double strokeWidth, double radius, boolean flipH, int page,
-                 List<DocumentPathSegment> path, boolean front, String picture) {
+                 List<DocumentPathSegment> path, boolean front, String picture, String text) {
         Shape {
             path = path == null ? List.of() : List.copyOf(path);
+        }
+
+        Shape(Kind kind, double x, double top, double width, double height, Color fill,
+              Color stroke, double strokeWidth, double radius, boolean flipH, int page,
+              List<DocumentPathSegment> path, boolean front, String picture) {
+            this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front, picture,
+                    null);
         }
 
         Shape(Kind kind, double x, double top, double width, double height, Color fill,
@@ -107,7 +116,17 @@ final class DocxDrawings {
         /** The same shape in front of the text rather than behind it. */
         Shape inFront() {
             return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, true,
-                    picture);
+                    picture, text);
+        }
+
+        /**
+         * The same shape holding a paragraph centred in it.
+         *
+         * @param paragraph the paragraph, as {@code w:p} markup
+         */
+        Shape holding(String paragraph) {
+            return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
+                    picture, paragraph);
         }
 
         /**
@@ -334,8 +353,22 @@ final class DocxDrawings {
                 + "<a:xfrm" + (shape.flipH() ? " flipH=\"1\"" : "") + "><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + cx
                 + "\" cy=\"" + cy + "\"/></a:xfrm>"
                 + geometry + fill + outline
-                + "</wps:spPr><wps:bodyPr/></wps:wsp>"
+                + "</wps:spPr>" + textOf(shape) + "</wps:wsp>"
                 + "</a:graphicData></a:graphic>";
+    }
+
+    /**
+     * What a shape holds in its text body: a paragraph centred across and down, with no inset
+     * and no wrapping, so a badge's initials stand in its middle as the page sets them; or
+     * nothing.
+     */
+    private static String textOf(Shape shape) {
+        if (shape.text() == null) {
+            return "<wps:bodyPr/>";
+        }
+        return "<wps:txbx><w:txbxContent>" + shape.text() + "</w:txbxContent></wps:txbx>"
+               + "<wps:bodyPr rot=\"0\" vert=\"horz\" wrap=\"none\" lIns=\"0\" tIns=\"0\" rIns=\"0\" bIns=\"0\""
+               + " anchor=\"ctr\" anchorCtr=\"0\"><a:noAutofit/></wps:bodyPr>";
     }
 
     /** A rounded rectangle's corner, as the preset states it: a share of its shorter side. */

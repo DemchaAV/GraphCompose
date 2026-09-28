@@ -247,6 +247,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // What the painted panel being written draws, and the paragraphs it could stand beside
     // (see anchorPanelDrawings); null outside a panel.
     private PanelDrawings panelDrawings;
+    // The paragraph a badge being drawn holds, as w:p markup (see textBadgeParagraph); null
+    // otherwise.
+    private String badgeText;
     // The cell of the panel being written, painted or framed; null outside a panel.
     private XWPFTableCell panelCell;
     // How far across the page the row cell being written reaches, {left, right}; null where
@@ -1651,6 +1654,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNodeContent(XWPFDocument document, DocumentNode node) throws Exception {
+        ParagraphNode initials = node instanceof ShapeContainerNode badge ? textBadgeParagraph(badge) : null;
+        if (initials != null) {
+            writeTextBadge(document, (ShapeContainerNode) node, initials);
+            return;
+        }
         if (node instanceof com.demcha.compose.document.node.LayerStackNode stack) {
             DocxLayerColumns.Plan columns = DocxLayerColumns.of(stack, layout,
                     candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
@@ -1888,9 +1896,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean front = false;
         boolean drew = false;
         for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
-            if (panelDrawings != null && !Double.isNaN(canvasHeight)) {
+            if (badgeText != null && !Double.isNaN(canvasHeight)) {
+                // A badge holding its initials: in front, the text being its own.
+                List<DocxDrawings.Shape> shapes = DocxDrawings.of(fragment, canvasHeight).stream()
+                        .map(shape -> shape.holding(badgeText).inFront()).toList();
+                if (panelDrawings != null) {
+                    panelDrawings.shapes().addAll(shapes);
+                } else {
+                    anchors.queue(shapes);
+                }
+                drew |= !shapes.isEmpty();
+                front |= !shapes.isEmpty();
+            } else if (panelDrawings != null && !Double.isNaN(canvasHeight)) {
                 // Held for the paragraph it stands beside, in front unless it frames text.
-                boolean inFront = !framesText(fragment, layout.textOnPage(fragment.pageIndex()));
+                // In a row outside a painted panel nothing paints over it, and it stays behind the
+                // text as a drawing on the page does.
+                boolean inFront = surfaceBehind != null
+                                  && !framesText(fragment, layout.textOnPage(fragment.pageIndex()));
                 for (DocxDrawings.Shape shape : DocxDrawings.of(fragment, canvasHeight)) {
                     panelDrawings.shapes().add(inFront ? shape.inFront() : shape);
                     drew = true;
@@ -1982,7 +2004,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // what lies behind the text: in front of it, the shape shows.
             shapes = shapes.stream().map(DocxDrawings.Shape::inFront).toList();
         }
-        anchors.queue(shapes);
+        if (panelDrawings != null) {
+            // Inside a panel or a row, held with what else it draws, in the order drawn: a
+            // badge's glyph anchored to the page at once stood where the page puts it, and
+            // under its badge, while the badge moved with its row.
+            panelDrawings.shapes().addAll(shapes);
+        } else {
+            anchors.queue(shapes);
+        }
         return !shapes.isEmpty();
     }
 
@@ -4757,6 +4786,101 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return inside && smaller;
     }
 
+    /** The most characters a badge's text is drawn in it rather than written: initials, a monogram. */
+    private static final int BADGE_TEXT_LIMIT = 4;
+
+    /**
+     * The paragraph a badge holds when its initials are drawn in it rather than written: the
+     * badge's one layer, a line of plain text a few characters long, the badge filled or stroked
+     * and placed on one page.
+     *
+     * <p>Written apart, the initials stood in the flow and the badge where the page puts it, and
+     * the two parted wherever the editor set the line differently — {@code ObsidianInvoice}'s
+     * footer "K" sat below its disc's corner — and inside a painted panel the disc, drawn behind
+     * the letters it frames, was hidden under the panel's shading. Held in one shape the two
+     * cannot part, and the shape can stand in front, the text being its own.</p>
+     *
+     * @return the paragraph, or {@code null} when the badge is written as before
+     */
+    private ParagraphNode textBadgeParagraph(ShapeContainerNode badge) {
+        if (badge.fillColor() == null && (badge.stroke() == null || !(badge.stroke().width() > 0))
+            || badge.children().size() != 1 || !(badge.children().get(0) instanceof ParagraphNode paragraph)
+            || badge.transform() != null && !badge.transform().isIdentity()
+            || Double.isNaN(canvasHeight)) {
+            return null;
+        }
+        String text = badgeTextOf(paragraph);
+        if (text == null || text.isBlank() || text.strip().length() > BADGE_TEXT_LIMIT) {
+            return null;
+        }
+        com.demcha.compose.document.layout.PlacedNode box = layout.placement(badge);
+        if (box == null || box.startPage() != box.endPage() || layout.lineCount(paragraph) != 1) {
+            return null;
+        }
+        return paragraph;
+    }
+
+    /**
+     * Writes a badge as one shape holding its initials, where the page draws it (see
+     * {@link #textBadgeParagraph}). In the flow it keeps the room the page gives it; inside
+     * something already drawn, that holds the room.
+     */
+    private void writeTextBadge(XWPFDocument document, ShapeContainerNode badge, ParagraphNode initials) {
+        if (overlayDepth == 0) {
+            holdTheSpaceOf(badge);
+        }
+        badgeText = badgeParagraphXml(document, initials);
+        try {
+            drawOutlineOf(badge);
+        } finally {
+            badgeText = null;
+        }
+    }
+
+    /** A paragraph's text when it is text alone, or {@code null} when it holds anything else. */
+    private static String badgeTextOf(ParagraphNode paragraph) {
+        if (paragraph.inlineRuns() == null || paragraph.inlineRuns().isEmpty()) {
+            return paragraph.text();
+        }
+        StringBuilder text = new StringBuilder();
+        for (InlineRun run : paragraph.inlineRuns()) {
+            if (!(run instanceof InlineTextRun textRun) || textRun.text() == null) {
+                return null;
+            }
+            text.append(textRun.text());
+        }
+        return text.toString();
+    }
+
+    /**
+     * A badge's text as the paragraph its shape holds, styled as a run of the body is.
+     *
+     * @return the paragraph as {@code w:p} markup
+     */
+    private String badgeParagraphXml(XWPFDocument document, ParagraphNode paragraph) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP markup =
+                org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP.Factory.newInstance();
+        XWPFParagraph para = new XWPFParagraph(markup, document);
+        para.setAlignment(ParagraphAlignment.CENTER);
+        CTSpacing spacing = markup.getPPr().isSetSpacing() ? markup.getPPr().getSpacing() : markup.getPPr().addNewSpacing();
+        spacing.setBefore(BigInteger.ZERO);
+        spacing.setAfter(BigInteger.ZERO);
+        DocumentTextStyle style = paragraph.textStyle();
+        if (paragraph.inlineRuns() != null && !paragraph.inlineRuns().isEmpty()
+            && paragraph.inlineRuns().get(0) instanceof InlineTextRun first && first.textStyle() != null) {
+            style = first.textStyle();
+        }
+        XWPFRun run = para.createRun();
+        applyStyle(run, style);
+        run.setText(badgeTextOf(paragraph).strip());
+        String main = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+        org.apache.xmlbeans.XmlOptions options = new org.apache.xmlbeans.XmlOptions();
+        options.setSaveSyntheticDocumentElement(new javax.xml.namespace.QName(main, "p", "w"));
+        options.setSaveSuggestedPrefixes(java.util.Map.of(main, "w"));
+        options.setSaveAggressiveNamespaces();
+        return markup.xmlText(options);
+    }
+
     /**
      * Draws a badge's glyph where the page draws it, in the box the layout gave it, over the
      * badge's outline drawn before it (see {@link #drawnOverItsBadge}).
@@ -5354,13 +5478,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // What the cell holds sits on the cell's fill — a stripe, not the card around
                 // the table — wherever it has no shading of its own.
                 DocumentColor outerSurface = surfaceBehind;
+                double[] outerSpan = hostSpan;
                 if (fill != null) {
                     surfaceBehind = fill;
                 }
+                // How far this cell reaches is not known here, so none of its paragraphs carries
+                // what a panel or a row draws (see PanelHost).
+                hostSpan = null;
                 try {
                     writeCellContent(cell, placement, node);
                 } finally {
                     surfaceBehind = outerSurface;
+                    hostSpan = outerSpan;
                 }
             }
             holdRowHeight(row, node, rowIdx);
@@ -5822,7 +5951,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return style == null ? DocumentTableStyle.empty() : style;
     }
 
+    /**
+     * Writes a row, what it draws carried by the paragraphs of its own cells.
+     *
+     * <p>Anchored to the page, a badge or an icon in a row stays where the page puts it while the
+     * editor sets the row higher or lower: {@code NorthlineProposal}'s step numbers stood a page
+     * above the steps they number once its title took a third line. Held for the row as a
+     * panel's drawing is (see {@link #anchorPanelDrawings}), each is placed down from its own
+     * cell and moves with the row. A row inside a panel is the panel's.</p>
+     */
     private void writeRow(XWPFDocument document, RowNode node) throws Exception {
+        PanelDrawings rowScope = panelDrawings == null && !Double.isNaN(canvasHeight) && layout.placed(node)
+                ? new PanelDrawings(null)
+                : null;
+        if (rowScope == null) {
+            writeRowTable(document, node);
+            return;
+        }
+        panelDrawings = rowScope;
+        try {
+            writeRowTable(document, node);
+        } finally {
+            panelDrawings = null;
+        }
+        anchorPanelDrawings(rowScope);
+    }
+
+    private void writeRowTable(XWPFDocument document, RowNode node) throws Exception {
         // Represent rows as a single one-row table so downstream editors get a
         // visual side-by-side layout; each cell holds its child as it is written
         // anywhere else (writeCellBody).
@@ -5847,6 +6002,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         com.demcha.compose.document.layout.PlacedNode placedRow =
                 panelDrawings != null && !Double.isNaN(canvasHeight) ? layout.placement(node) : null;
         double[] starts = placedRow == null ? null : layout.rowChildStarts(node);
+        boolean gutter = false;
         // A row has no fill of its own: inside a panel it is a table nested in the panel's
         // cell, and a cell with no shading shows the panel's through it.
         for (int i = 0; i < node.children().size(); i++) {
@@ -5869,13 +6025,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 hostSpan = outerSpan;
             }
             applyRowVerticalAlign(cell, node.verticalAlign());
-            if (starts != null) {
-                hostTheDrawingOf(cell, child, node, placedRow, starts, i);
+            if (starts != null && hostTheDrawingOf(cell, child, node, placedRow, starts, i)) {
+                gutter = true;
             }
         }
-        if (starts != null) {
+        if (starts != null && (gutter || panelDrawings.cell() != null)) {
             // The row is as tall as the page made it, so a drawing placed from its top stands
-            // where the page puts it beside the text the row centres.
+            // where the page puts it beside the text the row centres. Outside a panel only a row
+            // carrying such a drawing is held: held everywhere, rows LibreOffice sets taller than
+            // the page ran four one-page documents onto a second.
             holdRowAtLeast(row, placedRow.placementHeight() - node.padding().top() - node.padding().bottom());
         }
         indentTable(table);
@@ -5888,20 +6046,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>The cell has nothing Word lays out but an empty paragraph, which is set at the cell's
      * top, so its top is the row's content top on the page; the drawing is then carried by its
      * own column's cell, which holds it across.</p>
+     *
+     * @return whether the cell was made one
      */
-    private void hostTheDrawingOf(XWPFTableCell cell, DocumentNode child, RowNode row,
-                                  com.demcha.compose.document.layout.PlacedNode placedRow,
-                                  double[] starts, int index) {
+    private boolean hostTheDrawingOf(XWPFTableCell cell, DocumentNode child, RowNode row,
+                                     com.demcha.compose.document.layout.PlacedNode placedRow,
+                                     double[] starts, int index) {
         if (!(isDrawing(child) || onlyDrawn(child)) || cell.getBodyElements().size() != 1
             || !(cell.getBodyElements().get(0) instanceof XWPFParagraph empty) || !empty.getRuns().isEmpty()) {
-            return;
+            return false;
         }
         cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.TOP);
         double top = canvasHeight - placedRow.placementY() - placedRow.placementHeight() + row.padding().top();
         double height = placedRow.placementHeight() - row.padding().top() - row.padding().bottom();
         double left = placedRow.placementX() + starts[1 + index];
         double right = placedRow.placementX() + (index + 2 < starts.length ? starts[2 + index] : starts[0]);
-        panelDrawings.hosts().add(new PanelHost(empty, placedRow.startPage(), top, height, left, right));
+        // The paragraph's top is the cell's; the space it holds above — a badge's room — is below
+        // that top, so its line is written that much lower (anchorPanelDrawings takes it back).
+        panelDrawings.hosts().add(new PanelHost(empty, placedRow.startPage(), top + spaceAbove(empty), height,
+                left, right));
+        return true;
     }
 
     /**
@@ -5940,7 +6104,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 cell.removeParagraph(0);
                 List<DocumentNode> layers = columns.get(index).layers();
                 double previous = currentCellWidth;
+                double[] outerSpan = hostSpan;
                 currentCellWidth = usableWidthOf(cell, index, 1);
+                // As a table's cell: how far it reaches is not known here (see PanelHost).
+                hostSpan = null;
                 try {
                     writeInCell(cell, () -> {
                         for (int layer = 0; layer < layers.size(); layer++) {
@@ -5972,6 +6139,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 } finally {
                     currentCellWidth = previous;
                     resumeSpacing = Double.NaN;
+                    hostSpan = outerSpan;
                 }
                 if (cell.getParagraphs().isEmpty()) {
                     cell.addParagraph();
@@ -6113,6 +6281,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private boolean onlyDrawn(DocumentNode node) {
         if (node.children().isEmpty()) {
             return isDrawing(node);
+        }
+        if (node instanceof ShapeContainerNode badge && textBadgeParagraph(badge) != null) {
+            // Its initials are drawn in it, not written (see textBadgeParagraph).
+            return true;
         }
         for (DocumentNode child : node.children()) {
             boolean drawn = child instanceof ImageNode image && node instanceof ShapeContainerNode badge

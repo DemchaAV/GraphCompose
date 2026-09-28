@@ -551,17 +551,73 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void aDiscUnderItsInitialsInAPaintedPanelStaysBehindThem() throws Exception {
-        // In front, the disc would cover the initials it frames.
+    void aDiscAndItsInitialsInAPaintedPanelAreOneShapeInFront() throws Exception {
+        // Behind the initials it frames, the disc was hidden under the panel's shading; written
+        // apart from it, the initials parted from it wherever the editor set their line.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
                         .addParagraph(p -> p.text("Profile"))
                         .add(new ShapeContainerBuilder().name("Badge").circle(40).fillColor(ACCENT)
                                 .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("JR").build())
                                 .build()))))) {
+            String anchor = anchors(document.getDocument().xmlText()).get(0);
+
+            assertThat(anchors(document.getDocument().xmlText())).hasSize(1);
+            assertThat(anchor).contains("behindDoc=\"0\"").contains("prst=\"ellipse\"")
+                    .contains("<w:txbxContent>").contains(">JR<").contains("anchor=\"ctr\"");
+            String body = document.getDocument().xmlText();
+            assertThat(body.indexOf(">JR<")).as("the initials are the shape's alone, not a paragraph of the flow")
+                    .isEqualTo(body.lastIndexOf(">JR<"));
+            assertThat(allText(document)).as("still text a reader extracts").contains("JR");
+        }
+    }
+
+    @Test
+    void aBadgeOutsideAPanelHoldsItsInitialsToo() throws Exception {
+        // ObsidianInvoice's footer disc: its "K" stood below the disc's corner in the flow.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addRow("Closing", row -> row.columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(40),
+                                com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                        .add(new ShapeContainerBuilder().name("Disc").circle(28).fillColor(ACCENT)
+                                .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("K").build())
+                                .build())
+                        .addParagraph(p -> p.text("Thank you for your business."))))) ) {
             assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
-                    .contains("behindDoc=\"1\"");
-            assertThat(allText(document)).contains("JR");
+                    .contains("<w:txbxContent>").contains(">K<").contains("behindDoc=\"0\"")
+                    .as("placed from its own cell, so it moves with the row")
+                    .contains("<wp:positionV relativeFrom=\"paragraph\">");
+            String disc = document.getTables().get(0).getRow(0).getCell(0).getCTTc().xmlText();
+            assertThat(anchors(disc)).as("carried by the disc's own cell").hasSize(1);
+        }
+    }
+
+    @Test
+    void anIconInARowOutsideAPanelMovesWithTheRowAndStaysBehindTheText() throws Exception {
+        // Anchored to the page, it stayed where the page puts it while the editor set the row
+        // lower; nothing paints over it here, so it keeps behind the text.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addRow("Step", row -> row.verticalAlign(com.demcha.compose.document.node.RowVerticalAlign.CENTER)
+                        .columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(30),
+                                com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                        .add(new com.demcha.compose.document.dsl.EllipseBuilder().name("Icon").circle(16)
+                                .fillColor(ACCENT).build())
+                        .addParagraph(p -> p.text("Discovery & research")))))) {
+            String gutter = document.getTables().get(0).getRow(0).getCell(0).getCTTc().xmlText();
+
+            assertThat(anchors(gutter)).singleElement().asString()
+                    .contains("<wp:positionV relativeFrom=\"paragraph\">").contains("behindDoc=\"1\"");
+        }
+    }
+
+    @Test
+    void aBadgeWithMoreThanInitialsIsWrittenAsBefore() throws Exception {
+        // A pill with a word in it stays a written paragraph: its text is content, not a mark.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .add(new ShapeContainerBuilder().name("Pill").roundedRect(120, 24, 12).fillColor(ACCENT)
+                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Overdue").build())
+                        .build())))) {
+            assertThat(document.getDocument().xmlText()).doesNotContain("txbxContent");
+            assertThat(allText(document)).contains("Overdue");
         }
     }
 

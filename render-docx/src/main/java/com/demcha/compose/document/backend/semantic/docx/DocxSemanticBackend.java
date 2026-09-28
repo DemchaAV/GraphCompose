@@ -1849,10 +1849,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void drawOutlineOf(DocumentNode node) {
         if (!drawOwnFragments(node) && node instanceof ShapeContainerNode container
-            && (container.fillColor() != null || container.stroke() != null)) {
+            && (container.fillColor() != null || container.stroke() != null && container.stroke().width() > 0)) {
+            String outline = container.outline().getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT);
             report.add(DocxExportReport.Severity.DROPPED, "shape container outline", layout.pathOf(node),
-                    "a " + container.outline().getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT)
-                    + " outline has no shape this export draws, so it is not in the document");
+                    composedInACell(node)
+                            ? "a " + outline + " outline composed inside a table cell has no place in the "
+                              + "layout to be drawn at, so it is not in the document"
+                            : "a " + outline + " outline has no shape this export draws, so it is not in the "
+                              + "document");
         }
     }
 
@@ -2542,6 +2546,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (node.keepTogether() && layout.onOnePage(node)) {
             table.getRow(0).setCantSplitRow(true);
         }
+        if (node instanceof ShapeContainerNode) {
+            // The page centres a shape's layers in it. The chip is as tall as its line: held to
+            // the outline's height, every row grew by the cell's own margins round it.
+            cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
+        }
 
         cell.removeParagraph(0);
         DocumentColor outerSurface = surfaceBehind;
@@ -2606,6 +2615,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 ? availableWidth() - node.margin().left() - node.margin().right()
                 : Double.NaN;
         java.util.OptionalDouble placed = layout.placedWidth(node);
+        if (placed.isEmpty() && node instanceof ShapeContainerNode shape) {
+            // Composed in a table cell, it has no placement; its outline states its size, within
+            // the cell it is composed in.
+            return Double.isFinite(available) ? Math.min(shape.outline().width(), available) : shape.outline().width();
+        }
         if (placed.isEmpty()) {
             return available;
         }
@@ -3072,6 +3086,36 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return text == null ? 1L : Math.max(1L, text.length());
     }
 
+    /**
+     * Whether a shape container is written as a panel — a table of one cell carrying its fill and
+     * outline — rather than drawn.
+     *
+     * <p>A container the layout composes inside a table cell has no place of its own in the
+     * layout, so its outline has no position to be drawn at, and the export dropped it: every
+     * shift chip of a rota, a filled pill with its hours inside, came out as bare text. A
+     * rectangle or a rounded rectangle, filled or outlined, is a panel as a card is, with its
+     * text inside a cell painted its colour, and its corners squared.</p>
+     */
+    private boolean writtenAsAPanel(ShapeContainerNode node) {
+        boolean boxed = node.outline() instanceof com.demcha.compose.document.style.ShapeOutline.Rectangle
+                        || node.outline() instanceof com.demcha.compose.document.style.ShapeOutline.RoundedRectangle
+                        || node.outline() instanceof com.demcha.compose.document.style.ShapeOutline.RoundedRectanglePerCorner;
+        boolean painted = node.fillColor() != null || node.stroke() != null && node.stroke().width() > 0;
+        // One holding only drawing — an icon's tile — has nothing a cell can hold, and a panel
+        // with nothing inside is a sliver, or, held to the tile's height, a row taller than the
+        // page's on every line: an invoice ran onto a second page. It stays unwritten.
+        return boxed && painted && !onlyDrawn(node) && composedInACell(node);
+    }
+
+    /**
+     * Whether a node is laid out but has no place of its own in the layout — content composed
+     * inside a table cell. A document with no layout at all has no place for anything, and is
+     * not this.
+     */
+    private boolean composedInACell(DocumentNode node) {
+        return !layout.isEmpty() && layout.placement(node) == null && layout.ownFragments(node).isEmpty();
+    }
+
     /** Reads the fill and borders off whichever wrapper kind this is, or an empty paint. */
     private static ContainerPaint paintOf(DocumentNode node) {
         if (node instanceof SectionNode section) {
@@ -3103,7 +3147,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void warnContainerRadiusDropped(DocumentNode node) {
         boolean rounded = node instanceof SectionNode section
                 ? hasRadius(section.cornerRadius())
-                : node instanceof ContainerNode container && hasRadius(container.cornerRadius());
+                : node instanceof ContainerNode container
+                  ? hasRadius(container.cornerRadius())
+                  : node instanceof ShapeContainerNode shape
+                    && (shape.outline() instanceof com.demcha.compose.document.style.ShapeOutline.RoundedRectangle round
+                        && round.cornerRadius() > 0
+                        || shape.outline() instanceof com.demcha.compose.document.style.ShapeOutline.RoundedRectanglePerCorner corners
+                           && hasRadius(corners.corners()));
         if (rounded) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "corner radius", layout.pathOf(node),
                     "a Word table cell is rectangular, so the panel keeps its fill and "
@@ -3533,6 +3583,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeShapeContainer(XWPFDocument document, ShapeContainerNode node, DocxLayerColumns.Band band)
             throws Exception {
+        if (writtenAsAPanel(node)) {
+            warnContainerRadiusDropped(node);
+            if (node.transform() != null && !node.transform().isIdentity()) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, "shape container", layout.pathOf(node),
+                        "written as a panel in its table cell, which carries no transform, so it stands "
+                        + "upright at its size");
+            }
+            writePanel(document, node, new ContainerPaint(node.fillColor(), bordersOf(null, node.stroke())));
+            return;
+        }
         // POI/DOCX has no portable equivalent of a graphics-state path clip.
         // The fallback rule (recorded in docs/canonical-legacy-parity.md) is
         // to render the container's layers inline, in source order, without

@@ -8,6 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A filled pill inside a table cell keeps its colour in Word.** A shape container composed in a
+  table cell (`DocumentTableCell.node(...)`) has no place in the layout, so the DOCX export had
+  no position to draw its outline at and dropped it: `CobaltRota`'s 108 shift chips came out as
+  their hours in white on nothing. A filled or outlined rectangle or rounded rectangle there is
+  now written as a panel — a table of one cell in its fill and outline, its outline's width
+  within the cell, with its layers centred inside — its corners squared and reported. A container
+  holding only drawing — an icon's tile — and another outline composed in a cell are still
+  dropped, and the report now says why. In LibreOffice the chips show in their colours, the
+  rota's lines stand 1–2pt lower than before under the chips' cells, and no text line of another
+  template moves.
+
 - **Text headers and footers reach Word.** The DOCX export left out a `DocumentHeaderFooter` —
   `session.header(...)` / `session.footer(...)`, the three text slots and their page tokens —
   and the export report did not say so: nine invoice presets, `ModernReceipt`, `CobaltRota`,

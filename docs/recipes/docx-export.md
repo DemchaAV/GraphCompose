@@ -600,7 +600,10 @@ under its initials or a ring round a photo does, which stays behind what it fram
 hidden. A panel's shapes are anchored in the panel's paragraph whose first line stands
 nearest them, and placed down from that paragraph's top rather than the page's: an icon
 beside a heading moves with the heading where the editor sets the panel's text higher or
-lower than the page. The body's shapes stand above the page backgrounds, which LibreOffice stacks together
+lower than the page. Only a paragraph of a cell that holds the shape across carries it —
+Word prints a shape anchored in a cell clipped to that cell — so an icon in a row's gutter is
+carried by the gutter's own cell; a shape no such paragraph stands beside is anchored to the
+page. The body's shapes stand above the page backgrounds, which LibreOffice stacks together
 with them. Two limits, each named in the report:
 
 - A transform is not carried: a rotated or scaled shape is drawn upright at its size.

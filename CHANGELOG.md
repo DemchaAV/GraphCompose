@@ -16,7 +16,9 @@ follow semantic versioning; release dates are ISO 8601.
   shape now stands in front unless it frames a line of text or a picture, as a disc under its
   initials does. In front and anchored to the page, an icon lands on the next line wherever the
   editor sets the panel's text a little higher, so a panel's shapes are anchored in the
-  paragraph whose first line is nearest them and placed down from its top. A row at the top of
+  paragraph whose first line is nearest them and placed down from its top — a paragraph of a
+  cell that holds them across, since Word prints a shape anchored in a cell clipped to that
+  cell: an icon in a row's gutter is carried by the gutter's own cell, held at the row's height. A row at the top of
   a panel also keeps its top padding, which no paragraph above it held: `MerchantInvoice`'s
   due-date text stood against the card's top edge. No shape in the template corpus covers
   text in LibreOffice.

@@ -734,22 +734,6 @@ final class DocxLayoutMetrics {
     }
 
     /**
-     * The first fragment a node laid its lines out in — its own, or, composed in a table cell,
-     * the one its table laid out for it.
-     *
-     * @param node any node that lays its text out as paragraph lines
-     * @return the fragment, or {@code null} when the node laid out no lines
-     */
-    PlacedFragment firstTextFragment(DocumentNode node) {
-        for (PlacedFragment fragment : textFragmentsOf(node)) {
-            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph && !paragraph.lines().isEmpty()) {
-                return fragment;
-            }
-        }
-        return null;
-    }
-
-    /**
      * Every line of text and every picture the layout set on one page, whatever node set it.
      *
      * @param page the page, as a fragment counts it

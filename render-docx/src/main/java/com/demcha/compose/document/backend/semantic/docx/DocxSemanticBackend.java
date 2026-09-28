@@ -246,17 +246,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // What the tables being written drew of their composed cells (see drawCellDrawing): a drawing
     // node inside such a cell is then drawn, not lost.
     private CellDrawing cellDrawing = CellDrawing.NONE;
-    // What the painted panel being written draws, and the paragraphs it could stand beside
-    // (see anchorPanelDrawings); null outside a panel.
-    private PanelDrawings panelDrawings;
     // The paragraph a badge being drawn holds, as w:p markup (see textBadgeParagraph); null
     // otherwise.
     private String badgeText;
     // The cell of the panel being written, painted or framed; null outside a panel.
     private XWPFTableCell panelCell;
-    // How far across the page the row cell being written reaches, {left, right}; null where
-    // that is not known (see PanelHost).
-    private double[] hostSpan;
     // The text style the document is mostly written in, promoted to Word's Normal style.
     // Null until an export computes it, and when the graph carries no text at all.
     private DocumentTextStyle documentDefaultStyle;
@@ -560,9 +554,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         currentPage = 0;
         clipContainer = null;
         cellDrawing = CellDrawing.NONE;
-        panelDrawings = null;
         panelCell = null;
-        hostSpan = null;
         moves.clear();
         writingInAStandIn.clear();
         listNumbering.clear();
@@ -1888,9 +1880,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Draws the shapes a node paints itself where the page puts them, anchored in a paragraph
-     * written on their page (see {@link DocxDrawings} and {@link DocxDrawingAnchors}) — or,
-     * inside a painted panel, held for the panel's paragraph they stand beside
-     * ({@link #anchorPanelDrawings}).
+     * written on their page (see {@link DocxDrawings} and {@link DocxDrawingAnchors}).
      *
      * @return whether the node painted anything a shape shows
      */
@@ -1903,36 +1893,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // A badge holding its initials: in front, the text being its own.
                 List<DocxDrawings.Shape> shapes = DocxDrawings.of(fragment, canvasHeight).stream()
                         .map(shape -> shape.holding(badgeText).inFront()).toList();
-                if (panelDrawings != null) {
-                    panelDrawings.shapes().addAll(shapes);
-                } else {
-                    anchors.queue(shapes);
-                }
+                anchors.queue(shapes);
                 drew |= !shapes.isEmpty();
                 front |= !shapes.isEmpty();
-            } else if (panelDrawings != null && !Double.isNaN(canvasHeight)) {
-                // Held for the paragraph it stands beside, in front unless it frames text.
-                // In a row outside a painted panel nothing paints over it, and it stays behind the
-                // text as a drawing on the page does.
-                boolean inFront = surfaceBehind != null
-                                  && !framesText(fragment, layout.textOnPage(fragment.pageIndex()));
-                for (DocxDrawings.Shape shape : DocxDrawings.of(fragment, canvasHeight)) {
-                    panelDrawings.shapes().add(inFront ? shape.inFront() : shape);
-                    drew = true;
-                    front |= inFront;
-                }
-            } else if (queueDrawing(fragment, overlayFront)) {
+                continue;
+            }
+            // Inside a painted panel, whose shading both editors paint over what lies behind the
+            // text, a shape stands in front unless it frames a line of text or a picture on its
+            // page: a template sets an icon beside its heading through a stack of one layer, which
+            // kept every payment panel's heading icon behind its shading. Elsewhere the overlays
+            // it sits in decide (drawsInFront).
+            boolean inFront = surfaceBehind != null && !Double.isNaN(canvasHeight)
+                    ? !framesText(fragment, layout.textOnPage(fragment.pageIndex()))
+                    : overlayFront;
+            if (queueDrawing(fragment, inFront)) {
                 drew = true;
-                front |= overlayFront;
+                front |= inFront;
             }
         }
         if (drew) {
-            StringBuilder message = new StringBuilder(panelDrawings != null
-                    ? "drawn as a shape where the layout puts it, placed from the paragraph beside it in "
-                      + "its panel or row where that paragraph's cell holds it across, so it moves with "
-                      + "that paragraph, and anchored to the page otherwise"
-                    : "drawn as a shape anchored to the page where the layout puts it: it stays there "
-                      + "when the text around it is edited");
+            StringBuilder message = new StringBuilder("drawn as a shape anchored to the page where the "
+                    + "layout puts it: it stays there when the text around it is edited");
             if (badgeText != null) {
                 message.append("; its text is held in the shape, which stands in front of the text");
             } else if (front) {
@@ -2009,14 +1990,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // what lies behind the text: in front of it, the shape shows.
             shapes = shapes.stream().map(DocxDrawings.Shape::inFront).toList();
         }
-        if (panelDrawings != null) {
-            // Inside a panel or a row, held with what else it draws, in the order drawn: a
-            // badge's glyph anchored to the page at once stood where the page puts it, and
-            // under its badge, while the badge moved with its row.
-            panelDrawings.shapes().addAll(shapes);
-        } else {
-            anchors.queue(shapes);
-        }
+        anchors.queue(shapes);
         return !shapes.isEmpty();
     }
 
@@ -2678,24 +2652,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             surfaceBehind = paint.fill();
         }
         currentCellWidth = Double.isFinite(width) ? width - padding.left() - padding.right() : Double.NaN;
-        PanelDrawings outerPanel = panelDrawings;
-        PanelDrawings panel = paint.fill() != null ? new PanelDrawings(cell) : outerPanel;
-        panelDrawings = panel;
         XWPFTableCell outerPanelCell = panelCell;
-        double[] outerSpan = hostSpan;
         panelCell = cell;
-        hostSpan = null;
         try {
             writeInCell(cell, () -> writeChildren(cell.getXWPFDocument(), children, spacingOf(node)));
         } finally {
             surfaceBehind = outerSurface;
             currentCellWidth = outerCellWidth;
-            panelDrawings = outerPanel;
             panelCell = outerPanelCell;
-            hostSpan = outerSpan;
-        }
-        if (panel != outerPanel) {
-            anchorPanelDrawings(panel);
         }
         if (cell.getParagraphs().isEmpty()) {
             // A panel with nothing Word can hold inside is its padding tall on the page, not a
@@ -3886,21 +3850,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyLineHeight(target, layout.lineHeight(source));
         applyVerticalSpacing(target, source);
         applyLineGap(target, layout.lineGap(source), layout.lineCount(source));
-        if (panelDrawings != null) {
-            com.demcha.compose.document.layout.PlacedFragment lines = layout.firstTextFragment(source);
-            if (lines != null && lines.payload() instanceof com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload
-                    paragraph && !Double.isNaN(canvasHeight)) {
-                double padding = paragraph.padding() == null ? 0 : paragraph.padding().top();
-                double top = canvasHeight - lines.y() - lines.height() + padding;
-                double[] span = currentCell != null && currentCell == panelDrawings.cell()
-                        ? new double[]{Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY}
-                        : hostSpan;
-                if (span != null) {
-                    panelDrawings.hosts().add(new PanelHost(target, lines.pageIndex(), top,
-                            paragraph.lines().get(0).lineHeight(), span[0], span[1], false));
-                }
-            }
-        }
         return rightToLeft;
     }
 
@@ -5202,85 +5151,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         static final CellDrawing NONE = new CellDrawing(false, false);
     }
 
-    /** What a painted panel draws, held until it is written, and the paragraphs written in it. */
-    private record PanelDrawings(XWPFTableCell cell, List<DocxDrawings.Shape> shapes, List<PanelHost> hosts) {
-        PanelDrawings(XWPFTableCell cell) {
-            this(cell, new ArrayList<>(), new ArrayList<>());
-        }
-    }
-
-    /**
-     * A paragraph written in a panel, with where the layout set its first line and how far across
-     * the page its cell reaches.
-     *
-     * @param paragraph  the Word paragraph
-     * @param page       the page its first line is on
-     * @param lineTop    the first line's top, from the page's top
-     * @param lineHeight the first line's height
-     * @param left       its cell's left edge on the page; the panel's own cell reaches everywhere
-     * @param right      its cell's right edge on the page
-     * @param cellTop    whether the paragraph's top is {@code lineTop} itself — a gutter cell's
-     *                   empty paragraph, set at the cell's top — rather than its line's less the
-     *                   space written above it
-     */
-    private record PanelHost(XWPFParagraph paragraph, int page, double lineTop, double lineHeight,
-                             double left, double right, boolean cellTop) {
-
-        /** Where the paragraph's top stands on the page, which a drawing it carries is placed from. */
-        double paragraphTop() {
-            return cellTop ? lineTop : lineTop - spaceAbove(paragraph);
-        }
-    }
-
-    /**
-     * Anchors what a painted panel draws in the paragraph each drawing stands beside.
-     *
-     * <p>Anchored to the page, a drawing stays where the page puts it while the editor sets the
-     * panel's text a little higher or lower: behind the text, the panel's shading hid it — the
-     * heading icons of every payment panel on the invoice presets were missing — and in front, an
-     * icon beside a heading landed on the line below it where the editor set the panel higher.
-     * Each drawing is placed down from the paragraph whose first line is nearest it on its page,
-     * among those whose cell reaches across it, so it moves with that line; the paragraph's top
-     * in the editor is its line's less the space written above it.</p>
-     *
-     * <p>Only a cell that holds the drawing across can carry it: Word prints a shape anchored in a
-     * cell clipped to that cell, so an icon anchored in the heading's cell beside the icon's own
-     * would not be printed at all. The panel's own cell holds all it draws; a row's cell holds
-     * what stands over its column. A drawing no such paragraph stands beside is anchored to the
-     * page as before. Drawings are anchored in the order they were drawn, so they stack as the
-     * page stacks them.</p>
-     */
-    private void anchorPanelDrawings(PanelDrawings panel) {
-        for (DocxDrawings.Shape shape : panel.shapes()) {
-            PanelHost nearest = null;
-            double distance = Double.POSITIVE_INFINITY;
-            double centre = shape.top() + shape.height() / 2;
-            double across = shape.x() + shape.width() / 2;
-            for (PanelHost host : panel.hosts()) {
-                double away = Math.abs(host.lineTop() + host.lineHeight() / 2 - centre);
-                if (host.page() == shape.page() && across >= host.left() && across <= host.right()
-                    && away < distance) {
-                    nearest = host;
-                    distance = away;
-                }
-            }
-            if (nearest == null) {
-                anchors.queue(List.of(shape));
-            } else {
-                anchors.anchorBeside(nearest.paragraph(), List.of(shape), nearest.paragraphTop());
-            }
-        }
-    }
-
-    /** The space written above a paragraph, in points. */
-    private static double spaceAbove(XWPFParagraph paragraph) {
-        CTPPr properties = paragraph.getCTP().getPPr();
-        if (properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetBefore()) {
-            return 0;
-        }
-        return twipsOf(properties.getSpacing().getBefore()) / POINT_TO_TWIP;
-    }
-
     /**
      * Whether a node composed in a cell was drawn by its table, so that it is not lost.
      *
@@ -5509,18 +5379,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // What the cell holds sits on the cell's fill — a stripe, not the card around
                 // the table — wherever it has no shading of its own.
                 DocumentColor outerSurface = surfaceBehind;
-                double[] outerSpan = hostSpan;
                 if (fill != null) {
                     surfaceBehind = fill;
                 }
-                // How far this cell reaches is not known here, so none of its paragraphs carries
-                // what a panel or a row draws (see PanelHost).
-                hostSpan = null;
                 try {
                     writeCellContent(cell, placement, node);
                 } finally {
                     surfaceBehind = outerSurface;
-                    hostSpan = outerSpan;
                 }
             }
             holdRowHeight(row, node, rowIdx);
@@ -5982,33 +5847,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return style == null ? DocumentTableStyle.empty() : style;
     }
 
-    /**
-     * Writes a row, what it draws carried by the paragraphs of its own cells.
-     *
-     * <p>Anchored to the page, a badge or an icon in a row stays where the page puts it while the
-     * editor sets the row higher or lower: {@code NorthlineProposal}'s step numbers stood a page
-     * above the steps they number once its title took a third line. Held for the row as a
-     * panel's drawing is (see {@link #anchorPanelDrawings}), each is placed down from its own
-     * cell and moves with the row. A row inside a panel is the panel's.</p>
-     */
     private void writeRow(XWPFDocument document, RowNode node) throws Exception {
-        PanelDrawings rowScope = panelDrawings == null && !Double.isNaN(canvasHeight) && layout.placed(node)
-                ? new PanelDrawings(null)
-                : null;
-        if (rowScope == null) {
-            writeRowTable(document, node);
-            return;
-        }
-        panelDrawings = rowScope;
-        try {
-            writeRowTable(document, node);
-        } finally {
-            panelDrawings = null;
-        }
-        anchorPanelDrawings(rowScope);
-    }
-
-    private void writeRowTable(XWPFDocument document, RowNode node) throws Exception {
         // Represent rows as a single one-row table so downstream editors get a
         // visual side-by-side layout; each cell holds its child as it is written
         // anywhere else (writeCellBody).
@@ -6028,12 +5867,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (layout.placed(node)) {
             row.setCantSplitRow(true);
         }
-        // Inside a painted panel, how far across the page each cell reaches, so what the panel
-        // draws is carried by a paragraph of the cell it stands over (see anchorPanelDrawings).
+        // Inside a painted panel the row is held as tall as the page made it: its padding and a
+        // drawing standing in it are what make it taller than its text, as a panel's are, and
+        // MerchantInvoice's due-date text stood against its card's top without it.
         com.demcha.compose.document.layout.PlacedNode placedRow =
-                panelDrawings != null && !Double.isNaN(canvasHeight) ? layout.placement(node) : null;
-        double[] starts = placedRow == null ? null : layout.rowChildStarts(node);
-        boolean gutter = false;
+                surfaceBehind != null && panelCell != null ? layout.placement(node) : null;
         // A row has no fill of its own: inside a panel it is a table nested in the panel's
         // cell, and a cell with no shading shows the panel's through it.
         for (int i = 0; i < node.children().size(); i++) {
@@ -6042,61 +5880,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             DocumentNode child = node.children().get(i);
             // What the cell holds is sized to the cell, not to whatever surrounds the row.
             double previous = currentCellWidth;
-            double[] outerSpan = hostSpan;
             currentCellWidth = usableWidthOf(cell, i, 1);
-            if (starts != null) {
-                double left = placedRow.placementX() + starts[1 + i];
-                double right = placedRow.placementX() + (i + 2 < starts.length ? starts[2 + i] : starts[0]);
-                hostSpan = new double[]{left, right};
-            }
             try {
                 writeRowCellChild(cell, child);
             } finally {
                 currentCellWidth = previous;
-                hostSpan = outerSpan;
             }
             applyRowVerticalAlign(cell, node.verticalAlign());
-            if (starts != null && hostTheDrawingOf(cell, child, node, placedRow, starts, i)) {
-                gutter = true;
-            }
         }
-        if (starts != null && (gutter || panelDrawings.cell() != null)) {
-            // The row is as tall as the page made it, so a drawing placed from its top stands
-            // where the page puts it beside the text the row centres. Outside a panel only a row
-            // carrying such a drawing is held: held everywhere, rows LibreOffice sets taller than
-            // the page ran four one-page documents onto a second.
+        if (placedRow != null && placedRow.startPage() == placedRow.endPage()) {
             holdRowAtLeast(row, placedRow.placementHeight() - node.padding().top() - node.padding().bottom());
         }
         indentTable(table);
-    }
-
-    /**
-     * Makes the paragraph of a row's cell that holds only drawing — an icon in a gutter — a
-     * paragraph what the panel draws can stand beside.
-     *
-     * <p>The cell has nothing Word lays out but an empty paragraph, which is set at the cell's
-     * top, so its top is the row's content top on the page; the drawing is then carried by its
-     * own column's cell, which holds it across.</p>
-     *
-     * @return whether the cell was made one
-     */
-    private boolean hostTheDrawingOf(XWPFTableCell cell, DocumentNode child, RowNode row,
-                                     com.demcha.compose.document.layout.PlacedNode placedRow,
-                                     double[] starts, int index) {
-        if (!(isDrawing(child) || onlyDrawn(child)) || cell.getBodyElements().size() != 1
-            || !(cell.getBodyElements().get(0) instanceof XWPFParagraph empty) || !empty.getRuns().isEmpty()) {
-            return false;
-        }
-        cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.TOP);
-        double top = canvasHeight - placedRow.placementY() - placedRow.placementHeight() + row.padding().top();
-        double height = placedRow.placementHeight() - row.padding().top() - row.padding().bottom();
-        double left = placedRow.placementX() + starts[1 + index];
-        double right = placedRow.placementX() + (index + 2 < starts.length ? starts[2 + index] : starts[0]);
-        // The paragraph's top is the cell's, whatever space it holds above — a badge's room — and
-        // the row's top ranks it among the hosts: shifted by that room, a gutter lost its own
-        // row's icon to the gutter of the row above it in the same panel.
-        panelDrawings.hosts().add(new PanelHost(empty, placedRow.startPage(), top, height, left, right, true));
-        return true;
     }
 
     /**
@@ -6135,10 +5930,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 cell.removeParagraph(0);
                 List<DocumentNode> layers = columns.get(index).layers();
                 double previous = currentCellWidth;
-                double[] outerSpan = hostSpan;
                 currentCellWidth = usableWidthOf(cell, index, 1);
-                // As a table's cell: how far it reaches is not known here (see PanelHost).
-                hostSpan = null;
                 try {
                     writeInCell(cell, () -> {
                         for (int layer = 0; layer < layers.size(); layer++) {
@@ -6170,7 +5962,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 } finally {
                     currentCellWidth = previous;
                     resumeSpacing = Double.NaN;
-                    hostSpan = outerSpan;
                 }
                 if (cell.getParagraphs().isEmpty()) {
                     cell.addParagraph();

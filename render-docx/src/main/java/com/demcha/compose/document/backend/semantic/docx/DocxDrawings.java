@@ -260,24 +260,6 @@ final class DocxDrawings {
      * @return the drawing, to be added to a run
      */
     static CTDrawing drawing(Shape shape, long id, int order) {
-        return drawing(shape, id, order, null);
-    }
-
-    /**
-     * A shape or a picture as a drawing placed across the page and, when {@code paragraphTop} is
-     * given, down from the top of the paragraph that carries it rather than from the page's.
-     *
-     * <p>Placed from its paragraph, a shape moves with the text it stands beside where the editor
-     * sets that text higher or lower than the page does.</p>
-     *
-     * @param shape        the shape, its top measured from the page's
-     * @param id           an identifier for the drawing, unique in the document
-     * @param order        its place among the drawings
-     * @param paragraphTop where the carrying paragraph's top stands on the page, or {@code null}
-     *                     to place the shape from the page's top
-     * @return the drawing, to be added to a run of that paragraph
-     */
-    static CTDrawing drawing(Shape shape, long id, int order, Double paragraphTop) {
         long cx = Units.toEMU(shape.width());
         long cy = Units.toEMU(shape.height());
         boolean picture = shape.kind() == Kind.PICTURE;
@@ -297,10 +279,7 @@ final class DocxDrawings {
                 + "<wp:simplePos x=\"0\" y=\"0\"/>"
                 + "<wp:positionH relativeFrom=\"page\"><wp:posOffset>" + Units.toEMU(shape.x())
                 + "</wp:posOffset></wp:positionH>"
-                + (paragraphTop == null
-                   ? "<wp:positionV relativeFrom=\"page\"><wp:posOffset>" + Units.toEMU(shape.top())
-                   : "<wp:positionV relativeFrom=\"paragraph\"><wp:posOffset>"
-                     + Units.toEMU(shape.top() - paragraphTop))
+                + "<wp:positionV relativeFrom=\"page\"><wp:posOffset>" + Units.toEMU(shape.top())
                 + "</wp:posOffset></wp:positionV>"
                 + "<wp:extent cx=\"" + cx + "\" cy=\"" + cy + "\"/>"
                 + "<wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/>"
@@ -358,16 +337,19 @@ final class DocxDrawings {
     }
 
     /**
-     * What a shape holds in its text body: a paragraph centred across and down, with no inset
-     * and no wrapping, so a badge's initials stand in its middle as the page sets them; or
-     * nothing.
+     * What a shape holds in its text body: a paragraph centred across and down, with no inset,
+     * so a badge's initials stand in its middle as the page sets them; or nothing.
+     *
+     * <p>The text wraps in the shape's box, which the initials fit. Left unwrapped, Word sized
+     * the shape to its text: {@code ObsidianInvoice}'s 35.5pt disc came out 16.9pt wide round its
+     * "K".</p>
      */
     private static String textOf(Shape shape) {
         if (shape.text() == null) {
             return "<wps:bodyPr/>";
         }
         return "<wps:txbx><w:txbxContent>" + shape.text() + "</w:txbxContent></wps:txbx>"
-               + "<wps:bodyPr rot=\"0\" vert=\"horz\" wrap=\"none\" lIns=\"0\" tIns=\"0\" rIns=\"0\" bIns=\"0\""
+               + "<wps:bodyPr rot=\"0\" vert=\"horz\" wrap=\"square\" lIns=\"0\" tIns=\"0\" rIns=\"0\" bIns=\"0\""
                + " anchor=\"ctr\" anchorCtr=\"0\"><a:noAutofit/></wps:bodyPr>";
     }
 

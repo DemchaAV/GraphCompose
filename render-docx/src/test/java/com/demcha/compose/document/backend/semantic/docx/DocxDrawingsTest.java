@@ -233,10 +233,9 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void anIconDrawnBesideItsLabelInAPaintedPanelStandsInFrontPlacedFromTheLabel() throws Exception {
-        // Behind the text, the panel's shading hid the tile. In front and placed from the page, an
-        // editor that set the label a little higher or lower put the tile over the next line;
-        // placed from the label's paragraph, it moves with the label.
+    void anIconDrawnBesideItsLabelInAPaintedPanelStandsInFrontOfItsShading() throws Exception {
+        // Behind the text, the panel's shading hid the tile. It is anchored to the page: placed
+        // from a paragraph in a nested cell, Word measured it from the outer cell's top.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
                         .addContainer(row -> row.name("Fact").rectangle(300, 30)
@@ -248,40 +247,9 @@ class DocxDrawingsTest {
                                         .build())
                                 .position(new ParagraphBuilder().name("Label").text("Compliant").build(),
                                         34, 0, LayerAlign.CENTER_LEFT)))))) {
-            String body = document.getDocument().xmlText();
-            assertThat(anchors(body)).hasSize(2)
+            assertThat(anchors(document.getDocument().xmlText())).hasSize(2)
                     .allMatch(anchor -> anchor.contains("behindDoc=\"0\""))
-                    .allMatch(anchor -> anchor.contains("<wp:positionV relativeFrom=\"paragraph\">"));
-            java.util.regex.Matcher label = java.util.regex.Pattern
-                    .compile("<w:p>(?:(?!</w:p>).)*Compliant", java.util.regex.Pattern.DOTALL).matcher(body);
-            assertThat(label.find()).isTrue();
-            assertThat(label.group()).as("anchored in the label's own paragraph").contains("<wp:anchor");
-        }
-    }
-
-    @Test
-    void anIconInARowsGutterIsCarriedByItsOwnCellNotTheHeadingsBesideIt() throws Exception {
-        // Word prints a shape anchored in a cell clipped to that cell: carried by the heading's
-        // cell, the icon over the gutter would not be printed.
-        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
-                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
-                        .addRow("Heading", row -> row.verticalAlign(com.demcha.compose.document.node.RowVerticalAlign.CENTER)
-                                .columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(30),
-                                        com.demcha.compose.document.style.DocumentRowColumn.weight(1))
-                                .add(new com.demcha.compose.document.dsl.EllipseBuilder().name("Icon").circle(16)
-                                        .fillColor(ACCENT).build())
-                                .addParagraph(p -> p.text("Payment details"))))))) {
-            org.apache.poi.xwpf.usermodel.XWPFTable row = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
-            String gutter = row.getRow(0).getCell(0).getCTTc().xmlText();
-            String heading = row.getRow(0).getCell(1).getCTTc().xmlText();
-
-            assertThat(anchors(gutter)).singleElement().asString()
-                    .contains("<wp:positionV relativeFrom=\"paragraph\">").contains("behindDoc=\"0\"");
-            assertThat(anchors(heading)).isEmpty();
-            org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor anchor = row.getRow(0).getCell(0)
-                    .getParagraphs().get(0).getCTP().getRArray(0).getDrawingArray(0).getAnchorArray(0);
-            assertThat(anchor.getPositionV().getPosOffset()).as("down from the row's top, never above it")
-                    .isGreaterThanOrEqualTo(0);
+                    .allMatch(anchor -> anchor.contains("<wp:positionV relativeFrom=\"page\">"));
         }
     }
 
@@ -584,55 +552,8 @@ class DocxDrawingsTest {
                         .addParagraph(p -> p.text("Thank you for your business."))))) ) {
             assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
                     .contains("<w:txbxContent>").contains(">K<").contains("behindDoc=\"0\"")
-                    .as("placed from its own cell, so it moves with the row")
-                    .contains("<wp:positionV relativeFrom=\"paragraph\">");
-            String disc = document.getTables().get(0).getRow(0).getCell(0).getCTTc().xmlText();
-            assertThat(anchors(disc)).as("carried by the disc's own cell").hasSize(1);
+                    .contains("<wp:positionV relativeFrom=\"page\">");
         }
-    }
-
-    @Test
-    void anIconInARowOutsideAPanelMovesWithTheRowAndStaysBehindTheText() throws Exception {
-        // Anchored to the page, it stayed where the page puts it while the editor set the row
-        // lower; nothing paints over it here, so it keeps behind the text.
-        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
-                .addRow("Step", row -> row.verticalAlign(com.demcha.compose.document.node.RowVerticalAlign.CENTER)
-                        .columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(30),
-                                com.demcha.compose.document.style.DocumentRowColumn.weight(1))
-                        .add(new com.demcha.compose.document.dsl.EllipseBuilder().name("Icon").circle(16)
-                                .fillColor(ACCENT).build())
-                        .addParagraph(p -> p.text("Discovery & research")))))) {
-            String gutter = document.getTables().get(0).getRow(0).getCell(0).getCTTc().xmlText();
-
-            assertThat(anchors(gutter)).singleElement().asString()
-                    .contains("<wp:positionV relativeFrom=\"paragraph\">").contains("behindDoc=\"1\"");
-        }
-    }
-
-    @Test
-    void eachRowsIconInAPanelIsCarriedByItsOwnGutter() throws Exception {
-        // Ranked by a gutter shifted by the room its paragraph holds, the second row's icon went
-        // to the first row's gutter, and Word prints a shape clipped to the cell carrying it.
-        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
-                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240)).spacing(4)
-                        .addRow("First", row -> gutterRow(row, "Bank"))
-                        .addRow("Second", row -> gutterRow(row, "Card")))))) {
-            org.apache.poi.xwpf.usermodel.XWPFTableCell panel = document.getTables().get(0).getRow(0).getCell(0);
-
-            assertThat(panel.getTables()).hasSize(2).allSatisfy(row -> assertThat(
-                    anchors(row.getRow(0).getCell(0).getCTTc().xmlText())).as("its own gutter carries its icon")
-                    .hasSize(1));
-        }
-    }
-
-    private static void gutterRow(com.demcha.compose.document.dsl.RowBuilder row, String label) {
-        row.verticalAlign(com.demcha.compose.document.node.RowVerticalAlign.CENTER)
-                .columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(30),
-                        com.demcha.compose.document.style.DocumentRowColumn.weight(1))
-                .add(new ShapeContainerBuilder().name(label + "Disc").circle(16).fillColor(ACCENT)
-                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text(label.substring(0, 1)).build())
-                        .build())
-                .addParagraph(p -> p.text(label));
     }
 
     @Test

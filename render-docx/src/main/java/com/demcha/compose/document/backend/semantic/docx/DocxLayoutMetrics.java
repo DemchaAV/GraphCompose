@@ -8,6 +8,11 @@ import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.InlineRun;
+import com.demcha.compose.document.node.InlineTextRun;
+import com.demcha.compose.document.node.ParagraphNode;
+import com.demcha.compose.document.node.TableNode;
+import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.engine.components.content.table.TableResolvedCell;
 
 import java.util.ArrayList;
@@ -53,6 +58,10 @@ final class DocxLayoutMetrics {
     private final Map<DocumentNode, Map<String, Double>> cellLineHeights = new IdentityHashMap<>();
     // The rows of a table the layout placed, by index, filled on first use — see placedRowsOf.
     private final Map<DocumentNode, Map<String, Integer>> placedRows = new IdentityHashMap<>();
+    // The heights of a table's placed rows, by index, filled on first use — see rowHeightsOf.
+    private final Map<DocumentNode, Map<String, Double>> rowHeights = new IdentityHashMap<>();
+    // Paragraphs composed in table cells, paired with their fragments on first use.
+    private Map<DocumentNode, PlacedFragment> composedText;
 
     private DocxLayoutMetrics(Map<DocumentNode, String> paths,
                               Map<String, List<PlacedFragment>> fragments,
@@ -206,6 +215,41 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * How tall the layout made one of a table's rows, found as {@link #placedRow} finds it.
+     *
+     * <p>A row repeated on every page — a header — is the same height each time. A row whose
+     * placements disagree is answered as unknown rather than with one of them.</p>
+     *
+     * @param table the table node
+     * @param row   the row's index in the table
+     * @return the height in points, or empty when the row was not placed or its height is unclear
+     */
+    OptionalDouble rowHeight(DocumentNode table, int row) {
+        Double height = rowHeightsOf(table).get(String.valueOf(row));
+        return height == null || height.isNaN() ? OptionalDouble.empty() : OptionalDouble.of(height);
+    }
+
+    private Map<String, Double> rowHeightsOf(DocumentNode table) {
+        return rowHeights.computeIfAbsent(table, node -> {
+            Map<String, Double> heights = new HashMap<>();
+            String prefix = (node.name() == null || node.name().isBlank()
+                    ? node.nodeKind()
+                    : node.name()) + "__row_";
+            for (PlacedFragment fragment : ownRows(node)) {
+                String name = ((TableRowFragmentPayload) fragment.payload()).cells().get(0).name();
+                int end = name == null || !name.startsWith(prefix)
+                        ? -1
+                        : name.indexOf("__cell_", prefix.length());
+                if (end >= 0) {
+                    heights.merge(name.substring(prefix.length(), end), fragment.height(),
+                            (first, next) -> Math.abs(first - next) <= 0.01 ? first : Double.NaN);
+                }
+            }
+            return heights;
+        });
+    }
+
+    /**
      * The index part of each placed row's name, kept as the text the layout wrote rather than
      * parsed: a row is looked up by writing its index the same way, so a name that only
      * resembles the pattern matches nothing instead of failing the export. Each is kept with
@@ -261,7 +305,7 @@ final class DocxLayoutMetrics {
      * @return the gap in points, 0 when there is none or nothing was laid out
      */
     double lineGap(DocumentNode node) {
-        for (PlacedFragment fragment : fragmentsOf(node)) {
+        for (PlacedFragment fragment : textFragmentsOf(node)) {
             if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
                 return Math.max(0, paragraph.lineGap());
             }
@@ -310,7 +354,7 @@ final class DocxLayoutMetrics {
      */
     int lineCount(DocumentNode node) {
         int lines = 0;
-        for (PlacedFragment fragment : fragmentsOf(node)) {
+        for (PlacedFragment fragment : textFragmentsOf(node)) {
             if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
                 lines += paragraph.lines().size();
             }
@@ -415,7 +459,7 @@ final class DocxLayoutMetrics {
     OptionalDouble lineHeight(DocumentNode node) {
         double text = 0;
         double style = 0;
-        for (PlacedFragment fragment : fragmentsOf(node)) {
+        for (PlacedFragment fragment : textFragmentsOf(node)) {
             if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
                 for (ParagraphLine line : paragraph.lines()) {
                     text = Math.max(text, line.textLineHeight());
@@ -439,7 +483,7 @@ final class DocxLayoutMetrics {
      * @return the line, or empty when the node laid out nothing
      */
     java.util.Optional<ParagraphLine> firstLine(DocumentNode node) {
-        for (PlacedFragment fragment : fragmentsOf(node)) {
+        for (PlacedFragment fragment : textFragmentsOf(node)) {
             if (fragment.payload() instanceof ParagraphFragmentPayload paragraph && !paragraph.lines().isEmpty()) {
                 return java.util.Optional.of(paragraph.lines().get(0));
             }
@@ -576,6 +620,116 @@ final class DocxLayoutMetrics {
     private List<PlacedFragment> fragmentsOf(DocumentNode node) {
         String path = paths.get(node);
         return path == null ? List.of() : fragments.getOrDefault(path, List.of());
+    }
+
+    /**
+     * The fragments that hold a node's lines of text: its own, or — for a paragraph composed
+     * in a table cell, which has no path of its own — the one its table laid out for it.
+     */
+    private List<PlacedFragment> textFragmentsOf(DocumentNode node) {
+        List<PlacedFragment> own = fragmentsOf(node);
+        if (!own.isEmpty() || !(node instanceof ParagraphNode) || fragments.isEmpty()) {
+            return own;
+        }
+        if (composedText == null) {
+            composedText = matchComposedText();
+        }
+        PlacedFragment matched = composedText.get(node);
+        return matched == null ? List.of() : List.of(matched);
+    }
+
+    /**
+     * Pairs every paragraph composed in a table cell with the fragment its table laid out for it.
+     *
+     * <p>A composed cell's content is laid out under the table's path, so its paragraphs' lines
+     * sit among the table's own fragments and not at a path of their own. Without them a
+     * paragraph in a cell was written at the height Word gives the face — 13.4pt for a 9pt
+     * Gothic A1 line the page sets at 9.1 — and every row of such a table ran taller than the
+     * page's. Cells are laid out in order, and so is what each holds, so the paragraphs are
+     * walked in that order and each takes the first fragment not yet taken whose text is
+     * its own. A paragraph whose text no fragment carries is left without one, as before.</p>
+     */
+    private Map<DocumentNode, PlacedFragment> matchComposedText() {
+        Map<DocumentNode, PlacedFragment> matched = new IdentityHashMap<>();
+        for (DocumentNode table : paths.keySet()) {
+            if (!(table instanceof TableNode tableNode)) {
+                continue;
+            }
+            List<ParagraphNode> paragraphs = new ArrayList<>();
+            collectComposedParagraphs(tableNode, paragraphs);
+            if (paragraphs.isEmpty()) {
+                continue;
+            }
+            List<PlacedFragment> laidOut = new ArrayList<>();
+            List<String> texts = new ArrayList<>();
+            for (PlacedFragment fragment : fragmentsOf(table)) {
+                if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
+                    StringBuilder text = new StringBuilder();
+                    paragraph.lines().forEach(line -> text.append(line.text()));
+                    laidOut.add(fragment);
+                    texts.add(comparable(text.toString()));
+                }
+            }
+            boolean[] taken = new boolean[laidOut.size()];
+            for (ParagraphNode paragraph : paragraphs) {
+                String text = comparable(authoredText(paragraph));
+                if (text.isEmpty()) {
+                    continue;
+                }
+                for (int index = 0; index < laidOut.size(); index++) {
+                    if (!taken[index] && texts.get(index).equals(text)) {
+                        taken[index] = true;
+                        matched.put(paragraph, laidOut.get(index));
+                        break;
+                    }
+                }
+            }
+        }
+        return matched;
+    }
+
+    /** The paragraphs a table's composed cells hold, nested tables' included, in layout order. */
+    private static void collectComposedParagraphs(TableNode table, List<ParagraphNode> into) {
+        for (List<DocumentTableCell> row : table.rows()) {
+            for (DocumentTableCell cell : row) {
+                if (cell != null && cell.content() != null) {
+                    collectParagraphs(cell.content(), into);
+                }
+            }
+        }
+    }
+
+    private static void collectParagraphs(DocumentNode node, List<ParagraphNode> into) {
+        if (node instanceof ParagraphNode paragraph) {
+            into.add(paragraph);
+            return;
+        }
+        if (node instanceof TableNode nested) {
+            collectComposedParagraphs(nested, into);
+        }
+        for (DocumentNode child : node.children()) {
+            collectParagraphs(child, into);
+        }
+    }
+
+    private static String authoredText(ParagraphNode paragraph) {
+        if (paragraph.inlineRuns() == null || paragraph.inlineRuns().isEmpty()) {
+            return paragraph.text() == null ? "" : paragraph.text();
+        }
+        StringBuilder text = new StringBuilder();
+        for (InlineRun run : paragraph.inlineRuns()) {
+            if (!(run instanceof InlineTextRun textRun)) {
+                // A picture or a chip lays out as more than its text; nothing to compare.
+                return "";
+            }
+            text.append(textRun.text());
+        }
+        return text.toString();
+    }
+
+    /** Text as both sides can agree on it: wrapping drops spaces, and a style may set capitals. */
+    private static String comparable(String text) {
+        return text.replaceAll("\\s+", "").toLowerCase(java.util.Locale.ROOT);
     }
 
     /**

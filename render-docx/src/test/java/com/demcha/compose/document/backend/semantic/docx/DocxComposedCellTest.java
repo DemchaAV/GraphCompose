@@ -302,6 +302,45 @@ class DocxComposedCellTest {
         assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).as("the gradient path").isPositive();
     }
 
+    @Test
+    void aRowHoldingPaddedContentKeepsTheHeightThePageGaveIt() throws Exception {
+        // The padding is the composed section's, not the cell's: Word, given only the text,
+        // closed the row round it.
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        String body = export(report, List.of(DocumentTableCell.node(new com.demcha.compose.document.dsl.SectionBuilder()
+                .name("Padded").padding(com.demcha.compose.document.style.DocumentInsets.of(12))
+                .addParagraph(p -> p.text("Coastline Advanced")).build())));
+
+        java.util.regex.Matcher height = java.util.regex.Pattern
+                .compile("<w:trHeight w:val=\"(\\d+)\" w:hRule=\"atLeast\"/>").matcher(body);
+        assertThat(height.find()).as("the row's height is written").isTrue();
+        assertThat(Integer.parseInt(height.group(1))).as("the text and 24pt of padding").isGreaterThan(24 * 20 + 8 * 20);
+    }
+
+    @Test
+    void theSameTextComposedTwiceTakesEachItsOwnLine() throws Exception {
+        // Paragraphs are paired with their table's fragments in the order both were laid out.
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        String body = export(report, List.of(
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder().text("0.00")
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(8)).build()),
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder().text("0.00")
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(16)).build())));
+
+        java.util.regex.Pattern exact = java.util.regex.Pattern
+                .compile("w:line=\"(\\d+)\" w:lineRule=\"exact\"|w:lineRule=\"exact\" w:line=\"(\\d+)\"");
+        List<Integer> lines = new java.util.ArrayList<>();
+        java.util.regex.Matcher paragraph = java.util.regex.Pattern.compile("<w:p>.*?</w:p>").matcher(body);
+        while (paragraph.find()) {
+            java.util.regex.Matcher line = exact.matcher(paragraph.group());
+            if (paragraph.group().contains(">0.00<") && line.find()) {
+                lines.add(Integer.parseInt(line.group(1) != null ? line.group(1) : line.group(2)));
+            }
+        }
+        assertThat(lines).hasSize(2);
+        assertThat(lines.get(1)).isEqualTo(2 * lines.get(0));
+    }
+
     private static com.demcha.compose.document.dsl.PathBuilder triangle() {
         return new com.demcha.compose.document.dsl.PathBuilder().size(10, 10)
                 .moveTo(0, 0).lineTo(10, 0).lineTo(5, 10).closePath();

@@ -149,6 +149,102 @@ class DocxComposedCellTest {
         }
     }
 
+    @Test
+    void aFilledPillInACellIsAPanelWithItsTextInside() throws Exception {
+        // Composed in a cell, the pill has no place in the layout, and its outline was dropped:
+        // a rota's shift chips came out as bare hours.
+        XWPFTableCell cell = onlyTableCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .rowCells(DocumentTableCell.text("Mon"), DocumentTableCell.node(pill()))));
+
+        assertThat(cell.getTables()).as("the pill, as a table of one cell").hasSize(1);
+        XWPFTableCell chip = cell.getTables().get(0).getRow(0).getCell(0);
+        assertThat(chip.getColor()).isEqualToIgnoringCase("1A5694");
+        assertThat(chip.getText()).contains("09:00-17:00");
+        assertThat(((Number) chip.getCTTc().getTcPr().getTcW().getW()).longValue())
+                .as("as wide as its outline, and a point for the editor's face")
+                .isEqualTo(61L * 20);
+        assertThat(chip.getVerticalAlignment()).isEqualTo(XWPFTableCell.XWPFVertAlign.CENTER);
+        assertThat(cell.getTables().get(0).getRow(0).getHeight()).as("as tall as its line, not held to its outline")
+                .isZero();
+    }
+
+    @Test
+    void anOutlinedPillInACellIsAPanelWithItsBorders() throws Exception {
+        XWPFTableCell cell = onlyTableCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .rowCells(DocumentTableCell.text("Mon"), DocumentTableCell.node(
+                        new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                                .name("Soft").roundedRect(60, 14, 7)
+                                .stroke(com.demcha.compose.document.style.DocumentStroke.of(
+                                        com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1))
+                                .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("12:00").build())
+                                .build()))));
+
+        assertThat(cell.getTables()).hasSize(1);
+        XWPFTableCell chip = cell.getTables().get(0).getRow(0).getCell(0);
+        assertThat(chip.getCTTc().getTcPr().getTcBorders().getTop().xmlText()).containsIgnoringCase("1A5694");
+        assertThat(chip.getText()).contains("12:00");
+    }
+
+    @Test
+    void aTileHoldingOnlyDrawingIsNotAPanel() throws Exception {
+        XWPFTableCell cell = onlyTableCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .rowCells(DocumentTableCell.text("Mon"), DocumentTableCell.node(
+                        new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                                .name("Swatch").roundedRect(40, 12, 4)
+                                .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148))
+                                .center(new com.demcha.compose.document.dsl.EllipseBuilder().circle(4)
+                                        .fillColor(com.demcha.compose.document.style.DocumentColor.WHITE).build())
+                                .build()))));
+
+        assertThat(cell.getTables()).as("nothing a cell can hold: no empty panel").isEmpty();
+    }
+
+    @Test
+    void thePillsSquaredCornersAreReportedAndNothingIsDropped() throws Exception {
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        export(report, DocumentTableCell.node(pill()));
+
+        assertThat(report.get().notes()).anyMatch(note -> note.severity() == DocxExportReport.Severity.APPROXIMATED
+                                                          && note.subject().equals("corner radius"));
+        assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isZero();
+    }
+
+    @Test
+    void aCircleInACellIsStillDroppedAndTheReportSaysWhy() throws Exception {
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        export(report, DocumentTableCell.node(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Dot").circle(14)
+                .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148))
+                .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("A").build())
+                .build()));
+
+        assertThat(report.get().notes()).anyMatch(note -> note.severity() == DocxExportReport.Severity.DROPPED
+                                                          && note.detail().contains("composed inside a table cell"));
+    }
+
+    private static void export(java.util.concurrent.atomic.AtomicReference<DocxExportReport> report,
+                               DocumentTableCell composed) throws Exception {
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(com.demcha.compose.document.style.DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.addTable(t -> t
+                    .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                    .rowCells(DocumentTableCell.text("Mon"), composed)));
+            session.export(new DocxSemanticBackend(report::set));
+        }
+    }
+
+    private static DocumentNode pill() {
+        return new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Chip")
+                .roundedRect(60, 14, 7)
+                .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148))
+                .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("09:00-17:00").build())
+                .build();
+    }
+
     private static DocumentNode image() {
         return new com.demcha.compose.document.dsl.ImageBuilder()
                 .name("Logo")

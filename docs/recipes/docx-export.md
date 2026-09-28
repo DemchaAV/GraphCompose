@@ -515,22 +515,29 @@ tint it was flattened to. Recorded, like the other two.
   row's other cells start that much lower inside. Each paragraph
   keeps its bookmark and outline level. Two texts closer than 4pt stay one after the
   other. Drawing in the band is drawn as shapes where the page draws it.
-- **Shape containers → inline layers.** DOCX has no portable equivalent
-  of a graphics-state path clip, so the container's layers are written
+- **Shape containers → inline layers.** DOCX has no portable equivalent of
+  a graphics-state path clip, so the container's layers are written
   inline, in source order, without clipping — again with one warning per
-  export. The outline is drawn as a shape where the page draws it — a star,
-  a diamond or a path as custom geometry — and a picture that fills a
-  container clipped to an ellipse takes the ellipse's shape: a portrait is
-  round inside its ring. A badge's glyph — a smaller picture in a filled or
-  outlined container that clips it to its outline (`CLIP_PATH`) and holds
-  nothing else but drawing — is drawn as a picture anchored to the page over
-  the badge, where the page draws it, rather than written as a line of its
-  own above the text beside the badge. One that carries an anchor, one
-  cropped to cover its box, and one inside a filled panel, whose shading
-  would hide it, stay in the flow. A container with written content in one
-  layer only, laid beside drawing — a section title beside its badge or its
-  icon — is written as a layer stack's band is: the title stands where the
-  page places it, with the page's space above and below it inside the
+  export. The outline is drawn as a shape where the page draws it — a
+  star, a diamond or a path as custom geometry — and a picture that fills
+  a container clipped to an ellipse takes the ellipse's shape: a portrait
+  is round inside its ring. A filled or outlined rectangle or rounded
+  rectangle composed inside a table cell (`DocumentTableCell.node(...)`)
+  has no place in the layout to be drawn at; it is written as a panel is,
+  a table of one cell in its fill and outline, its outline's width within
+  the cell and a point for the editor's face, with its layers inside, its corners squared and
+  reported — a rota's shift chips keep their colour. A container holding
+  only drawing, and another outline composed in a cell, are reported as
+  dropped. A badge's glyph — a smaller picture in a filled or outlined
+  container that clips it to its outline (`CLIP_PATH`) and holds nothing
+  else but drawing — is drawn as a picture anchored to the page over the
+  badge, where the page draws it, rather than written as a line of its own
+  above the text beside the badge. One that carries an anchor, one cropped
+  to cover its box, and one inside a filled panel, whose shading would
+  hide it, stay in the flow. A container with written content in one layer
+  only, laid beside drawing — a section title beside its badge or its icon
+  — is written as a layer stack's band is: the title stands where the page
+  places it, with the page's space above and below it inside the
   container. An outline no shape shows is reported as dropped.
 - **`hangingIndent(true)` → the ordinary list form.** A list that opts
   into marker/content geometry exports exactly as one that did not: the

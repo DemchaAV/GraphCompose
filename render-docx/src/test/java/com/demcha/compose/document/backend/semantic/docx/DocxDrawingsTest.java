@@ -216,6 +216,12 @@ class DocxDrawingsTest {
             assertThat(((org.apache.poi.xwpf.usermodel.XWPFParagraph) body.get(0)).getCTP().xmlText())
                     .contains("prst=\"ellipse\"");
             assertThat(body.get(1)).as("the columns' row").isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
+            org.apache.poi.xwpf.usermodel.XWPFParagraph opening = (org.apache.poi.xwpf.usermodel.XWPFParagraph) body.get(0);
+            assertThat(opening.getText()).as("a hairline holding nothing but the drawing").isEmpty();
+            assertThat(opening.getCTP().getPPr().getSpacing().getLineRule()).hasToString("exact");
+            assertThat(DocxTwips.of(opening.getCTP().getPPr().getSpacing().getLine())).isEqualTo(2L);
+            assertThat(DocxTwips.of(opening.getCTP().getPPr().getSpacing().getBefore())).isZero();
+            assertThat(DocxTwips.of(opening.getCTP().getPPr().getSpacing().getAfter())).isZero();
             assertThat(document.getTables().get(0).getCTTbl().xmlText()).doesNotContain("wp:anchor");
         }
     }
@@ -229,6 +235,36 @@ class DocxDrawingsTest {
                         .addEllipse(e -> e.name("Dot").circle(20).fillColor(ACCENT)))))) {
             assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
                     .contains("behindDoc=\"0\"");
+        }
+    }
+
+    @Test
+    void aShapeInAPanelInAColumnIsDrawnInFrontToo() throws Exception {
+        // Columns lay nothing over anything: a dot in a card in the main column shows.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addLayerStack(stack -> stack
+                        .layer(column("Side", 0, 260, side -> side.addParagraph(p -> p.text("Contact"))),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                        .layer(column("Main", 100, 0, main -> main.addSection("Card", card -> card
+                                        .fillColor(DocumentColor.rgb(220, 230, 240))
+                                        .addParagraph(p -> p.text("Status"))
+                                        .addEllipse(e -> e.name("Dot").circle(10).fillColor(ACCENT)))),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT))))) {
+            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .contains("behindDoc=\"0\"");
+        }
+    }
+
+    @Test
+    void aRingRoundAPhotoInAPaintedCardStaysBehindThePhoto() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addSection("Card", card -> card.fillColor(DocumentColor.rgb(220, 230, 240))
+                        .add(new ShapeContainerBuilder().name("Portrait").circle(60)
+                                .stroke(DocumentStroke.of(ACCENT, 1)).fillColor(ACCENT)
+                                .center(new ImageBuilder().name("Photo").source(pngBytes()).size(60, 60).build())
+                                .build()))))) {
+            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .contains("behindDoc=\"1\"");
         }
     }
 
@@ -316,7 +352,7 @@ class DocxDrawingsTest {
         try (XWPFDocument ignored = export(report, session -> session.pageFlow(page -> page
                 .addSection("Panel", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
                         .addParagraph(p -> p.text("In the panel"))
-                        .addEllipse(e -> e.name("Hidden").circle(20).fillColor(ACCENT)))
+                        .addEllipse(e -> e.name("InPanel").circle(20).fillColor(ACCENT)))
                 .addEllipse(e -> e.name("Turned").size(30, 10).fillColor(ACCENT)
                         .transform(com.demcha.compose.document.style.DocumentTransform.rotate(45)))))) {
             List<String> messages = report.get().notes().stream()

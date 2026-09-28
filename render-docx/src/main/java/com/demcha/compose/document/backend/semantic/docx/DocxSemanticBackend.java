@@ -1317,6 +1317,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNodeContent(XWPFDocument document, DocumentNode node) throws Exception {
+        if (node instanceof com.demcha.compose.document.node.LayerStackNode stack) {
+            DocxLayerColumns.Plan columns = DocxLayerColumns.of(stack, layout,
+                    candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
+                                 && paintOf(candidate).isEmpty(),
+                    candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
+                                 && !paintOf(candidate).isEmpty());
+            if (columns != null) {
+                // Side by side, nothing in the stack overlaps: it is not an overlay.
+                writeLayerColumns(document, stack, columns);
+                return;
+            }
+        }
+        // Columns lay nothing over anything, and are not an overlay a shape is drawn under (see
+        // drawsInFront). A stack of one layer is kept as one: a template nests a row of icons
+        // and labels in it, and where the editor sets the labels a little differently from the
+        // page, an icon drawn in front of the text would stand over them.
         boolean overlay = isOverlay(node);
         if (overlay) {
             openOverlays.push(node);
@@ -1341,7 +1357,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return false;
         }
         for (DocumentNode overlay : openOverlays) {
-            if (!onlyDrawing(overlay)) {
+            // An empty container is its outline alone — a lone ring — and frames nothing.
+            if (!overlay.children().isEmpty() && !onlyDrawing(overlay)) {
                 return false;
             }
         }
@@ -1349,18 +1366,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNodeContentOf(XWPFDocument document, DocumentNode node) throws Exception {
-        if (node instanceof com.demcha.compose.document.node.LayerStackNode stack) {
-            DocxLayerColumns.Plan columns = DocxLayerColumns.of(stack, layout,
-                    candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
-                                 && paintOf(candidate).isEmpty(),
-                    candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
-                                 && !paintOf(candidate).isEmpty());
-            if (columns != null) {
-                // Side by side, nothing in the stack overlaps: it is not an overlay.
-                writeLayerColumns(document, stack, columns);
-                return;
-            }
-        }
         // A title and its dates at either end of one band are one line before they are layers.
         if (node instanceof com.demcha.compose.document.node.LayerStackNode
             || node instanceof ShapeContainerNode) {

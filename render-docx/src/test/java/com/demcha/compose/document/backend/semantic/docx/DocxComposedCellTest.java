@@ -188,52 +188,128 @@ class DocxComposedCellTest {
     }
 
     @Test
-    void aTileHoldingOnlyDrawingIsNotAPanel() throws Exception {
-        XWPFTableCell cell = onlyTableCell(page -> page.addTable(t -> t
-                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
-                .rowCells(DocumentTableCell.text("Mon"), DocumentTableCell.node(
-                        new com.demcha.compose.document.dsl.ShapeContainerBuilder()
-                                .name("Swatch").roundedRect(40, 12, 4)
-                                .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148))
-                                .center(new com.demcha.compose.document.dsl.EllipseBuilder().circle(4)
-                                        .fillColor(com.demcha.compose.document.style.DocumentColor.WHITE).build())
-                                .build()))));
-
-        assertThat(cell.getTables()).as("nothing a cell can hold: no empty panel").isEmpty();
-    }
-
-    @Test
-    void thePillsSquaredCornersAreReportedAndNothingIsDropped() throws Exception {
+    void aTileHoldingOnlyDrawingIsDrawnWhereThePageDrawsItNotAPanel() throws Exception {
         java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
-        export(report, DocumentTableCell.node(pill()));
+        String body = export(report, DocumentTableCell.node(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Swatch").roundedRect(40, 12, 4)
+                .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148))
+                .center(new com.demcha.compose.document.dsl.EllipseBuilder().circle(4)
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.WHITE).build())
+                .build()));
 
-        assertThat(report.get().notes()).anyMatch(note -> note.severity() == DocxExportReport.Severity.APPROXIMATED
-                                                          && note.subject().equals("corner radius"));
+        assertThat(body.split("<w:tbl>", -1)).as("the table alone, no empty panel nested in it").hasSize(2);
+        assertThat(anchors(body)).as("the tile and the dot on it, anchored where the page draws them")
+                .anyMatch(anchor -> anchor.contains("prst=\"roundRect\""))
+                .anyMatch(anchor -> anchor.contains("prst=\"ellipse\""));
         assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isZero();
     }
 
     @Test
-    void aCircleInACellIsStillDroppedAndTheReportSaysWhy() throws Exception {
+    void thePillsSquaredCornersAreReportedAndItIsNotDrawnAgainAsAShape() throws Exception {
         java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
-        export(report, DocumentTableCell.node(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+        String body = export(report, DocumentTableCell.node(pill()));
+
+        assertThat(report.get().notes()).anyMatch(note -> note.severity() == DocxExportReport.Severity.APPROXIMATED
+                                                          && note.subject().equals("corner radius"));
+        assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isZero();
+        assertThat(anchors(body)).as("a panel frames its text; its box is not drawn over it as well").isEmpty();
+    }
+
+    @Test
+    void aDiscUnderTextInACellIsDrawnBehindIt() throws Exception {
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        String body = export(report, DocumentTableCell.node(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
                 .name("Dot").circle(14)
                 .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148))
                 .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("A").build())
                 .build()));
 
-        assertThat(report.get().notes()).anyMatch(note -> note.severity() == DocxExportReport.Severity.DROPPED
-                                                          && note.detail().contains("composed inside a table cell"));
+        assertThat(anchors(body)).singleElement().asString()
+                .contains("prst=\"ellipse\"").contains("behindDoc=\"1\"");
+        assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isZero();
     }
 
-    private static void export(java.util.concurrent.atomic.AtomicReference<DocxExportReport> report,
-                               DocumentTableCell composed) throws Exception {
+    @Test
+    void anIconInAPaintedCellStandsInFrontAndADiscUnderItsNumberStaysBehind() throws Exception {
+        // Both editors paint a cell's shading over a drawing behind the text.
+        com.demcha.compose.document.table.DocumentTableStyle navy = com.demcha.compose.document.table.DocumentTableStyle
+                .builder().fillColor(com.demcha.compose.document.style.DocumentColor.rgb(16, 32, 80)).build();
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        String body = export(report, List.of(
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.EllipseBuilder().name("Icon").circle(8)
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.WHITE).build()).withStyle(navy),
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                        .name("Disc").circle(14)
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148))
+                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("7").build())
+                        .build()).withStyle(navy)));
+
+        assertThat(anchors(body)).as("the icon, alone in its navy cell").anyMatch(anchor ->
+                anchor.contains("prst=\"ellipse\"") && anchor.contains("behindDoc=\"0\"") && anchor.contains("FFFFFF"));
+        assertThat(anchors(body)).as("the disc, under its number").anyMatch(anchor ->
+                anchor.contains("prst=\"ellipse\"") && anchor.contains("behindDoc=\"1\"") && anchor.contains("1A5694"));
+    }
+
+    @Test
+    void aBoxLostInACellIsStillReportedWhenItsTableDrawsSomethingElse() throws Exception {
+        // A rectangle framing text inside a layer stack is no panel, and its table leaves it to one.
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        export(report, List.of(
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.EllipseBuilder().name("Icon").circle(8)
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148)).build()),
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.LayerStackBuilder().name("Pill")
+                        .layer(new com.demcha.compose.document.dsl.ShapeBuilder().name("PillBox").size(60, 14)
+                                .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148)).build())
+                        .layer(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Open").build())
+                        .build())));
+
+        assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).as("the box, not lost in silence")
+                .isPositive();
+    }
+
+    private static String export(java.util.concurrent.atomic.AtomicReference<DocxExportReport> report,
+                                 List<DocumentTableCell> composed) throws Exception {
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(com.demcha.compose.document.style.DocumentInsets.of(20)).create()) {
+            List<DocumentTableCell> cells = new java.util.ArrayList<>();
+            cells.add(DocumentTableCell.text("Mon"));
+            cells.addAll(composed);
+            List<DocumentTableColumn> columns = new java.util.ArrayList<>();
+            for (int i = 0; i < cells.size(); i++) {
+                columns.add(DocumentTableColumn.auto());
+            }
+            session.pageFlow(page -> page.addTable(t -> t
+                    .columns(columns.toArray(DocumentTableColumn[]::new))
+                    .rowCells(cells)));
+            byte[] docx = session.export(new DocxSemanticBackend(report::set));
+            try (XWPFDocument document = new XWPFDocument(new java.io.ByteArrayInputStream(docx))) {
+                return document.getDocument().xmlText();
+            }
+        }
+    }
+
+    private static String export(java.util.concurrent.atomic.AtomicReference<DocxExportReport> report,
+                                 DocumentTableCell composed) throws Exception {
         try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
                 .pageSize(400, 600).margin(com.demcha.compose.document.style.DocumentInsets.of(20)).create()) {
             session.pageFlow(page -> page.addTable(t -> t
                     .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
                     .rowCells(DocumentTableCell.text("Mon"), composed)));
-            session.export(new DocxSemanticBackend(report::set));
+            byte[] docx = session.export(new DocxSemanticBackend(report::set));
+            try (XWPFDocument document = new XWPFDocument(new java.io.ByteArrayInputStream(docx))) {
+                return document.getDocument().xmlText();
+            }
         }
+    }
+
+    private static List<String> anchors(String xml) {
+        List<String> anchors = new java.util.ArrayList<>();
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("<wp:anchor .*?</wp:anchor>", java.util.regex.Pattern.DOTALL).matcher(xml);
+        while (matcher.find()) {
+            anchors.add(matcher.group());
+        }
+        return anchors;
     }
 
     private static DocumentNode pill() {

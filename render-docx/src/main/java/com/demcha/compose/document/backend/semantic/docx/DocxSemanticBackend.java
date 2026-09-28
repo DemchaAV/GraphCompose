@@ -78,7 +78,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFHeaderFooter;
 import org.apache.poi.xwpf.model.XWPFHeaderFooterPolicy;
 import org.apache.xmlbeans.impl.xb.xmlschema.SpaceAttribute;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSimpleField;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STFldCharType;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTabStop;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTabJc;
 import org.apache.poi.common.usermodel.PictureType;
@@ -603,6 +603,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // carries the drawings nothing else on the last page carried.
                 reportDrawingsLeftOver(document, dropTheSpaceAtTheEnd(document));
             }
+            hideTheClosingMark(document);
             if (deterministicTimestamp != null) {
                 DocxDeterminism.pinCoreProperties(document, deterministicTimestamp);
             }
@@ -731,6 +732,43 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         return false;
+    }
+
+    /**
+     * Hides the mark of the empty paragraph a document ending in a table must end with.
+     *
+     * <p>Word ends a document on a paragraph, so one follows a closing table, a point tall.
+     * Where the table ends a point from the page's foot, that point does not fit, and the
+     * paragraph opened a page of its own: {@code ModernReceipt}'s QR code ends 0.5pt above the
+     * margin, and once its panels held the page's height the receipt ran to a blank second page
+     * in LibreOffice. A hidden mark is not laid out. Only a paragraph that is structure alone is
+     * hidden: one holding anything — a run, a field, a drawing's anchor, a bookmark — or drawing
+     * anything — a rule is a paragraph's border, a band its shading — or carrying a section's
+     * properties is left as it is.</p>
+     */
+    private static void hideTheClosingMark(XWPFDocument document) {
+        List<IBodyElement> body = document.getBodyElements();
+        if (body.size() < 2 || !(body.get(body.size() - 1) instanceof XWPFParagraph last)
+            || !(body.get(body.size() - 2) instanceof XWPFTable)) {
+            return;
+        }
+        org.w3c.dom.NodeList children = last.getCTP().getDomNode().getChildNodes();
+        for (int index = 0; index < children.getLength(); index++) {
+            org.w3c.dom.Node child = children.item(index);
+            if (child.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE && !"pPr".equals(child.getLocalName())) {
+                return;
+            }
+        }
+        if (last.getCTP().isSetPPr() && (last.getCTP().getPPr().isSetSectPr() || last.getCTP().getPPr().isSetPBdr()
+                                         || last.getCTP().getPPr().isSetShd())) {
+            return;
+        }
+        CTPPr properties = last.getCTP().isSetPPr() ? last.getCTP().getPPr() : last.getCTP().addNewPPr();
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTParaRPr mark =
+                properties.isSetRPr() ? properties.getRPr() : properties.addNewRPr();
+        if (mark.sizeOfVanishArray() == 0) {
+            mark.addNewVanish();
+        }
     }
 
     /** Makes a paragraph that exists only for Word's structure take a single point. */
@@ -1345,16 +1383,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Appends a Word field and the result it reads before an editor updates it.
      *
      * <p>Word repaints the field on open; the placeholder run is what a reader sees before that
-     * happens, and what a text extractor finds. It carries the text style like any other run —
-     * Word keeps a field result's formatting when it repaints it, so an unstyled placeholder
-     * would snap a styled page number back to the document default.</p>
+     * happens, and what a text extractor finds.</p>
+     *
+     * <p>Written as a complex field — begin, instruction, separator, result, end — each run
+     * carrying the text style. A simple field's result is repainted without its run's style:
+     * {@code MeteredInvoice}'s white page number on its navy footer band came out in the
+     * document's ink in both editors, so the band read "Page of". A complex field's result is
+     * set as its instruction is, and the instruction is styled.</p>
      */
     private void appendField(XWPFParagraph para, String instruction, String placeholder, DocumentTextStyle style) {
-        CTSimpleField simple = para.getCTP().addNewFldSimple();
-        simple.setInstr(instruction);
-        XWPFRun run = new XWPFRun(simple.addNewR(), (IRunBody) para);
+        fieldRun(para, style).getCTR().addNewFldChar().setFldCharType(STFldCharType.BEGIN);
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText code = fieldRun(para, style).getCTR().addNewInstrText();
+        code.setStringValue(instruction);
+        code.setSpace(org.apache.xmlbeans.impl.xb.xmlschema.SpaceAttribute.Space.PRESERVE);
+        fieldRun(para, style).getCTR().addNewFldChar().setFldCharType(STFldCharType.SEPARATE);
+        fieldRun(para, style).setText(placeholder);
+        fieldRun(para, style).getCTR().addNewFldChar().setFldCharType(STFldCharType.END);
+    }
+
+    private XWPFRun fieldRun(XWPFParagraph para, DocumentTextStyle style) {
+        XWPFRun run = para.createRun();
         applyStyle(run, style);
-        run.setText(placeholder);
+        return run;
     }
 
     /**
@@ -2576,6 +2626,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // line of text taller.
             holdToHairline(cell.addParagraph());
         }
+        com.demcha.compose.document.layout.PlacedNode placed = first && last && layout.onOnePage(node) ? layout.placement(node) : null;
+        if (placed != null && placed.placementHeight() > 0) {
+            // Its height is the page's: what makes a panel taller than its text — an icon drawn
+            // where the page puts it, a fixed outline — is not in the cell. MerchantInvoice's
+            // due-date card closed from 59.4pt to its text's 26, and its calendar hung below it.
+            holdRowAtLeast(table.getRow(0), placed.placementHeight());
+        }
 
         double edge = insetLeft + margin.left();
         double indent = currentCell == null ? edge + padding.left() - halfLeft : edge - halfLeft;
@@ -3676,16 +3733,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         String bookmark = bookmarkedAnchors.contains(node.anchor())
                 ? bookmarkNames.nameFor(node.anchor())
                 : null;
-        XWPFRun run;
         if (bookmark == null) {
-            run = para.createRun();
+            XWPFRun run = para.createRun();
+            applyStyle(run, node.textStyle());
+            run.setText(shown);
         } else {
-            CTSimpleField field = para.getCTP().addNewFldSimple();
-            field.setInstr(" PAGEREF " + bookmark + " \\h ");
-            run = new XWPFRun(field.addNewR(), (IRunBody) para);
+            // A complex field, as a page field is (see appendField): a simple one's number is
+            // repainted without its style when the field updates.
+            appendField(para, " PAGEREF " + bookmark + " \\h ", shown, node.textStyle());
         }
-        applyStyle(run, node.textStyle());
-        run.setText(shown);
     }
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
@@ -5045,14 +5101,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void holdRowHeight(XWPFTableRow row, TableNode node, int rowIdx) {
         java.util.OptionalDouble height = layout.rowHeight(node, rowIdx);
-        if (height.isEmpty()) {
-            return;
+        if (height.isPresent()) {
+            holdRowAtLeast(row, height.getAsDouble());
         }
+    }
+
+    /**
+     * Writes a row at least a height, less what its cells take above and below their content
+     * (see {@link #holdRowHeight}).
+     *
+     * @param row    the row, its cells' margins and borders written
+     * @param points the height the page gives it
+     */
+    private static void holdRowAtLeast(XWPFTableRow row, double points) {
         long margins = 0;
         for (XWPFTableCell cell : row.getTableCells()) {
             margins = Math.max(margins, verticalMargins(cell));
         }
-        long twips = Math.round(height.getAsDouble() * POINT_TO_TWIP) - margins;
+        long twips = Math.round(points * POINT_TO_TWIP) - margins;
         if (twips <= 0) {
             return;
         }

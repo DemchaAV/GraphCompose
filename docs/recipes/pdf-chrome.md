@@ -6,7 +6,8 @@ and the outline panel — is configured through backend-neutral value
 types in `com.demcha.compose.document.output` and applied with
 `DocumentSession` mutators: `metadata`, `watermark`, `header`,
 `footer`, `protect`. Backends that cannot honour a surface ignore it
-(DOCX honours metadata, skips watermark/header/footer/bookmarks).
+(DOCX honours metadata and writes the text header and footer as a Word
+header and footer; it skips the watermark and the outline bookmarks).
 
 ## Document metadata
 

@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Text headers and footers reach Word.** The DOCX export left out a `DocumentHeaderFooter` —
+  `session.header(...)` / `session.footer(...)`, the three text slots and their page tokens —
+  and the export report did not say so: nine invoice presets, `ModernReceipt`, `CobaltRota`,
+  `NorthlineProposal` and `EditorialProposal` lost their footer, its page count, note and
+  signature with it. The band is now one line of a Word header or footer: the left slot, the
+  centre slot at a centre tab and the right slot at a right tab against the margins; `{page}`
+  and `{pages}` as `PAGE` and `NUMPAGES` fields (`SECTIONPAGES` per section), in the band's
+  roman or alphabetic style; `{date}` as the date of the export, as the page prints its render
+  date; the separator as the paragraph's border; the line as far from the page edge as the page
+  sets it — in LibreOffice the baseline within 0.1pt of the PDF's and the separator within
+  0.6pt. A band that shares its kind with another band or a page zone — `MeteredInvoice`'s two
+  legal lines and its page number — stands in a frame at its own height on the page. A band kept
+  off the first page leaves the first page's part empty; a band starting after page 2, page
+  numbers that do not count from 1 on page 1, and a band alone of its kind that reaches past the
+  page margin, which Word moves the body clear of, are reported. A band and a page zone of the
+  same kind share Word's one header or footer. Across the sixty-two template renders, the
+  thirteen with a band now lose no word of it, and no page count or text line elsewhere changes.
+
 - **A badge's glyph stands in the middle of its circle in Word.** The DOCX export wrote a picture
   inside a painted shape container that clips it — `NavySidebar`'s section badges — as a
   paragraph of its own, which put the glyph on a line above the section title beside it, off the

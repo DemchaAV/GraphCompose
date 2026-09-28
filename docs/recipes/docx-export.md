@@ -102,6 +102,7 @@ when the reader edits the document:
 |---|---|---|
 | a page zone's `pageNumber()` | `PAGE` | the editor, every time it lays the pages out |
 | a page zone's `pageTotal()` | `NUMPAGES`, or `SECTIONPAGES` in a multi-section document | the editor, every time it lays the pages out — except LibreOffice, which does not update `SECTIONPAGES` |
+| `{page}` and `{pages}` in a text header or footer | `PAGE` and `NUMPAGES` / `SECTIONPAGES`, with Word's roman or alphabetic switch for those number styles | as the two rows above |
 | a table of contents' page numbers, `addPageReference(...)` | `PAGEREF` to the anchor's bookmark, as a hyperlink | LibreOffice on every layout (measured: a field whose stored number was replaced by 99 showed the real page); Word when fields are updated — F9, or printing with field updates on |
 
 Each field also stores a result, which is what a reader sees before an editor updates it
@@ -130,8 +131,8 @@ try (MultiSectionDocument document = GraphCompose.documents()
 ```
 
 Each section keeps its own page size, orientation, margins, and the header and footer its
-page zones (`session.chrome().zone(...)`) describe — the text header and footer slots are
-not written, in a section or in a single document (see below). Where Word
+page zones (`session.chrome().zone(...)`) and text header and footer slots describe (see
+below). Where Word
 would behave differently left to itself, the export tells it what the PDF does:
 
 - page numbers start again at 1 in every section, and a zone's `pageTotal()` is the
@@ -610,10 +611,33 @@ its size, the same matrix the PDF draws, so it scans, with its data as the
 picture's description. Its data is part of the picture — changing it means
 exporting again — and the report says so, and names a link or a transform on it
 as not carried. In a page zone a barcode is still skipped.
-The text header and footer slots, watermarks, and protection options are
-also ignored by the current exporter.
+Watermarks and protection options are also ignored by the current exporter.
 
-A page zone (`session.chrome().zone(...)`) is not: it exports as a real
+A text header or footer (`session.header(...)` / `session.footer(...)`, a
+`DocumentHeaderFooter`) is not: it exports as a line of a real Word header
+or footer. Its left slot starts the line, its centre slot stands at a centre
+tab in the middle of the margins and its right slot at a right tab against
+the right margin, as the page sets them; `{page}` and `{pages}` are live
+fields, and `{date}` is the date of the export, as the page prints the date
+it was rendered. Its separator is the paragraph's border, and the line
+stands as far from the page edge as the page sets the text — its baseline
+within 0.1pt, its separator within 0.6pt (measured in LibreOffice at 7, 9
+and 12pt). A band that shares its kind with another band or a page zone — an
+invoice's legal lines and its page number — stands in a frame at its own
+height on the page, since one after another in the footer they would keep
+the order they were added in rather than the page's order by height. A
+band kept off the first page (`showOnFirstPage(false)`, or counted from page
+2) leaves the first page's header or footer empty. Two numbering settings
+have no Word equivalent and are reported: a band that starts after the
+second page is written on every page but the first, and page numbers that do
+not count from 1 on the first page are numbered from 1 by Word. A band alone of
+its kind that reaches past the page margin is reported too: the page lets it overlap the
+body, Word moves the body clear of it. A band and a page zone of the same
+kind share Word's one header or footer. A `{date}` token keeps a
+deterministic export byte-identical only within one day unless
+`-Dgraphcompose.renderDate` pins it, as for the PDF.
+
+A page zone (`session.chrome().zone(...)`) exports as a real
 Word header or footer part, with the page number as a live field, and it
 sits as far from its page edge as the page puts it — the distance is read
 from where the zone's content landed in the resolved layout and written as

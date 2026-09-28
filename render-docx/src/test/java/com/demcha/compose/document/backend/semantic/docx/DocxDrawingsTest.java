@@ -278,10 +278,9 @@ class DocxDrawingsTest {
             assertThat(anchors(gutter)).singleElement().asString()
                     .contains("<wp:positionV relativeFrom=\"paragraph\">").contains("behindDoc=\"0\"");
             assertThat(anchors(heading)).isEmpty();
-            java.util.regex.Matcher offset = java.util.regex.Pattern
-                    .compile("relativeFrom=\"paragraph\"><wp:posOffset>(-?\\d+)").matcher(gutter);
-            assertThat(offset.find()).isTrue();
-            assertThat(Long.parseLong(offset.group(1))).as("down from the row's top, never above it")
+            org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor anchor = row.getRow(0).getCell(0)
+                    .getParagraphs().get(0).getCTP().getRArray(0).getDrawingArray(0).getAnchorArray(0);
+            assertThat(anchor.getPositionV().getPosOffset()).as("down from the row's top, never above it")
                     .isGreaterThanOrEqualTo(0);
         }
     }

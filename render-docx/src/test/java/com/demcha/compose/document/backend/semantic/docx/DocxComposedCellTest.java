@@ -307,15 +307,13 @@ class DocxComposedCellTest {
     void aRowHoldingPaddedContentKeepsTheHeightThePageGaveIt() throws Exception {
         // The padding is the composed section's, not the cell's: Word, given only the text,
         // closed the row round it.
-        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
-        String body = export(report, List.of(DocumentTableCell.node(new com.demcha.compose.document.dsl.SectionBuilder()
-                .name("Padded").padding(com.demcha.compose.document.style.DocumentInsets.of(12))
-                .addParagraph(p -> p.text("Coastline Advanced")).build())));
-
-        java.util.regex.Matcher height = java.util.regex.Pattern
-                .compile("<w:trHeight w:val=\"(\\d+)\" w:hRule=\"atLeast\"/>").matcher(body);
-        assertThat(height.find()).as("the row's height is written").isTrue();
-        assertThat(Integer.parseInt(height.group(1))).as("the text and 24pt of padding").isGreaterThan(24 * 20 + 8 * 20);
+        try (XWPFDocument document = exportDocument(List.of(DocumentTableCell.node(
+                new com.demcha.compose.document.dsl.SectionBuilder()
+                        .name("Padded").padding(com.demcha.compose.document.style.DocumentInsets.of(12))
+                        .addParagraph(p -> p.text("Coastline Advanced")).build())))) {
+            assertThat(heightOf(document.getTables().get(0))).as("the text and 24pt of padding")
+                    .isGreaterThan(24 * 20 + 8 * 20);
+        }
     }
 
     @Test
@@ -352,55 +350,84 @@ class DocxComposedCellTest {
     void aParagraphHoldingAPictureKeepsItsOwnLineFromALaterOneOfTheSameText() throws Exception {
         // Its laid-out text is its text runs'. Left unpaired, it left its 8pt line for the 16pt
         // "Paid" after it, whose text was then clipped to that line.
-        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
-        String body = export(report, List.of(
+        try (XWPFDocument document = exportDocument(List.of(
                 DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder()
                         .inlineImage(DocumentImageData.fromBytes(pngBytes()), 6, 6)
                         .inlineText("Paid", com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(8))
                         .build()),
                 DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Paid")
-                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(16)).build())));
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(16)).build())))) {
+            List<org.apache.poi.xwpf.usermodel.XWPFParagraph> paid = cellParagraphs(document, "Paid");
 
-        java.util.regex.Matcher paragraph = java.util.regex.Pattern.compile("<w:p>(?:(?!</w:p>).)*>Paid<").matcher(body);
-        String last = null;
-        while (paragraph.find()) {
-            last = paragraph.group();
+            assertThat(paid).hasSize(2);
+            assertThat(lineOf(paid.get(1))).as("a 16pt line, not the 8pt one").isGreaterThan(14 * 20);
         }
-        java.util.regex.Matcher line = java.util.regex.Pattern.compile("w:line=\"(\\d+)\"").matcher(last);
-        assertThat(line.find()).isTrue();
-        assertThat(Integer.parseInt(line.group(1))).as("a 16pt line, not the 8pt one").isGreaterThan(14 * 20);
     }
 
+    /** A table's first row's written height, which the export writes "at least". */
     private static int heightOf(XWPFTable table) {
-        java.util.regex.Matcher height = java.util.regex.Pattern
-                .compile("<w:trHeight w:val=\"(\\d+)\" w:hRule=\"atLeast\"/>")
-                .matcher(table.getRow(0).getCtRow().xmlText());
-        assertThat(height.find()).isTrue();
-        return Integer.parseInt(height.group(1));
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTrPr properties = table.getRow(0).getCtRow().getTrPr();
+        assertThat(properties).isNotNull();
+        assertThat(properties.sizeOfTrHeightArray()).isEqualTo(1);
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTHeight height = properties.getTrHeightArray(0);
+        assertThat(height.getHRule()).isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule.AT_LEAST);
+        return ((Number) height.getVal()).intValue();
+    }
+
+    /** A paragraph's written line height, in twips. */
+    private static int lineOf(org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph) {
+        return ((Number) paragraph.getCTP().getPPr().getSpacing().getLine()).intValue();
+    }
+
+    /** The paragraphs of the body's tables reading a text, in document order. */
+    private static List<org.apache.poi.xwpf.usermodel.XWPFParagraph> cellParagraphs(XWPFDocument document, String text) {
+        List<org.apache.poi.xwpf.usermodel.XWPFParagraph> found = new java.util.ArrayList<>();
+        for (XWPFTable table : document.getTables()) {
+            for (org.apache.poi.xwpf.usermodel.XWPFTableRow row : table.getRows()) {
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    for (org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph : cell.getParagraphs()) {
+                        if (paragraph.getText().equals(text)) {
+                            found.add(paragraph);
+                        }
+                    }
+                }
+            }
+        }
+        return found;
     }
 
     @Test
     void theSameTextComposedTwiceTakesEachItsOwnLine() throws Exception {
         // Paragraphs are paired with their table's fragments in the order both were laid out.
-        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
-        String body = export(report, List.of(
+        try (XWPFDocument document = exportDocument(List.of(
                 DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder().text("0.00")
                         .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(8)).build()),
                 DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder().text("0.00")
-                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(16)).build())));
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(16)).build())))) {
+            List<org.apache.poi.xwpf.usermodel.XWPFParagraph> amounts = cellParagraphs(document, "0.00");
 
-        java.util.regex.Pattern exact = java.util.regex.Pattern
-                .compile("w:line=\"(\\d+)\" w:lineRule=\"exact\"|w:lineRule=\"exact\" w:line=\"(\\d+)\"");
-        List<Integer> lines = new java.util.ArrayList<>();
-        java.util.regex.Matcher paragraph = java.util.regex.Pattern.compile("<w:p>.*?</w:p>").matcher(body);
-        while (paragraph.find()) {
-            java.util.regex.Matcher line = exact.matcher(paragraph.group());
-            if (paragraph.group().contains(">0.00<") && line.find()) {
-                lines.add(Integer.parseInt(line.group(1) != null ? line.group(1) : line.group(2)));
-            }
+            assertThat(amounts).hasSize(2).allSatisfy(amount -> assertThat(
+                    amount.getCTP().getPPr().getSpacing().getLineRule()).hasToString("exact"));
+            assertThat(lineOf(amounts.get(1))).isEqualTo(2 * lineOf(amounts.get(0)));
         }
-        assertThat(lines).hasSize(2);
-        assertThat(lines.get(1)).isEqualTo(2 * lines.get(0));
+    }
+
+    /** The export of a table of one row: a text cell, then the composed ones. */
+    private static XWPFDocument exportDocument(List<DocumentTableCell> composed) throws Exception {
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
+            List<DocumentTableCell> cells = new java.util.ArrayList<>();
+            cells.add(DocumentTableCell.text("Mon"));
+            cells.addAll(composed);
+            List<DocumentTableColumn> columns = new java.util.ArrayList<>();
+            for (int i = 0; i < cells.size(); i++) {
+                columns.add(DocumentTableColumn.auto());
+            }
+            session.pageFlow(page -> page.addTable(t -> t
+                    .columns(columns.toArray(DocumentTableColumn[]::new))
+                    .rowCells(cells)));
+            return new XWPFDocument(new java.io.ByteArrayInputStream(session.export(new DocxSemanticBackend())));
+        }
     }
 
     private static com.demcha.compose.document.dsl.PathBuilder triangle() {

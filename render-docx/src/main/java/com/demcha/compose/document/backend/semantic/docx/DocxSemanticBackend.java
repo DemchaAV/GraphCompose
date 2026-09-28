@@ -194,6 +194,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private DocumentColor surfaceBehind;
     // How many overlays — layer stacks, canvases, shape containers — the node being written sits in.
     private int overlayDepth;
+    // How many of those overlays are written as bands (see writeOverlayBand).
+    private int bandDepth;
     // How many of those overlays are layer stacks of one layer, which lay nothing over anything.
     private int oneLayerDepth;
     // The overlays being written, innermost first (see drawsInFront).
@@ -546,6 +548,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         warnedNodeKinds.clear();
         surfaceBehind = null;
         overlayDepth = 0;
+        bandDepth = 0;
         oneLayerDepth = 0;
         openOverlays.clear();
         forgetTheHang();
@@ -1925,12 +1928,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         if (drew) {
             StringBuilder message = new StringBuilder(panelDrawings != null
-                    ? "drawn as a shape where the layout puts it, placed from the panel's paragraph beside "
-                      + "it where one's cell holds it across, so it moves with that paragraph, and "
-                      + "anchored to the page otherwise"
+                    ? "drawn as a shape where the layout puts it, placed from the paragraph beside it in "
+                      + "its panel or row where that paragraph's cell holds it across, so it moves with "
+                      + "that paragraph, and anchored to the page otherwise"
                     : "drawn as a shape anchored to the page where the layout puts it: it stays there "
                       + "when the text around it is edited");
-            if (front) {
+            if (badgeText != null) {
+                message.append("; its text is held in the shape, which stands in front of the text");
+            } else if (front) {
                 message.append("; in front of the text, since the panel's shading is painted over "
                         + "shapes behind it");
             } else if (surfaceBehind != null) {
@@ -3892,7 +3897,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         : hostSpan;
                 if (span != null) {
                     panelDrawings.hosts().add(new PanelHost(target, lines.pageIndex(), top,
-                            paragraph.lines().get(0).lineHeight(), span[0], span[1]));
+                            paragraph.lines().get(0).lineHeight(), span[0], span[1], false));
                 }
             }
         }
@@ -4803,10 +4808,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @return the paragraph, or {@code null} when the badge is written as before
      */
     private ParagraphNode textBadgeParagraph(ShapeContainerNode badge) {
-        if (badge.fillColor() == null && (badge.stroke() == null || !(badge.stroke().width() > 0))
+        boolean filled = badge.fillColor() != null && badge.fillColor().color().getAlpha() > 0;
+        boolean stroked = badge.stroke() != null && badge.stroke().width() > 0 && badge.stroke().color() != null
+                          && badge.stroke().color().color().getAlpha() > 0;
+        if (!filled && !stroked
             || badge.children().size() != 1 || !(badge.children().get(0) instanceof ParagraphNode paragraph)
             || badge.transform() != null && !badge.transform().isIdentity()
             || Double.isNaN(canvasHeight)) {
+            return null;
+        }
+        // A link, a bookmark or an anchor on the text is the paragraph's, which a shape does not
+        // carry: such a badge is written as before.
+        if (paragraph.linkTarget() != null || paragraph.bookmarkOptions() != null
+            || paragraph.anchor() != null && !paragraph.anchor().isBlank()
+            || paragraph.inlineRuns() != null && paragraph.inlineRuns().stream()
+                    .anyMatch(run -> run instanceof InlineTextRun text && text.linkTarget() != null)) {
             return null;
         }
         String text = badgeTextOf(paragraph);
@@ -4828,6 +4844,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeTextBadge(XWPFDocument document, ShapeContainerNode badge, ParagraphNode initials) {
         if (overlayDepth == 0) {
             holdTheSpaceOf(badge);
+        } else if (bandDepth > 0) {
+            // A band measures its room above and below the text it writes, the initials among it:
+            // a line as tall as theirs stands in their place, or the band came out that line short.
+            com.demcha.compose.document.layout.PlacedNode line = layout.placement(initials);
+            if (line != null && line.placementHeight() > 0) {
+                XWPFParagraph standIn = newBodyParagraph(document);
+                applyLineHeight(standIn, java.util.OptionalDouble.of(line.placementHeight()));
+            }
         }
         badgeText = badgeParagraphXml(document, initials);
         try {
@@ -5195,9 +5219,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param lineHeight the first line's height
      * @param left       its cell's left edge on the page; the panel's own cell reaches everywhere
      * @param right      its cell's right edge on the page
+     * @param cellTop    whether the paragraph's top is {@code lineTop} itself — a gutter cell's
+     *                   empty paragraph, set at the cell's top — rather than its line's less the
+     *                   space written above it
      */
     private record PanelHost(XWPFParagraph paragraph, int page, double lineTop, double lineHeight,
-                             double left, double right) {
+                             double left, double right, boolean cellTop) {
+
+        /** Where the paragraph's top stands on the page, which a drawing it carries is placed from. */
+        double paragraphTop() {
+            return cellTop ? lineTop : lineTop - spaceAbove(paragraph);
+        }
     }
 
     /**
@@ -5235,8 +5267,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (nearest == null) {
                 anchors.queue(List.of(shape));
             } else {
-                anchors.anchorBeside(nearest.paragraph(), List.of(shape),
-                        nearest.lineTop() - spaceAbove(nearest.paragraph()));
+                anchors.anchorBeside(nearest.paragraph(), List.of(shape), nearest.paragraphTop());
             }
         }
     }
@@ -6061,10 +6092,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double height = placedRow.placementHeight() - row.padding().top() - row.padding().bottom();
         double left = placedRow.placementX() + starts[1 + index];
         double right = placedRow.placementX() + (index + 2 < starts.length ? starts[2 + index] : starts[0]);
-        // The paragraph's top is the cell's; the space it holds above — a badge's room — is below
-        // that top, so its line is written that much lower (anchorPanelDrawings takes it back).
-        panelDrawings.hosts().add(new PanelHost(empty, placedRow.startPage(), top + spaceAbove(empty), height,
-                left, right));
+        // The paragraph's top is the cell's, whatever space it holds above — a badge's room — and
+        // the row's top ranks it among the hosts: shifted by that room, a gutter lost its own
+        // row's icon to the gutter of the row above it in the same panel.
+        panelDrawings.hosts().add(new PanelHost(empty, placedRow.startPage(), top, height, left, right, true));
         return true;
     }
 
@@ -6187,6 +6218,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         insetLeft += stack.margin().left() + stack.padding().left();
         insetRight += stack.margin().right() + stack.padding().right();
         overlayDepth++;
+        bandDepth++;
         try {
             List<DocumentNode> layers = band.layers();
             for (int index = 0; index < layers.size(); index++) {
@@ -6208,6 +6240,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         } finally {
             overlayDepth--;
+            bandDepth--;
             insetLeft = outerLeft;
             insetRight = outerRight;
             standIns.removeAll(band.standIns());
@@ -6318,7 +6351,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Which leaves under a node are drawn rather than written: drawing, and the glyphs drawn over
-     * the badges holding them — neither is content a band's text is measured from.
+     * the badges holding them — neither is content a band's text is measured from. A badge's
+     * initials are measured from: the band writes a line in their place (see writeTextBadge).
      */
     private java.util.function.Predicate<DocumentNode> drawnIn(DocumentNode node) {
         java.util.Set<DocumentNode> pictures = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());

@@ -610,6 +610,96 @@ class DocxDrawingsTest {
     }
 
     @Test
+    void eachRowsIconInAPanelIsCarriedByItsOwnGutter() throws Exception {
+        // Ranked by a gutter shifted by the room its paragraph holds, the second row's icon went
+        // to the first row's gutter, and Word prints a shape clipped to the cell carrying it.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240)).spacing(4)
+                        .addRow("First", row -> gutterRow(row, "Bank"))
+                        .addRow("Second", row -> gutterRow(row, "Card")))))) {
+            org.apache.poi.xwpf.usermodel.XWPFTableCell panel = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(panel.getTables()).hasSize(2).allSatisfy(row -> assertThat(
+                    anchors(row.getRow(0).getCell(0).getCTTc().xmlText())).as("its own gutter carries its icon")
+                    .hasSize(1));
+        }
+    }
+
+    private static void gutterRow(com.demcha.compose.document.dsl.RowBuilder row, String label) {
+        row.verticalAlign(com.demcha.compose.document.node.RowVerticalAlign.CENTER)
+                .columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(30),
+                        com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                .add(new ShapeContainerBuilder().name(label + "Disc").circle(16).fillColor(ACCENT)
+                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text(label.substring(0, 1)).build())
+                        .build())
+                .addParagraph(p -> p.text(label));
+    }
+
+    @Test
+    void aBadgeInALayerStackKeepsTheRoomThePageGivesIt() throws Exception {
+        // Its initials are drawn, not written: measured round them, the stack held less than its
+        // height and what followed ran up under the badge.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addParagraph(p -> p.text("Above"))
+                .addLayerStack(stack -> stack.name("Mark")
+                        .layer(new com.demcha.compose.document.dsl.SpacerBuilder().name("Room").size(88, 88).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .layer(new ShapeContainerBuilder().name("Monogram").circle(88).fillColor(ACCENT)
+                                .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("AR").build())
+                                .build(), LayerAlign.TOP_LEFT, 0))
+                .addParagraph(p -> p.text("Below"))))) {
+            // The room between the two paragraphs: every paragraph written between them, and the
+            // space written above the second.
+            List<org.apache.poi.xwpf.usermodel.XWPFParagraph> paragraphs = document.getParagraphs();
+            int above = -1;
+            int below = -1;
+            for (int index = 0; index < paragraphs.size(); index++) {
+                // It carries the badge's anchor, whose text box's text its own text reads too.
+                if (paragraphs.get(index).getText().contains("Above")) {
+                    above = index;
+                } else if (paragraphs.get(index).getText().equals("Below")) {
+                    below = index;
+                }
+            }
+            long twips = 0;
+            for (int index = above + 1; index <= below; index++) {
+                org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSpacing spacing =
+                        paragraphs.get(index).getCTP().getPPr().getSpacing();
+                twips += spacing.isSetBefore() ? ((Number) spacing.getBefore()).longValue() : 0;
+                if (index < below) {
+                    twips += ((Number) spacing.getLine()).longValue()
+                             + (spacing.isSetAfter() ? ((Number) spacing.getAfter()).longValue() : 0);
+                }
+            }
+            assertThat(twips).as("the badge's 88pt held between the paragraphs").isBetween(86L * 20, 90L * 20);
+        }
+    }
+
+    @Test
+    void aBadgesTextIsEscapedInItsShape() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .add(new ShapeContainerBuilder().name("Mark").circle(30).fillColor(ACCENT)
+                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("A&B").build())
+                        .build())))) {
+            assertThat(allText(document)).contains("A&B");
+            assertThat(document.getDocument().xmlText()).contains("A&amp;B</w:t>");
+        }
+    }
+
+    @Test
+    void aRowWithoutADrawingIsNotHeldToThePagesHeight() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addRow("Pair", row -> row.columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1),
+                                com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                        .addParagraph(p -> p.text("Left"))
+                        .addParagraph(p -> p.text("Right")))))) {
+            assertThat(document.getTables().get(0).getRow(0).getCtRow().getTrPr() == null
+                       || document.getTables().get(0).getRow(0).getCtRow().getTrPr().sizeOfTrHeightArray() == 0)
+                    .isTrue();
+        }
+    }
+
+    @Test
     void aBadgeWithMoreThanInitialsIsWrittenAsBefore() throws Exception {
         // A pill with a word in it stays a written paragraph: its text is content, not a mark.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page

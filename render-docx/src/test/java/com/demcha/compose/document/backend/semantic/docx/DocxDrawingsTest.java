@@ -532,7 +532,9 @@ class DocxDrawingsTest {
 
             assertThat(anchors(document.getDocument().xmlText())).hasSize(1);
             assertThat(anchor).contains("behindDoc=\"0\"").contains("prst=\"ellipse\"")
-                    .contains("<w:txbxContent>").contains(">JR<").contains("anchor=\"ctr\"");
+                    .contains("<w:txbxContent>").contains(">JR<").contains("anchor=\"ctr\"")
+                    // Unwrapped, Word shrinks the box to the width of its letters.
+                    .contains("wrap=\"square\"");
             String body = document.getDocument().xmlText();
             assertThat(body.indexOf(">JR<")).as("the initials are the shape's alone, not a paragraph of the flow")
                     .isEqualTo(body.lastIndexOf(">JR<"));

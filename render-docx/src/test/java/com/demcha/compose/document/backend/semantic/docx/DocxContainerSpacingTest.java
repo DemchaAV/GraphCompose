@@ -129,6 +129,37 @@ class DocxContainerSpacingTest {
                 .isEqualTo(4 * 20L);
     }
 
+    @Test
+    void aCardsBorderIsNotTakenFromItsNeighbourInTheNextCell() throws Exception {
+        // Two cards side by side in a row stand at one height on the page; the first one's
+        // bottom border is below it, not above the second.
+        DocumentStroke stroke = DocumentStroke.of(DocumentColor.rgb(90, 90, 90), 1);
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow("Pair", row -> row
+                        .addSection("Left", card -> card(card, stroke)
+                                .margin(new DocumentInsets(4, 0, 0, 0)).addParagraph("Left"))
+                        .addSection("Right", card -> card(card, stroke)
+                                .margin(new DocumentInsets(4, 0, 0, 0)).addParagraph("Right"))))) {
+            List<XWPFTableCell> cells = document.getTables().get(0).getRow(0).getTableCells();
+
+            assertThat(cells).hasSize(2);
+            assertThat(spaceAboveTheCard(cells.get(1))).isEqualTo(spaceAboveTheCard(cells.get(0)));
+        }
+    }
+
+    private static long spaceAboveTheCard(XWPFTableCell cell) {
+        long space = 0;
+        for (IBodyElement element : cell.getBodyElements()) {
+            if (element instanceof XWPFTable) {
+                return space;
+            }
+            if (element instanceof XWPFParagraph paragraph) {
+                space += before(paragraph) + after(paragraph);
+            }
+        }
+        throw new AssertionError("the cell holds no card");
+    }
+
     private static long spaceBetweenTwoCards(DocumentStroke stroke) throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addSection("Cards", cards -> cards

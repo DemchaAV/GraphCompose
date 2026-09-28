@@ -278,7 +278,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * How far the bottom border of the panel just written stands below its box beyond the space
      * the panel holds under itself — taken from the space above the next panel, see
-     * {@link #writePanelPiece}.
+     * {@link #writePanelPiece}. A row carries the most any of its cells ends with; a paragraph,
+     * a page break or a new section clears it.
      */
     private double borderBelow;
 
@@ -1906,9 +1907,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 front |= !shapes.isEmpty();
                 continue;
             }
-            // Inside a painted panel, whose shading both editors paint over what lies behind the
-            // text, a shape stands in front unless it frames a line of text or a picture on its
-            // page: a template sets an icon beside its heading through a stack of one layer, which
+            // On a painted surface — a panel, or a filled cell — whose shading both editors paint
+            // over what lies behind the text, a shape stands in front unless it frames a line of
+            // text or a picture on its page: a template sets an icon beside its heading through a stack of one layer, which
             // kept every payment panel's heading icon behind its shading. Elsewhere the overlays
             // it sits in decide (drawsInFront).
             boolean inFront = surfaceBehind != null && !Double.isNaN(canvasHeight)
@@ -2704,7 +2705,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (last) {
             double below = strokeWidth(borders.bottom());
             owePendingSpacingAfter(Math.max(0, margin.bottom() - below));
-            borderBelow = Math.max(borderBelow, Math.max(0, below - margin.bottom()));
+            borderBelow = Math.max(0, below - margin.bottom());
         }
     }
 
@@ -7060,6 +7061,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph previousParagraph = lastBodyParagraph;
         double previousCarried = carriedSpacingBefore;
         double previousOwed = pendingSpacingAfter;
+        double previousBorderBelow = borderBelow;
         double previousHangingBelow = hangingBelow;
         XWPFParagraph previousHangingOver = hangingOver;
         double previousHangingOverBy = hangingOverBy;
@@ -7071,6 +7073,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         tableCloser = null;
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
+        borderBelow = 0;
         forgetTheHang();
         // A cell's content is measured from the cell's own edge, which its margins already
         // keep clear of the border; the containers around the table have nothing to add.
@@ -7093,6 +7096,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             lastBodyParagraph = previousParagraph;
             carriedSpacingBefore = previousCarried;
             pendingSpacingAfter = previousOwed;
+            // A card's border below the last thing in a cell stands below the row too, where
+            // Word makes the row as tall as its tallest cell; the cell beside it starts clear.
+            borderBelow = Math.max(previousBorderBelow, borderBelow);
             hangingBelow = previousHangingBelow;
             hangingOver = previousHangingOver;
             hangingOverBy = previousHangingOverBy;
@@ -7215,6 +7221,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // the break is on the page before, and space written below it would stay there; so is
         // text hanging below a band there.
         lastBodyParagraph = null;
+        borderBelow = 0;
         forgetTheHang();
     }
 

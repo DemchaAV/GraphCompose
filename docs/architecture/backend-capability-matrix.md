@@ -46,9 +46,10 @@ ellipse, line, polygon or path is drawn from the fragments the layout placed
 it as, a DrawingML shape anchored to the page behind the text (`DocxDrawings`,
 polygons and paths as custom geometry). Inside a filled panel a shape stands in
 front of the text unless it frames text, still placed from the page: Word lays
-a shape anchored in a table cell out inside the cell. A badge whose one layer is
-a few characters of text is one shape holding that text. A shape filled only with a gradient
-paint shows nothing the export carries and is dropped with a logged warning.
+a shape anchored in a table cell out inside the cell. A filled or outlined
+rectangle, rounded rectangle or ellipse whose one centred layer is a line of at
+most four characters in one style, left to right and unlinked, is one shape
+holding that text. A shape filled only with a gradient paint shows nothing the export carries and is dropped with a logged warning.
 A `BarcodeNode` reaches it too and is written as a picture.
 
 The PPTX *semantic* skeleton (`PptxSemanticBackend`, slide-safe node

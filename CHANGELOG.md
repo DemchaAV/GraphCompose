@@ -8,6 +8,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Table rows and the text in composed cells keep the page's height in Word.** A paragraph
+  composed in a table cell has no path of its own — its lines are laid out among its table's
+  fragments — so the DOCX export wrote it at the face's own line height: a 9pt Gothic A1 line the
+  page sets at 9.1pt came out 13.4pt. Such a paragraph is now paired with its table's fragment,
+  by text and in layout order, and takes its measured line. A row is also written at least as
+  tall as the page made it (`w:trHeight`, `atLeast`), less what its cells hold above and below
+  their content, which LibreOffice adds to the written height: a row whose content is a composed
+  row with padding of its own — `MerchantInvoice`'s 37.7pt line items — had closed to 31.3pt,
+  and the icons the table draws where the page puts them fell a row further out of line each row.
+  A paragraph's mark is sized as the text that ends its last line rather than as the paragraph's
+  own style when runs carry their own: a contact line's mark was 14pt Helvetica beside 8.5pt text,
+  and grew every such line. In LibreOffice, `MerchantInvoice`'s drift falls from 28.5pt to 8.5pt,
+  `ObsidianInvoice`'s from 81.9 to 24.3, `PaymentsInvoice`'s from 35.7 to 16.4, and
+  `IndigoProposal` fits on one page as the page does. `CobaltRota`'s lockup stands higher than
+  before: its subtitle is pulled up by a negative margin, which Word cannot express.
 - **Icons and shapes inside table cells reach Word.** What a table cell composes
   (`DocumentTableCell.node(...)`) has no place of its own in the layout: its drawing is laid out
   as the table's own. The DOCX export drew a node's fragments only, so every icon, tile and disc a

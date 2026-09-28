@@ -179,9 +179,10 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void aPageALongTableFillsCarriesItsShapesInARow() throws Exception {
-        // Page 2 holds nothing but the table's later rows, then the dot: a row there is the
-        // paragraph on that page, where the dot has to be anchored.
+    void aLastPageALongTableFillsCarriesItsShapesInTheBodyNotInARow() throws Exception {
+        // Page 2 holds nothing but the table's later rows, then the dot. Word prints a shape
+        // anchored in a cell clipped to the cell, so the paragraph closing the section carries
+        // it, and no row does.
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
         try (XWPFDocument document = export(report, session -> session.pageFlow(page -> page
                 .addTable(t -> {
@@ -192,16 +193,102 @@ class DocxDrawingsTest {
                 })
                 .addEllipse(e -> e.name("Dot").circle(20).fillColor(ACCENT))))) {
             assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isZero();
-            String carrier = document.getTables().get(0).getRows().stream()
-                    .flatMap(row -> row.getTableCells().stream())
-                    .flatMap(cell -> cell.getParagraphs().stream())
-                    .filter(paragraph -> paragraph.getCTP().xmlText().contains("prst=\"ellipse\""))
-                    .map(org.apache.poi.xwpf.usermodel.XWPFParagraph::getText)
-                    .findFirst()
-                    .orElseThrow();
-            assertThat(carrier).as("the first row the layout put on page 2")
-                    .isNotEqualTo("Row 0").startsWith("Row ");
+            assertThat(document.getTables().get(0).getCTTbl().xmlText()).doesNotContain("prst=\"ellipse\"");
+            assertThat(paragraphCarrying(document, "prst=\"ellipse\"")).as("the closing paragraph").isEmpty();
         }
+    }
+
+    @Test
+    void aFirstPageLaidOutInATableGetsABodyParagraphBeforeItForItsShapes() throws Exception {
+        // Two columns written as one row: the page has no body paragraph, and a shape anchored
+        // in the sidebar's cell was printed clipped to it. A hairline paragraph opens the page.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addLayerStack(stack -> stack
+                        .layer(column("Side", 0, 260, side -> side.addParagraph(p -> p.text("Contact"))),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                        .layer(column("Main", 100, 0, main -> main
+                                .addEllipse(e -> e.name("Ring").circle(40).fillColor(ACCENT))
+                                .addParagraph(p -> p.text("Body"))),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT))))) {
+            List<org.apache.poi.xwpf.usermodel.IBodyElement> body = document.getBodyElements();
+
+            assertThat(body.get(0)).isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFParagraph.class);
+            assertThat(((org.apache.poi.xwpf.usermodel.XWPFParagraph) body.get(0)).getCTP().xmlText())
+                    .contains("prst=\"ellipse\"");
+            assertThat(body.get(1)).as("the columns' row").isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
+            assertThat(document.getTables().get(0).getCTTbl().xmlText()).doesNotContain("wp:anchor");
+        }
+    }
+
+    @Test
+    void aShapeInAPaintedPanelIsDrawnInFrontOfTheText() throws Exception {
+        // Both editors paint a shaded cell over what lies behind the text.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addSection("Panel", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
+                        .addParagraph(p -> p.text("In the panel"))
+                        .addEllipse(e -> e.name("Dot").circle(20).fillColor(ACCENT)))))) {
+            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .contains("behindDoc=\"0\"");
+        }
+    }
+
+    @Test
+    void aDiscUnderItsInitialsInAPaintedPanelStaysBehindThem() throws Exception {
+        // In front, the disc would cover the initials it frames.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
+                        .addParagraph(p -> p.text("Profile"))
+                        .add(new ShapeContainerBuilder().name("Badge").circle(40).fillColor(ACCENT)
+                                .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("JR").build())
+                                .build()))))) {
+            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .contains("behindDoc=\"1\"");
+            assertThat(allText(document)).contains("JR");
+        }
+    }
+
+    @Test
+    void aLaterSectionOpeningWithATableGetsItsBodyParagraphBeforeThatTable() throws Exception {
+        DocumentSession first = GraphCompose.document().pageSize(400, 400).margin(DocumentInsets.of(20)).create();
+        first.pageFlow(page -> page.addParagraph(p -> p.text("Cover")));
+        DocumentSession second = GraphCompose.document().pageSize(400, 400).margin(DocumentInsets.of(20)).create();
+        second.pageFlow(page -> page.addLayerStack(stack -> stack
+                .layer(column("Side", 0, 260, side -> side.addParagraph(p -> p.text("Contact"))),
+                        com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                .layer(column("Main", 100, 0, main -> main
+                                .addEllipse(e -> e.name("Ring").circle(40).fillColor(ACCENT))
+                                .addParagraph(p -> p.text("Body"))),
+                        com.demcha.compose.document.node.LayerAlign.TOP_LEFT)));
+        byte[] docx;
+        try (com.demcha.compose.document.api.MultiSectionDocument document = GraphCompose.documents()
+                .section(first).section(second).create()) {
+            docx = document.toDocxBytes();
+        }
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            List<org.apache.poi.xwpf.usermodel.IBodyElement> body = document.getBodyElements();
+            int table = body.indexOf(document.getTables().get(0));
+
+            assertThat(table).isGreaterThan(1);
+            assertThat(((org.apache.poi.xwpf.usermodel.XWPFParagraph) body.get(table - 1)).getCTP().xmlText())
+                    .as("the paragraph just before the second section's table")
+                    .contains("prst=\"ellipse\"");
+        }
+    }
+
+    private static String allText(XWPFDocument document) {
+        try (var extractor = new org.apache.poi.xwpf.extractor.XWPFWordExtractor(document)) {
+            return extractor.getText();
+        } catch (Exception failure) {
+            throw new IllegalStateException(failure);
+        }
+    }
+
+    private static com.demcha.compose.document.node.DocumentNode column(String name, double left, double right,
+                                                                       Consumer<com.demcha.compose.document.dsl.SectionBuilder> content) {
+        com.demcha.compose.document.dsl.SectionBuilder layer = new com.demcha.compose.document.dsl.SectionBuilder();
+        layer.name(name).spacing(0).padding(new DocumentInsets(0, right, 0, left));
+        layer.addSection(name + "Content", content);
+        return layer.build();
     }
 
     @Test

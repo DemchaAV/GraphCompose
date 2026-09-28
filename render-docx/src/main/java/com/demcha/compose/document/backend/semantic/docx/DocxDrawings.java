@@ -71,17 +71,29 @@ final class DocxDrawings {
      * @param flipH       whether a line runs from its top-right corner
      * @param page        the page the layout drew it on, from 0
      * @param path        a custom shape's outline in its box's unit square, empty for a preset
+     * @param front       whether it is drawn in front of the text rather than behind it
      */
     record Shape(Kind kind, double x, double top, double width, double height, Color fill,
                  Color stroke, double strokeWidth, double radius, boolean flipH, int page,
-                 List<DocumentPathSegment> path) {
+                 List<DocumentPathSegment> path, boolean front) {
         Shape {
             path = path == null ? List.of() : List.copyOf(path);
         }
 
         Shape(Kind kind, double x, double top, double width, double height, Color fill,
+              Color stroke, double strokeWidth, double radius, boolean flipH, int page,
+              List<DocumentPathSegment> path) {
+            this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, false);
+        }
+
+        Shape(Kind kind, double x, double top, double width, double height, Color fill,
               Color stroke, double strokeWidth, double radius, boolean flipH, int page) {
             this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, List.of());
+        }
+
+        /** The same shape in front of the text rather than behind it. */
+        Shape inFront() {
+            return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, true);
         }
     }
 
@@ -226,7 +238,8 @@ final class DocxDrawings {
                 + " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\""
                 + " xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
                 + "<wp:anchor distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" simplePos=\"0\""
-                + " relativeHeight=\"" + stackHeight(order) + "\" behindDoc=\"1\" locked=\"0\""
+                + " relativeHeight=\"" + stackHeight(order) + "\" behindDoc=\"" + (shape.front() ? 0 : 1)
+                + "\" locked=\"0\""
                 + " layoutInCell=\"0\" allowOverlap=\"1\">"
                 + "<wp:simplePos x=\"0\" y=\"0\"/>"
                 + "<wp:positionH relativeFrom=\"page\"><wp:posOffset>" + Units.toEMU(shape.x())

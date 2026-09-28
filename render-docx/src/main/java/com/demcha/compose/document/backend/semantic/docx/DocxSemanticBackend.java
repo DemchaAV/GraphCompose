@@ -195,6 +195,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private int overlayDepth;
     // How many of those overlays are layer stacks of one layer, which lay nothing over anything.
     private int oneLayerDepth;
+    // The overlays being written, innermost first (see drawsInFront).
+    private final java.util.Deque<DocumentNode> openOverlays = new java.util.ArrayDeque<>();
     // How far the text of the band written last hangs below the band, in points: space the
     // next block's gap above already has on the page (see writeLinePair). Then the paragraph
     // that took what it could of it from the space owed, and what is left for its own margin.
@@ -234,6 +236,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // section being written.
     private int currentPage;
     private int sectionIndex;
+    // Where the section being written starts among the body's elements.
+    private int sectionFirstElement;
     // The shape container being written that clips its content to its outline, null outside one.
     private ShapeContainerNode clipContainer;
     // The text style the document is mostly written in, promoted to Word's Normal style.
@@ -523,6 +527,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         surfaceBehind = null;
         overlayDepth = 0;
         oneLayerDepth = 0;
+        openOverlays.clear();
         forgetTheHang();
         raisedRows.clear();
         insetLeft = 0;
@@ -559,6 +564,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     endSection(document);
                 }
                 beginSection(section, index);
+                sectionFirstElement = document.getBodyElements().size();
                 applyPageGeometry(document, context.canvas());
                 if (index == 0) {
                     writeStylesPart(document);
@@ -1311,6 +1317,38 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNodeContent(XWPFDocument document, DocumentNode node) throws Exception {
+        boolean overlay = isOverlay(node);
+        if (overlay) {
+            openOverlays.push(node);
+        }
+        try {
+            writeNodeContentOf(document, node);
+        } finally {
+            if (overlay) {
+                openOverlays.pop();
+            }
+        }
+    }
+
+    /**
+     * Whether a shape drawn now may stand in front of the text: inside a painted panel, whose
+     * shading both editors paint over what lies behind the text, and only when nothing of the
+     * overlays it is drawn in is text or a picture — a disc under its initials, a ring round a
+     * photo, a pill under its label stay behind what they frame.
+     */
+    private boolean drawsInFront() {
+        if (surfaceBehind == null) {
+            return false;
+        }
+        for (DocumentNode overlay : openOverlays) {
+            if (!onlyDrawing(overlay)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void writeNodeContentOf(XWPFDocument document, DocumentNode node) throws Exception {
         if (node instanceof com.demcha.compose.document.node.LayerStackNode stack) {
             DocxLayerColumns.Plan columns = DocxLayerColumns.of(stack, layout,
                     candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
@@ -1500,9 +1538,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (drew) {
             StringBuilder message = new StringBuilder("drawn as a shape anchored to the page where the "
                     + "layout puts it: it stays there when the text around it is edited");
-            if (surfaceBehind != null) {
-                message.append("; the panel's shading is painted over shapes behind the text, so "
-                        + "the editors hide it");
+            if (drawsInFront()) {
+                message.append("; in front of the text, since the panel's shading is painted over "
+                        + "shapes behind it");
+            } else if (surfaceBehind != null) {
+                message.append("; behind the text it frames, where the panel's shading hides it");
             }
             com.demcha.compose.document.style.DocumentTransform transform = transformOf(node);
             if (transform != null && !transform.isIdentity()) {
@@ -1559,23 +1599,57 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return false;
         }
         List<DocxDrawings.Shape> shapes = DocxDrawings.of(fragment, canvasHeight);
+        if (drawsInFront()) {
+            // A painted panel is a shaded cell, and both editors paint a cell's shading over
+            // what lies behind the text: in front of it, the shape shows.
+            shapes = shapes.stream().map(DocxDrawings.Shape::inFront).toList();
+        }
         anchors.queue(shapes);
         return !shapes.isEmpty();
     }
 
     /**
-     * Anchors the drawings no paragraph on their page carried: in the paragraph closing the
-     * section, or one of their own a point tall, when their page is the section's last — where
-     * a paragraph at the end still lands. Any on an earlier page are reported.
+     * A paragraph a hairline tall before a table in the body, holding no space of its own:
+     * the body paragraph a page laid out entirely in a table otherwise lacks.
+     */
+    private static XWPFParagraph openBefore(XWPFDocument document, XWPFTable table) {
+        try (org.apache.xmlbeans.XmlCursor cursor = table.getCTTbl().newCursor()) {
+            XWPFParagraph opening = document.insertNewParagraph(cursor);
+            CTPPr properties = opening.getCTP().isSetPPr() ? opening.getCTP().getPPr() : opening.getCTP().addNewPPr();
+            CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+            spacing.setBefore(BigInteger.ZERO);
+            spacing.setAfter(BigInteger.ZERO);
+            spacing.setLineRule(STLineSpacingRule.EXACT);
+            spacing.setLine(BigInteger.valueOf(2));
+            return opening;
+        }
+    }
+
+    /**
+     * Anchors the drawings no body paragraph on their page carried (see
+     * {@link DocxDrawingAnchors}): on the section's first page in a hairline paragraph opened
+     * before the table it starts with; on its last in the paragraph closing the section, or one
+     * of their own a point tall; on any other in a cell's paragraph, reported since Word may
+     * print them clipped to the cell. Any left are reported as dropped.
      *
      * @param closer the paragraph closing a section that ends with a table, or null
      */
     private void reportDrawingsLeftOver(XWPFDocument document, XWPFParagraph closer) {
         int lastPage = Math.max(0, layout.pageCount() - 1);
-        java.util.Map<Integer, Integer> dropped = anchors.endSection(lastPage,
+        List<IBodyElement> body = document.getBodyElements();
+        java.util.function.Supplier<XWPFParagraph> opening =
+                sectionFirstElement < body.size() && body.get(sectionFirstElement) instanceof XWPFTable first
+                        ? () -> openBefore(document, first)
+                        : null;
+        DocxDrawingAnchors.Leftovers leftovers = anchors.endSection(lastPage, opening,
                 () -> closer != null ? closer : collapsed(document.createParagraph()));
-        dropped.forEach((page, count) -> report.add(DocxExportReport.Severity.DROPPED, "drawing",
-                (sectioned ? "section " + (sectionIndex + 1) + ", " : "") + "page " + (page + 1),
+        String where = sectioned ? "section " + (sectionIndex + 1) + ", " : "";
+        leftovers.inCells().forEach((page, count) -> report.add(DocxExportReport.Severity.APPROXIMATED,
+                "drawing", where + "page " + (page + 1),
+                count + " shape(s) anchored in a table cell, the page having no other paragraph: Word may "
+                + "print them clipped to the cell"));
+        leftovers.dropped().forEach((page, count) -> report.add(DocxExportReport.Severity.DROPPED, "drawing",
+                where + "page " + (page + 1),
                 count + " shape(s) on a page no paragraph was written on, so nothing carries them"));
     }
 
@@ -2791,7 +2865,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
         lastBodyParagraph = para;
-        anchors.paragraphOn(currentPage, para);
+        anchors.paragraphOn(currentPage, para, currentCell == null);
         return para;
     }
 
@@ -4476,7 +4550,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             for (XWPFTableCell cell : table.getRow(index).getTableCells()) {
                 if (!cell.getParagraphs().isEmpty()) {
-                    anchors.paragraphOn(page, cell.getParagraphs().get(0));
+                    anchors.paragraphOn(page, cell.getParagraphs().get(0), false);
                     break;
                 }
             }

@@ -35,13 +35,7 @@ class DocxPanelHeightTest {
                 .addRow("DueRow", row -> row.padding(new DocumentInsets(20, 0, 20, 0))
                         .columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1))
                         .addParagraph(p -> p.text("26 June 2026")))))) {
-            XWPFTable panel = document.getTables().get(0);
-            String row = panel.getRow(0).getCtRow().xmlText();
-
-            java.util.regex.Matcher height = java.util.regex.Pattern
-                    .compile("<w:trHeight w:val=\"(\\d+)\" w:hRule=\"atLeast\"/>").matcher(row);
-            assertThat(height.find()).as(row).isTrue();
-            assertThat(Integer.parseInt(height.group(1))).as("40pt of padding and a line of text")
+            assertThat(heightOf(document.getTables().get(0))).as("40pt of padding and a line of text")
                     .isGreaterThan(48 * 20);
         }
     }
@@ -94,12 +88,14 @@ class DocxPanelHeightTest {
         }
     }
 
+    /** A table's first row's written height, which the export writes "at least". */
     private static int heightOf(XWPFTable table) {
-        java.util.regex.Matcher height = java.util.regex.Pattern
-                .compile("<w:trHeight w:val=\"(\\d+)\" w:hRule=\"atLeast\"/>")
-                .matcher(table.getRow(0).getCtRow().xmlText());
-        assertThat(height.find()).isTrue();
-        return Integer.parseInt(height.group(1));
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTrPr properties = table.getRow(0).getCtRow().getTrPr();
+        assertThat(properties).isNotNull();
+        assertThat(properties.sizeOfTrHeightArray()).isEqualTo(1);
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTHeight height = properties.getTrHeightArray(0);
+        assertThat(height.getHRule()).isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule.AT_LEAST);
+        return ((Number) height.getVal()).intValue();
     }
 
     @Test

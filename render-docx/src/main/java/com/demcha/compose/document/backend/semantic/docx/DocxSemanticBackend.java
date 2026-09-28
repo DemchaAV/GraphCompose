@@ -417,6 +417,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
          * <p>Embedded fonts are deterministic either way: each font's obfuscation key is
          * derived from the font rather than drawn at random.</p>
          *
+         * <p>A {@code {date}} token in a text header or footer is written as the date of the
+         * export, so a document using it stays byte-identical only within one day unless
+         * {@code -Dgraphcompose.renderDate} pins it — the same limitation the PDF and PPTX
+         * backends have.</p>
+         *
          * @param enabled {@code true} to pin output at the default timestamp,
          *                {@code false} to keep POI's live timestamps
          * @return this builder
@@ -845,9 +850,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // since its content is what the layout measured.
         List<ZoneWriter> writers = new ArrayList<>();
         for (DocumentHeaderFooter band : sectionBands) {
-            // Bands of one kind stand each at its own height on the page; stacked in the part as
-            // lines, a second and a third came out above the first instead of below it.
-            boolean framed = sectionBands.stream().filter(other -> other.getZone() == band.getZone()).count() > 1;
+            // A band that shares its kind with another band or a page zone stands at its own
+            // height on the page: stacked in the part as lines, they keep the order they were
+            // added in rather than the page's order by height.
+            boolean framed = sectionBands.stream().filter(other -> other.getZone() == band.getZone()).count() > 1
+                             || sectionZones.stream().anyMatch(zone -> zone.getZone() == band.getZone()
+                                                                       && zone.getContent() != null);
             writers.add(new ZoneWriter(band.getZone(), bandPageClasses(band),
                     part -> writeBand(part, band, framed), () -> placeBand(document, band, framed)));
         }
@@ -940,8 +948,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * The kinds of page a text band is drawn on: every one, or all but the first when its
-     * numbering keeps it off the first page. A band held off more pages than the first has no
-     * Word part to say so, and is written on every page, reported.
+     * numbering keeps it off the first page or counts from page 2 or later. A band held off
+     * more pages than the first has no Word part to say so, and is written on every page but the
+     * first, reported; so are page numbers that do not count from 1 on page 1, which Word's
+     * fields do.
      */
     private java.util.Set<DocxPageClasses.PageClass> bandPageClasses(DocumentHeaderFooter band) {
         com.demcha.compose.document.output.DocumentPageNumbering numbering = band.getNumbering();
@@ -975,38 +985,50 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Writes a text band as one line of a Word header or footer (see {@link DocxTextBands}).
      *
-     * <p>The export left the band out, so every invoice lost its footer — its page count, its
-     * note, its signature — and the report did not say so. The left slot starts the line, the
-     * centre slot stands at a centre tab in the middle of the margins and the right one at a
-     * right tab against the right margin, as the page sets them; {@code {page}} and
-     * {@code {pages}} are Word's page fields, and {@code {date}} is the date of the export, as the
-     * page prints the date it was rendered. The separator is the paragraph's border, below a
-     * header and above a footer, at the page's distance from the text.</p>
+     * <p>The left slot starts the line, the centre slot stands at a centre tab in the middle of
+     * the margins and the right one at a right tab against the right margin, as the page sets
+     * them; {@code {page}} and {@code {pages}} are Word's page fields, and {@code {date}} is the
+     * date of the export, as the page prints the date it was rendered. The separator is the
+     * paragraph's border, below a header and above a footer, at the page's distance from the
+     * text.</p>
      *
-     * <p>A band that shares its kind with another is framed: the page sets each at its own height
-     * from the edge, and one line after another in the part they came out stacked the other way
-     * round — an invoice's page number under its two legal lines instead of between them. Framed,
-     * each line stands at its own height on the page, where the part's flow does not move it.</p>
+     * <p>A band that shares its kind with another band or a page zone is framed: the page sets
+     * each at its own height from the edge, and one line after another in the part they keep the
+     * order they were added in rather than the page's order by height. Framed, each line stands
+     * at its own height on the page, where the part's flow does not move it, and moves nothing in
+     * the body. Two frames side by side in the part are kept apart by a hairline paragraph: Word
+     * takes adjacent paragraphs with the same frame for one frame, and two bands at one height
+     * would share a frame a line tall, the second line cut off.</p>
      *
      * @param framed whether the band stands in a frame at its height on the page
      */
     private void writeBand(XWPFHeaderFooter part, DocumentHeaderFooter band, boolean framed) {
+        boolean inFrame = framed && !Double.isNaN(canvasHeight);
+        List<XWPFParagraph> before = part.getParagraphs();
+        if (inFrame && !before.isEmpty() && before.get(before.size() - 1).getCTP().isSetPPr()
+            && before.get(before.size() - 1).getCTP().getPPr().isSetFramePr()) {
+            collapsed(part.createParagraph());
+        }
         XWPFParagraph para = part.createParagraph();
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         double line = DocxTextBands.lineHeight(band);
-        if (framed && !Double.isNaN(canvasHeight)) {
+        boolean separated = band.isShowSeparator() && band.getSeparatorColor() != null
+                            && band.getSeparatorColor().color().getAlpha() > 0 && band.getSeparatorThickness() > 0;
+        if (inFrame) {
+            // The frame holds the separator too, below a header's line and above a footer's.
+            double border = separated ? DocxTextBands.separatorSpace(band) + band.getSeparatorThickness() : 0;
             org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFramePr frame = properties.addNewFramePr();
             frame.setW(BigInteger.valueOf(toTwips(contentWidth)));
-            frame.setH(BigInteger.valueOf(toTwips(line)));
+            frame.setH(BigInteger.valueOf(toTwips(line + border)));
             frame.setHRule(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule.EXACT);
             frame.setHAnchor(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHAnchor.MARGIN);
             frame.setX(BigInteger.ZERO);
             frame.setVAnchor(org.openxmlformats.schemas.wordprocessingml.x2006.main.STVAnchor.PAGE);
             double top = band.getZone() == DocumentHeaderFooterZone.HEADER
                     ? DocxTextBands.distanceFromEdge(band)
-                    : canvasHeight - DocxTextBands.distanceFromEdge(band) - line;
+                    : canvasHeight - DocxTextBands.distanceFromEdge(band) - line - border;
             frame.setY(BigInteger.valueOf(toTwips(top)));
-            frame.setWrap(org.openxmlformats.schemas.wordprocessingml.x2006.main.STWrap.AROUND);
+            frame.setWrap(org.openxmlformats.schemas.wordprocessingml.x2006.main.STWrap.THROUGH);
         }
         CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
         spacing.setBefore(BigInteger.ZERO);
@@ -1043,8 +1065,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             appendTab(para, style);
             appendBandSlot(para, band.getRightText(), style, numbers);
         }
-        if (band.isShowSeparator() && band.getSeparatorColor() != null
-            && band.getSeparatorColor().color().getAlpha() > 0 && band.getSeparatorThickness() > 0) {
+        if (separated) {
             CTPBdr borders = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
             CTBorder edge = band.getZone() == DocumentHeaderFooterZone.HEADER
                     ? (borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom())
@@ -1062,7 +1083,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Writes one slot's text: its literal pieces as runs, its tokens as fields, whose results read
+     * Writes one slot's text: its literal pieces and {@code {date}} as runs, its page tokens as
+     * fields, whose results read
      * in the band's number style — an editor that does not update a field shows them as written.
      */
     private void appendBandSlot(XWPFParagraph para, String text, DocumentTextStyle style,
@@ -1117,7 +1139,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 : margin.getBottom() instanceof BigInteger bottom ? bottom : null;
         double reach = DocxTextBands.distanceFromEdge(band) + DocxTextBands.lineHeight(band)
                        + (band.isShowSeparator() ? DocxTextBands.separatorSpace(band) + band.getSeparatorThickness() : 0);
-        if (pageMargin != null && toTwips(reach) > pageMargin.longValue()) {
+        // A point of grace: a band as tall as the margin with its separator on the edge moves the
+        // body by a fraction of a point, which is not worth a note.
+        if (pageMargin != null && toTwips(reach) > pageMargin.longValue() + toTwips(1)) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "page " + zoneName(band),
                     sectioned ? "section " + (sectionIndex + 1) : null,
                     "it reaches " + Math.round(reach * 10) / 10.0 + "pt from the page edge, past the "
@@ -1158,9 +1182,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 blankZone(policy, sectPr, true, type, !hasHeader);
             }
             org.apache.poi.xwpf.usermodel.XWPFHeader header = headerOf(policy, type);
-            XWPFParagraph carrier = header.getParagraphs().isEmpty()
-                    ? collapsed(header.createParagraph())
-                    : header.getParagraphs().get(0);
+            // A paragraph of the header's flow: one in a text band's frame would hold the fills
+            // inside the frame in LibreOffice.
+            XWPFParagraph carrier = header.getParagraphs().stream()
+                    .filter(paragraph -> !paragraph.getCTP().isSetPPr() || !paragraph.getCTP().getPPr().isSetFramePr())
+                    .findFirst()
+                    .orElseGet(() -> collapsed(header.createParagraph()));
             XWPFRun run = carrier.createRun();
             for (int order = 0; order < fills.size(); order++) {
                 run.getCTR().addNewDrawing().set(

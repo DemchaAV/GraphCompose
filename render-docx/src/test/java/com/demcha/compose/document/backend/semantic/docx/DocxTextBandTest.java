@@ -25,8 +25,8 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A text header or footer — the three slots and their page tokens — is a Word header or footer:
- * the export used to leave it out, and every invoice lost its footer without a word in the report.
+ * A text header or footer — the three slots and their page tokens — is a Word header or footer
+ * with live page fields, each line where the page sets it.
  *
  * @author Artem Demchyshyn
  */
@@ -87,7 +87,7 @@ class DocxTextBandTest {
     }
 
     @Test
-    void aBandAndAPageZoneOfOneKindShareWordsOneFooter() throws Exception {
+    void aBandAndAPageZoneOfOneKindShareWordsOneFooterTheBandFramed() throws Exception {
         try (XWPFDocument document = export(null, session -> {
             session.footer(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.FOOTER)
                     .leftText("Band").build());
@@ -95,8 +95,49 @@ class DocxTextBandTest {
                     page -> new RowBuilder().addParagraph(p -> p.text("Zone")).build()));
         })) {
             XWPFFooter footer = only(document.getFooterList());
+            List<org.apache.poi.xwpf.usermodel.XWPFParagraph> paragraphs = footer.getParagraphs();
 
             assertThat(footer.getText()).contains("Band").contains("Zone");
+            assertThat(paragraphs).filteredOn(p -> p.getText().contains("Band"))
+                    .as("the band stands at its own height, beside the zone's line")
+                    .allMatch(p -> p.getCTP().getPPr().isSetFramePr());
+            assertThat(paragraphs).filteredOn(p -> p.getText().contains("Zone"))
+                    .as("the zone's line flows, placed by the zone's distance")
+                    .noneMatch(p -> p.getCTP().isSetPPr() && p.getCTP().getPPr().isSetFramePr());
+        }
+    }
+
+    @Test
+    void twoBandsAtOneHeightAreTwoFramesNotOne() throws Exception {
+        // Word takes adjacent paragraphs with the same frame for one frame, a line tall.
+        try (XWPFDocument document = export(null, session -> {
+            session.footer(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.FOOTER)
+                    .leftText("Confidential").build());
+            session.footer(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.FOOTER)
+                    .rightText("{page}").build());
+        })) {
+            List<org.apache.poi.xwpf.usermodel.XWPFParagraph> paragraphs = only(document.getFooterList()).getParagraphs();
+            List<Boolean> framed = paragraphs.stream()
+                    .map(p -> p.getCTP().isSetPPr() && p.getCTP().getPPr().isSetFramePr())
+                    .toList();
+
+            assertThat(framed).containsExactly(true, false, true);
+        }
+    }
+
+    @Test
+    void pageBackgroundsAreCarriedByTheHeadersFlowNotByAFrame() throws Exception {
+        try (XWPFDocument document = export(null, session -> {
+            session.pageBackground(DocumentColor.rgb(250, 250, 250));
+            session.header(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.HEADER).leftText("One").build());
+            session.header(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.HEADER).height(18)
+                    .rightText("Two").build());
+        })) {
+            XWPFHeader header = only(document.getHeaderList());
+
+            assertThat(header.getParagraphs()).filteredOn(p -> p.getCTP().xmlText().contains("<wp:anchor"))
+                    .singleElement()
+                    .matches(p -> !p.getCTP().isSetPPr() || !p.getCTP().getPPr().isSetFramePr());
         }
     }
 
@@ -134,7 +175,8 @@ class DocxTextBandTest {
         })) {
             XWPFFooter footer = only(document.getFooterList());
             List<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFramePr> frames = footer.getParagraphs()
-                    .stream().map(p -> p.getCTP().getPPr().getFramePr()).toList();
+                    .stream().filter(p -> p.getCTP().isSetPPr() && p.getCTP().getPPr().isSetFramePr())
+                    .map(p -> p.getCTP().getPPr().getFramePr()).toList();
 
             assertThat(frames).hasSize(2).allSatisfy(frame -> {
                 assertThat(frame).isNotNull();

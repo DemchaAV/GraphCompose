@@ -94,8 +94,9 @@ What maps:
 - **Barcodes and QR codes** are pictures of the same matrix the PDF draws, so they scan.
 - **Charts** are a table of their data.
 - **Pages.** Page size, margins and orientation; page zones (`session.chrome().zone(...)`)
-  as real Word headers and footers with live page-number fields; document metadata (title,
-  author, subject, keywords).
+  and text headers and footers (`session.header(...)` / `footer(...)`) as real Word headers
+  and footers with live page-number fields; document metadata (title, author, subject,
+  keywords).
 - **Byte-identical output** with `DocxSemanticBackend.builder().deterministic(true)`.
 
 What is not written — each one is named in the export report
@@ -108,13 +109,13 @@ What is not written — each one is named in the export report
   not carried. A layer stack whose layers are side-by-side columns is the exception: it is
   written as one table row, a cell per column.
 - **In a page zone**, a barcode or a rule.
-- **Watermarks and protection options.** The text header and footer slots are written, as a
-  line of a Word header or footer with live page fields.
+- **Watermarks and protection options.**
 - **`markerGap`** on a hanging-indent list: Word places the item text at its own indent.
 
 Multi-section documents export through `MultiSectionDocument.toDocxBytes()`,
 `writeDocx(...)` and `buildDocx(...)` (Experimental): each section becomes a Word section
-with its own page size, orientation, margins and page-zone header and footer — see the
+with its own page size, orientation, margins, and the header and footer its page zones and
+text header and footer describe — see the
 [DOCX recipe](../docs/recipes/docx-export.md#several-sections-in-one-document).
 
 Per-capability detail, with the implementing class for every supported cell:

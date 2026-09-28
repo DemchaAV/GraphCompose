@@ -612,17 +612,20 @@ fields, and `{date}` is the date of the export, as the page prints the date
 it was rendered. Its separator is the paragraph's border, and the line
 stands as far from the page edge as the page sets the text — its baseline
 within 0.1pt, its separator within 0.6pt (measured in LibreOffice at 7, 9
-and 12pt). Several bands of one kind — an invoice's legal lines and its
-page number — each stand in a frame at their own height on the page, since
-one after another in the footer they would come out in a different order. A
+and 12pt). A band that shares its kind with another band or a page zone — an
+invoice's legal lines and its page number — stands in a frame at its own
+height on the page, since one after another in the footer they would keep
+the order they were added in rather than the page's order by height. A
 band kept off the first page (`showOnFirstPage(false)`, or counted from page
 2) leaves the first page's header or footer empty. Two numbering settings
 have no Word equivalent and are reported: a band that starts after the
 second page is written on every page but the first, and page numbers that do
-not count from 1 on the first page are numbered from 1 by Word. A band that
-reaches past the page margin is reported too: the page lets it overlap the
+not count from 1 on the first page are numbered from 1 by Word. A band alone of
+its kind that reaches past the page margin is reported too: the page lets it overlap the
 body, Word moves the body clear of it. A band and a page zone of the same
-kind share Word's one header or footer, the band's line first.
+kind share Word's one header or footer. A `{date}` token keeps a
+deterministic export byte-identical only within one day unless
+`-Dgraphcompose.renderDate` pins it, as for the PDF.
 
 A page zone (`session.chrome().zone(...)`) exports as a real
 Word header or footer part, with the page number as a live field, and it

@@ -281,7 +281,15 @@ class DocxDrawingsTest {
     private static long relativeHeight(String anchor) {
         Matcher matcher = Pattern.compile("relativeHeight=\"(\\d+)\"").matcher(anchor);
         assertThat(matcher.find()).isTrue();
-        return Long.parseLong(matcher.group(1));
+        String value = matcher.group(1);
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            assertThat(false)
+                    .as("Invalid relativeHeight value '%s' in anchor: %s", value, anchor)
+                    .isTrue();
+            throw e;
+        }
     }
 
     @Test

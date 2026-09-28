@@ -528,9 +528,8 @@ class DocxDrawingsTest {
                         .add(new ShapeContainerBuilder().name("Badge").circle(40).fillColor(ACCENT)
                                 .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("JR").build())
                                 .build()))))) {
-            String anchor = anchors(document.getDocument().xmlText()).get(0);
-
             assertThat(anchors(document.getDocument().xmlText())).hasSize(1);
+            String anchor = anchors(document.getDocument().xmlText()).get(0);
             assertThat(anchor).contains("behindDoc=\"0\"").contains("prst=\"ellipse\"")
                     .contains("<w:txbxContent>").contains(">JR<").contains("anchor=\"ctr\"")
                     // Unwrapped, Word shrinks the box to the width of its letters.
@@ -605,12 +604,51 @@ class DocxDrawingsTest {
                         .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("A&B").build())
                         .build())))) {
             assertThat(allText(document)).contains("A&B");
-            assertThat(document.getDocument().xmlText()).contains("A&amp;B</w:t>");
+            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .contains("<w:txbxContent>").contains("A&amp;B</w:t>");
         }
     }
 
     @Test
-    void aRowWithoutADrawingIsNotHeldToThePagesHeight() throws Exception {
+    void aBadgesTextReachesTheEdgesOfItsOutline() throws Exception {
+        // An ellipse wraps its text in the square inscribed in it: without insets reaching out
+        // to the outline, Word broke "MWM" in a 36pt disc after "MW".
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .add(new ShapeContainerBuilder().name("Disc").circle(36).fillColor(ACCENT)
+                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("MW").build())
+                        .build())))) {
+            long reach = Units.toEMU(36 * (1 - Math.sqrt(0.5)) / 2);
+
+            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .as("reaching out by (1 - cos 45°) / 2 of the disc's width on every side")
+                    .contains("lIns=\"-" + reach + "\"").contains("rIns=\"-" + reach + "\"")
+                    .contains("tIns=\"-" + reach + "\"").contains("bIns=\"-" + reach + "\"");
+        }
+    }
+
+    @Test
+    void aBadgeItsShapeCannotSetAsThePageDoesIsWrittenAsBefore() throws Exception {
+        com.demcha.compose.document.style.DocumentTextStyle gold = com.demcha.compose.document.style.DocumentTextStyle
+                .builder().color(DocumentColor.rgb(200, 160, 40)).build();
+        List<Consumer<ShapeContainerBuilder>> badges = List.of(
+                // set in a corner, where the shape would centre it
+                badge -> badge.topLeft(new ParagraphBuilder().text("Q1").build()),
+                // two styles, where the shape holds one run
+                badge -> badge.center(new ParagraphBuilder().inlineText("J").inlineText("R", gold).build()),
+                // right to left, which the shape's paragraph does not say
+                badge -> badge.center(new ParagraphBuilder().text("AB")
+                        .direction(com.demcha.compose.document.node.TextDirection.RTL).build()));
+        for (Consumer<ShapeContainerBuilder> spec : badges) {
+            ShapeContainerBuilder badge = new ShapeContainerBuilder().name("Card").roundedRect(80, 40, 6).fillColor(ACCENT);
+            spec.accept(badge);
+            try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page.add(badge.build())))) {
+                assertThat(document.getDocument().xmlText()).doesNotContain("txbxContent");
+            }
+        }
+    }
+
+    @Test
+    void aRowOutsideAPaintedPanelIsNotHeldToThePagesHeight() throws Exception {
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addRow("Pair", row -> row.columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1),
                                 com.demcha.compose.document.style.DocumentRowColumn.weight(1))

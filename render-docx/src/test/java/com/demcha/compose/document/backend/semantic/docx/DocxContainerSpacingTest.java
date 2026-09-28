@@ -130,6 +130,37 @@ class DocxContainerSpacingTest {
     }
 
     @Test
+    void aCardsBottomBorderComesOutOfTheSpaceAboveTheParagraphAfterIt() throws Exception {
+        // With no margin to take it from, the border stood below the card and the paragraph
+        // after it landed a border lower than on the page.
+        long filled = spaceAboveTheParagraphAfterACard(null, 0);
+        long outlined = spaceAboveTheParagraphAfterACard(DocumentStroke.of(DocumentColor.rgb(90, 90, 90), 2), 0);
+
+        assertThat(filled - outlined).isEqualTo(2 * 20L);
+    }
+
+    @Test
+    void aCardsBottomMarginTakesItsBorderFirst() throws Exception {
+        long filled = spaceAboveTheParagraphAfterACard(null, 5);
+        long outlined = spaceAboveTheParagraphAfterACard(DocumentStroke.of(DocumentColor.rgb(90, 90, 90), 2), 5);
+
+        assertThat(filled - outlined).as("the border, out of the margin; nothing more").isEqualTo(2 * 20L);
+    }
+
+    private static long spaceAboveTheParagraphAfterACard(DocumentStroke stroke, double marginBelow) throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addSection("Page", body -> body
+                        .spacing(12)
+                        .addSection("Card", card -> card(card, stroke)
+                                .margin(new DocumentInsets(0, 0, marginBelow, 0)).addParagraph("Card"))
+                        .addParagraph("After")))) {
+            XWPFParagraph after = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().equals("After")).findFirst().orElseThrow();
+            return before(after);
+        }
+    }
+
+    @Test
     void aCardsBorderIsNotTakenFromItsNeighbourInTheNextCell() throws Exception {
         // Two cards side by side in a row stand at one height on the page; the first one's
         // bottom border is below it, not above the second.

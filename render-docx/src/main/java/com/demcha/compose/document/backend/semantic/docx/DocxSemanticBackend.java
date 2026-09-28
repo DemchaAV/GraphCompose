@@ -277,9 +277,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * How far the bottom border of the panel just written stands below its box beyond the space
-     * the panel holds under itself — taken from the space above the next panel, see
-     * {@link #writePanelPiece}. A row carries the most any of its cells ends with; a paragraph,
-     * a page break or a new section clears it.
+     * the panel holds under itself, see {@link #writePanelPiece}. The next panel, paragraph or
+     * table takes it from the space above itself; a row carries the most any of its cells ends
+     * with; a page break or a new section clears it.
      */
     private double borderBelow;
 
@@ -1909,9 +1909,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             // On a painted surface — a panel, or a filled cell — whose shading both editors paint
             // over what lies behind the text, a shape stands in front unless it frames a line of
-            // text or a picture on its page: a template sets an icon beside its heading through a stack of one layer, which
-            // kept every payment panel's heading icon behind its shading. Elsewhere the overlays
-            // it sits in decide (drawsInFront).
+            // text or a picture on its page: a template sets an icon beside its heading through a
+            // stack of one layer, which kept every payment panel's heading icon behind its
+            // shading. Elsewhere the overlays it sits in decide (drawsInFront).
             boolean inFront = surfaceBehind != null && !Double.isNaN(canvasHeight)
                     ? !framesText(fragment, layout.textOnPage(fragment.pageIndex()))
                     : overlayFront;
@@ -3313,7 +3313,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyInset(para);
         // Everything owed above this paragraph — the space the one before it holds below
         // itself, and any container edge — is written here, on one side of the gap.
-        double above = carriedSpacingBefore + pendingSpacingAfter;
+        // A card's border standing below the card took as much of the gap (writePanelPiece).
+        double above = Math.max(0, carriedSpacingBefore + pendingSpacingAfter - borderBelow);
+        borderBelow = 0;
         // Text that hung below the band above this paragraph already took that much of the
         // gap (see writeLinePair); whatever the owed space cannot give back, the paragraph's
         // own margin gives (applyVerticalSpacing).
@@ -3328,7 +3330,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
-        borderBelow = 0;
         lastBodyParagraph = para;
         anchors.paragraphOn(currentPage, para, currentCell == null);
         return para;
@@ -4786,6 +4787,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             || Double.isNaN(canvasHeight)) {
             return null;
         }
+        // The shape centres one run of text left to right in a rectangle, a rounded rectangle
+        // or an ellipse: a layer set in a corner, initials in two styles, a right-to-left line
+        // or an outline drawn as a path is written as before, its text in the flow.
+        com.demcha.compose.document.node.LayerStackNode.Layer layer = badge.layers().get(0);
+        if (layer.align() != com.demcha.compose.document.node.LayerAlign.CENTER
+            || layer.offsetX() != 0 || layer.offsetY() != 0
+            || badge.outline() instanceof com.demcha.compose.document.style.ShapeOutline.Polygon
+            || badge.outline() instanceof com.demcha.compose.document.style.ShapeOutline.Path
+            || paragraph.direction() != TextDirection.LTR
+            || paragraph.inlineRuns() != null && paragraph.inlineRuns().stream()
+                    .map(run -> run instanceof InlineTextRun text ? text.textStyle() : null)
+                    .distinct().count() > 1) {
+            return null;
+        }
         // A link, a bookmark or an anchor on the text is the paragraph's, which a shape does not
         // carry: such a badge is written as before.
         if (paragraph.linkTarget() != null || paragraph.bookmarkOptions() != null
@@ -4855,7 +4870,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP.Factory.newInstance();
         XWPFParagraph para = new XWPFParagraph(markup, document);
         para.setAlignment(ParagraphAlignment.CENTER);
-        CTSpacing spacing = markup.getPPr().isSetSpacing() ? markup.getPPr().getSpacing() : markup.getPPr().addNewSpacing();
+        CTSpacing spacing = markup.getPPr().isSetSpacing()
+                ? markup.getPPr().getSpacing() : markup.getPPr().addNewSpacing();
         spacing.setBefore(BigInteger.ZERO);
         spacing.setAfter(BigInteger.ZERO);
         DocumentTextStyle style = paragraph.textStyle();
@@ -6880,9 +6896,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private XWPFTable newTable(XWPFDocument document, int rows, int columns) {
         resumeHere();
-        // Text hanging below the band above took that much of the gap above this table.
-        pendingSpacingAfter = Math.max(0, pendingSpacingAfter - hangingBelow);
+        // Text hanging below the band above took that much of the gap above this table, and
+        // so did a card's border standing below the card (writePanelPiece).
+        pendingSpacingAfter = Math.max(0, pendingSpacingAfter - hangingBelow - borderBelow);
         hangingBelow = 0;
+        borderBelow = 0;
         if (currentCell == null ? endsWithATable(document.getBodyElements()) : cellEndsWithItsTableCloser()) {
             separateFromTheTableAbove(document);
         }

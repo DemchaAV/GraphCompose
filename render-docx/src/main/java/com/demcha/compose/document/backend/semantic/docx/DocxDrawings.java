@@ -343,13 +343,32 @@ final class DocxDrawings {
      * <p>The text wraps in the shape's box, which the initials fit. Left unwrapped, Word sized
      * the shape to its text: {@code ObsidianInvoice}'s 35.5pt disc came out 16.9pt wide round its
      * "K".</p>
+     *
+     * <p>A preset wraps its text in a rectangle of its own inside the shape — an ellipse the
+     * square inscribed in it, a rounded rectangle its box less part of each corner — where the
+     * page sets the initials across the outline's whole width. Word broke "MWM" in a 36pt disc
+     * after "MW". The insets reach out by as much, so the text wraps at the shape's edges.</p>
      */
     private static String textOf(Shape shape) {
         if (shape.text() == null) {
             return "<wps:bodyPr/>";
         }
+        double across = 0;
+        double down = 0;
+        if (shape.kind() == Kind.ELLIPSE) {
+            // The inscribed rectangle stands in by (1 - cos 45°) / 2 of each side.
+            across = shape.width() * (1 - Math.sqrt(0.5)) / 2;
+            down = shape.height() * (1 - Math.sqrt(0.5)) / 2;
+        } else if (shape.kind() == Kind.ROUND_RECT) {
+            // By the corner's radius, as the preset caps it, times 1 - cos 45°.
+            double corner = Math.min(shape.radius(), Math.min(shape.width(), shape.height()) / 2);
+            across = corner * (1 - Math.sqrt(0.5));
+            down = across;
+        }
+        String sides = " lIns=\"" + -Units.toEMU(across) + "\" tIns=\"" + -Units.toEMU(down)
+                       + "\" rIns=\"" + -Units.toEMU(across) + "\" bIns=\"" + -Units.toEMU(down) + "\"";
         return "<wps:txbx><w:txbxContent>" + shape.text() + "</w:txbxContent></wps:txbx>"
-               + "<wps:bodyPr rot=\"0\" vert=\"horz\" wrap=\"square\" lIns=\"0\" tIns=\"0\" rIns=\"0\" bIns=\"0\""
+               + "<wps:bodyPr rot=\"0\" vert=\"horz\" wrap=\"square\"" + sides
                + " anchor=\"ctr\" anchorCtr=\"0\"><a:noAutofit/></wps:bodyPr>";
     }
 

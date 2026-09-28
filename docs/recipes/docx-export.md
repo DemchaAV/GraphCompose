@@ -549,9 +549,11 @@ It flows with the text, and a reader moves or deletes it as a line of the
 document. A dashed line keeps a dash, in Word's own lengths; a translucent one is
 flattened against what lies under it, since a border is opaque. Three limits:
 
-- A line laid over something else — a layer in a layer stack or a canvas, such as
-  a skill meter's track and the fill over it — is not a rule in the flow, and is
-  drawn as a shape like other drawing.
+- A line laid over something else — a layer in a layer stack of two or more layers
+  or a canvas, such as a skill meter's track and the fill over it — is not a rule in
+  the flow, and is drawn as a shape like other drawing. A layer stack of one layer lays
+  nothing over anything, and a line among the text in it is a rule; its other shapes, and
+  a line in a stack that holds nothing but drawing, stay drawing.
 - A rule in a page zone is not written, as a zone takes paragraphs, fields and
   spacers.
 - Word draws one border for consecutive paragraphs whose borders and indents are

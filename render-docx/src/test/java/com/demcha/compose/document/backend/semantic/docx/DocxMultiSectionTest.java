@@ -18,7 +18,6 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBookmark;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTHdrFtrRef;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTHyperlink;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSimpleField;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 
 import java.io.ByteArrayInputStream;
@@ -323,8 +322,10 @@ class DocxMultiSectionTest {
     private static List<String> fieldInstructions(XWPFFooter footer) {
         List<String> instructions = new ArrayList<>();
         for (XWPFParagraph paragraph : footer.getParagraphs()) {
-            for (CTSimpleField field : paragraph.getCTP().getFldSimpleList()) {
-                instructions.add(field.getInstr().trim());
+            for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run : paragraph.getCTP().getRList()) {
+                for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText code : run.getInstrTextList()) {
+                    instructions.add(code.getStringValue().trim());
+                }
             }
         }
         return instructions;

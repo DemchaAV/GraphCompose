@@ -8,6 +8,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Page numbers keep their colour, panels their height, and a document ending in a table no
+  page of its own.** A page field was written as a simple field, whose result both editors
+  repaint without the run's style: `MeteredInvoice`'s white page number on its navy footer band
+  came out in the document's ink, so the band read "Page of". It is now a complex field, every
+  run of it styled. A painted panel that stands on one page is written with the page's height as its
+  minimum, less its margins and border, as a table row is: what makes a panel taller than
+  its text — an inner row's padding, an icon drawn where the page puts it — is not in the cell,
+  and `MerchantInvoice`'s due-date card closed from 59.4pt to its text's 26 with its calendar
+  hanging below it. The empty paragraph Word needs after a closing table has its mark hidden, so
+  a table ending a point from the page's foot — `ModernReceipt`'s QR code — no longer opens a
+  blank page. In LibreOffice, `TealPulse` fits on one page as the page does, `SerifHeadline` on
+  two rather than three, and `ModernReceipt`'s drift falls from 16.9pt to 2.
 - **Table rows and the text in composed cells keep the page's height.** A paragraph
   composed in a table cell has no path of its own — its lines are laid out among its table's
   fragments — so the DOCX export wrote it at the face's own line height: a 9pt Gothic A1 line the

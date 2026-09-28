@@ -42,11 +42,12 @@ class DocxTextBandTest {
             String xml = footer._getHdrFtr().xmlText();
 
             assertThat(footer.getText()).contains("Thank you").contains("Page ").contains(" of ");
-            assertThat(xml).contains("w:instr=\" PAGE \"").contains("w:instr=\" NUMPAGES \"")
+            assertThat(xml).containsPattern("<w:instrText[^>]*> PAGE </w:instrText>")
+                    .containsPattern("<w:instrText[^>]*> NUMPAGES </w:instrText>")
                     .as("the right slot stands at a right tab against the right margin")
                     .contains("w:val=\"right\"");
             assertThat(xml).as("the total reads the layout's count before Word updates it")
-                    .containsPattern("NUMPAGES \"><w:r>.*?<w:t>2</w:t>");
+                    .containsPattern("NUMPAGES </w:instrText>.*?<w:t>2</w:t>");
         }
     }
 
@@ -143,12 +144,35 @@ class DocxTextBandTest {
     }
 
     @Test
+    void aPageNumberKeepsItsBandsColourWhenTheEditorRepaintsIt() throws Exception {
+        // A simple field's result is repainted without its run's style: a white number on a dark
+        // band came out in the document's ink. Every run of a complex field carries the style.
+        try (XWPFDocument document = export(null, session -> session.footer(DocumentHeaderFooter.builder()
+                .zone(DocumentHeaderFooterZone.FOOTER).textColor(DocumentColor.WHITE)
+                .rightText("Page {page} of {pages}")
+                .build()))) {
+            String xml = only(document.getFooterList())._getHdrFtr().xmlText();
+
+            assertThat(xml).doesNotContain("fldSimple");
+            java.util.regex.Matcher runs = java.util.regex.Pattern.compile("<w:r>(.*?)</w:r>").matcher(xml);
+            int fieldRuns = 0;
+            while (runs.find()) {
+                if (runs.group(1).contains("fldChar") || runs.group(1).contains("instrText")) {
+                    fieldRuns++;
+                    assertThat(runs.group(1)).as(runs.group(1)).contains("w:color w:val=\"FFFFFF\"");
+                }
+            }
+            assertThat(fieldRuns).as("begin, code, separator and end of two fields").isEqualTo(8);
+        }
+    }
+
+    @Test
     void aRomanNumberedBandAsksWordForRomanNumbers() throws Exception {
         try (XWPFDocument document = export(null, session -> session.footer(DocumentHeaderFooter.builder()
                 .zone(DocumentHeaderFooterZone.FOOTER).rightText("{page}")
                 .numbering(DocumentPageNumbering.builder().style(DocumentPageNumberStyle.LOWER_ROMAN).build())
                 .build()))) {
-            assertThat(only(document.getFooterList())._getHdrFtr().xmlText()).contains("w:instr=\" PAGE \\* roman \"");
+            assertThat(only(document.getFooterList())._getHdrFtr().xmlText()).contains("> PAGE \\* roman </w:instrText>");
         }
     }
 

@@ -34,6 +34,10 @@ import java.util.Locale;
  * which is where the text around it stands too as long as the text lands where the page sets it.
  * A reader who then edits the text moves the text, not the drawing — a drawing is decoration,
  * and Word treats a floating shape the same way.</p>
+ *
+ * <p>A picture a badge holds is drawn the same way, over the badge: written in the flow, as a
+ * paragraph of its own, it stood on its own line above the title beside the badge instead of in
+ * the middle of the circle.</p>
  */
 final class DocxDrawings {
 
@@ -47,7 +51,9 @@ final class DocxDrawings {
         ELLIPSE("ellipse"),
         LINE("line"),
         /** A path or a polygon, drawn as custom geometry (see {@link DocxCustomGeometry}). */
-        CUSTOM(null);
+        CUSTOM(null),
+        /** A picture the document holds, drawn over its box. */
+        PICTURE(null);
 
         private final String preset;
 
@@ -72,12 +78,19 @@ final class DocxDrawings {
      * @param page        the page the layout drew it on, from 0
      * @param path        a custom shape's outline in its box's unit square, empty for a preset
      * @param front       whether it is drawn in front of the text rather than behind it
+     * @param picture     a picture's relationship in the document part, {@code null} for a shape
      */
     record Shape(Kind kind, double x, double top, double width, double height, Color fill,
                  Color stroke, double strokeWidth, double radius, boolean flipH, int page,
-                 List<DocumentPathSegment> path, boolean front) {
+                 List<DocumentPathSegment> path, boolean front, String picture) {
         Shape {
             path = path == null ? List.of() : List.copyOf(path);
+        }
+
+        Shape(Kind kind, double x, double top, double width, double height, Color fill,
+              Color stroke, double strokeWidth, double radius, boolean flipH, int page,
+              List<DocumentPathSegment> path, boolean front) {
+            this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front, null);
         }
 
         Shape(Kind kind, double x, double top, double width, double height, Color fill,
@@ -93,7 +106,18 @@ final class DocxDrawings {
 
         /** The same shape in front of the text rather than behind it. */
         Shape inFront() {
-            return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, true);
+            return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, true,
+                    picture);
+        }
+
+        /**
+         * A picture the document holds, measured from the page's top-left corner.
+         *
+         * @param relationship the picture's relationship in the document part
+         */
+        static Shape picture(double x, double top, double width, double height, int page, String relationship) {
+            return new Shape(Kind.PICTURE, x, top, width, height, null, null, 0, 0, false, page, List.of(), false,
+                    relationship);
         }
     }
 
@@ -209,7 +233,7 @@ final class DocxDrawings {
     }
 
     /**
-     * A shape as a drawing anchored to the page, behind the text.
+     * A shape or a picture as a drawing anchored to the page, behind the text or in front of it.
      *
      * @param shape the shape
      * @param id    an identifier for the drawing, unique in the document
@@ -219,24 +243,16 @@ final class DocxDrawings {
     static CTDrawing drawing(Shape shape, long id, int order) {
         long cx = Units.toEMU(shape.width());
         long cy = Units.toEMU(shape.height());
-        boolean filled = shape.fill() != null && shape.fill().getAlpha() > 0;
-        String geometry = shape.kind() == Kind.CUSTOM
-                ? DocxCustomGeometry.xml(shape.path(), filled)
-                : "<a:prstGeom prst=\"" + shape.kind().preset + "\"><a:avLst>"
-                  + (shape.kind() == Kind.ROUND_RECT ? roundness(shape) : "")
-                  + "</a:avLst></a:prstGeom>";
-        String fill = filled
-                ? "<a:solidFill>" + colour(shape.fill()) + "</a:solidFill>"
-                : "<a:noFill/>";
-        String outline = shape.stroke() == null || shape.stroke().getAlpha() == 0 || !(shape.strokeWidth() > 0)
-                ? "<a:ln><a:noFill/></a:ln>"
-                : "<a:ln w=\"" + Units.toEMU(shape.strokeWidth()) + "\"><a:solidFill>"
-                  + colour(shape.stroke()) + "</a:solidFill></a:ln>";
+        boolean picture = shape.kind() == Kind.PICTURE;
+        String graphic = picture ? pictureGraphic(shape, id, cx, cy) : shapeGraphic(shape, cx, cy);
         String xml = "<w:drawing"
                 + " xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\""
                 + " xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\""
                 + " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\""
-                + " xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
+                + (picture
+                   ? " xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\""
+                     + " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"
+                   : " xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">")
                 + "<wp:anchor distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" simplePos=\"0\""
                 + " relativeHeight=\"" + stackHeight(order) + "\" behindDoc=\"" + (shape.front() ? 0 : 1)
                 + "\" locked=\"0\""
@@ -251,13 +267,7 @@ final class DocxDrawings {
                 + "<wp:wrapNone/>"
                 + "<wp:docPr id=\"" + id + "\" name=\"Drawing " + (order + 1) + "\"/>"
                 + "<wp:cNvGraphicFramePr/>"
-                + "<a:graphic><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
-                + "<wps:wsp><wps:cNvSpPr/><wps:spPr>"
-                + "<a:xfrm" + (shape.flipH() ? " flipH=\"1\"" : "") + "><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + cx
-                + "\" cy=\"" + cy + "\"/></a:xfrm>"
-                + geometry + fill + outline
-                + "</wps:spPr><wps:bodyPr/></wps:wsp>"
-                + "</a:graphicData></a:graphic>"
+                + graphic
                 + "</wp:anchor></w:drawing>";
         // Parsed as the drawing's content rather than a document around it: set onto a run's
         // new w:drawing, a parsed document would nest a second w:drawing inside the first, and
@@ -269,6 +279,42 @@ final class DocxDrawings {
         } catch (XmlException failure) {
             throw new IllegalStateException("could not build a drawing", failure);
         }
+    }
+
+    /** A picture filling its box, as Word writes one. */
+    private static String pictureGraphic(Shape shape, long id, long cx, long cy) {
+        return "<a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">"
+                + "<pic:pic><pic:nvPicPr><pic:cNvPr id=\"" + id + "\" name=\"Picture " + id + "\"/>"
+                + "<pic:cNvPicPr><a:picLocks noChangeAspect=\"1\"/></pic:cNvPicPr></pic:nvPicPr>"
+                + "<pic:blipFill><a:blip r:embed=\"" + shape.picture() + "\"/>"
+                + "<a:stretch><a:fillRect/></a:stretch></pic:blipFill>"
+                + "<pic:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + cx + "\" cy=\"" + cy + "\"/></a:xfrm>"
+                + "<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr>"
+                + "</pic:pic></a:graphicData></a:graphic>";
+    }
+
+    /** A shape filled and outlined as on the page. */
+    private static String shapeGraphic(Shape shape, long cx, long cy) {
+        boolean filled = shape.fill() != null && shape.fill().getAlpha() > 0;
+        String geometry = shape.kind() == Kind.CUSTOM
+                ? DocxCustomGeometry.xml(shape.path(), filled)
+                : "<a:prstGeom prst=\"" + shape.kind().preset + "\"><a:avLst>"
+                  + (shape.kind() == Kind.ROUND_RECT ? roundness(shape) : "")
+                  + "</a:avLst></a:prstGeom>";
+        String fill = filled
+                ? "<a:solidFill>" + colour(shape.fill()) + "</a:solidFill>"
+                : "<a:noFill/>";
+        String outline = shape.stroke() == null || shape.stroke().getAlpha() == 0 || !(shape.strokeWidth() > 0)
+                ? "<a:ln><a:noFill/></a:ln>"
+                : "<a:ln w=\"" + Units.toEMU(shape.strokeWidth()) + "\"><a:solidFill>"
+                  + colour(shape.stroke()) + "</a:solidFill></a:ln>";
+        return "<a:graphic><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
+                + "<wps:wsp><wps:cNvSpPr/><wps:spPr>"
+                + "<a:xfrm" + (shape.flipH() ? " flipH=\"1\"" : "") + "><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + cx
+                + "\" cy=\"" + cy + "\"/></a:xfrm>"
+                + geometry + fill + outline
+                + "</wps:spPr><wps:bodyPr/></wps:wsp>"
+                + "</a:graphicData></a:graphic>";
     }
 
     /** A rounded rectangle's corner, as the preset states it: a share of its shorter side. */

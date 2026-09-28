@@ -214,14 +214,14 @@ final class DocxLayerColumns {
      * the blocks above it. Drawing writes no paragraph and is not content here: a circle's box
      * would otherwise decide where the text in it starts.</p>
      *
-     * @param stack   the stack
+     * @param stack   the stack: a layer stack, or a shape container, whose layers are its children
      * @param layout  where the layout placed the stack and its layers
      * @param drawing whether a leaf is drawing this export does not write
      * @return the band, or {@code null}
      */
-    static Band band(LayerStackNode stack, DocxLayoutMetrics layout, Predicate<DocumentNode> drawing) {
+    static Band band(DocumentNode stack, DocxLayoutMetrics layout, Predicate<DocumentNode> drawing) {
         PlacedNode box = layout.placement(stack);
-        if (box == null || stack.layers().size() < 2) {
+        if (box == null || stack.children().size() < 2) {
             return null;
         }
         List<DocumentNode> layers = stack.children();

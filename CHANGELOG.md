@@ -8,15 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
-- **Table rows and the text in composed cells keep the page's height in Word.** A paragraph
+- **Table rows and the text in composed cells keep the page's height.** A paragraph
   composed in a table cell has no path of its own — its lines are laid out among its table's
   fragments — so the DOCX export wrote it at the face's own line height: a 9pt Gothic A1 line the
   page sets at 9.1pt came out 13.4pt. Such a paragraph is now paired with its table's fragment,
-  by text and in layout order, and takes its measured line. A row is also written at least as
-  tall as the page made it (`w:trHeight`, `atLeast`), less what its cells hold above and below
-  their content, which LibreOffice adds to the written height: a row whose content is a composed
-  row with padding of its own — `MerchantInvoice`'s 37.7pt line items — had closed to 31.3pt,
-  and the icons the table draws where the page puts them fell a row further out of line each row.
+  by text and in layout order, and takes its measured line. A row is also written with a
+  minimum height (`w:trHeight`, `atLeast`): the page's, less what its cells hold above and below
+  their content, which LibreOffice adds to the written height and Word counts within it. The row
+  then matches the page in LibreOffice, and in Word wherever its cells carry no margins of their
+  own: a row whose content is a composed row with padding of its own — `MerchantInvoice`'s
+  37.7pt line items — had closed to 31.3pt, and the icons the table draws where the page puts
+  them fell a row further out of line each row.
   A paragraph's mark is sized as the text that ends its last line rather than as the paragraph's
   own style when runs carry their own: a contact line's mark was 14pt Helvetica beside 8.5pt text,
   and grew every such line. In LibreOffice, `MerchantInvoice`'s drift falls from 28.5pt to 8.5pt,

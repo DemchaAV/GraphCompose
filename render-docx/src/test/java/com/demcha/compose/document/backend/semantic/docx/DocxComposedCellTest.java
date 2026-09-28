@@ -3,6 +3,7 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -315,6 +316,67 @@ class DocxComposedCellTest {
                 .compile("<w:trHeight w:val=\"(\\d+)\" w:hRule=\"atLeast\"/>").matcher(body);
         assertThat(height.find()).as("the row's height is written").isTrue();
         assertThat(Integer.parseInt(height.group(1))).as("the text and 24pt of padding").isGreaterThan(24 * 20 + 8 * 20);
+    }
+
+    @Test
+    void aRowsHeightIsWrittenLessTheMarginsItsCellsHold() throws Exception {
+        // Two rows the page makes equally tall: padded inside the composed content, and padded as
+        // the cell. LibreOffice adds a cell's margins to the written height, so the second row's
+        // is written less them.
+        DocumentInsets twelve = new DocumentInsets(12, 0, 12, 0);
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page
+                    .addTable(t -> t.columns(DocumentTableColumn.fixed(200))
+                            .rowCells(DocumentTableCell.node(new com.demcha.compose.document.dsl.SectionBuilder()
+                                    .name("Padded").padding(twelve)
+                                    .addParagraph(p -> p.text("Row")).build())
+                                    .withStyle(com.demcha.compose.document.table.DocumentTableStyle.builder()
+                                            .padding(DocumentInsets.zero()).build())))
+                    .addTable(t -> t.columns(DocumentTableColumn.fixed(200))
+                            .rowCells(DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder()
+                                    .text("Row").build())
+                                    .withStyle(com.demcha.compose.document.table.DocumentTableStyle.builder()
+                                            .padding(twelve).build()))));
+            byte[] docx = session.export(new DocxSemanticBackend());
+            try (XWPFDocument document = new XWPFDocument(new java.io.ByteArrayInputStream(docx))) {
+                int inside = heightOf(document.getTables().get(0));
+                int asTheCell = heightOf(document.getTables().get(1));
+
+                assertThat(inside - asTheCell).as("the second cell's 24pt of margins").isEqualTo(24 * 20);
+            }
+        }
+    }
+
+    @Test
+    void aParagraphHoldingAPictureKeepsItsOwnLineFromALaterOneOfTheSameText() throws Exception {
+        // Its laid-out text is its text runs'. Left unpaired, it left its 8pt line for the 16pt
+        // "Paid" after it, whose text was then clipped to that line.
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        String body = export(report, List.of(
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder()
+                        .inlineImage(DocumentImageData.fromBytes(pngBytes()), 6, 6)
+                        .inlineText("Paid", com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(8))
+                        .build()),
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Paid")
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(16)).build())));
+
+        java.util.regex.Matcher paragraph = java.util.regex.Pattern.compile("<w:p>(?:(?!</w:p>).)*>Paid<").matcher(body);
+        String last = null;
+        while (paragraph.find()) {
+            last = paragraph.group();
+        }
+        java.util.regex.Matcher line = java.util.regex.Pattern.compile("w:line=\"(\\d+)\"").matcher(last);
+        assertThat(line.find()).isTrue();
+        assertThat(Integer.parseInt(line.group(1))).as("a 16pt line, not the 8pt one").isGreaterThan(14 * 20);
+    }
+
+    private static int heightOf(XWPFTable table) {
+        java.util.regex.Matcher height = java.util.regex.Pattern
+                .compile("<w:trHeight w:val=\"(\\d+)\" w:hRule=\"atLeast\"/>")
+                .matcher(table.getRow(0).getCtRow().xmlText());
+        assertThat(height.find()).isTrue();
+        return Integer.parseInt(height.group(1));
     }
 
     @Test

@@ -660,28 +660,22 @@ final class DocxLayoutMetrics {
             if (paragraphs.isEmpty()) {
                 continue;
             }
-            List<PlacedFragment> laidOut = new ArrayList<>();
-            List<String> texts = new ArrayList<>();
+            // One queue per text, in layout order: each paragraph takes the first of its own text
+            // still waiting, so pairing a table is linear in its cells.
+            Map<String, java.util.ArrayDeque<PlacedFragment>> byText = new HashMap<>();
             for (PlacedFragment fragment : fragmentsOf(table)) {
                 if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
                     StringBuilder text = new StringBuilder();
                     paragraph.lines().forEach(line -> text.append(line.text()));
-                    laidOut.add(fragment);
-                    texts.add(comparable(text.toString()));
+                    byText.computeIfAbsent(comparable(text.toString()), key -> new java.util.ArrayDeque<>())
+                            .add(fragment);
                 }
             }
-            boolean[] taken = new boolean[laidOut.size()];
             for (ParagraphNode paragraph : paragraphs) {
                 String text = comparable(authoredText(paragraph));
-                if (text.isEmpty()) {
-                    continue;
-                }
-                for (int index = 0; index < laidOut.size(); index++) {
-                    if (!taken[index] && texts.get(index).equals(text)) {
-                        taken[index] = true;
-                        matched.put(paragraph, laidOut.get(index));
-                        break;
-                    }
+                java.util.ArrayDeque<PlacedFragment> waiting = text.isEmpty() ? null : byText.get(text);
+                if (waiting != null && !waiting.isEmpty()) {
+                    matched.put(paragraph, waiting.poll());
                 }
             }
         }
@@ -716,20 +710,25 @@ final class DocxLayoutMetrics {
         if (paragraph.inlineRuns() == null || paragraph.inlineRuns().isEmpty()) {
             return paragraph.text() == null ? "" : paragraph.text();
         }
+        // As the layout writes a line's text: a run's text and a chip's, and nothing for a
+        // picture, an icon or a shape. Leaving the paragraph out instead left its fragment for a
+        // later paragraph of the same text to take, with this one's line.
         StringBuilder text = new StringBuilder();
         for (InlineRun run : paragraph.inlineRuns()) {
-            if (!(run instanceof InlineTextRun textRun)) {
-                // A picture or a chip lays out as more than its text; nothing to compare.
-                return "";
+            if (run instanceof InlineTextRun textRun && textRun.text() != null) {
+                text.append(textRun.text());
+            } else if (run instanceof com.demcha.compose.document.node.InlineHighlightRun chip && chip.text() != null) {
+                text.append(chip.text());
             }
-            text.append(textRun.text());
         }
         return text.toString();
     }
 
+    private static final java.util.regex.Pattern WHITESPACE = java.util.regex.Pattern.compile("\\s+");
+
     /** Text as both sides can agree on it: wrapping drops spaces, and a style may set capitals. */
     private static String comparable(String text) {
-        return text.replaceAll("\\s+", "").toLowerCase(java.util.Locale.ROOT);
+        return WHITESPACE.matcher(text).replaceAll("").toLowerCase(java.util.Locale.ROOT);
     }
 
     /**

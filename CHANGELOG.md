@@ -12,7 +12,7 @@ follow semantic versioning; release dates are ISO 8601.
   page of its own.** A page field was written as a simple field, whose result both editors
   repaint without the run's style: `MeteredInvoice`'s white page number on its navy footer band
   came out in the document's ink, so the band read "Page of". It is now a complex field, every
-  run of it styled. A painted panel that stands on one page is written with the page's height as its
+  run of it styled, and so is a page reference's `PAGEREF`. A painted panel that stands on one page is written with the page's height as its
   minimum, less its margins and border, as a table row is: what makes a panel taller than
   its text — an inner row's padding, an icon drawn where the page puts it — is not in the cell,
   and `MerchantInvoice`'s due-date card closed from 59.4pt to its text's 26 with its calendar

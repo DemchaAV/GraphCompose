@@ -78,7 +78,6 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFHeaderFooter;
 import org.apache.poi.xwpf.model.XWPFHeaderFooterPolicy;
 import org.apache.xmlbeans.impl.xb.xmlschema.SpaceAttribute;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSimpleField;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STFldCharType;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTabStop;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTabJc;
@@ -742,15 +741,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Where the table ends a point from the page's foot, that point does not fit, and the
      * paragraph opened a page of its own: {@code ModernReceipt}'s QR code ends 0.5pt above the
      * margin, and once its panels held the page's height the receipt ran to a blank second page
-     * in LibreOffice. A hidden mark is not laid out. A paragraph with anything in it — a run, a
-     * drawing's anchor — or carrying a section's properties is left as it is.</p>
+     * in LibreOffice. A hidden mark is not laid out. Only a paragraph that is structure alone is
+     * hidden: one holding anything — a run, a field, a drawing's anchor, a bookmark — or drawing
+     * anything — a rule is a paragraph's border, a band its shading — or carrying a section's
+     * properties is left as it is.</p>
      */
     private static void hideTheClosingMark(XWPFDocument document) {
         List<IBodyElement> body = document.getBodyElements();
         if (body.size() < 2 || !(body.get(body.size() - 1) instanceof XWPFParagraph last)
-            || !(body.get(body.size() - 2) instanceof XWPFTable)
-            || last.getCTP().sizeOfRArray() > 0 || last.getCTP().sizeOfHyperlinkArray() > 0
-            || last.getCTP().isSetPPr() && last.getCTP().getPPr().isSetSectPr()) {
+            || !(body.get(body.size() - 2) instanceof XWPFTable)) {
+            return;
+        }
+        org.w3c.dom.NodeList children = last.getCTP().getDomNode().getChildNodes();
+        for (int index = 0; index < children.getLength(); index++) {
+            org.w3c.dom.Node child = children.item(index);
+            if (child.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE && !"pPr".equals(child.getLocalName())) {
+                return;
+            }
+        }
+        if (last.getCTP().isSetPPr() && (last.getCTP().getPPr().isSetSectPr() || last.getCTP().getPPr().isSetPBdr()
+                                         || last.getCTP().getPPr().isSetShd())) {
             return;
         }
         CTPPr properties = last.getCTP().isSetPPr() ? last.getCTP().getPPr() : last.getCTP().addNewPPr();
@@ -3723,16 +3733,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         String bookmark = bookmarkedAnchors.contains(node.anchor())
                 ? bookmarkNames.nameFor(node.anchor())
                 : null;
-        XWPFRun run;
         if (bookmark == null) {
-            run = para.createRun();
+            XWPFRun run = para.createRun();
+            applyStyle(run, node.textStyle());
+            run.setText(shown);
         } else {
-            CTSimpleField field = para.getCTP().addNewFldSimple();
-            field.setInstr(" PAGEREF " + bookmark + " \\h ");
-            run = new XWPFRun(field.addNewR(), (IRunBody) para);
+            // A complex field, as a page field is (see appendField): a simple one's number is
+            // repainted without its style when the field updates.
+            appendField(para, " PAGEREF " + bookmark + " \\h ", shown, node.textStyle());
         }
-        applyStyle(run, node.textStyle());
-        run.setText(shown);
     }
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {

@@ -12,7 +12,6 @@ import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBookmark;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSimpleField;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -122,12 +121,29 @@ class DocxPageReferenceTest {
     private static Map<String, String> pageReferences(XWPFDocument document) {
         Map<String, String> fields = new LinkedHashMap<>();
         for (XWPFParagraph paragraph : allParagraphs(document)) {
-            for (CTSimpleField field : paragraph.getCTP().getFldSimpleList()) {
-                String instruction = field.getInstr().trim();
-                if (instruction.startsWith("PAGEREF")) {
-                    StringBuilder text = new StringBuilder();
-                    field.getRList().forEach(run -> run.getTList().forEach(t -> text.append(t.getStringValue())));
-                    fields.put(instruction, text.toString());
+            // A complex field: its instruction in one run, what it reads in the runs between the
+            // separator and the end.
+            String instruction = null;
+            boolean reading = false;
+            StringBuilder text = new StringBuilder();
+            for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run : paragraph.getCTP().getRList()) {
+                for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText code : run.getInstrTextList()) {
+                    instruction = code.getStringValue().trim();
+                }
+                for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFldChar mark : run.getFldCharList()) {
+                    if (mark.getFldCharType() == org.openxmlformats.schemas.wordprocessingml.x2006.main.STFldCharType.SEPARATE) {
+                        reading = true;
+                    } else if (mark.getFldCharType() == org.openxmlformats.schemas.wordprocessingml.x2006.main.STFldCharType.END) {
+                        if (instruction != null && instruction.startsWith("PAGEREF")) {
+                            fields.put(instruction, text.toString());
+                        }
+                        instruction = null;
+                        reading = false;
+                        text.setLength(0);
+                    }
+                }
+                if (reading) {
+                    run.getTList().forEach(t -> text.append(t.getStringValue()));
                 }
             }
         }

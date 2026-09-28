@@ -59,6 +59,50 @@ class DocxPanelHeightTest {
     }
 
     @Test
+    void aRuleClosingADocumentAfterATableStaysVisible() throws Exception {
+        // A rule is a paragraph with nothing in it but its border.
+        try (XWPFDocument document = export(page -> page
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(120)).row("Last"))
+                .addLine(line -> line.horizontal(200).thickness(1).color(DocumentColor.rgb(40, 40, 40))))) {
+            List<IBodyElement> body = document.getBodyElements();
+            XWPFParagraph last = (XWPFParagraph) body.get(body.size() - 1);
+
+            assertThat(last.getCTP().getPPr().isSetPBdr()).as("the rule is the last paragraph").isTrue();
+            assertThat(last.getCTP().getPPr().isSetRPr() && last.getCTP().getPPr().getRPr().sizeOfVanishArray() > 0)
+                    .isFalse();
+        }
+    }
+
+    @Test
+    void aPanelsHeightIsWrittenLessTheMarginsItsCellHolds() throws Exception {
+        // Two cards the page makes equally tall: padded by their inner row, and by the card.
+        // LibreOffice adds a cell's margins to the written height, so the second is written less them.
+        try (XWPFDocument document = export(page -> page
+                .addSection("Inner", card -> card.fillColor(DocumentColor.rgb(247, 249, 246))
+                        .addRow("InnerRow", row -> row.padding(new DocumentInsets(20, 0, 20, 0))
+                                .columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                                .addParagraph(p -> p.text("26 June 2026"))))
+                .addSection("Outer", card -> card.fillColor(DocumentColor.rgb(247, 249, 246))
+                        .padding(new DocumentInsets(10, 0, 10, 0))
+                        .addRow("OuterRow", row -> row.padding(new DocumentInsets(10, 0, 10, 0))
+                                .columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                                .addParagraph(p -> p.text("26 June 2026")))))) {
+            int inner = heightOf(document.getTables().get(0));
+            int outer = heightOf(document.getTables().get(document.getTables().size() - 1));
+
+            assertThat(inner - outer).as("the second card's 20pt of margins").isEqualTo(20 * 20);
+        }
+    }
+
+    private static int heightOf(XWPFTable table) {
+        java.util.regex.Matcher height = java.util.regex.Pattern
+                .compile("<w:trHeight w:val=\"(\\d+)\" w:hRule=\"atLeast\"/>")
+                .matcher(table.getRow(0).getCtRow().xmlText());
+        assertThat(height.find()).isTrue();
+        return Integer.parseInt(height.group(1));
+    }
+
+    @Test
     void aDocumentEndingInTextKeepsItsLastParagraphVisible() throws Exception {
         try (XWPFDocument document = export(page -> page.addParagraph(p -> p.text("The end")))) {
             List<XWPFParagraph> paragraphs = document.getParagraphs();

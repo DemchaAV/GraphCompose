@@ -233,9 +233,10 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void anIconDrawnBesideItsLabelInAPaintedPanelStaysBehindTheText() throws Exception {
-        // An icon's tile holding only drawing, set beside its label: in front, an editor that sets
-        // the label a little differently puts the tile over it.
+    void anIconDrawnBesideItsLabelInAPaintedPanelStandsInFrontPlacedFromTheLabel() throws Exception {
+        // Behind the text, the panel's shading hid the tile. In front and placed from the page, an
+        // editor that set the label a little higher or lower put the tile over the next line;
+        // placed from the label's paragraph, it moves with the label.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
                         .addContainer(row -> row.name("Fact").rectangle(300, 30)
@@ -247,8 +248,70 @@ class DocxDrawingsTest {
                                         .build())
                                 .position(new ParagraphBuilder().name("Label").text("Compliant").build(),
                                         34, 0, LayerAlign.CENTER_LEFT)))))) {
-            assertThat(anchors(document.getDocument().xmlText())).hasSize(2)
-                    .allMatch(anchor -> anchor.contains("behindDoc=\"1\""));
+            String body = document.getDocument().xmlText();
+            assertThat(anchors(body)).hasSize(2)
+                    .allMatch(anchor -> anchor.contains("behindDoc=\"0\""))
+                    .allMatch(anchor -> anchor.contains("<wp:positionV relativeFrom=\"paragraph\">"));
+            java.util.regex.Matcher label = java.util.regex.Pattern
+                    .compile("<w:p>(?:(?!</w:p>).)*Compliant", java.util.regex.Pattern.DOTALL).matcher(body);
+            assertThat(label.find()).isTrue();
+            assertThat(label.group()).as("anchored in the label's own paragraph").contains("<wp:anchor");
+        }
+    }
+
+    @Test
+    void anIconInARowsGutterIsCarriedByItsOwnCellNotTheHeadingsBesideIt() throws Exception {
+        // Word prints a shape anchored in a cell clipped to that cell: carried by the heading's
+        // cell, the icon over the gutter would not be printed.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
+                        .addRow("Heading", row -> row.verticalAlign(com.demcha.compose.document.node.RowVerticalAlign.CENTER)
+                                .columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(30),
+                                        com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                                .add(new com.demcha.compose.document.dsl.EllipseBuilder().name("Icon").circle(16)
+                                        .fillColor(ACCENT).build())
+                                .addParagraph(p -> p.text("Payment details"))))))) {
+            org.apache.poi.xwpf.usermodel.XWPFTable row = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
+            String gutter = row.getRow(0).getCell(0).getCTTc().xmlText();
+            String heading = row.getRow(0).getCell(1).getCTTc().xmlText();
+
+            assertThat(anchors(gutter)).singleElement().asString()
+                    .contains("<wp:positionV relativeFrom=\"paragraph\">").contains("behindDoc=\"0\"");
+            assertThat(anchors(heading)).isEmpty();
+            org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor anchor = row.getRow(0).getCell(0)
+                    .getParagraphs().get(0).getCTP().getRArray(0).getDrawingArray(0).getAnchorArray(0);
+            assertThat(anchor.getPositionV().getPosOffset()).as("down from the row's top, never above it")
+                    .isGreaterThanOrEqualTo(0);
+        }
+    }
+
+    @Test
+    void aPanelsDrawingWithNoParagraphBesideItIsAnchoredToThePage() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addParagraph(p -> p.text("Above"))
+                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
+                        .add(new com.demcha.compose.document.dsl.EllipseBuilder().name("Dot").circle(16)
+                                .fillColor(ACCENT).build()))))) {
+            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .contains("<wp:positionV relativeFrom=\"page\">");
+        }
+    }
+
+    @Test
+    void aRowAtTheTopOfAPaintedPanelKeepsItsTopPadding() throws Exception {
+        // Nothing above a table holds space in Word; at a panel's top the row's padding was lost.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
+                        .addRow("DueRow", row -> row.padding(new com.demcha.compose.document.style.DocumentInsets(16, 0, 0, 0))
+                                .columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                                .addParagraph(p -> p.text("26 June 2026"))))))) {
+            org.apache.poi.xwpf.usermodel.XWPFTableCell panel = document.getTables().get(0).getRow(0).getCell(0);
+            org.apache.poi.xwpf.usermodel.XWPFParagraph holder = panel.getParagraphs().get(0);
+
+            assertThat(panel.getBodyElements().get(0)).as("a paragraph holds the space above the row")
+                    .isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFParagraph.class);
+            assertThat(holder.getCTP().getPPr().getSpacing().getBefore()).isNotNull();
+            assertThat(((Number) holder.getCTP().getPPr().getSpacing().getBefore()).intValue()).isEqualTo(16 * 20);
         }
     }
 

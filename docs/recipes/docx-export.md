@@ -595,8 +595,15 @@ carries it; on any other page, the first paragraph of a cell on it does, where W
 print it clipped and the report says so, and a page with no paragraph at all drops it,
 reported too. A shape inside a filled panel is drawn in front of the text rather than
 behind it, since a panel is a table cell and both editors paint a cell's shading over what
-lies behind the text — unless it is drawn with text or a picture, as a disc under its
-initials or a ring round a photo is, which stays behind what it frames and hidden. The body's shapes stand above the page backgrounds, which LibreOffice stacks together
+lies behind the text — unless it frames a line of text or a picture on the page, as a disc
+under its initials or a ring round a photo does, which stays behind what it frames and
+hidden. A panel's shapes are anchored in the panel's paragraph whose first line stands
+nearest them, and placed down from that paragraph's top rather than the page's: an icon
+beside a heading moves with the heading where the editor sets the panel's text higher or
+lower than the page. Only a paragraph of a cell that holds the shape across carries it —
+Word prints a shape anchored in a cell clipped to that cell — so an icon in a row's gutter is
+carried by the gutter's own cell; a shape no such paragraph stands beside is anchored to the
+page. The body's shapes stand above the page backgrounds, which LibreOffice stacks together
 with them. Two limits, each named in the report:
 
 - A transform is not carried: a rotated or scaled shape is drawn upright at its size.

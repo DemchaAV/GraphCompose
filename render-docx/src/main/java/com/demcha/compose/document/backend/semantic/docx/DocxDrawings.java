@@ -241,6 +241,24 @@ final class DocxDrawings {
      * @return the drawing, to be added to a run
      */
     static CTDrawing drawing(Shape shape, long id, int order) {
+        return drawing(shape, id, order, null);
+    }
+
+    /**
+     * A shape or a picture as a drawing placed across the page and, when {@code paragraphTop} is
+     * given, down from the top of the paragraph that carries it rather than from the page's.
+     *
+     * <p>Placed from its paragraph, a shape moves with the text it stands beside where the editor
+     * sets that text higher or lower than the page does.</p>
+     *
+     * @param shape        the shape, its top measured from the page's
+     * @param id           an identifier for the drawing, unique in the document
+     * @param order        its place among the drawings
+     * @param paragraphTop where the carrying paragraph's top stands on the page, or {@code null}
+     *                     to place the shape from the page's top
+     * @return the drawing, to be added to a run of that paragraph
+     */
+    static CTDrawing drawing(Shape shape, long id, int order, Double paragraphTop) {
         long cx = Units.toEMU(shape.width());
         long cy = Units.toEMU(shape.height());
         boolean picture = shape.kind() == Kind.PICTURE;
@@ -260,7 +278,10 @@ final class DocxDrawings {
                 + "<wp:simplePos x=\"0\" y=\"0\"/>"
                 + "<wp:positionH relativeFrom=\"page\"><wp:posOffset>" + Units.toEMU(shape.x())
                 + "</wp:posOffset></wp:positionH>"
-                + "<wp:positionV relativeFrom=\"page\"><wp:posOffset>" + Units.toEMU(shape.top())
+                + (paragraphTop == null
+                   ? "<wp:positionV relativeFrom=\"page\"><wp:posOffset>" + Units.toEMU(shape.top())
+                   : "<wp:positionV relativeFrom=\"paragraph\"><wp:posOffset>"
+                     + Units.toEMU(shape.top() - paragraphTop))
                 + "</wp:posOffset></wp:positionV>"
                 + "<wp:extent cx=\"" + cx + "\" cy=\"" + cy + "\"/>"
                 + "<wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/>"

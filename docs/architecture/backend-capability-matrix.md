@@ -44,7 +44,9 @@ nodes are a different case: `ShapeNode`, `LineNode`, `EllipseNode`,
 `ShapeNode` is written as a rule; any other rectangle, rounded rectangle,
 ellipse, line, polygon or path is drawn from the fragments the layout placed
 it as, a DrawingML shape anchored to the page behind the text (`DocxDrawings`,
-polygons and paths as custom geometry). A shape filled only with a gradient
+polygons and paths as custom geometry). Inside a filled panel a shape stands in
+front of the text unless it frames text, placed down from the panel paragraph
+nearest it rather than from the page. A shape filled only with a gradient
 paint shows nothing the export carries and is dropped with a logged warning.
 A `BarcodeNode` reaches it too and is written as a picture.
 

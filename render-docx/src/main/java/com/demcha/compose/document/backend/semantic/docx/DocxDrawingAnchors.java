@@ -143,6 +143,21 @@ final class DocxDrawingAnchors {
     record Leftovers(Map<Integer, Integer> inCells, Map<Integer, Integer> dropped) {
     }
 
+    /**
+     * Anchors shapes in the paragraph they stand beside, placed down from its top, so they move
+     * with it where the editor sets it higher or lower than the page does.
+     *
+     * @param carrier      the paragraph
+     * @param shapes       the shapes, their tops measured from the page's
+     * @param paragraphTop where the paragraph's top stands on the page, as the layout puts it
+     */
+    void anchorBeside(XWPFParagraph carrier, List<DocxDrawings.Shape> shapes, double paragraphTop) {
+        XWPFRun run = carrier.insertNewRun(0);
+        for (DocxDrawings.Shape shape : shapes) {
+            run.getCTR().addNewDrawing().set(DocxDrawings.drawing(shape, ids.getAsLong(), order++, paragraphTop));
+        }
+    }
+
     private void anchor(XWPFParagraph carrier, List<DocxDrawings.Shape> shapes) {
         XWPFRun run = carrier.insertNewRun(0);
         for (DocxDrawings.Shape shape : shapes) {

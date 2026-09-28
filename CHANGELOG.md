@@ -8,6 +8,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Icons inside painted panels show in Word, beside the text they belong to.** A shape drawn
+  in a filled panel stayed behind the text whenever it sat in a layer beside a heading, and a
+  panel is a shaded table cell, whose shading both editors paint over what lies behind the
+  text: the heading icons of every payment panel on the invoice presets — a bank, a card, an
+  info mark, `ObsidianInvoice`'s notes and payment glyphs — were missing. Inside a panel a
+  shape now stands in front unless it frames a line of text or a picture, as a disc under its
+  initials does. In front and anchored to the page, an icon lands on the next line wherever the
+  editor sets the panel's text a little higher, so a panel's shapes are anchored in the
+  paragraph whose first line is nearest them and placed down from its top. A row at the top of
+  a panel also keeps its top padding, which no paragraph above it held: `MerchantInvoice`'s
+  due-date text stood against the card's top edge. No shape in the template corpus covers
+  text in LibreOffice.
 - **Page numbers keep their colour, panels their height, and a document ending in a table no
   page of its own.** A page field was written as a simple field, whose result both editors
   repaint without the run's style: `MeteredInvoice`'s white page number on its navy footer band

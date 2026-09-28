@@ -62,6 +62,8 @@ final class DocxLayoutMetrics {
     private final Map<DocumentNode, Map<String, Double>> rowHeights = new IdentityHashMap<>();
     // Paragraphs composed in table cells, paired with their fragments on first use.
     private Map<DocumentNode, PlacedFragment> composedText;
+    // The text and pictures of each page, indexed on first use — see textOnPage.
+    private Map<Integer, List<PlacedFragment>> textByPage;
 
     private DocxLayoutMetrics(Map<DocumentNode, String> paths,
                               Map<String, List<PlacedFragment>> fragments,
@@ -729,6 +731,43 @@ final class DocxLayoutMetrics {
     /** Text as both sides can agree on it: wrapping drops spaces, and a style may set capitals. */
     private static String comparable(String text) {
         return WHITESPACE.matcher(text).replaceAll("").toLowerCase(java.util.Locale.ROOT);
+    }
+
+    /**
+     * The first fragment a node laid its lines out in — its own, or, composed in a table cell,
+     * the one its table laid out for it.
+     *
+     * @param node any node that lays its text out as paragraph lines
+     * @return the fragment, or {@code null} when the node laid out no lines
+     */
+    PlacedFragment firstTextFragment(DocumentNode node) {
+        for (PlacedFragment fragment : textFragmentsOf(node)) {
+            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph && !paragraph.lines().isEmpty()) {
+                return fragment;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Every line of text and every picture the layout set on one page, whatever node set it.
+     *
+     * @param page the page, as a fragment counts it
+     * @return those fragments, empty when there are none or there is no layout
+     */
+    List<PlacedFragment> textOnPage(int page) {
+        if (textByPage == null) {
+            textByPage = new HashMap<>();
+            for (List<PlacedFragment> atPath : fragments.values()) {
+                for (PlacedFragment fragment : atPath) {
+                    if (fragment.payload() instanceof ParagraphFragmentPayload
+                        || fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ImageFragmentPayload) {
+                        textByPage.computeIfAbsent(fragment.pageIndex(), key -> new ArrayList<>()).add(fragment);
+                    }
+                }
+            }
+        }
+        return textByPage.getOrDefault(page, List.of());
     }
 
     /**

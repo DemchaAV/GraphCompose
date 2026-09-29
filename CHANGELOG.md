@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Stacked title lines and icons beside their labels keep the page's height in Word.** A
+  container writes its layers one after the other, and two kinds of layer took more room in
+  Word than on the page. Lines of text laid over one another — `NorthlineProposal`'s title,
+  three 46pt lines 48pt apart — took each line's own height, 70pt; now the first line keeps
+  its height, each line after it takes the distance from the foot of the line above to its
+  own, and a last line running past the container's foot takes its overhang from the gap
+  below. An icon picture beside its label in an unpainted container or a layer stack —
+  `NorthlineProposal`'s glance card facts, the contact lines of `ConsultingInvoice` — was written as a line of
+  its own above the label, an icon's height a fact; it is now drawn where the page puts it,
+  in front inside a painted panel, and the label is written beside it. A badge's glyph in a
+  painted panel is drawn over its badge, both in front of the panel's shading: kept in the
+  flow, the glyph was written white on the panel and its disc hid under the shading, and
+  `NorthlineProposal`'s acceptance heading lost its badge. A line is never squeezed below half
+  its face: Word was measured setting a 16pt word whole in a 10.7pt line, and nothing
+  tighter was. In Word,
+  `NorthlineProposal` fits on two pages as the page does, its median drift falling from
+  134pt to 4.7; `EditorialProposal`'s falls from 42.5pt to 3.3 and `SerifHeadline`'s from
+  37.9 to 20.4.
 - **A badge holds its initials, and bordered cards keep the page's spacing in Word.** A filled
   or stroked rectangle, rounded rectangle or ellipse whose one layer, centred, is a line of at
   most four characters in one style, left to right, with no link, on one page — a party's

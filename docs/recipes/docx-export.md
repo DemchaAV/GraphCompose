@@ -533,13 +533,23 @@ tint it was flattened to. Recorded, like the other two.
   container that clips it to its outline (`CLIP_PATH`) and holds nothing
   else but drawing — is drawn as a picture anchored to the page over the
   badge, where the page draws it, rather than written as a line of its own
-  above the text beside the badge. One that carries an anchor, one cropped
-  to cover its box, and one inside a filled panel, whose shading would
-  hide it, stay in the flow. A container with written content in one layer
+  above the text beside the badge. Inside a filled panel the badge and its
+  glyph are drawn in front of the panel's shading, which both editors paint
+  over what lies behind the text. One that carries an anchor and one cropped
+  to cover its box stay in the flow. A container with written content in one layer
   only, laid beside drawing — a section title beside its badge or its icon
   — is written as a layer stack's band is: the title stands where the page
   places it, with the page's space above and below it inside the
-  container. An outline no shape shows is reported as dropped.
+  container. So is one whose picture stands beside its text, clear of it
+  across, in an unpainted container or a layer stack — an icon left of a
+  label over a value: the picture is drawn where the page puts it, in front
+  inside a painted panel, rather than written as a line above the text.
+  Lines of text a container lays over one another — a title set a pitch
+  apart, tighter than its face's line — keep the page's pitch: the first
+  line keeps its height, each line after it takes the distance from the
+  foot of the line above to its own, and a last line running past the
+  container's foot takes its overhang from the gap below. An outline no
+  shape shows is reported as dropped.
 - **`hangingIndent(true)` → the ordinary list form.** A list that opts
   into marker/content geometry exports exactly as one that did not: the
   same Word list, the same levels, the same markers. Nothing is lost —

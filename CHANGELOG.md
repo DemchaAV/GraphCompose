@@ -8,6 +8,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A paragraph's own margin and padding hold its text in in Word, and a word the page sets
+  whole stays whole.** The DOCX export wrote a paragraph at its container's width, leaving out
+  its own sides: `SerifHeadline`'s summary stops at the column divider through its right margin
+  and ran the page's width in Word, a line short, so everything under it stood a line high. A
+  paragraph's margin and padding are now part of its indents — in a table cell less 2pt a side,
+  which the cell's text keeps as Word's — except for a layer of an overlay, whose box is placed
+  already. A word the page sets whole past its column — `SerifHeadline`'s
+  "linkedin.com/in/alexmorgan", 1.2pt past the contact column — was broken between two letters
+  in Word and took a line more; its paragraph now gets a negative right indent reaching as far
+  as the word does. Only a paragraph each line of which is one unbroken word, set from its
+  start, gets it: the indent is the whole paragraph's, and would give a line of several words
+  room to take more of them, or move a centred line off its centre. In Word the median drift falls from 4.5pt to 0.1 and the p90 from 12.7
+  to 1.2 on `TealPulse`, and the p90 from 38.3 to 27.9 on `IndigoProposal`.
 - **A table with no paragraph before it keeps the space above it in Word.** Word has no space
   above a table: the paragraph before it carries it, and a table with none before it in the
   body — opening the document or a section, or following a page break — lost it.

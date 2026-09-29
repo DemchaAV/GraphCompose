@@ -494,6 +494,33 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * The width of a node's widest laid-out line when every line of it is one word: a word with
+     * nowhere to break — an address, a link — longer than the width it is given is set whole,
+     * wider than that width. A node with a line of several words has none: the page broke it
+     * where it fits, and the room a long word would take would let those lines take more words.
+     *
+     * @param node any node that lays out as paragraph lines
+     * @return the width in points, 0 when any line holds more than one word or none is laid out
+     */
+    double unbrokenWidth(DocumentNode node) {
+        double widest = 0;
+        for (PlacedFragment fragment : textFragmentsOf(node)) {
+            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
+                for (ParagraphLine line : paragraph.lines()) {
+                    String text = line.text().strip();
+                    if (text.chars().anyMatch(Character::isWhitespace)) {
+                        return 0;
+                    }
+                    if (!text.isEmpty()) {
+                        widest = Math.max(widest, line.width());
+                    }
+                }
+            }
+        }
+        return widest;
+    }
+
+    /**
      * The text a node laid out as paragraph lines, as the layout wrote it.
      *
      * <p>A page reference's number is known only once the document is paginated, so the

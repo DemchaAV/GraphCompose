@@ -3626,6 +3626,42 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * The points a line is given past the room it takes on the page: Word sets a line a little
+     * wider than the page does, and a word that just fits there would break in Word.
+     */
+    private static final double EDITOR_SLACK_POINTS = 2;
+
+    /**
+     * Lets a line the page sets past its box's right edge stand out the same way in Word.
+     *
+     * <p>A word with nowhere to break — {@code SerifHeadline}'s "linkedin.com/in/alexmorgan" —
+     * longer than its box is set whole on the page, 1.2pt out of the contact column. Word breaks
+     * such a word between two letters instead: the column took a line more, and the whole page
+     * under it stood that line lower. The paragraph's right indent gives the line the room it
+     * takes on the page, and a couple of points more for an editor's slightly wider face.</p>
+     *
+     * <p>Only a paragraph each line of which is one word, set from its start: the indent is the
+     * whole paragraph's, and it would give a line of several words room to take more of them,
+     * or move a centred or right-aligned line off where the page sets it.</p>
+     *
+     * @param room the width the paragraph's text is written in, in points
+     */
+    private void letTheLineStandOut(XWPFParagraph para, ParagraphNode node, double room) {
+        if (node.align() == TextAlign.CENTER || node.align() == TextAlign.RIGHT) {
+            return;
+        }
+        double overhang = layout.unbrokenWidth(node) - room;
+        if (!Double.isFinite(overhang) || !(overhang > 0.01)) {
+            return;
+        }
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
+        Long right = indent.isSetRight() ? writtenTwips(indent.getRight()) : Long.valueOf(0);
+        long outward = toTwips(overhang + EDITOR_SLACK_POINTS);
+        indent.setRight(BigInteger.valueOf((right == null ? 0 : right) - outward));
+    }
+
+    /**
      * Holds the paragraph in from the sides by every enclosing container's margin and padding.
      *
      * <p>Only the sides a container asked for are written, and none when no container asked,
@@ -3871,17 +3907,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Word — a line short, and everything under it that much high.
         double outerLeft = insetLeft;
         double outerRight = insetRight;
-        if (currentCell == null) {
-            insetLeft += node.margin().left() + node.padding().left();
-            insetRight += node.margin().right() + node.padding().right();
+        // Not under an overlay: holdIn places a layer's box there, with room to spare, and a
+        // paragraph a layer holds is left the width it was given. In a cell, a couple of points of each side stay the editor's: Word sets a line a
+        // little wider than the page, and VioletGrid's narrow centred cells broke a word more,
+        // running the CV to a second page.
+        if (overlayDepth == 0) {
+            double spare = currentCell != null ? EDITOR_SLACK_POINTS : 0;
+            insetLeft += Math.max(0, node.margin().left() + node.padding().left() - spare);
+            insetRight += Math.max(0, node.margin().right() + node.padding().right() - spare);
         }
         XWPFParagraph para;
+        double room;
         try {
             para = newBodyParagraph(document);
+            room = availableWidth();
         } finally {
             insetLeft = outerLeft;
             insetRight = outerRight;
         }
+        letTheLineStandOut(para, node, room);
         boolean rightToLeft = applyParagraphProperties(para, node);
         applyHeadingRole(para, node);
         int anchor = openAnchor(para, node.anchor());

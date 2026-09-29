@@ -328,10 +328,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private DocumentNode leftMarginInCell;
     // What a row nested in a cell still hangs left once its first column has given what it can
     // (takeHang), handed to each of its cells: Word keeps a nested table inside its cell
-    // whatever the table's indent. Their text moves left by it as far as its own indent goes
-    // (leftIndentTwips); their right edge stays, a line given room rather than taken it, since
-    // an auto column is exactly as wide as its text.
+    // whatever the table's indent.
     private double cellHang;
+    // The cell being filled takes its row's hang as cellTextShift (a negative number): its
+    // paragraphs' text moves left by it as far as each one's own indent goes, and never past
+    // the cell's edge (applyInset). Only the text moves: the insets and the widths measured
+    // from them stay the cell's, so a rule, a picture or a table in it keeps the cell's size.
+    private double cellTextShift;
     // Every family this export can name, by the logical name a style asks for. The
     // session's own registrations win over the bundled ones, the way they do everywhere.
     private java.util.Map<FontName, FontFamilyDefinition> wordFamilies = java.util.Map.of();
@@ -573,6 +576,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         insetLeft = 0;
         insetRight = 0;
         cellHang = 0;
+        cellTextShift = 0;
         nextDrawingId = 100_000;
         anchors.reset();
         currentPage = 0;
@@ -3674,15 +3678,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Holds the paragraph in from the sides by every enclosing container's margin and padding.
-     *
-     * <p>Only the sides a container asked for are written, and none when no container asked,
-     * so a paragraph outside any padded container is written as it always was.</p>
-     *
-     * <p>The sides are written as the page's. A right-to-left paragraph has them turned to
-     * its flow when its direction is written, in {@link #applyDirection}.</p>
-     */
-    /**
      * A paragraph's left indent in twips: below zero in the body, where a container hanging
      * left by a negative margin takes its text out past the margin as the page does; never
      * below zero in a cell, where Word draws no text past the cell's left edge — measured, a
@@ -3692,14 +3687,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return currentCell != null ? toTwips(points) : Math.round(points * POINT_TO_TWIP);
     }
 
+    /**
+     * Holds the paragraph in from the sides by every enclosing container's margin and padding.
+     *
+     * <p>Only the sides a container asked for are written, and none when no container asked,
+     * so a paragraph outside any padded container is written as it always was. In a cell of a
+     * row hanging left, the text moves left by the hang as far as its indent goes
+     * ({@link #cellTextShift}).</p>
+     *
+     * <p>The sides are written as the page's. A right-to-left paragraph has them turned to
+     * its flow when its direction is written, in {@link #applyDirection}.</p>
+     */
     private void applyInset(XWPFParagraph para) {
+        double left = insetLeft + cellTextShift;
         if (!(Math.abs(insetLeft) > 0.01) && insetRight <= 0) {
             return;
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
         if (Math.abs(insetLeft) > 0.01) {
-            indent.setLeft(BigInteger.valueOf(leftIndentTwips(insetLeft)));
+            indent.setLeft(BigInteger.valueOf(leftIndentTwips(left)));
         }
         if (insetRight > 0) {
             indent.setRight(BigInteger.valueOf(toTwips(insetRight)));
@@ -7541,6 +7548,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double previousHangingOverBy = hangingOverBy;
         double previousInsetLeft = insetLeft;
         double previousInsetRight = insetRight;
+        double previousTextShift = cellTextShift;
         XWPFParagraph previousCloser = tableCloser;
         currentCell = cell;
         lastBodyParagraph = null;
@@ -7550,10 +7558,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         borderBelow = 0;
         forgetTheHang();
         // A cell's content is measured from the cell's own edge, which its margins already
-        // keep clear of the border; the containers around the table have nothing to add —
-        // save a row that hangs left out of the cell holding it (see writeRow).
-        insetLeft = cellHang;
+        // keep clear of the border; the containers around the table have nothing to add. A row
+        // hanging left out of the cell holding it moves this cell's text only (see cellHang).
+        insetLeft = 0;
         insetRight = 0;
+        cellTextShift = cellHang;
         cellHang = 0;
         try {
             content.write();
@@ -7580,6 +7589,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             hangingOverBy = previousHangingOverBy;
             insetLeft = previousInsetLeft;
             insetRight = previousInsetRight;
+            cellTextShift = previousTextShift;
             tableCloser = previousCloser;
         }
     }

@@ -18,6 +18,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTInd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPr;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
 
 /**
  * A container hanging left by a negative margin takes what it holds out past the text beside
@@ -53,7 +54,8 @@ class DocxHangingLeftTest {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 30, page -> page
                 .addRow(row -> row
                         .weights(3, 1)
-                        .addSection(column -> column.add(heading()).addParagraph("Senior Engineer"))
+                        .addSection(column -> column.add(heading())
+                                .addParagraph(p -> p.text("Senior Engineer").margin(new DocumentInsets(0, 0, 0, 8))))
                         .addParagraph("Sidebar")))) {
             XWPFTable nested = nestedTable(document.getTables().get(0).getRow(0).getCell(0));
             CTTblPr properties = tableProperties(nested);
@@ -67,7 +69,7 @@ class DocxHangingLeftTest {
             assertThat(firstColumn).as("the dash's column gives up all but a point").isEqualTo(1.0);
             assertThat(firstColumn + titleIndent)
                     .as("the title starts where the page starts it: the dash and its gap, less the hang")
-                    .isCloseTo(DASH + TITLE_PADDING - HANG, org.assertj.core.data.Offset.offset(0.1));
+                    .isCloseTo(DASH + TITLE_PADDING - HANG, offset(0.1));
             assertThat(titleIndent).as("and none of it past the cell's left edge").isNotNegative();
 
             long grid = 0;
@@ -79,9 +81,9 @@ class DocxHangingLeftTest {
 
             XWPFParagraph after = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().stream()
                     .filter(paragraph -> paragraph.getText().equals("Senior Engineer")).findFirst().orElseThrow();
-            CTInd afterIndent = after.getCTP().getPPr() == null ? null : after.getCTP().getPPr().getInd();
-            assertThat(afterIndent == null || !afterIndent.isSetLeft() || DocxTwips.of(afterIndent.getLeft()) >= 0)
-                    .as("the text after the heading keeps its column").isTrue();
+            assertThat(DocxTwips.of(after.getCTP().getPPr().getInd().getLeft()))
+                    .as("the text after the heading keeps its own indent, 8pt less the 2pt a cell keeps")
+                    .isEqualTo(6 * 20L);
         }
     }
 
@@ -94,10 +96,12 @@ class DocxHangingLeftTest {
                         .weights(3, 1)
                         .addSection(column -> column.add(heading(headingRow(DocumentRowColumn.auto(), 2))))
                         .addParagraph("Sidebar")))) {
-            XWPFParagraph title = paragraphWithText(
-                    nestedTable(document.getTables().get(0).getRow(0).getCell(0)), "PROJECTS");
+            XWPFTable nested = nestedTable(document.getTables().get(0).getRow(0).getCell(0));
+            double firstColumn = DocxTwips.of(nested.getCTTbl().getTblGrid().getGridColArray(0).getW()) / 20.0;
+            XWPFParagraph title = paragraphWithText(nested, "PROJECTS");
             CTInd indent = title.getCTP().getPPr() == null ? null : title.getCTP().getPPr().getInd();
 
+            assertThat(firstColumn).as("the dash's column gave what it could").isEqualTo(1.0);
             assertThat(indent == null || !indent.isSetLeft() || DocxTwips.of(indent.getLeft()) >= 0)
                     .as("its first letter kept").isTrue();
         }
@@ -118,7 +122,39 @@ class DocxHangingLeftTest {
             XWPFTable nested = nestedTable(document.getTables().get(0).getRow(0).getCell(0));
             double firstColumn = DocxTwips.of(nested.getCTTbl().getTblGrid().getGridColArray(0).getW()) / 20.0;
 
-            assertThat(firstColumn).as("the dash's column, whole").isCloseTo(DASH, org.assertj.core.data.Offset.offset(0.1));
+            assertThat(firstColumn).as("the dash's column, whole").isCloseTo(DASH, offset(0.1));
+            CTInd dash = nested.getRow(0).getCell(0).getParagraphs().get(0).getCTP().getPPr().getInd();
+            assertThat(dash == null || !dash.isSetRight() || DocxTwips.of(dash.getRight()) <= 10)
+                    .as("and the dash across all of it: the hang its cells take moves text, not widths")
+                    .isTrue();
+        }
+    }
+
+    @Test
+    void aListAndARuleInAContainerHangingLeftHangWithIt() throws Exception {
+        java.util.function.Predicate<XWPFParagraph> item = paragraph -> paragraph.getText().equals("One");
+        java.util.function.Predicate<XWPFParagraph> rule = paragraph -> paragraph.getCTP().getPPr() != null
+                && paragraph.getCTP().getPPr().isSetPBdr();
+
+        // Against the same section held in by as much: a flush item writes no indent of its own,
+        // leaving its numbering level's.
+        assertThat(firstIndent(-HANG, item) - firstIndent(HANG, item)).as("the list's items")
+                .isEqualTo(Math.round(-2 * HANG * 20));
+        assertThat(firstIndent(-HANG, rule) - firstIndent(HANG, rule)).as("the rule")
+                .isEqualTo(Math.round(-2 * HANG * 20));
+    }
+
+    /** The left indent of the first body paragraph that matches, in a section hung by {@code margin}. */
+    private static long firstIndent(double margin, java.util.function.Predicate<XWPFParagraph> which)
+            throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 30, page -> page
+                .addParagraph("Above")
+                .addSection(section -> section.margin(new DocumentInsets(0, 0, 0, margin))
+                        .addList(list -> list.bullet().items("One", "Two"))
+                        .addLine(line -> line.name("Divider").thickness(1))))) {
+            XWPFParagraph paragraph = document.getParagraphs().stream().filter(which).findFirst().orElseThrow();
+            CTInd indent = paragraph.getCTP().getPPr() == null ? null : paragraph.getCTP().getPPr().getInd();
+            return indent == null || !indent.isSetLeft() ? 0 : DocxTwips.of(indent.getLeft());
         }
     }
 

@@ -323,6 +323,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // How wide content may be inside that cell, so a table nested in it gets a width
     // instead of being squeezed by Word to a character a line.
     private double currentCellWidth = Double.NaN;
+    // The row child whose left margin its cell already holds: a row the layout placed starts
+    // each cell's text where the child starts, its left margin included.
+    private DocumentNode leftMarginInCell;
     // Every family this export can name, by the logical name a style asks for. The
     // session's own registrations win over the bundled ones, the way they do everywhere.
     private java.util.Map<FontName, FontFamilyDefinition> wordFamilies = java.util.Map.of();
@@ -3626,6 +3629,43 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * The points a paragraph's line is given past the room it takes on the page: Word sets a
+     * line a little wider than the page does, and a word that just fits there would break in
+     * Word. Twice a table column's {@value #EDITOR_COLUMN_SLACK_POINTS}pt: a column's room is
+     * its widest content, a paragraph's a line of whole words in a face Word may set wider.
+     */
+    private static final double EDITOR_SLACK_POINTS = 2;
+
+    /**
+     * Lets a line the page sets past its box's right edge stand out the same way in Word.
+     *
+     * <p>A word with nowhere to break — {@code SerifHeadline}'s "linkedin.com/in/alexmorgan" —
+     * longer than its box is set whole on the page, 1.2pt out of the contact column. Word breaks
+     * such a word between two letters instead: the column took a line more, and the whole page
+     * under it stood that line lower. The paragraph's right indent gives the line the room it
+     * takes on the page, and a couple of points more for an editor's slightly wider face.</p>
+     *
+     * <p>Only a paragraph each line of which is one word, set flush left: the indent is the
+     * whole paragraph's, and it would give a line of several words room to take more of them,
+     * or move a centred or right-aligned line off where the page sets it.</p>
+     *
+     * @param room the width the paragraph's text is written in, in points
+     */
+    private void letTheLineStandOut(XWPFParagraph para, ParagraphNode node, double room) {
+        if (node.align() == TextAlign.CENTER || node.align() == TextAlign.RIGHT) {
+            return;
+        }
+        double overhang = layout.unbrokenWidth(node) - room;
+        if (!Double.isFinite(overhang) || !(overhang > 0.01)) {
+            return;
+        }
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
+        long right = twipsOf(indent.isSetRight() ? indent.getRight() : null);
+        indent.setRight(BigInteger.valueOf(right - toTwips(overhang + EDITOR_SLACK_POINTS)));
+    }
+
+    /**
      * Holds the paragraph in from the sides by every enclosing container's margin and padding.
      *
      * <p>Only the sides a container asked for are written, and none when no container asked,
@@ -3882,7 +3922,32 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
-        XWPFParagraph para = newBodyParagraph(document);
+        // Its own sides hold its text in, as a container's do: SerifHeadline's summary stops at
+        // the column divider through its right margin, and without it ran the page's width in
+        // Word — a line short, and everything under it that much high.
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
+        // Not under an overlay, where holdIn places each layer's margin box and a paragraph
+        // there keeps the width it was given. In a cell, a couple of points of each side stay
+        // the editor's: Word sets a line a little wider than the page, and VioletGrid's narrow
+        // centred cells broke a word more, running the CV to a second page. A cell of a row the
+        // layout placed already starts where the paragraph does, past its left margin.
+        if (overlayDepth == 0) {
+            double spare = currentCell != null ? EDITOR_SLACK_POINTS : 0;
+            double left = (node == leftMarginInCell ? 0 : node.margin().left()) + node.padding().left();
+            insetLeft += Math.max(0, left - spare);
+            insetRight += Math.max(0, node.margin().right() + node.padding().right() - spare);
+        }
+        XWPFParagraph para;
+        double room;
+        try {
+            para = newBodyParagraph(document);
+            room = availableWidth();
+        } finally {
+            insetLeft = outerLeft;
+            insetRight = outerRight;
+        }
+        letTheLineStandOut(para, node, room);
         boolean rightToLeft = applyParagraphProperties(para, node);
         applyHeadingRole(para, node);
         int anchor = openAnchor(para, node.anchor());
@@ -6005,7 +6070,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // a header pair, a label beside a value — exported with visible rules the PDF
         // never draws.
         hideTableGrid(table);
-        applyRowGeometry(table, node);
+        boolean placedColumns = applyRowGeometry(table, node);
         XWPFTableRow row = table.getRow(0);
         // A row is laid out as one piece, never across a page break, so Word keeps it whole
         // too, where the layout placed it; see breakRowsWhereTheLayoutDoes.
@@ -6025,11 +6090,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             DocumentNode child = node.children().get(i);
             // What the cell holds is sized to the cell, not to whatever surrounds the row.
             double previous = currentCellWidth;
+            DocumentNode previousHeld = leftMarginInCell;
             currentCellWidth = usableWidthOf(cell, i, 1);
+            leftMarginInCell = placedColumns ? child : null;
             try {
                 writeRowCellChild(cell, child);
             } finally {
                 currentCellWidth = previous;
+                leftMarginInCell = previousHeld;
             }
             applyRowVerticalAlign(cell, node.verticalAlign());
         }
@@ -6562,27 +6630,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>The width used is the row's own when the layout placed it, and otherwise what the
      * containers around it leave of the page ({@link #availableWidth}); the row is moved in
      * by the same containers ({@link #indentTable}), so it starts where their text does.</p>
+     *
+     * @return whether the columns are the layout's, each cell's text starting where its child
+     *         does — past the child's left margin
      */
-    private void applyRowGeometry(XWPFTable table, RowNode node) {
+    private boolean applyRowGeometry(XWPFTable table, RowNode node) {
         double[] starts = layout.rowChildStarts(node);
         if (starts != null) {
             // The layout placed each child, so every way a row can divide — the two that
             // measure their children included — is already answered.
             setTableWidth(table, starts[0]);
             writeRowColumns(table, withRowEditorSlack(node, placedColumns(node, starts)));
-            return;
+            return true;
         }
 
         double available = availableWidth();
         if (!Double.isFinite(available) || available <= 0) {
-            return;
+            return false;
         }
         setTableWidth(table, available);
         double[] slots = resolveRowSlots(node, available);
         if (slots == null) {
-            return;
+            return false;
         }
         writeRowColumns(table, statedColumns(node, slots));
+        return false;
     }
 
     /**

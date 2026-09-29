@@ -326,6 +326,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The row child whose left margin its cell already holds: a row the layout placed starts
     // each cell's text where the child starts, its left margin included.
     private DocumentNode leftMarginInCell;
+    // What a row nested in a cell still hangs left once its first column has given what it can
+    // (takeHang), handed to each of its cells: Word keeps a nested table inside its cell
+    // whatever the table's indent.
+    private double cellHang;
+    // The cell being filled takes its row's hang as cellTextShift (a negative number): its
+    // paragraphs' text moves left by it as far as each one's own indent goes, and never past
+    // the cell's edge (applyInset). Only the text moves: the insets and the widths measured
+    // from them stay the cell's, so a rule, a picture or a table in it keeps the cell's size.
+    private double cellTextShift;
     // Every family this export can name, by the logical name a style asks for. The
     // session's own registrations win over the bundled ones, the way they do everywhere.
     private java.util.Map<FontName, FontFamilyDefinition> wordFamilies = java.util.Map.of();
@@ -566,6 +575,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         raisedRows.clear();
         insetLeft = 0;
         insetRight = 0;
+        cellHang = 0;
+        cellTextShift = 0;
         nextDrawingId = 100_000;
         anchors.reset();
         currentPage = 0;
@@ -2425,7 +2436,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (properties.isSetInd()) {
             long levelLeft = (long) LIST_HANGING_TWIPS + (long) LIST_NESTING_STEP_TWIPS * depth;
             CTInd indent = properties.getInd();
-            indent.setLeft(BigInteger.valueOf(toTwips(insetLeft) + levelLeft));
+            // As applyInset writes it: a list in a container hanging left hangs with it.
+            indent.setLeft(BigInteger.valueOf(leftIndentTwips(insetLeft) + levelLeft));
             indent.setHanging(BigInteger.valueOf(LIST_HANGING_TWIPS));
         }
     }
@@ -3666,22 +3678,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * A paragraph's left indent in twips: below zero in the body, where a container hanging
+     * left by a negative margin takes its text out past the margin as the page does; never
+     * below zero in a cell, where Word draws no text past the cell's left edge — measured, a
+     * section title hung 8pt out of its cell lost its first letter.
+     */
+    private long leftIndentTwips(double points) {
+        return currentCell != null ? toTwips(points) : Math.round(points * POINT_TO_TWIP);
+    }
+
+    /**
      * Holds the paragraph in from the sides by every enclosing container's margin and padding.
      *
      * <p>Only the sides a container asked for are written, and none when no container asked,
-     * so a paragraph outside any padded container is written as it always was.</p>
+     * so a paragraph outside any padded container is written as it always was. In a cell of a
+     * row hanging left, the text moves left by the hang as far as its indent goes
+     * ({@link #cellTextShift}).</p>
      *
      * <p>The sides are written as the page's. A right-to-left paragraph has them turned to
      * its flow when its direction is written, in {@link #applyDirection}.</p>
      */
     private void applyInset(XWPFParagraph para) {
-        if (insetLeft <= 0 && insetRight <= 0) {
+        double left = insetLeft + cellTextShift;
+        if (!(Math.abs(insetLeft) > 0.01) && insetRight <= 0) {
             return;
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
-        if (insetLeft > 0) {
-            indent.setLeft(BigInteger.valueOf(toTwips(insetLeft)));
+        if (Math.abs(insetLeft) > 0.01) {
+            indent.setLeft(BigInteger.valueOf(leftIndentTwips(left)));
         }
         if (insetRight > 0) {
             indent.setRight(BigInteger.valueOf(toTwips(insetRight)));
@@ -5153,7 +5178,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyVerticalSpacing(para, node);
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
-        indent.setLeft(BigInteger.valueOf(toTwips(insetLeft + sideLeft + from)));
+        // A rule in a container hanging left starts out past the margin with its text.
+        indent.setLeft(BigInteger.valueOf(leftIndentTwips(insetLeft + sideLeft + from)));
         // The right end is placed against the width the rule is written in, when that width is
         // known: a cell whose grid this export did not write has none, and measuring against the
         // page there put the rule's end past the cell's.
@@ -6070,7 +6096,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // a header pair, a label beside a value — exported with visible rules the PDF
         // never draws.
         hideTableGrid(table);
-        boolean placedColumns = applyRowGeometry(table, node);
+        // Nested in a cell, a row hanging left cannot move out of it: Word keeps a nested table
+        // in its cell whatever its indent. Its first column gives the hang what it can, and its
+        // cells' text takes the rest (see cellHang). SerifHeadline hangs each column's section
+        // heading left by its dash, and in Word the titles stood that far right of the page's,
+        // 17pt in the main column.
+        double hang = currentCell != null ? Math.max(0, -insetLeft) : 0;
+        RowGeometry geometry = applyRowGeometry(table, node, hang);
+        boolean placedColumns = geometry.placed();
+        hang -= geometry.hangTaken();
         XWPFTableRow row = table.getRow(0);
         // A row is laid out as one piece, never across a page break, so Word keeps it whole
         // too, where the layout placed it; see breakRowsWhereTheLayoutDoes.
@@ -6093,11 +6127,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             DocumentNode previousHeld = leftMarginInCell;
             currentCellWidth = usableWidthOf(cell, i, 1);
             leftMarginInCell = placedColumns ? child : null;
+            cellHang = -hang;
             try {
                 writeRowCellChild(cell, child);
             } finally {
                 currentCellWidth = previous;
                 leftMarginInCell = previousHeld;
+                cellHang = 0;
             }
             applyRowVerticalAlign(cell, node.verticalAlign());
         }
@@ -6631,31 +6667,101 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * containers around it leave of the page ({@link #availableWidth}); the row is moved in
      * by the same containers ({@link #indentTable}), so it starts where their text does.</p>
      *
+     * @param hang how far the row hangs left out of the cell holding it, in points; the first
+     *             column gives up what it can of it ({@link #takeHang})
      * @return whether the columns are the layout's, each cell's text starting where its child
-     *         does — past the child's left margin
+     *         does — past the child's left margin — and how much of the hang they took
      */
-    private boolean applyRowGeometry(XWPFTable table, RowNode node) {
+    private RowGeometry applyRowGeometry(XWPFTable table, RowNode node, double hang) {
         double[] starts = layout.rowChildStarts(node);
         if (starts != null) {
             // The layout placed each child, so every way a row can divide — the two that
             // measure their children included — is already answered.
-            setTableWidth(table, starts[0]);
-            writeRowColumns(table, withRowEditorSlack(node, placedColumns(node, starts)));
-            return true;
+            List<CellColumn> columns = new ArrayList<>(withRowEditorSlack(node, placedColumns(node, starts)));
+            double taken = takeHang(node, columns, hang);
+            setTableWidth(table, starts[0] - taken);
+            writeRowColumns(table, columns);
+            return new RowGeometry(true, taken);
         }
 
         double available = availableWidth();
         if (!Double.isFinite(available) || available <= 0) {
-            return false;
+            return new RowGeometry(false, 0);
         }
-        setTableWidth(table, available);
         double[] slots = resolveRowSlots(node, available);
         if (slots == null) {
-            return false;
+            setTableWidth(table, available);
+            return new RowGeometry(false, 0);
         }
-        writeRowColumns(table, statedColumns(node, slots));
+        List<CellColumn> columns = new ArrayList<>(statedColumns(node, slots));
+        double taken = takeHang(node, columns, hang);
+        setTableWidth(table, available - taken);
+        writeRowColumns(table, columns);
+        return new RowGeometry(false, taken);
+    }
+
+    /**
+     * How a row's carrier was divided.
+     *
+     * @param placed    whether the columns are the layout's (see {@link #applyRowGeometry})
+     * @param hangTaken how much of the row's hang its first column gave up, in points
+     */
+    private record RowGeometry(boolean placed, double hangTaken) {
+    }
+
+    /**
+     * Takes a row's hang out of its first column, so the columns after it start where the page
+     * starts them while the table stays in its cell.
+     *
+     * <p>The empty space before the first cell's text goes first. Its text box goes only when
+     * the cell writes nothing — a heading's dash, drawn where the page draws it, not a rule
+     * written across its cell — and never below {@value #MIN_COLUMN_POINTS}pt: a cell with text
+     * would wrap it. What the column cannot give the cells' text takes out of its own indent
+     * ({@link #cellHang}); Word draws no text past a cell's left edge, so the column gives what
+     * it can first.</p>
+     *
+     * @return the points taken, the table's width shrinking by as much
+     */
+    private double takeHang(RowNode node, List<CellColumn> columns, double hang) {
+        if (!(hang > 0.01) || columns.isEmpty() || node.children().isEmpty()) {
+            return 0;
+        }
+        CellColumn first = columns.get(0);
+        double fromLeading = Math.min(hang, first.leading());
+        DocumentNode lead = node.children().get(0);
+        double spare = onlyDrawn(lead) && !holdsARule(lead, overlayDepth, oneLayerDepth)
+                ? Math.max(0, textBoxOf(first) - MIN_COLUMN_POINTS)
+                : 0;
+        double fromBox = Math.min(hang - fromLeading, spare);
+        double taken = fromLeading + fromBox;
+        columns.set(0, new CellColumn(first.width() - taken, first.leading() - fromLeading, first.trailing()));
+        return taken;
+    }
+
+    /**
+     * Whether writing a node writes a rule: a line in the flow is a paragraph whose border spans
+     * its cell ({@link #ruleOf}), not a drawing where the page puts it, and a column narrowed
+     * under it would shorten it.
+     *
+     * @param overlays         the overlays the node is written inside
+     * @param oneLayerOverlays how many of them are stacks of one layer
+     */
+    private static boolean holdsARule(DocumentNode node, int overlays, int oneLayerOverlays) {
+        if (node.children().isEmpty()) {
+            return inTheFlow(node, overlays, oneLayerOverlays) && DocxRules.of(node) != null;
+        }
+        int inside = overlays + (isOverlay(node) ? 1 : 0);
+        int insideOneLayer = oneLayerOverlays + (isOneLayer(node) ? 1 : 0);
+        for (DocumentNode child : node.children()) {
+            if (holdsARule(child, inside, insideOneLayer)) {
+                return true;
+            }
+        }
         return false;
     }
+
+    /** The narrowest a column is left when it gives up its width to a hang. */
+    private static final double MIN_COLUMN_POINTS = 1;
 
     /**
      * One column of a row's carrier: the text box, and what sits either side of it inside
@@ -7300,9 +7406,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * section's text. So the first cell's written margin is added, and the border lands at
      * the inset, where the page draws it. A cell's own content is not indented this way —
      * inside a cell the inset is always zero.</p>
+     *
+     * <p>An inset below zero is written too: a container hanging left by a negative margin
+     * moves what it holds out past the text beside it. {@code SerifHeadline} hangs each section
+     * heading's row left by its dash, and in Word every title stood that far right of the
+     * page's, 17pt in the main column.</p>
      */
     private void indentTable(XWPFTable table) {
-        if (insetLeft <= 0 || table.getRows().isEmpty() || table.getRow(0).getTableCells().isEmpty()) {
+        // Nested in a cell, a hang is its cells' (writeRow): Word keeps the table in the cell.
+        if (!(Math.abs(insetLeft) > 0.01) || currentCell != null && insetLeft < 0
+            || table.getRows().isEmpty() || table.getRow(0).getTableCells().isEmpty()) {
             return;
         }
         XWPFTableCell first = table.getRow(0).getCell(0);
@@ -7319,7 +7432,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 : table.getCTTbl().addNewTblPr();
         CTTblWidth indent = properties.isSetTblInd() ? properties.getTblInd() : properties.addNewTblInd();
         indent.setType(STTblWidth.DXA);
-        indent.setW(BigInteger.valueOf(toTwips(insetLeft + firstCellMargin)));
+        // Signed: toTwips holds a width at zero, and an indent may reach out past the margin.
+        indent.setW(BigInteger.valueOf(Math.round((insetLeft + firstCellMargin) * POINT_TO_TWIP)));
     }
 
     private static boolean endsWithATable(List<IBodyElement> elements) {
@@ -7434,6 +7548,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double previousHangingOverBy = hangingOverBy;
         double previousInsetLeft = insetLeft;
         double previousInsetRight = insetRight;
+        double previousTextShift = cellTextShift;
         XWPFParagraph previousCloser = tableCloser;
         currentCell = cell;
         lastBodyParagraph = null;
@@ -7443,9 +7558,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         borderBelow = 0;
         forgetTheHang();
         // A cell's content is measured from the cell's own edge, which its margins already
-        // keep clear of the border; the containers around the table have nothing to add.
+        // keep clear of the border; the containers around the table have nothing to add. A row
+        // hanging left out of the cell holding it moves this cell's text only (see cellHang).
         insetLeft = 0;
         insetRight = 0;
+        cellTextShift = cellHang;
+        cellHang = 0;
         try {
             content.write();
             // A cell of space and nothing written — padding round a drawing the export keeps
@@ -7471,6 +7589,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             hangingOverBy = previousHangingOverBy;
             insetLeft = previousInsetLeft;
             insetRight = previousInsetRight;
+            cellTextShift = previousTextShift;
             tableCloser = previousCloser;
         }
     }

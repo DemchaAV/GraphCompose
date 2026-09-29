@@ -2403,9 +2403,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         XWPFRun run = para.createRun();
         applyStyle(run, style);
-        // Without Word's numbering the depth is spaces, which every line of the item starts with.
-        String indent = "  ".repeat(depth);
-        setTextBrokenAtLines(run, numId != null ? text : indent + text.replaceAll("\r\n|\r|\n", "\n" + indent));
+        setTextBrokenAtLines(run, numId != null ? text : "  ".repeat(depth) + text);
         styleTheMark(para, style);
     }
 
@@ -4196,6 +4194,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         styleTheMark(para, markStyle);
     }
 
+    /** A line break in text, as the page breaks lines at it (see {@code ParagraphWrapping}). */
+    private static final java.util.regex.Pattern LINE_BREAK = java.util.regex.Pattern.compile("\r\n|\r|\n");
+
     /**
      * Writes a run's text with each line break the page makes as Word's own.
      *
@@ -4205,7 +4206,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * under it stood as much higher as the lines it lost. Each break is a {@code w:br}.</p>
      */
     private static void setTextBrokenAtLines(XWPFRun run, String text) {
-        String[] lines = (text == null ? "" : text).split("\r\n|\r|\n", -1);
+        String[] lines = LINE_BREAK.split(text == null ? "" : text, -1);
         for (int index = 0; index < lines.length; index++) {
             if (index > 0) {
                 run.addBreak();

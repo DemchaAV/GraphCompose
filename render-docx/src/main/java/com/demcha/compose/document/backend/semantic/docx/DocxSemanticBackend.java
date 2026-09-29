@@ -2403,7 +2403,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         XWPFRun run = para.createRun();
         applyStyle(run, style);
-        run.setText(numId != null ? text : "  ".repeat(depth) + text);
+        // Without Word's numbering the depth is spaces, which every line of the item starts with.
+        String indent = "  ".repeat(depth);
+        setTextBrokenAtLines(run, numId != null ? text : indent + text.replaceAll("\r\n|\r|\n", "\n" + indent));
         styleTheMark(para, style);
     }
 
@@ -2483,7 +2485,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else {
             XWPFRun label = para.createRun();
             applyStyle(label, style);
-            label.setText(item.label());
+            setTextBrokenAtLines(label, item.label());
         }
         makeRoomForPictures(para, pictures);
         styleTheMark(para, style);
@@ -2514,7 +2516,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             XWPFRun docRun = newRun(para, text.linkTarget());
             applyStyle(docRun, text.textStyle() == null ? style : text.textStyle());
             applyInlineBackground(docRun, backgroundOf(run), path);
-            docRun.setText(text.text() == null ? "" : text.text());
+            setTextBrokenAtLines(docRun, text.text());
         }
         return pictures;
     }
@@ -4181,17 +4183,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             applyStyle(docRun, markStyle);
             applyRunDirection(docRun, rightToLeft);
             applyInlineBackground(docRun, backgroundOf(run), path);
-            docRun.setText(text.text() == null ? "" : text.text());
+            setTextBrokenAtLines(docRun, text.text());
             wroteARun = true;
         }
         if (!wroteARun) {
             XWPFRun docRun = newRun(para, node.linkTarget());
             applyStyle(docRun, node.textStyle());
             applyRunDirection(docRun, rightToLeft);
-            docRun.setText(node.text() == null ? "" : node.text());
+            setTextBrokenAtLines(docRun, node.text());
         }
         makeRoomForPictures(para, pictures);
         styleTheMark(para, markStyle);
+    }
+
+    /**
+     * Writes a run's text with each line break the page makes as Word's own.
+     *
+     * <p>Word reads a {@code "\n"} inside {@code w:t} as a space: an invoice's addressee —
+     * name, street, city, email and phone, one paragraph whose lines the page breaks at its
+     * {@code "\n"}s — came out as one wrapped line in {@code ClassicInvoice}, and everything
+     * under it stood as much higher as the lines it lost. Each break is a {@code w:br}.</p>
+     */
+    private static void setTextBrokenAtLines(XWPFRun run, String text) {
+        String[] lines = (text == null ? "" : text).split("\r\n|\r|\n", -1);
+        for (int index = 0; index < lines.length; index++) {
+            if (index > 0) {
+                run.addBreak();
+            }
+            run.setText(lines[index], index);
+        }
     }
 
     /**

@@ -39,7 +39,8 @@ class DocxParagraphSidesTest {
     void inACellACoupleOfPointsOfEachSideStayTheEditors() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addRow(row -> row
-                        .addParagraph(p -> p.text("Left").margin(new DocumentInsets(0, 40, 0, 1.5)))
+                        .addParagraph(p -> p.text("Left").margin(new DocumentInsets(0, 40, 0, 0))
+                                .padding(new DocumentInsets(0, 0, 0, 1.5)))
                         .addParagraph("Right")))) {
             XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
             CTInd indent = indent(cell.getParagraphs().get(0));
@@ -47,6 +48,24 @@ class DocxParagraphSidesTest {
             assertThat(DocxTwips.of(indent.getRight())).as("40pt less the 2pt the editor keeps").isEqualTo(38 * 20L);
             assertThat(indent.isSetLeft() && DocxTwips.of(indent.getLeft()) > 0)
                     .as("a side under 2pt is all the editor's").isFalse();
+        }
+    }
+
+    @Test
+    void aPlacedRowsCellHoldsItsChildsLeftMarginOnce() throws Exception {
+        // The layout starts the child past its left margin, and the cell's text starts where
+        // the child does: the paragraph indenting by it as well stood it off twice as far.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow(row -> row
+                        .addParagraph(p -> p.text(SUMMARY).margin(new DocumentInsets(0, 0, 0, 12)))
+                        .addParagraph("Right")))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+            CTInd indent = indent(cell.getParagraphs().get(0));
+
+            assertThat(DocxTwips.of(cell.getCTTc().getTcPr().getTcMar().getLeft().getW()))
+                    .as("the cell starts the text past the margin").isEqualTo(12 * 20L);
+            assertThat(indent == null || !indent.isSetLeft() || DocxTwips.of(indent.getLeft()) == 0)
+                    .as("and the paragraph does not indent by it again").isTrue();
         }
     }
 
@@ -71,21 +90,6 @@ class DocxParagraphSidesTest {
     }
 
     @Test
-    void wordsThatWrapKeepTheirColumn() throws Exception {
-        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addRow(row -> row
-                        .weights(3, 1)
-                        .addParagraph("Name")
-                        .addParagraph(SUMMARY)))) {
-            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(1);
-            CTInd indent = indent(cell.getParagraphs().get(0));
-
-            assertThat(indent == null || !indent.isSetRight() || DocxTwips.of(indent.getRight()) >= 0)
-                    .as("a line of several words breaks where it fits").isTrue();
-        }
-    }
-
-    @Test
     void aLongWordAmongOtherWordsGivesTheParagraphNoMoreRoom() throws Exception {
         // The indent is the whole paragraph's: given to the word's line, it would let the
         // lines of several words take more of them than the page does.
@@ -97,7 +101,8 @@ class DocxParagraphSidesTest {
                         .addParagraph(p -> p.text(text).margin(new DocumentInsets(0, -60, 0, 0)))))) {
             CTInd indent = indent(document.getTables().get(0).getRow(0).getCell(1).getParagraphs().get(0));
 
-            assertThat(indent == null || !indent.isSetRight() || DocxTwips.of(indent.getRight()) >= 0).isTrue();
+            assertThat(indent == null || !indent.isSetRight() || DocxTwips.of(indent.getRight()) >= 0)
+                    .as("its lines of several words break where the page breaks them").isTrue();
         }
     }
 

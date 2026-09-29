@@ -233,6 +233,70 @@ class DocxLayerColumnsTest {
                 : DocxTwips.of(properties.getSpacing().getBefore());
     }
 
+    @Test
+    void aCardsMarkAndTheRuleBetweenCardsAreDrawnOverTheColumnsNotColumnsOfTheirOwn() throws Exception {
+        // A card grid lays each card's mark over the edge of its text and a rule on the
+        // boundary between two cards: neither is a column, and while they stood in the way the
+        // grid was written one card under the other, each a column lower and further right.
+        try (Export export = export(stack -> stack
+                .layer(column("First", 0, MAIN, first -> first.addParagraph("AWS Certified")), LayerAlign.TOP_LEFT)
+                .layer(column("Second", SIDEBAR, 0, second -> second.addParagraph("Docker Certified")), LayerAlign.TOP_LEFT)
+                .layer(sleeve("Mark", SIDEBAR - 8, new com.demcha.compose.document.dsl.ImageBuilder().name("Medal")
+                        .source(pngBytes()).size(16, 16).build()), LayerAlign.TOP_LEFT)
+                .layer(sleeve("Rule", SIDEBAR - 4, new com.demcha.compose.document.dsl.LineBuilder().name("RuleLine")
+                        .vertical(80).thickness(0.5).color(DocumentColor.rgb(200, 200, 200)).build()),
+                        LayerAlign.TOP_LEFT))) {
+            XWPFDocument document = export.document();
+            String body = document.getDocument().xmlText();
+
+            assertThat(document.getTables()).hasSize(1);
+            XWPFTable table = document.getTables().get(0);
+            assertThat(table.getRow(0).getTableCells()).extracting(XWPFTableCell::getText)
+                    .containsExactly("AWS Certified", "Docker Certified");
+            assertThat(body).as("the mark is drawn where the page puts it, not written in a cell")
+                    .doesNotContain("<wp:inline").contains("<pic:pic");
+            assertThat(body).as("and the rule across the boundary with it").contains("C8C8C8");
+            // The rule, as tall as the band, is what made the band that tall: the row keeps it.
+            var row = table.getRow(0).getCtRow().getTrPr();
+            assertThat(row != null && row.sizeOfTrHeightArray() == 1).as("the row is held to a height").isTrue();
+            assertThat(DocxTwips.of(row.getTrHeightArray(0).getVal())).isGreaterThanOrEqualTo(80L * 20 - 1);
+        }
+    }
+
+    @Test
+    void aPortraitInABandOfItsOwnStaysAColumn() throws Exception {
+        // A picture alone in its sleeve is only left out where it stands across the columns: a
+        // portrait with a band of its own beside the text is that band's cell, as before.
+        try (Export export = export(stack -> stack
+                .layer(column("Portrait", 0, MAIN, side -> side.add(new com.demcha.compose.document.dsl.ImageBuilder()
+                        .name("Photo").source(pngBytes()).size(80, 80).build())), LayerAlign.TOP_LEFT)
+                .layer(column("Main", SIDEBAR, 0, main -> main.addParagraph("Experience")), LayerAlign.TOP_LEFT))) {
+            XWPFDocument document = export.document();
+
+            assertThat(document.getTables()).hasSize(1);
+            assertThat(document.getTables().get(0).getRow(0).getTableCells()).hasSize(2);
+            assertThat(document.getDocument().xmlText()).as("the portrait written in its cell").contains("<wp:inline");
+        }
+    }
+
+    private static DocumentNode sleeve(String name, double insetLeft, DocumentNode child) {
+        SectionBuilder sleeve = new SectionBuilder();
+        sleeve.name(name).spacing(0).padding(DocumentInsets.zero())
+                .margin(new DocumentInsets(0, 0, 0, insetLeft));
+        sleeve.add(child);
+        return sleeve.build();
+    }
+
+    private static byte[] pngBytes() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(16, 16,
+                    java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (Exception failure) {
+            throw new IllegalStateException(failure);
+        }
+    }
+
     /** One column as a full-width layer, inset to its band, as a two-column CV lays it out. */
     private static DocumentNode column(String name, double insetLeft, double insetRight,
                                        Consumer<SectionBuilder> content) {

@@ -8,6 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A grid of cards is one row of columns in Word.** A layer stack whose layers are
+  side-by-side columns is written as a one-row table, but only when every layer formed a
+  column. A card grid also lays each card's mark over the edge of its text and a rule between
+  two cards, and those layers stood across the columns: `SerifHeadline`'s projects,
+  certifications and achievements were written one card under the other, each a column lower
+  and further right. When such layers keep a stack from being columns, a layer holding only
+  drawing, or a picture alone, in a container that paints nothing is left out of them: it is
+  drawn where the page puts it, and a stack on one page keeps its height as the row's least
+  height, since a rule as tall as the band may be what made it that tall. A stack that forms
+  columns with every layer is written as before. In Word, `SerifHeadline` fits on one page as
+  the page does, its median drift falling from 37.9pt to 4.3.
 - **Stacked title lines and icons beside their labels keep the page's height in Word.** A
   container written layer by layer took more room in Word than on the page for two kinds of
   layer. Lines of text laid over one another — `NorthlineProposal`'s title, three 46pt lines

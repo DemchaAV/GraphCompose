@@ -45,6 +45,53 @@ class DocxStackedLayersTest {
     }
 
     @Test
+    void aLineLaidTooTightForItsFaceKeepsItsOwnHeight() throws Exception {
+        // 18pt apart is under two thirds of a 30pt face: Word would cut its letters off.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .add(new ShapeContainerBuilder().name("Tight").rectangle(300, 60)
+                        .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                        .position(new ParagraphBuilder().name("One").text("One").textStyle(LARGE).build(),
+                                0, 0, LayerAlign.TOP_LEFT)
+                        .position(new ParagraphBuilder().name("Two").text("Two").textStyle(LARGE).build(),
+                                0, 18, LayerAlign.TOP_LEFT)
+                        .build()))) {
+            assertThat(line(paragraph(document, "Two"))).isEqualTo(line(paragraph(document, "One")));
+        }
+    }
+
+    @Test
+    void aLineHoldingAPictureKeepsItsOwnHeight() throws Exception {
+        // A picture is not its line's face: squeezed, Word would cut its top off.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .add(new ShapeContainerBuilder().name("Mixed").rectangle(300, 80)
+                        .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                        .position(new ParagraphBuilder().name("One").text("One").textStyle(LARGE).build(),
+                                0, 0, LayerAlign.TOP_LEFT)
+                        .position(new ParagraphBuilder().name("Two").inlineText("Two", LARGE)
+                                .inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(pngBytes()),
+                                        30, 30).build(),
+                                0, PITCH, LayerAlign.TOP_LEFT)
+                        .build()))) {
+            XWPFParagraph two = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().startsWith("Two")).findFirst().orElseThrow();
+            assertThat(line(two)).as("its own line, not the step down from the one above")
+                    .isEqualTo(line(paragraph(document, "One")));
+        }
+    }
+
+    @Test
+    void anIconBesideItsLabelInAPaintedPanelStandsInFrontOfItsShading() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addSection("Card", card -> card.fillColor(com.demcha.compose.document.style.DocumentColor.rgb(240, 240, 240))
+                        .add(fact(30))))) {
+            String body = document.getDocument().xmlText();
+
+            assertThat(body).doesNotContain("<wp:inline");
+            assertThat(body).contains("<pic:pic").contains("behindDoc=\"0\"");
+        }
+    }
+
+    @Test
     void aLineBesideTheOneAboveKeepsItsOwnHeight() throws Exception {
         // A value set right of its label a few points lower is not laid over it: squeezed to
         // those few points, Word would cut its letters off.
@@ -80,7 +127,7 @@ class DocxStackedLayersTest {
 
             assertThat(body).as("no line of its own in the flow").doesNotContain("<wp:inline");
             assertThat(body).as("drawn where the page puts it").contains("<wp:anchor").contains("<pic:pic");
-            assertThat(paragraph(document, "Project duration")).isNotNull();
+            assertThat(document.getParagraphs()).extracting(XWPFParagraph::getText).contains("Project duration");
         }
     }
 

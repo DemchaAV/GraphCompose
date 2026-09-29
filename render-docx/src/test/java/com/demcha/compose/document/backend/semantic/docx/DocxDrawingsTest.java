@@ -214,6 +214,28 @@ class DocxDrawingsTest {
     }
 
     @Test
+    void aFillUnderTextInAPaintedPanelStaysBehindIt() throws Exception {
+        // A track holding only drawing, with its label laid over it: in front, it would cover
+        // the label. Only a badge whose glyph is drawn over it frames nothing of the flow.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
+                        .addLayerStack(stack -> stack
+                                .layer(new ShapeContainerBuilder().name("Track").rectangle(200, 20)
+                                                .fillColor(DocumentColor.rgb(90, 120, 200))
+                                                .center(new com.demcha.compose.document.dsl.ShapeBuilder().name("Fill")
+                                                        .size(100, 20).fillColor(ACCENT).build())
+                                                .build(),
+                                        LayerAlign.TOP_LEFT)
+                                .layer(new ParagraphBuilder().name("Label").text("80%").build(),
+                                        LayerAlign.CENTER))))) ) {
+            List<String> tracks = anchors(document.getDocument().xmlText()).stream()
+                    .filter(anchor -> anchor.contains("5A78C8")).toList();
+
+            assertThat(tracks).singleElement().asString().contains("behindDoc=\"1\"");
+        }
+    }
+
+    @Test
     void aBadgeAndItsGlyphInAPaintedPanelStandInFrontOfItsShading() throws Exception {
         // Kept in the flow, the glyph was written white on the panel's shading and the disc,
         // behind the text, hid under it: NorthlineProposal's acceptance heading lost its badge.

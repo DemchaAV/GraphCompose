@@ -1926,11 +1926,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // over what lies behind the text, a shape stands in front unless it frames a line of
             // text or a picture on its page: a template sets an icon beside its heading through a
             // stack of one layer, which kept every payment panel's heading icon behind its
-            // shading. Elsewhere the overlays it sits in decide (drawsInFront). A badge framing
-            // only its glyph, drawn over it in front (drawnOverItsBadge), stands in front too.
+            // shading. Elsewhere the overlays it sits in decide (drawsInFront). A badge whose
+            // glyph is drawn over it in front (drawnOverItsBadge) stands in front too: the
+            // picture it frames is its own, not the flow's.
             boolean inFront = surfaceBehind != null && !Double.isNaN(canvasHeight)
-                    ? node instanceof ShapeContainerNode && onlyDrawn(node)
-                      || !framesText(fragment, layout.textOnPage(fragment.pageIndex()))
+                    ? holdsItsDrawnGlyph(node) || !framesText(fragment, layout.textOnPage(fragment.pageIndex()))
                     : overlayFront;
             if (queueDrawing(fragment, inFront)) {
                 drew = true;
@@ -3787,64 +3787,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Holds each line of text laid over the one above it to the distance between the two
-     * lines' feet, so written one after the other they stand where the page stacks them.
-     *
-     * <p>A title set as layers a pitch apart, tighter than its face's own line — the page
-     * overlaps the line boxes — was written a line at a time at each line's own height:
-     * {@code NorthlineProposal}'s three 46pt title lines, 48pt apart on the page, took 70pt
-     * each in Word, and everything under them on the cover stood 44pt low while the shapes
-     * drawn where the page puts them stayed. Word sets the foot of an exactly-spaced line at
-     * the bottom of its line, so the first line keeps its own height and each line after it
-     * takes the distance from the foot of the line above to its own: every line's foot, and
-     * the stack's bottom, land where the page puts them.</p>
+     * Holds each line of text a container lays over the one above it to the distance between
+     * the two lines' feet, so written one after the other they stand where the page stacks them
+     * (see {@link DocxStackedLines}).
      *
      * @param layers a container's children, in the order they are written
      */
     private void holdStackedLines(List<DocumentNode> layers) {
-        for (int i = 1; i < layers.size(); i++) {
-            if (!(layers.get(i - 1) instanceof ParagraphNode above)
-                || !(layers.get(i) instanceof ParagraphNode line)
-                || layout.lineCount(above) != 1 || layout.lineCount(line) != 1) {
-                continue;
-            }
-            com.demcha.compose.document.layout.PlacedNode upper = layout.placement(above);
-            com.demcha.compose.document.layout.PlacedNode lower = layout.placement(line);
-            java.util.OptionalDouble own = layout.lineHeight(line);
-            if (upper == null || lower == null || own.isEmpty()
-                || upper.startPage() != upper.endPage() || lower.startPage() != upper.startPage()
-                || lower.endPage() != upper.startPage()) {
-                continue;
-            }
-            // The page's y runs up from a box's foot: a line laid over the one above starts
-            // above that line's foot, and under it across — a value set beside its label a
-            // few points lower is a line of its own, not one laid over it.
-            boolean overlaps = lower.placementY() + lower.placementHeight() > upper.placementY() + 0.01;
-            boolean under = lower.placementX() < upper.placementX() + upper.placementWidth()
-                            && upper.placementX() < lower.placementX() + lower.placementWidth();
-            double footToFoot = upper.placementY() - lower.placementY();
-            // Not below half the face. Measured, Word sets a 16pt word whole in a 10.7pt exact
-            // line, EditorialProposal's "STUDIO" under its "NORTHLINE"; a line squeezed further
-            // than that is left at its own height rather than risked.
-            double face = largestFaceOf(line);
-            if (overlaps && under && footToFoot >= face / 2 && footToFoot < own.getAsDouble()) {
-                stackedLineHeights.put(line, footToFoot);
-            }
-        }
-    }
-
-    /** The largest size a paragraph's text is set in: its runs' where it has runs, else its own. */
-    private static double largestFaceOf(ParagraphNode paragraph) {
-        if (paragraph.inlineRuns() == null || paragraph.inlineRuns().isEmpty()) {
-            return paragraph.textStyle() == null ? 0 : paragraph.textStyle().size();
-        }
-        double largest = 0;
-        for (InlineRun run : paragraph.inlineRuns()) {
-            DocumentTextStyle style = run instanceof InlineTextRun text && text.textStyle() != null
-                    ? text.textStyle() : paragraph.textStyle();
-            largest = Math.max(largest, style == null ? 0 : style.size());
-        }
-        return largest;
+        stackedLineHeights.putAll(DocxStackedLines.of(layers, layout));
     }
 
     /**
@@ -3867,8 +3817,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             || line.startPage() != box.startPage() || line.endPage() != box.startPage()) {
             return;
         }
-        // The page's y runs up from a box's foot.
-        double overhang = box.placementY() + node.padding().bottom() - line.placementY();
+        // The page's y runs up from a box's foot. Written layer by layer, the container writes
+        // none of its padding, so the overhang is measured from its own foot.
+        double overhang = box.placementY() - line.placementY();
         if (overhang > 0.01) {
             hangingBelow = Math.max(hangingBelow, overhang);
         }
@@ -4780,14 +4731,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             drawHeight = sourceHeight * scale;
         }
         if (drawnOverItsBadge(node, clipContainer)) {
-            drawWhereThePagePutsIt(document, node, bytes, sourceWidth, sourceHeight, surfaceBehind != null,
+            drawWhereThePagePutsIt(document, node, bytes, sourceWidth, sourceHeight,
                     "drawn over the badge holding it");
             return;
         }
         if (picturesDrawnBeside.contains(node)) {
-            // In a painted panel, in front: the panel's shading would hide it behind the text,
-            // and it stands clear of the text across.
-            drawWhereThePagePutsIt(document, node, bytes, sourceWidth, sourceHeight, surfaceBehind != null,
+            drawWhereThePagePutsIt(document, node, bytes, sourceWidth, sourceHeight,
                     "drawn beside the text it labels");
             return;
         }
@@ -5010,14 +4959,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Draws a picture where the page draws it, in the box the layout gave it: a badge's glyph
      * over the outline drawn before it ({@link #drawnOverItsBadge}), an icon beside its text
-     * ({@link #drawnBesideItsText}).
+     * ({@link #drawnBesideItsText}). On a painted surface it stands in front of the text: the
+     * surface's shading would hide it behind, and it frames no text of the flow.
      *
-     * @param inFront whether it stands in front of the text rather than behind it
-     * @param how     what it is drawn as, for the report
+     * @param how what it is drawn as, for the report
      */
     private void drawWhereThePagePutsIt(XWPFDocument document, ImageNode image, byte[] bytes,
-                                        double sourceWidth, double sourceHeight, boolean inFront,
-                                        String how) throws Exception {
+                                        double sourceWidth, double sourceHeight, String how) throws Exception {
+        boolean inFront = surfaceBehind != null;
         com.demcha.compose.document.layout.PlacedNode placed = layout.placement(image);
         double width = placed.placementWidth();
         double height = placed.placementHeight();
@@ -6300,23 +6249,36 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Which leaves under a node are drawn rather than written: drawing, and the glyphs drawn over
-     * the badges holding them — neither is content a band's text is measured from. A badge's
-     * initials are measured from: the band writes a line in their place (see writeTextBadge).
+     * Which leaves under a node are drawn rather than written: drawing, and the pictures drawn
+     * where the page puts them (see {@link #drawnPicture}) — neither is content a band's text is
+     * measured from. A badge's initials are measured from: the band writes a line in their place
+     * (see writeTextBadge).
      */
     private java.util.function.Predicate<DocumentNode> drawnIn(DocumentNode node) {
         java.util.Set<DocumentNode> pictures = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
-        collectPicturesDrawnOverBadges(node, pictures);
+        collectDrawnPictures(node, pictures);
         return leaf -> isDrawing(leaf) || pictures.contains(leaf);
     }
 
-    private void collectPicturesDrawnOverBadges(DocumentNode node, java.util.Set<DocumentNode> pictures) {
+    private void collectDrawnPictures(DocumentNode node, java.util.Set<DocumentNode> pictures) {
         for (DocumentNode child : node.children()) {
             if (child instanceof ImageNode image && drawnPicture(image, node)) {
                 pictures.add(child);
             }
-            collectPicturesDrawnOverBadges(child, pictures);
+            collectDrawnPictures(child, pictures);
         }
+    }
+
+    /** Whether a node is a paragraph of text or holds one. */
+    private static boolean holdsText(DocumentNode node) {
+        return node instanceof ParagraphNode || node.children().stream().anyMatch(DocxSemanticBackend::holdsText);
+    }
+
+    /** Whether a node is a badge holding a glyph drawn over it (see {@link #drawnOverItsBadge}). */
+    private boolean holdsItsDrawnGlyph(DocumentNode node) {
+        return node instanceof ShapeContainerNode badge
+               && badge.children().stream().anyMatch(layer -> layer instanceof ImageNode glyph
+                                                              && drawnOverItsBadge(glyph, badge));
     }
 
     /**
@@ -6372,8 +6334,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 return false;
             }
             // An icon, at most twice as tall as the text it labels: a photo beside a line of
-            // text is what the flow is written round, and stays in it.
-            if (!(layer instanceof ImageNode) && !onlyDrawing(layer)) {
+            // text is what the flow is written round, and stays in it; so is a logo beside
+            // another picture, a barcode or a spacer, which label nothing.
+            if (holdsText(layer)) {
                 besideText |= icon.placementHeight() <= 2 * placed.placementHeight() + edge;
             }
         }

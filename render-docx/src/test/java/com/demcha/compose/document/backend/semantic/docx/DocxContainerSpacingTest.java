@@ -146,9 +146,25 @@ class DocxContainerSpacingTest {
     }
 
     @Test
-    void aTableOpeningACellTakesNoParagraphAboveIt() throws Exception {
-        // In a cell the row's height and alignment already place what it holds: a paragraph
-        // carrying the space as well stood each of ObsidianInvoice's line items 8.5pt lower.
+    void aTableAfterAPageBreakKeepsTheSpaceAboveIt() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 0, page -> page
+                .addParagraph("First page")
+                .addPageBreak(b -> b.name("Break"))
+                .addSection("Second", body -> body.padding(new DocumentInsets(18, 0, 0, 0))
+                        .addRow(row -> row.addParagraph("Studio").addParagraph("INVOICE"))))) {
+            List<IBodyElement> body = document.getBodyElements();
+            int table = body.indexOf(document.getTables().get(0));
+
+            assertThat(body.get(table - 1)).as("a paragraph after the break carries the space")
+                    .isInstanceOf(XWPFParagraph.class);
+            assertThat(before((XWPFParagraph) body.get(table - 1))).isGreaterThanOrEqualTo(18 * 20L);
+        }
+    }
+
+    @Test
+    void aTableOpeningACellIsWrittenAsBefore() throws Exception {
+        // Only the body takes the paragraph: in a cell it was measured to set content lower
+        // than the page does — each of ObsidianInvoice's line items 8.5pt lower.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 0, page -> page
                 .addRow(outer -> outer
                         .addSection(cell -> cell.padding(new DocumentInsets(12, 0, 0, 0))

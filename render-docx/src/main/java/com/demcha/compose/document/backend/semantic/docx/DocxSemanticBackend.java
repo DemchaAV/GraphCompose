@@ -7165,10 +7165,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         owePendingSpacingAfter(carriedSpacingBefore);
         carriedSpacingBefore = 0;
         // With no paragraph before it in the body — the table opens the document or a section,
-        // or follows a page break — a hairline one carries it: ClassicInvoice opens with a row under its page padding, and
-        // without it stood against the paper's top edge in Word. Not in a cell: there the row's
-        // height and alignment already place what it holds, and the space came out twice —
-        // ObsidianInvoice's line items each stood 8.5pt lower.
+        // or follows a page break — a hairline one carries it: ClassicInvoice opens with a row
+        // under its page padding, and without it stood against the paper's top edge in Word.
+        // Not in a cell, where it was measured to set content lower than the page does:
+        // ObsidianInvoice's line items each stood 8.5pt lower and VioletGrid ran to two pages.
         if (currentCell == null) {
             holdTheSpaceAboveATable(document);
         }

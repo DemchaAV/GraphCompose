@@ -8,12 +8,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
-- **A table opening the document keeps the space above it in Word.** Word has no space above
-  a table: the paragraph before it carries it, and a table with none before it in the body
-  lost it. `ClassicInvoice` opens with a row under its page
-  padding and stood against the paper's top edge in Word. A hairline paragraph now carries the
-  space above such a table, as it already did above a panel. Not in a table cell, where the
-  row's height and alignment already place what it holds. In Word the median drift falls from
+- **A table with no paragraph before it keeps the space above it in Word.** Word has no space
+  above a table: the paragraph before it carries it, and a table with none before it in the
+  body — opening the document or a section, or following a page break — lost it.
+  `ClassicInvoice` opens with a row under its page padding and stood against the paper's top
+  edge in Word. A hairline paragraph now carries the space above such a table, as it already
+  did above a panel. Not in a table cell, where it was measured to set content lower than the
+  page does. In Word the median drift falls from
   20.4pt to 4.4 on `ClassicInvoice`, from 14.1 to 4.5 on `TealPulse` and from 6.8 to 3.9 on
   `PaymentsInvoice`, whose drawings no longer touch its text.
 - **A line break in a paragraph's text is a line break in Word.** The DOCX export wrote a

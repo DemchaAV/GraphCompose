@@ -1,6 +1,7 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -142,6 +143,33 @@ class DocxContainerSpacingTest {
                     .isInstanceOf(XWPFParagraph.class);
             assertThat(before((XWPFParagraph) body.get(0))).isEqualTo(18 * 20L);
             assertThat(body.get(1)).isInstanceOf(XWPFTable.class);
+        }
+    }
+
+    @Test
+    void aShapeContainersMarginIsSpaceAroundWhatItHolds() throws Exception {
+        // A section heading set as a row in a container 18pt below the block above: written layer
+        // by layer, the container's margin was never written and the heading stood 18pt high.
+        DocumentNode heading = new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Heading")
+                .rectangle(300, 14).clipPolicy(com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE)
+                .margin(new DocumentInsets(18, 0, 6, 0))
+                .position(new com.demcha.compose.document.dsl.RowBuilder().name("HeadingRow")
+                                .addParagraph("—").addParagraph("SKILLS").build(),
+                        0, 0, com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                .build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addParagraph("Los Angeles, CA")
+                .add(heading)
+                .addParagraph("Java"))) {
+            XWPFParagraph above = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().equals("Los Angeles, CA")).findFirst().orElseThrow();
+            XWPFParagraph below = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().equals("Java")).findFirst().orElseThrow();
+
+            assertThat(after(above)).as("its top margin, held below the paragraph before its row")
+                    .isEqualTo(18 * 20L);
+            assertThat(before(below)).as("its bottom margin, above the paragraph after it")
+                    .isEqualTo(6 * 20L);
         }
     }
 

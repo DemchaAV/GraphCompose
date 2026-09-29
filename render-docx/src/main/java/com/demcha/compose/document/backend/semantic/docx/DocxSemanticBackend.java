@@ -1676,7 +1676,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
                                  && paintOf(candidate).isEmpty(),
                     candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
-                                 && !paintOf(candidate).isEmpty());
+                                 && !paintOf(candidate).isEmpty(),
+                    this::drawnOverTheColumns);
             if (columns != null) {
                 // Side by side, nothing in the stack overlaps: it is not an overlay.
                 writeLayerColumns(document, stack, columns);
@@ -6002,6 +6003,81 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Whether a layer of a stack holds only what is drawn where the page puts it, and may be
+     * left out of the stack's columns (see {@link DocxLayerColumns#of}): drawing, or a picture
+     * alone in a container that places it, in a layer that paints nothing of its own and holds
+     * no badge's initials, which a band would write a line for.
+     */
+    private boolean drawnOverTheColumns(DocumentNode layer) {
+        if ((layer instanceof SectionNode || layer instanceof ContainerNode) && !paintOf(layer).isEmpty()
+            || holdsATextBadge(layer)) {
+            return false;
+        }
+        return onlyDrawn(layer) || aPictureAlone(layer) != null;
+    }
+
+    private boolean holdsATextBadge(DocumentNode node) {
+        return node instanceof ShapeContainerNode badge && textBadgeParagraph(badge) != null
+               || node.children().stream().anyMatch(this::holdsATextBadge);
+    }
+
+    /**
+     * Draws the layers of a stack written as columns that belong to no column — a card's mark,
+     * the rule between two cards — where the page puts them, writing nothing into the flow.
+     * Whatever space a layer would owe around itself is not the flow's: it is put back.
+     */
+    private void drawLayersOverTheColumns(XWPFDocument document, List<DocumentNode> layers) throws Exception {
+        if (layers.isEmpty()) {
+            return;
+        }
+        double carried = carriedSpacingBefore;
+        double owed = pendingSpacingAfter;
+        double hanging = hangingBelow;
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
+        overlayDepth++;
+        try {
+            for (DocumentNode layer : layers) {
+                ImageNode picture = aPictureAlone(layer);
+                if (picture != null) {
+                    picturesDrawnBeside.add(picture);
+                }
+                writeNode(document, layer);
+            }
+        } finally {
+            overlayDepth--;
+            carriedSpacingBefore = carried;
+            pendingSpacingAfter = owed;
+            hangingBelow = hanging;
+            insetLeft = outerLeft;
+            insetRight = outerRight;
+        }
+    }
+
+    /**
+     * The picture a layer holds alone — a card's mark in a sleeve that places it — or
+     * {@code null} when it holds anything else, or paints anything of its own.
+     */
+    private ImageNode aPictureAlone(DocumentNode layer) {
+        if (Double.isNaN(canvasHeight) || layer instanceof ImageNode) {
+            return null;
+        }
+        DocumentNode node = layer;
+        while (node instanceof SectionNode || node instanceof ContainerNode) {
+            if (!paintOf(node).isEmpty() || node.children().size() != 1) {
+                return null;
+            }
+            node = node.children().get(0);
+        }
+        if (!(node instanceof ImageNode picture) || picture.anchor() != null && !picture.anchor().isBlank()
+            || picture.fitMode() == DocumentImageFitMode.COVER) {
+            return null;
+        }
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(picture);
+        return placed != null && placed.startPage() == placed.endPage() ? picture : null;
+    }
+
+    /**
      * Writes a layer stack whose layers are side-by-side columns as a one-row table.
      *
      * <p>Each column is a cell as wide as its band, and holds the content of its layers — the
@@ -6077,6 +6153,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } finally {
             standIns.removeAll(plan.standIns());
             moves.remove(plan.moves());
+        }
+        // After the columns, as the stack lays them over the columns: a card's mark stands over
+        // whatever its card draws.
+        drawLayersOverTheColumns(document, plan.drawn());
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(stack);
+        if (!plan.drawn().isEmpty() && placed != null && placed.startPage() == placed.endPage()) {
+            // What is drawn over the columns — a rule as tall as the band — takes no room in
+            // them, and was what held the row to the page's height: a divider SlateOrange's
+            // header row lost, and the page under it rose 22pt.
+            holdRowAtLeast(table.getRow(0), placed.placementHeight() - stack.padding().top() - stack.padding().bottom());
         }
         double outerLeft = insetLeft;
         insetLeft += stack.margin().left() + stack.padding().left();

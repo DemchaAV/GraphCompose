@@ -63,9 +63,11 @@ final class DocxLayerColumns {
      * @param resumes  for each layer written after another in its cell, the space above its
      *                 first block, in points
      * @param moves    what is written in place of a stand-in instead (see {@link Moves})
+     * @param drawn    the layers holding only what is drawn where the page puts it — a column's
+     *                 mark, the rule between two columns — which belong to no column
      */
     record Plan(double width, List<Column> columns, Set<DocumentNode> standIns,
-                Map<DocumentNode, Double> resumes, Moves moves) {
+                Map<DocumentNode, Double> resumes, Moves moves, List<DocumentNode> drawn) {
 
         /**
          * The space above a layer's first block when it follows another layer in its cell.
@@ -88,10 +90,27 @@ final class DocxLayerColumns {
      * @param plain   whether a node is a container that draws nothing of its own
      * @param painted whether a node is a container that paints a panel, which a later layer's
      *                content written after it would stand outside of (see {@link Moves})
+     * @param drawn   whether a layer holds only what is drawn where the page puts it: it forms
+     *                no column, and may stand over one — a card grid lays each card's mark
+     *                over the edge of its text and a rule between two cards, and was written
+     *                one card under the other, each a column lower and further right
      * @return the plan, or {@code null} when the stack is not a set of side-by-side columns
      */
     static Plan of(LayerStackNode stack, DocxLayoutMetrics layout, Predicate<DocumentNode> plain,
-                   Predicate<DocumentNode> painted) {
+                   Predicate<DocumentNode> painted, Predicate<DocumentNode> drawn) {
+        // Every layer a column first: a stack that already forms columns — a portrait's band
+        // beside a text band — is written as it always was. Only one whose drawn layers stand
+        // across the columns is tried again without them.
+        Plan whole = columnsOf(stack, layout, plain, painted, node -> false);
+        if (whole != null) {
+            return whole;
+        }
+        Plan withoutDrawing = columnsOf(stack, layout, plain, painted, drawn);
+        return withoutDrawing == null || withoutDrawing.drawn().isEmpty() ? null : withoutDrawing;
+    }
+
+    private static Plan columnsOf(LayerStackNode stack, DocxLayoutMetrics layout, Predicate<DocumentNode> plain,
+                                  Predicate<DocumentNode> painted, Predicate<DocumentNode> drawn) {
         PlacedNode box = layout.placement(stack);
         if (box == null || stack.layers().size() < 2) {
             return null;
@@ -99,7 +118,12 @@ final class DocxLayerColumns {
         double contentLeft = box.placementX() + box.padding().left();
         double width = box.placementWidth() - box.padding().left() - box.padding().right();
         List<Column> columns = new ArrayList<>();
+        List<DocumentNode> drawnLayers = new ArrayList<>();
         for (LayerStackNode.Layer layer : stack.layers()) {
+            if (drawn.test(layer.node())) {
+                drawnLayers.add(layer.node());
+                continue;
+            }
             PlacedNode placed = layout.placement(layer.node());
             if (placed == null || layer.align() != LayerAlign.TOP_LEFT
                 || layer.offsetX() != 0 || layer.offsetY() != 0
@@ -140,7 +164,7 @@ final class DocxLayerColumns {
         for (Column column : columns) {
             flow(column.layers(), layout, node -> false, painted, standIns, resumes, moves);
         }
-        return new Plan(width, List.copyOf(columns), standIns, resumes, moves);
+        return new Plan(width, List.copyOf(columns), standIns, resumes, moves, List.copyOf(drawnLayers));
     }
 
     /**

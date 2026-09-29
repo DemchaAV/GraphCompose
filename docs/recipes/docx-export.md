@@ -477,7 +477,12 @@ tint it was flattened to. Recorded, like the other two.
   is drawn before the sidebar. Word has no layers. When every layer is a plain
   container at the stack's top-left corner, and the bands their padding leaves
   are either the same or apart, the stack is written as one row with a cell per
-  band. Layers sharing a band follow one another in its cell. A spacer that only
+  band. Where layers standing across the bands keep a stack from being columns, a
+  layer holding only drawing or a picture alone — a card's mark over the edge of its
+  text, the rule between two cards — in a container that paints nothing is left out
+  of them and drawn where the page puts it, and a stack on one page keeps its height
+  as the row's least height, which such a layer may have given it. Layers sharing a
+  band follow one another in its cell. A spacer that only
   keeps the place of another layer's content is not written, and the space above
   a later layer's first block is the gap the page shows, measured from the foot of
   a painted panel the block above sits in. Where a spacer inside a filled or bordered

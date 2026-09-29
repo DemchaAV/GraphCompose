@@ -3866,7 +3866,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
-        XWPFParagraph para = newBodyParagraph(document);
+        // Its own sides hold its text in, as a container's do: SerifHeadline's summary stops at
+        // the column divider through its right margin, and without it ran the page's width in
+        // Word — a line short, and everything under it that much high.
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
+        if (currentCell == null) {
+            insetLeft += node.margin().left() + node.padding().left();
+            insetRight += node.margin().right() + node.padding().right();
+        }
+        XWPFParagraph para;
+        try {
+            para = newBodyParagraph(document);
+        } finally {
+            insetLeft = outerLeft;
+            insetRight = outerRight;
+        }
         boolean rightToLeft = applyParagraphProperties(para, node);
         applyHeadingRole(para, node);
         int anchor = openAnchor(para, node.anchor());

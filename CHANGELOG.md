@@ -8,6 +8,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A container hanging left by a negative margin hangs left in Word.** The DOCX export wrote no
+  indent below zero, so what such a container holds stood at the edge it hangs from:
+  `SerifHeadline` hangs each section heading — a dash, the title and a rule, set as a row — left
+  by its dash, and in Word every title stood 17pt right of the page's in the main column and 5pt
+  in the sidebar; `LumaStudioInvoice`'s wordmark stood 120pt right. In the body, a table, a
+  paragraph, a list and a rule are now indented below zero where the page hangs them. A row
+  nested in a cell stays in the cell in Word whatever its indent, and Word draws no text past a
+  cell's left edge: its first column gives up the hang when it only holds drawing — the
+  heading's dash, not a rule written across it — and its cells' text takes what is left out of
+  its own indent, never past the cell's edge.
 - **A paragraph's own margin and padding hold its text in in Word, and a word the page sets
   whole stays whole.** The DOCX export wrote a paragraph at its container's width, leaving out
   its own sides: `SerifHeadline`'s summary stops at the column divider through its right margin

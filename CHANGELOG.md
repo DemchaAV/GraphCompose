@@ -8,6 +8,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Stacked title lines and icons beside their labels keep the page's height in Word.** A
+  container written layer by layer took more room in Word than on the page for two kinds of
+  layer. Lines of text laid over one another — `NorthlineProposal`'s title, three 46pt lines
+  48pt apart — took each line's own height, 70pt; now the first line keeps its height, each
+  single line of text laid over the one above it across takes the distance from that line's
+  foot to its own (`DocxStackedLines`), and a shape container's last line running past the
+  container's foot takes its overhang from the gap below. A line is never squeezed below 0.65
+  of its face, nor one holding a picture: Word was measured setting a 16pt word whole in a
+  10.7pt line. An icon picture beside a layer of text in a shape container neither painted,
+  clipped to its outline nor transformed, or in a layer stack — `NorthlineProposal`'s glance
+  card facts, the contact lines of `ConsultingInvoice` — was written as a line of its own
+  above the label, an icon's height a fact; clear of the text across and at most twice its
+  height, it is now drawn where the page puts it, in front inside a painted panel. A badge's
+  glyph in a painted panel is drawn over its badge, both in front of the panel's shading:
+  kept in the flow, the glyph was written white on the panel and its disc hid under the
+  shading, and `NorthlineProposal`'s acceptance heading lost its badge. In Word,
+  `NorthlineProposal` fits on two pages as the page does, its median drift falling from
+  134pt to 4.7; `EditorialProposal`'s falls from 42.5pt to 3.3 and `SerifHeadline`'s from
+  37.9 to 20.4.
 - **A badge holds its initials, and bordered cards keep the page's spacing in Word.** A filled
   or stroked rectangle, rounded rectangle or ellipse whose one layer, centred, is a line of at
   most four characters in one style, left to right, with no link, on one page — a party's
@@ -114,10 +133,9 @@ follow semantic versioning; release dates are ISO 8601.
   paragraph of its own, which put the glyph on a line above the section title beside it, off the
   circle's middle by that line's height: up to 8.5pt in LibreOffice and more in Word. A picture
   smaller than a container that clips it to its outline and holds nothing else but drawing is
-  now drawn as a picture anchored to the page where the layout puts it, over the outline. Inside
-  a filled panel it stays in the flow: both editors paint a panel's shading over a drawing behind
-  the text, and a badge drawn in front stands over any text an editor sets differently from the
-  page. A container with written content in one layer only, beside drawing, is written as a
+  now drawn as a picture anchored to the page where the layout puts it, over the outline; inside
+  a filled panel, badge and glyph are drawn in front of the panel's shading (see the entry on
+  stacked title lines above). A container with written content in one layer only, beside drawing, is written as a
   layer stack's band is, so the title keeps the page's space above and below it. In LibreOffice
   the glyphs of `NavySidebar` and `SerifHeadline` stand within 0.6pt of the page;
   `NavySidebar`'s main column stands 2.5pt below the page instead of 5.6pt, a `TealPulse`

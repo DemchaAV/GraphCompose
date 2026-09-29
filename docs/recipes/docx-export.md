@@ -595,16 +595,22 @@ carries it; on any other page, the first paragraph of a cell on it does, where W
 print it clipped and the report says so, and a page with no paragraph at all drops it,
 reported too. A shape inside a filled panel is drawn in front of the text rather than
 behind it, since a panel is a table cell and both editors paint a cell's shading over what
-lies behind the text — unless it frames a line of text or a picture on the page, as a disc
-under its initials or a ring round a photo does, which stays behind what it frames and
-hidden. A panel's shapes are anchored in the panel's paragraph whose first line stands
-nearest them, and placed down from that paragraph's top rather than the page's: an icon
-beside a heading moves with the heading where the editor sets the panel's text higher or
-lower than the page. Only a paragraph of a cell that holds the shape across carries it —
-Word prints a shape anchored in a cell clipped to that cell — so an icon in a row's gutter is
-carried by the gutter's own cell; a shape no such paragraph stands beside is anchored to the
-page. The body's shapes stand above the page backgrounds, which LibreOffice stacks together
-with them. Two limits, each named in the report:
+lies behind the text — unless it frames a line of text or a picture on the page, as a ring
+round a photo does, which stays behind what it frames and hidden; a filled table cell counts
+as a panel here. A filled or outlined rectangle, rounded rectangle or ellipse whose one
+layer, centred, is a line of at most four characters in one style — initials, a monogram, a
+step number — is one shape holding that text centred in it, drawn in front. The shape wraps
+its text in its own box, reaching out to its edges past the preset's inner text rectangle:
+Word shrinks a text box that does not wrap to the width of its letters, and wraps an
+ellipse's text in the square inscribed in it. Initials in a corner, in two styles, right to
+left or linked are written in the flow as before. Every shape is placed from the page's
+edges: Word lays a shape anchored in a table cell out inside the cell and measures a nested
+cell's shape from the outer cell's top, so a shape placed from a paragraph in a panel landed
+wherever the nesting put it. Word draws a panel's top and bottom borders outside the cell's
+shading, where the page strokes them on the panel's edge, so the top border comes out of the
+space above the panel, and the bottom border out of the space the panel holds below itself
+or, past that, out of the space above the paragraph, table or panel that follows. The body's
+shapes stand above the page backgrounds, which LibreOffice stacks together with them. Two limits, each named in the report:
 
 - A transform is not carried: a rotated or scaled shape is drawn upright at its size.
 - A timeline's rail stands under every other shape on its page, where the page puts it

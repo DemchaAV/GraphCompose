@@ -79,12 +79,21 @@ final class DocxDrawings {
      * @param path        a custom shape's outline in its box's unit square, empty for a preset
      * @param front       whether it is drawn in front of the text rather than behind it
      * @param picture     a picture's relationship in the document part, {@code null} for a shape
+     * @param text        a paragraph the shape holds centred in it, as {@code w:p} markup — a
+     *                    badge's initials — or {@code null}
      */
     record Shape(Kind kind, double x, double top, double width, double height, Color fill,
                  Color stroke, double strokeWidth, double radius, boolean flipH, int page,
-                 List<DocumentPathSegment> path, boolean front, String picture) {
+                 List<DocumentPathSegment> path, boolean front, String picture, String text) {
         Shape {
             path = path == null ? List.of() : List.copyOf(path);
+        }
+
+        Shape(Kind kind, double x, double top, double width, double height, Color fill,
+              Color stroke, double strokeWidth, double radius, boolean flipH, int page,
+              List<DocumentPathSegment> path, boolean front, String picture) {
+            this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front, picture,
+                    null);
         }
 
         Shape(Kind kind, double x, double top, double width, double height, Color fill,
@@ -107,7 +116,17 @@ final class DocxDrawings {
         /** The same shape in front of the text rather than behind it. */
         Shape inFront() {
             return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, true,
-                    picture);
+                    picture, text);
+        }
+
+        /**
+         * The same shape holding a paragraph centred in it.
+         *
+         * @param paragraph the paragraph, as {@code w:p} markup
+         */
+        Shape holding(String paragraph) {
+            return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
+                    picture, paragraph);
         }
 
         /**
@@ -241,24 +260,6 @@ final class DocxDrawings {
      * @return the drawing, to be added to a run
      */
     static CTDrawing drawing(Shape shape, long id, int order) {
-        return drawing(shape, id, order, null);
-    }
-
-    /**
-     * A shape or a picture as a drawing placed across the page and, when {@code paragraphTop} is
-     * given, down from the top of the paragraph that carries it rather than from the page's.
-     *
-     * <p>Placed from its paragraph, a shape moves with the text it stands beside where the editor
-     * sets that text higher or lower than the page does.</p>
-     *
-     * @param shape        the shape, its top measured from the page's
-     * @param id           an identifier for the drawing, unique in the document
-     * @param order        its place among the drawings
-     * @param paragraphTop where the carrying paragraph's top stands on the page, or {@code null}
-     *                     to place the shape from the page's top
-     * @return the drawing, to be added to a run of that paragraph
-     */
-    static CTDrawing drawing(Shape shape, long id, int order, Double paragraphTop) {
         long cx = Units.toEMU(shape.width());
         long cy = Units.toEMU(shape.height());
         boolean picture = shape.kind() == Kind.PICTURE;
@@ -278,10 +279,7 @@ final class DocxDrawings {
                 + "<wp:simplePos x=\"0\" y=\"0\"/>"
                 + "<wp:positionH relativeFrom=\"page\"><wp:posOffset>" + Units.toEMU(shape.x())
                 + "</wp:posOffset></wp:positionH>"
-                + (paragraphTop == null
-                   ? "<wp:positionV relativeFrom=\"page\"><wp:posOffset>" + Units.toEMU(shape.top())
-                   : "<wp:positionV relativeFrom=\"paragraph\"><wp:posOffset>"
-                     + Units.toEMU(shape.top() - paragraphTop))
+                + "<wp:positionV relativeFrom=\"page\"><wp:posOffset>" + Units.toEMU(shape.top())
                 + "</wp:posOffset></wp:positionV>"
                 + "<wp:extent cx=\"" + cx + "\" cy=\"" + cy + "\"/>"
                 + "<wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/>"
@@ -334,8 +332,44 @@ final class DocxDrawings {
                 + "<a:xfrm" + (shape.flipH() ? " flipH=\"1\"" : "") + "><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + cx
                 + "\" cy=\"" + cy + "\"/></a:xfrm>"
                 + geometry + fill + outline
-                + "</wps:spPr><wps:bodyPr/></wps:wsp>"
+                + "</wps:spPr>" + textOf(shape) + "</wps:wsp>"
                 + "</a:graphicData></a:graphic>";
+    }
+
+    /**
+     * What a shape holds in its text body: a paragraph centred across and down, with no inset,
+     * so a badge's initials stand in its middle as the page sets them; or nothing.
+     *
+     * <p>The text wraps in the shape's box, which the initials fit. Left unwrapped, Word sized
+     * the shape to its text: {@code ObsidianInvoice}'s 35.5pt disc came out 16.9pt wide round its
+     * "K".</p>
+     *
+     * <p>A preset wraps its text in a rectangle of its own inside the shape — an ellipse the
+     * square inscribed in it, a rounded rectangle its box less part of each corner — where the
+     * page sets the initials across the outline's whole width. Word broke "MWM" in a 36pt disc
+     * after "MW". The insets reach out by as much, so the text wraps at the shape's edges.</p>
+     */
+    private static String textOf(Shape shape) {
+        if (shape.text() == null) {
+            return "<wps:bodyPr/>";
+        }
+        double across = 0;
+        double down = 0;
+        if (shape.kind() == Kind.ELLIPSE) {
+            // The inscribed rectangle stands in by (1 - cos 45°) / 2 of each side.
+            across = shape.width() * (1 - Math.sqrt(0.5)) / 2;
+            down = shape.height() * (1 - Math.sqrt(0.5)) / 2;
+        } else if (shape.kind() == Kind.ROUND_RECT) {
+            // By the corner's radius, as the preset caps it, times 1 - cos 45°.
+            double corner = Math.min(shape.radius(), Math.min(shape.width(), shape.height()) / 2);
+            across = corner * (1 - Math.sqrt(0.5));
+            down = across;
+        }
+        String sides = " lIns=\"" + -Units.toEMU(across) + "\" tIns=\"" + -Units.toEMU(down)
+                       + "\" rIns=\"" + -Units.toEMU(across) + "\" bIns=\"" + -Units.toEMU(down) + "\"";
+        return "<wps:txbx><w:txbxContent>" + shape.text() + "</w:txbxContent></wps:txbx>"
+               + "<wps:bodyPr rot=\"0\" vert=\"horz\" wrap=\"square\"" + sides
+               + " anchor=\"ctr\" anchorCtr=\"0\"><a:noAutofit/></wps:bodyPr>";
     }
 
     /** A rounded rectangle's corner, as the preset states it: a share of its shorter side. */

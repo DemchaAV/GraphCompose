@@ -1,9 +1,13 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
+import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
@@ -108,6 +112,111 @@ class DocxContainerSpacingTest {
             assertThat(DocxTwips.of(spacing.getLine())).isLessThanOrEqualTo(2L);
             assertThat(before(all.get(2))).as("the spacer's height, above the next entry").isEqualTo(90L);
         }
+    }
+
+    @Test
+    void theBordersOfTwoCardsComeOutOfTheSpaceBetweenThem() throws Exception {
+        // Word draws a row's top and bottom borders outside its shading, where the page strokes
+        // them on the card's edge: written whole, the space between two outlined cards came out
+        // their borders wider, and an invoice of three such cards ran onto a second page.
+        long filled = spaceBetweenTwoCards(null);
+        long outlined = spaceBetweenTwoCards(DocumentStroke.of(DocumentColor.rgb(90, 90, 90), 2));
+
+        assertThat(filled).as("filled cards: the section's spacing, less the separator's hairline")
+                .isBetween(12 * 20L - 2, 12 * 20L);
+        assertThat(filled - outlined)
+                .as("the second card's top border and the first one's bottom border come out of it")
+                .isEqualTo(4 * 20L);
+    }
+
+    @Test
+    void aCardsBottomBorderComesOutOfTheSpaceAboveTheParagraphAfterIt() throws Exception {
+        // With no margin to take it from, the border stood below the card and the paragraph
+        // after it landed a border lower than on the page.
+        long filled = spaceAboveTheParagraphAfterACard(null, 0);
+        long outlined = spaceAboveTheParagraphAfterACard(DocumentStroke.of(DocumentColor.rgb(90, 90, 90), 2), 0);
+
+        assertThat(filled - outlined).isEqualTo(2 * 20L);
+    }
+
+    @Test
+    void aCardsBottomMarginTakesItsBorderFirst() throws Exception {
+        long filled = spaceAboveTheParagraphAfterACard(null, 5);
+        long outlined = spaceAboveTheParagraphAfterACard(DocumentStroke.of(DocumentColor.rgb(90, 90, 90), 2), 5);
+
+        assertThat(filled - outlined).as("the border, out of the margin; nothing more").isEqualTo(2 * 20L);
+    }
+
+    private static long spaceAboveTheParagraphAfterACard(DocumentStroke stroke, double marginBelow) throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addSection("Page", body -> body
+                        .spacing(12)
+                        .addSection("Card", card -> card(card, stroke)
+                                .margin(new DocumentInsets(0, 0, marginBelow, 0)).addParagraph("Card"))
+                        .addParagraph("After")))) {
+            XWPFParagraph after = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().equals("After")).findFirst().orElseThrow();
+            return before(after);
+        }
+    }
+
+    @Test
+    void aCardsBorderIsNotTakenFromItsNeighbourInTheNextCell() throws Exception {
+        // Two cards side by side in a row stand at one height on the page; the first one's
+        // bottom border is below it, not above the second.
+        DocumentStroke stroke = DocumentStroke.of(DocumentColor.rgb(90, 90, 90), 1);
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow("Pair", row -> row
+                        .addSection("Left", card -> card(card, stroke)
+                                .margin(new DocumentInsets(4, 0, 0, 0)).addParagraph("Left"))
+                        .addSection("Right", card -> card(card, stroke)
+                                .margin(new DocumentInsets(4, 0, 0, 0)).addParagraph("Right"))))) {
+            List<XWPFTableCell> cells = document.getTables().get(0).getRow(0).getTableCells();
+
+            assertThat(cells).hasSize(2);
+            assertThat(spaceAboveTheCard(cells.get(1))).isEqualTo(spaceAboveTheCard(cells.get(0)));
+        }
+    }
+
+    private static long spaceAboveTheCard(XWPFTableCell cell) {
+        long space = 0;
+        for (IBodyElement element : cell.getBodyElements()) {
+            if (element instanceof XWPFTable) {
+                return space;
+            }
+            if (element instanceof XWPFParagraph paragraph) {
+                space += before(paragraph) + after(paragraph);
+            }
+        }
+        throw new AssertionError("the cell holds no card");
+    }
+
+    private static long spaceBetweenTwoCards(DocumentStroke stroke) throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addSection("Cards", cards -> cards
+                        .spacing(12)
+                        .addSection("First", card -> card(card, stroke).addParagraph("First"))
+                        .addSection("Second", card -> card(card, stroke).addParagraph("Second"))))) {
+            List<IBodyElement> body = document.getBodyElements();
+            long space = 0;
+            boolean between = false;
+            for (IBodyElement element : body) {
+                if (element instanceof XWPFTable) {
+                    if (between) {
+                        return space;
+                    }
+                    between = true;
+                } else if (between && element instanceof XWPFParagraph paragraph) {
+                    space += before(paragraph) + after(paragraph);
+                }
+            }
+            throw new AssertionError("two cards were not written as two tables");
+        }
+    }
+
+    private static SectionBuilder card(SectionBuilder card, DocumentStroke stroke) {
+        card.fillColor(DocumentColor.rgb(240, 240, 240)).padding(DocumentInsets.of(6));
+        return stroke == null ? card : card.stroke(stroke);
     }
 
     private static List<XWPFParagraph> written(List<XWPFParagraph> paragraphs) {

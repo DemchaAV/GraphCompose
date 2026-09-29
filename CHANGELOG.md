@@ -8,20 +8,36 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A badge holds its initials, and bordered cards keep the page's spacing in Word.** A filled
+  or stroked rectangle, rounded rectangle or ellipse whose one layer, centred, is a line of at
+  most four characters in one style, left to right, with no link, on one page — a party's
+  initials on `ObsidianInvoice`, `MerchantInvoice`'s monogram tile, `ProfessionalSidebar`'s
+  ring, a proposal's step numbers — is written as one DrawingML shape holding the text centred
+  in it (`wps:txbx`), in front of the text. The text wraps in the shape's own box, reaching
+  out past the preset's inner text rectangle to its edges: unwrapped, Word shrank the shape to
+  the width of its letters, and inside an ellipse's inscribed square it broke "MWM" after
+  "MW". Written apart, the letters stood in the flow and the badge where the page puts it:
+  `ObsidianInvoice`'s footer "K" sat below its disc's corner, its party discs were hidden
+  behind their letters under the panel's shading, and the monogram tile's letter left it for
+  the next page. A panel's top border now comes out of the space above it, and its bottom
+  border out of its bottom margin or, past that, out of the space above whatever follows: Word
+  draws them outside the cell's shading, where the page strokes them on the panel's edge, so
+  every outlined card stood its borders lower and `ObsidianInvoice`'s line items sat 1.6pt low. In Word, `ObsidianInvoice`'s line items land
+  within 0.2pt of the page, `ProfessionalSidebar`'s p90 drift falls from 78.8pt to 1.3, and
+  `NorthlineProposal`'s cover header, which stood 12pt high, lands on the page's.
 - **Icons inside painted panels show in Word, beside the text they belong to.** A shape drawn
   in a filled panel stayed behind the text whenever it sat in a layer beside a heading, and a
   panel is a shaded table cell, whose shading both editors paint over what lies behind the
   text: the heading icons of every payment panel on the invoice presets — a bank, a card, an
   info mark, `ObsidianInvoice`'s notes and payment glyphs — were missing. Inside a panel a
-  shape now stands in front unless it frames a line of text or a picture, as a disc under its
-  initials does. In front and anchored to the page, an icon lands on the next line wherever the
-  editor sets the panel's text a little higher, so a panel's shapes are anchored in the
-  paragraph whose first line is nearest them and placed down from its top — a paragraph of a
-  cell that holds them across, since Word prints a shape anchored in a cell clipped to that
-  cell: an icon in a row's gutter is carried by the gutter's own cell, held at the row's height. A row at the top of
+  shape — there, and in a filled table cell — now stands in front unless it frames a line of
+  text or a picture, as a ring round a photo does. Such a shape is placed from the page's
+  edges: Word lays a shape anchored in a table cell out inside the cell, and measures one in a
+  nested cell from the outer cell's top, so a shape placed from a paragraph in a panel moves
+  wherever the nesting puts it. A row in a painted panel that stands on one page is held at
+  the page's height, as a panel is. A row at the top of
   a panel also keeps its top padding, which no paragraph above it held: `MerchantInvoice`'s
-  due-date text stood against the card's top edge. No shape in the template corpus covers
-  text in LibreOffice.
+  due-date text stood against the card's top edge.
 - **Page numbers keep their colour, panels their height, and a document ending in a table no
   page of its own.** A page field was written as a simple field, whose result both editors
   repaint without the run's style: `MeteredInvoice`'s white page number on its navy footer band

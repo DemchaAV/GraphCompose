@@ -233,10 +233,9 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void anIconDrawnBesideItsLabelInAPaintedPanelStandsInFrontPlacedFromTheLabel() throws Exception {
-        // Behind the text, the panel's shading hid the tile. In front and placed from the page, an
-        // editor that set the label a little higher or lower put the tile over the next line;
-        // placed from the label's paragraph, it moves with the label.
+    void anIconDrawnBesideItsLabelInAPaintedPanelStandsInFrontOfItsShading() throws Exception {
+        // Behind the text, the panel's shading hid the tile. It is anchored to the page: placed
+        // from a paragraph in a nested cell, Word measured it from the outer cell's top.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
                         .addContainer(row -> row.name("Fact").rectangle(300, 30)
@@ -248,40 +247,9 @@ class DocxDrawingsTest {
                                         .build())
                                 .position(new ParagraphBuilder().name("Label").text("Compliant").build(),
                                         34, 0, LayerAlign.CENTER_LEFT)))))) {
-            String body = document.getDocument().xmlText();
-            assertThat(anchors(body)).hasSize(2)
+            assertThat(anchors(document.getDocument().xmlText())).hasSize(2)
                     .allMatch(anchor -> anchor.contains("behindDoc=\"0\""))
-                    .allMatch(anchor -> anchor.contains("<wp:positionV relativeFrom=\"paragraph\">"));
-            java.util.regex.Matcher label = java.util.regex.Pattern
-                    .compile("<w:p>(?:(?!</w:p>).)*Compliant", java.util.regex.Pattern.DOTALL).matcher(body);
-            assertThat(label.find()).isTrue();
-            assertThat(label.group()).as("anchored in the label's own paragraph").contains("<wp:anchor");
-        }
-    }
-
-    @Test
-    void anIconInARowsGutterIsCarriedByItsOwnCellNotTheHeadingsBesideIt() throws Exception {
-        // Word prints a shape anchored in a cell clipped to that cell: carried by the heading's
-        // cell, the icon over the gutter would not be printed.
-        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
-                .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
-                        .addRow("Heading", row -> row.verticalAlign(com.demcha.compose.document.node.RowVerticalAlign.CENTER)
-                                .columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(30),
-                                        com.demcha.compose.document.style.DocumentRowColumn.weight(1))
-                                .add(new com.demcha.compose.document.dsl.EllipseBuilder().name("Icon").circle(16)
-                                        .fillColor(ACCENT).build())
-                                .addParagraph(p -> p.text("Payment details"))))))) {
-            org.apache.poi.xwpf.usermodel.XWPFTable row = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
-            String gutter = row.getRow(0).getCell(0).getCTTc().xmlText();
-            String heading = row.getRow(0).getCell(1).getCTTc().xmlText();
-
-            assertThat(anchors(gutter)).singleElement().asString()
-                    .contains("<wp:positionV relativeFrom=\"paragraph\">").contains("behindDoc=\"0\"");
-            assertThat(anchors(heading)).isEmpty();
-            org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor anchor = row.getRow(0).getCell(0)
-                    .getParagraphs().get(0).getCTP().getRArray(0).getDrawingArray(0).getAnchorArray(0);
-            assertThat(anchor.getPositionV().getPosOffset()).as("down from the row's top, never above it")
-                    .isGreaterThanOrEqualTo(0);
+                    .allMatch(anchor -> anchor.contains("<wp:positionV relativeFrom=\"page\">"));
         }
     }
 
@@ -551,17 +519,156 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void aDiscUnderItsInitialsInAPaintedPanelStaysBehindThem() throws Exception {
-        // In front, the disc would cover the initials it frames.
+    void aDiscAndItsInitialsInAPaintedPanelAreOneShapeInFront() throws Exception {
+        // Behind the initials it frames, the disc was hidden under the panel's shading; written
+        // apart from it, the initials parted from it wherever the editor set their line.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
                         .addParagraph(p -> p.text("Profile"))
                         .add(new ShapeContainerBuilder().name("Badge").circle(40).fillColor(ACCENT)
                                 .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("JR").build())
                                 .build()))))) {
+            assertThat(anchors(document.getDocument().xmlText())).hasSize(1);
+            String anchor = anchors(document.getDocument().xmlText()).get(0);
+            assertThat(anchor).contains("behindDoc=\"0\"").contains("prst=\"ellipse\"")
+                    .contains("<w:txbxContent>").contains(">JR<").contains("anchor=\"ctr\"")
+                    // Unwrapped, Word shrinks the box to the width of its letters.
+                    .contains("wrap=\"square\"");
+            String body = document.getDocument().xmlText();
+            assertThat(body.indexOf(">JR<")).as("the initials are the shape's alone, not a paragraph of the flow")
+                    .isEqualTo(body.lastIndexOf(">JR<"));
+            assertThat(allText(document)).as("still text a reader extracts").contains("JR");
+        }
+    }
+
+    @Test
+    void aBadgeOutsideAPanelHoldsItsInitialsToo() throws Exception {
+        // ObsidianInvoice's footer disc: its "K" stood below the disc's corner in the flow.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addRow("Closing", row -> row.columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(40),
+                                com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                        .add(new ShapeContainerBuilder().name("Disc").circle(28).fillColor(ACCENT)
+                                .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("K").build())
+                                .build())
+                        .addParagraph(p -> p.text("Thank you for your business."))))) ) {
             assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
-                    .contains("behindDoc=\"1\"");
-            assertThat(allText(document)).contains("JR");
+                    .contains("<w:txbxContent>").contains(">K<").contains("behindDoc=\"0\"")
+                    .contains("<wp:positionV relativeFrom=\"page\">");
+        }
+    }
+
+    @Test
+    void aBadgeInALayerStackKeepsTheRoomThePageGivesIt() throws Exception {
+        // Its initials are drawn, not written: measured round them, the stack held less than its
+        // height and what followed ran up under the badge.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addParagraph(p -> p.text("Above"))
+                .addLayerStack(stack -> stack.name("Mark")
+                        .layer(new com.demcha.compose.document.dsl.SpacerBuilder().name("Room").size(88, 88).build(),
+                                LayerAlign.TOP_LEFT, 0)
+                        .layer(new ShapeContainerBuilder().name("Monogram").circle(88).fillColor(ACCENT)
+                                .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("AR").build())
+                                .build(), LayerAlign.TOP_LEFT, 0))
+                .addParagraph(p -> p.text("Below"))))) {
+            // The room between the two paragraphs: every paragraph written between them, and the
+            // space written above the second.
+            List<org.apache.poi.xwpf.usermodel.XWPFParagraph> paragraphs = document.getParagraphs();
+            int above = -1;
+            int below = -1;
+            for (int index = 0; index < paragraphs.size(); index++) {
+                // It carries the badge's anchor, whose text box's text its own text reads too.
+                if (paragraphs.get(index).getText().contains("Above")) {
+                    above = index;
+                } else if (paragraphs.get(index).getText().equals("Below")) {
+                    below = index;
+                }
+            }
+            long twips = 0;
+            for (int index = above + 1; index <= below; index++) {
+                org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSpacing spacing =
+                        paragraphs.get(index).getCTP().getPPr().getSpacing();
+                twips += spacing.isSetBefore() ? ((Number) spacing.getBefore()).longValue() : 0;
+                if (index < below) {
+                    twips += ((Number) spacing.getLine()).longValue()
+                             + (spacing.isSetAfter() ? ((Number) spacing.getAfter()).longValue() : 0);
+                }
+            }
+            assertThat(twips).as("the badge's 88pt held between the paragraphs").isBetween(86L * 20, 90L * 20);
+        }
+    }
+
+    @Test
+    void aBadgesTextIsEscapedInItsShape() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .add(new ShapeContainerBuilder().name("Mark").circle(30).fillColor(ACCENT)
+                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("A&B").build())
+                        .build())))) {
+            assertThat(allText(document)).contains("A&B");
+            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .contains("<w:txbxContent>").contains("A&amp;B</w:t>");
+        }
+    }
+
+    @Test
+    void aBadgesTextReachesTheEdgesOfItsOutline() throws Exception {
+        // An ellipse wraps its text in the square inscribed in it: without insets reaching out
+        // to the outline, Word broke "MWM" in a 36pt disc after "MW".
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .add(new ShapeContainerBuilder().name("Disc").circle(36).fillColor(ACCENT)
+                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("MW").build())
+                        .build())))) {
+            long reach = Units.toEMU(36 * (1 - Math.sqrt(0.5)) / 2);
+
+            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .as("reaching out by (1 - cos 45°) / 2 of the disc's width on every side")
+                    .contains("lIns=\"-" + reach + "\"").contains("rIns=\"-" + reach + "\"")
+                    .contains("tIns=\"-" + reach + "\"").contains("bIns=\"-" + reach + "\"");
+        }
+    }
+
+    @Test
+    void aBadgeItsShapeCannotSetAsThePageDoesIsWrittenAsBefore() throws Exception {
+        com.demcha.compose.document.style.DocumentTextStyle gold = com.demcha.compose.document.style.DocumentTextStyle
+                .builder().color(DocumentColor.rgb(200, 160, 40)).build();
+        List<Consumer<ShapeContainerBuilder>> badges = List.of(
+                // set in a corner, where the shape would centre it
+                badge -> badge.topLeft(new ParagraphBuilder().text("Q1").build()),
+                // two styles, where the shape holds one run
+                badge -> badge.center(new ParagraphBuilder().inlineText("J").inlineText("R", gold).build()),
+                // right to left, which the shape's paragraph does not say
+                badge -> badge.center(new ParagraphBuilder().text("AB")
+                        .direction(com.demcha.compose.document.node.TextDirection.RTL).build()));
+        for (Consumer<ShapeContainerBuilder> spec : badges) {
+            ShapeContainerBuilder badge = new ShapeContainerBuilder().name("Card").roundedRect(80, 40, 6).fillColor(ACCENT);
+            spec.accept(badge);
+            try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page.add(badge.build())))) {
+                assertThat(document.getDocument().xmlText()).doesNotContain("txbxContent");
+            }
+        }
+    }
+
+    @Test
+    void aRowOutsideAPaintedPanelIsNotHeldToThePagesHeight() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addRow("Pair", row -> row.columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1),
+                                com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                        .addParagraph(p -> p.text("Left"))
+                        .addParagraph(p -> p.text("Right")))))) {
+            assertThat(document.getTables().get(0).getRow(0).getCtRow().getTrPr() == null
+                       || document.getTables().get(0).getRow(0).getCtRow().getTrPr().sizeOfTrHeightArray() == 0)
+                    .isTrue();
+        }
+    }
+
+    @Test
+    void aBadgeWithMoreThanInitialsIsWrittenAsBefore() throws Exception {
+        // A pill with a word in it stays a written paragraph: its text is content, not a mark.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .add(new ShapeContainerBuilder().name("Pill").roundedRect(120, 24, 12).fillColor(ACCENT)
+                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Overdue").build())
+                        .build())))) {
+            assertThat(document.getDocument().xmlText()).doesNotContain("txbxContent");
+            assertThat(allText(document)).contains("Overdue");
         }
     }
 

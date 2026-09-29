@@ -8,6 +8,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A line break in a paragraph's text is a line break in Word.** The DOCX export wrote a
+  paragraph's `\n` inside its text, and Word reads it as a space: an invoice's addressee —
+  name, street, city, email and phone in one paragraph the page breaks at each `\n` — came out
+  as one wrapped line, and everything under it stood as much higher as the lines it lost. Each
+  `\n` in a paragraph's text, a run of it or a list item is now a `w:br`. In Word the median
+  drift falls from 28.3pt to 4.0 on `ModernInvoice`, from 16.6 to 2.8 on `ConsultingInvoice`,
+  from 17.4 to 3.0 on `ModernProposal` and from 51.3 to 20.4 on `ClassicInvoice`.
 - **A grid of cards is one row of columns in Word.** A layer stack whose layers are
   side-by-side columns is written as a one-row table, but only when every layer formed a
   column. A card grid also lays each card's mark over the edge of its text and a rule between

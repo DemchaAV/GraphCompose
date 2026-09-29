@@ -1,6 +1,12 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.dsl.ShapeBuilder;
+import com.demcha.compose.document.dsl.ShapeContainerBuilder;
+import com.demcha.compose.document.node.LayerAlign;
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -143,6 +149,62 @@ class DocxContainerSpacingTest {
             assertThat(before((XWPFParagraph) body.get(0))).isEqualTo(18 * 20L);
             assertThat(body.get(1)).isInstanceOf(XWPFTable.class);
         }
+    }
+
+    @Test
+    void aShapeContainersEdgesAreSpaceAroundWhatItHolds() throws Exception {
+        // A section heading set as a row in a container 18pt below the block above: written
+        // layer by layer, the container's edges were never written and the heading stood high.
+        DocumentNode heading = new ShapeContainerBuilder().name("Heading")
+                .rectangle(300, 20).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .margin(new DocumentInsets(18, 0, 6, 0))
+                .padding(new DocumentInsets(4, 0, 2, 0))
+                .position(new RowBuilder().name("HeadingRow")
+                                .addParagraph("—").addParagraph("SKILLS").build(),
+                        0, 0, LayerAlign.TOP_LEFT)
+                .build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addParagraph("Los Angeles, CA")
+                .add(heading)
+                .addParagraph("Java"))) {
+            assertThat(after(paragraph(document, "Los Angeles, CA")))
+                    .as("its top margin and padding, held below the paragraph before its row")
+                    .isEqualTo(22 * 20L);
+            assertThat(before(paragraph(document, "Java")))
+                    .as("its bottom padding and margin, above the paragraph after it")
+                    .isEqualTo(8 * 20L);
+        }
+    }
+
+    @Test
+    void aShapeContainerThatWritesNothingIsNoSpace() throws Exception {
+        // A container in an overlay holding only a drawing writes no block: its edges would
+        // stand the heading written after it that much lower than the page does.
+        DocumentNode rule = new ShapeContainerBuilder().name("Rule")
+                .rectangle(300, 2).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .margin(new DocumentInsets(18, 0, 0, 0))
+                .position(new ShapeBuilder().name("Line").size(300, 2)
+                        .fillColor(DocumentColor.rgb(26, 86, 148)).build(), 0, 0, LayerAlign.TOP_LEFT)
+                .build();
+        DocumentNode heading = new ShapeContainerBuilder().name("Heading")
+                .rectangle(300, 60).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .margin(new DocumentInsets(10, 0, 0, 0))
+                .position(new SectionBuilder().name("Body").add(rule).addParagraph("SKILLS").build(),
+                        0, 0, LayerAlign.TOP_LEFT)
+                .build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addParagraph("Los Angeles, CA")
+                .add(heading))) {
+            long between = after(paragraph(document, "Los Angeles, CA")) + before(paragraph(document, "SKILLS"));
+
+            assertThat(between).as("the outer container's margin, not the drawn rule's as well")
+                    .isEqualTo(10 * 20L);
+        }
+    }
+
+    private static XWPFParagraph paragraph(XWPFDocument document, String text) {
+        return document.getParagraphs().stream()
+                .filter(paragraph -> paragraph.getText().equals(text)).findFirst().orElseThrow();
     }
 
     @Test

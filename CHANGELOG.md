@@ -8,6 +8,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A shape container's margin and padding are space in Word.** A shape container written layer
+  by layer wrote what it holds and not its own edges: `SerifHeadline`'s section headings — a
+  rule and a title in a row, in a container set its gap below the block above — stood that gap
+  high in Word, the skills heading on the line above it and the sidebar under it 21pt high. The
+  container's top margin and padding are now space above what it holds, its bottom ones space
+  below; one that writes nothing — only drawing, in an overlay — is no space, as a section
+  that writes nothing is not. In Word `SerifHeadline`'s p90 drift falls from 22.1pt to 5.2.
 - **A table with no paragraph before it keeps the space above it in Word.** Word has no space
   above a table: the paragraph before it carries it, and a table with none before it in the
   body — opening the document or a section, or following a page break — lost it.

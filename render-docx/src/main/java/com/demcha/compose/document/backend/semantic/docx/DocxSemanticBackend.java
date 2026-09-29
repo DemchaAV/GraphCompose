@@ -3773,13 +3773,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 return;
             }
             holdStackedLines(node.children());
+            // Its edges are space above and below what it holds, as a section's are: a
+            // SerifHeadline section heading — a row in a container set its gap below the block
+            // above — stood that gap high in Word, and everything under it with it.
+            // One that writes nothing — its layers all drawn — stands above nothing, and its
+            // edges are no space in the flow, as writeContainerBody hands them back.
+            double carriedFromOutside = carriedSpacingBefore;
+            long blocksBefore = blocksWritten;
+            carriedSpacingBefore += node.margin().top() + node.padding().top();
             for (DocumentNode child : node.children()) {
                 insetLeft = innerLeft;
                 insetRight = innerRight;
                 placeAcross(node, child);
                 writeNode(document, child);
             }
-            hangBelowItsBox(node);
+            if (blocksWritten == blocksBefore) {
+                carriedSpacingBefore = carriedFromOutside;
+            } else {
+                carriedSpacingBefore = 0;
+                owePendingSpacingAfter(node.padding().bottom() + node.margin().bottom());
+                hangBelowItsBox(node);
+            }
         } finally {
             insetLeft = outerLeft;
             insetRight = outerRight;
@@ -3818,9 +3832,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             || line.startPage() != box.startPage() || line.endPage() != box.startPage()) {
             return;
         }
-        // The page's y runs up from a box's foot. Written layer by layer, the container writes
-        // none of its padding, so the overhang is measured from its own foot.
-        double overhang = box.placementY() - line.placementY();
+        // The page's y runs up from a box's foot. The container's bottom padding is owed below
+        // it (writeShapeContainer), so the overhang is measured from its content's foot — but
+        // not in a band, which drops what its layers owe and sets its own space below.
+        double contentFoot = box.placementY() + (bandDepth > 0 ? 0 : node.padding().bottom());
+        double overhang = contentFoot - line.placementY();
         if (overhang > 0.01) {
             hangingBelow = Math.max(hangingBelow, overhang);
         }

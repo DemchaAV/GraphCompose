@@ -3790,6 +3790,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (blocksWritten == blocksBefore) {
                 carriedSpacingBefore = carriedFromOutside;
             } else {
+                carriedSpacingBefore = 0;
                 owePendingSpacingAfter(node.padding().bottom() + node.margin().bottom());
                 hangBelowItsBox(node);
             }
@@ -3832,8 +3833,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         // The page's y runs up from a box's foot. The container's bottom padding is owed below
-        // it (writeShapeContainer), so the overhang is measured from its content's foot.
-        double overhang = box.placementY() + node.padding().bottom() - line.placementY();
+        // it (writeShapeContainer), so the overhang is measured from its content's foot — but
+        // not in a band, which drops what its layers owe and sets its own space below.
+        double contentFoot = box.placementY() + (bandDepth > 0 ? 0 : node.padding().bottom());
+        double overhang = contentFoot - line.placementY();
         if (overhang > 0.01) {
             hangingBelow = Math.max(hangingBelow, overhang);
         }

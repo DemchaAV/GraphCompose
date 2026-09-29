@@ -130,6 +130,38 @@ class DocxContainerSpacingTest {
     }
 
     @Test
+    void aTableOpeningTheDocumentKeepsTheSpaceAboveIt() throws Exception {
+        // Word has no space above a table: with no paragraph before it, the section's top
+        // padding was lost and ClassicInvoice's header row stood against the paper's edge.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 0, page -> page
+                .addSection("Page", body -> body.padding(new DocumentInsets(18, 0, 0, 0))
+                        .addRow(row -> row.addParagraph("Studio").addParagraph("INVOICE"))))) {
+            List<IBodyElement> body = document.getBodyElements();
+
+            assertThat(body.get(0)).as("a paragraph before the table carries the space")
+                    .isInstanceOf(XWPFParagraph.class);
+            assertThat(before((XWPFParagraph) body.get(0))).isEqualTo(18 * 20L);
+            assertThat(body.get(1)).isInstanceOf(XWPFTable.class);
+        }
+    }
+
+    @Test
+    void aTableOpeningACellTakesNoParagraphAboveIt() throws Exception {
+        // In a cell the row's height and alignment already place what it holds: a paragraph
+        // carrying the space as well stood each of ObsidianInvoice's line items 8.5pt lower.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 0, page -> page
+                .addRow(outer -> outer
+                        .addSection(cell -> cell.padding(new DocumentInsets(12, 0, 0, 0))
+                                .addRow(inner -> inner.addParagraph("Qty").addParagraph("1")))
+                        .addParagraph("Notes")))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(cell.getBodyElements().get(0)).as("the nested table opens the cell")
+                    .isInstanceOf(XWPFTable.class);
+        }
+    }
+
+    @Test
     void aCardsBottomBorderComesOutOfTheSpaceAboveTheParagraphAfterIt() throws Exception {
         // With no margin to take it from, the border stood below the card and the paragraph
         // after it landed a border lower than on the page.

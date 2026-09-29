@@ -7164,6 +7164,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // the space out of the page and everything below the table moved up.
         owePendingSpacingAfter(carriedSpacingBefore);
         carriedSpacingBefore = 0;
+        // With no paragraph before it in the body — the table opens the document or a section,
+        // or follows a page break — a hairline one carries it: ClassicInvoice opens with a row under its page padding, and
+        // without it stood against the paper's top edge in Word. Not in a cell: there the row's
+        // height and alignment already place what it holds, and the space came out twice —
+        // ObsidianInvoice's line items each stood 8.5pt lower.
+        if (currentCell == null) {
+            holdTheSpaceAboveATable(document);
+        }
         // Word has no space above a table, so the paragraph before it has to carry it.
         flushSpacingAfter();
         // Nor can that paragraph carry the space below the table: it sits above it. Space

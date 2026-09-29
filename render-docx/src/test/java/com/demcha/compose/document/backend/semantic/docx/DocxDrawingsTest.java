@@ -214,9 +214,9 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void aGlyphInAPaintedPanelStaysInTheFlow() throws Exception {
-        // Behind the text, the cell's shading would hide the glyph; in front, the badge would
-        // stand over any text an editor sets differently from the page.
+    void aBadgeAndItsGlyphInAPaintedPanelStandInFrontOfItsShading() throws Exception {
+        // Kept in the flow, the glyph was written white on the panel's shading and the disc,
+        // behind the text, hid under it: NorthlineProposal's acceptance heading lost its badge.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
                         .addContainer(band -> band.name("Header").rectangle(300, 30)
@@ -225,10 +225,12 @@ class DocxDrawingsTest {
                                 .position(new ParagraphBuilder().name("Title").text("EXPERIENCE").build(),
                                         34, 0, LayerAlign.CENTER_LEFT)))))) {
             String body = document.getDocument().xmlText();
+            List<String> anchors = anchors(body);
 
-            assertThat(body).contains("<wp:inline");
-            assertThat(anchors(body)).singleElement().asString()
-                    .contains("prst=\"ellipse\"").contains("behindDoc=\"1\"");
+            assertThat(body).as("the glyph is no line of the flow").doesNotContain("<wp:inline");
+            assertThat(anchors).hasSize(2);
+            assertThat(anchors.get(0)).as("the disc first").contains("prst=\"ellipse\"").contains("behindDoc=\"0\"");
+            assertThat(anchors.get(1)).as("its glyph over it").contains("<pic:pic").contains("behindDoc=\"0\"");
         }
     }
 

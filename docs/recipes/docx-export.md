@@ -540,14 +540,17 @@ tint it was flattened to. Recorded, like the other two.
   only, laid beside drawing — a section title beside its badge or its icon
   — is written as a layer stack's band is: the title stands where the page
   places it, with the page's space above and below it inside the
-  container. So is one whose picture stands beside its text, clear of it
-  across, in an unpainted container or a layer stack — an icon left of a
-  label over a value: the picture is drawn where the page puts it, in front
-  inside a painted panel, rather than written as a line above the text.
-  Lines of text a container lays over one another — a title set a pitch
-  apart, tighter than its face's line — keep the page's pitch: the first
-  line keeps its height, each line after it takes the distance from the
-  foot of the line above to its own, and a last line running past the
+  container. So is one whose picture stands beside a layer of text, clear
+  of it across and at most twice its height, in a shape container neither
+  painted, clipped to its outline nor transformed, or in a layer stack — an
+  icon left of a label over a value: the picture is drawn where the page
+  puts it, in front inside a painted panel, rather than written as a line
+  above the text. Single lines of text a container written layer by layer
+  lays over one another — a title set a pitch apart, tighter than its
+  face's line — keep the page's pitch: the first line keeps its height,
+  each line laid over the one above it across takes the distance from
+  that line's foot to its own, never below 0.65 of its face nor when it
+  holds a picture, and a shape container's last line running past the
   container's foot takes its overhang from the gap below. An outline no
   shape shows is reported as dropped.
 - **`hangingIndent(true)` → the ordinary list form.** A list that opts

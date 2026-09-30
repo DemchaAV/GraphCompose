@@ -204,15 +204,38 @@ class DocxComposedCellTest {
     }
 
     @Test
-    void anOutlinedChipsLabelIsCutAsFarAsItsLettersAllow() throws Exception {
+    void anOutlinedChipsLabelIsCutAlikeAsFarAsItsLettersAllow() throws Exception {
         // Word keeps the 1.1pt borders outside the content, leaving 7pt: less than the letters
-        // and their margin need, so the line is cut short of that, and still cut.
+        // and their margin need. Lato's 8.2pt line is 9.84pt, its baseline 1.75pt above the foot,
+        // and the digits reach 0.07pt below it: 0.75pt from them, the foot can give 0.93pt, and
+        // the cell centring the line, the top gives no more — 9.84 less twice 0.93.
         XWPFTableCell chip = chipCell(com.demcha.compose.document.style.DocumentStroke.of(
                 com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1.1));
-        double line = lineOf(chip);
 
-        assertThat(line).as("cut").isLessThan(9.8);
-        assertThat(line).as("but no closer to the letters than their margin").isGreaterThan(9.2 - 2.2);
+        assertThat(lineOf(chip)).isCloseTo(7.98, org.assertj.core.api.Assertions.within(0.06));
+    }
+
+    @Test
+    void aPaddedOutlinedChipStaysItsOutlinesHeightInWord() throws Exception {
+        // The cell's margins are its padding less half each border, the page drawing that half
+        // inside the box; Word keeps the borders outside the content. Margins, borders and the
+        // line come to the 17.5pt outline, not 1pt short of it.
+        com.demcha.compose.document.dsl.ShapeContainerBuilder chip = new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Padded").roundedRect(90, 17.5, 4).padding(DocumentInsets.of(2))
+                .stroke(com.demcha.compose.document.style.DocumentStroke.of(
+                        com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1.1))
+                .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("09:00-16:00")
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.builder()
+                                .fontName(com.demcha.compose.font.FontName.LATO).size(12).build()).build());
+        DocumentNode node = chip.build();
+        XWPFTableCell cell = onlyTableCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.fixed(100))
+                .rowCells(DocumentTableCell.text("Mon"), DocumentTableCell.node(node))));
+        XWPFTableCell padded = cell.getTables().get(0).getRow(0).getCell(0);
+        var margins = padded.getCTTc().getTcPr().getTcMar();
+        double around = (DocxTwips.of(margins.getTop().getW()) + DocxTwips.of(margins.getBottom().getW())) / 20.0 + 2 * 1.1;
+
+        assertThat(around + lineOf(padded)).isCloseTo(17.5, org.assertj.core.api.Assertions.within(0.1));
     }
 
     @Test

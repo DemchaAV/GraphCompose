@@ -571,11 +571,12 @@ tint it was flattened to. Recorded, like the other two.
   squared and reported — a rota's shift chips keep their colour and their
   size. A one-line label the shape centres top to bottom, on a line taller
   than the outline leaves it, is written that much shorter, down to the
-  outline less its padding and borders (Word keeps a cell's borders outside
-  its content), its text seated where the page sets it — each side cut no
-  closer to its letters than three quarters of a point, so an outlined chip
-  is cut as far as its letters allow, its text lower by what its top keeps. A
-  label set from the shape's top or bottom edge, or moved, is written as it was. A badge's glyph — a smaller picture in a filled or outlined
+  room Word leaves the cell's content — the outline less the margins written
+  and the borders, which Word keeps outside its content — its text seated
+  where the page sets it: both sides cut alike, as the cell centres the line,
+  no closer to its letters than three quarters of a point, so an outlined
+  chip is cut as far as its letters allow. A label set from the shape's top
+  or bottom edge, or moved up or down, is written as it was. A badge's glyph — a smaller picture in a filled or outlined
   container that clips it to its outline (`CLIP_PATH`) and holds nothing
   else but drawing — is drawn as a picture anchored to the page over the
   badge, where the page draws it, rather than written as a line of its own

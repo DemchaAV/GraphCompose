@@ -2939,7 +2939,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFTableCell outerPanelCell = panelCell;
         panelCell = cell;
         if (first && last) {
-            cutTheLabelToItsOutline(node, borders);
+            cutTheLabelToItsOutline(node, borders, cell);
         }
         try {
             writeInCell(cell, () -> writeChildren(cell.getXWPFDocument(), children, spacingOf(node)));
@@ -3225,14 +3225,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * chips, 9.2pt outlines round 8.2pt text on a 10pt line, each came out 0.8pt taller, and an
      * outlined one its borders taller again, as Word keeps a cell's borders outside its content —
      * every staff row with two shifts in a day stood 3.8pt taller than the page's. The line is
-     * written as tall as the outline less its padding and borders, its text seated where the page
-     * sets it ({@link DocxStackedLines.Line}) — each side cut no closer to its letters than
-     * {@link DocxStackedLines#INK_MARGIN}. An outlined chip, its borders leaving less room than
-     * its letters, is cut as far as they allow, and where its top is cut less than the page lets
-     * the line pass the outline, its text stands that much lower, inside the line. Only a label
-     * the shape centres top to bottom is cut: one set from an edge overflows on one side.</p>
+     * written as tall as the room Word leaves the cell's content — the outline less the margins
+     * written and the borders — its text seated where the page sets it
+     * ({@link DocxStackedLines.Line}). Both sides are cut alike, since the cell centres the line,
+     * and no closer to the letters on either side than {@link DocxStackedLines#INK_MARGIN}: an
+     * outlined chip, its borders leaving less room than its letters, is cut as far as they allow
+     * and stays that much taller. Only a label the shape centres top to bottom is cut: one set
+     * from an edge overflows on one side.</p>
      */
-    private void cutTheLabelToItsOutline(DocumentNode node, DocumentBorders borders) {
+    private void cutTheLabelToItsOutline(DocumentNode node, DocumentBorders borders, XWPFTableCell cell) {
         if (!(node instanceof ShapeContainerNode shape) || layout.placement(node) != null) {
             return;
         }
@@ -3254,7 +3255,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         if (label == null || layout.lineCount(label) != 1 || stackedLineHeights.containsKey(label)
-            || label.margin().top() + label.margin().bottom() + label.padding().top() + label.padding().bottom() != 0) {
+            || label.margin().top() != 0 || label.margin().bottom() != 0
+            || label.padding().top() != 0 || label.padding().bottom() != 0) {
             return;
         }
         java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(label);
@@ -3262,7 +3264,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (line.isEmpty() || ink == null) {
             return;
         }
-        double room = shape.outline().height() - node.padding().top() - node.padding().bottom()
+        // What Word leaves the content of the cell the panel is: the outline less the margins
+        // written — its padding, less the half of each border the page draws inside it — and the
+        // borders Word keeps outside the content.
+        double room = shape.outline().height() - (cellMargin(cell, true) + cellMargin(cell, false)) / POINT_TO_TWIP
                       - strokeWidth(borders.top()) - strokeWidth(borders.bottom());
         double lineHeight = line.get().lineHeight();
         double over = (lineHeight - room) / 2;
@@ -3270,16 +3275,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         double baseline = line.get().baselineOffsetFromBottom();
-        // Cut each side as far as the page passes the outline, and no closer to the letters than
-        // the margin: an outlined chip's borders leave less room than its letters on the line.
-        double top = Math.min(over, lineHeight - baseline - ink[0] - DocxStackedLines.INK_MARGIN);
-        double bottom = Math.min(over, baseline - ink[1] - DocxStackedLines.INK_MARGIN);
-        if (!(top > 0.01) && !(bottom > 0.01)) {
+        // Both sides are cut alike, as far as the page passes the outline and no closer to the
+        // letters than the margin on either side: the cell centres the line, so a cut deeper on one
+        // side stood the text off the page's by half the difference — 0.42pt high for an outlined
+        // chip whose foot the letters left less room at.
+        double cut = Math.min(over, Math.min(lineHeight - baseline - ink[0], baseline - ink[1])
+                                    - DocxStackedLines.INK_MARGIN);
+        if (!(cut > 0.01)) {
             return;
         }
-        top = Math.max(0, top);
-        bottom = Math.max(0, bottom);
-        stackedLineHeights.put(label, new DocxStackedLines.Line(lineHeight - top - bottom, -top, 0));
+        stackedLineHeights.put(label, new DocxStackedLines.Line(lineHeight - 2 * cut, -cut, 0));
     }
 
     private static boolean hasRadius(com.demcha.compose.document.style.DocumentCornerRadius radius) {

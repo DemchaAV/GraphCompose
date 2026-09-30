@@ -14,12 +14,12 @@ follow semantic versioning; release dates are ISO 8601.
   10pt line. Word grew each chip to the line, and an outlined one by its borders again, as Word
   keeps a cell's borders outside its content: every staff row with two shifts in a day stood
   3.8pt taller than the page's, and one with two plain lines 1.6pt. A label the shape centres top
-  to bottom is now written as tall as the outline less its padding and borders, seated where the
-  page sets it, each side cut no closer to its letters than three quarters of a point; where the
-  letters leave less room than that, it is cut as far as they allow, its text lower by what the
-  top keeps. In Word `CobaltRota` fits one page
-  again; rows with two plain lines stand where the page puts them, rows with an outlined chip
-  1.1pt taller, and the 90th-percentile drift falls from 26pt to 18.
+  to bottom is now written as tall as the room Word leaves the cell's content — the outline less
+  the margins written and the borders — seated where the page sets it, both sides cut alike as
+  the cell centres the line, and no closer to its letters than three quarters of a point; where
+  the letters leave less room than that, it is cut as far as they allow. In Word `CobaltRota` fits
+  one page again; rows with two plain lines stand where the page puts them, rows with an outlined
+  chip 1.1pt taller, and the 90th-percentile drift falls from 26pt to 18.
 
 - **A table row's cells keep their own vertical padding in Word, not the row's largest.** Word and
   LibreOffice give every cell of a row the largest top and bottom margin of any cell in it:

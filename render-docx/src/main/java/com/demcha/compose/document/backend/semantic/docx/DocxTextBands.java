@@ -30,9 +30,11 @@ final class DocxTextBands {
     static final double LINE_FACTOR = 1.2;
 
     /**
-     * Where the baseline stands in an exact line, as a share of the line from its top: both
-     * editors centre the type's ascent and descent in the line, and the fonts a band is set in
-     * put the baseline about four fifths of the way down.
+     * Where both editors stand the baseline in an exact line, as a share of the line from its
+     * top. Measured, it is four fifths of the line whatever the face and size: Spectral, Lato
+     * and Arial at 10 to 46pt, in lines 12 to 100pt tall, within 0.1pt of it in Word and on it in
+     * LibreOffice. A band's line is placed by it here, and a paragraph's text is moved from it to
+     * the page's baseline ({@code DocxSemanticBackend#shiftToThePagesBaseline}).
      */
     static final double BASELINE_SHARE = 0.8;
 

@@ -6,6 +6,7 @@ import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
+import com.demcha.compose.document.layout.payloads.ParagraphLineGeometry;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.InlineRun;
@@ -491,6 +492,24 @@ final class DocxLayoutMetrics {
             }
         }
         return java.util.Optional.empty();
+    }
+
+    /**
+     * Where a node's first line of text starts, measured up from the foot of its page: the top
+     * of the first fragment holding its lines, inside the paragraph's padding, where the page
+     * starts setting them.
+     *
+     * @param node any node that lays out as paragraph lines
+     * @return the top in points, or empty when the node laid out nothing
+     */
+    OptionalDouble firstLineTop(DocumentNode node) {
+        for (PlacedFragment fragment : textFragmentsOf(node)) {
+            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph && !paragraph.lines().isEmpty()) {
+                return OptionalDouble.of(ParagraphLineGeometry.contentTop(fragment.y(), fragment.height(),
+                        paragraph.padding().top()));
+            }
+        }
+        return OptionalDouble.empty();
     }
 
     /**

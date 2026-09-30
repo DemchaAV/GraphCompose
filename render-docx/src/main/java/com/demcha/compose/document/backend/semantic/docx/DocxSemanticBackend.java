@@ -176,6 +176,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** {@code w:sz} and {@code w:szCs} count half-points. */
     private static final double HALF_POINTS_PER_POINT = 2.0;
     private static final double POINT_TO_TWIP = 20.0;
+    /** The least difference between Word's baseline and the page's that is moved: one half point. */
+    private static final double LEAST_BASELINE_SHIFT_POINTS = 0.5;
     private static final Logger LOG = LoggerFactory.getLogger(DocxSemanticBackend.class);
     // The page's content width, so an image is held to the same bound layout holds it to.
     // Set per export; Double.MAX_VALUE means "no canvas, so nothing to clamp against".
@@ -230,6 +232,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The line a layer of text is written at when it overlaps the layer above it, in points:
     // see holdStackedLines.
     private final java.util.Map<ParagraphNode, Double> stackedLineHeights = new java.util.IdentityHashMap<>();
+    // How far above the page's first line a paragraph's Word line starts, in points, where its
+    // lines took the space between them from the space above it: see applyLineGap.
+    private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP, Double> lineTopsTakenIn =
+            new java.util.IdentityHashMap<>();
     // Icons drawn beside the text they label rather than written: see drawnBesideItsText.
     private final java.util.Set<ImageNode> picturesDrawnBeside =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -595,6 +601,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         moves.clear();
         writingInAStandIn.clear();
         stackedLineHeights.clear();
+        lineTopsTakenIn.clear();
         picturesDrawnBeside.clear();
         listNumbering.clear();
         report = new DocxExportReport.Builder();
@@ -2777,7 +2784,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * warned about once per export rather than pretended away.</p>
      */
     private void writeContainerChildren(XWPFDocument document, DocumentNode node) throws Exception {
-        holdStackedLines(node.children());
+        // Nothing takes a wrapper's last line's overhang from the gap under it, as
+        // hangBelowItsBox does a shape container's, so that line keeps its own height.
+        holdStackedLines(node.children(), Double.NaN);
         ContainerPaint paint = paintOf(node);
         if (paint.isEmpty()) {
             writeContainerBody(document, node);
@@ -4069,12 +4078,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Each half is still the paragraph it was: its outline level, its bookmark around its
         // own text, and whether it keeps with what follows.
         applyHeadingRole(para, headingLevelOf(pair.left()) != null ? pair.left() : pair.right());
+        // The line starts at the higher text's top; each half is seated from there.
+        com.demcha.compose.document.layout.PlacedNode box = layout.placement(overlay);
+        double lineTop = box.placementY() + box.placementHeight() - pair.above();
         int leftAnchor = openAnchor(para, pair.left().anchor());
-        writeParagraphRuns(para, pair.left(), false);
+        writeParagraphRuns(para, pair.left(), false, lineTopAbove(lineTop, pair.left()));
         closeAnchor(para, leftAnchor);
         para.createRun().addTab();
         int rightAnchor = openAnchor(para, pair.right().anchor());
-        writeParagraphRuns(para, pair.right(), false);
+        writeParagraphRuns(para, pair.right(), false, lineTopAbove(lineTop, pair.right()));
         closeAnchor(para, rightAnchor);
         if ((pair.left().keepWithNext() && layout.onOnePage(pair.left()))
             || (pair.right().keepWithNext() && layout.onOnePage(pair.right()))) {
@@ -4096,6 +4108,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } finally {
             overlayDepth--;
         }
+    }
+
+    /**
+     * How far a line starting at {@code lineTop} starts above a paragraph's first line on the
+     * page, in points; 0 when the paragraph laid out no line.
+     *
+     * @param lineTop   the line's top, measured up from the foot of the page
+     * @param paragraph the paragraph set in the line
+     */
+    private double lineTopAbove(double lineTop, ParagraphNode paragraph) {
+        java.util.OptionalDouble first = layout.firstLineTop(paragraph);
+        return first.isPresent() ? lineTop - first.getAsDouble() : 0;
     }
 
     /**
@@ -4152,7 +4176,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 writeOverlayBand(document, node, band);
                 return;
             }
-            holdStackedLines(node.children());
+            holdStackedLines(node.children(), contentFoot(node));
             // Its edges are space above and below what it holds, as a section's are: a
             // SerifHeadline section heading — a row in a container set its gap below the block
             // above — stood that gap high in Word, and everything under it with it.
@@ -4182,14 +4206,29 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Holds each line of text a container lays over the one above it to the distance between
-     * the two lines' feet, so written one after the other they stand where the page stacks them
-     * (see {@link DocxStackedLines}).
+     * Holds each line of text a container lays the next one over to the distance down to that
+     * one's top, and the last to the container's foot, so written one after the other they
+     * start where the page stacks them and end where the container does (see
+     * {@link DocxStackedLines}).
      *
      * @param layers a container's children, in the order they are written
+     * @param foot   the foot of the container's content, measured up from the foot of the page,
+     *               or {@code NaN} to leave the last line its own height
      */
-    private void holdStackedLines(List<DocumentNode> layers) {
-        stackedLineHeights.putAll(DocxStackedLines.of(layers, layout));
+    private void holdStackedLines(List<DocumentNode> layers, double foot) {
+        stackedLineHeights.putAll(DocxStackedLines.of(layers, foot, layout));
+    }
+
+    /**
+     * The foot of a shape container's content, measured up from the foot of its page, or
+     * {@code NaN} when it is not laid out on one page. Its bottom padding is owed below it
+     * (writeShapeContainer), so the content ends above it — but not in a band, which drops what
+     * its layers owe and sets its own space below.
+     */
+    private double contentFoot(ShapeContainerNode node) {
+        com.demcha.compose.document.layout.PlacedNode box = layout.placement(node);
+        return box == null || box.startPage() != box.endPage()
+                ? Double.NaN : box.placementY() + (bandDepth > 0 ? 0 : node.padding().bottom());
     }
 
     /**
@@ -4197,13 +4236,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * text below a band does (see {@link #writeLinePair}): the page sets what follows under the
      * container, and the line's overhang is taken from the gap above it.
      *
-     * <p>{@code NorthlineProposal}'s title is 166pt tall on the page, three lines 48pt apart
-     * with the last one's foot 14pt below its box. Written whole, that line pushed the cover's
-     * byline and everything under it 14pt lower.</p>
+     * <p>A line whose own foot runs past its container's pushed what follows that much lower.
+     * The last line of a stack is written to the container's foot instead, and hangs past
+     * nothing (see {@link #holdStackedLines}).</p>
      */
     private void hangBelowItsBox(ShapeContainerNode node) {
         List<DocumentNode> layers = node.children();
-        if (layers.isEmpty() || !(layers.get(layers.size() - 1) instanceof ParagraphNode last)) {
+        // A stack's last line written to the container's foot hangs past nothing.
+        if (layers.isEmpty() || !(layers.get(layers.size() - 1) instanceof ParagraphNode last)
+            || stackedLineHeights.containsKey(last)) {
             return;
         }
         com.demcha.compose.document.layout.PlacedNode box = layout.placement(node);
@@ -4212,11 +4253,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             || line.startPage() != box.startPage() || line.endPage() != box.startPage()) {
             return;
         }
-        // The page's y runs up from a box's foot. The container's bottom padding is owed below
-        // it (writeShapeContainer), so the overhang is measured from its content's foot — but
-        // not in a band, which drops what its layers owe and sets its own space below.
-        double contentFoot = box.placementY() + (bandDepth > 0 ? 0 : node.padding().bottom());
-        double overhang = contentFoot - line.placementY();
+        // The page's y runs up from a box's foot.
+        double overhang = contentFoot(node) - line.placementY();
         if (overhang > 0.01) {
             hangingBelow = Math.max(hangingBelow, overhang);
         }
@@ -4428,7 +4466,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * {@code n} in Word; the one too many comes off the space above the paragraph. The
      * editor puts most of an exact line's spare height above its text (measured in
      * LibreOffice: 8pt of 10 above), so taking it from above keeps the first line nearly
-     * where the page sets it. Where the space above is less than a gap — a paragraph opening
+     * where the page sets it; the line then starts that much above the page's, and the text
+     * is seated from there (see {@link #shiftToThePagesBaseline}). Where the space above is
+     * less than a gap — a paragraph opening
      * a cell, or right under the block before it — what it cannot give is not put into the
      * lines at all: the {@code n - 1} gaps are shared out over {@code n} lines, so the
      * paragraph is as tall as on the page, its lines a little closer than there.</p>
@@ -4458,6 +4498,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         long taken = Math.min(before, twips);
         if (taken > 0) {
             spacing.setBefore(BigInteger.valueOf(before - taken));
+            lineTopsTakenIn.put(target.getCTP(), taken / POINT_TO_TWIP);
         }
         // n lines of (line + extra), less what came off above, are n lines and n - 1 gaps.
         long extra = Math.round(((lines - 1) * (double) twips + taken) / lines);
@@ -4580,7 +4621,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * than its text. Its fill is read from the authored run beside the reduced one.</p>
      */
     private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node, boolean rightToLeft) {
-        int runsBefore = node.verticalAlign() == null || node.verticalAlign() == TextVerticalAlign.DEFAULT
+        writeParagraphRuns(para, node, rightToLeft, 0);
+    }
+
+    /**
+     * Writes a paragraph's runs into a Word paragraph whose line starts above the page's first
+     * line of it: a line pair's line starts at the higher of its two texts.
+     *
+     * @param lineTopAbove how far above the page's first line of the paragraph the Word line
+     *                     starts, in points
+     */
+    private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node, boolean rightToLeft,
+                                    double lineTopAbove) {
+        int runsBefore = para.getCTP().sizeOfRArray() == 0 && para.getCTP().sizeOfHyperlinkArray() == 0
                 ? 0 : runsIn(para).size();
         warnDroppedInlineRuns(node);
         String path = layout.pathOf(node);
@@ -4619,7 +4672,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         makeRoomForPictures(para, pictures);
         styleTheMark(para, markStyle);
-        seatInTheLine(para, node, runsBefore);
+        seatInTheLine(para, node, runsBefore, lineTopAbove);
     }
 
     /**
@@ -4637,10 +4690,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * line's seated baseline. The room made for a picture in the line is its unseated reach. A
      * page zone's paragraph has no laid-out lines here, and is written on its baseline.</p>
      *
-     * @param runsBefore how many runs the Word paragraph held before this one's were written
+     * <p>The baseline the page seats off is not where Word puts it either (see
+     * {@link #shiftToThePagesBaseline}), and the two moves are one position.</p>
+     *
+     * @param runsBefore   how many runs the Word paragraph held before this one's were written
+     * @param lineTopAbove how far above the page's first line of the paragraph the Word line
+     *                     starts, in points
      */
-    private void seatInTheLine(XWPFParagraph para, ParagraphNode node, int runsBefore) {
-        long halfPoints = Math.round(seatShift(node) * HALF_POINTS_PER_POINT);
+    private void seatInTheLine(XWPFParagraph para, ParagraphNode node, int runsBefore, double lineTopAbove) {
+        long halfPoints = Math.round((seatShift(node) + shiftToThePagesBaseline(para, node, lineTopAbove))
+                                     * HALF_POINTS_PER_POINT);
         if (halfPoints == 0) {
             return;
         }
@@ -4695,6 +4754,57 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
                 return com.demcha.compose.document.backend.fixed.pdf.handlers.ParagraphSeating
                         .shift(line, seatFonts, node.verticalAlign());
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * How far Word's baseline in a paragraph's exact line stands below the page's, in points,
+     * positive when Word's is lower: the raise that stands the text where the page sets it.
+     *
+     * <p>The page sets a line's text its ascent below the line's top. Word stands the baseline of
+     * an exact line four fifths of the way down it whatever the face (see
+     * {@link DocxTextBands#BASELINE_SHARE}). The two agree for a face whose ascent is about four
+     * fifths of its line, as Lato's is, and not for one with a deep descent: Spectral's 46pt
+     * title line, 70pt tall, stood 7pt low in Word. A line written shorter than the page's own
+     * — a title's lines stacked a pitch apart — moves Word's baseline up with it, and a line
+     * that starts above the page's, as a line pair's does, takes that distance with it.</p>
+     *
+     * <p>Read off the first line holding text and the height the paragraph was written at, the
+     * gap between lines included, at the paragraph's middle line: where the space above could not
+     * give up a whole gap, Word's lines step a little closer than the page's, and the error is
+     * shared by the first and last. 0 for a paragraph not written at an exact height: Word
+     * then seats it by its own measure of the face. A difference under
+     * {@link #LEAST_BASELINE_SHIFT_POINTS} — a quarter point for a line of Lato body text — is
+     * left as Word sets it: the position counts in half points, and every line of body text
+     * moved by one would win a quarter point at most.</p>
+     *
+     * @param lineTopAbove how far above the page's first line the Word line starts, in points
+     */
+    private double shiftToThePagesBaseline(XWPFParagraph para, ParagraphNode node, double lineTopAbove) {
+        CTPPr properties = para.getCTP().getPPr();
+        if (properties == null || !properties.isSetSpacing()) {
+            return 0;
+        }
+        CTSpacing spacing = properties.getSpacing();
+        Long written = spacing.isSetLineRule() && spacing.getLineRule() == STLineSpacingRule.EXACT
+                ? writtenTwips(spacing.getLine()) : null;
+        if (written == null) {
+            return 0;
+        }
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : layout.lines(node)) {
+            if (line.spans().stream().anyMatch(
+                    span -> span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan)) {
+                // Lines whose gaps Word shares out step closer than the page's; the middle one is
+                // matched, so the first and last are off by as little as the steps allow.
+                double wordLine = written / POINT_TO_TWIP;
+                double middle = Math.max(0, layout.lineCount(node) - 1) / 2.0;
+                double pageStep = line.lineHeight() + layout.lineGap(node);
+                double pages = lineTopAbove + lineTopsTakenIn.getOrDefault(para.getCTP(), 0.0)
+                               + middle * pageStep + line.lineHeight() - line.baselineOffsetFromBottom();
+                double shift = middle * wordLine + wordLine * DocxTextBands.BASELINE_SHARE - pages;
+                return Math.abs(shift) < LEAST_BASELINE_SHIFT_POINTS ? 0 : shift;
             }
         }
         return 0;

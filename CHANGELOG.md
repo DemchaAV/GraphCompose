@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Text stands on the page's baseline in Word's exact lines, and stacked title lines take the
+  container's height.** Word stands the baseline of an exact line four fifths of the way down it
+  whatever the face — measured for Spectral, Lato and Arial, in lines 12 to 100pt tall, and
+  LibreOffice does the same — where the page sets it the face's ascent below the line's top. For a
+  face with a deep descent the two part: `NorthlineProposal`'s 46pt Spectral title stood 7pt low.
+  Its three lines, laid 48pt apart in a 140pt container, were also written 70, 48 and 48pt tall,
+  and what the 26pt they ran past the container left after the gap under it pushed the rest of the
+  cover 8pt below the section icons drawn where the page puts them. A paragraph's runs are now
+  moved to the page's baseline (`w:position`) wherever the two stand half a point or more apart,
+  from the line Word was given — a line pair's from the higher text's top, lines that took their
+  gaps from the space above from that higher top, several lines at the middle one; a list item's
+  and a composed table cell's are not moved yet. Lines a container stacks tighter than their face
+  are each written as tall as the step to the next one's top, and in a shape container the last
+  to the container's foot. In Word `NorthlineProposal`'s median drift falls from 8.0pt to 0.8, its
+  cover within 1.5pt of the page throughout, and `EditorialProposal`'s from 5.9 to 0.4; across the
+  62 templates, lines more than 2pt off fall from 1464 to 1341.
 - **A value set from its start keeps its start in Word.** Two texts one layer holds on one line —
   a label and its value, a title and its dates — are written as one Word line split by a tab
   stop, and the stop was always a right tab at the right text's end. A value aligned left in a
@@ -117,10 +133,10 @@ follow semantic versioning; release dates are ISO 8601.
 - **Stacked title lines and icons beside their labels keep the page's height in Word.** A
   container written layer by layer took more room in Word than on the page for two kinds of
   layer. Lines of text laid over one another — `NorthlineProposal`'s title, three 46pt lines
-  48pt apart — took each line's own height, 70pt; now the first line keeps its height, each
-  single line of text laid over the one above it across takes the distance from that line's
-  foot to its own (`DocxStackedLines`), and a shape container's last line running past the
-  container's foot takes its overhang from the gap below. A line is never squeezed below 0.65
+  48pt apart — took each line's own height, 70pt; now each single line of text laid over by
+  the next across takes the step down to that one's top (`DocxStackedLines`), and a shape
+  container's last line running past the container's foot takes its overhang from the gap
+  below, or, ending such a stack, the rest of the container. A line is never squeezed below 0.65
   of its face, nor one holding a picture: Word was measured setting a 16pt word whole in a
   10.7pt line. An icon picture beside a layer of text in a shape container neither painted,
   clipped to its outline nor transformed, or in a layer stack — `NorthlineProposal`'s glance

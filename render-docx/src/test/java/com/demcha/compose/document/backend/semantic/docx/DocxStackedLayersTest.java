@@ -32,15 +32,30 @@ class DocxStackedLayersTest {
 
     private static final double PITCH = 32;
     private static final DocumentTextStyle LARGE = DocumentTextStyle.builder().fontName(FontName.LATO).size(30).build();
+    /** Lato's own line at 30pt: its ascent and descent, 2400 of 2000 units. */
+    private static final double LARGE_LINE = 36;
 
     @Test
-    void eachLineLaidOverTheOneAboveTakesTheDistanceBetweenTheirFeet() throws Exception {
+    void eachLineLaidOverByTheNextTakesTheDistanceDownToItsTop() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .add(title(2 * PITCH + 40)))) {
-            assertThat(line(paragraph(document, "One"))).as("the first line keeps its own height")
-                    .isGreaterThan(PITCH);
+            assertThat(line(paragraph(document, "One"))).isCloseTo(PITCH, within(0.05));
             assertThat(line(paragraph(document, "Two"))).isCloseTo(PITCH, within(0.05));
-            assertThat(line(paragraph(document, "Three"))).isCloseTo(PITCH, within(0.05));
+            assertThat(line(paragraph(document, "Three"))).as("room for its own line under the box: its own height")
+                    .isCloseTo(LARGE_LINE, within(0.05));
+        }
+    }
+
+    @Test
+    void theLastLineOfAStackEndsAtTheContainersFootAndHangsPastNothing() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addSection("Cover", cover -> cover.spacing(30)
+                        .add(title(2 * PITCH + 30))
+                        .addParagraph("After")))) {
+            assertThat(line(paragraph(document, "Three"))).as("the rest of the box, not its own 36pt")
+                    .isCloseTo(30, within(0.05));
+            assertThat(before(paragraph(document, "After"))).as("the whole gap under the box")
+                    .isCloseTo(30, within(0.05));
         }
     }
 
@@ -61,9 +76,10 @@ class DocxStackedLayersTest {
 
     @Test
     void aLineHoldingAPictureKeepsItsOwnHeight() throws Exception {
-        // A picture is not its line's face: squeezed, Word would cut its top off.
+        // A picture is not its line's face: squeezed to the 28pt left in the box, Word would
+        // cut its top off.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .add(new ShapeContainerBuilder().name("Mixed").rectangle(300, 80)
+                .add(new ShapeContainerBuilder().name("Mixed").rectangle(300, PITCH + 28)
                         .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                         .position(new ParagraphBuilder().name("One").text("One").textStyle(LARGE).build(),
                                 0, 0, LayerAlign.TOP_LEFT)
@@ -74,8 +90,8 @@ class DocxStackedLayersTest {
                         .build()))) {
             XWPFParagraph two = document.getParagraphs().stream()
                     .filter(paragraph -> paragraph.getText().startsWith("Two")).findFirst().orElseThrow();
-            assertThat(line(two)).as("its own line, not the step down from the one above")
-                    .isEqualTo(line(paragraph(document, "One")));
+            assertThat(line(two)).as("its own line, not the rest of the box")
+                    .isCloseTo(LARGE_LINE, within(0.05));
         }
     }
 
@@ -111,10 +127,11 @@ class DocxStackedLayersTest {
 
     @Test
     void theLastLinesOverhangBelowItsBoxComesOutOfTheGapUnderIt() throws Exception {
-        // A box 4pt shorter leaves the last line hanging 4pt further below it, and the
-        // paragraph after it that much less space above.
-        double shorter = spaceAboveTheParagraphAfter(2 * PITCH + 30);
-        double taller = spaceAboveTheParagraphAfter(2 * PITCH + 34);
+        // Two lines too tight to stack: the second keeps its own line, its foot 54pt down. A
+        // box 4pt shorter leaves it hanging 4pt further below, and the paragraph after it that
+        // much less space above.
+        double shorter = spaceAboveTheParagraphAfter(46);
+        double taller = spaceAboveTheParagraphAfter(50);
 
         assertThat(taller - shorter).isCloseTo(4, within(0.1));
     }
@@ -142,13 +159,23 @@ class DocxStackedLayersTest {
     private static double spaceAboveTheParagraphAfter(double boxHeight) throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addSection("Cover", cover -> cover.spacing(30)
-                        .add(title(boxHeight))
+                        .add(new ShapeContainerBuilder().name("Tight").rectangle(300, boxHeight)
+                                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                                .position(new ParagraphBuilder().name("One").text("One").textStyle(LARGE).build(),
+                                        0, 0, LayerAlign.TOP_LEFT)
+                                .position(new ParagraphBuilder().name("Two").text("Two").textStyle(LARGE).build(),
+                                        0, 18, LayerAlign.TOP_LEFT)
+                                .build())
                         .addParagraph("After")))) {
-            CTPPr properties = paragraph(document, "After").getCTP().getPPr();
-            return properties != null && properties.isSetSpacing() && properties.getSpacing().isSetBefore()
-                    ? DocxTwips.of(properties.getSpacing().getBefore()) / 20.0
-                    : 0;
+            return before(paragraph(document, "After"));
         }
+    }
+
+    private static double before(XWPFParagraph paragraph) {
+        CTPPr properties = paragraph.getCTP().getPPr();
+        return properties != null && properties.isSetSpacing() && properties.getSpacing().isSetBefore()
+                ? DocxTwips.of(properties.getSpacing().getBefore()) / 20.0
+                : 0;
     }
 
     private static DocumentNode title(double boxHeight) {

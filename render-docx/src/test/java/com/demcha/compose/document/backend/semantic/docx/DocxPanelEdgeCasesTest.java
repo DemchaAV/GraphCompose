@@ -164,8 +164,9 @@ class DocxPanelEdgeCasesTest {
 
     @Test
     void aNestedCardWithTooThinAMarginGivesUpNoMoreThanItHolds() throws Exception {
-        // 1pt of padding against a 1.5pt border: the margin can give back 0.25pt, not the 2.25
-        // the border would need. The text keeps its width; the border stays where it was.
+        // 1pt of padding against a 1.5pt border: the margin can give back 0.25pt, not the 3.5
+        // the border and its clearance would need. The text keeps its width; the border moves in
+        // only by that quarter point.
         try (XWPFDocument document = export(page -> page.addSection("Outer", outer -> outer
                 .fillColor(SURFACE)
                 .addSection("Inner", inner -> inner
@@ -192,9 +193,10 @@ class DocxPanelEdgeCasesTest {
 
     @Test
     void aNestedCardAsWideAsItsCellEndsItsRightBorderInsideItAndKeepsItsTextsWidth() throws Exception {
-        // Word starts a nested table no further left than its cell's text, centres its borders on
-        // its edges and, on screen, cuts off what passes the cell's right edge: a card as wide as
-        // its cell lost its right border. The points it gives up come off its right margin.
+        // Word starts a nested table no further left than its cell's text, draws its right border
+        // outside its right edge and, on screen, cuts off what passes the cell's edge and draws
+        // the cell's gridline there: a card as wide as its cell lost its right border. The points
+        // it gives up come off its right margin.
         try (XWPFDocument document = export(page -> page.addSection("Outer", outer -> outer
                 .fillColor(SURFACE)
                 .addSection("Inner", inner -> inner
@@ -213,11 +215,12 @@ class DocxPanelEdgeCasesTest {
             var margins = nested.getRow(0).getCell(0).getCTTc().getTcPr().getTcMar();
             long text = width - DocxTwips.of(margins.getLeft().getW()) - DocxTwips.of(margins.getRight().getW());
 
-            // Word draws the right border, 1.5pt or 30 twips, outside the table's edge. The text
-            // is as wide as the card written as wide as its cell, every border inside the cell's
-            // margins: its room less its 10pt padding each side, and the four half borders the
-            // margins give back.
-            assertThat(start + width + 30).as("its right border inside the cell").isLessThanOrEqualTo(room);
+            // Word draws the right border, 1.5pt or 30 twips, outside the table's edge, and the
+            // cell's gridline half a point further. The text is as wide as the card written as
+            // wide as its cell, every border inside the cell's margins: its room less its 10pt
+            // padding each side, and the four half borders the margins give back.
+            assertThat(start + width + 30 + 10).as("its right border inside the cell, clear of its gridline")
+                    .isLessThanOrEqualTo(room);
             assertThat(text).as("its text as wide as on the page")
                     .isCloseTo(room - 400 + 60, org.assertj.core.data.Offset.offset(3L));
         }

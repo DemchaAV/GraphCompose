@@ -354,8 +354,8 @@ How it lands:
   no style fills is written white, as the page draws it on the card. Word draws a table's
   right border outside its right edge and, on screen, cuts off what passes its cell's edge
   and draws the cell's gridline there; a bordered panel reaching its cell's text edge ends its
-  right border and half a point short of it, the points taken from its right margin and no more
-  than it holds, so its text keeps its place and width.
+  whole right border plus half a point short of that edge, the points taken from its right
+  margin and no more than it holds, so its text keeps its place and width.
 - **Keeping together.** A `keepTogether()` panel the layout placed on one page is a row
   Word may not split. Anchors and keeps on the blocks inside a panel carry as they do
   anywhere else.

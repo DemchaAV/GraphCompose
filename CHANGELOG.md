@@ -8,6 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A row after a row rises into the gap above it in Word.** A table row whose text stands above
+  its cell on the page — a timeline entry's title raised over its marker band — is lifted by that
+  much out of the gap above it, and that gap was looked for only in the paragraph before the
+  table. After another table that paragraph is the empty one keeping the two apart, and the gap
+  is the first table's own, under the last line of its cells — `SerifHeadline`'s separator rule
+  between two entries — so nothing was lifted: each entry stood a further 3pt lower in Word, and
+  `PROJECTS` 5pt below its rule. The row is now lifted out of the space the row above ends with,
+  the same amount from each of its cells — not when a cell that takes room (text, a picture set
+  in its line, a nested table) ends with none, nor from a row held to a height, painted or
+  framed. In Word `SerifHeadline`'s median drift falls from 2.4pt to 1.6 and
+  its p90 from 5.5 to 3.0.
 - **A container hanging left by a negative margin hangs left in Word.** The DOCX export wrote no
   indent below zero, so what such a container holds stood at the edge it hangs from:
   `SerifHeadline` hangs each section heading — a dash, the title and a rule, set as a row — left

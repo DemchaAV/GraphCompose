@@ -182,6 +182,152 @@ class DocxLinePairTest {
     }
 
     @Test
+    void aRowAfterARowIsLiftedOutOfTheSpaceTheRowAboveEndsWith() throws Exception {
+        // The gap between two entries is the first entry's own, below its last paragraph —
+        // a timeline's separator rule — so it ends the first table's cell, and the empty
+        // paragraph between the tables carries nothing to lift into.
+        long[] reference = riseOfARaisedTitle();
+        long rise = reference[0];
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row.addSection(marker())
+                        .addSection("First", entry -> entry.add(band(6, -4, CONTENT))
+                                .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12)))))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            XWPFParagraph last = lastLine(document);
+            var second = document.getTables().get(1).getRow(0);
+
+            assertThat(12L * 20 - after(last)).as("the second row stands as much higher as its title rises")
+                    .isEqualTo(rise);
+            assertThat(before(second.getCell(0).getParagraphs().get(0)))
+                    .as("its marker keeps its place, as a lifted row's does").isEqualTo(reference[1]);
+        }
+    }
+
+    @Test
+    void aRowIsNotLiftedOutOfARowAboveThatMayNotShrink() throws Exception {
+        // Its marker cell holds text with no space under it: that cell may be the row's tallest,
+        // and taking the space from the other would lift the next row without the gap closing.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row.addParagraph(p -> p.text("*"))
+                        .addSection("First", entry -> entry.add(band(6, -4, CONTENT))
+                                .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12)))))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            assertThat(after(lastLine(document))).as("the space it ends with stays").isEqualTo(12L * 20);
+        }
+    }
+
+    @Test
+    void aRowAboveWithAPictureInItsOtherCellIsNotShortened() throws Exception {
+        // A picture set in a line takes room though it holds no text: that cell may be the
+        // tallest, and the row would not shrink.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row.addSection(photo -> photo.addImage(image -> image
+                                .source(com.demcha.compose.document.image.DocumentImageData.fromBytes(png()))
+                                .size(30, 60)))
+                        .addSection("First", entry -> entry.add(band(6, -4, CONTENT))
+                                .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12)))))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            assertThat(after(lastLine(document))).as("the space it ends with stays").isEqualTo(12L * 20);
+        }
+    }
+
+    @Test
+    void aRowAboveHeldToAHeightIsNotShortened() throws Exception {
+        // Inside a painted panel a row is held as tall as the page made it, its foot included:
+        // taking the foot would not shorten it, and the next row would drop.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addSection("Card", card -> card
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 230, 230))
+                        .addRow(row -> row.addSection(marker())
+                                .addSection("First", entry -> entry.add(band(6, -4, CONTENT - 20))
+                                        .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12)))))
+                        .addRow(row -> row.addSection(marker())
+                                .addSection("Second", entry -> entry.add(band(6, -4, CONTENT - 20))))))) {
+            XWPFParagraph last = lastLine(document);
+            var row = ((org.apache.poi.xwpf.usermodel.XWPFTableCell) last.getBody()).getTableRow();
+
+            assertThat(row.getCtRow().isSetTrPr() && row.getCtRow().getTrPr().sizeOfTrHeightArray() > 0)
+                    .as("the row is held to a height").isTrue();
+            assertThat(after(last)).as("the space it ends with stays").isEqualTo(12L * 20);
+        }
+    }
+
+    private static byte[] png() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(40, 40,
+                    java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (Exception failure) {
+            throw new IllegalStateException(failure);
+        }
+    }
+
+    @Test
+    void aPaintedBoxAboveARaisedRowKeepsItsHeight() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addSection("Card", card -> card
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 230, 230))
+                        .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12))))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            assertThat(after(lastLine(document))).as("the card is not shortened").isEqualTo(12L * 20);
+        }
+    }
+
+    /**
+     * What a raised title lifts its row by, with room enough above it, and the space its marker
+     * then starts lower by inside the row.
+     */
+    private static long[] riseOfARaisedTitle() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Entry", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            XWPFParagraph before = document.getParagraphs().stream()
+                    .filter(paragraph -> "Before".equals(paragraph.getText())).findFirst().orElseThrow();
+            long rise = 12L * 20 - after(before);
+            assertThat(rise).as("the title rises").isPositive();
+            return new long[] {rise, before(document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0))};
+        }
+    }
+
+    /** A timeline's marker: a cell holding nothing written, only a drawn disc. */
+    private static java.util.function.Consumer<com.demcha.compose.document.dsl.SectionBuilder> marker() {
+        return cell -> cell.addEllipse(disc -> disc.circle(6)
+                .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(20, 20, 20)));
+    }
+
+    private static XWPFParagraph lastLine(XWPFDocument document) {
+        XWPFParagraph found = lastLine(document.getTables());
+        if (found == null) {
+            throw new AssertionError("no paragraph reading Last line");
+        }
+        return found;
+    }
+
+    private static XWPFParagraph lastLine(List<org.apache.poi.xwpf.usermodel.XWPFTable> tables) {
+        for (var table : tables) {
+            for (var row : table.getRows()) {
+                for (var cell : row.getTableCells()) {
+                    for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                        if ("Last line".equals(paragraph.getText())) {
+                            return paragraph;
+                        }
+                    }
+                    XWPFParagraph nested = lastLine(cell.getTables());
+                    if (nested != null) {
+                        return nested;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @Test
     void theHangReachesTheNextBlockOnlyNotThePageAfterABreak() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
                 .add(band(6, 4))

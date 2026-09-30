@@ -3497,9 +3497,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Lifts each noted table's first row by what its highest text stands above it, as far as
      * the gap above the table allows: that gap is held by the paragraph just before the table —
-     * below it, or above it when it is an empty separator, as between two tables. Every other
-     * cell of the row then starts that much lower inside, and the cell whose text stood out
-     * by less than the lift starts lower by the difference.
+     * below it, or above it when it is an empty separator — or, when that paragraph only keeps
+     * two tables apart and holds none of it, by the foot of the table above
+     * ({@link #takeFromTheFoot}). Every other cell of the row then starts that much lower inside,
+     * and the cell whose text stood out by less than the lift starts lower by the difference.
      */
     private void raiseRows() {
         for (java.util.Map.Entry<XWPFTable, java.util.Map<XWPFTableCell, Double>> noted : raisedRows.entrySet()) {
@@ -3519,7 +3520,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // above is where the page draws the line.
             boolean separator = above.getText().isEmpty() && !properties.isSetPBdr();
             long before = separator && gap.isSetBefore() ? twipsOf(gap.getBefore()) : 0;
-            long lift = Math.min(after + before, toTwips(java.util.Collections.max(noted.getValue().values())));
+            long wanted = toTwips(java.util.Collections.max(noted.getValue().values()));
+            long lift = Math.min(after + before, wanted);
+            // The paragraph keeping two tables apart takes no room — a drawing anchored to the page
+            // may hang on it — and keeps with the table after.
+            boolean betweenTables = separator && !takesRoom(above) && properties.isSetKeepNext()
+                    && index >= 2 && around.get(index - 2) instanceof XWPFTable;
+            if (lift <= 0 && betweenTables && around.get(index - 2) instanceof XWPFTable previous) {
+                // Between two tables the gap is the one above's: its cells end with it.
+                lift = takeFromTheFoot(previous, wanted);
+                if (lift > 0) {
+                    liftEachCell(table, noted.getValue(), lift);
+                }
+                continue;
+            }
             if (lift <= 0) {
                 continue;
             }
@@ -3530,15 +3544,133 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (lift > fromAfter) {
                 gap.setBefore(BigInteger.valueOf(before - (lift - fromAfter)));
             }
-            for (XWPFTableCell cell : table.getRow(0).getTableCells()) {
-                long own = Math.min(lift, toTwips(noted.getValue().getOrDefault(cell, 0.0)));
-                if (lift - own > 0 && !cell.getBodyElements().isEmpty()
-                    && cell.getBodyElements().get(0) instanceof XWPFParagraph first) {
-                    addSpacing(first, (lift - own) / POINT_TO_TWIP, 0);
-                }
-            }
+            liftEachCell(table, noted.getValue(), lift);
         }
         raisedRows.clear();
+    }
+
+    /**
+     * Starts each cell of a lifted table's first row that much lower inside, less what its own
+     * text stood above the row: the cell whose text stood out by the whole lift keeps its place.
+     */
+    private void liftEachCell(XWPFTable table, java.util.Map<XWPFTableCell, Double> standing, long lift) {
+        for (XWPFTableCell cell : table.getRow(0).getTableCells()) {
+            long own = Math.min(lift, toTwips(standing.getOrDefault(cell, 0.0)));
+            if (lift - own > 0 && !cell.getBodyElements().isEmpty()
+                && cell.getBodyElements().get(0) instanceof XWPFParagraph first) {
+                addSpacing(first, (lift - own) / POINT_TO_TWIP, 0);
+            }
+        }
+    }
+
+    /**
+     * Takes up to {@code wanted} twips from the space the table above ends with — the space below
+     * the last paragraph of each cell of its last row — and returns what was taken.
+     *
+     * <p>Two tables in a row are held apart by an empty paragraph that carries nothing, so the
+     * gap between them is the first one's: its cells end with it. A timeline's entries are one
+     * table each, and the space under an entry's separator rule is the gap the next entry's
+     * title rises into on the page: {@code SerifHeadline}'s entries each stood a further 3pt
+     * lower in Word without it.</p>
+     *
+     * <p>A row is as tall as its tallest cell, so every cell ending with space gives the same
+     * amount — the least any of them has — and the row is shorter by exactly that. Nothing is
+     * taken when a cell that takes room ends with no space under it: it may be the tallest, and
+     * the row would not shrink at all. A cell that takes none — a timeline's marker, drawn where
+     * the page draws it — does not count. Nor from a row held to a height, which the space it
+     * gives would not shorten, nor from a painted or framed one: the box does not move for the
+     * text after it, as it does not for the text in it ({@link #standsAboveItsCell}).</p>
+     */
+    private static long takeFromTheFoot(XWPFTable previous, long wanted) {
+        if (previous.getRows().isEmpty() || drawn(tableBottom(previous))) {
+            return 0;
+        }
+        XWPFTableRow lastRow = previous.getRow(previous.getRows().size() - 1);
+        if (lastRow.getCtRow().isSetTrPr() && lastRow.getCtRow().getTrPr().sizeOfTrHeightArray() > 0) {
+            return 0;
+        }
+        List<CTSpacing> feet = new ArrayList<>();
+        long amount = wanted;
+        for (XWPFTableCell cell : lastRow.getTableCells()) {
+            if (paintedOrFramed(cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : null)) {
+                return 0;
+            }
+            List<IBodyElement> content = cell.getBodyElements();
+            CTSpacing foot = content.isEmpty() || !(content.get(content.size() - 1) instanceof XWPFParagraph last)
+                    ? null : spacingBelow(last);
+            if (foot == null) {
+                if (takesRoom(cell)) {
+                    return 0;
+                }
+                continue;
+            }
+            feet.add(foot);
+            amount = Math.min(amount, twipsOf(foot.getAfter()));
+        }
+        if (amount <= 0 || feet.isEmpty()) {
+            return 0;
+        }
+        for (CTSpacing foot : feet) {
+            foot.setAfter(BigInteger.valueOf(twipsOf(foot.getAfter()) - amount));
+        }
+        return amount;
+    }
+
+    /** A paragraph's spacing when it holds space below it, or {@code null}. */
+    private static CTSpacing spacingBelow(XWPFParagraph paragraph) {
+        CTPPr properties = paragraph.getCTP().getPPr();
+        if (properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetAfter()
+            || twipsOf(properties.getSpacing().getAfter()) <= 0) {
+            return null;
+        }
+        return properties.getSpacing();
+    }
+
+    /**
+     * Whether a cell's content takes room in it: text, a picture set in a line, a table nested in
+     * it. A shape anchored to the page takes none.
+     */
+    private static boolean takesRoom(XWPFTableCell cell) {
+        for (IBodyElement element : cell.getBodyElements()) {
+            if (!(element instanceof XWPFParagraph paragraph) || takesRoom(paragraph)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether a paragraph holds text or a picture set in its line; a drawing anchored to the page takes none. */
+    private static boolean takesRoom(XWPFParagraph paragraph) {
+        if (!paragraph.getText().isBlank()) {
+            return true;
+        }
+        for (XWPFRun run : paragraph.getRuns()) {
+            for (var drawing : run.getCTR().getDrawingList()) {
+                if (drawing.sizeOfInlineArray() > 0) {
+                    return true;
+                }
+            }
+            if (run.getCTR().sizeOfPictArray() > 0 || run.getCTR().sizeOfObjectArray() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether a cell is a box the reader sees: filled, or with any side drawn. */
+    private static boolean paintedOrFramed(CTTcPr properties) {
+        if (properties == null) {
+            return false;
+        }
+        if (properties.isSetShd()) {
+            return true;
+        }
+        if (!properties.isSetTcBorders()) {
+            return false;
+        }
+        var borders = properties.getTcBorders();
+        return drawn(borders.getTop()) || drawn(borders.getBottom()) || drawn(borders.getLeft())
+               || drawn(borders.getRight()) || drawn(borders.getStart()) || drawn(borders.getEnd());
     }
 
     /**

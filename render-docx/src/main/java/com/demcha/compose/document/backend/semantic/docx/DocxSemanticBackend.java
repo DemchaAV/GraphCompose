@@ -4061,7 +4061,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTTabStop tab = (properties.isSetTabs() ? properties.getTabs() : properties.addNewTabs()).addNewTab();
-        tab.setVal(STTabJc.RIGHT);
+        // A right text set from its start holds that start; one set against its end, as a date
+        // at the right of a band is, holds its end (see DocxLinePair.Pair#fromItsStart).
+        tab.setVal(pair.fromItsStart() ? STTabJc.LEFT : STTabJc.RIGHT);
         tab.setPos(BigInteger.valueOf(toTwips(lineStart + pair.tabStop())));
         // Each half is still the paragraph it was: its outline level, its bookmark around its
         // own text, and whether it keeps with what follows.

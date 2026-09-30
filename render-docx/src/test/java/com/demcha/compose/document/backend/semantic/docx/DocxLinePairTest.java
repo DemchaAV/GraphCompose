@@ -47,6 +47,29 @@ class DocxLinePairTest {
     }
 
     @Test
+    void aValueSetFromItsStartIsHeldThereByALeftTab() throws Exception {
+        // A bank detail's value starts at a column across the card whatever its length: a right
+        // tab at its end let an editor's narrower setting of a long IBAN start it further right.
+        DocumentNode row = new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("BankRow")
+                .rectangle(CONTENT, 14)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("IBAN", TextAlign.LEFT), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(paragraph("GB36 SRLG 6083 7198 7654 32", TextAlign.LEFT), 120, 0, LayerAlign.CENTER_LEFT)
+                .build();
+        try (XWPFDocument document = export(row)) {
+            XWPFParagraph line = written(document).get(0);
+            CTPPr properties = line.getCTP().getPPr();
+
+            assertThat(line.getText()).isEqualTo("IBAN\tGB36 SRLG 6083 7198 7654 32");
+            assertThat(properties.getTabs().getTabArray(0).getVal().toString()).isEqualTo("left");
+            assertThat(DocxTwips.of(properties.getTabs().getTabArray(0).getPos()))
+                    .as("where the value starts on the page")
+                    .isCloseTo(120L * 20, org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
     void aPairInALayerStackIsOneLineTooNotABandOfTwo() throws Exception {
         try (XWPFDocument document = export(new com.demcha.compose.document.dsl.LayerStackBuilder()
                 .name("EntryHead")

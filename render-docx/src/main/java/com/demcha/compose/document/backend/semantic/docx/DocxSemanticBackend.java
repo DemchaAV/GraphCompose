@@ -235,6 +235,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             new java.util.IdentityHashMap<>();
     // How far above the page's first line a paragraph's Word line starts, in points, where its
     // lines took the space between them from the space above it: see applyLineGap.
+    // How far each paragraph a container pulled above its cell rises inside its own line: see
+    // riseIntoItsLine.
+    private final java.util.Map<ParagraphNode, Double> risenLines = new java.util.IdentityHashMap<>();
     private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP, Double> lineTopsTakenIn =
             new java.util.IdentityHashMap<>();
     // Icons drawn beside the text they label rather than written: see drawnBesideItsText.
@@ -604,6 +607,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         writingInAStandIn.clear();
         stackedLineHeights.clear();
         lineTopsTakenIn.clear();
+        risenLines.clear();
         picturesDrawnBeside.clear();
         listNumbering.clear();
         report = new DocxExportReport.Builder();
@@ -3157,10 +3161,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * cell's top. A line whose letters cannot be read — a picture in it — is left as it was.</p>
      */
     private void riseIntoItsLine(DocumentNode node) {
-        double rise = -carriedSpacingBefore;
-        if (!(rise > 0.01) || currentCell == null || node.children().isEmpty()
-            || !(node.children().get(0) instanceof ParagraphNode first)
-            || layout.lineCount(first) != 1 || stackedLineHeights.containsKey(first)) {
+        if (currentCell == null || node.children().isEmpty() || !(node.children().get(0) instanceof ParagraphNode first)) {
+            return;
+        }
+        Double risen = risenLines.get(first);
+        if (risen != null) {
+            // Written again — a header on every page class: the line is already cut, and the
+            // edge it rises by is taken as it was the first time.
+            carriedSpacingBefore += risen;
+            return;
+        }
+        // What the paragraph would have above it, all told: the edges carried down to it, the
+        // space the block before it owes, less a border standing below that block, and its own
+        // top edge. Only what that comes short of zero is a rise; the rest is written as space.
+        double rise = -(carriedSpacingBefore + pendingSpacingAfter - borderBelow
+                        + first.margin().top() + first.padding().top());
+        if (!(rise > 0.01) || layout.lineCount(first) != 1 || stackedLineHeights.containsKey(first)) {
             return;
         }
         java.util.OptionalDouble own = layout.lineHeight(first);
@@ -3176,6 +3192,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         stackedLineHeights.put(first, new DocxStackedLines.Line(own.getAsDouble() - taken, -taken, 0));
+        risenLines.put(first, taken);
         carriedSpacingBefore += taken;
     }
 
@@ -6153,7 +6170,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return drawn > written + 0.5;
     }
 
-    /** Whether Word holds nothing in a cell: no table, and no paragraph with a run. */
+    /**
+     * Whether Word holds nothing in a cell that gives it height: no table, and no paragraph with
+     * a run. A rule's or a spacer's paragraph counts as nothing; the row it stands in is held no
+     * taller than the page makes it, which that child already sets.
+     */
     private static boolean holdsNothing(XWPFTableCell cell) {
         return cell.getTables().isEmpty()
                && cell.getParagraphs().stream().allMatch(paragraph -> paragraph.getCTP().sizeOfRArray() == 0

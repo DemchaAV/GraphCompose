@@ -145,6 +145,43 @@ class DocxRowHeightTest {
             double line = DocxTwips.of(resume.getCTP().getPPr().getSpacing().getLine()) / 20.0;
 
             assertThat(line).as("shortened by less than the 10pt it is pulled").isGreaterThan(43.2 - 4);
+            assertThat(line).as("but shortened").isLessThan(43.2);
+        }
+    }
+
+    @Test
+    void aDrawingsMarginCountsTowardsTheRowItMakes() throws Exception {
+        // A 12pt badge 8pt down its cell makes the row 20pt, taller than the 16pt text's 19.2pt
+        // line beside it: the row is sized by each child's margin box.
+        DocumentTextStyle entry = DocumentTextStyle.builder().fontName(FontName.LATO).size(16).build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow("Head", row -> row
+                        .columns(DocumentRowColumn.fixed(20), DocumentRowColumn.weight(1))
+                        .addSection("Disc", disc -> disc.margin(new DocumentInsets(8, 0, 0, 0)).add(badge(12)))
+                        .addParagraph(p -> p.text("Heading").textStyle(entry))))) {
+            XWPFTableRow row = document.getTables().get(0).getRow(0);
+
+            assertThat(row.getHeight()).as("held to the badge's 20pt box").isGreaterThan(0);
+        }
+    }
+
+    @Test
+    void aPulledLineHoldingAPictureIsLeftAsItWas() throws Exception {
+        // Its letters cannot be read past the picture, so how far it may rise is not known.
+        DocumentTextStyle title = DocumentTextStyle.builder().fontName(FontName.LATO).size(36).build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow("Masthead", row -> row
+                        .columns(DocumentRowColumn.weight(1), DocumentRowColumn.weight(1))
+                        .addParagraph(p -> p.text("Logo").textStyle(LABEL))
+                        .addSection("Title", cell -> cell
+                                .padding(new DocumentInsets(-4, 0, 0, 0))
+                                .addParagraph(p -> p.inlineText("INVOICE ", title)
+                                        .inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png()),
+                                                10, 10)))))) {
+            XWPFParagraph invoice = document.getTables().get(0).getRow(0).getCell(1).getParagraphs().get(0);
+            double line = DocxTwips.of(invoice.getCTP().getPPr().getSpacing().getLine()) / 20.0;
+
+            assertThat(line).as("not cut short").isGreaterThan(43.2 - 1);
         }
     }
 }

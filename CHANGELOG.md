@@ -8,6 +8,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A value set from its start keeps its start in Word.** Two texts one layer holds on one line —
+  a label and its value, a title and its dates — are written as one Word line split by a tab
+  stop, and the stop was always a right tab at the right text's end. A value aligned left in a
+  layer placed from the left starts at its column whatever its length; after a right tab it
+  started wherever the editor's slightly narrower setting of it ended up: `LumaStudioInvoice`'s
+  IBAN stood 2.6pt right of the bank details over it. Such a value is now held by a left tab at
+  its start; a value set against its end, as a date at the right of a band is, keeps its right
+  tab. In Word the values of `LumaStudioInvoice`'s and `ConsultingInvoice`'s detail rows start
+  within 0.1pt of the page's.
 - **Text seated off its baseline sits there in Word, and text hanging below its band takes its
   overhang from the gap under it.** A paragraph set with `TextVerticalAlign.TOP`, `CENTER` or
   `BOTTOM` was written on its baseline: `LumaStudioInvoice`'s "INVOICE" is set against the top

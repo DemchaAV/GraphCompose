@@ -4026,8 +4026,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Writes an overlay's left and right paragraph as one line, the right one after a
-     * right-aligned tab stop where it ends on the page (see {@link DocxLinePair}).
+     * Writes an overlay's left and right paragraph as one line, the right one after a tab stop:
+     * a right-aligned one where it ends on the page, or a left-aligned one where it starts when
+     * it is set from its start (see {@link DocxLinePair}).
      *
      * <p>The line starts where the left paragraph does and runs from the top of the higher
      * text to the bottom of the lower, so the band keeps its place in the flow: the space
@@ -4061,7 +4062,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTTabStop tab = (properties.isSetTabs() ? properties.getTabs() : properties.addNewTabs()).addNewTab();
-        tab.setVal(STTabJc.RIGHT);
+        // A right text set from its start holds that start; one set against its end, as a date
+        // at the right of a band is, holds its end (see DocxLinePair.Pair#fromItsStart).
+        tab.setVal(pair.fromItsStart() ? STTabJc.LEFT : STTabJc.RIGHT);
         tab.setPos(BigInteger.valueOf(toTwips(lineStart + pair.tabStop())));
         // Each half is still the paragraph it was: its outline level, its bookmark around its
         // own text, and whether it keeps with what follows.

@@ -47,6 +47,70 @@ class DocxLinePairTest {
     }
 
     @Test
+    void aValueSetFromItsStartIsHeldThereByALeftTab() throws Exception {
+        // A bank detail's value starts at a column across the card whatever its length: a right
+        // tab at its end let an editor's narrower setting of a long IBAN start it further right.
+        DocumentNode row = new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("BankRow")
+                .rectangle(CONTENT, 14)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("IBAN", TextAlign.LEFT), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(paragraph("GB36 SRLG 6083 7198 7654 32", TextAlign.LEFT), 120, 0, LayerAlign.CENTER_LEFT)
+                .build();
+        try (XWPFDocument document = export(row)) {
+            XWPFParagraph line = written(document).get(0);
+            CTPPr properties = line.getCTP().getPPr();
+
+            assertThat(line.getText()).isEqualTo("IBAN\tGB36 SRLG 6083 7198 7654 32");
+            assertThat(properties.getTabs().getTabArray(0).getVal().toString()).isEqualTo("left");
+            assertThat(DocxTwips.of(properties.getTabs().getTabArray(0).getPos()))
+                    .as("where the value starts on the page")
+                    .isCloseTo(120L * 20, org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void aValueSetFromItsEndOrRightUpToTheEdgeKeepsItsRightTab() throws Exception {
+        // Placed from the right, the value's end is where the page holds it; placed from the
+        // left but running to the row's end, a left tab would leave an editor's wider setting of
+        // it no room, and its last word would go onto a line of its own.
+        String value = "GB36 SRLG 6083 7198 7654 32";
+        assertThat(tabOf(new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("FromTheRight")
+                .rectangle(CONTENT, 14).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("IBAN", TextAlign.LEFT), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(paragraph(value, TextAlign.LEFT), -30, 0, LayerAlign.CENTER_RIGHT)
+                .build())).as("placed from the right, room to spare past it").isEqualTo("right");
+        double valueWidth = widthOf(value);
+        assertThat(tabOf(new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("UpToTheEdge")
+                .rectangle(CONTENT, 14).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(paragraph("IBAN", TextAlign.LEFT), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(paragraph(value, TextAlign.LEFT), CONTENT - valueWidth - 1, 0, LayerAlign.CENTER_LEFT)
+                .build())).as("from the left, a point short of the edge").isEqualTo("right");
+    }
+
+    /** The kind of the tab stop an overlay's pair is written with. */
+    private static String tabOf(DocumentNode row) throws Exception {
+        try (XWPFDocument document = export(row)) {
+            return written(document).get(0).getCTP().getPPr().getTabs().getTabArray(0).getVal().toString();
+        }
+    }
+
+    /** How wide the page sets the text as a 9pt line, from its laid-out line. */
+    private static double widthOf(String text) throws Exception {
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(PAGE_WIDTH, 600).margin(DocumentInsets.of(MARGIN)).create()) {
+            session.pageFlow(flow -> flow.add(paragraph(text, TextAlign.LEFT)));
+            return session.layoutGraph().fragments().stream()
+                    .map(fragment -> fragment.payload())
+                    .filter(payload -> payload
+                            instanceof com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload)
+                    .map(payload -> ((com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload) payload)
+                            .lines().get(0).width())
+                    .findFirst().orElseThrow();
+        }
+    }
+
+    @Test
     void aPairInALayerStackIsOneLineTooNotABandOfTwo() throws Exception {
         try (XWPFDocument document = export(new com.demcha.compose.document.dsl.LayerStackBuilder()
                 .name("EntryHead")

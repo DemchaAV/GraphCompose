@@ -4,10 +4,13 @@ import com.demcha.compose.document.layout.ParagraphDirection;
 import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.EllipseNode;
+import com.demcha.compose.document.node.LayerAlign;
+import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.node.PolygonNode;
+import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.node.TextDirection;
@@ -22,8 +25,10 @@ import java.util.List;
  * line, as two layers of one container. Word has no layers, so the export wrote the layers
  * one after the other, and the dates came out on a line of their own under the title: an
  * extra line in every entry, enough to push a one-page CV onto a second page. A line with
- * text at the left and more at the right is what Word builds with a right-aligned tab stop,
- * so that is what the pair is written as: the left paragraph's runs, a tab, the right one's.</p>
+ * text at the left and more at the right is what Word builds with a tab stop, so that is what
+ * the pair is written as: the left paragraph's runs, a tab, the right one's. The stop is a
+ * right-aligned one at the right text's end, or a left-aligned one at its start when the text
+ * is set from its start (see {@link Pair#fromItsStart}).</p>
  *
  * <p>An overlay is taken as such a pair when it holds exactly two paragraphs, each laid out
  * on one line, level with one another on the page and apart across it, and nothing else but
@@ -35,9 +40,10 @@ final class DocxLinePair {
     private static final double EDGE = 0.5;
 
     /**
-     * The room the two texts must leave between them, in points. An editor sets text a little
-     * wider or narrower than the page does, and a right-aligned tab the left text runs past
-     * sends the right one onto a line of its own — under an exact line height, out of sight.
+     * The room the two texts must leave between them, in points, and a text set from its start
+     * after its end. An editor sets text a little wider or narrower than the page does: a tab
+     * the left text runs past, or a right text run past the line's end, sends a word onto a line
+     * of its own — under an exact line height, out of sight.
      */
     private static final double MIN_GAP = 4;
 
@@ -50,7 +56,13 @@ final class DocxLinePair {
      * @param left       the paragraph at the left
      * @param right      the paragraph at the right
      * @param leftOffset where the left paragraph starts, from the overlay's left edge
-     * @param tabStop    where the right paragraph ends, from the overlay's left edge
+     * @param tabStop    where the right paragraph's tab stop stands, from the overlay's left
+     *                   edge: where its text starts when {@code fromItsStart}, where it ends
+     *                   otherwise
+     * @param fromItsStart whether the right text is set from its start — left-aligned in a
+     *                   layer placed from the left, with room past its end — so a left tab
+     *                   stop holds its start where the page puts it, and an editor setting it
+     *                   narrower or wider moves its end, as on the page, not its start
      * @param line       the height the two lines take together, from the top of the higher
      *                   to the bottom of the lower
      * @param above      from the overlay's top down to that top — negative where the text
@@ -59,7 +71,7 @@ final class DocxLinePair {
      *                   text hangs below it
      */
     record Pair(ParagraphNode left, ParagraphNode right, double leftOffset, double tabStop,
-                double line, double above, double below) {
+                boolean fromItsStart, double line, double above, double below) {
     }
 
     /**
@@ -117,12 +129,42 @@ final class DocxLinePair {
         double textTop = Math.max(first.placementY() + first.placementHeight(),
                 second.placementY() + second.placementHeight());
         double textBottom = Math.min(first.placementY(), second.placementY());
-        return new Pair(firstIsLeft ? text.get(0) : text.get(1), firstIsLeft ? text.get(1) : text.get(0),
+        ParagraphNode rightText = firstIsLeft ? text.get(1) : text.get(0);
+        // Held by its start, its end runs free: an editor setting it wider breaks its last word
+        // onto a line of its own unless the overlay leaves room past it. Held by its end, it
+        // cannot, as before.
+        boolean fromItsStart = setFromItsStart(overlay, rightText)
+                               && box.placementX() + box.placementWidth() - right[1] >= MIN_GAP;
+        return new Pair(firstIsLeft ? text.get(0) : text.get(1), rightText,
                 Math.max(0, left[0] - box.placementX()),
-                right[1] - box.placementX(),
+                (fromItsStart ? right[0] : right[1]) - box.placementX(),
+                fromItsStart,
                 textTop - textBottom,
                 boxTop - textTop,
                 textBottom - box.placementY());
+    }
+
+    /**
+     * Whether a paragraph's text is set from its start: aligned left in a layer placed from the
+     * overlay's left. A bank detail's value set at a column across the card starts there
+     * whatever its length; written after a right tab at its end, as a date at the right of a band
+     * is, it started wherever the editor's narrower setting of it ended up — "GB36 SRLG …" a few
+     * points right of the values over it.
+     */
+    private static boolean setFromItsStart(DocumentNode overlay, ParagraphNode paragraph) {
+        if (paragraph.align() != TextAlign.LEFT) {
+            return false;
+        }
+        List<LayerStackNode.Layer> layers = overlay instanceof LayerStackNode stack ? stack.layers()
+                : overlay instanceof ShapeContainerNode container ? container.layers()
+                : List.of();
+        for (LayerStackNode.Layer layer : layers) {
+            if (layer.node() == paragraph) {
+                return layer.align() == LayerAlign.TOP_LEFT || layer.align() == LayerAlign.CENTER_LEFT
+                       || layer.align() == LayerAlign.BOTTOM_LEFT;
+            }
+        }
+        return false;
     }
 
     /**

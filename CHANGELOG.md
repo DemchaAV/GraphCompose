@@ -8,6 +8,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A block pulled up by a negative top edge, and a row padded down its column, stand where the
+  page puts them in Word.** Word has no negative space above a paragraph, so a paragraph's, a
+  page reference's or a rule's negative top `margin` or `padding` was dropped:
+  `PaymentsInvoice`'s header rule, pulled 16.4pt up out of the space its header stack leaves
+  below its content, stood that far low with the page under it. The pull now comes out of the
+  space owed above the block, with any pull of the containers around it. Word has no space above
+  a table either, and a row opening a row's column lost the padding above it:
+  `PaymentsInvoice`'s metadata grid, padded 6.2pt down its column, stood that much above the
+  issuer beside it, as did `MerchantInvoice`'s. A paragraph a tenth of a point tall now carries
+  that space, the containers' padding included, in any cell but a table's — as it already
+  carried the space a row owed above itself at the top of a panel; a row opening a table's cell
+  is left to the row height the table holds. In Word `PaymentsInvoice`'s median drift falls from 10.3pt to 0.5,
+  and across the 62 templates lines more than 2pt off fall from 705 to 572; in LibreOffice from
+  1066 to 933.
+
 - **A row a drawing makes tall, and a title pulled above its row, keep the page's height in
   Word.** A row whose tallest child is drawn where the page puts it — a badge beside a heading,
   its cell holding nothing in Word — was only as tall as its text there: `WorkspaceInvoice`'s

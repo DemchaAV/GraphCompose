@@ -224,14 +224,20 @@ class DocxContainerSpacingTest {
     }
 
     @Test
-    void aTableOpeningACellIsWrittenAsBefore() throws Exception {
-        // Only the body takes the paragraph: in a cell it was measured to set content lower
-        // than the page does — each of ObsidianInvoice's line items 8.5pt lower.
+    void aTableOpeningATablesCellIsWrittenAsBefore() throws Exception {
+        // A table's cell takes no paragraph: the table holds its row at the page's height, and
+        // one there was measured to set content lower than the page does — each of
+        // ObsidianInvoice's line items 8.5pt lower. A row's column does (DocxSpaceAboveTest).
+        com.demcha.compose.document.dsl.SectionBuilder composed = new com.demcha.compose.document.dsl.SectionBuilder();
+        composed.padding(new DocumentInsets(12, 0, 0, 0))
+                .addRow(inner -> inner.addParagraph("Qty").addParagraph("1"));
+        com.demcha.compose.document.node.DocumentNode item = composed.build();
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 0, page -> page
-                .addRow(outer -> outer
-                        .addSection(cell -> cell.padding(new DocumentInsets(12, 0, 0, 0))
-                                .addRow(inner -> inner.addParagraph("Qty").addParagraph("1")))
-                        .addParagraph("Notes")))) {
+                .addTable(t -> t
+                        .columns(com.demcha.compose.document.table.DocumentTableColumn.auto(),
+                                com.demcha.compose.document.table.DocumentTableColumn.auto())
+                        .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(item),
+                                com.demcha.compose.document.table.DocumentTableCell.text("Notes"))))) {
             XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
 
             assertThat(cell.getBodyElements().get(0)).as("the nested table opens the cell")

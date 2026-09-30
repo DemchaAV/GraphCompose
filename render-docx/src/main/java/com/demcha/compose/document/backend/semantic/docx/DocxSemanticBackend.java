@@ -236,6 +236,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // How far each paragraph a container pulled above its cell rises inside its own line: see
     // riseIntoItsLine.
     private final java.util.Map<ParagraphNode, Double> risenLines = new java.util.IdentityHashMap<>();
+    // The cells of a table's grid that hold a composed node, whose row the table holds at the
+    // page's height: see writeTableWithItsOwnSpacing.
+    private final java.util.Set<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTc> tablesCells =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // How far above the page's first line a paragraph's Word line starts, in points, where its
     // lines took the space between them from the space above it: see applyLineGap.
     private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP, Double> lineTopsTakenIn =
@@ -608,6 +612,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         stackedLineHeights.clear();
         lineTopsTakenIn.clear();
         risenLines.clear();
+        tablesCells.clear();
         picturesDrawnBeside.clear();
         listNumbering.clear();
         report = new DocxExportReport.Builder();
@@ -2040,6 +2045,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void dispatchNode(XWPFDocument document, DocumentNode node) throws Exception {
         DocxRules.Rule rule = ruleOf(node);
+        if (overTheFlowDepth == 0 && (node instanceof ParagraphNode
+                || node instanceof com.demcha.compose.document.node.PageReferenceNode || rule != null)) {
+            standsIntoTheSpaceAbove(node);
+        }
         if (node instanceof ParagraphNode paragraph) {
             writeParagraph(document, paragraph);
         } else if (node instanceof com.demcha.compose.document.node.PageReferenceNode reference) {
@@ -2979,7 +2988,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean tableAbove = currentCell == null
                 ? endsWithATable(document.getBodyElements())
                 : cellEndsWithItsTableCloser();
-        if (pendingSpacingAfter > 0 && lastBodyParagraph == null && !tableAbove) {
+        // The space owed is the block's own edge and the edges of the containers opened
+        // around it, which are carried down to it rather than owed.
+        if (pendingSpacingAfter + carriedSpacingBefore - borderBelow > 0 && lastBodyParagraph == null && !tableAbove) {
             holdToHairline(newBodyParagraph(document));
         }
     }
@@ -3717,6 +3728,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** Whether a border is one the reader sees. */
     private static boolean drawn(CTBorder border) {
         return border != null && border.getVal() != STBorder.NONE && border.getVal() != STBorder.NIL;
+    }
+
+    /**
+     * Takes a paragraph's, page reference's or rule's negative top edge out of the space owed
+     * above it.
+     *
+     * <p>Word has no negative space above a paragraph, and {@link #applyVerticalSpacing}
+     * writes an edge only where it is positive, so an edge pulling the block up was dropped
+     * and the block stood that much low, with everything after it. {@code PaymentsInvoice}'s
+     * header rule is pulled 16.4pt up from the foot of the stack above it, whose band runs
+     * past its content: the rule and the page under it stood 16.4pt low. The pull is added
+     * to the edges carried down to the block, as a container's negative edge already is, so
+     * {@link #newBodyParagraph} nets it against everything owed above, as the page sums it;
+     * what that cannot give stays unwritten, as before. Text laid over the flow owes no
+     * space ({@link #writeOverTheFlow}), so its edges move nothing.</p>
+     */
+    private void standsIntoTheSpaceAbove(DocumentNode node) {
+        double edge = node.margin().top() + node.padding().top();
+        if (edge < 0) {
+            carriedSpacingBefore += edge;
+        }
     }
 
     /**
@@ -5982,18 +6014,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * below the paragraph before it, and the space below one is the space above the
      * paragraph after. Both go through the debt every other gap goes through
      * ({@link #owePendingSpacingAfter}), so a table between two paragraphs reads the same as
-     * two paragraphs with a gap between them — and a table with nothing above it loses that
-     * edge, which is the one thing Word genuinely cannot hold.</p>
+     * two paragraphs with a gap between them. With nothing above it — opening the body, or a
+     * row opening a cell — a paragraph a tenth of a point tall holds that edge
+     * ({@link #holdTheSpaceAboveATable}); a table opening a cell still loses it.</p>
      */
     private void writeTableWithItsOwnSpacing(XWPFDocument document, DocumentNode node)
             throws Exception {
         owePendingSpacingAfter(node.margin().top() + node.padding().top());
-        if (node instanceof RowNode && currentCell != null && currentCell == panelCell) {
-            // At the top of a panel nothing above holds that space: MerchantInvoice's due-date
+        if (node instanceof RowNode && currentCell != null && !tablesCells.contains(currentCell.getCTTc())) {
+            // At the top of a cell nothing above holds that space: MerchantInvoice's due-date
             // row lost its 16.7pt of top padding and stood against the card's top edge, once the
-            // card held the page's height. A row in a table's cell keeps to the row height the
-            // table holds (holdRowHeight). A table is left as it was: holding its space moved
-            // ObsidianInvoice's line items 6pt below the page's.
+            // card held the page's height, and PaymentsInvoice's metadata grid the 6.2pt its
+            // column is padded down by, standing that much above the issuer beside it. A row in
+            // a table's cell keeps to the row height the table holds (holdRowHeight): held
+            // again, ObsidianInvoice's line items stood 6pt low. A table is left as it was too:
+            // holding its space moved ObsidianInvoice's line items 6pt below the page's.
             holdTheSpaceAboveATable(document);
         }
         if (node instanceof RowNode row) {
@@ -6592,6 +6627,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // exported it as an empty cell.
             double previous = currentCellWidth;
             currentCellWidth = usableWidthOf(cell, placement);
+            tablesCells.add(cell.getCTTc());
             try {
                 writeCellBody(cell, source.content());
             } finally {

@@ -193,8 +193,16 @@ paragraph is held to a tenth of a point, so it adds no line of text to the gap i
 
 A table holds its own space the same way. Word has no space above a table and none below
 one, so a table's or a row's `margin` and `padding` travel to the paragraphs around it —
-the space above a table is the space below the paragraph before it. A table with no
-paragraph above it loses that edge, which is the one gap Word has nowhere to put.
+the space above a table is the space below the paragraph before it. Where no paragraph
+stands above it — a table opening the body, or a row opening any cell but a table's, padded
+down it — a paragraph a tenth of a point tall carries the space instead. A row opening a
+table's cell is left to the row height the table holds, which has that space in it already;
+a table (not a row) opening a cell still loses that edge.
+
+An edge pulling a block up — a paragraph's, a page reference's or a rule's negative top
+`margin` or `padding` — comes out of the space owed above it, as the page takes it from
+there: Word has no negative space above a paragraph. What that space cannot give is not
+written. Text laid over the flow in text boxes owes no space, so its edges move nothing.
 
 A paragraph's or a list's `lineSpacing` — the gap the page puts between two wrapped lines —
 goes into the line: Word has one line height for a paragraph and no gap between its lines,

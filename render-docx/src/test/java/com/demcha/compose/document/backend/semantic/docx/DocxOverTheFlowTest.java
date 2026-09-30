@@ -12,6 +12,8 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -75,7 +77,94 @@ class DocxOverTheFlowTest {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 40, page -> page
                 .addSection("Card", card -> card.fillColor(DocumentColor.rgb(230, 230, 230))
                         .add(sidebar(new DocumentInsets(0, 0, -STUB, 0))).addParagraph("Masthead")))) {
-            assertThat(document.getDocument().getBody().xmlText()).as("no text box").doesNotContain("<w:txbxContent>");
+            assertThat(document.getDocument().getBody().xmlText()).as("no text box, the lockup in the cell")
+                    .doesNotContain("<w:txbxContent>").contains(">&amp;Co.<");
+        }
+    }
+
+    @Test
+    void aLinkAnAnchorOrAPictureKeepsItInTheFlow() throws Exception {
+        // Each is something the flow carries and a text box does not: the whole node is
+        // written as before, its text in the flow.
+        assertThat(floats(new ParagraphBuilder().name("Site").text("Site")
+                .linkTarget(com.demcha.compose.document.node.DocumentLinkTarget.external("https://example.org"))
+                .build())).as("a link").isFalse();
+        assertThat(floats(new ParagraphBuilder().name("Named").text("Named").anchor("brand").build()))
+                .as("an anchor").isFalse();
+        assertThat(floats(new com.demcha.compose.document.dsl.SectionBuilder().name("Held").anchor("held")
+                .addParagraph("Held").build())).as("a block with an anchor").isFalse();
+        assertThat(floats(new com.demcha.compose.document.dsl.ImageBuilder().name("Logo")
+                .source(com.demcha.compose.document.image.DocumentImageData.fromBytes(png())).size(20, 20).build()))
+                .as("a picture").isFalse();
+        assertThat(floats(new ParagraphBuilder().name("Plain").text("Plain").build()))
+                .as("while plain text is set in a text box").isTrue();
+    }
+
+    @Test
+    void inATableCellItIsWrittenAsBefore() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 40, page -> page
+                .addRow(row -> row.addSection(cell -> cell.add(sidebar(new DocumentInsets(-10, 0, 10 - STUB, 0))))
+                        .addParagraph("Beside")))) {
+            assertThat(document.getDocument().getBody().xmlText()).as("no text box, the lockup in the cell")
+                    .doesNotContain("<w:txbxContent>").contains(">&amp;Co.<");
+        }
+    }
+
+    @Test
+    void itsTextBoxesStandInFrontOfTheTextAndItsDrawingsInTheirLayersOrder() throws Exception {
+        // In front, a fill or a panel's shading laid under a box cannot cover it. The drawings
+        // are stacked by their layers' order, not the order they were given in.
+        DocumentNode sidebar = new ShapeContainerBuilder().name("Sidebar")
+                .rectangle(100, STUB).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .margin(new DocumentInsets(-40, 0, 40 - STUB, -40))
+                .position(new ShapeBuilder().name("Upper").size(100, 50)
+                        .fillColor(DocumentColor.rgb(200, 0, 0)).build(), 0, 0, LayerAlign.TOP_LEFT, 2)
+                .position(new ParagraphBuilder().name("Line").text("Studio").build(), 10, 10, LayerAlign.TOP_LEFT, 3)
+                .position(new ShapeBuilder().name("Lower").size(100, STUB)
+                        .fillColor(DocumentColor.rgb(0, 0, 200)).build(), 0, 0, LayerAlign.TOP_LEFT, 1)
+                .build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 40, page -> page
+                .add(sidebar).addParagraph("Masthead"))) {
+            List<String> drawings = List.of(document.getDocument().getBody().xmlText().split("<wp:anchor"));
+            String box = drawings.stream().filter(chunk -> chunk.contains("<w:txbxContent>")).findFirst().orElseThrow();
+
+            assertThat(box).as("the text box in front of the text").contains("behindDoc=\"0\"");
+            assertThat(stackHeight(drawings, "0000C8")).as("the lower layer under the upper one")
+                    .isLessThan(stackHeight(drawings, "C80000"));
+        }
+    }
+
+    private static long stackHeight(List<String> drawings, String colour) {
+        String chunk = drawings.stream().filter(candidate -> candidate.contains("srgbClr val=\"" + colour + "\""))
+                .findFirst().orElseThrow();
+        java.util.regex.Matcher height = java.util.regex.Pattern.compile("relativeHeight=\"(\\d+)\"").matcher(chunk);
+        assertThat(height.find()).isTrue();
+        return Long.parseLong(height.group(1));
+    }
+
+    /** Whether a sidebar laid over the flow, a brand block and the given layer in it, is set in text boxes. */
+    private static boolean floats(DocumentNode layer) throws Exception {
+        DocumentNode sidebar = new ShapeContainerBuilder().name("Sidebar")
+                .rectangle(100, STUB).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .margin(new DocumentInsets(-40, 0, 40 - STUB, -40))
+                .position(new ShapeBuilder().name("BrandBlock").size(100, STUB)
+                        .fillColor(DocumentColor.rgb(160, 80, 50)).build(), 0, 0, LayerAlign.TOP_LEFT, 0)
+                .position(new ParagraphBuilder().name("Monogram").text("L").build(), 10, 10, LayerAlign.TOP_LEFT, 1)
+                .position(layer, 10, 40, LayerAlign.TOP_LEFT, 2)
+                .build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 40, page -> page
+                .add(sidebar).addParagraph("Masthead"))) {
+            return document.getDocument().getBody().xmlText().contains("<w:txbxContent>");
+        }
+    }
+
+    private static byte[] png() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(20, 20,
+                    java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (Exception failure) {
+            throw new IllegalStateException(failure);
         }
     }
 
@@ -152,6 +241,8 @@ class DocxOverTheFlowTest {
                 .add(sidebar)
                 .addParagraph("Masthead"))) {
             assertThat(document.getTables()).as("no table in the flow").isEmpty();
+            assertThat(document.getParagraphs()).extracting(DocxOverTheFlowTest::ownText)
+                    .as("neither in the flow").noneMatch(text -> text.contains("West") || text.contains("East"));
             assertThat(document.getDocument().getBody().xmlText()).contains(">West<").contains(">East<");
         }
     }

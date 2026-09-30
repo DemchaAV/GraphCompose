@@ -198,7 +198,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private int bandDepth;
     // How many nodes laid over the flow the writer is inside: their paragraphs go in text boxes
     // (see laidOverTheFlow).
-    private int overFlowDepth;
+    private int overTheFlowDepth;
     // How many of those overlays are layer stacks of one layer, which lay nothing over anything.
     private int oneLayerDepth;
     // The overlays being written, innermost first (see drawsInFront).
@@ -572,7 +572,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         surfaceBehind = null;
         overlayDepth = 0;
         bandDepth = 0;
-        overFlowDepth = 0;
+        overTheFlowDepth = 0;
         oneLayerDepth = 0;
         openOverlays.clear();
         forgetTheHang();
@@ -1693,11 +1693,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeOverTheFlow(document, node);
             return;
         }
-        if (overFlowDepth > 0 && !node.children().isEmpty()) {
+        if (overTheFlowDepth > 0 && !node.children().isEmpty()) {
             // Inside a node laid over the flow every container is only what it holds: its text
             // goes in text boxes, not in columns, a line pair, a band or a panel in the flow.
             drawOutlineOf(node);
-            for (DocumentNode child : node.children()) {
+            for (DocumentNode child : inPaintOrder(node)) {
                 writeNode(document, child);
             }
             return;
@@ -1749,9 +1749,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             || Double.isNaN(canvasHeight)) {
             return false;
         }
+        // No room at all: margins taking back more than the box pull the flow up, which nothing
+        // written out of it could do.
         com.demcha.compose.document.layout.PlacedNode box = layout.placement(node);
         if (box == null || box.startPage() != box.endPage()
-            || node.margin().top() + box.placementHeight() + node.margin().bottom() > 0.5) {
+            || Math.abs(node.margin().top() + box.placementHeight() + node.margin().bottom()) > 0.5) {
             return false;
         }
         boolean[] holdsText = {false};
@@ -1760,11 +1762,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether every leaf under a node is drawn where the page puts it or is a paragraph a text
-     * box holds as the page sets it: plain runs, on one page, with no link, bookmark or anchor.
+     * box holds as the page sets it: plain runs, on one page, with no link, bookmark or anchor,
+     * and no block under it anchored or transformed.
+     *
+     * @param holdsText set when a paragraph is found
      */
     private boolean floatable(DocumentNode node, boolean[] holdsText) {
         // A bookmark goes round what a block writes in the flow, and this one writes nothing there.
-        if (transformOf(node) != null && !transformOf(node).isIdentity() || blockAnchorOf(node, true) != null) {
+        com.demcha.compose.document.style.DocumentTransform transform = transformOf(node);
+        if (transform != null && !transform.isIdentity() || blockAnchorOf(node, true) != null) {
             return false;
         }
         if (node instanceof ParagraphNode paragraph) {
@@ -1801,20 +1807,39 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Writes a node laid over the flow ({@link #laidOverTheFlow}): its drawings where the page
      * draws them, and each of its paragraphs in a text box where the page sets it. Nothing of it
      * is written in the flow, which it takes no room in: the containers inside it are only what
-     * they hold (see {@link #writeNodeContentOf}), so none of their edges is owed as space.
+     * they hold (see {@link #writeNodeContent}), so none of their edges is owed as space.
      */
     private void writeOverTheFlow(XWPFDocument document, DocumentNode node) throws Exception {
         drawOutlineOf(node);
         overlayDepth++;
-        overFlowDepth++;
+        overTheFlowDepth++;
         try {
-            for (DocumentNode child : node.children()) {
+            for (DocumentNode child : inPaintOrder(node)) {
                 writeNode(document, child);
             }
         } finally {
             overlayDepth--;
-            overFlowDepth--;
+            overTheFlowDepth--;
         }
+    }
+
+    /**
+     * A node's children in the order the page paints them: a stack's or a container's layers
+     * by their z-index, the ones sharing one in the order they were given. Drawings are stacked
+     * in the order they are queued, so a fill a later layer lies over is drawn under it.
+     */
+    private static List<DocumentNode> inPaintOrder(DocumentNode node) {
+        List<com.demcha.compose.document.node.LayerStackNode.Layer> layers =
+                node instanceof com.demcha.compose.document.node.LayerStackNode stack ? stack.layers()
+                : node instanceof ShapeContainerNode container ? container.layers()
+                : null;
+        if (layers == null) {
+            return node.children();
+        }
+        return layers.stream()
+                .sorted(java.util.Comparator.comparingInt(com.demcha.compose.document.node.LayerStackNode.Layer::zIndex))
+                .map(com.demcha.compose.document.node.LayerStackNode.Layer::node)
+                .toList();
     }
 
     /** How far a line set in a text box over the flow may run past its box before Word breaks it. */
@@ -1825,26 +1850,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * drawn round it (see {@link #laidOverTheFlow}).
      *
      * <p>The box is the paragraph's content box. A line set in one is given a quarter again of
-     * the box's width, and a few points, on the side its text does not lean on: an editor sets
-     * text a little wider than the page, and the line would otherwise break inside the box. A
-     * paragraph of several lines keeps its width but for the editor's couple of points, as it
-     * breaks where the page breaks it — and the box is a line taller than its lines, as a text
-     * box shows nothing past its foot and a word the editor sets on one more line would be lost.
-     * The box draws nothing, so the room it has past the text is nowhere to be seen.</p>
+     * the box's width, and a few points, away from the side it is aligned to — both ways for a
+     * centred one: an editor sets text a little wider than the page, and the line would
+     * otherwise break inside the box. A paragraph of several lines keeps its width but for the
+     * editor's couple of points, as it breaks where the page breaks it — and the box is a line
+     * taller than its lines, as a text box shows nothing past its foot and a word the editor
+     * sets on one more line would be lost. The box draws nothing, so the room it has past the
+     * text is nowhere to be seen, and it stands in front of the text: a fill or a panel's
+     * shading the page lays under it cannot cover it.</p>
      */
     private void writeTextOverTheFlow(XWPFDocument document, ParagraphNode node) {
         com.demcha.compose.document.layout.PlacedNode placed = layout.placement(node);
-        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP markup =
-                org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP.Factory.newInstance();
-        XWPFParagraph para = new XWPFParagraph(markup, document);
+        XWPFParagraph para = detachedParagraph(document);
         boolean rightToLeft = ParagraphDirection.resolve(node) == TextDirection.RTL;
         para.setAlignment(toAlignment(node.align(), rightToLeft));
         applyDirection(para, rightToLeft);
         applyLineHeight(para, layout.lineHeight(node));
         applyLineGap(para, layout.lineGap(node), layout.lineCount(node));
-        CTSpacing spacing = markup.getPPr().isSetSpacing() ? markup.getPPr().getSpacing() : markup.getPPr().addNewSpacing();
-        spacing.setBefore(BigInteger.ZERO);
-        spacing.setAfter(BigInteger.ZERO);
         writeParagraphRuns(para, node, rightToLeft);
 
         double x = placed.placementX() + node.padding().left();
@@ -1855,19 +1877,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double spare = lines == 1 ? width * TEXT_BOX_SLACK_RATIO + EDITOR_SLACK_POINTS : EDITOR_SLACK_POINTS;
         height += height / lines;
         // The alignment is a side of the page's, whichever way the text runs (see toAlignment).
-        TextAlign align = node.align() == null ? TextAlign.LEFT : node.align();
-        if (align == TextAlign.CENTER) {
+        if (node.align() == TextAlign.CENTER) {
             x -= spare / 2;
-        } else if (align == TextAlign.RIGHT) {
+        } else if (node.align() == TextAlign.RIGHT) {
             x -= spare;
         }
-        String main = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
-        org.apache.xmlbeans.XmlOptions options = new org.apache.xmlbeans.XmlOptions();
-        options.setSaveSyntheticDocumentElement(new javax.xml.namespace.QName(main, "p", "w"));
-        options.setSaveSuggestedPrefixes(java.util.Map.of(main, "w"));
-        options.setSaveAggressiveNamespaces();
         anchors.queue(List.of(DocxDrawings.Shape.textBox(x, top, width + spare, height, placed.startPage(),
-                markup.xmlText(options))));
+                paragraphXml(para))));
         report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
                 "laid over the flow, which gives it no room: set in a text box where the page sets it");
     }
@@ -4236,7 +4252,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
-        if (overFlowDepth > 0) {
+        if (overTheFlowDepth > 0) {
             writeTextOverTheFlow(document, node);
             return;
         }
@@ -5353,14 +5369,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @return the paragraph as {@code w:p} markup
      */
     private String badgeParagraphXml(XWPFDocument document, ParagraphNode paragraph) {
-        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP markup =
-                org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP.Factory.newInstance();
-        XWPFParagraph para = new XWPFParagraph(markup, document);
+        XWPFParagraph para = detachedParagraph(document);
         para.setAlignment(ParagraphAlignment.CENTER);
-        CTSpacing spacing = markup.getPPr().isSetSpacing()
-                ? markup.getPPr().getSpacing() : markup.getPPr().addNewSpacing();
-        spacing.setBefore(BigInteger.ZERO);
-        spacing.setAfter(BigInteger.ZERO);
         DocumentTextStyle style = paragraph.textStyle();
         if (paragraph.inlineRuns() != null && !paragraph.inlineRuns().isEmpty()
             && paragraph.inlineRuns().get(0) instanceof InlineTextRun first && first.textStyle() != null) {
@@ -5369,12 +5379,29 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFRun run = para.createRun();
         applyStyle(run, style);
         run.setText(badgeTextOf(paragraph).strip());
+        return paragraphXml(para);
+    }
+
+    /** A paragraph held in no body, with no space above or below it: a shape's text. */
+    private static XWPFParagraph detachedParagraph(XWPFDocument document) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP markup =
+                org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP.Factory.newInstance();
+        XWPFParagraph para = new XWPFParagraph(markup, document);
+        CTPPr properties = markup.isSetPPr() ? markup.getPPr() : markup.addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        spacing.setBefore(BigInteger.ZERO);
+        spacing.setAfter(BigInteger.ZERO);
+        return para;
+    }
+
+    /** A detached paragraph as {@code w:p} markup, for a shape's text body. */
+    private static String paragraphXml(XWPFParagraph para) {
         String main = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
         org.apache.xmlbeans.XmlOptions options = new org.apache.xmlbeans.XmlOptions();
         options.setSaveSyntheticDocumentElement(new javax.xml.namespace.QName(main, "p", "w"));
         options.setSaveSuggestedPrefixes(java.util.Map.of(main, "w"));
         options.setSaveAggressiveNamespaces();
-        return markup.xmlText(options);
+        return para.getCTP().xmlText(options);
     }
 
     /**

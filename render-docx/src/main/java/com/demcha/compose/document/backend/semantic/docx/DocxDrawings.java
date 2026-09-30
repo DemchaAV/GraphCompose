@@ -133,7 +133,9 @@ final class DocxDrawings {
 
         /**
          * A box holding a paragraph set from its top-left corner, with nothing drawn round it: a
-         * line of text laid over the flow, where the page sets it.
+         * line of text laid over the flow, where the page sets it. It stands in front of the
+         * text, where no shading and no shape behind the text covers it; drawing nothing, it
+         * covers nothing either.
          *
          * @param x         from the page's left edge, in points
          * @param top       from the page's top edge, in points
@@ -143,7 +145,7 @@ final class DocxDrawings {
          * @param paragraph the paragraph, as {@code w:p} markup
          */
         static Shape textBox(double x, double top, double width, double height, int page, String paragraph) {
-            return new Shape(Kind.RECT, x, top, width, height, null, null, 0, 0, false, page, List.of(), false,
+            return new Shape(Kind.RECT, x, top, width, height, null, null, 0, 0, false, page, List.of(), true,
                     null, paragraph, true);
         }
 

@@ -60,6 +60,26 @@ class DocxOverTheFlowTest {
     }
 
     @Test
+    void aLinePulledUpInItTakesNothingFromTheFlowAfterIt() throws Exception {
+        // A negative top edge takes its pull out of the space owed above a block in the flow;
+        // a line in a text box owes none, and the masthead keeps the 6pt its section holds
+        // above it.
+        DocumentNode pulled = new ShapeContainerBuilder().name("Sidebar")
+                .rectangle(100, STUB).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .margin(new DocumentInsets(-40, 0, 40 - STUB, -40))
+                .position(new ParagraphBuilder().name("Monogram").text("L")
+                        .margin(DocumentInsets.top(-5)).build(), 10, 10, LayerAlign.TOP_LEFT, 0)
+                .build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 40, page -> page
+                .add(pulled)
+                .addSection("Head", head -> head.padding(DocumentInsets.top(6)).addParagraph("Masthead")))) {
+            assertThat(document.getDocument().getBody().xmlText()).as("the line is in a text box")
+                    .contains("<w:txbxContent>");
+            assertThat(before(masthead(document))).as("the section's space above it").isEqualTo(6 * 20L);
+        }
+    }
+
+    @Test
     void aLineIsGivenRoomOnTheSideItsTextDoesNotLeanOn() throws Exception {
         // A right-to-left line is set against the page's right side as a right-aligned one is,
         // so it is given its room on the left too.

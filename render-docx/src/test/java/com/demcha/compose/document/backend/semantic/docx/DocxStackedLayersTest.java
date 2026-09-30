@@ -1,11 +1,18 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import com.demcha.compose.document.dsl.ImageBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
+import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.style.ClipPolicy;
+import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -15,7 +22,10 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -36,13 +46,39 @@ class DocxStackedLayersTest {
     private static final double LARGE_LINE = 36;
 
     @Test
-    void eachLineLaidOverByTheNextTakesTheDistanceDownToItsTop() throws Exception {
-        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .add(title(2 * PITCH + 40)))) {
-            assertThat(line(paragraph(document, "One"))).isCloseTo(PITCH, within(0.05));
-            assertThat(line(paragraph(document, "Two"))).isCloseTo(PITCH, within(0.05));
-            assertThat(line(paragraph(document, "Three"))).as("room for its own line under the box: its own height")
-                    .isCloseTo(LARGE_LINE, within(0.05));
+    void eachLineOfAStackHoldsItsLettersWholeAndStandsOnThePagesBaseline() throws Exception {
+        // Word draws an exact line's text on screen only inside the line.
+        for (Stacked line : stacked(title(2 * PITCH + 40), "One", "Two", "Three")) {
+            assertThat(line.wordBaseline()).as("%s on the page's baseline", line.text())
+                    .isCloseTo(line.pageBaseline(), within(0.3));
+            assertThat(line.wordBaseline() - line.inkAbove()).as("%s: its letters' tops inside its line", line.text())
+                    .isGreaterThanOrEqualTo(line.top());
+            assertThat(line.wordBaseline() + line.inkBelow()).as("%s: its letters' feet inside its line", line.text())
+                    .isLessThanOrEqualTo(line.top() + line.height());
+        }
+    }
+
+    @Test
+    void aTitleSetTighterThanItsFaceHoldsItsLettersWhole() throws Exception {
+        // NorthlineProposal's title: 46pt Spectral lines 48pt apart, whose letters a 48pt step
+        // cuts — "Proposal" loses its descenders, "Brand" the tops of its capitals.
+        DocumentTextStyle display = DocumentTextStyle.builder().fontName(FontName.SPECTRAL).size(46).build();
+        DocumentNode title = new ShapeContainerBuilder().name("Display").rectangle(520, 140)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(new ParagraphBuilder().name("A").text("Proposal —").textStyle(display).build(),
+                        0, 0, LayerAlign.TOP_LEFT)
+                .position(new ParagraphBuilder().name("B").text("Brand Refresh &").textStyle(display).build(),
+                        0, 48, LayerAlign.TOP_LEFT)
+                .position(new ParagraphBuilder().name("C").text("Website Redesign").textStyle(display).build(),
+                        0, 96, LayerAlign.TOP_LEFT)
+                .build();
+        for (Stacked line : stacked(title, "Proposal —", "Brand Refresh &", "Website Redesign")) {
+            assertThat(line.wordBaseline()).as("%s on the page's baseline", line.text())
+                    .isCloseTo(line.pageBaseline(), within(0.3));
+            assertThat(line.wordBaseline() - line.inkAbove()).as("%s: tops inside", line.text())
+                    .isGreaterThanOrEqualTo(line.top());
+            assertThat(line.wordBaseline() + line.inkBelow()).as("%s: feet inside", line.text())
+                    .isLessThanOrEqualTo(line.top() + line.height());
         }
     }
 
@@ -50,18 +86,38 @@ class DocxStackedLayersTest {
     void theLastLineOfAStackEndsAtTheContainersFootAndHangsPastNothing() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addSection("Cover", cover -> cover.spacing(30)
-                        .add(title(2 * PITCH + 30))
+                        .add(title(2 * PITCH + 34))
                         .addParagraph("After")))) {
-            assertThat(line(paragraph(document, "Three"))).as("the rest of the box, not its own 36pt")
-                    .isCloseTo(30, within(0.05));
+            double stack = line(paragraph(document, "One")) + line(paragraph(document, "Two"))
+                           + line(paragraph(document, "Three"));
+            assertThat(stack).as("as tall as the box, its last line's own 36pt running past it")
+                    .isCloseTo(2 * PITCH + 34, within(0.1));
             assertThat(before(paragraph(document, "After"))).as("the whole gap under the box")
                     .isCloseTo(30, within(0.05));
         }
     }
 
     @Test
-    void aLineLaidTooTightForItsFaceKeepsItsOwnHeight() throws Exception {
-        // 18pt apart is under two thirds of a 30pt face: Word would cut its letters off.
+    void theLettersOfAStacksLastLineHangingPastTheFootComeOutOfTheGapUnderIt() throws Exception {
+        // The box ends 4pt above the last line's baseline: its letters stand past the foot.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addSection("Cover", cover -> cover.spacing(30)
+                        .add(title(2 * PITCH + 26))
+                        .addParagraph("After")))) {
+            double stack = line(paragraph(document, "One")) + line(paragraph(document, "Two"))
+                           + line(paragraph(document, "Three"));
+            double hang = stack - (2 * PITCH + 26);
+
+            assertThat(hang).as("the stack runs past the box").isGreaterThan(2);
+            assertThat(before(paragraph(document, "After"))).as("by as much less gap under it")
+                    .isCloseTo(30 - hang, within(0.1));
+        }
+    }
+
+    @Test
+    void linesWhoseLettersOverlapKeepTheirOwnHeight() throws Exception {
+        // 18pt apart in a 30pt face, the letters of one line reach into the next's: no edge
+        // between them leaves both whole.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .add(new ShapeContainerBuilder().name("Tight").rectangle(300, 60)
                         .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
@@ -76,8 +132,8 @@ class DocxStackedLayersTest {
 
     @Test
     void aLineHoldingAPictureKeepsItsOwnHeight() throws Exception {
-        // A picture is not its line's face: squeezed to the 28pt left in the box, Word would
-        // cut its top off.
+        // A picture's height is not its line's letters': squeezed to the 28pt left in the box,
+        // Word would cut its top off.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .add(new ShapeContainerBuilder().name("Mixed").rectangle(300, PITCH + 28)
                         .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
@@ -176,6 +232,65 @@ class DocxStackedLayersTest {
         return properties != null && properties.isSetSpacing() && properties.getSpacing().isSetBefore()
                 ? DocxTwips.of(properties.getSpacing().getBefore()) / 20.0
                 : 0;
+    }
+
+    /**
+     * One line of a stack as Word sets it, measured down from the stack's first line's top.
+     *
+     * @param top          where its Word line starts
+     * @param height       its Word line's height
+     * @param wordBaseline where Word stands its baseline: four fifths down, less its raise
+     * @param pageBaseline where the page sets it
+     * @param inkAbove     how far its letters reach above the baseline
+     * @param inkBelow     and below it
+     */
+    private record Stacked(String text, double top, double height, double wordBaseline, double pageBaseline,
+                           double inkAbove, double inkBelow) {
+    }
+
+    /** Lays a container of stacked lines out, exports it, and reads each line's both ways. */
+    private static List<Stacked> stacked(DocumentNode container, String... texts) throws Exception {
+        try (DocumentSession session = GraphCompose.document().pageSize(595, 600)
+                .margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.add(container));
+            List<PlacedFragment> fragments = session.layoutGraph().fragments();
+            byte[] docx = session.export(new DocxSemanticBackend());
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+                List<Stacked> lines = new ArrayList<>();
+                double firstTop = Double.NaN;
+                double wordTop = 0;
+                for (String text : texts) {
+                    PlacedFragment fragment = fragments.stream()
+                            .filter(f -> f.payload() instanceof ParagraphFragmentPayload p
+                                         && p.lines().get(0).text().startsWith(text.split(" ")[0]))
+                            .findFirst().orElseThrow();
+                    ParagraphFragmentPayload payload = (ParagraphFragmentPayload) fragment.payload();
+                    ParagraphLine line = payload.lines().get(0);
+                    double pageTop = fragment.y() + fragment.height() - payload.padding().top();
+                    if (Double.isNaN(firstTop)) {
+                        firstTop = pageTop;
+                    }
+                    double pageBaseline = firstTop - pageTop + line.lineHeight() - line.baselineOffsetFromBottom();
+                    double[] ink = DocxInk.of(line, PdfFontLibraryFactory.measurementLibrary(List.of()));
+                    XWPFParagraph written = document.getParagraphs().stream()
+                            .filter(paragraph -> paragraph.getText().startsWith(text.split(" ")[0]))
+                            .findFirst().orElseThrow();
+                    double height = line(written);
+                    double raise = positionOf(written) / 2.0;
+                    assertThat(payload.lines()).as("%s on one line", text).hasSize(1);
+                    lines.add(new Stacked(text, wordTop, height, wordTop + 0.8 * height - raise, pageBaseline,
+                            ink[0], ink[1]));
+                    wordTop += height;
+                }
+                return lines;
+            }
+        }
+    }
+
+    private static int positionOf(XWPFParagraph paragraph) {
+        var properties = paragraph.getRuns().get(0).getCTR().getRPr();
+        return properties == null || properties.sizeOfPositionArray() == 0 ? 0
+                : ((Number) properties.getPositionArray(0).getVal()).intValue();
     }
 
     private static DocumentNode title(double boxHeight) {

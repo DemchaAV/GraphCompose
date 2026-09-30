@@ -20,10 +20,12 @@ follow semantic versioning; release dates are ISO 8601.
   from the line Word was given — a line pair's from the higher text's top, lines that took their
   gaps from the space above from that higher top, several lines at the middle one; a list item's
   and a composed table cell's are not moved yet. Lines a container stacks tighter than their face
-  are each written as tall as the step to the next one's top, and in a shape container the last
-  to the container's foot. In Word `NorthlineProposal`'s median drift falls from 8.0pt to 0.8, its
-  cover within 1.5pt of the page throughout, and `EditorialProposal`'s from 5.9 to 0.4; across the
-  62 templates, lines more than 2pt off fall from 1464 to 1341.
+  are each written to end halfway between their own letters and the next line's, read from the
+  glyphs' outlines, and in a shape container the last to the container's foot or below its
+  letters: Word draws an exact line's text on screen only inside the line, and lines a pitch tall
+  cut the title's descenders and capitals there. In Word `NorthlineProposal`'s median drift falls
+  from 8.0pt to 0.8, its cover within 1.5pt of the page throughout, and `EditorialProposal`'s from
+  5.9 to 0.4; across the 62 templates, lines more than 2pt off fall from 1464 to 1341.
 - **A value set from its start keeps its start in Word.** Two texts one layer holds on one line —
   a label and its value, a title and its dates — are written as one Word line split by a tab
   stop, and the stop was always a right tab at the right text's end. A value aligned left in a
@@ -134,11 +136,10 @@ follow semantic versioning; release dates are ISO 8601.
   container written layer by layer took more room in Word than on the page for two kinds of
   layer. Lines of text laid over one another — `NorthlineProposal`'s title, three 46pt lines
   48pt apart — took each line's own height, 70pt; now each single line of text laid over by
-  the next across takes the step down to that one's top (`DocxStackedLines`), and a shape
-  container's last line running past the container's foot takes its overhang from the gap
-  below, or, ending such a stack, the rest of the container. A line is never squeezed below 0.65
-  of its face, nor one holding a picture: Word was measured setting a 16pt word whole in a
-  10.7pt line. An icon picture beside a layer of text in a shape container neither painted,
+  the next across ends halfway between its letters and the next line's (`DocxStackedLines`),
+  and a shape container's last line running past the container's foot takes its overhang from
+  the gap below. Lines whose letters meet, and a line holding a picture, keep their own height.
+  An icon picture beside a layer of text in a shape container neither painted,
   clipped to its outline nor transformed, or in a layer stack — `NorthlineProposal`'s glance
   card facts, the contact lines of `ConsultingInvoice` — was written as a line of its own
   above the label, an icon's height a fact; clear of the text across and at most twice its

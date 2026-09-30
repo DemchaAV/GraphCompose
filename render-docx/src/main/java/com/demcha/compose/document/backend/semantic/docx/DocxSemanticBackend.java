@@ -231,7 +231,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // The line a layer of text is written at when it overlaps the layer above it, in points:
     // see holdStackedLines.
-    private final java.util.Map<ParagraphNode, Double> stackedLineHeights = new java.util.IdentityHashMap<>();
+    private final java.util.Map<ParagraphNode, DocxStackedLines.Line> stackedLineHeights =
+            new java.util.IdentityHashMap<>();
     // How far above the page's first line a paragraph's Word line starts, in points, where its
     // lines took the space between them from the space above it: see applyLineGap.
     private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP, Double> lineTopsTakenIn =
@@ -349,7 +350,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // session's own registrations win over the bundled ones, the way they do everywhere.
     private java.util.Map<FontName, FontFamilyDefinition> wordFamilies = java.util.Map.of();
     // The families the layout measured with, and the fonts it measured them in, loaded when a
-    // line seated off its baseline first asks for a cap height (see seatShift).
+    // line seated off its baseline first asks for a cap height (see seatShift) or a stack for its
+    // letters' reach (see inkOf).
     private List<FontFamilyDefinition> measuredFamilies = List.of();
     private FontLibrary seatFonts;
     // What this export could not carry as authored. Collected whether or not anyone asked
@@ -4206,17 +4208,32 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Holds each line of text a container lays the next one over to the distance down to that
-     * one's top, and the last to the container's foot, so written one after the other they
-     * start where the page stacks them and end where the container does (see
+     * Holds the lines of text a container lays over one another to lines that each end between
+     * its letters and the next one's, the last at the container's foot, so written one after
+     * the other they hold their letters whole and end where the container does (see
      * {@link DocxStackedLines}).
      *
      * @param layers a container's children, in the order they are written
      * @param foot   the foot of the container's content, measured up from the foot of the page,
-     *               or {@code NaN} to leave the last line its own height
+     *               or {@code NaN} to end the last line where its own line ends
      */
     private void holdStackedLines(List<DocumentNode> layers, double foot) {
-        stackedLineHeights.putAll(DocxStackedLines.of(layers, foot, layout));
+        stackedLineHeights.putAll(DocxStackedLines.of(layers, foot, layout, this::inkOf));
+    }
+
+    /** How far a paragraph's first line's letters reach above and below its baseline (see {@link DocxInk}). */
+    private double[] inkOf(ParagraphNode paragraph) {
+        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(paragraph);
+        return line.isEmpty() ? null : DocxInk.of(line.get(), measuredFonts());
+    }
+
+    /** The fonts the layout measured with, loaded when first asked for. */
+    private FontLibrary measuredFonts() {
+        if (seatFonts == null) {
+            seatFonts = com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory
+                    .measurementLibrary(measuredFamilies);
+        }
+        return seatFonts;
     }
 
     /**
@@ -4237,14 +4254,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * container, and the line's overhang is taken from the gap above it.
      *
      * <p>A line whose own foot runs past its container's pushed what follows that much lower.
-     * The last line of a stack is written to the container's foot instead, and hangs past
-     * nothing (see {@link #holdStackedLines}).</p>
+     * The last line of a stack ends at the container's foot or below its own letters, and hangs
+     * as far as those run past the foot (see {@link #holdStackedLines}).</p>
      */
     private void hangBelowItsBox(ShapeContainerNode node) {
         List<DocumentNode> layers = node.children();
-        // A stack's last line written to the container's foot hangs past nothing.
-        if (layers.isEmpty() || !(layers.get(layers.size() - 1) instanceof ParagraphNode last)
-            || stackedLineHeights.containsKey(last)) {
+        if (layers.isEmpty() || !(layers.get(layers.size() - 1) instanceof ParagraphNode last)) {
+            return;
+        }
+        DocxStackedLines.Line stacked = stackedLineHeights.get(last);
+        if (stacked != null) {
+            if (stacked.hang() > 0.01) {
+                hangingBelow = Math.max(hangingBelow, stacked.hang());
+            }
             return;
         }
         com.demcha.compose.document.layout.PlacedNode box = layout.placement(node);
@@ -4333,7 +4355,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean rightToLeft = applyParagraphProperties(para, node);
         applyHeadingRole(para, node);
         int anchor = openAnchor(para, node.anchor());
-        writeParagraphRuns(para, node, rightToLeft);
+        // A line of a stack starts where its letters and the ones above leave room, not where
+        // the page's line does (see DocxStackedLines).
+        DocxStackedLines.Line stacked = stackedLineHeights.get(node);
+        writeParagraphRuns(para, node, rightToLeft, stacked == null ? 0 : stacked.topAbove());
         closeAnchor(para, anchor);
     }
 
@@ -4391,8 +4416,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean rightToLeft = ParagraphDirection.resolve(source) == TextDirection.RTL;
         target.setAlignment(toAlignment(source.align(), rightToLeft));
         applyDirection(target, rightToLeft);
-        Double stacked = stackedLineHeights.get(source);
-        applyLineHeight(target, stacked != null ? java.util.OptionalDouble.of(stacked) : layout.lineHeight(source));
+        DocxStackedLines.Line stacked = stackedLineHeights.get(source);
+        applyLineHeight(target, stacked != null ? java.util.OptionalDouble.of(stacked.height()) : layout.lineHeight(source));
         applyVerticalSpacing(target, source);
         applyLineGap(target, layout.lineGap(source), layout.lineCount(source));
         return rightToLeft;
@@ -4748,12 +4773,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (com.demcha.compose.document.layout.payloads.ParagraphLine line : layout.lines(node)) {
             if (line.spans().stream().anyMatch(
                     span -> span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan)) {
-                if (seatFonts == null) {
-                    seatFonts = com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory
-                            .measurementLibrary(measuredFamilies);
-                }
                 return com.demcha.compose.document.backend.fixed.pdf.handlers.ParagraphSeating
-                        .shift(line, seatFonts, node.verticalAlign());
+                        .shift(line, measuredFonts(), node.verticalAlign());
             }
         }
         return 0;

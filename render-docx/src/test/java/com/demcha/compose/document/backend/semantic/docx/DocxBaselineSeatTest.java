@@ -56,25 +56,6 @@ class DocxBaselineSeatTest {
     }
 
     @Test
-    void aLineStackedShorterThanItsFaceIsLoweredIntoIt() throws Exception {
-        // Lines 48pt apart in a 46pt face: Word's baseline, four fifths down 48pt, stands above
-        // the page's, the face's ascent down.
-        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .add(new ShapeContainerBuilder().name("Title").rectangle(360, 140)
-                        .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
-                        .position(new ParagraphBuilder().name("One").text("One").textStyle(spectral(46)).build(),
-                                0, 0, LayerAlign.TOP_LEFT)
-                        .position(new ParagraphBuilder().name("Two").text("Two").textStyle(spectral(46)).build(),
-                                0, 48, LayerAlign.TOP_LEFT)
-                        .build()))) {
-            XWPFParagraph one = paragraph(document, "One");
-
-            assertThat(line(one)).isCloseTo(48, within(0.05));
-            assertThat(position(one)).isCloseTo((int) Math.round((0.8 * 48 - SPECTRAL_ASCENT * 46) * 2), within(1));
-        }
-    }
-
-    @Test
     void theHalfOfALinePairSetLowerIsSeatedFromTheLinesTop() throws Exception {
         // A 12pt label centred beside a 30pt value: the line is the value's, and the label's own
         // line starts half the difference below its top.

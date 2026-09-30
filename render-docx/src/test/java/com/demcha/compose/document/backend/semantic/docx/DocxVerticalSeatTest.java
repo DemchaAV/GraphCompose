@@ -34,14 +34,15 @@ class DocxVerticalSeatTest {
 
     @Test
     void textSeatedOffItsBaselineIsMovedInItsLine() throws Exception {
+        // Measured from where it stands on its baseline, which Word's line moves too.
+        int baseline = position(TextVerticalAlign.DEFAULT);
         int top = position(TextVerticalAlign.TOP);
         int bottom = position(TextVerticalAlign.BOTTOM);
 
-        assertThat(top).as("raised to the line's top").isPositive();
-        assertThat(bottom).as("lowered to the line's foot").isNegative();
+        assertThat(top).as("raised to the line's top").isGreaterThan(baseline);
+        assertThat(bottom).as("lowered to the line's foot").isLessThan(baseline);
         assertThat(position(TextVerticalAlign.CENTER)).as("halfway between the two, the page's own midpoint")
                 .isCloseTo((top + bottom) / 2, org.assertj.core.data.Offset.offset(1));
-        assertThat(position(TextVerticalAlign.DEFAULT)).as("on its baseline, as written before").isZero();
     }
 
     @Test
@@ -75,13 +76,22 @@ class DocxVerticalSeatTest {
 
     @Test
     void onlyTheSeatedHalfOfALineMovesInIt() throws Exception {
-        // A label and its value set as one line: the value is seated at its line's top, the
-        // label on its baseline, and the label stays there.
+        // A label and its value set as one line: the value seated at its line's top moves up
+        // from where it stands on its baseline, and the label beside it stays where it was.
+        int[] onTheBaseline = labelAndValue(TextVerticalAlign.DEFAULT);
+        int[] atTheTop = labelAndValue(TextVerticalAlign.TOP);
+
+        assertThat(atTheTop[0]).as("the label where it was").isEqualTo(onTheBaseline[0]);
+        assertThat(atTheTop[1]).as("the value raised").isGreaterThan(onTheBaseline[1]);
+    }
+
+    /** The run positions of a label and a value seated as given, set as one line. */
+    private static int[] labelAndValue(TextVerticalAlign seat) throws Exception {
         DocumentNode row = new ShapeContainerBuilder().name("Row")
                 .rectangle(300, 40).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                 .position(new ParagraphBuilder().name("Label").text("Label").build(), 0, 0, LayerAlign.CENTER_LEFT)
                 .position(new ParagraphBuilder().name("Value").text("Value").textStyle(DISPLAY)
-                        .verticalAlign(TextVerticalAlign.TOP).build(), 0, 0, LayerAlign.CENTER_RIGHT)
+                        .verticalAlign(seat).build(), 0, 0, LayerAlign.CENTER_RIGHT)
                 .build();
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 40, page -> page.add(row))) {
             XWPFParagraph line = document.getParagraphs().stream()
@@ -90,8 +100,7 @@ class DocxVerticalSeatTest {
             assertThat(line.getText()).as("one line").contains("Label");
             var label = line.getRuns().stream().filter(run -> run.text().contains("Label")).findFirst().orElseThrow();
             var value = line.getRuns().stream().filter(run -> run.text().contains("Value")).findFirst().orElseThrow();
-            assertThat(positionOf(label.getCTR())).as("the label on its baseline").isZero();
-            assertThat(positionOf(value.getCTR())).as("the value raised").isPositive();
+            return new int[]{positionOf(label.getCTR()), positionOf(value.getCTR())};
         }
     }
 

@@ -173,7 +173,7 @@ it cannot work out for itself:
 
 | What | Where it lands |
 |---|---|
-| Line height | `w:spacing w:lineRule="exact"` on every paragraph, cells and list items included — the height the engine measured, not a multiple Word would measure again against a substituted font. A paragraph the layout did not measure — one in a composed table cell — is left to the editor, and a line holding a picture above its text is written "at least" that height; in both the paragraph mark is set in the text's size and face, since the mark counts towards the last line's height |
+| Line height | `w:spacing w:lineRule="exact"` on every paragraph, cells and list items included — the height the engine measured, not a multiple Word would measure again against a substituted font. A paragraph the layout did not measure — one in a composed table cell — is left to the editor, and a line holding a picture above its text is written "at least" that height; in both the paragraph mark is set in the text's size and face, since the mark counts towards the last line's height. Both editors stand the baseline of an exact line four fifths of the way down it whatever the face (measured in Word and LibreOffice), and the page sets it the face's ascent below the line's top: where the two are half a point or more apart — a face with a deep descent, as Spectral's is — a paragraph's text is raised or lowered to the page's baseline by `w:position`, matched at its middle line; a list item's and a table text cell's are not yet. A picture among such text moves with it in Word; LibreOffice keeps a picture on its own baseline, where it stood before. Lines a container stacks tighter than their face — a title's lines a pitch apart — each end halfway between their letters and the next line's, since Word draws an exact line's text on screen only inside the line, and the last layer of a shape container, where its line runs past the foot, ends at the foot or below its letters |
 | Table columns | the resolved cell widths as `w:gridCol`, with `w:tblLayout` fixed so Word does not re-fit them |
 | Row columns | where the layout placed each child, with the row's gap and padding folded into the neighbouring column and taken back out as that cell's margin. A column sized to its content (`DocumentRowColumn.auto()`) gets a point more, taken from the row's weight columns so the row keeps its width, for the reason a table's does: the editor's substitute font would wrap it — a table of contents' labels broke mid-word ("Intr" / "o") in LibreOffice without it. A row with no auto column, no weight column, or no stated columns (weights, an even split) is written as placed |
 
@@ -555,11 +555,19 @@ tint it was flattened to. Recorded, like the other two.
   puts it, in front inside a painted panel, rather than written as a line
   above the text. Single lines of text a container written layer by layer
   lays over one another — a title set a pitch apart, tighter than its
-  face's line — keep the page's pitch: the first line keeps its height,
-  each line laid over the one above it across takes the distance from
-  that line's foot to its own, never below 0.65 of its face nor when it
-  holds a picture, and a shape container's last line running past the
-  container's foot takes its overhang from the gap below. An outline no
+  face's line — keep the page's pitch: Word draws an exact line's text on
+  screen only inside the line, so each line laid over by the next across
+  ends halfway between its letters and the next line's, read from the
+  glyphs' outlines, and its text is seated in it by `w:position`. Where
+  the last layer of a shape container on one page runs past the
+  container's foot, it ends at the foot, or below its letters where they
+  hang past it, the overhang taken from the gap below. Where the page
+  sets two lines' letters into each other the edge still falls halfway,
+  so the page does not move; a stack whose letters cannot be read, or
+  that holds a picture, keeps its lines' own heights, and a line with
+  space above or below it stays out of a stack. Any other last line
+  running past a shape container's foot takes its overhang from the gap
+  below. An outline no
   shape shows is reported as dropped.
 - **`hangingIndent(true)` → the ordinary list form.** A list that opts
   into marker/content geometry exports exactly as one that did not: the

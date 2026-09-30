@@ -8,6 +8,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Text laid over the flow stands where the page sets it in Word.** A layer stack or a shape
+  container the page gives no room — its margins take back its whole height — was drawn where the
+  page puts it, but its text was written in the flow. `LumaStudioInvoice`'s sidebar is pulled up
+  over the page's top margin and hands its height back below; its lockup's five lines pushed the
+  masthead beside them 120pt down in Word, the line items onto a second page and the sign-off,
+  white, into that page's empty paper. Each paragraph of such a node is now set in a text box
+  where the page sets it, in front of the text — its content box, a quarter wider for a single
+  line away from the side it is aligned to (both ways when centred), so the editor's wider
+  setting does not break it, and a line taller — and nothing of it is written in the flow; its
+  drawings are drawn in their layers' order. A paragraph with a link, an anchor or a picture in
+  it, a block with an anchor, a transform, or a node in a table cell or a painted panel keeps it
+  in the flow as before. In Word the median drift falls from 213pt to 14.5 on
+  `LumaStudioInvoice` and from 164.7 to 8.5 on its long variant.
 - **A row after a row rises into the gap above it in Word.** A table row whose text stands above
   its cell on the page — a timeline entry's title raised over its marker band — is lifted by that
   much out of the gap above it, and that gap was looked for only in the paragraph before the

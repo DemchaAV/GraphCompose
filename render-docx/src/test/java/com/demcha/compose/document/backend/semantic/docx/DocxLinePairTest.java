@@ -182,6 +182,93 @@ class DocxLinePairTest {
     }
 
     @Test
+    void aRowAfterARowIsLiftedOutOfTheSpaceTheRowAboveEndsWith() throws Exception {
+        // The gap between two entries is the first entry's own, below its last paragraph —
+        // a timeline's separator rule — so it ends the first table's cell, and the empty
+        // paragraph between the tables carries nothing to lift into.
+        long[] reference = riseOfARaisedTitle();
+        long rise = reference[0];
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row.addSection(marker())
+                        .addSection("First", entry -> entry.add(band(6, -4, CONTENT))
+                                .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12)))))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            XWPFParagraph last = lastLine(document);
+            var second = document.getTables().get(1).getRow(0);
+
+            assertThat(12L * 20 - after(last)).as("the second row stands as much higher as its title rises")
+                    .isEqualTo(rise);
+            assertThat(before(second.getCell(0).getParagraphs().get(0)))
+                    .as("its marker keeps its place, as a lifted row's does").isEqualTo(reference[1]);
+        }
+    }
+
+    @Test
+    void aRowIsNotLiftedOutOfARowAboveThatMayNotShrink() throws Exception {
+        // Its marker cell holds text with no space under it: that cell may be the row's tallest,
+        // and taking the space from the other would lift the next row without the gap closing.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row.addParagraph(p -> p.text("*"))
+                        .addSection("First", entry -> entry.add(band(6, -4, CONTENT))
+                                .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12)))))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            assertThat(after(lastLine(document))).as("the space it ends with stays").isEqualTo(12L * 20);
+        }
+    }
+
+    @Test
+    void aPaintedBoxAboveARaisedRowKeepsItsHeight() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addSection("Card", card -> card
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 230, 230))
+                        .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12))))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            assertThat(after(lastLine(document))).as("the card is not shortened").isEqualTo(12L * 20);
+        }
+    }
+
+    /**
+     * What a raised title lifts its row by, with room enough above it, and the space its marker
+     * then starts lower by inside the row.
+     */
+    private static long[] riseOfARaisedTitle() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(12)))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Entry", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            XWPFParagraph before = document.getParagraphs().stream()
+                    .filter(paragraph -> "Before".equals(paragraph.getText())).findFirst().orElseThrow();
+            long rise = 12L * 20 - after(before);
+            assertThat(rise).as("the title rises").isPositive();
+            return new long[] {rise, before(document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0))};
+        }
+    }
+
+    /** A timeline's marker: a cell holding nothing written, only a drawn disc. */
+    private static java.util.function.Consumer<com.demcha.compose.document.dsl.SectionBuilder> marker() {
+        return cell -> cell.addEllipse(disc -> disc.circle(6)
+                .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(20, 20, 20)));
+    }
+
+    private static XWPFParagraph lastLine(XWPFDocument document) {
+        for (var table : document.getTables()) {
+            for (var row : table.getRows()) {
+                for (var cell : row.getTableCells()) {
+                    for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                        if ("Last line".equals(paragraph.getText())) {
+                            return paragraph;
+                        }
+                    }
+                }
+            }
+        }
+        throw new AssertionError("no paragraph reading Last line");
+    }
+
+    @Test
     void theHangReachesTheNextBlockOnlyNotThePageAfterABreak() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(PAGE_WIDTH, 600, MARGIN, page -> page
                 .add(band(6, 4))

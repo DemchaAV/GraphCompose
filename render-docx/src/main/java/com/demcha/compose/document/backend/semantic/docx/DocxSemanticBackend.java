@@ -2938,6 +2938,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         currentCellWidth = Double.isFinite(width) ? width - padding.left() - padding.right() : Double.NaN;
         XWPFTableCell outerPanelCell = panelCell;
         panelCell = cell;
+        if (first && last) {
+            cutTheLabelToItsOutline(node, borders);
+        }
         try {
             writeInCell(cell, () -> writeChildren(cell.getXWPFDocument(), children, spacingOf(node)));
         } finally {
@@ -3211,6 +3214,72 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         stackedLineHeights.put(first, new DocxStackedLines.Line(own.getAsDouble() - taken, -taken, 0));
         risenLines.put(first, taken);
         carriedSpacingBefore += taken;
+    }
+
+    /**
+     * Cuts the one line of text a shape composed in a table cell centres in it to the room its
+     * outline leaves, where the page lets the line pass the outline and its letters fit inside.
+     *
+     * <p>The page centres the label's line in the shape and draws it past the outline where the
+     * line is taller. Word grows the panel's row to the line: {@code CobaltRota}'s stacked shift
+     * chips, 9.2pt outlines round 8.2pt text on a 10pt line, each came out 0.8pt taller, and an
+     * outlined one its borders taller again, as Word keeps a cell's borders outside its content —
+     * every staff row with two shifts in a day stood 3.8pt taller than the page's. The line is
+     * written as tall as the outline less its padding and borders, its text seated where the page
+     * sets it ({@link DocxStackedLines.Line}) — each side cut no closer to its letters than
+     * {@link DocxStackedLines#INK_MARGIN}. An outlined chip, its borders leaving less room than
+     * its letters, is cut as far as they allow, and where its top is cut less than the page lets
+     * the line pass the outline, its text stands that much lower, inside the line. Only a label
+     * the shape centres top to bottom is cut: one set from an edge overflows on one side.</p>
+     */
+    private void cutTheLabelToItsOutline(DocumentNode node, DocumentBorders borders) {
+        if (!(node instanceof ShapeContainerNode shape) || layout.placement(node) != null) {
+            return;
+        }
+        ParagraphNode label = null;
+        for (com.demcha.compose.document.node.LayerStackNode.Layer layer : shape.layers()) {
+            if (layer.node() instanceof ParagraphNode paragraph) {
+                // Only a line the page centres top to bottom passes the outline equally above
+                // and below it; one set from an edge, or moved, overflows on one side.
+                com.demcha.compose.document.node.LayerAlign align = layer.align();
+                boolean centred = align == com.demcha.compose.document.node.LayerAlign.CENTER
+                                  || align == com.demcha.compose.document.node.LayerAlign.CENTER_LEFT
+                                  || align == com.demcha.compose.document.node.LayerAlign.CENTER_RIGHT;
+                if (label != null || !centred || layer.offsetY() != 0) {
+                    return;
+                }
+                label = paragraph;
+            } else if (!isDrawing(layer.node())) {
+                return;
+            }
+        }
+        if (label == null || layout.lineCount(label) != 1 || stackedLineHeights.containsKey(label)
+            || label.margin().top() + label.margin().bottom() + label.padding().top() + label.padding().bottom() != 0) {
+            return;
+        }
+        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(label);
+        double[] ink = inkOf(label);
+        if (line.isEmpty() || ink == null) {
+            return;
+        }
+        double room = shape.outline().height() - node.padding().top() - node.padding().bottom()
+                      - strokeWidth(borders.top()) - strokeWidth(borders.bottom());
+        double lineHeight = line.get().lineHeight();
+        double over = (lineHeight - room) / 2;
+        if (!(over > 0.01) || !(room > 0)) {
+            return;
+        }
+        double baseline = line.get().baselineOffsetFromBottom();
+        // Cut each side as far as the page passes the outline, and no closer to the letters than
+        // the margin: an outlined chip's borders leave less room than its letters on the line.
+        double top = Math.min(over, lineHeight - baseline - ink[0] - DocxStackedLines.INK_MARGIN);
+        double bottom = Math.min(over, baseline - ink[1] - DocxStackedLines.INK_MARGIN);
+        if (!(top > 0.01) && !(bottom > 0.01)) {
+            return;
+        }
+        top = Math.max(0, top);
+        bottom = Math.max(0, bottom);
+        stackedLineHeights.put(label, new DocxStackedLines.Line(lineHeight - top - bottom, -top, 0));
     }
 
     private static boolean hasRadius(com.demcha.compose.document.style.DocumentCornerRadius radius) {

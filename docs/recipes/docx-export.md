@@ -569,7 +569,13 @@ tint it was flattened to. Recorded, like the other two.
   outline's width within the cell and a point for the editor's face, its row
   held at least its outline's height, with its layers inside, its corners
   squared and reported — a rota's shift chips keep their colour and their
-  size. A badge's glyph — a smaller picture in a filled or outlined
+  size. A one-line label the shape centres top to bottom, on a line taller
+  than the outline leaves it, is written that much shorter, down to the
+  outline less its padding and borders (Word keeps a cell's borders outside
+  its content), its text seated where the page sets it — each side cut no
+  closer to its letters than three quarters of a point, so an outlined chip
+  is cut as far as its letters allow, its text lower by what its top keeps. A
+  label set from the shape's top or bottom edge, or moved, is written as it was. A badge's glyph — a smaller picture in a filled or outlined
   container that clips it to its outline (`CLIP_PATH`) and holds nothing
   else but drawing — is drawn as a picture anchored to the page over the
   badge, where the page draws it, rather than written as a line of its own

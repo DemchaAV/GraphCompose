@@ -194,6 +194,63 @@ class DocxComposedCellTest {
     }
 
     @Test
+    void aChipsLabelTallerThanItsOutlineIsCutToIt() throws Exception {
+        // CobaltRota's stacked chips: a 9.2pt outline round 8.2pt text on a 10pt line. Grown to
+        // the line in Word, each stood 0.8pt taller than the page draws it.
+        XWPFTableCell chip = chipCell(null);
+        double line = lineOf(chip);
+
+        assertThat(line).as("the outline's height, not the text's line").isCloseTo(9.2, org.assertj.core.api.Assertions.within(0.06));
+    }
+
+    @Test
+    void anOutlinedChipsLabelIsCutAsFarAsItsLettersAllow() throws Exception {
+        // Word keeps the 1.1pt borders outside the content, leaving 7pt: less than the letters
+        // and their margin need, so the line is cut short of that, and still cut.
+        XWPFTableCell chip = chipCell(com.demcha.compose.document.style.DocumentStroke.of(
+                com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1.1));
+        double line = lineOf(chip);
+
+        assertThat(line).as("cut").isLessThan(9.8);
+        assertThat(line).as("but no closer to the letters than their margin").isGreaterThan(9.2 - 2.2);
+    }
+
+    @Test
+    void aLabelSetFromTheChipsTopIsLeftAsItWas() throws Exception {
+        // It passes the outline below only: cut on both sides, its text would stand high.
+        XWPFTableCell chip = chipCell(null, com.demcha.compose.document.node.LayerAlign.TOP_LEFT, 8.2);
+
+        assertThat(lineOf(chip)).as("the text's own line").isGreaterThan(9.8);
+    }
+
+    private static XWPFTableCell chipCell(com.demcha.compose.document.style.DocumentStroke stroke) throws Exception {
+        return chipCell(stroke, com.demcha.compose.document.node.LayerAlign.CENTER, 8.2);
+    }
+
+    private static XWPFTableCell chipCell(com.demcha.compose.document.style.DocumentStroke stroke,
+                                          com.demcha.compose.document.node.LayerAlign align, double size) throws Exception {
+        com.demcha.compose.document.dsl.ShapeContainerBuilder chip = new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Stacked").roundedRect(90, 9.2, 4).padding(DocumentInsets.zero())
+                .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(20, 160, 70))
+                .layer(new com.demcha.compose.document.dsl.ParagraphBuilder().text("09:00-16:00")
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.builder()
+                                .fontName(com.demcha.compose.font.FontName.LATO).size(size).build()).build(), align);
+        if (stroke != null) {
+            chip.stroke(stroke);
+        }
+        DocumentNode node = chip.build();
+        XWPFTableCell cell = onlyTableCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.fixed(100))
+                .rowCells(DocumentTableCell.text("Mon"), DocumentTableCell.node(node))));
+        return cell.getTables().get(0).getRow(0).getCell(0);
+    }
+
+    private static double lineOf(XWPFTableCell chip) {
+        var spacing = chip.getParagraphs().get(0).getCTP().getPPr().getSpacing();
+        return DocxTwips.of(spacing.getLine()) / 20.0;
+    }
+
+    @Test
     void aTileHoldingOnlyDrawingIsDrawnWhereThePageDrawsItNotAPanel() throws Exception {
         java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
         String body = export(report, DocumentTableCell.node(new com.demcha.compose.document.dsl.ShapeContainerBuilder()

@@ -33,12 +33,24 @@ class DocxVerticalSeatTest {
             .fontName(com.demcha.compose.font.FontName.SPECTRAL).size(30).color(DocumentColor.BLACK).build();
 
     @Test
-    void textSeatedAtTheTopOfItsLineIsRaisedInIt() throws Exception {
-        assertThat(position(TextVerticalAlign.TOP)).as("raised").isPositive();
-        assertThat(position(TextVerticalAlign.BOTTOM)).as("lowered to the line's foot").isNegative();
-        assertThat(position(TextVerticalAlign.CENTER)).as("centred between the two")
-                .isBetween(position(TextVerticalAlign.BOTTOM), position(TextVerticalAlign.TOP));
+    void textSeatedOffItsBaselineIsMovedInItsLine() throws Exception {
+        int top = position(TextVerticalAlign.TOP);
+        int bottom = position(TextVerticalAlign.BOTTOM);
+
+        assertThat(top).as("raised to the line's top").isPositive();
+        assertThat(bottom).as("lowered to the line's foot").isNegative();
+        assertThat(position(TextVerticalAlign.CENTER)).as("halfway between the two, the page's own midpoint")
+                .isCloseTo((top + bottom) / 2, org.assertj.core.data.Offset.offset(1));
         assertThat(position(TextVerticalAlign.DEFAULT)).as("on its baseline, as written before").isZero();
+    }
+
+    @Test
+    void aBandInsideABandHangsOnlyOnce() throws Exception {
+        // A title block whose line hangs below it, laid in a taller stack: the outer stack measures
+        // its space below from that same line, so what the inner one left hanging is not taken
+        // from the gap a second time — the gap is what it is with the title block tall enough.
+        assertThat(beforeTheStack(20)).as("the inner block too short for its line")
+                .isCloseTo(beforeTheStack(60), org.assertj.core.data.Offset.offset(2L));
     }
 
     @Test
@@ -63,7 +75,7 @@ class DocxVerticalSeatTest {
 
     @Test
     void onlyTheSeatedHalfOfALineMovesInIt() throws Exception {
-        // A label and its value set as one line: the value is seated at its line's centre, the
+        // A label and its value set as one line: the value is seated at its line's top, the
         // label on its baseline, and the label stays there.
         DocumentNode row = new ShapeContainerBuilder().name("Row")
                 .rectangle(300, 40).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
@@ -76,14 +88,35 @@ class DocxVerticalSeatTest {
                     .filter(paragraph -> paragraph.getText().contains("Value")).findFirst().orElseThrow();
 
             assertThat(line.getText()).as("one line").contains("Label");
-            for (var run : line.getRuns()) {
-                int raised = positionOf(run.getCTR());
-                if (run.text().contains("Label")) {
-                    assertThat(raised).as("the label on its baseline").isZero();
-                } else if (run.text().contains("Value")) {
-                    assertThat(raised).as("the value raised").isPositive();
-                }
-            }
+            var label = line.getRuns().stream().filter(run -> run.text().contains("Label")).findFirst().orElseThrow();
+            var value = line.getRuns().stream().filter(run -> run.text().contains("Value")).findFirst().orElseThrow();
+            assertThat(positionOf(label.getCTR())).as("the label on its baseline").isZero();
+            assertThat(positionOf(value.getCTR())).as("the value raised").isPositive();
+        }
+    }
+
+    /** The space written above the paragraph after a stack holding a title block of the given height. */
+    private static long beforeTheStack(double titleBlockHeight) throws Exception {
+        DocumentNode titleBlock = new ShapeContainerBuilder().name("TitleBlock")
+                .rectangle(200, titleBlockHeight).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(new ParagraphBuilder().name("Title").text("INVOICE").textStyle(DISPLAY).build(),
+                        0, 0, LayerAlign.TOP_LEFT)
+                .position(new LineBuilder().name("TitleRule").horizontal(40).thickness(1)
+                        .color(DocumentColor.BLACK).build(), 0, 0, LayerAlign.BOTTOM_LEFT)
+                .build();
+        DocumentNode stack = new com.demcha.compose.document.dsl.LayerStackBuilder().name("Header")
+                .layer(new com.demcha.compose.document.dsl.ShapeBuilder().name("Backdrop").size(300, 90)
+                        .fillColor(DocumentColor.rgb(230, 230, 230)).build(), LayerAlign.TOP_LEFT)
+                .layer(titleBlock, LayerAlign.TOP_LEFT)
+                .margin(new DocumentInsets(0, 0, 8, 0))
+                .build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 40, page -> page
+                .add(stack).addParagraph("INVOICE NO."))) {
+            XWPFParagraph details = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().equals("INVOICE NO.")).findFirst().orElseThrow();
+            var properties = details.getCTP().getPPr();
+            return properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetBefore()
+                    ? 0 : DocxTwips.of(properties.getSpacing().getBefore());
         }
     }
 

@@ -4657,8 +4657,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static List<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR> runsIn(XWPFParagraph para) {
         List<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR> runs = new ArrayList<>();
-        org.apache.xmlbeans.XmlCursor cursor = para.getCTP().newCursor();
-        try {
+        try (org.apache.xmlbeans.XmlCursor cursor = para.getCTP().newCursor()) {
             cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' "
                               + "./w:r | ./w:hyperlink/w:r");
             while (cursor.toNextSelection()) {
@@ -4666,8 +4665,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     runs.add(run);
                 }
             }
-        } finally {
-            cursor.close();
         }
         return runs;
     }
@@ -4675,9 +4672,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * How far the page moves a paragraph's text off its baseline to seat it by its cap band, in
      * points, positive up: the PDF backend's own correction
-     * ({@code ParagraphSeating}), from the fonts the layout
-     * measured with. Read off the first line holding text — a picture alone on the first line
-     * seats nothing — and 0 when the paragraph sits on its baseline.
+     * ({@link com.demcha.compose.document.backend.fixed.pdf.handlers.ParagraphSeating}), from the
+     * fonts the layout measured with. Read off the first line holding text — a picture alone on
+     * the first line seats nothing — and 0 when the paragraph sits on its baseline. One Word
+     * paragraph takes one shift: the page seats each line by its own, which differs only for
+     * lines in different sizes.
      */
     private double seatShift(ParagraphNode node) {
         if (node.verticalAlign() == null || node.verticalAlign() == TextVerticalAlign.DEFAULT) {
@@ -6786,13 +6785,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // it, as a line pair's does (writeLinePair): LumaStudioInvoice's "INVOICE" is set in a
         // line 13pt deeper than its title block, and the invoice's details under it, and
         // everything after them, stood that much lower in Word.
+        // The band measures its space below from its lowest text, a nested band's included: what
+        // a band inside it left hanging is already in that number, and is not taken twice.
         double below = unwritten + band.below() + stack.margin().bottom();
-        if (below >= 0) {
-            pendingSpacingAfter = below;
-        } else {
-            pendingSpacingAfter = 0;
-            hangingBelow = Math.max(hangingBelow, -below);
-        }
+        pendingSpacingAfter = Math.max(0, below);
+        hangingBelow = below < 0 ? -below : 0;
     }
 
     /**

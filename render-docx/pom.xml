@@ -93,7 +93,8 @@
              there is no working DOCX export without it. Compile scope, as the PPTX backend
              carries it: a barcode is written as a picture of the same ZXing matrix the PDF
              and PPTX backends draw, through render-pdf's BarcodeMatrices, so the three
-             cannot encode one symbol differently. -->
+             cannot encode one symbol differently; and text seated off its baseline is moved
+             by render-pdf's ParagraphSeating over the same measurement fonts. -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-render-pdf</artifactId>

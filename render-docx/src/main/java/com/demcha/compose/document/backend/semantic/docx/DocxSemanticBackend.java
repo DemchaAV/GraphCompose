@@ -4026,8 +4026,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Writes an overlay's left and right paragraph as one line, the right one after a
-     * right-aligned tab stop where it ends on the page (see {@link DocxLinePair}).
+     * Writes an overlay's left and right paragraph as one line, the right one after a tab stop:
+     * a right-aligned one where it ends on the page, or a left-aligned one where it starts when
+     * it is set from its start (see {@link DocxLinePair}).
      *
      * <p>The line starts where the left paragraph does and runs from the top of the higher
      * text to the bottom of the lower, so the band keeps its place in the flow: the space

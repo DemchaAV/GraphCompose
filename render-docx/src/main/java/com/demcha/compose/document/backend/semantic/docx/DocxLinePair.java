@@ -25,8 +25,10 @@ import java.util.List;
  * line, as two layers of one container. Word has no layers, so the export wrote the layers
  * one after the other, and the dates came out on a line of their own under the title: an
  * extra line in every entry, enough to push a one-page CV onto a second page. A line with
- * text at the left and more at the right is what Word builds with a right-aligned tab stop,
- * so that is what the pair is written as: the left paragraph's runs, a tab, the right one's.</p>
+ * text at the left and more at the right is what Word builds with a tab stop, so that is what
+ * the pair is written as: the left paragraph's runs, a tab, the right one's. The stop is a
+ * right-aligned one at the right text's end, or a left-aligned one at its start when the text
+ * is set from its start (see {@link Pair#fromItsStart}).</p>
  *
  * <p>An overlay is taken as such a pair when it holds exactly two paragraphs, each laid out
  * on one line, level with one another on the page and apart across it, and nothing else but
@@ -38,9 +40,10 @@ final class DocxLinePair {
     private static final double EDGE = 0.5;
 
     /**
-     * The room the two texts must leave between them, in points. An editor sets text a little
-     * wider or narrower than the page does, and a right-aligned tab the left text runs past
-     * sends the right one onto a line of its own — under an exact line height, out of sight.
+     * The room the two texts must leave between them, in points, and a text set from its start
+     * after its end. An editor sets text a little wider or narrower than the page does: a tab
+     * the left text runs past, or a right text run past the line's end, sends a word onto a line
+     * of its own — under an exact line height, out of sight.
      */
     private static final double MIN_GAP = 4;
 
@@ -57,9 +60,9 @@ final class DocxLinePair {
      *                   edge: where its text starts when {@code fromItsStart}, where it ends
      *                   otherwise
      * @param fromItsStart whether the right text is set from its start — left-aligned in a
-     *                   layer placed from the left — so a left tab stop holds its start where
-     *                   the page puts it, and an editor setting it narrower or wider moves its
-     *                   end, as on the page, not its start
+     *                   layer placed from the left, with room past its end — so a left tab
+     *                   stop holds its start where the page puts it, and an editor setting it
+     *                   narrower or wider moves its end, as on the page, not its start
      * @param line       the height the two lines take together, from the top of the higher
      *                   to the bottom of the lower
      * @param above      from the overlay's top down to that top — negative where the text
@@ -127,7 +130,11 @@ final class DocxLinePair {
                 second.placementY() + second.placementHeight());
         double textBottom = Math.min(first.placementY(), second.placementY());
         ParagraphNode rightText = firstIsLeft ? text.get(1) : text.get(0);
-        boolean fromItsStart = setFromItsStart(overlay, rightText);
+        // Held by its start, its end runs free: an editor setting it wider breaks its last word
+        // onto a line of its own unless the overlay leaves room past it. Held by its end, it
+        // cannot, as before.
+        boolean fromItsStart = setFromItsStart(overlay, rightText)
+                               && box.placementX() + box.placementWidth() - right[1] >= MIN_GAP;
         return new Pair(firstIsLeft ? text.get(0) : text.get(1), rightText,
                 Math.max(0, left[0] - box.placementX()),
                 (fromItsStart ? right[0] : right[1]) - box.placementX(),
@@ -145,7 +152,7 @@ final class DocxLinePair {
      * points right of the values over it.
      */
     private static boolean setFromItsStart(DocumentNode overlay, ParagraphNode paragraph) {
-        if (paragraph.align() != null && paragraph.align() != TextAlign.LEFT) {
+        if (paragraph.align() != TextAlign.LEFT) {
             return false;
         }
         List<LayerStackNode.Layer> layers = overlay instanceof LayerStackNode stack ? stack.layers()

@@ -507,11 +507,14 @@ tint it was flattened to. Recorded, like the other two.
   spare on the side its text does not lean on. A block in `addAligned(...)` is held in
   the same way, to where the alignment puts it. Drawing is drawn as a shape where the
   page draws it (see "What is skipped") and does not count as content.
-- **Text at the left and the right of one band → one line with a right tab.** A
+- **Text at the left and the right of one band → one line split by a tab.** A
   container or a layer stack holding exactly two single-line paragraphs, level with
   one another and apart across the page — a CV entry's title and its dates — is one
   Word paragraph: the left paragraph's runs, a tab, the right one's, with a
-  right-aligned tab stop where the right text ends on the page. Its line runs from the
+  right-aligned tab stop where the right text ends on the page. A right text set from
+  its start — aligned left in a layer placed from the left, with room past its end, as
+  a bank detail's value is — takes a left-aligned stop where it starts instead, so an
+  editor setting it a little narrower moves its end, not its start. Its line runs from the
   top of the higher text to the bottom of the lower; text standing out of its band
   takes that much from the gap on that side, as it does on the page. A Word paragraph
   cannot reach above its cell, so text standing above a cell of a table's first row

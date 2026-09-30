@@ -330,6 +330,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The last paragraph written into the body, so a container can hand it the space it
     // holds below itself once its children are done.
     private XWPFParagraph lastBodyParagraph;
+    // The paragraph writeParagraph wrote last, and the Word paragraph it wrote it in: a paragraph
+    // pulled up into it takes the pull off its foot (takeFromTheLineAbove), while nothing else has
+    // been written since — lastBodyParagraph is that same Word paragraph then.
+    private ParagraphNode lastWrittenNode;
+    private XWPFParagraph lastWrittenParagraph;
     // The empty paragraph closing the last table written into the cell being filled, while
     // nothing has been written after it; see newTable.
     private XWPFParagraph tableCloser;
@@ -718,6 +723,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         anItemWasWritten = false;
         forgetTheHang();
         lastBodyParagraph = null;
+        lastWrittenNode = null;
+        lastWrittenParagraph = null;
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
         canvasHeight = context.canvas() == null ? Double.NaN : context.canvas().height();
     }
@@ -3829,7 +3836,103 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double edge = node.margin().top() + node.padding().top();
         if (edge < 0) {
             carriedSpacingBefore += edge;
+            double shortBy = -(carriedSpacingBefore + pendingSpacingAfter - borderBelow);
+            if (shortBy > 0.01 && node instanceof ParagraphNode paragraph) {
+                shortBy -= takeFromTheLineAbove(shortBy, paragraph);
+                if (shortBy > 0.01) {
+                    riseInsideItsOwnLine(paragraph, shortBy);
+                }
+            }
         }
+    }
+
+    /**
+     * Takes up to {@code points} off the foot of the one line written just before, where its
+     * letters leave that room, keeping its text where it stood; how much it took is given back to
+     * the space above the next block.
+     *
+     * <p>A paragraph pulled up into the one above it, with nothing above it to give the pull —
+     * the two lines of a lockup in a table cell, {@code CobaltRota}'s subtitle 6.5pt up under
+     * its 21pt wordmark — stood that much low in Word, and the row and the page under it with
+     * it. The line above is written shorter by what its letters do not reach, and its text,
+     * which Word would raise with the baseline of a shorter exact line, lowered as much.</p>
+     *
+     * <p>Only a line of text alone in its paragraph, with no space written below it and no run
+     * shaded behind its text, on the page the pulled paragraph starts on: a shaded run fills the
+     * line in Word, and the last line of a page shortened would move where Word breaks it.</p>
+     *
+     * @return how far the line above was shortened, in points
+     */
+    private double takeFromTheLineAbove(double points, ParagraphNode pulled) {
+        ParagraphNode above = lastWrittenNode;
+        XWPFParagraph para = lastWrittenParagraph;
+        if (above == null || para == null || para != lastBodyParagraph || layout.lineCount(above) != 1
+            || stackedLineHeights.containsKey(above)) {
+            return 0;
+        }
+        com.demcha.compose.document.layout.PlacedNode abovePlaced = layout.placement(above);
+        com.demcha.compose.document.layout.PlacedNode pulledPlaced = layout.placement(pulled);
+        if (abovePlaced != null && pulledPlaced != null && abovePlaced.endPage() != pulledPlaced.startPage()) {
+            return 0;
+        }
+        for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run : runsIn(para)) {
+            if (run.isSetRPr() && run.getRPr().sizeOfShdArray() > 0) {
+                return 0;
+            }
+        }
+        CTPPr properties = para.getCTP().getPPr();
+        CTSpacing spacing = properties != null && properties.isSetSpacing() ? properties.getSpacing() : null;
+        Long line = spacing != null && spacing.isSetLineRule() && spacing.getLineRule() == STLineSpacingRule.EXACT
+                ? writtenTwips(spacing.getLine()) : null;
+        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> laid = layout.firstLine(above);
+        double[] ink = inkOf(above);
+        if (line == null || laid.isEmpty() || ink == null || spacing.isSetAfter()) {
+            return 0;
+        }
+        double room = laid.get().baselineOffsetFromBottom() - ink[1] - DocxStackedLines.INK_MARGIN;
+        long taken = Math.round(Math.min(points, room) * POINT_TO_TWIP);
+        if (taken <= 0 || taken >= line) {
+            return 0;
+        }
+        spacing.setLine(BigInteger.valueOf(line - taken));
+        // Word stands an exact line's baseline four fifths of the way down it: shorter by the
+        // taken twips, its text would rise by four fifths of them.
+        long lowered = Math.round(taken / POINT_TO_TWIP * DocxTextBands.BASELINE_SHARE * HALF_POINTS_PER_POINT);
+        for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run : runsIn(para)) {
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr runProperties =
+                    run.isSetRPr() ? run.getRPr() : run.addNewRPr();
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSignedHpsMeasure position =
+                    runProperties.sizeOfPositionArray() > 0 ? runProperties.getPositionArray(0) : runProperties.addNewPosition();
+            long raised = position.getVal() instanceof Number number ? number.longValue() : 0;
+            position.setVal(BigInteger.valueOf(raised - lowered));
+        }
+        double takenPoints = taken / POINT_TO_TWIP;
+        carriedSpacingBefore += takenPoints;
+        return takenPoints;
+    }
+
+    /**
+     * Rises a one-line paragraph inside its own line by up to {@code points}, where the room above
+     * its letters allows, as {@link #riseIntoItsLine} does for a container's first line.
+     */
+    private void riseInsideItsOwnLine(ParagraphNode paragraph, double points) {
+        if (layout.lineCount(paragraph) != 1 || stackedLineHeights.containsKey(paragraph)) {
+            return;
+        }
+        java.util.OptionalDouble own = layout.lineHeight(paragraph);
+        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(paragraph);
+        double[] ink = inkOf(paragraph);
+        if (own.isEmpty() || line.isEmpty() || ink == null) {
+            return;
+        }
+        double aboveTheLetters = line.get().lineHeight() - line.get().baselineOffsetFromBottom() - ink[0]
+                                 - DocxStackedLines.INK_MARGIN;
+        double taken = Math.min(points, aboveTheLetters);
+        if (!(taken > 0.01) || taken >= own.getAsDouble()) {
+            return;
+        }
+        stackedLineHeights.put(paragraph, new DocxStackedLines.Line(own.getAsDouble() - taken, -taken, 0));
+        carriedSpacingBefore += taken;
     }
 
     /**
@@ -4570,6 +4673,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         DocxStackedLines.Line stacked = stackedLineHeights.get(node);
         writeParagraphRuns(para, node, rightToLeft, stacked == null ? 0 : stacked.topAbove(), stacked == null);
         closeAnchor(para, anchor);
+        lastWrittenNode = node;
+        lastWrittenParagraph = para;
     }
 
     /**

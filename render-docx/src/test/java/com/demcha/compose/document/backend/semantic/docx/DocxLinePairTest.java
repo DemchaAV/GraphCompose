@@ -219,6 +219,53 @@ class DocxLinePairTest {
     }
 
     @Test
+    void aRowAboveWithAPictureInItsOtherCellIsNotShortened() throws Exception {
+        // A picture set in a line takes room though it holds no text: that cell may be the
+        // tallest, and the row would not shrink.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addRow(row -> row.addSection(photo -> photo.addImage(image -> image
+                                .source(com.demcha.compose.document.image.DocumentImageData.fromBytes(png()))
+                                .size(30, 60)))
+                        .addSection("First", entry -> entry.add(band(6, -4, CONTENT))
+                                .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12)))))
+                .addRow(row -> row.addSection(marker())
+                        .addSection("Second", entry -> entry.add(band(6, -4, CONTENT)))))) {
+            assertThat(after(lastLine(document))).as("the space it ends with stays").isEqualTo(12L * 20);
+        }
+    }
+
+    @Test
+    void aRowAboveHeldToAHeightIsNotShortened() throws Exception {
+        // Inside a painted panel a row is held as tall as the page made it, its foot included:
+        // taking the foot would not shorten it, and the next row would drop.
+        try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
+                .addSection("Card", card -> card
+                        .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 230, 230))
+                        .addRow(row -> row.addSection(marker())
+                                .addSection("First", entry -> entry.add(band(6, -4, CONTENT - 20))
+                                        .addParagraph(p -> p.text("Last line").margin(DocumentInsets.bottom(12)))))
+                        .addRow(row -> row.addSection(marker())
+                                .addSection("Second", entry -> entry.add(band(6, -4, CONTENT - 20))))))) {
+            XWPFParagraph last = lastLine(document);
+            var row = ((org.apache.poi.xwpf.usermodel.XWPFTableCell) last.getBody()).getTableRow();
+
+            assertThat(row.getCtRow().isSetTrPr() && row.getCtRow().getTrPr().sizeOfTrHeightArray() > 0)
+                    .as("the row is held to a height").isTrue();
+            assertThat(after(last)).as("the space it ends with stays").isEqualTo(12L * 20);
+        }
+    }
+
+    private static byte[] png() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(40, 40,
+                    java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (Exception failure) {
+            throw new IllegalStateException(failure);
+        }
+    }
+
+    @Test
     void aPaintedBoxAboveARaisedRowKeepsItsHeight() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(2 * PAGE_WIDTH, 600, MARGIN, page -> page
                 .addSection("Card", card -> card
@@ -254,7 +301,15 @@ class DocxLinePairTest {
     }
 
     private static XWPFParagraph lastLine(XWPFDocument document) {
-        for (var table : document.getTables()) {
+        XWPFParagraph found = lastLine(document.getTables());
+        if (found == null) {
+            throw new AssertionError("no paragraph reading Last line");
+        }
+        return found;
+    }
+
+    private static XWPFParagraph lastLine(List<org.apache.poi.xwpf.usermodel.XWPFTable> tables) {
+        for (var table : tables) {
             for (var row : table.getRows()) {
                 for (var cell : row.getTableCells()) {
                     for (XWPFParagraph paragraph : cell.getParagraphs()) {
@@ -262,10 +317,14 @@ class DocxLinePairTest {
                             return paragraph;
                         }
                     }
+                    XWPFParagraph nested = lastLine(cell.getTables());
+                    if (nested != null) {
+                        return nested;
+                    }
                 }
             }
         }
-        throw new AssertionError("no paragraph reading Last line");
+        return null;
     }
 
     @Test

@@ -8,6 +8,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Text seated off its baseline sits there in Word, and text hanging below its band takes its
+  overhang from the gap under it.** A paragraph set with `TextVerticalAlign.TOP`, `CENTER` or
+  `BOTTOM` was written on its baseline: `LumaStudioInvoice`'s "INVOICE" is set against the top
+  of a line far taller than its capitals, and stood 20pt low in Word with its rule through the
+  letters, and the lockup's "L" stood on the "&Co." set under it. Its own runs, a link's
+  included, are now raised or lowered in the line (`w:position`, added to a picture's own raise)
+  by the PDF backend's seating correction, from the fonts the layout measured with. A band whose
+  lowest written block runs past its foot — that title line is 13pt
+  deeper than its title block — gave the overhang no room at all, and the invoice's details and
+  everything under them stood that much lower, its notes on a second page; the overhang now
+  comes out of the gap under the band, as a title-and-dates line's already did. In Word
+  `LumaStudioInvoice` fits on one page, its median drift falling from 14.5pt to 1.2 and its p90
+  from 15.4 to 2.1; its long variant's from 8.5 to 1.9 and from 15.3 to 5.8.
 - **Text laid over the flow stands where the page sets it in Word.** A layer stack or a shape
   container the page gives no room — its margins take back its whole height — was drawn where the
   page puts it, but its text was written in the flow. `LumaStudioInvoice`'s sidebar is pulled up

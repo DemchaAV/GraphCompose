@@ -494,6 +494,22 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * Every line a node laid out, page after page, in order.
+     *
+     * @param node any node that lays out as paragraph lines
+     * @return the lines, empty when the node laid out none
+     */
+    List<ParagraphLine> lines(DocumentNode node) {
+        List<ParagraphLine> lines = new ArrayList<>();
+        for (PlacedFragment fragment : textFragmentsOf(node)) {
+            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
+                lines.addAll(paragraph.lines());
+            }
+        }
+        return lines;
+    }
+
+    /**
      * The width of a node's widest laid-out line when every line of it is one word: a word with
      * nowhere to break — an address, a link — longer than the width it is given is set whole,
      * wider than that width. A node with a line of several words has none: the page broke it

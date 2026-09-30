@@ -11,6 +11,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
+import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor;
 
 import java.util.List;
 
@@ -125,21 +126,33 @@ class DocxOverTheFlowTest {
                 .build();
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 40, page -> page
                 .add(sidebar).addParagraph("Masthead"))) {
-            List<String> drawings = List.of(document.getDocument().getBody().xmlText().split("<wp:anchor"));
-            String box = drawings.stream().filter(chunk -> chunk.contains("<w:txbxContent>")).findFirst().orElseThrow();
+            List<CTAnchor> drawings = anchors(document);
+            CTAnchor box = drawings.stream().filter(anchor -> anchor.xmlText().contains("<w:txbxContent>"))
+                    .findFirst().orElseThrow();
 
-            assertThat(box).as("the text box in front of the text").contains("behindDoc=\"0\"");
-            assertThat(stackHeight(drawings, "0000C8")).as("the lower layer under the upper one")
-                    .isLessThan(stackHeight(drawings, "C80000"));
+            assertThat(box.getBehindDoc()).as("the text box in front of the text").isFalse();
+            assertThat(holding(drawings, "0000C8").getRelativeHeight()).as("the lower layer under the upper one")
+                    .isLessThan(holding(drawings, "C80000").getRelativeHeight());
         }
     }
 
-    private static long stackHeight(List<String> drawings, String colour) {
-        String chunk = drawings.stream().filter(candidate -> candidate.contains("srgbClr val=\"" + colour + "\""))
+    /** The drawing filled with the given colour. */
+    private static CTAnchor holding(List<CTAnchor> drawings, String colour) {
+        return drawings.stream().filter(anchor -> anchor.xmlText().contains("srgbClr val=\"" + colour + "\""))
                 .findFirst().orElseThrow();
-        java.util.regex.Matcher height = java.util.regex.Pattern.compile("relativeHeight=\"(\\d+)\"").matcher(chunk);
-        assertThat(height.find()).isTrue();
-        return Long.parseLong(height.group(1));
+    }
+
+    /** Every drawing anchored in the body's paragraphs. */
+    private static List<CTAnchor> anchors(XWPFDocument document) {
+        List<CTAnchor> anchors = new java.util.ArrayList<>();
+        for (XWPFParagraph paragraph : document.getParagraphs()) {
+            for (var run : paragraph.getCTP().getRList()) {
+                for (var drawing : run.getDrawingList()) {
+                    anchors.addAll(drawing.getAnchorList());
+                }
+            }
+        }
+        return anchors;
     }
 
     /** Whether a sidebar laid over the flow, a brand block and the given layer in it, is set in text boxes. */
@@ -179,13 +192,9 @@ class DocxOverTheFlowTest {
                 .build();
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 40, page -> page
                 .add(sidebar).addParagraph("Masthead"))) {
-            String body = document.getDocument().getBody().xmlText();
-            java.util.regex.Matcher offset = java.util.regex.Pattern
-                    .compile("positionH relativeFrom=\"page\"><wp:posOffset>(-?\\d+)</wp:posOffset>.*?<w:txbxContent>",
-                            java.util.regex.Pattern.DOTALL)
-                    .matcher(body);
-            assertThat(offset.find()).as("a text box").isTrue();
-            return Double.parseDouble(offset.group(1));
+            CTAnchor box = anchors(document).stream()
+                    .filter(anchor -> anchor.xmlText().contains("<w:txbxContent>")).findFirst().orElseThrow();
+            return box.getPositionH().getPosOffset();
         }
     }
 

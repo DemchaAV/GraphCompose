@@ -4221,10 +4221,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         stackedLineHeights.putAll(DocxStackedLines.of(layers, foot, layout, this::inkOf));
     }
 
-    /** How far a paragraph's first line's letters reach above and below its baseline (see {@link DocxInk}). */
+    /**
+     * How far a paragraph's first line's letters reach above and below its baseline (see
+     * {@link DocxInk}), where the page seats them: text raised to its line's top reaches as much
+     * further up and less far down.
+     */
     private double[] inkOf(ParagraphNode paragraph) {
         java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(paragraph);
-        return line.isEmpty() ? null : DocxInk.of(line.get(), measuredFonts());
+        double[] reach = line.isEmpty() ? null : DocxInk.of(line.get(), measuredFonts());
+        if (reach == null) {
+            return null;
+        }
+        double seated = seatShift(paragraph);
+        return new double[]{reach[0] + seated, reach[1] - seated};
     }
 
     /** The fonts the layout measured with, loaded when first asked for. */
@@ -4825,7 +4834,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 double pages = lineTopAbove + lineTopsTakenIn.getOrDefault(para.getCTP(), 0.0)
                                + middle * pageStep + line.lineHeight() - line.baselineOffsetFromBottom();
                 double shift = middle * wordLine + wordLine * DocxTextBands.BASELINE_SHARE - pages;
-                return Math.abs(shift) < LEAST_BASELINE_SHIFT_POINTS ? 0 : shift;
+                // A line starting elsewhere than the page's — a stack's, a line pair's — was cut
+                // to fit its letters where the page sets them, and is seated however little.
+                boolean cutToFit = lineTopAbove != 0 || stackedLineHeights.containsKey(node);
+                return Math.abs(shift) < LEAST_BASELINE_SHIFT_POINTS && !cutToFit ? 0 : shift;
             }
         }
         return 0;

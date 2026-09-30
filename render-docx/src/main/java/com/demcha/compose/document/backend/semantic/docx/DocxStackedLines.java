@@ -25,9 +25,10 @@ import java.util.function.Function;
  * only inside the line, and a 46pt line's letters, seated where the page sets them, reach past a
  * 48pt step — "Proposal" lost its descenders and "Brand Refresh" the tops of its capitals. So
  * each line of a stack ends halfway between its own letters and the next line's, where the page
- * leaves room between them, and the stack ends at the container's foot or, where its last
- * letters hang past it, below them. Every line holds its letters whole; the lines together are
- * as tall as the page's, and the text is seated in each where the page sets it (see
+ * leaves room between them. A stack ending a shape container whose foot its own last line runs
+ * past ends at that foot or, where its last letters hang past it, below them; any other ends
+ * where its last line does. Every line holds its letters whole, and the text is seated in each
+ * where the page sets it (see
  * {@code DocxSemanticBackend#shiftToThePagesBaseline}).</p>
  */
 final class DocxStackedLines {
@@ -59,10 +60,10 @@ final class DocxStackedLines {
      *
      * <p>A stack is a run of layers, each a paragraph of one laid-out line on one page, whose
      * box the next one's starts above the foot of and overlaps across — a value set beside its
-     * label a few points lower is a line of its own. A stack is written only where the letters
-     * of each line stay clear of the next one's, and each line's letters can be read: a line
-     * holding a picture, whose height is not its letters', keeps its own height, as does every
-     * line of its stack.</p>
+     * label a few points lower is a line of its own — and has no space written above or below
+     * it. A stack is written only where each line's letters can be read: a line holding a
+     * picture, whose height is not its letters', keeps its own height, as does every line of its
+     * stack.</p>
      *
      * @param layers a container's children, in the order they are written
      * @param foot   the foot of the container's content, measured up from the foot of the page,
@@ -110,9 +111,15 @@ final class DocxStackedLines {
         return overlaps && under;
     }
 
+    /**
+     * Whether a paragraph is one line on one page with no space above or below it: a stack's
+     * lines are written back to back, and space written between two would move every line after.
+     */
     private static boolean oneLine(ParagraphNode paragraph, DocxLayoutMetrics layout) {
         PlacedNode box = layout.placement(paragraph);
-        return layout.lineCount(paragraph) == 1 && box != null && box.startPage() == box.endPage();
+        return layout.lineCount(paragraph) == 1 && box != null && box.startPage() == box.endPage()
+               && paragraph.margin().top() == 0 && paragraph.margin().bottom() == 0
+               && paragraph.padding().top() == 0 && paragraph.padding().bottom() == 0;
     }
 
     /**
@@ -148,15 +155,11 @@ final class DocxStackedLines {
             inkFoot[k] = baseline + reach[1];
             ownFoot = top[k] + line.get().lineHeight();
         }
-        if (inkTop[0] < 0) {
-            return;
-        }
         double[] edge = new double[n + 1];
         for (int k = 1; k < n; k++) {
-            // Letters the page sets into the next line's cannot both stand whole in two lines.
-            if (inkTop[k] < inkFoot[k - 1]) {
-                return;
-            }
+            // Halfway, even where the page sets one line's letters into the next one's: both lose
+            // what they share, and every line stays where the page stacks it — written at their
+            // own heights instead, the lines would push the page down by far more.
             edge[k] = (inkFoot[k - 1] + inkTop[k]) / 2;
         }
         double end = Math.max(ownFoot, inkFoot[n - 1] + INK_MARGIN);
@@ -165,8 +168,9 @@ final class DocxStackedLines {
             double containerFoot = first - foot;
             if (ownFoot > containerFoot) {
                 end = Math.max(containerFoot, inkFoot[n - 1] + INK_MARGIN);
-                hang = Math.max(0, end - containerFoot);
             }
+            // Letters hanging past the foot are the overhang, whether the line's own box does or not.
+            hang = Math.max(0, end - containerFoot);
         }
         edge[n] = end;
         for (int k = 0; k < n; k++) {

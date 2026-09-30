@@ -107,17 +107,44 @@ class DocxStackedLayersTest {
             double stack = line(paragraph(document, "One")) + line(paragraph(document, "Two"))
                            + line(paragraph(document, "Three"));
             double hang = stack - (2 * PITCH + 26);
+            Stacked last = stacked(title(2 * PITCH + 26), "One", "Two", "Three").get(2);
 
-            assertThat(hang).as("the stack runs past the box").isGreaterThan(2);
+            assertThat(hang).as("just below its letters, not where its own line ends")
+                    .isCloseTo(last.pageBaseline() + last.inkBelow() + DocxStackedLines.INK_MARGIN - (2 * PITCH + 26),
+                            within(0.1));
             assertThat(before(paragraph(document, "After"))).as("by as much less gap under it")
                     .isCloseTo(30 - hang, within(0.1));
         }
     }
 
     @Test
-    void linesWhoseLettersOverlapKeepTheirOwnHeight() throws Exception {
+    void aStackedLineSeatedAtItsTopHoldsItsRaisedLettersWhole() throws Exception {
+        // "Two" is set against the top of its line, 8pt higher than on its baseline: its letters
+        // come that much closer to the line above, and the edge between them moves up with them.
+        DocumentNode title = new ShapeContainerBuilder().name("Seated").rectangle(300, 2 * PITCH + 40)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(new ParagraphBuilder().name("One").text("One").textStyle(LARGE).build(),
+                        0, 0, LayerAlign.TOP_LEFT)
+                .position(new ParagraphBuilder().name("Two").text("Two").textStyle(LARGE)
+                        .verticalAlign(com.demcha.compose.document.node.TextVerticalAlign.TOP).build(),
+                        0, PITCH, LayerAlign.TOP_LEFT)
+                .position(new ParagraphBuilder().name("Three").text("Three").textStyle(LARGE).build(),
+                        0, 2 * PITCH, LayerAlign.TOP_LEFT)
+                .build();
+        for (Stacked line : stacked(title, "One", "Two", "Three")) {
+            assertThat(line.wordBaseline()).as("%s where the page seats it", line.text())
+                    .isCloseTo(line.pageBaseline(), within(0.3));
+            assertThat(line.wordBaseline() - line.inkAbove()).as("%s: tops inside", line.text())
+                    .isGreaterThanOrEqualTo(line.top());
+            assertThat(line.wordBaseline() + line.inkBelow()).as("%s: feet inside", line.text())
+                    .isLessThanOrEqualTo(line.top() + line.height());
+        }
+    }
+
+    @Test
+    void linesWhoseLettersOverlapAreStillSplitHalfwaySoThePageDoesNotMove() throws Exception {
         // 18pt apart in a 30pt face, the letters of one line reach into the next's: no edge
-        // between them leaves both whole.
+        // leaves both whole, and each line at its own 36pt would push the page 18pt down.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .add(new ShapeContainerBuilder().name("Tight").rectangle(300, 60)
                         .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
@@ -126,7 +153,12 @@ class DocxStackedLayersTest {
                         .position(new ParagraphBuilder().name("Two").text("Two").textStyle(LARGE).build(),
                                 0, 18, LayerAlign.TOP_LEFT)
                         .build()))) {
-            assertThat(line(paragraph(document, "Two"))).isEqualTo(line(paragraph(document, "One")));
+            double one = line(paragraph(document, "One"));
+            double two = line(paragraph(document, "Two"));
+
+            assertThat(one).as("cut halfway into the letters both lines share, short of its own 36pt")
+                    .isLessThan(LARGE_LINE - 5);
+            assertThat(one + two).as("ending where the second line's own box does").isCloseTo(18 + LARGE_LINE, within(0.1));
         }
     }
 
@@ -183,9 +215,9 @@ class DocxStackedLayersTest {
 
     @Test
     void theLastLinesOverhangBelowItsBoxComesOutOfTheGapUnderIt() throws Exception {
-        // Two lines too tight to stack: the second keeps its own line, its foot 54pt down. A
-        // box 4pt shorter leaves it hanging 4pt further below, and the paragraph after it that
-        // much less space above.
+        // One line, no stack, set 18pt down: its own line's foot is 54pt down. A box 4pt shorter
+        // leaves it hanging 4pt further below, and the paragraph after it that much less space
+        // above.
         double shorter = spaceAboveTheParagraphAfter(46);
         double taller = spaceAboveTheParagraphAfter(50);
 
@@ -215,10 +247,8 @@ class DocxStackedLayersTest {
     private static double spaceAboveTheParagraphAfter(double boxHeight) throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addSection("Cover", cover -> cover.spacing(30)
-                        .add(new ShapeContainerBuilder().name("Tight").rectangle(300, boxHeight)
+                        .add(new ShapeContainerBuilder().name("Low").rectangle(300, boxHeight)
                                 .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
-                                .position(new ParagraphBuilder().name("One").text("One").textStyle(LARGE).build(),
-                                        0, 0, LayerAlign.TOP_LEFT)
                                 .position(new ParagraphBuilder().name("Two").text("Two").textStyle(LARGE).build(),
                                         0, 18, LayerAlign.TOP_LEFT)
                                 .build())
@@ -270,8 +300,13 @@ class DocxStackedLayersTest {
                     if (Double.isNaN(firstTop)) {
                         firstTop = pageTop;
                     }
-                    double pageBaseline = firstTop - pageTop + line.lineHeight() - line.baselineOffsetFromBottom();
-                    double[] ink = DocxInk.of(line, PdfFontLibraryFactory.measurementLibrary(List.of()));
+                    com.demcha.compose.font.FontLibrary fonts = PdfFontLibraryFactory.measurementLibrary(List.of());
+                    // Measured down from the first line's top; text the page seats up stands higher.
+                    double seat = payload.verticalAlign() == com.demcha.compose.document.node.TextVerticalAlign.DEFAULT
+                            ? 0 : com.demcha.compose.document.backend.fixed.pdf.handlers.ParagraphSeating
+                                    .shift(line, fonts, payload.verticalAlign());
+                    double pageBaseline = firstTop - pageTop + line.lineHeight() - line.baselineOffsetFromBottom() - seat;
+                    double[] ink = DocxInk.of(line, fonts);
                     XWPFParagraph written = document.getParagraphs().stream()
                             .filter(paragraph -> paragraph.getText().startsWith(text.split(" ")[0]))
                             .findFirst().orElseThrow();
@@ -281,6 +316,14 @@ class DocxStackedLayersTest {
                     lines.add(new Stacked(text, wordTop, height, wordTop + 0.8 * height - raise, pageBaseline,
                             ink[0], ink[1]));
                     wordTop += height;
+                }
+                // Each edge between two lines stands halfway between the one's letters and the next's.
+                for (int k = 0; k + 1 < lines.size(); k++) {
+                    Stacked above = lines.get(k);
+                    Stacked below = lines.get(k + 1);
+                    assertThat(below.top()).as("the edge under %s", above.text()).isCloseTo(
+                            (above.pageBaseline() + above.inkBelow() + below.pageBaseline() - below.inkAbove()) / 2,
+                            within(0.05));
                 }
                 return lines;
             }

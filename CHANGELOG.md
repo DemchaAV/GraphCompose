@@ -13,17 +13,21 @@ follow semantic versioning; release dates are ISO 8601.
   whatever the face — measured for Spectral, Lato and Arial, in lines 12 to 100pt tall, and
   LibreOffice does the same — where the page sets it the face's ascent below the line's top. For a
   face with a deep descent the two part: `NorthlineProposal`'s 46pt Spectral title stood 7pt low.
-  Its three lines, laid 48pt apart in a 140pt container, were also written 70, 48 and 48pt tall,
-  and what the 26pt they ran past the container left after the gap under it pushed the rest of the
+  Its three lines, laid 48pt apart in a 140pt container, were also written 70, 48 and 48pt tall.
+  They ran 26pt past the container; the gap under it took 18pt of that, and the rest pushed the
   cover 8pt below the section icons drawn where the page puts them. A paragraph's runs are now
   moved to the page's baseline (`w:position`) wherever the two stand half a point or more apart,
   from the line Word was given — a line pair's from the higher text's top, lines that took their
   gaps from the space above from that higher top, several lines at the middle one; a list item's
-  and a composed table cell's are not moved yet. Lines a container stacks tighter than their face
-  are each written to end halfway between their own letters and the next line's, read from the
-  glyphs' outlines, and in a shape container the last to the container's foot or below its
-  letters: Word draws an exact line's text on screen only inside the line, and lines a pitch tall
-  cut the title's descenders and capitals there. In Word `NorthlineProposal`'s median drift falls
+  and a table text cell's are not moved yet. Lines a container stacks tighter than their face are
+  each written to end halfway between their own letters and the next line's, read from the glyphs'
+  outlines: Word draws an exact line's text on screen only inside the line, and lines a pitch tall
+  cut the title's descenders and capitals there. Where the last layer of a shape container runs
+  past its foot, it ends at the foot, or below its letters where they hang past it. Where the page
+  sets two lines' letters into each other the edge still falls halfway, so the page does not move;
+  a stack whose letters cannot be read, or that holds a picture, keeps each line's own height, and
+  a line with space above or below it stays out of a stack. In Word `NorthlineProposal`'s median
+  drift falls
   from 8.0pt to 0.8, its cover within 1.5pt of the page throughout, and `EditorialProposal`'s from
   5.9 to 0.4; across the 62 templates, lines more than 2pt off fall from 1464 to 1341.
 - **A value set from its start keeps its start in Word.** Two texts one layer holds on one line —
@@ -138,7 +142,7 @@ follow semantic versioning; release dates are ISO 8601.
   48pt apart — took each line's own height, 70pt; now each single line of text laid over by
   the next across ends halfway between its letters and the next line's (`DocxStackedLines`),
   and a shape container's last line running past the container's foot takes its overhang from
-  the gap below. Lines whose letters meet, and a line holding a picture, keep their own height.
+  the gap below. A stack that holds a picture keeps its lines' own heights.
   An icon picture beside a layer of text in a shape container neither painted,
   clipped to its outline nor transformed, or in a layer stack — `NorthlineProposal`'s glance
   card facts, the contact lines of `ConsultingInvoice` — was written as a line of its own

@@ -56,6 +56,34 @@ class DocxBaselineSeatTest {
     }
 
     @Test
+    void aPictureOnTheBaselineMovesWithItsText() throws Exception {
+        // An 8pt picture standing on the baseline of a Spectral line: Word stands both on its own
+        // baseline, so the picture takes the text's move and nothing else.
+        byte[] png = png();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addParagraph(p -> p.inlineText("Title ", spectral(30))
+                        .inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png), 8, 8,
+                                com.demcha.compose.document.node.InlineImageAlignment.BASELINE, 0, null)))) {
+            XWPFParagraph title = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().startsWith("Title")).findFirst().orElseThrow();
+            int text = positionOf(title.getRuns().get(0).getCTR());
+
+            assertThat(text).as("the premise: the line moved").isPositive();
+            assertThat(positionOf(title.getRuns().get(1).getCTR())).isEqualTo(text);
+        }
+    }
+
+    private static byte[] png() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(8, 8,
+                    java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (java.io.IOException failure) {
+            throw new IllegalStateException(failure);
+        }
+    }
+
+    @Test
     void theHalfOfALinePairSetLowerIsSeatedFromTheLinesTop() throws Exception {
         // A 12pt label centred beside a 30pt value: the line is the value's, and the label's own
         // line starts half the difference below its top.

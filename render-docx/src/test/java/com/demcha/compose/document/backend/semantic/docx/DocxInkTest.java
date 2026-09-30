@@ -50,6 +50,28 @@ class DocxInkTest {
                 .isLessThan(line.lineHeight() - 5);
     }
 
+    @Test
+    void aLineHoldingAPictureHasNoLettersToRead() throws Exception {
+        // A picture's height is not a glyph's: the line's reach is not known.
+        java.io.ByteArrayOutputStream png = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(8, 8,
+                java.awt.image.BufferedImage.TYPE_INT_RGB), "png", png);
+        ParagraphLine line;
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 400)
+                .margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.addParagraph(p -> p.inlineText("Icon ", DocumentTextStyle.builder()
+                            .fontName(FontName.SPECTRAL).size(SIZE).build())
+                    .inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png.toByteArray()),
+                            8, 8)));
+            line = session.layoutGraph().fragments().stream()
+                    .filter(fragment -> fragment.payload() instanceof ParagraphFragmentPayload)
+                    .map(fragment -> ((ParagraphFragmentPayload) fragment.payload()).lines().get(0))
+                    .findFirst().orElseThrow();
+        }
+
+        assertThat(DocxInk.of(line, fonts())).isNull();
+    }
+
     private static com.demcha.compose.font.FontLibrary fonts() {
         return PdfFontLibraryFactory.measurementLibrary(List.of());
     }

@@ -4832,9 +4832,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // with no text is not seated on the page's baseline (shiftToThePagesBaseline), and held
         // exact its picture would stand where Word's baseline puts it, cut by the line's top.
         double heldAbove = ownLine && layout.lineCount(node) == 1 && holdsText(node)
-                ? holdPicturesInTheLine(para, pictures) : Double.NaN;
-        // A line reaching its pictures' ink past the page's has that ink at its edges.
-        boolean cutToTheInk = !Double.isNaN(heldAbove) && (pictures.above() > 0 || pictures.below() > 0);
+                ? holdPicturesInTheLine(para, pictures, seatShift(node)) : Double.NaN;
+        // A line held to its pictures has their ink within half a point of its edges.
+        boolean cutToTheInk = !Double.isNaN(heldAbove);
         if (Double.isNaN(heldAbove)) {
             makeRoomForPictures(para, pictures);
             heldAbove = 0;
@@ -5059,14 +5059,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A picture's ink reaching past the page's line is drawn on the page in the gaps around
      * it; an exact Word line cuts it off. So the line reaches as far, taking that room from the
      * space written above it and from the space above what follows ({@link #hangingBelow}),
-     * and keeps its pitch. A line with no space above it to take is grown as before.
-     * LibreOffice stands a picture on the baseline, higher than the page does, and cuts what
-     * passes the line's top.</p>
+     * and keeps its pitch. The picture's raise and the line's seat are each rounded to a half
+     * point, so the line keeps {@link #INK_ROOM_POINTS} past the ink on either side, taken the
+     * same way, as far as the space above goes: an icon as tall as its line lost 0.2 to 0.4pt at
+     * an edge without it. A line whose space above is shorter than the ink's own reach is grown
+     * as before. The vertical seat
+     * ({@link #seatShift}) moves the pictures with the text, as on the page. LibreOffice stands
+     * a picture on the baseline, higher than the page does, and cuts what passes the line's
+     * top.</p>
      *
+     * @param seat how far the page seats the line's text and pictures off its baseline, in
+     *             points, raised
      * @return how far above the page's line the Word line now starts, in points, or NaN when
      *         the line is left to {@link #makeRoomForPictures}
      */
-    private double holdPicturesInTheLine(XWPFParagraph para, PictureReach pictures) {
+    private double holdPicturesInTheLine(XWPFParagraph para, PictureReach pictures, double seat) {
         CTPPr properties = para.getCTP().getPPr();
         // A picture inside its text keeps the exact line it has (makeRoomForPictures).
         if (pictures == null || !pictures.overText() || !(pictures.reach() > 0) || !(pictures.pageLine() > 0)
@@ -5078,13 +5085,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return Double.NaN;
         }
         long before = spacing.isSetBefore() ? twipsOf(spacing.getBefore()) : 0;
-        long up = Math.round(pictures.above() * POINT_TO_TWIP);
-        if (up > before) {
+        // The ink itself must fit under the space above; the room past it is taken as far as
+        // that space goes — a line opening its cell has none.
+        if (Math.round(Math.max(0, pictures.above() + seat) * POINT_TO_TWIP) > before) {
             return Double.NaN;
         }
+        long up = Math.min(before, Math.round(Math.max(0, pictures.above() + seat + INK_ROOM_POINTS) * POINT_TO_TWIP));
         Long current = writtenTwips(spacing.getLine());
         long page = Math.round(pictures.pageLine() * POINT_TO_TWIP);
-        long down = Math.round(pictures.below() * POINT_TO_TWIP);
+        long down = Math.round(Math.max(0, pictures.below() - seat + INK_ROOM_POINTS) * POINT_TO_TWIP);
         spacing.setLine(BigInteger.valueOf((current == null ? page : Math.max(current, page)) + up + down));
         if (up > 0) {
             spacing.setBefore(BigInteger.valueOf(before - up));
@@ -5094,6 +5103,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         return up / POINT_TO_TWIP;
     }
+
+    /**
+     * The room a line held to its pictures keeps past their ink on either side, in points: the
+     * picture's raise and the line's seat are rounded to a half point each.
+     */
+    private static final double INK_ROOM_POINTS = 0.5;
 
     /**
      * Writes an inline picture or icon where it sits in the line, as a picture in its own run.
@@ -5240,17 +5255,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param pageLine the page's height of the line, 0 when where the pictures stand is not
      *                 known, and NaN when no picture was written
      * @param above    how far the highest picture's ink reaches above the page's line where Word
-     *                 puts it, in points
-     * @param below    how far the lowest picture's ink reaches below it, in points
+     *                 puts it, in points; negative when it stays that far inside
+     * @param below    how far the lowest picture's ink reaches below it, in points; negative when
+     *                 it stays that far inside
      */
     record PictureReach(double reach, boolean overText, double pageLine, double above, double below) {
 
         /** No picture written. */
-        static final PictureReach NONE = new PictureReach(0, false, Double.NaN, 0, 0);
+        static final PictureReach NONE = new PictureReach(0, false, Double.NaN,
+                Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
 
         /** A picture in a line the page laid out none of: where it stands is not known. */
         static PictureReach unplaced(double height) {
-            return new PictureReach(height, false, 0, 0, 0);
+            return new PictureReach(height, false, 0, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
         }
 
         static PictureReach of(double bottomFromBaseline, double height,
@@ -5276,8 +5293,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             double wordTop = bottomFromBaseline + height - inset;
             double top = Math.max(wordTop, height - inset);
             boolean passes = top > line.textAscent() || -(bottomFromBaseline + inset) > descent;
-            double above = Math.max(0, descent + wordTop - line.lineHeight());
-            double below = Math.max(0, -(bottomFromBaseline + inset) - descent);
+            double above = descent + wordTop - line.lineHeight();
+            double below = -(bottomFromBaseline + inset) - descent;
             return new PictureReach(descent + wordTop, passes, line.lineHeight(), above, below);
         }
 

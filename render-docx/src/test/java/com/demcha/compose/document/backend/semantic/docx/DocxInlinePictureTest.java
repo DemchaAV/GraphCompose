@@ -113,10 +113,12 @@ class DocxInlinePictureTest {
     @Test
     void aLineHoldingAPictureTallerThanItsTextIsThePagesLineGrownToIt() throws Exception {
         // The page makes the line as tall as the picture: one line holding it is written exactly
-        // that tall, and Word sets the picture in it where the page does.
-        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
-                .inlineText("Tall ").inlineImage(DocumentImageData.fromBytes(png(30, 30)), 30, 30)))) {
-            var spacing = document.getParagraphs().get(0).getCTP().getPPr().getSpacing();
+        // that tall, and Word sets the picture in it where the page does. The paragraph above
+        // leaves it room above for half a point past the picture's edge.
+        try (XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Above").margin(new DocumentInsets(0, 0, 6, 0)))
+                .addParagraph(p -> p.inlineText("Tall ").inlineImage(DocumentImageData.fromBytes(png(30, 30)), 30, 30)))) {
+            var spacing = document.getParagraphs().get(1).getCTP().getPPr().getSpacing();
 
             assertThat(spacing.getLineRule())
                     .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
@@ -178,44 +180,104 @@ class DocxInlinePictureTest {
 
     @Test
     void anIconsInkAboveThePagesLineComesOutOfTheSpaceAboveIt() throws Exception {
-        // Lowered 1.35pt, the icon's ink stands above the page's line by as much: the Word line
-        // starts that much higher, and the 3pt above it is written that much shorter.
-        Laid laid = contactLines(InlineImageAlignment.CENTER, -1.35);
-        var spacing = laid.lines().get(1).getCTP().getPPr().getSpacing();
-        double up = 3 - DocxTwips.of(spacing.getBefore()) / 20.0;
+        // Raised 1.5pt, the centred icon's ink stands above the page's line: the Word line starts
+        // that much and half a point higher, and the 3pt above it is written that much shorter.
+        Between line = betweenTwoLines(InlineImageAlignment.CENTER, 1.5);
 
-        assertThat(up).as("the space above gives up the ink's reach").isGreaterThan(0.5);
-        assertThat(DocxTwips.of(spacing.getLine()) / 20.0).as("the page's line and that reach")
-                .isCloseTo(laid.heights().get(1) + up, within(0.1));
+        assertThat(line.up()).as("the space above gives up the ink's reach").isGreaterThan(1.5);
+        assertThat(line.down()).as("nothing hangs below").isZero();
+        assertThat(line.line()).as("the page's line and that reach").isCloseTo(line.pageLine() + line.up(), within(0.06));
     }
 
     @Test
     void anIconsInkBelowThePagesLineComesOutOfTheSpaceBelowIt() throws Exception {
-        // Set from the text's top, the icon hangs below the page's line: the Word line ends that
-        // much lower, and the space above the next line is written that much shorter.
-        Laid laid = contactLines(InlineImageAlignment.TEXT_TOP, 1.5);
-        var first = laid.lines().get(0).getCTP().getPPr().getSpacing();
-        var next = laid.lines().get(1).getCTP().getPPr().getSpacing();
-        double down = DocxTwips.of(first.getLine()) / 20.0 - laid.heights().get(0);
+        // Lowered 1.35pt, as TimelineMinimal's contact icons are, the ink hangs below the page's
+        // line: the Word line ends that much and half a point lower, and the space above the
+        // next line is written that much shorter.
+        Between line = betweenTwoLines(InlineImageAlignment.CENTER, -1.35);
 
-        assertThat(first.getLineRule())
-                .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
-        assertThat(down).as("the line reaches the ink below it").isGreaterThan(0.5);
-        assertThat(DocxTwips.of(next.getBefore()) / 20.0).as("the 3pt gap, less the hang")
-                .isCloseTo(3 - down, within(0.1));
+        assertThat(line.down()).as("the space below gives up the ink's reach").isGreaterThan(1.35);
+        assertThat(line.up()).as("nothing stands above").isZero();
+        assertThat(line.line()).as("the page's line and that reach").isCloseTo(line.pageLine() + line.down(), within(0.06));
     }
 
     @Test
-    void aLineWithNoSpaceAboveToTakeLeavesItAsItWas() throws Exception {
-        // The first line opens the page: nothing above it gives up the icon's reach, so the room
-        // for it is made in the line itself, the page's line and the reach together, as it was.
-        Laid laid = contactLines(InlineImageAlignment.CENTER, -1.35);
-        var first = laid.lines().get(0).getCTP().getPPr().getSpacing();
-        var second = laid.lines().get(1).getCTP().getPPr().getSpacing();
+    void anIconAsTallAsItsLineKeepsHalfAPointOfRoomAtEitherEdge() throws Exception {
+        // The picture's raise and the line's seat round to half points each: an icon whose ink
+        // meets both edges of the page's line lost 0.2 to 0.4pt at one of them held without room.
+        Between line = betweenTwoLines(InlineImageAlignment.CENTER, 0);
 
+        assertThat(line.up()).isCloseTo(0.5, within(0.06));
+        assertThat(line.down()).isCloseTo(0.5, within(0.06));
+    }
+
+    @Test
+    void aLineHeldToItsIconIsSeatedHoweverLittleItsTextMoves() throws Exception {
+        // Held with its ink half a point from the line's edges, Word's baseline stands less than
+        // the half point from the page's that a line of body text is left at: moved by nothing,
+        // the ink would pass an edge by that much.
+        Between line = betweenTwoLines(InlineImageAlignment.CENTER, -0.75);
+
+        assertThat(line.textPosition()).as("the text is moved, the icon with it").isNotZero();
+    }
+
+    @Test
+    void aLineOpeningThePageIsHeldWhereItsInkFitsTakingWhatRoomThereIs() throws Exception {
+        // As TimelineMinimal's first contact line: the icon's ink meets the line's top and does
+        // not pass it, so the line is held, with no room above it to take past the ink.
+        Laid laid = contactLines(InlineImageAlignment.CENTER, 0);
+        var first = laid.lines().get(0).getCTP().getPPr().getSpacing();
+
+        assertThat(first.getLineRule())
+                .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
+        assertThat(first.isSetBefore() ? DocxTwips.of(first.getBefore()) : 0L).as("nothing above to take").isZero();
+    }
+
+    @Test
+    void aLineWhoseSpaceAboveIsShorterThanItsReachIsGrownAsBefore() throws Exception {
+        // The first line opens the page: nothing above it gives up the raised icon's reach.
+        Laid laid = contactLines(InlineImageAlignment.CENTER, 1.5);
+        var first = laid.lines().get(0).getCTP().getPPr().getSpacing();
+
+        assertThat(first.getLineRule())
+                .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.AT_LEAST);
         assertThat(first.isSetBefore() ? DocxTwips.of(first.getBefore()) : 0L).as("nothing taken above").isZero();
-        assertThat(DocxTwips.of(first.getLine())).as("as tall as a line that took its reach from above")
-                .isEqualTo(DocxTwips.of(second.getLine()));
+    }
+
+    /**
+     * An icon line between two lines of text 3pt apart: how far its Word line reaches above
+     * and below the page's, read off the space written above it and above the line after it.
+     */
+    private record Between(double pageLine, double line, double up, double down, int textPosition) {
+    }
+
+    private static Between betweenTwoLines(InlineImageAlignment alignment, double offset) throws Exception {
+        com.demcha.compose.document.style.DocumentTextStyle small =
+                com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(7);
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 400)
+                .margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.addSection("Contact", contact -> {
+                contact.spacing(3);
+                contact.addParagraph(p -> p.name("Above").textStyle(small).text("Above"));
+                contact.addParagraph(p -> p.name("Iconed").textStyle(small).inlineText("London  ", small)
+                        .inlineSvgIcon(ICON, 10.5, alignment, offset, null));
+                contact.addParagraph(p -> p.name("Below").textStyle(small).text("Below"));
+            }));
+            double pageLine = session.layoutGraph().nodes().stream()
+                    .filter(node -> "Iconed".equals(node.semanticName()))
+                    .findFirst().orElseThrow().placementHeight();
+            XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(session.export(new DocxSemanticBackend())));
+            var iconed = document.getParagraphs().get(1).getCTP().getPPr().getSpacing();
+            var after = document.getParagraphs().get(2).getCTP().getPPr().getSpacing();
+            assertThat(iconed.getLineRule())
+                    .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
+            XWPFRun text = document.getParagraphs().get(1).getRuns().get(0);
+            int textPosition = text.getCTR().isSetRPr() && text.getCTR().getRPr().sizeOfPositionArray() > 0
+                    ? ((Number) text.getCTR().getRPr().getPositionArray(0).getVal()).intValue() : 0;
+            return new Between(pageLine, DocxTwips.of(iconed.getLine()) / 20.0,
+                    3 - DocxTwips.of(iconed.getBefore()) / 20.0,
+                    3 - (after.isSetBefore() ? DocxTwips.of(after.getBefore()) : 0) / 20.0, textPosition);
+        }
     }
 
     @Test
@@ -357,6 +419,15 @@ class DocxInlinePictureTest {
         assertThat(placed.max(DocxSemanticBackend.PictureReach.NONE)).isEqualTo(placed);
     }
 
+    @Test
+    void aLineOfSeveralPicturesIsTheTallestAndReachesAsFarAsAnyOfThem() {
+        var tall = new DocxSemanticBackend.PictureReach(10, true, 14, -1, 0.5);
+        var high = new DocxSemanticBackend.PictureReach(9, true, 12, 0.8, -2);
+
+        assertThat(tall.max(high)).isEqualTo(new DocxSemanticBackend.PictureReach(10, true, 14, 0.8, 0.5));
+        assertThat(high.max(tall)).isEqualTo(new DocxSemanticBackend.PictureReach(10, true, 14, 0.8, 0.5));
+    }
+
     private static List<Integer> picturePositions(XWPFDocument document) {
         return document.getParagraphs().stream()
                 .flatMap(paragraph -> paragraph.getRuns().stream())
@@ -400,21 +471,22 @@ class DocxInlinePictureTest {
 
         // Lowered 2pt, an 8pt picture tops out at 6pt in Word and at 8pt on LibreOffice's
         // baseline: within the ascent either way. The line asks for Word's reach, 2 + 6.
-        // Both stand inside the page's 14pt line where Word puts them.
+        // Both stand inside the page's 14pt line where Word puts them: 6pt below its top, and
+        // on its foot.
         assertThat(DocxSemanticBackend.PictureReach.of(-2, 8, line))
-                .isEqualTo(new DocxSemanticBackend.PictureReach(8, false, 14, 0, 0));
+                .isEqualTo(new DocxSemanticBackend.PictureReach(8, false, 14, -6, 0));
         // A 10pt one tops out at 8pt in Word, inside, but at 10pt on the baseline, outside: the
         // line is "at least" Word's 2 + 8, and LibreOffice grows it to its own placement.
         assertThat(DocxSemanticBackend.PictureReach.of(-2, 10, line))
-                .isEqualTo(new DocxSemanticBackend.PictureReach(10, true, 14, 0, 0));
+                .isEqualTo(new DocxSemanticBackend.PictureReach(10, true, 14, -4, 0));
         // A 14pt one is outside in both, and meets the top of the page's 14pt line; a 16pt one
         // passes it by 2pt.
         assertThat(DocxSemanticBackend.PictureReach.of(-2, 14, line).overText()).isTrue();
-        assertThat(DocxSemanticBackend.PictureReach.of(-2, 14, line).above()).isZero();
-        assertThat(DocxSemanticBackend.PictureReach.of(-2, 16, line).above()).isEqualTo(2);
+        assertThat(DocxSemanticBackend.PictureReach.of(-2, 14, line).above()).isCloseTo(0, within(1e-9));
+        assertThat(DocxSemanticBackend.PictureReach.of(-2, 16, line).above()).isCloseTo(2, within(1e-9));
         // One lowered 4pt hangs past the 2pt descent in Word, 2pt below the line's foot.
         assertThat(DocxSemanticBackend.PictureReach.of(-4, 5, line).overText()).isTrue();
-        assertThat(DocxSemanticBackend.PictureReach.of(-4, 5, line).below()).isEqualTo(2);
+        assertThat(DocxSemanticBackend.PictureReach.of(-4, 5, line).below()).isCloseTo(2, within(1e-9));
     }
 
     @Test

@@ -3828,8 +3828,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * past its content: the pull was lost, and the rule and the page under it stood 10pt low,
      * the 16.4pt less the 6.3pt its metadata grid had lost above it. The pull is added
      * to the edges carried down to the block, as a container's negative edge already is, so
-     * {@link #newBodyParagraph} nets it against everything owed above, as the page sums it;
-     * what that cannot give stays unwritten, as before. Text laid over the flow owes no
+     * {@link #newBodyParagraph} nets it against everything owed above, as the page sums it.
+     * Where that cannot give it all, a paragraph takes the rest off the foot of the line written
+     * just before it ({@link #takeFromTheLineAbove}), then off the top of its own line
+     * ({@link #riseInsideItsOwnLine}); what neither can give stays unwritten. Text laid over the flow owes no
      * space ({@link #writeOverTheFlow}), so its edges move nothing.</p>
      */
     private void standsIntoTheSpaceAbove(DocumentNode node) {
@@ -3857,9 +3859,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * it. The line above is written shorter by what its letters do not reach, and its text,
      * which Word would raise with the baseline of a shorter exact line, lowered as much.</p>
      *
-     * <p>Only a line of text alone in its paragraph, with no space written below it and no run
-     * shaded behind its text, on the page the pulled paragraph starts on: a shaded run fills the
-     * line in Word, and the last line of a page shortened would move where Word breaks it.</p>
+     * <p>Only an exact line of text alone in its paragraph, not one of a stack, with no space
+     * written below it and no run shaded or underlined: a shaded run fills the line in Word, and
+     * an underline is drawn below the letters. Where both are laid out, the line must end on the
+     * page the pulled paragraph starts on: the last line of a page shortened would move where
+     * Word breaks it.</p>
      *
      * @return how far the line above was shortened, in points
      */
@@ -3876,7 +3880,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return 0;
         }
         for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run : runsIn(para)) {
-            if (run.isSetRPr() && run.getRPr().sizeOfShdArray() > 0) {
+            // A shaded run fills the line; an underline is drawn below the letters' ink.
+            if (run.isSetRPr() && (run.getRPr().sizeOfShdArray() > 0 || run.getRPr().sizeOfUArray() > 0
+                                   && run.getRPr().getUArray(0).getVal() != org.openxmlformats.schemas.wordprocessingml.x2006.main.STUnderline.NONE)) {
                 return 0;
             }
         }
@@ -3885,11 +3891,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         Long line = spacing != null && spacing.isSetLineRule() && spacing.getLineRule() == STLineSpacingRule.EXACT
                 ? writtenTwips(spacing.getLine()) : null;
         java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> laid = layout.firstLine(above);
-        double[] ink = inkOf(above);
-        if (line == null || laid.isEmpty() || ink == null || spacing.isSetAfter()) {
+        // The letters' reach off their own baseline, before any seat: the position written on
+        // the runs below carries the seat, as far as it was written.
+        double[] ink = laid.isEmpty() ? null : DocxInk.of(laid.get(), measuredFonts());
+        if (line == null || ink == null || spacing.isSetAfter()) {
             return 0;
         }
-        double room = laid.get().baselineOffsetFromBottom() - ink[1] - DocxStackedLines.INK_MARGIN;
+        // The room under the letters where Word draws them: its baseline stands a fifth of the
+        // line above the foot, raised by the runs' written position; less the margin, and the
+        // quarter point the lowering below can round away.
+        List<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR> runs = runsIn(para);
+        long seated = 0;
+        if (!runs.isEmpty() && runs.get(0).isSetRPr() && runs.get(0).getRPr().sizeOfPositionArray() > 0
+            && runs.get(0).getRPr().getPositionArray(0).getVal() instanceof Number number) {
+            seated = number.longValue();
+        }
+        double wordFoot = (1 - DocxTextBands.BASELINE_SHARE) * line / POINT_TO_TWIP + seated / HALF_POINTS_PER_POINT;
+        double room = wordFoot - ink[1] - DocxStackedLines.INK_MARGIN - 0.5 / HALF_POINTS_PER_POINT;
         long taken = Math.round(Math.min(points, room) * POINT_TO_TWIP);
         if (taken <= 0 || taken >= line) {
             return 0;

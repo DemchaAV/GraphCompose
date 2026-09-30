@@ -8,6 +8,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A bordered panel in a table cell shows its right border in Word.** Word draws a table's right
+  border outside its right edge — measured in its PDF, a table ending at 566.0pt had its right
+  border from 566.2 to 566.9 — and on screen cuts off what passes its cell's edge and draws the
+  cell's gridline there. `EditorialProposal`'s glance card, as wide as its column, lost its right
+  border on screen. A bordered panel reaching its cell's text edge now ends its whole right border
+  plus half a point short of that edge, the points taken from its right margin and no more than
+  that margin holds: its text stands where it did and wraps as it did, and its right border is
+  drawn on screen and on paper wherever its margin is wide enough.
 - **A ruled table's rows are as tall in Word as on the page, and a table that states no rule is
   ruled as the page rules it.** Word makes room in a table for its horizontal rules — a rule
   between two rows half in each, the rule above the table and the one below it whole in their

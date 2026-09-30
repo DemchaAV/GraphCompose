@@ -341,7 +341,9 @@ class DocxComposedCellTest {
                 int inside = heightOf(document.getTables().get(0));
                 int asTheCell = heightOf(document.getTables().get(1));
 
-                assertThat(inside - asTheCell).as("the second cell's 24pt of margins").isEqualTo(24 * 20);
+                // 12pt above and below, less the default 1pt rule on each side that Word gives
+                // room of its own.
+                assertThat(inside - asTheCell).as("the second cell's 22pt of margins").isEqualTo(22 * 20);
             }
         }
     }

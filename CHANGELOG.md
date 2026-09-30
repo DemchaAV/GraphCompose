@@ -8,6 +8,23 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A ruled table's rows are as tall in Word as on the page, and a table that states no rule is
+  ruled as the page rules it.** Word makes room in a table for its horizontal rules — a rule
+  between two rows half in each, the rule above the table and the one below it whole in their
+  row — where the page draws a cell's rules on its edges and steps its rows by padding and content
+  alone. Measured, a row of 12.35pt text and 7pt padding stepped 26.35pt unruled, 27.1 with 0.75pt
+  rules and 27.85 with 1.5pt ones, and a one-row table with 1.5pt rules stood 3pt taller. Every
+  ruled table grew row by row: `EditorialProposal`'s timeline and investment tables pushed its
+  investment block onto a third page, and `NorthlineProposal`'s acceptance heading stood 12pt
+  below its badge. Each rule now comes off a cell's padding above or below, where Word puts it —
+  between two rows ruled differently, the lower row's rule, which Word was measured making room
+  for — so a table ruled alike throughout, with padding enough, steps as the page does; padding
+  thinner than its share gives what it has.
+  A table that states no rule was left on Word's own grid, thinner than the engine's default 1pt
+  black rule the page draws and giving its rows other heights; it is now written with that rule.
+  In Word `EditorialProposal` is two pages again; across the 62 templates the median drift falls
+  from 0.94pt to 0.56 and lines more than 2pt off from 1341 to 858, and in LibreOffice the median
+  from 1.59pt to 0.55.
 - **Text stands on the page's baseline in Word's exact lines, and stacked title lines take the
   container's height.** Word stands the baseline of an exact line four fifths of the way down it
   whatever the face — measured for Spectral, Lato and Arial, in lines 12 to 100pt tall, and

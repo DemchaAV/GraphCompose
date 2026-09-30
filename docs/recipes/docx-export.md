@@ -201,8 +201,16 @@ a table (not a row) opening a cell still loses that edge.
 
 An edge pulling a block up — a paragraph's, a page reference's or a rule's negative top
 `margin` or `padding` — comes out of the space owed above it, as the page takes it from
-there: Word has no negative space above a paragraph. What that space cannot give is not
-written. Text laid over the flow in text boxes owes no space, so its edges move nothing.
+there: Word has no negative space above a paragraph. What that space cannot give a paragraph
+takes from the foot of the line of text written just before it on the same page — one exact
+line alone in its paragraph, not one of a stack, with no space below it and no run shaded or
+underlined, as shading fills the line and an underline is drawn below the letters — as far as
+that line's letters leave room below them where Word draws them, three quarters of a point
+clear: the line written shorter, its text lowered by the four fifths of that Word's baseline
+would rise. The rest it takes from the top of its own line, where it is one line of text, as
+far as its letters leave room above them, its text seated where the page sets it; what neither
+can give is not written. Text laid over the flow in text boxes owes no space, so its edges
+move nothing.
 
 A paragraph's or a list's `lineSpacing` — the gap the page puts between two wrapped lines —
 goes into the line: Word has one line height for a paragraph and no gap between its lines,

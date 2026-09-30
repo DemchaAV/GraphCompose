@@ -8,6 +8,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A line pulled up into the line above it, with no space above to take the pull from, is no
+  longer dropped in Word.** A paragraph's negative top edge comes out of the space owed above
+  it, and where there is none — the two lines of a lockup in a table cell — it was dropped:
+  `CobaltRota`'s subtitle, 6.5pt up under its 21pt wordmark, stood that much low, and its
+  masthead row and the rota under it with it. The pull now comes off the foot of the line of
+  text written just before, on the same page — one exact line alone in its paragraph, with no
+  space below it and no run shaded or underlined — as far as its letters leave room where Word
+  draws them, three quarters of a point clear: the line written shorter, its text lowered by
+  the four fifths of that Word's baseline would rise. The rest comes off the top of the pulled
+  line itself, as far as its letters allow; what neither can give is not written. `CobaltRota`'s median drift falls from 8.9pt to 2.4 in Word and in LibreOffice; its
+  lines more than 2pt off fall from 65 to 45 in Word and from 62 to 47 in LibreOffice.
+
 - **A chip's label taller than the chip no longer makes it taller in Word.** A shape composed in
   a table cell centres its one line of text in it, and the page lets the line pass the outline
   where it is taller: `CobaltRota`'s stacked shift chips, 9.2pt outlines round 8.2pt text on a

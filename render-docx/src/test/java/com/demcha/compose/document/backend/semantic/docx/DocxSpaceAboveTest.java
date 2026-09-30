@@ -3,6 +3,7 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
@@ -89,6 +90,109 @@ class DocxSpaceAboveTest {
             assertThat(DocxTwips.of(pulled.getCTP().getPPr().getSpacing().getBefore()) / 20.0)
                     .as("10 less 4 less 3").isCloseTo(3, within(0.1));
         }
+    }
+
+    @Test
+    void aLinePulledUpIntoTheLineAboveInACellTakesItsFoot() throws Exception {
+        // CobaltRota's lockup: a subtitle pulled up under its wordmark, in a cell with nothing
+        // above to give the pull. The wordmark's line, its letters standing on the baseline, is
+        // written 3.5pt shorter, its text lowered by the four fifths of that Word's baseline would
+        // rise — 6 half points, where three quarters would round to 5 — and the subtitle has no
+        // space above it.
+        DocumentTextStyle wordmark = DocumentTextStyle.builder().fontName(FontName.LATO).size(21).build();
+        XWPFParagraph[] plain = lockup(wordmark, 0);
+        XWPFParagraph[] pulled = lockup(wordmark, -3.5);
+
+        double shorter = (DocxTwips.of(lineOf(plain[0])) - DocxTwips.of(lineOf(pulled[0]))) / 20.0;
+        assertThat(shorter).as("the wordmark's line gives up the pull").isCloseTo(3.5, within(0.06));
+        assertThat(positionOf(pulled[0]) - positionOf(plain[0])).as("its text lowered as its baseline would rise")
+                .isEqualTo(-6);
+        assertThat(DocxTwips.of(lineOf(pulled[1]))).as("the pulled line whole, the pull taken above it")
+                .isEqualTo(DocxTwips.of(lineOf(plain[1])));
+    }
+
+    @Test
+    void aLineAboveWithItsTextShadedIsLeftWhole() throws Exception {
+        // A shaded run fills its exact line in Word: shortened, the chip would lose its foot.
+        XWPFParagraph plain = decoratedLockup(true, false, 0);
+        XWPFParagraph pulled = decoratedLockup(true, false, -2);
+
+        assertThat(pulled.getRuns().get(0).getCTR().getRPr().sizeOfShdArray()).as("a shaded run").isPositive();
+        assertThat(DocxTwips.of(lineOf(pulled))).as("its line not cut").isEqualTo(DocxTwips.of(lineOf(plain)));
+        assertThat(positionOf(pulled)).as("nor its text lowered").isEqualTo(positionOf(plain));
+    }
+
+    @Test
+    void aLineAboveWithItsTextUnderlinedIsLeftWhole() throws Exception {
+        // Word draws an underline below the letters, in the room the pull would take.
+        XWPFParagraph plain = decoratedLockup(false, true, 0);
+        XWPFParagraph pulled = decoratedLockup(false, true, -2);
+
+        assertThat(pulled.getRuns().get(0).getCTR().getRPr().sizeOfUArray()).as("an underlined run").isPositive();
+        assertThat(DocxTwips.of(lineOf(pulled))).as("its line not cut").isEqualTo(DocxTwips.of(lineOf(plain)));
+        assertThat(positionOf(pulled)).as("nor its text lowered").isEqualTo(positionOf(plain));
+    }
+
+    /** A 21pt wordmark, shaded or underlined, over a 10pt subtitle pulled up by {@code pull}. */
+    private static XWPFParagraph decoratedLockup(boolean shaded, boolean underlined, double pull) throws Exception {
+        DocumentTextStyle wordmark = DocumentTextStyle.builder().fontName(FontName.LATO).size(21)
+                .decoration(underlined ? DocumentTextDecoration.UNDERLINE : DocumentTextDecoration.DEFAULT).build();
+        DocumentTextStyle subtitle = DocumentTextStyle.builder().fontName(FontName.LATO).size(10).build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow("Head", row -> row
+                        .columns(DocumentRowColumn.weight(1), DocumentRowColumn.weight(1))
+                        .addSection("Lockup", cell -> cell
+                                .addParagraph(p -> {
+                                    if (shaded) {
+                                        p.inlineHighlight("HALL", wordmark,
+                                                DocumentColor.rgb(255, 230, 150), 0, DocumentInsets.zero());
+                                    } else {
+                                        p.text("HALL").textStyle(wordmark);
+                                    }
+                                })
+                                .addParagraph(p -> p.text("QUAYSIDE BAR").textStyle(subtitle)
+                                        .margin(new DocumentInsets(pull, 0, 0, 0))))
+                        .addParagraph(p -> p.text("MONDAY").textStyle(subtitle))))) {
+            return document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
+        }
+    }
+
+    @Test
+    void aPullDeeperThanTheLettersAboveLeaveRoomForRisesInsideItsOwnLine() throws Exception {
+        // Under 12pt text the line's foot has about 3pt below the letters; the rest of an 8pt
+        // pull comes out of the top of the pulled line itself.
+        DocumentTextStyle small = DocumentTextStyle.builder().fontName(FontName.LATO).size(12).build();
+        XWPFParagraph[] plain = lockup(small, 0);
+        XWPFParagraph[] pulled = lockup(small, -8);
+
+        assertThat(DocxTwips.of(lineOf(pulled[0]))).as("the line above gave some").isLessThan(DocxTwips.of(lineOf(plain[0])));
+        assertThat(DocxTwips.of(lineOf(pulled[1]))).as("and the pulled line the rest").isLessThan(DocxTwips.of(lineOf(plain[1])));
+    }
+
+    /** A wordmark over a 10pt subtitle pulled up by {@code pull}, in a row's cell. */
+    private static XWPFParagraph[] lockup(DocumentTextStyle wordmark, double pull) throws Exception {
+        DocumentTextStyle subtitle = DocumentTextStyle.builder().fontName(FontName.LATO).size(10).build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow("Head", row -> row
+                        .columns(DocumentRowColumn.weight(1), DocumentRowColumn.weight(1))
+                        .addSection("Lockup", cell -> cell
+                                .addParagraph(p -> p.text("HALL").textStyle(wordmark))
+                                .addParagraph(p -> p.text("QUAYSIDE BAR").textStyle(subtitle)
+                                        .margin(new DocumentInsets(pull, 0, 0, 0))))
+                        .addParagraph(p -> p.text("MONDAY").textStyle(subtitle))))) {
+            List<XWPFParagraph> paragraphs = document.getTables().get(0).getRow(0).getCell(0).getParagraphs();
+            return new XWPFParagraph[]{paragraphs.get(0), paragraphs.get(1)};
+        }
+    }
+
+    private static Object lineOf(XWPFParagraph paragraph) {
+        return paragraph.getCTP().getPPr().getSpacing().getLine();
+    }
+
+    private static int positionOf(XWPFParagraph paragraph) {
+        var run = paragraph.getRuns().get(0).getCTR();
+        return run.isSetRPr() && run.getRPr().sizeOfPositionArray() > 0
+                ? ((Number) run.getRPr().getPositionArray(0).getVal()).intValue() : 0;
     }
 
     @Test

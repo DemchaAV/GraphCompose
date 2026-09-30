@@ -11,8 +11,8 @@ import com.demcha.compose.font.FontLibrary;
 /**
  * Where a paragraph's line seats its text by its cap band, off the baseline the layout gave it.
  *
- * <p>Shared by the PDF backend, which draws the line there, and the DOCX backend, which raises
- * the same text in a Word line by as much — so the two cannot drift apart.</p>
+ * <p>Shared by the PDF and PPTX backends, which draw the line there, and the DOCX backend, which
+ * raises the same text in a Word line by as much — so the three cannot drift apart.</p>
  */
 @Internal
 public final class ParagraphSeating {

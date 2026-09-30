@@ -4629,9 +4629,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * letters and everything under it lower. Its lockup's "L" stood on the "&amp;Co." set under
      * it.</p>
      *
-     * <p>Only this paragraph's runs move — a line pair or a page zone writes another's in the
-     * same Word paragraph — and a picture's own raise is added to, as the page moves a picture
-     * with its line's seated baseline.</p>
+     * <p>Only this paragraph's runs move — a line pair writes another's in the same Word
+     * paragraph — and a picture's own raise is added to, as the page moves a picture with its
+     * line's seated baseline. The room made for a picture in the line is its unseated reach. A
+     * page zone's paragraph has no laid-out lines here, and is written on its baseline.</p>
      *
      * @param runsBefore how many runs the Word paragraph held before this one's were written
      */

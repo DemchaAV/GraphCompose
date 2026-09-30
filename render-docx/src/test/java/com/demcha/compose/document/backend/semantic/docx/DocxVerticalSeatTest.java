@@ -69,7 +69,7 @@ class DocxVerticalSeatTest {
     @Test
     void anOverhangDeeperThanTheBandsMarginLeavesNoGapAtAll() throws Exception {
         // The line hangs further below the block than its 5pt margin reaches: the paragraph after
-        // it starts at once, the rest of the overhang taken from what follows.
+        // it starts at once.
         assertThat(beforeTheDetails(20, 5)).isZero();
     }
 

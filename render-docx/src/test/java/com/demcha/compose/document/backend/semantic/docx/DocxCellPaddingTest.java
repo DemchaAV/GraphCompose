@@ -44,19 +44,58 @@ class DocxCellPaddingTest {
                         .build())
                 .row("Padded")));
 
-        assertThat(margins(cell)).containsExactly(180L, 140L, 100L, 60L);
+        // Above and below, less the engine's default 1pt rule, which Word gives room of its own.
+        assertThat(margins(cell)).containsExactly(160L, 140L, 80L, 60L);
+    }
+
+    @Test
+    void aRuledCellGivesItsRulesOutOfItsPaddingWhereWordPutsThem() throws Exception {
+        // Word gives a rule between two rows half to each, and the rules above and below the
+        // table whole to their row: measured, a 1.5pt rule made each row 1.5pt taller and a
+        // one-row table 3pt taller. The sides keep their padding.
+        XWPFTable table = firstTable(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(7))
+                        .stroke(com.demcha.compose.document.style.DocumentStroke.of(
+                                com.demcha.compose.document.style.DocumentColor.BLACK, 1.5))
+                        .build())
+                .row("First")
+                .row("Second")));
+
+        assertThat(margins(table.getRow(0).getCell(0))).as("the rule above the table, half the one between")
+                .containsExactly(110L, 140L, 125L, 140L);
+        assertThat(margins(table.getRow(1).getCell(0))).as("half the rule between, the rule below the table")
+                .containsExactly(125L, 140L, 110L, 140L);
+    }
+
+    @Test
+    void aTableThatStatesNoRuleIsRuledWithTheEnginesOwnDefault() throws Exception {
+        // Not Word's thinner grid: the page draws such a table with 1pt black rules, and the
+        // rows are as tall as those rules make them.
+        XWPFTableCell cell = firstCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .row("Plain")));
+        var top = cell.getCTTc().getTcPr().getTcBorders().getTop();
+
+        assertThat(top.getVal().toString()).isEqualTo("single");
+        assertThat(((Number) top.getSz()).intValue()).as("1pt in eighths").isEqualTo(8);
+        assertThat(DocxSemanticBackend.ENGINE_DEFAULT_CELL_STROKE.width())
+                .isEqualTo(TableCellLayoutStyle.DEFAULT.stroke().width());
     }
 
     @Test
     void aTableThatStatesNothingIsWrittenWithTheEnginesOwnDefault() throws Exception {
         // Not Word's 5.4pt a side and nothing above: the page is laid out with 4pt all
-        // round, and the file has to say the same or the rows come out shorter than drawn.
+        // round, and the file has to say the same or the rows come out shorter than drawn —
+        // less, above and below, the engine's default 1pt rule, which Word gives room of its own.
         XWPFTableCell cell = firstCell(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.auto())
                 .row("Plain")));
 
         long four = Math.round(4 * TWIPS_PER_POINT);
-        assertThat(margins(cell)).containsExactly(four, four, four, four);
+        long three = Math.round(3 * TWIPS_PER_POINT);
+        assertThat(margins(cell)).containsExactly(three, four, three, four);
     }
 
     @Test
@@ -84,8 +123,9 @@ class DocxCellPaddingTest {
                         DocumentTableCell.text("cell wins").withStyle(
                                 DocumentTableStyle.builder().padding(DocumentInsets.of(11)).build()))));
 
-        assertThat(margins(table.getRow(0).getCell(0))[0]).isEqualTo(Math.round(6 * TWIPS_PER_POINT));
-        assertThat(margins(table.getRow(0).getCell(1))[0]).isEqualTo(Math.round(11 * TWIPS_PER_POINT));
+        // The first row's top, less the default 1pt rule above the table.
+        assertThat(margins(table.getRow(0).getCell(0))[0]).isEqualTo(Math.round(5 * TWIPS_PER_POINT));
+        assertThat(margins(table.getRow(0).getCell(1))[0]).isEqualTo(Math.round(10 * TWIPS_PER_POINT));
     }
 
     @Test

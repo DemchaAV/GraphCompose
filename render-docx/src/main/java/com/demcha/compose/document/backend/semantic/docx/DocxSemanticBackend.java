@@ -6158,8 +6158,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // The covered positions of a merge take the paint too, so a merged
                 // region reads as one cell rather than as a striped run of them.
                 DocumentColor fill = resolveCellFill(node, placement);
-                applyCellPaint(cell, fill, resolveCellValue(node, placement, DocumentTableStyle::stroke));
-                applyCellPadding(cell, resolveCellPadding(node, placement));
+                DocumentStroke stroke = resolveCellStroke(node, placement);
+                applyCellPaint(cell, fill, stroke);
+                applyCellPadding(cell, clearOfTheRules(resolveCellPadding(node, placement), stroke,
+                        placement.row() == 0, placement.row() + placement.rowSpan() >= rowCount));
                 applyVerticalAnchor(cell, resolveCellAnchor(node, placement));
                 if (placement.row() != rowIdx) {
                     // A covered position carries the merge marker and no content of its own.
@@ -6351,6 +6353,42 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         setCellMargin(margins.isSetRight() ? margins.getRight() : margins.addNewRight(),
                 padding.right());
     }
+
+    /**
+     * A table cell's padding as its margins, with room for the rules above and below it.
+     *
+     * <p>The page draws a cell's rules on its edges and steps its rows by their padding and
+     * content alone. Word gives the rules room: a rule between two rows half to each, the rule
+     * above the table and the one below it whole to their row. Measured, a row of 12.35pt text
+     * and 7pt padding stepped 26.35pt unruled, 27.1 with 0.75pt rules and 27.85 with 1.5pt
+     * ones, and a one-row table with 1.5pt rules stood 3pt taller, its text 1.5pt lower.
+     * {@code EditorialProposal}'s timeline and investment tables grew that much row by row, and
+     * their last block went onto a third page. So each rule comes off the padding where Word puts
+     * it, which keeps every row's text where the page sets it too. The sides keep their padding,
+     * as the columns' widths are fixed. Padding thinner than its share gives what it has.</p>
+     *
+     * @param firstRow whether the cell starts the table's first row, under the rule above the table
+     * @param lastRow  whether the cell ends the table's last row, over the rule below it
+     */
+    private static DocumentInsets clearOfTheRules(DocumentInsets padding, DocumentStroke stroke,
+                                                  boolean firstRow, boolean lastRow) {
+        double rule = strokeWidth(stroke);
+        return new DocumentInsets(Math.max(0, padding.top() - (firstRow ? rule : rule / 2)), padding.right(),
+                Math.max(0, padding.bottom() - (lastRow ? rule : rule / 2)), padding.left());
+    }
+
+    /**
+     * The rule a cell resolves to, most specific wins, with the engine's own default underneath:
+     * a table that states no rule is drawn with it on the page, and the table's own grid Word
+     * would otherwise draw is thinner and gives its rows other heights.
+     */
+    private DocumentStroke resolveCellStroke(TableNode node, TableGrid.Placement placement) {
+        DocumentStroke authored = resolveCellValue(node, placement, DocumentTableStyle::stroke);
+        return authored != null ? authored : ENGINE_DEFAULT_CELL_STROKE;
+    }
+
+    /** What the engine rules a cell with when nothing states otherwise. */
+    static final DocumentStroke ENGINE_DEFAULT_CELL_STROKE = DocumentStroke.of(DocumentColor.BLACK, 1.0);
 
     /**
      * The padding a cell resolves to, most specific wins, with the engine's own default

@@ -1,7 +1,9 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
@@ -57,8 +59,8 @@ class DocxCellPaddingTest {
                 .columns(DocumentTableColumn.auto())
                 .defaultCellStyle(DocumentTableStyle.builder()
                         .padding(DocumentInsets.of(7))
-                        .stroke(com.demcha.compose.document.style.DocumentStroke.of(
-                                com.demcha.compose.document.style.DocumentColor.BLACK, 1.5))
+                        .stroke(DocumentStroke.of(
+                                DocumentColor.BLACK, 1.5))
                         .build())
                 .row("First")
                 .row("Second")));
@@ -67,6 +69,54 @@ class DocxCellPaddingTest {
                 .containsExactly(110L, 140L, 125L, 140L);
         assertThat(margins(table.getRow(1).getCell(0))).as("half the rule between, the rule below the table")
                 .containsExactly(125L, 140L, 110L, 140L);
+    }
+
+    @Test
+    void betweenRowsRuledDifferentlyTheLowerRowsRuleIsTheOneGivenUp() throws Exception {
+        // Measured, a 1.5pt header over 0.5pt rows stepped as 0.5pt rules do: Word makes room
+        // at the edge for the lower row's rule.
+        XWPFTable table = firstTable(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(7)).stroke(DocumentStroke.of(DocumentColor.BLACK, 0.5)).build())
+                .rowStyle(0, DocumentTableStyle.builder().stroke(DocumentStroke.of(DocumentColor.BLACK, 1.5)).build())
+                .row("Header")
+                .row("Body")));
+
+        assertThat(margins(table.getRow(0).getCell(0))).as("its own 1.5pt above, half the body's 0.5pt below")
+                .containsExactly(110L, 140L, 135L, 140L);
+        assertThat(margins(table.getRow(1).getCell(0))).as("half its own 0.5pt above, its own below")
+                .containsExactly(135L, 140L, 130L, 140L);
+    }
+
+    @Test
+    void aCellSpanningToTheLastRowGivesUpTheRuleBelowTheTable() throws Exception {
+        XWPFTable table = firstTable(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(7)).stroke(DocumentStroke.of(DocumentColor.BLACK, 1.5)).build())
+                .rowCells(DocumentTableCell.text("Tall").rowSpan(2), DocumentTableCell.text("Top"))
+                .rowCells(DocumentTableCell.text("Low"))));
+
+        assertThat(margins(table.getRow(0).getCell(0))).as("above the table and below it, both whole")
+                .containsExactly(110L, 140L, 110L, 140L);
+    }
+
+    @Test
+    void aRuleOfNoWidthGivesUpNothingAndPaddingThinnerThanItsShareGivesWhatItHas() throws Exception {
+        XWPFTableCell unruled = firstCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(7)).stroke(DocumentStroke.of(DocumentColor.BLACK, 0)).build())
+                .row("Unruled")));
+        XWPFTableCell thin = firstCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(1)).stroke(DocumentStroke.of(DocumentColor.BLACK, 2)).build())
+                .row("Thin")));
+
+        assertThat(margins(unruled)).containsExactly(140L, 140L, 140L, 140L);
+        assertThat(margins(thin)).as("none left above and below, the sides kept").containsExactly(0L, 20L, 0L, 20L);
     }
 
     @Test
@@ -80,6 +130,7 @@ class DocxCellPaddingTest {
 
         assertThat(top.getVal().toString()).isEqualTo("single");
         assertThat(((Number) top.getSz()).intValue()).as("1pt in eighths").isEqualTo(8);
+        assertThat(top.xgetColor().getStringValue()).as("black").isEqualToIgnoringCase("000000");
         assertThat(DocxSemanticBackend.ENGINE_DEFAULT_CELL_STROKE.width())
                 .isEqualTo(TableCellLayoutStyle.DEFAULT.stroke().width());
     }

@@ -16,7 +16,10 @@ follow semantic versioning; release dates are ISO 8601.
   rules and 27.85 with 1.5pt ones, and a one-row table with 1.5pt rules stood 3pt taller. Every
   ruled table grew row by row: `EditorialProposal`'s timeline and investment tables pushed its
   investment block onto a third page, and `NorthlineProposal`'s acceptance heading stood 12pt
-  below its badge. Each rule now comes off a cell's padding above or below, where Word puts it.
+  below its badge. Each rule now comes off a cell's padding above or below, where Word puts it —
+  between two rows ruled differently, the lower row's rule, which Word was measured making room
+  for — so a table ruled alike throughout, with padding enough, steps as the page does; padding
+  thinner than its share gives what it has.
   A table that states no rule was left on Word's own grid, thinner than the engine's default 1pt
   black rule the page draws and giving its rows other heights; it is now written with that rule.
   In Word `EditorialProposal` is two pages again; across the 62 templates the median drift falls

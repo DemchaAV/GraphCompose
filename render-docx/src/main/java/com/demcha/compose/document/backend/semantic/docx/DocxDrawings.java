@@ -79,12 +79,14 @@ final class DocxDrawings {
      * @param path        a custom shape's outline in its box's unit square, empty for a preset
      * @param front       whether it is drawn in front of the text rather than behind it
      * @param picture     a picture's relationship in the document part, {@code null} for a shape
-     * @param text        a paragraph the shape holds centred in it, as {@code w:p} markup — a
-     *                    badge's initials — or {@code null}
+     * @param text        a paragraph the shape holds, as {@code w:p} markup — a badge's initials,
+     *                    or a line of text laid over the flow — or {@code null}
+     * @param textAtTop   whether the paragraph is set from the box's top-left corner, as the page
+     *                    sets a line in its box, rather than centred in the shape
      */
     record Shape(Kind kind, double x, double top, double width, double height, Color fill,
                  Color stroke, double strokeWidth, double radius, boolean flipH, int page,
-                 List<DocumentPathSegment> path, boolean front, String picture, String text) {
+                 List<DocumentPathSegment> path, boolean front, String picture, String text, boolean textAtTop) {
         Shape {
             path = path == null ? List.of() : List.copyOf(path);
         }
@@ -93,7 +95,7 @@ final class DocxDrawings {
               Color stroke, double strokeWidth, double radius, boolean flipH, int page,
               List<DocumentPathSegment> path, boolean front, String picture) {
             this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front, picture,
-                    null);
+                    null, false);
         }
 
         Shape(Kind kind, double x, double top, double width, double height, Color fill,
@@ -116,7 +118,7 @@ final class DocxDrawings {
         /** The same shape in front of the text rather than behind it. */
         Shape inFront() {
             return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, true,
-                    picture, text);
+                    picture, text, textAtTop);
         }
 
         /**
@@ -126,7 +128,23 @@ final class DocxDrawings {
          */
         Shape holding(String paragraph) {
             return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
-                    picture, paragraph);
+                    picture, paragraph, false);
+        }
+
+        /**
+         * A box holding a paragraph set from its top-left corner, with nothing drawn round it: a
+         * line of text laid over the flow, where the page sets it.
+         *
+         * @param x         from the page's left edge, in points
+         * @param top       from the page's top edge, in points
+         * @param width     in points
+         * @param height    in points
+         * @param page      the page the layout set it on, from 0
+         * @param paragraph the paragraph, as {@code w:p} markup
+         */
+        static Shape textBox(double x, double top, double width, double height, int page, String paragraph) {
+            return new Shape(Kind.RECT, x, top, width, height, null, null, 0, 0, false, page, List.of(), false,
+                    null, paragraph, true);
         }
 
         /**
@@ -352,6 +370,12 @@ final class DocxDrawings {
     private static String textOf(Shape shape) {
         if (shape.text() == null) {
             return "<wps:bodyPr/>";
+        }
+        if (shape.textAtTop()) {
+            // Set from the corner, with no inset, as the page sets a line in its box.
+            return "<wps:txbx><w:txbxContent>" + shape.text() + "</w:txbxContent></wps:txbx>"
+                   + "<wps:bodyPr rot=\"0\" vert=\"horz\" wrap=\"square\" lIns=\"0\" tIns=\"0\" rIns=\"0\""
+                   + " bIns=\"0\" anchor=\"t\" anchorCtr=\"0\"><a:noAutofit/></wps:bodyPr>";
         }
         double across = 0;
         double down = 0;

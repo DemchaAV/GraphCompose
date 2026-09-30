@@ -22,8 +22,9 @@ import static org.assertj.core.api.Assertions.within;
  *
  * <p>{@code PaymentsInvoice}'s header rule is pulled 16.4pt up out of the space its header
  * stack leaves below itself, and its metadata grid is padded 6.2pt down its column. Word has
- * no negative space above a paragraph and no space above a table: the rule and the page under
- * it stood 16.4pt low, and the grid 6.2pt high.</p>
+ * no negative space above a paragraph and no space above a table: the pull was dropped and the
+ * padding lost, and in Word the grid stood 6.3pt high and the rule and the page under it 10pt
+ * low.</p>
  */
 class DocxSpaceAboveTest {
 
@@ -54,6 +55,22 @@ class DocxSpaceAboveTest {
             var spacing = pulled.getCTP().getPPr().getSpacing();
 
             assertThat(spacing.isSetBefore() ? DocxTwips.of(spacing.getBefore()) : 0L).isZero();
+        }
+    }
+
+    @Test
+    void aPageReferencePulledUpTakesItsPullOutOfTheSpaceOwedAboveIt() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addParagraph(p -> p.text("Header").textStyle(BODY).margin(new DocumentInsets(0, 0, 20, 0)))
+                .add(new com.demcha.compose.document.node.PageReferenceNode("Ref", "terms", BODY,
+                        com.demcha.compose.document.node.TextAlign.LEFT, "", DocumentInsets.zero(),
+                        new DocumentInsets(-8, 0, 0, 0)))
+                .addSection(s -> s.anchor("terms").addParagraph(p -> p.text("Terms").textStyle(BODY))))) {
+            XWPFParagraph reference = document.getParagraphs().get(1);
+
+            assertThat(reference.getCTP().xmlText()).as("the page reference's paragraph").contains("PAGEREF");
+            assertThat(DocxTwips.of(reference.getCTP().getPPr().getSpacing().getBefore()) / 20.0)
+                    .as("20pt owed less the 8pt it is pulled up").isCloseTo(12, within(0.1));
         }
     }
 

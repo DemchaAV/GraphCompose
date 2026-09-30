@@ -3183,9 +3183,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         // What the paragraph would have above it before its own edge, which is written apart
-        // (applyVerticalSpacing): the edges carried down to it and the space the block before it
-        // owes, less a border standing below that block. Only what that comes short of zero is
-        // a rise; the rest is written as space.
+        // (applyVerticalSpacing, or standsIntoTheSpaceAbove for a negative one, after this): the
+        // edges carried down to it and the space the block before it owes, less a border
+        // standing below that block. Only what that comes short of zero is a rise; the rest is
+        // written as space.
         double rise = -(carriedSpacingBefore + pendingSpacingAfter - borderBelow);
         if (!(rise > 0.01) || layout.lineCount(first) != 1 || stackedLineHeights.containsKey(first)) {
             return;
@@ -3738,7 +3739,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * writes an edge only where it is positive, so an edge pulling the block up was dropped
      * and the block stood that much low, with everything after it. {@code PaymentsInvoice}'s
      * header rule is pulled 16.4pt up from the foot of the stack above it, whose band runs
-     * past its content: the rule and the page under it stood 16.4pt low. The pull is added
+     * past its content: the pull was lost, and the rule and the page under it stood 10pt low,
+     * the 16.4pt less the 6.3pt its metadata grid had lost above it. The pull is added
      * to the edges carried down to the block, as a container's negative edge already is, so
      * {@link #newBodyParagraph} nets it against everything owed above, as the page sums it;
      * what that cannot give stays unwritten, as before. Text laid over the flow owes no
@@ -6015,7 +6017,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * paragraph after. Both go through the debt every other gap goes through
      * ({@link #owePendingSpacingAfter}), so a table between two paragraphs reads the same as
      * two paragraphs with a gap between them. With nothing above it — opening the body, or a
-     * row opening a cell — a paragraph a tenth of a point tall holds that edge
+     * row opening any cell but a table's — a paragraph a tenth of a point tall holds that edge
      * ({@link #holdTheSpaceAboveATable}); a table opening a cell still loses it.</p>
      */
     private void writeTableWithItsOwnSpacing(XWPFDocument document, DocumentNode node)
@@ -6025,10 +6027,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // At the top of a cell nothing above holds that space: MerchantInvoice's due-date
             // row lost its 16.7pt of top padding and stood against the card's top edge, once the
             // card held the page's height, and PaymentsInvoice's metadata grid the 6.2pt its
-            // column is padded down by, standing that much above the issuer beside it. A row in
-            // a table's cell keeps to the row height the table holds (holdRowHeight): held
-            // again, ObsidianInvoice's line items stood 6pt low. A table is left as it was too:
-            // holding its space moved ObsidianInvoice's line items 6pt below the page's.
+            // column is padded down by, standing 6.3pt above the issuer beside it. A row in a
+            // table's cell keeps to the row height the table holds (holdRowHeight), and a table
+            // is left as it was: holding the space of either moved ObsidianInvoice's line items
+            // 6pt below the page's.
             holdTheSpaceAboveATable(document);
         }
         if (node instanceof RowNode row) {

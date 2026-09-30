@@ -196,7 +196,7 @@ one, so a table's or a row's `margin` and `padding` travel to the paragraphs aro
 the space above a table is the space below the paragraph before it. Where no paragraph
 stands above it — a table opening the body, or a row opening any cell but a table's, padded
 down it — a paragraph a tenth of a point tall carries the space instead. A row opening a
-table's cell is left to the row height the table holds, which has that space in it already;
+table's cell is left to the row height the table holds, at least as tall as the page makes it;
 a table (not a row) opening a cell still loses that edge.
 
 An edge pulling a block up — a paragraph's, a page reference's or a rule's negative top

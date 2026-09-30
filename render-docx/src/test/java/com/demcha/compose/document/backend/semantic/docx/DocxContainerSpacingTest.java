@@ -224,10 +224,10 @@ class DocxContainerSpacingTest {
     }
 
     @Test
-    void aTableOpeningATablesCellIsWrittenAsBefore() throws Exception {
-        // A table's cell takes no paragraph: the table holds its row at the page's height, and
-        // one there was measured to set content lower than the page does — each of
-        // ObsidianInvoice's line items 8.5pt lower. A row's column does (DocxSpaceAboveTest).
+    void aRowOpeningATablesCellIsWrittenAsBefore() throws Exception {
+        // A table's cell takes no paragraph: the table holds its row at least as tall as the
+        // page makes it, and one there was measured to set content lower than the page does —
+        // each of ObsidianInvoice's line items 6pt lower. A row's column does (DocxSpaceAboveTest).
         com.demcha.compose.document.dsl.SectionBuilder composed = new com.demcha.compose.document.dsl.SectionBuilder();
         composed.padding(new DocumentInsets(12, 0, 0, 0))
                 .addRow(inner -> inner.addParagraph("Qty").addParagraph("1"));

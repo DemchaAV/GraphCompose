@@ -213,7 +213,8 @@ final class DocxLayerColumns {
      * @param resumes  for each layer after the first, the space above its first block
      * @param above    from the stack's top to its first written block, that block's own margin
      *                 aside
-     * @param below    from the text of its lowest written block to the stack's bottom
+     * @param below    from the text of its lowest written block to the stack's bottom; below zero
+     *                 when that text runs past the bottom, by as much as it hangs below it
      */
     record Band(List<DocumentNode> layers, Set<DocumentNode> standIns, Map<DocumentNode, Double> resumes,
                 double above, double below) {
@@ -278,7 +279,7 @@ final class DocxLayerColumns {
         double above = box.placementY() + box.placementHeight()
                        - (top.placementY() + top.placementHeight()) - first.margin().top();
         double below = lowest.placementY() + lowest.padding().bottom() - box.placementY();
-        return new Band(layers, standIns, resumes, Math.max(0, above), Math.max(0, below));
+        return new Band(layers, standIns, resumes, Math.max(0, above), below);
     }
 
     /**

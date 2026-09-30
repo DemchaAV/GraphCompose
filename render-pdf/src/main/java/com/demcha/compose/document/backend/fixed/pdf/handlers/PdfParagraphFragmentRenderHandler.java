@@ -42,48 +42,6 @@ public final class PdfParagraphFragmentRenderHandler
     public PdfParagraphFragmentRenderHandler() {
     }
 
-    /**
-     * Baseline correction that seats a line by its cap band within the line box,
-     * used for the non-default {@link TextVerticalAlign} modes. Derived purely
-     * from font metrics — no magic offset — so it scales with font size:
-     *
-     * <ul>
-     *   <li>{@code TOP} — raise the cap top to the line-box top
-     *       ({@code ascent + leading - capHeight}).</li>
-     *   <li>{@code CENTER} — centre the cap band {@code [baseline, baseline + capHeight]}
-     *       on the line-box middle (the midpoint of {@code TOP} and {@code BOTTOM}).</li>
-     *   <li>{@code BOTTOM} — lower the baseline to the line-box bottom
-     *       ({@code -descent}); descenders extend below the box.</li>
-     * </ul>
-     *
-     * <p>The cap height is read from the line's first text span; an image-only
-     * line is left untouched.</p>
-     *
-     * @return points to add to the baseline Y (positive raises the text)
-     */
-    private static double verticalSeatShift(ParagraphLine line, FontLibrary fonts, TextVerticalAlign align) {
-        for (ParagraphSpan span : line.spans()) {
-            if (span instanceof ParagraphTextSpan textSpan) {
-                PdfFont font = fonts.getFont(textSpan.textStyle().fontName(), PdfFont.class).orElse(null);
-                if (font == null) {
-                    return 0.0;
-                }
-                double capHeight = font.getCapHeight(textSpan.textStyle());
-                double ascent = line.textAscent();
-                double descent = line.baselineOffsetFromBottom();
-                double leading = Math.max(0.0, line.textLineHeight() - ascent - descent);
-                double capTopToBoxTop = ascent + leading - capHeight;
-                return switch (align) {
-                    case TOP -> capTopToBoxTop;
-                    case CENTER -> (capTopToBoxTop - descent) / 2.0;
-                    case BOTTOM -> -descent;
-                    case DEFAULT -> 0.0;
-                };
-            }
-        }
-        return 0.0;
-    }
-
     private static double resolveImageBottom(ParagraphImageSpan imageSpan,
                                              double baselineY,
                                              double textAscent,
@@ -350,7 +308,7 @@ public final class PdfParagraphFragmentRenderHandler
                 double baselineY = ParagraphLineGeometry.baselineY(
                     lineTop, resolvedLineHeight, line.baselineOffsetFromBottom());
                 if (payload.verticalAlign() != TextVerticalAlign.DEFAULT) {
-                    baselineY += verticalSeatShift(line, fonts, payload.verticalAlign());
+                    baselineY += ParagraphSeating.shift(line, fonts, payload.verticalAlign());
                 }
                 double lineX = ParagraphLineGeometry.lineStartX(
                     payload.align(), innerX, innerWidth, line.width());

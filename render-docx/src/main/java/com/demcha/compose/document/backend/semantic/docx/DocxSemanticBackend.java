@@ -45,6 +45,7 @@ import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -341,6 +342,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // Every family this export can name, by the logical name a style asks for. The
     // session's own registrations win over the bundled ones, the way they do everywhere.
     private java.util.Map<FontName, FontFamilyDefinition> wordFamilies = java.util.Map.of();
+    // The families the layout measured with, and the fonts it measured them in, loaded when a
+    // line seated off its baseline first asks for a cap height (see seatShift).
+    private List<FontFamilyDefinition> measuredFamilies = List.of();
+    private FontLibrary seatFonts;
     // What this export could not carry as authored. Collected whether or not anyone asked
     // for it: building it costs a list, and deciding later that nobody wanted it is not
     // something the writers can do halfway through.
@@ -597,6 +602,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         headingLevels = headingLevelsIn(whole);
         bookmarkedAnchors = bookmarkedAnchorsIn(whole);
         wordFamilies = DocxFontTable.familiesByName(fonts);
+        measuredFamilies = List.copyOf(fonts);
+        seatFonts = null;
         documentDefaultStyle = dominantTextStyle(whole);
         currentCell = null;
         currentCellWidth = Double.NaN;
@@ -4570,6 +4577,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * than its text. Its fill is read from the authored run beside the reduced one.</p>
      */
     private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node, boolean rightToLeft) {
+        int runsBefore = node.verticalAlign() == null || node.verticalAlign() == TextVerticalAlign.DEFAULT
+                ? 0 : runsIn(para).size();
         warnDroppedInlineRuns(node);
         String path = layout.pathOf(node);
         java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(node);
@@ -4607,6 +4616,85 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         makeRoomForPictures(para, pictures);
         styleTheMark(para, markStyle);
+        seatInTheLine(para, node, runsBefore);
+    }
+
+    /**
+     * Raises or lowers a paragraph's text in its lines by as much as the page seats it off its
+     * baseline ({@link TextVerticalAlign}), as a run position Word keeps inside the line.
+     *
+     * <p>A line's height is written as the page's; where in it the text sits is not.
+     * {@code LumaStudioInvoice}'s title sets "INVOICE" against the top of a line far taller
+     * than its capitals, and Word set it on the line's foot: 20pt low, its rule through the
+     * letters and everything under it lower. Its lockup's "L" stood on the "&amp;Co." set under
+     * it.</p>
+     *
+     * <p>Only this paragraph's runs move — a line pair writes another's in the same Word
+     * paragraph — and a picture's own raise is added to, as the page moves a picture with its
+     * line's seated baseline. The room made for a picture in the line is its unseated reach. A
+     * page zone's paragraph has no laid-out lines here, and is written on its baseline.</p>
+     *
+     * @param runsBefore how many runs the Word paragraph held before this one's were written
+     */
+    private void seatInTheLine(XWPFParagraph para, ParagraphNode node, int runsBefore) {
+        long halfPoints = Math.round(seatShift(node) * HALF_POINTS_PER_POINT);
+        if (halfPoints == 0) {
+            return;
+        }
+        List<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR> runs = runsIn(para);
+        for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run : runs.subList(runsBefore, runs.size())) {
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr properties =
+                    run.isSetRPr() ? run.getRPr() : run.addNewRPr();
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSignedHpsMeasure position =
+                    properties.sizeOfPositionArray() > 0 ? properties.getPositionArray(0) : properties.addNewPosition();
+            long raised = position.getVal() instanceof Number number ? number.longValue() : 0;
+            position.setVal(BigInteger.valueOf(raised + halfPoints));
+        }
+    }
+
+    /**
+     * A paragraph's runs in document order, the ones inside its links included: an internal
+     * link's runs are not among {@link XWPFParagraph#getRuns()}.
+     */
+    private static List<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR> runsIn(XWPFParagraph para) {
+        List<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR> runs = new ArrayList<>();
+        try (org.apache.xmlbeans.XmlCursor cursor = para.getCTP().newCursor()) {
+            cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' "
+                              + "./w:r | ./w:hyperlink/w:r");
+            while (cursor.toNextSelection()) {
+                if (cursor.getObject() instanceof org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run) {
+                    runs.add(run);
+                }
+            }
+        }
+        return runs;
+    }
+
+    /**
+     * How far the page moves a paragraph's text off its baseline to seat it by its cap band, in
+     * points, positive up: the PDF backend's own correction
+     * ({@link com.demcha.compose.document.backend.fixed.pdf.handlers.ParagraphSeating}), from the
+     * fonts the layout measured with. Read off the first line holding text — a picture alone on
+     * the first line seats nothing — and 0 when the paragraph sits on its baseline. One Word
+     * paragraph takes one shift: the page seats each line by its own, which differs only for
+     * lines in different sizes.
+     */
+    private double seatShift(ParagraphNode node) {
+        if (node.verticalAlign() == null || node.verticalAlign() == TextVerticalAlign.DEFAULT) {
+            return 0;
+        }
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : layout.lines(node)) {
+            if (line.spans().stream().anyMatch(
+                    span -> span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan)) {
+                if (seatFonts == null) {
+                    seatFonts = com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory
+                            .measurementLibrary(measuredFamilies);
+                }
+                return com.demcha.compose.document.backend.fixed.pdf.handlers.ParagraphSeating
+                        .shift(line, seatFonts, node.verticalAlign());
+            }
+        }
+        return 0;
     }
 
     /** A line break in text, as the page breaks lines at it (see {@code ParagraphWrapping}). */
@@ -6694,7 +6782,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double unwritten = Double.isNaN(resumeSpacing) ? 0 : resumeSpacing;
         resumeSpacing = Double.NaN;
         carriedSpacingBefore = 0;
-        pendingSpacingAfter = unwritten + band.below() + stack.margin().bottom();
+        // Text running past the band's foot hangs below it and takes that much of the gap under
+        // it, as a line pair's does (writeLinePair): LumaStudioInvoice's "INVOICE" is set in a
+        // line 13pt deeper than its title block, and the invoice's details under it, and
+        // everything after them, stood that much lower in Word.
+        // The band measures its space below from its lowest text, a nested band's included: what
+        // a band inside it left hanging is already in that number, and is not taken twice.
+        double below = unwritten + band.below() + stack.margin().bottom();
+        pendingSpacingAfter = Math.max(0, below);
+        hangingBelow = below < 0 ? -below : 0;
     }
 
     /**

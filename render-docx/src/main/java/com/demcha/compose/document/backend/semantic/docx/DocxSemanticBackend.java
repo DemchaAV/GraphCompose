@@ -2840,6 +2840,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
+    /**
+     * The room a panel in a cell leaves past its right border, in points: Word draws the cell's
+     * gridline on screen at the cell's edge, over a border that meets it.
+     */
+    private static final double CLEAR_OF_THE_GRIDLINE_POINTS = 0.5;
+
     /** Writes one table of a panel: the whole panel, or the part of it between page breaks. */
     private void writePanelPiece(XWPFDocument document, DocumentNode node, ContainerPaint paint,
                                  List<DocumentNode> children, boolean first, boolean last) throws Exception {
@@ -2863,11 +2869,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         holdTheSpaceAboveATable(document);
         double width = panelWidth(node);
 
+        double edge = insetLeft + margin.left();
+        double indent = currentCell == null ? edge + padding.left() - halfLeft : edge - halfLeft;
+        // In a cell, Word starts a nested table no further left than the cell's text, draws its
+        // right border outside the table's right edge — measured in its PDF, a table ending at
+        // 566.0pt had its right border from 566.2 to 566.9 — and on screen cuts off whatever
+        // passes the cell's edge and draws the cell's gridline over it: a panel as wide as its
+        // cell lost its right border, EditorialProposal's glance card. A panel with a right
+        // border that reaches its cell's text edge ends that border and a little more short of
+        // it, the points taken from its right margin and no more than it holds, so its text keeps
+        // its place and its width.
+        double shortOfTheEdge = 0;
+        double room = currentCell != null && Double.isFinite(currentCellWidth) && strokeWidth(borders.right()) > 0
+                ? currentCellWidth - insetRight - Math.max(0, indent) - strokeWidth(borders.right())
+                  - CLEAR_OF_THE_GRIDLINE_POINTS
+                : Double.NaN;
+
         XWPFTable table = newTable(document, 1, 1);
         hideTableGrid(table);
         XWPFTableCell cell = table.getRow(0).getCell(0);
         if (Double.isFinite(width) && width > 0) {
             double outer = width + halfLeft + halfRight;
+            if (room > 0 && outer > room) {
+                // No more than the right margin holds: past that the text would narrow and wrap,
+                // which is worse than a border the cell's edge covers.
+                shortOfTheEdge = Math.min(outer - room, insideTheBorders(padding, borders).right());
+                outer -= shortOfTheEdge;
+            }
             setTableWidth(table, outer);
             writeGrid(table, new double[]{outer});
             CTTcPr properties = cellProperties(cell);
@@ -2877,7 +2905,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         applyCellPaint(cell, paint.fill(), null);
         paintCellSides(cell, paint.borders());
-        applyCellPadding(cell, insideTheBorders(padding, borders));
+        DocumentInsets margins = insideTheBorders(padding, borders);
+        applyCellPadding(cell, new DocumentInsets(margins.top(), Math.max(0, margins.right() - shortOfTheEdge),
+                margins.bottom(), margins.left()));
         if (node.keepTogether() && layout.onOnePage(node)) {
             table.getRow(0).setCantSplitRow(true);
         }
@@ -2916,15 +2946,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             holdRowAtLeast(table.getRow(0), placed.placementHeight());
         }
 
-        double edge = insetLeft + margin.left();
-        double indent = currentCell == null ? edge + padding.left() - halfLeft : edge - halfLeft;
         if (indent != 0) {
             CTTblPr tableProperties = table.getCTTbl().getTblPr();
             CTTblWidth tableIndent = tableProperties.isSetTblInd()
                     ? tableProperties.getTblInd()
                     : tableProperties.addNewTblInd();
             tableIndent.setType(STTblWidth.DXA);
-            // Signed: a nested panel with no margin starts half its border left of the cell.
+            // Signed: a nested panel with no margin starts half its border left of the cell, and
+            // Word starts it at the cell's text.
             tableIndent.setW(BigInteger.valueOf(Math.round(indent * POINT_TO_TWIP)));
         }
         if (last) {

@@ -163,6 +163,67 @@ class DocxPanelEdgeCasesTest {
     }
 
     @Test
+    void aNestedCardWithTooThinAMarginGivesUpNoMoreThanItHolds() throws Exception {
+        // 1pt of padding against a 1.5pt border: the margin can give back 0.25pt, not the 2.25
+        // the border would need. The text keeps its width; the border stays where it was.
+        try (XWPFDocument document = export(page -> page.addSection("Outer", outer -> outer
+                .fillColor(SURFACE)
+                .addSection("Inner", inner -> inner
+                        .stroke(com.demcha.compose.document.style.DocumentStroke.of(ACCENT, 1.5))
+                        .padding(DocumentInsets.of(1))
+                        .addParagraph(p -> p.text("Inner")))))) {
+            XWPFTableCell host = card(document);
+            var hostProperties = host.getCTTc().getTcPr();
+            long room = DocxTwips.of(hostProperties.getTcW().getW())
+                        - DocxTwips.of(hostProperties.getTcMar().getLeft().getW())
+                        - DocxTwips.of(hostProperties.getTcMar().getRight().getW());
+            XWPFTable nested = host.getTables().get(0);
+            long width = DocxTwips.of(nested.getCTTbl().getTblPr().getTblW().getW());
+            var margins = nested.getRow(0).getCell(0).getCTTc().getTcPr().getTcMar();
+
+            assertThat(DocxTwips.of(margins.getRight().getW())).as("all its right margin given up").isZero();
+            // As wide as its cell, every border inside its margins: the room less 1pt of padding
+            // each side, and the four half borders the margins give back.
+            assertThat(width - DocxTwips.of(margins.getLeft().getW()) - DocxTwips.of(margins.getRight().getW()))
+                    .as("its text as wide as on the page")
+                    .isCloseTo(room - 40 + 60, org.assertj.core.data.Offset.offset(3L));
+        }
+    }
+
+    @Test
+    void aNestedCardAsWideAsItsCellEndsItsRightBorderInsideItAndKeepsItsTextsWidth() throws Exception {
+        // Word starts a nested table no further left than its cell's text, centres its borders on
+        // its edges and, on screen, cuts off what passes the cell's right edge: a card as wide as
+        // its cell lost its right border. The points it gives up come off its right margin.
+        try (XWPFDocument document = export(page -> page.addSection("Outer", outer -> outer
+                .fillColor(SURFACE)
+                .addSection("Inner", inner -> inner
+                        .stroke(com.demcha.compose.document.style.DocumentStroke.of(ACCENT, 1.5))
+                        .padding(DocumentInsets.of(10))
+                        .addParagraph(p -> p.text("Inner")))))) {
+            XWPFTableCell host = card(document);
+            XWPFTable nested = host.getTables().get(0);
+            var hostProperties = host.getCTTc().getTcPr();
+            long room = DocxTwips.of(hostProperties.getTcW().getW())
+                        - DocxTwips.of(hostProperties.getTcMar().getLeft().getW())
+                        - DocxTwips.of(hostProperties.getTcMar().getRight().getW());
+            var tableProperties = nested.getCTTbl().getTblPr();
+            long start = Math.max(0, tableProperties.isSetTblInd() ? DocxTwips.of(tableProperties.getTblInd().getW()) : 0);
+            long width = DocxTwips.of(tableProperties.getTblW().getW());
+            var margins = nested.getRow(0).getCell(0).getCTTc().getTcPr().getTcMar();
+            long text = width - DocxTwips.of(margins.getLeft().getW()) - DocxTwips.of(margins.getRight().getW());
+
+            // Word draws the right border, 1.5pt or 30 twips, outside the table's edge. The text
+            // is as wide as the card written as wide as its cell, every border inside the cell's
+            // margins: its room less its 10pt padding each side, and the four half borders the
+            // margins give back.
+            assertThat(start + width + 30).as("its right border inside the cell").isLessThanOrEqualTo(room);
+            assertThat(text).as("its text as wide as on the page")
+                    .isCloseTo(room - 400 + 60, org.assertj.core.data.Offset.offset(3L));
+        }
+    }
+
+    @Test
     void aCardWithNoCanvasLeavesItsWidthToTheEditor() throws Exception {
         try (XWPFDocument document = DocxExports.withoutCanvas(page -> page.addSection("Card", card -> card
                 .fillColor(SURFACE)

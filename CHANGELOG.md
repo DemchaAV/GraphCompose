@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A row a drawing makes tall, and a title pulled above its row, keep the page's height in
+  Word.** A row whose tallest child is drawn where the page puts it — a badge beside a heading,
+  its cell holding nothing in Word — was only as tall as its text there: `WorkspaceInvoice`'s
+  bill-to heading stood beside a 20pt badge, and the address under it stood 10pt high. Such a row
+  is now held at least as tall as the page makes it, as a row inside a painted panel already was;
+  a drawing no taller than its neighbours' text, a timeline's rail beside its entry, leaves the
+  row to Word. A section in a cell (a row's, a table's or a panel's) that pulls its first line up
+  with a negative top edge — `WorkspaceInvoice`'s masthead title, set 4pt above its row — had that
+  line start at the cell's top in Word, and the page under it 4pt low; a one-line first paragraph
+  is now written as much shorter, its text seated where the page sets it — no more than the room
+  above its letters, as Word draws an exact line's text only inside the line. The paragraph's own
+  top edge is written as before. In Word `WorkspaceInvoice`'s median drift
+  falls from 4.8pt to 0.4 and `SubscriptionInvoice`'s from 8.8 to 0.5; across the 62 templates,
+  lines more than 2pt off fall from 858 to 705. `PaymentsInvoice`'s parties now stand level with
+  each other and its median rises from 3.7 to 10.3: the collapsed heading row had been hiding a
+  gap above it that runs about 16pt long in Word.
 - **A bordered panel in a table cell shows its right border in Word.** Word draws a table's right
   border outside its right edge — measured in its PDF, a table ending at 566.0pt had its right
   border from 566.2 to 566.9 — and on screen cuts off what passes its cell's edge and draws the

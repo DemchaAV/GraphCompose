@@ -3107,6 +3107,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double carriedFromOutside = carriedSpacingBefore;
         long blocksBefore = blocksWritten;
         carriedSpacingBefore += node.margin().top() + node.padding().top();
+        riseIntoItsLine(node);
         // The sides are carried the same way, as the indent of every paragraph inside: a
         // container's content starts inside its margin and its padding on the page, and was
         // written flush with the page margin, the card's text touching the card's edge.
@@ -3135,6 +3136,47 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // sidebar's top padding under the portrait that opened it. A drawing in the flow
         // counts as a block (holdTheSpaceOf).
         carriedSpacingBefore = blocksWritten == blocksBefore ? carriedFromOutside : 0;
+    }
+
+    /**
+     * Lets a container in a cell that pulls its first line up above the cell — a negative top
+     * edge — do so inside that line.
+     *
+     * <p>A Word paragraph starts no higher than its cell. {@code WorkspaceInvoice}'s title is set
+     * 4pt above its masthead row by the cell's padding, and in Word stood 4pt low with the whole
+     * page under it; the row opens the page, and there is no space above to lift it into (see
+     * {@link #standsAboveItsCell}). A first child of one line is written that much shorter
+     * instead, its text seated where the page sets it (see {@link DocxStackedLines.Line}), so
+     * the row is as tall as the page's and the title stands where the page puts it. That holds
+     * wherever the container stands in its cell: after other blocks, the space owed above it is
+     * written, and the line rises from there as the page's does.</p>
+     *
+     * <p>Word draws an exact line's text on screen only inside the line, so the line gives up no
+     * more than the room above its letters (see {@link DocxInk}): an accent on a capital pulled
+     * up further would be cut. What it cannot give stays where it did, the line starting at the
+     * cell's top. A line whose letters cannot be read — a picture in it — is left as it was.</p>
+     */
+    private void riseIntoItsLine(DocumentNode node) {
+        double rise = -carriedSpacingBefore;
+        if (!(rise > 0.01) || currentCell == null || node.children().isEmpty()
+            || !(node.children().get(0) instanceof ParagraphNode first)
+            || layout.lineCount(first) != 1 || stackedLineHeights.containsKey(first)) {
+            return;
+        }
+        java.util.OptionalDouble own = layout.lineHeight(first);
+        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(first);
+        double[] ink = inkOf(first);
+        if (own.isEmpty() || line.isEmpty() || ink == null) {
+            return;
+        }
+        double aboveTheLetters = line.get().lineHeight() - line.get().baselineOffsetFromBottom() - ink[0]
+                                 - DocxStackedLines.INK_MARGIN;
+        double taken = Math.min(rise, aboveTheLetters);
+        if (!(taken > 0.01) || taken >= own.getAsDouble()) {
+            return;
+        }
+        stackedLineHeights.put(first, new DocxStackedLines.Line(own.getAsDouble() - taken, -taken, 0));
+        carriedSpacingBefore += taken;
     }
 
     private static boolean hasRadius(com.demcha.compose.document.style.DocumentCornerRadius radius) {
@@ -6088,6 +6130,37 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Whether a row's tallest child on the page, margins included as the row is sized by them,
+     * is one whose cell Word holds nothing in, taller by more than half a point than every child
+     * it writes.
+     */
+    private boolean aDrawingMakesTheRow(RowNode node, XWPFTableRow row) {
+        double drawn = 0;
+        double written = 0;
+        for (int i = 0; i < node.children().size() && i < row.getTableCells().size(); i++) {
+            DocumentNode child = node.children().get(i);
+            com.demcha.compose.document.layout.PlacedNode placed = layout.placement(child);
+            if (placed == null) {
+                continue;
+            }
+            double height = placed.placementHeight() + child.margin().top() + child.margin().bottom();
+            if (holdsNothing(row.getCell(i))) {
+                drawn = Math.max(drawn, height);
+            } else {
+                written = Math.max(written, height);
+            }
+        }
+        return drawn > written + 0.5;
+    }
+
+    /** Whether Word holds nothing in a cell: no table, and no paragraph with a run. */
+    private static boolean holdsNothing(XWPFTableCell cell) {
+        return cell.getTables().isEmpty()
+               && cell.getParagraphs().stream().allMatch(paragraph -> paragraph.getCTP().sizeOfRArray() == 0
+                                                                      && paragraph.getCTP().sizeOfHyperlinkArray() == 0);
+    }
+
+    /**
      * Writes a row at least a height, less what its cells take above and below their content
      * (see {@link #holdRowHeight}).
      *
@@ -6746,8 +6819,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Inside a painted panel the row is held as tall as the page made it: its padding and a
         // drawing standing in it are what make it taller than its text, as a panel's are, and
         // MerchantInvoice's due-date text stood against its card's top without it.
-        com.demcha.compose.document.layout.PlacedNode placedRow =
-                surfaceBehind != null && panelCell != null ? layout.placement(node) : null;
+        boolean inAPanel = surfaceBehind != null && panelCell != null;
+        com.demcha.compose.document.layout.PlacedNode placedRow = layout.placement(node);
         // A row has no fill of its own: inside a panel it is a table nested in the panel's
         // cell, and a cell with no shading shows the panel's through it.
         for (int i = 0; i < node.children().size(); i++) {
@@ -6769,7 +6842,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             applyRowVerticalAlign(cell, node.verticalAlign());
         }
-        if (placedRow != null && placedRow.startPage() == placedRow.endPage()) {
+        // Anywhere, a row whose tallest child is one Word holds nothing of in its cell — a
+        // picture drawn where the page puts it, a badge beside a heading — is only as tall there
+        // as its text: WorkspaceInvoice's bill-to heading stood beside a 20pt badge, and the
+        // address under it stood 10pt high in Word. Held to the page's height, whose margins are
+        // written around the table. A drawing no taller than its neighbours' text — a timeline's rail
+        // beside its entry — changes nothing and is left to Word.
+        if (placedRow != null && placedRow.startPage() == placedRow.endPage()
+            && (inAPanel || aDrawingMakesTheRow(node, row))) {
             holdRowAtLeast(row, placedRow.placementHeight() - node.padding().top() - node.padding().bottom());
         }
         indentTable(table);

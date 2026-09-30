@@ -416,6 +416,19 @@ page.addParagraph(p -> p
   LibreOffice. A picture that stays inside the text in both editors keeps the exact
   height; a 12pt icon on a line of 14pt text does not, since on the baseline it rises past
   the ascent.
+  A paragraph of one line of text, in a Word paragraph of its own, keeps an exact line at
+  the page's height of it instead — the page makes that line tall enough for its pictures —
+  and Word sets the text on the page's baseline and the pictures with it, where the page
+  puts them. What a picture's ink reaches past the line, into the gap above or below as the
+  page draws it, the line takes from that gap, so the lines keep the page's pitch:
+  `TimelineMinimal`'s contact lines, a 10.5pt icon beside smaller text, had grown 0.9pt each
+  in Word and 2.2pt in LibreOffice. With no space above it to take, the line makes that room
+  itself, as before. A paragraph of several lines, a line holding only a picture — not seated
+  on the page's baseline, having no text — a list item, a table's text cell and a line set
+  beside another are grown as above. At the end of a cell, the ink below the last line is
+  not taken from the cell's bottom: the row is that much taller. LibreOffice stands such a picture on
+  the baseline, higher than the page does, and cuts what passes the line's top: a lowered
+  icon stands up to its drop too high there, its top cut, where its text is in place.
 - **What an icon is.** An SVG icon — an emoji among them — is drawn into a transparent
   picture from the same layers the page draws, by the raster the PPTX export falls back
   to, so it looks as it does on the page. The text it stands for is the picture's

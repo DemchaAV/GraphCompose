@@ -111,12 +111,12 @@ class DocxParagraphMarkTest {
 
     @Test
     void aLineGrownToAPictureSizesItsMarkToo() throws Exception {
-        // Small print with an icon rising above it is written "at least" the icon's height; a
-        // mark at the document's size would grow it further.
+        // Two lines of small print with an icon rising above them are written "at least" the
+        // icon's height; a mark at the document's size would grow them further.
         try (XWPFDocument document = export(page -> page
-                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addParagraph(p -> p.text("Body text sets the document's size. ".repeat(12)))
                 .addParagraph(p -> p.textStyle(DocumentTextStyle.DEFAULT.withSize(6))
-                        .inlineText("Tiny ")
+                        .inlineText("Tiny print that runs on past the end of its line ".repeat(4))
                         .inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png()), 14, 14)))) {
             CTPPr small = document.getParagraphs().get(1).getCTP().getPPr();
 
@@ -127,13 +127,13 @@ class DocxParagraphMarkTest {
 
     @Test
     void aMarkIsSizedAsTheTextThatEndsTheLineNotAsTheParagraphsUnusedStyle() throws Exception {
-        // A contact line: an icon and runs styled on their own, the paragraph's style left at its
-        // default. A mark in that default grew every such line in both editors.
+        // A contact block: an icon and runs styled on their own, the paragraph's style left at its
+        // default, on two lines. A mark in that default grew every such line in both editors.
         try (XWPFDocument document = export(page -> page
                 .addParagraph(p -> p.text("Body text sets the document's size"))
                 .addParagraph(p -> p
                         .inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png()), 14, 14)
-                        .inlineText(" billing@example.com", DocumentTextStyle.DEFAULT.withSize(6))))) {
+                        .inlineText(" billing@example.com".repeat(12), DocumentTextStyle.DEFAULT.withSize(6))))) {
             CTPPr line = document.getParagraphs().get(1).getCTP().getPPr();
 
             assertThat(line.getSpacing().getLineRule()).hasToString("atLeast");

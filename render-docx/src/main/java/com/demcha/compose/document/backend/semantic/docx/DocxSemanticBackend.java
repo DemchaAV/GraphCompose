@@ -4206,11 +4206,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         com.demcha.compose.document.layout.PlacedNode box = layout.placement(overlay);
         double lineTop = box.placementY() + box.placementHeight() - pair.above();
         int leftAnchor = openAnchor(para, pair.left().anchor());
-        writeParagraphRuns(para, pair.left(), false, lineTopAbove(lineTop, pair.left()));
+        writeParagraphRuns(para, pair.left(), false, lineTopAbove(lineTop, pair.left()), false);
         closeAnchor(para, leftAnchor);
         para.createRun().addTab();
         int rightAnchor = openAnchor(para, pair.right().anchor());
-        writeParagraphRuns(para, pair.right(), false, lineTopAbove(lineTop, pair.right()));
+        writeParagraphRuns(para, pair.right(), false, lineTopAbove(lineTop, pair.right()), false);
         closeAnchor(para, rightAnchor);
         if ((pair.left().keepWithNext() && layout.onOnePage(pair.left()))
             || (pair.right().keepWithNext() && layout.onOnePage(pair.right()))) {
@@ -4489,7 +4489,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // A line of a stack starts where its letters and the ones above leave room, not where
         // the page's line does (see DocxStackedLines).
         DocxStackedLines.Line stacked = stackedLineHeights.get(node);
-        writeParagraphRuns(para, node, rightToLeft, stacked == null ? 0 : stacked.topAbove());
+        writeParagraphRuns(para, node, rightToLeft, stacked == null ? 0 : stacked.topAbove(), stacked == null);
         closeAnchor(para, anchor);
     }
 
@@ -4777,7 +4777,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * than its text. Its fill is read from the authored run beside the reduced one.</p>
      */
     private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node, boolean rightToLeft) {
-        writeParagraphRuns(para, node, rightToLeft, 0);
+        writeParagraphRuns(para, node, rightToLeft, 0, false);
     }
 
     /**
@@ -4786,9 +4786,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * @param lineTopAbove how far above the page's first line of the paragraph the Word line
      *                     starts, in points
+     * @param ownLine      whether the Word paragraph is this paragraph's alone, its lines the
+     *                     page's — not a line pair's, a stack's or a text box's
      */
     private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node, boolean rightToLeft,
-                                    double lineTopAbove) {
+                                    double lineTopAbove, boolean ownLine) {
         int runsBefore = para.getCTP().sizeOfRArray() == 0 && para.getCTP().sizeOfHyperlinkArray() == 0
                 ? 0 : runsIn(para).size();
         warnDroppedInlineRuns(node);
@@ -4826,9 +4828,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             applyRunDirection(docRun, rightToLeft);
             setTextBrokenAtLines(docRun, node.text());
         }
-        makeRoomForPictures(para, pictures);
+        // A line pair's or a stack's line is cut to its own measure, not the paragraph's. A line
+        // with no text is not seated on the page's baseline (shiftToThePagesBaseline), and held
+        // exact its picture would stand where Word's baseline puts it, cut by the line's top.
+        double heldAbove = ownLine && layout.lineCount(node) == 1 && holdsText(node)
+                ? holdPicturesInTheLine(para, pictures) : Double.NaN;
+        // A line reaching its pictures' ink past the page's has that ink at its edges.
+        boolean cutToTheInk = !Double.isNaN(heldAbove) && (pictures.above() > 0 || pictures.below() > 0);
+        if (Double.isNaN(heldAbove)) {
+            makeRoomForPictures(para, pictures);
+            heldAbove = 0;
+        }
         styleTheMark(para, markStyle);
-        seatInTheLine(para, node, runsBefore, lineTopAbove);
+        seatInTheLine(para, node, runsBefore, lineTopAbove + heldAbove, cutToTheInk);
+    }
+
+    /** Whether a paragraph laid out a line holding text, which its seat is read from. */
+    private boolean holdsText(ParagraphNode node) {
+        return layout.lines(node).stream().anyMatch(line -> line.spans().stream().anyMatch(
+                span -> span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan));
     }
 
     /**
@@ -4852,9 +4870,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param runsBefore   how many runs the Word paragraph held before this one's were written
      * @param lineTopAbove how far above the page's first line of the paragraph the Word line
      *                     starts, in points
+     * @param heldExact    whether the line was held to its pictures' reach
+     *                     ({@link #holdPicturesInTheLine}), and so is seated however little
      */
-    private void seatInTheLine(XWPFParagraph para, ParagraphNode node, int runsBefore, double lineTopAbove) {
-        long halfPoints = Math.round((seatShift(node) + shiftToThePagesBaseline(para, node, lineTopAbove))
+    private void seatInTheLine(XWPFParagraph para, ParagraphNode node, int runsBefore, double lineTopAbove,
+                               boolean heldExact) {
+        long halfPoints = Math.round((seatShift(node) + shiftToThePagesBaseline(para, node, lineTopAbove, heldExact))
                                      * HALF_POINTS_PER_POINT);
         if (halfPoints == 0) {
             return;
@@ -4933,8 +4954,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * moved by one would win a quarter point at most.</p>
      *
      * @param lineTopAbove how far above the page's first line the Word line starts, in points
+     * @param heldExact    whether the line was cut to its pictures' reach, and so is seated
+     *                     however little
      */
-    private double shiftToThePagesBaseline(XWPFParagraph para, ParagraphNode node, double lineTopAbove) {
+    private double shiftToThePagesBaseline(XWPFParagraph para, ParagraphNode node, double lineTopAbove,
+                                           boolean heldExact) {
         CTPPr properties = para.getCTP().getPPr();
         if (properties == null || !properties.isSetSpacing()) {
             return 0;
@@ -4957,8 +4981,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                + middle * pageStep + line.lineHeight() - line.baselineOffsetFromBottom();
                 double shift = middle * wordLine + wordLine * DocxTextBands.BASELINE_SHARE - pages;
                 // A line starting elsewhere than the page's — a stack's, a line pair's — was cut
-                // to fit its letters where the page sets them, and is seated however little.
-                boolean cutToFit = lineTopAbove != 0 || stackedLineHeights.containsKey(node);
+                // to fit its letters where the page sets them, and is seated however little; so
+                // is one cut to its pictures' reach, whose ink stands at its edges.
+                boolean cutToFit = lineTopAbove != 0 || stackedLineHeights.containsKey(node) || heldExact;
                 return Math.abs(shift) < LEAST_BASELINE_SHIFT_POINTS && !cutToFit ? 0 : shift;
             }
         }
@@ -4999,7 +5024,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * editor's own measure of its text, which in LibreOffice is taller than the page's —
      * where the page makes only the line holding the picture taller. A paragraph written with
      * no exact height — a page zone's, one with no layout — grows to its pictures on its own
-     * and is left alone.</p>
+     * and is left alone. A paragraph of one line is held to the page's line instead where it
+     * can be ({@link #holdPicturesInTheLine}).</p>
      */
     private static void makeRoomForPictures(XWPFParagraph para, PictureReach pictures) {
         CTPPr properties = para.getCTP().getPPr();
@@ -5017,6 +5043,56 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             spacing.setLineRule(STLineSpacingRule.AT_LEAST);
         }
         spacing.setLine(BigInteger.valueOf(line));
+    }
+
+    /**
+     * Holds a paragraph of one line and its pictures at the page's height, where Word sets them
+     * as the page does.
+     *
+     * <p>The line stays exact, at the page's height of it: Word then sets its text on the
+     * page's baseline ({@link #seatInTheLine}) and the pictures with it, where the page puts
+     * them. Grown "at least" to a picture instead ({@link #makeRoomForPictures}), Word made the
+     * line its own height — {@code TimelineMinimal}'s contact lines, a 10.5pt icon beside
+     * smaller text, each came out 0.9pt taller, and the page under them 4.4pt low; LibreOffice,
+     * measuring its text taller still, 11pt low.</p>
+     *
+     * <p>A picture's ink reaching past the page's line is drawn on the page in the gaps around
+     * it; an exact Word line cuts it off. So the line reaches as far, taking that room from the
+     * space written above it and from the space above what follows ({@link #hangingBelow}),
+     * and keeps its pitch. A line with no space above it to take is grown as before.
+     * LibreOffice stands a picture on the baseline, higher than the page does, and cuts what
+     * passes the line's top.</p>
+     *
+     * @return how far above the page's line the Word line now starts, in points, or NaN when
+     *         the line is left to {@link #makeRoomForPictures}
+     */
+    private double holdPicturesInTheLine(XWPFParagraph para, PictureReach pictures) {
+        CTPPr properties = para.getCTP().getPPr();
+        // A picture inside its text keeps the exact line it has (makeRoomForPictures).
+        if (pictures == null || !pictures.overText() || !(pictures.reach() > 0) || !(pictures.pageLine() > 0)
+            || properties == null || !properties.isSetSpacing()) {
+            return Double.NaN;
+        }
+        CTSpacing spacing = properties.getSpacing();
+        if (!spacing.isSetLineRule() || spacing.getLineRule() != STLineSpacingRule.EXACT) {
+            return Double.NaN;
+        }
+        long before = spacing.isSetBefore() ? twipsOf(spacing.getBefore()) : 0;
+        long up = Math.round(pictures.above() * POINT_TO_TWIP);
+        if (up > before) {
+            return Double.NaN;
+        }
+        Long current = writtenTwips(spacing.getLine());
+        long page = Math.round(pictures.pageLine() * POINT_TO_TWIP);
+        long down = Math.round(pictures.below() * POINT_TO_TWIP);
+        spacing.setLine(BigInteger.valueOf((current == null ? page : Math.max(current, page)) + up + down));
+        if (up > 0) {
+            spacing.setBefore(BigInteger.valueOf(before - up));
+        }
+        if (down > 0) {
+            hangingBelow = Math.max(hangingBelow, down / POINT_TO_TWIP);
+        }
+        return up / POINT_TO_TWIP;
     }
 
     /**
@@ -5125,7 +5201,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     + ") is the picture's description rather than a character in the line");
         }
         if (line.isEmpty()) {
-            return new PictureReach(height, false);
+            return PictureReach.unplaced(height);
         }
         long raise = Math.round(bottom * 2);
         if (raise != 0) {
@@ -5155,13 +5231,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * line — below the text's ascent where Word puts it, above it on the baseline — counts as
      * rising: in LibreOffice it lost 1.7pt of its top at the exact height.</p>
      *
+     * <p>The page's own line holds most of a picture already: a contact line's icon, taller
+     * than its text and hanging below it, makes the line as tall as the icon, and what its ink
+     * reaches past the line the page draws in the gaps around it ({@link #holdPicturesInTheLine}).</p>
+     *
      * @param reach    how far above the line's bottom the highest picture reaches, in points
      * @param overText whether a picture passes the text's ascent or descent
+     * @param pageLine the page's height of the line, 0 when where the pictures stand is not
+     *                 known, and NaN when no picture was written
+     * @param above    how far the highest picture's ink reaches above the page's line where Word
+     *                 puts it, in points
+     * @param below    how far the lowest picture's ink reaches below it, in points
      */
-    record PictureReach(double reach, boolean overText) {
+    record PictureReach(double reach, boolean overText, double pageLine, double above, double below) {
 
         /** No picture written. */
-        static final PictureReach NONE = new PictureReach(0, false);
+        static final PictureReach NONE = new PictureReach(0, false, Double.NaN, 0, 0);
+
+        /** A picture in a line the page laid out none of: where it stands is not known. */
+        static PictureReach unplaced(double height) {
+            return new PictureReach(height, false, 0, 0, 0);
+        }
 
         static PictureReach of(double bottomFromBaseline, double height,
                                com.demcha.compose.document.layout.payloads.ParagraphLine line) {
@@ -5186,12 +5276,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             double wordTop = bottomFromBaseline + height - inset;
             double top = Math.max(wordTop, height - inset);
             boolean passes = top > line.textAscent() || -(bottomFromBaseline + inset) > descent;
-            return new PictureReach(descent + wordTop, passes);
+            double above = Math.max(0, descent + wordTop - line.lineHeight());
+            double below = Math.max(0, -(bottomFromBaseline + inset) - descent);
+            return new PictureReach(descent + wordTop, passes, line.lineHeight(), above, below);
         }
 
         PictureReach max(PictureReach other) {
-            return other == null ? this
-                    : new PictureReach(Math.max(reach, other.reach), overText || other.overText);
+            if (other == null) {
+                return this;
+            }
+            double line = Double.isNaN(pageLine) ? other.pageLine
+                    : Double.isNaN(other.pageLine) ? pageLine
+                    : pageLine > 0 && other.pageLine > 0 ? Math.max(pageLine, other.pageLine) : 0;
+            return new PictureReach(Math.max(reach, other.reach), overText || other.overText, line,
+                    Math.max(above, other.above), Math.max(below, other.below));
         }
     }
 

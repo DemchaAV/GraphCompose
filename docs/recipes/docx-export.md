@@ -173,7 +173,7 @@ it cannot work out for itself:
 
 | What | Where it lands |
 |---|---|
-| Line height | `w:spacing w:lineRule="exact"` on every paragraph, cells and list items included — the height the engine measured, not a multiple Word would measure again against a substituted font. A paragraph the layout did not measure — one in a composed table cell — is left to the editor, and a line holding a picture above its text is written "at least" that height; in both the paragraph mark is set in the text's size and face, since the mark counts towards the last line's height. Both editors stand the baseline of an exact line four fifths of the way down it whatever the face (measured in Word and LibreOffice), and the page sets it the face's ascent below the line's top: where the two are half a point or more apart — a face with a deep descent, as Spectral's is — a paragraph's text is raised or lowered to the page's baseline by `w:position`, matched at its middle line; a list item's and a table text cell's are not yet. A picture among such text moves with it in Word; LibreOffice keeps a picture on its own baseline, where it stood before. Lines a container stacks tighter than their face — a title's lines a pitch apart — each end halfway between their letters and the next line's, since Word draws an exact line's text on screen only inside the line, and the last layer of a shape container, where its line runs past the foot, ends at the foot or below its letters |
+| Line height | `w:spacing w:lineRule="exact"` on every paragraph, cells and list items included — the height the engine measured, not a multiple Word would measure again against a substituted font. A paragraph the layout did not measure — one in a composed table cell — is left to the editor, and a line holding a picture above its text is written "at least" that height — except a paragraph of one line of text with room above for its pictures' reach, held exact at the page's height (see "Inline pictures"); in both the paragraph mark is set in the text's size and face, since the mark counts towards the last line's height. Both editors stand the baseline of an exact line four fifths of the way down it whatever the face (measured in Word and LibreOffice), and the page sets it the face's ascent below the line's top: where the two are half a point or more apart — a face with a deep descent, as Spectral's is — a paragraph's text is raised or lowered to the page's baseline by `w:position`, matched at its middle line; a list item's and a table text cell's are not yet. A picture among such text moves with it in Word; LibreOffice keeps a picture on its own baseline, where it stood before. Lines a container stacks tighter than their face — a title's lines a pitch apart — each end halfway between their letters and the next line's, since Word draws an exact line's text on screen only inside the line, and the last layer of a shape container, where its line runs past the foot, ends at the foot or below its letters |
 | Table columns | the resolved cell widths as `w:gridCol`, with `w:tblLayout` fixed so Word does not re-fit them |
 | Row columns | where the layout placed each child, with the row's gap and padding folded into the neighbouring column and taken back out as that cell's margin. A column sized to its content (`DocumentRowColumn.auto()`) gets a point more, taken from the row's weight columns so the row keeps its width, for the reason a table's does: the editor's substitute font would wrap it — a table of contents' labels broke mid-word ("Intr" / "o") in LibreOffice without it. A row with no auto column, no weight column, or no stated columns (weights, an even split) is written as placed |
 
@@ -414,8 +414,27 @@ page.addParagraph(p -> p
   paragraph, so every line of it is then at least that reach and otherwise as tall as the
   editor's own font makes it — for 14pt text, about 2.5pt taller than the page's in
   LibreOffice. A picture that stays inside the text in both editors keeps the exact
-  height; a 12pt icon on a line of 14pt text does not, since on the baseline it rises past
+  height; a 12pt icon on a line of 14pt text leaves it, since on the baseline it rises past
   the ascent.
+  Such a paragraph of one line of text, in a Word paragraph of its own, keeps an exact line
+  at the page's height of it instead — the page makes that line tall enough for its pictures —
+  and Word sets the text on the page's baseline and the pictures with it, where the page
+  puts them. What a picture's ink reaches past the line, into the gap above or below as the
+  page draws it, the line takes from that gap, so the lines keep the page's pitch:
+  `TimelineMinimal`'s contact lines, a 10.5pt icon beside smaller text, had grown 0.9pt each
+  in Word and 2.2pt in LibreOffice. The line keeps half a point past the ink on either side
+  as well, taken the same way where there is room: Word rounds the picture's position and
+  the text's to half points each, and an icon as tall as its line lost 0.2 to 0.4pt at an
+  edge without it. Where the space above is shorter than the ink's reach above the line —
+  as it can be for the first line of a page or a cell — the line is grown "at least", as
+  before. The ink below is taken from the space above what follows, as much as that space
+  holds. A paragraph
+  of several lines, a line holding only a picture — not seated
+  on the page's baseline, having no text — a list item, a table's text cell and a line set
+  beside another are grown as above. At the end of a cell, the ink below the last line is
+  not taken from the cell's bottom: the row is that much taller. LibreOffice stands such a picture on
+  the baseline, higher than the page does, and cuts what passes the line's top: a lowered
+  icon stands up to its drop too high there, its top cut, where its text is in place.
 - **What an icon is.** An SVG icon — an emoji among them — is drawn into a transparent
   picture from the same layers the page draws, by the raster the PPTX export falls back
   to, so it looks as it does on the page. The text it stands for is the picture's

@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A line holding an icon keeps the page's height in Word.** A paragraph whose picture passes
+  its text was written "at least" the picture's height, and Word, growing the line to its own
+  measure, made it taller than the page: `TimelineMinimal`'s contact lines, a 10.5pt icon
+  beside smaller text, came out 0.9pt taller each, and the page under them 4.4pt low. A
+  paragraph of one line of text is now written at the page's exact height of its line, which
+  the page makes tall enough for its pictures; Word sets the text on the page's baseline and the
+  pictures with it, and what their ink reaches past the line is taken from the gaps around it,
+  with half a point more for the half points Word rounds a position to, so the lines keep the
+  page's pitch. A line whose space above is shorter than its pictures' reach above it — as the
+  first of a page or a cell can be — a paragraph of several lines, a line holding only a
+  picture, a list item, a table's text cell and a line set beside another are grown "at least"
+  as before. In LibreOffice a picture the page lowers now stands higher than its text and loses
+  what passes the line's top, where its text had drifted as far as 11pt low. Across the 62
+  templates, lines more than 2pt off fall from 572 to 406 in Word and from 933 to 737 in
+  LibreOffice. In Word, `TimelineMinimal`'s median drift falls from 4.1pt to 1.4 and its lines
+  off from 67 to none, `MerchantInvoice`'s from 1.7pt to 0.3, and `CharcoalGold`,
+  `SidebarPortrait` and `MintEditorial` have no line 2pt off.
+
 - **A block pulled up by a negative top edge, and a row padded down its column, stand where the
   page puts them in Word.** Word has no negative space above a paragraph, so a paragraph's, a
   page reference's or a rule's negative top `margin` or `padding` was dropped:

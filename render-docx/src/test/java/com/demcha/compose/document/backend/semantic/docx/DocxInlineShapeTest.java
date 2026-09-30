@@ -240,7 +240,9 @@ class DocxInlineShapeTest {
                 .shape(ShapeOutline.circle(8), INK, DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 2.4),
                         com.demcha.compose.document.node.InlineImageAlignment.BASELINE, 0, null)))) {
             // Half the 2.4pt stroke and the frame: 1.45pt, which is 2.9 half-points — not a tie.
-            assertThat(position(document.getParagraphs().get(0).getRuns().get(1)))
+            // Read off the text's position, which the line's seat moves the picture with.
+            var runs = document.getParagraphs().get(0).getRuns();
+            assertThat(position(runs.get(1)) - position(runs.get(0)))
                     .isEqualTo(Math.round(-(1.2 + DocxShapePictures.EDGE) * 2));
         }
     }

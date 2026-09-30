@@ -170,6 +170,9 @@ class DocxComposedCellTest {
         // chips closed to 13pt round their hours.
         assertThat(cell.getTables().get(0).getRow(0).getHeight()).as("held to its outline")
                 .isEqualTo(14 * 20);
+        assertThat(cell.getTables().get(0).getRow(0).getCtRow().getTrPr().getTrHeightArray(0).getHRule())
+                .as("at least: a longer label still grows it")
+                .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule.AT_LEAST);
     }
 
     @Test

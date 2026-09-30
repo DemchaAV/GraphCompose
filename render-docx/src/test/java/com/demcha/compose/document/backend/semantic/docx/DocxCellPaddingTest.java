@@ -218,13 +218,35 @@ class DocxCellPaddingTest {
         XWPFTableCell three = table.getRow(0).getCell(1);
 
         assertThat(table.getRow(0).getCell(2).getBodyElements().get(0)).isInstanceOf(XWPFTable.class);
+        assertThat(margins(table.getRow(0).getCell(2))[0]).as("the nested table's cell keeps its own")
+                .isEqualTo(Math.round(5 * TWIPS_PER_POINT));
         assertThat(margins(three)[0]).as("left as it was").isEqualTo(Math.round(3 * TWIPS_PER_POINT));
         assertThat(before(three)).as("no padding written twice").isZero();
     }
 
     @Test
+    void aCellInAVerticalMergeHoldsTheRowsBottomUpToItsOwn() throws Exception {
+        // The merged cell keeps its 10pt below; a 6pt cell beside it in the row is left as it
+        // was, not lowered to the 2pt cell's and given its padding in its paragraph as well.
+        XWPFTable table = firstTable(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder().padding(DocumentInsets.of(2))
+                        .stroke(DocumentStroke.of(DocumentColor.BLACK, 0)).build())
+                .rowCells(DocumentTableCell.text("spans").rowSpan(2).withStyle(DocumentTableStyle.builder()
+                                .padding(new DocumentInsets(2, 2, 10, 2)).build()),
+                        DocumentTableCell.text("six").withStyle(DocumentTableStyle.builder()
+                                .padding(new DocumentInsets(2, 2, 6, 2)).build()),
+                        DocumentTableCell.text("two"))
+                .rowCells(DocumentTableCell.text("second"), DocumentTableCell.text("third"))));
+        XWPFTableCell six = table.getRow(0).getCell(1);
+
+        assertThat(margins(six)[2]).as("left as it was").isEqualTo(Math.round(6 * TWIPS_PER_POINT));
+        assertThat(after(six)).as("no padding written twice").isZero();
+    }
+
+    @Test
     void aCellInAVerticalMergeKeepsItsMargins() throws Exception {
-        // Its bottom edge is in the last row it spans, not in the row it starts.
+        // It spans rows whose margins are evened apart: its bottom edge is in the last row.
         XWPFTable table = firstTable(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
                 .defaultCellStyle(DocumentTableStyle.builder().padding(DocumentInsets.of(2))
@@ -235,6 +257,7 @@ class DocxCellPaddingTest {
                 .rowCells(DocumentTableCell.text("second"))));
         XWPFTableCell spans = table.getRow(0).getCell(0);
 
+        assertThat(margins(spans)[0]).as("its own top").isEqualTo(Math.round(2 * TWIPS_PER_POINT));
         assertThat(margins(spans)[2]).as("its own bottom").isEqualTo(Math.round(10 * TWIPS_PER_POINT));
         assertThat(after(spans)).as("none written below it").isZero();
     }

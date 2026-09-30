@@ -233,11 +233,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // see holdStackedLines.
     private final java.util.Map<ParagraphNode, DocxStackedLines.Line> stackedLineHeights =
             new java.util.IdentityHashMap<>();
-    // How far above the page's first line a paragraph's Word line starts, in points, where its
-    // lines took the space between them from the space above it: see applyLineGap.
     // How far each paragraph a container pulled above its cell rises inside its own line: see
     // riseIntoItsLine.
     private final java.util.Map<ParagraphNode, Double> risenLines = new java.util.IdentityHashMap<>();
+    // How far above the page's first line a paragraph's Word line starts, in points, where its
+    // lines took the space between them from the space above it: see applyLineGap.
     private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP, Double> lineTopsTakenIn =
             new java.util.IdentityHashMap<>();
     // Icons drawn beside the text they label rather than written: see drawnBesideItsText.
@@ -3171,11 +3171,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             carriedSpacingBefore += risen;
             return;
         }
-        // What the paragraph would have above it, all told: the edges carried down to it, the
-        // space the block before it owes, less a border standing below that block, and its own
-        // top edge. Only what that comes short of zero is a rise; the rest is written as space.
-        double rise = -(carriedSpacingBefore + pendingSpacingAfter - borderBelow
-                        + first.margin().top() + first.padding().top());
+        // What the paragraph would have above it before its own edge, which is written apart
+        // (applyVerticalSpacing): the edges carried down to it and the space the block before it
+        // owes, less a border standing below that block. Only what that comes short of zero is
+        // a rise; the rest is written as space.
+        double rise = -(carriedSpacingBefore + pendingSpacingAfter - borderBelow);
         if (!(rise > 0.01) || layout.lineCount(first) != 1 || stackedLineHeights.containsKey(first)) {
             return;
         }

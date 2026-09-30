@@ -17,9 +17,9 @@ follow semantic versioning; release dates are ISO 8601.
   row to Word. A section in a cell (a row's, a table's or a panel's) that pulls its first line up
   with a negative top edge — `WorkspaceInvoice`'s masthead title, set 4pt above its row — had that
   line start at the cell's top in Word, and the page under it 4pt low; a one-line first paragraph
-  is now written as
-  much shorter, its text seated where the page sets it — no more than the room above its letters,
-  as Word draws an exact line's text only inside the line. In Word `WorkspaceInvoice`'s median drift
+  is now written as much shorter, its text seated where the page sets it — no more than the room
+  above its letters, as Word draws an exact line's text only inside the line. The paragraph's own
+  top edge is written as before. In Word `WorkspaceInvoice`'s median drift
   falls from 4.8pt to 0.4 and `SubscriptionInvoice`'s from 8.8 to 0.5; across the 62 templates,
   lines more than 2pt off fall from 858 to 705. `PaymentsInvoice`'s parties now stand level with
   each other and its median rises from 3.7 to 10.3: the collapsed heading row had been hiding a

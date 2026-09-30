@@ -161,7 +161,53 @@ class DocxRowHeightTest {
                         .addParagraph(p -> p.text("Heading").textStyle(entry))))) {
             XWPFTableRow row = document.getTables().get(0).getRow(0);
 
-            assertThat(row.getHeight()).as("held to the badge's 20pt box").isGreaterThan(0);
+            assertThat(row.getHeight()).as("held to the badge's 20pt box").isBetween(380, 400);
+        }
+    }
+
+    @Test
+    void aPulledTitlesOwnMarginIsWrittenAboveItAndNotTakenFromItsLine() throws Exception {
+        // The section pulls up 4pt, the paragraph sets itself 2pt down: its own 2pt is written as
+        // space above it, as for any paragraph, and the line gives up the section's 4pt.
+        DocumentTextStyle title = DocumentTextStyle.builder().fontName(FontName.LATO).size(36).build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow("Masthead", row -> row
+                        .columns(DocumentRowColumn.weight(1), DocumentRowColumn.weight(1))
+                        .addParagraph(p -> p.text("Logo").textStyle(LABEL))
+                        .addSection("Title", cell -> cell
+                                .padding(new DocumentInsets(-4, 0, 0, 0))
+                                .addParagraph(p -> p.text("INVOICE").textStyle(title)
+                                        .margin(new DocumentInsets(2, 0, 0, 0))))))) {
+            XWPFParagraph invoice = document.getTables().get(0).getRow(0).getCell(1).getParagraphs().get(0);
+            var spacing = invoice.getCTP().getPPr().getSpacing();
+
+            assertThat(DocxTwips.of(spacing.getLine()) / 20.0).isCloseTo(43.2 - 4, within(0.1));
+            assertThat(DocxTwips.of(spacing.getBefore()) / 20.0).as("its own margin above it").isCloseTo(2, within(0.1));
+        }
+    }
+
+    @Test
+    void aSectionAfterABlockInItsCellWritesTheSpaceOwedBeforeItRises() throws Exception {
+        // 6pt owed below the label, the section pulls up 4pt: the title stands 2pt below the
+        // label's line, written as 2pt of space, its line whole.
+        DocumentTextStyle title = DocumentTextStyle.builder().fontName(FontName.LATO).size(36).build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow("Masthead", row -> row
+                        .columns(DocumentRowColumn.weight(1), DocumentRowColumn.weight(1))
+                        .addParagraph(p -> p.text("Logo").textStyle(LABEL))
+                        .addSection("Title", cell -> cell
+                                .addParagraph(p -> p.text("ISSUED").textStyle(LABEL)
+                                        .margin(new DocumentInsets(0, 0, 6, 0)))
+                                .addSection("Pulled", pulled -> pulled
+                                        .padding(new DocumentInsets(-4, 0, 0, 0))
+                                        .addParagraph(p -> p.text("INVOICE").textStyle(title))))))) {
+            java.util.List<XWPFParagraph> paragraphs = document.getTables().get(0).getRow(0).getCell(1).getParagraphs();
+            XWPFParagraph invoice = paragraphs.stream()
+                    .filter(paragraph -> paragraph.getText().contains("INVOICE")).findFirst().orElseThrow();
+            var spacing = invoice.getCTP().getPPr().getSpacing();
+
+            assertThat(DocxTwips.of(spacing.getLine()) / 20.0).as("nothing to rise into").isCloseTo(43.2, within(0.1));
+            assertThat(DocxTwips.of(spacing.getBefore()) / 20.0).as("6pt owed less the 4pt pulled").isCloseTo(2, within(0.1));
         }
     }
 

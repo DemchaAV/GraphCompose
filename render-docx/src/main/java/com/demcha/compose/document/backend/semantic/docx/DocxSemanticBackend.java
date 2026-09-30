@@ -2925,8 +2925,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             table.getRow(0).setCantSplitRow(true);
         }
         if (node instanceof ShapeContainerNode) {
-            // The page centres a shape's layers in it. The chip is as tall as its line: held to
-            // the outline's height, every row grew by the cell's own margins round it.
+            // The page centres a shape's layers in it, in the outline's height the row is held to.
             cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
         }
 
@@ -2957,6 +2956,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // where the page puts it, a fixed outline — is not in the cell. MerchantInvoice's
             // due-date card closed from 59.4pt to its text's 26, and its calendar hung below it.
             holdRowAtLeast(table.getRow(0), placed.placementHeight());
+        } else if (first && last && layout.placement(node) == null && node instanceof ShapeContainerNode shape
+                   && shape.outline().height() > 0) {
+            // Composed in a table cell, it has no placement; its outline states its height, as it
+            // states its width (panelWidth). CobaltRota's shift chips, 17.5pt outlines round a
+            // line of text, closed to the text's 12.7pt in Word.
+            holdRowAtLeast(table.getRow(0), shape.outline().height());
         }
 
         if (indent != 0) {
@@ -6299,6 +6304,111 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Gives every cell of a row the row's smallest top and bottom margins, the rest of each
+     * cell's padding written as space above its first paragraph and below its last.
+     *
+     * <p>Word and LibreOffice give every cell of a row the largest top margin of any cell in it,
+     * and the largest bottom margin: measured, a row whose day cells were padded 5.5pt above and
+     * 10.25pt below and whose label cell 0.75pt stood 60.3pt tall in both, where its tallest
+     * cell's content and padding came to 46 — the label's content padded as the day cells were.
+     * {@code CobaltRota}'s masthead row stood 20.8pt taller than the page's, and each staff row,
+     * its name padded 2.55pt against its days' 1.35, 2.4pt taller. Space in a cell's paragraphs is
+     * the cell's own.</p>
+     *
+     * <p>Some margins stay as they are, and the row's then comes to the largest of them: a cell
+     * opening with a table has no paragraph above it to hold its padding, and a cell in a
+     * vertical merge spans rows whose margins are evened apart. A table the page ends with
+     * keeps the space moved below its cells' text: {@link #dropTheSpaceBelow} leaves a table
+     * with a drawn bottom alone, and every table written here has one.</p>
+     */
+    private static void evenTheRowsMargins(XWPFTableRow row) {
+        long top = Long.MAX_VALUE;
+        long bottom = Long.MAX_VALUE;
+        long keptTop = 0;
+        long keptBottom = 0;
+        for (XWPFTableCell cell : row.getTableCells()) {
+            top = Math.min(top, cellMargin(cell, true));
+            bottom = Math.min(bottom, cellMargin(cell, false));
+            if (!canMoveItsPadding(cell, true)) {
+                keptTop = Math.max(keptTop, cellMargin(cell, true));
+            }
+            if (!canMoveItsPadding(cell, false)) {
+                keptBottom = Math.max(keptBottom, cellMargin(cell, false));
+            }
+        }
+        if (top == Long.MAX_VALUE) {
+            return;
+        }
+        top = Math.max(top, keptTop);
+        bottom = Math.max(bottom, keptBottom);
+        for (XWPFTableCell cell : row.getTableCells()) {
+            List<IBodyElement> content = cell.getBodyElements();
+            long extraTop = cellMargin(cell, true) - top;
+            if (extraTop > 0 && canMoveItsPadding(cell, true)) {
+                if (!content.isEmpty()) {
+                    addSpacingTwips((XWPFParagraph) content.get(0), extraTop, 0);
+                }
+                setCellMarginTwips(cell, true, top);
+            }
+            long extraBottom = cellMargin(cell, false) - bottom;
+            if (extraBottom > 0 && canMoveItsPadding(cell, false)) {
+                if (!content.isEmpty()) {
+                    addSpacingTwips((XWPFParagraph) content.get(content.size() - 1), 0, extraBottom);
+                }
+                setCellMarginTwips(cell, false, bottom);
+            }
+        }
+    }
+
+    /**
+     * Whether a cell's top or bottom padding can be written in its paragraphs: it is in no
+     * vertical merge, and a paragraph opens (or closes) it — a cell written here always holds
+     * one, a table in it closed by a paragraph after it.
+     */
+    private static boolean canMoveItsPadding(XWPFTableCell cell, boolean top) {
+        CTTcPr properties = cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : null;
+        if (properties != null && properties.isSetVMerge()) {
+            return false;
+        }
+        List<IBodyElement> content = cell.getBodyElements();
+        return content.isEmpty() || content.get(top ? 0 : content.size() - 1) instanceof XWPFParagraph;
+    }
+
+    /** A cell's top or bottom margin as written, in twips; 0 where none is. */
+    private static long cellMargin(XWPFTableCell cell, boolean top) {
+        CTTcPr properties = cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : null;
+        if (properties == null || !properties.isSetTcMar()) {
+            return 0;
+        }
+        CTTcMar margins = properties.getTcMar();
+        if (top ? !margins.isSetTop() : !margins.isSetBottom()) {
+            return 0;
+        }
+        return twipsOf((top ? margins.getTop() : margins.getBottom()).getW());
+    }
+
+    private static void setCellMarginTwips(XWPFTableCell cell, boolean top, long twips) {
+        CTTcPr properties = cellProperties(cell);
+        CTTcMar margins = properties.isSetTcMar() ? properties.getTcMar() : properties.addNewTcMar();
+        var side = top ? (margins.isSetTop() ? margins.getTop() : margins.addNewTop())
+                : (margins.isSetBottom() ? margins.getBottom() : margins.addNewBottom());
+        side.setType(STTblWidth.DXA);
+        side.setW(BigInteger.valueOf(twips));
+    }
+
+    /** Adds space above and below a paragraph, in twips, to what it already has. */
+    private static void addSpacingTwips(XWPFParagraph para, long before, long after) {
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        if (before > 0) {
+            spacing.setBefore(BigInteger.valueOf(twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null) + before));
+        }
+        if (after > 0) {
+            spacing.setAfter(BigInteger.valueOf(twipsOf(spacing.isSetAfter() ? spacing.getAfter() : null) + after));
+        }
+    }
+
+    /**
      * Whether a row's tallest child on the page, margins included as the row is sized by them,
      * is one whose cell Word holds nothing in, taller by more than half a point than every child
      * it writes.
@@ -6457,6 +6567,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     surfaceBehind = outerSurface;
                 }
             }
+            evenTheRowsMargins(row);
             holdRowHeight(row, node, rowIdx);
         }
         breakRowsWhereTheLayoutDoes(table, node);

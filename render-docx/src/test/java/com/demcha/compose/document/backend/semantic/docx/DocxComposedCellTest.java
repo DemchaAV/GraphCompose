@@ -166,8 +166,13 @@ class DocxComposedCellTest {
                 .as("as wide as its outline, and a point for the editor's face")
                 .isEqualTo(61L * 20);
         assertThat(chip.getVerticalAlignment()).isEqualTo(XWPFTableCell.XWPFVertAlign.CENTER);
-        assertThat(cell.getTables().get(0).getRow(0).getHeight()).as("as tall as its line, not held to its outline")
-                .isZero();
+        // Held to its outline's 14pt, as the page draws it: left to its line, CobaltRota's 17.5pt
+        // chips closed to 13pt round their hours.
+        assertThat(cell.getTables().get(0).getRow(0).getHeight()).as("held to its outline")
+                .isEqualTo(14 * 20);
+        assertThat(cell.getTables().get(0).getRow(0).getCtRow().getTrPr().getTrHeightArray(0).getHRule())
+                .as("at least: a longer label still grows it")
+                .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule.AT_LEAST);
     }
 
     @Test

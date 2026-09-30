@@ -174,9 +174,80 @@ class DocxCellPaddingTest {
                         DocumentTableCell.text("cell wins").withStyle(
                                 DocumentTableStyle.builder().padding(DocumentInsets.of(11)).build()))));
 
-        // The first row's top, less the default 1pt rule above the table.
+        // The first row's top, less the default 1pt rule above the table: the row's smaller top
+        // as the cells' margin, the rest of the larger in the cell's first paragraph.
         assertThat(margins(table.getRow(0).getCell(0))[0]).isEqualTo(Math.round(5 * TWIPS_PER_POINT));
-        assertThat(margins(table.getRow(0).getCell(1))[0]).isEqualTo(Math.round(10 * TWIPS_PER_POINT));
+        assertThat(margins(table.getRow(0).getCell(1))[0] + before(table.getRow(0).getCell(1)))
+                .isEqualTo(Math.round(10 * TWIPS_PER_POINT));
+    }
+
+    @Test
+    void aRowsCellsShareItsSmallestVerticalMarginsTheRestWrittenInTheirParagraphs() throws Exception {
+        // Word and LibreOffice give every cell of a row the row's largest top and bottom margin:
+        // a cell padded 8pt beside one padded 2pt made the row as tall as if both were padded 8.
+        XWPFTable table = firstTable(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder().padding(DocumentInsets.of(2))
+                        .stroke(DocumentStroke.of(DocumentColor.BLACK, 0)).build())
+                .rowCells(DocumentTableCell.text("tight"),
+                        DocumentTableCell.text("loose").withStyle(DocumentTableStyle.builder()
+                                .padding(new DocumentInsets(8, 2, 6, 2)).build()))));
+        XWPFTableCell tight = table.getRow(0).getCell(0);
+        XWPFTableCell loose = table.getRow(0).getCell(1);
+
+        assertThat(margins(loose)[0]).as("top, as the tight cell's").isEqualTo(margins(tight)[0]);
+        assertThat(margins(loose)[2]).as("bottom, as the tight cell's").isEqualTo(margins(tight)[2]);
+        assertThat(margins(loose)[0] + before(loose)).as("its own 8pt above").isEqualTo(Math.round(8 * TWIPS_PER_POINT));
+        assertThat(margins(loose)[2] + after(loose)).as("its own 6pt below").isEqualTo(Math.round(6 * TWIPS_PER_POINT));
+    }
+
+    @Test
+    void aCellOpeningWithATableKeepsItsMarginAndTheRowComesToIt() throws Exception {
+        // The nested table has no paragraph above it to hold its cell's 5pt: the row's top comes
+        // to 5pt in Word, and the 3pt cell beside it is not given its padding twice.
+        XWPFTable table = firstTable(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder().padding(DocumentInsets.of(2))
+                        .stroke(DocumentStroke.of(DocumentColor.BLACK, 0)).build())
+                .rowCells(DocumentTableCell.text("tight"),
+                        DocumentTableCell.text("three").withStyle(DocumentTableStyle.builder()
+                                .padding(DocumentInsets.of(3)).build()),
+                        DocumentTableCell.node(new com.demcha.compose.document.dsl.TableBuilder()
+                                        .columns(DocumentTableColumn.auto()).row("inner").build())
+                                .withStyle(DocumentTableStyle.builder().padding(DocumentInsets.of(5)).build()))));
+        XWPFTableCell three = table.getRow(0).getCell(1);
+
+        assertThat(table.getRow(0).getCell(2).getBodyElements().get(0)).isInstanceOf(XWPFTable.class);
+        assertThat(margins(three)[0]).as("left as it was").isEqualTo(Math.round(3 * TWIPS_PER_POINT));
+        assertThat(before(three)).as("no padding written twice").isZero();
+    }
+
+    @Test
+    void aCellInAVerticalMergeKeepsItsMargins() throws Exception {
+        // Its bottom edge is in the last row it spans, not in the row it starts.
+        XWPFTable table = firstTable(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder().padding(DocumentInsets.of(2))
+                        .stroke(DocumentStroke.of(DocumentColor.BLACK, 0)).build())
+                .rowCells(DocumentTableCell.text("spans").rowSpan(2).withStyle(DocumentTableStyle.builder()
+                                .padding(new DocumentInsets(2, 2, 10, 2)).build()),
+                        DocumentTableCell.text("first"))
+                .rowCells(DocumentTableCell.text("second"))));
+        XWPFTableCell spans = table.getRow(0).getCell(0);
+
+        assertThat(margins(spans)[2]).as("its own bottom").isEqualTo(Math.round(10 * TWIPS_PER_POINT));
+        assertThat(after(spans)).as("none written below it").isZero();
+    }
+
+    private static long before(XWPFTableCell cell) {
+        var spacing = cell.getParagraphs().get(0).getCTP().getPPr().getSpacing();
+        return spacing != null && spacing.isSetBefore() ? DocxTwips.of(spacing.getBefore()) : 0;
+    }
+
+    private static long after(XWPFTableCell cell) {
+        var paragraphs = cell.getParagraphs();
+        var spacing = paragraphs.get(paragraphs.size() - 1).getCTP().getPPr().getSpacing();
+        return spacing != null && spacing.isSetAfter() ? DocxTwips.of(spacing.getAfter()) : 0;
     }
 
     @Test

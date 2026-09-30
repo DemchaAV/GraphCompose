@@ -8,6 +8,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A table row whose cells are padded differently is as tall in Word as on the page.** Word and
+  LibreOffice give every cell of a row the largest top and bottom margin of any cell in it:
+  measured, a row whose day cells were padded 5.5pt above and 10.25pt below beside a label
+  padded 0.75pt stood 60.3pt tall in both, where its tallest cell came to 46. `CobaltRota`'s
+  masthead row stood 20.8pt taller than the page's, each staff row 2.4pt taller, and the rota ran
+  onto a second page. A row's cells are now written with its smallest vertical margins, and the
+  rest of each cell's padding as space above its first paragraph and below its last; a cell
+  opening with a table, or in a vertical merge, keeps its margins, and the row's comes down no
+  lower than the largest of them. A shape
+  composed in a table cell and written as a panel — a rota's shift chip — is held to its
+  outline's height, where it had closed round its line of text: 13pt for a 17.5pt chip. In both
+  editors `CobaltRota`'s median drift falls from 23.1pt to 8.9, and it fits one page again in
+  LibreOffice.
+
 - **A line holding an icon keeps the page's height in Word.** A paragraph whose picture passes
   its text was written "at least" the picture's height, and Word, growing the line to its own
   measure, made it taller than the page: `TimelineMinimal`'s contact lines, a 10.5pt icon

@@ -214,8 +214,8 @@ final class DocxLayoutMetrics {
 
     /**
      * Every box the layout placed one of a table's cells in, in the order it placed them: one
-     * for a row placed once, one a page for a header repeated on every page; empty when it
-     * placed none by that name.
+     * for a row placed once, one a page for a header repeated on every page, as many as the
+     * layout placed it otherwise; empty when it placed none by that name.
      *
      * @param table  the table node
      * @param row    the cell's logical row

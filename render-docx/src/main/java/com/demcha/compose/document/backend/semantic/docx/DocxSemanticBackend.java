@@ -6627,13 +6627,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * {@code CobaltRota}'s band icons, each alone in the first column of its navy strip, stood
      * 4pt, 9pt and 14pt above their labels, the last out of its strip. Its drawing is the first
      * of the table's waiting fragments inside the table's cell being written, where the layout
-     * first placed it, when those are its shapes (see {@link DocxCellDrawings}). The cell's
-     * paragraph is held at the height of their box and carries them,
-     * placed from its top and the cell's text column: the row carries them.</p>
+     * first placed it, when those are its shapes and the only drawing the cell holds (see
+     * {@link DocxCellDrawings}). The cell's paragraph is held at the height of their box and
+     * carries them, placed from its top and the cell's text column: the row carries them. Word
+     * repeats a repeated header row with what is anchored in it, so the matching copies in the
+     * cell's boxes on later pages are dropped.</p>
      *
-     * <p>Only a layer stack of shapes — no container outline, no picture, no line, which is a
-     * rule — with no margins, in a cell holding nothing else yet; the cell's text column is taken
-     * to start where its shapes do. Anything else is left to the page, as before.</p>
+     * <p>Only a layer stack of shapes — no container outline, no picture, no line — with no
+     * margin or padding, in a cell holding nothing else yet; the cell's text column is taken to
+     * start where its shapes do. Anything else is left to the page, as before.</p>
      */
     private void anchorComposedDrawing(XWPFTableCell cell, DocumentNode node) {
         if (tableDrawings == null || tableDrawings.isEmpty() || composedCellBoxes.isEmpty() || Double.isNaN(canvasHeight)
@@ -6649,8 +6651,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // header's copies on later pages, and other cells' drawings, are not this one's — and
         // from the first of those still waiting: a drawing no cell took before this one is
         // never passed over and given to the next.
+        // The only drawing the table's cell holds: where it holds others, which of them a later
+        // node paints is not known, and one left to the page would be taken for the next.
         List<CellFragment> inTheCell = waitingIn(composedCellBoxes.get(0));
-        if (!DocxCellDrawings.opensWith(inTheCell.stream().map(CellFragment::fragment).toList(), shapes)) {
+        if (inTheCell.size() != shapes.size()
+            || !DocxCellDrawings.opensWith(inTheCell.stream().map(CellFragment::fragment).toList(), shapes)) {
             return;
         }
         List<CellFragment> own = inTheCell.subList(0, shapes.size());
@@ -6692,10 +6697,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         taken.addAll(own);
         // A header repeated on later pages repeats its cell there in Word, the drawing anchored
         // in it with it: the page's copies of the drawing would draw it twice.
+        int firstPage = composedCellBoxes.get(0).page();
         for (DocxLayoutMetrics.CellBox repeat : composedCellBoxes.subList(1, composedCellBoxes.size())) {
             List<CellFragment> copy = waitingIn(repeat);
-            if (DocxCellDrawings.opensWith(copy.stream().map(CellFragment::fragment).toList(), shapes)) {
-                taken.addAll(copy.subList(0, shapes.size()));
+            if (repeat.page() > firstPage && copy.size() == shapes.size()
+                && DocxCellDrawings.opensWith(copy.stream().map(CellFragment::fragment).toList(), shapes)) {
+                taken.addAll(copy);
             }
         }
         tableDrawings.removeIf(taken::contains);

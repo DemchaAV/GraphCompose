@@ -61,8 +61,8 @@ class DocxCellDrawingTest {
 
     @Test
     void iconsOfOneSizeInTwoCellsAreEachAnchoredInTheirOwn() throws Exception {
-        // The table's drawings are taken in the order its cells are written: the first band's
-        // icon, the red one, is the first of the two.
+        // Each band's cell takes the drawing the layout placed inside it: the red icon in the
+        // first, the blue one in the second.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(300))
                 .rowCells(DocumentTableCell.node(band(ICON, 12)))
@@ -83,15 +83,21 @@ class DocxCellDrawingTest {
     @Test
     void aHeadersIconRepeatedOnTheNextPageIsNotTakenByARowThere() throws Exception {
         // The layout draws a repeated header's icon again on every page; the export writes the
-        // header once. On the second page its copy comes first among the table's drawings, and
-        // matched by kind and size alone the next row took it and passed its own on, row by row.
-        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page.addTable(t -> {
+        // header once. A row takes only what the layout placed inside its own cell, so it never
+        // takes the header's copy; the copies lie in the header's later boxes and are dropped.
+        java.util.function.Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content = page -> page.addTable(t -> {
             t.columns(DocumentTableColumn.fixed(300)).repeatHeader(1)
                     .headerCells(DocumentTableCell.node(band(ICON, 12)));
             for (int i = 0; i < 16; i++) {
                 t.rowCells(DocumentTableCell.node(band(BLUE_ICON, 12)));
             }
-        }))) {
+        });
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 300).margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(content::accept);
+            assertThat(session.layoutGraph().totalPages()).as("the table runs onto a second page").isGreaterThan(1);
+        }
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, content)) {
             XWPFTable table = document.getTables().get(0);
             assertThat(xmlOfIcon(table, 0)).as("the header's own icon").contains("FF0000");
             for (int row = 1; row < table.getRows().size(); row++) {
@@ -123,6 +129,7 @@ class DocxCellDrawingTest {
 
             assertThat(xmlOfIcon(table, 0)).doesNotContain("layoutInCell=\"1\"");
             assertThat(xmlOfIcon(table, 1)).contains("layoutInCell=\"1\"").contains("0000FF").doesNotContain("FF0000");
+            assertThat(pageAnchoredShapes(document)).as("the first mark and its line, on the page").isEqualTo(2);
         }
     }
 
@@ -169,6 +176,23 @@ class DocxCellDrawingTest {
     }
 
     @Test
+    void aCellHoldingTwoDrawingsLeavesBothOnThePage() throws Exception {
+        // The first mark has a margin, so it stays on the page; the second, of the same kind and
+        // size, would otherwise take the first's fragments, the first of those waiting in the cell.
+        DocumentNode inset = new com.demcha.compose.document.node.LayerStackNode("Inset",
+                List.of(new com.demcha.compose.document.node.LayerStackNode.Layer(ICON.node(12))),
+                DocumentInsets.zero(), DocumentInsets.of(2));
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(300))
+                .rowCells(DocumentTableCell.node(new RowBuilder().name("Pair").verticalAlign(RowVerticalAlign.CENTER)
+                        .weights(16, 12, 272).add(inset).add(ICON.node(12)).addParagraph(p -> p.text("LABEL"))
+                        .build()))))) {
+            assertThat(document.getDocument().xmlText()).doesNotContain("layoutInCell=\"1\"");
+            assertThat(pageAnchoredShapes(document)).as("both marks, on the page").isEqualTo(2);
+        }
+    }
+
+    @Test
     void aPaddedStackComposedInACellStaysOnThePage() throws Exception {
         // Its padding sets the icon in from the box the layout keeps for it, which the icon's own
         // box cannot stand for.
@@ -209,7 +233,7 @@ class DocxCellDrawingTest {
     }
 
     @Test
-    void aLineAloneInACellOfARowInTheFlowStaysARule() throws Exception {
+    void aLineAloneInACellOfARowInTheFlowStaysOnThePage() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Above"))
                 .addRow("Ruled", row -> row.weights(150, 150)
@@ -221,6 +245,7 @@ class DocxCellDrawingTest {
             String body = document.getDocument().xmlText();
 
             assertThat(body).as("no drawing taken into a cell").doesNotContain("layoutInCell=\"1\"");
+            assertThat(pageAnchoredShapes(document)).as("the line, drawn on the page as before").isEqualTo(1);
         }
     }
 

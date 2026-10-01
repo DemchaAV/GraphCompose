@@ -59,9 +59,9 @@ final class DocxCellDrawings {
     }
 
     /**
-     * Whether a drawing holds a line anywhere in it. A line alone in a cell, or in a stack of
-     * one layer, is a rule and written as one; a drawing holding a line is left where it was
-     * drawn before, rather than told apart from a rule here.
+     * Whether a drawing holds a line anywhere in it. A line may be a rule, written as one, and a
+     * drawing holding one is left where it was drawn before rather than told apart from a rule
+     * here.
      */
     static boolean holdsALine(DocumentNode node) {
         if (node instanceof LineNode) {

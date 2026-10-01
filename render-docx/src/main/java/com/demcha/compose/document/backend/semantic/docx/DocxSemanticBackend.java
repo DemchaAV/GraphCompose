@@ -314,6 +314,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private double pendingSpacingAfter;
 
     /**
+     * How far the paragraph just written pulls the next one up into itself, by a negative bottom
+     * edge, in points: taken off the space written above the next paragraph, as the page sums
+     * the two edges. It goes wherever the space owed below goes when no paragraph takes it — a
+     * table, a cell's end, a section's — and a pull no space above can give stays unwritten, as
+     * an edge Word cannot write.
+     */
+    private double pullBelow;
+
+    /** What of {@link #pullBelow} the space owed above a paragraph did not give, for its own top edge. */
+    private double pullLeft;
+
+    /** The paragraph {@link #pullLeft} is left for. */
+    private XWPFParagraph pullLeftOn;
+
+    /**
      * How far the bottom border of the panel just written stands below its box beyond the space
      * the panel holds under itself, see {@link #writePanelPiece}. The next panel, paragraph or
      * table takes it from the space above itself; a row carries the most any of its cells ends
@@ -736,6 +751,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
+        pullBelow = 0;
+        pullLeft = 0;
+        pullLeftOn = null;
         borderBelow = 0;
         pendingItemSpacing = 0;
         anItemWasWritten = false;
@@ -3999,8 +4017,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Everything owed above this paragraph — the space the one before it holds below
         // itself, and any container edge — is written here, on one side of the gap.
         // A card's border standing below the card took as much of the gap (writePanelPiece).
-        double above = Math.max(0, carriedSpacingBefore + pendingSpacingAfter - borderBelow);
+        double owed = carriedSpacingBefore + pendingSpacingAfter - borderBelow;
+        double above = Math.max(0, owed - pullBelow);
+        // What the space owed cannot give of the pull, the paragraph's own top edge gives.
+        pullLeft = Math.max(0, pullBelow - Math.max(0, owed));
+        pullLeftOn = pullLeft > 0 ? para : null;
         borderBelow = 0;
+        pullBelow = 0;
         // Text that hung below the band above this paragraph already took that much of the
         // gap (see writeLinePair); whatever the owed space cannot give back, the paragraph's
         // own margin gives (applyVerticalSpacing).
@@ -4038,6 +4061,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private XWPFParagraph dropTheSpaceAtTheEnd(XWPFDocument document) {
         pendingSpacingAfter = 0;
         carriedSpacingBefore = 0;
+        pullBelow = 0;
         List<IBodyElement> body = document.getBodyElements();
         if (!body.isEmpty() && body.get(body.size() - 1) instanceof XWPFTable table) {
             dropTheSpaceBelow(table);
@@ -4503,6 +4527,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             addSpacing(lastBodyParagraph, 0, pendingSpacingAfter);
         }
         pendingSpacingAfter = 0;
+        pullBelow = 0;
     }
 
     /**
@@ -4634,6 +4659,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final double WORDS_MEASURE_CLEARANCE = 1;
 
     /**
+     * The share wider than the page sets it a line of one is given room for: Word sets a face
+     * other than the page's, or emboldens one, a little wider. {@code OrangeOps}' headings are
+     * Oswald SemiBold, a face whose file does not say it is bold; Word set "ACHIEVEMENTS" 1% wider,
+     * past the box it fills, and broke it onto a second line — three such headings put the CV on
+     * two pages.
+     */
+    private static final double ONE_LINE_FACE_SLACK = 0.03;
+
+    /**
      * The measure Word is to set a paragraph's text in, in points: the page's, as much wider or
      * narrower as Word sets the line that grows most, a point short of that in a paragraph of
      * several lines unless one of its lines needs more, and never less than a point past the
@@ -4652,7 +4686,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * still has a point to spare, which wins where the two meet. A paragraph of one line broke
      * no word: it keeps its measure or the share it grows by, whichever is wider, so a line as
      * wide as its column is never narrowed onto two — {@code OrangeOps}' phone number broke in
-     * LibreOffice a point narrower. Without the page's lines — an export with no layout — the
+     * LibreOffice a point narrower — and room for its line a few hundredths wider
+     * ({@link #ONE_LINE_FACE_SLACK}), for a face Word sets wider than the page. Without the page's lines — an export with no layout — the
      * paragraph's runs are weighed by their letters.</p>
      */
     private double wordsMeasure(ParagraphNode node, double room) {
@@ -4686,12 +4721,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (Double.isNaN(share)) {
             return room * lettersShare(node);
         }
+        if (broken < 1) {
+            // One line breaks no word to keep out, and broken in Word it is a line more.
+            return Math.max(room, Math.max(room * share, fits * (1 + ONE_LINE_FACE_SLACK)));
+        }
         if (Math.abs(share - 1) < 1e-9) {
             // Word sets every line at the page's size: the page's measure is Word's.
             return room;
-        }
-        if (broken < 1) {
-            return Math.max(room, Math.max(room * share, fits));
         }
         return Math.max(room * share - WORDS_MEASURE_CLEARANCE, fits + WORDS_MEASURE_CLEARANCE);
     }
@@ -5333,8 +5369,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         hangingOver = null;
         hangingOverBy = 0;
+        if (target == pullLeftOn) {
+            before = Math.max(0, before - pullLeft);
+        }
+        pullLeftOn = null;
+        pullLeft = 0;
         addSpacing(target, before, 0);
-        owePendingSpacingAfter(source.margin().bottom() + source.padding().bottom());
+        double below = source.margin().bottom() + source.padding().bottom();
+        // OrangeOps' role bar is pulled 3.8pt up into its name's line; dropped, the pull set
+        // the bar and the whole page under it that much low in Word, and onto a second page.
+        if (below < 0) {
+            pullBelow -= below;
+        } else {
+            owePendingSpacingAfter(below);
+        }
     }
 
     /**
@@ -9363,6 +9411,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph previousParagraph = lastBodyParagraph;
         double previousCarried = carriedSpacingBefore;
         double previousOwed = pendingSpacingAfter;
+        double previousPull = pullBelow;
         double previousBorderBelow = borderBelow;
         double previousHangingBelow = hangingBelow;
         XWPFParagraph previousHangingOver = hangingOver;
@@ -9376,6 +9425,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         tableCloser = null;
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
+        pullBelow = 0;
         borderBelow = 0;
         forgetTheHang();
         // A cell's content is measured from the cell's own edge, which its margins already
@@ -9402,6 +9452,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             lastBodyParagraph = previousParagraph;
             carriedSpacingBefore = previousCarried;
             pendingSpacingAfter = previousOwed;
+            pullBelow = previousPull;
             // A card's border below the last thing in a cell stands below the row too, where
             // Word makes the row as tall as its tallest cell; the cell beside it starts clear.
             borderBelow = Math.max(previousBorderBelow, borderBelow);

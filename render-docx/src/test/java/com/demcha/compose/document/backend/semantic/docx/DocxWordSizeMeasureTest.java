@@ -55,6 +55,22 @@ class DocxWordSizeMeasureTest {
     }
 
     @Test
+    void aLineOfOneAsWideAsItsBoxIsGivenRoomPastIt() throws Exception {
+        // OrangeOps' headings fill their boxes; Word set them a little wider and broke them onto
+        // a second line. A line of one breaks no word, so it is given a few hundredths more room.
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 30, page -> page
+                .addSection(s -> s.fillColor(com.demcha.compose.document.style.DocumentColor.rgb(230, 240, 255))
+                        .padding(com.demcha.compose.document.style.DocumentInsets.of(14))
+                        .addParagraph(p -> p.text("Card title"))))) {
+            XWPFParagraph heading = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
+
+            assertThat(rightIndent(heading)).as("a little past the box, at the right").isNegative()
+                    .isGreaterThan(-40);
+        }
+        assertThat(indentOf(9.5, TextAlign.LEFT, SHORT)).as("a line of one with room to spare").isZero();
+    }
+
+    @Test
     void aCentredLineIsLeftWhereThePageSetsIt() throws Exception {
         assertThat(indentOf(7.8, TextAlign.CENTER, LONG)).isZero();
     }

@@ -219,6 +219,11 @@ far as its letters leave room above them, its text seated where the page sets it
 can give is not written. Text laid over the flow in text boxes owes no space, so its edges
 move nothing.
 
+A paragraph's negative bottom `margin` or `padding` pulls the next paragraph up into it the
+same way: it comes out of the space above that paragraph, its own top edge included, even
+where the two stand in different containers. What that space cannot give is not written, and
+a table, the end of a cell or the end of a section takes the pull with it.
+
 A paragraph's or a list's `lineSpacing` — the gap the page puts between two wrapped lines —
 goes into the line: Word has one line height for a paragraph and no gap between its lines,
 so a paragraph that wraps is written with its lines taller. The page has one gap fewer than
@@ -294,7 +299,9 @@ them; a reader's new text wraps at that measure. The measure grows by the share 
 that grows most for its size — pictures and tracking keep their own width — and in a paragraph
 of several lines stays a point short of that, unless a line needs the room, so a word the page
 broke off by a fraction of a point is not pulled back up. A paragraph of one line is never
-narrowed. A centred or right-aligned paragraph keeps
+narrowed, and has room for a line three hundredths wider than its own: Word sets a face other
+than the page's, or emboldens one whose file does not say it is bold, a little wider, and a
+line of one broken in Word is a line more. A centred or right-aligned paragraph keeps
 the page's measure, as moving its other edge would move its lines. A list's items, a line pair's
 line, text over the flow and a header's or footer's line keep the page's measure too.
 

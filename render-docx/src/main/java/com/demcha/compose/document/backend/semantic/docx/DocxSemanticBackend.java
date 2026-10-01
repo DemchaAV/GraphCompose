@@ -4581,19 +4581,144 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * or move a centred or right-aligned line off where the page sets it.</p>
      *
      * @param room the width the paragraph's text is written in, in points
+     * @return whether the paragraph was given room past its box
      */
-    private void letTheLineStandOut(XWPFParagraph para, ParagraphNode node, double room) {
+    private boolean letTheLineStandOut(XWPFParagraph para, ParagraphNode node, double room) {
         if (node.align() == TextAlign.CENTER || node.align() == TextAlign.RIGHT) {
-            return;
+            return false;
         }
         double overhang = layout.unbrokenWidth(node) - room;
         if (!Double.isFinite(overhang) || !(overhang > 0.01)) {
-            return;
+            return false;
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
         long right = twipsOf(indent.isSetRight() ? indent.getRight() : null);
         indent.setRight(BigInteger.valueOf(right - toTwips(overhang + EDITOR_SLACK_POINTS)));
+        return true;
+    }
+
+    /**
+     * Sets a paragraph's lines in a measure as much wider or narrower than the page's as Word
+     * sets its text, so they break at the words the page breaks them.
+     *
+     * <p>Word states a type size in half points, so a size the page sets to the tenth is set a
+     * little larger or smaller, and its lines that much wider or narrower: {@code
+     * EngineeringResume}'s 6.9pt skills, set at 7pt, broke "SQL" onto a line of its own, and its
+     * 7.8pt profile, set at 8pt, took a line more, each column standing 8 to 9pt low under it.
+     * The glyphs are left as Word sets them — a scale would stay on the text a reader types
+     * next — and the right indent gives the line the same share more room, or takes it.</p>
+     *
+     * <p>Only a paragraph set flush left: moving a centred or right-aligned line's other edge
+     * would move the line off where the page sets it. A list's items, a line pair, text over
+     * the flow and a header's or footer's line are written elsewhere and keep the page's
+     * measure.</p>
+     *
+     * @param room the width the paragraph's text is written in, in points
+     */
+    private void measureAtWordsSize(XWPFParagraph para, ParagraphNode node, double room) {
+        if (node.align() == TextAlign.CENTER || node.align() == TextAlign.RIGHT || !Double.isFinite(room)) {
+            return;
+        }
+        double more = wordsMeasure(node, room) - room;
+        if (!Double.isFinite(more) || Math.abs(more) < 0.05) {
+            return;
+        }
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
+        long right = twipsOf(indent.isSetRight() ? indent.getRight() : null);
+        indent.setRight(BigInteger.valueOf(right - Math.round(more * POINT_TO_TWIP)));
+    }
+
+    /** How far inside the page's measure, grown or shrunk as Word sets it, Word's is held, in points. */
+    private static final double WORDS_MEASURE_CLEARANCE = 1;
+
+    /**
+     * The measure Word is to set a paragraph's text in, in points: the page's, as much wider or
+     * narrower as Word sets the line that grows most, a point short of that in a paragraph of
+     * several lines unless one of its lines needs more, and never less than a point past the
+     * widest line.
+     *
+     * <p>Each line the page laid out is weighed by its own text: a line of a 7.35pt title set at
+     * 7.5 grows, the 7.1pt lines under it set at 7 shrink, and a share averaged over the
+     * paragraph would narrow the measure the title's line no longer fits. A picture or a shape
+     * in a line is written at its own size and takes the same room in Word, and tracking is
+     * written in points, so neither grows with the size.</p>
+     *
+     * <p>A line the page broke because its next word did not fit may have missed by a fraction
+     * of a point, and grown in the same proportion it misses by as little in Word, where it can
+     * fit: {@code CompactMono}'s "and", 0.1pt from fitting on the page, fitted in Word. Held a
+     * point short, the measure misses such a word by that much more. The widest line, grown,
+     * still has a point to spare, which wins where the two meet. A paragraph of one line broke
+     * no word: it keeps its measure or the share it grows by, whichever is wider, so a line as
+     * wide as its column is never narrowed onto two — {@code OrangeOps}' phone number broke in
+     * LibreOffice a point narrower. Without the page's lines — an export with no layout — the
+     * paragraph's runs are weighed by their letters.</p>
+     */
+    private double wordsMeasure(ParagraphNode node, double room) {
+        double share = Double.NaN;
+        double fits = 0;
+        int broken = -1;
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : layout.lines(node)) {
+            broken++;
+            double asked = 0;
+            double set = 0;
+            boolean text = false;
+            for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
+                if (!(span.width() > 0)) {
+                    continue;
+                }
+                asked += span.width();
+                if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan run
+                    && run.textStyle() != null && run.textStyle().size() > 0) {
+                    double tracking = run.textStyle().letterSpacing() * run.text().codePointCount(0, run.text().length());
+                    set += (span.width() - tracking) * wordsSize(run.textStyle().size()) / run.textStyle().size() + tracking;
+                    text = true;
+                } else {
+                    set += span.width();
+                }
+            }
+            if (text) {
+                share = Double.isNaN(share) ? set / asked : Math.max(share, set / asked);
+                fits = Math.max(fits, set);
+            }
+        }
+        if (Double.isNaN(share)) {
+            return room * lettersShare(node);
+        }
+        if (Math.abs(share - 1) < 1e-9) {
+            // Word sets every line at the page's size: the page's measure is Word's.
+            return room;
+        }
+        if (broken < 1) {
+            return Math.max(room, Math.max(room * share, fits));
+        }
+        return Math.max(room * share - WORDS_MEASURE_CLEARANCE, fits + WORDS_MEASURE_CLEARANCE);
+    }
+
+    /** How much wider Word sets a paragraph's runs, weighed by their letters, 1 for as wide. */
+    private double lettersShare(ParagraphNode node) {
+        double asked = 0;
+        double set = 0;
+        for (InlineRun run : node.inlineRuns()) {
+            InlineTextRun text = textOf(run);
+            DocumentTextStyle style = text == null ? null : text.textStyle() == null ? node.textStyle() : text.textStyle();
+            if (style != null && style.size() > 0) {
+                asked += text.text().length() * style.size();
+                set += text.text().length() * wordsSize(style.size());
+            }
+        }
+        if (node.inlineRuns().isEmpty() && node.textStyle() != null && node.textStyle().size() > 0) {
+            // No text runs: the paragraph's own text, in its own style.
+            asked = node.textStyle().size();
+            set = wordsSize(asked);
+        }
+        return asked > 0 ? set / asked : 1;
+    }
+
+    /** The size Word sets a size in, to the half point, as {@code w:sz} states it. */
+    private static double wordsSize(double size) {
+        return Math.max(1, Math.round(size * HALF_POINTS_PER_POINT)) / HALF_POINTS_PER_POINT;
     }
 
     /**
@@ -4993,8 +5118,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             insetLeft = outerLeft;
             insetRight = outerRight;
         }
-        letTheLineStandOut(para, node, room);
+        boolean standsOut = letTheLineStandOut(para, node, room);
         boolean rightToLeft = applyParagraphProperties(para, node);
+        // A line that stands out was given its room, and a couple of points more.
+        if (!rightToLeft && !standsOut) {
+            measureAtWordsSize(para, node, room);
+        }
         applyHeadingRole(para, node);
         int anchor = openAnchor(para, node.anchor());
         // A line of a stack starts where its letters and the ones above leave room, not where

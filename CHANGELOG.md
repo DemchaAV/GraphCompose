@@ -1489,6 +1489,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **Word holds the DOCX export to its corpus too.** `scripts/docx-visual/word-fidelity.ps1`
+  runs `DocxFidelityCorpusTest` in two halves around a conversion by a private Word instance:
+  `export` writes the documents, Word converts them, and `word` measures Word's PDFs against
+  `word-windows.tsv`. `convert-with-word.ps1` records the SHA-256 of each DOCX it converts, and
+  a document is measured only when that is the digest of the DOCX this tree exports, so a
+  conversion left from another tree fails and names the documents rather than passing. Word is
+  driven from PowerShell, not from the build: Word driven through COM from a process Git Bash
+  started has stalled on its first document. `convert-with-word.ps1` also repaginates before it
+  exports, as Word settles pagination on screen.
+
 - **CI holds the DOCX export to its corpus.** The `DOCX Fidelity` job runs
   `DocxFidelityCorpusTest` on a pinned Ubuntu image with LibreOffice whenever the engine, a
   backend it measures with, the DOCX backend, a template or the corpus changes, against a

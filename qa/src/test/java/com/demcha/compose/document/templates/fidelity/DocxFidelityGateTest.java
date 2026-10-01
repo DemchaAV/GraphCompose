@@ -206,6 +206,43 @@ class DocxFidelityGateTest {
     }
 
     @Test
+    void aWordConversionIsMeasuredOnlyForTheDocxItConverted() throws Exception {
+        byte[] docx = docx();
+        // As convert-with-word.ps1 writes it: UTF-8 with a byte-order mark, the digest in hex.
+        Files.write(dir.resolve("conversion.json"), ("﻿{\"version\": \"16.0 (16.0.20430)\", \"results\": ["
+                + "{\"source\": \"cv-probe.docx\", \"sha256\": \"" + WordConversion.sha256(docx).toUpperCase() + "\"}]}")
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        WordConversion conversion = WordConversion.read(dir);
+        byte[] edited = docx.clone();
+        edited[edited.length / 2] ^= 1;
+
+        assertThat(conversion.version()).isEqualTo("16.0 (16.0.20430)");
+        assertThat(conversion.convertedFrom("cv-probe.docx", docx())).as("exported again, the same bytes").isTrue();
+        assertThat(conversion.convertedFrom("cv-probe.docx", edited)).as("a byte otherwise").isFalse();
+        assertThat(conversion.convertedFrom("cv-other.docx", docx)).as("a document it never converted").isFalse();
+    }
+
+    @Test
+    void aWordConversionWithoutItsRecordOrItsBuildIsRefused() throws Exception {
+        assertThatThrownBy(() -> WordConversion.read(dir)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no Word conversion recorded");
+        Files.writeString(dir.resolve("conversion.json"), "{\"results\": []}");
+        assertThatThrownBy(() -> WordConversion.read(dir)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("names no Word build");
+    }
+
+    /** A small document's DOCX, exported as the corpus exports it. */
+    private static byte[] docx() throws Exception {
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 300)
+                .margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(flow -> LINES.forEach(flow::addParagraph));
+            return session.export(com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend.builder()
+                    .deterministic(true).build());
+        }
+    }
+
+    @Test
     void aMalformedBaselineRowIsRefusedByName() {
         assertThatThrownBy(() -> FidelityMeasurement.parse("cv-a\t1\tone\t40\t39\t0.25\t0.5\t1", Map.of()))
                 .isInstanceOf(IllegalArgumentException.class)

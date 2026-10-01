@@ -105,6 +105,7 @@ jobs:
       templates: ${{ steps.filter.outputs.templates }}
       perf: ${{ steps.filter.outputs.perf }}
       jvm: ${{ steps.filter.outputs.jvm }}
+      docx: ${{ steps.filter.outputs.docx }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -162,6 +163,25 @@ jobs:
               - 'templates/**'
               - 'benchmarks/**'
               - 'core/pom.xml'
+            # Everything a DOCX export of the template corpus is made from: the
+            # engine that lays it out, the font metrics render-pdf measures with, the
+            # DOCX backend, the presets and their fonts, and the corpus test with its
+            # baselines. Drives the docx-fidelity job.
+            docx:
+              - 'core/src/**'
+              - 'core/pom.xml'
+              - 'render-pdf/**'
+              - 'render-docx/**'
+              - 'templates/**'
+              - 'fonts/**'
+              - 'emoji/**'
+              - 'qa/pom.xml'
+              - 'qa/src/test/java/com/demcha/compose/document/templates/**'
+              - 'qa/src/test/resources/docx-fidelity/**'
+              - 'pom.xml'
+              - '.mvn/**'
+              - 'mvnw'
+              - '.github/workflows/ci.yml'
             # Published library modules + build toolchain. A change here runs the
             # full JDK matrix (it ships to users across JVMs); a PR touching only
             # the non-published test/build infra (qa, coverage, examples,
@@ -513,6 +533,84 @@ jobs:
           # artifact — are what prove a render later on.
           retention-days: 7
 
+  docx-fidelity:
+    name: DOCX Fidelity (LibreOffice)
+    # Every template preset exported to DOCX, set by LibreOffice, and held line by
+    # line to qa/src/test/resources/docx-fidelity/libreoffice-linux*.tsv
+    # (DocxFidelityCorpusTest): a change that sets any line of any preset further
+    # from the engine's PDF, at other words, or on more pages fails here. Gated on
+    # `docx` — what an export of the corpus is made from.
+    #
+    # The image is pinned, not ubuntu-latest: the baseline is LibreOffice's setting
+    # of the text, and a new image's LibreOffice sets some lines a little apart. A
+    # run that fails on every document at once with the note's build changed is a
+    # new LibreOffice, not a regression: take the measured files from the artifact
+    # as the new baseline.
+    if: github.event_name != 'schedule' && (github.event_name != 'pull_request' || needs.changes.outputs.docx == 'true')
+    needs: [changes]
+    runs-on: ubuntu-24.04
+    env:
+      JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Temurin JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Name the week the LibreOffice packages are cached for
+        id: week
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the LibreOffice packages
+        # The archive mirror has served the ~90 MB of Writer packages at 50 kB/s:
+        # 26 minutes for a corpus run of 34 seconds. Cached a week at a time, so a
+        # point release is picked up within one.
+        uses: actions/cache@v6
+        with:
+          path: ~/apt-cache
+          key: libreoffice-writer-ubuntu-24.04-${{ steps.week.outputs.week }}
+          restore-keys: libreoffice-writer-ubuntu-24.04-
+
+      - name: Install LibreOffice
+        run: |
+          mkdir -p ~/apt-cache/partial
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends -o Dir::Cache::Archives="$HOME/apt-cache" libreoffice-writer
+          sudo chown -R "$USER" ~/apt-cache
+
+      - name: Install the modules the corpus exports through
+        # A standalone -f qa/pom.xml run resolves its graph-compose-* dependencies
+        # from the local repository, so the tree is installed first; -am brings the
+        # fonts and emoji upstreams.
+        run: ./mvnw -B -ntp -DskipTests install -pl :graph-compose-qa -am
+
+      - name: Hold the corpus to its LibreOffice baseline
+        run: >-
+          ./mvnw -B -ntp test -f qa/pom.xml
+          -Dtest=DocxFidelityCorpusTest
+          -Dsurefire.failIfNoSpecifiedTests=false
+          -Dgraphcompose.docxFidelity=libreoffice
+
+      - name: Upload the measurements
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: docx-fidelity-${{ github.run_id }}
+          path: |
+            qa/target/docx-fidelity/measured-libreoffice*.tsv
+            qa/target/docx-fidelity/libreoffice.log
+          if-no-files-found: warn
+          # What a reviewer compares against the baseline, or takes as the new one
+          # when a change moves documents nearer the page: needed while the change
+          # is in review, so the same week as the example PDFs.
+          retention-days: 7
+
   binary-compat:
     name: Binary Compatibility (japicmp vs pom baseline)
     # japicmp diffs the graph-compose-core and graph-compose-templates public
@@ -701,7 +799,7 @@ jobs:
     # Every job that can run on a pull request belongs here; only the schedule-only
     # benchmark job is outside, and CiGateCoverageGuardTest holds that line.
     if: always() && github.event_name != 'schedule'
-    needs: [architecture-and-documentation-guards, changes, build-and-test, examples-generation, binary-compat, perf-smoke]
+    needs: [architecture-and-documentation-guards, changes, build-and-test, examples-generation, docx-fidelity, binary-compat, perf-smoke]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job failed

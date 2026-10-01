@@ -355,6 +355,10 @@ Choose the smallest tests that match the change:
   A change that moves documents nearer the page rewrites the baseline with
   `-Dgraphcompose.docxFidelity.update=true`, and commits it with the change: its diff shows
   which documents moved. A new preset joins the corpus in its family's `*DocxCorpus` class.
+  CI runs it on Linux (the `DOCX Fidelity` job) against `libreoffice-linux.tsv`, and uploads
+  what it measured: LibreOffice sets text a little differently per platform, so a change that
+  moves documents nearer the page takes that artifact's files as the Linux baseline, and its own
+  run's as the Windows one.
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 

@@ -124,6 +124,31 @@ class DocxPageBackgroundTest {
     }
 
     @Test
+    void aHeaderCarryingTheBackgroundsDoesNotMoveABodyThatHasNoMargin() throws Exception {
+        // The header is a point tall against the page's top: past a margin of none, Word moved
+        // NavySidebar's whole page a point down under it. A negative margin holds the body there.
+        try (XWPFDocument document = export(DocumentInsets.zero(), session -> session.pageBackgrounds(List.of(
+                PageBackgroundFill.leftColumn(0.3, CHARCOAL))))) {
+            var margin = document.getDocument().getBody().getSectPr().getPgMar();
+
+            assertThat(((Number) margin.getHeader()).longValue()).isZero();
+            assertThat(((Number) margin.getTop()).longValue()).as("the least margin there is, written negative")
+                    .isEqualTo(-1);
+            assertThat(((Number) margin.getBottom()).longValue()).as("no footer reaches the bottom one")
+                    .isZero();
+        }
+    }
+
+    @Test
+    void aMarginTheHeaderDoesNotReachPastStaysAsThePageSetsIt() throws Exception {
+        try (XWPFDocument document = export(session -> session.pageBackgrounds(List.of(
+                PageBackgroundFill.leftColumn(0.3, CHARCOAL))))) {
+            assertThat(((Number) document.getDocument().getBody().getSectPr().getPgMar().getTop()).longValue())
+                    .isEqualTo(20 * 20);
+        }
+    }
+
+    @Test
     void aDocumentWithoutPageBackgroundsWritesNoHeader() throws Exception {
         try (XWPFDocument document = export(session -> { })) {
             assertThat(document.getHeaderList()).isEmpty();
@@ -136,9 +161,13 @@ class DocxPageBackgroundTest {
     }
 
     private static XWPFDocument export(Consumer<DocumentSession> setup) throws Exception {
+        return export(DocumentInsets.of(20), setup);
+    }
+
+    private static XWPFDocument export(DocumentInsets margin, Consumer<DocumentSession> setup) throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(400, 600)
-                .margin(DocumentInsets.of(20))
+                .margin(margin)
                 .create()) {
             setup.accept(session);
             session.pageFlow(page -> page.addParagraph("Body text."));

@@ -786,6 +786,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * it also sits against the page edge: left at Word's default distance it would reach past
      * a narrow margin, and Word would push the body down to make room for a header the page
      * does not draw. A section that does draw one keeps that one's distance.</p>
+     *
+     * <p>Against the edge it still reaches a point into the page, past a margin narrower than
+     * that, and Word moves the body down by what it reaches past — {@code NavySidebar}'s whole
+     * page, under the header carrying its backgrounds, stood a point low. That margin is
+     * written negative, which holds the body at it (see {@link #placeBand}).</p>
      */
     private static void blankZone(XWPFHeaderFooterPolicy policy, CTSectPr sectPr, boolean header,
                                   org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type,
@@ -793,12 +798,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFHeaderFooter blank = header ? policy.createHeader(type) : policy.createFooter(type);
         collapsed(blank.createParagraph());
         if (againstTheEdge && sectPr.isSetPgMar()) {
+            CTPageMar margin = sectPr.getPgMar();
             if (header) {
-                sectPr.getPgMar().setHeader(BigInteger.ZERO);
+                margin.setHeader(BigInteger.ZERO);
+                if (reachedPast(margin.getTop())) {
+                    margin.setTop(BigInteger.valueOf(-Math.max(1, twipsOf(margin.getTop()))));
+                }
             } else {
-                sectPr.getPgMar().setFooter(BigInteger.ZERO);
+                margin.setFooter(BigInteger.ZERO);
+                if (reachedPast(margin.getBottom())) {
+                    margin.setBottom(BigInteger.valueOf(-Math.max(1, twipsOf(margin.getBottom()))));
+                }
             }
         }
+    }
+
+    /** Whether a page margin is narrower than the point a blank zone against its edge reaches. */
+    private static boolean reachedPast(Object pageMargin) {
+        return pageMargin instanceof Number twips && twips.longValue() >= 0
+               && twips.longValue() < Math.round(POINT_TO_TWIP);
     }
 
     /**
@@ -2691,9 +2709,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         listItemLines = laidOut.size() == itemCount(list)
                 ? new java.util.ArrayDeque<>(laidOut)
                 : new java.util.ArrayDeque<>();
+        // Its own sides hold its items in, as a paragraph's hold its text (see writeParagraph):
+        // NavySidebar indents its closing lists to clear the badge beside their heading, and
+        // without it their markers stood under the badge, the text a line short in Word.
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
+        if (overlayDepth == 0) {
+            double spare = currentCell != null ? EDITOR_SLACK_POINTS : 0;
+            double left = (list == leftMarginInCell ? 0 : list.margin().left()) + list.padding().left();
+            insetLeft += Math.max(0, left - spare);
+            insetRight += Math.max(0, list.margin().right() + list.padding().right() - spare);
+        }
         try {
             writeListItems(document, list, numId);
         } finally {
+            insetLeft = outerLeft;
+            insetRight = outerRight;
             pendingItemSpacing = previousItemSpacing;
             anItemWasWritten = previousItemWritten;
             listLineGap = previousLineGap;

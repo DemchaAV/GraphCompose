@@ -243,6 +243,24 @@ class DocxListNumberingTest {
         }
     }
 
+    @Test
+    void aListsOwnSidesHoldItsItemsIn() throws Exception {
+        // NavySidebar indents a list to clear the badge beside its heading: its markers stood
+        // under the badge in Word, and its text ran a line short.
+        try (XWPFDocument document = export(flow -> flow
+                .addList(list -> list.name("Indented").bullet().items("Java", "SQL")
+                        .margin(new DocumentInsets(0, 20, 0, 30))))) {
+            for (XWPFParagraph item : items(document)) {
+                var indent = item.getCTP().getPPr().getInd();
+
+                assertThat(DocxTwips.of(indent.getLeft())).as("the margin, then the level's own indent")
+                        .isEqualTo(30 * 20L + 180);
+                assertThat(DocxTwips.of(indent.getHanging())).isEqualTo(180L);
+                assertThat(DocxTwips.of(indent.getRight())).isEqualTo(20 * 20L);
+            }
+        }
+    }
+
     /** A chain of single children {@code depth} levels deep, markers left to the cascade. */
     private static ListNode nested(int depth) {
         ListItem item = new ListItem("level " + (depth - 1), null, List.of());

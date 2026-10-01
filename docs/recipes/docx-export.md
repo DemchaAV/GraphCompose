@@ -88,8 +88,10 @@ band) are painted behind the text of every page. Word colours a page in one colo
 each fill is a rectangle anchored to the page in the section's header, behind the text —
 Word draws a header's shapes on every page that header is shown on, and the rectangle is in
 each header the section has, the first page's and even pages' included. A section without a
-header gets an empty one, against the page edge, to carry them. On a page with no top margin
-that header pushes the first line down about 3pt (measured in LibreOffice). A two-column
+header gets an empty one, against the page edge, to carry them. That header is a point
+tall, and on a page whose top margin is narrower than that the margin is written negative,
+so Word holds the body at it rather than moving it down under the header; LibreOffice reads
+the margin as positive and still moves the first line down about 3pt. A two-column
 layout still flows its columns one after the other in Word, so a column fill can stand
 beside text that is not its column's.
 
@@ -185,7 +187,9 @@ sums it.
 
 An image and a list hold their own space the same way a paragraph does — a picture's
 paragraph is the picture's block, and a list's edges go to the paragraphs around it, with
-`itemSpacing` as the gap above each item after the first. A section's or a container's
+`itemSpacing` as the gap above each item after the first. A list's left and right edges
+are its items' indents, as a paragraph's are, under the level's own hanging indent: a list
+indented to clear a badge beside its heading starts on the heading's axis. A section's or a container's
 `spacing` is the gap between each two of its children, owed below one and written above
 the next; before a page break there is none, as the page ends there, and after one the next
 page starts that far down, as the layout starts it. A spacer is its height alone: its empty

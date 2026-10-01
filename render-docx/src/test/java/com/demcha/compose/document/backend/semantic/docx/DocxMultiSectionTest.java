@@ -110,6 +110,21 @@ class DocxMultiSectionTest {
     }
 
     @Test
+    void anEmptyFooterDoesNotLiftABodyThatHasNoBottomMargin() throws Exception {
+        // The empty footer is a point tall against the page's bottom: past a margin of none, Word
+        // would move the body's foot up under it. A negative margin holds the body there.
+        DocumentSession bleed = session(300, 400, 0);
+        bleed.pageFlow(page -> page.addParagraph("Cover"));
+        try (XWPFDocument document = export(landscapeBody(), bleed)) {
+            var margin = sectionsOf(document).get(1).getPgMar();
+
+            assertThat(DocxTwips.of(margin.getFooter())).isZero();
+            assertThat(DocxTwips.of(margin.getBottom())).as("the least margin there is, written negative")
+                    .isEqualTo(-1L);
+        }
+    }
+
+    @Test
     void aSectionBeforeAnyFooterNeedsNoneOfItsOwn() throws Exception {
         try (XWPFDocument document = export(cover(), landscapeBody())) {
             assertThat(sectionsOf(document).get(0).getFooterReferenceList())

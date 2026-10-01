@@ -358,7 +358,10 @@ Choose the smallest tests that match the change:
   CI runs it on Linux (the `DOCX Fidelity` job) against `libreoffice-linux.tsv`, and uploads
   what it measured: LibreOffice sets text a little differently per platform, so a change that
   moves documents nearer the page takes that artifact's files as the Linux baseline, and its own
-  run's as the Windows one.
+  run's as the Windows one. Microsoft Word, the editor the export answers to, is not in CI: on
+  Windows with Word, `scripts/docx-visual/word-fidelity.ps1` (`-Update` to rewrite) exports the
+  corpus, has a private Word instance convert it, and holds it to `word-windows.tsv` — run it
+  before a DOCX export change is opened.
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 

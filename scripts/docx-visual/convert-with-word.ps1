@@ -76,6 +76,8 @@ function Convert-WithWord {
             $out = Join-Path $Destination ($file.BaseName + '.pdf')
             $doc = $word.Documents.Open($file.FullName, [ref]$false, [ref]$true)
             try {
+                # Pagination settled before the export, as Word settles it on screen.
+                $doc.Repaginate()
                 $doc.ExportAsFixedFormat($out, $WD_EXPORT_FORMAT_PDF)
                 $results += @{ source = $file.Name; pdf = (Split-Path $out -Leaf); pages = $doc.ComputeStatistics(2) }
             } finally {

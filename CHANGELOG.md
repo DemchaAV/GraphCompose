@@ -13,9 +13,11 @@ follow semantic versioning; release dates are ISO 8601.
   at 8pt and took a line more, and its 6.9pt skills, set at 7pt, broke "SQL" onto a line of its
   own: each column stood 8 to 9pt low. A paragraph set flush left is now given a measure as much
   wider or narrower as Word sets its text, through its right indent; the glyphs are left as
-  Word sets them. The measure follows the line that grows most, so a 7.35pt title, set at 7.5,
-  still fits over 7.1pt prose set at 7; and a paragraph of several lines keeps it a point short
-  of the full share, so a word the page broke off by a fraction of a point stays broken off.
+  Word sets them. The measure grows by the share of the line that grows most, so a 7.35pt
+  title, set at 7.5, still fits over 7.1pt prose set at 7, and every line keeps a point to
+  spare; a paragraph of several lines is held a point short of the full share where its lines
+  allow, so a word the page broke off by a fraction of a point stays broken off; a paragraph of
+  one line is never narrowed.
   In Word, `EngineeringResume`'s median drift falls from 7.9pt to 0.6, and the corpus's lines
   more than 2pt off fall from 324 to 249; line by line no line moves further from the page in
   Word or LibreOffice.

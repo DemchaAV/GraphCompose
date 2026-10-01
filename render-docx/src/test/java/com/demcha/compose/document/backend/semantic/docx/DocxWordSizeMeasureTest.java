@@ -32,25 +32,31 @@ class DocxWordSizeMeasureTest {
 
     @Test
     void aSizeWordSetsLargerWidensTheMeasureByAsMuch() throws Exception {
-        assertThat(rightIndent(paragraph(7.8, TextAlign.LEFT)))
+        assertThat(indentOf(7.8, TextAlign.LEFT, SHORT))
                 .as("one line: the measure 8/7.8 of the page's, in full")
                 .isEqualTo(-Math.round(ROOM * (8 / 7.8 - 1) * 20));
     }
 
     @Test
-    void aSizeWordSetsSmallerNarrowsIt() throws Exception {
-        assertThat(rightIndent(paragraph(9.2, TextAlign.LEFT)))
-                .isEqualTo(Math.round(ROOM * (1 - 9 / 9.2) * 20));
+    void aSizeWordSetsSmallerNarrowsAParagraphOfSeveralLines() throws Exception {
+        assertThat(indentOf(9.2, TextAlign.LEFT, LONG)).as("9/9.2 of the page's, a point short of it")
+                .isEqualTo(Math.round((ROOM * (1 - 9 / 9.2) + 1) * 20));
+    }
+
+    @Test
+    void aParagraphOfOneLineIsNeverNarrowed() throws Exception {
+        // It broke no word to keep out, and narrowed it could break onto two.
+        assertThat(indentOf(9.2, TextAlign.LEFT, SHORT)).isZero();
     }
 
     @Test
     void aSizeWordStatesAsItIsLeavesTheMeasureAlone() throws Exception {
-        assertThat(rightIndent(paragraph(9.5, TextAlign.LEFT))).isZero();
+        assertThat(indentOf(9.5, TextAlign.LEFT, LONG)).isZero();
     }
 
     @Test
     void aCentredLineIsLeftWhereThePageSetsIt() throws Exception {
-        assertThat(rightIndent(paragraph(7.8, TextAlign.CENTER))).isZero();
+        assertThat(indentOf(7.8, TextAlign.CENTER, LONG)).isZero();
     }
 
     @Test
@@ -60,14 +66,25 @@ class DocxWordSizeMeasureTest {
         // letters the measure would narrow, and the title's line would no longer fit.
         String title = "GraphCompose (Java 21, PDFBox, Maven, JMH) - Declarative Java PDF layout";
         String prose = " engine. Semantic templates, snapshot testing, and the pipelines that run on them ".repeat(4);
-        try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page
-                .addParagraph(p -> p.rich(rich -> rich.size(title, 7.35).size(prose, 7.1))))) {
-            double letters = (title.length() * 7.5 + prose.length() * 7.0) / (title.length() * 7.35 + prose.length() * 7.1);
+        java.util.function.Consumer<com.demcha.compose.document.dsl.ParagraphBuilder> paragraph =
+                p -> p.rich(rich -> rich.size(title, 7.35).size(prose, 7.1));
+        double letters = (title.length() * 7.5 + prose.length() * 7.0) / (title.length() * 7.35 + prose.length() * 7.1);
+        assertThat(letters).as("the letters' average narrows").isLessThan(1);
+        for (double room = 300; room < 360; room += 0.25) {
+            double first = wordsWidth(laidOut(room, paragraph).get(0));
+            if (!(first > room * letters)) {
+                continue;
+            }
+            // A measure where the title's line, as Word sets it, is wider than the averaged one.
+            double width = room;
+            try (XWPFDocument document = DocxExports.withLayout(room + 40, 400, 20, page -> page.addParagraph(paragraph))) {
+                double measure = width - rightIndent(text(document, "GraphCompose")) / 20.0;
 
-            assertThat(letters).as("the letters' average narrows").isLessThan(1);
-            assertThat(rightIndent(text(document, "GraphCompose")))
-                    .as("the title's line is given the room it grows by").isNegative();
+                assertThat(measure).as("the title's line fits, a point to spare").isGreaterThanOrEqualTo(first + 0.99);
+            }
+            return;
         }
+        throw new AssertionError("no measure where the averaged share would cut the title's line");
     }
 
     @Test
@@ -121,6 +138,7 @@ class DocxWordSizeMeasureTest {
                 double measure = room - rightIndent(text(document, "Built backend")) / 20.0;
                 double grows = 8 / 7.95;
 
+                assertThat(rightIndent(text(document, "Built backend"))).as("wider than the page's").isNegative();
                 assertThat(measure).as("every line fits").isGreaterThanOrEqualTo(tie[0] * grows);
                 assertThat(measure).as("the next word does not, by a point")
                         .isLessThanOrEqualTo(tie[1] * grows - 0.99);
@@ -128,6 +146,51 @@ class DocxWordSizeMeasureTest {
             return;
         }
         throw new AssertionError("no measure within 0.2pt of a line and its next word");
+    }
+
+    @Test
+    void everyLineHoldingAPictureStillFits() throws Exception {
+        // A picture is written at its own size: it takes the room it takes on the page. Over a
+        // run of measures one finds the picture's line all but full.
+        String prose = "Built backend services and production document rendering pipelines that process "
+                       + "two million documents a month for hiring, billing and reporting teams.";
+        java.util.function.Consumer<com.demcha.compose.document.dsl.ParagraphBuilder> paragraph = p -> p.rich(rich -> rich
+                .image(com.demcha.compose.document.image.DocumentImageData.fromBytes(pngBytes()), 24, 8)
+                .size(" " + prose, 7.1));
+        double tightest = Double.POSITIVE_INFINITY;
+        for (double room = 300; room < 330; room += 0.25) {
+            double widest = laidOut(room, paragraph).stream().mapToDouble(DocxWordSizeMeasureTest::wordsWidth).max().orElseThrow();
+            double width = room;
+            try (XWPFDocument document = DocxExports.withLayout(room + 40, 400, 20, page -> page.addParagraph(paragraph))) {
+                double measure = width - rightIndent(text(document, "Built backend")) / 20.0;
+                tightest = Math.min(tightest, measure - widest);
+            }
+        }
+        assertThat(tightest).as("the least room any line, picture and all, is left in Word's measure")
+                .isGreaterThanOrEqualTo(0.99);
+    }
+
+    /** A laid-out line's width as Word sets it: text at its half-point size, pictures as they are. */
+    private static double wordsWidth(ParagraphLine line) {
+        double width = 0;
+        for (var span : line.spans()) {
+            if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan text) {
+                double size = text.textStyle().size();
+                width += text.width() * Math.round(size * 2) / 2.0 / size;
+            } else {
+                width += span.width();
+            }
+        }
+        return width;
+    }
+
+    private static byte[] pngBytes() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(24, 8, java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (java.io.IOException failure) {
+            throw new IllegalStateException(failure);
+        }
     }
 
     /**
@@ -153,10 +216,14 @@ class DocxWordSizeMeasureTest {
     }
 
     private static List<ParagraphLine> laidOut(double room, String text) {
+        return laidOut(room, p -> p.text(text).textStyle(DocumentTextStyle.DEFAULT.withSize(7.95)));
+    }
+
+    private static List<ParagraphLine> laidOut(double room,
+                                               java.util.function.Consumer<com.demcha.compose.document.dsl.ParagraphBuilder> paragraph) {
         try (DocumentSession session = GraphCompose.document().pageSize(room + 40, 400)
                 .margin(DocumentInsets.of(20)).create()) {
-            session.pageFlow(page -> page.addParagraph(p -> p.text(text)
-                    .textStyle(DocumentTextStyle.DEFAULT.withSize(7.95))));
+            session.pageFlow(page -> page.addParagraph(paragraph));
             return session.layoutGraph().fragments().stream()
                     .filter(fragment -> fragment.payload() instanceof ParagraphFragmentPayload)
                     .flatMap(fragment -> ((ParagraphFragmentPayload) fragment.payload()).lines().stream())
@@ -171,17 +238,21 @@ class DocxWordSizeMeasureTest {
         return indent == null || !indent.isSetRight() ? 0 : DocxTwips.of(indent.getRight());
     }
 
-    private static XWPFParagraph paragraph(double size, TextAlign align) throws Exception {
-        XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page
-                .addParagraph(p -> p.text("Platform engineer with ten years of document pipelines.")
-                        .textStyle(DocumentTextStyle.DEFAULT.withSize(size))
-                        .align(align)));
-        return text(document, "Platform engineer");
+    private static final String SHORT = "Platform engineer with ten years of document pipelines.";
+    private static final String LONG = SHORT + " Built resilient layout engines, template systems and the "
+            + "snapshot-tested libraries that replace brittle production scripts across many teams.";
+
+    /** The right indent of a paragraph of the text given, at a size and an alignment. */
+    private static long indentOf(double size, TextAlign align, String words) throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page
+                .addParagraph(p -> p.text(words).textStyle(DocumentTextStyle.DEFAULT.withSize(size)).align(align)))) {
+            return rightIndent(text(document, "Platform engineer"));
+        }
     }
 
     private static XWPFParagraph text(XWPFDocument document, String start) {
         return document.getParagraphs().stream()
-                .filter(p -> p.getText().startsWith(start))
+                .filter(p -> p.getText().strip().startsWith(start))
                 .findFirst().orElseThrow();
     }
 }

@@ -4581,19 +4581,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * or move a centred or right-aligned line off where the page sets it.</p>
      *
      * @param room the width the paragraph's text is written in, in points
+     * @return whether the paragraph was given room past its box
      */
-    private void letTheLineStandOut(XWPFParagraph para, ParagraphNode node, double room) {
+    private boolean letTheLineStandOut(XWPFParagraph para, ParagraphNode node, double room) {
         if (node.align() == TextAlign.CENTER || node.align() == TextAlign.RIGHT) {
-            return;
+            return false;
         }
         double overhang = layout.unbrokenWidth(node) - room;
         if (!Double.isFinite(overhang) || !(overhang > 0.01)) {
-            return;
+            return false;
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
         long right = twipsOf(indent.isSetRight() ? indent.getRight() : null);
         indent.setRight(BigInteger.valueOf(right - toTwips(overhang + EDITOR_SLACK_POINTS)));
+        return true;
     }
 
     /**
@@ -4633,22 +4635,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * The measure Word is to set a paragraph's text in, in points: the page's, as much wider or
-     * narrower as Word sets the line that grows most, a point short of it, and never short of
-     * the widest line.
+     * narrower as Word sets the line that grows most, a point short of that in a paragraph of
+     * several lines unless one of its lines needs more, and never less than a point past the
+     * widest line.
      *
      * <p>Each line the page laid out is weighed by its own text: a line of a 7.35pt title set at
      * 7.5 grows, the 7.1pt lines under it set at 7 shrink, and a share averaged over the
-     * paragraph would narrow the measure the title's line no longer fits. The measure takes the
-     * share of the line that grows most, so every line still fits.</p>
+     * paragraph would narrow the measure the title's line no longer fits. A picture or a shape
+     * in a line is written at its own size and takes the same room in Word, and tracking is
+     * written in points, so neither grows with the size.</p>
      *
      * <p>A line the page broke because its next word did not fit may have missed by a fraction
      * of a point, and grown in the same proportion it misses by as little in Word, where it can
      * fit: {@code CompactMono}'s "and", 0.1pt from fitting on the page, fitted in Word. Held a
-     * point short, the measure misses every such word by at least that; held a point past the
-     * widest line, it still fits every line. A paragraph of one line broke no word, and keeps
-     * the measure grown in full: {@code OrangeOps}' phone number, as wide as its column, broke
-     * in LibreOffice a point narrower. Without the page's lines — an export with no
-     * layout — the paragraph's runs are weighed by their letters.</p>
+     * point short, the measure misses such a word by that much more. The widest line, grown,
+     * still has a point to spare, which wins where the two meet. A paragraph of one line broke
+     * no word: it keeps its measure or the share it grows by, whichever is wider, so a line as
+     * wide as its column is never narrowed onto two — {@code OrangeOps}' phone number broke in
+     * LibreOffice a point narrower. Without the page's lines — an export with no layout — the
+     * paragraph's runs are weighed by their letters.</p>
      */
     private double wordsMeasure(ParagraphNode node, double room) {
         double share = Double.NaN;
@@ -4658,14 +4663,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             broken++;
             double asked = 0;
             double set = 0;
+            boolean text = false;
             for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
-                if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan text
-                    && text.textStyle() != null && text.textStyle().size() > 0 && text.width() > 0) {
-                    asked += text.width();
-                    set += text.width() * wordsSize(text.textStyle().size()) / text.textStyle().size();
+                if (!(span.width() > 0)) {
+                    continue;
+                }
+                asked += span.width();
+                if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan run
+                    && run.textStyle() != null && run.textStyle().size() > 0) {
+                    double tracking = run.textStyle().letterSpacing() * run.text().codePointCount(0, run.text().length());
+                    set += (span.width() - tracking) * wordsSize(run.textStyle().size()) / run.textStyle().size() + tracking;
+                    text = true;
+                } else {
+                    set += span.width();
                 }
             }
-            if (asked > 0) {
+            if (text) {
                 share = Double.isNaN(share) ? set / asked : Math.max(share, set / asked);
                 fits = Math.max(fits, set);
             }
@@ -4678,8 +4691,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return room;
         }
         if (broken < 1) {
-            // One line: no word the page broke to keep out, and room to spare for the editor's face.
-            return Math.max(room * share, fits);
+            return Math.max(room, Math.max(room * share, fits));
         }
         return Math.max(room * share - WORDS_MEASURE_CLEARANCE, fits + WORDS_MEASURE_CLEARANCE);
     }
@@ -5106,9 +5118,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             insetLeft = outerLeft;
             insetRight = outerRight;
         }
-        letTheLineStandOut(para, node, room);
+        boolean standsOut = letTheLineStandOut(para, node, room);
         boolean rightToLeft = applyParagraphProperties(para, node);
-        if (!rightToLeft) {
+        // A line that stands out was given its room, and a couple of points more.
+        if (!rightToLeft && !standsOut) {
             measureAtWordsSize(para, node, room);
         }
         applyHeadingRole(para, node);

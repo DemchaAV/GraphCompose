@@ -8,6 +8,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **`OrangeOps` stands on one page in Word.** It ran to two, and 6 of its 108 lines were
+  found in Word's rendering; now 99 are, at a median drift of 0.42pt.
+  - Its headings are Oswald SemiBold, a face whose file does not say it is bold. Word set
+    "ACHIEVEMENTS" about 1% wider than the page, past its box, and broke it onto a second line, and
+    three such headings added 51pt. A paragraph of one line now has room for a line three
+    hundredths wider than its own: it breaks no word, and broken in Word it is a line more.
+  - Its role bar stands 3.8pt up inside its name's line, by the name's negative bottom margin.
+    A negative bottom edge — a paragraph's, an image's, a barcode's or a rule's — was dropped;
+    it now comes out of the space above the next paragraph, its own top edge included, or of the
+    space owed below where a table or a page break follows. LibreOffice's `NorthlineProposal` gains from it too: lines past
+    2pt fall from 34 to 6.
+  - Line by line, no document moves further from the page in Word or LibreOffice.
+
 - **A paragraph breaks its lines where the page does, though Word sets its size to the half
   point.** Word states a type size in half points, so `EngineeringResume`'s 7.8pt profile was set
   at 8pt and took a line more, and its 6.9pt skills, set at 7pt, broke "SQL" onto a line of its

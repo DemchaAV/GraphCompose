@@ -33,7 +33,9 @@ class DocxPanelInsetTest {
             CTPPr properties = cellParagraph(document, "Card title").getCTP().getPPr();
             var margins = document.getTables().get(0).getRow(0).getCell(0).getCTTc().getTcPr().getTcMar();
 
-            assertThat(properties == null || !properties.isSetInd())
+            // A line of one as wide as its panel is given room past it on the right, and none
+            // of the padding.
+            assertThat(addsNoPadding(properties))
                     .as("the padding is the cell's margin; the text adds nothing to it")
                     .isTrue();
             assertThat(DocxTwips.of(margins.getLeft().getW()))
@@ -170,6 +172,15 @@ class DocxPanelInsetTest {
         }
     }
 
+    /** No left indent, and a right one only past the box: room for the line, none of the padding. */
+    private static boolean addsNoPadding(CTPPr properties) {
+        if (properties == null || !properties.isSetInd()) {
+            return true;
+        }
+        var indent = properties.getInd();
+        return !indent.isSetLeft() && (!indent.isSetRight() || DocxTwips.of(indent.getRight()) <= 0);
+    }
+
     private static long firstCellMarginTwips(org.apache.poi.xwpf.usermodel.XWPFTable table) {
         var cell = table.getRow(0).getCell(0).getCTTc().getTcPr();
         return DocxTwips.of(cell.getTcMar().getLeft().getW());
@@ -205,7 +216,7 @@ class DocxPanelInsetTest {
             XWPFParagraph inCell = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
             CTPPr properties = inCell.getCTP().getPPr();
 
-            assertThat(properties == null || !properties.isSetInd())
+            assertThat(addsNoPadding(properties))
                     .as("the cell's own margin keeps it clear; the panel around the table adds nothing")
                     .isTrue();
         }

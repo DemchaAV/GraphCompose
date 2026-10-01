@@ -278,8 +278,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The drawings the composed cells of the table being written paint, not yet anchored, in the
     // order the layout emitted them; null outside such a table (see anchorComposedDrawing).
     private List<CellFragment> tableDrawings;
-    // Where the layout first placed the cell of that table being written; null outside one.
-    private DocxLayoutMetrics.CellBox composedCellBox;
+    // Where the layout placed the cell of that table being written, first placement first; empty
+    // outside one.
+    private List<DocxLayoutMetrics.CellBox> composedCellBoxes = List.of();
     // The shapes composed in a cell that anchorComposedDrawing anchored there, so not lost.
     private final java.util.Set<DocumentNode> anchoredInCells =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -625,7 +626,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         clipContainer = null;
         cellDrawing = CellDrawing.NONE;
         tableDrawings = null;
-        composedCellBox = null;
+        composedCellBoxes = List.of();
         anchoredInCells.clear();
         panelCell = null;
         moves.clear();
@@ -2304,9 +2305,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * their labels, the last out of its strip. A drawing that is all its cell holds is placed
      * from that cell's paragraph instead, held at the drawing's height: the row carries it.</p>
      *
-     * <p>Only a drawing with no margins, laid out on one page, in a cell holding nothing else yet:
-     * the cell's text column then starts where the drawing does, and the paragraph's top where
-     * its top is.</p>
+     * <p>Only a layer stack or shape container that only draws and holds no line (a rule), with no
+     * margins, laid out on one page, painting nothing outside its box, in a cell holding nothing
+     * else yet: the cell's text column then starts where the drawing does, the paragraph's top
+     * where its top is, and the cell holds all of it.</p>
      */
     private DrawingCell drawingCellFor(XWPFTableCell cell, DocumentNode node) {
         if (Double.isNaN(canvasHeight)
@@ -6634,7 +6636,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * to start where its shapes do. Anything else is left to the page, as before.</p>
      */
     private void anchorComposedDrawing(XWPFTableCell cell, DocumentNode node) {
-        if (tableDrawings == null || tableDrawings.isEmpty() || composedCellBox == null || Double.isNaN(canvasHeight)
+        if (tableDrawings == null || tableDrawings.isEmpty() || composedCellBoxes.isEmpty() || Double.isNaN(canvasHeight)
             || !composedInACell(node) || !holdsNothingYet(cell)) {
             return;
         }
@@ -6647,9 +6649,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // header's copies on later pages, and other cells' drawings, are not this one's — and
         // from the first of those still waiting: a drawing no cell took before this one is
         // never passed over and given to the next.
-        List<CellFragment> inTheCell = tableDrawings.stream()
-                .filter(waiting -> composedCellBox.holds(waiting.fragment()))
-                .toList();
+        List<CellFragment> inTheCell = waitingIn(composedCellBoxes.get(0));
         if (!DocxCellDrawings.opensWith(inTheCell.stream().map(CellFragment::fragment).toList(), shapes)) {
             return;
         }
@@ -6681,10 +6681,29 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!drawn.isEmpty()) {
             anchors.anchorInCell(carrier, drawn, new DocxDrawings.CellOrigin(left, top));
         }
-        anchoredInCells.addAll(shapes);
+        // A shape whose fragment draws nothing — a path painted only with a gradient — is still
+        // reported as lost.
+        for (int i = 0; i < shapes.size(); i++) {
+            if (!own.get(i).shapes().isEmpty()) {
+                anchoredInCells.add(shapes.get(i));
+            }
+        }
         java.util.Set<CellFragment> taken = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         taken.addAll(own);
+        // A header repeated on later pages repeats its cell there in Word, the drawing anchored
+        // in it with it: the page's copies of the drawing would draw it twice.
+        for (DocxLayoutMetrics.CellBox repeat : composedCellBoxes.subList(1, composedCellBoxes.size())) {
+            List<CellFragment> copy = waitingIn(repeat);
+            if (DocxCellDrawings.opensWith(copy.stream().map(CellFragment::fragment).toList(), shapes)) {
+                taken.addAll(copy.subList(0, shapes.size()));
+            }
+        }
         tableDrawings.removeIf(taken::contains);
+    }
+
+    /** The table's drawings still waiting that lie in one of its cells' boxes, in their order. */
+    private List<CellFragment> waitingIn(DocxLayoutMetrics.CellBox box) {
+        return tableDrawings.stream().filter(waiting -> box.holds(waiting.fragment())).toList();
     }
 
     /** Whether a cell holds nothing yet: no element, or one paragraph with nothing in it. */
@@ -7284,20 +7303,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // A composed cell keeps its node and leaves lines() empty, so reading lines()
             // exported it as an empty cell.
             double previous = currentCellWidth;
-            DocxLayoutMetrics.CellBox outerBox = composedCellBox;
+            List<DocxLayoutMetrics.CellBox> outerBoxes = composedCellBoxes;
             currentCellWidth = usableWidthOf(cell, placement);
             tablesCells.add(cell.getCTTc());
             // A table nested in a composed cell has no rows of its own in the layout: its cells
             // stand in the outer table's cell.
-            DocxLayoutMetrics.CellBox box = layout.cellBox(node, placement.row(), placement.column());
-            if (box != null) {
-                composedCellBox = box;
+            List<DocxLayoutMetrics.CellBox> boxes = layout.cellBoxes(node, placement.row(), placement.column());
+            if (!boxes.isEmpty()) {
+                composedCellBoxes = boxes;
             }
             try {
                 writeCellBody(cell, source.content());
             } finally {
                 currentCellWidth = previous;
-                composedCellBox = outerBox;
+                composedCellBoxes = outerBoxes;
             }
             return;
         }

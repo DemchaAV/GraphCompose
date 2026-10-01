@@ -77,7 +77,8 @@ final class DocxCellDrawings {
 
     /**
      * A layer stack's shapes in the order the page paints them, or {@code null} when it holds
-     * anything else — a container outline, a picture, text — or a stack in it has a margin.
+     * anything else — a container outline, a picture, text — or a stack in it has a margin or
+     * padding.
      */
     static List<DocumentNode> shapesOf(LayerStackNode stack) {
         List<DocumentNode> shapes = new ArrayList<>();
@@ -92,8 +93,9 @@ final class DocxCellDrawings {
         if (!(node instanceof LayerStackNode stack) || stack.layers().isEmpty()) {
             return false;
         }
-        DocumentInsets margin = stack.margin();
-        if (margin != null && (margin.top() != 0 || margin.right() != 0 || margin.bottom() != 0 || margin.left() != 0)) {
+        // A margin or padding sets the shapes in from the box the layout keeps for the stack,
+        // which their own box would then stand for.
+        if (insets(stack.margin()) || insets(stack.padding())) {
             return false;
         }
         List<LayerStackNode.Layer> layers = stack.layers().stream()
@@ -131,6 +133,11 @@ final class DocxCellDrawings {
             }
         }
         return true;
+    }
+
+    private static boolean insets(DocumentInsets insets) {
+        return insets != null
+               && (insets.top() != 0 || insets.right() != 0 || insets.bottom() != 0 || insets.left() != 0);
     }
 
     /** A drawing node's width and height, in points, or {@code null} for any other node. */

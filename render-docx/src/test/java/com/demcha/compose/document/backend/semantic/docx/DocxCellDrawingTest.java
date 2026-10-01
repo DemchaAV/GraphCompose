@@ -5,6 +5,7 @@ import com.demcha.compose.document.dsl.LineBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -16,12 +17,13 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.xmlbeans.XmlObject;
 import org.junit.jupiter.api.Test;
+import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor;
+import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.STRelFromV;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -96,8 +98,10 @@ class DocxCellDrawingTest {
                 assertThat(xmlOfIcon(table, row)).as("row " + row + " holds its own icon")
                         .contains("layoutInCell=\"1\"").contains("0000FF").doesNotContain("FF0000");
             }
-            assertThat(pageAnchoredShapes(document)).as("the header's copy on the second page, left to the page")
-                    .isEqualTo(1);
+            // Word repeats the header row, the icon anchored in it with it, on every page: the
+            // layout's copy there is not drawn again on the page.
+            assertThat(table.getRow(0).getCtRow().getTrPr().sizeOfTblHeaderArray()).as("a repeated header").isPositive();
+            assertThat(pageAnchoredShapes(document)).as("no second copy of the header's icon").isZero();
         }
     }
 
@@ -132,14 +136,51 @@ class DocxCellDrawingTest {
                         .addShape(shape -> shape.size(150, 20).fillColor(DocumentColor.rgb(230, 230, 240)))
                         .add(ICON.node(12))
                         .addParagraph(p -> p.text("LABEL"))))) {
-            String body = document.getDocument().xmlText();
-            Matcher banner = Pattern.compile("relativeHeight=\"(\\d+)\"[^>]*layoutInCell=\"0\"").matcher(body);
-            Matcher icon = Pattern.compile("relativeHeight=\"(\\d+)\"[^>]*layoutInCell=\"1\"").matcher(body);
+            List<CTAnchor> drawn = anchorsIn(document.getDocument());
+            CTAnchor banner = drawn.stream().filter(anchor -> !anchor.getLayoutInCell()).findFirst().orElseThrow();
+            CTAnchor icon = drawn.stream().filter(CTAnchor::getLayoutInCell).findFirst().orElseThrow();
 
-            assertThat(banner.find()).isTrue();
-            assertThat(icon.find()).isTrue();
-            assertThat(Long.parseLong(banner.group(1))).as("the banner under the icon")
-                    .isLessThan(Long.parseLong(icon.group(1)));
+            assertThat(banner.getRelativeHeight()).as("the banner under the icon")
+                    .isLessThan(icon.getRelativeHeight());
+        }
+    }
+
+    @Test
+    void aTableNestedInACellDoesNotLendItsCellsToTheOuterTable() throws Exception {
+        // Neither table is named, so their cells carry the same names; the inner table's rows,
+        // laid out with the outer table's first row, must not stand for the outer rows below it.
+        DocumentNode inner = new com.demcha.compose.document.dsl.TableBuilder()
+                .columns(DocumentTableColumn.fixed(100))
+                .rowCells(DocumentTableCell.text("a"))
+                .rowCells(DocumentTableCell.text("b"))
+                .rowCells(DocumentTableCell.text("c"))
+                .build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(150), DocumentTableColumn.fixed(150))
+                .rowCells(DocumentTableCell.text("Nested"), DocumentTableCell.node(inner))
+                .rowCells(DocumentTableCell.node(band(ICON, 12)), DocumentTableCell.text("One"))
+                .rowCells(DocumentTableCell.node(band(BLUE_ICON, 12)), DocumentTableCell.text("Two"))))) {
+            XWPFTable table = document.getTables().get(0);
+
+            assertThat(xmlOfIcon(table, 1)).contains("layoutInCell=\"1\"").contains("FF0000");
+            assertThat(xmlOfIcon(table, 2)).contains("layoutInCell=\"1\"").contains("0000FF");
+            assertThat(pageAnchoredShapes(document)).isZero();
+        }
+    }
+
+    @Test
+    void aPaddedStackComposedInACellStaysOnThePage() throws Exception {
+        // Its padding sets the icon in from the box the layout keeps for it, which the icon's own
+        // box cannot stand for.
+        DocumentNode padded = new com.demcha.compose.document.node.LayerStackNode("Padded",
+                List.of(new com.demcha.compose.document.node.LayerStackNode.Layer(ICON.node(12))),
+                DocumentInsets.of(4), DocumentInsets.zero());
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(300))
+                .rowCells(DocumentTableCell.node(new RowBuilder().name("Band").verticalAlign(RowVerticalAlign.CENTER)
+                        .weights(20, 280).add(padded).addParagraph(p -> p.text("LABEL")).build()))))) {
+            assertThat(xmlOfIcon(document.getTables().get(0), 0)).doesNotContain("layoutInCell=\"1\"");
+            assertThat(pageAnchoredShapes(document)).isEqualTo(1);
         }
     }
 
@@ -180,6 +221,40 @@ class DocxCellDrawingTest {
             String body = document.getDocument().xmlText();
 
             assertThat(body).as("no drawing taken into a cell").doesNotContain("layoutInCell=\"1\"");
+        }
+    }
+
+    @Test
+    void aMarkHoldingALineInACellOfARowInTheFlowStaysOnThePage() throws Exception {
+        // Its line is drawn among the mark's layers, not a rule; the drawing is left as it was.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addParagraph(p -> p.text("Above"))
+                .addRow("Band", row -> row.weights(12, 288).verticalAlign(RowVerticalAlign.CENTER)
+                        .add(new LayerStackBuilder().name("RuledMark")
+                                .layer(ICON.node(12))
+                                .layer(new LineBuilder().name("Underline").horizontal(12)
+                                        .stroke(DocumentStroke.of(DocumentColor.rgb(200, 0, 0), 1)).build())
+                                .build())
+                        .addParagraph(p -> p.text("LABEL"))))) {
+            assertThat(document.getDocument().xmlText()).doesNotContain("layoutInCell=\"1\"");
+            assertThat(pageAnchoredShapes(document)).as("the mark and its line, on the page").isEqualTo(2);
+        }
+    }
+
+    @Test
+    void aDrawingPaintingPastItsBoxStaysOnThePage() throws Exception {
+        // Word clips a drawing anchored in a cell to the cell: one reaching past its own box is
+        // left to the page whole, not split between the two.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addParagraph(p -> p.text("Above"))
+                .addRow("Band", row -> row.weights(20, 280).verticalAlign(RowVerticalAlign.CENTER)
+                        .add(new LayerStackBuilder().name("Overhanging")
+                                .layer(ICON.node(12))
+                                .position(BLUE_ICON.node(12), 10, 0, LayerAlign.TOP_LEFT)
+                                .build())
+                        .addParagraph(p -> p.text("LABEL"))))) {
+            assertThat(document.getDocument().xmlText()).doesNotContain("layoutInCell=\"1\"");
+            assertThat(pageAnchoredShapes(document)).as("both marks, on the page").isEqualTo(2);
         }
     }
 
@@ -243,33 +318,40 @@ class DocxCellDrawingTest {
     private record Anchor(String fromH, double x, String fromV, double y, double height) {
     }
 
-    private static final Pattern ANCHOR = Pattern.compile(
-            "layoutInCell=\"1\".*?positionH relativeFrom=\"(\\w+)\"><wp:posOffset>(-?\\d+)</wp:posOffset>.*?"
-            + "positionV relativeFrom=\"(\\w+)\"><wp:posOffset>(-?\\d+)</wp:posOffset>.*?"
-            + "<wp:extent cx=\"\\d+\" cy=\"(\\d+)\"", Pattern.DOTALL);
-
     /** The drawings anchored in a paragraph's cell, to a tenth of a point. */
     private static List<Anchor> anchors(XWPFParagraph paragraph) {
         List<Anchor> anchors = new ArrayList<>();
-        Matcher matcher = ANCHOR.matcher(paragraph.getCTP().xmlText());
-        while (matcher.find()) {
-            anchors.add(new Anchor(matcher.group(1), points(matcher.group(2)), matcher.group(3),
-                    points(matcher.group(4)), points(matcher.group(5))));
+        for (CTAnchor anchor : anchorsIn(paragraph.getCTP())) {
+            if (anchor.getLayoutInCell()) {
+                anchors.add(new Anchor(anchor.getPositionH().getRelativeFrom().toString(),
+                        points(anchor.getPositionH().getPosOffset()),
+                        anchor.getPositionV().getRelativeFrom().toString(),
+                        points(anchor.getPositionV().getPosOffset()),
+                        points(anchor.getExtent().getCy())));
+            }
         }
         return anchors;
     }
 
-    private static double points(String emu) {
-        return Math.round(Long.parseLong(emu) / 12700.0 * 10) / 10.0;
+    /** Every drawing anchored under an element, in document order. */
+    private static List<CTAnchor> anchorsIn(XmlObject root) {
+        List<CTAnchor> anchors = new ArrayList<>();
+        for (XmlObject found : root.selectPath("declare namespace wp='"
+                                               + "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing'"
+                                               + " .//wp:anchor")) {
+            anchors.add((CTAnchor) found);
+        }
+        return anchors;
+    }
+
+    private static double points(long emu) {
+        return Math.round(emu / 12700.0 * 10) / 10.0;
     }
 
     /** How many shapes the document places from the page's edges. */
-    private static int pageAnchoredShapes(XWPFDocument document) {
-        Matcher matcher = Pattern.compile("positionV relativeFrom=\"page\"").matcher(document.getDocument().xmlText());
-        int count = 0;
-        while (matcher.find()) {
-            count++;
-        }
-        return count;
+    private static long pageAnchoredShapes(XWPFDocument document) {
+        return anchorsIn(document.getDocument()).stream()
+                .filter(anchor -> anchor.getPositionV().getRelativeFrom() == STRelFromV.PAGE)
+                .count();
     }
 }

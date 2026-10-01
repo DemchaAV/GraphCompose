@@ -29,6 +29,13 @@ import java.util.function.Supplier;
  * the first paragraph of a cell on that page, clipped as it may be, is still better than none.
  * Pages are counted within a section, as the layout counts them, so a section ends with
  * {@link #endSection}.</p>
+ *
+ * <p>A drawing that is all a table cell holds is the exception: {@link #anchorInCell} anchors it
+ * in that cell's paragraph, placed from the paragraph and the cell's text column, so it moves
+ * with its row; the cell holds it whole, so Word's clipping cuts nothing.</p>
+ *
+ * <p>Every shape takes its place in the paint order when it is drawn ({@link #ordered}), not
+ * when it finds its paragraph.</p>
  */
 final class DocxDrawingAnchors {
 

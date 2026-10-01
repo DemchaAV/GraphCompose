@@ -17,12 +17,16 @@ follow semantic versioning; release dates are ISO 8601.
   drawing does. In a row of the flow that is a layer stack or a shape container that only
   draws — shapes, a drawn picture, a badge's initials — with no margins, on one page, all of it
   inside its box. In a table's composed cell, whose drawing belongs to the table, it is a layer
-  stack of shapes only: its drawing is the first of the table's waiting shapes inside that cell,
-  where the layout first placed it, when those are its shapes, of their kinds and sizes. A
+  stack of shapes only, with no margin or padding: its drawing is the first of the table's
+  waiting shapes inside that cell, where the layout first placed it, when those are its shapes,
+  of their kinds and sizes and on one page. Word repeats a repeated header row, the drawing
+  anchored in it with it, so the layout's copies of that drawing on later pages are not drawn
+  again. A
   drawing holding a line, a lone shape and a composed tile are drawn on the page as before.
   Every shape is now painted in the order it was drawn, rather than the order it found a
   paragraph to anchor it, so one waiting for its page's first paragraph is not painted over a
-  shape anchored in a cell after it.
+  shape anchored in a cell after it. `CobaltRota`'s icons stand beside their labels in Word and
+  in LibreOffice; its p90 drift in Word falls from 11.7pt to 6.4.
 
 - **A line pulled up into the line above it, with no space above to take the pull from, is no
   longer dropped in Word.** A paragraph's negative top edge comes out of the space owed above

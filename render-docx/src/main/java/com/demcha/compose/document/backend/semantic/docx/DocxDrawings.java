@@ -33,7 +33,8 @@ import java.util.Locale;
  * page, so it stays on the page it belongs to; within the page it stands where the layout put it,
  * which is where the text around it stands too as long as the text lands where the page sets it.
  * A reader who then edits the text moves the text, not the drawing — a drawing is decoration,
- * and Word treats a floating shape the same way.</p>
+ * and Word treats a floating shape the same way. A drawing that is all a table cell holds is
+ * the exception ({@link #drawingInCell}): anchored in that cell, it moves with its row.</p>
  *
  * <p>A picture a badge holds is drawn the same way, over the badge: written in the flow, as a
  * paragraph of its own, it stood on its own line above the title beside the badge instead of in

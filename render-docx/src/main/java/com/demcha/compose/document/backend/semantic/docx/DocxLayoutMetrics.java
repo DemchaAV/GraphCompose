@@ -57,7 +57,7 @@ final class DocxLayoutMetrics {
     private final int pageCount;
     // A table's measured cells by name, filled on first use — see cellLineHeightsOf.
     private final Map<DocumentNode, Map<String, Double>> cellLineHeights = new IdentityHashMap<>();
-    private final Map<DocumentNode, Map<String, CellBox>> cellBoxes = new IdentityHashMap<>();
+    private final Map<DocumentNode, Map<String, List<CellBox>>> cellBoxes = new IdentityHashMap<>();
     // The rows of a table the layout placed, by index, filled on first use — see placedRowsOf.
     private final Map<DocumentNode, Map<String, Integer>> placedRows = new IdentityHashMap<>();
     // The heights of a table's placed rows, by index, filled on first use — see rowHeightsOf.
@@ -192,8 +192,8 @@ final class DocxLayoutMetrics {
     }
 
     /**
-     * Where the layout first placed one of a table's cells, found by its name as
-     * {@link #cellLineHeight} finds it: the page and the box, in the page's points, y up.
+     * Where the layout placed one of a table's cells, found by its name among the table's own
+     * rows (see {@link #ownRows}): the page and the box, in the page's points, y up.
      *
      * @param page   the page, counted within the section
      * @param left   the cell's left edge
@@ -213,29 +213,32 @@ final class DocxLayoutMetrics {
     }
 
     /**
-     * The box the layout first placed one of a table's cells in — the first page it stands on,
-     * for a header repeated on every page — or {@code null} when it placed none by that name.
+     * Every box the layout placed one of a table's cells in, in the order it placed them: one
+     * for a row placed once, one a page for a header repeated on every page; empty when it
+     * placed none by that name.
      *
      * @param table  the table node
      * @param row    the cell's logical row
      * @param column the cell's first column
      */
-    CellBox cellBox(DocumentNode table, int row, int column) {
+    List<CellBox> cellBoxes(DocumentNode table, int row, int column) {
         String owner = table.name() == null || table.name().isBlank() ? table.nodeKind() : table.name();
         return cellBoxes.computeIfAbsent(table, node -> {
-            Map<String, CellBox> byName = new HashMap<>();
-            for (PlacedFragment fragment : fragmentsOf(node)) {
+            Map<String, List<CellBox>> byName = new HashMap<>();
+            // Only the table's own rows: a table composed in one of its cells, unnamed as it may
+            // be, emits rows under the owner's path whose cells carry the owner's names.
+            for (PlacedFragment fragment : ownRows(node)) {
                 if (fragment.payload() instanceof TableRowFragmentPayload payload) {
                     for (TableResolvedCell cell : payload.cells()) {
                         double bottom = fragment.y() + cell.yOffset();
                         double left = fragment.x() + cell.x();
-                        byName.putIfAbsent(cell.name(),
+                        byName.computeIfAbsent(cell.name(), name -> new ArrayList<>()).add(
                                 new CellBox(fragment.pageIndex(), left, bottom, left + cell.width(), bottom + cell.height()));
                     }
                 }
             }
             return byName;
-        }).get(owner + "__row_" + row + "__cell_" + column);
+        }).getOrDefault(owner + "__row_" + row + "__cell_" + column, List.of());
     }
 
     /**

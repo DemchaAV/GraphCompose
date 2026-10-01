@@ -579,7 +579,9 @@ tint it was flattened to. Recorded, like the other two.
   does, so it moves with its row wherever Word sets the rows above it. Its
   drawing is the first of the table's drawings still waiting inside that
   cell, where the layout first placed it, when those are the stack's own
-  shapes, each of its kind and size. In a row of the flow, a layer stack or shape container
+  shapes, each of its kind and size; a stack with a margin or padding is
+  left to the page. Word repeats a repeated header row with the drawing
+  anchored in it, so the header's copies on later pages are not drawn again. In a row of the flow, a layer stack or shape container
   that only draws — shapes, a drawn picture, a badge's initials — and is all
   its cell holds is anchored the same way, when it has no margins, stands on
   one page and paints nothing outside its box. A drawing holding a line, a

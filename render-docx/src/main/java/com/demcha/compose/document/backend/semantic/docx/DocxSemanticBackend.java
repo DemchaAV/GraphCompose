@@ -3110,31 +3110,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // low the content would stand: a padding as wide as the border holds it.
         double low = topNotTaken - padding.top();
         takeTheTopBorderInside(cell, low);
+        // Where its padding does not hold its top border, Word draws both borders outside the
+        // row's height, the panel's top where the space above put it: so the height held is the
+        // page's less the part of the top border no space above took and less the bottom border.
+        // holdRowAtLeast already takes the heavier of the two off; the rest comes off here. A
+        // padding that holds the border leaves the height as it was: Word draws the border inside
+        // the margin, and InvoiceMetered's card moved its top down taking it off.
+        double bordersOutside = low > 0
+                ? Math.max(0, topNotTaken + strokeWidth(borders.bottom())
+                              - Math.max(strokeWidth(borders.top()), strokeWidth(borders.bottom())))
+                : 0;
         com.demcha.compose.document.layout.PlacedNode placed = first && last && layout.onOnePage(node) ? layout.placement(node) : null;
         if (placed != null && placed.placementHeight() > 0) {
             // Its height is the page's: what makes a panel taller than its text — an icon drawn
             // where the page puts it, a fixed outline — is not in the cell. MerchantInvoice's
             // due-date card closed from 59.4pt to its text's 26, and its calendar hung below it.
-            // Where its padding does not hold its top border, Word draws both borders outside the
-            // row's height, the panel's top where the space above put it: so the height held is
-            // the page's less the part of the top border no space above took and less the bottom
-            // border. holdRowAtLeast already takes the heavier of the two off, which LibreOffice
-            // adds to the height once; the rest comes off here. Measured on MerchantInvoice's
-            // payment panel, Word drew it 0.8pt taller than the page without this, and as tall
-            // with it; LibreOffice draws such a panel that border's width shorter. A padding that
-            // holds the border leaves the height as it was: Word draws the border inside the
-            // margin, and InvoiceMetered's card moved its top down taking it off.
-            double bordersOutside = low > 0
-                    ? topNotTaken + strokeWidth(borders.bottom())
-                      - Math.max(strokeWidth(borders.top()), strokeWidth(borders.bottom()))
-                    : 0;
-            holdRowAtLeast(table.getRow(0), placed.placementHeight() - Math.max(0, bordersOutside));
+            // Measured on MerchantInvoice's payment panel, Word drew it 0.8pt taller than the page
+            // without the borders outside taken off, and as tall with them; LibreOffice, whose
+            // height there its content sets, draws it that border's width shorter.
+            holdRowAtLeast(table.getRow(0), placed.placementHeight() - bordersOutside);
         } else if (first && last && layout.placement(node) == null && node instanceof ShapeContainerNode shape
                    && shape.outline().height() > 0) {
             // Composed in a table cell, it has no placement; its outline states its height, as it
             // states its width (panelWidth). CobaltRota's shift chips, 17.5pt outlines round a
-            // line of text, closed to the text's 12.7pt in Word.
-            holdRowAtLeast(table.getRow(0), shape.outline().height());
+            // line of text, closed to the text's 12.7pt in Word. Less the borders drawn outside:
+            // its outlined chips, 9.2pt outlines with a 1.125pt border, stood 10.3pt tall in Word
+            // and 10.2pt in LibreOffice, each row holding one 1.1pt taller than the page's.
+            holdRowAtLeast(table.getRow(0), shape.outline().height() - bordersOutside);
         }
 
         if (indent != 0) {
@@ -6997,8 +6999,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * What LibreOffice adds to a row's written height for one cell, in twips: its top and bottom
-     * margins, and the width of its heavier horizontal border.
+     * What the editors add to a row's written height for one cell, in twips: its top and bottom
+     * margins, and the width of its heavier horizontal border. A panel's cell, its borders its
+     * own, has the other one drawn outside the height too; writePanelPiece takes that off.
      */
     private static long verticalMargins(XWPFTableCell cell) {
         org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr properties = cell.getCTTc().getTcPr();

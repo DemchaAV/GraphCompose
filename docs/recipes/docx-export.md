@@ -591,8 +591,9 @@ tint it was flattened to. Recorded, like the other two.
   A filled or outlined rectangle or rounded rectangle holding text there
   is written as a panel is, a table of one cell in its fill and outline, its
   outline's width within the cell and a point for the editor's face, its row
-  held at least its outline's height, with its layers inside, its corners
-  squared and reported — a rota's shift chips keep their colour and their
+  held at least its outline's height less the borders both editors draw
+  outside it where its padding does not hold them, with its layers inside,
+  its corners squared and reported — a rota's shift chips keep their colour and their
   size. A one-line label the shape centres top to bottom, on a line taller
   than the outline leaves it, is written that much shorter, down to the
   room Word leaves the cell's content — the outline less the margins written

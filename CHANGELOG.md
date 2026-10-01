@@ -8,6 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **`CobaltRota`'s outlined chips are as tall in Word as on the page.** A shape composed in a
+  table cell is written as a one-cell table holding its row at least the outline's height, less
+  the heavier border, which LibreOffice was taken to add to it once. Both editors draw the cell's
+  top and bottom borders outside that height: a 9.2pt chip outlined with a 1.125pt border stood
+  10.3pt tall in Word and 10.2pt in LibreOffice, and each staff row holding one stood 1.1pt
+  taller than the page's; the rota's last row stood 6.5pt low in Word, now 2.4. Where its padding
+  does not hold the top border, the row now holds the outline's height less the borders drawn
+  outside it — the top as far as no space above took it — as a panel with a placement already
+  did. `CobaltRota`'s p90 drift falls from 6.4pt to 2.9 in Word and from 7.3pt to 3.9
+  in LibreOffice.
+
 - **`MerchantInvoice` fits its page in Word again.** Two things pushed its footer row onto a
   second page.
   - Its payment panel opens a table cell, so no space above could take the panel's 0.875pt

@@ -57,6 +57,7 @@ final class DocxLayoutMetrics {
     private final int pageCount;
     // A table's measured cells by name, filled on first use — see cellLineHeightsOf.
     private final Map<DocumentNode, Map<String, Double>> cellLineHeights = new IdentityHashMap<>();
+    private final Map<DocumentNode, Map<String, CellBox>> cellBoxes = new IdentityHashMap<>();
     // The rows of a table the layout placed, by index, filled on first use — see placedRowsOf.
     private final Map<DocumentNode, Map<String, Integer>> placedRows = new IdentityHashMap<>();
     // The heights of a table's placed rows, by index, filled on first use — see rowHeightsOf.
@@ -188,6 +189,53 @@ final class DocxLayoutMetrics {
             }
             return byName;
         });
+    }
+
+    /**
+     * Where the layout first placed one of a table's cells, found by its name as
+     * {@link #cellLineHeight} finds it: the page and the box, in the page's points, y up.
+     *
+     * @param page   the page, counted within the section
+     * @param left   the cell's left edge
+     * @param bottom the cell's bottom edge
+     * @param right  the cell's right edge
+     * @param top    the cell's top edge
+     */
+    record CellBox(int page, double left, double bottom, double right, double top) {
+
+        /** Whether a fragment lies in the box on its page, a point either side allowed. */
+        boolean holds(PlacedFragment fragment) {
+            double slack = 1;
+            return fragment.pageIndex() == page
+                   && fragment.x() >= left - slack && fragment.x() + fragment.width() <= right + slack
+                   && fragment.y() >= bottom - slack && fragment.y() + fragment.height() <= top + slack;
+        }
+    }
+
+    /**
+     * The box the layout first placed one of a table's cells in — the first page it stands on,
+     * for a header repeated on every page — or {@code null} when it placed none by that name.
+     *
+     * @param table  the table node
+     * @param row    the cell's logical row
+     * @param column the cell's first column
+     */
+    CellBox cellBox(DocumentNode table, int row, int column) {
+        String owner = table.name() == null || table.name().isBlank() ? table.nodeKind() : table.name();
+        return cellBoxes.computeIfAbsent(table, node -> {
+            Map<String, CellBox> byName = new HashMap<>();
+            for (PlacedFragment fragment : fragmentsOf(node)) {
+                if (fragment.payload() instanceof TableRowFragmentPayload payload) {
+                    for (TableResolvedCell cell : payload.cells()) {
+                        double bottom = fragment.y() + cell.yOffset();
+                        double left = fragment.x() + cell.x();
+                        byName.putIfAbsent(cell.name(),
+                                new CellBox(fragment.pageIndex(), left, bottom, left + cell.width(), bottom + cell.height()));
+                    }
+                }
+            }
+            return byName;
+        }).get(owner + "__row_" + row + "__cell_" + column);
     }
 
     /**

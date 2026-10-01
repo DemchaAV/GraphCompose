@@ -267,9 +267,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private int sectionFirstElement;
     // The shape container being written that clips its content to its outline, null outside one.
     private ShapeContainerNode clipContainer;
+    // The table cell a drawing is written alone in, whose paragraph carries its shapes; null
+    // outside one (see drawingCellFor).
+    private DrawingCell drawingCell;
+    // Whether the shapes last queued went into that cell rather than onto the page.
+    private boolean drewInCell;
     // What the tables being written drew of their composed cells (see drawCellDrawing): a drawing
     // node inside such a cell is then drawn, not lost.
     private CellDrawing cellDrawing = CellDrawing.NONE;
+    // The drawings the composed cells of the table being written paint, not yet anchored, in the
+    // order the layout emitted them; null outside such a table (see anchorComposedDrawing).
+    private List<CellFragment> tableDrawings;
+    // Where the layout first placed the cell of that table being written; null outside one.
+    private DocxLayoutMetrics.CellBox composedCellBox;
+    // The shapes composed in a cell that anchorComposedDrawing anchored there, so not lost.
+    private final java.util.Set<DocumentNode> anchoredInCells =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // The paragraph a badge being drawn holds, as w:p markup (see textBadgeParagraph); null
     // otherwise.
     private String badgeText;
@@ -611,6 +624,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         currentPage = 0;
         clipContainer = null;
         cellDrawing = CellDrawing.NONE;
+        tableDrawings = null;
+        composedCellBox = null;
+        anchoredInCells.clear();
         panelCell = null;
         moves.clear();
         writingInAStandIn.clear();
@@ -2136,12 +2152,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean overlayFront = drawsInFront();
         boolean front = false;
         boolean drew = false;
+        drewInCell = false;
         for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
             if (badgeText != null && !Double.isNaN(canvasHeight)) {
                 // A badge holding its initials: in front, the text being its own.
                 List<DocxDrawings.Shape> shapes = DocxDrawings.of(fragment, canvasHeight).stream()
                         .map(shape -> shape.holding(badgeText).inFront()).toList();
-                anchors.queue(shapes);
+                queueDrawings(shapes, false);
                 drew |= !shapes.isEmpty();
                 front |= !shapes.isEmpty();
                 continue;
@@ -2162,8 +2179,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         if (drew) {
-            StringBuilder message = new StringBuilder("drawn as a shape anchored to the page where the "
-                    + "layout puts it: it stays there when the text around it is edited");
+            StringBuilder message = new StringBuilder(drewInCell
+                    ? "drawn as a shape anchored in the table cell it fills, where the layout puts it "
+                      + "in the cell: it moves with the row"
+                    : "drawn as a shape anchored to the page where the "
+                      + "layout puts it: it stays there when the text around it is edited");
             if (badgeText != null) {
                 message.append("; its text is held in the shape, which stands in front of the text");
             } else if (front) {
@@ -2240,8 +2260,102 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // what lies behind the text: in front of it, the shape shows.
             shapes = shapes.stream().map(DocxDrawings.Shape::inFront).toList();
         }
+        DrawingCell cell = drawingCell;
+        if (cell != null && !shapes.isEmpty() && shapes.stream().allMatch(cell::holds)) {
+            anchors.anchorInCell(cell.carrier(), anchors.ordered(shapes), cell.origin());
+            drewInCell = true;
+            return true;
+        }
         anchors.queue(shapes);
         return !shapes.isEmpty();
+    }
+
+    /**
+     * A table cell holding one drawing and nothing else, and where the page puts it.
+     *
+     * @param carrier the cell's paragraph, held at the drawing's height
+     * @param origin  where the page puts the drawing's top-left corner, which the paragraph's
+     *                top and the cell's text column stand at
+     * @param width   the drawing's width, in points
+     * @param height  the drawing's height, in points
+     * @param page    the page it is laid out on, counted within the section
+     */
+    private record DrawingCell(XWPFParagraph carrier, DocxDrawings.CellOrigin origin, double width, double height,
+                               int page) {
+
+        /** Whether a shape lies in the drawing's box, a point's stroke either side allowed. */
+        boolean holds(DocxDrawings.Shape shape) {
+            double slack = 1;
+            return shape.page() == page
+                   && shape.x() >= origin.x() - slack && shape.x() + shape.width() <= origin.x() + width + slack
+                   && shape.top() >= origin.top() - slack
+                   && shape.top() + shape.height() <= origin.top() + height + slack;
+        }
+    }
+
+    /**
+     * The cell a drawing is written alone in, when its shapes can be anchored in that cell's
+     * paragraph rather than on the page; {@code null} when they cannot.
+     *
+     * <p>Every other shape is placed from the page's edges (see {@link DocxDrawingAnchors}), which
+     * holds it where the page puts it — and, in a table, off the row it belongs to wherever Word
+     * sets the rows above a little taller or shorter than the page. {@code CobaltRota}'s band
+     * icons, each alone in the first column of its navy strip, stood 4pt, 9pt and 14pt above
+     * their labels, the last out of its strip. A drawing that is all its cell holds is placed
+     * from that cell's paragraph instead, held at the drawing's height: the row carries it.</p>
+     *
+     * <p>Only a drawing with no margins, laid out on one page, in a cell holding nothing else yet:
+     * the cell's text column then starts where the drawing does, and the paragraph's top where
+     * its top is.</p>
+     */
+    private DrawingCell drawingCellFor(XWPFTableCell cell, DocumentNode node) {
+        if (Double.isNaN(canvasHeight)
+            || !(node instanceof com.demcha.compose.document.node.LayerStackNode || node instanceof ShapeContainerNode)
+            || !onlyDrawn(node) || DocxCellDrawings.holdsALine(node)) {
+            return null;
+        }
+        com.demcha.compose.document.style.DocumentInsets margin = node.margin();
+        if (margin != null && (margin.top() != 0 || margin.right() != 0 || margin.bottom() != 0 || margin.left() != 0)) {
+            return null;
+        }
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(node);
+        if (placed == null || placed.startPage() != placed.endPage() || !(placed.placementHeight() > 0)
+            || !holdsNothingYet(cell) || !paintsInsideItsBox(node, placed)) {
+            return null;
+        }
+        XWPFParagraph carrier = cell.getParagraphs().isEmpty() ? cell.addParagraph() : cell.getParagraphs().get(0);
+        CTPPr properties = carrier.getCTP().isSetPPr() ? carrier.getCTP().getPPr() : carrier.getCTP().addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        spacing.setBefore(BigInteger.ZERO);
+        spacing.setAfter(BigInteger.ZERO);
+        spacing.setLineRule(STLineSpacingRule.EXACT);
+        spacing.setLine(BigInteger.valueOf(Math.max(2, toTwips(placed.placementHeight()))));
+        double top = canvasHeight - placed.placementY() - placed.placementHeight();
+        return new DrawingCell(carrier, new DocxDrawings.CellOrigin(placed.placementX(), top),
+                placed.placementWidth(), placed.placementHeight(), placed.startPage());
+    }
+
+    /**
+     * Whether everything a node and the nodes inside it paint lies in its box on its page, a
+     * point either side allowed: the cell then holds the whole drawing, or none of it.
+     */
+    private boolean paintsInsideItsBox(DocumentNode node, com.demcha.compose.document.layout.PlacedNode box) {
+        for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
+            double slack = 1;
+            if (fragment.pageIndex() != box.startPage()
+                || fragment.x() < box.placementX() - slack
+                || fragment.x() + fragment.width() > box.placementX() + box.placementWidth() + slack
+                || fragment.y() < box.placementY() - slack
+                || fragment.y() + fragment.height() > box.placementY() + box.placementHeight() + slack) {
+                return false;
+            }
+        }
+        for (DocumentNode child : node.children()) {
+            if (!paintsInsideItsBox(child, box)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -6101,10 +6215,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double top = canvasHeight - placed.placementY() - (placed.placementHeight() + height) / 2;
         DocxDrawings.Shape picture = DocxDrawings.Shape.picture(x, top, width, height, placed.startPage(),
                 relationship);
+        drewInCell = false;
         queueDrawings(List.of(picture), inFront);
         report.add(DocxExportReport.Severity.APPROXIMATED, image.nodeKind(), layout.pathOf(image),
-                how + ", anchored to the page where the layout puts it: it stays "
-                + "there when the text around it is edited");
+                drewInCell
+                        ? how + ", anchored in the table cell it fills, where the layout puts it in the cell: "
+                          + "it moves with the row"
+                        : how + ", anchored to the page where the layout puts it: it stays "
+                          + "there when the text around it is edited");
     }
 
     /**
@@ -6363,12 +6481,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         CellDrawing outerCellDrawing = cellDrawing;
+        List<CellFragment> outerDrawings = tableDrawings;
         CellDrawing drawn = drawCellDrawing(node);
         cellDrawing = new CellDrawing(outerCellDrawing.drew() || drawn.drew(),
-                outerCellDrawing.skippedBoxes() || drawn.skippedBoxes());
+                outerCellDrawing.skippedBoxes() || drawn.skippedBoxes(), List.of());
+        if (!drawn.pending().isEmpty()) {
+            tableDrawings = new ArrayList<>(drawn.pending());
+        }
         try {
             writeTableRows(document, node);
         } finally {
+            // What no cell took is drawn where the page puts it, in the order the table paints it.
+            if (tableDrawings != outerDrawings) {
+                for (CellFragment waiting : tableDrawings) {
+                    anchors.queueOrdered(waiting.shapes());
+                }
+            }
+            tableDrawings = outerDrawings;
             cellDrawing = outerCellDrawing;
         }
     }
@@ -6378,9 +6507,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * @param drew         whether they drew anything
      * @param skippedBoxes whether they left a box framing text to the panel it is written as
+     * @param pending      the drawings one table's cells paint, waiting to be anchored
      */
-    private record CellDrawing(boolean drew, boolean skippedBoxes) {
-        static final CellDrawing NONE = new CellDrawing(false, false);
+    private record CellDrawing(boolean drew, boolean skippedBoxes, List<CellFragment> pending) {
+        static final CellDrawing NONE = new CellDrawing(false, false, List.of());
     }
 
     /**
@@ -6391,6 +6521,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * table skipped any, a box node is still reported, rather than one lost in silence.</p>
      */
     private boolean drawnByItsTable(DocumentNode node) {
+        if (anchoredInCells.contains(node)) {
+            return true;
+        }
         if (!cellDrawing.drew() || !composedInACell(node)
             || !(isDrawing(node) || node instanceof ShapeContainerNode)) {
             // A node kind the table's drawing does not cover is reported as ever.
@@ -6445,21 +6578,121 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 .toList();
         boolean drew = false;
         boolean skipped = false;
+        List<CellFragment> pending = new ArrayList<>();
         for (com.demcha.compose.document.layout.PlacedFragment fragment : fragments) {
             boolean frames = framesText(fragment, content);
             if (frames && fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload) {
                 skipped = true;
                 continue;
             }
-            drew |= queueDrawing(fragment, !frames);
+            if (Double.isNaN(canvasHeight)) {
+                continue;
+            }
+            List<DocxDrawings.Shape> shapes = DocxDrawings.of(fragment, canvasHeight);
+            if (!shapes.isEmpty() || DocxCellDrawings.drawnKind(fragment) != null) {
+                // Its place in the paint order is the table's, wherever it is anchored.
+                pending.add(new CellFragment(fragment, anchors.ordered(
+                        frames ? shapes : shapes.stream().map(DocxDrawings.Shape::inFront).toList())));
+                drew |= !shapes.isEmpty();
+            }
         }
         if (drew) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "cell drawing", layout.pathOf(table),
-                    "what its cells draw is drawn as shapes anchored to the page where the layout puts "
-                    + "it: it stays there when the text around it is edited, and a clip, a transform, a "
-                    + "gradient or a dash on it is not carried");
+                    "what its cells draw is drawn as shapes where the layout puts it — anchored in the "
+                    + "cell a drawing is all of, and to the page otherwise, where it stays when the text "
+                    + "around it is edited; a clip, a transform, a gradient or a dash on it is not carried");
         }
-        return new CellDrawing(drew, skipped);
+        return new CellDrawing(drew, skipped, pending);
+    }
+
+    /**
+     * A drawing a table's composed cell paints, waiting to be anchored.
+     *
+     * @param fragment the table's fragment
+     * @param shapes   the shapes it draws, each with its place in the paint order
+     */
+    private record CellFragment(com.demcha.compose.document.layout.PlacedFragment fragment,
+                                List<DocxDrawingAnchors.Ordered> shapes) {
+    }
+
+    /**
+     * Anchors a drawing composed alone in a table cell in that cell, where the page puts it in
+     * the cell, rather than on the page.
+     *
+     * <p>A composed cell's content has no place of its own in the layout: its drawings are the
+     * table's fragments (see {@link #drawCellDrawing}), placed from the page's edges, and so off
+     * their row wherever Word sets the rows above a little taller or shorter than the page.
+     * {@code CobaltRota}'s band icons, each alone in the first column of its navy strip, stood
+     * 4pt, 9pt and 14pt above their labels, the last out of its strip. Its drawing is the first
+     * of the table's waiting fragments inside the table's cell being written, where the layout
+     * first placed it, when those are its shapes (see {@link DocxCellDrawings}). The cell's
+     * paragraph is held at the height of their box and carries them,
+     * placed from its top and the cell's text column: the row carries them.</p>
+     *
+     * <p>Only a layer stack of shapes — no container outline, no picture, no line, which is a
+     * rule — with no margins, in a cell holding nothing else yet; the cell's text column is taken
+     * to start where its shapes do. Anything else is left to the page, as before.</p>
+     */
+    private void anchorComposedDrawing(XWPFTableCell cell, DocumentNode node) {
+        if (tableDrawings == null || tableDrawings.isEmpty() || composedCellBox == null || Double.isNaN(canvasHeight)
+            || !composedInACell(node) || !holdsNothingYet(cell)) {
+            return;
+        }
+        List<DocumentNode> shapes = node instanceof com.demcha.compose.document.node.LayerStackNode stack
+                ? DocxCellDrawings.shapesOf(stack) : null;
+        if (shapes == null || DocxCellDrawings.holdsALine(node)) {
+            return;
+        }
+        // Only what the table's cell being written holds, where the layout first placed it — a
+        // header's copies on later pages, and other cells' drawings, are not this one's — and
+        // from the first of those still waiting: a drawing no cell took before this one is
+        // never passed over and given to the next.
+        List<CellFragment> inTheCell = tableDrawings.stream()
+                .filter(waiting -> composedCellBox.holds(waiting.fragment()))
+                .toList();
+        if (!DocxCellDrawings.opensWith(inTheCell.stream().map(CellFragment::fragment).toList(), shapes)) {
+            return;
+        }
+        List<CellFragment> own = inTheCell.subList(0, shapes.size());
+        double left = Double.POSITIVE_INFINITY;
+        double top = Double.POSITIVE_INFINITY;
+        double right = Double.NEGATIVE_INFINITY;
+        double bottom = Double.NEGATIVE_INFINITY;
+        List<DocxDrawingAnchors.Ordered> drawn = new ArrayList<>();
+        for (CellFragment waiting : own) {
+            com.demcha.compose.document.layout.PlacedFragment fragment = waiting.fragment();
+            double fragmentTop = canvasHeight - fragment.y() - fragment.height();
+            left = Math.min(left, fragment.x());
+            top = Math.min(top, fragmentTop);
+            right = Math.max(right, fragment.x() + fragment.width());
+            bottom = Math.max(bottom, fragmentTop + fragment.height());
+            drawn.addAll(waiting.shapes());
+        }
+        if (!(bottom - top > 0)) {
+            return;
+        }
+        XWPFParagraph carrier = cell.getParagraphs().isEmpty() ? cell.addParagraph() : cell.getParagraphs().get(0);
+        CTPPr properties = carrier.getCTP().isSetPPr() ? carrier.getCTP().getPPr() : carrier.getCTP().addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        spacing.setBefore(BigInteger.ZERO);
+        spacing.setAfter(BigInteger.ZERO);
+        spacing.setLineRule(STLineSpacingRule.EXACT);
+        spacing.setLine(BigInteger.valueOf(Math.max(2, toTwips(bottom - top))));
+        if (!drawn.isEmpty()) {
+            anchors.anchorInCell(carrier, drawn, new DocxDrawings.CellOrigin(left, top));
+        }
+        anchoredInCells.addAll(shapes);
+        java.util.Set<CellFragment> taken = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        taken.addAll(own);
+        tableDrawings.removeIf(taken::contains);
+    }
+
+    /** Whether a cell holds nothing yet: no element, or one paragraph with nothing in it. */
+    private static boolean holdsNothingYet(XWPFTableCell cell) {
+        List<IBodyElement> elements = cell.getBodyElements();
+        return elements.isEmpty()
+               || elements.size() == 1 && elements.get(0) instanceof XWPFParagraph only && only.getRuns().isEmpty()
+                  && only.getCTP().sizeOfHyperlinkArray() == 0;
     }
 
     /** Whether a box holds a line of text or a picture of its table: the centre of one stands inside it. */
@@ -7051,12 +7284,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // A composed cell keeps its node and leaves lines() empty, so reading lines()
             // exported it as an empty cell.
             double previous = currentCellWidth;
+            DocxLayoutMetrics.CellBox outerBox = composedCellBox;
             currentCellWidth = usableWidthOf(cell, placement);
             tablesCells.add(cell.getCTTc());
+            // A table nested in a composed cell has no rows of its own in the layout: its cells
+            // stand in the outer table's cell.
+            DocxLayoutMetrics.CellBox box = layout.cellBox(node, placement.row(), placement.column());
+            if (box != null) {
+                composedCellBox = box;
+            }
             try {
                 writeCellBody(cell, source.content());
             } finally {
                 currentCellWidth = previous;
+                composedCellBox = outerBox;
             }
             return;
         }
@@ -8725,9 +8966,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** Writes several nodes into a cell, one after another, as a block of the cell's own. */
     private void writeCellNodes(XWPFTableCell cell, List<DocumentNode> children) throws Exception {
+        DrawingCell alone = children.size() == 1 ? drawingCellFor(cell, children.get(0)) : null;
+        if (children.size() == 1 && alone == null) {
+            anchorComposedDrawing(cell, children.get(0));
+        }
         writeInCell(cell, () -> {
-            for (DocumentNode child : children) {
-                writeNode(cell.getXWPFDocument(), child);
+            DrawingCell outer = drawingCell;
+            drawingCell = alone;
+            try {
+                for (DocumentNode child : children) {
+                    writeNode(cell.getXWPFDocument(), child);
+                }
+            } finally {
+                drawingCell = outer;
             }
         });
     }

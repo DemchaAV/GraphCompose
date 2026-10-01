@@ -345,6 +345,16 @@ Choose the smallest tests that match the change:
   [CvV2VisualParityTest.java (CV)](qa/src/test/java/com/demcha/compose/document/templates/cv/presets/CvV2VisualParityTest.java)
   [CoverLetterV2VisualParityTest.java (cover letter)](qa/src/test/java/com/demcha/compose/document/templates/coverletter/presets/CoverLetterV2VisualParityTest.java)
   and the [per-preset smoke tests](qa/src/test/java/com/demcha/compose/document/templates/cv/presets)
+- For DOCX export (`render-docx`) changes:
+  [DocxFidelityCorpusTest.java](qa/src/test/java/com/demcha/compose/document/templates/fidelity/DocxFidelityCorpusTest.java).
+  It exports every template preset to DOCX, has LibreOffice set each one, and holds every
+  line of every document to the drift its baseline records: a line set further from the page,
+  a line set at other words, or a page more fails it. It needs LibreOffice and runs only when
+  asked for — install first, as for any standalone `qa` run:
+  `./mvnw -B -ntp test -f qa/pom.xml -Dtest=DocxFidelityCorpusTest -Dgraphcompose.docxFidelity=libreoffice`.
+  A change that moves documents nearer the page rewrites the baseline with
+  `-Dgraphcompose.docxFidelity.update=true`, and commits it with the change: its diff shows
+  which documents moved. A new preset joins the corpus in its family's `*DocxCorpus` class.
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 

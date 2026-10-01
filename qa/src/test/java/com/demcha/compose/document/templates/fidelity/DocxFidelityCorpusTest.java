@@ -26,22 +26,23 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Every template preset's DOCX, set by an editor, stands no further from the engine's PDF than
  * its baseline holds it.
  *
- * <p>The engine draws each corpus document to PDF and exports it to DOCX; LibreOffice converts
- * the DOCX to PDF; each document is measured line by line against the page
+ * <p>The engine draws each corpus document to PDF and exports it to DOCX; an editor converts the
+ * DOCX to PDF; each document is measured line by line against the page
  * ({@link FidelityMeasurement}) and held to the baseline for this editor and operating system
  * ({@link FidelityBaseline}). A change to the export that sets any document further from the
  * page fails here, wherever the document is.</p>
  *
- * <p>It runs only when asked for, with {@code -Dgraphcompose.docxFidelity=libreoffice}: it
- * needs LibreOffice and takes a few minutes. Asked for and without LibreOffice, it fails rather
- * than passing unrun. Microsoft Word, the editor the export answers to, is measured on Windows
- * in two runs around a conversion of its own ({@code scripts/docx-visual/word-fidelity.ps1}):
- * {@code export} writes the documents, Word converts them, and {@code word} measures Word's
- * PDFs — first checking that this tree still exports, to the byte, the DOCX Word converted —
- * against {@code word-windows.tsv}. {@code -Dgraphcompose.docxFidelity.update=true} writes what it measured as
- * the baseline, for a change that moves documents nearer the page; the baseline's diff then
- * shows the reviewer which documents moved. The documents, their PDFs and the report are left
- * in {@code target/docx-fidelity}.</p>
+ * <p>It runs only when asked for, with {@code -Dgraphcompose.docxFidelity}, and takes a few
+ * minutes; a value it does not know fails. {@code libreoffice} exports, converts with
+ * LibreOffice and measures, and fails rather than passing unrun without LibreOffice. Microsoft
+ * Word, the editor the export answers to, converts outside the build, around two runs of this
+ * test ({@code scripts/docx-visual/word-fidelity.ps1}): {@code export} writes the documents,
+ * Word converts them, and {@code word} measures Word's PDFs against {@code word-windows.tsv} —
+ * each only when the DOCX Word converted, by the SHA-256 its conversion records, is the one
+ * this tree exports ({@link WordConversion}). {@code -Dgraphcompose.docxFidelity.update=true}
+ * writes what it measured as the baseline, for a change that moves documents nearer the page;
+ * the baseline's diff then shows the reviewer which documents moved. The documents, their PDFs
+ * and the report are left in {@code target/docx-fidelity}.</p>
  */
 class DocxFidelityCorpusTest {
 
@@ -52,27 +53,33 @@ class DocxFidelityCorpusTest {
     @Test
     void everyDocumentStandsNoFurtherFromThePageThanItsBaseline() throws Exception {
         String mode = System.getProperty("graphcompose.docxFidelity", "");
-        Assumptions.assumeTrue(List.of(LIBREOFFICE, WORD, EXPORT).contains(mode),
-                "NOT_RUN: the DOCX fidelity corpus runs with -Dgraphcompose.docxFidelity=libreoffice, "
-                + "or export then word (scripts/docx-visual/word-fidelity.ps1)");
+        Assumptions.assumeTrue(!mode.isEmpty(), "NOT_RUN: the DOCX fidelity corpus runs with "
+                + "-Dgraphcompose.docxFidelity=libreoffice, or with Word through scripts/docx-visual/word-fidelity.ps1");
+        assertThat(mode).as("-Dgraphcompose.docxFidelity").isIn(LIBREOFFICE, WORD, EXPORT);
         Path work = Path.of("target", "docx-fidelity").toAbsolutePath();
-        Path engine = Files.createDirectories(work.resolve("engine"));
+        Path engine = work.resolve("engine");
         List<DocxCorpusDocument> corpus = corpus();
         String note;
         Path editor = work.resolve(mode);
         if (mode.equals(WORD)) {
-            // Word converts what export wrote, outside this run: COM from the build's own
-            // process tree can stall. The DOCX it converted must be the one this tree exports.
+            // Word converts outside this run (see word-fidelity.ps1), so its PDFs are measured
+            // only when the DOCX it converted is, to the byte, the one this tree exports.
+            assertThat(LibreOfficeConverter.platform()).as("Word is measured on Windows").isEqualTo("windows");
+            WordConversion conversion = WordConversion.read(editor);
+            Files.createDirectories(engine);
             List<String> stale = new ArrayList<>();
             for (DocxCorpusDocument document : corpus) {
-                if (!exportUnchanged(document, engine)) {
+                if (!conversion.convertedFrom(document.stem() + ".docx", exportTo(document, engine))) {
                     stale.add(document.stem());
                 }
             }
-            assertThat(stale).as("DOCX this tree exports otherwise than the ones Word converted: run "
+            assertThat(stale).as("documents Word converted from other DOCX than this tree exports: run "
                                  + "scripts/docx-visual/word-fidelity.ps1, which exports and converts first").isEmpty();
-            note = WORD + " " + wordVersion(editor) + " on " + LibreOfficeConverter.platform();
+            note = WORD + " " + conversion.version() + " on " + LibreOfficeConverter.platform();
         } else {
+            // A document no longer in the corpus leaves no DOCX for an editor to convert.
+            deleteTree(engine);
+            Files.createDirectories(engine);
             List<Path> docx = new ArrayList<>();
             for (DocxCorpusDocument document : corpus) {
                 docx.add(export(document, engine));
@@ -143,27 +150,6 @@ class DocxFidelityCorpusTest {
         corpus.addAll(ReceiptDocxCorpus.documents());
         corpus.addAll(RotaDocxCorpus.documents());
         return corpus;
-    }
-
-    /**
-     * Writes a document's PDF, and says whether its DOCX, exported to the byte the same each time,
-     * is the one already in {@code dir}.
-     */
-    private static boolean exportUnchanged(DocxCorpusDocument document, Path dir) throws Exception {
-        Path docx = dir.resolve(document.stem() + ".docx");
-        byte[] exported = exportTo(document, dir);
-        return Files.exists(docx) && java.util.Arrays.equals(Files.readAllBytes(docx), exported);
-    }
-
-    /** The Word version the conversion beside its PDFs records, or {@code unknown}. */
-    private static String wordVersion(Path pdfs) {
-        Path record = pdfs.resolve("conversion.json");
-        try {
-            var tree = new com.fasterxml.jackson.databind.ObjectMapper().readTree(record.toFile());
-            return tree.path("version").asText("unknown");
-        } catch (java.io.IOException unreadable) {
-            return "unknown";
-        }
     }
 
     /** Writes a document's PDF and its DOCX; returns the DOCX. */

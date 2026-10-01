@@ -79,7 +79,9 @@ function Convert-WithWord {
                 # Pagination settled before the export, as Word settles it on screen.
                 $doc.Repaginate()
                 $doc.ExportAsFixedFormat($out, $WD_EXPORT_FORMAT_PDF)
-                $results += @{ source = $file.Name; pdf = (Split-Path $out -Leaf); pages = $doc.ComputeStatistics(2) }
+                # The DOCX's digest ties the PDF to the file it was converted from.
+                $results += @{ source = $file.Name; pdf = (Split-Path $out -Leaf); pages = $doc.ComputeStatistics(2);
+                    sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $file.FullName).Hash.ToLowerInvariant() }
             } finally {
                 $doc.Close([ref]$false)
                 [Runtime.InteropServices.Marshal]::ReleaseComObject($doc) | Out-Null

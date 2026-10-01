@@ -12,24 +12,26 @@
          qa/target/docx-fidelity/engine;
       2. convert-with-word.ps1 converts the DOCX through a private, hidden Word
          instance into qa/target/docx-fidelity/word, recording Word's version;
-      3. the corpus test in `word` mode checks that the tree still exports those
-         DOCX to the byte, measures Word's PDFs line by line against the engine's,
-         and holds them to qa/src/test/resources/docx-fidelity/word-windows.tsv.
+      3. the corpus test in `word` mode checks, by the SHA-256 the conversion
+         recorded, that Word converted the DOCX this tree exports, measures Word's
+         PDFs line by line against the engine's, and holds them to
+         qa/src/test/resources/docx-fidelity/word-windows.tsv.
 
-    Word is driven from this PowerShell, not from the build: COM started from the
-    build's own process tree has stalled Word. Run the install the qa module needs
-    first, as for any standalone qa run.
+    Run it from PowerShell (pwsh), not through powershell.exe under Git Bash: Word
+    driven through COM from a process Git Bash started has stalled on its first
+    document. Run the install the qa module needs first, as for any standalone qa
+    run.
 
 .PARAMETER Update
     Rewrites the Word baseline with what was measured, for a change that moves
     documents nearer the page. What it writes over is printed first.
 
 .EXAMPLE
-    ./mvnw -B -ntp -DskipTests install -pl :graph-compose-qa -am
-    ./scripts/docx-visual/word-fidelity.ps1
+    .\mvnw.cmd -B -ntp -DskipTests install -pl :graph-compose-qa -am
+    .\scripts\docx-visual\word-fidelity.ps1
 
 .EXAMPLE
-    ./scripts/docx-visual/word-fidelity.ps1 -Update
+    .\scripts\docx-visual\word-fidelity.ps1 -Update
 #>
 [CmdletBinding()]
 param(
@@ -54,6 +56,8 @@ Invoke-Corpus -Mode 'export'
 
 $pdfs = Join-Path $work 'word'
 if (Test-Path $pdfs) { Remove-Item -Recurse -Force $pdfs }
+# The converter sets an exit code only when it stops early (2, NOT_RUN); clear the build's.
+$global:LASTEXITCODE = 0
 & (Join-Path $PSScriptRoot 'convert-with-word.ps1') -Path (Join-Path $work 'engine') -OutputDir $pdfs
 if ($LASTEXITCODE -ne 0) { throw "Word did not convert the corpus (exit $LASTEXITCODE)" }
 

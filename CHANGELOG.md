@@ -5,7 +5,42 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.4.2 — Planned
 
+### Build
+
+- **A release reaches Maven Central as one deployment instead of eight.** Central now counts
+  every distinct publish operation against an organisation's monthly Release Count, and
+  `publish.yml` deployed the train as eight separate `-f <module>/pom.xml deploy` runs — eight
+  deployments, eight validation queues and eight Publish clicks for one version. It now runs
+  the release profile once over the root reactor, `-P release deploy -pl` the eight train
+  artifacts: the `central-publishing-maven-plugin` stages every module and uploads one
+  `central-bundle.zip` from the last. Every coordinate, POM, jar, sources and javadoc jar and
+  signature is what it was — only the transaction is shared. The deployment validates as a unit,
+  so a failure no longer leaves the first modules of a version published and the rest missing.
+  `graph-compose-fonts` and `graph-compose-emoji` keep their own tags and workflows. The
+  `start_at` resume input is replaced by `skip_published`, off by default, which leaves out
+  components the Portal already reports as published, for recovering a version that is
+  partially live. The uploaded zip is kept as a workflow artifact.
+
+### Tests
+
+- **`PublishTrainGuardTest`** holds the deploy to exactly one `-pl` reactor run, its selection
+  to the lockstep modules derived from the poms (standalone, publishing, on the reactor
+  version), and keeps fonts, emoji and the build-only modules out of it. It forbids `-am`, which
+  would pull fonts and emoji into the deployment, and requires the eight `release` profiles to
+  declare the plugin identically, because the upload runs with the settings of the module the
+  reactor orders last. `PublishedModules` reads `-pl` deploys as well as `-f` ones, so the
+  CodeQL scope guard keeps its inventory.
+- **The release smoke runs before the upload.** `run.sh --staged-repo <dir>` /
+  `run.ps1 -StagedRepo <dir>` resolves the GraphCompose coordinates from an unzipped
+  `central-bundle.zip` and everything else from Central, and fails a scenario unless every
+  GraphCompose artifact it resolved came from the staged directory.
+
 ### Documentation
+
+- **The release runbook describes the single deployment.** `docs/contributing/release-process.md`
+  explains the one-deployment train, how to dry-run it against a dead endpoint and smoke the
+  staged bundle, and replaces the per-module `start_at` recovery with the failure cases a single
+  deployment has.
 
 - **A card of a preset shows the code that draws that preset.** The catalogue carries one
   compiled block per family — the CVs' builds `BoxedSections`, the invoices' `ModernInvoice` —

@@ -4597,6 +4597,61 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Sets a paragraph's lines in a measure as much wider or narrower than the page's as Word
+     * sets its text, so they break at the words the page breaks them.
+     *
+     * <p>Word states a type size in half points, so a size the page sets to the tenth is set a
+     * little larger or smaller, and its lines that much wider or narrower: {@code
+     * EngineeringResume}'s 6.9pt skills, set at 7pt, broke "SQL" onto a line of its own, and its
+     * 7.8pt profile, set at 8pt, took a line more, each column standing 8 to 9pt low under it.
+     * The glyphs are left as Word sets them — a scale would stay on the text a reader types
+     * next — and the right indent gives the line the same share more room, or takes it.</p>
+     *
+     * <p>Only a paragraph set flush left: moving a centred or right-aligned line's other edge
+     * would move the line off where the page sets it. A list's items, a line pair, text over
+     * the flow and a header's or footer's line are written elsewhere and keep the page's
+     * measure.</p>
+     *
+     * @param room the width the paragraph's text is written in, in points
+     */
+    private void measureAtWordsSize(XWPFParagraph para, ParagraphNode node, double room) {
+        if (node.align() == TextAlign.CENTER || node.align() == TextAlign.RIGHT || !Double.isFinite(room)) {
+            return;
+        }
+        double set = 0;
+        double asked = 0;
+        for (InlineRun run : node.inlineRuns()) {
+            InlineTextRun text = textOf(run);
+            if (text == null) {
+                continue;
+            }
+            DocumentTextStyle style = text.textStyle() == null ? node.textStyle() : text.textStyle();
+            double size = style == null ? 0 : style.size();
+            if (size > 0) {
+                int characters = text.text().length();
+                asked += characters * size;
+                set += characters * Math.max(1, Math.round(size * HALF_POINTS_PER_POINT)) / HALF_POINTS_PER_POINT;
+            }
+        }
+        if (node.inlineRuns().isEmpty() && node.textStyle() != null && node.textStyle().size() > 0) {
+            // No text runs: the paragraph's own text, in its own style.
+            asked = node.textStyle().size();
+            set = Math.max(1, Math.round(asked * HALF_POINTS_PER_POINT)) / HALF_POINTS_PER_POINT;
+        }
+        if (!(asked > 0)) {
+            return;
+        }
+        double more = room * (set / asked - 1);
+        if (Math.abs(more) < 0.05) {
+            return;
+        }
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
+        long right = twipsOf(indent.isSetRight() ? indent.getRight() : null);
+        indent.setRight(BigInteger.valueOf(right - Math.round(more * POINT_TO_TWIP)));
+    }
+
+    /**
      * A paragraph's left indent in twips: below zero in the body, where a container hanging
      * left by a negative margin takes its text out past the margin as the page does; never
      * below zero in a cell, where Word draws no text past the cell's left edge — measured, a
@@ -4995,6 +5050,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         letTheLineStandOut(para, node, room);
         boolean rightToLeft = applyParagraphProperties(para, node);
+        if (!rightToLeft) {
+            measureAtWordsSize(para, node, room);
+        }
         applyHeadingRole(para, node);
         int anchor = openAnchor(para, node.anchor());
         // A line of a stack starts where its letters and the ones above leave room, not where

@@ -287,10 +287,12 @@ bold in both.
 
 Word states a type size in half-points, so a size set to the tenth is written to the
 nearest half: 9.4pt as 9.5, 7.8pt as 8. A line of it is that much wider or narrower than on
-the page. Measured over twenty CV presets, about one line in eight breaks at another word in
-Word or LibreOffice than on the page; in LibreOffice about a fifth of those break there
-because of the rounding, the rest because of how the editor sets text. The run is not scaled across to make up for it: a
-scale would stay on the text a reader types next.
+the page. The glyphs are not scaled to make up for it, since a scale would stay on the text
+a reader types next. A paragraph set flush left is given a measure that much wider or
+narrower instead, through its right indent, so its lines break at the words the page breaks
+them; a reader's new text wraps at that measure. A centred or right-aligned paragraph keeps
+the page's measure, as moving its other edge would move its lines. A list's items, a line pair's
+line, text over the flow and a header's or footer's line keep the page's measure too.
 
 ## Named styles, so the document can be restyled
 

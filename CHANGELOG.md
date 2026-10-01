@@ -8,6 +8,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A paragraph breaks its lines where the page does, though Word sets its size to the half
+  point.** Word states a type size in half points, so `EngineeringResume`'s 7.8pt profile was set
+  at 8pt and took a line more, and its 6.9pt skills, set at 7pt, broke "SQL" onto a line of its
+  own: each column stood 8 to 9pt low. A paragraph set flush left is now given a measure as much
+  wider or narrower as Word sets its text, through its right indent; the glyphs are left as
+  Word sets them. In Word, `EngineeringResume`'s median drift falls from 7.9pt to 0.5, and the
+  corpus's lines more than 2pt off fall from 324 to 249.
+
 - **`NavySidebar` stands where the page sets it in Word.** Its median drift in Word falls from
   5.2pt to 0.1pt, every line within 2pt of the page.
   - Its portrait is a 127pt ring round a 123.8pt photo, in a column 123.8pt wide. The photo was

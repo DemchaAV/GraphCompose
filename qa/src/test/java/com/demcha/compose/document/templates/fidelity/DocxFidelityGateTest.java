@@ -107,7 +107,7 @@ class DocxFidelityGateTest {
 
         assertThat(baseline.regressions(List.of(doc("cv-probe", 1, 2, line(1, "aa", 0.4)))))
                 .singleElement().asString().contains("2 pages");
-        assertThat(baseline.regressions(List.of(doc("cv-other", 1, 1, line(1, "aa", 0.4)))))
+        assertThat(baseline.regressions(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.4)), doc("cv-other", 1, 1, line(1, "aa", 0.4)))))
                 .singleElement().asString().contains("not in the baseline");
     }
 
@@ -130,9 +130,79 @@ class DocxFidelityGateTest {
         FidelityBaseline.write(file, "probe", rows);
 
         assertThat(FidelityBaseline.read(file).regressions(rows)).isEmpty();
-        assertThat(FidelityBaseline.read(file).regressions(List.of(doc("cv-b", 2, 3, line(1, "aa", -1.5)))))
+        assertThat(FidelityBaseline.read(file).regressions(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.86)),
+                doc("cv-b", 2, 3, line(1, "aa", -1.5), line(2, "cc", 3)))))
+                .as("a drift read back as written: 0.25 -> 0.86 is further").singleElement().asString().contains("further");
+        assertThat(FidelityBaseline.read(file).regressions(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25)),
+                doc("cv-b", 2, 3, line(1, "aa", -1.5)))))
                 .as("the line file read back with the document file").singleElement().asString().contains("no longer found");
         assertThat(Files.readAllLines(file)).first().isEqualTo("# probe");
+    }
+
+    @Test
+    void halfAPointFurtherIsRoundingAndMoreIsNot() {
+        FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 1.0))));
+
+        assertThat(baseline.regressions(List.of(doc("cv-probe", 1, 1, line(1, "aa", 1.5))))).isEmpty();
+        assertThat(baseline.regressions(List.of(doc("cv-probe", 1, 1, line(1, "aa", 1.51))))).hasSize(1);
+    }
+
+    @Test
+    void aDocumentTheCorpusNoLongerHasFails() {
+        FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-gone", 1, 1, line(1, "aa", 0))));
+
+        assertThat(baseline.regressions(List.of())).singleElement().asString().contains("no longer in the corpus");
+    }
+
+    @Test
+    void aBaselineWithoutItsLinesIsRefused() throws Exception {
+        Path file = dir.resolve("baseline.tsv");
+        FidelityBaseline.write(file, "probe", List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25), line(1, "bb", 0.5))));
+        Path lines = dir.resolve("baseline-lines.tsv");
+        List<String> rows = Files.readAllLines(lines);
+
+        Files.write(lines, rows.subList(0, rows.size() - 1));
+        assertThatThrownBy(() -> FidelityBaseline.read(file)).as("a line missing from the line file")
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("cv-a");
+        Files.delete(lines);
+        assertThatThrownBy(() -> FidelityBaseline.read(file)).as("no line file")
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("no line file");
+    }
+
+    @Test
+    void aMalformedLineRowIsRefusedByName() {
+        assertThatThrownBy(() -> FidelityMeasurement.parseLine("cv-a\t1:abc\tfar\tletters", new LinkedHashMap<>()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("cv-a");
+    }
+
+    @Test
+    void linesOfTheSameLettersArePairedNearestFirst() {
+        // A rota's two "09:00-18:00" on one page: the editor draws them in the other order and
+        // loses the first. The one left is the second, where it stood, and the first is lost.
+        PdfLines page = new PdfLines(List.of(new PdfLines.Line(0, "0900-1800", 40, 100),
+                new PdfLines.Line(0, "0900-1800", 40, 200)), 1);
+        PdfLines set = new PdfLines(List.of(new PdfLines.Line(0, "0900-1800", 40, 200.5)), 1);
+
+        FidelityMeasurement measured = FidelityMeasurement.of("rota-probe", page, set);
+
+        assertThat(measured.lines()).isEqualTo(2);
+        assertThat(measured.matched()).isEqualTo(1);
+        assertThat(measured.found()).hasSize(1);
+        var found = measured.found().entrySet().iterator().next();
+        assertThat(found.getKey()).endsWith("#1");
+        assertThat(found.getValue().drift()).isEqualTo(0.5);
+    }
+
+    @Test
+    void twoColumnsOnOneBaselineAreTwoLines() throws Exception {
+        Path page = pdf("columns", flow -> flow.addRow("Row", row -> row
+                .columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(180),
+                        com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                .addParagraph("Left")
+                .addParagraph("Right")));
+
+        assertThat(PdfLines.of(page).lines()).extracting(PdfLines.Line::key).containsExactly("left", "right");
     }
 
     @Test

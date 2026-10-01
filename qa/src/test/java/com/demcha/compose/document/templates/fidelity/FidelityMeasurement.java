@@ -17,7 +17,9 @@ import java.util.Map;
  * How far an editor's rendering of a document's DOCX stands from the engine's PDF of it.
  *
  * <p>Each line of the page is looked for, by its letters, on the same page of the editor's
- * PDF; a line the editor breaks at another word, or puts on another page, is not found. A found
+ * PDF; a line the editor breaks at another word, or puts on another page, is not found. Lines
+ * of the same letters on one page — a rota's shifts, a CV's date ranges — are paired each with
+ * the editor's nearest, so one lost or moved among them is not hidden behind another. A found
  * line's drift is how far its baseline stands below the page's, above when negative.</p>
  *
  * @param stem         the document
@@ -28,8 +30,9 @@ import java.util.Map;
  * @param median       the median of the found lines' drift either way, in points
  * @param p90          the drift either way nine in ten found lines stay within, in points
  * @param over2        the found lines drifting more than 2pt either way
- * @param found        each found line's drift, by its {@link #lineId line id}; empty when read
- *                     from a baseline row
+ * @param found        each found line's drift, by its line id: its page, a digest of its
+ *                     letters, and which of the page's lines of those letters it is, in the
+ *                     order the page draws them
  */
 record FidelityMeasurement(String stem, int enginePages, int editorPages, int lines, int matched,
                            double median, double p90, int over2, Map<String, Found> found) {
@@ -44,48 +47,93 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
         found = Collections.unmodifiableMap(new LinkedHashMap<>(found));
     }
 
-    /** The share of the page's lines found in the editor's, from 0 to 1. */
-    double matchedShare() {
-        return lines == 0 ? 1 : (double) matched / lines;
-    }
-
     /** Measures the editor's PDF of a document against the engine's. */
     static FidelityMeasurement of(String stem, Path enginePdf, Path editorPdf) throws IOException {
         return of(stem, PdfLines.of(enginePdf), PdfLines.of(editorPdf));
     }
 
     static FidelityMeasurement of(String stem, PdfLines engine, PdfLines editor) {
-        Map<String, PdfLines.Line> page = engine.byKey();
-        Map<String, PdfLines.Line> set = editor.byKey();
+        Map<String, List<PdfLines.Line>> page = grouped(engine);
+        Map<String, List<PdfLines.Line>> set = grouped(editor);
         Map<String, Found> found = new LinkedHashMap<>();
         List<Double> drifts = new ArrayList<>();
-        for (Map.Entry<String, PdfLines.Line> line : page.entrySet()) {
-            PdfLines.Line there = set.get(line.getKey());
-            if (there != null) {
-                double drift = round(there.baseline() - line.getValue().baseline());
-                found.put(lineId(line.getValue()), new Found(line.getValue().page(), preview(line.getValue().key()), drift));
-                drifts.add(Math.abs(drift));
+        int lines = 0;
+        for (Map.Entry<String, List<PdfLines.Line>> group : page.entrySet()) {
+            List<PdfLines.Line> ours = group.getValue();
+            lines += ours.size();
+            PdfLines.Line[] theirs = paired(ours, set.getOrDefault(group.getKey(), List.of()));
+            for (int index = 0; index < ours.size(); index++) {
+                if (theirs[index] != null) {
+                    PdfLines.Line line = ours.get(index);
+                    double drift = round(theirs[index].baseline() - line.baseline());
+                    found.put(lineId(line, index), new Found(line.page(), preview(line.key()), drift));
+                    drifts.add(Math.abs(drift));
+                }
             }
         }
         Collections.sort(drifts);
         int over2 = (int) drifts.stream().filter(drift -> drift > 2).count();
-        return new FidelityMeasurement(stem, engine.pages(), editor.pages(), page.size(), drifts.size(),
+        return new FidelityMeasurement(stem, engine.pages(), editor.pages(), lines, drifts.size(),
                 quantile(drifts, 0.5), quantile(drifts, 0.9), over2, found);
     }
 
-    /** A line's identity across runs: its page and a digest of its letters. */
-    static String lineId(PdfLines.Line line) {
+    /** A PDF's lines by page and letters, each group in the order the page draws them. */
+    private static Map<String, List<PdfLines.Line>> grouped(PdfLines pdf) {
+        Map<String, List<PdfLines.Line>> groups = new LinkedHashMap<>();
+        for (PdfLines.Line line : pdf.lines()) {
+            groups.computeIfAbsent(line.page() + "/" + line.key(), key -> new ArrayList<>()).add(line);
+        }
+        return groups;
+    }
+
+    /**
+     * Pairs the page's lines of one group with the editor's, nearest first: each pair is the
+     * closest of the lines still unpaired, so a group the editor sets in another order, or with
+     * one line lost, pairs the lines that stand where they did.
+     */
+    private static PdfLines.Line[] paired(List<PdfLines.Line> ours, List<PdfLines.Line> theirs) {
+        PdfLines.Line[] pairs = new PdfLines.Line[ours.size()];
+        if (ours.size() == 1 && theirs.size() == 1) {
+            pairs[0] = theirs.get(0);
+            return pairs;
+        }
+        List<int[]> candidates = new ArrayList<>();
+        for (int i = 0; i < ours.size(); i++) {
+            for (int j = 0; j < theirs.size(); j++) {
+                candidates.add(new int[]{i, j});
+            }
+        }
+        candidates.sort(java.util.Comparator.comparingDouble(pair -> distance(ours.get(pair[0]), theirs.get(pair[1]))));
+        boolean[] taken = new boolean[theirs.size()];
+        for (int[] pair : candidates) {
+            if (pairs[pair[0]] == null && !taken[pair[1]]) {
+                pairs[pair[0]] = theirs.get(pair[1]);
+                taken[pair[1]] = true;
+            }
+        }
+        return pairs;
+    }
+
+    private static double distance(PdfLines.Line a, PdfLines.Line b) {
+        return Math.hypot(a.x() - b.x(), a.baseline() - b.baseline());
+    }
+
+    /**
+     * A line's identity across runs: its page, a digest of its letters, and which of the page's
+     * lines of those letters it is.
+     */
+    static String lineId(PdfLines.Line line, int occurrence) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(line.key().getBytes(StandardCharsets.UTF_8));
-            return line.page() + ":" + HexFormat.of().formatHex(digest, 0, 6);
+            String id = line.page() + ":" + HexFormat.of().formatHex(digest, 0, 6);
+            return occurrence == 0 ? id : id + "#" + occurrence;
         } catch (NoSuchAlgorithmException missing) {
             throw new IllegalStateException(missing);
         }
     }
 
     private static String preview(String key) {
-        String letters = key.replaceAll("[\\t\\r\\n]", "");
-        return letters.length() <= 32 ? letters : letters.substring(0, 32);
+        return key.codePointCount(0, key.length()) <= 32 ? key : key.substring(0, key.offsetByCodePoints(0, 32));
     }
 
     private static double round(double points) {

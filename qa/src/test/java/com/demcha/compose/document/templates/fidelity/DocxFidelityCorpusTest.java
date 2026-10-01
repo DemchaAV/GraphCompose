@@ -53,6 +53,9 @@ class DocxFidelityCorpusTest {
         Path work = Path.of("target", "docx-fidelity").toAbsolutePath();
         Path engine = Files.createDirectories(work.resolve("engine"));
         Path editor = work.resolve(EDITOR);
+        // LibreOffice can exit cleanly when a file fails to load: a PDF left from an earlier
+        // run would then be measured in its place.
+        deleteTree(editor);
         List<DocxCorpusDocument> corpus = corpus();
         List<Path> docx = new ArrayList<>();
         for (DocxCorpusDocument document : corpus) {
@@ -67,16 +70,19 @@ class DocxFidelityCorpusTest {
             measurements.add(FidelityMeasurement.of(document.stem(),
                     engine.resolve(document.stem() + ".pdf"), converted));
         }
-        String note = EDITOR + " on " + LibreOfficeConverter.platform();
+        String note = EDITOR + " " + converter.build() + " on " + LibreOfficeConverter.platform();
         FidelityBaseline.write(work.resolve("measured-" + EDITOR + ".tsv"), note, measurements);
 
         Path baseline = Path.of("src", "test", "resources", "docx-fidelity",
                 EDITOR + "-" + LibreOfficeConverter.platform() + ".tsv");
+        List<String> regressions = FidelityBaseline.read(baseline).regressions(measurements);
         if (Boolean.getBoolean("graphcompose.docxFidelity.update")) {
+            // Written all the same: what it lets through is the baseline's diff, shown here first.
+            regressions.forEach(regression -> System.err.println("baseline rewritten over: " + regression));
             FidelityBaseline.write(baseline, note, measurements);
             return;
         }
-        assertThat(FidelityBaseline.read(baseline).regressions(measurements))
+        assertThat(regressions)
                 .as("documents set further from the page than %s holds them (measured: %s)",
                         baseline, work.resolve("measured-" + EDITOR + ".tsv"))
                 .isEmpty();
@@ -89,6 +95,17 @@ class DocxFidelityCorpusTest {
             assertThat(stems.add(document.stem())).as("%s named once", document.stem()).isTrue();
         }
         assertThat(stems).hasSizeGreaterThanOrEqualTo(60);
+    }
+
+    private static void deleteTree(Path dir) throws java.io.IOException {
+        if (!Files.exists(dir)) {
+            return;
+        }
+        try (var paths = Files.walk(dir)) {
+            for (Path path : paths.sorted(java.util.Comparator.reverseOrder()).toList()) {
+                Files.delete(path);
+            }
+        }
     }
 
     /** Every family's presets. */

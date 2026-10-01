@@ -19,10 +19,12 @@ import java.util.Map;
  * <p>A change may move the export nearer the page, never further. Against its baseline a
  * document fails when the editor sets it on a page count further from the engine's, when a
  * line the baseline found is no longer found — the editor breaks it at another word, or puts it
- * on another page — or when a found line drifts {@value #LINE_SLACK}pt further from the page
- * than it did. Line by line, because a document already set a few points off throughout hides a
- * new defect in its counts. A document the baseline does not hold fails until the baseline is
- * written with it.</p>
+ * on another page — or when a found line drifts more than {@value #LINE_SLACK}pt further from
+ * the page than it did. Line by line, because a document already set a few points off
+ * throughout hides a new defect in its counts. A document the baseline does not hold fails
+ * until the baseline is written with it, and so does one the baseline holds and the corpus no
+ * longer has. A document whose lines the editor mostly sets at other words is held to the few
+ * it finds: the gate keeps what an export has, and adds nothing for what it lacks.</p>
  *
  * <p>The baseline is two files: {@code <name>.tsv}, a row per document, and
  * {@code <name>-lines.tsv}, a row per found line, named by its page and a digest of its
@@ -42,26 +44,38 @@ final class FidelityBaseline {
         this.rows = rows;
     }
 
+    /**
+     * Reads a baseline: no file at all is an empty baseline, which every document fails
+     * against; a document file without its line file, or a line file that holds another number
+     * of a document's lines than its row says it found, is refused rather than read as a
+     * baseline that holds no lines.
+     */
     static FidelityBaseline read(Path documents) throws IOException {
-        Map<String, Map<String, FidelityMeasurement.Found>> lines = new LinkedHashMap<>();
+        Map<String, FidelityMeasurement> rows = new LinkedHashMap<>();
+        if (!Files.exists(documents)) {
+            return new FidelityBaseline(rows);
+        }
         Path lineFile = linesOf(documents);
-        if (Files.exists(lineFile)) {
-            for (String row : Files.readAllLines(lineFile, StandardCharsets.UTF_8)) {
-                if (!row.isBlank() && !row.startsWith("#")) {
-                    FidelityMeasurement.parseLine(row, lines);
-                }
+        if (!Files.exists(lineFile)) {
+            throw new IllegalStateException("the baseline " + documents + " has no line file " + lineFile);
+        }
+        Map<String, Map<String, FidelityMeasurement.Found>> lines = new LinkedHashMap<>();
+        for (String row : Files.readAllLines(lineFile, StandardCharsets.UTF_8)) {
+            if (!row.isBlank() && !row.startsWith("#")) {
+                FidelityMeasurement.parseLine(row, lines);
             }
         }
-        Map<String, FidelityMeasurement> rows = new LinkedHashMap<>();
-        if (Files.exists(documents)) {
-            for (String row : Files.readAllLines(documents, StandardCharsets.UTF_8)) {
-                if (row.isBlank() || row.startsWith("#") || row.equals(FidelityMeasurement.HEADER)) {
-                    continue;
-                }
-                String stem = row.substring(0, Math.max(0, row.indexOf('\t')));
-                FidelityMeasurement measured = FidelityMeasurement.parse(row, lines.getOrDefault(stem, Map.of()));
-                rows.put(measured.stem(), measured);
+        for (String row : Files.readAllLines(documents, StandardCharsets.UTF_8)) {
+            if (row.isBlank() || row.startsWith("#") || row.equals(FidelityMeasurement.HEADER)) {
+                continue;
             }
+            String stem = row.substring(0, Math.max(0, row.indexOf('\t')));
+            FidelityMeasurement measured = FidelityMeasurement.parse(row, lines.getOrDefault(stem, Map.of()));
+            if (measured.found().size() != measured.matched()) {
+                throw new IllegalStateException(stem + " found " + measured.matched() + " lines, and "
+                        + lineFile + " holds " + measured.found().size() + " of them");
+            }
+            rows.put(measured.stem(), measured);
         }
         return new FidelityBaseline(rows);
     }
@@ -90,6 +104,10 @@ final class FidelityBaseline {
     /** What each measurement does worse than its baseline; empty when none does. */
     List<String> regressions(Collection<FidelityMeasurement> measurements) {
         List<String> found = new ArrayList<>();
+        java.util.Set<String> measured = new java.util.HashSet<>();
+        measurements.forEach(now -> measured.add(now.stem()));
+        rows.keySet().stream().filter(stem -> !measured.contains(stem))
+                .forEach(stem -> found.add(stem + ": in the baseline, and no longer in the corpus"));
         for (FidelityMeasurement now : measurements) {
             FidelityMeasurement was = rows.get(now.stem());
             if (was == null) {

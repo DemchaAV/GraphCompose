@@ -8,33 +8,35 @@ import org.apache.pdfbox.text.TextPosition;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
- * The lines of text a PDF draws, each keyed by its page and its letters, with the baseline its
- * first letter stands on.
+ * The lines of text a PDF draws, each with its page, its letters, and where its first letter
+ * stands.
  *
  * <p>Glyphs are read in the order the page draws them. A line ends where the next glyph stands
- * on another baseline, steps back to the left, or stands further off than one and a half of its
- * size: two columns on one baseline are two lines, as they are two runs of text. The key is the
- * line's letters without white space, lower-cased, so text an editor sets with spaces between
- * tracked letters, or with a trailing space, keys as the page's does. Lines of fewer than three
- * letters are left out, and only the first line of each key on a page is kept.</p>
+ * on another baseline (more than half its size off), steps back to the left, or stands further
+ * off than one and a half times its size: two runs of text on one baseline are two lines when
+ * the second starts that far past the first, as two columns' text does. The key is the line's
+ * letters without white space, lower-cased, so text an editor sets with spaces between tracked
+ * letters, or with a trailing space, keys as the page's does. Lines of fewer than three letters
+ * are left out.</p>
  */
 final class PdfLines {
 
-    /** A line: its page, its letters, and the baseline of its first letter from the page's top. */
-    record Line(int page, String key, double baseline) {
+    /**
+     * A line: its page, its letters, and its first letter's left edge and baseline, from the
+     * page's left and top, in points.
+     */
+    record Line(int page, String key, double x, double baseline) {
     }
 
     private final List<Line> lines;
     private final int pages;
 
-    private PdfLines(List<Line> lines, int pages) {
-        this.lines = lines;
+    PdfLines(List<Line> lines, int pages) {
+        this.lines = List.copyOf(lines);
         this.pages = pages;
     }
 
@@ -57,20 +59,12 @@ final class PdfLines {
         return lines;
     }
 
-    /** The lines by page and key, the first of each kept. */
-    Map<String, Line> byKey() {
-        Map<String, Line> keyed = new LinkedHashMap<>();
-        for (Line line : lines) {
-            keyed.putIfAbsent(line.page() + "/" + line.key(), line);
-        }
-        return keyed;
-    }
-
     private static final class Collector extends PDFTextStripper {
 
         private final List<Line> lines = new ArrayList<>();
         private final StringBuilder key = new StringBuilder();
         private int page;
+        private double x = Double.NaN;
         private double baseline = Double.NaN;
         private double lastEnd = Double.NaN;
         private double lastX = Double.NaN;
@@ -88,35 +82,34 @@ final class PdfLines {
         @Override
         protected void processTextPosition(TextPosition glyph) {
             double y = glyph.getYDirAdj();
-            double x = glyph.getXDirAdj();
+            double left = glyph.getXDirAdj();
             double size = Math.max(1, glyph.getFontSizeInPt());
             boolean sameLine = !Double.isNaN(baseline)
                                && Math.abs(y - baseline) < size * 0.5
-                               && x >= lastX - 1
-                               && x - lastEnd < size * 1.5;
+                               && left >= lastX - 1
+                               && left - lastEnd < size * 1.5;
             if (!sameLine) {
                 endLine();
                 baseline = y;
+                x = left;
             }
             String letters = glyph.getUnicode();
             if (letters != null) {
-                for (int i = 0; i < letters.length(); i++) {
-                    char c = letters.charAt(i);
-                    if (!Character.isWhitespace(c) && c != ' ') {
-                        key.append(c);
-                    }
-                }
+                letters.codePoints()
+                        .filter(c -> !Character.isWhitespace(c) && !Character.isSpaceChar(c))
+                        .forEach(key::appendCodePoint);
             }
-            lastX = x;
-            lastEnd = x + glyph.getWidthDirAdj();
+            lastX = left;
+            lastEnd = left + glyph.getWidthDirAdj();
         }
 
         private void endLine() {
             String letters = key.toString().toLowerCase(Locale.ROOT);
             if (letters.codePointCount(0, letters.length()) >= 3) {
-                lines.add(new Line(page, letters, baseline));
+                lines.add(new Line(page, letters, x, baseline));
             }
             key.setLength(0);
+            x = Double.NaN;
             baseline = Double.NaN;
             lastEnd = Double.NaN;
             lastX = Double.NaN;

@@ -4618,37 +4618,95 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (node.align() == TextAlign.CENTER || node.align() == TextAlign.RIGHT || !Double.isFinite(room)) {
             return;
         }
-        double set = 0;
-        double asked = 0;
-        for (InlineRun run : node.inlineRuns()) {
-            InlineTextRun text = textOf(run);
-            if (text == null) {
-                continue;
-            }
-            DocumentTextStyle style = text.textStyle() == null ? node.textStyle() : text.textStyle();
-            double size = style == null ? 0 : style.size();
-            if (size > 0) {
-                int characters = text.text().length();
-                asked += characters * size;
-                set += characters * Math.max(1, Math.round(size * HALF_POINTS_PER_POINT)) / HALF_POINTS_PER_POINT;
-            }
-        }
-        if (node.inlineRuns().isEmpty() && node.textStyle() != null && node.textStyle().size() > 0) {
-            // No text runs: the paragraph's own text, in its own style.
-            asked = node.textStyle().size();
-            set = Math.max(1, Math.round(asked * HALF_POINTS_PER_POINT)) / HALF_POINTS_PER_POINT;
-        }
-        if (!(asked > 0)) {
-            return;
-        }
-        double more = room * (set / asked - 1);
-        if (Math.abs(more) < 0.05) {
+        double more = wordsMeasure(node, room) - room;
+        if (!Double.isFinite(more) || Math.abs(more) < 0.05) {
             return;
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
         long right = twipsOf(indent.isSetRight() ? indent.getRight() : null);
         indent.setRight(BigInteger.valueOf(right - Math.round(more * POINT_TO_TWIP)));
+    }
+
+    /** How far inside the page's measure, grown or shrunk as Word sets it, Word's is held, in points. */
+    private static final double WORDS_MEASURE_CLEARANCE = 1;
+
+    /**
+     * The measure Word is to set a paragraph's text in, in points: the page's, as much wider or
+     * narrower as Word sets the line that grows most, a point short of it, and never short of
+     * the widest line.
+     *
+     * <p>Each line the page laid out is weighed by its own text: a line of a 7.35pt title set at
+     * 7.5 grows, the 7.1pt lines under it set at 7 shrink, and a share averaged over the
+     * paragraph would narrow the measure the title's line no longer fits. The measure takes the
+     * share of the line that grows most, so every line still fits.</p>
+     *
+     * <p>A line the page broke because its next word did not fit may have missed by a fraction
+     * of a point, and grown in the same proportion it misses by as little in Word, where it can
+     * fit: {@code CompactMono}'s "and", 0.1pt from fitting on the page, fitted in Word. Held a
+     * point short, the measure misses every such word by at least that; held a point past the
+     * widest line, it still fits every line. A paragraph of one line broke no word, and keeps
+     * the measure grown in full: {@code OrangeOps}' phone number, as wide as its column, broke
+     * in LibreOffice a point narrower. Without the page's lines — an export with no
+     * layout — the paragraph's runs are weighed by their letters.</p>
+     */
+    private double wordsMeasure(ParagraphNode node, double room) {
+        double share = Double.NaN;
+        double fits = 0;
+        int broken = -1;
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : layout.lines(node)) {
+            broken++;
+            double asked = 0;
+            double set = 0;
+            for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
+                if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan text
+                    && text.textStyle() != null && text.textStyle().size() > 0 && text.width() > 0) {
+                    asked += text.width();
+                    set += text.width() * wordsSize(text.textStyle().size()) / text.textStyle().size();
+                }
+            }
+            if (asked > 0) {
+                share = Double.isNaN(share) ? set / asked : Math.max(share, set / asked);
+                fits = Math.max(fits, set);
+            }
+        }
+        if (Double.isNaN(share)) {
+            return room * lettersShare(node);
+        }
+        if (Math.abs(share - 1) < 1e-9) {
+            // Word sets every line at the page's size: the page's measure is Word's.
+            return room;
+        }
+        if (broken < 1) {
+            // One line: no word the page broke to keep out, and room to spare for the editor's face.
+            return Math.max(room * share, fits);
+        }
+        return Math.max(room * share - WORDS_MEASURE_CLEARANCE, fits + WORDS_MEASURE_CLEARANCE);
+    }
+
+    /** How much wider Word sets a paragraph's runs, weighed by their letters, 1 for as wide. */
+    private double lettersShare(ParagraphNode node) {
+        double asked = 0;
+        double set = 0;
+        for (InlineRun run : node.inlineRuns()) {
+            InlineTextRun text = textOf(run);
+            DocumentTextStyle style = text == null ? null : text.textStyle() == null ? node.textStyle() : text.textStyle();
+            if (style != null && style.size() > 0) {
+                asked += text.text().length() * style.size();
+                set += text.text().length() * wordsSize(style.size());
+            }
+        }
+        if (node.inlineRuns().isEmpty() && node.textStyle() != null && node.textStyle().size() > 0) {
+            // No text runs: the paragraph's own text, in its own style.
+            asked = node.textStyle().size();
+            set = wordsSize(asked);
+        }
+        return asked > 0 ? set / asked : 1;
+    }
+
+    /** The size Word sets a size in, to the half point, as {@code w:sz} states it. */
+    private static double wordsSize(double size) {
+        return Math.max(1, Math.round(size * HALF_POINTS_PER_POINT)) / HALF_POINTS_PER_POINT;
     }
 
     /**

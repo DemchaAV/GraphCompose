@@ -1,12 +1,19 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTInd;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +33,7 @@ class DocxWordSizeMeasureTest {
     @Test
     void aSizeWordSetsLargerWidensTheMeasureByAsMuch() throws Exception {
         assertThat(rightIndent(paragraph(7.8, TextAlign.LEFT)))
-                .as("the measure 8/7.8 of the page's")
+                .as("one line: the measure 8/7.8 of the page's, in full")
                 .isEqualTo(-Math.round(ROOM * (8 / 7.8 - 1) * 20));
     }
 
@@ -47,16 +54,19 @@ class DocxWordSizeMeasureTest {
     }
 
     @Test
-    void runsOfTwoSizesShareTheMeasureByTheirLetters() throws Exception {
-        // Ten letters at 7.8pt, set at 8, and ten at 9pt, set as they are.
+    void theMeasureIsTheOneTheLineThatGrowsMostNeeds() throws Exception {
+        // EngineeringResume's projects: a 7.35pt title, set at 7.5, fills most of the first
+        // line, and 7.1pt prose, set at 7, the lines under it. Averaged over the paragraph's
+        // letters the measure would narrow, and the title's line would no longer fit.
+        String title = "GraphCompose (Java 21, PDFBox, Maven, JMH) - Declarative Java PDF layout";
+        String prose = " engine. Semantic templates, snapshot testing, and the pipelines that run on them ".repeat(4);
         try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page
-                .addParagraph(p -> p.rich(rich -> rich
-                        .size("abcdefghij", 7.8)
-                        .size("klmnopqrst", 9))))) {
-            double share = (10 * 8.0 + 10 * 9.0) / (10 * 7.8 + 10 * 9.0);
+                .addParagraph(p -> p.rich(rich -> rich.size(title, 7.35).size(prose, 7.1))))) {
+            double letters = (title.length() * 7.5 + prose.length() * 7.0) / (title.length() * 7.35 + prose.length() * 7.1);
 
-            assertThat(rightIndent(text(document, "abcdefghij")))
-                    .isEqualTo(-Math.round(ROOM * (share - 1) * 20));
+            assertThat(letters).as("the letters' average narrows").isLessThan(1);
+            assertThat(rightIndent(text(document, "GraphCompose")))
+                    .as("the title's line is given the room it grows by").isNegative();
         }
     }
 
@@ -90,6 +100,69 @@ class DocxWordSizeMeasureTest {
             assertThat(-rightIndent(cell)).as("wider, by its share of a column no wider than 200pt")
                     .isPositive()
                     .isLessThanOrEqualTo(Math.round(200 * (8 / 7.8 - 1) * 20));
+        }
+    }
+
+    @Test
+    void aLineThePageBrokeJustShortOfItsNextWordStaysBroken() throws Exception {
+        // CompactMono's "and" was 0.1pt from fitting on the page; given the measure in
+        // proportion, Word fitted it. Find a measure as close, then hold Word's clear of it.
+        String text = "Built backend services and production document rendering pipelines processing two "
+                      + "million documents per month and cutting render latency from seconds to milliseconds.";
+        for (double width = 300; width < 360; width += 0.05) {
+            double room = width;
+            List<ParagraphLine> lines = laidOut(room, text);
+            double[] tie = lineAndNextWord(lines);
+            if (tie == null || !(tie[1] - room > 0) || !(tie[1] - room < 0.2)) {
+                continue;
+            }
+            try (XWPFDocument document = DocxExports.withLayout(room + 40, 400, 20, page -> page
+                    .addParagraph(p -> p.text(text).textStyle(DocumentTextStyle.DEFAULT.withSize(7.95))))) {
+                double measure = room - rightIndent(text(document, "Built backend")) / 20.0;
+                double grows = 8 / 7.95;
+
+                assertThat(measure).as("every line fits").isGreaterThanOrEqualTo(tie[0] * grows);
+                assertThat(measure).as("the next word does not, by a point")
+                        .isLessThanOrEqualTo(tie[1] * grows - 0.99);
+            }
+            return;
+        }
+        throw new AssertionError("no measure within 0.2pt of a line and its next word");
+    }
+
+    /**
+     * The widest line, and the narrowest line with a space and its next line's first word, as
+     * the page lays them out; a word's width is its own line's, laid out alone.
+     */
+    private static double[] lineAndNextWord(List<ParagraphLine> lines) {
+        double widest = 0;
+        double nearest = Double.POSITIVE_INFINITY;
+        double space = widthAlone("a a") - 2 * widthAlone("a");
+        for (int index = 0; index < lines.size(); index++) {
+            widest = Math.max(widest, lines.get(index).width());
+            if (index + 1 < lines.size()) {
+                String next = lines.get(index + 1).text().strip().split("\\s+")[0];
+                nearest = Math.min(nearest, lines.get(index).width() + space + widthAlone(next));
+            }
+        }
+        return lines.size() < 2 ? null : new double[]{widest, nearest};
+    }
+
+    private static double widthAlone(String text) {
+        return laidOut(500, text).get(0).width();
+    }
+
+    private static List<ParagraphLine> laidOut(double room, String text) {
+        try (DocumentSession session = GraphCompose.document().pageSize(room + 40, 400)
+                .margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.addParagraph(p -> p.text(text)
+                    .textStyle(DocumentTextStyle.DEFAULT.withSize(7.95))));
+            return session.layoutGraph().fragments().stream()
+                    .filter(fragment -> fragment.payload() instanceof ParagraphFragmentPayload)
+                    .flatMap(fragment -> ((ParagraphFragmentPayload) fragment.payload()).lines().stream())
+                    .toList();
+        } catch (Exception failure) {
+            throw new IllegalStateException(failure);
         }
     }
 

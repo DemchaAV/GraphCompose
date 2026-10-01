@@ -290,7 +290,9 @@ nearest half: 9.4pt as 9.5, 7.8pt as 8. A line of it is that much wider or narro
 the page. The glyphs are not scaled to make up for it, since a scale would stay on the text
 a reader types next. A paragraph set flush left is given a measure that much wider or
 narrower instead, through its right indent, so its lines break at the words the page breaks
-them; a reader's new text wraps at that measure. A centred or right-aligned paragraph keeps
+them; a reader's new text wraps at that measure. The measure follows the line Word sets widest
+for its size, and in a paragraph of several lines stays a point short of it, so a word the page
+broke off by a fraction of a point is not pulled back up. A centred or right-aligned paragraph keeps
 the page's measure, as moving its other edge would move its lines. A list's items, a line pair's
 line, text over the flow and a header's or footer's line keep the page's measure too.
 

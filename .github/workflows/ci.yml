@@ -335,8 +335,8 @@ jobs:
         # reader lands on, the entry point every snippet starts from, and the type
         # they spend the rest of their time in.
         #
-        # Three passes, mirroring the order publish.yml deploys in — and the order
-        # is the whole point, because getting it wrong is silent.
+        # Three passes, and the order is the whole point, because getting it wrong
+        # is silent.
         #
         # The wrapper's javadoc jar is configured in its `release` profile with
         # includeDependencySources, so it needs the ENGINE'S SOURCES JAR in the
@@ -349,7 +349,8 @@ jobs:
         # published), which render-pdf needs at test scope. So: build the reactor
         # profile-free to get every module including that tests jar, re-install the
         # engine under `release` to add its sources jar, then build the wrapper.
-        # publish.yml gets there by deploying the engine before the wrapper.
+        # publish.yml gets there by building both in one `-P release` reactor run,
+        # where the engine's sources jar is attached before the wrapper needs it.
         if: matrix.java == '17'
         run: |
           set -euo pipefail

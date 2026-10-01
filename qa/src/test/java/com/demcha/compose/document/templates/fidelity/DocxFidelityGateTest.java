@@ -243,6 +243,28 @@ class DocxFidelityGateTest {
     }
 
     @Test
+    void aDocumentPassesWhenTheEditorSetsItAsThePageDoes() {
+        // engine pages, editor pages, lines, found, median, p90, past 2pt
+        assertThat(FidelityAcceptance.shortfalls(new FidelityMeasurement("cv-a", 1, 1, 100, 95, 1.0, 2, 9, Map.of())))
+                .as("at every limit").isEmpty();
+        assertThat(FidelityAcceptance.shortfalls(new FidelityMeasurement("cv-a", 1, 2, 100, 94, 1.01, 2, 10, Map.of())))
+                .containsExactly("2 pages, not 1", "94 of 100 lines found", "median 1.01pt", "10 lines past 2pt");
+    }
+
+    @Test
+    void theAcceptanceReportNamesTheDocumentsThatFallShort() throws Exception {
+        Path file = dir.resolve("acceptance.md");
+        FidelityAcceptance.write(file, "probe", List.of(
+                new FidelityMeasurement("cv-a", 1, 1, 100, 100, 0.2, 0.4, 0, Map.of()),
+                new FidelityMeasurement("cv-b", 1, 2, 100, 60, 3.0, 9, 50, Map.of())));
+
+        assertThat(String.join("\n", Files.readAllLines(file)))
+                .contains("1 of 2 documents pass")
+                .contains("| cv-b | 2 pages, not 1; 60 of 100 lines found; median 3.00pt; 50 lines past 2pt |")
+                .doesNotContain("| cv-a |");
+    }
+
+    @Test
     void aMalformedBaselineRowIsRefusedByName() {
         assertThatThrownBy(() -> FidelityMeasurement.parse("cv-a\t1\tone\t40\t39\t0.25\t0.5\t1", Map.of()))
                 .isInstanceOf(IllegalArgumentException.class)

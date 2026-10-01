@@ -104,6 +104,7 @@ class DocxFidelityCorpusTest {
                     engine.resolve(document.stem() + ".pdf"), converted));
         }
         FidelityBaseline.write(work.resolve("measured-" + mode + ".tsv"), note, measurements);
+        FidelityAcceptance.write(work.resolve("measured-" + mode + "-acceptance.md"), note, measurements);
 
         Path baseline = Path.of("src", "test", "resources", "docx-fidelity",
                 mode + "-" + LibreOfficeConverter.platform() + ".tsv");

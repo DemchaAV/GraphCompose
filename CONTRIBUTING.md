@@ -362,6 +362,9 @@ Choose the smallest tests that match the change:
   Windows with Word, `scripts/docx-visual/word-fidelity.ps1` (`-Update` to rewrite) exports the
   corpus, has a private Word instance convert it, and holds it to `word-windows.tsv` — run it
   from PowerShell (pwsh), after the install above, before a DOCX export change is opened.
+  Each run also writes `measured-<editor>-acceptance.md`: which presets the editor sets as the
+  page does — the same pages, 95% of the lines found, a median of 1pt or less, no more than 10%
+  past 2pt — and what keeps the rest short of it. CI shows LibreOffice's in the job summary.
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 

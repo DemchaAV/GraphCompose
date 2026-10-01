@@ -1489,6 +1489,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX fidelity corpus reports which presets are set as the page sets them.** Each run
+  writes `measured-<editor>-acceptance.md` (`FidelityAcceptance`): a preset passes when the editor
+  sets it on the page's pages, finds 95% of its lines, sets them a median of 1pt or less from
+  the page, and no more than 10% past 2pt; the rest are listed with what keeps them short of
+  it, the furthest first. It reports and does not gate — the baseline gates. In Word 41 of the
+  62 presets pass, in LibreOffice 37. CI writes LibreOffice's report into the job summary.
+
 - **Word holds the DOCX export to its corpus too.** `scripts/docx-visual/word-fidelity.ps1`
   runs `DocxFidelityCorpusTest` in two halves around a conversion by a private Word instance:
   `export` writes the documents, Word converts them, and `word` measures Word's PDFs against

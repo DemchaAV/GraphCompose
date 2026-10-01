@@ -597,6 +597,10 @@ jobs:
           -Dsurefire.failIfNoSpecifiedTests=false
           -Dgraphcompose.docxFidelity=libreoffice
 
+      - name: Show which presets LibreOffice sets as the page does
+        if: always()
+        run: cat qa/target/docx-fidelity/measured-libreoffice-acceptance.md >> "$GITHUB_STEP_SUMMARY" || true
+
       - name: Upload the measurements
         if: always()
         uses: actions/upload-artifact@v7
@@ -604,6 +608,7 @@ jobs:
           name: docx-fidelity-${{ github.run_id }}
           path: |
             qa/target/docx-fidelity/measured-libreoffice*.tsv
+            qa/target/docx-fidelity/measured-libreoffice-acceptance.md
             qa/target/docx-fidelity/libreoffice.log
           if-no-files-found: warn
           # What a reviewer compares against the baseline, or takes as the new one

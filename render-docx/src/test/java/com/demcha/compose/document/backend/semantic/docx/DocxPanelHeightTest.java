@@ -112,21 +112,44 @@ class DocxPanelHeightTest {
         XWPFTableCell plain = panelInARow(0, 10);
 
         assertThat(beforeOf(bordered)).isEqualTo(beforeOf(plain));
+        // Its margins are half a border narrower top and bottom, its border LibreOffice's
+        // allowance: the height held is the same, nothing more taken off for Word.
+        assertThat(heightOf(outerTableOf(bordered))).isEqualTo(heightOf(outerTableOf(plain)));
+    }
+
+    @Test
+    void aPanelRuledAboveOnlyOpeningACellKeepsTheHeightItHeld() throws Exception {
+        // Word draws the one border outside the row's height, where LibreOffice's allowance for it
+        // already took it off; nothing more comes off for it.
+        XWPFTableCell ruled = panelInARow(1, 0, true);
+        XWPFTableCell plain = panelInARow(0, 0, false);
+
+        assertThat(beforeOf(ruled)).as("the room over the heading, less the border").isEqualTo(beforeOf(plain) - 20);
+        assertThat(heightOf(outerTableOf(ruled))).as("less the border once")
+                .isEqualTo(heightOf(outerTableOf(plain)) - 20);
     }
 
     private static XWPFTableCell panelInARow(double border) throws Exception {
-        return panelInARow(border, 0);
+        return panelInARow(border, 0, false);
+    }
+
+    private static XWPFTableCell panelInARow(double border, double padding) throws Exception {
+        return panelInARow(border, padding, false);
     }
 
     /** The cell of a painted panel opening a row's first column, its heading 7pt below its top. */
-    private static XWPFTableCell panelInARow(double border, double padding) throws Exception {
+    private static XWPFTableCell panelInARow(double border, double padding, boolean aboveOnly) throws Exception {
         XWPFDocument document = export(page -> page.addRow("Settlement", row -> row
                 .columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1),
                         com.demcha.compose.document.style.DocumentRowColumn.weight(1))
                 .addSection("Panel", panel -> {
                     panel.keepTogether().fillColor(DocumentColor.rgb(247, 249, 246)).padding(DocumentInsets.of(padding));
-                    if (border > 0) {
-                        panel.stroke(com.demcha.compose.document.style.DocumentStroke.of(DocumentColor.rgb(200, 200, 200), border));
+                    com.demcha.compose.document.style.DocumentStroke stroke =
+                            com.demcha.compose.document.style.DocumentStroke.of(DocumentColor.rgb(200, 200, 200), border);
+                    if (border > 0 && aboveOnly) {
+                        panel.borders(new com.demcha.compose.document.style.DocumentBorders(stroke, null, null, null));
+                    } else if (border > 0) {
+                        panel.stroke(stroke);
                     }
                     // A row in a row's column is laid in a layer stack, as the template lays it.
                     panel.addLayerStack(stack -> stack.name("HeadingLayer").layer(

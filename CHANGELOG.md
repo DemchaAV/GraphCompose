@@ -12,13 +12,14 @@ follow semantic versioning; release dates are ISO 8601.
   second page.
   - Its payment panel opens a table cell, so no space above could take the panel's 0.875pt
     top border, which Word draws above a cell's content. Every line inside stood that much
-    low, and the row that much taller. A panel whose cell margin at the top is narrower than
-    its border, with no space above it, now takes what of the border its padding does not hold
-    out of the space above its first line, where that line has some, and its held height is
-    that much less; LibreOffice, which adds the border to a row's height once, draws such a
-    panel that border's width shorter.
+    low, and the row that much taller. A panel with less space above it than its top border now
+    takes what of the border neither that space nor its padding holds out of the space above
+    its first line, where that line has some; where its row holds the page's height, that
+    height is less the borders Word draws outside it. LibreOffice, which adds the heavier border
+    to a row's height once, draws such a panel with two borders that border's width shorter.
   - Its footer reaches 9.8pt from the page's edge, past the page's 3.4pt margin, and Word
-    moved the body clear of it. A band reaching past the margin now writes that margin
+    moved the body clear of it. A band alone of its kind reaching past the margin, by any
+    more than a twentieth of a point, now writes that margin
     negative (a margin of none as a twentieth of a point), which Word reads as holding the body
     at the margin, as the page does. LibreOffice reads it as positive and still moves the body
     clear.
@@ -400,7 +401,7 @@ follow semantic versioning; release dates are ISO 8601.
   legal lines and its page number — stands in a frame at its own height on the page. A band kept
   off the first page leaves the first page's part empty; a band starting after page 2, page
   numbers that do not count from 1 on page 1, and a band alone of its kind that reaches past the
-  page margin, which Word moves the body clear of, are reported. A band and a page zone of the
+  page margin are reported. A band and a page zone of the
   same kind share Word's one header or footer. Across the sixty-two template renders, the
   thirteen with a band now lose no word of it, and no page count or text line elsewhere changes.
 

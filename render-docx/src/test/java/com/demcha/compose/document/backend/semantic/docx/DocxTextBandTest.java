@@ -315,6 +315,36 @@ class DocxTextBandTest {
     }
 
     @Test
+    void aFramedBandLeavesTheMarginAsItIs() throws Exception {
+        // Two footers stand in frames at their own heights, beside the part's flow.
+        try (XWPFDocument document = export(null, session -> {
+            session.footer(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.FOOTER).height(60)
+                    .leftText("Tall").build());
+            session.footer(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.FOOTER)
+                    .rightText("Short").build());
+        })) {
+            Object bottom = document.getDocument().getBody().getSectPr().getPgMar().getBottom();
+            assertThat(((Number) bottom).longValue()).isEqualTo(600);
+        }
+    }
+
+    @Test
+    void aBandPastNoMarginWritesTheLeastNegativeOne() throws Exception {
+        // A margin of none has no negative: a twentieth of a point stands for it.
+        try (DocumentSession session = GraphCompose.document().pageSize(300, 200)
+                .margin(DocumentInsets.of(0)).create()) {
+            session.header(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.HEADER)
+                    .leftText("Edge").build());
+            session.pageFlow(page -> page.addParagraph(p -> p.text("Body")));
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                    session.export(new DocxSemanticBackend())))) {
+                Object top = document.getDocument().getBody().getSectPr().getPgMar().getTop();
+                assertThat(((Number) top).longValue()).isEqualTo(-1);
+            }
+        }
+    }
+
+    @Test
     void aBandWithinTheMarginLeavesItAsItIs() throws Exception {
         try (XWPFDocument document = export(null, session -> session.footer(DocumentHeaderFooter.builder()
                 .zone(DocumentHeaderFooterZone.FOOTER).leftText("Short").build()))) {

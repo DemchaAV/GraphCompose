@@ -3105,23 +3105,30 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             holdToHairline(cell.addParagraph());
         }
         // Word starts the cell's content below its top border, or its top margin where that is
-        // wider: the border then stands inside the margin. The page starts it the padding below
-        // the panel's edge. What of the border no space above took, and what the margin holds
-        // past the border, less the padding, is how far low the content would stand.
-        double low = topNotTaken + Math.max(0, margins.top() - strokeWidth(borders.top())) - padding.top();
-        double takenInside = takeTheTopBorderInside(cell, low);
+        // wider, the border then standing inside the margin; the page starts it the padding below
+        // the panel's edge. What of the border no space above took, less the padding, is how far
+        // low the content would stand: a padding as wide as the border holds it.
+        double low = topNotTaken - padding.top();
+        takeTheTopBorderInside(cell, low);
         com.demcha.compose.document.layout.PlacedNode placed = first && last && layout.onOnePage(node) ? layout.placement(node) : null;
         if (placed != null && placed.placementHeight() > 0) {
             // Its height is the page's: what makes a panel taller than its text — an icon drawn
             // where the page puts it, a fixed outline — is not in the cell. MerchantInvoice's
             // due-date card closed from 59.4pt to its text's 26, and its calendar hung below it.
-            // Less what of its top border came out of the room inside it: Word draws both
-            // borders outside the row's height, and the one above is no longer taken from the
-            // space above. Measured on MerchantInvoice's payment panel, Word drew it 0.8pt taller
-            // than the page without this, and as tall with it. LibreOffice adds the heavier
-            // border to the height once, which holdRowAtLeast already allows for, so a panel
-            // whose height this sets stands that border's width shorter there.
-            holdRowAtLeast(table.getRow(0), placed.placementHeight() - takenInside);
+            // Where its padding does not hold its top border, Word draws both borders outside the
+            // row's height, the panel's top where the space above put it: so the height held is
+            // the page's less the part of the top border no space above took and less the bottom
+            // border. holdRowAtLeast already takes the heavier of the two off, which LibreOffice
+            // adds to the height once; the rest comes off here. Measured on MerchantInvoice's
+            // payment panel, Word drew it 0.8pt taller than the page without this, and as tall
+            // with it; LibreOffice draws such a panel that border's width shorter. A padding that
+            // holds the border leaves the height as it was: Word draws the border inside the
+            // margin, and InvoiceMetered's card moved its top down taking it off.
+            double bordersOutside = low > 0
+                    ? topNotTaken + strokeWidth(borders.bottom())
+                      - Math.max(strokeWidth(borders.top()), strokeWidth(borders.bottom()))
+                    : 0;
+            holdRowAtLeast(table.getRow(0), placed.placementHeight() - Math.max(0, bordersOutside));
         } else if (first && last && layout.placement(node) == null && node instanceof ShapeContainerNode shape
                    && shape.outline().height() > 0) {
             // Composed in a table cell, it has no placement; its outline states its height, as it
@@ -3149,33 +3156,32 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Takes how far a panel's content would stand low in Word out of the space above its first
-     * paragraph, as far as that holds, and answers how much it took, in points.
+     * paragraph, as far as that holds.
      *
      * <p>Word draws a cell's top border above its content unless the cell's top margin is wider;
-     * the page strokes it on the panel's edge, inside the padding. Where the panel has no padding
-     * to hold the border and no space above it to take the border from — it opens a cell, or
-     * follows nothing — every line inside stood the border's width low and the row as much taller:
-     * {@code MerchantInvoice}'s payment panel, first in its row's cell, stood 0.9pt low in Word
-     * and pushed its footer onto a second page. The space above its first paragraph — the room the
-     * page leaves over its heading — takes it instead.</p>
+     * the page strokes it on the panel's edge. Where the panel has no padding to hold the border
+     * and less space above it than the border — it opens a cell, or follows nothing — every line
+     * inside stood the border's width low: {@code MerchantInvoice}'s payment panel, first in its
+     * row's cell, stood 0.9pt low in Word and pushed its footer onto a second page. The space above
+     * its first paragraph — the room the page leaves over its heading — takes it instead.</p>
+     *
+     * @param low how far low the content would stand, in points
      */
-    private static double takeTheTopBorderInside(XWPFTableCell cell, double low) {
+    private static void takeTheTopBorderInside(XWPFTableCell cell, double low) {
         if (!(low > 0) || cell.getBodyElements().isEmpty()
             || !(cell.getBodyElements().get(0) instanceof XWPFParagraph first)) {
-            return 0;
+            return;
         }
         CTPPr properties = first.getCTP().getPPr();
         if (properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetBefore()) {
-            return 0;
+            return;
         }
         CTSpacing spacing = properties.getSpacing();
         long before = twipsOf(spacing.getBefore());
         long taken = Math.min(before, toTwips(low));
-        if (taken <= 0) {
-            return 0;
+        if (taken > 0) {
+            spacing.setBefore(BigInteger.valueOf(before - taken));
         }
-        spacing.setBefore(BigInteger.valueOf(before - taken));
-        return taken / POINT_TO_TWIP;
     }
 
     /**

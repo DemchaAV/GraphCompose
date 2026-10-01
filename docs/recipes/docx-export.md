@@ -702,12 +702,13 @@ wherever the nesting put it. Word draws a panel's top and bottom borders outside
 shading, where the page strokes them on the panel's edge, so the top border comes out of the
 space above the panel, and the bottom border out of the space the panel holds below itself
 or, past that, out of the space above the paragraph, table or panel that follows. A panel with
-no space above it — one that opens a table cell — whose cell margin at the top is narrower
-than its border takes what of the border its padding does not hold out of the space above its
-first line inside, where that line has some, and its held height is that much less: Word
-starts a cell's content below its top border, or its top margin where that is wider, and draws
-both borders outside the row's height. LibreOffice adds the border to the height once, so a
-panel whose held height sets its size stands that border's width shorter there. The body's
+less space above it than its top border — such as one opening a table cell — takes what of the
+border neither that space nor its padding holds out of the space above its first line inside,
+where that line has some, and where its row holds the page's height, that height is less the
+borders Word draws outside it: Word starts a cell's content below its top border, or its top
+margin where that is wider, and draws both borders outside the row's height. LibreOffice adds
+the heavier border to the height once, so such a panel with two borders, its height set by the
+held row, stands that border's width shorter there. The body's
 shapes stand above the page backgrounds, which LibreOffice stacks together with them. Two limits, each named in the report:
 
 - A transform is not carried: a rotated or scaled shape is drawn upright at its size.
@@ -750,7 +751,8 @@ band kept off the first page (`showOnFirstPage(false)`, or counted from page
 have no Word equivalent and are reported: a band that starts after the
 second page is written on every page but the first, and page numbers that do
 not count from 1 on the first page are numbered from 1 by Word. A band alone of
-its kind that reaches past the page margin writes that margin negative: the page lets the
+its kind that reaches past the page margin, by more than a twentieth of a point, writes that
+margin negative: the page lets the
 band overlap the body, and Word holds the body at a negative margin whatever the band
 reaches, where it moves the body clear of a band past a positive one. LibreOffice reads the
 margin as positive and still moves the body clear, which is reported. A band and a page zone of the same

@@ -89,16 +89,16 @@ class DocxHangingLeftTest {
 
     @Test
     void aListInACellOfAHangingRowMovesLeftWithTheTextBesideIt() throws Exception {
-        // The title and a list under it, both 10pt in: the list's items stand where the title
-        // does, the marker's hanging indent past it, the hang taken from both.
+        // The title and a list under it, both at the cell's padding: the list's items stand where
+        // the title does, the marker's hanging indent past it, the hang taken from both.
         RowBuilder row = new RowBuilder().name("HeadingRow");
         row.spacing(0);
         row.columns(DocumentRowColumn.fixed(DASH), DocumentRowColumn.auto(), DocumentRowColumn.weight(1.0));
         row.addSection(cell -> cell.spacing(0).padding(5f, 0f, 0f, 0f)
                 .addLine(line -> line.name("Dash").horizontal(DASH).thickness(1).color(DocumentColor.BLACK)));
         row.addSection(cell -> cell.spacing(0).padding(0f, 0f, 0f, (float) TITLE_PADDING)
-                .addParagraph(paragraph -> paragraph.name("Title").text("PROJECTS").margin(new DocumentInsets(0, 0, 0, 10)))
-                .addList(list -> list.name("Points").bullet().items("One").margin(new DocumentInsets(0, 0, 0, 10))));
+                .addParagraph(paragraph -> paragraph.name("Title").text("PROJECTS"))
+                .addList(list -> list.name("Points").bullet().items("One")));
         row.addSection(cell -> cell.spacing(0).padding(5f, 0f, 0f, 4f)
                 .addLine(line -> line.name("Tail").fill().thickness(0.5).color(DocumentColor.BLACK)));
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 30, page -> page
@@ -113,7 +113,10 @@ class DocxHangingLeftTest {
             XWPFTable nested = nestedTable(document.getTables().get(0).getRow(0).getCell(0));
             long title = DocxTwips.of(paragraphWithText(nested, "PROJECTS").getCTP().getPPr().getInd().getLeft());
             long item = DocxTwips.of(paragraphWithText(nested, "One").getCTP().getPPr().getInd().getLeft());
+            double firstColumn = DocxTwips.of(nested.getCTTbl().getTblGrid().getGridColArray(0).getW()) / 20.0;
 
+            assertThat(firstColumn + title / 20.0).as("the title where the page starts it, less the hang")
+                    .isCloseTo(DASH + TITLE_PADDING - HANG, offset(0.1));
             assertThat(item - title).as("the level's own indent, and nothing else between them").isEqualTo(180L);
         }
     }

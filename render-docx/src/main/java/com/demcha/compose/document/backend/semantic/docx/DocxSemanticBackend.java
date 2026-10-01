@@ -4831,9 +4831,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double above = contentTop - (layer.placementY() + layer.placementHeight()) - margin.top();
         double below = layer.placementY() - contentFoot - margin.bottom();
         // A layer moved past either edge leaves the other side no more than the two hold together.
+        // A paragraph's line past the foot is written where the page puts it: hangBelowItsBox
+        // takes its overhang from the gap under the container.
         double together = Math.max(0, above + below);
-        double setAbove = Math.min(Math.max(0, above), together);
-        return new double[]{setAbove, together - setAbove};
+        double setAbove = node.children().get(0) instanceof ParagraphNode
+                ? Math.max(0, above)
+                : Math.min(Math.max(0, above), together);
+        return new double[]{setAbove, Math.max(0, together - setAbove)};
     }
 
     /**
@@ -6149,7 +6153,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // space, the sides are not written.
         com.demcha.compose.document.layout.PlacedNode laidOut = layout.placement(node);
         if (laidOut != null) {
-            DocumentInsets padding = node.padding() == null ? DocumentInsets.zero() : node.padding();
+            DocumentInsets padding = node.padding();
             double placedWidth = laidOut.placementWidth() - padding.left() - padding.right();
             double placedHeight = laidOut.placementHeight() - padding.top() - padding.bottom();
             if (placedWidth > 0 && placedHeight > 0) {

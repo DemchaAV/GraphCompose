@@ -188,9 +188,11 @@ sums it.
 
 An image and a list hold their own space the same way a paragraph does — a picture's
 paragraph is the picture's block, and a list's edges go to the paragraphs around it, with
-`itemSpacing` as the gap above each item after the first. A list's left and right edges
-are its items' indents, as a paragraph's are, under the level's own hanging indent, so its
-markers start where the page starts them. A section's or a container's
+`itemSpacing` as the gap above each item after the first. A list's left and right edges —
+its margin and padding — indent its items, the level's own indent added on top, so its
+markers start where the page starts them. As for a paragraph, a cell keeps two points of each
+side for the editor, and under a shape container, whose layer's box already places what it
+holds, a list's own sides are not written. A section's or a container's
 `spacing` is the gap between each two of its children, owed below one and written above
 the next; before a page break there is none, as the page ends there, and after one the next
 page starts that far down, as the layout starts it. A spacer is its height alone: its empty

@@ -20,7 +20,8 @@ follow semantic versioning; release dates are ISO 8601.
     on a page with no top margin Word moved the whole body down under it, the photo a point
     below its ring. A margin narrower than an empty header or footer against its edge is now
     written negative, which holds the body at it: seven sidebar CVs move up that point in Word.
-  - A list's own left and right edges now indent its items, as a paragraph's indent its text.
+  - A list's own left and right edges now indent its items outside a shape container, as a
+    paragraph's indent its text.
     `NavySidebar`'s closing lists, indented to clear the badge beside their heading, stood 30pt
     left under the badge, a line short, and the `CERTIFICATIONS` heading a line above its badge.
 

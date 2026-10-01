@@ -133,7 +133,7 @@ class DocxPageBackgroundTest {
 
             assertThat(DocxTwips.of(margin.getHeader())).isZero();
             assertThat(DocxTwips.of(margin.getTop())).as("the least margin there is, written negative")
-                    .isEqualTo(-1);
+                    .isEqualTo(-1L);
             assertThat(DocxTwips.of(margin.getBottom())).as("no footer reaches the bottom one")
                     .isZero();
         }

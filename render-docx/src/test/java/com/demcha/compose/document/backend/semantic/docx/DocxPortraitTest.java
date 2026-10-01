@@ -4,6 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.ImageBuilder;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
@@ -32,8 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>{@code NavySidebar}'s portrait is a 127pt ring round a 123.8pt photo, in a column 123.8pt
  * wide. Sized from the width left inside the ring, the photo came out 120.6pt; written flush with
- * the ring's top, it lost the 1.6pt the ring holds round it above and below, and the column under
- * it stood 5.2pt high in Word.</p>
+ * the ring's top, it lost the 1.6pt the ring holds round it above and below.</p>
  */
 class DocxPortraitTest {
 
@@ -57,16 +57,11 @@ class DocxPortraitTest {
         try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page
                 .addImage(image -> image.name("Logo").source(DocumentImageData.fromBytes(pngBytes()))
                         .size(100, 50).padding(DocumentInsets.of(10))))) {
-            var extent = document.getParagraphs().stream()
-                    .filter(p -> !p.getRuns().isEmpty() && p.getRuns().get(0).getCTR().sizeOfDrawingArray() > 0)
-                    .findFirst().orElseThrow()
-                    .getRuns().get(0).getCTR().getDrawingArray(0).getInlineArray(0).getExtent();
+            XWPFParagraph logo = pictureIn(document.getParagraphs());
+            var extent = logo.getRuns().get(0).getCTR().getDrawingArray(0).getInlineArray(0).getExtent();
 
             assertThat(extent.getCx()).isEqualTo(100L * 12700);
             assertThat(extent.getCy()).isEqualTo(50L * 12700);
-            XWPFParagraph logo = document.getParagraphs().stream()
-                    .filter(p -> !p.getRuns().isEmpty() && p.getRuns().get(0).getCTR().sizeOfDrawingArray() > 0)
-                    .findFirst().orElseThrow();
             assertThat(beforeOf(logo)).as("its top padding, as the space above its paragraph").isEqualTo(10 * 20L);
         }
     }
@@ -104,6 +99,42 @@ class DocxPortraitTest {
             assertThat(beforeOf(picture) - 25 * 20L + 40 * 20L + below)
                     .as("the space above the picture, the picture and the space under it: the frame's 60pt")
                     .isEqualTo(60 * 20L);
+            assertThat(below).as("all of what the frame holds is above the picture").isZero();
+            assertThat(beforeOf(picture)).isEqualTo(Math.round((25 + gaps[0] + gaps[1]) * 20));
+        }
+    }
+
+    @Test
+    void aLayerMovedPastTheTopLeavesTheFrameNoTallerThanItIs() throws Exception {
+        Consumer<SectionBuilder> frame = sidebar -> sidebar.addContainer(box -> box.name("Frame")
+                .rectangle(100, 60)
+                .position(picture(DocumentInsets.zero()), 0, -30, LayerAlign.CENTER));
+        double[] gaps = gapsAround(frame);
+        assertThat(gaps[0]).as("the picture reaches past the frame's top").isNegative();
+        try (XWPFDocument document = inSidebar(frame)) {
+            List<XWPFParagraph> paragraphs = sidebar(document);
+            XWPFParagraph picture = pictureIn(paragraphs);
+
+            assertThat(beforeOf(picture)).as("none of the frame above the picture").isEqualTo(25 * 20L);
+            assertThat(beforeOf(paragraphs.get(paragraphs.indexOf(picture) + 1)))
+                    .as("all of what it holds under it")
+                    .isEqualTo(Math.round((gaps[0] + gaps[1] + 22) * 20));
+        }
+    }
+
+    @Test
+    void aLineMovedPastTheFootStandsWhereThePagePutsIt() throws Exception {
+        // Its overhang is taken from the gap under the frame, so the space above it is all of it.
+        Consumer<SectionBuilder> frame = sidebar -> sidebar.addContainer(box -> box.name("Frame")
+                .rectangle(100, 40)
+                .position(new ParagraphBuilder().name("Pic").text("Lead").build(), 0, 20, LayerAlign.CENTER));
+        double[] gaps = gapsAround(frame);
+        assertThat(gaps[1]).as("the line reaches past the frame's foot").isNegative();
+        try (XWPFDocument document = inSidebar(frame)) {
+            XWPFParagraph line = sidebar(document).stream().filter(p -> p.getText().equals("Lead"))
+                    .findFirst().orElseThrow();
+
+            assertThat(beforeOf(line)).isEqualTo(Math.round((25 + gaps[0]) * 20));
         }
     }
 
@@ -165,7 +196,7 @@ class DocxPortraitTest {
                 .addParagraph(p -> p.text("Main")));
     }
 
-    /** Where the page puts the picture in its frame: the space above it and the space under it. */
+    /** Where the page puts the layer named Pic in its frame: the space above it and under it. */
     private static double[] gapsAround(Consumer<SectionBuilder> content) {
         try (DocumentSession session = GraphCompose.document().pageSize(400, 400)
                 .margin(DocumentInsets.of(20)).create()) {
@@ -197,10 +228,7 @@ class DocxPortraitTest {
     }
 
     private static XWPFParagraph photoParagraph(XWPFDocument document) {
-        return sidebar(document).stream()
-                .filter(p -> !p.getRuns().isEmpty() && p.getRuns().get(0).getCTR().sizeOfDrawingArray() > 0
-                             && p.getRuns().get(0).getCTR().getDrawingArray(0).sizeOfInlineArray() > 0)
-                .findFirst().orElseThrow();
+        return pictureIn(sidebar(document));
     }
 
     private static long beforeOf(XWPFParagraph paragraph) {

@@ -246,6 +246,21 @@ class DocxComposedCellTest {
         assertThat(lineOf(chip)).as("the text's own line").isGreaterThan(9.8);
     }
 
+    @Test
+    void anOutlinedChipHoldsItsRowLessBothBorders() throws Exception {
+        // Word and LibreOffice draw a cell's top and bottom borders outside the height its row
+        // holds: CobaltRota's outlined chips, 9.2pt outlines with a 1.125pt border, stood 10.3pt
+        // tall in Word, and each row holding one 1.1pt taller than the page's.
+        XWPFTableCell outlined = chipCell(com.demcha.compose.document.style.DocumentStroke.of(
+                com.demcha.compose.document.style.DocumentColor.rgb(20, 160, 70), 1.125));
+        XWPFTableCell filled = chipCell(null);
+
+        assertThat(heightOf(outlined.getTableRow().getTable())).as("9.2pt less two 1.125pt borders")
+                .isEqualTo(139);
+        assertThat(heightOf(filled.getTableRow().getTable())).as("a chip with no border keeps its outline's")
+                .isEqualTo(184);
+    }
+
     private static XWPFTableCell chipCell(com.demcha.compose.document.style.DocumentStroke stroke) throws Exception {
         return chipCell(stroke, com.demcha.compose.document.node.LayerAlign.CENTER, 8.2);
     }

@@ -591,8 +591,9 @@ tint it was flattened to. Recorded, like the other two.
   A filled or outlined rectangle or rounded rectangle holding text there
   is written as a panel is, a table of one cell in its fill and outline, its
   outline's width within the cell and a point for the editor's face, its row
-  held at least its outline's height, with its layers inside, its corners
-  squared and reported — a rota's shift chips keep their colour and their
+  held at least its outline's height less the borders both editors draw
+  outside it where its padding does not hold its top border, with its layers inside,
+  its corners squared and reported — a rota's shift chips keep their colour and their
   size. A one-line label the shape centres top to bottom, on a line taller
   than the outline leaves it, is written that much shorter, down to the
   room Word leaves the cell's content — the outline less the margins written
@@ -706,9 +707,9 @@ less space above it than its top border — such as one opening a table cell —
 border neither that space nor its padding holds out of the space above its first line inside,
 where that line has some, and where its row holds the page's height, that height is less the
 borders Word draws outside it: Word starts a cell's content below its top border, or its top
-margin where that is wider, and draws both borders outside the row's height. LibreOffice adds
-the heavier border to the height once, so such a panel with two borders, its height set by the
-held row, stands that border's width shorter there. The body's
+margin where that is wider, and draws both borders outside the row's height. Measured,
+`MerchantInvoice`'s payment panel, its height set by its content in LibreOffice, stands that
+border's width shorter there. The body's
 shapes stand above the page backgrounds, which LibreOffice stacks together with them. Two limits, each named in the report:
 
 - A transform is not carried: a rotated or scaled shape is drawn upright at its size.

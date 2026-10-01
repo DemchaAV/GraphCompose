@@ -43,13 +43,45 @@ render because the backend and companions were pulled transitively.
 
 # Fast dev iteration — keep everything cached:
 ./scripts/release-smoke/run.sh --warm
+
+# Before upload — consume the staged deployment instead of Central:
+./scripts/release-smoke/run.sh --staged-repo target/staged-bundle
 ```
 
 ```powershell
 pwsh ./scripts/release-smoke/run.ps1                 # isolated
 pwsh ./scripts/release-smoke/run.ps1 -Version 2.0.1  # a different published version
 pwsh ./scripts/release-smoke/run.ps1 -Warm           # warm
+pwsh ./scripts/release-smoke/run.ps1 -StagedRepo target/staged-bundle  # staged
 ```
+
+### Staged mode (before the upload)
+
+`--staged-repo <dir>` / `-StagedRepo <dir>` runs the same scenarios against a
+deployment that has not reached Central yet. `<dir>` is a Maven repository-layout
+directory — the unzipped `central-bundle.zip` the release reactor builds (see
+[`docs/contributing/release-process.md`](../../docs/contributing/release-process.md),
+*Dry-running the Central deployment*). The harness writes a settings file whose
+Central-only mirror excludes one repository, `staged`, pointing at `<dir>`; the
+GraphCompose coordinates resolve from there and everything else (third-party
+libraries, the independently versioned fonts and emoji) from Central. The version
+defaults to the single `graph-compose-core` version staged in `<dir>`.
+
+A scenario passes only if, besides its own assertions, every file of every train
+artifact it resolved records `staged` as its source in `_remote.repositories`, and
+no train artifact was resolved at a version other than the one staged — so a stale
+cache or a Central copy cannot stand in for the staged bytes, a staged POM that
+pins a sibling at a drifted version fails, and a scenario that resolved no train
+artifact fails. `graph-compose-fonts` and `graph-compose-emoji` are exempt: they
+version independently and come from Central. Staged mode refuses `--warm` for the
+same reason.
+
+The bundle a tagged run uploaded is kept as the workflow artifact
+`central-bundle-v<X.Y.Z>-attempt-<N>`. While the deployment waits at `VALIDATED`,
+download it (`gh run download <run-id>`), unzip the `central-bundle.zip` inside it
+into a directory, and smoke that directory with `--staged-repo` before pressing
+Publish. A recovery bundle (`skip_published`) omits the modules already live, so it
+cannot be smoked this way — smoke that version from Central after publishing.
 
 Or dispatch the **Release Smoke (consumer verification)** GitHub Actions workflow
 (`.github/workflows/release-smoke.yml`) with a `version` input — handy after a

@@ -5,9 +5,28 @@ name: Publish to Maven Central
 # Triggered by the same `v*` tag push that fires release.yml (Track D4).
 # The two workflows are independent — release.yml creates the GitHub
 # Release; this one publishes the Maven Central artefacts. They can
-# succeed or fail independently, and a maintainer can re-run this
-# workflow alone via workflow_dispatch if Central had a transient
-# validator hiccup without re-cutting the tag.
+# succeed or fail independently, and a maintainer can run this workflow
+# again for the same tag, without re-cutting it, when it failed BEFORE
+# anything was uploaded (no "deploymentId" in the log). Once a deployment
+# exists, never run the deploy again — act on it in the Central portal (see
+# the recovery table in docs/contributing/release-process.md). Run the tag's
+# own workflow: "Re-run failed jobs" on the tag's run, or dispatch FROM THE
+# TAG (gh workflow run publish.yml --ref vX.Y.Z -f tag=vX.Y.Z) — a dispatch
+# runs the workflow file of the ref it is dispatched from, and main, the
+# UI's default, is merged only after the tag.
+#
+# The whole lockstep train ships as ONE Central deployment: a single
+# `-P release deploy -pl <train>` over the root reactor. The plugin stages
+# every selected module, then bundles and uploads them together from the
+# last one, so one GraphCompose version is one publish operation (one
+# Release Count event) holding eight components, each still its own
+# coordinate for consumers. The deployment validates and publishes as a
+# unit, so a release can no longer end split across deployments. The root
+# aggregator is not selected (and no train module inherits its
+# maven.deploy.skip);
+# examples, benchmarks, qa, coverage, fonts and emoji are not selected.
+# fonts and emoji keep their own tags and workflows (publish-fonts.yml,
+# publish-emoji.yml) and publish only when their own version moves.
 #
 # Hyphenated tags (rc / alpha / beta / SNAPSHOT) are skipped: those
 # ship only to the GitHub Release pre-release surface, never to Central
@@ -37,30 +56,22 @@ on:
         description: 'Existing v*-prefixed tag to (re-)publish'
         required: true
         type: string
-      start_at:
-        description: 'Resume the module deploys from here. Keep "all" for a normal publish; pick a module ONLY to complete a confirmed-partial publication — never blindly re-run a full deploy, Central rejects re-uploading an already-published coordinate.'
+      skip_published:
+        description: 'Recovery only: leave out components of this version that are already published on Maven Central, and publish the rest as one deployment. Keep false for a normal publish; set it ONLY after confirming which coordinates are live. A deployment that is still VALIDATED but unpublished is not "published" — publish or drop it in the Central portal first. Dispatch from the tag: gh workflow run publish.yml --ref vX.Y.Z -f tag=vX.Y.Z -f skip_published=true.'
         required: false
-        type: choice
-        default: all
-        options:
-          - all
-          - core
-          - render-pdf
-          - wrapper
-          - render-docx
-          - render-pptx
-          - templates
-          - testing
-          - bundle
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
-# Serialize Maven Central publishes. A publish is a global, non-atomic sequence
-# of eight module uploads, so two runs must never overlap — a constant group
-# name funnels every tag / dispatch through one lane. cancel-in-progress is
-# false so a re-tag or dispatch never aborts a publish already mid-upload; the
-# second run queues behind it instead.
+# Serialize Maven Central publishes. Two runs must never overlap — two
+# uploads of the same version would race to validate the same coordinates —
+# so a constant group name funnels every tag / dispatch through one lane.
+# cancel-in-progress is false so a re-tag or dispatch never aborts a publish
+# already mid-upload; the next run waits behind it. GitHub keeps only ONE
+# pending run per group: a third run cancels the one already waiting, so
+# never queue two publishes behind a running one.
 concurrency:
   group: publish-maven-central
   cancel-in-progress: false
@@ -157,146 +168,77 @@ jobs:
           test -s templates/target/japicmp/japicmp-against-major-floor.xml
           test -s templates/target/japicmp/japicmp-against-previous-release.xml
 
-      - name: Build, test and install to local m2 (verify + seed the deploys)
+      - name: Build, test and install to local m2 (verify + seed the release reactor)
         # Re-verify the tagged commit before publishing (defence in depth
         # against a tag pushed from a broken branch). `install` — not `verify` —
         # seeds the runner's local m2 with EVERY module artifact, including the
         # core tests-jar that render-pdf depends on at test scope but the release
-        # profile never publishes. Each per-module `-P release deploy` below
-        # builds in isolation and resolves its inter-module deps (Maven resolves
-        # test-scope deps even with -DskipTests) from this local m2, so the
-        # unpublished tests-jar no longer fails the deploy. It runs after the gate
-        # above, so the artifacts it installs cannot serve as baselines.
+        # profile never publishes (it unbinds that jar). The reactor deploy below
+        # therefore resolves it (Maven resolves test-scope deps even with
+        # -DskipTests) from this local m2, while every published artifact comes
+        # from the reactor itself. It runs after the gate above, so the artifacts
+        # it installs cannot serve as baselines.
         run: ./mvnw -B -ntp clean install
 
-      - name: Plan the deploy set (start_at resume)
-        id: plan
-        # A partial Central publication CANNOT be blindly re-dispatched: the deploys
-        # always start at core, and Central rejects re-uploading a coordinate that
-        # already validated, so a full re-run fails at the first already-published
-        # module before ever reaching the missing ones. `start_at` lets a maintainer
-        # resume from the first UNPUBLISHED module after confirming which coordinates
-        # are already live (via `mvn dependency:get`, or the release-smoke matrix). The
-        # default `all` — and every tag-triggered run, where the input is empty —
-        # deploys the whole train. The `clean install` preflight already seeded local m2
-        # with every module, so a skipped earlier deploy never breaks a later one's deps.
+      - name: Announce a recovery run
+        if: github.event.inputs.skip_published == 'true'
         env:
-          START_AT: ${{ github.event.inputs.start_at }}
-        run: |
-          order="core render-pdf wrapper render-docx render-pptx templates testing bundle"
-          # Fail loudly on an unknown start_at: an unrecognised value would leave every
-          # run_* false and silently publish NOTHING while the job stayed green. Empty
-          # (a tag-triggered run) is allowed and means "all".
-          if [ -n "$START_AT" ]; then
-            case " $order all " in
-              *" $START_AT "*) ;;
-              *) echo "::error::Invalid start_at: '$START_AT'"; exit 1 ;;
-            esac
-          fi
-          started="false"
-          if [ -z "$START_AT" ] || [ "$START_AT" = "all" ]; then started="true"; fi
-          for m in $order; do
-            if [ "$m" = "$START_AT" ]; then started="true"; fi
-            key="run_$(echo "$m" | tr '-' '_')"
-            echo "$key=$started" >> "$GITHUB_OUTPUT"
-          done
-          echo "Deploying the train from: ${START_AT:-all}"
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: echo "::warning::skip_published=true — components of $TAG already published on Maven Central are left out of this deployment. Recovery only."
 
-      - name: Publish engine to Maven Central
-        if: steps.plan.outputs.run_core == 'true'
-        # Activates the release profile (sources + javadoc + gpg sign +
-        # central-publishing) and flips gpg.skip=false. The deploy
-        # phase invokes central-publishing-maven-plugin's upload goal
-        # which blocks until Sonatype's validator confirms validation.
-        # The release profile also disables the tests-jar execution, so
-        # only the main + sources + javadoc + pom artefacts are uploaded.
-        # Inter-module deps (incl. the core tests-jar render-pdf needs) resolve
-        # from the local m2 seeded by the install step above.
-        run: ./mvnw -B -ntp -f core/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
+      - name: Publish the release train to Maven Central (one deployment)
+        id: train
+        # One reactor run over exactly the lockstep train. `-P release` adds the
+        # sources + javadoc jars, GPG-signs every artefact at verify, and lets the
+        # central-publishing plugin replace deploy: each module is STAGED into one
+        # shared directory, and the last module bundles all of them into
+        # central-bundle.zip and uploads it once. The upload settings (autoPublish,
+        # waitUntil) are therefore read from that last module's release profile —
+        # PublishTrainGuardTest holds all eight identical. waitUntil=validated
+        # blocks until Central validates the whole deployment; autoPublish=false
+        # then leaves ONE deployment for the maintainer to publish on
+        # central.sonatype.com.
+        #
+        # A failure in any module stops the build before the last module, the one
+        # that uploads, so nothing partial reaches Central (and under
+        # --fail-at-end the plugin refuses on its own: "Earlier build failures
+        # detected"). Never widen the selection: -am would pull
+        # fonts and emoji (core's test-scope deps) into the reactor and the
+        # deployment, re-uploading coordinates they already published, and -amd
+        # would pull in the build-only dependents (examples, qa, …).
+        #
+        # The whole train shares the plugin's waitMaxTime (1800 s). A run that
+        # goes red on that wait (or on any status-polling error, which the plugin
+        # does not retry) still leaves a deployment once "deploymentId" is in the
+        # log: act on it in the Central portal, and never dispatch or re-run the
+        # deploy again — that uploads a second deployment.
+        #
+        # ignorePublishedComponents is false on every tag push and on a dispatch
+        # that leaves skip_published unset. Set, the plugin asks the Central
+        # Portal which of these components are already published and leaves those
+        # out — the recovery for a version that is partially live.
         env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+          SKIP_PUBLISHED: ${{ github.event.inputs.skip_published == 'true' }}
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        run: ./mvnw -B -ntp -P release -DskipTests -Dgpg.skip=false -DdeploymentName="GraphCompose $TAG" -DignorePublishedComponents=$SKIP_PUBLISHED deploy -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose-bundle
 
-      - name: Publish render-pdf to Maven Central
-        if: steps.plan.outputs.run_render_pdf == 'true'
-        # The PDF render backend, lockstep-versioned with the engine (ships on the
-        # same v* tag). graph-compose-core resolves from the local repo installed by
-        # the engine deploy above; the wrapper below depends on this.
-        run: ./mvnw -B -ntp -f render-pdf/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
-        env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-
-      - name: Publish graph-compose (compat wrapper) to Maven Central
-        if: steps.plan.outputs.run_wrapper == 'true'
-        # The empty jar that keeps the `graph-compose` coordinate a drop-in: it
-        # depends on graph-compose-core + graph-compose-render-pdf, resolved from the
-        # local repo installed by the deploys above. Ships on the same v* tag.
-        run: ./mvnw -B -ntp -f wrapper/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
-        env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-
-      - name: Publish render-docx to Maven Central
-        if: steps.plan.outputs.run_render_docx == 'true'
-        # The semantic DOCX backend, lockstep-versioned with the engine (ships on
-        # the same v* tag). graph-compose-core resolves from the local repo installed
-        # by the engine deploy above.
-        run: ./mvnw -B -ntp -f render-docx/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
-        env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-
-      - name: Publish render-pptx to Maven Central
-        if: steps.plan.outputs.run_render_pptx == 'true'
-        # The PPTX render backend — a fixed-layout POI XSLF backend consuming the
-        # same resolved LayoutGraph as the PDF one, alongside the older semantic
-        # manifest skeleton. Lockstep-versioned with the engine (ships on the same
-        # v* tag). graph-compose-core resolves from the local repo installed
-        # by the engine deploy above.
-        run: ./mvnw -B -ntp -f render-pptx/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
-        env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-
-      - name: Publish templates to Maven Central
-        if: steps.plan.outputs.run_templates == 'true'
-        # The built-in document templates, lockstep-versioned with the engine (ships
-        # on the same v* tag). graph-compose-core resolves from the local repo
-        # installed by the engine deploy above.
-        run: ./mvnw -B -ntp -f templates/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
-        env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-
-      - name: Publish testing to Maven Central
-        if: steps.plan.outputs.run_testing == 'true'
-        # Consumer testing support (LayoutSnapshotAssertions / PdfVisualRegression),
-        # lockstep-versioned with the engine (ships on the same v* tag). graph-compose
-        # resolves from the local repo installed by the engine deploy above.
-        run: ./mvnw -B -ntp -f testing/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
-        env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-
-      - name: Publish bundle to Maven Central
-        if: steps.plan.outputs.run_bundle == 'true'
-        # The graph-compose-bundle convenience aggregate pins this engine
-        # version + compatible graph-compose-fonts and graph-compose-emoji
-        # versions. It tracks the engine line, so it ships on the same v* tag.
-        # Packaged as an empty jar carrying only <dependencies> (like the
-        # graph-compose wrapper), so the signed jar + pom are uploaded. The
-        # train artifacts resolve from the preceding deploy steps; the
-        # independently versioned fonts and emoji artifacts resolve from Maven Central.
-        run: ./mvnw -B -ntp -f bundle/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
-        env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+      - name: Keep the deployment bundle with the run
+        # The exact zip the plugin uploaded (or would have uploaded), for audit,
+        # for smoking the VALIDATED deployment before publishing it
+        # (scripts/release-smoke --staged-repo), and for a manual upload through
+        # the Central portal if the API path is unavailable. The plugin writes it
+        # under the first staged module's target/, hence the wildcard. Runs
+        # whenever the deploy step ran, pass or fail — not when an earlier step
+        # (an invalid tag, a red gate) kept it from running.
+        if: ${{ !cancelled() && steps.train.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v7
+        with:
+          # The attempt number keeps a "Re-run jobs" attempt from colliding with
+          # the artifact an earlier attempt of the same run already uploaded.
+          name: central-bundle-${{ github.event.inputs.tag || github.ref_name }}-attempt-${{ github.run_attempt }}
+          path: '*/target/central-publishing/central-bundle.zip'
+          if-no-files-found: warn
+          retention-days: 90

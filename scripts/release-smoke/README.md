@@ -67,11 +67,18 @@ GraphCompose coordinates resolve from there and everything else (third-party
 libraries, the independently versioned fonts and emoji) from Central. The version
 defaults to the single `graph-compose-core` version staged in `<dir>`.
 
-A scenario passes only if, besides its own assertions, every GraphCompose artifact
-of that version it resolved records `staged` as its source in
-`_remote.repositories` — so a stale cache or a Central copy cannot stand in for the
-staged bytes, and a scenario that resolved none of them fails. Staged mode refuses
-`--warm` for the same reason.
+A scenario passes only if, besides its own assertions, every file of every train
+artifact it resolved records `staged` as its source in `_remote.repositories`, and
+no train artifact was resolved at a version other than the one staged — so a stale
+cache or a Central copy cannot stand in for the staged bytes, a staged POM that
+pins a sibling at a drifted version fails, and a scenario that resolved no train
+artifact fails. `graph-compose-fonts` and `graph-compose-emoji` are exempt: they
+version independently and come from Central. Staged mode refuses `--warm` for the
+same reason.
+
+The bundle a tagged run uploaded is kept as the workflow artifact
+`central-bundle-v<X.Y.Z>`. While the deployment waits at `VALIDATED`, download it,
+unzip it and smoke it with `--staged-repo` before pressing Publish.
 
 Or dispatch the **Release Smoke (consumer verification)** GitHub Actions workflow
 (`.github/workflows/release-smoke.yml`) with a `version` input — handy after a

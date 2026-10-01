@@ -47,6 +47,9 @@ class PublishTrainGuardTest {
     private static final Pattern CENTRAL_PLUGIN_VERSION = Pattern.compile(
             "<central\\.publishing\\.plugin\\.version>\\s*([^<]+?)\\s*</central\\.publishing\\.plugin\\.version>");
 
+    /** The {@code deploy} goal as a word — not {@code deployment}, not {@code deploy-web}. */
+    private static final Pattern DEPLOY_GOAL = Pattern.compile("(?<![\\w-])deploy(?![\\w-])");
+
     /** Options that widen a {@code -pl} selection beyond the modules it names. */
     private static final Set<String> ALSO_MAKE = Set.of("-am", "--also-make", "-amd", "--also-make-dependents");
 
@@ -85,6 +88,45 @@ class PublishTrainGuardTest {
                 .describedAs("the train deploy must not widen its -pl selection: also-make pulls "
                         + "core's test-scope fonts and emoji into the reactor, and therefore into "
                         + "the deployment, re-uploading coordinates already on Central")
+                .isEmpty();
+    }
+
+    /**
+     * Every other test here reads deploys through {@link PublishedModules#deployCommands},
+     * which recognises one shape: a single-line {@code ./mvnw … deploy}. A deploy written
+     * any other way — {@code mvn}, a {@code - run:} list item, a command wrapped with
+     * {@code \} continuations — would be invisible to all of them, so a second deployment
+     * could ship while "exactly one deploy" stayed green. This keys on the positive
+     * signal instead: any non-comment line of a publish workflow naming the
+     * {@code deploy} goal must be one the parser read.
+     */
+    @Test
+    void everyDeployInAPublishWorkflowIsOneTheGuardsRead() throws IOException {
+        Set<String> unread = new TreeSet<>();
+        try (var files = Files.list(PROJECT_ROOT.resolve(".github/workflows"))) {
+            for (Path workflow : files.sorted().toList()) {
+                String name = workflow.getFileName().toString();
+                if (!name.startsWith("publish") || !name.endsWith(".yml")) {
+                    continue;
+                }
+                List<String> parsed = PublishedModules.deployCommands(workflow);
+                for (String line : Files.readAllLines(workflow)) {
+                    String code = line.strip();
+                    if (code.startsWith("#") || !DEPLOY_GOAL.matcher(code).find()) {
+                        continue;
+                    }
+                    if (!parsed.contains(code)) {
+                        unread.add(name + ": " + code);
+                    }
+                }
+            }
+        }
+
+        assertThat(unread)
+                .describedAs("publish workflow lines that name the deploy goal in a shape "
+                        + "PublishedModules does not read, so no guard checks what they ship. "
+                        + "Write the deploy as one `./mvnw … deploy` line, or teach "
+                        + "PublishedModules the new shape")
                 .isEmpty();
     }
 

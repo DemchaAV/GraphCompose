@@ -30,10 +30,12 @@ follow semantic versioning; release dates are ISO 8601.
   declare the plugin identically, because the upload runs with the settings of the module the
   reactor orders last. `PublishedModules` reads `-pl` deploys as well as `-f` ones, so the
   CodeQL scope guard keeps its inventory.
-- **The release smoke runs before the upload.** `run.sh --staged-repo <dir>` /
+- **The release smoke can run before anything is published.** `run.sh --staged-repo <dir>` /
   `run.ps1 -StagedRepo <dir>` resolves the GraphCompose coordinates from an unzipped
-  `central-bundle.zip` and everything else from Central, and fails a scenario unless every
-  GraphCompose artifact it resolved came from the staged directory.
+  `central-bundle.zip` — a local dry run's, or the tagged run's workflow artifact while the
+  deployment waits at `VALIDATED` — and everything else from Central. A scenario fails unless
+  every file of every train artifact it resolved came from the staged directory at the staged
+  version.
 
 ### Documentation
 

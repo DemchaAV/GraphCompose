@@ -159,7 +159,7 @@ jobs:
           test -s templates/target/japicmp/japicmp-against-major-floor.xml
           test -s templates/target/japicmp/japicmp-against-previous-release.xml
 
-      - name: Build, test and install to local m2 (verify + seed the deploy)
+      - name: Build, test and install to local m2 (verify + seed the release reactor)
         # Re-verify the tagged commit before publishing (defence in depth
         # against a tag pushed from a broken branch). `install` — not `verify` —
         # seeds the runner's local m2 with EVERY module artifact, including the
@@ -178,6 +178,7 @@ jobs:
         run: echo "::warning::skip_published=true — components of $TAG already published on Maven Central are left out of this deployment. Recovery only."
 
       - name: Publish the release train to Maven Central (one deployment)
+        id: train
         # One reactor run over exactly the lockstep train. `-P release` adds the
         # sources + javadoc jars, GPG-signs every artefact at verify, and lets the
         # central-publishing plugin replace deploy: each module is STAGED into one
@@ -191,9 +192,15 @@ jobs:
         #
         # A failure in any module before the upload stops the plugin from
         # uploading anything ("Earlier build failures detected"), so nothing
-        # partial reaches Central. Never add -am / -amd: also-make would pull
+        # partial reaches Central. Never widen the selection: -am would pull
         # fonts and emoji (core's test-scope deps) into the reactor and the
-        # deployment, re-uploading coordinates they already published.
+        # deployment, re-uploading coordinates they already published, and -amd
+        # would pull in the build-only dependents (examples, qa, …).
+        #
+        # The whole train shares the plugin's waitMaxTime (1800 s). A run that
+        # goes red on that wait may still leave a deployment that later reaches
+        # VALIDATED — check the Central portal before re-dispatching, or the
+        # re-dispatch uploads a second deployment.
         #
         # ignorePublishedComponents is false on every tag push and on a dispatch
         # that leaves skip_published unset. Set, the plugin asks the Central
@@ -208,11 +215,14 @@ jobs:
         run: ./mvnw -B -ntp -P release -DskipTests -Dgpg.skip=false -DdeploymentName="GraphCompose $TAG" -DignorePublishedComponents=$SKIP_PUBLISHED deploy -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose-bundle
 
       - name: Keep the deployment bundle with the run
-        # The exact zip the plugin uploaded (or would have uploaded), for audit
-        # and for a manual upload through the Central portal if the API path is
-        # unavailable. The plugin writes it under the first staged module's
-        # target/, hence the wildcard.
-        if: always()
+        # The exact zip the plugin uploaded (or would have uploaded), for audit,
+        # for smoking the VALIDATED deployment before publishing it
+        # (scripts/release-smoke --staged-repo), and for a manual upload through
+        # the Central portal if the API path is unavailable. The plugin writes it
+        # under the first staged module's target/, hence the wildcard. Runs
+        # whenever the deploy step ran, pass or fail — not when an earlier step
+        # (an invalid tag, a red gate) kept it from running.
+        if: ${{ !cancelled() && steps.train.outcome != 'skipped' }}
         uses: actions/upload-artifact@v7
         with:
           name: central-bundle-${{ github.event.inputs.tag || github.ref_name }}

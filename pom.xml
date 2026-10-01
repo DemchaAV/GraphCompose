@@ -24,13 +24,15 @@
     </description>
 
     <!--
-        Belt-and-braces: nothing aggregated here is meant to be deployed via the
-        reactor. The published artifacts (engine, fonts, bundle) are deployed by
-        their own targeted `-f <module>/pom.xml ... deploy` invocations in the
-        publish workflows. This skip stops an accidental aggregator `deploy` from
-        pushing the examples / benchmarks (which have no distributionManagement)
-        to anywhere. The standalone engine / fonts / bundle poms do not inherit
-        this and manage their own publication.
+        Belt-and-braces: nothing aggregated here is meant to be deployed by an
+        unselected reactor `deploy`. The release train is deployed by one
+        `-P release deploy -pl <train>` run over this reactor (publish.yml), which
+        selects only the standalone train modules; fonts and emoji by their own
+        `-f <module>/pom.xml ... deploy` runs (publish-fonts.yml,
+        publish-emoji.yml). This skip stops an accidental aggregator `deploy` from
+        pushing the examples / benchmarks / qa / coverage (which have no
+        distributionManagement) to anywhere. The standalone train / fonts / emoji
+        poms do not inherit this and manage their own publication.
     -->
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>

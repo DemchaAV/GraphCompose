@@ -53,7 +53,8 @@ if ($StagedRepo) {
         Write-Error "FATAL: $StagedRepo is not a Maven repository layout holding io/github/demchaav"
         exit 2
     }
-    $stagedAbs = (Resolve-Path $StagedRepo).Path -replace '\\', '/'
+    # The path goes into XML; escape the characters that would break it.
+    $stagedAbs = [System.Security.SecurityElement]::Escape(((Resolve-Path $StagedRepo).Path -replace '\\', '/'))
     if (-not $PSBoundParameters.ContainsKey('Version')) {
         $staged = @(Get-ChildItem -Directory (Join-Path $stagedGc 'graph-compose-core') -ErrorAction SilentlyContinue)
         if ($staged.Count -ne 1) {
@@ -65,7 +66,7 @@ if ($StagedRepo) {
     # The isolated settings, with one exception carved out of the Central-only mirror:
     # the staged repository, active for every scenario.
     $settings = Join-Path $repoRoot 'target\release-smoke-m2\settings-staged.xml'
-    @"
+    $stagedSettings = @"
 <settings>
   <mirrors>
     <mirror>
@@ -91,26 +92,48 @@ if ($StagedRepo) {
     <activeProfile>staged</activeProfile>
   </activeProfiles>
 </settings>
-"@ | Set-Content -Encoding utf8 -Path $settings
+"@
+    # Without a BOM: Windows PowerShell's `-Encoding utf8` writes one.
+    [System.IO.File]::WriteAllText($settings, $stagedSettings, (New-Object System.Text.UTF8Encoding($false)))
 }
 
-# Staged mode only: every GraphCompose artifact of the version under test that the
-# scenario resolved must record the staged repository as its source. Fails closed —
-# a scenario that resolved none of them proves nothing about the staged bytes.
+# Staged mode only. Every file of every train artifact the scenario resolved must
+# record the staged repository as its source, and every train artifact must be at
+# the version under test — a train module resolved at another version is lockstep
+# drift in a staged POM, and it would have come from Central unchecked. fonts and
+# emoji are exempt: they version independently and always come from Central. Fails
+# closed — a scenario that resolved no train artifact proves nothing.
 function Test-StagedProvenance {
-    $dirs = @(Get-ChildItem -Directory (Join-Path $repo 'io\github\demchaav') -ErrorAction SilentlyContinue |
-            ForEach-Object { Join-Path $_.FullName $Version } | Where-Object { Test-Path $_ })
-    if ($dirs.Count -eq 0) {
+    $seen = 0
+    $ok = $true
+    $artifacts = @(Get-ChildItem -Directory (Join-Path $repo 'io\github\demchaav') -ErrorAction SilentlyContinue)
+    foreach ($artifact in $artifacts) {
+        if ($artifact.Name -in @('graph-compose-fonts', 'graph-compose-emoji')) { continue }
+        foreach ($versionDir in @(Get-ChildItem -Directory $artifact.FullName)) {
+            if ($versionDir.Name -ne $Version) {
+                Write-Host "PROVENANCE: $($artifact.Name) resolved at $($versionDir.Name), not the staged $Version"
+                $ok = $false
+                continue
+            }
+            $seen++
+            $marker = Join-Path $versionDir.FullName '_remote.repositories'
+            if (-not (Test-Path $marker)) {
+                Write-Host "PROVENANCE: $($versionDir.FullName) records no source repository"
+                $ok = $false
+                continue
+            }
+            foreach ($line in Get-Content $marker) {
+                if (-not $line -or $line.StartsWith('#')) { continue }
+                if (-not $line.EndsWith('>staged=')) {
+                    Write-Host "PROVENANCE: $($artifact.Name) ${Version}: '$line' was not resolved from the staged repository"
+                    $ok = $false
+                }
+            }
+        }
+    }
+    if ($seen -eq 0) {
         Write-Host "PROVENANCE: no GraphCompose $Version artifact was resolved at all"
         return $false
-    }
-    $ok = $true
-    foreach ($dir in $dirs) {
-        $marker = Join-Path $dir '_remote.repositories'
-        if (-not ((Test-Path $marker) -and (Select-String -Path $marker -SimpleMatch '>staged=' -Quiet))) {
-            Write-Host "PROVENANCE: $dir was not resolved from the staged repository"
-            $ok = $false
-        }
     }
     return $ok
 }

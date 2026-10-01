@@ -63,8 +63,12 @@ if [ -n "$STAGED" ]; then
     echo "FATAL: $STAGED is not a Maven repository layout holding io/github/demchaav" >&2
     exit 2
   fi
-  # pwd -W gives C:/... under Git Bash; elsewhere it fails and plain pwd is right.
-  STAGED_ABS="$(cd "$STAGED" && (pwd -W 2>/dev/null || pwd))"
+  # Java on Windows needs C:/... — cygpath gives it under Git Bash and Cygwin;
+  # elsewhere (Linux, WSL, macOS) the plain absolute path is right.
+  STAGED_ABS="$(cd "$STAGED" && pwd)"
+  if command -v cygpath >/dev/null 2>&1; then STAGED_ABS="$(cygpath -m "$STAGED_ABS")"; fi
+  # The path goes into XML; escape the characters that would break it.
+  STAGED_URL_PATH="$(printf '%s' "${STAGED_ABS#/}" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')"
   if [ "$VERSION_SET" = "0" ]; then
     staged_versions="$(ls "$STAGED/io/github/demchaav/graph-compose-core" 2>/dev/null)"
     if [ "$(printf '%s\n' "$staged_versions" | grep -c .)" != "1" ]; then
@@ -91,7 +95,7 @@ if [ -n "$STAGED" ]; then
       <repositories>
         <repository>
           <id>staged</id>
-          <url>file:///${STAGED_ABS#/}</url>
+          <url>file:///${STAGED_URL_PATH}</url>
           <releases><enabled>true</enabled></releases>
           <snapshots><enabled>false</enabled></snapshots>
         </repository>
@@ -105,18 +109,40 @@ if [ -n "$STAGED" ]; then
 EOF
 fi
 
-# Staged mode only: every GraphCompose artifact of the version under test that the
-# scenario resolved must record the staged repository as its source. Fails closed —
-# a scenario that resolved none of them proves nothing about the staged bytes.
+# Staged mode only. Every file of every train artifact the scenario resolved must
+# record the staged repository as its source, and every train artifact must be at
+# the version under test — a train module resolved at another version is lockstep
+# drift in a staged POM, and it would have come from Central unchecked. fonts and
+# emoji are exempt: they version independently and always come from Central. Fails
+# closed — a scenario that resolved no train artifact proves nothing.
 staged_provenance_ok() {
-  local seen=0 bad=0 dir
-  for dir in "$REPO"/io/github/demchaav/*/"$GC_VERSION"; do
+  local seen=0 bad=0 dir artifact version line
+  for dir in "$REPO"/io/github/demchaav/*/*/; do
     [ -d "$dir" ] || continue
-    seen=$((seen + 1))
-    if ! grep -qs '>staged=' "$dir/_remote.repositories"; then
-      echo "PROVENANCE: $dir was not resolved from the staged repository" >&2
+    dir="${dir%/}"
+    version="${dir##*/}"
+    artifact="$(basename "$(dirname "$dir")")"
+    case "$artifact" in graph-compose-fonts|graph-compose-emoji) continue ;; esac
+    if [ "$version" != "$GC_VERSION" ]; then
+      echo "PROVENANCE: $artifact resolved at $version, not the staged $GC_VERSION" >&2
       bad=$((bad + 1))
+      continue
     fi
+    seen=$((seen + 1))
+    if [ ! -f "$dir/_remote.repositories" ]; then
+      echo "PROVENANCE: $dir records no source repository" >&2
+      bad=$((bad + 1))
+      continue
+    fi
+    while IFS= read -r line; do
+      line="${line%$'\r'}"
+      case "$line" in ''|'#'*) continue ;; esac
+      case "$line" in
+        *'>staged=') ;;
+        *) echo "PROVENANCE: $artifact $version: '$line' was not resolved from the staged repository" >&2
+           bad=$((bad + 1)) ;;
+      esac
+    done < "$dir/_remote.repositories"
   done
   if [ "$seen" = "0" ]; then
     echo "PROVENANCE: no GraphCompose $GC_VERSION artifact was resolved at all" >&2

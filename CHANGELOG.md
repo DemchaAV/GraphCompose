@@ -1489,6 +1489,12 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **CI holds the DOCX export to its corpus.** The `DOCX Fidelity` job runs
+  `DocxFidelityCorpusTest` on a pinned Ubuntu image with LibreOffice whenever the engine, a
+  backend it measures with, the DOCX backend, a template or the corpus changes, against a
+  Linux baseline of its own, and is part of `CI Gate`. It uploads what it measured, which is the
+  new baseline when a change moves documents nearer the page.
+
 - **The DOCX export is held to its corpus, line by line.** `DocxFidelityCorpusTest` exports
   every template preset — 62 documents across CVs, cover letters, invoices, proposals, a
   receipt and a rota — to DOCX, has LibreOffice set each one, and finds each of the page's

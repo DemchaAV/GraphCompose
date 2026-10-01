@@ -38,10 +38,13 @@ class PublishTrainGuardTest {
     private static final Path PROJECT_ROOT = RepoRoot.get();
     private static final Path PUBLISH = PROJECT_ROOT.resolve(".github/workflows/publish.yml");
 
-    /** The central-publishing plugin declaration inside a pom. */
+    /**
+     * A {@code <plugin>} block naming the central-publishing plugin, whatever order its
+     * child elements are written in: the block may not close before the artifactId.
+     */
     private static final Pattern CENTRAL_PLUGIN = Pattern.compile(
-            "<plugin>\\s*<groupId>org\\.sonatype\\.central</groupId>\\s*"
-                    + "<artifactId>central-publishing-maven-plugin</artifactId>.*?</plugin>",
+            "<plugin>(?:(?!</plugin>).)*?<artifactId>\\s*central-publishing-maven-plugin\\s*</artifactId>"
+                    + ".*?</plugin>",
             Pattern.DOTALL);
 
     private static final Pattern CENTRAL_PLUGIN_VERSION = Pattern.compile(
@@ -58,11 +61,17 @@ class PublishTrainGuardTest {
     /** A Maven launcher token: {@code mvn}, {@code ./mvnw}, {@code mvnw.cmd}, … */
     private static final Pattern MAVEN_LAUNCHER = Pattern.compile("(?:^|/)mvnw?(?:\\.cmd)?$");
 
-    /** A module-selection option, in either spelling, with or without {@code =value}. */
-    private static final Pattern SELECTION_OPTION = Pattern.compile("^(?:-pl|--projects)(?:=.*)?$");
+    /**
+     * A module-selection option: {@code -pl}, or {@code --projects} and the prefixes of it
+     * Maven's option parser also accepts, with or without {@code =value}.
+     */
+    private static final Pattern SELECTION_OPTION = Pattern.compile("^(?:-pl|--pr[a-z]*)(?:=.*)?$");
 
-    /** Shell operators that would chain a second command onto the deploy line. */
-    private static final Pattern CHAINING = Pattern.compile("&&|\\|\\||;|\\|");
+    /**
+     * Shell operators that would chain or background a second command onto the deploy
+     * line ({@code &&}, {@code ||}, {@code ;}, {@code |}, {@code &}).
+     */
+    private static final Pattern CHAINING = Pattern.compile("[;&|]");
 
     /** Options that widen a {@code -pl} selection beyond the modules it names. */
     private static final Set<String> ALSO_MAKE = Set.of("-am", "--also-make", "-amd", "--also-make-dependents");
@@ -88,7 +97,8 @@ class PublishTrainGuardTest {
                 .hasSize(1);
 
         String deploy = deploys.get(0);
-        List<String> tokens = List.of(deploy.split("\\s+"));
+        // Unquoted, so `"./mvnw"` or `'-pl'` counts the same as the bare token the shell sees.
+        List<String> tokens = List.of(deploy.replaceAll("[\"']", "").split("\\s+"));
         assertThat(tokens)
                 .describedAs("the train deploy must select its modules with -pl over the root "
                         + "reactor and run the release profile: %s", deploy)

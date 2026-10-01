@@ -56,14 +56,14 @@ if ($StagedRepo) {
         exit 2
     }
     $stagedGc = Join-Path $StagedRepo 'io\github\demchaav'
-    if (-not (Test-Path $stagedGc -PathType Container)) {
+    if (-not (Test-Path -LiteralPath $stagedGc -PathType Container)) {
         Write-Error "FATAL: $StagedRepo is not a Maven repository layout holding io/github/demchaav"
         exit 2
     }
     # The path goes into XML; escape the characters that would break it.
-    $stagedAbs = [System.Security.SecurityElement]::Escape(((Resolve-Path $StagedRepo).Path -replace '\\', '/'))
+    $stagedAbs = [System.Security.SecurityElement]::Escape(((Resolve-Path -LiteralPath $StagedRepo).Path -replace '\\', '/'))
     if (-not $PSBoundParameters.ContainsKey('Version')) {
-        $staged = @(Get-ChildItem -Directory (Join-Path $stagedGc 'graph-compose-core') -ErrorAction SilentlyContinue)
+        $staged = @(Get-ChildItem -Directory -LiteralPath (Join-Path $stagedGc 'graph-compose-core') -ErrorAction SilentlyContinue)
         if ($staged.Count -ne 1) {
             Write-Error "FATAL: expected exactly one staged graph-compose-core version, found: $($staged.Name -join ', ')"
             exit 2

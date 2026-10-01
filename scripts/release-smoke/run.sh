@@ -45,7 +45,8 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --warm) WARM=1; shift ;;
     --version) GC_VERSION="${2:?--version needs a value}"; VERSION_SET=1; shift 2 ;;
-    --version=*) GC_VERSION="${1#*=}"; VERSION_SET=1; shift ;;
+    --version=*) GC_VERSION="${1#*=}"; VERSION_SET=1; shift
+                 [ -n "$GC_VERSION" ] || { echo "--version needs a value" >&2; exit 2; } ;;
     --staged-repo) STAGED="${2-}"; STAGED_SET=1; shift; [ $# -gt 0 ] && shift ;;
     --staged-repo=*) STAGED="${1#*=}"; STAGED_SET=1; shift ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;

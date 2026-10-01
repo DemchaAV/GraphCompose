@@ -43,11 +43,12 @@ final class PublishedModules {
             Pattern.compile("-f\\s+([\\w-]+)/pom\\.xml");
 
     /**
-     * A reactor deploy's module selection: {@code -pl :a,:b,…}, in either spelling and with
-     * a space or {@code =}. Every occurrence is read, because Maven merges repeated ones.
+     * A reactor deploy's module selection: {@code -pl :a,:b,…}, or {@code --projects} and
+     * its accepted prefixes, with a space or {@code =}, quoted or not. Every occurrence is
+     * read, because Maven merges repeated ones.
      */
     private static final Pattern DEPLOY_SELECTION =
-            Pattern.compile("\\s(?:-pl|--projects)(?:\\s+|=)(\\S+)");
+            Pattern.compile("\\s[\"']?(?:-pl|--pr[a-z]*)[\"']?(?:\\s+|=)[\"']?([^\\s\"']+)");
 
     private static final Pattern VERSION = Pattern.compile("<version>\\s*([^<]+?)\\s*</version>");
 

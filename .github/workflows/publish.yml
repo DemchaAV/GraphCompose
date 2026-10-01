@@ -5,12 +5,15 @@ name: Publish to Maven Central
 # Triggered by the same `v*` tag push that fires release.yml (Track D4).
 # The two workflows are independent — release.yml creates the GitHub
 # Release; this one publishes the Maven Central artefacts. They can
-# succeed or fail independently, and a maintainer can re-run this
-# workflow alone via workflow_dispatch if Central had a transient
-# validator hiccup without re-cutting the tag. Dispatch it FROM THE TAG
-# (gh workflow run publish.yml --ref vX.Y.Z -f tag=vX.Y.Z): a dispatch runs
-# the workflow file of the ref it is dispatched from, and main, the UI's
-# default, is merged only after the tag.
+# succeed or fail independently, and a maintainer can run this workflow
+# again for the same tag, without re-cutting it, when it failed BEFORE
+# anything was uploaded (no "deploymentId" in the log). Once a deployment
+# exists, never run the deploy again — act on it in the Central portal (see
+# the recovery table in docs/contributing/release-process.md). Run the tag's
+# own workflow: "Re-run failed jobs" on the tag's run, or dispatch FROM THE
+# TAG (gh workflow run publish.yml --ref vX.Y.Z -f tag=vX.Y.Z) — a dispatch
+# runs the workflow file of the ref it is dispatched from, and main, the
+# UI's default, is merged only after the tag.
 #
 # The whole lockstep train ships as ONE Central deployment: a single
 # `-P release deploy -pl <train>` over the root reactor. The plugin stages
@@ -205,9 +208,10 @@ jobs:
         # would pull in the build-only dependents (examples, qa, …).
         #
         # The whole train shares the plugin's waitMaxTime (1800 s). A run that
-        # goes red on that wait may still leave a deployment that later reaches
-        # VALIDATED — check the Central portal before re-dispatching, or the
-        # re-dispatch uploads a second deployment.
+        # goes red on that wait (or on any status-polling error, which the plugin
+        # does not retry) still leaves a deployment once "deploymentId" is in the
+        # log: act on it in the Central portal, and never dispatch or re-run the
+        # deploy again — that uploads a second deployment.
         #
         # ignorePublishedComponents is false on every tag push and on a dispatch
         # that leaves skip_published unset. Set, the plugin asks the Central

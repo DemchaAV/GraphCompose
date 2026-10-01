@@ -16,6 +16,13 @@
 #   ./scripts/release-smoke/run.sh                 # isolated, tests gc.version=2.4.1
 #   ./scripts/release-smoke/run.sh --version 2.0.1 # test a different published version
 #   ./scripts/release-smoke/run.sh --warm          # keep everything cached (fast dev iteration)
+#   ./scripts/release-smoke/run.sh --staged-repo <dir>
+#       # before upload: resolve the GraphCompose coordinates from <dir>, a Maven
+#       # repository-layout directory such as the unzipped central-bundle.zip, and
+#       # everything else from Central. The version defaults to the single version
+#       # staged there. After each scenario every GraphCompose artifact of that
+#       # version must have come from <dir> — one resolved from anywhere else (a stale
+#       # cache, Central) fails the scenario, so a pass proves the staged bytes.
 #
 set -u
 
@@ -31,15 +38,92 @@ REPO="$REPO_ROOT/target/release-smoke-m2/repo"
 # test PUBLISHED artifacts — never a -SNAPSHOT.
 GC_VERSION="2.4.1"
 WARM=0
+STAGED=""
+VERSION_SET=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --warm) WARM=1; shift ;;
-    --version) GC_VERSION="${2:?--version needs a value}"; shift 2 ;;
-    --version=*) GC_VERSION="${1#*=}"; shift ;;
+    --version) GC_VERSION="${2:?--version needs a value}"; VERSION_SET=1; shift 2 ;;
+    --version=*) GC_VERSION="${1#*=}"; VERSION_SET=1; shift ;;
+    --staged-repo) STAGED="${2:?--staged-repo needs a directory}"; shift 2 ;;
+    --staged-repo=*) STAGED="${1#*=}"; shift ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
 mkdir -p "$REPO"
+
+if [ -n "$STAGED" ]; then
+  if [ "$WARM" = "1" ]; then
+    # A warm cache can satisfy a coordinate without consulting the staged repo,
+    # which is the one thing staged mode exists to rule out.
+    echo "--staged-repo cannot be combined with --warm" >&2
+    exit 2
+  fi
+  if [ ! -d "$STAGED/io/github/demchaav" ]; then
+    echo "FATAL: $STAGED is not a Maven repository layout holding io/github/demchaav" >&2
+    exit 2
+  fi
+  # pwd -W gives C:/... under Git Bash; elsewhere it fails and plain pwd is right.
+  STAGED_ABS="$(cd "$STAGED" && (pwd -W 2>/dev/null || pwd))"
+  if [ "$VERSION_SET" = "0" ]; then
+    staged_versions="$(ls "$STAGED/io/github/demchaav/graph-compose-core" 2>/dev/null)"
+    if [ "$(printf '%s\n' "$staged_versions" | grep -c .)" != "1" ]; then
+      echo "FATAL: expected exactly one staged graph-compose-core version, found: $staged_versions" >&2
+      exit 2
+    fi
+    GC_VERSION="$staged_versions"
+  fi
+  # The isolated settings, with one exception carved out of the Central-only mirror:
+  # the staged repository, active for every scenario.
+  SETTINGS="$REPO_ROOT/target/release-smoke-m2/settings-staged.xml"
+  cat > "$SETTINGS" <<EOF
+<settings>
+  <mirrors>
+    <mirror>
+      <id>central-only</id>
+      <url>https://repo.maven.apache.org/maven2</url>
+      <mirrorOf>*,!staged</mirrorOf>
+    </mirror>
+  </mirrors>
+  <profiles>
+    <profile>
+      <id>staged</id>
+      <repositories>
+        <repository>
+          <id>staged</id>
+          <url>file:///${STAGED_ABS#/}</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>staged</activeProfile>
+  </activeProfiles>
+</settings>
+EOF
+fi
+
+# Staged mode only: every GraphCompose artifact of the version under test that the
+# scenario resolved must record the staged repository as its source. Fails closed —
+# a scenario that resolved none of them proves nothing about the staged bytes.
+staged_provenance_ok() {
+  local seen=0 bad=0 dir
+  for dir in "$REPO"/io/github/demchaav/*/"$GC_VERSION"; do
+    [ -d "$dir" ] || continue
+    seen=$((seen + 1))
+    if ! grep -qs '>staged=' "$dir/_remote.repositories"; then
+      echo "PROVENANCE: $dir was not resolved from the staged repository" >&2
+      bad=$((bad + 1))
+    fi
+  done
+  if [ "$seen" = "0" ]; then
+    echo "PROVENANCE: no GraphCompose $GC_VERSION artifact was resolved at all" >&2
+    return 1
+  fi
+  [ "$bad" = "0" ]
+}
 
 pass=0
 fail=0
@@ -59,11 +143,15 @@ for s in "${SCENARIOS[@]}"; do
   fi
   echo ""
   echo "=================================================================="
-  echo "=== SMOKE $s   (version=$GC_VERSION, repo=$REPO, evicted=$([ "$WARM" = "0" ] && echo yes || echo no))"
+  echo "=== SMOKE $s   (version=$GC_VERSION, repo=$REPO, evicted=$([ "$WARM" = "0" ] && echo yes || echo no)${STAGED:+, staged=$STAGED})"
   echo "=================================================================="
   "$MVNW" -B -ntp -s "$SETTINGS" -Dgc.version="$GC_VERSION" \
     -f "$HERE/$s/pom.xml" -Dmaven.repo.local="$REPO" clean verify
-  if [ $? -eq 0 ]; then
+  status=$?
+  if [ "$status" -eq 0 ] && [ -n "$STAGED" ] && ! staged_provenance_ok; then
+    status=1
+  fi
+  if [ "$status" -eq 0 ]; then
     results+=("$s PASS")
     pass=$((pass + 1))
   else
@@ -74,7 +162,7 @@ done
 
 echo ""
 echo "===================== RELEASE SMOKE SUMMARY ====================="
-echo "version-under-test: $GC_VERSION"
+echo "version-under-test: $GC_VERSION${STAGED:+ (staged: $STAGED)}"
 for r in "${results[@]}"; do
   echo "RESULT $r"
 done

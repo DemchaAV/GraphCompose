@@ -66,7 +66,13 @@ final class LibreOfficeConverter {
      * {@code unknown}. Read from the file: {@code soffice --version} can wait on a window.
      */
     String build() {
-        Path program = soffice.toAbsolutePath().getParent();
+        Path program;
+        try {
+            // On Linux soffice is a link from /usr/bin into the installation.
+            program = soffice.toRealPath().getParent();
+        } catch (IOException unresolved) {
+            program = soffice.toAbsolutePath().getParent();
+        }
         for (String name : List.of("version.ini", "versionrc")) {
             Path file = program.resolve(name);
             try {

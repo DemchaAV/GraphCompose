@@ -563,10 +563,26 @@ jobs:
           java-version: '17'
           cache: maven
 
+      - name: Name the week the LibreOffice packages are cached for
+        id: week
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the LibreOffice packages
+        # The archive mirror has served the ~90 MB of Writer packages at 50 kB/s:
+        # 26 minutes for a corpus run of 34 seconds. Cached a week at a time, so a
+        # point release is picked up within one.
+        uses: actions/cache@v6
+        with:
+          path: ~/apt-cache
+          key: libreoffice-writer-ubuntu-24.04-${{ steps.week.outputs.week }}
+          restore-keys: libreoffice-writer-ubuntu-24.04-
+
       - name: Install LibreOffice
         run: |
+          mkdir -p ~/apt-cache/partial
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libreoffice-writer
+          sudo apt-get install -y --no-install-recommends -o Dir::Cache::Archives="$HOME/apt-cache" libreoffice-writer
+          sudo chown -R "$USER" ~/apt-cache
 
       - name: Install the modules the corpus exports through
         # A standalone -f qa/pom.xml run resolves its graph-compose-* dependencies

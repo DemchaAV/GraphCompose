@@ -3,6 +3,7 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.table.DocumentTableColumn;
@@ -38,6 +39,72 @@ class DocxPanelHeightTest {
                         .addParagraph(p -> p.text("26 June 2026")))))) {
             assertThat(heightOf(document.getTables().get(0))).as("40pt of padding and a line of text")
                     .isGreaterThan(48 * 20);
+        }
+    }
+
+    @Test
+    void theEmptyParagraphClosingACellThatEndsInATableIsNotLaidOut() throws Exception {
+        // LibreOffice laid it out a tenth of a point tall under every nested table.
+        try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
+                .fillColor(DocumentColor.rgb(247, 249, 246))
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(120)).row("Inner"))))) {
+            XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
+            List<IBodyElement> elements = card.getBodyElements();
+            XWPFParagraph closing = (XWPFParagraph) elements.get(elements.size() - 1);
+
+            assertThat(elements.get(elements.size() - 2)).isInstanceOf(XWPFTable.class);
+            assertThat(closing.getCTP().getPPr().getRPr().sizeOfVanishArray()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void theEmptyParagraphClosingACellOfANestedTableIsNotLaidOutEither() throws Exception {
+        // CobaltRota's shape: a table composed in a cell of a table in a card.
+        DocumentNode inner = new com.demcha.compose.document.dsl.TableBuilder()
+                .columns(DocumentTableColumn.fixed(80)).row("Deep").build();
+        try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
+                .fillColor(DocumentColor.rgb(247, 249, 246))
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(120))
+                        .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(inner)))))) {
+            XWPFTableCell middle = document.getTables().get(0).getRow(0).getCell(0)
+                    .getTables().get(0).getRow(0).getCell(0);
+            List<IBodyElement> elements = middle.getBodyElements();
+            XWPFParagraph closing = (XWPFParagraph) elements.get(elements.size() - 1);
+
+            assertThat(elements.get(elements.size() - 2)).isInstanceOf(XWPFTable.class);
+            assertThat(closing.getCTP().getPPr().getRPr().sizeOfVanishArray()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void textAfterATableInACellKeepsItsMark() throws Exception {
+        // The paragraph closing the table is taken over by the text written after it.
+        try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
+                .fillColor(DocumentColor.rgb(247, 249, 246))
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(120)).row("Inner"))
+                .addParagraph(p -> p.text("After")))) ) {
+            XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
+            for (XWPFParagraph paragraph : card.getParagraphs()) {
+                assertThat(paragraph.getCTP().getPPr() != null && paragraph.getCTP().getPPr().isSetRPr()
+                           && paragraph.getCTP().getPPr().getRPr().sizeOfVanishArray() > 0)
+                        .as("no mark hidden in a cell ending in text").isFalse();
+            }
+        }
+    }
+
+    @Test
+    void theParagraphClosingACellKeepsItsMarkWhenItHoldsTheSpaceBelowTheTable() throws Exception {
+        // A padded card ending in a table keeps its bottom padding in the paragraph under it.
+        try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
+                .fillColor(DocumentColor.rgb(247, 249, 246))
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(120)).row("Inner").margin(new DocumentInsets(0, 0, 12, 0)))))) {
+            XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
+            List<IBodyElement> elements = card.getBodyElements();
+            XWPFParagraph closing = (XWPFParagraph) elements.get(elements.size() - 1);
+
+            assertThat(closing.getCTP().getPPr().getSpacing().isSetAfter()).as("the space below the table").isTrue();
+            assertThat(closing.getCTP().getPPr().isSetRPr() && closing.getCTP().getPPr().getRPr().sizeOfVanishArray() > 0)
+                    .isFalse();
         }
     }
 

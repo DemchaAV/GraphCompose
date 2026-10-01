@@ -7148,7 +7148,62 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.util.OptionalDouble height = layout.rowHeight(node, rowIdx);
         if (height.isPresent()) {
             holdRowAtLeast(row, height.getAsDouble());
+            fitBlankLinesToTheRow(row);
         }
+    }
+
+    /**
+     * Cuts the line of a cell that holds no letters to the room its row leaves it.
+     *
+     * <p>A row that is only a rule takes its thickness from an empty cell's font: on the page
+     * the rule's borders are drawn across that line, and in Word they stand outside it. The row
+     * is written less its borders (see {@link #holdRowAtLeast}), but the line is not, and Word
+     * grows the row to the line: {@code CobaltRota}'s two rules, a 2.3pt and a 1.95pt line under
+     * a 0.9pt border, stood 0.9pt taller each, and the whole sheet under them 1.8pt low. A line
+     * with no letters has nothing to cut into; one with letters keeps its line.</p>
+     */
+    private static void fitBlankLinesToTheRow(XWPFTableRow row) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTrPr properties = row.getCtRow().getTrPr();
+        if (properties == null || properties.sizeOfTrHeightArray() == 0) {
+            return;
+        }
+        Long rowTwips = writtenTwips(properties.getTrHeightArray(0).getVal());
+        if (rowTwips == null) {
+            return;
+        }
+        for (XWPFTableCell cell : row.getTableCells()) {
+            List<IBodyElement> content = cell.getBodyElements();
+            if (content.size() != 1 || !(content.get(0) instanceof XWPFParagraph para) || !holdsNoLetters(para)) {
+                continue;
+            }
+            CTPPr paragraph = para.getCTP().getPPr();
+            CTSpacing spacing = paragraph != null && paragraph.isSetSpacing() ? paragraph.getSpacing() : null;
+            if (spacing == null || !spacing.isSetLineRule() || spacing.getLineRule() != STLineSpacingRule.EXACT) {
+                continue;
+            }
+            Long line = writtenTwips(spacing.getLine());
+            long room = rowTwips - cellMargin(cell, true) - cellMargin(cell, false)
+                        - twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null)
+                        - twipsOf(spacing.isSetAfter() ? spacing.getAfter() : null);
+            if (line != null && line > room) {
+                // A hairline, as the paragraph a table is opened with (openBefore).
+                spacing.setLine(BigInteger.valueOf(Math.max(2, room)));
+            }
+        }
+    }
+
+    /** Whether a paragraph draws nothing: no letters, and no picture, shape or object in its runs. */
+    private static boolean holdsNoLetters(XWPFParagraph para) {
+        if (!para.getText().isEmpty() || para.getCTP().sizeOfHyperlinkArray() > 0) {
+            return false;
+        }
+        for (XWPFRun run : para.getRuns()) {
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR ctr = run.getCTR();
+            if (ctr.sizeOfDrawingArray() > 0 || ctr.sizeOfPictArray() > 0 || ctr.sizeOfObjectArray() > 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

@@ -8,6 +8,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **`CobaltRota` stands where the page sets it in Word and LibreOffice.** Its header opens and
+  closes with a row that is only a rule, its thickness an empty cell's line. The page draws the
+  rule's borders across that line; Word and LibreOffice keep them outside it and grew each row
+  by the border's 0.9pt, so the sheet under them stood 1.8pt low. The empty line is now cut to
+  the room its row leaves it; a line with letters keeps its height. Word's median drift falls
+  from 2.48pt to 0.74, LibreOffice's from 2.39 to 0.60, and no line is now more than 2pt off
+  in either, where 119 and 124 were.
+
 - **`OrangeOps` stands on one page in Word.** It ran to two, and 6 of its 108 lines were
   found in Word's rendering; now 99 are, at a median drift of 0.42pt.
   - Its headings are Oswald SemiBold, a face whose file does not say it is bold. Word set

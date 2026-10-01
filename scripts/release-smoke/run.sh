@@ -39,18 +39,26 @@ REPO="$REPO_ROOT/target/release-smoke-m2/repo"
 GC_VERSION="2.4.1"
 WARM=0
 STAGED=""
+STAGED_SET=0
 VERSION_SET=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --warm) WARM=1; shift ;;
     --version) GC_VERSION="${2:?--version needs a value}"; VERSION_SET=1; shift 2 ;;
     --version=*) GC_VERSION="${1#*=}"; VERSION_SET=1; shift ;;
-    --staged-repo) STAGED="${2:?--staged-repo needs a directory}"; shift 2 ;;
-    --staged-repo=*) STAGED="${1#*=}"; shift ;;
+    --staged-repo) STAGED="${2-}"; STAGED_SET=1; shift; [ $# -gt 0 ] && shift ;;
+    --staged-repo=*) STAGED="${1#*=}"; STAGED_SET=1; shift ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
 mkdir -p "$REPO"
+
+# An empty value (an unset shell variable) must not quietly turn staged mode off and
+# smoke the published default from Central instead.
+if [ "$STAGED_SET" = "1" ] && [ -z "$STAGED" ]; then
+  echo "--staged-repo needs a directory (got an empty value)" >&2
+  exit 2
+fi
 
 if [ -n "$STAGED" ]; then
   if [ "$WARM" = "1" ]; then
@@ -70,7 +78,8 @@ if [ -n "$STAGED" ]; then
   # The path goes into XML; escape the characters that would break it.
   STAGED_URL_PATH="$(printf '%s' "${STAGED_ABS#/}" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')"
   if [ "$VERSION_SET" = "0" ]; then
-    staged_versions="$(ls "$STAGED/io/github/demchaav/graph-compose-core" 2>/dev/null)"
+    # Version directories only — a maven-metadata.xml beside them is not a version.
+    staged_versions="$(cd "$STAGED/io/github/demchaav/graph-compose-core" 2>/dev/null && ls -d -- */ 2>/dev/null | tr -d /)"
     if [ "$(printf '%s\n' "$staged_versions" | grep -c .)" != "1" ]; then
       echo "FATAL: expected exactly one staged graph-compose-core version, found: $staged_versions" >&2
       exit 2
@@ -134,7 +143,7 @@ staged_provenance_ok() {
       bad=$((bad + 1))
       continue
     fi
-    while IFS= read -r line; do
+    while IFS= read -r line || [ -n "$line" ]; do
       line="${line%$'\r'}"
       case "$line" in ''|'#'*) continue ;; esac
       case "$line" in

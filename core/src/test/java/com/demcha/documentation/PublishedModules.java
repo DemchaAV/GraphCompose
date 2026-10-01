@@ -42,9 +42,12 @@ final class PublishedModules {
     private static final Pattern DEPLOY_STEP =
             Pattern.compile("-f\\s+([\\w-]+)/pom\\.xml");
 
-    /** A reactor deploy's module selection: {@code -pl :a,:b,…}. */
+    /**
+     * A reactor deploy's module selection: {@code -pl :a,:b,…}, in either spelling and with
+     * a space or {@code =}. Every occurrence is read, because Maven merges repeated ones.
+     */
     private static final Pattern DEPLOY_SELECTION =
-            Pattern.compile("\\s-pl\\s+(\\S+)");
+            Pattern.compile("\\s(?:-pl|--projects)(?:\\s+|=)(\\S+)");
 
     private static final Pattern VERSION = Pattern.compile("<version>\\s*([^<]+?)\\s*</version>");
 
@@ -134,7 +137,7 @@ final class PublishedModules {
             modules.add(standalone.group(1));
         }
         Matcher selection = DEPLOY_SELECTION.matcher(command);
-        if (selection.find()) {
+        while (selection.find()) {
             for (String selector : selection.group(1).split(",")) {
                 String artifactId = selector.strip().replaceFirst("^:", "");
                 if (artifactId.isEmpty()) {

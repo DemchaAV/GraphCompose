@@ -24,8 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * reactor run: the central-publishing plugin stages each selected module and uploads
  * them together from the last one. That shape has failure modes no build notices. A
  * module left out of {@code -pl} is simply never released; an {@code -am} quietly pulls
- * the independently versioned fonts and emoji into the deployment and re-uploads
- * coordinates Central already holds; and because the upload runs with whichever
+ * the independently versioned fonts and emoji into the train's deployment, re-uploading
+ * them when their version is already on Central; and because the upload runs with whichever
  * module's plugin settings the reactor happens to order last, eight release profiles
  * that drift apart publish with settings nobody chose.</p>
  *
@@ -47,8 +47,22 @@ class PublishTrainGuardTest {
     private static final Pattern CENTRAL_PLUGIN_VERSION = Pattern.compile(
             "<central\\.publishing\\.plugin\\.version>\\s*([^<]+?)\\s*</central\\.publishing\\.plugin\\.version>");
 
-    /** The {@code deploy} goal as a word — not {@code deployment}, not {@code deploy-web}. */
-    private static final Pattern DEPLOY_GOAL = Pattern.compile("(?<![\\w-])deploy(?![\\w-])");
+    /**
+     * A line that uploads to Central: the {@code deploy} goal as a word (not
+     * {@code deployment}, not {@code deploy-web}), or the central-publishing plugin's
+     * {@code publish} goal invoked directly, which uploads without ever saying "deploy".
+     */
+    private static final Pattern UPLOADS = Pattern.compile(
+            "(?<![\\w-])deploy(?![\\w-])|central-publishing[\\w.:-]*:publish(?![\\w-])");
+
+    /** A Maven launcher token: {@code mvn}, {@code ./mvnw}, {@code mvnw.cmd}, … */
+    private static final Pattern MAVEN_LAUNCHER = Pattern.compile("(?:^|/)mvnw?(?:\\.cmd)?$");
+
+    /** A module-selection option, in either spelling, with or without {@code =value}. */
+    private static final Pattern SELECTION_OPTION = Pattern.compile("^(?:-pl|--projects)(?:=.*)?$");
+
+    /** Shell operators that would chain a second command onto the deploy line. */
+    private static final Pattern CHAINING = Pattern.compile("&&|\\|\\||;|\\|");
 
     /** Options that widen a {@code -pl} selection beyond the modules it names. */
     private static final Set<String> ALSO_MAKE = Set.of("-am", "--also-make", "-amd", "--also-make-dependents");
@@ -82,6 +96,19 @@ class PublishTrainGuardTest {
                 .doesNotContain("-f");
         assertThat(deploy).contains("-P release");
 
+        assertThat(CHAINING.matcher(deploy).find())
+                .describedAs("the train deploy line chains another command — a second `./mvnw "
+                        + "… deploy` after `&&` is a second deployment no other check sees: %s", deploy)
+                .isFalse();
+        assertThat(tokens.stream().filter(token -> MAVEN_LAUNCHER.matcher(token).find()).count())
+                .describedAs("the train deploy line must invoke Maven exactly once: %s", deploy)
+                .isEqualTo(1);
+        assertThat(tokens.stream().filter(token -> SELECTION_OPTION.matcher(token).matches()).count())
+                .describedAs("the train deploy must carry exactly one module selection — Maven "
+                        + "merges a second -pl / --projects, which could add a module no train "
+                        + "check reads: %s", deploy)
+                .isEqualTo(1);
+
         Set<String> widening = new TreeSet<>(ALSO_MAKE);
         widening.retainAll(tokens);
         assertThat(widening)
@@ -96,9 +123,11 @@ class PublishTrainGuardTest {
      * which recognises one shape: a single-line {@code ./mvnw … deploy}. A deploy written
      * any other way — {@code mvn}, a {@code - run:} list item, a command wrapped with
      * {@code \} continuations — would be invisible to all of them, so a second deployment
-     * could ship while "exactly one deploy" stayed green. This keys on the positive
-     * signal instead: any non-comment line of a publish workflow naming the
-     * {@code deploy} goal must be one the parser read.
+     * could ship while "exactly one deploy" stayed green. So could the plugin's
+     * {@code publish} goal called directly. This keys on the positive signal instead: any
+     * non-comment line of a publish workflow naming either must be one the parser read.
+     * It cannot see an upload hidden behind a script the workflow calls, or a deploy in
+     * a workflow not named {@code publish*.yml}.
      */
     @Test
     void everyDeployInAPublishWorkflowIsOneTheGuardsRead() throws IOException {
@@ -112,7 +141,7 @@ class PublishTrainGuardTest {
                 List<String> parsed = PublishedModules.deployCommands(workflow);
                 for (String line : Files.readAllLines(workflow)) {
                     String code = line.strip();
-                    if (code.startsWith("#") || !DEPLOY_GOAL.matcher(code).find()) {
+                    if (code.startsWith("#") || !UPLOADS.matcher(code).find()) {
                         continue;
                     }
                     if (!parsed.contains(code)) {
@@ -123,7 +152,8 @@ class PublishTrainGuardTest {
         }
 
         assertThat(unread)
-                .describedAs("publish workflow lines that name the deploy goal in a shape "
+                .describedAs("publish workflow lines that upload (the deploy goal, or the "
+                        + "central-publishing publish goal called directly) in a shape "
                         + "PublishedModules does not read, so no guard checks what they ship. "
                         + "Write the deploy as one `./mvnw … deploy` line, or teach "
                         + "PublishedModules the new shape")
@@ -201,11 +231,13 @@ class PublishTrainGuardTest {
         Map<String, String> versions = new LinkedHashMap<>();
         for (String module : PublishedModules.lockstepPublished(PROJECT_ROOT)) {
             String pom = Files.readString(PROJECT_ROOT.resolve(module).resolve("pom.xml"));
-            Matcher plugin = CENTRAL_PLUGIN.matcher(pom);
-            assertThat(plugin.find())
-                    .describedAs("%s/pom.xml declares no central-publishing plugin block", module)
-                    .isTrue();
-            declarations.put(module, plugin.group().replaceAll("\\s+", " "));
+            List<String> blocks = CENTRAL_PLUGIN.matcher(pom).results()
+                    .map(match -> match.group().replaceAll("\\s+", " ")).toList();
+            assertThat(blocks)
+                    .describedAs("%s/pom.xml must declare the central-publishing plugin exactly once "
+                            + "— a second declaration would escape the comparison below", module)
+                    .hasSize(1);
+            declarations.put(module, blocks.get(0));
             Matcher version = CENTRAL_PLUGIN_VERSION.matcher(pom);
             versions.put(module, version.find() ? version.group(1) : "<unset>");
 
@@ -233,7 +265,9 @@ class PublishTrainGuardTest {
     void skippingPublishedComponentsIsAnExplicitRecoveryOnly() throws IOException {
         // A Windows checkout carries CRLF; the patterns below are written against LF.
         String workflow = Files.readString(PUBLISH).replace("\r", "");
-        String deploy = PublishedModules.deployCommands(PUBLISH).get(0);
+        List<String> deploys = PublishedModules.deployCommands(PUBLISH);
+        assertThat(deploys).describedAs("publish.yml carries no readable deploy").isNotEmpty();
+        String deploy = deploys.get(0);
 
         assertThat(workflow)
                 .describedAs("publish.yml must offer skip_published as a boolean dispatch input "
@@ -241,10 +275,12 @@ class PublishTrainGuardTest {
                 .containsPattern("(?m)^      skip_published:\\s*$")
                 .containsPattern("skip_published:(?:\\n {8}.*)*\\n {8}type: boolean")
                 .containsPattern("skip_published:(?:\\n {8}.*)*\\n {8}default: false");
-        assertThat(workflow)
-                .describedAs("SKIP_PUBLISHED must be true only when a dispatch set skip_published — "
-                        + "never on a tag push, where the input is absent")
-                .contains("SKIP_PUBLISHED: ${{ github.event.inputs.skip_published == 'true' }}");
+        List<String> definitions = workflow.lines().map(String::strip)
+                .filter(line -> line.startsWith("SKIP_PUBLISHED:")).toList();
+        assertThat(definitions)
+                .describedAs("SKIP_PUBLISHED must be defined once, and be true only when a dispatch "
+                        + "set skip_published — never on a tag push, where the input is absent")
+                .containsExactly("SKIP_PUBLISHED: ${{ github.event.inputs.skip_published == 'true' }}");
         assertThat(deploy)
                 .describedAs("the deploy must pass the recovery switch through, and only that way")
                 .contains("-DignorePublishedComponents=$SKIP_PUBLISHED");

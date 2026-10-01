@@ -7,7 +7,10 @@ name: Publish to Maven Central
 # Release; this one publishes the Maven Central artefacts. They can
 # succeed or fail independently, and a maintainer can re-run this
 # workflow alone via workflow_dispatch if Central had a transient
-# validator hiccup without re-cutting the tag.
+# validator hiccup without re-cutting the tag. Dispatch it FROM THE TAG
+# (gh workflow run publish.yml --ref vX.Y.Z -f tag=vX.Y.Z): a dispatch runs
+# the workflow file of the ref it is dispatched from, and main, the UI's
+# default, is merged only after the tag.
 #
 # The whole lockstep train ships as ONE Central deployment: a single
 # `-P release deploy -pl <train>` over the root reactor. The plugin stages
@@ -15,8 +18,9 @@ name: Publish to Maven Central
 # last one, so one GraphCompose version is one publish operation (one
 # Release Count event) holding eight components, each still its own
 # coordinate for consumers. The deployment validates and publishes as a
-# unit, so a release can no longer end half on Central. The root
-# aggregator is not selected (and nothing inherits its maven.deploy.skip);
+# unit, so a release can no longer end split across deployments. The root
+# aggregator is not selected (and no train module inherits its
+# maven.deploy.skip);
 # examples, benchmarks, qa, coverage, fonts and emoji are not selected.
 # fonts and emoji keep their own tags and workflows (publish-fonts.yml,
 # publish-emoji.yml) and publish only when their own version moves.
@@ -50,7 +54,7 @@ on:
         required: true
         type: string
       skip_published:
-        description: 'Recovery only: leave out components of this version that are already published on Maven Central, and publish the rest as one deployment. Keep false for a normal publish; set it ONLY after confirming which coordinates are live. A deployment that is still VALIDATED but unpublished is not "published" — publish or drop it in the Central portal first.'
+        description: 'Recovery only: leave out components of this version that are already published on Maven Central, and publish the rest as one deployment. Keep false for a normal publish; set it ONLY after confirming which coordinates are live. A deployment that is still VALIDATED but unpublished is not "published" — publish or drop it in the Central portal first. Dispatch from the tag: gh workflow run publish.yml --ref vX.Y.Z -f tag=vX.Y.Z -f skip_published=true.'
         required: false
         type: boolean
         default: false
@@ -62,7 +66,9 @@ permissions:
 # uploads of the same version would race to validate the same coordinates —
 # so a constant group name funnels every tag / dispatch through one lane.
 # cancel-in-progress is false so a re-tag or dispatch never aborts a publish
-# already mid-upload; the second run queues behind it instead.
+# already mid-upload; the next run waits behind it. GitHub keeps only ONE
+# pending run per group: a third run cancels the one already waiting, so
+# never queue two publishes behind a running one.
 concurrency:
   group: publish-maven-central
   cancel-in-progress: false
@@ -190,9 +196,10 @@ jobs:
         # then leaves ONE deployment for the maintainer to publish on
         # central.sonatype.com.
         #
-        # A failure in any module before the upload stops the plugin from
-        # uploading anything ("Earlier build failures detected"), so nothing
-        # partial reaches Central. Never widen the selection: -am would pull
+        # A failure in any module stops the build before the last module, the one
+        # that uploads, so nothing partial reaches Central (and under
+        # --fail-at-end the plugin refuses on its own: "Earlier build failures
+        # detected"). Never widen the selection: -am would pull
         # fonts and emoji (core's test-scope deps) into the reactor and the
         # deployment, re-uploading coordinates they already published, and -amd
         # would pull in the build-only dependents (examples, qa, …).
@@ -225,7 +232,9 @@ jobs:
         if: ${{ !cancelled() && steps.train.outcome != 'skipped' }}
         uses: actions/upload-artifact@v7
         with:
-          name: central-bundle-${{ github.event.inputs.tag || github.ref_name }}
+          # The attempt number keeps a "Re-run jobs" attempt from colliding with
+          # the artifact an earlier attempt of the same run already uploaded.
+          name: central-bundle-${{ github.event.inputs.tag || github.ref_name }}-attempt-${{ github.run_attempt }}
           path: '*/target/central-publishing/central-bundle.zip'
           if-no-files-found: warn
           retention-days: 90

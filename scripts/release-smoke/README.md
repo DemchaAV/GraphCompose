@@ -77,8 +77,11 @@ version independently and come from Central. Staged mode refuses `--warm` for th
 same reason.
 
 The bundle a tagged run uploaded is kept as the workflow artifact
-`central-bundle-v<X.Y.Z>`. While the deployment waits at `VALIDATED`, download it,
-unzip it and smoke it with `--staged-repo` before pressing Publish.
+`central-bundle-v<X.Y.Z>-attempt-<N>`. While the deployment waits at `VALIDATED`,
+download it (`gh run download <run-id>`), unzip the `central-bundle.zip` inside it
+into a directory, and smoke that directory with `--staged-repo` before pressing
+Publish. A recovery bundle (`skip_published`) omits the modules already live, so it
+cannot be smoked this way — smoke that version from Central after publishing.
 
 Or dispatch the **Release Smoke (consumer verification)** GitHub Actions workflow
 (`.github/workflows/release-smoke.yml`) with a `version` input — handy after a

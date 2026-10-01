@@ -41,6 +41,13 @@ $scenarios = @('s1-graph-compose', 's2-core-only', 's3-core-render-pdf', 's4-tem
 $repo = Join-Path $repoRoot 'target\release-smoke-m2\repo'
 New-Item -ItemType Directory -Force -Path $repo | Out-Null
 
+# An empty value (an unset variable) must not quietly turn staged mode off and smoke
+# the published default from Central instead.
+if ($PSBoundParameters.ContainsKey('StagedRepo') -and -not $StagedRepo) {
+    Write-Error '-StagedRepo needs a directory (got an empty value)'
+    exit 2
+}
+
 if ($StagedRepo) {
     if ($Warm) {
         # A warm cache can satisfy a coordinate without consulting the staged repo,
@@ -49,7 +56,7 @@ if ($StagedRepo) {
         exit 2
     }
     $stagedGc = Join-Path $StagedRepo 'io\github\demchaav'
-    if (-not (Test-Path $stagedGc)) {
+    if (-not (Test-Path $stagedGc -PathType Container)) {
         Write-Error "FATAL: $StagedRepo is not a Maven repository layout holding io/github/demchaav"
         exit 2
     }

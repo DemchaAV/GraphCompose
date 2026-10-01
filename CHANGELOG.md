@@ -15,7 +15,8 @@ follow semantic versioning; release dates are ISO 8601.
   artifacts: the `central-publishing-maven-plugin` stages every module and uploads one
   `central-bundle.zip` from the last. Every coordinate, POM, jar, sources and javadoc jar and
   signature is what it was — only the transaction is shared. The deployment validates as a unit,
-  so a failure no longer leaves the first modules of a version published and the rest missing.
+  so a failure no longer leaves the first modules of a version uploaded as separate deployments
+  and the rest missing.
   `graph-compose-fonts` and `graph-compose-emoji` keep their own tags and workflows. The
   `start_at` resume input is replaced by `skip_published`, off by default, which leaves out
   components the Portal already reports as published, for recovering a version that is

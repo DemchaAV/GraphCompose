@@ -1489,6 +1489,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX export is held to its corpus, line by line.** `DocxFidelityCorpusTest` exports
+  every template preset — 62 documents across CVs, cover letters, invoices, proposals, a
+  receipt and a rota — to DOCX, has LibreOffice set each one, and finds each of the page's
+  lines in it by its letters — lines of the same letters on a page, a rota's shifts, each
+  paired with the editor's nearest. Against the committed baseline a document fails when a line
+  is no longer found (set at other words or on another page), when a line drifts more than half
+  a point further from the page, or when it takes a page more. Counts per document would not do: a
+  sidebar CV that LibreOffice sets about 3pt off throughout lost an indented list without
+  its counts moving, and the line check names the two lines lost and the six set 12pt
+  higher. It runs on request, `-Dgraphcompose.docxFidelity=libreoffice`; a change that moves
+  documents nearer the page rewrites the baseline, whose diff shows which. `DocxFidelityGateTest`
+  holds the gate itself to lines set lower, a line lost and a page more.
+
 - **One DOCX export's state stays in that export — now pinned.** The backend keeps what an
   export is in the middle of in its own fields, and starts each export from nothing.
   `DocxExportIsolationTest` holds that to the byte on deterministic output: a backend used

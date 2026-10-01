@@ -3,9 +3,11 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -60,12 +62,12 @@ class DocxPanelHeightTest {
     @Test
     void theEmptyParagraphClosingACellOfANestedTableIsNotLaidOutEither() throws Exception {
         // CobaltRota's shape: a table composed in a cell of a table in a card.
-        DocumentNode inner = new com.demcha.compose.document.dsl.TableBuilder()
+        DocumentNode inner = new TableBuilder()
                 .columns(DocumentTableColumn.fixed(80)).row("Deep").build();
         try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
                 .fillColor(DocumentColor.rgb(247, 249, 246))
                 .addTable(t -> t.columns(DocumentTableColumn.fixed(120))
-                        .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(inner)))))) {
+                        .rowCells(DocumentTableCell.node(inner)))))) {
             XWPFTableCell middle = document.getTables().get(0).getRow(0).getCell(0)
                     .getTables().get(0).getRow(0).getCell(0);
             List<IBodyElement> elements = middle.getBodyElements();
@@ -82,13 +84,33 @@ class DocxPanelHeightTest {
         try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
                 .fillColor(DocumentColor.rgb(247, 249, 246))
                 .addTable(t -> t.columns(DocumentTableColumn.fixed(120)).row("Inner"))
-                .addParagraph(p -> p.text("After")))) ) {
+                .addParagraph(p -> p.text("After"))))) {
             XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
+            List<IBodyElement> elements = card.getBodyElements();
+            assertThat(elements).as("the table, and the text in the paragraph that closed it").hasSize(2);
+            assertThat(((XWPFParagraph) elements.get(1)).getText()).isEqualTo("After");
             for (XWPFParagraph paragraph : card.getParagraphs()) {
                 assertThat(paragraph.getCTP().getPPr() != null && paragraph.getCTP().getPPr().isSetRPr()
                            && paragraph.getCTP().getPPr().getRPr().sizeOfVanishArray() > 0)
                         .as("no mark hidden in a cell ending in text").isFalse();
             }
+        }
+    }
+
+    @Test
+    void theParagraphClosingACellKeepsItsMarkWhenItHoldsABookmark() throws Exception {
+        // An anchored table's bookmark closes in the paragraph under it: that paragraph is not
+        // structure alone.
+        try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
+                .fillColor(DocumentColor.rgb(247, 249, 246))
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(120)).row("Inner").anchor("inner"))))) {
+            XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
+            List<IBodyElement> elements = card.getBodyElements();
+            XWPFParagraph closing = (XWPFParagraph) elements.get(elements.size() - 1);
+
+            assertThat(closing.getCTP().getBookmarkEndList()).as("the bookmark's end").isNotEmpty();
+            assertThat(closing.getCTP().getPPr().isSetRPr() && closing.getCTP().getPPr().getRPr().sizeOfVanishArray() > 0)
+                    .isFalse();
         }
     }
 
@@ -102,7 +124,8 @@ class DocxPanelHeightTest {
             List<IBodyElement> elements = card.getBodyElements();
             XWPFParagraph closing = (XWPFParagraph) elements.get(elements.size() - 1);
 
-            assertThat(closing.getCTP().getPPr().getSpacing().isSetAfter()).as("the space below the table").isTrue();
+            assertThat(((Number) closing.getCTP().getPPr().getSpacing().getAfter()).longValue())
+                    .as("the space below the table").isPositive();
             assertThat(closing.getCTP().getPPr().isSetRPr() && closing.getCTP().getPPr().getRPr().sizeOfVanishArray() > 0)
                     .isFalse();
         }

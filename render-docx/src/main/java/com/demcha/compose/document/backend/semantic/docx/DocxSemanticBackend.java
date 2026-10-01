@@ -857,7 +857,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * {@link #newTable}). Word lays it out at no height that shows; LibreOffice gives it its tenth
      * of a point, so every row of {@code CobaltRota}, a chip in a table in a table in each cell,
      * stood up to 0.3pt taller there than on the page, and its last row 5.2pt low; hidden, it is
-     * not laid out, and the row stands 3.5pt low. Only that hairline is hidden: a paragraph that
+     * not laid out, and its last row stands 3.5pt low. Only that hairline is hidden: a paragraph that
      * is structure alone, a hairline tall and holding no space above or below it, which would go
      * with it.</p>
      */

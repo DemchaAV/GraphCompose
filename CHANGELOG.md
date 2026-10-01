@@ -15,7 +15,7 @@ follow semantic versioning; release dates are ISO 8601.
   row 5.2pt low. Such a paragraph, left at the cell's end holding nothing and no space, now has
   its mark hidden, as the paragraph closing a document that ends in a table already had. Word's
   output is unchanged. In LibreOffice `CobaltRota`'s last row stands 3.5pt low and its p90 drift
-  falls from 3.9pt to 2.9; across the 33 templates with such a cell no page count changes, and
+  falls from 3.9pt to 2.9; across the 33 templates it changes no page count changes, and
   no median drift moves by more than 0.2pt.
 
 - **`CobaltRota`'s outlined chips are as tall in Word as on the page.** A shape composed in a

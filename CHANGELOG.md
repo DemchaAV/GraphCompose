@@ -8,6 +8,23 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **`MerchantInvoice` fits its page in Word again.** Two things pushed its footer row onto a
+  second page.
+  - Its payment panel opens a table cell, so no space above could take the panel's 0.875pt
+    top border, which Word draws above a cell's content. Every line inside stood that much
+    low, and the row that much taller. A panel whose cell margin at the top is narrower than
+    its border, with no space above it, now takes what of the border its padding does not hold
+    out of the space above its first line, where that line has some, and its held height is
+    that much less; LibreOffice, which adds the border to a row's height once, draws such a
+    panel that border's width shorter.
+  - Its footer reaches 9.8pt from the page's edge, past the page's 3.4pt margin, and Word
+    moved the body clear of it. A band reaching past the margin now writes that margin
+    negative (a margin of none as a twentieth of a point), which Word reads as holding the body
+    at the margin, as the page does. LibreOffice reads it as positive and still moves the body
+    clear.
+  `ObsidianInvoice`'s p90 drift in Word falls from 1.6pt to 0.6, `PlatformInvoice`'s from
+  0.65pt to 0.4, and `MerchantInvoice`'s from 1.6pt to 0.8.
+
 - **An icon alone in a table cell moves with its row in Word.** A drawing the page places in a
   cell of its own — a band's icon beside its label — was drawn from the page's edges, and so
   off its row wherever Word set the rows above it a little taller or shorter than the page:

@@ -292,6 +292,37 @@ class DocxTextBandTest {
         }
     }
 
+    @Test
+    void aBandReachingPastTheMarginLeavesTheBodyAtTheMargin() throws Exception {
+        // The page lets the band overlap the body; Word moves the body clear of a header taller
+        // than its margin unless the margin is written negative. MerchantInvoice's footer row,
+        // set down to its 3.4pt margin, went to a second page under a 9.8pt footer.
+        try (XWPFDocument document = export(null, session -> session.header(DocumentHeaderFooter.builder()
+                .zone(DocumentHeaderFooterZone.HEADER).height(60).leftText("Tall").build()))) {
+            Object top = document.getDocument().getBody().getSectPr().getPgMar().getTop();
+            assertThat(((Number) top).longValue()).as("the 30pt margin, held whatever the band reaches")
+                    .isEqualTo(-600);
+        }
+    }
+
+    @Test
+    void aFooterReachingPastTheMarginLeavesTheBodyAtTheMargin() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.footer(DocumentHeaderFooter.builder()
+                .zone(DocumentHeaderFooterZone.FOOTER).height(60).leftText("Tall").build()))) {
+            Object bottom = document.getDocument().getBody().getSectPr().getPgMar().getBottom();
+            assertThat(((Number) bottom).longValue()).isEqualTo(-600);
+        }
+    }
+
+    @Test
+    void aBandWithinTheMarginLeavesItAsItIs() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.footer(DocumentHeaderFooter.builder()
+                .zone(DocumentHeaderFooterZone.FOOTER).leftText("Short").build()))) {
+            Object bottom = document.getDocument().getBody().getSectPr().getPgMar().getBottom();
+            assertThat(((Number) bottom).longValue()).isEqualTo(600);
+        }
+    }
+
     private static <T> T only(List<T> parts) {
         assertThat(parts).hasSize(1);
         return parts.get(0);

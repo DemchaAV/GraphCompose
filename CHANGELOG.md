@@ -8,6 +8,26 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **An icon alone in a table cell moves with its row in Word.** A drawing the page places in a
+  cell of its own — a band's icon beside its label — was drawn from the page's edges, and so
+  off its row wherever Word set the rows above it a little taller or shorter than the page:
+  `CobaltRota`'s band icons stood 4pt, 9pt and 14pt above their labels, the last out of its
+  strip. Such a drawing is now anchored in that cell's paragraph, held at the drawing's height
+  and placed from its top and the cell's text column, which is taken to start where the
+  drawing does. In a row of the flow that is a layer stack or a shape container that only
+  draws — shapes, a drawn picture, a badge's initials — with no margins, on one page, all of it
+  inside its box. In a table's composed cell, whose drawing belongs to the table, it is a layer
+  stack of shapes only, with no margin or padding and the only drawing the cell holds: its
+  drawing is the table's shapes waiting inside that cell, where the layout first placed it,
+  when those are its shapes, of their kinds and sizes and on one page. Word repeats a repeated
+  header row, the drawing anchored in it with it, so the layout's copies of that drawing on
+  later pages are not drawn again. A drawing holding a line, a lone shape, a composed tile and
+  a drawing sharing its table cell with another are drawn on the page as before.
+  Every shape is now painted in the order it was drawn, rather than the order it found a
+  paragraph to anchor it, so one waiting for its page's first paragraph is not painted over a
+  shape anchored in a cell after it. `CobaltRota`'s icons stand beside their labels in Word and
+  in LibreOffice; its p90 drift in Word falls from 11.7pt to 6.4.
+
 - **A line pulled up into the line above it, with no space above to take the pull from, is no
   longer dropped in Word.** A paragraph's negative top edge comes out of the space owed above
   it, and where there is none — the two lines of a lockup in a table cell — it was dropped:

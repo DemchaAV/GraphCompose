@@ -33,7 +33,8 @@ import java.util.Locale;
  * page, so it stays on the page it belongs to; within the page it stands where the layout put it,
  * which is where the text around it stands too as long as the text lands where the page sets it.
  * A reader who then edits the text moves the text, not the drawing — a drawing is decoration,
- * and Word treats a floating shape the same way.</p>
+ * and Word treats a floating shape the same way. A drawing that is all a table cell holds is
+ * the exception ({@link #drawingInCell}): anchored in that cell, it moves with its row.</p>
  *
  * <p>A picture a badge holds is drawn the same way, over the badge: written in the flow, as a
  * paragraph of its own, it stood on its own line above the title beside the badge instead of in
@@ -280,6 +281,35 @@ final class DocxDrawings {
      * @return the drawing, to be added to a run
      */
     static CTDrawing drawing(Shape shape, long id, int order) {
+        return drawing(shape, id, order, null);
+    }
+
+    /**
+     * A shape or a picture as a drawing anchored in a table cell's paragraph, placed from the
+     * cell's text column and that paragraph's top, so it moves with the row wherever Word sets
+     * it.
+     *
+     * @param shape  the shape
+     * @param id     an identifier for the drawing, unique in the document
+     * @param order  its place among the drawings: a later one is drawn over an earlier one
+     * @param origin where the page puts the cell's text column and the paragraph's top, in
+     *               points from the page's left and top edges
+     * @return the drawing, to be added to a run of that paragraph
+     */
+    static CTDrawing drawingInCell(Shape shape, long id, int order, CellOrigin origin) {
+        return drawing(shape, id, order, origin);
+    }
+
+    /**
+     * Where the page puts a cell's text column and a paragraph's top in it.
+     *
+     * @param x   from the page's left edge, in points
+     * @param top from the page's top edge, in points
+     */
+    record CellOrigin(double x, double top) {
+    }
+
+    private static CTDrawing drawing(Shape shape, long id, int order, CellOrigin origin) {
         long cx = Units.toEMU(shape.width());
         long cy = Units.toEMU(shape.height());
         boolean picture = shape.kind() == Kind.PICTURE;
@@ -295,11 +325,13 @@ final class DocxDrawings {
                 + "<wp:anchor distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" simplePos=\"0\""
                 + " relativeHeight=\"" + stackHeight(order) + "\" behindDoc=\"" + (shape.front() ? 0 : 1)
                 + "\" locked=\"0\""
-                + " layoutInCell=\"0\" allowOverlap=\"1\">"
+                + " layoutInCell=\"" + (origin == null ? 0 : 1) + "\" allowOverlap=\"1\">"
                 + "<wp:simplePos x=\"0\" y=\"0\"/>"
-                + "<wp:positionH relativeFrom=\"page\"><wp:posOffset>" + Units.toEMU(shape.x())
+                + "<wp:positionH relativeFrom=\"" + (origin == null ? "page" : "column") + "\"><wp:posOffset>"
+                + Units.toEMU(origin == null ? shape.x() : shape.x() - origin.x())
                 + "</wp:posOffset></wp:positionH>"
-                + "<wp:positionV relativeFrom=\"page\"><wp:posOffset>" + Units.toEMU(shape.top())
+                + "<wp:positionV relativeFrom=\"" + (origin == null ? "page" : "paragraph") + "\"><wp:posOffset>"
+                + Units.toEMU(origin == null ? shape.top() : shape.top() - origin.top())
                 + "</wp:posOffset></wp:positionV>"
                 + "<wp:extent cx=\"" + cx + "\" cy=\"" + cy + "\"/>"
                 + "<wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/>"

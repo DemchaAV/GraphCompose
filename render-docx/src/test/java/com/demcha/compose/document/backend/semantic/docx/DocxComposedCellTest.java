@@ -287,6 +287,8 @@ class DocxComposedCellTest {
         assertThat(anchors(body)).as("the tile and the dot on it, anchored where the page draws them")
                 .anyMatch(anchor -> anchor.contains("prst=\"roundRect\""))
                 .anyMatch(anchor -> anchor.contains("prst=\"ellipse\""));
+        assertThat(anchors(body)).as("a composed tile is not taken into its cell: it stays on the page")
+                .allMatch(anchor -> anchor.contains("<wp:positionV relativeFrom=\"page\">"));
         assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isZero();
     }
 

@@ -29,11 +29,18 @@ import java.util.function.Supplier;
  * the first paragraph of a cell on that page, clipped as it may be, is still better than none.
  * Pages are counted within a section, as the layout counts them, so a section ends with
  * {@link #endSection}.</p>
+ *
+ * <p>A drawing that is all a table cell holds is the exception: {@link #anchorInCell} anchors it
+ * in that cell's paragraph, placed from the paragraph and the cell's text column, so it moves
+ * with its row; the cell holds it whole, so Word's clipping cuts nothing.</p>
+ *
+ * <p>Every shape takes its place in the paint order when it is drawn ({@link #ordered}), not
+ * when it finds its paragraph.</p>
  */
 final class DocxDrawingAnchors {
 
-    // Shapes waiting for a paragraph on their page, by page.
-    private final Map<Integer, List<DocxDrawings.Shape>> pending = new TreeMap<>();
+    // Shapes waiting for a paragraph on their page, by page, each with its place in the paint order.
+    private final Map<Integer, List<Ordered>> pending = new TreeMap<>();
     // The first body paragraph written on each page of the section, by page.
     private final Map<Integer, XWPFParagraph> bodyParagraph = new HashMap<>();
     // The first table-cell paragraph written on each page of the section, by page.
@@ -56,16 +63,45 @@ final class DocxDrawingAnchors {
     }
 
     /**
+     * A shape and its place in the paint order: a later one is drawn over an earlier one.
+     *
+     * @param shape the shape
+     * @param order its place, given when it was drawn, whenever it is anchored
+     */
+    record Ordered(DocxDrawings.Shape shape, int order) {
+    }
+
+    /**
+     * Gives shapes their places in the paint order, in the order they come, as drawn now.
+     *
+     * <p>A shape is painted in the order it is drawn, not the order it finds a paragraph: one
+     * waiting for its page's first paragraph would otherwise be painted over a shape anchored
+     * in a cell meanwhile, though drawn before it.</p>
+     */
+    List<Ordered> ordered(List<DocxDrawings.Shape> shapes) {
+        List<Ordered> ordered = new ArrayList<>(shapes.size());
+        for (DocxDrawings.Shape shape : shapes) {
+            ordered.add(new Ordered(shape, order++));
+        }
+        return ordered;
+    }
+
+    /**
      * Anchors shapes in the body paragraph already written on their page, or keeps them for
      * the first one written there.
      */
     void queue(List<DocxDrawings.Shape> shapes) {
-        for (DocxDrawings.Shape shape : shapes) {
-            XWPFParagraph carrier = bodyParagraph.get(shape.page());
+        queueOrdered(ordered(shapes));
+    }
+
+    /** Anchors shapes given their places in the paint order, as {@link #queue} does. */
+    void queueOrdered(List<Ordered> shapes) {
+        for (Ordered shape : shapes) {
+            XWPFParagraph carrier = bodyParagraph.get(shape.shape().page());
             if (carrier != null) {
                 anchor(carrier, List.of(shape));
             } else {
-                pending.computeIfAbsent(shape.page(), page -> new ArrayList<>()).add(shape);
+                pending.computeIfAbsent(shape.shape().page(), page -> new ArrayList<>()).add(shape);
             }
         }
     }
@@ -89,7 +125,7 @@ final class DocxDrawingAnchors {
         if (bodyParagraph.putIfAbsent(page, paragraph) != null) {
             return;
         }
-        List<DocxDrawings.Shape> waiting = pending.remove(page);
+        List<Ordered> waiting = pending.remove(page);
         if (waiting != null && !waiting.isEmpty()) {
             anchor(paragraph, waiting);
         }
@@ -143,10 +179,28 @@ final class DocxDrawingAnchors {
     record Leftovers(Map<Integer, Integer> inCells, Map<Integer, Integer> dropped) {
     }
 
-    private void anchor(XWPFParagraph carrier, List<DocxDrawings.Shape> shapes) {
+    /**
+     * Anchors shapes in the paragraph of the table cell that holds them, placed from its text
+     * column and the paragraph's top rather than from the page's edges: they move with the row
+     * wherever Word sets it. The caller hands it only shapes the cell holds whole, as Word clips
+     * a shape anchored in a cell to the cell.
+     *
+     * @param carrier the cell's paragraph
+     * @param shapes  the shapes, measured from the page's edges
+     * @param origin  where the page puts the cell's text column and the paragraph's top
+     */
+    void anchorInCell(XWPFParagraph carrier, List<Ordered> shapes, DocxDrawings.CellOrigin origin) {
         XWPFRun run = carrier.insertNewRun(0);
-        for (DocxDrawings.Shape shape : shapes) {
-            run.getCTR().addNewDrawing().set(DocxDrawings.drawing(shape, ids.getAsLong(), order++));
+        for (Ordered shape : shapes) {
+            run.getCTR().addNewDrawing().set(
+                    DocxDrawings.drawingInCell(shape.shape(), ids.getAsLong(), shape.order(), origin));
+        }
+    }
+
+    private void anchor(XWPFParagraph carrier, List<Ordered> shapes) {
+        XWPFRun run = carrier.insertNewRun(0);
+        for (Ordered shape : shapes) {
+            run.getCTR().addNewDrawing().set(DocxDrawings.drawing(shape.shape(), ids.getAsLong(), shape.order()));
         }
     }
 }

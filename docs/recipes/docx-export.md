@@ -572,7 +572,23 @@ tint it was flattened to. Recorded, like the other two.
   (`DocumentTableCell.node(...)`) has no place of its own in the layout:
   its drawing belongs to the table, and the table draws it — an icon, a
   tile, a disc under a number — anchored to the page where the page draws
-  it. A filled or outlined rectangle or rounded rectangle holding text there
+  it. A layer stack of shapes that is all its cell holds — an icon alone in
+  the first column of a band — is anchored in that cell instead: the cell's
+  paragraph is held at the drawing's height and carries it, placed from its
+  top and the cell's text column, which is taken to start where the drawing
+  does, so it moves with its row wherever Word sets the rows above it. Its
+  drawing is the table's drawings still waiting inside that cell, where the
+  layout first placed it, when those are the stack's own shapes, each of its
+  kind and size, and the only drawing the cell holds; a stack with a margin
+  or padding is left to the page. Word repeats a repeated header row with
+  the drawing anchored in it, so the header's copies on later pages are not
+  drawn again. In a row of the flow, a layer stack or shape container that
+  only draws — shapes, a drawn picture, a badge's initials — and is all its
+  cell holds is anchored the same way, when it has no margins, stands on one
+  page and paints nothing outside its box. A drawing holding a line, a lone
+  shape, a composed tile and a drawing sharing its table cell with another
+  stay on the page.
+  A filled or outlined rectangle or rounded rectangle holding text there
   is written as a panel is, a table of one cell in its fill and outline, its
   outline's width within the cell and a point for the editor's face, its row
   held at least its outline's height, with its layers inside, its corners

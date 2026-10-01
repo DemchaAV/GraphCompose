@@ -567,7 +567,8 @@ class DocxDrawingsTest {
 
     @Test
     void aBadgeOutsideAPanelHoldsItsInitialsToo() throws Exception {
-        // ObsidianInvoice's footer disc: its "K" stood below the disc's corner in the flow.
+        // ObsidianInvoice's footer disc: its "K" stood below the disc's corner in the flow. All its
+        // cell holds, the disc is anchored in that cell, where it moves with its row.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addRow("Closing", row -> row.columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(40),
                                 com.demcha.compose.document.style.DocumentRowColumn.weight(1))
@@ -577,7 +578,8 @@ class DocxDrawingsTest {
                         .addParagraph(p -> p.text("Thank you for your business."))))) ) {
             assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
                     .contains("<w:txbxContent>").contains(">K<").contains("behindDoc=\"0\"")
-                    .contains("<wp:positionV relativeFrom=\"page\">");
+                    .contains("layoutInCell=\"1\"")
+                    .contains("<wp:positionV relativeFrom=\"paragraph\"><wp:posOffset>0</wp:posOffset>");
         }
     }
 

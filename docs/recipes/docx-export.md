@@ -88,8 +88,11 @@ band) are painted behind the text of every page. Word colours a page in one colo
 each fill is a rectangle anchored to the page in the section's header, behind the text —
 Word draws a header's shapes on every page that header is shown on, and the rectangle is in
 each header the section has, the first page's and even pages' included. A section without a
-header gets an empty one, against the page edge, to carry them. On a page with no top margin
-that header pushes the first line down about 3pt (measured in LibreOffice). A two-column
+header gets an empty one, against the page edge, to carry them. That header is a point
+tall, and on a page whose top margin is narrower than that the margin is written negative,
+so Word holds the body at it rather than moving it down under the header; LibreOffice still
+moves the first line down about 3pt. An empty footer against the page's foot writes a
+bottom margin narrower than its point the same way. A two-column
 layout still flows its columns one after the other in Word, so a column fill can stand
 beside text that is not its column's.
 
@@ -185,7 +188,11 @@ sums it.
 
 An image and a list hold their own space the same way a paragraph does — a picture's
 paragraph is the picture's block, and a list's edges go to the paragraphs around it, with
-`itemSpacing` as the gap above each item after the first. A section's or a container's
+`itemSpacing` as the gap above each item after the first. A list's left and right edges —
+its margin and padding — indent its items, the level's own indent added on top, so its
+markers start where the page starts them. As for a paragraph, a cell keeps two points of each
+side for the editor, and under a shape container, whose layer's box already places what it
+holds, a list's own sides are not written. A section's or a container's
 `spacing` is the gap between each two of its children, owed below one and written above
 the next; before a page break there is none, as the page ends there, and after one the next
 page starts that far down, as the layout starts it. A spacer is its height alone: its empty
@@ -568,7 +575,12 @@ tint it was flattened to. Recorded, like the other two.
   export. The outline is drawn as a shape where the page draws it — a
   star, a diamond or a path as custom geometry — and a picture that fills
   a container clipped to an ellipse takes the ellipse's shape: a portrait
-  is round inside its ring. What a table cell composes
+  is round inside its ring. A picture the layout placed is written the
+  size it placed it, less its padding, not the width left inside the
+  containers round it, and a container's one layer set in from its
+  content's top and bottom — a
+  photo centred in a ring wider than it — keeps that much space above and
+  below it. What a table cell composes
   (`DocumentTableCell.node(...)`) has no place of its own in the layout:
   its drawing belongs to the table, and the table draws it — an icon, a
   tile, a disc under a number — anchored to the page where the page draws

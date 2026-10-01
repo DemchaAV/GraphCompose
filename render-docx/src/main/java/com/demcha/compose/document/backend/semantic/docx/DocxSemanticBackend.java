@@ -786,6 +786,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * it also sits against the page edge: left at Word's default distance it would reach past
      * a narrow margin, and Word would push the body down to make room for a header the page
      * does not draw. A section that does draw one keeps that one's distance.</p>
+     *
+     * <p>Against the edge it still reaches a point into the page, past a margin narrower than
+     * that, and Word moves the body down by what it reaches past — {@code NavySidebar}'s whole
+     * page, under the header carrying its backgrounds, stood a point low. That margin is
+     * written negative, which holds the body at it (see {@link #placeBand}).</p>
      */
     private static void blankZone(XWPFHeaderFooterPolicy policy, CTSectPr sectPr, boolean header,
                                   org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type,
@@ -793,12 +798,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFHeaderFooter blank = header ? policy.createHeader(type) : policy.createFooter(type);
         collapsed(blank.createParagraph());
         if (againstTheEdge && sectPr.isSetPgMar()) {
+            CTPageMar margin = sectPr.getPgMar();
             if (header) {
-                sectPr.getPgMar().setHeader(BigInteger.ZERO);
+                margin.setHeader(BigInteger.ZERO);
+                if (reachedPast(margin.getTop())) {
+                    margin.setTop(BigInteger.valueOf(-Math.max(1, twipsOf(margin.getTop()))));
+                }
             } else {
-                sectPr.getPgMar().setFooter(BigInteger.ZERO);
+                margin.setFooter(BigInteger.ZERO);
+                if (reachedPast(margin.getBottom())) {
+                    margin.setBottom(BigInteger.valueOf(-Math.max(1, twipsOf(margin.getBottom()))));
+                }
             }
         }
+    }
+
+    /** Whether a page margin is narrower than the point a blank zone against its edge reaches. */
+    private static boolean reachedPast(Object pageMargin) {
+        return pageMargin instanceof Number twips && twips.longValue() >= 0
+               && twips.longValue() < Math.round(POINT_TO_TWIP);
     }
 
     /**
@@ -2691,9 +2709,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         listItemLines = laidOut.size() == itemCount(list)
                 ? new java.util.ArrayDeque<>(laidOut)
                 : new java.util.ArrayDeque<>();
+        // Its own sides hold its items in, as a paragraph's hold its text (see writeParagraph):
+        // NavySidebar indents its closing lists to clear the badge beside their heading, and
+        // without it their markers stood under the badge, the text a line short in Word.
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
+        if (overlayDepth == 0) {
+            double spare = currentCell != null ? EDITOR_SLACK_POINTS : 0;
+            double left = (list == leftMarginInCell ? 0 : list.margin().left()) + list.padding().left();
+            insetLeft += Math.max(0, left - spare);
+            insetRight += Math.max(0, list.margin().right() + list.padding().right() - spare);
+        }
         try {
             writeListItems(document, list, numId);
         } finally {
+            insetLeft = outerLeft;
+            insetRight = outerRight;
             pendingItemSpacing = previousItemSpacing;
             anItemWasWritten = previousItemWritten;
             listLineGap = previousLineGap;
@@ -2834,8 +2865,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (properties.isSetInd()) {
             long levelLeft = (long) LIST_HANGING_TWIPS + (long) LIST_NESTING_STEP_TWIPS * depth;
             CTInd indent = properties.getInd();
-            // As applyInset writes it: a list in a container hanging left hangs with it.
-            indent.setLeft(BigInteger.valueOf(leftIndentTwips(insetLeft) + levelLeft));
+            // As applyInset writes it: a list in a container hanging left hangs with it, and in a
+            // cell of a row hanging left it moves left by the hang, as a paragraph beside it does.
+            indent.setLeft(BigInteger.valueOf(leftIndentTwips(insetLeft + cellTextShift) + levelLeft));
             indent.setHanging(BigInteger.valueOf(LIST_HANGING_TWIPS));
         }
     }
@@ -4750,7 +4782,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // edges are no space in the flow, as writeContainerBody hands them back.
             double carriedFromOutside = carriedSpacingBefore;
             long blocksBefore = blocksWritten;
-            carriedSpacingBefore += node.margin().top() + node.padding().top();
+            // A single layer the container sets in from its edges — centred, smaller than its
+            // outline — stands that far in from them on the page: NavySidebar's photo sits 1.6pt
+            // inside its ring, top and bottom, and written flush with the ring's top the column
+            // under it stood twice the ring's width high.
+            double[] setIn = layerSetIn(node);
+            carriedSpacingBefore += node.margin().top() + node.padding().top() + setIn[0];
             for (DocumentNode child : node.children()) {
                 insetLeft = innerLeft;
                 insetRight = innerRight;
@@ -4761,7 +4798,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 carriedSpacingBefore = carriedFromOutside;
             } else {
                 carriedSpacingBefore = 0;
-                owePendingSpacingAfter(node.padding().bottom() + node.margin().bottom());
+                owePendingSpacingAfter(setIn[1] + node.padding().bottom() + node.margin().bottom());
                 hangBelowItsBox(node);
             }
         } finally {
@@ -4769,6 +4806,38 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             insetRight = outerRight;
             clipContainer = outerClip;
         }
+    }
+
+    /**
+     * How far a shape container sets its one layer in from the top and the bottom of its content,
+     * where the layout placed both on one page; {@code {0, 0}} for a container of more layers,
+     * or one the layout did not place.
+     */
+    private double[] layerSetIn(ShapeContainerNode node) {
+        if (node.children().size() != 1) {
+            return new double[]{0, 0};
+        }
+        com.demcha.compose.document.layout.PlacedNode box = layout.placement(node);
+        com.demcha.compose.document.layout.PlacedNode layer = layout.placement(node.children().get(0));
+        if (box == null || layer == null || box.startPage() != box.endPage()
+            || layer.startPage() != box.startPage() || layer.endPage() != box.startPage()) {
+            return new double[]{0, 0};
+        }
+        // Measured up from the foot of the page: the box's content runs from its padding up.
+        double contentTop = box.placementY() + box.placementHeight() - node.padding().top();
+        double contentFoot = box.placementY() + node.padding().bottom();
+        // The layer's own margins are its own edges, written with it.
+        DocumentInsets margin = node.children().get(0).margin();
+        double above = contentTop - (layer.placementY() + layer.placementHeight()) - margin.top();
+        double below = layer.placementY() - contentFoot - margin.bottom();
+        // A layer moved past either edge leaves the other side no more than the two hold together.
+        // A paragraph's line past the foot is written where the page puts it: hangBelowItsBox
+        // takes its overhang from the gap under the container.
+        double together = Math.max(0, above + below);
+        double setAbove = node.children().get(0) instanceof ParagraphNode
+                ? Math.max(0, above)
+                : Math.min(Math.max(0, above), together);
+        return new double[]{setAbove, Math.max(0, together - setAbove)};
     }
 
     /**
@@ -6036,7 +6105,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * {@code scale}, or by one dimension with the other implied by its aspect ratio, came
      * out at a size nothing had asked for. {@link NodeDefinitionSupport#resolveImageDimensions}
      * is the rule the layout pipeline applies for exactly this, including the clamp to the
-     * page's content width, and is used here so the two agree.</p>
+     * page's content width, and is used here so the two agree where the layout did not place
+     * the image; where it did, the box is the one it placed, less its padding.</p>
      *
      * <p>{@code fitMode} then decides how the image sits in that box, matching the PDF
      * handler: {@code CONTAIN} scales by the smaller ratio and is embedded at that size,
@@ -6075,6 +6145,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         DocumentImageFitMode fitMode =
                 node.fitMode() == null ? DocumentImageFitMode.STRETCH : node.fitMode();
 
+        // Laid out, the picture is the size the page draws it: the width left where it is written
+        // narrows by every container's insets round it, and a ring wider than the column it
+        // stands in — NavySidebar's portrait, 127pt in a 123.8pt column — shrank its photo by
+        // the ring's width on both sides, 120.6pt for 123.8.
+        // Its placement holds its padding: the top and the bottom are written as its paragraph's
+        // space, the sides are not written.
+        com.demcha.compose.document.layout.PlacedNode laidOut = layout.placement(node);
+        if (laidOut != null) {
+            DocumentInsets padding = node.padding();
+            double placedWidth = laidOut.placementWidth() - padding.left() - padding.right();
+            double placedHeight = laidOut.placementHeight() - padding.top() - padding.bottom();
+            if (placedWidth > 0 && placedHeight > 0) {
+                box = new NodeDefinitionSupport.ImageDimensions(placedWidth, placedHeight);
+            }
+        }
         double drawWidth = box.width();
         double drawHeight = box.height();
         if (fitMode == DocumentImageFitMode.CONTAIN) {

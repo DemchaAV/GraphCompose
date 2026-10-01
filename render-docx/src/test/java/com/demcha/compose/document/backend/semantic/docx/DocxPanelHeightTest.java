@@ -10,6 +10,7 @@ import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -86,6 +87,92 @@ class DocxPanelHeightTest {
 
             assertThat(inner - outer).as("the second card's 20pt of margins").isEqualTo(20 * 20);
         }
+    }
+
+    @Test
+    void aPanelOpeningACellTakesItsTopBorderFromTheSpaceOverItsFirstLine() throws Exception {
+        // MerchantInvoice's payment panel: first in its row's cell, with no padding and no space
+        // above to take its border from. Word draws the border above the cell's content, so every
+        // line inside stood the border's width low and the row as much taller.
+        XWPFTableCell bordered = panelInARow(1);
+        XWPFTableCell plain = panelInARow(0);
+
+        assertThat(beforeOf(bordered)).as("the room over the heading, less the 1pt border")
+                .isEqualTo(beforeOf(plain) - 20);
+        // The height written is already less the border LibreOffice adds to it; it is also less
+        // the border taken over the heading, which Word draws above the row's height.
+        assertThat(heightOf(outerTableOf(bordered))).as("the row's height, less the border twice")
+                .isEqualTo(heightOf(outerTableOf(plain)) - 20 - 20);
+    }
+
+    @Test
+    void aPaddedPanelOpeningACellKeepsTheSpaceOverItsFirstLine() throws Exception {
+        // Its top margin is wider than its border, which Word then draws inside the margin.
+        XWPFTableCell bordered = panelInARow(1, 10);
+        XWPFTableCell plain = panelInARow(0, 10);
+
+        assertThat(beforeOf(bordered)).isEqualTo(beforeOf(plain));
+        // Its margins are half a border narrower top and bottom, its border LibreOffice's
+        // allowance: the height held is the same, nothing more taken off for Word.
+        assertThat(heightOf(outerTableOf(bordered))).isEqualTo(heightOf(outerTableOf(plain)));
+    }
+
+    @Test
+    void aPanelRuledAboveOnlyOpeningACellKeepsTheHeightItHeld() throws Exception {
+        // Word draws the one border outside the row's height, where LibreOffice's allowance for it
+        // already took it off; nothing more comes off for it.
+        XWPFTableCell ruled = panelInARow(1, 0, true);
+        XWPFTableCell plain = panelInARow(0, 0, false);
+
+        assertThat(beforeOf(ruled)).as("the room over the heading, less the border").isEqualTo(beforeOf(plain) - 20);
+        assertThat(heightOf(outerTableOf(ruled))).as("less the border once")
+                .isEqualTo(heightOf(outerTableOf(plain)) - 20);
+    }
+
+    private static XWPFTableCell panelInARow(double border) throws Exception {
+        return panelInARow(border, 0, false);
+    }
+
+    private static XWPFTableCell panelInARow(double border, double padding) throws Exception {
+        return panelInARow(border, padding, false);
+    }
+
+    /** The cell of a painted panel opening a row's first column, its heading 7pt below its top. */
+    private static XWPFTableCell panelInARow(double border, double padding, boolean aboveOnly) throws Exception {
+        XWPFDocument document = export(page -> page.addRow("Settlement", row -> row
+                .columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1),
+                        com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                .addSection("Panel", panel -> {
+                    panel.keepTogether().fillColor(DocumentColor.rgb(247, 249, 246)).padding(DocumentInsets.of(padding));
+                    com.demcha.compose.document.style.DocumentStroke stroke =
+                            com.demcha.compose.document.style.DocumentStroke.of(DocumentColor.rgb(200, 200, 200), border);
+                    if (border > 0 && aboveOnly) {
+                        panel.borders(new com.demcha.compose.document.style.DocumentBorders(stroke, null, null, null));
+                    } else if (border > 0) {
+                        panel.stroke(stroke);
+                    }
+                    // A row in a row's column is laid in a layer stack, as the template lays it.
+                    panel.addLayerStack(stack -> stack.name("HeadingLayer").layer(
+                            new com.demcha.compose.document.dsl.RowBuilder().name("Heading")
+                                    .padding(new DocumentInsets(7, 0, 0, 0))
+                                    .columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                                    .addParagraph(p -> p.text("PAYMENT DETAILS"))
+                                    .build()));
+                    panel.addParagraph(p -> p.text("Bank Name: Harbour Bank of Canada"));
+                })
+                .addParagraph(p -> p.text("Subtotal"))));
+        return document.getTables().get(0).getRow(0).getCell(0).getTables().get(0).getRow(0).getCell(0);
+    }
+
+    private static XWPFTable outerTableOf(XWPFTableCell cell) {
+        return cell.getTableRow().getTable();
+    }
+
+    /** The space above a cell's first paragraph, in twips. */
+    private static long beforeOf(XWPFTableCell cell) {
+        XWPFParagraph first = (XWPFParagraph) cell.getBodyElements().get(0);
+        var spacing = first.getCTP().getPPr().getSpacing();
+        return spacing.isSetBefore() ? ((Number) spacing.getBefore()).longValue() : 0;
     }
 
     /** A table's first row's written height, which the export writes "at least". */

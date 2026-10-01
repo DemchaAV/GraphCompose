@@ -1286,24 +1286,50 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else {
             margin.setFooter(distance);
         }
-        // The page lets a band reach into the body; Word moves the body clear of its header and
-        // footer instead, which can add a page. A framed band stands beside the flow and moves
-        // nothing.
+        // The page lets a band reach into the body; past a positive margin Word moves the body
+        // clear of its header and footer instead, which can add a page. A framed band stands
+        // beside the flow and moves nothing.
         if (framed) {
             return;
         }
-        BigInteger pageMargin = header ? margin.getTop() instanceof BigInteger top ? top : null
-                : margin.getBottom() instanceof BigInteger bottom ? bottom : null;
-        double reach = DocxTextBands.distanceFromEdge(band) + DocxTextBands.lineHeight(band)
-                       + (band.isShowSeparator() ? DocxTextBands.separatorSpace(band) + band.getSeparatorThickness() : 0);
-        // A point of grace: a band as tall as the margin with its separator on the edge moves the
-        // body by a fraction of a point, which is not worth a note.
-        if (pageMargin != null && toTwips(reach) > pageMargin.longValue() + toTwips(1)) {
+        if (reachesPastTheMargin(document, band)) {
+            // The page lets the band overlap the body. Word moves the body clear of a header or
+            // footer taller than its margin — MerchantInvoice's footer row, set down to its 3.4pt
+            // margin, went to a second page under a footer reaching 9.8pt — unless the margin is
+            // written negative, which holds the body at it whatever the band reaches.
+            // No margin has no negative: the least one stands for it.
+            if (header) {
+                margin.setTop(BigInteger.valueOf(-Math.max(1, twipsOf(margin.getTop()))));
+            } else {
+                margin.setBottom(BigInteger.valueOf(-Math.max(1, twipsOf(margin.getBottom()))));
+            }
             report.add(DocxExportReport.Severity.APPROXIMATED, "page " + zoneName(band),
                     sectioned ? "section " + (sectionIndex + 1) : null,
-                    "it reaches " + Math.round(reach * 10) / 10.0 + "pt from the page edge, past the "
-                    + "page margin, and Word moves the body clear of it where the page lets the two overlap");
+                    "it reaches " + Math.round(reachOf(band) * 10) / 10.0 + "pt from the page edge, past the "
+                    + "page margin, which is written negative so that Word holds the body at the margin, as "
+                    + "the page does; LibreOffice moves the body clear of it");
         }
+    }
+
+    /** How far a text band reaches from its page edge, its separator included, in points. */
+    private static double reachOf(DocumentHeaderFooter band) {
+        return DocxTextBands.distanceFromEdge(band) + DocxTextBands.lineHeight(band)
+               + (band.isShowSeparator() ? DocxTextBands.separatorSpace(band) + band.getSeparatorThickness() : 0);
+    }
+
+    /**
+     * Whether a text band reaches past the page margin on its edge, into the body, where the page
+     * lets the two overlap. A twentieth of a point of grace is rounding.
+     */
+    private boolean reachesPastTheMargin(XWPFDocument document, DocumentHeaderFooter band) {
+        CTSectPr sectPr = bodySectPr(document);
+        if (!sectPr.isSetPgMar()) {
+            return false;
+        }
+        CTPageMar margin = sectPr.getPgMar();
+        Object edge = band.getZone() == DocumentHeaderFooterZone.HEADER ? margin.getTop() : margin.getBottom();
+        return edge instanceof Number pageMargin && pageMargin.longValue() >= 0
+               && toTwips(reachOf(band)) > pageMargin.longValue() + 1;
     }
 
     /**
@@ -2994,11 +3020,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // space above this table too, and a table carries no space above itself.
         owePendingSpacingAfter(carriedSpacingBefore + (first ? margin.top() : 0));
         carriedSpacingBefore = 0;
+        double topNotTaken = 0;
         if (first) {
             // Word draws a row's top and bottom borders outside its shading, so the table is as
             // much taller than the panel as its borders are thick. The page strokes them on the
             // box's edge, taking no room. So the border comes out of the space above, and so
             // does the one a panel just above could not take out of its own space below.
+            topNotTaken = Math.max(0, strokeWidth(borders.top()) - Math.max(0, pendingSpacingAfter - borderBelow));
             pendingSpacingAfter = Math.max(0, pendingSpacingAfter - strokeWidth(borders.top()) - borderBelow);
             borderBelow = 0;
         }
@@ -3076,12 +3104,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // line of text taller.
             holdToHairline(cell.addParagraph());
         }
+        // Word starts the cell's content below its top border, or its top margin where that is
+        // wider, the border then standing inside the margin; the page starts it the padding below
+        // the panel's edge. What of the border no space above took, less the padding, is how far
+        // low the content would stand: a padding as wide as the border holds it.
+        double low = topNotTaken - padding.top();
+        takeTheTopBorderInside(cell, low);
         com.demcha.compose.document.layout.PlacedNode placed = first && last && layout.onOnePage(node) ? layout.placement(node) : null;
         if (placed != null && placed.placementHeight() > 0) {
             // Its height is the page's: what makes a panel taller than its text — an icon drawn
             // where the page puts it, a fixed outline — is not in the cell. MerchantInvoice's
             // due-date card closed from 59.4pt to its text's 26, and its calendar hung below it.
-            holdRowAtLeast(table.getRow(0), placed.placementHeight());
+            // Where its padding does not hold its top border, Word draws both borders outside the
+            // row's height, the panel's top where the space above put it: so the height held is
+            // the page's less the part of the top border no space above took and less the bottom
+            // border. holdRowAtLeast already takes the heavier of the two off, which LibreOffice
+            // adds to the height once; the rest comes off here. Measured on MerchantInvoice's
+            // payment panel, Word drew it 0.8pt taller than the page without this, and as tall
+            // with it; LibreOffice draws such a panel that border's width shorter. A padding that
+            // holds the border leaves the height as it was: Word draws the border inside the
+            // margin, and InvoiceMetered's card moved its top down taking it off.
+            double bordersOutside = low > 0
+                    ? topNotTaken + strokeWidth(borders.bottom())
+                      - Math.max(strokeWidth(borders.top()), strokeWidth(borders.bottom()))
+                    : 0;
+            holdRowAtLeast(table.getRow(0), placed.placementHeight() - Math.max(0, bordersOutside));
         } else if (first && last && layout.placement(node) == null && node instanceof ShapeContainerNode shape
                    && shape.outline().height() > 0) {
             // Composed in a table cell, it has no placement; its outline states its height, as it
@@ -3104,6 +3151,36 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             double below = strokeWidth(borders.bottom());
             owePendingSpacingAfter(Math.max(0, margin.bottom() - below));
             borderBelow = Math.max(0, below - margin.bottom());
+        }
+    }
+
+    /**
+     * Takes how far a panel's content would stand low in Word out of the space above its first
+     * paragraph, as far as that holds.
+     *
+     * <p>Word draws a cell's top border above its content unless the cell's top margin is wider;
+     * the page strokes it on the panel's edge. Where the panel has no padding to hold the border
+     * and less space above it than the border — it opens a cell, or follows nothing — every line
+     * inside stood the border's width low: {@code MerchantInvoice}'s payment panel, first in its
+     * row's cell, stood 0.9pt low in Word and pushed its footer onto a second page. The space above
+     * its first paragraph — the room the page leaves over its heading — takes it instead.</p>
+     *
+     * @param low how far low the content would stand, in points
+     */
+    private static void takeTheTopBorderInside(XWPFTableCell cell, double low) {
+        if (!(low > 0) || cell.getBodyElements().isEmpty()
+            || !(cell.getBodyElements().get(0) instanceof XWPFParagraph first)) {
+            return;
+        }
+        CTPPr properties = first.getCTP().getPPr();
+        if (properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetBefore()) {
+            return;
+        }
+        CTSpacing spacing = properties.getSpacing();
+        long before = twipsOf(spacing.getBefore());
+        long taken = Math.min(before, toTwips(low));
+        if (taken > 0) {
+            spacing.setBefore(BigInteger.valueOf(before - taken));
         }
     }
 

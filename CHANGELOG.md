@@ -26,8 +26,8 @@ follow semantic versioning; release dates are ISO 8601.
     low, and the row that much taller. A panel with less space above it than its top border now
     takes what of the border neither that space nor its padding holds out of the space above
     its first line, where that line has some; where its row holds the page's height, that
-    height is less the borders Word draws outside it. LibreOffice, which adds the heavier border
-    to a row's height once, draws such a panel with two borders that border's width shorter.
+    height is less the borders Word draws outside it. LibreOffice, where the panel's content
+    sets its height, draws `MerchantInvoice`'s panel that border's width shorter.
   - Its footer reaches 9.8pt from the page's edge, past the page's 3.4pt margin, and Word
     moved the body clear of it. A band alone of its kind reaching past the margin, by any
     more than a twentieth of a point, now writes that margin

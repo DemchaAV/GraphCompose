@@ -7001,7 +7001,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * What the editors add to a row's written height for one cell, in twips: its top and bottom
      * margins, and the width of its heavier horizontal border. A panel's cell, its borders its
-     * own, has the other one drawn outside the height too; writePanelPiece takes that off.
+     * own, has the other one drawn outside the height too; writePanelPiece takes that off where
+     * the panel's padding does not hold its top border.
      */
     private static long verticalMargins(XWPFTableCell cell) {
         org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr properties = cell.getCTTc().getTcPr();

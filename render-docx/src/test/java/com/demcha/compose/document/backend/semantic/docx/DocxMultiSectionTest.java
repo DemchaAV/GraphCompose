@@ -121,6 +121,7 @@ class DocxMultiSectionTest {
             assertThat(DocxTwips.of(margin.getFooter())).isZero();
             assertThat(DocxTwips.of(margin.getBottom())).as("the least margin there is, written negative")
                     .isEqualTo(-1L);
+            assertThat(DocxTwips.of(margin.getTop())).as("no header reaches the top one").isZero();
         }
     }
 

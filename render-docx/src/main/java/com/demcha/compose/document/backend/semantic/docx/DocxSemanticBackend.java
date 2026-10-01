@@ -2865,8 +2865,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (properties.isSetInd()) {
             long levelLeft = (long) LIST_HANGING_TWIPS + (long) LIST_NESTING_STEP_TWIPS * depth;
             CTInd indent = properties.getInd();
-            // As applyInset writes it: a list in a container hanging left hangs with it.
-            indent.setLeft(BigInteger.valueOf(leftIndentTwips(insetLeft) + levelLeft));
+            // As applyInset writes it: a list in a container hanging left hangs with it, and in a
+            // cell of a row hanging left it moves left by the hang, as a paragraph beside it does.
+            indent.setLeft(BigInteger.valueOf(leftIndentTwips(insetLeft + cellTextShift) + levelLeft));
             indent.setHanging(BigInteger.valueOf(LIST_HANGING_TWIPS));
         }
     }
@@ -4784,7 +4785,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // A single layer the container sets in from its edges — centred, smaller than its
             // outline — stands that far in from them on the page: NavySidebar's photo sits 1.6pt
             // inside its ring, top and bottom, and written flush with the ring's top the column
-            // under it stood the ring's width high.
+            // under it stood twice the ring's width high.
             double[] setIn = layerSetIn(node);
             carriedSpacingBefore += node.margin().top() + node.padding().top() + setIn[0];
             for (DocumentNode child : node.children()) {
@@ -4818,7 +4819,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         com.demcha.compose.document.layout.PlacedNode box = layout.placement(node);
         com.demcha.compose.document.layout.PlacedNode layer = layout.placement(node.children().get(0));
-        if (box == null || layer == null || box.startPage() != box.endPage() || layer.startPage() != box.startPage()) {
+        if (box == null || layer == null || box.startPage() != box.endPage()
+            || layer.startPage() != box.startPage() || layer.endPage() != box.startPage()) {
             return new double[]{0, 0};
         }
         // Measured up from the foot of the page: the box's content runs from its padding up.
@@ -4826,11 +4828,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double contentFoot = box.placementY() + node.padding().bottom();
         // The layer's own margins are its own edges, written with it.
         DocumentInsets margin = node.children().get(0).margin();
-        double above = contentTop - (layer.placementY() + layer.placementHeight()) - (margin == null ? 0 : margin.top());
-        double below = layer.placementY() - contentFoot - (margin == null ? 0 : margin.bottom());
-        // A layer moved past an edge leaves the other side no more than the two hold together.
-        double setAbove = Math.max(0, above);
-        return new double[]{setAbove, Math.max(0, above + below - setAbove)};
+        double above = contentTop - (layer.placementY() + layer.placementHeight()) - margin.top();
+        double below = layer.placementY() - contentFoot - margin.bottom();
+        // A layer moved past either edge leaves the other side no more than the two hold together.
+        double together = Math.max(0, above + below);
+        double setAbove = Math.min(Math.max(0, above), together);
+        return new double[]{setAbove, together - setAbove};
     }
 
     /**
@@ -6142,7 +6145,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // narrows by every container's insets round it, and a ring wider than the column it
         // stands in — NavySidebar's portrait, 127pt in a 123.8pt column — shrank its photo by
         // the ring's width on both sides, 120.6pt for 123.8.
-        // Its placement holds its padding, which is written as the paragraph's space around it.
+        // Its placement holds its padding: the top and the bottom are written as its paragraph's
+        // space, the sides are not written.
         com.demcha.compose.document.layout.PlacedNode laidOut = layout.placement(node);
         if (laidOut != null) {
             DocumentInsets padding = node.padding() == null ? DocumentInsets.zero() : node.padding();

@@ -173,7 +173,7 @@ class DocxContainerSpacingTest {
             // The row stands at the top of the 20pt outline, which holds 7.05pt more under it.
             assertThat(before(paragraph(document, "Java")))
                     .as("the outline under its row, its bottom padding and margin, above the paragraph after it")
-                    .isEqualTo(8 * 20L + 141);
+                    .isEqualTo(8 * 20L + Math.round(7.05 * 20));
         }
     }
 

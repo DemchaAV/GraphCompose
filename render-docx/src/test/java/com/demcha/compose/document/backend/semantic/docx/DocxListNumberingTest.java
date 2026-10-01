@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.ListItem;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -258,6 +259,47 @@ class DocxListNumberingTest {
                 assertThat(DocxTwips.of(indent.getHanging())).isEqualTo(180L);
                 assertThat(DocxTwips.of(indent.getRight())).isEqualTo(20 * 20L);
             }
+        }
+    }
+
+    @Test
+    void aListsPaddingHoldsEveryLevelIn() throws Exception {
+        try (XWPFDocument document = export(flow -> flow
+                .addList(list -> list.name("Padded").padding(new DocumentInsets(0, 0, 0, 30))
+                        .addItem("alpha", child -> child.addItem("beta"))))) {
+            List<XWPFParagraph> items = items(document);
+
+            assertThat(DocxTwips.of(items.get(0).getCTP().getPPr().getInd().getLeft())).isEqualTo(30 * 20L + 180);
+            assertThat(DocxTwips.of(items.get(1).getCTP().getPPr().getInd().getLeft()))
+                    .as("the padding, then the second level's own indent")
+                    .isEqualTo(30 * 20L + 180 + 120);
+        }
+    }
+
+    @Test
+    void aMarkerlessListsMarginIsItsParagraphsIndent() throws Exception {
+        try (XWPFDocument document = export(flow -> flow
+                .addList(list -> list.name("Bare").noMarker().items("alpha", "beta")
+                        .margin(new DocumentInsets(0, 0, 0, 30))))) {
+            for (XWPFParagraph item : items(document)) {
+                assertThat(DocxTwips.of(item.getCTP().getPPr().getInd().getLeft())).isEqualTo(30 * 20L);
+            }
+        }
+    }
+
+    @Test
+    void aListInACellKeepsItsMarginLessTheEditorsSlack() throws Exception {
+        // As a paragraph in a cell does: a couple of points of each side stay the editor's.
+        try (XWPFDocument document = export(flow -> flow.addRow("Page", row -> row
+                .columns(DocumentRowColumn.fixed(200), DocumentRowColumn.weight(1))
+                .addSection("Left", section -> section.addList(list -> list.name("Cell").bullet()
+                        .items("alpha").margin(new DocumentInsets(0, 0, 0, 30))))
+                .addSection("Right", section -> section.addParagraph("Main"))))) {
+            XWPFParagraph item = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().stream()
+                    .filter(p -> p.getText().equals("alpha"))
+                    .findFirst().orElseThrow();
+
+            assertThat(DocxTwips.of(item.getCTP().getPPr().getInd().getLeft())).isEqualTo((30 - 2) * 20L + 180);
         }
     }
 

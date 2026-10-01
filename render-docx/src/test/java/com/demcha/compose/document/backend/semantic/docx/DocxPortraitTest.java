@@ -1,11 +1,19 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.ImageBuilder;
+import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.layout.PlacedNode;
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
@@ -14,6 +22,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,6 +64,46 @@ class DocxPortraitTest {
 
             assertThat(extent.getCx()).isEqualTo(100L * 12700);
             assertThat(extent.getCy()).isEqualTo(50L * 12700);
+            XWPFParagraph logo = document.getParagraphs().stream()
+                    .filter(p -> !p.getRuns().isEmpty() && p.getRuns().get(0).getCTR().sizeOfDrawingArray() > 0)
+                    .findFirst().orElseThrow();
+            assertThat(beforeOf(logo)).as("its top padding, as the space above its paragraph").isEqualTo(10 * 20L);
+        }
+    }
+
+    @Test
+    void aLayersOwnMarginIsWrittenWithItAndNotTwice() throws Exception {
+        // The layer's top margin is part of the space the frame holds above it: written once,
+        // the picture stands where the page puts it.
+        Consumer<SectionBuilder> frame = sidebar -> sidebar.addContainer(box -> box.name("Frame")
+                .rectangle(100, 60)
+                .center(picture(new DocumentInsets(6, 0, 0, 0))));
+        double[] gaps = gapsAround(frame);
+        try (XWPFDocument document = inSidebar(frame)) {
+            List<XWPFParagraph> paragraphs = sidebar(document);
+            XWPFParagraph picture = pictureIn(paragraphs);
+
+            assertThat(beforeOf(picture)).isEqualTo(Math.round((25 + gaps[0]) * 20));
+            assertThat(beforeOf(paragraphs.get(paragraphs.indexOf(picture) + 1)))
+                    .isEqualTo(Math.round((gaps[1] + 22) * 20));
+        }
+    }
+
+    @Test
+    void aLayerMovedPastTheBottomLeavesTheFrameNoTallerThanItIs() throws Exception {
+        Consumer<SectionBuilder> frame = sidebar -> sidebar.addContainer(box -> box.name("Frame")
+                .rectangle(100, 60)
+                .position(picture(DocumentInsets.zero()), 0, 30, LayerAlign.CENTER));
+        double[] gaps = gapsAround(frame);
+        assertThat(gaps[1]).as("the picture reaches past the frame's foot").isNegative();
+        try (XWPFDocument document = inSidebar(frame)) {
+            List<XWPFParagraph> paragraphs = sidebar(document);
+            XWPFParagraph picture = pictureIn(paragraphs);
+            long below = beforeOf(paragraphs.get(paragraphs.indexOf(picture) + 1)) - 22 * 20L;
+
+            assertThat(beforeOf(picture) - 25 * 20L + 40 * 20L + below)
+                    .as("the space above the picture, the picture and the space under it: the frame's 60pt")
+                    .isEqualTo(60 * 20L);
         }
     }
 
@@ -77,8 +126,8 @@ class DocxPortraitTest {
         // section of its own at its top.
         double pad = (180 - PHOTO) / 2;
         return DocxExports.withLayout(400, 400, 20, page -> page.addRow("Page", row -> row
-                .columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(180),
-                        com.demcha.compose.document.style.DocumentRowColumn.weight(1))
+                .columns(DocumentRowColumn.fixed(180),
+                        DocumentRowColumn.weight(1))
                 .addSection("Sidebar", sidebar -> sidebar.padding(new DocumentInsets(25, pad, 0, pad))
                 .addSection("Avatar", avatar -> avatar.addContainer(ring -> ring.name("AvatarRing")
                         .circle(PHOTO + 2 * RING)
@@ -92,6 +141,54 @@ class DocxPortraitTest {
                                 .build())))
                 .addParagraph(p -> p.text("CONTACT").margin(new DocumentInsets(22, 0, 0, 0))))
                 .addParagraph(p -> p.text("Main"))));
+    }
+
+    /** A 40pt picture with the margin given. */
+    private static DocumentNode picture(DocumentInsets margin) {
+        return new ImageBuilder().name("Pic").source(DocumentImageData.fromBytes(pngBytes()))
+                .size(40, 40).margin(margin).build();
+    }
+
+    /** The section, with a CONTACT heading 22pt under it, as the sidebar of a page's row. */
+    private static XWPFDocument inSidebar(Consumer<SectionBuilder> content) throws Exception {
+        return DocxExports.withLayout(400, 400, 20, page -> sidebarRow(page, content));
+    }
+
+    private static void sidebarRow(PageFlowBuilder page, Consumer<SectionBuilder> content) {
+        page.addRow("Page", row -> row
+                .columns(DocumentRowColumn.fixed(180), DocumentRowColumn.weight(1))
+                .addSection("Sidebar", sidebar -> {
+                    sidebar.padding(new DocumentInsets(25, 20, 0, 20));
+                    content.accept(sidebar);
+                    sidebar.addParagraph(p -> p.text("CONTACT").margin(new DocumentInsets(22, 0, 0, 0)));
+                })
+                .addParagraph(p -> p.text("Main")));
+    }
+
+    /** Where the page puts the picture in its frame: the space above it and the space under it. */
+    private static double[] gapsAround(Consumer<SectionBuilder> content) {
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 400)
+                .margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> sidebarRow(page, content));
+            PlacedNode frame = placed(session, "Frame");
+            PlacedNode picture = placed(session, "Pic");
+            return new double[]{
+                    frame.placementY() + frame.placementHeight() - picture.placementY() - picture.placementHeight(),
+                    picture.placementY() - frame.placementY()};
+        }
+    }
+
+    private static PlacedNode placed(DocumentSession session, String name) {
+        return session.layoutGraph().nodes().stream()
+                .filter(node -> name.equals(node.semanticName()))
+                .findFirst().orElseThrow();
+    }
+
+    private static XWPFParagraph pictureIn(List<XWPFParagraph> paragraphs) {
+        return paragraphs.stream()
+                .filter(p -> !p.getRuns().isEmpty() && p.getRuns().get(0).getCTR().sizeOfDrawingArray() > 0
+                             && p.getRuns().get(0).getCTR().getDrawingArray(0).sizeOfInlineArray() > 0)
+                .findFirst().orElseThrow();
     }
 
     /** The sidebar cell's paragraphs. */
@@ -108,7 +205,7 @@ class DocxPortraitTest {
 
     private static long beforeOf(XWPFParagraph paragraph) {
         var spacing = paragraph.getCTP().getPPr().getSpacing();
-        return spacing.isSetBefore() ? ((Number) spacing.getBefore()).longValue() : 0;
+        return spacing.isSetBefore() ? DocxTwips.of(spacing.getBefore()) : 0;
     }
 
     private static byte[] pngBytes() {

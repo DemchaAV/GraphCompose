@@ -131,11 +131,25 @@ class DocxPageBackgroundTest {
                 PageBackgroundFill.leftColumn(0.3, CHARCOAL))))) {
             var margin = document.getDocument().getBody().getSectPr().getPgMar();
 
-            assertThat(((Number) margin.getHeader()).longValue()).isZero();
-            assertThat(((Number) margin.getTop()).longValue()).as("the least margin there is, written negative")
+            assertThat(DocxTwips.of(margin.getHeader())).isZero();
+            assertThat(DocxTwips.of(margin.getTop())).as("the least margin there is, written negative")
                     .isEqualTo(-1);
-            assertThat(((Number) margin.getBottom()).longValue()).as("no footer reaches the bottom one")
+            assertThat(DocxTwips.of(margin.getBottom())).as("no footer reaches the bottom one")
                     .isZero();
+        }
+    }
+
+    @Test
+    void aMarginNarrowerThanTheHeaderIsWrittenNegativeAndOneAsWideIsNot() throws Exception {
+        try (XWPFDocument narrower = export(DocumentInsets.of(0.5), session -> session.pageBackgrounds(List.of(
+                PageBackgroundFill.leftColumn(0.3, CHARCOAL))));
+             XWPFDocument asWide = export(DocumentInsets.of(1), session -> session.pageBackgrounds(List.of(
+                PageBackgroundFill.leftColumn(0.3, CHARCOAL))))) {
+            assertThat(DocxTwips.of(narrower.getDocument().getBody().getSectPr().getPgMar().getTop()))
+                    .isEqualTo(-10);
+            assertThat(DocxTwips.of(asWide.getDocument().getBody().getSectPr().getPgMar().getTop()))
+                    .as("the header reaches to the margin and no further")
+                    .isEqualTo(20);
         }
     }
 
@@ -143,7 +157,7 @@ class DocxPageBackgroundTest {
     void aMarginTheHeaderDoesNotReachPastStaysAsThePageSetsIt() throws Exception {
         try (XWPFDocument document = export(session -> session.pageBackgrounds(List.of(
                 PageBackgroundFill.leftColumn(0.3, CHARCOAL))))) {
-            assertThat(((Number) document.getDocument().getBody().getSectPr().getPgMar().getTop()).longValue())
+            assertThat(DocxTwips.of(document.getDocument().getBody().getSectPr().getPgMar().getTop()))
                     .isEqualTo(20 * 20);
         }
     }

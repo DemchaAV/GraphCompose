@@ -90,8 +90,9 @@ Word draws a header's shapes on every page that header is shown on, and the rect
 each header the section has, the first page's and even pages' included. A section without a
 header gets an empty one, against the page edge, to carry them. That header is a point
 tall, and on a page whose top margin is narrower than that the margin is written negative,
-so Word holds the body at it rather than moving it down under the header; LibreOffice reads
-the margin as positive and still moves the first line down about 3pt. A two-column
+so Word holds the body at it rather than moving it down under the header; LibreOffice still
+moves the first line down about 3pt. An empty footer against the page's foot writes a
+bottom margin narrower than its point the same way. A two-column
 layout still flows its columns one after the other in Word, so a column fill can stand
 beside text that is not its column's.
 
@@ -188,8 +189,8 @@ sums it.
 An image and a list hold their own space the same way a paragraph does — a picture's
 paragraph is the picture's block, and a list's edges go to the paragraphs around it, with
 `itemSpacing` as the gap above each item after the first. A list's left and right edges
-are its items' indents, as a paragraph's are, under the level's own hanging indent: a list
-indented to clear a badge beside its heading starts on the heading's axis. A section's or a container's
+are its items' indents, as a paragraph's are, under the level's own hanging indent, so its
+markers start where the page starts them. A section's or a container's
 `spacing` is the gap between each two of its children, owed below one and written above
 the next; before a page break there is none, as the page ends there, and after one the next
 page starts that far down, as the layout starts it. A spacer is its height alone: its empty
@@ -574,8 +575,8 @@ tint it was flattened to. Recorded, like the other two.
   a container clipped to an ellipse takes the ellipse's shape: a portrait
   is round inside its ring. A picture the layout placed is written the
   size it placed it, less its padding, not the width left inside the
-  containers round it, and
-  a container's one layer set in from its content's top and bottom — a
+  containers round it, and a container's one layer set in from its
+  content's top and bottom — a
   photo centred in a ring wider than it — keeps that much space above and
   below it. What a table cell composes
   (`DocumentTableCell.node(...)`) has no place of its own in the layout:

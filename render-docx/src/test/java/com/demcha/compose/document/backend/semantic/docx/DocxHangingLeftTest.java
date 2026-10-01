@@ -88,6 +88,37 @@ class DocxHangingLeftTest {
     }
 
     @Test
+    void aListInACellOfAHangingRowMovesLeftWithTheTextBesideIt() throws Exception {
+        // The title and a list under it, both 10pt in: the list's items stand where the title
+        // does, the marker's hanging indent past it, the hang taken from both.
+        RowBuilder row = new RowBuilder().name("HeadingRow");
+        row.spacing(0);
+        row.columns(DocumentRowColumn.fixed(DASH), DocumentRowColumn.auto(), DocumentRowColumn.weight(1.0));
+        row.addSection(cell -> cell.spacing(0).padding(5f, 0f, 0f, 0f)
+                .addLine(line -> line.name("Dash").horizontal(DASH).thickness(1).color(DocumentColor.BLACK)));
+        row.addSection(cell -> cell.spacing(0).padding(0f, 0f, 0f, (float) TITLE_PADDING)
+                .addParagraph(paragraph -> paragraph.name("Title").text("PROJECTS").margin(new DocumentInsets(0, 0, 0, 10)))
+                .addList(list -> list.name("Points").bullet().items("One").margin(new DocumentInsets(0, 0, 0, 10))));
+        row.addSection(cell -> cell.spacing(0).padding(5f, 0f, 0f, 4f)
+                .addLine(line -> line.name("Tail").fill().thickness(0.5).color(DocumentColor.BLACK)));
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 30, page -> page
+                .addRow(outer -> outer
+                        .weights(3, 1)
+                        .addSection(column -> column.add(new ShapeContainerBuilder().name("Heading")
+                                .rectangle(200, 30).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                                .margin(new DocumentInsets(10, 0, 0, -HANG))
+                                .position(row.build(), 0, 0, LayerAlign.CENTER_LEFT)
+                                .build()))
+                        .addParagraph("Sidebar")))) {
+            XWPFTable nested = nestedTable(document.getTables().get(0).getRow(0).getCell(0));
+            long title = DocxTwips.of(paragraphWithText(nested, "PROJECTS").getCTP().getPPr().getInd().getLeft());
+            long item = DocxTwips.of(paragraphWithText(nested, "One").getCTP().getPPr().getInd().getLeft());
+
+            assertThat(item - title).as("the level's own indent, and nothing else between them").isEqualTo(180L);
+        }
+    }
+
+    @Test
     void textInACellIsNeverHungPastTheCellsLeftEdge() throws Exception {
         // The dash's column gives 11.8pt of the 17.2 and the title sits 2pt into its cell: the
         // rest would take it past the cell's edge, where Word draws no text.

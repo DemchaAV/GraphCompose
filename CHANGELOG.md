@@ -8,23 +8,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
-- **`NavySidebar`'s column stands where the page sets it in Word.** Its portrait is a 127pt
-  ring round a 123.8pt photo, in a column 123.8pt wide. The photo was sized from the width left
-  inside the ring, 120.6pt, and written flush with the ring's top, losing the 1.6pt the ring holds
-  round it above and below: everything under it stood 5.2pt high in Word and 3.3pt in
-  LibreOffice. A picture the layout placed is now written the size it was placed, less its
-  padding, and a shape
-  container's one layer set in from its content's top and bottom keeps that space above and
-  below it. `NavySidebar`'s median drift in Word falls from 5.2pt to 1.0, and `SerifHeadline`'s,
-  whose section headings stand at the top of taller outlines, from 1.0pt to 0.5.
-  The empty header carrying a page's backgrounds is a point tall against the page's top, and
-  Word moved the whole body down under it on a page with no top margin, so the photo stood a
-  point below its ring. A margin narrower than that header is now written negative, which holds
-  the body at it: seven sidebar CVs with no top margin move up that point in Word.
-  A list's own left and right edges now indent its items, as a paragraph's indent its text:
-  `NavySidebar`'s closing lists, indented to clear the badge beside their heading, stood 30pt
-  left under the badge in Word, a line short, and the `CERTIFICATIONS` heading a line above its
-  badge. `NavySidebar`'s median drift in Word is now 0.1pt, with every line within 2pt.
+- **`NavySidebar` stands where the page sets it in Word.** Its median drift in Word falls from
+  5.2pt to 0.1pt, every line within 2pt of the page.
+  - Its portrait is a 127pt ring round a 123.8pt photo, in a column 123.8pt wide. The photo was
+    sized from the width left inside the ring, 120.6pt, and written flush with the ring's top,
+    losing the 1.6pt the ring holds round it above and below. A picture the layout placed is now
+    written the size it was placed, less its padding, and a shape container's one layer set in
+    from its content's top and bottom keeps that space above and below it. `SerifHeadline`,
+    whose section headings stand at the top of taller outlines, falls from 1.0pt to 0.5.
+  - The empty header carrying a page's backgrounds is a point tall against the page's top, and
+    on a page with no top margin Word moved the whole body down under it, the photo a point
+    below its ring. A margin narrower than an empty header or footer against its edge is now
+    written negative, which holds the body at it: seven sidebar CVs move up that point in Word.
+  - A list's own left and right edges now indent its items, as a paragraph's indent its text.
+    `NavySidebar`'s closing lists, indented to clear the badge beside their heading, stood 30pt
+    left under the badge, a line short, and the `CERTIFICATIONS` heading a line above its badge.
 
 - **A cell ending in a nested table is no taller in LibreOffice than on the page.** Word ends a
   cell on a paragraph, so a hairline one closes a table nested in a cell. Word lays it out at no

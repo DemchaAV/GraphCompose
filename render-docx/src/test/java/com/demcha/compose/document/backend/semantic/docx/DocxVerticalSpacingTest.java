@@ -502,6 +502,38 @@ class DocxVerticalSpacingTest {
     }
 
     @Test
+    void aPullTheSpaceOwedAboveCannotGiveComesOutOfTheParagraphsOwnEdge() throws Exception {
+        // 2pt of the section's padding, less the 4pt pull, then the paragraph's own 10pt: 8.
+        List<XWPFParagraph> body = bodyOf(page -> page
+                .addSection(masthead -> masthead.padding(DocumentInsets.bottom(2))
+                        .addParagraph(p -> p.text("Name").margin(new DocumentInsets(0, 0, -4, 0))))
+                .addParagraph(p -> p.text("Role").margin(new DocumentInsets(10, 0, 0, 0))));
+
+        assertThat(after(body.get(0))).isZero();
+        assertThat(before(body.get(1))).isEqualTo(Math.round((2 - 4 + 10) * TWIPS_PER_POINT));
+    }
+
+    @Test
+    void aPullComesOutOfTheSpaceOwedBelowBeforeATable() throws Exception {
+        List<XWPFParagraph> body = bodyOf(page -> page
+                .addSection(masthead -> masthead.padding(DocumentInsets.bottom(10))
+                        .addParagraph(p -> p.text("Name").margin(new DocumentInsets(0, 0, -4, 0))))
+                .addTable(t -> t.autoColumns(1).row("Cell")));
+
+        assertThat(after(body.get(0))).isEqualTo(Math.round((10 - 4) * TWIPS_PER_POINT));
+    }
+
+    @Test
+    void aPullComesOutOfASpacerUnderIt() throws Exception {
+        List<XWPFParagraph> body = bodyOf(page -> page
+                .addParagraph(p -> p.text("Name").margin(new DocumentInsets(0, 0, -4, 0)))
+                .addSpacer(spacer -> spacer.name("Gap").width(100).height(10))
+                .addParagraph(p -> p.text("After")));
+
+        assertThat(before(body.get(1))).isEqualTo(Math.round((10 - 4) * TWIPS_PER_POINT));
+    }
+
+    @Test
     void aPullStopsAtATable() throws Exception {
         List<XWPFParagraph> body = bodyOf(page -> page
                 .addParagraph(p -> p.text("Name").margin(new DocumentInsets(0, 0, -4, 0)))

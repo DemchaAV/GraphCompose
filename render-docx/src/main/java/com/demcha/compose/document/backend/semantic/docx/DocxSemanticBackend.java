@@ -316,9 +316,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * How far the paragraph just written pulls the next one up into itself, by a negative bottom
      * edge, in points: taken off the space written above the next paragraph, as the page sums
-     * the two edges. It goes wherever the space owed below goes when no paragraph takes it — a
-     * table, a cell's end, a section's — and a pull no space above can give stays unwritten, as
-     * an edge Word cannot write.
+     * the two edges. Where no paragraph takes it — before a table, at a cell's end, a page break
+     * or the document's end — it comes out of the space owed below instead. A pull no space can
+     * give stays unwritten, as an edge Word cannot write. Layers that overlap on the page take
+     * none of it from one another: the space between them is measured from their boxes.
      */
     private double pullBelow;
 
@@ -4523,8 +4524,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** Writes the owed space onto the paragraph that owes it, for want of a later one. */
     private void flushSpacingAfter() {
-        if (pendingSpacingAfter > 0 && lastBodyParagraph != null) {
-            addSpacing(lastBodyParagraph, 0, pendingSpacingAfter);
+        // A pull out of the paragraph above comes out of what it owes below, as the page sums them.
+        double owed = pendingSpacingAfter - pullBelow;
+        if (owed > 0 && lastBodyParagraph != null) {
+            addSpacing(lastBodyParagraph, 0, owed);
         }
         pendingSpacingAfter = 0;
         pullBelow = 0;
@@ -4661,9 +4664,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * The share wider than the page sets it a line of one is given room for: Word sets a face
      * other than the page's, or emboldens one, a little wider. {@code OrangeOps}' headings are
-     * Oswald SemiBold, a face whose file does not say it is bold; Word set "ACHIEVEMENTS" 1% wider,
-     * past the box it fills, and broke it onto a second line — three such headings put the CV on
-     * two pages.
+     * Oswald SemiBold, a face whose file does not say it is bold; Word set "ACHIEVEMENTS" about
+     * 1% wider, past the box it fills, and broke it onto a second line — three such headings
+     * put the CV on two pages.
      */
     private static final double ONE_LINE_FACE_SLACK = 0.03;
 
@@ -4687,8 +4690,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * no word: it keeps its measure or the share it grows by, whichever is wider, so a line as
      * wide as its column is never narrowed onto two — {@code OrangeOps}' phone number broke in
      * LibreOffice a point narrower — and room for its line a few hundredths wider
-     * ({@link #ONE_LINE_FACE_SLACK}), for a face Word sets wider than the page. Without the page's lines — an export with no layout — the
-     * paragraph's runs are weighed by their letters.</p>
+     * ({@link #ONE_LINE_FACE_SLACK}), for a face Word sets wider than the page. Without the
+     * page's lines — an export with no layout — the paragraph's runs are weighed by their
+     * letters.</p>
      */
     private double wordsMeasure(ParagraphNode node, double room) {
         double share = Double.NaN;
@@ -8025,6 +8029,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double carried = carriedSpacingBefore;
         double owed = pendingSpacingAfter;
         double hanging = hangingBelow;
+        double pull = pullBelow;
         double outerLeft = insetLeft;
         double outerRight = insetRight;
         overlayDepth++;
@@ -8041,6 +8046,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             carriedSpacingBefore = carried;
             pendingSpacingAfter = owed;
             hangingBelow = hanging;
+            pullBelow = pull;
             insetLeft = outerLeft;
             insetRight = outerRight;
         }
@@ -8118,6 +8124,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                 // What the layers above still owe below themselves is space
                                 // the page does not have: the gap to this one is the page's.
                                 pendingSpacingAfter = 0;
+                                pullBelow = 0;
                                 resumeSpacing = plan.resume(node);
                             }
                             writeChildren(document, node.children(), spacingOf(node));
@@ -8202,6 +8209,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 if (index > 0 && !Double.isNaN(resume) && Double.isNaN(resumeSpacing)) {
                     pendingSpacingAfter = 0;
                     carriedSpacingBefore = 0;
+                    pullBelow = 0;
                     resumeSpacing = resume;
                 }
                 double bandLeft = insetLeft;
@@ -8232,6 +8240,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // The band measures its space below from its lowest text, a nested band's included: what
         // a band inside it left hanging is already in that number, and is not taken twice.
         double below = unwritten + band.below() + stack.margin().bottom();
+        // The band measures that from its boxes on the page, a layer's pull already in it.
+        pullBelow = 0;
         pendingSpacingAfter = Math.max(0, below);
         hangingBelow = below < 0 ? -below : 0;
     }
@@ -9558,6 +9568,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (hangingOver == para) {
             height = Math.max(0, height - hangingOverBy);
             forgetTheHang();
+        }
+        // So does a pull out of the paragraph above that the space above it did not give.
+        if (pullLeftOn == para) {
+            height = Math.max(0, height - pullLeft);
+            pullLeftOn = null;
+            pullLeft = 0;
         }
         owePendingSpacingAfter(height);
     }

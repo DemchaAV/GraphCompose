@@ -196,6 +196,67 @@ class DocxOverlayBandTest {
         }
     }
 
+    @Test
+    void aLayersNegativeBottomEdgePullsNothingOutOfTheBand() throws Exception {
+        // The layers overlap on the page: a pull out of one's foot moves neither the next layer
+        // nor what follows the band, which the page measures from their boxes.
+        assertThat(beforesWithLayerBottoms(-4)).isEqualTo(beforesWithLayerBottoms(0));
+    }
+
+    @Test
+    void theLastLayersNegativeBottomEdgeIsTakenOnceBelowTheBand() throws Exception {
+        // The band measures the space below it from that layer's box: the text running 4pt past
+        // the stack's foot takes 4pt off the 10pt above the next paragraph, and no more.
+        DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> page
+                .addLayerStack(stack -> stack.name("Stack")
+                        .back(new SpacerNode("Space", 200, BADGE, DocumentInsets.zero(), DocumentInsets.zero()))
+                        .layer(new ParagraphBuilder().name("Low").text("Low")
+                                .margin(new DocumentInsets(0, 0, -4, 0)).build(), LayerAlign.BOTTOM_LEFT))
+                .addParagraph(p -> p.text("Below").margin(DocumentInsets.top(10))));
+        try (session; XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                session.export(new DocxSemanticBackend())))) {
+            XWPFParagraph below = document.getParagraphs().stream()
+                    .filter(paragraph -> "Below".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(before(below)).isEqualTo((10 - 4) * 20L);
+        }
+    }
+
+    @Test
+    void aLayersNegativeBottomEdgeInAShapeContainerMovesNothingBelowIt() throws Exception {
+        // The outline is its own size; the layer's shorter box is already in the space below it.
+        assertThat(beforesWithLayerBottoms(-4).get("After")).isEqualTo(beforesWithLayerBottoms(0).get("After"));
+    }
+
+    private static java.util.Map<String, Long> beforesWithLayerBottoms(double bottom) throws Exception {
+        DocumentInsets edge = new DocumentInsets(0, 0, bottom, 0);
+        DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> page
+                .addParagraph(p -> p.text("Above"))
+                .addLayerStack(stack -> stack.name("Stack")
+                        .back(new SpacerNode("Space", 200, BADGE, DocumentInsets.zero(), DocumentInsets.zero()))
+                        .layer(new ParagraphBuilder().name("Top").text("Top").margin(edge).build(), LayerAlign.TOP_LEFT)
+                        .layer(new ParagraphBuilder().name("Low").text("Low").build(), LayerAlign.BOTTOM_LEFT))
+                .addParagraph(p -> p.text("Below"))
+                .add(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                        .name("Header").rectangle(240, 60)
+                        .clipPolicy(com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE)
+                        .position(new ParagraphBuilder().name("Title").text("TITLE").margin(edge).build(),
+                                0, 0, LayerAlign.TOP_LEFT)
+                        .build())
+                .addParagraph(p -> p.text("After")));
+        try (session; XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                session.export(new DocxSemanticBackend())))) {
+            java.util.Map<String, Long> befores = new java.util.LinkedHashMap<>();
+            for (XWPFParagraph paragraph : document.getParagraphs()) {
+                befores.put(paragraph.getText(), before(paragraph));
+            }
+            assertThat(befores).containsKeys("Low", "Below", "After");
+            return befores;
+        }
+    }
+
     private static long before(XWPFParagraph paragraph) {
         CTPPr properties = paragraph.getCTP().getPPr();
         if (properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetBefore()) {

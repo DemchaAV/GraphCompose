@@ -219,10 +219,12 @@ far as its letters leave room above them, its text seated where the page sets it
 can give is not written. Text laid over the flow in text boxes owes no space, so its edges
 move nothing.
 
-A paragraph's negative bottom `margin` or `padding` pulls the next paragraph up into it the
-same way: it comes out of the space above that paragraph, its own top edge included, even
-where the two stand in different containers. What that space cannot give is not written, and
-a table, the end of a cell or the end of a section takes the pull with it.
+A negative bottom `margin` or `padding` — a paragraph's, an image's, a barcode's or a rule's —
+pulls the next paragraph up into it the same way: it comes out of the space above that
+paragraph, its own top edge included, even where the two stand in different containers. What
+that space cannot give is not written. Before a table, a page break or the end of a cell it
+comes out of the space owed below instead. Layers that overlap on the page take none of it
+from one another, as the space between them is measured from their boxes.
 
 A paragraph's or a list's `lineSpacing` — the gap the page puts between two wrapped lines —
 goes into the line: Word has one line height for a paragraph and no gap between its lines,

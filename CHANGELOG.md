@@ -8,6 +8,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **`NavySidebar`'s column stands where the page sets it in Word.** Its portrait is a 127pt
+  ring round a 123.8pt photo, in a column 123.8pt wide. The photo was sized from the width left
+  inside the ring, 120.6pt, and written flush with the ring's top, losing the 1.6pt the ring holds
+  round it above and below: everything under it stood 5.2pt high in Word and 3.3pt in
+  LibreOffice. A picture the layout placed is now written the size it was placed, less its
+  padding, and a shape
+  container's one layer set in from its content's top and bottom keeps that space above and
+  below it. `NavySidebar`'s median drift in Word falls from 5.2pt to 1.0, and `SerifHeadline`'s,
+  whose section headings stand at the top of taller outlines, from 1.0pt to 0.5.
+
 - **A cell ending in a nested table is no taller in LibreOffice than on the page.** Word ends a
   cell on a paragraph, so a hairline one closes a table nested in a cell. Word lays it out at no
   height that shows; LibreOffice gives it its tenth of a point, so every row of `CobaltRota`, a

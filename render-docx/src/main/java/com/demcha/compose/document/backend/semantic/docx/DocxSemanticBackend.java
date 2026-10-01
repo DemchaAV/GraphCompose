@@ -4750,7 +4750,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // edges are no space in the flow, as writeContainerBody hands them back.
             double carriedFromOutside = carriedSpacingBefore;
             long blocksBefore = blocksWritten;
-            carriedSpacingBefore += node.margin().top() + node.padding().top();
+            // A single layer the container sets in from its edges — centred, smaller than its
+            // outline — stands that far in from them on the page: NavySidebar's photo sits 1.6pt
+            // inside its ring, top and bottom, and written flush with the ring's top the column
+            // under it stood the ring's width high.
+            double[] setIn = layerSetIn(node);
+            carriedSpacingBefore += node.margin().top() + node.padding().top() + setIn[0];
             for (DocumentNode child : node.children()) {
                 insetLeft = innerLeft;
                 insetRight = innerRight;
@@ -4761,7 +4766,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 carriedSpacingBefore = carriedFromOutside;
             } else {
                 carriedSpacingBefore = 0;
-                owePendingSpacingAfter(node.padding().bottom() + node.margin().bottom());
+                owePendingSpacingAfter(setIn[1] + node.padding().bottom() + node.margin().bottom());
                 hangBelowItsBox(node);
             }
         } finally {
@@ -4769,6 +4774,32 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             insetRight = outerRight;
             clipContainer = outerClip;
         }
+    }
+
+    /**
+     * How far a shape container sets its one layer in from the top and the bottom of its content,
+     * where the layout placed both on one page; {@code {0, 0}} for a container of more layers,
+     * or one the layout did not place.
+     */
+    private double[] layerSetIn(ShapeContainerNode node) {
+        if (node.children().size() != 1) {
+            return new double[]{0, 0};
+        }
+        com.demcha.compose.document.layout.PlacedNode box = layout.placement(node);
+        com.demcha.compose.document.layout.PlacedNode layer = layout.placement(node.children().get(0));
+        if (box == null || layer == null || box.startPage() != box.endPage() || layer.startPage() != box.startPage()) {
+            return new double[]{0, 0};
+        }
+        // Measured up from the foot of the page: the box's content runs from its padding up.
+        double contentTop = box.placementY() + box.placementHeight() - node.padding().top();
+        double contentFoot = box.placementY() + node.padding().bottom();
+        // The layer's own margins are its own edges, written with it.
+        DocumentInsets margin = node.children().get(0).margin();
+        double above = contentTop - (layer.placementY() + layer.placementHeight()) - (margin == null ? 0 : margin.top());
+        double below = layer.placementY() - contentFoot - (margin == null ? 0 : margin.bottom());
+        // A layer moved past an edge leaves the other side no more than the two hold together.
+        double setAbove = Math.max(0, above);
+        return new double[]{setAbove, Math.max(0, above + below - setAbove)};
     }
 
     /**
@@ -6036,7 +6067,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * {@code scale}, or by one dimension with the other implied by its aspect ratio, came
      * out at a size nothing had asked for. {@link NodeDefinitionSupport#resolveImageDimensions}
      * is the rule the layout pipeline applies for exactly this, including the clamp to the
-     * page's content width, and is used here so the two agree.</p>
+     * page's content width, and is used here so the two agree where the layout did not place
+     * the image; where it did, the box is the one it placed, less its padding.</p>
      *
      * <p>{@code fitMode} then decides how the image sits in that box, matching the PDF
      * handler: {@code CONTAIN} scales by the smaller ratio and is embedded at that size,
@@ -6075,6 +6107,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         DocumentImageFitMode fitMode =
                 node.fitMode() == null ? DocumentImageFitMode.STRETCH : node.fitMode();
 
+        // Laid out, the picture is the size the page draws it: the width left where it is written
+        // narrows by every container's insets round it, and a ring wider than the column it
+        // stands in — NavySidebar's portrait, 127pt in a 123.8pt column — shrank its photo by
+        // the ring's width on both sides, 120.6pt for 123.8.
+        // Its placement holds its padding, which is written as the paragraph's space around it.
+        com.demcha.compose.document.layout.PlacedNode laidOut = layout.placement(node);
+        if (laidOut != null) {
+            DocumentInsets padding = node.padding() == null ? DocumentInsets.zero() : node.padding();
+            double placedWidth = laidOut.placementWidth() - padding.left() - padding.right();
+            double placedHeight = laidOut.placementHeight() - padding.top() - padding.bottom();
+            if (placedWidth > 0 && placedHeight > 0) {
+                box = new NodeDefinitionSupport.ImageDimensions(placedWidth, placedHeight);
+            }
+        }
         double drawWidth = box.width();
         double drawHeight = box.height();
         if (fitMode == DocumentImageFitMode.CONTAIN) {

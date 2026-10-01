@@ -568,7 +568,12 @@ tint it was flattened to. Recorded, like the other two.
   export. The outline is drawn as a shape where the page draws it — a
   star, a diamond or a path as custom geometry — and a picture that fills
   a container clipped to an ellipse takes the ellipse's shape: a portrait
-  is round inside its ring. What a table cell composes
+  is round inside its ring. A picture the layout placed is written the
+  size it placed it, less its padding, not the width left inside the
+  containers round it, and
+  a container's one layer set in from its content's top and bottom — a
+  photo centred in a ring wider than it — keeps that much space above and
+  below it. What a table cell composes
   (`DocumentTableCell.node(...)`) has no place of its own in the layout:
   its drawing belongs to the table, and the table draws it — an icon, a
   tile, a disc under a number — anchored to the page where the page draws

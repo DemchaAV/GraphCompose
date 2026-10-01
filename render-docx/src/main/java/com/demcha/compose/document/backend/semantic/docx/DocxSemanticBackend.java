@@ -694,6 +694,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 reportDrawingsLeftOver(document, dropTheSpaceAtTheEnd(document));
             }
             hideTheClosingMark(document);
+            hideTheCellClosingMarks(document.getTables());
             if (deterministicTimestamp != null) {
                 DocxDeterminism.pinCoreProperties(document, deterministicTimestamp);
             }
@@ -842,21 +843,67 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static void hideTheClosingMark(XWPFDocument document) {
         List<IBodyElement> body = document.getBodyElements();
         if (body.size() < 2 || !(body.get(body.size() - 1) instanceof XWPFParagraph last)
-            || !(body.get(body.size() - 2) instanceof XWPFTable)) {
+            || !(body.get(body.size() - 2) instanceof XWPFTable) || !structureAlone(last)) {
             return;
         }
-        org.w3c.dom.NodeList children = last.getCTP().getDomNode().getChildNodes();
+        hide(last);
+    }
+
+    /**
+     * Hides the mark of the empty paragraph a table cell ending in a nested table must end with,
+     * in every table of the document, nested ones included.
+     *
+     * <p>Word ends a cell on a paragraph, so a hairline one closes a nested table there (see
+     * {@link #newTable}). Word lays it out at no height that shows; LibreOffice gives it its tenth
+     * of a point, so every row of {@code CobaltRota}, a chip in a table in a table in each cell,
+     * stood up to 0.3pt taller there than on the page, and its last row 5.2pt low; hidden, it is
+     * not laid out, and its last row stands 3.5pt low. Only that hairline is hidden: a paragraph that
+     * is structure alone, a hairline tall and holding no space above or below it, which would go
+     * with it.</p>
+     */
+    private static void hideTheCellClosingMarks(List<XWPFTable> tables) {
+        for (XWPFTable table : tables) {
+            for (org.apache.poi.xwpf.usermodel.XWPFTableRow row : table.getRows()) {
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    hideTheCellClosingMarks(cell.getTables());
+                    List<IBodyElement> elements = cell.getBodyElements();
+                    if (elements.size() < 2 || !(elements.get(elements.size() - 1) instanceof XWPFParagraph last)
+                        || !(elements.get(elements.size() - 2) instanceof XWPFTable) || !structureAlone(last)) {
+                        continue;
+                    }
+                    CTSpacing spacing = last.getCTP().getPPr() != null && last.getCTP().getPPr().isSetSpacing()
+                            ? last.getCTP().getPPr().getSpacing() : null;
+                    boolean hairline = spacing != null && spacing.isSetLineRule()
+                                       && spacing.getLineRule() == STLineSpacingRule.EXACT
+                                       && twipsOf(spacing.getLine()) == Math.round(SEPARATOR_POINTS * POINT_TO_TWIP);
+                    if (!hairline || twipsOf(spacing.getBefore()) != 0 || twipsOf(spacing.getAfter()) != 0) {
+                        continue;
+                    }
+                    hide(last);
+                }
+            }
+        }
+    }
+
+    /**
+     * Whether a paragraph is structure alone: it holds nothing — a run, a field, a drawing's
+     * anchor, a bookmark — and draws nothing — a rule is a paragraph's border, a band its
+     * shading — nor carries a section's properties.
+     */
+    private static boolean structureAlone(XWPFParagraph paragraph) {
+        org.w3c.dom.NodeList children = paragraph.getCTP().getDomNode().getChildNodes();
         for (int index = 0; index < children.getLength(); index++) {
             org.w3c.dom.Node child = children.item(index);
             if (child.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE && !"pPr".equals(child.getLocalName())) {
-                return;
+                return false;
             }
         }
-        if (last.getCTP().isSetPPr() && (last.getCTP().getPPr().isSetSectPr() || last.getCTP().getPPr().isSetPBdr()
-                                         || last.getCTP().getPPr().isSetShd())) {
-            return;
-        }
-        CTPPr properties = last.getCTP().isSetPPr() ? last.getCTP().getPPr() : last.getCTP().addNewPPr();
+        CTPPr properties = paragraph.getCTP().getPPr();
+        return properties == null || !(properties.isSetSectPr() || properties.isSetPBdr() || properties.isSetShd());
+    }
+
+    private static void hide(XWPFParagraph paragraph) {
+        CTPPr properties = paragraph.getCTP().isSetPPr() ? paragraph.getCTP().getPPr() : paragraph.getCTP().addNewPPr();
         org.openxmlformats.schemas.wordprocessingml.x2006.main.CTParaRPr mark =
                 properties.isSetRPr() ? properties.getRPr() : properties.addNewRPr();
         if (mark.sizeOfVanishArray() == 0) {

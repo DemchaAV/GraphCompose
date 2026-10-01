@@ -3,8 +3,11 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.TableBuilder;
+import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -38,6 +41,93 @@ class DocxPanelHeightTest {
                         .addParagraph(p -> p.text("26 June 2026")))))) {
             assertThat(heightOf(document.getTables().get(0))).as("40pt of padding and a line of text")
                     .isGreaterThan(48 * 20);
+        }
+    }
+
+    @Test
+    void theEmptyParagraphClosingACellThatEndsInATableIsNotLaidOut() throws Exception {
+        // LibreOffice laid it out a tenth of a point tall under every nested table.
+        try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
+                .fillColor(DocumentColor.rgb(247, 249, 246))
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(120)).row("Inner"))))) {
+            XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
+            List<IBodyElement> elements = card.getBodyElements();
+            XWPFParagraph closing = (XWPFParagraph) elements.get(elements.size() - 1);
+
+            assertThat(elements.get(elements.size() - 2)).isInstanceOf(XWPFTable.class);
+            assertThat(closing.getCTP().getPPr().getRPr().sizeOfVanishArray()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void theEmptyParagraphClosingACellOfANestedTableIsNotLaidOutEither() throws Exception {
+        // CobaltRota's shape: a table composed in a cell of a table in a card.
+        DocumentNode inner = new TableBuilder()
+                .columns(DocumentTableColumn.fixed(80)).row("Deep").build();
+        try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
+                .fillColor(DocumentColor.rgb(247, 249, 246))
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(120))
+                        .rowCells(DocumentTableCell.node(inner)))))) {
+            XWPFTableCell middle = document.getTables().get(0).getRow(0).getCell(0)
+                    .getTables().get(0).getRow(0).getCell(0);
+            List<IBodyElement> elements = middle.getBodyElements();
+            XWPFParagraph closing = (XWPFParagraph) elements.get(elements.size() - 1);
+
+            assertThat(elements.get(elements.size() - 2)).isInstanceOf(XWPFTable.class);
+            assertThat(closing.getCTP().getPPr().getRPr().sizeOfVanishArray()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void textAfterATableInACellKeepsItsMark() throws Exception {
+        // The paragraph closing the table is taken over by the text written after it.
+        try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
+                .fillColor(DocumentColor.rgb(247, 249, 246))
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(120)).row("Inner"))
+                .addParagraph(p -> p.text("After"))))) {
+            XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
+            List<IBodyElement> elements = card.getBodyElements();
+            assertThat(elements).as("the table, and the text in the paragraph that closed it").hasSize(2);
+            assertThat(((XWPFParagraph) elements.get(1)).getText()).isEqualTo("After");
+            for (XWPFParagraph paragraph : card.getParagraphs()) {
+                assertThat(paragraph.getCTP().getPPr() != null && paragraph.getCTP().getPPr().isSetRPr()
+                           && paragraph.getCTP().getPPr().getRPr().sizeOfVanishArray() > 0)
+                        .as("no mark hidden in a cell ending in text").isFalse();
+            }
+        }
+    }
+
+    @Test
+    void theParagraphClosingACellKeepsItsMarkWhenItHoldsABookmark() throws Exception {
+        // An anchored table's bookmark closes in the paragraph under it: that paragraph is not
+        // structure alone.
+        try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
+                .fillColor(DocumentColor.rgb(247, 249, 246))
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(120)).row("Inner").anchor("inner"))))) {
+            XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
+            List<IBodyElement> elements = card.getBodyElements();
+            XWPFParagraph closing = (XWPFParagraph) elements.get(elements.size() - 1);
+
+            assertThat(closing.getCTP().getBookmarkEndList()).as("the bookmark's end").isNotEmpty();
+            assertThat(closing.getCTP().getPPr().isSetRPr() && closing.getCTP().getPPr().getRPr().sizeOfVanishArray() > 0)
+                    .isFalse();
+        }
+    }
+
+    @Test
+    void theParagraphClosingACellKeepsItsMarkWhenItHoldsTheSpaceBelowTheTable() throws Exception {
+        // A padded card ending in a table keeps its bottom padding in the paragraph under it.
+        try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
+                .fillColor(DocumentColor.rgb(247, 249, 246))
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(120)).row("Inner").margin(new DocumentInsets(0, 0, 12, 0)))))) {
+            XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
+            List<IBodyElement> elements = card.getBodyElements();
+            XWPFParagraph closing = (XWPFParagraph) elements.get(elements.size() - 1);
+
+            assertThat(((Number) closing.getCTP().getPPr().getSpacing().getAfter()).longValue())
+                    .as("the space below the table").isPositive();
+            assertThat(closing.getCTP().getPPr().isSetRPr() && closing.getCTP().getPPr().getRPr().sizeOfVanishArray() > 0)
+                    .isFalse();
         }
     }
 

@@ -8,6 +8,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A cell ending in a nested table is no taller in LibreOffice than on the page.** Word ends a
+  cell on a paragraph, so a hairline one closes a table nested in a cell. Word lays it out at no
+  height that shows; LibreOffice gives it its tenth of a point, so every row of `CobaltRota`, a
+  chip in a table in a table in each of its cells, stood up to 0.3pt taller there, and its last
+  row 5.2pt low. Such a paragraph, left at the cell's end holding nothing and no space, now has
+  its mark hidden, as the paragraph closing a document that ends in a table already had. Word's
+  output is unchanged. In LibreOffice `CobaltRota`'s last row stands 3.5pt low and its p90 drift
+  falls from 3.9pt to 2.9; across the 33 templates it changes no page count changes, and
+  no median drift moves by more than 0.2pt.
+
 - **`CobaltRota`'s outlined chips are as tall in Word as on the page.** A shape composed in a
   table cell is written as a one-cell table holding its row at least the outline's height, less
   the heavier border, which LibreOffice was taken to add to it once. Both editors draw the cell's

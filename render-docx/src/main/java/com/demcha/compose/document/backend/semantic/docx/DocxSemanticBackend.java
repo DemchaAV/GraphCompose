@@ -4959,10 +4959,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // edges are no space in the flow, as writeContainerBody hands them back.
             double carriedFromOutside = carriedSpacingBefore;
             long blocksBefore = blocksWritten;
-            // A single layer the container sets in from its edges — centred, smaller than its
-            // outline — stands that far in from them on the page: NavySidebar's photo sits 1.6pt
-            // inside its ring, top and bottom, and written flush with the ring's top the column
-            // under it stood twice the ring's width high.
+            // What the container sets in from its edges — a layer centred, smaller than its
+            // outline, or lines written one under another — stands that far in from them on the
+            // page: NavySidebar's photo sits 1.6pt inside its ring, top and bottom, and written
+            // flush with the ring's top the column under it stood twice the ring's width high.
             double[] setIn = layerSetIn(node);
             carriedSpacingBefore += node.margin().top() + node.padding().top() + setIn[0];
             for (DocumentNode child : node.children()) {
@@ -4986,27 +4986,53 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * How far a shape container sets its one layer in from the top and the bottom of its content,
-     * where the layout placed both on one page; {@code {0, 0}} for a container of more layers,
-     * or one the layout did not place.
+     * How far a shape container sets its layers in from the top and the bottom of its content,
+     * where the layout placed them all on its page; {@code {0, 0}} for one the layout did not
+     * place, or one of several layers that do not stand one under another.
+     *
+     * <p>Several layers are set in as one where they are paragraphs written one under another:
+     * each starting at or below the foot of the one before, or the two held as a stack of lines
+     * ({@link #holdStackedLines}), whose lines meet. The set-in runs from the top of the first to
+     * the foot of the last. {@code MidnightNavy}'s monogram centres its two initials in a 76pt
+     * ring; written from the ring's top, the initials stood 9.6pt high in Word, and the name
+     * under the ring 19.3pt, with the whole column under it. Layers set side by side, or
+     * overlapping without being a stack, are written taller than the page has them, and are
+     * not set in.</p>
      */
     private double[] layerSetIn(ShapeContainerNode node) {
-        if (node.children().size() != 1) {
+        List<DocumentNode> layers = node.children();
+        if (layers.isEmpty()) {
             return new double[]{0, 0};
         }
         com.demcha.compose.document.layout.PlacedNode box = layout.placement(node);
-        com.demcha.compose.document.layout.PlacedNode layer = layout.placement(node.children().get(0));
-        if (box == null || layer == null || box.startPage() != box.endPage()
-            || layer.startPage() != box.startPage() || layer.endPage() != box.startPage()) {
+        if (box == null || box.startPage() != box.endPage()) {
             return new double[]{0, 0};
         }
+        DocumentNode previous = null;
+        double previousFoot = Double.POSITIVE_INFINITY;
+        for (DocumentNode child : layers) {
+            com.demcha.compose.document.layout.PlacedNode placed = layout.placement(child);
+            if (placed == null || placed.startPage() != box.startPage() || placed.endPage() != box.startPage()
+                || layers.size() > 1 && !(child instanceof ParagraphNode)) {
+                return new double[]{0, 0};
+            }
+            double top = placed.placementY() + placed.placementHeight();
+            boolean stacked = previous instanceof ParagraphNode above && stackedLineHeights.containsKey(above)
+                              && child instanceof ParagraphNode below && stackedLineHeights.containsKey(below);
+            if (previous != null && !(top <= previousFoot + 0.01) && !stacked) {
+                return new double[]{0, 0};
+            }
+            previous = child;
+            previousFoot = placed.placementY();
+        }
+        com.demcha.compose.document.layout.PlacedNode first = layout.placement(layers.get(0));
+        com.demcha.compose.document.layout.PlacedNode last = layout.placement(layers.get(layers.size() - 1));
         // Measured up from the foot of the page: the box's content runs from its padding up.
         double contentTop = box.placementY() + box.placementHeight() - node.padding().top();
         double contentFoot = box.placementY() + node.padding().bottom();
-        // The layer's own margins are its own edges, written with it.
-        DocumentInsets margin = node.children().get(0).margin();
-        double above = contentTop - (layer.placementY() + layer.placementHeight()) - margin.top();
-        double below = layer.placementY() - contentFoot - margin.bottom();
+        // A layer's own margins are its own edges, written with it.
+        double above = contentTop - (first.placementY() + first.placementHeight()) - layers.get(0).margin().top();
+        double below = last.placementY() - contentFoot - layers.get(layers.size() - 1).margin().bottom();
         // A layer moved past either edge leaves the other side no more than the two hold together.
         // A paragraph's line past the foot is written where the page puts it: hangBelowItsBox
         // takes its overhang from the gap under the container.
@@ -5527,6 +5553,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         PictureReach pictures = PictureReach.NONE;
         // The mark closes the last line, so it is sized as the text that ends it.
         DocumentTextStyle markStyle = node.textStyle();
+        // A shape's picture is wider than its box on either side: the text just before it gives
+        // back the room on the left, so its ink starts where the page starts it, and the text
+        // just after it the room on the right (giveBackWidth).
+        double widthOwed = 0;
+        XWPFRun textBefore = null;
+        java.util.Map<XWPFRun, Double> givenBack = new java.util.LinkedHashMap<>();
+        java.util.Map<XWPFRun, String> lettersOf = new java.util.HashMap<>();
         for (InlineRun run : node.inlineRuns()) {
             InlineTextRun text = textOf(run);
             if (text == null) {
@@ -5534,7 +5567,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 if (reach != null) {
                     wroteARun = true;
                     pictures = pictures.max(reach);
+                    if (run instanceof InlineShapeRun shape && !rightToLeft) {
+                        if (textBefore != null) {
+                            givenBack.merge(textBefore, DocxShapePictures.widthBeforeItsBox(shape), Double::sum);
+                        }
+                        widthOwed += DocxShapePictures.widthAfterItsBox(shape);
+                    }
                 }
+                textBefore = null;
                 continue;
             }
             // A run's own link wins over the paragraph's: a sentence with one linked phrase
@@ -5547,8 +5587,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             applyRunDirection(docRun, rightToLeft);
             applyInlineBackground(docRun, backgroundOf(run), path);
             setTextBrokenAtLines(docRun, text.text());
+            if (widthOwed > 0) {
+                givenBack.merge(docRun, widthOwed, Double::sum);
+            }
+            widthOwed = 0;
+            textBefore = docRun;
+            lettersOf.put(docRun, text.text());
             wroteARun = true;
         }
+        givenBack.forEach((textRun, room) -> giveBackWidth(textRun, lettersOf.get(textRun), room));
         if (!wroteARun) {
             XWPFRun docRun = newRun(para, node.linkTarget());
             applyStyle(docRun, node.textStyle());
@@ -5785,6 +5832,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         return 0;
+    }
+
+    /**
+     * Sets a run's letters closer by the room the shapes beside it take past their boxes.
+     *
+     * <p>A shape is written as a picture wider than its box on either side, by its ink's
+     * overhang and an edge ({@link DocxShapePictures#widthBeforeItsBox},
+     * {@link DocxShapePictures#widthAfterItsBox}). Word sets a picture at its width whatever
+     * spacing its run states, and letters closer when theirs is condensed: a run gives back the
+     * room the shape before it takes on its right and the shape after it on its left, spread
+     * over its letters. Word sets a letter's spacing after every letter in tenths of a point —
+     * measured, two quarter points on two letters of a gap came out three tenths each — and
+     * LibreOffice moved nothing for a space condensed in a run of its own; so each letter of the
+     * run is set closer by whole tenths, as near the room as they come. A run too long for a
+     * tenth a letter gives back nothing. {@code MidnightNavy}'s language dots, five to a line
+     * with four spaces between each, stood 2.5pt wider than the page's in Word, and the fifth
+     * broke onto a second line. A run holding a line break is left as it is, its letters on two
+     * lines.</p>
+     *
+     * @param points the room the shapes beside the run take past their boxes, in points
+     */
+    private static void giveBackWidth(XWPFRun run, String text, double points) {
+        if (text == null || text.isEmpty() || LINE_BREAK.matcher(text).find()) {
+            return;
+        }
+        long tenths = Math.round(points * 10 / text.codePointCount(0, text.length()));
+        if (tenths != 0) {
+            run.setCharacterSpacing((int) (run.getCharacterSpacing() - tenths * 2));
+        }
     }
 
     /** A line break in text, as the page breaks lines at it (see {@code ParagraphWrapping}). */
@@ -8163,6 +8239,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             applyRowVerticalAlign(cell, node.verticalAlign());
         }
+        giveTheLastCellItsInk(table, node, placedColumns);
         // Anywhere, a row whose tallest child is one Word holds nothing of in its cell — a
         // picture drawn where the page puts it, a badge beside a heading — is only as tall there
         // as its text: WorkspaceInvoice's bill-to heading stood beside a 20pt badge, and the
@@ -8174,6 +8251,86 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             holdRowAtLeast(row, placedRow.placementHeight() - node.padding().top() - node.padding().bottom());
         }
         indentTable(table);
+    }
+
+    /**
+     * Widens a row's last cell by as far as the shape ending its line is drawn past it.
+     *
+     * <p>The page draws a shape's ink past its box — half a ring's stroke — and past the cell
+     * the box ends at. Word cuts a cell's content at the cell's edge, the transparent edge
+     * round a shape's picture with it: {@code MidnightNavy}'s fifth language dot, a ring at its
+     * column's right edge, lost the right of its stroke. Its column, and the table, are made as
+     * much wider; the row's other columns keep their widths. Only a paragraph of one line set
+     * from the left is measured: its line ends where the page ends it, wider by the room its
+     * shapes take where no text beside them gives it back (see {@link #giveBackWidth}).</p>
+     *
+     * @param placedColumns whether the row's columns are the layout's, its children's margins
+     *                      already outside them
+     */
+    private void giveTheLastCellItsInk(XWPFTable table, RowNode node, boolean placedColumns) {
+        int last = node.children().size() - 1;
+        if (last < 0 || !(node.children().get(last) instanceof ParagraphNode paragraph)
+            || paragraph.align() == TextAlign.CENTER || paragraph.align() == TextAlign.RIGHT
+            || ParagraphDirection.resolve(paragraph) == TextDirection.RTL
+            || layout.lineCount(paragraph) != 1 || paragraph.inlineRuns().isEmpty()
+            || !(paragraph.inlineRuns().get(paragraph.inlineRuns().size() - 1) instanceof InlineShapeRun)) {
+            return;
+        }
+        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(paragraph);
+        XWPFTableCell cell = table.getRow(0).getCell(last);
+        double room = usableWidthOf(cell, last, 1)
+                      - paragraph.padding().left() - paragraph.padding().right()
+                      - (placedColumns ? 0 : paragraph.margin().left() + paragraph.margin().right());
+        if (line.isEmpty() || !Double.isFinite(room)) {
+            return;
+        }
+        double past = line.get().width() + roomNotGivenBack(paragraph.inlineRuns()) - room;
+        if (!(past > 0)) {
+            return;
+        }
+        long more = (long) Math.ceil(past * POINT_TO_TWIP);
+        var column = table.getCTTbl().getTblGrid().getGridColArray(last);
+        Long columnTwips = writtenTwips(column.getW());
+        if (columnTwips == null) {
+            return;
+        }
+        column.setW(BigInteger.valueOf(columnTwips + more));
+        CTTcPr properties = cellProperties(cell);
+        if (properties.isSetTcW() && writtenTwips(properties.getTcW().getW()) != null) {
+            properties.getTcW().setW(BigInteger.valueOf(writtenTwips(properties.getTcW().getW()) + more));
+        }
+        CTTblPr tableProperties = table.getCTTbl().getTblPr();
+        if (tableProperties != null && tableProperties.isSetTblW() && writtenTwips(tableProperties.getTblW().getW()) != null) {
+            tableProperties.getTblW().setW(BigInteger.valueOf(writtenTwips(tableProperties.getTblW().getW()) + more));
+        }
+    }
+
+    /**
+     * The room a paragraph's shapes take past their boxes that no text beside them gives back, in
+     * points: a shape opening its line, the side of one standing against another, the end of
+     * one closing the line (see {@link #giveBackWidth}).
+     */
+    private double roomNotGivenBack(List<InlineRun> runs) {
+        double room = 0;
+        for (int index = 0; index < runs.size(); index++) {
+            if (!(runs.get(index) instanceof InlineShapeRun shape)) {
+                continue;
+            }
+            if (index == 0 || !givesBackWidth(runs.get(index - 1))) {
+                room += DocxShapePictures.widthBeforeItsBox(shape);
+            }
+            if (index == runs.size() - 1 || !givesBackWidth(runs.get(index + 1))) {
+                room += DocxShapePictures.widthAfterItsBox(shape);
+            }
+        }
+        return room;
+    }
+
+    /** Whether a run is text that sets its letters closer for a shape beside it (giveBackWidth). */
+    private boolean givesBackWidth(InlineRun run) {
+        InlineTextRun text = textOf(run);
+        return text != null && text.text() != null && !text.text().isEmpty()
+               && !LINE_BREAK.matcher(text.text()).find();
     }
 
     /**
@@ -9269,11 +9426,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * node that contributes nothing — a wrapper that ended up with no children — would
      * otherwise leave the cell with no block child at all. Word tolerates less of that than
      * the schema validator notices.</p>
+     *
+     * <p>A cell left with nothing in it at all — its content drawn where the page draws it, as
+     * a skill's meter beside its label — has that paragraph a hairline tall: left to Word's
+     * own line it was a line of the document's font, and {@code MidnightNavy}'s skills each
+     * stood 2.1pt taller than the page's.</p>
      */
     private void writeCellBody(XWPFTableCell cell, DocumentNode child) throws Exception {
         writeCellNode(cell, child);
         if (cell.getParagraphs().isEmpty()) {
-            cell.addParagraph();
+            boolean empty = cell.getBodyElements().isEmpty();
+            XWPFParagraph closing = cell.addParagraph();
+            if (empty) {
+                holdToHairline(closing);
+            }
         }
     }
 

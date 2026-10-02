@@ -179,6 +179,78 @@ class DocxOverlayBandTest {
     }
 
     @Test
+    void aCellOfDrawingAloneHoldsAHairline() throws Exception {
+        // Nothing in the cell is written, and no space is carried into it: the paragraph a cell
+        // ends with is a hairline, not a line of the document's font beside a shorter label.
+        // MidnightNavy's skill row: held in a layer, so it can sit in its column's section.
+        com.demcha.compose.document.dsl.SectionBuilder skill = new com.demcha.compose.document.dsl.SectionBuilder();
+        skill.name("SkillHolder").addRow("SkillRow", row -> row
+                .verticalAlign(com.demcha.compose.document.node.RowVerticalAlign.CENTER)
+                .columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1),
+                        com.demcha.compose.document.style.DocumentRowColumn.fixed(60))
+                .addParagraph(p -> p.text("Beside"))
+                .addSection("MeterCell", cell -> cell.addLayerStack(stack -> stack.name("Meter")
+                        .layer(new com.demcha.compose.document.dsl.LineBuilder().name("Track").horizontal(60)
+                                .thickness(1).color(DocumentColor.rgb(120, 120, 120)).build(), LayerAlign.CENTER_LEFT, 0)
+                        .position(new com.demcha.compose.document.dsl.ShapeBuilder().name("Knob").size(6, 4)
+                                .fillColor(DocumentColor.rgb(0, 0, 0)).build(), 30, 0, LayerAlign.CENTER_LEFT, 1))));
+        com.demcha.compose.document.node.DocumentNode held = skill.build();
+        try (XWPFDocument document = DocxExports.withLayout(300, 500, 20, page -> page
+                .addSection("Column", column -> column.addLayerStack(stack -> stack.name("SkillLayer")
+                        .layer(held, LayerAlign.TOP_LEFT, 0))))) {
+            XWPFParagraph holder = document.getTables().get(0).getRow(0).getCell(1).getParagraphs().get(0);
+            CTPPr properties = holder.getCTP().getPPr();
+
+            assertThat(holder.getRuns()).as("nothing of the meter is written in its cell").isEmpty();
+            assertThat(properties).as("the cell's paragraph is written").isNotNull();
+            assertThat(properties.getSpacing().getLineRule())
+                    .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
+            assertThat(DocxTwips.of(properties.getSpacing().getLine())).isEqualTo(2L);
+        }
+    }
+
+    @Test
+    void aShapeContainersStackedLinesStandWhereTheOutlineSetsThem() throws Exception {
+        // Two initials centred in a ring, one above the other: the space above the first and
+        // below the last is the ring's, as for a single layer.
+        DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> page.add(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                        .name("Ring").circle(76)
+                        .stroke(DocumentStroke.of(DocumentColor.rgb(0, 0, 0), 1))
+                        .position(new ParagraphBuilder().name("First").text("A")
+                                .textStyle(DocumentTextStyle.DEFAULT.withSize(24)).build(), 0, -13, LayerAlign.CENTER)
+                        .position(new ParagraphBuilder().name("Second").text("M")
+                                .textStyle(DocumentTextStyle.DEFAULT.withSize(24)).build(), 0, 13, LayerAlign.CENTER)
+                        .build())
+                .addParagraph(p -> p.name("Below").text("Below")));
+        try (session; XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                session.export(new DocxSemanticBackend())))) {
+            PlacedNode ring = placed(session, "Ring");
+            PlacedNode first = placed(session, "First");
+            PlacedNode second = placed(session, "Second");
+            PlacedNode next = placed(session, "Below");
+            double above = (ring.placementY() + ring.placementHeight()) - (first.placementY() + first.placementHeight());
+            double below = second.placementY() - ring.placementY();
+            double gap = ring.placementY() - (next.placementY() + next.placementHeight());
+            XWPFParagraph initial = document.getParagraphs().stream()
+                    .filter(paragraph -> "A".equals(paragraph.getText())).findFirst().orElseThrow();
+            XWPFParagraph after = document.getParagraphs().stream()
+                    .filter(paragraph -> "Below".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(above).as("the initials stand inside the ring").isGreaterThan(5);
+            assertThat(before(initial)).as("written from where the ring sets the first initial")
+                    .isCloseTo(Math.round(above * 20), org.assertj.core.data.Offset.offset(2L));
+            assertThat(before(after)).as("and the ring's foot as far under the last as the page has it")
+                    .isCloseTo(Math.round((below + gap) * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    private static PlacedNode placed(DocumentSession session, String name) {
+        return session.layoutGraph().nodes().stream()
+                .filter(node -> name.equals(node.semanticName())).findFirst().orElseThrow();
+    }
+
+    @Test
     void aCellOfSpaceAndDrawingKeepsItsHeight() throws Exception {
         // A masthead's hairline column: padding round a vertical line. Nothing in it is
         // written, and the row is as tall as it only if its space is still there.

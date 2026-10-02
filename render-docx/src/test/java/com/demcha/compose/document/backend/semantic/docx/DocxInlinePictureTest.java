@@ -42,6 +42,103 @@ class DocxInlinePictureTest {
             + "<circle cx='12' cy='12' r='10' fill='#1A5694'/></svg>");
 
     @Test
+    void theTextBesideADotGivesBackTheRoomItsPictureTakesPastItsBox() throws Exception {
+        // A dot is written as a picture a quarter point wider than its box on either side: the
+        // text before it gives back the left quarter, so the dot starts where the page starts it,
+        // and the four spaces between two dots the first's right quarter and the second's left.
+        com.demcha.compose.document.style.DocumentColor black = com.demcha.compose.document.style.DocumentColor.rgb(0, 0, 0);
+        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
+                .inlineText("Level ")
+                .dot(6, black).inlineText("    ")
+                .dot(6, black)
+                .inlineText(" done")))) {
+            // Spread over the letters in whole tenths: half a point over four spaces is a tenth a
+            // letter, a quarter over five letters a tenth, and over six letters less than one.
+            assertThat(lettersAndSpacing(document.getParagraphs().get(0)))
+                    .as("each run's room given back by its letters")
+                    .containsExactly("Level :0", "[picture]", "    :-2", "[picture]", " done:-2");
+        }
+    }
+
+    @Test
+    void aLineBreakAfterADotKeepsItsLetters() throws Exception {
+        com.demcha.compose.document.style.DocumentColor black = com.demcha.compose.document.style.DocumentColor.rgb(0, 0, 0);
+        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
+                .dot(6, black).inlineText(" one\ntwo")))) {
+            assertThat(lettersAndSpacing(document.getParagraphs().get(0)))
+                    .as("its letters stand on two lines; none is set closer")
+                    .allMatch(piece -> piece.equals("[picture]") || piece.endsWith(":0"));
+        }
+    }
+
+    /** Each run of a paragraph as its letters and its character spacing in twips, a picture as such. */
+    private static List<String> lettersAndSpacing(XWPFParagraph paragraph) {
+        List<String> pieces = new java.util.ArrayList<>();
+        for (var run : paragraph.getCTP().getRList()) {
+            if (run.sizeOfDrawingArray() > 0) {
+                pieces.add("[picture]");
+                continue;
+            }
+            StringBuilder letters = new StringBuilder();
+            for (var text : run.getTArray()) {
+                letters.append(text.getStringValue());
+            }
+            long spacing = run.isSetRPr() && run.getRPr().sizeOfSpacingArray() > 0
+                    ? DocxTwips.of(run.getRPr().getSpacingArray(0).getVal()) : 0;
+            pieces.add(letters + ":" + spacing);
+        }
+        return pieces;
+    }
+
+    @Test
+    void aRowsLastCellIsWidenedToTheRingEndingItsLine() throws Exception {
+        // The page draws half a ring's stroke past the cell its line ends at; Word cuts a cell's
+        // content at its edge, so the column is made that much wider.
+        com.demcha.compose.document.style.DocumentColor white = com.demcha.compose.document.style.DocumentColor.rgb(255, 255, 255);
+        com.demcha.compose.document.style.DocumentStroke ring =
+                com.demcha.compose.document.style.DocumentStroke.of(com.demcha.compose.document.style.DocumentColor.rgb(0, 0, 0), 0.8);
+        assertThat(lastColumnTwips(30.2, p -> {
+            for (int dot = 0; dot < 5; dot++) {
+                p.dot(6, white, ring);
+            }
+        })).as("five rings against each other, none of their edges given back: each a point wider")
+                .isGreaterThan(Math.round(30.2 * 20) + 5 * 20);
+        assertThat(lastColumnTwips(60, p -> {
+            p.dot(6, white, ring);
+            for (int dot = 1; dot < 5; dot++) {
+                p.inlineText(" ").dot(6, white, ring);
+            }
+        })).as("rings with room to spare, the spaces between them giving their edges back")
+                .isEqualTo(Math.round(60 * 20));
+    }
+
+    private static long lastColumnTwips(double column,
+                                        Consumer<com.demcha.compose.document.dsl.ParagraphBuilder> dots) throws Exception {
+        try (XWPFDocument document = export(page -> page.addRow(row -> row
+                .spacing(0)
+                .columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1),
+                        com.demcha.compose.document.style.DocumentRowColumn.fixed(column))
+                .addParagraph("Level")
+                .addParagraph(dots::accept)))) {
+            var grid = document.getTables().get(0).getCTTbl().getTblGrid();
+            return DocxTwips.of(grid.getGridColArray(1).getW());
+        }
+    }
+
+    @Test
+    void textWithNoShapeBesideItKeepsItsSpacing() throws Exception {
+        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
+                .inlineText("Before ")
+                .inlineImage(DocumentImageData.fromBytes(png(20, 20)), 20, 20)
+                .inlineText(" after")))) {
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+
+            assertThat(runs.get(0).getCharacterSpacing()).as("a picture is set at its own width").isZero();
+            assertThat(runs.get(2).getCharacterSpacing()).isZero();
+        }
+    }
+
+    @Test
     void aPictureInALineIsARunBetweenItsWords() throws Exception {
         try (XWPFDocument document = export(page -> page.addParagraph(p -> p
                 .inlineText("Before ")

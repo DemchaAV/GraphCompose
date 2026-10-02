@@ -8,6 +8,29 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **`MidnightNavy`'s sidebar stands where the page sets it in Word.** Three causes, each its own:
+  - Its monogram centres two initials in a 76pt ring, two layers of one shape container. Only a
+    container of one layer was set in from its outline, so the initials were written from the
+    ring's top: they stood 9.6pt high, and the name and the whole column under the ring 19.3pt.
+    A container's paragraph layers standing one under another are now set in as one, from the
+    top of the first and the foot of the last.
+  - Each skill is a row: its label, and a meter drawn where the page draws it, so nothing is
+    written in the meter's cell. The paragraph a cell must end with was a line of the document's
+    font, and each row stood 2.1pt taller than the page's. A cell left with nothing in it now
+    holds a hairline.
+  - Each language's five dots are inline shapes, written as pictures wider than their boxes on
+    either side — a quarter point, and a ring's half stroke more — so each pushed the next 0.5pt
+    or more further along: the fifth broke onto a second line, each language row 9.7pt taller.
+    The text beside a shape now gives that room back, its letters set closer in whole tenths of
+    a point, and each dot's picture stands where the page puts its box. The page draws half the
+    last ring's stroke past its cell, where Word cuts a cell's content; a row's last cell is
+    widened by as far as the line ending in a shape reaches past it.
+
+  In Word, lines more than 2pt off fall from 30 to 0, and the p90 drift from 19.86pt to 0.58.
+  `CharcoalGold` finds 83 of its 85 lines in Word where it found 77. In LibreOffice the p90 falls
+  from 17.11pt to 3.24; two skills, which the rows' growth had carried onto the page's line,
+  now stand at the 2.7pt every line of the sheet stands at there.
+
 - **`SlateOrange`'s sidebar stands where the page sets it in Word.** Each skill is a row with a
   12.4pt icon on a line of its own, no text in it, and Word sizes that line itself. The
   paragraph's mark, set in the icon cell's style at 10.5pt, reached below the icon, so each row

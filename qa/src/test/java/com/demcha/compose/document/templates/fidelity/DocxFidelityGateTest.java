@@ -195,6 +195,34 @@ class DocxFidelityGateTest {
     }
 
     @Test
+    void aLineStandsWhereItsFirstLetterDoesNotWhereASpaceBeforeItDoes() throws Exception {
+        // An empty paragraph's space, drawn just before a label 4pt lower beside it.
+        Path page = Files.createTempFile("first-letter", ".pdf");
+        try (org.apache.pdfbox.pdmodel.PDDocument document = new org.apache.pdfbox.pdmodel.PDDocument()) {
+            org.apache.pdfbox.pdmodel.PDPage sheet = new org.apache.pdfbox.pdmodel.PDPage();
+            document.addPage(sheet);
+            var font = new org.apache.pdfbox.pdmodel.font.PDType1Font(
+                    org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName.HELVETICA);
+            try (var content = new org.apache.pdfbox.pdmodel.PDPageContentStream(document, sheet)) {
+                content.beginText();
+                content.setFont(font, 10);
+                content.newLineAtOffset(50, 700);
+                content.showText(" ");
+                content.newLineAtOffset(2, -4);
+                content.showText("Label");
+                content.endText();
+            }
+            document.save(page.toFile());
+        }
+        double height = 792;
+
+        PdfLines.Line line = PdfLines.of(page).lines().get(0);
+        assertThat(line.key()).isEqualTo("label");
+        assertThat(line.baseline()).isCloseTo(height - 696, org.assertj.core.data.Offset.offset(0.01));
+        assertThat(line.x()).isCloseTo(52, org.assertj.core.data.Offset.offset(0.01));
+    }
+
+    @Test
     void twoColumnsOnOneBaselineAreTwoLines() throws Exception {
         Path page = pdf("columns", flow -> flow.addRow("Row", row -> row
                 .columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(180),

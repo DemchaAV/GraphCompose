@@ -276,6 +276,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The page the node being written starts on, as the layout placed it, counted within the
     // section being written.
     private int currentPage;
+
+    /** The page the last block written in the flow ended on, -1 before the first. */
+    private int lastEndPage = -1;
     private int sectionIndex;
     // Where the section being written starts among the body's elements.
     private int sectionFirstElement;
@@ -655,6 +658,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         nextDrawingId = 100_000;
         anchors.reset();
         currentPage = 0;
+        lastEndPage = -1;
         clipContainer = null;
         cellDrawing = CellDrawing.NONE;
         tableDrawings = null;
@@ -777,6 +781,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pendingItemSpacing = 0;
         anItemWasWritten = false;
         forgetTheHang();
+        // The layout counts a section's pages from its own first.
+        lastEndPage = -1;
         lastBodyParagraph = null;
         lastWrittenNode = null;
         lastWrittenParagraph = null;
@@ -1662,6 +1668,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (placed != null) {
             currentPage = placed.startPage();
         }
+        boolean inTheBody = currentCell == null;
+        try {
+            writePlacedNode(document, node);
+        } finally {
+            if (placed != null && inTheBody) {
+                lastEndPage = Math.max(lastEndPage, placed.endPage());
+            }
+        }
+    }
+
+    private void writePlacedNode(XWPFDocument document, DocumentNode node) throws Exception {
         boolean keepTogether = node.keepTogether() && layout.onOnePage(node);
         boolean keepWithNext = node.keepWithNext() && layout.onOnePage(node);
         String anchor = blockAnchorOf(node, inTheFlow(node, overlayDepth, oneLayerDepth));
@@ -7242,7 +7259,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeTableWithItsOwnSpacing(XWPFDocument document, DocumentNode node)
             throws Exception {
+        // The layout starts a block it moves to a new page at the block's own top edge: what
+        // the page above holds below its last block, and the gap between the two, stay there.
+        boolean onANewPage = currentCell == null && startsAPageOfItsOwn(node);
+        if (onANewPage) {
+            flushSpacingAfter();
+            // A border or a line hanging below the last block stands on the page above, as a
+            // page break leaves it (writePageBreak).
+            borderBelow = 0;
+            forgetTheHang();
+        }
         owePendingSpacingAfter(node.margin().top() + node.padding().top());
+        if (onANewPage) {
+            holdTheSpaceAboveOnItsPage(document);
+        }
         if (node instanceof RowNode && currentCell != null && !tablesCells.contains(currentCell.getCTTc())) {
             // At the top of a cell nothing above holds that space: MerchantInvoice's due-date
             // row lost its 16.7pt of top padding and stood against the card's top edge, once the
@@ -9945,6 +9975,46 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!properties.isSetKeepNext()) {
             properties.addNewKeepNext();
         }
+    }
+
+    /**
+     * Whether the layout starts a block on a page after the one the block before it ended on:
+     * the page broke between them, and the block's space above went with it.
+     */
+    private boolean startsAPageOfItsOwn(DocumentNode node) {
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(node);
+        return placed != null && lastEndPage >= 0 && placed.startPage() > lastEndPage;
+    }
+
+    /**
+     * Holds the space owed above a table the layout starts on a new page, on that page.
+     *
+     * <p>The page keeps a block's space above it where a page break moves the block down: the
+     * closing pair of the long {@code LumaStudioInvoice} starts its third page 12pt below the
+     * margin. Word has no space above a table, so the space was written below the paragraph
+     * before it, at the foot of the page above, and the pair stood 12pt high. A paragraph's
+     * space above at the top of a page Word drops too, measured; the height of a line it keeps.
+     * So the space is the height of a line of its own, kept with the table.</p>
+     */
+    private void holdTheSpaceAboveOnItsPage(XWPFDocument document) {
+        if (!(carriedSpacingBefore + pendingSpacingAfter - borderBelow - pullBelow > 0.01)) {
+            return;
+        }
+        XWPFParagraph spacer = newBodyParagraph(document);
+        CTPPr properties = spacer.getCTP().isSetPPr() ? spacer.getCTP().getPPr() : spacer.getCTP().addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        long held = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null);
+        spacing.setBefore(BigInteger.ZERO);
+        spacing.setLineRule(STLineSpacingRule.EXACT);
+        spacing.setLine(BigInteger.valueOf(Math.max(1, held)));
+        if (!properties.isSetKeepNext()) {
+            properties.addNewKeepNext();
+        }
+        // The mark of a line this tall in the document's size would not grow it; a point keeps
+        // it from standing out of the line in an editor that measures the mark.
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTParaRPr mark =
+                properties.isSetRPr() ? properties.getRPr() : properties.addNewRPr();
+        (mark.sizeOfSzArray() > 0 ? mark.getSzArray(0) : mark.addNewSz()).setVal(BigInteger.valueOf(ONE_POINT_IN_HALF_POINTS));
     }
 
     /** Makes a paragraph that holds no text as short as a separator between tables. */

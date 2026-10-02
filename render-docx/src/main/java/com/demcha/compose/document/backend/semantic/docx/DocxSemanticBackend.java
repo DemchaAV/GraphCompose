@@ -5376,8 +5376,44 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyLineHeight(target, stacked != null ? java.util.OptionalDouble.of(stacked.height()) : layout.lineHeight(source));
         applyVerticalSpacing(target, source);
         applyLineGap(target, layout.lineGap(source), layout.lineCount(source));
+        if (stacked == null) {
+            oweWhatTheLinesFallShort(target, source);
+        }
         return rightToLeft;
     }
+
+    /**
+     * Owes below a paragraph what its lines are shorter in Word than on the page.
+     *
+     * <p>Word sets a paragraph's lines one height apart, and the page sets each line its own
+     * height. Where they differ the written height is the page's distance between lines
+     * ({@code DocxLayoutMetrics.lineHeight}), and the paragraph comes out short by what its
+     * first line's top and its last line's foot hold beyond that: {@code EditorialProposal}'s
+     * terms, whose wrapped lines carry a taller prefix than their first, stood 0.6pt higher
+     * with every item. Only a paragraph written at a height other than its tallest laid-out
+     * line is made up to the page; one written at its tallest line, to keep its letters whole,
+     * comes out no shorter than the page and keeps that height.</p>
+     */
+    private void oweWhatTheLinesFallShort(XWPFParagraph target, ParagraphNode source) {
+        java.util.OptionalDouble page = layout.linesHeight(source);
+        CTPPr properties = target.getCTP().getPPr();
+        if (page.isEmpty() || properties == null || !hasAnExactLine(target) || !layout.lineIsNotTheTallest(source)) {
+            return;
+        }
+        Long line = writtenTwips(properties.getSpacing().getLine());
+        if (line == null) {
+            return;
+        }
+        double written = layout.lineCount(source) * (line / POINT_TO_TWIP)
+                         - lineTopsTakenIn.getOrDefault(target.getCTP(), 0.0);
+        double shortBy = page.getAsDouble() - written;
+        if (shortBy > LINES_SHORT_TOLERANCE) {
+            owePendingSpacingAfter(shortBy);
+        }
+    }
+
+    /** What a paragraph's lines may fall short of the page by, twips rounding, before it is owed. */
+    private static final double LINES_SHORT_TOLERANCE = 0.1;
 
     /**
      * Sets a paragraph's mark in its text's size and face, where the editor may grow the line.

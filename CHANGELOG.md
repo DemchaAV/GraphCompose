@@ -8,6 +8,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A paragraph's `bulletOffset` indents its lines in DOCX as it does on the page.**
+  The prefix was not written, so `EditorialProposal`'s bullets, whose wrapped lines the page
+  sets after three spaces, started those lines under the dot in Word, 11.6pt left of the
+  page's. A prefix of spaces is now the paragraph's indent — left and hanging for
+  `FROM_SECOND_LINE`, first line for `FIRST_LINE`, left for `ALL_LINES` — measured in the
+  paragraph's style. A prefix with letters in it is still not written, but its wrapped lines
+  start after the spaces the page covers it with. In Word the wrapped lines start within 0.1pt of the page's, and
+  `EditorialProposal` finds 130 of its 132 lines where it found 128.
 - **A row's fixed columns keep their widths in DOCX when they add up to less than the row.**
   The last column ran to the row's edge: `EditorialProposal`'s deliverables, a 194pt column in a
   535pt band, came out 272pt wide, and Word set "Responsive design for desktop, tablet & mobile"

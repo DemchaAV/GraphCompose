@@ -1090,6 +1090,32 @@ final class DocxLayoutMetrics {
                 parent.placementX() + parent.placementWidth() - parent.padding().right()};
     }
 
+    /**
+     * Whether the layout placed something after a node in the same parent — a block under it
+     * in a section.
+     *
+     * @param node a placed node
+     * @return true when a later sibling was placed
+     */
+    boolean followedInItsParent(DocumentNode node) {
+        PlacedNode box = placedFor(node);
+        if (box == null || box.parentPath() == null) {
+            return false;
+        }
+        if (lastChildIndex == null) {
+            lastChildIndex = new HashMap<>();
+            for (PlacedNode other : placed.values()) {
+                if (other.parentPath() != null) {
+                    lastChildIndex.merge(other.parentPath(), other.childIndex(), Math::max);
+                }
+            }
+        }
+        return lastChildIndex.getOrDefault(box.parentPath(), -1) > box.childIndex();
+    }
+
+    /** The highest child index the layout placed under each parent path, built when first asked. */
+    private Map<String, Integer> lastChildIndex;
+
     /** The placed node for a semantic node, or null when this index knows neither. */
     private PlacedNode placedFor(DocumentNode node) {
         String path = paths.get(node);

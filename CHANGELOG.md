@@ -10,11 +10,12 @@ follow semantic versioning; release dates are ISO 8601.
 
 - **`SlateOrange`'s sidebar stands where the page sets it in Word.** Each skill is a row with a
   12.4pt icon on a line of its own, no text in it, and Word sizes that line itself. The
-  paragraph's mark, set in the text's 10.5pt, reached below the icon, so each row came out
-  0.2pt taller and the tenth 2.3pt low, with the sidebar under them. Where its pictures fill
-  the page's line, a line of pictures alone now has its mark and its pictures' runs set at a
-  point; a smaller picture, in a line the page sets at its font's height, keeps the mark as it
-  was. In Word, lines more than 2pt off fall from 36 to 9, and the p90 drift from 4.99pt to
+  paragraph's mark, set in the icon cell's style at 10.5pt, reached below the icon, so each row
+  came out 0.2pt taller and the tenth 2.5pt low, with the sidebar under them. Where its
+  pictures fill the page's line, a line of pictures alone now has its mark and its pictures'
+  runs set at a point; a smaller picture, in a line the page sets at its font's height, keeps
+  the mark as it was, and so does a line holding a letter, a break, a tab, a field or a link's
+  text. In Word, lines more than 2pt off fall from 36 to 9, and the p90 drift from 4.99pt to
   3.46. LibreOffice is unchanged.
 
 - **`CobaltRota` stands where the page sets it in Word and LibreOffice.** Its header opens and

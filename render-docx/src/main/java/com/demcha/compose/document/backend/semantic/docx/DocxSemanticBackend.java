@@ -181,6 +181,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * points (see {@link #letThePicturesSetTheLine}).
      */
     private static final double PICTURE_FILLS_ITS_LINE = 0.5;
+
+    /** A one-point font size, as Word writes sizes: in half points. */
+    private static final long ONE_POINT_IN_HALF_POINTS = 2;
     private static final double POINT_TO_TWIP = 20.0;
     /** The least difference between Word's baseline and the page's that is moved: one half point. */
     private static final double LEAST_BASELINE_SHIFT_POINTS = 0.5;
@@ -5052,7 +5055,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return seatFonts;
     }
 
-    /** The height the layout gives a line set in a style, in points; 0 for no style. */
+    /**
+     * The height the layout gives a line set in a style, in points; 0 for no style, and for a
+     * face the measured fonts do not hold — an export whose layout failed is written without
+     * one, and measuring here must not fail it in its stead.
+     */
     private double styleLineHeight(DocumentTextStyle style) {
         if (style == null) {
             return 0;
@@ -5062,7 +5069,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     new com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem(
                             measuredFonts(), com.demcha.compose.engine.render.pdf.PdfFont.class));
         }
-        return styleMetrics.lineHeight(style);
+        try {
+            return styleMetrics.lineHeight(style);
+        } catch (RuntimeException unknownFace) {
+            return 0;
+        }
     }
 
     /**
@@ -5556,7 +5567,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             heldAbove = 0;
         }
         styleTheMark(para, markStyle);
-        // A paragraph composed in a table cell has no lines laid out: its line is its style's.
+        // A paragraph the layout laid out none of — composed in a table cell, a page zone's, or
+        // one of an export without a layout — has its style's line.
         double pageLine = pictures.pageLine() > 0 ? pictures.pageLine()
                 : pictures.pageLine() == 0 ? styleLineHeight(node.textStyle()) : 0;
         if (pageLine > 0 && pictures.reach() >= pageLine - PICTURE_FILLS_ITS_LINE) {
@@ -5568,13 +5580,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Lets a line of pictures and no text be as tall as its pictures, where Word sizes the line.
      *
-     * <p>A line Word sizes itself — no exact or least height written, as one holding only a
-     * picture is, since held exact its picture would stand where Word's baseline puts it and
-     * be cut — is its tallest run's height, and the paragraph's mark is a run: its font's depth
-     * below the baseline went under the picture. {@code SlateOrange}'s skills, a 12.4pt icon
-     * beside each label, came out 0.2pt taller each in Word, its tenth 2.3pt low and the column
-     * under them with it. The mark and the picture runs are set at a point, whose depth is a
-     * fraction of one.</p>
+     * <p>A line Word sizes itself — no exact or least height written, as a paragraph the layout
+     * laid out no line of is written — is its tallest run's height, and the paragraph's mark is
+     * a run: its font's depth below the baseline went under the picture. {@code SlateOrange}'s
+     * skills, a 12.4pt icon in a cell of its own beside each label, came out 0.2pt taller each in
+     * Word, its tenth 2.5pt low and the column under them with it. The mark and the picture runs
+     * are set at a point, whose depth is a fraction of one. A paragraph holding anything else —
+     * a letter, a break, a tab, a field, a link's text — keeps its sizes.</p>
      *
      * <p>Only where the pictures fill the page's line ({@link #PICTURE_FILLS_ITS_LINE}): there
      * the line is the pictures' height on the page too. A smaller picture stands in a line the
@@ -5583,7 +5595,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static void letThePicturesSetTheLine(XWPFParagraph para) {
         CTPPr properties = para.getCTP().getPPr();
-        if (!para.getText().isEmpty()
+        if (!holdsOnlyPictures(para)
             || properties != null && properties.isSetSpacing() && properties.getSpacing().isSetLineRule()
                && properties.getSpacing().getLineRule() != STLineSpacingRule.AUTO) {
             return;
@@ -5593,14 +5605,39 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         org.openxmlformats.schemas.wordprocessingml.x2006.main.CTParaRPr mark =
                 properties.isSetRPr() ? properties.getRPr() : properties.addNewRPr();
-        BigInteger point = BigInteger.valueOf(Math.round(HALF_POINTS_PER_POINT));
+        BigInteger point = BigInteger.valueOf(ONE_POINT_IN_HALF_POINTS);
         (mark.sizeOfSzArray() > 0 ? mark.getSzArray(0) : mark.addNewSz()).setVal(point);
         (mark.sizeOfSzCsArray() > 0 ? mark.getSzCsArray(0) : mark.addNewSzCs()).setVal(point);
         for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run : runsIn(para)) {
-            CTRPr runProperties = run.isSetRPr() ? run.getRPr() : run.addNewRPr();
-            (runProperties.sizeOfSzArray() > 0 ? runProperties.getSzArray(0) : runProperties.addNewSz()).setVal(point);
-            (runProperties.sizeOfSzCsArray() > 0 ? runProperties.getSzCsArray(0) : runProperties.addNewSzCs()).setVal(point);
+            CTRPr size = run.isSetRPr() ? run.getRPr() : run.addNewRPr();
+            (size.sizeOfSzArray() > 0 ? size.getSzArray(0) : size.addNewSz()).setVal(point);
+            (size.sizeOfSzCsArray() > 0 ? size.getSzCsArray(0) : size.addNewSzCs()).setVal(point);
         }
+    }
+
+    /**
+     * Whether a paragraph's runs, a link's included, hold pictures and nothing else: no
+     * letter, break, tab, symbol or field. An internal link's runs are not among the
+     * paragraph's own, so its text is not in {@link XWPFParagraph#getText()}.
+     */
+    private static boolean holdsOnlyPictures(XWPFParagraph para) {
+        if (para.getCTP().sizeOfFldSimpleArray() > 0) {
+            return false;
+        }
+        boolean picture = false;
+        for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run : runsIn(para)) {
+            if (run.sizeOfBrArray() > 0 || run.sizeOfTabArray() > 0 || run.sizeOfSymArray() > 0
+                || run.sizeOfFldCharArray() > 0 || run.sizeOfInstrTextArray() > 0) {
+                return false;
+            }
+            for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText text : run.getTArray()) {
+                if (text.getStringValue() != null && !text.getStringValue().isEmpty()) {
+                    return false;
+                }
+            }
+            picture |= run.sizeOfDrawingArray() > 0 || run.sizeOfPictArray() > 0;
+        }
+        return picture;
     }
 
     /** Whether a paragraph laid out a line holding text, which its seat is read from. */

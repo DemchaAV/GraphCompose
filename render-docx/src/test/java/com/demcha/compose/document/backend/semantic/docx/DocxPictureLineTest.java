@@ -2,12 +2,15 @@ package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.node.InlineImageAlignment;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
+import com.demcha.compose.font.FontName;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
@@ -21,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Word sizes such a line itself, and the paragraph's mark is a run in it: the mark's font
  * reached below the picture. {@code SlateOrange}'s skills, an icon beside each label, came out
- * 0.2pt taller each, and the tenth 2.3pt low.</p>
+ * 0.2pt taller each, and the tenth 2.5pt low.</p>
  */
 class DocxPictureLineTest {
 
@@ -47,6 +50,40 @@ class DocxPictureLineTest {
         XWPFParagraph dot = iconCell(4, 12);
 
         assertThat(markSize(dot)).isNotEqualTo(ONE_POINT);
+    }
+
+    @Test
+    void anIconBesideALinksTextKeepsTheTextsSize() throws Exception {
+        // Written with no layout, the line is Word's to size. An internal link's runs are not the
+        // paragraph's own, and its text is still text.
+        try (XWPFDocument document = DocxExports.withoutLayout(400, 300, 20, page -> page
+                .addParagraph(p -> p.lineSpacing(0)
+                        .textStyle(DocumentTextStyle.DEFAULT.withSize(10))
+                        .inlineSvgIcon(ICON, 12, InlineImageAlignment.CENTER)
+                        .inlineLinkTo("Projects", "projects"))
+                .addParagraph(p -> p.text("Projects").anchor("projects")))) {
+            XWPFParagraph paragraph = document.getParagraphs().get(0);
+            var link = paragraph.getCTP().getHyperlinkArray(0).getRArray(0);
+
+            assertThat(link.getTArray(0).getStringValue()).isEqualTo("Projects");
+            assertThat(link.isSetRPr() && link.getRPr().sizeOfSzArray() > 0
+                       && DocxTwips.of(link.getRPr().getSzArray(0).getVal()) == ONE_POINT)
+                    .as("the link's text is not set at a point").isFalse();
+            assertThat(markSize(paragraph)).isNotEqualTo(ONE_POINT);
+        }
+    }
+
+    @Test
+    void aLineOfPicturesInAFaceNoFontHoldsStillExports() throws Exception {
+        // No layout and no measured fonts: the line's height is not known, and the export goes on.
+        DocumentTextStyle unknown = new DocumentTextStyle(FontName.of("NoSuchFace"), 10,
+                DocumentTextDecoration.DEFAULT, DocumentColor.rgb(0, 0, 0));
+        try (XWPFDocument document = DocxExports.withoutLayout(400, 300, 20, page -> page
+                .addParagraph(p -> p.lineSpacing(0)
+                        .textStyle(unknown)
+                        .inlineSvgIcon(ICON, 12, InlineImageAlignment.CENTER)))) {
+            assertThat(document.getParagraphs()).isNotEmpty();
+        }
     }
 
     private static long markSize(XWPFParagraph paragraph) {

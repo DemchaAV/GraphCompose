@@ -621,6 +621,33 @@ final class DocxLayoutMetrics {
         return OptionalDouble.of(height);
     }
 
+    /**
+     * The page's mean distance between the baselines of a node's lines, the gap included, over
+     * each two neighbouring lines as tall as their text. Empty when the lines are not on one
+     * fragment, or no two neighbours are.
+     *
+     * @param node any node that lays its text out as paragraph lines
+     * @return the distance in points, or empty
+     */
+    OptionalDouble linePitch(DocumentNode node) {
+        List<PlacedFragment> fragments = textFragmentsOf(node);
+        if (fragments.size() != 1 || !(fragments.get(0).payload() instanceof ParagraphFragmentPayload paragraph)) {
+            return OptionalDouble.empty();
+        }
+        double pitches = 0;
+        int pairs = 0;
+        ParagraphLine above = null;
+        for (ParagraphLine line : paragraph.lines()) {
+            if (above != null && setByText(above) && setByText(line)) {
+                pitches += above.baselineOffsetFromBottom() + Math.max(0, paragraph.lineGap())
+                           + line.lineHeight() - line.baselineOffsetFromBottom();
+                pairs++;
+            }
+            above = line;
+        }
+        return pairs == 0 ? OptionalDouble.empty() : OptionalDouble.of(pitches / pairs);
+    }
+
     /** Whether a line is as tall as its text, nothing inline making it taller. */
     private static boolean setByText(ParagraphLine line) {
         return Math.abs(line.lineHeight() - line.textLineHeight()) < 0.01;

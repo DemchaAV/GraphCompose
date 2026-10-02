@@ -254,6 +254,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // lines took the space between them from the space above it: see applyLineGap.
     private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP, Double> lineTopsTakenIn =
             new java.util.IdentityHashMap<>();
+    // Table cells whose top padding a paragraph opening them may take its line gap from: see
+    // takeFromTheTopOfItsCell.
+    private final java.util.Set<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTc> cellsGivingTheirPadding =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // Icons drawn beside the text they label rather than written: see drawnBesideItsText.
     private final java.util.Set<ImageNode> picturesDrawnBeside =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -661,6 +665,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         writingInAStandIn.clear();
         stackedLineHeights.clear();
         lineTopsTakenIn.clear();
+        cellsGivingTheirPadding.clear();
         risenLines.clear();
         tablesCells.clear();
         picturesDrawnBeside.clear();
@@ -5375,7 +5380,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         DocxStackedLines.Line stacked = stackedLineHeights.get(source);
         applyLineHeight(target, stacked != null ? java.util.OptionalDouble.of(stacked.height()) : layout.lineHeight(source));
         applyVerticalSpacing(target, source);
-        applyLineGap(target, layout.lineGap(source), layout.lineCount(source));
+        applyLineGap(target, layout.lineGap(source), layout.lineCount(source), layout.linePitch(source));
         if (stacked == null) {
             oweWhatTheLinesFallShort(target, source);
         }
@@ -5484,9 +5489,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * editor puts most of an exact line's spare height above its text (measured in
      * LibreOffice: 8pt of 10 above), so taking it from above keeps the first line nearly
      * where the page sets it; the line then starts that much above the page's, and the text
-     * is seated from there (see {@link #shiftToThePagesBaseline}). Where the space above is
-     * less than a gap — a paragraph opening
-     * a cell, or right under the block before it — what it cannot give is not put into the
+     * is seated from there (see {@link #shiftToThePagesBaseline}). A paragraph opening a cell
+     * takes what the space above cannot give from the cell's top padding
+     * ({@link #takeFromTheTopOfItsCell}). Where the two are less than a gap — right under the
+     * block before it, or in a cell padded less — what they cannot give is not put into the
      * lines at all: the {@code n - 1} gaps are shared out over {@code n} lines, so the
      * paragraph is as tall as on the page, its lines a little closer than there.</p>
      *
@@ -5495,6 +5501,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param lines  how many lines the page set it on
      */
     private void applyLineGap(XWPFParagraph target, double gap, int lines) {
+        applyLineGap(target, gap, lines, java.util.OptionalDouble.empty());
+    }
+
+    /**
+     * {@link #applyLineGap(XWPFParagraph, double, int)}, knowing the page's mean distance
+     * between the lines' baselines: a paragraph opening a cell takes from the cell's padding
+     * only what steps its lines that far apart.
+     */
+    private void applyLineGap(XWPFParagraph target, double gap, int lines, java.util.OptionalDouble pitch) {
         if (!(gap > 0) || lines < 2) {
             return;
         }
@@ -5515,11 +5530,87 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         long taken = Math.min(before, twips);
         if (taken > 0) {
             spacing.setBefore(BigInteger.valueOf(before - taken));
+        }
+        // The cell's padding gives no more than steps the lines the page's distance apart: n lines
+        // of (line + extra) are that distance apart where extra = pitch - line. Lines of
+        // different heights can stand closer than their tallest and the gap.
+        if (pitch.isPresent()) {
+            long stepped = Math.round(lines * (pitch.getAsDouble() * POINT_TO_TWIP - line)
+                                      - (lines - 1) * (double) twips) - taken;
+            taken += takeFromTheTopOfItsCell(target, Math.min(twips - taken, stepped));
+        }
+        if (taken > 0) {
             lineTopsTakenIn.put(target.getCTP(), taken / POINT_TO_TWIP);
         }
         // n lines of (line + extra), less what came off above, are n lines and n - 1 gaps.
         long extra = Math.round(((lines - 1) * (double) twips + taken) / lines);
         spacing.setLine(BigInteger.valueOf(line + extra));
+    }
+
+    /**
+     * Whether every cell of a table row can have its top margin evened down to the row's
+     * smallest ({@link #evenTheRowsMargins}): none is merged down over rows, and none opens with
+     * a table, which has no paragraph above it to hold the padding.
+     *
+     * <p>Word gives every cell of a row the row's largest top margin. Where one stays as it is,
+     * a cell whose paragraph took the gap from its padding would be set at that margin
+     * whatever its own says: the padding would come back, and the line grown for it stand that
+     * much low. Such a row is written as before.</p>
+     */
+    private static boolean everyMarginEvens(List<TableGrid.Placement> row) {
+        for (TableGrid.Placement placement : row) {
+            if (placement.rowSpan() > 1 || opensWithATable(placement.cell().content())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Whether writing a node writes a table first: the node is one, or its first child does. */
+    private static boolean opensWithATable(DocumentNode node) {
+        for (DocumentNode current = node; current != null;
+             current = current.children().isEmpty() ? null : current.children().get(0)) {
+            if (current instanceof TableNode) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Takes up to {@code twips} off the top padding of the cell a paragraph opens, for the gap
+     * its first line is given above it.
+     *
+     * <p>The cell's padding is space above the paragraph as much as the paragraph's own: the
+     * row is as tall as the padding and the lines together, and the line starts that much
+     * higher in it. {@code EditorialProposal}'s timeline describes each phase in a cell of two
+     * lines 13.85pt apart on the page; with nothing above the paragraph to take the gap from,
+     * Word set them 12.35pt apart, the first 1.85pt low and the second 0.36pt.</p>
+     *
+     * <p>Only a table's cell gives its padding, in a row whose margins all even
+     * ({@link #everyMarginEvens}). A panel's cell keeps its: its margin is the padding less half
+     * its border, and Word sets the content no nearer the border than the border's width.</p>
+     *
+     * @return the twips taken, 0 when the paragraph does not open a padded cell
+     */
+    private long takeFromTheTopOfItsCell(XWPFParagraph target, long twips) {
+        if (twips <= 0 || currentCell == null || !cellsGivingTheirPadding.contains(currentCell.getCTTc())
+            || currentCell.getBodyElements().isEmpty()
+            || !(currentCell.getBodyElements().get(0) instanceof XWPFParagraph first)
+            || first.getCTP() != target.getCTP()) {
+            return 0;
+        }
+        CTTcPr cellProperties = currentCell.getCTTc().isSetTcPr() ? currentCell.getCTTc().getTcPr() : null;
+        if (cellProperties == null || !cellProperties.isSetTcMar() || !cellProperties.getTcMar().isSetTop()) {
+            return 0;
+        }
+        var top = cellProperties.getTcMar().getTop();
+        long padding = twipsOf(top.getW());
+        long taken = Math.min(padding, twips);
+        if (taken > 0) {
+            top.setW(BigInteger.valueOf(padding - taken));
+        }
+        return Math.max(0, taken);
     }
 
     /**
@@ -7761,6 +7852,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             while (row.getTableCells().size() < physical.size()) {
                 row.createCell();
             }
+            boolean marginsEven = everyMarginEvens(physical);
             for (int i = 0; i < physical.size(); i++) {
                 TableGrid.Placement placement = physical.get(i);
                 XWPFTableCell cell = row.getCell(i);
@@ -7780,6 +7872,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     continue;
                 }
                 cell.removeParagraph(0);
+                if (marginsEven) {
+                    cellsGivingTheirPadding.add(cell.getCTTc());
+                }
                 // What the cell holds sits on the cell's fill — a stripe, not the card around
                 // the table — wherever it has no shading of its own.
                 DocumentColor outerSurface = surfaceBehind;

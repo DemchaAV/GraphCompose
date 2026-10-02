@@ -18,17 +18,17 @@ follow semantic versioning; release dates are ISO 8601.
     written in the meter's cell. The paragraph a cell must end with was a line of the document's
     font, and each row stood 2.1pt taller than the page's. A cell left with nothing in it now
     holds a hairline.
-  - Each language's five dots are inline shapes, written as pictures a quarter point wider than
-    their boxes on either side, so each pushed the next 0.5pt further along: the fifth broke onto
-    a second line, each language row 9.7pt taller. The text before a shape is now set closer by
-    the room its picture takes on the left and the text after it by the room on the right, so
-    each dot stands where the page puts it. The page draws half the last ring's stroke past its
-    cell, where Word cuts a cell's content; a row's last cell is widened by as far as the shape
-    ending its line reaches past it.
+  - Each language's five dots are inline shapes, written as pictures wider than their boxes on
+    either side — a quarter point, and a ring's half stroke more — so each pushed the next 0.5pt
+    or more further along: the fifth broke onto a second line, each language row 9.7pt taller.
+    The text beside a shape now gives that room back, its letters set closer in whole tenths of
+    a point, and each dot's picture stands where the page puts its box. The page draws half the
+    last ring's stroke past its cell, where Word cuts a cell's content; a row's last cell is
+    widened by as far as the line ending in a shape reaches past it.
 
   In Word, lines more than 2pt off fall from 30 to 0, and the p90 drift from 19.86pt to 0.58.
   `CharcoalGold` finds 83 of its 85 lines in Word where it found 77. In LibreOffice the p90 falls
-  from 17.11pt to 3.25; two skills, which the rows' growth had carried onto the page's line,
+  from 17.11pt to 3.24; two skills, which the rows' growth had carried onto the page's line,
   now stand at the 2.7pt every line of the sheet stands at there.
 
 - **`SlateOrange`'s sidebar stands where the page sets it in Word.** Each skill is a row with a

@@ -52,16 +52,42 @@ class DocxInlinePictureTest {
                 .dot(6, black).inlineText("    ")
                 .dot(6, black)
                 .inlineText(" done")))) {
-            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
-
-            assertThat(runs.get(0).getCharacterSpacing()).as("a quarter point over six letters, in twips")
-                    .isEqualTo((int) Math.round(-DocxShapePictures.EDGE * 20 / 6));
-            assertThat(runs.get(2).text()).isEqualTo("    ");
-            assertThat(runs.get(2).getCharacterSpacing()).as("half a point over four spaces")
-                    .isEqualTo((int) Math.round(-2 * DocxShapePictures.EDGE * 20 / 4));
-            assertThat(runs.get(4).getCharacterSpacing()).as("a quarter point over five letters")
-                    .isEqualTo((int) Math.round(-DocxShapePictures.EDGE * 20 / 5));
+            // Spread over the letters in whole tenths: half a point over four spaces is a tenth a
+            // letter, a quarter over five letters a tenth, and over six letters less than one.
+            assertThat(lettersAndSpacing(document.getParagraphs().get(0)))
+                    .as("each run's room given back by its letters")
+                    .containsExactly("Level :0", "[picture]", "    :-2", "[picture]", " done:-2");
         }
+    }
+
+    @Test
+    void aLineBreakAfterADotKeepsItsLetters() throws Exception {
+        com.demcha.compose.document.style.DocumentColor black = com.demcha.compose.document.style.DocumentColor.rgb(0, 0, 0);
+        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
+                .dot(6, black).inlineText(" one\ntwo")))) {
+            assertThat(lettersAndSpacing(document.getParagraphs().get(0)))
+                    .as("its letters stand on two lines; none is set closer")
+                    .allMatch(piece -> piece.equals("[picture]") || piece.endsWith(":0"));
+        }
+    }
+
+    /** Each run of a paragraph as its letters and its character spacing in twips, a picture as such. */
+    private static List<String> lettersAndSpacing(XWPFParagraph paragraph) {
+        List<String> pieces = new java.util.ArrayList<>();
+        for (var run : paragraph.getCTP().getRList()) {
+            if (run.sizeOfDrawingArray() > 0) {
+                pieces.add("[picture]");
+                continue;
+            }
+            StringBuilder letters = new StringBuilder();
+            for (var text : run.getTArray()) {
+                letters.append(text.getStringValue());
+            }
+            long spacing = run.isSetRPr() && run.getRPr().sizeOfSpacingArray() > 0
+                    ? DocxTwips.of(run.getRPr().getSpacingArray(0).getVal()) : 0;
+            pieces.add(letters + ":" + spacing);
+        }
+        return pieces;
     }
 
     @Test
@@ -72,16 +98,18 @@ class DocxInlinePictureTest {
         com.demcha.compose.document.style.DocumentStroke ring =
                 com.demcha.compose.document.style.DocumentStroke.of(com.demcha.compose.document.style.DocumentColor.rgb(0, 0, 0), 0.8);
         assertThat(lastColumnTwips(30.2, p -> {
-            for (int dot = 0; dot < 4; dot++) {
+            for (int dot = 0; dot < 5; dot++) {
                 p.dot(6, white, ring);
             }
+        })).as("five rings against each other, none of their edges given back: each a point wider")
+                .isGreaterThan(Math.round(30.2 * 20) + 5 * 20);
+        assertThat(lastColumnTwips(60, p -> {
             p.dot(6, white, ring);
-        })).as("a ring at the cell's edge").isGreaterThan(Math.round(30.2 * 20));
-        assertThat(lastColumnTwips(31, p -> {
-            for (int dot = 0; dot < 5; dot++) {
-                p.dot(6, white);
+            for (int dot = 1; dot < 5; dot++) {
+                p.inlineText(" ").dot(6, white, ring);
             }
-        })).as("dots inside the cell").isEqualTo(Math.round(31 * 20));
+        })).as("rings with room to spare, the spaces between them giving their edges back")
+                .isEqualTo(Math.round(60 * 20));
     }
 
     private static long lastColumnTwips(double column,

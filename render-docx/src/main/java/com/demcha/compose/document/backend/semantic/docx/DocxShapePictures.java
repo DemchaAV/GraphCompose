@@ -121,10 +121,7 @@ final class DocxShapePictures {
     static Picture of(InlineShapeRun run) {
         double width = run.width();
         double height = run.height();
-        Overhang ink = Overhang.NONE;
-        for (ShapeLayer layer : run.layers()) {
-            ink = ink.max(overhang(layer, width, height));
-        }
+        Overhang ink = inkOf(run);
         double left = ink.left() + EDGE;
         double right = ink.right() + EDGE;
         double top = ink.top() + EDGE;

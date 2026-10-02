@@ -222,21 +222,32 @@ class DocxOverlayBandTest {
                         .position(new ParagraphBuilder().name("Second").text("M")
                                 .textStyle(DocumentTextStyle.DEFAULT.withSize(24)).build(), 0, 13, LayerAlign.CENTER)
                         .build())
-                .addParagraph(p -> p.text("Below")));
+                .addParagraph(p -> p.name("Below").text("Below")));
         try (session; XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
                 session.export(new DocxSemanticBackend())))) {
-            PlacedNode ring = session.layoutGraph().nodes().stream()
-                    .filter(node -> "Ring".equals(node.semanticName())).findFirst().orElseThrow();
-            PlacedNode first = session.layoutGraph().nodes().stream()
-                    .filter(node -> "First".equals(node.semanticName())).findFirst().orElseThrow();
+            PlacedNode ring = placed(session, "Ring");
+            PlacedNode first = placed(session, "First");
+            PlacedNode second = placed(session, "Second");
+            PlacedNode next = placed(session, "Below");
             double above = (ring.placementY() + ring.placementHeight()) - (first.placementY() + first.placementHeight());
+            double below = second.placementY() - ring.placementY();
+            double gap = ring.placementY() - (next.placementY() + next.placementHeight());
             XWPFParagraph initial = document.getParagraphs().stream()
                     .filter(paragraph -> "A".equals(paragraph.getText())).findFirst().orElseThrow();
+            XWPFParagraph after = document.getParagraphs().stream()
+                    .filter(paragraph -> "Below".equals(paragraph.getText())).findFirst().orElseThrow();
 
             assertThat(above).as("the initials stand inside the ring").isGreaterThan(5);
             assertThat(before(initial)).as("written from where the ring sets the first initial")
                     .isCloseTo(Math.round(above * 20), org.assertj.core.data.Offset.offset(2L));
+            assertThat(before(after)).as("and the ring's foot as far under the last as the page has it")
+                    .isCloseTo(Math.round((below + gap) * 20), org.assertj.core.data.Offset.offset(2L));
         }
+    }
+
+    private static PlacedNode placed(DocumentSession session, String name) {
+        return session.layoutGraph().nodes().stream()
+                .filter(node -> name.equals(node.semanticName())).findFirst().orElseThrow();
     }
 
     @Test

@@ -7263,6 +7263,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // the page above holds below its last block, and the gap between the two, stay there.
         boolean onANewPage = currentCell == null && startsAPageOfItsOwn(node);
         if (onANewPage) {
+            // A band's resumed gap is the page above's too: made the one owed first, so it is
+            // written there rather than taken into the line below.
+            resumeHere();
             flushSpacingAfter();
             // A border or a line hanging below the last block stands on the page above, as a
             // page break leaves it (writePageBreak).

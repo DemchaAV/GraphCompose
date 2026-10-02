@@ -65,6 +65,31 @@ class DocxSpaceOnANewPageTest {
     }
 
     @Test
+    void aRowMovedToANewPageAfterATableHoldsItsTopEdgeBetweenThem() throws Exception {
+        // Seven rows fill the first page, and the row moves to the second (with five or six it
+        // stays on the first). Word joins two tables with nothing between them; the line holding
+        // the edge is what keeps them apart, on the row's page.
+        try (XWPFDocument document = DocxExports.withLayout(300, 200, 20, page -> {
+            page.spacing(GAP);
+            page.addTable(t -> {
+                t.name("Lines").autoColumns(2);
+                for (int i = 0; i < 7; i++) {
+                    t.row("Item " + i, "100.00");
+                }
+            });
+            page.addRow(row -> row.name("Closing").margin(new DocumentInsets(EDGE, 0, 0, 0))
+                    .addParagraph("Notes").addParagraph("Payment"));
+        })) {
+            XWPFTable closing = document.getTables().get(document.getTables().size() - 1);
+            XWPFParagraph spacer = paragraphBefore(document, closing);
+
+            assertThat(document.getTables()).hasSize(2);
+            assertThat(DocxTwips.of(spacer.getCTP().getPPr().getSpacing().getLine())).isEqualTo(Math.round(EDGE * 20));
+            assertThat(spacer.getCTP().getPPr().isSetKeepNext()).isTrue();
+        }
+    }
+
+    @Test
     void aRowOnThePageOfTheBlockBeforeItIsWrittenAsBefore() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(300, 600, 20, content(2))) {
             XWPFParagraph above = paragraphBefore(document, onlyTable(document));

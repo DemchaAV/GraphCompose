@@ -541,16 +541,33 @@ final class DocxLayoutMetrics {
         double style = 0;
         double pitches = 0;
         int pairs = 0;
-        // A line of its own keeps its laid-out height: a paragraph of one line is set at it where
-        // nothing would make up a shorter one (riseIntoItsLine, holdPicturesInTheLine).
-        boolean prefixed = withoutPrefix && lineCount(node) > 1 && node instanceof ParagraphNode paragraphNode
-                           && !paragraphNode.bulletOffset().isEmpty()
-                           && paragraphNode.indentStrategy() != com.demcha.compose.document.style.DocumentTextIndent.NONE;
+        double heights = 0;
+        int textLines = 0;
+        // Only lines on one fragment, of more than one line, are written other than at their
+        // tallest: what they then fall short of the page is owed below them (linesHeight), and a
+        // line of its own is set at its laid-out height where nothing would make up a shorter one
+        // (riseIntoItsLine, holdPicturesInTheLine).
+        boolean ownWay = textFragmentsOf(node).size() == 1 && lineCount(node) > 1;
+        // The layout sets the prefix before the lines its strategy names, and only there.
+        com.demcha.compose.document.style.DocumentTextIndent strategy =
+                withoutPrefix && ownWay && node instanceof ParagraphNode paragraphNode
+                && !paragraphNode.bulletOffset().isEmpty()
+                        ? paragraphNode.indentStrategy()
+                        : com.demcha.compose.document.style.DocumentTextIndent.NONE;
+        boolean firstPrefixed = strategy == com.demcha.compose.document.style.DocumentTextIndent.FIRST_LINE
+                                || strategy == com.demcha.compose.document.style.DocumentTextIndent.ALL_LINES;
+        boolean wrappedPrefixed = strategy == com.demcha.compose.document.style.DocumentTextIndent.FROM_SECOND_LINE
+                                  || strategy == com.demcha.compose.document.style.DocumentTextIndent.ALL_LINES;
         for (PlacedFragment fragment : textFragmentsOf(node)) {
             if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
                 ParagraphLine above = null;
                 for (ParagraphLine line : paragraph.lines()) {
+                    boolean prefixed = above == null ? firstPrefixed : wrappedPrefixed;
                     text = Math.max(text, prefixed ? writtenTextHeight(line) : line.textLineHeight());
+                    if (setByText(line)) {
+                        heights += line.lineHeight();
+                        textLines++;
+                    }
                     // A line a picture makes taller is made room for on its own (makeRoomForPictures).
                     if (above != null && setByText(above) && setByText(line)) {
                         pitches += above.baselineOffsetFromBottom() + Math.max(0, paragraph.lineGap())
@@ -568,9 +585,12 @@ final class DocxLayoutMetrics {
             // Word sets every line of a paragraph one height apart; the page sets each pair of
             // lines its own distance apart. Where those differ, the page's mean distance — less
             // the gap Word is given on top (applyLineGap) — keeps the first and last lines where
-            // the page has them, never below the tallest written line, which would clip it.
-            if (byPitch && pairs > 0) {
-                text = Math.max(text, pitches / pairs - Math.max(0, lineGap(node)));
+            // the page has them, never below the tallest written line, which would clip it. Nor
+            // above the lines' mean height: the paragraph would come out taller than the page,
+            // and a surplus cannot be owed back.
+            if (byPitch && ownWay && pairs > 0 && textLines > 0) {
+                double pitch = pitches / pairs - Math.max(0, lineGap(node));
+                text = Math.max(text, Math.min(pitch, heights / textLines));
             }
             return OptionalDouble.of(text);
         }

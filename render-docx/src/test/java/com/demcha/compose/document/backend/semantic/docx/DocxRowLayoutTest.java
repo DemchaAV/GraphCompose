@@ -149,6 +149,21 @@ class DocxRowLayoutTest {
     }
 
     @Test
+    void fixedColumnsNarrowerThanTheRowLeaveTheRestOfItEmpty() throws Exception {
+        // The last column wraps its text at its own width, laid out or not; the rest of the
+        // row is empty, and the table is no wider than its columns.
+        java.util.function.Consumer<PageFlowBuilder> row = page -> page.addRow(r -> r
+                .columns(DocumentRowColumn.fixed(100), DocumentRowColumn.fixed(80))
+                .addParagraph(p -> p.text("Label"))
+                .addParagraph(p -> p.text("Value")));
+
+        for (XWPFTable table : List.of(onlyTable(row), measuredTable(row))) {
+            assertThat(gridTwips(table)).containsExactly(2000L, 1600L);
+            assertThat(twips(table.getCTTbl().getTblPr().getTblW().getW())).isEqualTo(3600L);
+        }
+    }
+
+    @Test
     void theRowsPaddingRidesInTheOuterColumnsAndComesBackOutAsAMargin() throws Exception {
         // 12pt each side leaves 336 to halve. The padding is part of the table, which
         // spans the content width, so it lives in the first and last columns and is taken

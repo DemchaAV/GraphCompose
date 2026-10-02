@@ -8,6 +8,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A row's fixed columns keep their widths in DOCX when they add up to less than the row.**
+  The last column ran to the row's edge: `EditorialProposal`'s deliverables, a 194pt column in a
+  535pt band, came out 272pt wide, and Word set "Responsive design for desktop, tablet & mobile"
+  on one line where the page wraps it, and every item under it a line higher. The last column
+  now keeps its stated width, and the table is no wider than its columns. In Word,
+  `EditorialProposal` finds 128 of its 132 lines where it found 120, and those more than 2pt off
+  fall from 22 to 19; `PaymentsInvoice` finds 104 of 104, none past 2pt, where it found 100.
+
 - **`MidnightNavy`'s sidebar stands where the page sets it in Word.** Three causes, each its own:
   - Its monogram centres two initials in a 76pt ring, two layers of one shape container. Only a
     container of one layer was set in from its outline, so the initials were written from the

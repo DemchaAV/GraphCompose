@@ -8882,8 +8882,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // The layout placed each child, so every way a row can divide — the two that
             // measure their children included — is already answered.
             List<CellColumn> columns = new ArrayList<>(withRowEditorSlack(node, placedColumns(node, starts)));
+            holdTheLastFixedColumn(node, columns);
             double taken = takeHang(node, columns, hang);
-            setTableWidth(table, starts[0] - taken);
+            setTableWidth(table, Math.min(starts[0], widthOf(columns) + taken) - taken);
             writeRowColumns(table, columns);
             return new RowGeometry(true, taken);
         }
@@ -8899,9 +8900,42 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         List<CellColumn> columns = new ArrayList<>(statedColumns(node, slots));
         double taken = takeHang(node, columns, hang);
-        setTableWidth(table, available - taken);
+        setTableWidth(table, Math.min(available, widthOf(columns) + taken) - taken);
         writeRowColumns(table, columns);
         return new RowGeometry(false, taken);
+    }
+
+    /**
+     * Holds a row's last column to its fixed width, where the row states one, rather than to
+     * the row's edge.
+     *
+     * <p>Fixed columns that add up to less than the row leave the rest of it empty, and the
+     * last column's text wraps at its own width: {@code EditorialProposal}'s deliverables, a
+     * column of 194pt in a band of 535, wrapped "Responsive design for desktop, tablet &amp;
+     * mobile" onto two lines. Run to the row's edge, the cell was 272pt wide, and Word set the
+     * item on one line and every item under it a line higher.</p>
+     */
+    private static void holdTheLastFixedColumn(RowNode node, List<CellColumn> columns) {
+        List<DocumentRowColumn> specs = node.columns();
+        if (columns.isEmpty() || specs.size() != columns.size()
+            || specs.get(specs.size() - 1).type() != DocumentRowColumn.Type.FIXED) {
+            return;
+        }
+        int last = columns.size() - 1;
+        CellColumn column = columns.get(last);
+        double held = column.leading() + specs.get(last).value() + column.trailing();
+        if (held < column.width() - 0.01) {
+            columns.set(last, new CellColumn(held, column.leading(), column.trailing()));
+        }
+    }
+
+    /** The width a row's columns take together, in points. */
+    private static double widthOf(List<CellColumn> columns) {
+        double width = 0;
+        for (CellColumn column : columns) {
+            width += column.width();
+        }
+        return width;
     }
 
     /**

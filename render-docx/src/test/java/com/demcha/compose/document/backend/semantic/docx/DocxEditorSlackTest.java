@@ -106,7 +106,8 @@ class DocxEditorSlackTest {
                 .addParagraph("Label").addParagraph("Value"));
 
         assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0));
-        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1));
+        assertThat(exported.gridTwips(1)).as("the fixed column at its own width, the rest of the row empty")
+                .isEqualTo(80 * 20L);
     }
 
     @Test

@@ -3061,7 +3061,9 @@ invoice-payments	0:1a7b308d8df6	0.24	quantity
 invoice-payments	0:d1062d072acd	0.24	unitprice
 invoice-payments	0:7c512b48ba8a	0.24	vat
 invoice-payments	0:2da123241332	0.24	amount(gbp)
-invoice-payments	0:3ab6c1099bcc	5.43	subscriptionbilling
+invoice-payments	0:3ab6c1099bcc	0.43	subscriptionbilling
+invoice-payments	0:c8e69cd6e074	0.57	subscriptionmanagementandrecurri
+invoice-payments	0:0c95c7ece1ce	0.41	billing
 invoice-payments	0:96d6b62c061d	0.40	£250.00
 invoice-payments	0:96d6b62c061d#1	0.41	£250.00
 invoice-payments	0:dc934fe30a94	0.40	20%
@@ -3070,7 +3072,9 @@ invoice-payments	0:dc934fe30a94#2	0.42	20%
 invoice-payments	0:dc934fe30a94#3	0.41	20%
 invoice-payments	0:dc934fe30a94#4	0.40	20%
 invoice-payments	0:dc934fe30a94#5	0.59	20%
-invoice-payments	0:0a9acaea6477	5.43	paymentprocessing
+invoice-payments	0:0a9acaea6477	0.43	paymentprocessing
+invoice-payments	0:b8a3c21545b4	0.57	onlinecardpaymentsprocessing
+invoice-payments	0:b42561a38a06	0.41	(volumetier)
 invoice-payments	0:351704ebff51	0.40	£1,180.00
 invoice-payments	0:351704ebff51#1	0.41	£1,180.00
 invoice-payments	0:b3bc34f90a55	0.42	fraudscreening
@@ -3618,7 +3622,11 @@ proposal-editorial	0:e8228bfeba0e	0.15	foundationforfuture
 proposal-editorial	0:1fa35c7a1402	-0.85	growth.
 proposal-editorial	0:bc981abcdf59	-1.33	scopeofwork
 proposal-editorial	0:28450edd9a4f	-0.25	discovery&research
+proposal-editorial	0:ce9012b74aa2	0.00	stakeholderinterviews,brandaudit
+proposal-editorial	0:730c3e278933	-0.28	audienceinsightstoinformstrategy
 proposal-editorial	0:12bff3036b66	-0.16	visualidentityrefinement
+proposal-editorial	0:937ad523a90c	0.09	refinelogosystem,colorpalette,ty
+proposal-editorial	0:9b232e66f46c	-0.19	guidelinesforacohesive,modernide
 proposal-editorial	0:fc5134bf5fd1	-0.07	websiteux/uidesign
 proposal-editorial	0:5d58b01c7096	0.18	designaresponsive,accessibility-
 proposal-editorial	0:5d6068f6a879	-0.10	navigationandclearconversionpath
@@ -3626,6 +3634,8 @@ proposal-editorial	0:32001e20b2ed	0.02	contentstructure&messaging
 proposal-editorial	0:b3c948ec3e36	0.27	definesitearchitecture,keymessag
 proposal-editorial	0:231428fde7aa	-0.01	communicatevalueandbuildtrust.
 proposal-editorial	0:8c7703bb6fb7	0.11	launchsupport
+proposal-editorial	0:34f9fe468474	0.36	developerhandoff,qasupport,train
+proposal-editorial	0:2b4cf15f6f16	0.08	toensureasmoothlaunch.
 proposal-editorial	0:026890c58de9	0.01	northlinestudio|northlinestudio.
 proposal-editorial	1:e35c32bb5ed8	-46.41	deliverables
 proposal-editorial	1:23eb79a19b39	-45.38	brandstrategysummary
@@ -3633,9 +3643,11 @@ proposal-editorial	1:aaa2a6073d69	-45.38	refinedlogosuite&brandguidelines
 proposal-editorial	1:d626f7532564	-45.38	color,typography&designsystem
 proposal-editorial	1:018ec557a513	-45.38	websiteuxwireframes
 proposal-editorial	1:5ed4970fa285	-45.38	high-fidelitywebsitedesigns
-proposal-editorial	1:8b712e7e93bf	-57.80	contentstrategy&pagetemplates
-proposal-editorial	1:e9bf06d9b130	-57.80	developer-readyassets&specificat
-proposal-editorial	1:e93e7ba95ceb	-57.80	launchchecklist&trainingsession
+proposal-editorial	1:a579d6d1c12e	-45.48	responsivedesignfordesktop,table
+proposal-editorial	1:d524c1a0811d	-45.13	mobile
+proposal-editorial	1:8b712e7e93bf	-44.40	contentstrategy&pagetemplates
+proposal-editorial	1:e9bf06d9b130	-44.40	developer-readyassets&specificat
+proposal-editorial	1:e93e7ba95ceb	-44.40	launchchecklist&trainingsession
 proposal-editorial	1:94d192b3a326	-46.32	timeline
 proposal-editorial	1:02195b8e9896	-45.06	phase
 proposal-editorial	1:c51faa148557	-45.06	focus

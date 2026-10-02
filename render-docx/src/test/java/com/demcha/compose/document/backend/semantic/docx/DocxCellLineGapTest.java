@@ -111,10 +111,10 @@ class DocxCellLineGapTest {
     }
 
     @Test
-    void aRowKeepingALargerMarginGetsThePaddingBack() throws Exception {
+    void aRowBesideAMergedCellLeavesThePaddingAlone() throws Exception {
         // Word sets a row's cells at its largest top margin; a merged cell's cannot be evened
-        // down, so the padding taken would come back and the grown lines stand low. The lines
-        // are written as they were, the gaps shared out.
+        // down, so padding taken would come back and the grown lines stand low. The lines are
+        // written as they were, the gaps shared out.
         long padding = untakenPaddingTwips();
         Exported exported = export(PADDING, true, section -> section.addParagraph(p -> p.text(WRAPPING)
                 .textStyle(BODY).lineSpacing(GAP)));

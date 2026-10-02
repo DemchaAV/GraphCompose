@@ -14,10 +14,11 @@ follow semantic versioning; release dates are ISO 8601.
   its gaps were shared out over its lines: `EditorialProposal`'s timeline sets each phase's
   description on two lines 13.85pt apart, and Word set them 12.35pt apart, the first 1.85pt
   low and the second 0.36pt. The gap now comes off the cell's top padding instead, no more than
-  steps the lines the page's distance apart, and the cell keeps its height; where the row
-  keeps a larger margin Word would set the cell at — a merged cell's — the padding is left as
-  it was. In Word, `EditorialProposal`'s lines more than 2pt off fall from 17 to 11, and its
-  p90 from 2.07 to 1.81pt; `CobaltRota`'s wrapped cells come from 1–1.4pt low to 0.2. A cell's
+  steps the lines the page's distance apart, and the cell keeps its height. A row beside a
+  merged cell, or a cell opening with a table, keeps a margin Word sets the whole row at, and
+  its cells keep their padding, as does a panel. In Word, `EditorialProposal`'s lines more than
+  2pt off fall from 17 to 11, and its p90 from 2.07 to 1.81pt; `CobaltRota`'s wrapped cells,
+  up to 1.4pt low, come to about 0.2. A cell's
   lines now stand level with each other and keep the cell's own offset, so a few medians rise
   by hundredths: the long `ConsultingInvoice`'s from 0.89 to 0.99pt.
 - **A `bulletOffset` paragraph's wrapped lines keep the page's distance in DOCX.**

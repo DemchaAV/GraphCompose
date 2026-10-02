@@ -254,9 +254,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // lines took the space between them from the space above it: see applyLineGap.
     private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP, Double> lineTopsTakenIn =
             new java.util.IdentityHashMap<>();
-    // What a paragraph opening a cell took from the cell's top padding: see takeFromTheTopOfItsCell.
-    private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTc, PaddingTaken> paddingTaken =
-            new java.util.IdentityHashMap<>();
+    // Table cells whose top padding a paragraph opening them may take its line gap from: see
+    // takeFromTheTopOfItsCell.
+    private final java.util.Set<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTc> cellsGivingTheirPadding =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // Icons drawn beside the text they label rather than written: see drawnBesideItsText.
     private final java.util.Set<ImageNode> picturesDrawnBeside =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -664,7 +665,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         writingInAStandIn.clear();
         stackedLineHeights.clear();
         lineTopsTakenIn.clear();
-        paddingTaken.clear();
+        cellsGivingTheirPadding.clear();
         risenLines.clear();
         tablesCells.clear();
         picturesDrawnBeside.clear();
@@ -5533,13 +5534,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // The cell's padding gives no more than steps the lines the page's distance apart: n lines
         // of (line + extra) are that distance apart where extra = pitch - line. Lines of
         // different heights can stand closer than their tallest and the gap.
-        long fromAbove = taken;
-        long fromPadding = 0;
         if (pitch.isPresent()) {
             long stepped = Math.round(lines * (pitch.getAsDouble() * POINT_TO_TWIP - line)
                                       - (lines - 1) * (double) twips) - taken;
-            fromPadding = takeFromTheTopOfItsCell(target, Math.min(twips - taken, stepped));
-            taken += fromPadding;
+            taken += takeFromTheTopOfItsCell(target, Math.min(twips - taken, stepped));
         }
         if (taken > 0) {
             lineTopsTakenIn.put(target.getCTP(), taken / POINT_TO_TWIP);
@@ -5547,50 +5545,36 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // n lines of (line + extra), less what came off above, are n lines and n - 1 gaps.
         long extra = Math.round(((lines - 1) * (double) twips + taken) / lines);
         spacing.setLine(BigInteger.valueOf(line + extra));
-        if (fromPadding > 0) {
-            paddingTaken.put(currentCell.getCTTc(), new PaddingTaken(target, fromPadding,
-                    line + Math.round(((lines - 1) * (double) twips + fromAbove) / lines)));
-        }
     }
 
     /**
-     * What a paragraph opening a cell took from the cell's top padding, and the line it would
-     * have been written at without it.
-     */
-    private record PaddingTaken(XWPFParagraph paragraph, long twips, long lineWithout) {
-    }
-
-    /**
-     * Gives a cell back the top padding its paragraph took, where the row keeps a larger margin.
+     * Whether every cell of a table row can have its top margin evened down to the row's
+     * smallest ({@link #evenTheRowsMargins}): none is merged down over rows, and none opens with
+     * a table, which has no paragraph above it to hold the padding.
      *
-     * <p>Word gives every cell of a row the row's largest top margin, and the export evens them
-     * down to the smallest ({@link #evenTheRowsMargins}) — save a margin it cannot move into a
-     * paragraph, a merged cell's or one opening with a table. There Word sets the cell's
-     * content at that margin whatever its own says: the padding taken would come back, and the
-     * line grown for it would stand that much low. So the take is undone, and the lines are
-     * written as before.</p>
+     * <p>Word gives every cell of a row the row's largest top margin. Where one stays as it is,
+     * a cell whose paragraph took the gap from its padding would be set at that margin
+     * whatever its own says: the padding would come back, and the line grown for it stand that
+     * much low. Such a row is written as before.</p>
      */
-    private void giveBackPaddingAKeptMarginUndoes(XWPFTableRow row) {
-        long keptTop = 0;
-        for (XWPFTableCell cell : row.getTableCells()) {
-            if (!canMoveItsPadding(cell, true)) {
-                keptTop = Math.max(keptTop, cellMargin(cell, true));
+    private static boolean everyMarginEvens(List<TableGrid.Placement> row) {
+        for (TableGrid.Placement placement : row) {
+            if (placement.rowSpan() > 1 || opensWithATable(placement.cell().content())) {
+                return false;
             }
         }
-        for (XWPFTableCell cell : row.getTableCells()) {
-            PaddingTaken take = paddingTaken.remove(cell.getCTTc());
-            if (take == null || cellMargin(cell, true) >= keptTop) {
-                continue;
-            }
-            setCellMarginTwips(cell, true, cellMargin(cell, true) + take.twips());
-            take.paragraph().getCTP().getPPr().getSpacing().setLine(BigInteger.valueOf(take.lineWithout()));
-            double above = lineTopsTakenIn.getOrDefault(take.paragraph().getCTP(), 0.0) - take.twips() / POINT_TO_TWIP;
-            if (above > 1e-9) {
-                lineTopsTakenIn.put(take.paragraph().getCTP(), above);
-            } else {
-                lineTopsTakenIn.remove(take.paragraph().getCTP());
+        return true;
+    }
+
+    /** Whether writing a node writes a table first: the node is one, or its first child does. */
+    private static boolean opensWithATable(DocumentNode node) {
+        for (DocumentNode current = node; current != null;
+             current = current.children().isEmpty() ? null : current.children().get(0)) {
+            if (current instanceof TableNode) {
+                return true;
             }
         }
+        return false;
     }
 
     /**
@@ -5603,10 +5587,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * lines 13.85pt apart on the page; with nothing above the paragraph to take the gap from,
      * Word set them 12.35pt apart, the first 1.85pt low and the second 0.36pt.</p>
      *
+     * <p>Only a table's cell gives its padding, in a row whose margins all even
+     * ({@link #everyMarginEvens}). A panel's cell keeps its: its margin is the padding less half
+     * its border, and Word sets the content no nearer the border than the border's width.</p>
+     *
      * @return the twips taken, 0 when the paragraph does not open a padded cell
      */
     private long takeFromTheTopOfItsCell(XWPFParagraph target, long twips) {
-        if (twips <= 0 || currentCell == null || currentCell.getBodyElements().isEmpty()
+        if (twips <= 0 || currentCell == null || !cellsGivingTheirPadding.contains(currentCell.getCTTc())
+            || currentCell.getBodyElements().isEmpty()
             || !(currentCell.getBodyElements().get(0) instanceof XWPFParagraph first)
             || first.getCTP() != target.getCTP()) {
             return 0;
@@ -7863,6 +7852,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             while (row.getTableCells().size() < physical.size()) {
                 row.createCell();
             }
+            boolean marginsEven = everyMarginEvens(physical);
             for (int i = 0; i < physical.size(); i++) {
                 TableGrid.Placement placement = physical.get(i);
                 XWPFTableCell cell = row.getCell(i);
@@ -7882,6 +7872,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     continue;
                 }
                 cell.removeParagraph(0);
+                if (marginsEven) {
+                    cellsGivingTheirPadding.add(cell.getCTTc());
+                }
                 // What the cell holds sits on the cell's fill — a stripe, not the card around
                 // the table — wherever it has no shading of its own.
                 DocumentColor outerSurface = surfaceBehind;
@@ -7894,7 +7887,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     surfaceBehind = outerSurface;
                 }
             }
-            giveBackPaddingAKeptMarginUndoes(row);
             evenTheRowsMargins(row);
             holdRowHeight(row, node, rowIdx);
         }

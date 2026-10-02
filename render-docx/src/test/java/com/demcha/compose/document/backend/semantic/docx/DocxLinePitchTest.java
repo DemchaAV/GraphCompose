@@ -85,6 +85,30 @@ class DocxLinePitchTest {
         assertThat(exported.beforeNextTwips()).isZero();
     }
 
+    @Test
+    void aParagraphOfOneLineKeepsItsLaidOutHeight() throws Exception {
+        // Nothing makes a shorter line up where a single line is set by its rise or its pictures,
+        // so its prefix still counts.
+        try (DocumentSession session = GraphCompose.document().pageSize(260, 400).margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.addParagraph(p -> p.inlineText("Short", BODY)
+                    .bulletOffset("   ").indentStrategy(DocumentTextIndent.FIRST_LINE)));
+            ParagraphLine line = session.layoutGraph().fragments().stream()
+                    .map(fragment -> fragment.payload())
+                    .filter(ParagraphFragmentPayload.class::isInstance)
+                    .map(payload -> ((ParagraphFragmentPayload) payload).lines().get(0))
+                    .findFirst()
+                    .orElseThrow();
+            XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(session.export(new DocxSemanticBackend())));
+            XWPFParagraph paragraph = document.getParagraphs().stream()
+                    .filter(p -> p.getText().contains("Short"))
+                    .findFirst()
+                    .orElseThrow();
+
+            assertThat(DocxTwips.of(paragraph.getCTP().getPPr().getSpacing().getLine()))
+                    .isEqualTo(Math.round(line.textLineHeight() * 20));
+        }
+    }
+
     private record Exported(XWPFParagraph paragraph, XWPFParagraph next, List<ParagraphLine> lines, double gap) {
 
         CTSpacing spacing() {

@@ -502,8 +502,9 @@ final class DocxLayoutMetrics {
      * where the style's height clipped them. An inline picture does not count; the lines
      * that hold one are made room for separately ({@code makeRoomForPictures}). A line with
      * no text at all — an empty line, one holding only a picture — has the style's height,
-     * and counts with it. A paragraph's blank {@code bulletOffset}, which the export writes as
-     * an indent, does not count towards its line ({@link #writtenTextHeight}).</p>
+     * and counts with it. In a paragraph of more than one line, a blank {@code bulletOffset},
+     * which the export writes as an indent, does not count towards its line
+     * ({@link #writtenTextHeight}).</p>
      *
      * <p>Where the page sets the lines further apart than the tallest of them and the gap —
      * lines of different heights, each set its own height — the page's mean distance between
@@ -540,7 +541,9 @@ final class DocxLayoutMetrics {
         double style = 0;
         double pitches = 0;
         int pairs = 0;
-        boolean prefixed = withoutPrefix && node instanceof ParagraphNode paragraphNode
+        // A line of its own keeps its laid-out height: a paragraph of one line is set at it where
+        // nothing would make up a shorter one (riseIntoItsLine, holdPicturesInTheLine).
+        boolean prefixed = withoutPrefix && lineCount(node) > 1 && node instanceof ParagraphNode paragraphNode
                            && !paragraphNode.bulletOffset().isEmpty()
                            && paragraphNode.indentStrategy() != com.demcha.compose.document.style.DocumentTextIndent.NONE;
         for (PlacedFragment fragment : textFragmentsOf(node)) {

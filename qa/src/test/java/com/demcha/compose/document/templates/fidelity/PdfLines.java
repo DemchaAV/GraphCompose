@@ -84,16 +84,24 @@ final class PdfLines {
             double y = glyph.getYDirAdj();
             double left = glyph.getXDirAdj();
             double size = Math.max(1, glyph.getFontSizeInPt());
+            String letters = glyph.getUnicode();
+            // A space opens no line: Word writes one for an empty paragraph, and one drawn just
+            // before a line of text beside it, on a baseline a few points off, gave that line
+            // the space's baseline instead of its letters'.
+            boolean blank = letters == null
+                            || letters.codePoints().allMatch(c -> Character.isWhitespace(c) || Character.isSpaceChar(c));
             boolean sameLine = !Double.isNaN(baseline)
                                && Math.abs(y - baseline) < size * 0.5
                                && left >= lastX - 1
                                && left - lastEnd < size * 1.5;
             if (!sameLine) {
                 endLine();
+                if (blank) {
+                    return;
+                }
                 baseline = y;
                 x = left;
             }
-            String letters = glyph.getUnicode();
             if (letters != null) {
                 letters.codePoints()
                         .filter(c -> !Character.isWhitespace(c) && !Character.isSpaceChar(c))

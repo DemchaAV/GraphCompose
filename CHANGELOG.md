@@ -1521,6 +1521,12 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX fidelity corpus measures a line from its first letter.** A space opened a line
+  (`PdfLines`), and Word writes one for an empty paragraph: drawn just before a line of text
+  beside it, a few points off its baseline, it gave that line its own. The lines measured past
+  2pt in Word fall from 9 to 0 in `SlateOrange`, from 14 to 2 in `VioletGrid` and from 2 to 0
+  in `OrangeOps`; the text did not move. LibreOffice's measurement is unchanged.
+
 - **The DOCX fidelity corpus reports which presets are set as the page sets them.** Each run
   writes `measured-<editor>-acceptance.md` (`FidelityAcceptance`): a preset passes when the editor
   sets it on the page's pages, finds 95% of its lines, sets them a median of 1pt or less from

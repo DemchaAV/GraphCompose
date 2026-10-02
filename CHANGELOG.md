@@ -11,8 +11,9 @@ follow semantic versioning; release dates are ISO 8601.
 - **`CobaltRota` stands where the page sets it in Word and LibreOffice.** Its header opens and
   closes with a row that is only a rule, its thickness an empty cell's line. The page draws the
   rule's borders across that line; Word and LibreOffice keep them outside it and grew each row
-  by the border's 0.9pt, so the sheet under them stood 1.8pt low. The empty line is now cut to
-  the room its row leaves it; a line with letters keeps its height. Word's median drift falls
+  by the border's 0.9pt, so the sheet under them stood 1.8pt low. A table cell holding nothing
+  but an empty line now has that line cut to the room its row leaves it; a line with letters
+  keeps its height. Word's median drift falls
   from 2.48pt to 0.74, LibreOffice's from 2.39 to 0.60, and no line is now more than 2pt off
   in either, where 119 and 124 were.
 

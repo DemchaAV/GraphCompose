@@ -7159,8 +7159,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the rule's borders are drawn across that line, and in Word they stand outside it. The row
      * is written less its borders (see {@link #holdRowAtLeast}), but the line is not, and Word
      * grows the row to the line: {@code CobaltRota}'s two rules, a 2.3pt and a 1.95pt line under
-     * a 0.9pt border, stood 0.9pt taller each, and the whole sheet under them 1.8pt low. A line
-     * with no letters has nothing to cut into; one with letters keeps its line.</p>
+     * a 0.9pt border, stood 0.9pt taller each, and the whole sheet under them 1.8pt low.
+     * LibreOffice did the same. A line with no letters has nothing to cut into; one with
+     * letters keeps its line.</p>
+     *
+     * <p>The row's height is written less the most any of its cells takes above and below its
+     * content; Word reads it as the row's whole, a cell's content and margins filling it. So a
+     * cell's room is that height, as much again as the row's written height leaves out, less
+     * what the cell itself takes and its paragraph's space above and below — the page's row,
+     * less the cell's own margins and border. Taken off the written height alone, a blank row's
+     * line would lose its padding twice.</p>
      */
     private static void fitBlankLinesToTheRow(XWPFTableRow row) {
         org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTrPr properties = row.getCtRow().getTrPr();
@@ -7170,6 +7178,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         Long rowTwips = writtenTwips(properties.getTrHeightArray(0).getVal());
         if (rowTwips == null) {
             return;
+        }
+        long leftOut = 0;
+        for (XWPFTableCell cell : row.getTableCells()) {
+            leftOut = Math.max(leftOut, verticalMargins(cell));
         }
         for (XWPFTableCell cell : row.getTableCells()) {
             List<IBodyElement> content = cell.getBodyElements();
@@ -7182,7 +7194,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 continue;
             }
             Long line = writtenTwips(spacing.getLine());
-            long room = rowTwips - cellMargin(cell, true) - cellMargin(cell, false)
+            long room = rowTwips + leftOut - verticalMargins(cell)
                         - twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null)
                         - twipsOf(spacing.isSetAfter() ? spacing.getAfter() : null);
             if (line != null && line > room) {
@@ -7192,9 +7204,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
-    /** Whether a paragraph draws nothing: no letters, and no picture, shape or object in its runs. */
+    /**
+     * Whether a paragraph draws nothing: no letters, no picture, shape or object in its runs,
+     * and no border or shading of its own — a rule written as a paragraph's border stands on its
+     * line (writeRule).
+     */
     private static boolean holdsNoLetters(XWPFParagraph para) {
         if (!para.getText().isEmpty() || para.getCTP().sizeOfHyperlinkArray() > 0) {
+            return false;
+        }
+        CTPPr properties = para.getCTP().getPPr();
+        if (properties != null && (properties.isSetPBdr() || properties.isSetShd())) {
             return false;
         }
         for (XWPFRun run : para.getRuns()) {

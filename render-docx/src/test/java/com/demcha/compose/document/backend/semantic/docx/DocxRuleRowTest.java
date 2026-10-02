@@ -10,13 +10,12 @@ import com.demcha.compose.document.table.DocumentTableStyle;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.junit.jupiter.api.Test;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSpacing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A table row that is only a rule — an empty cell whose font sets its thickness — keeps the
- * page's height in Word.
+ * A table cell that holds no letters — a row that is only a rule, its thickness an empty
+ * cell's font — keeps the page's height in Word.
  *
  * <p>The page draws the rule's borders across the empty line; Word keeps a cell's borders
  * outside its content and grows the row to the line. {@code CobaltRota} opens and closes its
@@ -26,44 +25,61 @@ class DocxRuleRowTest {
 
     private static final DocumentStroke RULE = DocumentStroke.of(DocumentColor.rgb(16, 32, 80), 0.9);
 
+    /** The 0.9pt border, in twips. */
+    private static final long BORDER = 18;
+
     @Test
     void aRuleRowsEmptyLineIsCutToTheRoomItsRowLeaves() throws Exception {
-        try (XWPFDocument document = export(DocumentTextStyle.DEFAULT.withSize(2))) {
+        try (XWPFDocument document = export(DocumentInsets.zero(), DocumentTextStyle.DEFAULT.withSize(2))) {
             XWPFTableRow rule = document.getTables().get(0).getRow(0);
-            long row = DocxTwips.of(rule.getCtRow().getTrPr().getTrHeightArray(0).getVal());
-            CTSpacing spacing = rule.getCell(0).getParagraphs().get(0).getCTP().getPPr().getSpacing();
 
-            assertThat(row).as("the row is written less its border").isPositive();
-            assertThat(DocxTwips.of(spacing.getLine())).as("the line stands inside the row").isEqualTo(row);
+            assertThat(line(rule)).as("the line stands inside the row").isEqualTo(rowHeight(rule));
         }
     }
 
     @Test
     void aLineWithLettersKeepsItsHeight() throws Exception {
-        try (XWPFDocument document = export(DocumentTextStyle.DEFAULT.withSize(2))) {
+        try (XWPFDocument document = export(DocumentInsets.zero(), DocumentTextStyle.DEFAULT.withSize(2))) {
             XWPFTableRow text = document.getTables().get(0).getRow(1);
-            long row = DocxTwips.of(text.getCtRow().getTrPr().getTrHeightArray(0).getVal());
-            CTSpacing spacing = text.getCell(0).getParagraphs().get(0).getCTP().getPPr().getSpacing();
 
-            assertThat(DocxTwips.of(spacing.getLine())).as("its letters would be cut").isGreaterThan(row);
+            assertThat(line(text)).as("its letters would be cut").isEqualTo(rowHeight(text) + BORDER);
         }
     }
 
-    private static XWPFDocument export(DocumentTextStyle thickness) throws Exception {
+    @Test
+    void aPaddedBlankLineKeepsItsHeight() throws Exception {
+        // Word reads the row's height as its whole, the cell's margins inside it, and the
+        // padding already gives up the room the border takes: the blank line fits as it is.
+        try (XWPFDocument document = export(DocumentInsets.of(4), DocumentTextStyle.DEFAULT)) {
+            var table = document.getTables().get(0);
+
+            assertThat(line(table.getRow(0))).isEqualTo(line(table.getRow(1)));
+        }
+    }
+
+    private static long rowHeight(XWPFTableRow row) {
+        return DocxTwips.of(row.getCtRow().getTrPr().getTrHeightArray(0).getVal());
+    }
+
+    private static long line(XWPFTableRow row) {
+        return DocxTwips.of(row.getCell(0).getParagraphs().get(0).getCTP().getPPr().getSpacing().getLine());
+    }
+
+    private static XWPFDocument export(DocumentInsets padding, DocumentTextStyle blank) throws Exception {
         DocumentTableStyle rule = DocumentTableStyle.builder()
-                .padding(DocumentInsets.zero())
+                .padding(padding)
                 .stroke(RULE)
-                .textStyle(thickness)
+                .textStyle(blank)
                 .lineSpacing(0)
                 .build();
-        DocumentTableStyle tight = DocumentTableStyle.builder()
-                .padding(DocumentInsets.zero())
+        DocumentTableStyle text = DocumentTableStyle.builder()
+                .padding(padding)
                 .stroke(RULE)
                 .lineSpacing(0)
                 .build();
         return DocxExports.withLayout(400, 300, 20, page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
                 .rowCells(DocumentTableCell.text("").withStyle(rule), DocumentTableCell.text("").withStyle(rule))
-                .rowCells(DocumentTableCell.text("Text").withStyle(tight), DocumentTableCell.text("More").withStyle(tight))));
+                .rowCells(DocumentTableCell.text("Text").withStyle(text), DocumentTableCell.text("More").withStyle(text))));
     }
 }

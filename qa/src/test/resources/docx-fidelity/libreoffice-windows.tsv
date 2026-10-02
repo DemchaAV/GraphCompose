@@ -28,8 +28,8 @@ cv-timeline_minimal	2	2	89	86	1.40	1.40	0
 cv-violet_grid	1	2	80	76	5.71	21.81	40
 invoice-classic	1	1	56	56	0.47	1.17	0
 invoice-classic_long	2	2	166	166	0.47	0.87	0
-invoice-consulting	1	1	92	92	0.93	1.61	3
-invoice-consulting_long	2	2	236	236	0.88	1.41	3
+invoice-consulting	1	1	92	92	0.99	1.61	3
+invoice-consulting_long	2	2	236	236	0.96	1.41	3
 invoice-luma_studio	1	1	97	97	0.12	0.52	2
 invoice-luma_studio_long	3	3	192	192	0.24	11.83	22
 invoice-merchant	1	2	94	90	0.21	0.67	0
@@ -56,9 +56,9 @@ letter-nordic_clean	1	1	15	15	0.16	0.38	0
 letter-panel	1	1	13	13	0.15	0.21	0
 letter-sidebar_portrait	1	1	12	12	0.43	0.51	0
 letter-timeline_minimal	1	1	15	15	1.32	1.52	0
-proposal-editorial	2	2	132	129	43.29	45.18	72
+proposal-editorial	2	2	132	129	43.44	45.33	72
 proposal-indigo	1	1	72	70	0.57	27.88	16
 proposal-modern	1	1	44	44	0.41	0.75	0
-proposal-northline	2	2	132	132	0.38	1.47	0
+proposal-northline	2	2	132	132	0.42	1.32	0
 receipt-modern	1	1	57	57	0.26	0.29	0
-rota-cobalt	1	1	154	151	0.60	1.29	0
+rota-cobalt	1	1	154	151	0.59	1.29	0

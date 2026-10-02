@@ -8,6 +8,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A `bulletOffset` paragraph's wrapped lines keep the page's distance in DOCX.**
+  Word sets every line of a paragraph one height apart, and the export wrote the tallest. In
+  `EditorialProposal`'s bullets the wrapped line carries a prefix of spaces in the paragraph's
+  taller style, so the page sets it 13.05pt under the first and Word set it 13.8pt under, and
+  each item stood half a point to a point lower than the one above it. The prefix, written as
+  an indent, no longer counts towards the line; where the page's mean distance between the
+  lines is still more than the tallest, it is written instead, and what the paragraph then
+  falls short of the page is owed below it. In Word, `EditorialProposal`'s lines more than 2pt off fall from 21 to
+  17, and `NorthlineProposal`'s from 6 to none.
 - **A paragraph's `bulletOffset` indents its lines in DOCX as it does on the page.**
   The prefix was not written, so `EditorialProposal`'s bullets, whose wrapped lines the page
   sets after three spaces, started those lines under the dot in Word, 11.6pt left of the

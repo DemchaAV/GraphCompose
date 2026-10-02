@@ -502,7 +502,13 @@ final class DocxLayoutMetrics {
      * where the style's height clipped them. An inline picture does not count; the lines
      * that hold one are made room for separately ({@code makeRoomForPictures}). A line with
      * no text at all — an empty line, one holding only a picture — has the style's height,
-     * and counts with it.</p>
+     * and counts with it. A paragraph's blank {@code bulletOffset}, which the export writes as
+     * an indent, does not count towards its line ({@link #writtenTextHeight}).</p>
+     *
+     * <p>Where the page sets the lines further apart than the tallest of them and the gap —
+     * lines of different heights, each set its own height — the page's mean distance between
+     * their baselines, less the gap, is the height instead: Word sets every line that far apart,
+     * and the first and last lines' baselines stand that far apart on both.</p>
      *
      * <p>Read from every fragment the node emitted: a paragraph split across a page boundary
      * emits one fragment per page, and its tallest line may be on any of them.</p>
@@ -511,12 +517,44 @@ final class DocxLayoutMetrics {
      * @return the line height in points, or empty when the node laid out nothing
      */
     OptionalDouble lineHeight(DocumentNode node) {
+        return lineHeight(node, true, true);
+    }
+
+    /**
+     * Whether a node's line height is other than its tallest laid-out line ({@link #lineHeight}):
+     * the page's distance between its lines, or a line without its prefix. The paragraph, set at
+     * that one height, can then come out shorter than the page's; at the tallest line it cannot.
+     *
+     * @param node any node that lays its text out as paragraph lines
+     * @return whether the height is not the tallest line's
+     */
+    boolean lineIsNotTheTallest(DocumentNode node) {
+        OptionalDouble written = lineHeight(node, true, true);
+        OptionalDouble tallest = lineHeight(node, false, false);
+        return written.isPresent() && tallest.isPresent()
+               && Math.abs(written.getAsDouble() - tallest.getAsDouble()) > 0.01;
+    }
+
+    private OptionalDouble lineHeight(DocumentNode node, boolean byPitch, boolean withoutPrefix) {
         double text = 0;
         double style = 0;
+        double pitches = 0;
+        int pairs = 0;
+        boolean prefixed = withoutPrefix && node instanceof ParagraphNode paragraphNode
+                           && !paragraphNode.bulletOffset().isEmpty()
+                           && paragraphNode.indentStrategy() != com.demcha.compose.document.style.DocumentTextIndent.NONE;
         for (PlacedFragment fragment : textFragmentsOf(node)) {
             if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
+                ParagraphLine above = null;
                 for (ParagraphLine line : paragraph.lines()) {
-                    text = Math.max(text, line.textLineHeight());
+                    text = Math.max(text, prefixed ? writtenTextHeight(line) : line.textLineHeight());
+                    // A line a picture makes taller is made room for on its own (makeRoomForPictures).
+                    if (above != null && setByText(above) && setByText(line)) {
+                        pitches += above.baselineOffsetFromBottom() + Math.max(0, paragraph.lineGap())
+                                   + line.lineHeight() - line.baselineOffsetFromBottom();
+                        pairs++;
+                    }
+                    above = line;
                 }
                 if (style <= 0) {
                     style = paragraph.lineHeight();
@@ -524,9 +562,67 @@ final class DocxLayoutMetrics {
             }
         }
         if (text > 0) {
+            // Word sets every line of a paragraph one height apart; the page sets each pair of
+            // lines its own distance apart. Where those differ, the page's mean distance — less
+            // the gap Word is given on top (applyLineGap) — keeps the first and last lines where
+            // the page has them, never below the tallest written line, which would clip it.
+            if (byPitch && pairs > 0) {
+                text = Math.max(text, pitches / pairs - Math.max(0, lineGap(node)));
+            }
             return OptionalDouble.of(text);
         }
         return style > 0 ? OptionalDouble.of(style) : OptionalDouble.empty();
+    }
+
+    /**
+     * How tall the page sets a node's lines together: each line's own height and the gap
+     * between each two. Empty when the lines are not on one fragment, or a picture makes one
+     * of them taller than its text — those are made room for on their own.
+     *
+     * @param node any node that lays its text out as paragraph lines
+     * @return the height in points, or empty
+     */
+    OptionalDouble linesHeight(DocumentNode node) {
+        List<PlacedFragment> fragments = textFragmentsOf(node);
+        if (fragments.size() != 1 || !(fragments.get(0).payload() instanceof ParagraphFragmentPayload paragraph)
+            || paragraph.lines().isEmpty()) {
+            return OptionalDouble.empty();
+        }
+        double height = Math.max(0, paragraph.lineGap()) * (paragraph.lines().size() - 1);
+        for (ParagraphLine line : paragraph.lines()) {
+            if (!setByText(line)) {
+                return OptionalDouble.empty();
+            }
+            height += line.lineHeight();
+        }
+        return OptionalDouble.of(height);
+    }
+
+    /** Whether a line is as tall as its text, nothing inline making it taller. */
+    private static boolean setByText(ParagraphLine line) {
+        return Math.abs(line.lineHeight() - line.textLineHeight()) < 0.01;
+    }
+
+    /**
+     * The height of a line's text the export writes: the line's own, less a leading span of
+     * blank prefix the page sets in the paragraph's style ({@code bulletOffset}), which the
+     * export writes as an indent and not as text. The page measures that span with the rest,
+     * so a prefix in a face taller than the runs made a wrapped line taller than its text.
+     */
+    private static double writtenTextHeight(ParagraphLine line) {
+        List<com.demcha.compose.document.layout.payloads.ParagraphSpan> spans = line.spans();
+        if (spans.size() < 2
+            || !(spans.get(0) instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan prefix)
+            || !prefix.text().isBlank()) {
+            return line.textLineHeight();
+        }
+        double height = 0;
+        for (int i = 1; i < spans.size(); i++) {
+            if (spans.get(i) instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan span) {
+                height = Math.max(height, span.height());
+            }
+        }
+        return height > 0 ? Math.min(height, line.textLineHeight()) : line.textLineHeight();
     }
 
     /**

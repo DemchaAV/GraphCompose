@@ -12,9 +12,9 @@ follow semantic versioning; release dates are ISO 8601.
   A row cannot sit in a row cell, so templates wrap one in a layer stack of one layer; the
   row is written in the flow, and a drawing in it is drawn where the page puts it. Its room
   was kept only outside every overlay, so `IndigoProposal`'s meta and feature tiles, a disc
-  or a rounded tile over each label, set every label 24pt to 28pt higher than the page. A drawing with a block
-  after it in its section now takes its room there; one alone in its section is left to its
-  row. `IndigoProposal`'s lines more than 2pt off fall from 16 to none in both editors.
+  or a rounded tile over each label, set every label 24pt to 28pt higher than the page. A
+  drawing with a block after it in its section now takes its room there; one alone in its
+  section is left to its row. `IndigoProposal`'s lines more than 2pt off fall from 16 to none in both editors.
 - **A table or row the layout moves to a new page keeps its top edge there in DOCX.**
   The page starts a block a page break moves down at its own top edge, and leaves the gap
   before it at the foot of the page above where it fits there. Word has no space above a table, so the edge was

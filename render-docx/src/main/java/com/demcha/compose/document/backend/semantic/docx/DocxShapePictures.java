@@ -83,6 +83,36 @@ final class DocxShapePictures {
     }
 
     /**
+     * How far an inline shape's picture reaches past its box on the left, in points: its ink's
+     * overhang there and {@link #EDGE}.
+     *
+     * @param run the shape
+     * @return the width the picture takes in its line before the run's box
+     */
+    static double widthBeforeItsBox(InlineShapeRun run) {
+        return inkOf(run).left() + EDGE;
+    }
+
+    /**
+     * How far an inline shape's picture reaches past its box on the right, in points: its ink's
+     * overhang there and {@link #EDGE}.
+     *
+     * @param run the shape
+     * @return the width the picture takes in its line after the run's box
+     */
+    static double widthAfterItsBox(InlineShapeRun run) {
+        return inkOf(run).right() + EDGE;
+    }
+
+    private static Overhang inkOf(InlineShapeRun run) {
+        Overhang ink = Overhang.NONE;
+        for (ShapeLayer layer : run.layers()) {
+            ink = ink.max(overhang(layer, run.width(), run.height()));
+        }
+        return ink;
+    }
+
+    /**
      * Draws an inline shape as a picture.
      *
      * @param run the shape

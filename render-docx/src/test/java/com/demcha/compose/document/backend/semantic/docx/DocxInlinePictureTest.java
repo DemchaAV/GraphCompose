@@ -42,6 +42,75 @@ class DocxInlinePictureTest {
             + "<circle cx='12' cy='12' r='10' fill='#1A5694'/></svg>");
 
     @Test
+    void theTextBesideADotGivesBackTheRoomItsPictureTakesPastItsBox() throws Exception {
+        // A dot is written as a picture a quarter point wider than its box on either side: the
+        // text before it gives back the left quarter, so the dot starts where the page starts it,
+        // and the four spaces between two dots the first's right quarter and the second's left.
+        com.demcha.compose.document.style.DocumentColor black = com.demcha.compose.document.style.DocumentColor.rgb(0, 0, 0);
+        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
+                .inlineText("Level ")
+                .dot(6, black).inlineText("    ")
+                .dot(6, black)
+                .inlineText(" done")))) {
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+
+            assertThat(runs.get(0).getCharacterSpacing()).as("a quarter point over six letters, in twips")
+                    .isEqualTo((int) Math.round(-DocxShapePictures.EDGE * 20 / 6));
+            assertThat(runs.get(2).text()).isEqualTo("    ");
+            assertThat(runs.get(2).getCharacterSpacing()).as("half a point over four spaces")
+                    .isEqualTo((int) Math.round(-2 * DocxShapePictures.EDGE * 20 / 4));
+            assertThat(runs.get(4).getCharacterSpacing()).as("a quarter point over five letters")
+                    .isEqualTo((int) Math.round(-DocxShapePictures.EDGE * 20 / 5));
+        }
+    }
+
+    @Test
+    void aRowsLastCellIsWidenedToTheRingEndingItsLine() throws Exception {
+        // The page draws half a ring's stroke past the cell its line ends at; Word cuts a cell's
+        // content at its edge, so the column is made that much wider.
+        com.demcha.compose.document.style.DocumentColor white = com.demcha.compose.document.style.DocumentColor.rgb(255, 255, 255);
+        com.demcha.compose.document.style.DocumentStroke ring =
+                com.demcha.compose.document.style.DocumentStroke.of(com.demcha.compose.document.style.DocumentColor.rgb(0, 0, 0), 0.8);
+        assertThat(lastColumnTwips(30.2, p -> {
+            for (int dot = 0; dot < 4; dot++) {
+                p.dot(6, white, ring);
+            }
+            p.dot(6, white, ring);
+        })).as("a ring at the cell's edge").isGreaterThan(Math.round(30.2 * 20));
+        assertThat(lastColumnTwips(31, p -> {
+            for (int dot = 0; dot < 5; dot++) {
+                p.dot(6, white);
+            }
+        })).as("dots inside the cell").isEqualTo(Math.round(31 * 20));
+    }
+
+    private static long lastColumnTwips(double column,
+                                        Consumer<com.demcha.compose.document.dsl.ParagraphBuilder> dots) throws Exception {
+        try (XWPFDocument document = export(page -> page.addRow(row -> row
+                .spacing(0)
+                .columns(com.demcha.compose.document.style.DocumentRowColumn.weight(1),
+                        com.demcha.compose.document.style.DocumentRowColumn.fixed(column))
+                .addParagraph("Level")
+                .addParagraph(dots::accept)))) {
+            var grid = document.getTables().get(0).getCTTbl().getTblGrid();
+            return DocxTwips.of(grid.getGridColArray(1).getW());
+        }
+    }
+
+    @Test
+    void textWithNoShapeBesideItKeepsItsSpacing() throws Exception {
+        try (XWPFDocument document = export(page -> page.addParagraph(p -> p
+                .inlineText("Before ")
+                .inlineImage(DocumentImageData.fromBytes(png(20, 20)), 20, 20)
+                .inlineText(" after")))) {
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+
+            assertThat(runs.get(0).getCharacterSpacing()).as("a picture is set at its own width").isZero();
+            assertThat(runs.get(2).getCharacterSpacing()).isZero();
+        }
+    }
+
+    @Test
     void aPictureInALineIsARunBetweenItsWords() throws Exception {
         try (XWPFDocument document = export(page -> page.addParagraph(p -> p
                 .inlineText("Before ")

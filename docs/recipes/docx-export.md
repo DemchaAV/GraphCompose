@@ -595,7 +595,18 @@ tint it was flattened to. Recorded, like the other two.
   containers round it, and a container's one layer set in from its
   content's top and bottom — a
   photo centred in a ring wider than it — keeps that much space above and
-  below it. What a table cell composes
+  below it; so do its paragraph layers standing one under another, as one,
+  from the top of the first and the foot of the last — a monogram's two
+  initials centred in a ring. A row's cell left with nothing written in it, its
+  content all drawn where the page draws it — a skill's meter beside its
+  label — ends with a hairline paragraph, not a line of the document's font.
+  An inline shape is written as a picture a quarter point wider than its box
+  on either side, and its ink's overhang wider still, and Word sets a picture
+  at its width whatever its run's spacing: the text before it is set closer by
+  the room on the left and the text after it by the room on the right, so the
+  shape and what follows stand where the page puts them. A row's last cell
+  whose line ends in a shape reaching past the cell is widened by that much,
+  as Word cuts a cell's content at its edge. What a table cell composes
   (`DocumentTableCell.node(...)`) has no place of its own in the layout:
   its drawing belongs to the table, and the table draws it — an icon, a
   tile, a disc under a number — anchored to the page where the page draws

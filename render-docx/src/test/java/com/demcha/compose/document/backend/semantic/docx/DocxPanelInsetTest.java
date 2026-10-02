@@ -46,6 +46,26 @@ class DocxPanelInsetTest {
     }
 
     @Test
+    void aPanelBledToThePaperEdgeWritesItsIndentOfNothing() throws Exception {
+        // A negative margin takes the fill to the paper's edge and the padding takes the text
+        // back to the page margin: the indent placing the text is 0. Unwritten, Word puts the
+        // table's edge on the margin and the text a padding further in (measured, 27.6pt).
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 30, page -> page
+                .addSection(s -> s.fillColor(SURFACE)
+                        .margin(new DocumentInsets(0, -30, 0, -30))
+                        .padding(new DocumentInsets(0, 0, 0, 30))
+                        .addParagraph(p -> p.text("Band"))))) {
+            var properties = document.getTables().get(0).getCTTbl().getTblPr();
+
+            assertThat(properties.isSetTblInd()).as("written, though it is nothing").isTrue();
+            assertThat(DocxTwips.of(properties.getTblInd().getW())).isZero();
+            assertThat(DocxTwips.of(document.getTables().get(0).getRow(0).getCell(0).getCTTc().getTcPr()
+                    .getTcMar().getLeft().getW()))
+                    .as("the text at the margin, the fill from the paper's edge").isEqualTo(30 * 20L);
+        }
+    }
+
+    @Test
     void anUnpaintedContainerStillHoldsItsTextIn() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 300, 30, page -> page
                 .addSection(s -> s.padding(DocumentInsets.of(10))

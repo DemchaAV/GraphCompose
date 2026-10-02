@@ -3278,7 +3278,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             holdRowAtLeast(table.getRow(0), shape.outline().height() - bordersOutside);
         }
 
-        if (indent != 0) {
+        // In the body it is written even when it is 0. The indent places the cell's text, less
+        // half its left border, and with none Word 16 places the table's edge on the margin
+        // instead, its text a padding further in (measured): IndigoProposal's about band, bled to the paper's edge by a negative margin its
+        // padding takes back, stood 27.6pt right of the page's, fill and text.
+        if (indent != 0 || currentCell == null) {
             CTTblPr tableProperties = table.getCTTbl().getTblPr();
             CTTblWidth tableIndent = tableProperties.isSetTblInd()
                     ? tableProperties.getTblInd()

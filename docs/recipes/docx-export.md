@@ -387,6 +387,10 @@ How it lands:
   by the other half, so the text and the border land where the page draws them. Measured
   in LibreOffice against the engine's render at 96 dpi, the band, a 3pt accent bar and the
   text of a card land within a pixel of the page's.
+- **Indent.** In the body the table's `w:tblInd` places its cell's text, less half its left
+  border, and is written even when it is 0 — a panel bled to the paper's edge by a negative
+  margin its padding takes back. Unwritten, Word 16 puts the table's edge on the margin and the
+  text a padding further in (measured).
 - **Nesting.** A panel inside a panel is a table inside its cell. So is a row, with no fill
   of its own, so the panel shows through it. A table keeps its own cell fills, and a cell
   no style fills is written white, as the page draws it on the card. Word draws a table's

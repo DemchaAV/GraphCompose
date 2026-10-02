@@ -8851,8 +8851,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>A row occupies the whole width it is offered — {@code measureRow} returns the
      * available width unconditionally, whatever its children measure — so the carrier
-     * gets the content width. Left at POI's size-to-content default the pair collapses
-     * around its text instead.</p>
+     * gets the content width, unless fixed columns add up to less and leave the rest of
+     * the row empty ({@link #holdTheLastFixedColumn}): then it is as wide as its columns.
+     * Left at POI's size-to-content default the pair collapses around its text instead.</p>
      *
      * <p>How that width divides is arithmetic the document already carries, for every
      * distribution except one. Weights, an even split and fixed columns are shares of the
@@ -8923,7 +8924,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         int last = columns.size() - 1;
         CellColumn column = columns.get(last);
-        double held = column.leading() + specs.get(last).value() + column.trailing();
+        // The column starts where its child does, past the child's left margin; its slot
+        // starts that margin earlier.
+        double margin = node.children().size() == columns.size() ? node.children().get(last).margin().left() : 0;
+        double held = column.leading() - margin + specs.get(last).value() + column.trailing();
         if (held < column.width() - 0.01) {
             columns.set(last, new CellColumn(held, column.leading(), column.trailing()));
         }

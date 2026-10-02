@@ -2132,10 +2132,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 return;
             }
         }
-        // Only in the flow: inside an overlay, the overlay's own place already holds it.
-        if (overlayDepth == 0
-            && (node instanceof com.demcha.compose.document.node.LayerStackNode || node instanceof ShapeContainerNode)
-            && onlyDrawn(node) && holdTheSpaceOf(node)) {
+        // Only in the flow: inside an overlay, the overlay's own place already holds it. Inside
+        // layer stacks of one layer only it is in the flow — a template wraps a row in one to
+        // nest it — and a drawing with a sibling after it takes its room there as anywhere else:
+        // IndigoProposal's meta tiles set a disc over each label, and without the disc's room
+        // every label stood 24pt high. The last in its parent, an icon in a section of its own
+        // beside a heading, is held by its row (holdRowAtLeast).
+        if ((node instanceof com.demcha.compose.document.node.LayerStackNode || node instanceof ShapeContainerNode)
+            && onlyDrawn(node)
+            && (overlayDepth == 0 || overlayDepth == oneLayerDepth && layout.followedInItsParent(node))
+            && holdTheSpaceOf(node)) {
             // Its drawing is drawn and takes no room: the space held above is its room.
             drawOutlineOf(node);
             ShapeContainerNode outerClip = clipContainer;

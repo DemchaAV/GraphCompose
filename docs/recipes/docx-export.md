@@ -765,7 +765,10 @@ shape still takes its room:
 its placed height and margins are owed as space above what follows, and so are
 those of a layer stack or shape container holding only drawing, counted once
 however deeply it is nested. A cell holding nothing else keeps that space on a
-paragraph a tenth of a point tall.
+paragraph a tenth of a point tall. In a row nested through a layer stack of one
+layer — the way a template puts a row in a row cell — a drawing with a block after
+it in its section takes its room too; one alone in its section, an icon beside a
+heading, is left to the row it sits in, which is held as tall as the page makes it.
 
 A barcode in the body is not skipped: it exports as a picture of the symbol at
 its size, the same matrix the PDF draws, so it scans, with its data as the

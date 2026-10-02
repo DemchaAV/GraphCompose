@@ -107,12 +107,42 @@ class DocxGeneratedIndentTest {
     }
 
     @Test
-    void aPrefixWithLettersInItIsLeftAsItWas() throws Exception {
-        try (XWPFDocument document = DocxExports.withLayout(300, 400, 20, page -> page
-                .addParagraph(p -> styled(p).bulletOffset("-").indentStrategy(DocumentTextIndent.ALL_LINES)))) {
-            XWPFParagraph paragraph = paragraph(document);
+    void wrappedLinesStartAfterTheSpacesThatCoverAPrefixWithLetters() throws Exception {
+        // The page draws "-" only on a first line, and sets a wrapped one after as many spaces
+        // as cover "- ": 0.333 + 0.278 em is 2.2 spaces, so three — 167 twips again.
+        CTInd indent = indentOf(p -> p.bulletOffset("-").indentStrategy(DocumentTextIndent.FROM_SECOND_LINE));
 
-            assertThat(paragraph.getCTP().getPPr().isSetInd()).isFalse();
+        assertThat(DocxTwips.of(indent.getLeft())).isEqualTo(THREE_SPACES);
+        assertThat(DocxTwips.of(indent.getHanging())).isEqualTo(THREE_SPACES);
+    }
+
+    @Test
+    void aFirstLineIsNotMovedForLettersTheExportDoesNotWrite() throws Exception {
+        CTInd indent = indentOf(p -> p.bulletOffset("-").indentStrategy(DocumentTextIndent.ALL_LINES));
+
+        assertThat(DocxTwips.of(indent.getLeft())).as("the wrapped lines after the covering spaces")
+                .isEqualTo(THREE_SPACES);
+        assertThat(DocxTwips.of(indent.getHanging())).as("the first line back at the margin").isEqualTo(THREE_SPACES);
+
+        try (XWPFDocument document = DocxExports.withLayout(300, 400, 20, page -> page
+                .addParagraph(p -> styled(p).bulletOffset("-").indentStrategy(DocumentTextIndent.FIRST_LINE)))) {
+            assertThat(paragraph(document).getCTP().getPPr().isSetInd()).as("nothing to move").isFalse();
+        }
+    }
+
+    @Test
+    void aRightToLeftParagraphInAPaddedContainerKeepsBothItsIndents() throws Exception {
+        // The container's 20pt is on the page's left, the end of a right-to-left flow, and the
+        // prefix on the flow's start.
+        try (XWPFDocument document = DocxExports.withLayout(300, 400, 20, page -> page
+                .addSection(section -> section.padding(new DocumentInsets(0, 0, 0, 20))
+                        .addParagraph(p -> styled(p).direction(TextDirection.RTL).bulletOffset("   ")
+                                .indentStrategy(DocumentTextIndent.FROM_SECOND_LINE))))) {
+            CTInd indent = paragraph(document).getCTP().getPPr().getInd();
+
+            assertThat(DocxTwips.of(indent.getRight())).isEqualTo(20 * 20L);
+            assertThat(DocxTwips.of(indent.getLeft())).isEqualTo(THREE_SPACES);
+            assertThat(DocxTwips.of(indent.getHanging())).isEqualTo(THREE_SPACES);
         }
     }
 

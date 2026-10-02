@@ -5254,24 +5254,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * once a right-to-left paragraph's sides are turned, so it goes on {@code w:left}, the
      * start of the flow in either direction.</p>
      *
-     * <p>A prefix with letters in it is text the export does not write, and is left as it was.
-     * An auto-sized paragraph's prefix is measured at the size the export writes its text in,
-     * not the one the page fits it to.</p>
+     * <p>A prefix with letters in it is drawn only before the first line; the wrapped lines
+     * start after as many spaces as cover it ({@link #spacesCovering}), a distance written as any
+     * other. Its letters are text the export does not write, so the first line is not moved for
+     * them. An auto-sized paragraph's prefix is measured at the size the export writes its text
+     * in, not the one the page fits it to.</p>
      */
     private void indentAsThePrefixDoes(XWPFParagraph para, ParagraphNode node) {
         String prefix = node.bulletOffset();
         DocumentTextIndent strategy = node.indentStrategy();
-        if (prefix.isEmpty() || !prefix.isBlank() || strategy == DocumentTextIndent.NONE) {
+        if (prefix.isEmpty() || strategy == DocumentTextIndent.NONE) {
             return;
         }
-        double width = styleWidth(node.textStyle(), prefix);
-        if (!(width > 0.01)) {
-            return;
-        }
-        boolean first = strategy == DocumentTextIndent.FIRST_LINE || strategy == DocumentTextIndent.ALL_LINES;
+        boolean blank = prefix.isBlank();
+        boolean first = blank && (strategy == DocumentTextIndent.FIRST_LINE || strategy == DocumentTextIndent.ALL_LINES);
         boolean wrapped = strategy == DocumentTextIndent.FROM_SECOND_LINE || strategy == DocumentTextIndent.ALL_LINES;
-        long wrappedTwips = wrapped ? toTwips(width) : 0;
-        long firstTwips = first ? toTwips(width) : 0;
+        DocumentTextStyle style = node.textStyle();
+        long wrappedTwips = wrapped ? toTwips(styleWidth(style, blank ? prefix : spacesCovering(style, prefix))) : 0;
+        long firstTwips = first ? toTwips(styleWidth(style, prefix)) : 0;
+        if (wrappedTwips <= 0 && firstTwips <= 0) {
+            return;
+        }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
         if (wrappedTwips > 0) {
@@ -5283,6 +5286,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else if (wrappedTwips > firstTwips) {
             indent.setHanging(BigInteger.valueOf(wrappedTwips - firstTwips));
         }
+    }
+
+    /**
+     * The spaces the page sets a wrapped line after for a prefix with letters in it: as many as
+     * cover the prefix and the space that ends it, as the layout counts them
+     * ({@code ParagraphWrapping.computeIndentFromPrefix}); empty for a face the measured fonts
+     * do not hold.
+     */
+    private String spacesCovering(DocumentTextStyle style, String prefix) {
+        String ended = Character.isWhitespace(prefix.charAt(prefix.length() - 1)) ? prefix : prefix + " ";
+        double space = styleWidth(style, " ");
+        if (!(space > 1e-6)) {
+            return "";
+        }
+        return " ".repeat((int) Math.ceil(styleWidth(style, ended) / space));
     }
 
     /**
@@ -5536,8 +5554,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * right — the text short of the edge the page runs it to, by exactly that padding, in
      * both editors. {@code w:start} and {@code w:end} are no way out: both editors read them
      * as {@code left} and {@code right}, measured. The sides are turned once, as the mark is
-     * added, so every indent a paragraph carries has to be on it by then — the inset is,
-     * since a body paragraph is created with it.</p>
+     * added, so every indent written by page side has to be on it by then — the inset is,
+     * since a body paragraph is created with it. An indent measured from the flow's start, as
+     * a blank prefix's is ({@link #indentAsThePrefixDoes}), goes on after the turn.</p>
      *
      * @param para        the Word paragraph
      * @param rightToLeft whether the page laid the paragraph out right to left

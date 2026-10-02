@@ -175,6 +175,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final double TWIPS_PER_POINT = 20.0;
     /** {@code w:sz} and {@code w:szCs} count half-points. */
     private static final double HALF_POINTS_PER_POINT = 2.0;
+
+    /**
+     * How far short of the top of the page's line a picture may reach and still fill it, in
+     * points (see {@link #letThePicturesSetTheLine}).
+     */
+    private static final double PICTURE_FILLS_ITS_LINE = 0.5;
     private static final double POINT_TO_TWIP = 20.0;
     /** The least difference between Word's baseline and the page's that is moved: one half point. */
     private static final double LEAST_BASELINE_SHIFT_POINTS = 0.5;
@@ -396,6 +402,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // letters' reach (see inkOf).
     private List<FontFamilyDefinition> measuredFamilies = List.of();
     private FontLibrary seatFonts;
+    // Those fonts' line heights, for a line the layout placed none of (see styleLineHeight).
+    private com.demcha.compose.document.chart.ChartTextMetrics styleMetrics;
     // What this export could not carry as authored. Collected whether or not anyone asked
     // for it: building it costs a list, and deciding later that nobody wanted it is not
     // something the writers can do halfway through.
@@ -660,6 +668,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         wordFamilies = DocxFontTable.familiesByName(fonts);
         measuredFamilies = List.copyOf(fonts);
         seatFonts = null;
+        styleMetrics = null;
         documentDefaultStyle = dominantTextStyle(whole);
         currentCell = null;
         currentCellWidth = Double.NaN;
@@ -5043,6 +5052,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return seatFonts;
     }
 
+    /** The height the layout gives a line set in a style, in points; 0 for no style. */
+    private double styleLineHeight(DocumentTextStyle style) {
+        if (style == null) {
+            return 0;
+        }
+        if (styleMetrics == null) {
+            styleMetrics = new com.demcha.compose.document.layout.ChartTextMetricsSupport(
+                    new com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem(
+                            measuredFonts(), com.demcha.compose.engine.render.pdf.PdfFont.class));
+        }
+        return styleMetrics.lineHeight(style);
+    }
+
     /**
      * The foot of a shape container's content, measured up from the foot of its page, or
      * {@code NaN} when it is not laid out on one page. Its bottom padding is owed below it
@@ -5534,7 +5556,51 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             heldAbove = 0;
         }
         styleTheMark(para, markStyle);
+        // A paragraph composed in a table cell has no lines laid out: its line is its style's.
+        double pageLine = pictures.pageLine() > 0 ? pictures.pageLine()
+                : pictures.pageLine() == 0 ? styleLineHeight(node.textStyle()) : 0;
+        if (pageLine > 0 && pictures.reach() >= pageLine - PICTURE_FILLS_ITS_LINE) {
+            letThePicturesSetTheLine(para);
+        }
         seatInTheLine(para, node, runsBefore, lineTopAbove + heldAbove, cutToTheInk);
+    }
+
+    /**
+     * Lets a line of pictures and no text be as tall as its pictures, where Word sizes the line.
+     *
+     * <p>A line Word sizes itself — no exact or least height written, as one holding only a
+     * picture is, since held exact its picture would stand where Word's baseline puts it and
+     * be cut — is its tallest run's height, and the paragraph's mark is a run: its font's depth
+     * below the baseline went under the picture. {@code SlateOrange}'s skills, a 12.4pt icon
+     * beside each label, came out 0.2pt taller each in Word, its tenth 2.3pt low and the column
+     * under them with it. The mark and the picture runs are set at a point, whose depth is a
+     * fraction of one.</p>
+     *
+     * <p>Only where the pictures fill the page's line ({@link #PICTURE_FILLS_ITS_LINE}): there
+     * the line is the pictures' height on the page too. A smaller picture stands in a line the
+     * page makes as tall as its font, and that line is the mark's: {@code VioletGrid}'s bullet
+     * dots, their lines cut to the dots, set every bullet 5.8pt high.</p>
+     */
+    private static void letThePicturesSetTheLine(XWPFParagraph para) {
+        CTPPr properties = para.getCTP().getPPr();
+        if (!para.getText().isEmpty()
+            || properties != null && properties.isSetSpacing() && properties.getSpacing().isSetLineRule()
+               && properties.getSpacing().getLineRule() != STLineSpacingRule.AUTO) {
+            return;
+        }
+        if (properties == null) {
+            properties = para.getCTP().addNewPPr();
+        }
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTParaRPr mark =
+                properties.isSetRPr() ? properties.getRPr() : properties.addNewRPr();
+        BigInteger point = BigInteger.valueOf(Math.round(HALF_POINTS_PER_POINT));
+        (mark.sizeOfSzArray() > 0 ? mark.getSzArray(0) : mark.addNewSz()).setVal(point);
+        (mark.sizeOfSzCsArray() > 0 ? mark.getSzCsArray(0) : mark.addNewSzCs()).setVal(point);
+        for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run : runsIn(para)) {
+            CTRPr runProperties = run.isSetRPr() ? run.getRPr() : run.addNewRPr();
+            (runProperties.sizeOfSzArray() > 0 ? runProperties.getSzArray(0) : runProperties.addNewSz()).setVal(point);
+            (runProperties.sizeOfSzCsArray() > 0 ? runProperties.getSzCsArray(0) : runProperties.addNewSzCs()).setVal(point);
+        }
     }
 
     /** Whether a paragraph laid out a line holding text, which its seat is read from. */

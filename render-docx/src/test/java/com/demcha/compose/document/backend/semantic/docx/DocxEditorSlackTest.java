@@ -97,16 +97,20 @@ class DocxEditorSlackTest {
 
         assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0));
         assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1));
+        assertThat(DocxTwips.of(exported.table().getCTTbl().getTblPr().getTblW().getW()))
+                .as("columns that fill the row keep the table at its width")
+                .isEqualTo(exported.placedTwips(0) + exported.placedTwips(1));
     }
 
     @Test
-    void aRowWithNoWeightColumnHasNoPointToGiveAndIsWrittenAsPlaced() throws Exception {
+    void aRowWithNoWeightColumnHasNoPointToGiveItsFixedColumnAtItsWidth() throws Exception {
         ExportedRow exported = exportRow(row -> row
                 .columns(DocumentRowColumn.auto(), DocumentRowColumn.fixed(80))
                 .addParagraph("Label").addParagraph("Value"));
 
         assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0));
-        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1));
+        assertThat(exported.gridTwips(1)).as("the fixed column at its own width, the rest of the row empty")
+                .isEqualTo(80 * 20L);
     }
 
     @Test

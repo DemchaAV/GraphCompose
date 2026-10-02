@@ -146,6 +146,52 @@ class DocxRowLayoutTest {
                 .addParagraph(p -> p.text("Value"))));
 
         assertThat(gridTwips(table)).containsExactly(2000L, 5200L);
+        assertThat(twips(table.getCTTbl().getTblPr().getTblW().getW()))
+                .as("columns that fill the row keep the table at its width")
+                .isEqualTo(7200L);
+    }
+
+    @Test
+    void fixedColumnsNarrowerThanTheRowLeaveTheRestOfItEmpty() throws Exception {
+        // The last column wraps its text at its own width, laid out or not; the rest of the
+        // row is empty, and the table is no wider than its columns.
+        Consumer<PageFlowBuilder> row = page -> page.addRow(r -> r
+                .columns(DocumentRowColumn.fixed(100), DocumentRowColumn.fixed(80))
+                .addParagraph(p -> p.text("Label"))
+                .addParagraph(p -> p.text("Value")));
+
+        for (XWPFTable table : List.of(onlyTable(row), measuredTable(row))) {
+            assertThat(gridTwips(table)).containsExactly(2000L, 1600L);
+            assertThat(twips(table.getCTTbl().getTblPr().getTblW().getW())).isEqualTo(3600L);
+        }
+    }
+
+    @Test
+    void aLastFixedColumnHoldsItsChildsMarginInsideItsWidth() throws Exception {
+        // The cell starts where the child does, past its 10pt margin; the 80pt slot ends 70 on.
+        XWPFTable table = measuredTable(page -> page.addRow(r -> r
+                .columns(DocumentRowColumn.fixed(100), DocumentRowColumn.fixed(80))
+                .addParagraph(p -> p.text("Label"))
+                .addParagraph(p -> p.text("Value").margin(new DocumentInsets(0, 0, 0, 10)))));
+
+        assertThat(gridTwips(table).get(1)).isEqualTo(70 * 20L);
+    }
+
+    @Test
+    void fixedColumnsNarrowerThanTheRowKeepItsPaddingAtTheirOuterEdges() throws Exception {
+        // 12pt of padding each side: it rides in the first and the last column, both of which
+        // end where their slots do, and the table ends with the last column's margin.
+        Consumer<PageFlowBuilder> row = page -> page.addRow(r -> r
+                .padding(DocumentInsets.symmetric(0, 12))
+                .columns(DocumentRowColumn.fixed(100), DocumentRowColumn.fixed(80))
+                .addParagraph(p -> p.text("Label"))
+                .addParagraph(p -> p.text("Value")));
+
+        for (XWPFTable table : List.of(onlyTable(row), measuredTable(row))) {
+            assertThat(gridTwips(table)).containsExactly(112 * 20L, 92 * 20L);
+            assertThat(marginTwips(table, 1)).containsExactly(0L, 240L);
+            assertThat(twips(table.getCTTbl().getTblPr().getTblW().getW())).isEqualTo(204 * 20L);
+        }
     }
 
     @Test

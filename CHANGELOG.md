@@ -8,6 +8,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A panel bled to the paper's edge stands where the page puts it in Word.** A panel's
+  table indent places its text, and an indent of 0 was not written. A panel whose negative
+  margin takes its fill to the paper's edge and whose padding takes its text back to the
+  margin has exactly that indent, and with none Word puts the table's edge on the margin:
+  `IndigoProposal`'s about band, fill and text, stood 27.6pt right of the page's. The indent is
+  now written in the body even when it is 0. LibreOffice already set the band where the page
+  does.
 - **A drawing over text in a row nested through a one-layer stack takes its room in DOCX.**
   A row cannot sit in a row cell, so templates wrap one in a layer stack of one layer; the
   row is written in the flow, and a drawing in it is drawn where the page puts it. Its room

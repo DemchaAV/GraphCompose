@@ -51,6 +51,7 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
@@ -5090,16 +5091,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (style == null) {
             return 0;
         }
+        try {
+            return styleMetrics().lineHeight(style);
+        } catch (RuntimeException unknownFace) {
+            return 0;
+        }
+    }
+
+    /** The measured fonts' metrics for a style, built when first asked for. */
+    private com.demcha.compose.document.chart.ChartTextMetrics styleMetrics() {
         if (styleMetrics == null) {
             styleMetrics = new com.demcha.compose.document.layout.ChartTextMetricsSupport(
                     new com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem(
                             measuredFonts(), com.demcha.compose.engine.render.pdf.PdfFont.class));
         }
-        try {
-            return styleMetrics.lineHeight(style);
-        } catch (RuntimeException unknownFace) {
-            return 0;
-        }
+        return styleMetrics;
     }
 
     /**
@@ -5219,6 +5225,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         boolean standsOut = letTheLineStandOut(para, node, room);
         boolean rightToLeft = applyParagraphProperties(para, node);
+        indentAsThePrefixDoes(para, node);
         // A line that stands out was given its room, and a couple of points more.
         if (!rightToLeft && !standsOut) {
             measureAtWordsSize(para, node, room);
@@ -5232,6 +5239,65 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         closeAnchor(para, anchor);
         lastWrittenNode = node;
         lastWrittenParagraph = para;
+    }
+
+    /**
+     * Indents a paragraph's lines by the blank prefix the page sets them after.
+     *
+     * <p>A paragraph's {@code bulletOffset} is text the page puts before its first line, its
+     * wrapped lines or both ({@code indentStrategy}), and none of it is in the paragraph's
+     * text. {@code EditorialProposal}'s bullets are a dot and three spaces before the text, and
+     * a prefix of three spaces before each wrapped line: in Word those lines started under the
+     * dot, 11.6pt left of the page's. A prefix of spaces is only a distance, so it is written as
+     * one — the left indent for the wrapped lines and the first line's difference from it —
+     * measured in the paragraph's style, not its runs', as the page measures it. It is written
+     * once a right-to-left paragraph's sides are turned, so it goes on {@code w:left}, the
+     * start of the flow in either direction.</p>
+     *
+     * <p>A prefix with letters in it is text the export does not write, and is left as it was.
+     * An auto-sized paragraph's prefix is measured at the size the export writes its text in,
+     * not the one the page fits it to.</p>
+     */
+    private void indentAsThePrefixDoes(XWPFParagraph para, ParagraphNode node) {
+        String prefix = node.bulletOffset();
+        DocumentTextIndent strategy = node.indentStrategy();
+        if (prefix.isEmpty() || !prefix.isBlank() || strategy == DocumentTextIndent.NONE) {
+            return;
+        }
+        double width = styleWidth(node.textStyle(), prefix);
+        if (!(width > 0.01)) {
+            return;
+        }
+        boolean first = strategy == DocumentTextIndent.FIRST_LINE || strategy == DocumentTextIndent.ALL_LINES;
+        boolean wrapped = strategy == DocumentTextIndent.FROM_SECOND_LINE || strategy == DocumentTextIndent.ALL_LINES;
+        long wrappedTwips = wrapped ? toTwips(width) : 0;
+        long firstTwips = first ? toTwips(width) : 0;
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
+        if (wrappedTwips > 0) {
+            long left = twipsOf(indent.isSetLeft() ? indent.getLeft() : null);
+            indent.setLeft(BigInteger.valueOf(left + wrappedTwips));
+        }
+        if (firstTwips > wrappedTwips) {
+            indent.setFirstLine(BigInteger.valueOf(firstTwips - wrappedTwips));
+        } else if (wrappedTwips > firstTwips) {
+            indent.setHanging(BigInteger.valueOf(wrappedTwips - firstTwips));
+        }
+    }
+
+    /**
+     * The width the layout gives text set in a style, in points; 0 for no style, and for a
+     * face the measured fonts do not hold, as {@link #styleLineHeight} answers.
+     */
+    private double styleWidth(DocumentTextStyle style, String text) {
+        if (style == null) {
+            return 0;
+        }
+        try {
+            return styleMetrics().width(style, text);
+        } catch (RuntimeException unknownFace) {
+            return 0;
+        }
     }
 
     /**

@@ -31,7 +31,7 @@ invoice-classic_long	2	2	166	166	0.51	0.88	0
 invoice-consulting	1	1	92	92	1.10	1.65	3
 invoice-consulting_long	2	2	236	236	0.99	1.40	3
 invoice-luma_studio	1	1	97	97	0.13	0.42	0
-invoice-luma_studio_long	3	3	192	192	0.23	11.75	20
+invoice-luma_studio_long	3	3	192	192	0.22	0.38	0
 invoice-merchant	1	1	94	94	0.30	0.75	0
 invoice-metered	1	1	99	99	0.37	0.77	0
 invoice-modern	1	1	54	54	0.31	0.57	0

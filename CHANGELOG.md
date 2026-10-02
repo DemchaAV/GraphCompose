@@ -8,6 +8,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A table or row the layout moves to a new page keeps its top edge there in DOCX.**
+  The page starts a block a page break moves down at its own top edge, and leaves the gap
+  before it at the foot of the page above where it fits there. Word has no space above a table, so the edge was
+  written below the paragraph before it, on the page above, and the long `LumaStudioInvoice`'s
+  closing pair stood 12pt high at the top of its third page. The edge is now a line of that
+  height kept with the table: Word drops a paragraph's space above at the top of a page, and
+  keeps a line's height. `LumaStudioInvoice`'s lines more than 2pt off fall from 20 to none
+  in Word, and from 22 to 2 in LibreOffice.
 - **A paragraph opening a table cell keeps its lines the page's distance apart in DOCX.**
   Word holds a paragraph's line gap inside its lines, and a paragraph of `n` lines then has a
   gap too many, which comes off the space above it. A paragraph opening a cell has none, so

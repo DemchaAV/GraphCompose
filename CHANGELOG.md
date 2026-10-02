@@ -8,6 +8,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **What follows a line holding only a drawn shape stands where the page sets it in DOCX.**
+  A shape is written as a picture a transparent frame larger than its ink on every side, and
+  Word makes a line of pictures and no text, grown to them, as tall as the pictures, frame
+  included.
+  `MonogramSidebar`'s contact icons stood in lines half a point taller than the page's, and
+  each contact under them half a point lower than the one above. The frame is now taken from
+  the space above the line and above what follows. `MonogramSidebar`'s lines more than 2pt off
+  fall from 17 to none in Word, its median from 0.79 to 0.29pt.
 - **A panel bled to the paper's edge stands where the page puts it in Word.** A panel's
   table indent places its text, and an indent of 0 was not written. A panel whose negative
   margin takes its fill to the paper's edge and whose padding takes its text back to the

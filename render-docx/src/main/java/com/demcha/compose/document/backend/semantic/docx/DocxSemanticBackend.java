@@ -5859,6 +5859,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 : pictures.pageLine() == 0 ? styleLineHeight(node.textStyle()) : 0;
         if (pageLine > 0 && pictures.reach() >= pageLine - PICTURE_FILLS_ITS_LINE) {
             letThePicturesSetTheLine(para);
+            if (ownLine) {
+                takeThePicturesEdgesFromAround(para, pictures);
+            }
         }
         seatInTheLine(para, node, runsBefore, lineTopAbove + heldAbove, cutToTheInk);
     }
@@ -5898,6 +5901,47 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             CTRPr size = run.isSetRPr() ? run.getRPr() : run.addNewRPr();
             (size.sizeOfSzArray() > 0 ? size.getSzArray(0) : size.addNewSz()).setVal(point);
             (size.sizeOfSzCsArray() > 0 ? size.getSzCsArray(0) : size.addNewSzCs()).setVal(point);
+        }
+    }
+
+    /**
+     * Keeps a line of pictures and no text, grown to its pictures, as tall as the page's.
+     *
+     * <p>Word makes such a line, written at least the pictures' reach, as tall as the pictures
+     * themselves — a drawn shape's transparent frame ({@link DocxShapePictures#EDGE}) above and
+     * below its ink included. {@code MonogramSidebar}'s contact icons, a 22pt glyph each over
+     * its line of text, stood in 22.5pt lines, and every contact under them half a point lower
+     * than the one above. What the pictures' edges reach past the page's line is taken from the
+     * space written above the line and from the space above what follows ({@link #hangingBelow}),
+     * as a line held to its pictures takes its ink's ({@link #holdPicturesInTheLine}); the ink
+     * then stands where the page draws it, and what follows where the page sets it.</p>
+     *
+     * <p>Only a drawn shape's frame, and only where the pictures' edges pass the line written:
+     * where they stay within it Word keeps that height, and taking the room would lift what
+     * follows. A line of its own only: half of a line pair shares its line with the other half.</p>
+     */
+    private void takeThePicturesEdgesFromAround(XWPFParagraph para, PictureReach pictures) {
+        CTPPr properties = para.getCTP().getPPr();
+        if (!holdsOnlyPictures(para) || properties == null || !properties.isSetSpacing()
+            || !properties.getSpacing().isSetLineRule()
+            || properties.getSpacing().getLineRule() != STLineSpacingRule.AT_LEAST
+            || !Double.isFinite(pictures.boxAbove()) || !Double.isFinite(pictures.boxBelow())
+            || !(pictures.boxAbove() > pictures.above() + 1e-9 || pictures.boxBelow() > pictures.below() + 1e-9)) {
+            return;
+        }
+        Long written = writtenTwips(properties.getSpacing().getLine());
+        double box = pictures.pageLine() + Math.max(0, pictures.boxAbove()) + Math.max(0, pictures.boxBelow());
+        if (written == null || !(box * POINT_TO_TWIP > written + 0.5)) {
+            return;
+        }
+        CTSpacing spacing = properties.getSpacing();
+        long before = spacing.isSetBefore() ? twipsOf(spacing.getBefore()) : 0;
+        long up = Math.min(before, Math.round(Math.max(0, pictures.boxAbove()) * POINT_TO_TWIP));
+        if (up > 0) {
+            spacing.setBefore(BigInteger.valueOf(before - up));
+        }
+        if (pictures.boxBelow() > 0) {
+            hangingBelow = Math.max(hangingBelow, pictures.boxBelow());
         }
     }
 
@@ -6371,7 +6415,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param below    how far the lowest picture's ink reaches below it, in points; negative when
      *                 it stays that far inside
      */
-    record PictureReach(double reach, boolean overText, double pageLine, double above, double below) {
+    record PictureReach(double reach, boolean overText, double pageLine, double above, double below,
+                        double boxAbove, double boxBelow) {
+
+        PictureReach(double reach, boolean overText, double pageLine, double above, double below) {
+            this(reach, overText, pageLine, above, below, above, below);
+        }
 
         /** No picture written. */
         static final PictureReach NONE = new PictureReach(0, false, Double.NaN,
@@ -6407,7 +6456,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             boolean passes = top > line.textAscent() || -(bottomFromBaseline + inset) > descent;
             double above = descent + wordTop - line.lineHeight();
             double below = -(bottomFromBaseline + inset) - descent;
-            return new PictureReach(descent + wordTop, passes, line.lineHeight(), above, below);
+            // The picture's own edges, frame and all: what a line Word sizes to it spans.
+            return new PictureReach(descent + wordTop, passes, line.lineHeight(), above, below,
+                    above + inset, below + inset);
         }
 
         PictureReach max(PictureReach other) {
@@ -6418,7 +6469,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     : Double.isNaN(other.pageLine) ? pageLine
                     : pageLine > 0 && other.pageLine > 0 ? Math.max(pageLine, other.pageLine) : 0;
             return new PictureReach(Math.max(reach, other.reach), overText || other.overText, line,
-                    Math.max(above, other.above), Math.max(below, other.below));
+                    Math.max(above, other.above), Math.max(below, other.below),
+                    Math.max(boxAbove, other.boxAbove), Math.max(boxBelow, other.boxBelow));
         }
     }
 

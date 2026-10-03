@@ -7674,18 +7674,72 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * needs more room than the page's, the row still grows to hold it.</p>
      *
      * <p>The height is written less the most any of the row's cells takes above and below its
-     * content — top and bottom margins, and a horizontal border's width. LibreOffice reads a
-     * row's height as its cells' content and adds those to it: written whole,
-     * {@code PlatformInvoice}'s 36pt rows, padded 6.1pt above and below, came out 48pt. Less
-     * them, a row is the page's height there, and no taller than its content where the height
-     * is read as the row's whole.</p>
+     * content — top and bottom margins, and a horizontal border's width, with half of the rule
+     * above the table and of the one below it more in the first row and the last
+     * ({@link #outerRulesBeyondOne}). LibreOffice reads a row's height as its cells' content and
+     * adds those to it: written whole, {@code PlatformInvoice}'s 36pt rows, padded 6.1pt above
+     * and below, came out 48pt. Word does too, measured on a ruled table. Less them, a row is the
+     * page's height in both.</p>
      */
-    private void holdRowHeight(XWPFTableRow row, TableNode node, int rowIdx) {
+    private void holdRowHeight(XWPFTable table, TableNode node, int rowIdx) {
         java.util.OptionalDouble height = layout.rowHeight(node, rowIdx);
         if (height.isPresent()) {
-            holdRowAtLeast(row, height.getAsDouble());
+            XWPFTableRow row = table.getRow(rowIdx);
+            holdRowAtLeast(row, height.getAsDouble(), outerRulesBeyondOne(table, rowIdx));
             fitBlankLinesToTheRow(row);
         }
+    }
+
+    /**
+     * What a table's first or last row holds of its rules beyond the one {@link #verticalMargins}
+     * counts, in twips.
+     *
+     * <p>Word gives a rule between two rows half to each — the lower row's, where the two differ
+     * — and the rule above the table and the one below it whole to their row; it reads a row's
+     * written height as its cells' content alone. So the first row carries its own rule and half
+     * the next row's, and the last row half its own and its own again: written less one rule,
+     * each was held half a rule taller than its content needs. Measured, a table of four rows ruled
+     * at 0.75pt, held this way, stood 0.46pt taller in its first row and 0.36pt in its last.
+     * {@code EditorialProposal}'s timeline and investment tables each stood that much taller in
+     * Word, and the page under them that much low.</p>
+     */
+    private static long outerRulesBeyondOne(XWPFTable table, int rowIdx) {
+        int rows = table.getNumberOfRows();
+        boolean first = rowIdx == 0;
+        boolean last = rowIdx == rows - 1;
+        if (!first && !last) {
+            return 0;
+        }
+        if (first && !last) {
+            // Its own rule above the table counts; half the next row's rule is the rest.
+            return Math.round(mostRule(table.getRow(1), true) / 2.0);
+        }
+        long most = 0;
+        for (XWPFTableCell cell : table.getRow(rowIdx).getTableCells()) {
+            long top = first ? rule(cell, true) : 0;
+            most = Math.max(most, Math.round((top + rule(cell, false)) / 2.0));
+        }
+        return most;
+    }
+
+    /** The heaviest top (or bottom) rule of a row's cells, in twips. */
+    private static long mostRule(XWPFTableRow row, boolean top) {
+        long most = 0;
+        for (XWPFTableCell cell : row.getTableCells()) {
+            most = Math.max(most, rule(cell, top));
+        }
+        return most;
+    }
+
+    /** A cell's own top (or bottom) rule, in twips. */
+    private static long rule(XWPFTableCell cell, boolean top) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr properties = cell.getCTTc().getTcPr();
+        if (properties == null || !properties.isSetTcBorders()) {
+            return 0;
+        }
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcBorders borders = properties.getTcBorders();
+        return top ? borderTwips(borders.isSetTop() ? borders.getTop() : null)
+                : borderTwips(borders.isSetBottom() ? borders.getBottom() : null);
     }
 
     /**
@@ -7700,10 +7754,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * letters keeps its line.</p>
      *
      * <p>The row's height is written less the most any of its cells takes above and below its
-     * content; Word reads it as the row's whole, a cell's content and margins filling it. So a
+     * content, the cells' content and margins filling the row's whole around it. So a
      * cell's room is that height, as much again as the row's written height leaves out, less
      * what the cell itself takes and its paragraph's space above and below — the page's row,
-     * less the cell's own margins and border. Taken off the written height alone, a blank row's
+     * less the cell's own margins and border, and in a table's first or last row the half rule
+     * more it holds ({@link #outerRulesBeyondOne}). Taken off the written height alone, a blank row's
      * line would lose its padding twice.</p>
      */
     private static void fitBlankLinesToTheRow(XWPFTableRow row) {
@@ -7911,14 +7966,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param points the height the page gives it
      */
     private static void holdRowAtLeast(XWPFTableRow row, double points) {
+        holdRowAtLeast(row, points, 0);
+    }
+
+    /**
+     * {@link #holdRowAtLeast(XWPFTableRow, double)}, less {@code beyond} twips more of rules the
+     * row holds besides the one its cells' margins count ({@link #outerRulesBeyondOne}).
+     */
+    private static void holdRowAtLeast(XWPFTableRow row, double points, long beyond) {
         long margins = 0;
         for (XWPFTableCell cell : row.getTableCells()) {
             margins = Math.max(margins, verticalMargins(cell));
         }
-        long twips = Math.round(points * POINT_TO_TWIP) - margins;
-        if (twips <= 0) {
+        long lessMargins = Math.round(points * POINT_TO_TWIP) - margins;
+        if (lessMargins <= 0) {
             return;
         }
+        // Rules the row holds besides take it down to a twip at the least: written, the height
+        // still cuts a blank line to the room the row leaves it (fitBlankLinesToTheRow).
+        long twips = Math.max(1, lessMargins - beyond);
         row.setHeight((int) twips);
         row.setHeightRule(org.apache.poi.xwpf.usermodel.TableRowHeightRule.AT_LEAST);
     }
@@ -8034,7 +8100,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
             }
             evenTheRowsMargins(row);
-            holdRowHeight(row, node, rowIdx);
+            // The first row's share of the rule under it is the next row's rule, written next.
+            if (rowIdx > 0 || rowCount == 1) {
+                holdRowHeight(table, node, rowIdx);
+            }
+        }
+        if (rowCount > 1) {
+            holdRowHeight(table, node, 0);
         }
         breakRowsWhereTheLayoutDoes(table, node);
         indentTable(table);

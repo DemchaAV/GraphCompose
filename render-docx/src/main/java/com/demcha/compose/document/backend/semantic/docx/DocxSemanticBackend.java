@@ -7366,8 +7366,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * paragraph after. Both go through the debt every other gap goes through
      * ({@link #owePendingSpacingAfter}), so a table between two paragraphs reads the same as
      * two paragraphs with a gap between them. With nothing above it — opening the body, or a
-     * row opening any cell but a table's — a paragraph a tenth of a point tall holds that edge
-     * ({@link #holdTheSpaceAboveATable}); a table opening a cell still loses it.</p>
+     * row opening any cell but a table's, or a table opening a cell where a band or column layer
+     * resumes — a paragraph a tenth of a point tall holds that edge
+     * ({@link #holdTheSpaceAboveATable}); any other table opening a cell still loses it.</p>
      */
     private void writeTableWithItsOwnSpacing(XWPFDocument document, DocumentNode node)
             throws Exception {
@@ -7384,11 +7385,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             borderBelow = 0;
             forgetTheHang();
         }
+        // A table a band's or a column's layer opens is that layer's first block, so it starts
+        // where the layer resumes, as a paragraph does, and its own top margin comes after: VioletGrid's education
+        // lines, beside a badge, lost their 2.3pt and stood 2.4pt high. A row is not a first block:
+        // the band measures to the first one inside it, and the row's cells write what stands
+        // above that block.
+        boolean resumed = node instanceof TableNode && !Double.isNaN(resumeSpacing);
+        if (resumed) {
+            resumeHere();
+        }
         owePendingSpacingAfter(node.margin().top() + node.padding().top());
         if (onANewPage) {
             holdTheSpaceAboveOnItsPage(document);
         }
-        if (node instanceof RowNode && currentCell != null && !tablesCells.contains(currentCell.getCTTc())) {
+        if ((node instanceof RowNode || resumed) && currentCell != null && !tablesCells.contains(currentCell.getCTTc())) {
             // At the top of a cell nothing above holds that space: MerchantInvoice's due-date
             // row lost its 16.7pt of top padding and stood against the card's top edge, once the
             // card held the page's height, and PaymentsInvoice's metadata grid the 6.2pt its
@@ -7398,10 +7408,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // 6pt below the page's.
             holdTheSpaceAboveATable(document);
         }
-        if (node instanceof RowNode row) {
-            writeRow(document, row);
-        } else {
-            writeTable(document, (TableNode) node);
+        // Its side margins hold it in from the edges it is written between, as a paragraph's do:
+        // VioletGrid's education lines, a table held 51.3pt clear of the badge beside them,
+        // started under the badge, and PaymentsInvoice's bank details 36.7pt left of the page's.
+        double outerLeft = insetLeft;
+        double outerRight = insetRight;
+        // A row's column already starts past the margin of the block the layout placed in it.
+        insetLeft += node == leftMarginInCell ? 0 : node.margin().left();
+        insetRight += node.margin().right();
+        try {
+            if (node instanceof RowNode row) {
+                writeRow(document, row);
+            } else {
+                writeTable(document, (TableNode) node);
+            }
+        } finally {
+            insetLeft = outerLeft;
+            insetRight = outerRight;
         }
         owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
     }

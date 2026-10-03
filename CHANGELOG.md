@@ -16,7 +16,9 @@ follow semantic versioning; release dates are ISO 8601.
   the header row, and moved the whole page under the header down that much. That reach now comes out of the
   cell's own space under it first, and what passes the row comes out of the gap under the row.
   `TimelineMinimal`'s median drift falls from 1.44 to 0.36pt in Word and from 1.40 to 0.45pt in
-  LibreOffice, its cover letter's from 1.30 to 0.29pt and 1.32 to 0.33pt.
+  LibreOffice, its cover letter's from 1.30 to 0.29pt and 1.32 to 0.33pt. A spacer the layout
+  moves to the next page under such a row leaves the row's reach on the page above, and holds
+  the whole gap carried with it, as a paragraph moved there does.
 - **A spacer is as tall in DOCX as on the page.** A spacer is written as an empty paragraph a
   tenth of a point tall, which Word keeps (measured: ten such lines between eleven lines of
   text added 0.96pt), and its whole height was then owed below it as well. Every spacer stood a

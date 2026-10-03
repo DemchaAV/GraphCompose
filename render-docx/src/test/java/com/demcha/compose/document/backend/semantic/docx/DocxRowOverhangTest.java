@@ -101,6 +101,46 @@ class DocxRowOverhangTest {
         }
     }
 
+    @Test
+    void aRowsHangStaysOnItsPageWhenTheGapUnderItCarriesASpacerToTheNext() throws Exception {
+        // The row ends 3pt above the page's foot, less than the 10pt gap: the gap and the spacer
+        // open the next page, and the spacer's line holds the whole gap there. What the row's
+        // last line hangs past the row is on the page above.
+        double rowHeight;
+        try (DocumentSession session = rowAndSpacer(0)) {
+            rowHeight = session.layoutGraph().nodes().stream()
+                    .filter(node -> "Row".equals(node.semanticName()))
+                    .findFirst().orElseThrow().placementHeight();
+        }
+        double content = 400 - 2 * 20;
+        try (DocumentSession session = rowAndSpacer(content - GAP - rowHeight - 3);
+             XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(session.export(new DocxSemanticBackend())))) {
+            XWPFParagraph after = after(document);
+            java.util.List<XWPFParagraph> paragraphs = document.getParagraphs();
+            CTSpacing spacer = paragraphs.get(paragraphs.indexOf(after) - 1).getCTP().getPPr().getSpacing();
+
+            assertThat(DocxTwips.of(spacer.getLine())).as("the hairline and the whole gap")
+                    .isEqualTo(2 + Math.round(GAP * 20));
+        }
+    }
+
+    /** A filler, a row whose taller cell ends with a hanging icon line, a 3pt spacer and a paragraph. */
+    private static DocumentSession rowAndSpacer(double filler) {
+        DocumentSession session = GraphCompose.document().pageSize(400, 400).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> {
+            page.spacing(GAP);
+            if (filler > 0) {
+                page.spacer(0, filler);
+            }
+            page.addRow(row -> row.name("Row")
+                            .addSection("Left", left -> left.addParagraph(p -> p.textStyle(SMALL).text("Name")))
+                            .addSection("Right", DocxRowOverhangTest::contact))
+                    .spacer(0, 3)
+                    .addParagraph(p -> p.textStyle(SMALL).text("After"));
+        });
+        return session;
+    }
+
     /** A contact stack whose last line holds an icon lowered as TimelineMinimal's are. */
     private static void contact(SectionBuilder section) {
         section.spacing(3);

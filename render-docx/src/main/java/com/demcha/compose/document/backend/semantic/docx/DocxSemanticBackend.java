@@ -224,7 +224,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private double hangingOverBy;
     // How far the last line of the cell written last hangs below everything the cell writes
     // under it, in points: Word's cell is that much taller than its content on the page (see
-    // writeInCell). The row it stands in reads it.
+    // writeInCell). A row reads it for each of its cells (writeRow); a panel or a stack written
+    // as columns does not, and that much still makes its table taller.
     private double cellOverhang;
 
     /**
@@ -10507,13 +10508,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeInPlaceOf(document, node);
             return;
         }
+        boolean opensAPage = currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(node);
+        if (opensAPage) {
+            // Text hanging below the block before — a row's last line held to its icon — a pull
+            // out of it and a card's border below it stay on the page above with it, as at a
+            // paragraph moved to a new page (holdAParagraphsTopEdgeOnItsPage).
+            forgetTheHang();
+            pullBelow = 0;
+            borderBelow = 0;
+        }
         XWPFParagraph para = newBodyParagraph(document);
         para.createRun().setText("");
         // The spacer is its height and nothing more. An empty paragraph at Word's own line
         // height is a line of text tall, and it stood on top of that height: between two CV
         // entries held apart by a 4.5pt spacer, the page shows 16pt and LibreOffice drew 23.
         holdToHairline(para);
-        if (currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(node)) {
+        if (opensAPage) {
             holdTheGapAboveInTheLine(para, node);
         }
         // The hairline is part of the height, as a separator's is of the gap it stands in: owed

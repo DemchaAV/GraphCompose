@@ -32,7 +32,8 @@ class DocxSpaceAboveOnANewPageTest {
 
     /**
      * The page's content is 160pt tall: 300 x 200 with a 20pt margin. A spacer fills it to a
-     * height; its height is owed below it, and written above the paragraph that follows.
+     * height; its height less its hairline is owed below it, and written above the paragraph
+     * that follows.
      */
     private static final double CONTENT = 160;
 
@@ -48,7 +49,7 @@ class DocxSpaceAboveOnANewPageTest {
 
             assertThat(spacing.getLineRule()).isEqualTo(STLineSpacingRule.EXACT);
             assertThat(before(spacing)).as("the filler's height, owed below it, and no gap")
-                    .isEqualTo(Math.round((CONTENT - 3) * 20));
+                    .isEqualTo(owed(CONTENT - 3));
             assertThat(DocxTwips.of(spacing.getLine())).as("the gap, and the hairline's height")
                     .isEqualTo(Math.round(GAP * 20) + HAIRLINE);
         }
@@ -65,7 +66,7 @@ class DocxSpaceAboveOnANewPageTest {
             CTSpacing spacing = spacing(spacerOnThePageAfter(document));
 
             assertThat(before(spacing)).as("the filler's height and the gap, which the page leaves above")
-                    .isEqualTo(Math.round((CONTENT - 10 + GAP) * 20));
+                    .isEqualTo(owed(CONTENT - 10 + GAP));
             assertThat(DocxTwips.of(spacing.getLine())).isEqualTo(HAIRLINE);
         }
     }
@@ -89,7 +90,7 @@ class DocxSpaceAboveOnANewPageTest {
                     .isEqualTo(Math.round(PADDING * 20));
             assertThat(line.getCTP().getPPr().isSetKeepNext()).as("kept with the heading").isTrue();
             assertThat(before(spacing)).as("the filler's height and the gap stay above the line")
-                    .isEqualTo(Math.round((CONTENT - 10 + GAP) * 20));
+                    .isEqualTo(owed(CONTENT - 10 + GAP));
             assertThat(before(spacing(heading))).as("its edge is the line's").isZero();
         }
     }
@@ -107,7 +108,7 @@ class DocxSpaceAboveOnANewPageTest {
 
             assertThat(DocxTwips.of(spacing.getLine())).as("the gap and the padding")
                     .isEqualTo(Math.round((GAP + PADDING) * 20));
-            assertThat(before(spacing)).as("the filler's height alone").isEqualTo(Math.round((CONTENT - 3) * 20));
+            assertThat(before(spacing)).as("the filler's height alone").isEqualTo(owed(CONTENT - 3));
         }
     }
 
@@ -154,7 +155,7 @@ class DocxSpaceAboveOnANewPageTest {
             assertThat(document.getParagraphs()).as("the filler, the heading and the body, no line")
                     .hasSize(3);
             assertThat(before(spacing(heading))).as("the padding, left for Word to drop")
-                    .isEqualTo(Math.round((CONTENT - 30 - GAP + GAP + PADDING) * 20));
+                    .isEqualTo(owed(CONTENT - 30 - GAP + GAP + PADDING));
         }
     }
 
@@ -197,7 +198,7 @@ class DocxSpaceAboveOnANewPageTest {
             CTSpacing spacing = spacing(paragraphBefore(document, text));
 
             assertThat(DocxTwips.of(spacing.getLine())).as("its 2pt edge, less the 1.4pt gap").isEqualTo(40 - 28);
-            assertThat(before(spacing)).isEqualTo(Math.round((CONTENT - 10 + GAP) * 20));
+            assertThat(before(spacing)).isEqualTo(owed(CONTENT - 10 + GAP));
             assertThat(before(spacing(text))).isZero();
         }
     }
@@ -211,7 +212,7 @@ class DocxSpaceAboveOnANewPageTest {
 
             assertThat(DocxTwips.of(spacing.getLine())).as("a twip left of its 1pt edge").isEqualTo(1);
             assertThat(before(spacing)).as("the 11 twips of the gap the line could not give")
-                    .isEqualTo(Math.round((CONTENT - 10 + GAP) * 20) - 11);
+                    .isEqualTo(owed(CONTENT - 10 + GAP) - 11);
             assertThat(DocxTwips.of(spacing(text).getLine()))
                     .as("its lines as tall as where the whole gap comes off the space above it on one page")
                     .isEqualTo(DocxTwips.of(spacing(paragraphWith(onOnePage, WRAPPED)).getLine()));
@@ -245,12 +246,20 @@ class DocxSpaceAboveOnANewPageTest {
             XWPFParagraph heading = paragraphWith(document, "Heading");
 
             assertThat(document.getParagraphs()).as("the spacer and the heading, no line between them").hasSize(2);
-            assertThat(before(spacing(heading))).isEqualTo(Math.round((CONTENT - 10 + GAP + PADDING) * 20));
+            assertThat(before(spacing(heading))).isEqualTo(owed(CONTENT - 10 + GAP + PADDING));
         }
     }
 
     /** A spacer's paragraph is a tenth of a point tall, in twips (see holdToHairline). */
     private static final long HAIRLINE = 2;
+
+    /**
+     * The space owed above the block after the filler, in twips: {@code points} of it, less the
+     * filler's own hairline, which is part of its height.
+     */
+    private static long owed(double points) {
+        return Math.round(points * 20) - HAIRLINE;
+    }
 
     private static XWPFParagraph spacerOnThePageAfter(XWPFDocument document) {
         return paragraphBefore(document, paragraphWith(document, "After"));

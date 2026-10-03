@@ -116,7 +116,26 @@ class DocxContainerSpacingTest {
                     .as("the spacer's line is held to a hairline").isTrue();
             assertThat(spacing.getLineRule().toString()).isEqualTo("exact");
             assertThat(DocxTwips.of(spacing.getLine())).isLessThanOrEqualTo(2L);
-            assertThat(before(all.get(2))).as("the spacer's height, above the next entry").isEqualTo(90L);
+            assertThat(DocxTwips.of(spacing.getLine()) + before(all.get(2)))
+                    .as("the hairline and the space above the next entry, the spacer's height").isEqualTo(90L);
+        }
+    }
+
+    @Test
+    void aSpacerOverATableHoldsTheRestOfItsHeightBelowItsHairline() throws Exception {
+        // A table has no space above it in Word, so the spacer writes the rest of its height
+        // below its own line; nothing stands between them to take the hairline out again.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addParagraph("Above")
+                .addSpacer(spacer -> spacer.name("Gap").width(100).height(10))
+                .addTable(t -> t.autoColumns(1).row("Cell")))) {
+            List<IBodyElement> body = document.getBodyElements();
+            XWPFTable table = document.getTables().get(0);
+            XWPFParagraph spacer = (XWPFParagraph) body.get(body.indexOf(table) - 1);
+
+            assertThat(spacer.getText()).isEmpty();
+            assertThat(DocxTwips.of(spacer.getCTP().getPPr().getSpacing().getLine()) + after(spacer))
+                    .as("the hairline and the space below it, the spacer's height").isEqualTo(200L);
         }
     }
 

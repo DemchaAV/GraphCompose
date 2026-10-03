@@ -1693,6 +1693,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX fidelity corpus holds a line where it stands across, as well as down.** It measured
+  how far from the page's an editor set each line up or down, and nothing across: a table's
+  left margin the export dropped (fixed in #831) stood `PaymentsInvoice`'s bank details 36.7pt
+  and `VioletGrid`'s education lines 51pt left of the page's in both editors, no line further
+  down than its baseline held, and the gate passed both. The line file now records each line's
+  first letter's drift right of the page's (`FidelityMeasurement.Found.across`), and a line set
+  more than half a point further from the page across fails as one set further up or down does.
+  With #831 reverted, the LibreOffice gate now fails those two documents and `PlatformInvoice`'s
+  footer. A line file written before keeps holding lines down alone; one measured across
+  refuses a row without the column. "More than half a point" is counted in the hundredths
+  drifts are written in, down and across: in doubles, 22 of the 501 steps of exactly half a
+  point between 0 and 5pt counted as further. Across the corpus the median line stands 0.07pt off across in Word and 0.10pt in
+  LibreOffice on Windows; 175 and 130 lines stand more than 2pt off, and 427 in LibreOffice on
+  Linux, held where they are.
+
 - **The DOCX fidelity corpus measures a line from its first letter.** A space opened a line
   (`PdfLines`), and Word writes one for an empty paragraph: drawn just before a line of text
   beside it, a few points off its baseline, it gave that line its own. The lines measured past

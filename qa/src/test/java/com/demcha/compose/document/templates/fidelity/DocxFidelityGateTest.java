@@ -94,6 +94,86 @@ class DocxFidelityGateTest {
     }
 
     @Test
+    void linesSetFurtherRightDriftAcrossByAsMuch() throws Exception {
+        // PaymentsInvoice's bank details stood 36.7pt left of the page's in Word, no line lower.
+        Path page = pdf("page", flow -> LINES.forEach(flow::addParagraph));
+        Path right = pdf("right", flow -> LINES.forEach(text -> flow.addParagraph(
+                p -> p.text(text).margin(new DocumentInsets(0, 0, 0, 8)))));
+
+        FidelityMeasurement measured = FidelityMeasurement.of("probe", page, right);
+
+        assertThat(measured.matched()).isEqualTo(3);
+        assertThat(measured.median()).as("no line lower").isCloseTo(0, within(0.05));
+        assertThat(measured.found().values()).allSatisfy(line ->
+                assertThat(line.across()).as("each line 8pt right").isCloseTo(8, within(0.05)));
+    }
+
+    @Test
+    void theBaselineFailsALineFurtherAcross() {
+        FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1,
+                line(1, "aa", 0.1, 0.2), line(1, "bb", 0.1, -3.0))));
+
+        assertThat(baseline.regressions(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, -0.71),
+                line(1, "bb", 0.1, -3.0))))).as("0.51pt further, to the other side")
+                .singleElement().asString().contains("1 lines further").contains("across");
+        assertThat(baseline.regressions(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, 0.69),
+                line(1, "bb", 0.1, -0.5))))).as("within half a point, and nearer").isEmpty();
+    }
+
+    @Test
+    void aLineFurtherBothWaysIsNamedOnceWithBoth() {
+        FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, 0.1))));
+
+        assertThat(baseline.regressions(List.of(doc("cv-probe", 1, 1, line(1, "aa", 2.0, -3.0)))))
+                .singleElement().asString().contains("1 lines further")
+                .contains("+0.10 -> +2.00pt, +0.10 -> -3.00pt across");
+    }
+
+    @Test
+    void aBaselineWrittenBeforeLinesWereMeasuredAcrossHoldsThemDownAlone() {
+        Map<String, Map<String, FidelityMeasurement.Found>> read = new LinkedHashMap<>();
+        FidelityMeasurement.parseLine("cv-a\t1:aa\t0.25\taa", read);
+        FidelityMeasurement.Found found = read.get("cv-a").get("1:aa");
+
+        assertThat(found.preview()).isEqualTo("aa");
+        assertThat(found.drift()).isEqualTo(0.25);
+        assertThat(found.across()).isNaN();
+        FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-a", 1, 1, Map.entry("1:aa", found))));
+        assertThat(baseline.regressions(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, 40)))))
+                .as("no place across to hold it to").isEmpty();
+        assertThat(baseline.regressions(List.of(doc("cv-a", 1, 1, line(1, "aa", 1.0, 0)))))
+                .as("and still held down").singleElement().asString().contains("further").doesNotContain("across");
+    }
+
+    @Test
+    void aLineFileMeasuredAcrossRefusesARowWithoutItsDriftAcross() throws Exception {
+        Path file = dir.resolve("baseline.tsv");
+        FidelityBaseline.write(file, "probe", List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, 1.5))));
+        Path lines = dir.resolve("baseline-lines.tsv");
+        List<String> rows = Files.readAllLines(lines);
+
+        Files.write(lines, List.of(rows.get(0), "cv-a\t1:aa\t0.25\taa"));
+        assertThatThrownBy(() -> FidelityBaseline.read(file)).as("a row cut short, not one written before")
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("5 cells");
+        Files.write(lines, List.of("cv-a\t1:aa\t0.25\t1.50\taa", "cv-a\t1:bb\t0.50\tbb"));
+        assertThatThrownBy(() -> FidelityBaseline.read(file)).as("no header, and a row measured across beside one cut short")
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("5 cells");
+    }
+
+    @Test
+    void halfAPointFurtherIsRoundingForEveryDrift() {
+        // In doubles, 0.18 + 0.5 is less than 0.68: half a point further failed 22 of these drifts.
+        for (int hundredths = 0; hundredths <= 500; hundredths++) {
+            double was = hundredths / 100.0;
+            double now = (hundredths + 50) / 100.0;
+            FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", was, was))));
+
+            assertThat(baseline.regressions(List.of(doc("cv-probe", 1, 1, line(1, "aa", now, now)))))
+                    .as("%.2f -> %.2f", was, now).isEmpty();
+        }
+    }
+
+    @Test
     void theBaselineFailsALineNoLongerFound() {
         FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.4), line(1, "bb", 2.8))));
 
@@ -124,12 +204,16 @@ class DocxFidelityGateTest {
     @Test
     void aBaselineIsReadAsItWasWritten() throws Exception {
         Path file = dir.resolve("baseline.tsv");
-        List<FidelityMeasurement> rows = List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25)),
+        List<FidelityMeasurement> rows = List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, -1.25)),
                 doc("cv-b", 2, 3, line(1, "aa", -1.5), line(2, "cc", 3)));
 
         FidelityBaseline.write(file, "probe", rows);
 
         assertThat(FidelityBaseline.read(file).regressions(rows)).isEmpty();
+        assertThat(FidelityBaseline.read(file).regressions(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, -1.86)),
+                doc("cv-b", 2, 3, line(1, "aa", -1.5), line(2, "cc", 3)))))
+                .as("a drift across read back as written: -1.25 -> -1.86 is further")
+                .singleElement().asString().contains("across");
         assertThat(FidelityBaseline.read(file).regressions(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.86)),
                 doc("cv-b", 2, 3, line(1, "aa", -1.5), line(2, "cc", 3)))))
                 .as("a drift read back as written: 0.25 -> 0.86 is further").singleElement().asString().contains("further");
@@ -310,7 +394,12 @@ class DocxFidelityGateTest {
     }
 
     private static Map.Entry<String, FidelityMeasurement.Found> line(int page, String letters, double drift) {
-        return Map.entry(page + ":" + letters, new FidelityMeasurement.Found(page, letters, drift));
+        return line(page, letters, drift, 0);
+    }
+
+    private static Map.Entry<String, FidelityMeasurement.Found> line(int page, String letters, double drift,
+                                                                     double across) {
+        return Map.entry(page + ":" + letters, new FidelityMeasurement.Found(page, letters, drift, across));
     }
 
     private Path pdf(String name, Consumer<PageFlowBuilder> content) throws Exception {

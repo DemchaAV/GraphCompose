@@ -76,6 +76,94 @@ class DocxWordSizeMeasureTest {
     }
 
     @Test
+    void aShortCentredLineIsLeftWhereThePageSetsIt() throws Exception {
+        // Its box has room for it as Word sets it: an indent past a cell's edge moves it.
+        assertThat(indentOf(7.8, TextAlign.CENTER, SHORT)).isZero();
+    }
+
+    @Test
+    void aCentredLineThatFillsItsBoxIsGivenRoomAtBothEdgesAlike() throws Exception {
+        // VioletGrid's 6.8pt "INFORMATION ARCHITECTURE" fills its tile; set at 7pt it broke in two.
+        double room = fillingRoom(HEADING, 6.8);
+        try (XWPFDocument document = filledBy(HEADING, 6.8, TextAlign.CENTER, room)) {
+            XWPFParagraph heading = text(document, "INFORMATION");
+            double measure = room - (leftIndent(heading) + rightIndent(heading)) / 20.0;
+
+            assertThat(leftIndent(heading)).as("both edges move").isNegative();
+            assertThat(Math.abs(leftIndent(heading) - rightIndent(heading))).as("alike, so its centre stays")
+                    .isLessThanOrEqualTo(1);
+            assertThat(measure).as("the line fits at Word's 7pt").isGreaterThan(widthAlone(HEADING, 6.8) * 7 / 6.8);
+        }
+    }
+
+    @Test
+    void aRightAlignedLineThatFillsItsBoxIsGivenRoomAtItsLeft() throws Exception {
+        double room = fillingRoom(HEADING, 6.8);
+        try (XWPFDocument document = filledBy(HEADING, 6.8, TextAlign.RIGHT, room)) {
+            XWPFParagraph heading = text(document, "INFORMATION");
+
+            assertThat(rightIndent(heading)).as("its edge stays").isZero();
+            assertThat(room - leftIndent(heading) / 20.0).as("the line fits at Word's 7pt")
+                    .isGreaterThan(widthAlone(HEADING, 6.8) * 7 / 6.8);
+        }
+    }
+
+    @Test
+    void aRightAlignedLineFillingACellTakesNoTextPastTheCellsLeftEdge() throws Exception {
+        // Word draws no text left of a cell's edge: the room the left indent cannot give comes
+        // from the right.
+        double column = fillingRoom(HEADING, 6.8);
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
+                .addRow("Tile", row -> row
+                        .columns(DocumentRowColumn.fixed(column), DocumentRowColumn.weight(1))
+                        .addParagraph(p -> p.text(HEADING).textStyle(DocumentTextStyle.DEFAULT.withSize(6.8))
+                                .align(TextAlign.RIGHT))
+                        .addParagraph("Main")))) {
+            var cell = document.getTables().get(0).getRow(0).getCell(0);
+            XWPFParagraph heading = cell.getParagraphs().stream()
+                    .filter(p -> p.getText().startsWith("INFORMATION")).findFirst().orElseThrow();
+            long cellWidth = DocxTwips.of(cell.getCTTc().getTcPr().getTcW().getW());
+
+            assertThat(leftIndent(heading)).as("nothing past the cell's left edge").isGreaterThanOrEqualTo(0);
+            assertThat((cellWidth - leftIndent(heading) - rightIndent(heading)) / 20.0)
+                    .as("the line still fits at Word's 7pt").isGreaterThan(widthAlone(HEADING, 6.8) * 7 / 6.8);
+        }
+    }
+
+    @Test
+    void aRightAlignedParagraphOfSeveralLinesIsLeftWhereThePageSetsIt() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page
+                .addParagraph(p -> p.text(LONG).textStyle(DocumentTextStyle.DEFAULT.withSize(7.8))
+                        .align(TextAlign.RIGHT)))) {
+            XWPFParagraph paragraph = text(document, "Platform engineer");
+
+            assertThat(leftIndent(paragraph)).isZero();
+            assertThat(rightIndent(paragraph)).isZero();
+        }
+    }
+
+    private static final String HEADING = "INFORMATION ARCHITECTURE";
+
+    /** A measure the line fills at the page's size, with less than Word's size needs to spare. */
+    private static double fillingRoom(String line, double size) {
+        return widthAlone(line, size) + 0.5;
+    }
+
+    private static XWPFDocument filledBy(String line, double size, TextAlign align, double room) throws Exception {
+        return DocxExports.withLayout(room + 40, 300, 20, page -> page
+                .addParagraph(p -> p.text(line).textStyle(DocumentTextStyle.DEFAULT.withSize(size)).align(align)));
+    }
+
+    private static double widthAlone(String text, double size) {
+        return laidOut(500, p -> p.text(text).textStyle(DocumentTextStyle.DEFAULT.withSize(size))).get(0).width();
+    }
+
+    private static long leftIndent(XWPFParagraph paragraph) {
+        CTInd indent = paragraph.getCTP().getPPr() == null ? null : paragraph.getCTP().getPPr().getInd();
+        return indent == null || !indent.isSetLeft() ? 0 : DocxTwips.of(indent.getLeft());
+    }
+
+    @Test
     void theMeasureIsTheOneTheLineThatGrowsMostNeeds() throws Exception {
         // EngineeringResume's projects: a 7.35pt title, set at 7.5, fills most of the first
         // line, and 7.1pt prose, set at 7, the lines under it. Averaged over the paragraph's

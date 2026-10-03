@@ -8,6 +8,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A centred or right-aligned line that fills its box keeps to one line in Word.** Word sets
+  a size in half points, so a 6.8pt line is set at 7pt, 2.9% wider, and no longer fits a box it
+  fills. A flush-left paragraph was already given that much more measure; a centred or
+  right-aligned one of one line now is too, at both edges or at its left, so the line stays
+  where the page sets it.
+  `VioletGrid`'s "INFORMATION ARCHITECTURE" broke onto two lines in its skill tile, and the
+  tile's text stood 7.5pt low under it. Lines more than 2pt off in Word fall from 2 to none
+  across the corpus, and `VioletGrid`'s median in LibreOffice from 5.2pt to 0.4pt.
 - **A table or a row keeps its own margins in DOCX.** Its left margin is now written into its
   indent (`w:tblInd`), as a paragraph's is: it was dropped everywhere, and `PaymentsInvoice`'s
   bank details stood 36.7pt left of the page's in Word. A table indented in a cell takes that

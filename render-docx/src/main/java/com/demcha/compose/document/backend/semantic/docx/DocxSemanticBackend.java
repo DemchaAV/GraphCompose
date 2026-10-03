@@ -4707,25 +4707,85 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * The glyphs are left as Word sets them — a scale would stay on the text a reader types
      * next — and the right indent gives the line the same share more room, or takes it.</p>
      *
-     * <p>Only a paragraph set flush left: moving a centred or right-aligned line's other edge
-     * would move the line off where the page sets it. A list's items, a line pair, text over
-     * the flow and a header's or footer's line are written elsewhere and keep the page's
-     * measure.</p>
+     * <p>A paragraph set flush left has its measure moved at its right edge. A centred or
+     * right-aligned one is given room only for a line of its own that Word sets past its box
+     * or within three hundredths of it ({@link #ONE_LINE_FACE_SLACK}), at both edges, half each,
+     * or at its left, so the line stays where the page sets it — in a cell, where Word draws no
+     * text past the left edge, the right edge gives what the left indent cannot:
+     * {@code VioletGrid}'s 6.8pt "INFORMATION ARCHITECTURE", set at 7pt and centred in a tile
+     * it fills, broke onto two lines, and the tile's text stood 7.5pt low under it. A centred
+     * paragraph of several lines is left as it is — a wider measure there takes another word
+     * onto a line Word already breaks elsewhere than the page — and so is a short line, whose
+     * box has room for it: Word sets a centred line in a cell a little off its place when an
+     * indent reaches past the cell's edge. A list's items, a line pair, text over the flow and
+     * a header's or footer's line are written elsewhere and keep the page's measure.</p>
      *
      * @param room the width the paragraph's text is written in, in points
      */
     private void measureAtWordsSize(XWPFParagraph para, ParagraphNode node, double room) {
-        if (node.align() == TextAlign.CENTER || node.align() == TextAlign.RIGHT || !Double.isFinite(room)) {
+        boolean flushLeft = node.align() != TextAlign.CENTER && node.align() != TextAlign.RIGHT;
+        if (!Double.isFinite(room) || !flushLeft && layout.lineCount(node) != 1) {
             return;
         }
-        double more = wordsMeasure(node, room) - room;
+        double more = (flushLeft ? wordsMeasure(node, room) : oneLinesMeasure(node, room)) - room;
         if (!Double.isFinite(more) || Math.abs(more) < 0.05) {
             return;
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
-        long right = twipsOf(indent.isSetRight() ? indent.getRight() : null);
-        indent.setRight(BigInteger.valueOf(right - Math.round(more * POINT_TO_TWIP)));
+        long twips = Math.round(more * POINT_TO_TWIP);
+        // The edge the text does not lean on moves: a centred line's two, half each.
+        long fromTheLeft = node.align() == TextAlign.RIGHT ? twips
+                : node.align() == TextAlign.CENTER ? twips / 2
+                : 0;
+        long left = twipsOf(indent.isSetLeft() ? indent.getLeft() : null);
+        if (currentCell != null) {
+            // Word draws no text past a cell's left edge (see leftIndentTwips): what the left
+            // indent cannot give, the right one does, and the line moves by that much.
+            fromTheLeft = Math.min(fromTheLeft, Math.max(0, left));
+        }
+        long fromTheRight = twips - fromTheLeft;
+        if (fromTheLeft != 0) {
+            indent.setLeft(BigInteger.valueOf(left - fromTheLeft));
+        }
+        if (fromTheRight != 0) {
+            long right = twipsOf(indent.isSetRight() ? indent.getRight() : null);
+            indent.setRight(BigInteger.valueOf(right - fromTheRight));
+        }
+    }
+
+    /**
+     * The measure a paragraph of one line needs in Word, in points: its box, or its line as wide
+     * as Word sets it and a few hundredths more ({@link #ONE_LINE_FACE_SLACK}), whichever is
+     * wider.
+     */
+    private double oneLinesMeasure(ParagraphNode node, double room) {
+        double set = 0;
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : layout.lines(node)) {
+            set = Math.max(set, widthAtWordsSize(line));
+        }
+        return Math.max(room, set * (1 + ONE_LINE_FACE_SLACK));
+    }
+
+    /**
+     * How wide Word sets a line the page laid out: its text grown or shrunk to Word's size, its
+     * tracking, pictures and shapes as the page has them.
+     */
+    private static double widthAtWordsSize(com.demcha.compose.document.layout.payloads.ParagraphLine line) {
+        double set = 0;
+        for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
+            if (!(span.width() > 0)) {
+                continue;
+            }
+            if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan run
+                && run.textStyle() != null && run.textStyle().size() > 0) {
+                double tracking = run.textStyle().letterSpacing() * run.text().codePointCount(0, run.text().length());
+                set += (span.width() - tracking) * wordsSize(run.textStyle().size()) / run.textStyle().size() + tracking;
+            } else {
+                set += span.width();
+            }
+        }
+        return set;
     }
 
     /** How far inside the page's measure, grown or shrunk as Word sets it, Word's is held, in points. */
@@ -4771,22 +4831,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (com.demcha.compose.document.layout.payloads.ParagraphLine line : layout.lines(node)) {
             broken++;
             double asked = 0;
-            double set = 0;
             boolean text = false;
             for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
-                if (!(span.width() > 0)) {
-                    continue;
-                }
-                asked += span.width();
-                if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan run
-                    && run.textStyle() != null && run.textStyle().size() > 0) {
-                    double tracking = run.textStyle().letterSpacing() * run.text().codePointCount(0, run.text().length());
-                    set += (span.width() - tracking) * wordsSize(run.textStyle().size()) / run.textStyle().size() + tracking;
-                    text = true;
-                } else {
-                    set += span.width();
+                if (span.width() > 0) {
+                    asked += span.width();
+                    text |= span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan run
+                            && run.textStyle() != null && run.textStyle().size() > 0;
                 }
             }
+            double set = widthAtWordsSize(line);
             if (text) {
                 share = Double.isNaN(share) ? set / asked : Math.max(share, set / asked);
                 fits = Math.max(fits, set);

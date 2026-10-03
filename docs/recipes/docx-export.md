@@ -309,8 +309,13 @@ of several lines stays a point short of that, unless a line needs the room, so a
 broke off by a fraction of a point is not pulled back up. A paragraph of one line is never
 narrowed, and has room for a line three hundredths wider than its own: Word sets a face other
 than the page's, or emboldens one whose file does not say it is bold, a little wider, and a
-line of one broken in Word is a line more. A centred or right-aligned paragraph keeps
-the page's measure, as moving its other edge would move its lines. A list's items, a line pair's
+line of one broken in Word is a line more. A centred or right-aligned paragraph of one line
+whose line, as Word sets it and three hundredths wider, does not fit its box is given that
+room: at both edges, half each, or at its left edge, so the line stays where the page sets
+it. In a table cell, where Word draws no text past the cell's left edge, the left indent
+gives no more than it has, and the right edge gives the rest. Any other centred or right-aligned paragraph keeps the page's measure: in one of
+several lines a wider measure takes another word onto a line, and a short line's box already
+has room for it. A list's items, a line pair's
 line, text over the flow and a header's or footer's line keep the page's measure too.
 
 ## Named styles, so the document can be restyled

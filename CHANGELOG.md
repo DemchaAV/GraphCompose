@@ -8,6 +8,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A ruled table's first and last rows keep the page's height in DOCX.** A row the page holds
+  at a height is written that height less what its cells take around their content, since
+  Word, as LibreOffice, reads a row's written height as its content. Word gives a rule between
+  two rows half to each row, and the rule above the table and the one below it whole, so the
+  first row and the last carry a rule and a half; written less one rule, each stood half a rule
+  taller. `EditorialProposal`'s timeline and investment tables each stood that much taller, and
+  its second page ran 2.5pt low by its acceptance block, 1.2pt of it these tables. Lines more
+  than 2pt off fall from 11 to none for `EditorialProposal` in Word, and from 22 to 11 across
+  the corpus; the corpus's mean |drift| in Word falls from 0.43 to 0.34pt.
 - **A row's cell whose last line hangs below the row takes it out of the gap under the row in
   DOCX.** A line held to an icon reaches as far below the page's line as the icon's ink, and
   gives that room back out of the space above what follows. The last line of a cell had

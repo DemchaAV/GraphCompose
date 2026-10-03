@@ -42,14 +42,15 @@ class DocxRuleRowTest {
         try (XWPFDocument document = export(DocumentInsets.zero(), DocumentTextStyle.DEFAULT.withSize(2))) {
             XWPFTableRow text = document.getTables().get(0).getRow(1);
 
-            assertThat(line(text)).as("its letters would be cut").isEqualTo(rowHeight(text) + BORDER);
+            // The row is written less its rules, the last row's a rule and a half (the rule
+            // below the table whole, half the one above it); the line keeps the page's height.
+            assertThat(line(text)).as("its letters would be cut").isEqualTo(rowHeight(text) + BORDER + BORDER / 2);
         }
     }
 
     @Test
     void aPaddedBlankLineKeepsItsHeight() throws Exception {
-        // Word reads the row's height as its whole, the cell's margins inside it, and the
-        // padding already gives up the room the border takes: the blank line fits as it is.
+        // The padding already gives up the room the border takes: the blank line fits as it is.
         try (XWPFDocument document = export(DocumentInsets.of(4), DocumentTextStyle.DEFAULT)) {
             var table = document.getTables().get(0);
 

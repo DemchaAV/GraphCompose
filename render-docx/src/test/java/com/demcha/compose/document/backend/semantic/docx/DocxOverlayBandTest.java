@@ -343,7 +343,7 @@ class DocxOverlayBandTest {
             XWPFParagraph next = document.getParagraphs().stream()
                     .filter(paragraph -> "Next".equals(paragraph.getText())).findFirst().orElseThrow();
 
-            assertThat(before(next)).as("the gap whole, the hang left above").isEqualTo(10 * 20L);
+            assertThat(before(next)).as("the space above it, written whole: Word drops it at the page top, and the hang is not taken from it").isEqualTo(10 * 20L);
         }
     }
 

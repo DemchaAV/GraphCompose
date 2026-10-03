@@ -8995,7 +8995,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // Text hanging below the block before — a band's last line past its foot, a row's
             // icon line — takes its place out of that space, as out of the gap above a paragraph
             // (newBodyParagraph); the band's first block forgets it (resumeHere). ConsultingInvoice's
-            // address runs 2.3pt past its band, and the contact bands under it stood 2.4pt low.
+            // address runs 2.3pt past its band, and the contact bands under it stood 2.9pt low.
             // A band the layout starts on a new page leaves the hang on the page above, as a
             // paragraph or a table there does.
             double hang = currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(stack) ? 0 : hangingBelow;

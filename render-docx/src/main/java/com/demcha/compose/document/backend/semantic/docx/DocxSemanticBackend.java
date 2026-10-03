@@ -279,6 +279,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** The page the last block written in the flow ended on, -1 before the first. */
     private int lastEndPage = -1;
+
+    /** A paragraph whose own top edge a line above it holds: {@link #holdAParagraphsTopEdgeOnItsPage}. */
+    private DocumentNode topEdgeHeldAbove;
+
+    /** How much of that paragraph's own top edge the line holds, in points. */
+    private double topEdgeHeld;
+
+    /** The line holding that edge, until the paragraph's line gap is written. */
+    private XWPFParagraph topEdgeLine;
+
+    /** The Word paragraph that line holds the edge of, once written. */
+    private XWPFParagraph topEdgeLineOver;
     private int sectionIndex;
     // Where the section being written starts among the body's elements.
     private int sectionFirstElement;
@@ -356,6 +368,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** The page's height in points, or {@code NaN} when the export has no canvas. */
     private double canvasHeight = Double.NaN;
+
+    /** The page's top margin in points, or {@code NaN} when the export has no canvas. */
+    private double canvasTopMargin = Double.NaN;
 
     /** Whether this export writes more than one section — see {@link #exportSections}. */
     private boolean sectioned;
@@ -659,6 +674,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         anchors.reset();
         currentPage = 0;
         lastEndPage = -1;
+        topEdgeHeldAbove = null;
+        topEdgeHeld = 0;
+        topEdgeLine = null;
+        topEdgeLineOver = null;
         clipContainer = null;
         cellDrawing = CellDrawing.NONE;
         tableDrawings = null;
@@ -788,6 +807,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         lastWrittenParagraph = null;
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
         canvasHeight = context.canvas() == null ? Double.NaN : context.canvas().height();
+        canvasTopMargin = context.canvas() == null ? Double.NaN : context.canvas().margin().top();
     }
 
     /**
@@ -5230,6 +5250,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeTextOverTheFlow(document, node);
             return;
         }
+        if (currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(node)) {
+            holdAParagraphsTopEdgeOnItsPage(document, node);
+        }
         // Its own sides hold its text in, as a container's do: SerifHeadline's summary stops at
         // the column divider through its right margin, and without it ran the page's width in
         // Word — a line short, and everything under it that much high.
@@ -5408,6 +5431,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyLineHeight(target, stacked != null ? java.util.OptionalDouble.of(stacked.height()) : layout.lineHeight(source));
         applyVerticalSpacing(target, source);
         applyLineGap(target, layout.lineGap(source), layout.lineCount(source), layout.linePitch(source));
+        topEdgeLine = null;
+        topEdgeLineOver = null;
         if (stacked == null) {
             oweWhatTheLinesFallShort(target, source);
         }
@@ -5558,6 +5583,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (taken > 0) {
             spacing.setBefore(BigInteger.valueOf(before - taken));
         }
+        // The paragraph's top edge held by a line above it is the space above it all the same.
+        if (target == topEdgeLineOver && taken < twips) {
+            taken += takeFromTheLineHoldingItsEdge(twips - taken);
+        }
         // The cell's padding gives no more than steps the lines the page's distance apart: n lines
         // of (line + extra) are that distance apart where extra = pitch - line. Lines of
         // different heights can stand closer than their tallest and the gap.
@@ -5665,6 +5694,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void applyVerticalSpacing(XWPFParagraph target, DocumentNode source) {
         double before = source.margin().top() + source.padding().top();
+        if (source == topEdgeHeldAbove) {
+            // Held by the line above it, on the page the layout starts it on.
+            before -= topEdgeHeld;
+            topEdgeHeldAbove = null;
+            topEdgeHeld = 0;
+            topEdgeLineOver = target;
+        }
         if (target == hangingOver) {
             before = Math.max(0, before - hangingOverBy);
         }
@@ -10074,13 +10110,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!(carriedSpacingBefore + pendingSpacingAfter - borderBelow - pullBelow > 0.01)) {
             return;
         }
-        XWPFParagraph spacer = newBodyParagraph(document);
-        CTPPr properties = spacer.getCTP().isSetPPr() ? spacer.getCTP().getPPr() : spacer.getCTP().addNewPPr();
+        XWPFParagraph line = newBodyParagraph(document);
+        CTPPr properties = line.getCTP().isSetPPr() ? line.getCTP().getPPr() : line.getCTP().addNewPPr();
         CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
         long held = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null);
         spacing.setBefore(BigInteger.ZERO);
+        holdInALineKeptWithTheNext(line, held);
+    }
+
+    /** Makes a paragraph a line of exactly {@code twips} with no text, kept with what follows. */
+    private static void holdInALineKeptWithTheNext(XWPFParagraph line, long twips) {
+        CTPPr properties = line.getCTP().isSetPPr() ? line.getCTP().getPPr() : line.getCTP().addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
         spacing.setLineRule(STLineSpacingRule.EXACT);
-        spacing.setLine(BigInteger.valueOf(Math.max(1, held)));
+        spacing.setLine(BigInteger.valueOf(Math.max(1, twips)));
         if (!properties.isSetKeepNext()) {
             properties.addNewKeepNext();
         }
@@ -10089,6 +10132,125 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         org.openxmlformats.schemas.wordprocessingml.x2006.main.CTParaRPr mark =
                 properties.isSetRPr() ? properties.getRPr() : properties.addNewRPr();
         (mark.sizeOfSzArray() > 0 ? mark.getSzArray(0) : mark.addNewSz()).setVal(BigInteger.valueOf(ONE_POINT_IN_HALF_POINTS));
+    }
+
+    /**
+     * Holds the top edge of a paragraph the layout moves to a new page, on that page.
+     *
+     * <p>The page starts a block a page break moves down at its own top edge — the containers
+     * opening there with it. Word drops a paragraph's space above at the top of a page, the
+     * paragraph's own edge with the gap: {@code ModernProfessional}'s second page opens with a
+     * heading its section pads 8pt down, and in Word the heading and everything under it stood
+     * 7.7pt high. A line as tall as that edge, kept with the paragraph, holds it; Word keeps a
+     * line's height there.</p>
+     *
+     * <p>The line is as tall as the layout leaves above the paragraph's text on that page: the
+     * space above its box ({@link #spaceAboveOnItsPage}) and its own padding. That is the gap
+     * too where the gap did not fit at the foot of the page above, and less than the edges
+     * where the layout spent some on the page above — a heading kept with what follows, hoisted
+     * to the next page out of a section begun on this one, leaves the section's padding behind.
+     * The rest of the space owed stays above the line, so where Word breaks the page is
+     * unchanged: at the foot of the page above, the line and that space together take what the
+     * paragraph's space above did. Written on the page above instead, the gap let
+     * {@code ClassicSerif}'s second page's first line fit on its first in Word.</p>
+     */
+    private void holdAParagraphsTopEdgeOnItsPage(XWPFDocument document, ParagraphNode node) {
+        double own = Math.max(0, node.margin().top() + node.padding().top());
+        double edges = Math.max(0, carriedSpacingBefore);
+        double above = spaceAboveOnItsPage(node);
+        double kept = Double.isNaN(above) ? own + edges : Math.max(0, above) + Math.max(0, node.padding().top());
+        if (!(kept > 0.01)) {
+            return;
+        }
+        // Text hanging below a band, a pull out of the block before and a card's border below
+        // it stay on the page above with them, as at a table moved to a new page: the layout
+        // starts the new page from its top.
+        forgetTheHang();
+        pullBelow = 0;
+        borderBelow = 0;
+        carriedSpacingBefore += own;
+        XWPFParagraph line = newBodyParagraph(document);
+        pullLeftOn = null;
+        pullLeft = 0;
+        CTPPr properties = line.getCTP().isSetPPr() ? line.getCTP().getPPr() : line.getCTP().addNewPPr();
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        long before = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null);
+        long held = Math.min(before, toTwips(kept));
+        spacing.setBefore(BigInteger.valueOf(before - held));
+        holdInALineKeptWithTheNext(line, held);
+        topEdgeHeldAbove = node;
+        topEdgeHeld = own;
+        topEdgeLine = line;
+    }
+
+    /**
+     * Takes up to {@code twips} out of the space above a paragraph whose top edge a line holds,
+     * for the gap between the paragraph's lines (see {@link #applyLineGap}): out of that line,
+     * and what the line cannot give out of the space above the line, as it came out of the
+     * paragraph's own space above before the line held it. Returns how much it took.
+     *
+     * <p>Word drops that space above at the top of a page, so what comes out of it moves
+     * nothing there and the first line stands that much low; it keeps the paragraph's lines as
+     * tall as where the whole gap comes off the space above it on one page.</p>
+     */
+    private long takeFromTheLineHoldingItsEdge(long twips) {
+        CTSpacing spacing = topEdgeLine == null ? null : topEdgeLine.getCTP().getPPr().getSpacing();
+        Long line = spacing == null ? null : writtenTwips(spacing.getLine());
+        if (line == null) {
+            return 0;
+        }
+        long taken = Math.max(0, Math.min(twips, line - 1));
+        spacing.setLine(BigInteger.valueOf(line - taken));
+        long before = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null);
+        long rest = Math.min(before, twips - taken);
+        if (rest > 0) {
+            spacing.setBefore(BigInteger.valueOf(before - rest));
+            taken += rest;
+        }
+        return taken;
+    }
+
+    /**
+     * How far below the top of its page the layout starts a block it moves to a new page, in
+     * points: the space above the block's box on that page — its own top margin, the edges of
+     * the containers opening with it and any gap carried there; the box holds its padding. NaN
+     * when the export has no canvas, or the block runs over more than one page, whose placement
+     * pairs its first piece's place with the whole block's height.
+     */
+    private double spaceAboveOnItsPage(DocumentNode node) {
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(node);
+        if (placed == null || placed.startPage() != placed.endPage()
+                || Double.isNaN(canvasHeight) || Double.isNaN(canvasTopMargin)) {
+            return Double.NaN;
+        }
+        return canvasHeight - canvasTopMargin - placed.placementY() - placed.placementHeight();
+    }
+
+    /**
+     * Moves the space above a spacer's line the layout starts on a new page into the line, as
+     * far as the layout keeps that space on the page.
+     *
+     * <p>The layout carries the gap between two blocks onto the next page when the gap itself
+     * does not fit at the foot of the page: {@code Executive}'s spacer between two entries opens
+     * its second page 3pt below the margin. Word drops a paragraph's space above at the top of a
+     * page and keeps its line's height, so the entries under it stood 3pt high. The line and the
+     * space above it together are as tall as before, so Word breaks the page where it did.</p>
+     */
+    private void holdTheGapAboveInTheLine(XWPFParagraph para, DocumentNode node) {
+        double onItsPage = spaceAboveOnItsPage(node);
+        CTSpacing spacing = para.getCTP().isSetPPr() && para.getCTP().getPPr().isSetSpacing()
+                ? para.getCTP().getPPr().getSpacing() : null;
+        if (!(onItsPage > 0.01) || spacing == null || !spacing.isSetBefore()
+                || spacing.getLineRule() != STLineSpacingRule.EXACT) {
+            return;
+        }
+        long before = twipsOf(spacing.getBefore());
+        long held = Math.min(before, toTwips(onItsPage));
+        if (held <= 0) {
+            return;
+        }
+        spacing.setBefore(BigInteger.valueOf(before - held));
+        spacing.setLine(BigInteger.valueOf(twipsOf(spacing.getLine()) + held));
     }
 
     /** Makes a paragraph that holds no text as short as a separator between tables. */
@@ -10305,6 +10467,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // height is a line of text tall, and it stood on top of that height: between two CV
         // entries held apart by a 4.5pt spacer, the page shows 16pt and LibreOffice drew 23.
         holdToHairline(para);
+        if (currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(node)) {
+            holdTheGapAboveInTheLine(para, node);
+        }
         // Text that hung below the band above takes its place out of this height first.
         double height = node.height();
         if (hangingOver == para) {

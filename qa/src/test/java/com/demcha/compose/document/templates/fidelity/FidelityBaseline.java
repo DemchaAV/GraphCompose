@@ -139,12 +139,18 @@ final class FidelityBaseline {
                 FidelityMeasurement.Found there = now.found().get(id);
                 if (there == null) {
                     lost.add("\"" + line.preview() + "\"");
-                } else if (further(line.drift(), there.drift())) {
-                    further.add(String.format(Locale.ROOT, "\"%s\" %+.2f -> %+.2fpt",
-                            line.preview(), line.drift(), there.drift()));
-                } else if (!Double.isNaN(line.across()) && further(line.across(), there.across())) {
-                    further.add(String.format(Locale.ROOT, "\"%s\" %+.2f -> %+.2fpt across",
-                            line.preview(), line.across(), there.across()));
+                    return;
+                }
+                // Named once, with every way it moved further.
+                List<String> ways = new ArrayList<>(2);
+                if (further(line.drift(), there.drift())) {
+                    ways.add(String.format(Locale.ROOT, "%+.2f -> %+.2fpt", line.drift(), there.drift()));
+                }
+                if (!Double.isNaN(line.across()) && further(line.across(), there.across())) {
+                    ways.add(String.format(Locale.ROOT, "%+.2f -> %+.2fpt across", line.across(), there.across()));
+                }
+                if (!ways.isEmpty()) {
+                    further.add("\"" + line.preview() + "\" " + String.join(", ", ways));
                 }
             });
             if (!lost.isEmpty()) {
@@ -159,7 +165,7 @@ final class FidelityBaseline {
     }
 
     /**
-     * Whether a drift is more than {@link #LINE_SLACK} further from the page than it was,
+     * Whether a drift is more than {@link #LINE_SLACK}pt further from the page than it was,
      * counted in the hundredths both are written in: in doubles, half a point further was
      * further for some drifts and not for others.
      */

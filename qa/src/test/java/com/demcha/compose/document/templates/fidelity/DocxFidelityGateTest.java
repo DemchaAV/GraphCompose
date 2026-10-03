@@ -121,6 +121,15 @@ class DocxFidelityGateTest {
     }
 
     @Test
+    void aLineFurtherBothWaysIsNamedOnceWithBoth() {
+        FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", 0.1, 0.1))));
+
+        assertThat(baseline.regressions(List.of(doc("cv-probe", 1, 1, line(1, "aa", 2.0, -3.0)))))
+                .singleElement().asString().contains("1 lines further")
+                .contains("+0.10 -> +2.00pt, +0.10 -> -3.00pt across");
+    }
+
+    @Test
     void aBaselineWrittenBeforeLinesWereMeasuredAcrossHoldsThemDownAlone() {
         Map<String, Map<String, FidelityMeasurement.Found>> read = new LinkedHashMap<>();
         FidelityMeasurement.parseLine("cv-a\t1:aa\t0.25\taa", read);

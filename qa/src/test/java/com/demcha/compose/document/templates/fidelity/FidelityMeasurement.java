@@ -196,8 +196,9 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
 
     /**
      * Reads a row of the baseline's line file, refusing one without its drift across in a file
-     * whose header says its lines were measured across: a row cut short there would otherwise
-     * be read as one written before, and hold its line down alone.
+     * whose lines were measured across — its header says so, or another of its rows holds one:
+     * a row cut short there would otherwise be read as one written before, and hold its line
+     * down alone.
      */
     static void parseLine(String row, Map<String, Map<String, Found>> byDocument, boolean acrossExpected) {
         String[] cells = row.split("\t", 5);

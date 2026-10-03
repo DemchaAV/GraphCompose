@@ -538,7 +538,7 @@ jobs:
     # Every template preset exported to DOCX, set by LibreOffice, and held line by
     # line to qa/src/test/resources/docx-fidelity/libreoffice-linux*.tsv
     # (DocxFidelityCorpusTest): a change that sets any line of any preset further
-    # from the engine's PDF, at other words, or on more pages fails here. Gated on
+    # from the engine's PDF, down or across, at other words, or on more pages fails here. Gated on
     # `docx` — what an export of the corpus is made from.
     #
     # The image is pinned, not ubuntu-latest: the baseline is LibreOffice's setting

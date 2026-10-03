@@ -7681,40 +7681,65 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * and below, came out 48pt. Word does too, measured on a ruled table. Less them, a row is the
      * page's height in both.</p>
      */
-    private void holdRowHeight(XWPFTableRow row, TableNode node, int rowIdx) {
+    private void holdRowHeight(XWPFTable table, TableNode node, int rowIdx) {
         java.util.OptionalDouble height = layout.rowHeight(node, rowIdx);
         if (height.isPresent()) {
-            holdRowAtLeast(row, height.getAsDouble(),
-                    outerRulesBeyondOne(row, rowIdx == 0, rowIdx == node.rows().size() - 1));
+            XWPFTableRow row = table.getRow(rowIdx);
+            holdRowAtLeast(row, height.getAsDouble(), outerRulesBeyondOne(table, rowIdx));
             fitBlankLinesToTheRow(row);
         }
     }
 
     /**
      * What a table's first or last row holds of its rules beyond the one {@link #verticalMargins}
-     * counts, in twips: half the rule above the table, and half the one below it.
+     * counts, in twips.
      *
-     * <p>Word gives a rule between two rows half to each, and the rule above the table and the one
-     * below it whole to their row; it reads a row's written height as its cells' content alone.
-     * So the first row and the last carry a rule and a half, and written less one rule they are
-     * held half a rule taller than their content needs: measured, a table of four rows ruled at
-     * 0.75pt, held this way, stood 0.46pt taller in its first row and 0.36pt in its last.
+     * <p>Word gives a rule between two rows half to each — the lower row's, where the two differ
+     * — and the rule above the table and the one below it whole to their row; it reads a row's
+     * written height as its cells' content alone. So the first row carries its own rule and half
+     * the next row's, and the last row half its own and its own again: written less one rule,
+     * each was held half a rule taller than its content needs. Measured, a table of four rows ruled
+     * at 0.75pt, held this way, stood 0.46pt taller in its first row and 0.36pt in its last.
      * {@code EditorialProposal}'s timeline and investment tables each stood that much taller in
      * Word, and the page under them that much low.</p>
      */
-    private static long outerRulesBeyondOne(XWPFTableRow row, boolean firstRow, boolean lastRow) {
+    private static long outerRulesBeyondOne(XWPFTable table, int rowIdx) {
+        int rows = table.getNumberOfRows();
+        boolean first = rowIdx == 0;
+        boolean last = rowIdx == rows - 1;
+        if (!first && !last) {
+            return 0;
+        }
+        if (first && !last) {
+            // Its own rule above the table counts; half the next row's rule is the rest.
+            return Math.round(mostRule(table.getRow(1), true) / 2.0);
+        }
         long most = 0;
-        for (XWPFTableCell cell : row.getTableCells()) {
-            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr properties = cell.getCTTc().getTcPr();
-            if (properties == null || !properties.isSetTcBorders()) {
-                continue;
-            }
-            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcBorders borders = properties.getTcBorders();
-            long top = firstRow ? borderTwips(borders.isSetTop() ? borders.getTop() : null) : 0;
-            long bottom = lastRow ? borderTwips(borders.isSetBottom() ? borders.getBottom() : null) : 0;
-            most = Math.max(most, Math.round((top + bottom) / 2.0));
+        for (XWPFTableCell cell : table.getRow(rowIdx).getTableCells()) {
+            long top = first ? rule(cell, true) : 0;
+            most = Math.max(most, Math.round((top + rule(cell, false)) / 2.0));
         }
         return most;
+    }
+
+    /** The heaviest top (or bottom) rule of a row's cells, in twips. */
+    private static long mostRule(XWPFTableRow row, boolean top) {
+        long most = 0;
+        for (XWPFTableCell cell : row.getTableCells()) {
+            most = Math.max(most, rule(cell, top));
+        }
+        return most;
+    }
+
+    /** A cell's own top (or bottom) rule, in twips. */
+    private static long rule(XWPFTableCell cell, boolean top) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr properties = cell.getCTTc().getTcPr();
+        if (properties == null || !properties.isSetTcBorders()) {
+            return 0;
+        }
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcBorders borders = properties.getTcBorders();
+        return top ? borderTwips(borders.isSetTop() ? borders.getTop() : null)
+                : borderTwips(borders.isSetBottom() ? borders.getBottom() : null);
     }
 
     /**
@@ -7953,10 +7978,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (XWPFTableCell cell : row.getTableCells()) {
             margins = Math.max(margins, verticalMargins(cell));
         }
-        long twips = Math.round(points * POINT_TO_TWIP) - margins - beyond;
-        if (twips <= 0) {
+        long lessMargins = Math.round(points * POINT_TO_TWIP) - margins;
+        if (lessMargins <= 0) {
             return;
         }
+        // Rules the row holds besides take it down to a twip at the least: written, the height
+        // still cuts a blank line to the room the row leaves it (fitBlankLinesToTheRow).
+        long twips = Math.max(1, lessMargins - beyond);
         row.setHeight((int) twips);
         row.setHeightRule(org.apache.poi.xwpf.usermodel.TableRowHeightRule.AT_LEAST);
     }
@@ -8072,7 +8100,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
             }
             evenTheRowsMargins(row);
-            holdRowHeight(row, node, rowIdx);
+            // The first row's share of the rule under it is the next row's rule, written next.
+            if (rowIdx > 0 || rowCount == 1) {
+                holdRowHeight(table, node, rowIdx);
+            }
+        }
+        if (rowCount > 1) {
+            holdRowHeight(table, node, 0);
         }
         breakRowsWhereTheLayoutDoes(table, node);
         indentTable(table);

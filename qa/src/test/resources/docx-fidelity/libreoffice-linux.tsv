@@ -32,11 +32,11 @@ invoice-consulting	1	1	92	92	0.67	0.96	3
 invoice-consulting_long	2	2	236	236	0.71	1.06	3
 invoice-luma_studio	1	1	97	97	0.12	0.52	2
 invoice-luma_studio_long	3	3	192	192	0.20	0.41	2
-invoice-merchant	1	1	94	94	0.73	1.72	5
+invoice-merchant	1	1	94	94	0.73	1.91	5
 invoice-metered	1	1	99	99	0.91	10.00	48
 invoice-modern	1	1	54	54	0.07	0.20	0
 invoice-modern_long	2	2	162	162	0.20	0.27	0
-invoice-obsidian	1	1	81	81	1.12	3.00	20
+invoice-obsidian	1	1	81	81	1.38	3.35	25
 invoice-payments	1	1	104	104	0.32	5.53	45
 invoice-platform	1	1	111	111	0.39	0.52	0
 invoice-subscription	1	1	81	81	0.28	0.73	0
@@ -61,4 +61,4 @@ proposal-indigo	1	1	72	70	0.26	0.65	0
 proposal-modern	1	1	44	44	0.50	0.75	0
 proposal-northline	2	2	132	132	0.27	0.57	0
 receipt-modern	1	1	57	57	0.26	0.29	0
-rota-cobalt	1	1	154	151	0.54	1.24	0
+rota-cobalt	1	1	154	151	0.23	0.79	0

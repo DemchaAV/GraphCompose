@@ -50,6 +50,43 @@ class DocxRuledRowHeightTest {
         }
     }
 
+    @Test
+    void aHeaderRuledHeavierThanItsRowsGivesHalfTheirRuleNotItsOwn() throws Exception {
+        // Word gives the edge under the header to the lower row's 0.5pt rule, half to each: the
+        // header carries its own 1.5pt above and 0.25pt below.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(7)).stroke(DocumentStroke.of(DocumentColor.BLACK, 0.5)).build())
+                .rowStyle(0, DocumentTableStyle.builder().stroke(DocumentStroke.of(DocumentColor.BLACK, 1.5)).build())
+                .row("Header")
+                .row("Body")
+                .row("Body")))) {
+            XWPFTableRow header = document.getTables().get(0).getRow(0);
+
+            assertThat((long) header.getHeight()).as("its line").isEqualTo(line(header));
+        }
+    }
+
+    @Test
+    void aRowItsRulesFillIsStillHeldAtATwip() throws Exception {
+        // A one-row table no taller than its two 1pt rules: the height left for its content is
+        // nothing, and is written all the same, at a twip — so a blank line in such a row is still
+        // cut to the room it leaves (fitBlankLinesToTheRow) rather than left at its font's height.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.zero())
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(1.5))
+                        .lineSpacing(0)
+                        .build())
+                .row("x")))) {
+            XWPFTableRow row = document.getTables().get(0).getRow(0);
+
+            assertThat(row.getHeight()).as("held at a twip").isEqualTo(1);
+        }
+    }
+
     private static long line(XWPFTableRow row) {
         return DocxTwips.of(row.getCell(0).getParagraphs().get(0).getCTP().getPPr().getSpacing().getLine());
     }

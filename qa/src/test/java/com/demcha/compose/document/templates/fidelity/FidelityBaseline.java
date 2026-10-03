@@ -67,9 +67,11 @@ final class FidelityBaseline {
         }
         Map<String, Map<String, FidelityMeasurement.Found>> lines = new LinkedHashMap<>();
         List<String> lineRows = Files.readAllLines(lineFile, StandardCharsets.UTF_8);
-        // Its header says whether its lines were measured across, for the whole file.
+        // Its lines were measured across, for the whole file, when its header says so or any
+        // row holds a drift across: a row without one there is refused, not read as old.
         boolean across = !lineRows.isEmpty() && lineRows.get(0).startsWith("#")
-                         && lineRows.get(0).contains(ACROSS_COLUMN);
+                         && lineRows.get(0).contains(ACROSS_COLUMN)
+                         || lineRows.stream().anyMatch(row -> !row.startsWith("#") && row.split("\t", 5).length == 5);
         for (String row : lineRows) {
             if (!row.isBlank() && !row.startsWith("#")) {
                 FidelityMeasurement.parseLine(row, lines, across);
@@ -137,11 +139,10 @@ final class FidelityBaseline {
                 FidelityMeasurement.Found there = now.found().get(id);
                 if (there == null) {
                     lost.add("\"" + line.preview() + "\"");
-                } else if (Math.abs(there.drift()) > Math.abs(line.drift()) + LINE_SLACK) {
+                } else if (further(line.drift(), there.drift())) {
                     further.add(String.format(Locale.ROOT, "\"%s\" %+.2f -> %+.2fpt",
                             line.preview(), line.drift(), there.drift()));
-                } else if (!Double.isNaN(line.across())
-                           && Math.abs(there.across()) > Math.abs(line.across()) + LINE_SLACK) {
+                } else if (!Double.isNaN(line.across()) && further(line.across(), there.across())) {
                     further.add(String.format(Locale.ROOT, "\"%s\" %+.2f -> %+.2fpt across",
                             line.preview(), line.across(), there.across()));
                 }
@@ -155,6 +156,15 @@ final class FidelityBaseline {
             }
         }
         return found;
+    }
+
+    /**
+     * Whether a drift is more than {@link #LINE_SLACK} further from the page than it was,
+     * counted in the hundredths both are written in: in doubles, half a point further was
+     * further for some drifts and not for others.
+     */
+    private static boolean further(double was, double now) {
+        return Math.round(Math.abs(now) * 100) > Math.round(Math.abs(was) * 100) + Math.round(LINE_SLACK * 100);
     }
 
     private static String named(List<String> lines) {

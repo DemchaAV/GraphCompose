@@ -202,7 +202,7 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
     static void parseLine(String row, Map<String, Map<String, Found>> byDocument, boolean acrossExpected) {
         String[] cells = row.split("\t", 5);
         if (cells.length < 3 || acrossExpected && cells.length != 5) {
-            throw new IllegalArgumentException("a baseline line row has " + (acrossExpected ? "5" : "at least 3")
+            throw new IllegalArgumentException("a baseline line row must have " + (acrossExpected ? "5" : "at least 3")
                                                + " cells: " + row);
         }
         try {

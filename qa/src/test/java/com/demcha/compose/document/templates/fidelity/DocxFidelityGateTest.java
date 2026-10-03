@@ -132,6 +132,8 @@ class DocxFidelityGateTest {
         FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-a", 1, 1, Map.entry("1:aa", found))));
         assertThat(baseline.regressions(List.of(doc("cv-a", 1, 1, line(1, "aa", 0.25, 40)))))
                 .as("no place across to hold it to").isEmpty();
+        assertThat(baseline.regressions(List.of(doc("cv-a", 1, 1, line(1, "aa", 1.0, 0)))))
+                .as("and still held down").singleElement().asString().contains("further").doesNotContain("across");
     }
 
     @Test
@@ -144,6 +146,22 @@ class DocxFidelityGateTest {
         Files.write(lines, List.of(rows.get(0), "cv-a\t1:aa\t0.25\taa"));
         assertThatThrownBy(() -> FidelityBaseline.read(file)).as("a row cut short, not one written before")
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("5 cells");
+        Files.write(lines, List.of("cv-a\t1:aa\t0.25\t1.50\taa", "cv-a\t1:bb\t0.50\tbb"));
+        assertThatThrownBy(() -> FidelityBaseline.read(file)).as("no header, and a row measured across beside one cut short")
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("5 cells");
+    }
+
+    @Test
+    void halfAPointFurtherIsRoundingForEveryDrift() {
+        // In doubles, 0.18 + 0.5 is less than 0.68: half a point further failed 22 of these drifts.
+        for (int hundredths = 0; hundredths <= 500; hundredths++) {
+            double was = hundredths / 100.0;
+            double now = (hundredths + 50) / 100.0;
+            FidelityBaseline baseline = FidelityBaseline.of(List.of(doc("cv-probe", 1, 1, line(1, "aa", was, was))));
+
+            assertThat(baseline.regressions(List.of(doc("cv-probe", 1, 1, line(1, "aa", now, now)))))
+                    .as("%.2f -> %.2f", was, now).isEmpty();
+        }
     }
 
     @Test

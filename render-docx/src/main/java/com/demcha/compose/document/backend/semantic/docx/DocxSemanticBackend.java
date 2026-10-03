@@ -7386,10 +7386,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             forgetTheHang();
         }
         // A table a band's or a column's layer opens is that layer's first block, so it starts
-        // where the layer resumes, as a paragraph does, and its own top margin comes after: VioletGrid's education
-        // lines, beside a badge, lost their 2.3pt and stood 2.4pt high. A row is not a first block:
-        // the band measures to the first one inside it, and the row's cells write what stands
-        // above that block.
+        // where the layer resumes, as a paragraph does, and its own top margin comes after:
+        // VioletGrid's education lines, beside a badge, lost their 2.3pt and stood 2.4pt high.
+        // A row is not a first block: the band measures to the first one inside it, and the
+        // row's cells write what stands above that block.
         boolean resumed = node instanceof TableNode && !Double.isNaN(resumeSpacing);
         if (resumed) {
             resumeHere();
@@ -7398,7 +7398,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (onANewPage) {
             holdTheSpaceAboveOnItsPage(document);
         }
-        if ((node instanceof RowNode || resumed) && currentCell != null && !tablesCells.contains(currentCell.getCTTc())) {
+        if ((node instanceof RowNode || resumed) && currentCell != null
+            && !tablesCells.contains(currentCell.getCTTc())) {
             // At the top of a cell nothing above holds that space: MerchantInvoice's due-date
             // row lost its 16.7pt of top padding and stood against the card's top edge, once the
             // card held the page's height, and PaymentsInvoice's metadata grid the 6.2pt its
@@ -10085,7 +10086,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Word to about one character per line, which is not a document anybody can read.</p>
      */
     private double nestedTableWidth() {
-        return currentCellWidth;
+        // Less what the table is held in by, its own margins included (writeTableWithItsOwnSpacing).
+        return currentCellWidth - Math.max(0, insetLeft) - Math.max(0, insetRight);
     }
 
     private XWPFTable newTable(XWPFDocument document, int rows, int columns) {

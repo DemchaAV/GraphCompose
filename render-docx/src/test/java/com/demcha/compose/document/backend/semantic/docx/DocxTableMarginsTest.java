@@ -20,7 +20,6 @@ import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -115,6 +114,26 @@ class DocxTableMarginsTest {
     }
 
     @Test
+    void aTableIndentedInACellStillEndsInsideIt() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(500, 600, 20, page -> page
+                .addRow(row -> row.name("Columns")
+                        .addSection("Left", section -> section.add(new TableBuilder().name("Auto")
+                                .margin(new DocumentInsets(0, 0, 0, 20))
+                                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                                .row("A rather longer cell of text", "Another rather long cell")
+                                .build()))
+                        .addSection("Right", right -> right.addParagraph("Right"))))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+            XWPFTable nested = cell.getTables().get(0);
+            long cellWidth = ((Number) cell.getCTTc().getTcPr().getTcW().getW()).longValue();
+            long tableWidth = ((Number) nested.getCTTbl().getTblPr().getTblW().getW()).longValue();
+            assertThat(indentOf(nested)).isEqualTo(400);
+            assertThat(indentOf(nested) + tableWidth).as("its margin comes out of its width, not past the cell")
+                    .isLessThanOrEqualTo(cellWidth);
+        }
+    }
+
+    @Test
     void aTableOpeningACellOutsideABandHoldsNoHairline() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(500, 600, 20, page -> page
                 .addRow(row -> row.name("Columns")
@@ -159,7 +178,6 @@ class DocxTableMarginsTest {
         if (properties == null || !properties.isSetTblInd()) {
             return 0;
         }
-        Object width = properties.getTblInd().getW();
-        return width instanceof BigInteger value ? value.longValue() : Long.parseLong(String.valueOf(width));
+        return ((Number) properties.getTblInd().getW()).longValue();
     }
 }

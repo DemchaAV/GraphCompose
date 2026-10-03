@@ -10,11 +10,12 @@ follow semantic versioning; release dates are ISO 8601.
 
 - **A table or a row keeps its own margins in DOCX.** Its left margin is now written into its
   indent (`w:tblInd`), as a paragraph's is: it was dropped everywhere, and `PaymentsInvoice`'s
-  bank details stood 36.7pt left of the page's in Word. A table that opens a layer of a stack
-  written as a band starts where the band resumes and keeps its top margin below that, held by
-  a hairline line at the top of a cell. `VioletGrid`'s education lines, a table beside a badge
+  bank details stood 36.7pt left of the page's in Word. A table indented in a cell takes that
+  margin out of the width it is given there, rather than running past the cell. A table that
+  opens a layer of a stack written as a band starts where the band resumes and keeps its top
+  margin below that, held by a hairline line at the top of a cell. `VioletGrid`'s education lines, a table beside a badge
   held 51.3pt clear of it and 2.3pt down, started under the badge and stood 2.4pt high; they
-  are 0.05pt off now. Lines more than 2pt off in Word fall from 5 to 2 for `VioletGrid`.
+  are at most 0.07pt off now. Lines more than 2pt off in Word fall from 5 to 2 for `VioletGrid`.
 - **Text hanging past a block takes its place out of the space above a stack that follows in
   DOCX.** A stack written as a band opens at the space the page measures above its first block,
   and that block forgot what the text above it already hung into that space: a band's or a

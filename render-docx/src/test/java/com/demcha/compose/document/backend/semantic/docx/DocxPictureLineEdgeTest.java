@@ -51,17 +51,35 @@ class DocxPictureLineEdgeTest {
     }
 
     @Test
-    void aShapeAmongTextTakesNothing() throws Exception {
-        // Its line is the text's, exact, and Word does not grow it to the picture.
+    void aPictureWithNoFrameTakesNothing() throws Exception {
+        // An author's picture alone in its line: its edges are its ink, which stands where the
+        // page draws it, and nothing is taken from around it.
+        DocumentTextStyle small = DocumentTextStyle.builder().fontName(FontName.LATO).size(6).build();
+        com.demcha.compose.document.image.DocumentImageData picture =
+                com.demcha.compose.document.image.DocumentImageData.fromBytes(png());
         try (XWPFDocument document = DocxExports.withLayout(300, 400, 20, page -> page
                 .spacing(0)
                 .addParagraph("Above")
-                .addParagraph(p -> p.margin(DocumentInsets.top(4))
-                        .dot(4, DocumentColor.rgb(176, 141, 87)).inlineText("  Contact", null)))) {
-            XWPFParagraph line = document.getParagraphs().get(1);
+                .addParagraph(p -> p.textStyle(small).align(TextAlign.CENTER)
+                        .margin(DocumentInsets.top(4))
+                        .inlineImage(picture, 22, 22))
+                .addParagraph(p -> p.text("Under").textStyle(small).align(TextAlign.CENTER)
+                        .margin(DocumentInsets.top(8))))) {
+            XWPFParagraph icon = document.getParagraphs().get(1);
+            XWPFParagraph under = document.getParagraphs().get(2);
+            assertThat(icon.getText()).isEmpty();
 
-            assertThat(before(line)).isEqualTo(4 * 20L);
+            assertThat(before(icon)).isEqualTo(4 * 20L);
+            assertThat(before(under)).isEqualTo(8 * 20L);
         }
+    }
+
+    /** A small opaque picture. */
+    private static byte[] png() throws Exception {
+        java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(8, 8, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(image, "png", bytes);
+        return bytes.toByteArray();
     }
 
     private static CTSpacing spacing(XWPFParagraph paragraph) {

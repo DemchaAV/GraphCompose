@@ -5930,18 +5930,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         Long written = writtenTwips(properties.getSpacing().getLine());
-        double box = pictures.pageLine() + Math.max(0, pictures.boxAbove()) + Math.max(0, pictures.boxBelow());
-        if (written == null || !(box * POINT_TO_TWIP > written + 0.5)) {
+        // The pictures' box, edge to edge, and how much taller than the line written Word makes
+        // the line for it: that much is taken, from above as far as the box passes the line's
+        // top, the rest from below.
+        double box = pictures.pageLine() + pictures.boxAbove() + pictures.boxBelow();
+        double grown = written == null ? 0 : box - written / POINT_TO_TWIP;
+        if (!(grown * POINT_TO_TWIP > 0.5)) {
             return;
         }
         CTSpacing spacing = properties.getSpacing();
         long before = spacing.isSetBefore() ? twipsOf(spacing.getBefore()) : 0;
-        long up = Math.min(before, Math.round(Math.max(0, pictures.boxAbove()) * POINT_TO_TWIP));
+        long up = Math.min(before, Math.round(Math.min(grown, Math.max(0, pictures.boxAbove())) * POINT_TO_TWIP));
         if (up > 0) {
             spacing.setBefore(BigInteger.valueOf(before - up));
         }
-        if (pictures.boxBelow() > 0) {
-            hangingBelow = Math.max(hangingBelow, pictures.boxBelow());
+        double down = grown - up / POINT_TO_TWIP;
+        if (down > 0) {
+            hangingBelow = Math.max(hangingBelow, down);
         }
     }
 
@@ -6414,6 +6419,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *                 puts it, in points; negative when it stays that far inside
      * @param below    how far the lowest picture's ink reaches below it, in points; negative when
      *                 it stays that far inside
+     * @param boxAbove how far the highest picture's own edge reaches above the page's line, a
+     *                 drawn shape's transparent frame included; {@code above} for a picture with
+     *                 no frame
+     * @param boxBelow how far the lowest picture's own edge reaches below it, likewise
      */
     record PictureReach(double reach, boolean overText, double pageLine, double above, double below,
                         double boxAbove, double boxBelow) {

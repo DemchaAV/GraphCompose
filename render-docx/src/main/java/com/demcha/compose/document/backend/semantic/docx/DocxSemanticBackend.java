@@ -7888,8 +7888,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether Word holds nothing in a cell that gives it height: no table, and no paragraph with
-     * a run. A rule's or a spacer's paragraph counts as nothing; the row it stands in is held no
-     * taller than the page makes it, which that child already sets.
+     * a run. A rule's paragraph counts as nothing; the row it stands in is held no taller than
+     * the page makes it, which that child already sets. A spacer's paragraph carries an empty run
+     * and counts: it is as tall as the spacer.
      */
     private static boolean holdsNothing(XWPFTableCell cell) {
         return cell.getTables().isEmpty()

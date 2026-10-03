@@ -115,7 +115,7 @@ class DocxContainerSpacingTest {
             assertThat(spacing != null && spacing.isSetLineRule() && spacing.isSetLine())
                     .as("the spacer's line is held to a hairline").isTrue();
             assertThat(spacing.getLineRule().toString()).isEqualTo("exact");
-            assertThat(DocxTwips.of(spacing.getLine())).isLessThanOrEqualTo(2L);
+            assertThat(DocxTwips.of(spacing.getLine())).as("a tenth of a point").isEqualTo(2L);
             assertThat(DocxTwips.of(spacing.getLine()) + before(all.get(2)))
                     .as("the hairline and the space above the next entry, the spacer's height").isEqualTo(90L);
         }
@@ -135,6 +135,28 @@ class DocxContainerSpacingTest {
 
             assertThat(spacer.getText()).isEmpty();
             assertThat(DocxTwips.of(spacer.getCTP().getPPr().getSpacing().getLine()) + after(spacer))
+                    .as("the hairline and the space below it, the spacer's height").isEqualTo(200L);
+        }
+    }
+
+    @Test
+    void aSpacerUnderATableInACellIsTheTablesCloserAndItsHeightOnce() throws Exception {
+        // In a cell the paragraph closing the table above becomes the spacer's: one hairline,
+        // and no separator taking a second tenth out of the gap.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addSection("Card", card -> card.fillColor(DocumentColor.rgb(230, 230, 230))
+                        .addTable(t -> t.autoColumns(1).row("Cell"))
+                        .addSpacer(spacer -> spacer.name("Gap").width(100).height(10))
+                        .addParagraph("After")))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+            List<IBodyElement> content = cell.getBodyElements();
+            XWPFParagraph after = cell.getParagraphs().stream()
+                    .filter(p -> p.getText().equals("After")).findFirst().orElseThrow();
+            XWPFParagraph spacer = (XWPFParagraph) content.get(content.indexOf(after) - 1);
+
+            assertThat(content.get(content.indexOf(spacer) - 1)).as("right under the table")
+                    .isInstanceOf(XWPFTable.class);
+            assertThat(DocxTwips.of(spacer.getCTP().getPPr().getSpacing().getLine()) + after(spacer) + before(after))
                     .as("the hairline and the space below it, the spacer's height").isEqualTo(200L);
         }
     }

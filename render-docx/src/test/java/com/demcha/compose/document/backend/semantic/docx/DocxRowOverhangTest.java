@@ -101,6 +101,77 @@ class DocxRowOverhangTest {
         }
     }
 
+    @Test
+    void aRowsHangStaysOnItsPageWhenTheGapUnderItCarriesASpacerToTheNext() throws Exception {
+        // What the row's last line hangs past the row is on the page above.
+        try (XWPFDocument document = aSpacerOpeningTheNextPageUnder(page -> page.addRow(row -> row.name("Block")
+                .addSection("Left", left -> left.addParagraph(p -> p.textStyle(SMALL).text("Name")))
+                .addSection("Right", DocxRowOverhangTest::contact)))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(1);
+            XWPFParagraph iconed = cell.getParagraphs().get(cell.getParagraphs().size() - 1);
+            assertThat(iconed.getCTP().getPPr().getSpacing().getLineRule()).as("the row's last line hangs")
+                    .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
+
+            assertThat(DocxTwips.of(spacerAbove(after(document)).getLine())).as("the hairline and the whole gap")
+                    .isEqualTo(2 + Math.round(GAP * 20));
+        }
+    }
+
+    @Test
+    void aPullOutOfTheBlockAboveStaysOnItsPageWhenTheGapCarriesASpacerToTheNext() throws Exception {
+        // The paragraph above pulls what follows it 4pt up, on its own page.
+        try (XWPFDocument document = aSpacerOpeningTheNextPageUnder(page -> page.addParagraph(p -> p.name("Block")
+                .textStyle(SMALL).text("Pulled").margin(new DocumentInsets(0, 0, -4, 0))))) {
+            assertThat(DocxTwips.of(spacerAbove(after(document)).getLine())).as("the hairline and the whole gap")
+                    .isEqualTo(2 + Math.round(GAP * 20));
+        }
+    }
+
+    /**
+     * A block ending 3pt above the page's foot, less than the 10pt gap under it, then a 3pt spacer
+     * and a paragraph: the gap and the spacer open the next page, which the layout is checked to
+     * do before the export is read.
+     */
+    private static XWPFDocument aSpacerOpeningTheNextPageUnder(Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> block)
+            throws Exception {
+        double extent;
+        try (DocumentSession session = blockAndSpacer(0, block)) {
+            com.demcha.compose.document.layout.PlacedNode placed = placed(session, "Block");
+            extent = placed.placementHeight() + placed.margin().top() + placed.margin().bottom();
+        }
+        try (DocumentSession session = blockAndSpacer(400 - 2 * 20 - 3 - GAP - extent, block)) {
+            com.demcha.compose.document.layout.PlacedNode spacer = placed(session, "Gap");
+            assertThat(spacer.startPage()).as("the spacer opens the next page").isEqualTo(1);
+            assertThat(400 - 20 - spacer.placementY() - spacer.placementHeight())
+                    .as("with the gap above it there").isCloseTo(GAP, org.assertj.core.api.Assertions.within(0.01));
+            return new XWPFDocument(new ByteArrayInputStream(session.export(new DocxSemanticBackend())));
+        }
+    }
+
+    private static DocumentSession blockAndSpacer(double filler, Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> block) {
+        DocumentSession session = GraphCompose.document().pageSize(400, 400).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> {
+            page.spacing(GAP);
+            if (filler > 0) {
+                page.spacer(0, filler);
+            }
+            block.accept(page);
+            page.addSpacer(spacer -> spacer.name("Gap").size(0, 3))
+                    .addParagraph(p -> p.textStyle(SMALL).text("After"));
+        });
+        return session;
+    }
+
+    private static com.demcha.compose.document.layout.PlacedNode placed(DocumentSession session, String name) {
+        return session.layoutGraph().nodes().stream()
+                .filter(node -> name.equals(node.semanticName())).findFirst().orElseThrow();
+    }
+
+    private static CTSpacing spacerAbove(XWPFParagraph paragraph) {
+        java.util.List<XWPFParagraph> paragraphs = paragraph.getDocument().getParagraphs();
+        return paragraphs.get(paragraphs.indexOf(paragraph) - 1).getCTP().getPPr().getSpacing();
+    }
+
     /** A contact stack whose last line holds an icon lowered as TimelineMinimal's are. */
     private static void contact(SectionBuilder section) {
         section.spacing(3);

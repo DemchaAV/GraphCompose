@@ -8,6 +8,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A row's cell whose last line hangs below the row takes it out of the gap under the row in
+  DOCX.** A line held to an icon reaches as far below the page's line as the icon's ink, and
+  gives that room back out of the space above what follows. The last line of a cell had
+  nothing following it there: Word made the row that much taller than the page's.
+  `TimelineMinimal`'s last contact line, its icon lowered beside the text, ended 1.8pt below
+  the header row, and moved the whole page under the header down that much. That reach now comes out of the
+  cell's own space under it first, and what passes the row comes out of the gap under the row.
+  `TimelineMinimal`'s median drift falls from 1.44 to 0.36pt in Word and from 1.40 to 0.45pt in
+  LibreOffice, its cover letter's from 1.30 to 0.29pt and 1.32 to 0.33pt.
 - **A spacer is as tall in DOCX as on the page.** A spacer is written as an empty paragraph a
   tenth of a point tall, which Word keeps (measured: ten such lines between eleven lines of
   text added 0.96pt), and its whole height was then owed below it as well. Every spacer stood a

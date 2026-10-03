@@ -1,18 +1,18 @@
 # libreoffice build bce0998afefd on windows
 document	engine_pages	editor_pages	lines	matched	median	p90	over2
 cv-blue_banner	2	2	54	52	0.14	0.46	0
-cv-boxed_sections	2	2	58	58	0.30	0.59	0
+cv-boxed_sections	2	2	58	58	0.30	0.46	0
 cv-centered_headline	2	2	58	56	0.23	0.72	0
 cv-charcoal_gold	1	1	85	83	2.94	3.29	83
 cv-classic_serif	2	2	57	54	0.24	0.55	0
 cv-compact_mono	1	1	58	58	0.27	0.93	0
 cv-editorial_blue	2	2	82	81	0.41	10.06	9
 cv-engineering_resume	1	1	57	57	0.60	1.62	0
-cv-executive	2	2	60	60	0.24	3.10	15
+cv-executive	2	2	60	60	0.18	0.30	0
 cv-midnight_navy	1	1	86	80	2.72	3.24	76
-cv-minimal_underlined	2	2	59	57	0.69	13.40	9
+cv-minimal_underlined	2	2	59	57	0.68	13.40	9
 cv-mint_editorial	2	2	59	59	0.27	0.60	0
-cv-modern_professional	2	2	61	59	0.12	0.59	5
+cv-modern_professional	2	2	61	59	0.12	0.44	0
 cv-monogram_sidebar	1	1	53	50	2.90	3.57	50
 cv-navy_sidebar	1	1	71	71	2.81	3.03	71
 cv-nordic_clean	1	1	63	58	0.20	0.57	0

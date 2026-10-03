@@ -66,7 +66,8 @@ class DocxPageBackgroundTest {
         // and all: the body pages took the cover's navy behind their dark text.
         DocumentSession cover = GraphCompose.document().pageSize(300, 440).margin(DocumentInsets.of(24)).create();
         cover.pageBackground(DocumentColor.rgb(28, 39, 64));
-        cover.pageFlow(page -> page.addParagraph("Cover"));
+        // Two pages: a cover of one draws its colour from its page, with no header to inherit.
+        cover.pageFlow(page -> page.addParagraph("Cover").addPageBreak(b -> { }).addParagraph("Inside cover"));
         DocumentSession body = GraphCompose.document().pageSize(300, 440).margin(DocumentInsets.of(24)).create();
         body.pageFlow(page -> page.addParagraph("Body"));
         byte[] docx;
@@ -163,6 +164,53 @@ class DocxPageBackgroundTest {
     }
 
     @Test
+    void aPageOfItsOwnDrawsItsBackgroundsFromTheBodyWithNoHeader() throws Exception {
+        // LibreOffice gives a header a height of its own however little it holds, and set every
+        // line of a sidebar CV that much lower.
+        try (XWPFDocument document = export(DocumentInsets.zero(), session -> session.pageBackgrounds(List.of(
+                PageBackgroundFill.leftColumn(0.3, CHARCOAL))), page -> page.addParagraph("Body text."))) {
+            String body = document.getDocument().getBody().xmlText();
+
+            assertThat(document.getHeaderList()).as("no header to give a height").isEmpty();
+            assertThat(body).contains("name=\"Page background 1\"").contains("val=\"2B2F36\"")
+                    .contains("behindDoc=\"1\"").contains("relativeFrom=\"page\"");
+            assertThat(DocxTwips.of(document.getDocument().getBody().getSectPr().getPgMar().getTop()))
+                    .as("the page's margin, no header to hold the body against").isZero();
+        }
+    }
+
+    @Test
+    void aPageOfOneTableCarriesItsBackgroundsInItsFirstCellWithNoHairlineOverIt() throws Exception {
+        // A row the page's height has no room for a hairline over it: LibreOffice moved
+        // MidnightNavy's onto a second page under one.
+        try (XWPFDocument document = export(DocumentInsets.zero(), session -> session.pageBackgrounds(List.of(
+                        PageBackgroundFill.leftColumn(0.3, CHARCOAL))),
+                page -> page.addRow("Columns", row -> row
+                        .addSection("Side", side -> side.addParagraph("Side"))
+                        .addSection("Main", main -> main.addParagraph("Main"))))) {
+            var body = document.getBodyElements();
+            String cell = document.getTables().get(0).getRow(0).getCell(0).getCTTc().xmlText();
+
+            assertThat(body.get(0)).as("the table opens the page").isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
+            assertThat(cell).contains("name=\"Page background 1\"").contains("layoutInCell=\"0\"")
+                    .contains("relativeFrom=\"page\"");
+        }
+    }
+
+    @Test
+    void aPageOfItsOwnUnderAFooterKeepsItsBackgroundsInAHeader() throws Exception {
+        // Word paints the body's shapes over a footer's text: MeteredInvoice's band hid it.
+        try (XWPFDocument document = export(DocumentInsets.of(20), session -> {
+            session.pageBackgrounds(List.of(PageBackgroundFill.bandPoints(540, 40, 600, CHARCOAL)));
+            session.chrome().zone(com.demcha.compose.document.output.DocumentPageZone.footer(30,
+                    page -> new com.demcha.compose.document.dsl.ParagraphBuilder().text("Footer").build()));
+        }, page -> page.addParagraph("Body text."))) {
+            assertThat(onlyHeader(document)._getHdrFtr().xmlText()).contains("2B2F36");
+            assertThat(document.getDocument().getBody().xmlText()).doesNotContain("Page background");
+        }
+    }
+
+    @Test
     void aDocumentWithoutPageBackgroundsWritesNoHeader() throws Exception {
         try (XWPFDocument document = export(session -> { })) {
             assertThat(document.getHeaderList()).isEmpty();
@@ -178,13 +226,21 @@ class DocxPageBackgroundTest {
         return export(DocumentInsets.of(20), setup);
     }
 
+    /** A document of two pages, whose backgrounds a header carries to both. */
     private static XWPFDocument export(DocumentInsets margin, Consumer<DocumentSession> setup) throws Exception {
+        return export(margin, setup, page -> page.addParagraph("Body text.").addPageBreak(b -> { })
+                .addParagraph("Second page."));
+    }
+
+    private static XWPFDocument export(DocumentInsets margin, Consumer<DocumentSession> setup,
+                                       Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content)
+            throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(400, 600)
                 .margin(margin)
                 .create()) {
             setup.accept(session);
-            session.pageFlow(page -> page.addParagraph("Body text."));
+            session.pageFlow(content);
             return new XWPFDocument(new ByteArrayInputStream(session.export(new DocxSemanticBackend())));
         }
     }

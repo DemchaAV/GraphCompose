@@ -91,8 +91,16 @@ each header the section has, the first page's and even pages' included. A sectio
 header gets an empty one, against the page edge, to carry them. That header is a point
 tall, and on a page whose top margin is narrower than that the margin is written negative,
 so Word holds the body at it rather than moving it down under the header; LibreOffice still
-moves the first line down about 3pt. An empty footer against the page's foot writes a
-bottom margin narrower than its point the same way. A two-column
+moves the first line down about 3pt, since it gives a header a height of its own however
+little it holds. So a section of one page with no header or footer writes no header at all:
+its fills are anchored to the page in the body, behind the text and under every other shape,
+and a page that opens with a table carries them, and its other shapes, in the first cell's
+paragraph, laid out from the page — a hairline paragraph over a row as tall as the page would
+push the row onto a second page in LibreOffice. A section with a footer keeps them in its
+header: Word paints the body's shapes over a footer's text. Drawn from the body, the fills are
+on that page alone: text an editor adds that runs onto a second page leaves that page without
+them, where a header would have painted it. An empty footer against the
+page's foot writes a bottom margin narrower than its point the same way. A two-column
 layout still flows its columns one after the other in Word, so a column fill can stand
 beside text that is not its column's.
 

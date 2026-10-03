@@ -299,6 +299,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private int sectionIndex;
     // Where the section being written starts among the body's elements.
     private int sectionFirstElement;
+    // The section's page backgrounds drawn from its page in the body, not from a header.
+    private List<DocxPageBackgrounds.Fill> backgroundsInBody = List.of();
     // The shape container being written that clips its content to its outline, null outside one.
     private ShapeContainerNode clipContainer;
     // The table cell a drawing is written alone in, whose paragraph carries its shapes; null
@@ -727,6 +729,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
                 beginSection(section, index);
                 sectionFirstElement = document.getBodyElements().size();
+                backgroundsInBody = List.of();
                 applyPageGeometry(document, context.canvas());
                 if (index == 0) {
                     writeStylesPart(document);
@@ -1492,6 +1495,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, sectPr);
         boolean hasHeader = policy.getDefaultHeader() != null || policy.getFirstPageHeader() != null
                             || policy.getEvenPageHeader() != null;
+        boolean hasFooter = policy.getDefaultFooter() != null || policy.getFirstPageFooter() != null
+                            || policy.getEvenPageFooter() != null;
+        if (!hasHeader && !hasFooter && graph.totalPages() == 1) {
+            // A section of one page with no header or footer draws them from that page instead
+            // (reportDrawingsLeftOver): LibreOffice gives a header a height of its own however
+            // little it holds, and set the body that much lower — SlateOrange, CharcoalGold,
+            // MidnightNavy and the other sidebar CVs, their column a background, stood 2.6 to
+            // 3.3pt low on every line. Not under a footer: Word paints the body's shapes over a
+            // header's and a footer's text, and MeteredInvoice's footer band hid its footer. The
+            // fills are on that page alone: text an editor adds past it gets a page without them.
+            backgroundsInBody = fills;
+            return false;
+        }
         for (org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type
                 : partTypes(sectPr.isSetTitlePg(), evenAndOdd)) {
             if (headerOf(policy, type) == null) {
@@ -2565,12 +2581,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void reportDrawingsLeftOver(XWPFDocument document, XWPFParagraph closer) {
         int lastPage = Math.max(0, layout.pageCount() - 1);
         List<IBodyElement> body = document.getBodyElements();
-        java.util.function.Supplier<XWPFParagraph> opening =
-                sectionFirstElement < body.size() && body.get(sectionFirstElement) instanceof XWPFTable first
-                        ? () -> openBefore(document, first)
-                        : null;
-        DocxDrawingAnchors.Leftovers leftovers = anchors.endSection(lastPage, opening,
-                () -> closer != null ? closer : collapsed(document.createParagraph()));
+        XWPFTable opensWith = sectionFirstElement < body.size() && body.get(sectionFirstElement) instanceof XWPFTable first
+                ? first : null;
+        XWPFParagraph firstOnThePage = anchors.bodyParagraphOn(0);
+        XWPFParagraph firstInACell = anchors.cellParagraphOn(0);
+        // A page of one table whose row is all its height has no room for a hairline over it:
+        // LibreOffice moved MidnightNavy's row onto a second page under one. Its backgrounds and
+        // shapes are carried by its first cell's paragraph instead, laid out from the page —
+        // measured in Word 16.0.20430, PDF and screen, a shape anchored there out of the cell's
+        // bounds is drawn whole.
+        boolean inTheFirstCell = !backgroundsInBody.isEmpty() && opensWith != null && firstInACell != null;
+        XWPFParagraph[] opened = {inTheFirstCell ? firstInACell : null};
+        java.util.function.Supplier<XWPFParagraph> opening = opensWith == null ? null
+                : () -> opened[0] != null ? opened[0] : (opened[0] = openBefore(document, opensWith));
+        XWPFParagraph[] closed = {closer};
+        java.util.function.Supplier<XWPFParagraph> closing =
+                () -> closed[0] != null ? closed[0] : (closed[0] = collapsed(document.createParagraph()));
+        DocxDrawingAnchors.Leftovers leftovers = anchors.endSection(lastPage, opening, closing);
+        if (!backgroundsInBody.isEmpty()) {
+            XWPFParagraph carrier = firstOnThePage != null ? firstOnThePage
+                    : opening != null ? opening.get()
+                    : closing.get();
+            XWPFRun run = carrier.insertNewRun(0);
+            for (int order = 0; order < backgroundsInBody.size(); order++) {
+                run.getCTR().addNewDrawing().set(
+                        DocxPageBackgrounds.drawing(backgroundsInBody.get(order), nextDrawingId++, order, false));
+            }
+        }
         String where = sectioned ? "section " + (sectionIndex + 1) + ", " : "";
         leftovers.inCells().forEach((page, count) -> report.add(DocxExportReport.Severity.APPROXIMATED,
                 "drawing", where + "page " + (page + 1),

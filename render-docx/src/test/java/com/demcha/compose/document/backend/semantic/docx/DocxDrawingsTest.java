@@ -389,15 +389,27 @@ class DocxDrawingsTest {
                     .addEllipse(e -> e.name("First").circle(10).fillColor(ACCENT))
                     .addEllipse(e -> e.name("Second").circle(10).fillColor(ACCENT)));
         })) {
-            List<Long> body = heights(document.getParagraphs());
-            List<Long> header = new ArrayList<>();
+            // A page of its own draws its background from the body too (DocxPageBackgroundTest).
+            List<org.apache.poi.xwpf.usermodel.XWPFParagraph> paragraphs = new ArrayList<>(document.getParagraphs());
             for (XWPFHeader part : document.getHeaderList()) {
-                header.addAll(heights(part.getParagraphs()));
+                paragraphs.addAll(part.getParagraphs());
+            }
+            List<Long> backgrounds = new ArrayList<>();
+            List<Long> shapes = new ArrayList<>();
+            for (org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph : paragraphs) {
+                for (org.apache.poi.xwpf.usermodel.XWPFRun run : paragraph.getRuns()) {
+                    for (var drawing : run.getCTR().getDrawingList()) {
+                        for (var anchor : drawing.getAnchorList()) {
+                            boolean background = anchor.getDocPr().getName().startsWith("Page background");
+                            (background ? backgrounds : shapes).add(anchor.getRelativeHeight());
+                        }
+                    }
+                }
             }
 
-            assertThat(header).isNotEmpty();
-            assertThat(body).hasSize(2).isSorted();
-            assertThat(body.get(0)).isGreaterThan(header.stream().mapToLong(Long::longValue).max().orElseThrow());
+            assertThat(backgrounds).hasSize(1);
+            assertThat(shapes).hasSize(2).isSorted();
+            assertThat(shapes.get(0)).isGreaterThan(backgrounds.get(0));
         }
     }
 

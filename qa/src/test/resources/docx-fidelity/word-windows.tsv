@@ -24,8 +24,8 @@ cv-sidebar_portrait	1	1	49	49	0.08	0.27	0
 cv-slate_orange	1	1	87	85	0.53	1.18	0
 cv-teal_pulse	1	1	57	57	0.11	0.38	0
 cv-terracotta_rail	1	1	102	102	0.42	0.87	0
-cv-timeline_minimal	2	2	89	86	1.44	1.57	0
-cv-violet_grid	1	1	80	77	0.35	0.81	2
+cv-timeline_minimal	2	2	89	86	0.36	0.48	0
+cv-violet_grid	1	1	80	77	0.23	1.30	5
 invoice-classic	1	1	56	56	0.48	1.22	0
 invoice-classic_long	2	2	166	166	0.51	0.88	0
 invoice-consulting	1	1	92	92	0.91	1.41	3
@@ -55,7 +55,7 @@ letter-monogram_sidebar	1	1	12	12	0.14	0.20	0
 letter-nordic_clean	1	1	15	15	0.16	0.35	0
 letter-panel	1	1	13	13	0.17	0.25	0
 letter-sidebar_portrait	1	1	12	12	0.41	0.52	0
-letter-timeline_minimal	1	1	15	15	1.30	1.63	0
+letter-timeline_minimal	1	1	15	15	0.29	0.53	0
 proposal-editorial	2	2	132	130	0.50	1.81	11
 proposal-indigo	1	1	72	70	0.40	0.62	0
 proposal-modern	1	1	44	44	0.35	0.73	0

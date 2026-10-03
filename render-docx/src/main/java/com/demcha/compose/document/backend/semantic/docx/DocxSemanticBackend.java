@@ -222,6 +222,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private double hangingBelow;
     private XWPFParagraph hangingOver;
     private double hangingOverBy;
+    // How far the last line of the cell written last hangs below everything the cell writes
+    // under it, in points: Word's cell is that much taller than its content on the page (see
+    // writeInCell). The row it stands in reads it.
+    private double cellOverhang;
 
     /**
      * The tables whose first row text stands above, by cell — see {@link #standsAboveItsCell}.
@@ -8575,6 +8579,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // MerchantInvoice's due-date text stood against its card's top without it.
         boolean inAPanel = surfaceBehind != null && panelCell != null;
         com.demcha.compose.document.layout.PlacedNode placedRow = layout.placement(node);
+        double rowOverhang = 0;
         // A row has no fill of its own: inside a panel it is a table nested in the panel's
         // cell, and a cell with no shading shows the panel's through it.
         for (int i = 0; i < node.children().size(); i++) {
@@ -8587,6 +8592,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             currentCellWidth = usableWidthOf(cell, i, 1);
             leftMarginInCell = placedColumns ? child : null;
             cellHang = -hang;
+            cellOverhang = 0;
             try {
                 writeRowCellChild(cell, child);
             } finally {
@@ -8594,6 +8600,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 leftMarginInCell = previousHeld;
                 cellHang = 0;
             }
+            rowOverhang = Math.max(rowOverhang, cellOverhang - roomBelowInItsRow(child, placedRow, node));
+            cellOverhang = 0;
             applyRowVerticalAlign(cell, node.verticalAlign());
         }
         giveTheLastCellItsInk(table, node, placedColumns);
@@ -8608,6 +8616,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             holdRowAtLeast(row, placedRow.placementHeight() - node.padding().top() - node.padding().bottom());
         }
         indentTable(table);
+        // A cell's last line hanging past the row's foot makes Word's row that much taller, and
+        // takes as much of the gap under it, as text hanging below a band does (writeLinePair):
+        // TimelineMinimal's last contact line, held to its icon, stood 1.8pt below the row, and
+        // the page under the header with it.
+        // A card's border below another cell (borderBelow) makes the row taller too: Word's row
+        // is as tall as the taller of the two, so only what passes the border is added to it.
+        if (rowOverhang - borderBelow > 0) {
+            hangingBelow = Math.max(hangingBelow, rowOverhang - borderBelow);
+        }
+    }
+
+    /**
+     * How much shorter a row's child is than the row's content box on the page, in points: room a
+     * line hanging below the child has before it makes Word's row taller. {@code +∞} when the
+     * layout does not say, so nothing is taken for it.
+     */
+    private double roomBelowInItsRow(DocumentNode child, com.demcha.compose.document.layout.PlacedNode placedRow,
+                                     RowNode row) {
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(child);
+        if (placedRow == null || placed == null || placedRow.startPage() != placedRow.endPage()
+            || placed.startPage() != placed.endPage()) {
+            return Double.POSITIVE_INFINITY;
+        }
+        // The row's room less the child's height, wherever the row aligns it: Word grows a row
+        // only when a cell holds more than the row, however the cell sets its content in it.
+        return Math.max(0, placedRow.placementHeight() - row.padding().top() - row.padding().bottom()
+                           - placed.placementHeight() - child.margin().top() - child.margin().bottom());
     }
 
     /**
@@ -10350,6 +10385,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         insetRight = 0;
         cellTextShift = cellHang;
         cellHang = 0;
+        double overhang = 0;
         try {
             content.write();
             // A cell of space and nothing written — padding round a drawing the export keeps
@@ -10359,6 +10395,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 && carriedSpacingBefore + pendingSpacingAfter > 0 && cell.getBodyElements().isEmpty()) {
                 holdToHairline(newBodyParagraph(cell.getXWPFDocument()));
             }
+            // A line hanging below the cell's last block takes the space the cell owes under it
+            // first, as it takes the gap above the next block in the flow; what it reaches past
+            // that makes Word's cell taller than its content on the page.
+            double hang = hangingBelow;
+            // What a pull keeps from being written is no room for it (flushSpacingAfter).
+            double taken = Math.min(Math.max(0, pendingSpacingAfter - pullBelow), hang);
+            pendingSpacingAfter -= taken;
+            overhang = hang - taken;
             // A cell ends where it ends: its last gap cannot land on whatever the body
             // writes next, and the body's cannot land inside it.
             flushSpacingAfter();
@@ -10379,6 +10423,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             cellTextShift = previousTextShift;
             tableCloser = previousCloser;
         }
+        cellOverhang = overhang;
     }
 
     /** Whether anything under a node was written in an earlier layer's stand-in. */

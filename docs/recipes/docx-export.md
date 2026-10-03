@@ -465,8 +465,10 @@ page.addParagraph(p -> p
   holds. A paragraph
   of several lines, a line holding only a picture — not seated
   on the page's baseline, having no text — a list item, a table's text cell and a line set
-  beside another are grown as above. At the end of a cell, the ink below the last line is
-  not taken from the cell's bottom: the row is that much taller. LibreOffice stands such a picture on
+  beside another are grown as above. At the end of a cell, the ink below the last line comes
+  out of the space the cell holds under it. In a row, what passes that, less the room the row
+  leaves the cell on the page, makes Word's row taller and comes out of the gap under the row;
+  in a panel or a stack written as columns it still makes the table taller. LibreOffice stands such a picture on
   the baseline, higher than the page does, and cuts what passes the line's top: a lowered
   icon stands up to its drop too high there, its top cut, where its text is in place.
 - **What an icon is.** An SVG icon — an emoji among them — is drawn into a transparent

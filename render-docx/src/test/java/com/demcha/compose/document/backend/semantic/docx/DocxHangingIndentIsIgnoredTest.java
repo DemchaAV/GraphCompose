@@ -19,8 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * {@code hangingIndent} is fixed-layout geometry, and the semantic DOCX export does not
- * lay text out — so it exports a list exactly the same way whether the flag is set or
- * not.
+ * lay text out — so it exports a list of text markers exactly the same way whether the
+ * flag is set or not. (A top-level marker that is a picture alone is the exception, its
+ * first line's text tabbed to where the layout puts it: {@code DocxListMarkerGapTest}.)
  *
  * <p>That is a decision rather than an omission, and it was made against measurements.
  * Word places content at absolute indents and has no way to be told "start the text one
@@ -42,7 +43,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * and it still does not honour it. What it buys is behaviour — Enter continues the list —
  * at the price of a marker column that is a stated constant rather than the configured
  * gap. So the decision this test pins is unchanged and its subject is narrower than it
- * was: not "no numbering", but "the flag and the gap change nothing about the output".</p>
+ * was: not "no numbering", but "the flag and the gap change nothing about the output" of a
+ * list of text markers.</p>
  *
  * @author Artem Demchyshyn
  */

@@ -13,8 +13,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * width and {@code markerGap} past where the item starts.
  *
  * <p>The marker was followed by a space, a little over two points where the page leaves the
- * gap asked for: {@code TealPulse}'s skills and highlights, a 3.4pt dot and a 9.6pt gap, stood
- * 6.7pt left of the page's in both editors. Word draws a picture at the size it is written, so
+ * gap asked for: {@code TealPulse}'s skills and highlights, a 3.2pt dot and a 9.2pt gap, stood
+ * 6.3 to 6.7pt left of the page's in both editors. Word draws a picture at the size it is written, so
  * a tab to a stop there puts the text in place — where the picture, its edges included, clears
  * the stop; a marker of text, which Word sets in its own widths, keeps its space.</p>
  */
@@ -65,6 +65,20 @@ class DocxListMarkerGapTest {
             XWPFParagraph paragraph = item(document, "Patient Assessment");
 
             assertThat(paragraph.getText()).isEqualTo(" Patient Assessment");
+        }
+    }
+
+    @Test
+    void aDrawnMarkerWithABlankRunBesideItKeepsItsSpace() throws Exception {
+        // The layout drops the blank run and Word sets it: a stop measured past the dot alone
+        // could fall inside the space, and the tab run on half an inch.
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
+                .addList(list -> list.marker(m -> m.dot(4, DocumentColor.rgb(0, 128, 128)).plain(" "))
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(14))
+                        .hangingIndent(true).addItem("Patient Assessment")))) {
+            XWPFParagraph paragraph = item(document, "Patient Assessment");
+
+            assertThat(paragraph.getText()).doesNotContain("\t");
         }
     }
 

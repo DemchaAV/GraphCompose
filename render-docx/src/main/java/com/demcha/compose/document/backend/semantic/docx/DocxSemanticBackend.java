@@ -3052,13 +3052,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (!drawnOnly || pictures.reach() > 0) {
                 XWPFRun gap = para.createRun();
                 applyStyle(gap, style);
-                if (drawnOnly && markerToText.isPresent()
+                // A picture alone: a blank run beside it is no text the page keeps — the layout
+                // drops it — and is a space Word does set, which the stop is not measured past.
+                boolean pictureAlone = marker.runs().stream().allMatch(run -> textOf(run) == null);
+                if (pictureAlone && markerToText.isPresent()
                     && markerToText.getAsDouble() > drawnWidth(para) + MARKER_TAB_CLEARANCE) {
                     // A marker that is a picture alone is drawn at the size it is written, so its
                     // text can stand where the page sets it, the marker's width and markerGap past
                     // it: a tab to a stop there. A space put TealPulse's skills and highlights
-                    // 6.7pt left of the page's, the gap after their dots 9.6pt where a space is
-                    // 2.5. Not where the picture, its edges included, reaches the stop: the tab
+                    // 6.3 to 6.7pt left of the page's, the gap after their dots 9.2pt where a
+                    // space is 2.5. Not where the picture, its edges included, reaches the stop: the tab
                     // would run on to Word's next default stop, half an inch on.
                     gap.addTab();
                     tabTo(para, markerToText.getAsDouble());

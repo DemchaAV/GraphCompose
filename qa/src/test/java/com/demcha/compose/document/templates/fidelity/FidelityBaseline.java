@@ -20,7 +20,9 @@ import java.util.Map;
  * document fails when the editor sets it on a page count further from the engine's, when a
  * line the baseline found is no longer found — the editor breaks it at another word, or puts it
  * on another page — or when a found line drifts more than {@value #LINE_SLACK}pt further from
- * the page than it did. Line by line, because a document already set a few points off
+ * the page than it did, down or across. Across as well as down: a table's left margin the
+ * export dropped stood {@code PaymentsInvoice}'s bank details 36.7pt left of the page's and
+ * moved no line up or down. Line by line, because a document already set a few points off
  * throughout hides a new defect in its counts. A document the baseline does not hold fails
  * until the baseline is written with it, and so does one the baseline holds and the corpus no
  * longer has. A document whose lines the editor mostly sets at other words is held to the few
@@ -28,12 +30,16 @@ import java.util.Map;
  *
  * <p>The baseline is two files: {@code <name>.tsv}, a row per document, and
  * {@code <name>-lines.tsv}, a row per found line, named by its page and a digest of its
- * letters, with a few of them to read it by.</p>
+ * letters, with its drift down and across and a few of its letters to read it by. A line file
+ * written before lines were measured across holds them to their drift down alone.</p>
  */
 final class FidelityBaseline {
 
     /** How much further a line may drift, in points: rounding, not room for a change to spend. */
     static final double LINE_SLACK = 0.5;
+
+    /** The line file's header names this column when its lines were measured across. */
+    private static final String ACROSS_COLUMN = "drift right of the page (pt)";
 
     /** How many of a document's failing lines a failure names. */
     private static final int NAMED = 4;
@@ -60,9 +66,13 @@ final class FidelityBaseline {
             throw new IllegalStateException("the baseline " + documents + " has no line file " + lineFile);
         }
         Map<String, Map<String, FidelityMeasurement.Found>> lines = new LinkedHashMap<>();
-        for (String row : Files.readAllLines(lineFile, StandardCharsets.UTF_8)) {
+        List<String> lineRows = Files.readAllLines(lineFile, StandardCharsets.UTF_8);
+        // Its header says whether its lines were measured across, for the whole file.
+        boolean across = !lineRows.isEmpty() && lineRows.get(0).startsWith("#")
+                         && lineRows.get(0).contains(ACROSS_COLUMN);
+        for (String row : lineRows) {
             if (!row.isBlank() && !row.startsWith("#")) {
-                FidelityMeasurement.parseLine(row, lines);
+                FidelityMeasurement.parseLine(row, lines, across);
             }
         }
         for (String row : Files.readAllLines(documents, StandardCharsets.UTF_8)) {
@@ -91,7 +101,8 @@ final class FidelityBaseline {
         List<FidelityMeasurement> sorted = measurements.stream()
                 .sorted(Comparator.comparing(FidelityMeasurement::stem)).toList();
         List<String> rows = new ArrayList<>(List.of("# " + note, FidelityMeasurement.HEADER));
-        List<String> lines = new ArrayList<>(List.of("# " + note + " — document, line, drift below the page (pt), letters"));
+        List<String> lines = new ArrayList<>(List.of("# " + note
+                + " — document, line, drift below the page (pt), " + ACROSS_COLUMN + ", letters"));
         for (FidelityMeasurement measured : sorted) {
             rows.add(measured.row());
             lines.addAll(measured.lineRows());
@@ -129,6 +140,10 @@ final class FidelityBaseline {
                 } else if (Math.abs(there.drift()) > Math.abs(line.drift()) + LINE_SLACK) {
                     further.add(String.format(Locale.ROOT, "\"%s\" %+.2f -> %+.2fpt",
                             line.preview(), line.drift(), there.drift()));
+                } else if (!Double.isNaN(line.across())
+                           && Math.abs(there.across()) > Math.abs(line.across()) + LINE_SLACK) {
+                    further.add(String.format(Locale.ROOT, "\"%s\" %+.2f -> %+.2fpt across",
+                            line.preview(), line.across(), there.across()));
                 }
             });
             if (!lost.isEmpty()) {

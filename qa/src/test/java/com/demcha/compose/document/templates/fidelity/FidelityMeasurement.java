@@ -20,7 +20,8 @@ import java.util.Map;
  * PDF; a line the editor breaks at another word, or puts on another page, is not found. Lines
  * of the same letters on one page — a rota's shifts, a CV's date ranges — are paired each with
  * the editor's nearest, so one lost or moved among them is not hidden behind another. A found
- * line's drift is how far its baseline stands below the page's, above when negative.</p>
+ * line's drift is how far its baseline stands below the page's, above when negative, and its
+ * drift across how far its first letter stands right of the page's, left when negative.</p>
  *
  * @param stem         the document
  * @param enginePages  the pages the engine draws
@@ -37,8 +38,12 @@ import java.util.Map;
 record FidelityMeasurement(String stem, int enginePages, int editorPages, int lines, int matched,
                            double median, double p90, int over2, Map<String, Found> found) {
 
-    /** A found line: where it is, a few of its letters to name it by, and its drift. */
-    record Found(int page, String preview, double drift) {
+    /**
+     * A found line: where it is, a few of its letters to name it by, its drift below the page's,
+     * and its drift across — how far right of the page's its first letter stands, left when
+     * negative; {@code NaN} in a baseline written before it was measured.
+     */
+    record Found(int page, String preview, double drift, double across) {
     }
 
     static final String HEADER = "document\tengine_pages\teditor_pages\tlines\tmatched\tmedian\tp90\tover2";
@@ -66,7 +71,8 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
                 if (theirs[index] != null) {
                     PdfLines.Line line = ours.get(index);
                     double drift = round(theirs[index].baseline() - line.baseline());
-                    found.put(lineId(line, index), new Found(line.page(), preview(line.key()), drift));
+                    double across = round(theirs[index].x() - line.x());
+                    found.put(lineId(line, index), new Found(line.page(), preview(line.key()), drift, across));
                     drifts.add(Math.abs(drift));
                 }
             }
@@ -159,7 +165,8 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
     List<String> lineRows() {
         List<String> rows = new ArrayList<>();
         found.forEach((id, line) -> rows.add(String.join("\t", stem, id,
-                String.format(Locale.ROOT, "%.2f", line.drift()), line.preview())));
+                String.format(Locale.ROOT, "%.2f", line.drift()),
+                String.format(Locale.ROOT, "%.2f", line.across()), line.preview())));
         return rows;
     }
 
@@ -178,16 +185,33 @@ record FidelityMeasurement(String stem, int enginePages, int editorPages, int li
         }
     }
 
-    /** Reads a row of the baseline's line file into its document's lines. */
+    /**
+     * Reads a row of the baseline's line file into its document's lines: document, line, drift,
+     * drift across, letters — or, in a baseline written before lines were measured across,
+     * document, line, drift, letters, which holds no line to its place across.
+     */
     static void parseLine(String row, Map<String, Map<String, Found>> byDocument) {
-        String[] cells = row.split("\t", 4);
-        if (cells.length < 3) {
-            throw new IllegalArgumentException("a baseline line row has at least 3 cells: " + row);
+        parseLine(row, byDocument, false);
+    }
+
+    /**
+     * Reads a row of the baseline's line file, refusing one without its drift across in a file
+     * whose header says its lines were measured across: a row cut short there would otherwise
+     * be read as one written before, and hold its line down alone.
+     */
+    static void parseLine(String row, Map<String, Map<String, Found>> byDocument, boolean acrossExpected) {
+        String[] cells = row.split("\t", 5);
+        if (cells.length < 3 || acrossExpected && cells.length != 5) {
+            throw new IllegalArgumentException("a baseline line row has " + (acrossExpected ? "5" : "at least 3")
+                                               + " cells: " + row);
         }
         try {
             int page = Integer.parseInt(cells[1].substring(0, cells[1].indexOf(':')));
+            boolean measuredAcross = cells.length == 5;
+            double across = measuredAcross ? Double.parseDouble(cells[3]) : Double.NaN;
+            String preview = measuredAcross ? cells[4] : cells.length > 3 ? cells[3] : "";
             byDocument.computeIfAbsent(cells[0], stem -> new LinkedHashMap<>())
-                    .put(cells[1], new Found(page, cells.length > 3 ? cells[3] : "", Double.parseDouble(cells[2])));
+                    .put(cells[1], new Found(page, preview, Double.parseDouble(cells[2]), across));
         } catch (NumberFormatException | StringIndexOutOfBoundsException malformed) {
             throw new IllegalArgumentException("a baseline line row is malformed: " + row, malformed);
         }

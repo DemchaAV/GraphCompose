@@ -348,8 +348,8 @@ Choose the smallest tests that match the change:
 - For DOCX export (`render-docx`) changes:
   [DocxFidelityCorpusTest.java](qa/src/test/java/com/demcha/compose/document/templates/fidelity/DocxFidelityCorpusTest.java).
   It exports every template preset to DOCX, has LibreOffice set each one, and holds every
-  line of every document to the drift its baseline records: a line set further from the page,
-  a line set at other words, or a page more fails it. It needs LibreOffice and runs only when
+  line of every document to the drift its baseline records, down and across: a line set further
+  from the page either way, a line set at other words, or a page more fails it. It needs LibreOffice and runs only when
   asked for — install first, as for any standalone `qa` run:
   `./mvnw -B -ntp test -f qa/pom.xml -Dtest=DocxFidelityCorpusTest -Dgraphcompose.docxFidelity=libreoffice`.
   A change that moves documents nearer the page rewrites the baseline with

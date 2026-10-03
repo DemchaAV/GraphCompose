@@ -692,6 +692,32 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * How far right of its marker a list's first item's text starts, as the page sets it: the
+     * marker's width and the gap after it. A list whose marker the page draws is laid out as
+     * a fragment for the marker and one for the item's text beside it.
+     *
+     * @param list the list
+     * @return the distance in points, or empty when the list laid out no marker beside its text
+     */
+    OptionalDouble markerToText(DocumentNode list) {
+        List<PlacedFragment> own = fragmentsOf(list);
+        for (int index = 0; index + 1 < own.size(); index++) {
+            if (own.get(index).payload() instanceof ParagraphFragmentPayload marker
+                && own.get(index + 1).payload() instanceof ParagraphFragmentPayload text
+                && drawsOnly(marker) && !drawsOnly(text)) {
+                return OptionalDouble.of(own.get(index + 1).x() - own.get(index).x());
+            }
+        }
+        return OptionalDouble.empty();
+    }
+
+    /** Whether a paragraph fragment holds nothing but drawings — a list's drawn marker. */
+    private static boolean drawsOnly(ParagraphFragmentPayload paragraph) {
+        return !paragraph.lines().isEmpty() && paragraph.lines().stream().allMatch(line -> !line.spans().isEmpty()
+                && line.spans().stream().noneMatch(span -> span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan));
+    }
+
+    /**
      * Where a node's first line of text starts, measured up from the foot of its page: the top
      * of the first fragment holding its lines, inside the paragraph's padding, where the page
      * starts setting them.

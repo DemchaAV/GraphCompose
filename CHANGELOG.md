@@ -8,6 +8,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A list item whose marker is a picture starts its text where the page does in DOCX.** The
+  picture — a dot, an icon — was followed by a space, a little over two points where the page
+  leaves the `markerGap` asked for: `TealPulse`'s skills, highlights and certifications, a
+  3.4pt dot and a 9.6pt gap, stood 6.3 to 6.7pt left of the page's in both editors, and
+  `OrangeOps`' 6pt in Word. A top-level item of a `hangingIndent(true)` list whose marker is
+  the list's and a picture alone is now followed by a tab to a stop the layout's measure past
+  the item's start — the picture's width and the gap — where the picture, its edges included,
+  clears that stop, as Word draws a picture at the size it is written; a marker of text, which
+  Word sets in its own widths, keeps its space. Those lines now stand within 0.1pt across. Lines more than 2pt off across fall from 175 to 136 in Word and from 130 to 102 in
+  LibreOffice. `ListBuilder.hangingIndent` and `markerGap` say what DOCX now keeps.
 - **A page of its own draws its backgrounds from the body in DOCX, so LibreOffice no longer
   sets it lower.** LibreOffice gives a header a height of its own however little it holds, and
   the header carrying a page's backgrounds set every line of the seven sidebar CVs

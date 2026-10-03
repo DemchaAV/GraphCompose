@@ -207,12 +207,16 @@ class DocxSemanticBackendTest {
                     .toList();
             assertThat(paragraphs).hasSize(2);
 
-            // A disc is the picture it draws — not a bullet nobody asked for — followed by
-            // the space a text marker gets, so the item does not run into it.
+            // A disc is the picture it draws — not a bullet nobody asked for — followed by a
+            // tab to where the page starts the item: the disc's width and markerGap past it.
             XWPFParagraph drawn = paragraphs.get(0);
-            assertThat(drawn.getText()).isEqualTo(" Drawn marker item");
+            assertThat(drawn.getText()).isEqualTo("\tDrawn marker item");
             assertThat(drawn.getRuns().stream().filter(run -> !run.getEmbeddedPictures().isEmpty()))
                     .as("the disc").hasSize(1);
+            var stops = drawn.getCTP().getPPr().getTabs().getTabArray();
+            assertThat(stops).hasSize(1);
+            assertThat(DocxTwips.of(stops[0].getPos())).as("the disc's width and the gap after it")
+                    .isEqualTo(Math.round((4.0 + com.demcha.compose.document.node.ListNode.DEFAULT_MARKER_GAP) * 20));
 
             // A marker written as text keeps the colour it was given, because a
             // run colour is something Word holds.

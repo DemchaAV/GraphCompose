@@ -2905,7 +2905,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // any row with runs in it is; its item is still just a label.
                 writeRichListLine(document, list.textStyle(), list.marker(),
                         com.demcha.compose.document.node.ListItem.of(normalized), 0, lineHeight, layout.firstLine(list),
-                        layout.pathOf(list));
+                        layout.pathOf(list), layout.markerToText(list));
             } else if (numId != null) {
                 // Word draws the marker, so the text is the item and nothing else.
                 writeListLine(document, list.textStyle(), normalized, 0, numId, lineHeight);
@@ -2934,8 +2934,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth);
         java.util.OptionalDouble lineHeight = layout.lineHeight(list);
         if (item.isRich() || marker.isRich()) {
+            // A nested item stands after its depth's indent, and an item may carry a marker of
+            // its own: the list's measure of its first item's marker is only a top-level item's
+            // that carries the list's.
+            java.util.OptionalDouble markerToText = depth == 0 && marker.equals(list.marker())
+                    ? layout.markerToText(list) : java.util.OptionalDouble.empty();
             writeRichListLine(document, list.textStyle(), marker, item, depth, lineHeight, layout.firstLine(list),
-                    layout.pathOf(list));
+                    layout.pathOf(list), markerToText);
         } else if (numId != null) {
             writeListLine(document, list.textStyle(), item.label(), depth, numId, lineHeight);
         } else {
@@ -3001,8 +3006,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>This is the part of the opt-in marker/content list the semantic export
      * can reproduce, and it reproduces it exactly. The geometry — the measured
-     * marker column, the gap, the shared content origin — is unavailable here for
-     * the reason {@code hangingIndent} documents. Which piece of an item is bold
+     * marker column, the shared content origin — is not written, for the reason
+     * {@code hangingIndent} documents; the gap after a marker that is a picture
+     * alone is, as a tab to where the layout starts the text. Which piece of an item is bold
      * is not geometry: Word carries a style per run inside a paragraph, so
      * writing the item's plain reading in one face would be dropping something
      * Word can hold.</p>
@@ -3011,7 +3017,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * and face it was given, because those are run properties Word has. A marker
      * that draws a disc or an icon is written as the picture it draws, the way a
      * shape or an icon in a line is, rather than as a glyph the author did not ask
-     * for — and is followed by the same space as a text marker.</p>
+     * for — and is followed by that tab, or, where the layout measured no gap or the
+     * picture reaches the stop, by the same space as a text marker.</p>
+     *
+     * @param markerToText how far right of its marker the layout starts the item's text, or
+     *                     empty when that is not this item's — a nested item, or one with a
+     *                     marker of its own
      */
     private void writeRichListLine(XWPFDocument document, DocumentTextStyle style,
                                    com.demcha.compose.document.node.ListMarker marker,
@@ -3019,7 +3030,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                    int depth,
                                    java.util.OptionalDouble lineHeight,
                                    java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line,
-                                   String path) {
+                                   String path, java.util.OptionalDouble markerToText) {
         warnDroppedInlineRuns(marker.runs(), path);
         warnDroppedInlineRuns(item.runs(), path);
         line = line.map(listLine -> itemLine(listLine, item.runs()));
@@ -3033,16 +3044,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         PictureReach pictures = PictureReach.NONE;
         if (marker.isRich()) {
             pictures = writeInlineTextRuns(para, style, marker.runs(), path, line);
-            // The gap after a marker is markerGap, which is geometry and so not
-            // available here; a space is what separates a marker from its item on
-            // the text path, and it separates them here for the same reason.
-            // A marker that drew a picture separates the same way; one whose picture had no
-            // data drew nothing, and gets no space either.
-            if (!com.demcha.compose.document.node.InlineRun.plainText(marker.runs()).isBlank()
-                || pictures.reach() > 0) {
+            // A space is what separates a marker of text from its item, as on the text path:
+            // Word sets the marker in its own widths. A marker that drew a picture is followed
+            // by a tab where the layout measured its gap; one whose picture had no data drew
+            // nothing, and gets no space either.
+            boolean drawnOnly = com.demcha.compose.document.node.InlineRun.plainText(marker.runs()).isBlank();
+            if (!drawnOnly || pictures.reach() > 0) {
                 XWPFRun gap = para.createRun();
                 applyStyle(gap, style);
-                gap.setText(" ");
+                if (drawnOnly && markerToText.isPresent()
+                    && markerToText.getAsDouble() > drawnWidth(para) + MARKER_TAB_CLEARANCE) {
+                    // A marker that is a picture alone is drawn at the size it is written, so its
+                    // text can stand where the page sets it, the marker's width and markerGap past
+                    // it: a tab to a stop there. A space put TealPulse's skills and highlights
+                    // 6.7pt left of the page's, the gap after their dots 9.6pt where a space is
+                    // 2.5. Not where the picture, its edges included, reaches the stop: the tab
+                    // would run on to Word's next default stop, half an inch on.
+                    gap.addTab();
+                    tabTo(para, markerToText.getAsDouble());
+                } else {
+                    gap.setText(" ");
+                }
             }
         }
         if (item.isRich()) {
@@ -3054,6 +3076,46 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         makeRoomForPictures(para, pictures);
         styleTheMark(para, style);
+    }
+
+    /** How far past a list marker's picture its tab stop must stand for the tab to reach it, in points. */
+    private static final double MARKER_TAB_CLEARANCE = 0.1;
+
+    /** How wide the pictures written inline in a paragraph so far are, in points. */
+    private static double drawnWidth(XWPFParagraph para) {
+        double width = 0;
+        for (XWPFRun run : para.getRuns()) {
+            for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing drawing : run.getCTR().getDrawingList()) {
+                for (var inline : drawing.getInlineList()) {
+                    if (inline.getExtent() != null) {
+                        width += inline.getExtent().getCx() / (double) org.apache.poi.util.Units.EMU_PER_POINT;
+                    }
+                }
+            }
+        }
+        return width;
+    }
+
+    /**
+     * Sets a left tab stop a distance right of where a paragraph's first line starts: past its
+     * left indent and its first-line indent, as Word measures a tab stop from the column's edge.
+     *
+     * @param points how far right of the first line's start, in points
+     */
+    private static void tabTo(XWPFParagraph para, double points) {
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        long start = 0;
+        if (properties.isSetInd()) {
+            CTInd indent = properties.getInd();
+            start = twipsOf(indent.isSetLeft() ? indent.getLeft() : null)
+                    + twipsOf(indent.isSetFirstLine() ? indent.getFirstLine() : null)
+                    - twipsOf(indent.isSetHanging() ? indent.getHanging() : null);
+        }
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTabs tabs =
+                properties.isSetTabs() ? properties.getTabs() : properties.addNewTabs();
+        CTTabStop stop = tabs.addNewTab();
+        stop.setVal(STTabJc.LEFT);
+        stop.setPos(BigInteger.valueOf(start + Math.round(points * POINT_TO_TWIP)));
     }
 
     /**

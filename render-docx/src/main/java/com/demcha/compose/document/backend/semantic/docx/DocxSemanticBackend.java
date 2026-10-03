@@ -10162,10 +10162,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!(kept > 0.01)) {
             return;
         }
-        // Text hanging below a band, and a pull out of the paragraph before, stay on the page
-        // above with them, as at a table moved to a new page.
+        // Text hanging below a band, a pull out of the block before and a card's border below
+        // it stay on the page above with them, as at a table moved to a new page: the layout
+        // starts the new page from its top.
         forgetTheHang();
-        carriedSpacingBefore = edges + own;
+        pullBelow = 0;
+        borderBelow = 0;
+        carriedSpacingBefore += own;
         XWPFParagraph line = newBodyParagraph(document);
         pullLeftOn = null;
         pullLeft = 0;
@@ -10185,6 +10188,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * for the gap between the paragraph's lines (see {@link #applyLineGap}): out of that line,
      * and what the line cannot give out of the space above the line, as it came out of the
      * paragraph's own space above before the line held it. Returns how much it took.
+     *
+     * <p>Word drops that space above at the top of a page, so what comes out of it moves
+     * nothing there and the first line stands that much low; it keeps the paragraph's lines as
+     * tall as where the whole gap comes off the space above it on one page.</p>
      */
     private long takeFromTheLineHoldingItsEdge(long twips) {
         CTSpacing spacing = topEdgeLine == null ? null : topEdgeLine.getCTP().getPPr().getSpacing();

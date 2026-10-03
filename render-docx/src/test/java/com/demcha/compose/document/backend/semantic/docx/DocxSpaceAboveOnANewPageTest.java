@@ -130,19 +130,48 @@ class DocxSpaceAboveOnANewPageTest {
     void aHeadingHoistedOutOfASectionBegunOnThePageAboveHoldsNothing() throws Exception {
         // 126pt and the gap leave 30: the section and its 8pt padding begin on the first page,
         // and the heading, kept with the body's first line, moves to the second without them.
-        try (XWPFDocument document = DocxExports.withLayout(300, 200, 20, page -> page
+        java.util.function.Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content = page -> page
                 .spacing(GAP)
                 .spacer(0, CONTENT - 30 - GAP)
                 .addSection("Experience", section -> section
                         .padding(new DocumentInsets(PADDING, 0, 0, 0))
                         .addSection("Title", title -> title.keepWithNext().addParagraph("Heading"))
-                        .addParagraph("Body")))) {
+                        .addParagraph("Body"));
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(300, 200).margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(content::accept);
+            List<com.demcha.compose.document.layout.PlacedNode> nodes = session.layoutGraph().nodes();
+            assertThat(nodes).filteredOn(n -> "Experience".equals(n.semanticName()))
+                    .singleElement().extracting(n -> n.startPage()).as("the section begins on the first page")
+                    .isEqualTo(0);
+            assertThat(nodes).filteredOn(n -> "Title".equals(n.semanticName()))
+                    .singleElement().extracting(n -> n.startPage()).as("the heading opens the second")
+                    .isEqualTo(1);
+        }
+        try (XWPFDocument document = DocxExports.withLayout(300, 200, 20, content)) {
             XWPFParagraph heading = paragraphWith(document, "Heading");
 
             assertThat(document.getParagraphs()).as("the filler, the heading and the body, no line")
                     .hasSize(3);
             assertThat(before(spacing(heading))).as("the padding, left for Word to drop")
                     .isEqualTo(Math.round((CONTENT - 30 - GAP + GAP + PADDING) * 20));
+        }
+    }
+
+    @Test
+    void aPullOutOfTheBlockOnThePageAboveLeavesTheLineWhole() throws Exception {
+        // The paragraph above pulls what follows it 5pt up, on its own page; the section opens
+        // the next page at its padding all the same.
+        try (XWPFDocument document = DocxExports.withLayout(300, 200, 20, page -> page
+                .spacer(0, CONTENT - 20)
+                .addParagraph(p -> p.text("Above").margin(new DocumentInsets(0, 0, -5, 0)))
+                .addSection("Title", section -> section
+                        .padding(new DocumentInsets(PADDING, 0, 0, 0))
+                        .addParagraph("Heading")))) {
+            CTSpacing spacing = spacing(paragraphBefore(document, paragraphWith(document, "Heading")));
+
+            assertThat(DocxTwips.of(spacing.getLine())).as("the padding, none of it pulled")
+                    .isEqualTo(Math.round(PADDING * 20));
         }
     }
 

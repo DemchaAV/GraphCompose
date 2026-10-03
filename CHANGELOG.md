@@ -14,7 +14,7 @@ follow semantic versioning; release dates are ISO 8601.
   foot of the page above. Word drops a paragraph's space above at the top of a page:
   `ModernProfessional`'s second page opens with a heading its section pads 8pt down, and in
   Word it stood 7.7pt high with everything under it; `Executive`'s opens with the spacer
-  between two entries 3pt down, and stood 3pt high. That space is now a line's height, which
+  between two entries 3pt down, and stood 3.2pt high. That space is now a line's height, which
   Word keeps, the gap that stays at the foot of the page above left as the space above that
   line, so Word breaks the page where it did. Lines more than 2pt off fall from 15 to none for
   `Executive` and from 5 to none for `ModernProfessional`, in both editors.

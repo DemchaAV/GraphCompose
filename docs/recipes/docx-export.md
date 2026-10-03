@@ -366,7 +366,11 @@ changing what was asked for:
 - **A markerless list.** Numbering always draws something and indents; a list that asked
   for neither would gain both.
 - **A drawn marker** — one made of runs, an icon or a disc. It has no Word list analogue,
-  so the item keeps the run path it already used.
+  so the item keeps the run path it already used. A top-level item of a
+  `hangingIndent(true)` list whose marker is a picture alone is followed by a tab to a stop
+  where the layout starts its text — the picture's width and `markerGap` past the item's
+  start, where the picture, its edges included, clears that stop — Word draws a picture at
+  the size it is written; any other marker by a space.
 - **A list whose siblings at one depth carry different markers.** A Word list definition
   names one marker per level, and silently replacing one of them with the other would be
   worse than writing both as text.
@@ -700,12 +704,16 @@ tint it was flattened to. Recorded, like the other two.
   below. An outline no
   shape shows is reported as dropped.
 - **`hangingIndent(true)` → the ordinary list form.** A list that opts
-  into marker/content geometry exports exactly as one that did not: the
-  same Word list, the same levels, the same markers. Nothing is lost —
-  same items, same text, same nesting — but the marker column is the
-  level's own and `markerGap` has no effect here.
+  into marker/content geometry exports as one that did not — the same Word
+  list, the same levels, the same markers, the same items, text and
+  nesting — but for one thing: after a top-level marker that is the list's and
+  a picture alone (see "What a list becomes"), the first line's text stands
+  where the layout puts it. Otherwise the marker column is the level's own and
+  `markerGap` has no effect here.
 
-  This is a decision rather than an omission. Word places content at
+  That one exception rests on what the rest lacks: a picture is drawn at the
+  size it is written, and the layout has placed its text, so a tab stop there
+  is the page's distance. For a marker of text it is not: Word places content at
   absolute indents and has no way to be told "start the text one marker
   width plus a gap from here", so every mechanism that looks like it
   would — a hanging indent, a hanging indent with a tab stop, real Word

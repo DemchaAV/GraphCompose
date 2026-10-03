@@ -10512,7 +10512,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (opensAPage) {
             // Text hanging below the block before — a row's last line held to its icon — a pull
             // out of it and a card's border below it stay on the page above with it, as at a
-            // paragraph moved to a new page (holdAParagraphsTopEdgeOnItsPage).
+            // paragraph moved to a new page (holdAParagraphsTopEdgeOnItsPage), whether or not the
+            // spacer's line then holds any of the gap.
             forgetTheHang();
             pullBelow = 0;
             borderBelow = 0;

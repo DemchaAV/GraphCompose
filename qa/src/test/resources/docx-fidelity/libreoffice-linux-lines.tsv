@@ -2012,9 +2012,9 @@ invoice-classic_long	1:8822ea375315	0.22	remittancedetails.
 invoice-classic_long	1:e3337beaa171	0.20	thankyouforchoosinggraphcomposef
 invoice-consulting	0:d44ceaea97d1	0.27	level8,1collinsstreet
 invoice-consulting	0:78a0bb33347f	0.29	melbournevic3000australia
-invoice-consulting	0:3b45ab243edb	2.81	+61398765432
-invoice-consulting	0:a17a9fc6d4a8	2.81	hello@northpoint.com.au
-invoice-consulting	0:ef0664c1d352	2.81	northpoint.com.au
+invoice-consulting	0:3b45ab243edb	0.51	+61398765432
+invoice-consulting	0:a17a9fc6d4a8	0.51	hello@northpoint.com.au
+invoice-consulting	0:ef0664c1d352	0.51	northpoint.com.au
 invoice-consulting	0:52d6e3de4fa0	-0.44	invoice
 invoice-consulting	0:6282391a4cc1	-0.63	invoicenumber:
 invoice-consulting	0:7d66eb3c1070	-0.19	inv-2025-0478
@@ -2104,9 +2104,9 @@ invoice-consulting	0:55ee5fe62c33	0.01	northpointconsultingptyltd|abn12
 invoice-consulting	0:bdbada284e80	0.01	page1/1
 invoice-consulting_long	0:d44ceaea97d1	0.27	level8,1collinsstreet
 invoice-consulting_long	0:78a0bb33347f	0.29	melbournevic3000australia
-invoice-consulting_long	0:3b45ab243edb	2.81	+61398765432
-invoice-consulting_long	0:a17a9fc6d4a8	2.81	hello@northpoint.com.au
-invoice-consulting_long	0:ef0664c1d352	2.81	northpoint.com.au
+invoice-consulting_long	0:3b45ab243edb	0.51	+61398765432
+invoice-consulting_long	0:a17a9fc6d4a8	0.51	hello@northpoint.com.au
+invoice-consulting_long	0:ef0664c1d352	0.51	northpoint.com.au
 invoice-consulting_long	0:52d6e3de4fa0	-0.44	invoice
 invoice-consulting_long	0:6282391a4cc1	-0.63	invoicenumber:
 invoice-consulting_long	0:7d66eb3c1070	-0.19	inv-2025-0478

@@ -296,6 +296,58 @@ class DocxOverlayBandTest {
     }
 
     @Test
+    void textHangingBelowABandTakesItsPlaceOutOfTheSpaceAboveTheNextBand() throws Exception {
+        // ConsultingInvoice's address runs past its band, and the contact band under it opened at
+        // the gap whole: the band's first block resumes the space the page measures, and the
+        // text hanging into it from above already stands in it.
+        DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> page
+                .spacing(10)
+                .addLayerStack(stack -> stack.name("First")
+                        .back(new SpacerNode("Space", 200, BADGE, DocumentInsets.zero(), DocumentInsets.zero()))
+                        .layer(new ParagraphBuilder().name("Low").text("Low")
+                                .margin(new DocumentInsets(0, 0, -4, 0)).build(), LayerAlign.BOTTOM_LEFT))
+                .addLayerStack(stack -> stack.name("Second")
+                        .back(new SpacerNode("Room", 200, 40, DocumentInsets.zero(), DocumentInsets.zero()))
+                        .layer(new ParagraphBuilder().name("Next").text("Next").build(), LayerAlign.TOP_LEFT)));
+        try (session; XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                session.export(new DocxSemanticBackend())))) {
+            XWPFParagraph next = document.getParagraphs().stream()
+                    .filter(paragraph -> "Next".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(before(next)).as("the 10pt gap, less the 4pt the text above hangs into it")
+                    .isEqualTo((10 - 4) * 20L);
+        }
+    }
+
+    @Test
+    void aBandOpeningTheNextPageLeavesTheHangAboveOnItsPage() throws Exception {
+        // 360pt, the gap and the first stack leave the second no room: it opens the next page,
+        // and what the first stack's text hangs below it stays on the page above.
+        DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> page
+                .spacing(10)
+                .spacer(0, 360)
+                .addLayerStack(stack -> stack.name("First")
+                        .back(new SpacerNode("Space", 200, BADGE, DocumentInsets.zero(), DocumentInsets.zero()))
+                        .layer(new ParagraphBuilder().name("Low").text("Low")
+                                .margin(new DocumentInsets(0, 0, -4, 0)).build(), LayerAlign.BOTTOM_LEFT))
+                .addLayerStack(stack -> stack.name("Second")
+                        .back(new SpacerNode("Room", 200, 40, DocumentInsets.zero(), DocumentInsets.zero()))
+                        .layer(new ParagraphBuilder().name("Next").text("Next").build(), LayerAlign.TOP_LEFT)));
+        assertThat(session.layoutGraph().nodes().stream()
+                .filter(node -> "Second".equals(node.semanticName())).findFirst().orElseThrow().startPage())
+                .as("the second stack opens the next page").isEqualTo(1);
+        try (session; XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                session.export(new DocxSemanticBackend())))) {
+            XWPFParagraph next = document.getParagraphs().stream()
+                    .filter(paragraph -> "Next".equals(paragraph.getText())).findFirst().orElseThrow();
+
+            assertThat(before(next)).as("the space above it, written whole: Word drops it at the page top, and the hang is not taken from it").isEqualTo(10 * 20L);
+        }
+    }
+
+    @Test
     void aLayersNegativeBottomEdgeInAShapeContainerMovesNothingBelowIt() throws Exception {
         // The outline is its own size; the layer's shorter box is already in the space below it.
         assertThat(beforesWithLayerBottoms(-4).get("After")).isEqualTo(beforesWithLayerBottoms(0).get("After"));

@@ -92,6 +92,22 @@ final class DocxPageBackgrounds {
      * @return the drawing, to be added to a run in a header
      */
     static CTDrawing drawing(Fill fill, long id, int order) {
+        return drawing(fill, id, order, true);
+    }
+
+    /**
+     * A fill as a drawing anchored to the page, behind the text, in a header or in the body.
+     *
+     * <p>In the body its anchor may be a table cell's paragraph, so it is laid out from the page
+     * and not inside the cell ({@code layoutInCell="0"}), and is not locked to that paragraph.</p>
+     *
+     * @param fill     the fill
+     * @param id       an identifier for the shape, unique in the document
+     * @param order    its place among the page's fills: a later fill is drawn over an earlier one
+     * @param inHeader whether the drawing goes into a header rather than the body
+     * @return the drawing, to be added to a run
+     */
+    static CTDrawing drawing(Fill fill, long id, int order, boolean inHeader) {
         long x = Units.toEMU(fill.x());
         long y = Units.toEMU(fill.top());
         long cx = Units.toEMU(fill.width());
@@ -106,8 +122,8 @@ final class DocxPageBackgrounds {
                 + " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\""
                 + " xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
                 + "<wp:anchor distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" simplePos=\"0\""
-                + " relativeHeight=\"" + stackHeight(order) + "\" behindDoc=\"1\" locked=\"1\""
-                + " layoutInCell=\"1\" allowOverlap=\"1\">"
+                + " relativeHeight=\"" + stackHeight(order) + "\" behindDoc=\"1\" locked=\"" + (inHeader ? 1 : 0) + "\""
+                + " layoutInCell=\"" + (inHeader ? 1 : 0) + "\" allowOverlap=\"1\">"
                 + "<wp:simplePos x=\"0\" y=\"0\"/>"
                 + "<wp:positionH relativeFrom=\"page\"><wp:posOffset>" + x + "</wp:posOffset></wp:positionH>"
                 + "<wp:positionV relativeFrom=\"page\"><wp:posOffset>" + y + "</wp:posOffset></wp:positionV>"

@@ -8,6 +8,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A page of its own draws its backgrounds from the body in DOCX, so LibreOffice no longer
+  sets it lower.** LibreOffice gives a header a height of its own however little it holds, and
+  the header carrying a page's backgrounds set every line of the seven sidebar CVs
+  (`SlateOrange`, `CharcoalGold`, `MidnightNavy`, `NavySidebar`, `ProfessionalSidebar`,
+  `SidebarPortrait`, `MonogramSidebar`) 2.6 to 3.3pt low. A section of one page with no header
+  or footer now writes no header: its fills are anchored to the page in the body, under every
+  other shape, and a page that opens with a table carries them and its other shapes in its
+  first cell's paragraph rather than a hairline over the table, which pushed a row as tall as
+  the page onto a second page. A section with a footer keeps them in a header, as Word paints
+  the body's shapes over a footer's text. In LibreOffice those CVs' medians fall from 2.6–3.3pt
+  to 0.1–0.4pt, and lines more than 2pt off across the corpus from 606 to 127; in Word their
+  lines stand 0.04–0.17pt higher without the hairline, their mean distance from the page 0.28pt
+  before and 0.29pt after. The fills are on that one page: a page an editor's text runs onto
+  has none.
 - **A centred or right-aligned line that fills its box keeps to one line in Word.** Word sets
   a size in half points, so a 6.8pt line is set at 7pt, 2.9% wider, and no longer fits a box it
   fills. A flush-left paragraph was already given that much more measure; a centred or

@@ -8,6 +8,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A spacer is as tall in DOCX as on the page.** A spacer is written as an empty paragraph a
+  tenth of a point tall, which Word keeps (measured: ten such lines between eleven lines of
+  text added 0.96pt), and its whole height was then owed below it as well. Every spacer stood a
+  tenth of a point taller than the page's; `EditorialBlue`'s first page ran 1.2pt low by its
+  foot, its last entry's heading found no room there in Word, and its second page stood 10pt
+  low. The spacer's height now counts its own line. `EditorialBlue`'s lines more than 2pt off
+  fall from 9 to none in Word and in LibreOffice on Windows, and the corpus's mean drift in
+  Word from 0.49 to 0.45pt.
 - **A body paragraph or spacer the layout moves to a new page keeps the space above it there
   in DOCX.** The page starts a paragraph a page break moves down at its own top edge, with the
   containers opening there, and keeps the gap before it too where the gap did not fit at the

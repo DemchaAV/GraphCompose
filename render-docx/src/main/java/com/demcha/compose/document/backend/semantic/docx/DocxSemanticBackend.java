@@ -7888,8 +7888,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether Word holds nothing in a cell that gives it height: no table, and no paragraph with
-     * a run. A rule's or a spacer's paragraph counts as nothing; the row it stands in is held no
-     * taller than the page makes it, which that child already sets.
+     * a run. A rule's paragraph counts as nothing; the row it stands in is held no taller than
+     * the page makes it, which that child already sets. A spacer's paragraph carries an empty run
+     * and counts: it is as tall as the spacer.
      */
     private static boolean holdsNothing(XWPFTableCell cell) {
         return cell.getTables().isEmpty()
@@ -10470,8 +10471,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(node)) {
             holdTheGapAboveInTheLine(para, node);
         }
+        // The hairline is part of the height, as a separator's is of the gap it stands in: owed
+        // whole below it, every spacer stood a tenth of a point taller than the page's, and
+        // EditorialBlue's experience ran a point and more low by the foot of its first page.
+        double height = Math.max(0, node.height() - SEPARATOR_POINTS);
         // Text that hung below the band above takes its place out of this height first.
-        double height = node.height();
         if (hangingOver == para) {
             height = Math.max(0, height - hangingOverBy);
             forgetTheHang();

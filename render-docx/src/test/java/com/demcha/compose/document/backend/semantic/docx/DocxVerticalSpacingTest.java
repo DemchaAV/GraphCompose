@@ -530,7 +530,8 @@ class DocxVerticalSpacingTest {
                 .addSpacer(spacer -> spacer.name("Gap").width(100).height(10))
                 .addParagraph(p -> p.text("After")));
 
-        assertThat(before(body.get(1))).isEqualTo(Math.round((10 - 4) * TWIPS_PER_POINT));
+        // Less the spacer's own hairline, which is part of its height.
+        assertThat(before(body.get(1))).isEqualTo(Math.round((10 - 4 - 0.1) * TWIPS_PER_POINT));
     }
 
     @Test

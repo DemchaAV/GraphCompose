@@ -413,17 +413,19 @@ public final class ListBuilder {
      * no marker — contributes no row, so its children hang at the level it would
      * have occupied rather than one deeper.</p>
      *
-     * <p><b>Fixed-layout only.</b> This is geometry, and it applies to the
-     * backends that do their own layout — PDF and PPTX. The semantic DOCX
+     * <p><b>Fixed-layout, but for a drawn marker's gap.</b> This is geometry, and
+     * it applies to the backends that do their own layout — PDF and PPTX. The semantic DOCX
      * export writes a Word paragraph per item and lets Word lay it out, so it
-     * keeps the marker in the item's text and is unchanged by this setting: the
-     * same paragraphs, the same text, the same nesting. Word positions content
-     * at absolute indents and has no way to be told "start the text one marker
-     * width plus a gap from here", so reproducing this geometry there would mean
-     * measuring the marker — which the semantic backend deliberately cannot do,
-     * since it depends on neither a font runtime nor a layout pass. A document
-     * exported both ways is therefore identical in content and nesting, and
-     * differs in how its wrapped lines line up.</p>
+     * keeps the marker in the item's text: the same paragraphs, the same text,
+     * the same nesting. Word positions content at absolute indents and has no
+     * way to be told "start the text one marker width plus a gap from here", and
+     * sets a text marker in its own widths. Only a top-level item whose marker is
+     * the list's and a picture alone — a dot, an icon — has its first line's text
+     * placed where the layout puts it, a tab to the marker's width and the gap past
+     * the item's start, where the picture with its edges clears that stop: Word
+     * draws a picture at the size it is written. A document exported
+     * both ways is otherwise identical, and differs in how its wrapped lines line
+     * up.</p>
      *
      * @param hangingIndent whether items use marker/content geometry
      * @return this builder
@@ -444,11 +446,11 @@ public final class ListBuilder {
      * <p>Real geometry, never spaces. A markerless item takes no gap at all,
      * rather than an unexplained inset.</p>
      *
-     * <p><b>Fixed-layout only</b>, for the reason given on
-     * {@link #hangingIndent(boolean)}: the semantic DOCX export does not lay text
-     * out and cannot place content a measured distance after a marker, so it
-     * ignores this value rather than approximating it with something that would
-     * render as a different number than the one asked for.</p>
+     * <p>In the semantic DOCX export, for the reason given on
+     * {@link #hangingIndent(boolean)}, it places only the first line's text of a
+     * top-level item whose marker is a picture alone; after a marker of text it is
+     * a space, rather than an approximation that would render as a different
+     * number than the one asked for.</p>
      *
      * @param markerGap gap in points; {@code 0} is allowed
      * @return this builder

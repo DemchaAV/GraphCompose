@@ -28,8 +28,8 @@ cv-timeline_minimal	2	2	89	86	0.36	0.48	0
 cv-violet_grid	1	1	80	77	0.23	1.30	5
 invoice-classic	1	1	56	56	0.22	0.36	0
 invoice-classic_long	2	2	166	166	0.27	0.34	0
-invoice-consulting	1	1	92	92	0.73	1.05	3
-invoice-consulting_long	2	2	236	236	0.74	1.10	3
+invoice-consulting	1	1	92	92	0.70	1.02	0
+invoice-consulting_long	2	2	236	236	0.74	0.97	0
 invoice-luma_studio	1	1	97	97	0.13	0.42	0
 invoice-luma_studio_long	3	3	192	192	0.22	0.38	0
 invoice-merchant	1	1	94	94	0.14	0.35	0

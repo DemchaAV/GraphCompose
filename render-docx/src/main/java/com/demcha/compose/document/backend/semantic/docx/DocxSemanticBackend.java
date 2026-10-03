@@ -8991,7 +8991,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // A band inside a band that has written nothing yet: the outer band measured its space
         // to the first block written, which is this one's first too, so that space stands.
         if (Double.isNaN(resumeSpacing)) {
-            resumeSpacing = carriedSpacingBefore + pendingSpacingAfter + stack.margin().top() + band.above();
+            double above = carriedSpacingBefore + pendingSpacingAfter + stack.margin().top() + band.above();
+            // Text hanging below the block before — a band's last line past its foot, a row's
+            // icon line — takes its place out of that space, as out of the gap above a paragraph
+            // (newBodyParagraph); the band's first block forgets it (resumeHere). ConsultingInvoice's
+            // address runs 2.3pt past its band, and the contact bands under it stood 2.4pt low.
+            // A band the layout starts on a new page leaves the hang on the page above, as a
+            // paragraph or a table there does.
+            double hang = currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(stack) ? 0 : hangingBelow;
+            resumeSpacing = above - Math.min(Math.max(0, above), hang);
         }
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;

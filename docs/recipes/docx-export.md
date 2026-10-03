@@ -224,7 +224,10 @@ pulls the next paragraph up into it the same way: it comes out of the space abov
 paragraph, its own top edge included, even where the two stand in different containers. What
 that space cannot give is not written. Before a table, a page break or the end of a cell it
 comes out of the space owed below instead. Layers that overlap on the page take none of it
-from one another, as the space between them is measured from their boxes.
+from one another, as the space between them is measured from their boxes. Text that runs past
+the foot of the block it stands in — a stack's or a shape container's last line, a row cell's
+icon line — comes out of the space above what follows the same way, a stack written as a band
+included.
 
 A paragraph's or a list's `lineSpacing` — the gap the page puts between two wrapped lines —
 goes into the line: Word has one line height for a paragraph and no gap between its lines,

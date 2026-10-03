@@ -8,6 +8,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Text hanging past a block takes its place out of the space above a stack that follows in
+  DOCX.** A stack written as a band opens at the space the page measures above its first block,
+  and that block forgot what the text above it already hung into that space: a shape
+  container's last line run past its foot, a row's icon line. `ConsultingInvoice`'s address
+  runs 2.3pt past its band, and the contact bands under it stood 2.4pt low in Word. Lines more
+  than 2pt off fall from 3 to none for `ConsultingInvoice` and its long version in both editors,
+  and from 11 to 5 across the corpus in Word.
 - **A ruled table's first and last rows keep the page's height in DOCX.** A row the page holds
   at a height is written that height less what its cells take around their content, since
   Word, as LibreOffice, reads a row's written height as its content. Word gives a rule between

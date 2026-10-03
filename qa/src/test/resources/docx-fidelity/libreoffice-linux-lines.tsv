@@ -1727,8 +1727,9 @@ cv-violet_grid	0:b96067918254	-0.26	uxresearch
 cv-violet_grid	0:9058674fd905	-0.21	userinterviews,surveys,
 cv-violet_grid	0:0cdd38014d79	-0.22	personas,journeymaps,
 cv-violet_grid	0:61e4ba28d469	-0.22	competitiveanalysis
-cv-violet_grid	0:db5c6756c4b6	7.59	sitemaps,userflows,card
-cv-violet_grid	0:6c7ad1834a60	7.58	sorting,contentstrategy
+cv-violet_grid	0:3de6be58cb9f	-0.26	informationarchitecture
+cv-violet_grid	0:db5c6756c4b6	-0.21	sitemaps,userflows,card
+cv-violet_grid	0:6c7ad1834a60	-0.22	sorting,contentstrategy
 cv-violet_grid	0:187737d59250	-0.26	wireframing
 cv-violet_grid	0:2286e5aa328a	-0.21	lowtohigh-fidelity
 cv-violet_grid	0:5c4b21cb1af8	-0.26	prototyping

@@ -77,8 +77,15 @@ class DocxWordSizeMeasureTest {
 
     @Test
     void aShortCentredLineIsLeftWhereThePageSetsIt() throws Exception {
-        // Its box has room for it as Word sets it: an indent past a cell's edge moves it.
-        assertThat(indentOf(7.8, TextAlign.CENTER, SHORT)).isZero();
+        // Its box has room for it as Word sets it, so neither edge moves.
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page
+                .addParagraph(p -> p.text(SHORT).textStyle(DocumentTextStyle.DEFAULT.withSize(7.8))
+                        .align(TextAlign.CENTER)))) {
+            XWPFParagraph paragraph = text(document, "Platform engineer");
+
+            assertThat(leftIndent(paragraph)).isZero();
+            assertThat(rightIndent(paragraph)).isZero();
+        }
     }
 
     @Test
@@ -142,25 +149,40 @@ class DocxWordSizeMeasureTest {
         }
     }
 
-    private static final String HEADING = "INFORMATION ARCHITECTURE";
+    @Test
+    void aCellsLeftIndentGivesWhatItHasAndTheRightTheRest() throws Exception {
+        // Padded 2.5pt, the paragraph keeps half a point of indent past the editor's slack.
+        double column = fillingRoom(HEADING, 6.8) + 2.5;
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
+                .addRow("Tile", row -> row
+                        .columns(DocumentRowColumn.fixed(column), DocumentRowColumn.weight(1))
+                        .addParagraph(p -> p.text(HEADING).textStyle(DocumentTextStyle.DEFAULT.withSize(6.8))
+                                .padding(new DocumentInsets(0, 0, 0, 2.5)).align(TextAlign.RIGHT))
+                        .addParagraph("Main")))) {
+            var cell = document.getTables().get(0).getRow(0).getCell(0);
+            XWPFParagraph heading = cell.getParagraphs().stream()
+                    .filter(p -> p.getText().startsWith("INFORMATION")).findFirst().orElseThrow();
+            long cellWidth = DocxTwips.of(cell.getCTTc().getTcPr().getTcW().getW());
 
-    /** A measure the line fills at the page's size, with less than Word's size needs to spare. */
-    private static double fillingRoom(String line, double size) {
-        return widthAlone(line, size) + 0.5;
+            assertThat(leftIndent(heading)).as("all the half point it had, and no more").isZero();
+            assertThat(rightIndent(heading)).as("the rest from the right").isNegative();
+            assertThat((cellWidth - leftIndent(heading) - rightIndent(heading)) / 20.0)
+                    .as("the line still fits at Word's 7pt").isGreaterThan(widthAlone(HEADING, 6.8) * 7 / 6.8);
+        }
     }
 
-    private static XWPFDocument filledBy(String line, double size, TextAlign align, double room) throws Exception {
-        return DocxExports.withLayout(room + 40, 300, 20, page -> page
-                .addParagraph(p -> p.text(line).textStyle(DocumentTextStyle.DEFAULT.withSize(size)).align(align)));
-    }
+    @Test
+    void aCentredLineOfAPictureAloneIsLeftAsItIs() throws Exception {
+        // A picture is written at its size and takes the same room in Word.
+        try (XWPFDocument document = DocxExports.withLayout(150.5 + 40, 300, 20, page -> page
+                .addParagraph(p -> p.rich(rich -> rich.image(
+                                com.demcha.compose.document.image.DocumentImageData.fromBytes(pngBytes()), 150, 20))
+                        .align(TextAlign.CENTER)))) {
+            XWPFParagraph picture = document.getParagraphs().get(0);
 
-    private static double widthAlone(String text, double size) {
-        return laidOut(500, p -> p.text(text).textStyle(DocumentTextStyle.DEFAULT.withSize(size))).get(0).width();
-    }
-
-    private static long leftIndent(XWPFParagraph paragraph) {
-        CTInd indent = paragraph.getCTP().getPPr() == null ? null : paragraph.getCTP().getPPr().getInd();
-        return indent == null || !indent.isSetLeft() ? 0 : DocxTwips.of(indent.getLeft());
+            assertThat(leftIndent(picture)).isZero();
+            assertThat(rightIndent(picture)).isZero();
+        }
     }
 
     @Test
@@ -340,6 +362,27 @@ class DocxWordSizeMeasureTest {
     private static long rightIndent(XWPFParagraph paragraph) {
         CTInd indent = paragraph.getCTP().getPPr() == null ? null : paragraph.getCTP().getPPr().getInd();
         return indent == null || !indent.isSetRight() ? 0 : DocxTwips.of(indent.getRight());
+    }
+
+    private static final String HEADING = "INFORMATION ARCHITECTURE";
+
+    /** A measure the line fills at the page's size, with less than Word's size needs to spare. */
+    private static double fillingRoom(String line, double size) {
+        return widthAlone(line, size) + 0.5;
+    }
+
+    private static XWPFDocument filledBy(String line, double size, TextAlign align, double room) throws Exception {
+        return DocxExports.withLayout(room + 40, 300, 20, page -> page
+                .addParagraph(p -> p.text(line).textStyle(DocumentTextStyle.DEFAULT.withSize(size)).align(align)));
+    }
+
+    private static double widthAlone(String text, double size) {
+        return laidOut(500, p -> p.text(text).textStyle(DocumentTextStyle.DEFAULT.withSize(size))).get(0).width();
+    }
+
+    private static long leftIndent(XWPFParagraph paragraph) {
+        CTInd indent = paragraph.getCTP().getPPr() == null ? null : paragraph.getCTP().getPPr().getInd();
+        return indent == null || !indent.isSetLeft() ? 0 : DocxTwips.of(indent.getLeft());
     }
 
     private static final String SHORT = "Platform engineer with ten years of document pipelines.";

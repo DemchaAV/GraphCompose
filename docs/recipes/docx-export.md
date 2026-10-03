@@ -313,10 +313,11 @@ line of one broken in Word is a line more. A centred or right-aligned paragraph 
 whose line, as Word sets it and three hundredths wider, does not fit its box is given that
 room: at both edges, half each, or at its left edge, so the line stays where the page sets
 it. In a table cell, where Word draws no text past the cell's left edge, the left indent
-gives no more than it has, and the right edge gives the rest. Any other centred or right-aligned paragraph keeps the page's measure: in one of
-several lines a wider measure takes another word onto a line, and a short line's box already
-has room for it. A list's items, a line pair's
-line, text over the flow and a header's or footer's line keep the page's measure too.
+gives no more than it has, and the right edge gives the rest, the line moving by that much.
+Any other centred or right-aligned paragraph keeps the page's measure: in one of several
+lines a wider measure takes another word onto a line, and a short line's box already has
+room for it. A list's items, a line pair's line, text over the flow and a header's or
+footer's line keep the page's measure too.
 
 ## Named styles, so the document can be restyled
 

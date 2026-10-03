@@ -4716,8 +4716,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * it fills, broke onto two lines, and the tile's text stood 7.5pt low under it. A centred
      * paragraph of several lines is left as it is — a wider measure there takes another word
      * onto a line Word already breaks elsewhere than the page — and so is a short line, whose
-     * box has room for it: Word sets a centred line in a cell a little off its place when an
-     * indent reaches past the cell's edge. A list's items, a line pair, text over the flow and
+     * box has room for it: measured, {@code MerchantInvoice}'s centred amounts, their cells'
+     * indents taken past the cells' edges, stood 0.12pt off their place. A list's items, a line pair, text over the flow and
      * a header's or footer's line are written elsewhere and keep the page's measure.</p>
      *
      * @param room the width the paragraph's text is written in, in points
@@ -4741,8 +4741,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         long left = twipsOf(indent.isSetLeft() ? indent.getLeft() : null);
         if (currentCell != null) {
             // Word draws no text past a cell's left edge (see leftIndentTwips): what the left
-            // indent cannot give, the right one does, and the line moves by that much.
-            fromTheLeft = Math.min(fromTheLeft, Math.max(0, left));
+            // indent cannot give, the right one does, and the line moves by that much. A hanging
+            // first line already starts that much further left.
+            long hanging = twipsOf(indent.isSetHanging() ? indent.getHanging() : null);
+            fromTheLeft = Math.min(fromTheLeft, Math.max(0, left - hanging));
         }
         long fromTheRight = twips - fromTheLeft;
         if (fromTheLeft != 0) {
@@ -4762,7 +4764,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private double oneLinesMeasure(ParagraphNode node, double room) {
         double set = 0;
         for (com.demcha.compose.document.layout.payloads.ParagraphLine line : layout.lines(node)) {
-            set = Math.max(set, widthAtWordsSize(line));
+            // A line of pictures alone is set at their size, in Word as on the page.
+            boolean text = line.spans().stream().anyMatch(span -> span.width() > 0
+                    && span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan run
+                    && run.textStyle() != null && run.textStyle().size() > 0);
+            if (text) {
+                set = Math.max(set, widthAtWordsSize(line));
+            }
         }
         return Math.max(room, set * (1 + ONE_LINE_FACE_SLACK));
     }

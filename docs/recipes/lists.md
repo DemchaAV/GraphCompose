@@ -95,8 +95,9 @@ inside the content column and leave the marker where it is.
 It is off by default and stays off; existing lists are untouched.
 
 > **In DOCX, the top level's column.** PDF and PPTX honour this in full. A
-> DOCX list is a real Word list either way — same levels, same markers, same
-> paragraphs, text and nesting. Its top level takes the column the layout set
+> DOCX list exports the same either way — the same Word list, or the same
+> paragraphs for rich items and drawn markers, with the same text and nesting.
+> Its top level takes the column the layout set
 > the marker in, the marker's width and the gap — its text and wrapped lines
 > stand where the page puts them — where the gap covers what Word may set the
 > marker wider, by half a point past it — the default 4pt gap does after a

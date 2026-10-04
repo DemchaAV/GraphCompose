@@ -28,9 +28,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * a number only Word knew: a reserved column rendered a gap other than the one configured —
  * a 0pt gap came out as 5.72pt, a 4pt gap as 9.68pt — and a marker wider than the column
  * misaligned outright, so the export kept a stated column. The layout now sets the marker
- * in a column of its own, and the export embeds the page's face: Word sets the marker in
- * the same widths, a few hundredths wider at most for its size to the half point. Where the
- * gap covers that, the top level's column is the page's ({@code DocxListMarkerGapTest});
+ * in a column of its own, and where the export embeds the page's face or names a standard
+ * one set in the same widths, Word sets the marker in the same widths, a few hundredths
+ * wider at most for its size to the half point. Where the gap covers that, the top level's
+ * column is the page's ({@code DocxListMarkerGapTest});
  * where it does not, or the list is not laid out so, the stated column stays, and the gap
  * never becomes characters in the text.</p>
  *

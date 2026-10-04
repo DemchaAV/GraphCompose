@@ -422,10 +422,11 @@ public final class ListBuilder {
      * column the layout set its marker in — the marker's width and the gap — as
      * the list's indent and hanging, or as a tab and a hanging indent where the
      * list is not a Word list. It does so where the gap covers what Word may set
-     * the marker wider: a picture, its edges included, or text in the page's
-     * face — embedded, or a standard one Word sets in the same widths — at its
-     * size to the half point, half a point clear. A list that nests items, and a
-     * marker the gap does not clear, keep stated columns.</p>
+     * the marker wider: a picture, its edges included, or text at its size to the
+     * half point, half a point clear — Word setting it in the page's face where
+     * the export embeds it, or in a standard face set in the same widths. A list
+     * that nests items, a marker made of runs, and a marker the gap does not
+     * clear keep stated columns.</p>
      *
      * @param hangingIndent whether items use marker/content geometry
      * @return this builder

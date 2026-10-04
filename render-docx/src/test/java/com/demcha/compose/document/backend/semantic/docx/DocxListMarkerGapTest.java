@@ -87,6 +87,25 @@ class DocxListMarkerGapTest {
     }
 
     @Test
+    void aWordListSetSmallerThanTheDocumentDrawsItsMarkerInItsOwnSize() throws Exception {
+        // Word draws a level's marker in the item's mark, which an exact line leaves the
+        // document's 11pt: an 8pt list's bullet would come out wider than the one measured.
+        var body = com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(11);
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
+                .addParagraph(p -> p.text("The body of the page, set in the document's own size.").textStyle(body))
+                .addParagraph(p -> p.text("And more of it, so that eleven points is its size.").textStyle(body))
+                .addList(list -> list.marker("•").markerGap(1).hangingIndent(true)
+                        .textStyle(body.withSize(8)).items("Alpha", "Beta")))) {
+            var level = document.getNumbering().getAbstractNum(java.math.BigInteger.ZERO).getAbstractNum()
+                    .getLvlArray(0);
+
+            assertThat(levelZero(document)[0]).as("the column is measured").isNotEqualTo(180);
+            assertThat(level.isSetRPr()).as("the level names the list's style").isTrue();
+            assertThat(level.getRPr().getSzArray(0).getVal()).isEqualTo(java.math.BigInteger.valueOf(16));
+        }
+    }
+
+    @Test
     void aTextMarkerWithTooLittleGapKeepsTheStatedColumn() throws Exception {
         // Word may set the bullet a few hundredths wider; with no gap to cover that, a column
         // at the page's would leave it past its tab.
@@ -167,6 +186,26 @@ class DocxListMarkerGapTest {
             assertThat(paragraph.getText()).startsWith("\t");
             assertThat(tabStop(paragraph)).as("in a cell, from the cell's text edge")
                     .isEqualTo(firstLineStart(paragraph) + Math.round((DOT + GAP) * 20));
+        }
+    }
+
+    @Test
+    void aListThatNestsKeepsItsSpaceAtTheTopLevelToo() throws Exception {
+        // Its nested levels are not measured: a top level at the page's column could stand
+        // right of the text of the items nested under it.
+        try (XWPFDocument drawn = DocxExports.withLayout(400, 300, 20, page -> page
+                     .addList(list -> list.marker(m -> m.dot(DOT, DocumentColor.rgb(0, 128, 128)))
+                             .markerGap(GAP).hangingIndent(true)
+                             .addItem("Parent", parent -> parent.addItem("Child"))));
+             XWPFDocument text = DocxExports.withLayout(400, 300, 20, page -> page
+                     .addList(list -> list.marker("•").markerGap(GAP).hangingIndent(true)
+                             .addItem(rich -> rich.bold("Label:").plain(" parent"),
+                                     parent -> parent.addItem("Child"))))) {
+            for (XWPFParagraph parent : java.util.List.of(item(drawn, "Parent"), item(text, "parent"))) {
+                assertThat(parent.getText()).doesNotContain("\t");
+                assertThat(parent.getCTP().getPPr() == null || !parent.getCTP().getPPr().isSetTabs()).isTrue();
+            }
+            assertThat(item(text, "parent").getText()).isEqualTo("• Label: parent");
         }
     }
 

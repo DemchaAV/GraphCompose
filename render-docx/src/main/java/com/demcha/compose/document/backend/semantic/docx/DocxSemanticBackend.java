@@ -2715,6 +2715,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             indent.setLeft(BigInteger.valueOf(measured
                     ? column : (long) LIST_HANGING_TWIPS + (long) LIST_NESTING_STEP_TWIPS * depth));
             indent.setHanging(BigInteger.valueOf(measured ? column : LIST_HANGING_TWIPS));
+            if (measured && list.textStyle() != null) {
+                // Word draws the marker in the paragraph mark's style, and an item at an exact
+                // line leaves its mark the document's: a list set smaller, or in another face,
+                // would get a marker wider than the one the column was measured against.
+                applyDefaultRunProperties(level.addNewRPr(), list.textStyle());
+            }
         }
         BigInteger abstractId = document.createNumbering()
                 .addAbstractNum(new org.apache.poi.xwpf.usermodel.XWPFAbstractNum(abstractNum));
@@ -3078,7 +3084,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // A marker of text the layout set in a column of its own is followed by a tab to where
         // it starts the text, and the item's lines hang there, as the page sets them — where the
         // gap after the marker covers what Word may set it wider: its size to the half point,
-        // the face the page's, embedded or one Word sets in the same widths. Panel's skills,
+        // in the page's face where the export embeds it or names a standard one set in the same
+        // widths, and the half point of clearance for the rest. Panel's skills,
         // wrapped back under their bullets, stood 7.8pt left of the page's on their second line.
         boolean textTab = measured != null && depth == 0 && setInAColumn(measured, marker);
         String letters = marker.isRich() ? "" : marker.prefix().stripTrailing();
@@ -3180,8 +3187,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * How wide Word may set a list's marker of text: the page's width grown to the size Word
-     * sets it in, to the half point; the face is the page's, embedded or a standard one Word
-     * sets in the same widths.
+     * sets it in, to the half point. It holds where the export embeds the page's face or names a
+     * standard one set in the same widths; a face it may not embed is Word's to substitute, and
+     * only {@link #MARKER_TEXT_CLEARANCE} covers that.
      */
     private double wordsMarkerWidth(com.demcha.compose.document.node.ListNode list, String letters,
                                     DocumentTextStyle style) {

@@ -135,7 +135,8 @@ class DocxParagraphSidesTest {
 
                 assertThat(indent).as("the item carries the padding past its level, layered %s", layered).isNotNull();
                 assertThat(DocxTwips.of(indent.getLeft()))
-                        .as("the level's 9pt and all 10pt of the padding, layered %s", layered).isEqualTo(180 + 200);
+                        .as("the level's column and all 10pt of the padding, layered %s", layered)
+                        .isEqualTo(DocxListLevels.column(document) + 200);
                 assertThat(DocxTwips.of(indent.getRight()))
                         .as("30pt, less the editor's 2pt in a cell, layered %s", layered)
                         .isEqualTo(layered ? 30 * 20L : 28 * 20L);

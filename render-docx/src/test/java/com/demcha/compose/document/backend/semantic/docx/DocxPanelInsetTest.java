@@ -98,8 +98,8 @@ class DocxPanelInsetTest {
 
             assertThat(DocxTwips.of(properties.getInd().getLeft()))
                     .as("the section's inset plus the level's own indent")
-                    .isEqualTo(14 * 20L + 180L);
-            assertThat(DocxTwips.of(properties.getInd().getHanging())).isEqualTo(180L);
+                    .isEqualTo(14 * 20L + DocxListLevels.column(document));
+            assertThat(DocxTwips.of(properties.getInd().getHanging())).isEqualTo(DocxListLevels.column(document));
         }
     }
 

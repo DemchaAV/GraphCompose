@@ -334,6 +334,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             listNumbering = new java.util.IdentityHashMap<>();
     // The marker column, in twips, of the list definitions whose top level takes the page's.
     private final java.util.Map<BigInteger, Long> measuredColumns = new java.util.HashMap<>();
+    // Of those, the ones whose column is the page's prefix of spaces, the marker a space ahead.
+    private final java.util.Set<BigInteger> prefixColumns = new java.util.HashSet<>();
     // What the engine already measured for the nodes being written: line heights and
     // resolved column widths. Empty when the export was handed no layout.
     private DocxLayoutMetrics layout = DocxLayoutMetrics.EMPTY;
@@ -391,10 +393,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private double listLineGap;
 
     /**
-     * How many lines each item of the list being written still to come was laid out on,
-     * first item first; empty when they cannot be told apart, and then no item gets the gap.
+     * The lines each item of the list being written still to come was laid out on, first item
+     * first; empty when they cannot be told apart, and then no item gets the gap.
      */
-    private java.util.ArrayDeque<Integer> listItemLines = new java.util.ArrayDeque<>();
+    private java.util.ArrayDeque<List<com.demcha.compose.document.layout.payloads.ParagraphLine>> listItemLines =
+            new java.util.ArrayDeque<>();
 
     /** Whether the list being written has an item above the one about to be written. */
     private boolean anItemWasWritten;
@@ -703,6 +706,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         picturesDrawnBeside.clear();
         listNumbering.clear();
         measuredColumns.clear();
+        prefixColumns.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
         headingLevels = headingLevelsIn(whole);
@@ -2698,6 +2702,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return null;
         }
         long column = measuredColumn(list, levels.get(0));
+        boolean afterASpace = false;
+        if (column == 0) {
+            column = prefixColumn(list);
+            afterASpace = column > 0;
+        }
         CTAbstractNum abstractNum = CTAbstractNum.Factory.newInstance();
         abstractNum.setAbstractNumId(BigInteger.valueOf(listNumbering.size()));
         for (int depth = 0; depth < levels.size(); depth++) {
@@ -2715,6 +2724,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             indent.setLeft(BigInteger.valueOf(measured
                     ? column : (long) LIST_HANGING_TWIPS + (long) LIST_NESTING_STEP_TWIPS * depth));
             indent.setHanging(BigInteger.valueOf(measured ? column : LIST_HANGING_TWIPS));
+            if (measured && afterASpace) {
+                // The page sets the first line's text a space after the marker, not at a column.
+                followTheMarkerWithASpace(level);
+            }
             if (measured && list.textStyle() != null) {
                 // Word draws the marker in the paragraph mark's style, and an item at an exact
                 // line leaves its mark the document's: a list set smaller, or in another face,
@@ -2728,6 +2741,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         listNumbering.put(list, numId);
         if (column > 0) {
             measuredColumns.put(numId, column);
+        }
+        if (afterASpace) {
+            prefixColumns.add(numId);
         }
         return numId;
     }
@@ -2749,6 +2765,39 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return 0;
         }
         return Math.round(toText.getAsDouble() * POINT_TO_TWIP);
+    }
+
+    /**
+     * Writes {@code w:suff="space"} on a list level, where the schema puts it, before its
+     * {@code w:lvlText}: the marker is followed by a space rather than a tab to the level's
+     * column. The schema classes POI ships hold no type for it.
+     */
+    private static void followTheMarkerWithASpace(CTLvl level) {
+        String w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+        try (org.apache.xmlbeans.XmlCursor cursor = level.getLvlText().newCursor()) {
+            cursor.beginElement(new javax.xml.namespace.QName(w, "suff", "w"));
+            cursor.insertAttributeWithValue(new javax.xml.namespace.QName(w, "val", "w"), "space");
+        }
+    }
+
+    /**
+     * The column a list without {@code hangingIndent} sets its wrapped lines at, in twips, or 0
+     * where it keeps the stated one: the spaces covering its marker and the space after it,
+     * which the page puts before every wrapped line ({@code ParagraphWrapping}), measured in the
+     * list's style. Its first line is the marker, a space and the text, which a level whose
+     * marker a space follows sets as the page does. Only a list the layout placed, with a
+     * marker it sets, that does not nest: a nested level's prefix is not measured.
+     */
+    private long prefixColumn(com.demcha.compose.document.node.ListNode list) {
+        // A list of item trees, even leaves, is laid out flattened, its markers in its text and
+        // no prefix before a wrapped line.
+        if (list.hangingIndent() || !list.nestedItems().isEmpty() || !layout.placed(list) || !list.marker().isVisible()
+            || list.marker().isRich() || list.marker().prefix().isBlank()) {
+            return 0;
+        }
+        String spaces = spacesCovering(list.textStyle(), list.marker().prefix());
+        double width = spaces.isEmpty() ? 0 : styleWidth(list.textStyle(), spaces);
+        return width > 0 ? Math.round(width * POINT_TO_TWIP) : 0;
     }
 
     /**
@@ -2852,13 +2901,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean previousItemWritten = anItemWasWritten;
         anItemWasWritten = false;
         double previousLineGap = listLineGap;
-        java.util.ArrayDeque<Integer> previousItemLines = listItemLines;
+        java.util.ArrayDeque<List<com.demcha.compose.document.layout.payloads.ParagraphLine>> previousItemLines =
+                listItemLines;
         // The list's lineSpacing stands between the lines of an item that wraps, and only
         // there: each item is a paragraph of its own, so each is given it by its own lines
         // (see applyLineGap). The items are matched to the layout's in order; where the
         // two do not count the same items, none is given it.
         listLineGap = layout.lineGap(list);
-        List<Integer> laidOut = layout.itemLineCounts(list);
+        List<List<com.demcha.compose.document.layout.payloads.ParagraphLine>> laidOut = layout.itemLines(list);
         listItemLines = laidOut.size() == itemCount(list)
                 ? new java.util.ArrayDeque<>(laidOut)
                 : new java.util.ArrayDeque<>();
@@ -2886,11 +2936,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /** Puts the list's gap between the lines of the item just started, if it wraps. */
-    private void applyItemLineGap(XWPFParagraph item) {
-        Integer lines = listItemLines.poll();
+    private List<com.demcha.compose.document.layout.payloads.ParagraphLine> applyItemLineGap(XWPFParagraph item) {
+        List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines = listItemLines.poll();
         if (lines != null) {
-            applyLineGap(item, listLineGap, lines);
+            applyLineGap(item, listLineGap, lines.size());
         }
+        return lines;
     }
 
     /** How many items a list writes, nested ones included. */
@@ -3002,16 +3053,69 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         spaceBeforeTheNextItem();
         XWPFParagraph para = newBodyParagraph(document);
         applyLineHeight(para, lineHeight);
-        applyItemLineGap(para);
+        List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines = applyItemLineGap(para);
         if (numId != null) {
             para.setNumID(numId);
             para.setNumILvl(BigInteger.valueOf(depth));
             indentListItemInside(para, depth, numId);
+            if (depth == 0 && prefixColumns.contains(numId)) {
+                measureTheItemAtWordsSize(para, style, lines, measuredColumns.get(numId));
+            }
         }
         XWPFRun run = para.createRun();
         applyStyle(run, style);
         setTextBrokenAtLines(run, numId != null ? text : "  ".repeat(depth) + text);
         styleTheMark(para, style);
+    }
+
+    /**
+     * Sets a list item's lines in a measure as much wider or narrower than the page's as Word
+     * sets its text, as {@link #measureAtWordsSize} does a paragraph's.
+     *
+     * <p>An item in the page's prefix column has exactly the page's measure, and Word sets a
+     * size the page gives to the tenth at the half point: {@code TerracottaRail}'s 8.6pt
+     * items, set at 8.5, took onto a line a word the page breaks onto the next, and everything
+     * under them stood 11.5pt high. Held a point short, as a paragraph's is, and never short of
+     * its widest line as Word sets it and a point more, which would take a word off a line the
+     * page fills to the point; an item of one line broke no word, and is given room and never
+     * narrowed, and so is one whose lines are not known.</p>
+     *
+     * @param lines  the lines the page set the item in, or {@code null} unknown
+     * @param column the item's column, in twips
+     */
+    private void measureTheItemAtWordsSize(XWPFParagraph para, DocumentTextStyle style,
+                                           List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
+                                           long column) {
+        double room = availableWidth() - column / POINT_TO_TWIP;
+        if (style == null || !(style.size() > 0) || !Double.isFinite(room) || !(room > 0)) {
+            return;
+        }
+        double share = wordsSize(style.size()) / style.size();
+        if (Math.abs(share - 1) < 1e-9) {
+            return;
+        }
+        // Each line as Word sets it, from the column: the page's line holds the prefix the
+        // column stands for, the marker and its space or the spaces covering them.
+        double fits = 0;
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines == null ? List.<com.demcha.compose.document.layout.payloads.ParagraphLine>of() : lines) {
+            fits = Math.max(fits, widthAtWordsSize(line) - column / POINT_TO_TWIP);
+        }
+        double more = lines == null || lines.size() <= 1
+                ? Math.max(0, Math.max(room * (share - 1), fits * (1 + ONE_LINE_FACE_SLACK) - room))
+                : Math.max(room * (share - 1) - WORDS_MEASURE_CLEARANCE, fits + WORDS_MEASURE_CLEARANCE - room);
+        if (Math.abs(more) < 0.05) {
+            return;
+        }
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        if (!properties.isSetInd()) {
+            // A paragraph's own w:ind takes its level's place: the column comes with it.
+            CTInd indent = properties.addNewInd();
+            indent.setLeft(BigInteger.valueOf(column));
+            indent.setHanging(BigInteger.valueOf(column));
+        }
+        CTInd indent = properties.getInd();
+        long right = twipsOf(indent.isSetRight() ? indent.getRight() : null);
+        indent.setRight(BigInteger.valueOf(right - Math.round(more * POINT_TO_TWIP)));
     }
 
     /**

@@ -1,7 +1,16 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.dsl.ListBuilder;
+import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.dsl.ShapeBuilder;
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.node.TextDirection;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
@@ -39,8 +48,8 @@ class DocxParagraphSidesTest {
     void inACellACoupleOfPointsOfTheSideTheTextDoesNotLeanOnStayTheEditors() throws Exception {
         // Off the side a line is set from, they moved every padded line in a cell 2pt off the
         // page's: ObsidianInvoice's amounts ended 1.8pt right of it, OrangeOps' certifications
-        // started 2pt left.
-        // Padding, which a placed row's cell does not hold as it holds a left margin.
+        // started 2pt left. Padding, which a placed row's cell does not hold as it holds a left
+        // margin.
         DocumentInsets sides = new DocumentInsets(0, 40, 0, 10);
         try (XWPFDocument document = DocxExports.withLayout(500, 600, 20, page -> page
                 .addRow(row -> row
@@ -48,7 +57,7 @@ class DocxParagraphSidesTest {
                         .addParagraph(p -> p.text("Right").padding(sides).align(TextAlign.RIGHT))
                         .addParagraph(p -> p.text("Centre").padding(sides).align(TextAlign.CENTER))
                         .addParagraph(p -> p.text("שלום").padding(sides)
-                                .direction(com.demcha.compose.document.node.TextDirection.RTL))))) {
+                                .direction(TextDirection.RTL))))) {
             var cells = document.getTables().get(0).getRow(0).getTableCells();
             long[][] expected = {{10, 38}, {8, 40}, {8, 38}, {8, 38}};
             String[] what = {"a left-aligned line keeps its left", "a right-aligned line keeps its right",
@@ -84,15 +93,14 @@ class DocxParagraphSidesTest {
     void aParagraphInALayeredRowIsHeldInByItsOwnSides() throws Exception {
         // SubscriptionInvoice's metadata labels, padded past their bars in a row on a layer,
         // stood at the bars in Word: an overlay's paragraph took none of its own sides.
-        var row = new com.demcha.compose.document.dsl.SectionBuilder().name("Holder")
+        DocumentNode row = new SectionBuilder().name("Holder")
                 .addRow(line -> line.spacing(0)
-                        .columns(com.demcha.compose.document.style.DocumentRowColumn.fixed(4),
-                                com.demcha.compose.document.style.DocumentRowColumn.weight(1))
-                        .addShape(bar -> bar.size(4, 20).fillColor(com.demcha.compose.document.style.DocumentColor.BLACK))
+                        .columns(DocumentRowColumn.fixed(4), DocumentRowColumn.weight(1))
+                        .addShape(bar -> bar.size(4, 20).fillColor(DocumentColor.BLACK))
                         .addParagraph(p -> p.text("Invoice No").padding(new DocumentInsets(0, 0, 0, 9.6))))
                 .build();
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addLayerStack(stack -> stack.layer(row, com.demcha.compose.document.node.LayerAlign.TOP_LEFT)))) {
+                .addLayerStack(stack -> stack.layer(row, LayerAlign.TOP_LEFT)))) {
             XWPFParagraph label = document.getTables().stream()
                     .flatMap(table -> table.getRows().stream())
                     .flatMap(tableRow -> tableRow.getTableCells().stream())
@@ -108,14 +116,13 @@ class DocxParagraphSidesTest {
     void aListIsHeldInByAllOfItsLeftSideInACellAndOnALayer() throws Exception {
         // An item's marker is set from its left edge: NavySidebar's lists, padded in their
         // column, stood 2pt left of the page's with the editor's points taken off that side.
-        java.util.function.Function<Double, com.demcha.compose.document.node.DocumentNode> list = pad ->
-                new com.demcha.compose.document.dsl.ListBuilder().name("Items").dash()
-                        .padding(new DocumentInsets(0, 0, 0, pad)).items("Alpha").build();
+        // Its right side gives the editor theirs.
         for (boolean layered : new boolean[] {false, true}) {
-            var node = list.apply(10.0);
+            DocumentNode node = new ListBuilder().name("Items").dash()
+                    .padding(new DocumentInsets(0, 30, 0, 10)).items("Alpha").build();
             try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> {
                 if (layered) {
-                    page.addLayerStack(stack -> stack.layer(node, com.demcha.compose.document.node.LayerAlign.TOP_LEFT));
+                    page.addLayerStack(stack -> stack.layer(node, LayerAlign.TOP_LEFT));
                 } else {
                     page.addRow(row -> row.addSection(column -> column.add(node)).addParagraph("Beside"));
                 }
@@ -129,7 +136,27 @@ class DocxParagraphSidesTest {
                 assertThat(indent).as("the item carries the padding past its level, layered %s", layered).isNotNull();
                 assertThat(DocxTwips.of(indent.getLeft()))
                         .as("the level's 9pt and all 10pt of the padding, layered %s", layered).isEqualTo(180 + 200);
+                assertThat(DocxTwips.of(indent.getRight()))
+                        .as("30pt, less the editor's 2pt in a cell, layered %s", layered)
+                        .isEqualTo(layered ? 30 * 20L : 28 * 20L);
             }
+        }
+    }
+
+    @Test
+    void aParagraphThatIsALayerOfABandStandsItsOwnSidesPastWhereTheBandPlacesIt() throws Exception {
+        // The band holds the layer in to its margin box; its padding is inside that, taken once.
+        DocumentNode label = new ParagraphBuilder().name("Label").text("Status")
+                .padding(new DocumentInsets(0, 0, 0, 10)).build();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addLayerStack(stack -> stack
+                        .back(new ShapeBuilder().name("Plate").size(300, 30).fillColor(DocumentColor.BLACK).build())
+                        .position(label, 50, 0, LayerAlign.TOP_LEFT)))) {
+            XWPFParagraph status = document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().equals("Status")).findFirst().orElseThrow();
+
+            assertThat(DocxTwips.of(indent(status).getLeft())).as("50pt along, and its 10pt padding past that")
+                    .isEqualTo(60 * 20L);
         }
     }
 

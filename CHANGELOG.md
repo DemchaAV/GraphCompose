@@ -8,6 +8,23 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX chip takes the room its padding takes on the page.** A chip's fill is written as
+  run shading, which covers the letters and nothing more, so its horizontal padding was not
+  in the file. `ModernReceipt`'s status chip, right-aligned with 9pt of padding on each side,
+  stood 9.16pt right of the page's in Word; it stands 0.16pt right now. The padding is
+  written as character spacing (`w:spacing`) in two places. After the chip's last letter it
+  is shaded with the chip; after the letter before the chip it is not. Each of those letters,
+  with its accents, goes in a run of its own unless it is its run's only one, inside the same
+  link where it is in one. A centred or right-aligned line spaced to the page's width adds its
+  spacing to the padding's and reckons the padding at its own width, not grown to Word's type
+  size. It is the only chip in the corpus with padding beside its letters, and no other line
+  moves, in Word or in LibreOffice. LibreOffice sets no spacing after a line's last letter, so
+  there the status chip stays where it was (9.21 → 9.26pt); mid-line it sets it as Word does.
+  Not written, and so reported:
+  - the left padding of a chip that opens its line;
+  - both sides in a right-to-left paragraph.
+
+  The export report says this in place of the old "its padding is not in the file".
 - **A DOCX panel in the body starts its text the whole padding in.** A panel's table took half
   its left border off its cell's left margin and its indent, for an editor that keeps the
   border inside the cell; for a panel in the body, Word 16 and LibreOffice on Windows centre

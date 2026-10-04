@@ -36,9 +36,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * part of itself that was doing the talking.</p>
  *
  * <p>Word shades a run with {@code w:shd}, which takes any RGB. What it cannot express is
- * the chip's shape: shading covers the glyph box, so the rounded corners and the padding go
- * and the export says so. A {@code w:shd} fill is also opaque, so a translucent chip is
- * flattened against what Word paints beneath it first.</p>
+ * the chip's shape: shading covers the glyph box, so the rounded corners go and the export
+ * says so. The room its padding takes beside its letters is written as character spacing
+ * after a letter, shaded on the chip's right only. A {@code w:shd} fill is also opaque, so a
+ * translucent chip is flattened against what Word paints beneath it first.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -158,6 +159,217 @@ class DocxInlineBackgroundTest {
     }
 
     @Test
+    void aChipsRightPaddingIsSpaceAfterItsLastLetterInsideItsShading() throws Exception {
+        // ModernReceipt's status chip, right-aligned with 9pt of padding on each side, stood
+        // 9.2pt right of the page's in Word: shading covers the letters and nothing more.
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p
+                        .inlineHighlight("Completed", DocumentTextStyle.DEFAULT, BADGE,
+                                9, new DocumentInsets(3.5, 9, 3.5, 9))
+                        .align(com.demcha.compose.document.node.TextAlign.RIGHT)))) {
+
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+            assertThat(runs).extracting(XWPFRun::text).containsExactly("Complete", "d");
+            assertThat(runs.get(1).getCharacterSpacing() - runs.get(0).getCharacterSpacing())
+                    .as("the last letter is 9pt further from what follows, in twentieths")
+                    .isEqualTo(180);
+            assertThat(runs).extracting(DocxInlineBackgroundTest::fillOf)
+                    .as("both shaded, so the room is inside the chip")
+                    .containsExactly("D63838", "D63838");
+        }
+    }
+
+    @Test
+    void aChipsLeftPaddingIsSpaceAfterTheLetterBeforeIt() throws Exception {
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p
+                        .inlineText("Status:")
+                        .inlineHighlight("due", DocumentTextStyle.DEFAULT, BADGE,
+                                0, new DocumentInsets(0, 0, 0, 6))
+                        .inlineText(" today")))) {
+
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+            assertThat(runs).extracting(XWPFRun::text).containsExactly("Status", ":", "due", " today");
+            assertThat(runs.get(1).getCharacterSpacing()).as("6pt after the colon").isEqualTo(120);
+            assertThat(fillOf(runs.get(1))).as("outside the chip, so not shaded").isNull();
+            assertThat(runs.get(2).getCharacterSpacing()).as("no right padding, nothing after it").isZero();
+            assertThat(document.getParagraphs().get(0).getText()).isEqualTo("Status:due today");
+        }
+    }
+
+    @Test
+    void twoChipsSideBySideAreSpacedByBothTheirPaddings() throws Exception {
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p
+                        .inlineHighlight("one", DocumentTextStyle.DEFAULT, BADGE,
+                                0, new DocumentInsets(0, 2, 0, 0))
+                        .inlineHighlight("two", DocumentTextStyle.DEFAULT, BADGE,
+                                0, new DocumentInsets(0, 0, 0, 3))))) {
+
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+            assertThat(runs).extracting(XWPFRun::text).containsExactly("on", "e", "two");
+            assertThat(runs.get(1).getCharacterSpacing()).as("2pt + 3pt").isEqualTo(100);
+        }
+    }
+
+    @Test
+    void aChipInAListItemIsSpacedByItsPadding() throws Exception {
+        try (XWPFDocument document = exported(page -> page
+                .addList(list -> list
+                        .bullet()
+                        .hangingIndent(true)
+                        .addItem(rich -> rich.plain("Invoice ").highlight("overdue",
+                                DocumentTextStyle.DEFAULT, BADGE, 0, new DocumentInsets(0, 4, 0, 0)))))) {
+
+            XWPFRun head = runReading(document, "overdue");
+            assertThat(head.text()).isEqualTo("overdu");
+            XWPFParagraph item = (XWPFParagraph) head.getParent();
+            XWPFRun last = item.getRuns().get(item.getRuns().indexOf(head) + 1);
+            assertThat(last.getCharacterSpacing()).isEqualTo(80);
+        }
+    }
+
+    @Test
+    void aCentredLinesLettersAreSpacedOnTopOfAChipsPadding() throws Exception {
+        // 8.3pt is set at 8.5 in Word, so a centred line of it is spaced back to the page's
+        // width; that spacing goes on every letter, the padding's on the last one too.
+        DocumentTextStyle small = DocumentTextStyle.builder().size(8.3).build();
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p
+                        .inlineHighlight("Settled by the beneficiary bank today", small, BADGE,
+                                0, new DocumentInsets(0, 5, 0, 0))
+                        .align(com.demcha.compose.document.node.TextAlign.CENTER)))) {
+
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+            assertThat(runs).hasSize(2);
+            assertThat(runs.get(0).getCharacterSpacing()).as("the line is spaced to the page's").isNotZero();
+            assertThat(runs.get(1).getCharacterSpacing() - runs.get(0).getCharacterSpacing())
+                    .isEqualTo(100);
+        }
+    }
+
+    @Test
+    void aChipWithNoPaddingStaysOneRun() throws Exception {
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p
+                        .inlineText("Status: ")
+                        .inlineHighlight("due", DocumentTextStyle.DEFAULT, BADGE, 0, DocumentInsets.zero())
+                        .inlineText(" today")))) {
+
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+            assertThat(runs).extracting(XWPFRun::text).containsExactly("Status: ", "due", " today");
+            assertThat(runs).extracting(XWPFRun::getCharacterSpacing).containsOnly(0);
+        }
+    }
+
+    @Test
+    void aLinkedPaddedChipIsOneLink() throws Exception {
+        // The last letter's run goes in the link its letters are in: a second w:hyperlink would
+        // make the phrase two links to a reader and to Word's Edit Hyperlink.
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p.inlineHighlight("Docs", DocumentTextStyle.DEFAULT,
+                        BADGE, 0, new DocumentInsets(0, 4, 0, 0),
+                        new DocumentLinkOptions("https://graphcompose.dev"))))) {
+
+            var links = document.getParagraphs().get(0).getCTP().getHyperlinkList();
+            assertThat(links).hasSize(1);
+            assertThat(links.get(0).sizeOfRArray()).isEqualTo(2);
+            assertThat(document.getParagraphs().get(0).getText()).isEqualTo("Docs");
+        }
+    }
+
+    @Test
+    void theLastLetterKeepsItsAccent() throws Exception {
+        // A decomposed é is two code points, one letter: split between them, the accent would
+        // be shaped in a run of its own.
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p.inlineHighlight("Resumé", DocumentTextStyle.DEFAULT,
+                        BADGE, 0, new DocumentInsets(0, 4, 0, 0))))) {
+
+            assertThat(document.getParagraphs().get(0).getRuns())
+                    .extracting(XWPFRun::text).containsExactly("Resum", "é");
+        }
+    }
+
+    @Test
+    void aChipsPaddingIsNotGrownToWordsSize() throws Exception {
+        // 8.3pt letters are set at 8.5 in Word, and the line is spaced back to the page's
+        // width when it grows a point or more. The padding is written in points, not grown:
+        // reckoned at Word's size, 80pt of it alone would have grown the line 1.9pt.
+        DocumentTextStyle small = DocumentTextStyle.builder().size(8.3).build();
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p
+                        .inlineHighlight("Paid", small, BADGE, 0, new DocumentInsets(0, 40, 0, 40))
+                        .align(com.demcha.compose.document.node.TextAlign.CENTER)))) {
+
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+            assertThat(runs).extracting(XWPFRun::text).containsExactly("Pai", "d");
+            assertThat(runs.get(0).getCharacterSpacing()).as("four letters grow under a point").isZero();
+            assertThat(runs.get(1).getCharacterSpacing()).isEqualTo(800);
+        }
+    }
+
+    @Test
+    void aChipInAListItemTakesItsLeftPaddingAfterTheTextBeforeIt() throws Exception {
+        try (XWPFDocument document = exported(page -> page
+                .addList(list -> list
+                        .bullet()
+                        .hangingIndent(true)
+                        .addItem(rich -> rich.plain("Invoice:").highlight("overdue",
+                                DocumentTextStyle.DEFAULT, BADGE, 0, new DocumentInsets(0, 0, 0, 6)))))) {
+
+            XWPFRun colon = runReading(document, ":");
+            assertThat(colon.getCharacterSpacing()).isEqualTo(120);
+        }
+    }
+
+    @Test
+    void whatAChipsPaddingLosesIsSaidAsItIs() throws Exception {
+        DocumentInsets sides = new DocumentInsets(0, 4, 0, 4);
+        assertThat(reportOf(page -> page.addParagraph(p -> p
+                        .inlineHighlight("due", DocumentTextStyle.DEFAULT, BADGE, 0, sides)))
+                .bySubject().get("inline chip").get(0).detail())
+                .as("left to right: the left side is unshaded space, the right is written")
+                .contains("left padding is unshaded space")
+                .doesNotContain("right padding");
+        assertThat(reportOf(page -> page.addParagraph(p -> p
+                        .direction(TextDirection.RTL)
+                        .inlineHighlight("דחוף", DocumentTextStyle.DEFAULT, BADGE, 0, sides)))
+                .bySubject().get("inline chip").get(0).detail())
+                .contains("padding beside its letters is not in the file");
+    }
+
+    @Test
+    void textBrokenOverLinesBeforeAChipSpacesTheLastLetterOfItsLastLine() throws Exception {
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p
+                        .inlineText("Invoice 42\nStatus:")
+                        .inlineHighlight("due", DocumentTextStyle.DEFAULT, BADGE,
+                                0, new DocumentInsets(0, 0, 0, 6))))) {
+
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+            assertThat(runs).extracting(XWPFRun::text).containsExactly("Invoice 42\nStatus", ":", "due");
+            assertThat(runs.get(1).getCharacterSpacing()).isEqualTo(120);
+        }
+    }
+
+    @Test
+    void aChipInARightToLeftParagraphIsNotSpaced() throws Exception {
+        // Spacing goes after a letter in the run's order, which is not the side the
+        // padding stands on in a right-to-left line.
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p
+                        .direction(TextDirection.RTL)
+                        .inlineHighlight("דחוף", DocumentTextStyle.DEFAULT, BADGE,
+                                0, new DocumentInsets(0, 4, 0, 4))))) {
+
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+            assertThat(runs).extracting(XWPFRun::text).containsExactly("דחוף");
+            assertThat(runs.get(0).getCharacterSpacing()).isZero();
+        }
+    }
+
+    @Test
     void aLinkedChipIsStillALink() throws Exception {
         // The chip and the link are written by different parts of the run path, and the
         // one that knows about the fill must not be the one that forgets the address.
@@ -203,7 +415,8 @@ class DocxInlineBackgroundTest {
         assertThat(note.detail())
                 .as("the fill is written; what goes is the shape around it")
                 .contains("rounded corners")
-                .contains("padding");
+                .contains("left padding")
+                .contains("above and below");
     }
 
     @Test
@@ -280,11 +493,18 @@ class DocxInlineBackgroundTest {
                 : null;
     }
 
+    /**
+     * The run reading {@code text}, or the first of two that do: a padded chip's last letter is
+     * a run of its own.
+     */
     private static XWPFRun runReading(XWPFDocument document, String text) {
         for (XWPFParagraph para : everyParagraph(document)) {
-            for (XWPFRun run : para.getRuns()) {
-                if (text.equals(run.text())) {
-                    return run;
+            List<XWPFRun> runs = para.getRuns();
+            for (int index = 0; index < runs.size(); index++) {
+                String read = runs.get(index).text();
+                if (text.equals(read)
+                    || index + 1 < runs.size() && text.equals(read + runs.get(index + 1).text())) {
+                    return runs.get(index);
                 }
             }
         }

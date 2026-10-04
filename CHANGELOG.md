@@ -13,18 +13,22 @@ follow semantic versioning; release dates are ISO 8601.
   in the file. `ModernReceipt`'s status chip, right-aligned with 9pt of padding on each side,
   stood 9.16pt right of the page's in Word; it stands 0.16pt right now. The padding is
   written as character spacing (`w:spacing`) in two places. After the chip's last letter it
-  is shaded with the chip; after the letter before the chip it is not. Each of those letters,
-  with its accents, goes in a run of its own unless it is its run's only one, inside the same
-  link where it is in one. A centred or right-aligned line spaced to the page's width adds its
+  is shaded with the chip; after the letter before the chip it is not, unless that letter
+  ends another chip, whose fill it then takes. Each of those letters, with its accents, goes
+  in a run of its own where its run holds anything else, inside the same link where it is in
+  one. A centred or right-aligned line spaced to the page's width adds its
   spacing to the padding's and reckons the padding at its own width, not grown to Word's type
   size. It is the only chip in the corpus with padding beside its letters, and no other line
   moves, in Word or in LibreOffice. LibreOffice sets no spacing after a line's last letter, so
   there the status chip stays where it was (9.21 → 9.26pt); mid-line it sets it as Word does.
   Not written, and so reported:
-  - the left padding of a chip that opens its line;
-  - both sides in a right-to-left paragraph.
+  - the left padding of a chip that opens its line or follows a picture;
+  - any space after right-to-left letters: in a right-to-left paragraph, and for Hebrew or
+    Arabic in a left-to-right one;
+  - any space after a symbol or an emoji, which Java 17 does not keep whole.
 
-  The export report says this in place of the old "its padding is not in the file".
+  The export report says, chip by chip, how each side was written, in place of the old "its
+  padding is not in the file".
 - **A DOCX panel in the body starts its text the whole padding in.** A panel's table took half
   its left border off its cell's left margin and its indent, for an editor that keeps the
   border inside the cell; for a panel in the body, Word 16 and LibreOffice on Windows centre

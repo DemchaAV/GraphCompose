@@ -324,19 +324,71 @@ class DocxInlineBackgroundTest {
     }
 
     @Test
-    void whatAChipsPaddingLosesIsSaidAsItIs() throws Exception {
+    void whatAChipsPaddingLosesIsSaidChipByChip() throws Exception {
         DocumentInsets sides = new DocumentInsets(0, 4, 0, 4);
-        assertThat(reportOf(page -> page.addParagraph(p -> p
-                        .inlineHighlight("due", DocumentTextStyle.DEFAULT, BADGE, 0, sides)))
-                .bySubject().get("inline chip").get(0).detail())
-                .as("left to right: the left side is unshaded space, the right is written")
-                .contains("left padding is unshaded space")
-                .doesNotContain("right padding");
-        assertThat(reportOf(page -> page.addParagraph(p -> p
+        assertThat(chipNotes(page -> page.addParagraph(p -> p
+                        .inlineText("Status:")
+                        .inlineHighlight("due", DocumentTextStyle.DEFAULT, BADGE, 0, sides))))
+                .as("after text: the left side is unshaded space, the right is written")
+                .containsExactly("the fill is written as run shading; its left padding is unshaded "
+                                 + "space after the text before it");
+        assertThat(chipNotes(page -> page.addParagraph(p -> p
+                        .inlineHighlight("due", DocumentTextStyle.DEFAULT, BADGE, 0, sides))))
+                .as("opening its line, nothing comes before it to take its left padding")
+                .containsExactly("the fill is written as run shading; its left padding is not in the file");
+        assertThat(chipNotes(page -> page.addParagraph(p -> p
+                        .inlineHighlight("Java", DocumentTextStyle.DEFAULT, BADGE, 0, DocumentInsets.zero())
+                        .inlineHighlight("Kotlin", DocumentTextStyle.DEFAULT, SURFACE, 0,
+                                new DocumentInsets(0, 0, 0, 4)))))
+                .as("after a chip, its left padding takes that chip's fill")
+                .containsExactly("the fill is written as run shading; its left padding is space "
+                                 + "after the chip before it, in that chip's fill");
+        assertThat(chipNotes(page -> page.addParagraph(p -> p
                         .direction(TextDirection.RTL)
-                        .inlineHighlight("דחוף", DocumentTextStyle.DEFAULT, BADGE, 0, sides)))
-                .bySubject().get("inline chip").get(0).detail())
-                .contains("padding beside its letters is not in the file");
+                        .inlineText("סטטוס:")
+                        .inlineHighlight("דחוף", DocumentTextStyle.DEFAULT, BADGE, 0, sides))))
+                .containsExactly("the fill is written as run shading; its left padding is not in "
+                                 + "the file, its right padding is not in the file");
+        assertThat(chipNotes(page -> page.addParagraph(p -> p
+                        .inlineHighlight("due", DocumentTextStyle.DEFAULT, BADGE, 0,
+                                new DocumentInsets(0, 4, 0, 0)))))
+                .as("a right padding written is no loss")
+                .isEmpty();
+    }
+
+    @Test
+    void rightToLeftLettersInALeftToRightLineAreNotSpaced() throws Exception {
+        // In run order the last Hebrew letter stands at the left of the word, and an Arabic one
+        // set in a run of its own would lose its join: no space is written after either.
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p
+                        .inlineText("שלום")
+                        .inlineHighlight("דחוף", DocumentTextStyle.DEFAULT, BADGE, 0,
+                                new DocumentInsets(0, 4, 0, 4))
+                        .inlineText(" then")))) {
+
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+            assertThat(runs).extracting(XWPFRun::text).containsExactly("שלום", "דחוף", " then");
+            assertThat(runs).extracting(XWPFRun::getCharacterSpacing).containsOnly(0);
+        }
+    }
+
+    @Test
+    void aFlagEndingAChipIsNotCutInTwo() throws Exception {
+        // Java 17 splits a flag's two letters; a run boundary between them draws two letters.
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p.inlineHighlight("Ship 🇬🇧",
+                        DocumentTextStyle.DEFAULT, BADGE, 0, new DocumentInsets(0, 4, 0, 0))))) {
+
+            List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();
+            assertThat(runs).hasSize(1);
+            assertThat(runs.get(0).getCharacterSpacing()).isZero();
+        }
+    }
+
+    private static List<String> chipNotes(Consumer<PageFlowBuilder> content) throws Exception {
+        List<DocxExportReport.Note> notes = reportOf(content).bySubject().get("inline chip");
+        return notes == null ? List.of() : notes.stream().map(DocxExportReport.Note::detail).toList();
     }
 
     @Test

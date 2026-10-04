@@ -584,20 +584,27 @@ What Word has no way to say is the chip's *shape*. Shading covers the glyph box,
 - **The corner radius** is square in Word.
 - **The padding beside the letters** is written as the room it takes. It becomes character
   spacing after the chip's last letter, which Word shades with the chip, and after the letter
-  before the chip, which it does not. The text after the chip then stands where the page puts
-  it, and a right-aligned or centred line holding one starts where the page starts it. The
-  chip's fill shows its padding on the right only. There are exceptions:
+  before the chip, which it does not — or, where that letter ends another chip, does in that
+  chip's fill. The text after the chip then stands where the page puts it, and a
+  right-aligned or centred line holding one starts where the page starts it. The chip's fill
+  shows its padding on the right only. There are exceptions:
   - A chip that opens its line, or that follows a picture, has no letter before it, so its
     left padding is not in the file.
-  - In a right-to-left paragraph neither side is written, since spacing goes after a letter
-    in the run's order rather than toward the side the padding stands on.
+  - No space is written after right-to-left letters, so a right-to-left paragraph has
+    neither side in the file, and Hebrew or Arabic in a left-to-right one neither. In run
+    order such a letter stands at the word's left, and an Arabic one in a run of its own would
+    lose its join.
+  - No space is written after a symbol or an emoji. Java 17 does not keep a flag or a joined
+    emoji sequence whole, and a run boundary inside one draws it as its parts.
   - LibreOffice sets no spacing after the last letter of a line, so a chip ending a
-    right-aligned line has its letters its right padding further right there than in Word,
-    and one ending a centred line half that.
+    right-aligned line has its letters its right padding further right there than in Word.
+    One ending a centred line should be off by half that, though only the right-aligned case
+    is measured.
 - **The padding above and below** the letters is not in the file.
 
 What is lost is recorded as `APPROXIMATED` in the export report, per chip, so a caller can
-see which phrase lost what.
+see which phrase lost what — down to whether its left padding is unshaded space, in another
+chip's fill, or not in the file.
 
 A `w:shd` fill is opaque, so a translucent chip — `inlineCode(...)` is a fifth-opacity
 grey — is flattened first against what the export wrote underneath it: the paragraph's own

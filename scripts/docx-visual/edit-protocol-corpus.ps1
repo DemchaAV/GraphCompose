@@ -163,16 +163,22 @@ function Get-AllTables {
         $all += $table
         foreach ($nested in $table.Tables) { $all += $nested }
     }
-    return $all
+    # The comma keeps a single table an array: PowerShell would hand back the table itself.
+    return ,$all
 }
 
 # The index, among Get-AllTables, of the table with the most rows: a document's data table.
+# A table with cells merged down its rows is left out: Word does not let its rows be reached
+# one by one, the way a person adding a row reaches them.
 function Find-DataTable {
     param($Doc)
     $tables = Get-AllTables $Doc
     $best = -1; $bestRows = 2
     for ($i = 0; $i -lt $tables.Count; $i++) {
-        if ($tables[$i].Rows.Count -gt $bestRows) { $best = $i; $bestRows = $tables[$i].Rows.Count }
+        $rows = $tables[$i].Rows.Count
+        if ($rows -le $bestRows) { continue }
+        try { $tables[$i].Rows($rows) | Out-Null } catch { continue }
+        $best = $i; $bestRows = $rows
     }
     return $best
 }
@@ -287,8 +293,8 @@ function Invoke-Protocol {
         New-Result 'lengthen-a-paragraph' 'PASS' $detail
     }
 
-    # 2. Delete the second half of the same paragraph: it stands shorter, and the block after
-    #    it comes no lower.
+    # 2. Delete the second half of the same paragraph: it stands no taller — a paragraph of one
+    #    line stays one — and the block after it comes no lower.
     $results += Invoke-Scenario $Word $Source 'shorten-a-paragraph' -Edit {
         param($doc, $state)
         $state.index = Find-BodyParagraph $doc
@@ -307,7 +313,7 @@ function Invoke-Protocol {
         $next = Get-NextPlace $doc $p
         $notLower = $null -eq $state.nextBefore -or $next -le $state.nextBefore
         $detail = "removed $($state.removed) characters, $([Math]::Round($state.extentBefore, 1)) -> $([Math]::Round($extent, 1)) tall, block after it not lower=$notLower"
-        if ($state.charactersAfter -ge $state.charactersBefore -or $extent -ge $state.extentBefore -or -not $notLower) { return New-Result 'shorten-a-paragraph' 'FAIL' $detail }
+        if ($state.charactersAfter -ge $state.charactersBefore -or $extent -gt $state.extentBefore -or -not $notLower) { return New-Result 'shorten-a-paragraph' 'FAIL' $detail }
         New-Result 'shorten-a-paragraph' 'PASS' $detail
     }
 
@@ -426,19 +432,27 @@ function Invoke-Protocol {
         $end.Collapse(0)
         $end.Select()
         $selection = $doc.ActiveWindow.Selection
-        foreach ($i in 1..70) {
-            # Enter between lines, not after the last: an empty paragraph could end a page of its own.
-            if ($i -gt 1 -or (Get-Text $last).Length -gt 0) { $selection.TypeParagraph() }
-            $selection.TypeText("Protocol line $i typed to run the document onto a new page.")
+        # Ten lines at a time until the page count grows, or 200 lines: a last page with room
+        # takes many before it gives way.
+        $state.lines = 0
+        while ($state.lines -lt 200) {
+            foreach ($j in 1..10) {
+                $state.lines++
+                # Enter between lines, not after the last: an empty paragraph could end a page of its own.
+                if ($state.lines -gt 1 -or (Get-Text $last).Length -gt 0) { $selection.TypeParagraph() }
+                $selection.TypeText("Protocol line $($state.lines) typed to run the document onto a new page.")
+            }
+            if ($doc.ComputeStatistics($WD_STATISTIC_PAGES) -gt $state.pagesBefore) { break }
         }
     } -Verify {
         param($doc, $state)
         # Read hidden text too: Word leaves it out of a range's text, and hidden is a finding.
         $typed = $null
-        for ($i = $doc.Paragraphs.Count; $i -ge [Math]::Max(1, $doc.Paragraphs.Count - 80) -and -not $typed; $i--) {
+        $marker = "Protocol line $($state.lines) typed"
+        for ($i = $doc.Paragraphs.Count; $i -ge [Math]::Max(1, $doc.Paragraphs.Count - 210) -and -not $typed; $i--) {
             $range = $doc.Paragraphs($i).Range
             $range.TextRetrievalMode.IncludeHiddenText = $true
-            if ($range.Text -match 'Protocol line 70 typed') { $typed = $doc.Paragraphs($i) }
+            if ($range.Text -match $marker) { $typed = $doc.Paragraphs($i) }
         }
         if (-not $typed) { return New-Result 'add-a-page' 'FAIL' 'the typed lines did not survive the save' }
         if ($typed.Range.Information($WD_WITHIN_TABLE)) {
@@ -451,7 +465,7 @@ function Invoke-Protocol {
         $format = $typed.Format
         $squeezed = $format.LineSpacingRule -eq $WD_LINE_SPACE_EXACTLY -and $format.LineSpacing -lt $size * $EXACT_LINE_SHARE
         $footer = Get-FooterOn $doc.Sections($doc.Sections.Count) $lastPage
-        $detail = "pages $($state.pagesBefore) -> $($state.pagesAfter), last typed line on page $lastPage at ${size}pt, hidden=$hidden, exact $($format.LineSpacing)pt lines too short=$squeezed, footer there '$footer'"
+        $detail = "$($state.lines) lines typed, pages $($state.pagesBefore) -> $($state.pagesAfter), the last on page $lastPage at ${size}pt, hidden=$hidden, exact $($format.LineSpacing)pt lines too short=$squeezed, footer there '$footer'"
         if ($hidden -or $squeezed) { return New-Result 'add-a-page' 'FAIL' "what was typed at the end cannot be read; $detail" }
         if ($state.pagesAfter -le $state.pagesBefore -or $lastPage -ne $state.pagesAfter) { return New-Result 'add-a-page' 'FAIL' $detail }
         New-Result 'add-a-page' 'PASS' $detail

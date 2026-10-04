@@ -377,10 +377,14 @@ Choose the smallest tests that match the change:
   - type at the end until a new page opens;
   - save with no edit.
 
-  It records what it can decide alone in `edit-protocol-corpus.json`: text kept, a paragraph
-  rewrapped, the block after it moved, the body size following Normal, typed text visible on
-  lines it fits. Beside the edited copies it writes PDFs, from which a person judges whether a
-  page still looks right. It takes about a minute a document.
+  It records what it can decide alone in `edit-protocol-corpus.json`:
+  - text kept, and a paragraph grown or shrunk and still above the block after it;
+  - the body size following Normal;
+  - typed text standing below everything else, outside any table, visible, on lines it fits.
+
+  It reads the letters' size and visibility from the text, without the paragraph mark. Beside
+  the lengthened copy and the new-page copy it writes PDFs, from which a person judges whether
+  a page still looks right. It takes about a minute a document.
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 

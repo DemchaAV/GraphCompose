@@ -10,14 +10,16 @@
     first list, the end of the document.
 
     Each scenario edits a copy, saves it, reopens it from disk and records what it measured.
-    What it decides by itself is objective: text kept or lost, a paragraph rewrapped, the block
-    after it moved, a row held to an exact height that would hide what the edit added, the body
-    size following the Normal style, a list continued by Enter, a new page carrying the
-    document's footer, a save that changes nothing. Whether the edited page still looks right is
-    read from the PDFs it writes beside each copy, by a person.
+    What it decides by itself is objective: text kept or lost, a paragraph grown or shrunk and
+    still above the block after it, a row held to an exact height that would hide what the edit
+    added, the body size following the Normal style, a list continued by Enter, text typed at
+    the end of the document readable below everything else, a save that changes nothing. It
+    reads letters' size, face and visibility from the text alone, not the paragraph mark, which
+    a range's font reports with it. Whether an edited page still looks right is read by a
+    person from the PDFs written beside the lengthened copy and the new-page copy.
 
-    Word is not installed by the build. When it is absent every document is recorded NOT_RUN
-    and the script exits non-zero.
+    Word is not installed by the build. When it is absent the protocol records NOT_RUN and the
+    script exits 2; a scenario that does not pass exits 1.
 
 .PARAMETER Docx
     One or more exported .docx files. All are copied into the output directory before the first
@@ -49,7 +51,15 @@ $WD_VERTICAL_POSITION_ON_PAGE = 6
 $WD_WITHIN_TABLE = 12
 $WD_ROW_HEIGHT_EXACTLY = 2
 $WD_EXPORT_PDF = 17
+$WD_STYLE_NORMAL = -1
+$WD_LINE_SPACE_EXACTLY = 4
 $WD_HEADER_FOOTER_PRIMARY = 1
+$WD_HEADER_FOOTER_FIRST_PAGE = 2
+$WD_HEADER_FOOTER_EVEN_PAGES = 3
+
+# An exact line shorter than this share of its letters' size cuts them on Word's screen: Word
+# sets a single line of its faces at 1.15 to 1.2 of the size.
+$EXACT_LINE_SHARE = 1.1
 
 $ADDED = ' The editing protocol appended this sentence to make the paragraph about twice as long, so that it has to rewrap and whatever stands below it has to move down to make room for it.'
 
@@ -66,13 +76,35 @@ function Get-Place {
     return [double]$start.Information($WD_ACTIVE_END_PAGE) * 10000 + [double]$start.Information($WD_VERTICAL_POSITION_ON_PAGE)
 }
 
-# How tall a paragraph stands, from its first letter to its last, in points across pages.
-# Word's line statistic reads 0 inside a table, so the height is measured instead.
-function Get-Extent {
+function Get-Text {
+    param($Paragraph)
+    return ($Paragraph.Range.Text -replace "[`r`a]", '').Trim()
+}
+
+# A paragraph's text without its mark, or a cell's end mark: Word does not let an edit touch
+# them, and a range's font reports the mark's size and visibility along with the letters'.
+function Get-TextRange {
+    param($Paragraph)
+    $range = $Paragraph.Range.Duplicate
+    for ($i = 0; $i -lt 3 -and $range.End -gt $range.Start -and $range.Text -match "[`r`a]$"; $i++) {
+        $range.MoveEnd(1, -1) | Out-Null
+    }
+    return $range
+}
+
+# Where a paragraph's last letter stands, as Get-Place counts it.
+function Get-EndPlace {
     param($Paragraph)
     $end = Get-TextRange $Paragraph
     $end.Collapse(0)
-    return (Get-Place $end) - (Get-Place $Paragraph.Range)
+    return Get-Place $end
+}
+
+# How tall a paragraph stands, from its first letter to its last. Word's line statistic reads 0
+# inside a table, so the height is measured instead; across a page it counts 10000 a page.
+function Get-Extent {
+    param($Paragraph)
+    return (Get-EndPlace $Paragraph) - (Get-Place $Paragraph.Range)
 }
 
 # Where the block after a paragraph starts: after its row, for a paragraph in a table, since
@@ -85,21 +117,6 @@ function Get-NextPlace {
     }
     if ($end -ge $Doc.Content.End - 1) { return $null }
     return Get-Place $Doc.Range($end, $end + 1)
-}
-
-function Get-Text {
-    param($Paragraph)
-    return ($Paragraph.Range.Text -replace "[`r`a]", '').Trim()
-}
-
-# A paragraph's text without its mark, or a cell's end mark, which Word does not let an edit touch.
-function Get-TextRange {
-    param($Paragraph)
-    $range = $Paragraph.Range.Duplicate
-    for ($i = 0; $i -lt 3 -and $range.End -gt $range.Start -and $range.Text -match "[`r`a]$"; $i++) {
-        $range.MoveEnd(1, -1) | Out-Null
-    }
-    return $range
 }
 
 # Puts the caret after a paragraph's last letter and types as a person does: Enter, then text.
@@ -138,14 +155,24 @@ function Find-ListParagraph {
     return -1
 }
 
-# The table with the most rows, nested tables included: a document's data table.
+# Every table, nested ones after the table holding them, in one order a reopened document repeats.
+function Get-AllTables {
+    param($Doc)
+    $all = @()
+    foreach ($table in $Doc.Tables) {
+        $all += $table
+        foreach ($nested in $table.Tables) { $all += $nested }
+    }
+    return $all
+}
+
+# The index, among Get-AllTables, of the table with the most rows: a document's data table.
 function Find-DataTable {
     param($Doc)
-    $best = $null; $bestRows = 2
-    foreach ($table in $Doc.Tables) {
-        foreach ($candidate in @($table) + @($table.Tables)) {
-            if ($candidate.Rows.Count -gt $bestRows) { $best = $candidate; $bestRows = $candidate.Rows.Count }
-        }
+    $tables = Get-AllTables $Doc
+    $best = -1; $bestRows = 2
+    for ($i = 0; $i -lt $tables.Count; $i++) {
+        if ($tables[$i].Rows.Count -gt $bestRows) { $best = $i; $bestRows = $tables[$i].Rows.Count }
     }
     return $best
 }
@@ -157,19 +184,44 @@ function Test-ExactRow {
     try { return $Range.Cells(1).HeightRule -eq $WD_ROW_HEIGHT_EXACTLY } catch { return $false }
 }
 
+# The letters' size of each paragraph with text, by its index; mixed sizes are left out.
+function Get-TextSizes {
+    param($Doc)
+    $sizes = @{}
+    for ($i = 1; $i -le $Doc.Paragraphs.Count; $i++) {
+        $p = $Doc.Paragraphs($i)
+        if ((Get-Text $p).Length -eq 0) { continue }
+        $size = [double](Get-TextRange $p).Font.Size
+        if ($size -lt 1000) { $sizes[$i] = $size }
+    }
+    return $sizes
+}
+
+# The footer Word shows on a page of a section, digits aside: a page number is not the footer.
+function Get-FooterOn {
+    param($Section, [int]$Page)
+    $kind = $WD_HEADER_FOOTER_PRIMARY
+    if ($Page -eq 1 -and $Section.PageSetup.DifferentFirstPageHeaderFooter) {
+        $kind = $WD_HEADER_FOOTER_FIRST_PAGE
+    } elseif ($Page % 2 -eq 0 -and $Section.PageSetup.OddAndEvenPagesHeaderFooter) {
+        $kind = $WD_HEADER_FOOTER_EVEN_PAGES
+    }
+    return ($Section.Footers($kind).Range.Text -replace "[`r`a0-9]", '').Trim()
+}
+
 # An edit Word refuses is a result of that scenario, not the end of the document's protocol.
 function Invoke-Scenario {
-    param($Word, $Source, [string]$Suffix, [scriptblock]$Edit, [scriptblock]$Verify, [switch]$Pdf)
+    param($Word, $Source, [string]$Name, [scriptblock]$Edit, [scriptblock]$Verify, [switch]$Pdf)
     try {
-        return Invoke-ScenarioOnce $Word $Source $Suffix $Edit $Verify -Pdf:$Pdf
+        return Invoke-ScenarioOnce $Word $Source $Name $Edit $Verify -Pdf:$Pdf
     } catch {
-        return New-Result $Suffix 'ERROR' $_.Exception.Message
+        return New-Result $Name 'ERROR' $_.Exception.Message
     }
 }
 
 function Invoke-ScenarioOnce {
-    param($Word, $Source, [string]$Suffix, [scriptblock]$Edit, [scriptblock]$Verify, [switch]$Pdf)
-    $copy = Join-Path $OutputDir ($Source.BaseName + '-' + $Suffix + '.docx')
+    param($Word, $Source, [string]$Name, [scriptblock]$Edit, [scriptblock]$Verify, [switch]$Pdf)
+    $copy = Join-Path $OutputDir ($Source.BaseName + '-' + $Name + '.docx')
     Copy-Item $Source.FullName $copy -Force
     $state = @{}
     $doc = $Word.Documents.Open($copy, [ref]$false, [ref]$false)
@@ -209,8 +261,9 @@ function Invoke-Protocol {
     param($Word, $Source)
     $results = @()
 
-    # 1. Lengthen the longest paragraph about twofold: it rewraps, nothing is lost, the block
-    #    after it moves down, and no exact row height hides what was added.
+    # 1. Lengthen the longest paragraph about twofold: nothing is lost, it grows, no exact row
+    #    height hides what was added, and it still ends above the block after it. A paragraph
+    #    beside a taller cell grows inside its row, and the row need not grow with it.
     $results += Invoke-Scenario $Word $Source 'lengthen-a-paragraph' -Pdf -Edit {
         param($doc, $state)
         $state.index = Find-BodyParagraph $doc
@@ -219,7 +272,6 @@ function Invoke-Protocol {
         $state.target = (Get-Text $p).Substring(0, 30)
         $state.extentBefore = Get-Extent $p
         $state.exactRow = Test-ExactRow $p.Range
-        $state.nextBefore = Get-NextPlace $doc $p
         (Get-TextRange $p).InsertAfter($ADDED)
     } -Verify {
         param($doc, $state)
@@ -227,16 +279,16 @@ function Invoke-Protocol {
         $kept = (Get-Text $p) -like '*whatever stands below it has to move down*'
         $extent = Get-Extent $p
         $next = Get-NextPlace $doc $p
-        $moved = $null -eq $state.nextBefore -or $next -gt $state.nextBefore
-        $detail = "'$($state.target)…' stands $([Math]::Round($state.extentBefore, 1)) -> $([Math]::Round($extent, 1))pt tall, block after it moved=$moved, exact row=$($state.exactRow)"
+        $above = $null -eq $next -or (Get-EndPlace $p) -le $next
+        $detail = "'$($state.target)…' stands $([Math]::Round($state.extentBefore, 1)) -> $([Math]::Round($extent, 1)) tall, ends above the block after it=$above, exact row=$($state.exactRow)"
         if (-not $kept) { return New-Result 'lengthen-a-paragraph' 'FAIL' "the added text was lost; $detail" }
         if ($state.exactRow) { return New-Result 'lengthen-a-paragraph' 'FAIL' "the paragraph sits in a row of exact height, which hides what it grows by; $detail" }
-        if ($extent -le $state.extentBefore -or -not $moved) { return New-Result 'lengthen-a-paragraph' 'FAIL' $detail }
+        if ($extent -le $state.extentBefore -or -not $above) { return New-Result 'lengthen-a-paragraph' 'FAIL' $detail }
         New-Result 'lengthen-a-paragraph' 'PASS' $detail
     }
 
-    # 2. Delete the second half of the same paragraph: it shrinks, and the block after it
-    #    does not stay where a taller paragraph would have left it.
+    # 2. Delete the second half of the same paragraph: it stands shorter, and the block after
+    #    it comes no lower.
     $results += Invoke-Scenario $Word $Source 'shorten-a-paragraph' -Edit {
         param($doc, $state)
         $state.index = Find-BodyParagraph $doc
@@ -254,19 +306,19 @@ function Invoke-Protocol {
         $extent = Get-Extent $p
         $next = Get-NextPlace $doc $p
         $notLower = $null -eq $state.nextBefore -or $next -le $state.nextBefore
-        $detail = "removed $($state.removed) characters, $([Math]::Round($state.extentBefore, 1)) -> $([Math]::Round($extent, 1))pt tall, block after it not lower=$notLower"
-        if ($state.charactersAfter -ge $state.charactersBefore -or -not $notLower) { return New-Result 'shorten-a-paragraph' 'FAIL' $detail }
+        $detail = "removed $($state.removed) characters, $([Math]::Round($state.extentBefore, 1)) -> $([Math]::Round($extent, 1)) tall, block after it not lower=$notLower"
+        if ($state.charactersAfter -ge $state.charactersBefore -or $extent -ge $state.extentBefore -or -not $notLower) { return New-Result 'shorten-a-paragraph' 'FAIL' $detail }
         New-Result 'shorten-a-paragraph' 'PASS' $detail
     }
 
-    # 3. Insert a paragraph after it: it joins the flow in the same style and size.
+    # 3. Press Enter after it and type: the new paragraph joins the flow in its style, and its
+    #    letters in the size and face of the letter typing continues from.
     $results += Invoke-Scenario $Word $Source 'insert-a-paragraph' -Edit {
         param($doc, $state)
         $state.index = Find-BodyParagraph $doc
         if ($state.index -lt 0) { return $false }
         $p = $doc.Paragraphs($state.index)
         $state.style = $p.Style.NameLocal
-        # What the text ends in is what typing after it continues: the last letter's size and face.
         $lastLetter = Get-TextRange $p
         $lastLetter.MoveStart(1, $lastLetter.End - $lastLetter.Start - 1) | Out-Null
         $state.size = $lastLetter.Font.Size
@@ -275,74 +327,71 @@ function Invoke-Protocol {
     } -Verify {
         param($doc, $state)
         $p = $doc.Paragraphs($state.index + 1)
+        $text = Get-TextRange $p
         $present = (Get-Text $p) -like 'A paragraph the protocol inserted*'
-        $hidden = $p.Range.Font.Hidden -ne 0
-        $detail = "style '$($state.style)' -> '$($p.Style.NameLocal)', size $($state.size) -> $($p.Range.Font.Size), font '$($state.font)' -> '$($p.Range.Font.Name)', hidden=$hidden"
+        $hidden = $text.Font.Hidden -ne 0
+        $detail = "style '$($state.style)' -> '$($p.Style.NameLocal)', size $($state.size) -> $($text.Font.Size), font '$($state.font)' -> '$($text.Font.Name)', hidden=$hidden"
         if (-not $present -or $state.paragraphsAfter -le $state.paragraphsBefore) { return New-Result 'insert-a-paragraph' 'FAIL' "the paragraph did not survive the save; $detail" }
-        if ($hidden -or $p.Style.NameLocal -ne $state.style -or $p.Range.Font.Size -ne $state.size -or $p.Range.Font.Name -ne $state.font) { return New-Result 'insert-a-paragraph' 'FAIL' $detail }
+        if ($hidden -or $p.Style.NameLocal -ne $state.style -or $text.Font.Size -ne $state.size -or $text.Font.Name -ne $state.font) { return New-Result 'insert-a-paragraph' 'FAIL' $detail }
         New-Result 'insert-a-paragraph' 'PASS' $detail
     }
 
-    # 4. Restyle the body through Normal: the body size — the most common size of the
-    #    document's text — has to follow. A run with a direct size swallows the edit.
+    # 4. Restyle the body through Normal by +2pt: the paragraphs whose letters are at the body
+    #    size — the size most of the document's letters are set in — grow by those 2pt. A run
+    #    with a size of its own swallows the edit.
     $results += Invoke-Scenario $Word $Source 'restyle-body-through-normal' -Edit {
         param($doc, $state)
-        $sizes = @{}
-        for ($i = 1; $i -le $doc.Paragraphs.Count; $i++) {
-            $p = $doc.Paragraphs($i)
-            $length = (Get-Text $p).Length
-            if ($length -eq 0) { continue }
-            $size = [double]$p.Range.Font.Size
-            if ($size -gt 1000) { continue }
-            $sizes[$size] = $sizes[$size] + $length
+        $sizes = Get-TextSizes $doc
+        $weights = @{}
+        foreach ($i in $sizes.Keys) {
+            $weights[$sizes[$i]] = $weights[$sizes[$i]] + (Get-Text $doc.Paragraphs($i)).Length
         }
-        $state.bodySize = ($sizes.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 1).Key
-        $state.normalBefore = $doc.Styles('Normal').Font.Size
-        $state.bodyParagraphs = @()
-        for ($i = 1; $i -le $doc.Paragraphs.Count; $i++) {
-            $p = $doc.Paragraphs($i)
-            if ((Get-Text $p).Length -gt 0 -and [double]$p.Range.Font.Size -eq $state.bodySize) { $state.bodyParagraphs += $i }
-        }
-        $doc.Styles('Normal').Font.Size = $state.normalBefore + 2
+        if ($weights.Count -eq 0) { return $false }
+        $state.bodySize = ($weights.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 1).Key
+        $state.bodyParagraphs = @($sizes.Keys | Where-Object { $sizes[$_] -eq $state.bodySize })
+        $state.normalBefore = $doc.Styles($WD_STYLE_NORMAL).Font.Size
+        $doc.Styles($WD_STYLE_NORMAL).Font.Size = $state.normalBefore + 2
     } -Verify {
         param($doc, $state)
         $followed = 0
         foreach ($i in $state.bodyParagraphs) {
-            if ([double]$doc.Paragraphs($i).Range.Font.Size -ne $state.bodySize) { $followed++ }
+            if ([double](Get-TextRange $doc.Paragraphs($i)).Font.Size -eq $state.bodySize + 2) { $followed++ }
         }
         $total = $state.bodyParagraphs.Count
         $share = if ($total -gt 0) { [Math]::Round(100.0 * $followed / $total) } else { 0 }
-        $detail = "body size $($state.bodySize)pt (Normal $($state.normalBefore)pt): $followed of $total paragraphs followed Normal (+2pt) ($share%), pages $($state.pagesBefore) -> $($state.pagesAfter)"
+        $detail = "body size $($state.bodySize)pt (Normal $($state.normalBefore)pt): $followed of $total paragraphs grew with Normal by 2pt ($share%), pages $($state.pagesBefore) -> $($state.pagesAfter)"
         if ($share -lt 90) { return New-Result 'restyle-body-through-normal' 'FAIL' $detail }
         New-Result 'restyle-body-through-normal' 'PASS' $detail
     }
 
-    # 5. Insert a row into the data table and delete one: the grid is a grid.
+    # 5. Insert a row into the data table and delete one: the grid is a grid. The table is found
+    #    again by its place among the document's tables, not by its shape, which the edit changes.
     $results += Invoke-Scenario $Word $Source 'insert-a-table-row' -Edit {
         param($doc, $state)
-        $table = Find-DataTable $doc
-        if (-not $table) { return $false }
+        $state.table = Find-DataTable $doc
+        if ($state.table -lt 0) { return $false }
+        $table = (Get-AllTables $doc)[$state.table]
         $state.rows = $table.Rows.Count
         $row = $table.Rows.Add($table.Rows($table.Rows.Count))
         $row.Cells(1).Range.Text = 'Protocol row'
     } -Verify {
         param($doc, $state)
         $present = $doc.Content.Text -like '*Protocol row*'
-        $table = Find-DataTable $doc
-        $detail = "rows $($state.rows) -> $($table.Rows.Count), tables $($state.tablesBefore) -> $($state.tablesAfter)"
-        if (-not $present -or $table.Rows.Count -ne $state.rows + 1 -or $state.tablesAfter -ne $state.tablesBefore) { return New-Result 'insert-a-table-row' 'FAIL' $detail }
+        $rows = (Get-AllTables $doc)[$state.table].Rows.Count
+        $detail = "rows $($state.rows) -> $rows, tables $($state.tablesBefore) -> $($state.tablesAfter)"
+        if (-not $present -or $rows -ne $state.rows + 1 -or $state.tablesAfter -ne $state.tablesBefore) { return New-Result 'insert-a-table-row' 'FAIL' $detail }
         New-Result 'insert-a-table-row' 'PASS' $detail
     }
     $results += Invoke-Scenario $Word $Source 'delete-a-table-row' -Edit {
         param($doc, $state)
-        $table = Find-DataTable $doc
-        if (-not $table) { return $false }
+        $state.table = Find-DataTable $doc
+        if ($state.table -lt 0) { return $false }
+        $table = (Get-AllTables $doc)[$state.table]
         $state.rows = $table.Rows.Count
         $table.Rows($table.Rows.Count - 1).Delete()
     } -Verify {
         param($doc, $state)
-        $table = Find-DataTable $doc
-        $rows = if ($table) { $table.Rows.Count } else { 0 }
+        $rows = (Get-AllTables $doc)[$state.table].Rows.Count
         $detail = "rows $($state.rows) -> $rows, tables $($state.tablesBefore) -> $($state.tablesAfter)"
         if ($rows -ne $state.rows - 1 -or $state.tablesAfter -ne $state.tablesBefore) { return New-Result 'delete-a-table-row' 'FAIL' $detail }
         New-Result 'delete-a-table-row' 'PASS' $detail
@@ -366,20 +415,20 @@ function Invoke-Protocol {
         New-Result 'continue-a-list' 'PASS' $detail
     }
 
-    # 7. Type at the end of the document until it runs onto a new page: what was typed is
-    #    visible text on lines it fits, the page count follows, and the new page carries the
-    #    document's footer — its page numbers aside.
+    # 7. Type at the end of the document until it runs onto a new page, as a person does: the
+    #    caret Word gives the document's end, Enter first where the last paragraph holds text.
+    #    What was typed stands below everything else, outside any table, visible, on lines it
+    #    fits, and the page count follows. The footer the new page shows is recorded.
     $results += Invoke-Scenario $Word $Source 'add-a-page' -Pdf -Edit {
         param($doc, $state)
-        $section = $doc.Sections($doc.Sections.Count)
-        $state.footer = ($section.Footers($WD_HEADER_FOOTER_PRIMARY).Range.Text -replace "[`r`a0-9]", '').Trim()
+        $last = $doc.Paragraphs($doc.Paragraphs.Count)
         $end = $doc.Content
         $end.Collapse(0)
         $end.Select()
         $selection = $doc.ActiveWindow.Selection
         foreach ($i in 1..70) {
             # Enter between lines, not after the last: an empty paragraph could end a page of its own.
-            if ($i -gt 1) { $selection.TypeParagraph() }
+            if ($i -gt 1 -or (Get-Text $last).Length -gt 0) { $selection.TypeParagraph() }
             $selection.TypeText("Protocol line $i typed to run the document onto a new page.")
         }
     } -Verify {
@@ -389,20 +438,22 @@ function Invoke-Protocol {
         for ($i = $doc.Paragraphs.Count; $i -ge [Math]::Max(1, $doc.Paragraphs.Count - 80) -and -not $typed; $i--) {
             $range = $doc.Paragraphs($i).Range
             $range.TextRetrievalMode.IncludeHiddenText = $true
-            if ($range.Text -like 'Protocol line 70 typed*') { $typed = $doc.Paragraphs($i) }
+            if ($range.Text -match 'Protocol line 70 typed') { $typed = $doc.Paragraphs($i) }
         }
         if (-not $typed) { return New-Result 'add-a-page' 'FAIL' 'the typed lines did not survive the save' }
-        $lastPage = $typed.Range.Information($WD_ACTIVE_END_PAGE)
-        $hidden = $typed.Range.Font.Hidden -ne 0
-        $size = $typed.Range.Font.Size
+        if ($typed.Range.Information($WD_WITHIN_TABLE)) {
+            return New-Result 'add-a-page' 'FAIL' "what was typed at the end went into a table cell, not below the table; pages $($state.pagesBefore) -> $($state.pagesAfter)"
+        }
+        $text = Get-TextRange $typed
+        $lastPage = $text.Information($WD_ACTIVE_END_PAGE)
+        $hidden = $text.Font.Hidden -ne 0
+        $size = $text.Font.Size
         $format = $typed.Format
-        # wdLineSpaceExactly is 4: an exact line shorter than its text cuts the letters.
-        $squeezed = $format.LineSpacingRule -eq 4 -and $format.LineSpacing -lt $size
-        $section = $doc.Sections($doc.Sections.Count)
-        $footer = ($section.Footers($WD_HEADER_FOOTER_PRIMARY).Range.Text -replace "[`r`a0-9]", '').Trim()
-        $detail = "pages $($state.pagesBefore) -> $($state.pagesAfter), last typed line on page $lastPage at ${size}pt, hidden=$hidden, squeezed into $($format.LineSpacing)pt lines=$squeezed, footer kept=$($footer -eq $state.footer)"
+        $squeezed = $format.LineSpacingRule -eq $WD_LINE_SPACE_EXACTLY -and $format.LineSpacing -lt $size * $EXACT_LINE_SHARE
+        $footer = Get-FooterOn $doc.Sections($doc.Sections.Count) $lastPage
+        $detail = "pages $($state.pagesBefore) -> $($state.pagesAfter), last typed line on page $lastPage at ${size}pt, hidden=$hidden, exact $($format.LineSpacing)pt lines too short=$squeezed, footer there '$footer'"
         if ($hidden -or $squeezed) { return New-Result 'add-a-page' 'FAIL' "what was typed at the end cannot be read; $detail" }
-        if ($state.pagesAfter -le $state.pagesBefore -or $lastPage -ne $state.pagesAfter -or $footer -ne $state.footer) { return New-Result 'add-a-page' 'FAIL' $detail }
+        if ($state.pagesAfter -le $state.pagesBefore -or $lastPage -ne $state.pagesAfter) { return New-Result 'add-a-page' 'FAIL' $detail }
         New-Result 'add-a-page' 'PASS' $detail
     }
 
@@ -460,7 +511,7 @@ try {
     version         = $wordVersion
     os              = [System.Environment]::OSVersion.VersionString
     ranAt           = (Get-Date).ToString('o')
-    visualJudgement = 'NOT_RUN — whether an edited page still looks right is read from the PDFs beside the copies'
+    visualJudgement = 'NOT_RUN: whether an edited page still looks right is read from the PDFs beside the lengthened and new-page copies'
     documents       = $documents
 } | ConvertTo-Json -Depth 6 | Set-Content -Path (Join-Path $OutputDir 'edit-protocol-corpus.json') -Encoding utf8
 

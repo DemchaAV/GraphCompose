@@ -166,7 +166,7 @@ class DocxMultiSectionTest {
             int table = body.indexOf(document.getTables().get(0));
             XWPFParagraph carrier = (XWPFParagraph) body.get(table + 1);
             assertThat(carrier.getCTP().getPPr())
-                    .as("the section ends straight after the table")
+                    .as("the paragraph after the table has properties to carry")
                     .isNotNull();
             assertThat(carrier.getCTP().getPPr().isSetSectPr()).isTrue();
             assertThat(DocxTwips.of(carrier.getCTP().getPPr().getSpacing().getLine()))

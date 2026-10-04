@@ -150,6 +150,25 @@ class DocxVerticalSpacingTest {
     }
 
     @Test
+    void aPageBackgroundTakesNoRoomFromTheClosingParagraph() throws Exception {
+        // A background fills the page to its foot, under the content: it is the layout's own
+        // fragment, not the flow's, so the room below the table is still the page's.
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(com.demcha.compose.document.style.DocumentInsets.of(20)).create()) {
+            session.pageBackground(com.demcha.compose.document.style.DocumentColor.rgb(240, 244, 248));
+            session.pageFlow(page -> page
+                    .addRow(row -> row.addParagraph(p -> p.text("Left")).addParagraph(p -> p.text("Right"))));
+            try (XWPFDocument document = new XWPFDocument(
+                    new java.io.ByteArrayInputStream(session.export(new DocxSemanticBackend())))) {
+                var body = document.getBodyElements();
+                var properties = ((XWPFParagraph) body.get(body.size() - 1)).getCTP().getPPr();
+                assertThat(properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetLineRule())
+                        .as("an ordinary closing paragraph").isTrue();
+            }
+        }
+    }
+
+    @Test
     void aDocumentWhoseTableLeavesRoomBelowEndsWithAnOrdinaryParagraph() throws Exception {
         // The paragraph after the closing table is where a reader types to add to the document.
         // A point tall with its mark hidden, what Word's editing protocol typed there was hidden

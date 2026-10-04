@@ -843,8 +843,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * section that wrote nothing into the body at all — an empty session, or one of shapes
      * this export drops — whose last paragraph is still the one closing the section before
      * it. Handing that paragraph these properties would overwrite the earlier section's,
-     * folding two sections into one. The added paragraph is one invisible point tall, so it
-     * cannot push a full page onto a page of its own.</p>
+     * folding two sections into one. A section ending in a table already ends with the paragraph
+     * {@link #dropTheSpaceAtTheEnd} writes after it, which carries them; one that wrote nothing
+     * gets an added paragraph a point tall, so it cannot push a full page onto a page of its
+     * own.</p>
      */
     private void endSection(XWPFDocument document) {
         CTBody body = document.getDocument().getBody();
@@ -933,7 +935,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Hides the mark of the empty paragraph a document ending in a table must end with.
      *
-     * <p>Word ends a document on a paragraph, so one follows a closing table, a point tall.
+     * <p>Word ends a document on a paragraph, so one follows a closing table, a point tall where
+     * the last page has no room for an ordinary one ({@link #dropTheSpaceAtTheEnd}).
      * Where the table ends a point from the page's foot, that point does not fit, and the
      * paragraph opened a page of its own: {@code ModernReceipt}'s QR code ends 0.5pt above the
      * margin, and once its panels held the page's height the receipt ran to a blank second page
@@ -4579,10 +4582,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (room >= roomForAClosingLine()) {
                 return closing;
             }
-            report.add(DocxExportReport.Severity.APPROXIMATED, "closing paragraph", null,
+            report.add(DocxExportReport.Severity.APPROXIMATED, "closing paragraph",
+                    sectioned ? "section " + (sectionIndex + 1) : null,
                     "the last page has no room for a line below the closing table, so the paragraph "
-                    + "after it is a point tall with its mark hidden: text typed at the end of the "
-                    + "document takes that formatting, and is hidden until it is given a style");
+                    + "after it is a point tall — at the end of the document, its mark hidden where it "
+                    + "holds nothing else: text typed there takes that formatting, on point-tall lines "
+                    + "or hidden");
             return collapsed(closing);
         }
         return null;
@@ -4607,9 +4612,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * How far above its bottom margin a section's content ends on its last page, in points; 0
-     * where there is no layout to say. Only the content counts: a page's backgrounds, zones and
-     * fields — fragments under a path of the layout's own, starting {@code @} — are drawn
-     * elsewhere and take no room in the flow.
+     * where there is no layout to say. Only the content counts: a page's backgrounds, its zones
+     * with the fields in them and a timeline's rail — fragments under a path of the layout's
+     * own, starting {@code @} — are drawn elsewhere and take no room in the flow.
      */
     private static double roomBelowTheFlow(com.demcha.compose.document.layout.LayoutGraph graph) {
         if (graph == null || graph.totalPages() <= 0) {

@@ -27,6 +27,33 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DocxParagraphMarkTest {
 
     @Test
+    void aParagraphsMarkCarriesWhatItsTextEndsInSoEnterContinuesIt() throws Exception {
+        // Word gives the paragraph Enter opens its mark's formatting. With the mark left at the
+        // document's own, the new paragraph's letters came out another size: 9pt after 10.5pt
+        // in NavySidebar, 14pt after 11pt in ClassicInvoice. Lines written exact are included:
+        // the mark does not grow them, but it is what typing continues.
+        DocumentColor accent = DocumentColor.rgb(30, 90, 160);
+        try (XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addParagraph(p -> p
+                        .inlineText("Plain, then ")
+                        .inlineText("bold and coloured", DocumentTextStyle.builder().size(11)
+                                .decoration(com.demcha.compose.document.style.DocumentTextDecoration.BOLD)
+                                .color(accent).build())))) {
+            XWPFParagraph paragraph = document.getParagraphs().stream()
+                    .filter(p -> p.getText().startsWith("Plain")).findFirst().orElseThrow();
+            CTPPr properties = paragraph.getCTP().getPPr();
+
+            assertThat(properties.getSpacing().getLineRule()).as("an exact line").hasToString("exact");
+            var mark = properties.getRPr();
+            assertThat(mark.getSzArray(0).getVal()).as("its last run's size, half points").hasToString("22");
+            assertThat(mark.sizeOfBArray()).as("bold, as its last run").isEqualTo(1);
+            assertThat(mark.getColorArray(0).getVal()).as("in its colour")
+                    .isEqualTo(paragraph.getRuns().get(paragraph.getRuns().size() - 1).getCTR().getRPr().getColorArray(0).getVal());
+        }
+    }
+
+    @Test
     void aHairlineOfTextInACellIsNotAsTallAsBodyText() throws Exception {
         // A heading rule drawn as a filled cell holding half-point text: with the mark at the
         // document's size, the cell came out a line of body text tall.
@@ -85,7 +112,13 @@ class DocxParagraphMarkTest {
 
             assertThat(properties.getSpacing().getLineRule()).hasToString("exact");
             assertThat(((Number) properties.getSpacing().getLine()).intValue()).as("the face's ascent and descent, no leading").isBetween(16 * 20, 24 * 20);
-            assertThat(properties.isSetRPr()).as("an exact line needs no mark").isFalse();
+            // An exact line does not grow for its mark, but Enter at its end continues from it.
+            assertThat(properties.getRPr().getSzArray(0).getVal())
+                    .as("the mark in the text's size, half points").hasToString("40");
+            assertThat(properties.getRPr().getRFontsArray(0).getAscii())
+                    .as("and in its face, as its run names it")
+                    .isEqualTo(document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0)
+                            .getRuns().get(0).getFontFamily());
         }
     }
 

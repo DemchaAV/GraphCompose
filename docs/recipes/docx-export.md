@@ -452,12 +452,15 @@ How it lands:
 - **Width.** The table is as wide as the layout placed the container, which is as wide as
   its content when the content is short, plus a point of slack so an editor setting the
   text in its own face keeps the page's line breaks.
-- **Borders.** The page centres a border on the panel's edge; Word keeps a cell's border
-  inside the cell. Half of each border comes off that side's margin and the table widens
-  by the other half, so the text and the border land where the page draws them. A panel in
-  the body is the exception on its left: both editors centre a body table's left border on
-  its edge, as the page does, and start its text the cell's margin past that edge, so its
-  left margin is the whole padding and the table is no wider on that side.
+- **Borders.** The page centres a border on the panel's edge; in a cell, Word keeps a cell's
+  border inside the cell. Half of each border comes off that side's margin and the table
+  widens by the other half, so the text and the border land where the page draws them. A
+  panel in the body is the exception on its left: Word 16 and LibreOffice on Windows centre a
+  body table's left border on its edge, as the page does, and start its text at its indent,
+  the margin past that edge, so its left margin is the whole padding and the table is no
+  wider on that side. An older LibreOffice — the build on the Linux CI — reads the indent as
+  the table's edge, its text a margin further in, and sets such a panel's text about a
+  padding right of the page's.
   Measured on `ModernInvoice`'s 4pt accent, half of it taken off the margin stood every line in
   the panel 2pt left of the page's, in Word and LibreOffice alike.
 - **Indent.** In the body the table's `w:tblInd` places its cell's text, the padding in, and

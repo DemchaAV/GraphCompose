@@ -192,6 +192,11 @@ class DocxContainerPaintTest {
             assertThat(DocxTwips.of(nested.getCTTbl().getTblPr().getTblInd().getW()))
                     .as("its margin, less the half of the border outside its edge")
                     .isEqualTo(4 * 20L);
+            // In a cell the editor keeps the border inside the cell: the padding less half of it,
+            // unlike a panel in the body.
+            assertThat(DocxTwips.of(nested.getRow(0).getCell(0).getCTTc().getTcPr().getTcMar().getLeft().getW()))
+                    .as("the padding less half the 2pt border")
+                    .isEqualTo(7 * 20L);
         }
     }
 

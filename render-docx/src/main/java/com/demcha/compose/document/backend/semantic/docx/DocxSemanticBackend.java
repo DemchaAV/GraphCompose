@@ -3522,15 +3522,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Writes a painting container as a one-cell table; see {@link #writeContainerChildren}.
      *
      * <p>The geometry is the page's, translated. The page centres a panel's border on its
-     * edge and measures the padding from the edge; the editor keeps a cell's border inside
-     * the cell and starts the cell's margin after it. So each margin is the padding less half
-     * that side's border, and the table is wider than the panel by half of each side border:
-     * the text then lands the padding in from the panel's edge, and the border straddles the
-     * edge, as on the page. A panel in the body is the exception on its left: both editors
-     * centre a body table's left border on its edge and start its text the margin past it, so
-     * its left margin is the whole padding and the table no wider on that side — measured on
+     * edge and measures the padding from the edge; in a cell, the editor keeps a cell's border
+     * inside the cell and starts the cell's margin after it. So each margin is the padding less
+     * half that side's border, and the table is wider than the panel by half of each side
+     * border: the text then lands the padding in from the panel's edge, and the border
+     * straddles the edge, as on the page. A panel in the body is the exception on its left:
+     * Word 16 and LibreOffice on Windows centre a body table's left border on its edge and
+     * start its text at its indent, the margin past that edge, so its left margin is the whole
+     * padding, its indent the text's place and the table no wider on that side — measured on
      * {@code ModernInvoice}'s 4pt accent, half of it taken off stood every line 2pt left of the
-     * page's, in Word and LibreOffice alike.</p>
+     * page's in both. LibreOffice's build on the Linux CI reads the indent as the table's edge
+     * instead, its text a margin further in: there those panels stood about a padding right of
+     * the page's already, and stand the border's width further.</p>
      *
      * <p>The table sits where the container's margin box starts, the enclosing insets and its
      * own left margin in. A table in the body is placed by its first cell's text, so its
@@ -3595,11 +3598,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double width = panelWidth(node);
 
         double edge = insetLeft + margin.left();
-        // In the body, both editors centre the table's left border on its edge, as the page
-        // centres it on the panel's, and start its text the cell's margin past that edge: the
-        // indent places the text, the padding in, and the margin is the whole padding. Measured
-        // on ModernInvoice's 4pt accent, half of it taken off both stood every line in the panel
-        // 2pt left of the page's, in Word and LibreOffice alike.
+        // In the body the indent places the text, the padding in, and the margin is the whole
+        // padding (see writePanel).
         boolean inTheBody = currentCell == null;
         double indent = inTheBody ? edge + padding.left() : edge - halfLeft;
         // In a cell, Word starts a nested table no further left than the cell's text, draws its

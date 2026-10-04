@@ -3073,9 +3073,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * sets its text, as {@link #measureAtWordsSize} does a paragraph's.
      *
      * <p>An item in the page's prefix column has exactly the page's measure, and Word sets a
-     * size the page gives to the tenth at the half point: {@code TerracottaRail}'s 8.6pt
-     * items, set at 8.5, took onto a line a word the page breaks onto the next, and everything
-     * under them stood 11.5pt high. Held a point short, as a paragraph's is, and never short of
+     * size the page gives to the tenth at the half point: measured in that column alone,
+     * {@code TerracottaRail}'s 8.6pt items, set at 8.5, took onto a line a word the page breaks
+     * onto the next, and everything under them stood 11.5pt high. Held a point short, as a
+     * paragraph's is, and never short of
      * its widest line as Word sets it and a point more, which would take a word off a line the
      * page fills to the point; an item of one line broke no word, and is given room and never
      * narrowed, and so is one whose lines are not known.</p>
@@ -3107,13 +3108,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
-        if (!properties.isSetInd()) {
-            // A paragraph's own w:ind takes its level's place: the column comes with it.
-            CTInd indent = properties.addNewInd();
-            indent.setLeft(BigInteger.valueOf(column));
-            indent.setHanging(BigInteger.valueOf(column));
-        }
-        CTInd indent = properties.getInd();
+        // The right side alone: Word and LibreOffice take each side of w:ind on its own, so the
+        // item keeps its level's column and follows the level when an editor changes it.
+        CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
         long right = twipsOf(indent.isSetRight() ? indent.getRight() : null);
         indent.setRight(BigInteger.valueOf(right - Math.round(more * POINT_TO_TWIP)));
     }

@@ -19,10 +19,11 @@ follow semantic versioning; release dates are ISO 8601.
   same proportion, less a point and never short of its widest line as Word sets it, so it
   breaks at the page's words: in the page's column alone,
   `TerracottaRail`'s 8.6pt items, set at 8.5, took a word onto a line the page breaks it from,
-  and the column under them rose 11.5pt. Lines more than 2pt off across fall from 72 to 49 in
-  Word and from 77 to 54 in LibreOffice; nothing moves down, and four lines more are found in
-  `MidnightNavy` in both editors and in `OrangeOps` in Word, their items now breaking as the
-  page breaks them.
+  and the column under them rose 11.5pt. The item's own `w:ind` is its right side alone, so it
+  keeps its level's column. Lines more than 2pt off across fall from 72 to 49 in Word, and in
+  LibreOffice from 77 to 54 on Windows and 358 to 335 on Linux; nothing moves down, and four
+  lines more are found in `MidnightNavy` in both editors and in `OrangeOps` in Word and on
+  Linux, their items now breaking as the page breaks them.
 - **A panel with a left border in a DOCX cell no longer widens the cell in Word.** A panel's
   table hangs half its left border left of the text it is written in, so both editors put its
   text where the page does. In a cell, Word starts the table half that border in from the

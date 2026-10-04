@@ -56,7 +56,7 @@ class DocxListMarkerGapTest {
             assertThat(column[0]).as("the bullet's width and the gap").isGreaterThan(Math.round(GAP * 20));
             long[] prefix = levelZero(stated);
             assertThat(prefix[0]).as("a list without the flag takes the page's prefix of spaces")
-                    .isEqualTo(prefix[1]).isNotEqualTo(column[0]);
+                    .isEqualTo(prefix[1]).isNotEqualTo(column[0]).isNotEqualTo(180);
             assertThat(DocxListLevels.markerFollowedByASpace(stated)).as("its marker a space ahead").isTrue();
             assertThat(DocxListLevels.markerFollowedByASpace(wide)).as("a column's marker a tab ahead").isFalse();
         }

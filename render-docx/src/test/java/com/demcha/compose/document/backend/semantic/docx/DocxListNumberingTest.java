@@ -349,9 +349,10 @@ class DocxListNumberingTest {
 
     @Test
     void anItemInThePagesPrefixColumnIsMeasuredAtWordsSize() throws Exception {
-        // TerracottaRail's 8.6pt items, set at 8.5, took onto a line a word the page breaks onto
-        // the next. Narrowed as much as Word sets them narrower, and a point; widened where Word
-        // sets them wider; an item of one line is never narrowed.
+        // In the page's column alone, TerracottaRail's 8.6pt items, set at 8.5, took onto a line a
+        // word the page breaks onto the next. Narrowed as much as Word sets them narrower, and a
+        // point; widened where Word sets them wider; an item of one line is never narrowed. Only
+        // the right side is the item's own: its column stays the level's.
         String wrapping = "Coordinated with contractors and consultants to maintain programme, budget and design "
                           + "intent across every stage of the work, from the first sketch to the last handover.";
         for (double size : new double[] {8.6, 8.4}) {
@@ -364,6 +365,8 @@ class DocxListNumberingTest {
                 var short_ = items.get(1).getCTP().getPPr().getInd();
                 double right = DocxTwips.of(long_.getRight()) / 20.0;
 
+                assertThat(long_.isSetLeft() || long_.isSetHanging() || long_.isSetFirstLine())
+                        .as("no column of its own at %spt, so it follows its level", size).isFalse();
                 if (size < 8.5) {
                     assertThat(right).as("widened at least as Word sets it wider, less a point")
                             .isLessThanOrEqualTo(proportional + 0.05);

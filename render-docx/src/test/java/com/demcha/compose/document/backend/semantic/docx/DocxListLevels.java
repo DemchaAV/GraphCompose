@@ -5,7 +5,10 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTLvl;
 
 import java.math.BigInteger;
 
-/** Reads a list definition's top level back from an exported document. */
+/**
+ * Reads a list definition's top level back from an exported document: the first one written,
+ * which is the first list the export made a Word list.
+ */
 final class DocxListLevels {
 
     private DocxListLevels() {

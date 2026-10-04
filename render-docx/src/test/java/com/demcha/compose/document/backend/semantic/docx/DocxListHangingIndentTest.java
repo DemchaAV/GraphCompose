@@ -171,7 +171,7 @@ class DocxListHangingIndentTest {
             }
             List<Integer> prefix = indentsOf(without);
             assertThat(prefix.get(0)).as("the page's prefix of spaces, the marker a space ahead")
-                    .isEqualTo(prefix.get(1));
+                    .isEqualTo(prefix.get(1)).isNotEqualTo(180);
             assertThat(DocxListLevels.markerFollowedByASpace(without)).isTrue();
             List<Integer> measured = indentsOf(withFlag);
             assertThat(measured.get(0)).as("the column the layout set the bullet in, the 16pt gap and the bullet")

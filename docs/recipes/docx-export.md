@@ -399,7 +399,9 @@ Word draws the marker and its space in. Where Word sets the list's size to the h
 wider or narrower than the page's, an item that wraps is given a right indent that grows or
 shrinks its measure in the same proportion, less a point and never short of its widest line
 as Word sets it and a point more, so it breaks at the page's words; an item of one line, and
-one whose lines the layout does not report, is only given room. A list built as a tree of
+one whose lines the layout does not report — every item of a list one of whose items runs
+onto the next page —, is only given room. The item's own indent is its right side alone, so
+it keeps its level's column and follows the level when it is edited. A list built as a tree of
 items is laid out flattened, its markers in its text, and keeps the stated column.
 
 A list that nests items keeps stated columns throughout — its nested levels are not

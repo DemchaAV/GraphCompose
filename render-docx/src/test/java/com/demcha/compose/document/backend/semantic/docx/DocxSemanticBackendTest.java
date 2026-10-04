@@ -157,28 +157,32 @@ class DocxSemanticBackendTest {
             assertThat(paragraphs).hasSize(2);
 
             // The marker still reads the same down the whole list, and the
-            // item's text is all there. The geometry hangingIndent(true) asks
-            // for has no Word analogue; which piece of an item is bold does.
-            assertThat(paragraphs.get(0).getText()).isEqualTo("- Plain item");
+            // item's text is all there, a tab after the marker to the column the
+            // layout set it in; which piece of an item is bold is kept as well.
+            assertThat(paragraphs.get(0).getText()).isEqualTo("-\tPlain item");
             XWPFParagraph rich = paragraphs.get(1);
-            assertThat(rich.getText()).isEqualTo("- Status: pending");
+            assertThat(rich.getText()).isEqualTo("-\tStatus: pending");
             assertThat(rich.getRuns().stream().map(XWPFRun::text).toList())
-                    .as("the marker leads in the list's own style, then one run each")
-                    .containsExactly("- ", "Status: ", "pending");
+                    .as("the marker leads in the list's own style, a tab, then one run each")
+                    .containsExactly("-", "\t", "Status: ", "pending");
             assertThat(rich.getRuns().stream().map(XWPFRun::isBold).toList())
                     .as("and only the bold run is bold")
-                    .containsExactly(false, true, false);
+                    .containsExactly(false, false, true, false);
         }
     }
 
     @Test
-    void aRichListItemExportsTheSameWhetherOrNotTheListOptedIntoMarkerGeometry() throws Exception {
-        // hangingIndent is fixed-layout geometry, and the semantic export lays
-        // nothing out — so unlike the PDF path, which needs the opt-in before it
-        // can carry runs at all, this one is indifferent to it. Word owns the
-        // layout here and can hold a run's style either way.
-        assertThat(runStructure(richListDocx(false)))
-                .isEqualTo(runStructure(richListDocx(true)));
+    void aRichListItemOptedIntoMarkerGeometryTabsToItsColumnAndKeepsItsRunsOtherwise() throws Exception {
+        // With the opt-in the layout sets the marker in a column of its own, and the item
+        // follows it with a tab to that column; without it, with the space it has always had.
+        // Which runs the item is made of, and their styles, are the same either way.
+        List<String> plain = runStructure(richListDocx(false));
+        List<String> opted = runStructure(richListDocx(true));
+        assertThat(plain).contains("- Plain item|bold=false", "- |bold=false");
+        assertThat(opted).contains("Plain item|bold=false", "-|bold=false", "\t|bold=false")
+                .doesNotContain("- Plain item|bold=false", "- |bold=false");
+        assertThat(opted.stream().filter(run -> run.startsWith("Status") || run.startsWith("pending")).toList())
+                .isEqualTo(plain.stream().filter(run -> run.startsWith("Status") || run.startsWith("pending")).toList());
     }
 
     @Test

@@ -413,19 +413,20 @@ public final class ListBuilder {
      * no marker — contributes no row, so its children hang at the level it would
      * have occupied rather than one deeper.</p>
      *
-     * <p><b>Fixed-layout, but for a drawn marker's gap.</b> This is geometry, and
-     * it applies to the backends that do their own layout — PDF and PPTX. The semantic DOCX
-     * export writes a Word paragraph per item and lets Word lay it out, so it
-     * keeps the marker in the item's text: the same paragraphs, the same text,
-     * the same nesting. Word positions content at absolute indents and has no
-     * way to be told "start the text one marker width plus a gap from here", and
-     * sets a text marker in its own widths. Only a top-level item whose marker is
-     * the list's and a picture alone — a dot, an icon — has its first line's text
-     * placed where the layout puts it, a tab to the marker's width and the gap past
-     * the item's start, where the picture with its edges clears that stop: Word
-     * draws a picture at the size it is written. A document exported
-     * both ways is otherwise identical, and differs in how its wrapped lines line
-     * up.</p>
+     * <p><b>In DOCX, the top level's column.</b> This is geometry, and the
+     * backends that do their own layout — PDF and PPTX — apply it in full. The
+     * semantic DOCX export writes a Word paragraph per item and lets Word lay it
+     * out: the same paragraphs, the same text, the same nesting. Word positions
+     * content at absolute indents and has no way to be told "start the text one
+     * marker width plus a gap from here", so the export gives the top level the
+     * column the layout set its marker in — the marker's width and the gap — as
+     * the list's indent and hanging, or as a tab and a hanging indent where the
+     * list is not a Word list. It does so where the gap covers what Word may set
+     * the marker wider: a picture, its edges included, or text at its size to the
+     * half point, half a point clear — Word setting it in the page's face where
+     * the export embeds it, or in a standard face set in the same widths. A list
+     * that nests items, a marker made of runs, and a marker the gap does not
+     * clear keep stated columns.</p>
      *
      * @param hangingIndent whether items use marker/content geometry
      * @return this builder
@@ -446,11 +447,9 @@ public final class ListBuilder {
      * <p>Real geometry, never spaces. A markerless item takes no gap at all,
      * rather than an unexplained inset.</p>
      *
-     * <p>In the semantic DOCX export, for the reason given on
-     * {@link #hangingIndent(boolean)}, it places only the first line's text of a
-     * top-level item whose marker is a picture alone; after a marker of text it is
-     * a space, rather than an approximation that would render as a different
-     * number than the one asked for.</p>
+     * <p>In the semantic DOCX export it sets the top level's marker column, as
+     * {@link #hangingIndent(boolean)} describes, where it covers what Word may set
+     * the marker wider; it never becomes characters in the text.</p>
      *
      * @param markerGap gap in points; {@code 0} is allowed
      * @return this builder

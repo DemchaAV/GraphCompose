@@ -332,6 +332,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // two lists reading the same are still two lists.
     private final java.util.Map<com.demcha.compose.document.node.ListNode, BigInteger>
             listNumbering = new java.util.IdentityHashMap<>();
+    // The marker column, in twips, of the list definitions whose top level takes the page's.
+    private final java.util.Map<BigInteger, Long> measuredColumns = new java.util.HashMap<>();
     // What the engine already measured for the nodes being written: line heights and
     // resolved column widths. Empty when the export was handed no layout.
     private DocxLayoutMetrics layout = DocxLayoutMetrics.EMPTY;
@@ -700,6 +702,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         tablesCells.clear();
         picturesDrawnBeside.clear();
         listNumbering.clear();
+        measuredColumns.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
         headingLevels = headingLevelsIn(whole);
@@ -2649,10 +2652,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Word''s marker column, in twips. Chosen to sit close to the single space the text
-     * path used rather than to Word''s much wider default, and stated as the convention it
-     * is: measuring the marker would need a font runtime, which is the same thing
-     * {@code hangingIndent} is missing and the reason its gap is unrepresentable here.
+     * Word''s marker column, in twips, where the layout gives none ({@link #measuredColumn}).
+     * Chosen to sit close to the single space the text path used rather than to Word''s much
+     * wider default, and stated as the convention it is.
      */
     private static final int LIST_HANGING_TWIPS = 180;
 
@@ -2677,11 +2679,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * failure this repairs. Attaching {@code w:numPr} makes Word own the marker, so the
      * list continues, renumbers and demotes the way a reader expects.</p>
      *
-     * <p>This does not fix {@code markerGap}, and does not claim to. Word places content
-     * at an absolute indent and cannot be told "one marker width plus a gap from here";
-     * real numbering was measured against that requirement and rejected for it, and it is
-     * still rejected. What it buys is behaviour, and it costs geometry: the marker column
-     * is a stated constant rather than the measured gap.</p>
+     * <p>Word places content at an absolute indent and cannot be told "one marker width plus a
+     * gap from here". The top level's column is the layout's where it set the marker in one
+     * and the gap covers what Word may set the marker wider ({@link #measuredColumn}); every
+     * other level's, and every level of a list without that measure, is a stated constant.</p>
      *
      * @return the list definition to attach, or {@code null} when the list has to stay
      *         marker-prefixed text
@@ -2696,6 +2697,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (levels == null) {
             return null;
         }
+        long column = measuredColumn(list, levels.get(0));
         CTAbstractNum abstractNum = CTAbstractNum.Factory.newInstance();
         abstractNum.setAbstractNumId(BigInteger.valueOf(listNumbering.size()));
         for (int depth = 0; depth < levels.size(); depth++) {
@@ -2709,15 +2711,44 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             level.addNewLvlText().setVal(levels.get(depth));
             level.addNewLvlJc().setVal(STJc.LEFT);
             CTInd indent = level.addNewPPr().addNewInd();
-            indent.setLeft(BigInteger.valueOf(
-                    (long) LIST_HANGING_TWIPS + (long) LIST_NESTING_STEP_TWIPS * depth));
-            indent.setHanging(BigInteger.valueOf(LIST_HANGING_TWIPS));
+            boolean measured = depth == 0 && column > 0;
+            indent.setLeft(BigInteger.valueOf(measured
+                    ? column : (long) LIST_HANGING_TWIPS + (long) LIST_NESTING_STEP_TWIPS * depth));
+            indent.setHanging(BigInteger.valueOf(measured ? column : LIST_HANGING_TWIPS));
+            if (measured && list.textStyle() != null) {
+                // Word draws the marker in the paragraph mark's style, and an item at an exact
+                // line leaves its mark the document's: a list set smaller, or in another face,
+                // would get a marker wider than the one the column was measured against.
+                applyDefaultRunProperties(level.addNewRPr(), list.textStyle());
+            }
         }
         BigInteger abstractId = document.createNumbering()
                 .addAbstractNum(new org.apache.poi.xwpf.usermodel.XWPFAbstractNum(abstractNum));
         BigInteger numId = document.getNumbering().addNum(abstractId);
         listNumbering.put(list, numId);
+        if (column > 0) {
+            measuredColumns.put(numId, column);
+        }
         return numId;
+    }
+
+    /**
+     * The marker column a list's top level takes as the page sets it, in twips, or 0 where it
+     * keeps the stated one: the marker's width and markerGap, where the layout set the marker
+     * in a column of its own and the gap covers what Word may set the marker wider, and the
+     * list does not nest ({@link #nests}). The stated column is 9pt, whatever the marker and the
+     * gap the page leaves after it.
+     */
+    private long measuredColumn(com.demcha.compose.document.node.ListNode list, String letters) {
+        if (nests(list)) {
+            return 0;
+        }
+        java.util.OptionalDouble toText = layout.markerToText(list, letters);
+        if (toText.isEmpty()
+            || !(toText.getAsDouble() > wordsMarkerWidth(list, letters, list.textStyle()) + MARKER_TEXT_CLEARANCE)) {
+            return 0;
+        }
+        return Math.round(toText.getAsDouble() * POINT_TO_TWIP);
     }
 
     /**
@@ -2905,10 +2936,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // any row with runs in it is; its item is still just a label.
                 writeRichListLine(document, list.textStyle(), list.marker(),
                         com.demcha.compose.document.node.ListItem.of(normalized), 0, lineHeight, layout.firstLine(list),
-                        layout.pathOf(list), layout.markerToText(list));
+                        layout.pathOf(list), list);
             } else if (numId != null) {
                 // Word draws the marker, so the text is the item and nothing else.
                 writeListLine(document, list.textStyle(), normalized, 0, numId, lineHeight);
+            } else if (setInAColumn(list, list.marker())) {
+                // A list that is not a Word list, its marker in a column the layout set: the item
+                // is written as a rich one is, its text tabbed to that column.
+                writeRichListLine(document, list.textStyle(), list.marker(),
+                        com.demcha.compose.document.node.ListItem.of(normalized), 0, lineHeight, layout.firstLine(list),
+                        layout.pathOf(list), list);
             } else {
                 writeListLine(document, list.textStyle(),
                         list.marker().prefix() + normalized, 0, null, lineHeight);
@@ -2937,12 +2974,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // A nested item stands after its depth's indent, and an item may carry a marker of
             // its own: the list's measure of its first item's marker is only a top-level item's
             // that carries the list's.
-            java.util.OptionalDouble markerToText = depth == 0 && marker.equals(list.marker())
-                    ? layout.markerToText(list) : java.util.OptionalDouble.empty();
             writeRichListLine(document, list.textStyle(), marker, item, depth, lineHeight, layout.firstLine(list),
-                    layout.pathOf(list), markerToText);
+                    layout.pathOf(list), depth == 0 && marker.equals(list.marker()) ? list : null);
         } else if (numId != null) {
             writeListLine(document, list.textStyle(), item.label(), depth, numId, lineHeight);
+        } else if (depth == 0 && marker.equals(list.marker()) && setInAColumn(list, marker)) {
+            writeRichListLine(document, list.textStyle(), marker, item, depth, lineHeight, layout.firstLine(list),
+                    layout.pathOf(list), list);
         } else {
             writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth, null,
                     lineHeight);
@@ -2969,7 +3007,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (numId != null) {
             para.setNumID(numId);
             para.setNumILvl(BigInteger.valueOf(depth));
-            indentListItemInside(para, depth);
+            indentListItemInside(para, depth, numId);
         }
         XWPFRun run = para.createRun();
         applyStyle(run, style);
@@ -2984,18 +3022,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * inset written on it would drop the level's hanging indent and the marker would run into
      * the text. The level's indent is added back on top of the inset.</p>
      */
-    private void indentListItemInside(XWPFParagraph para, int depth) {
+    private void indentListItemInside(XWPFParagraph para, int depth, BigInteger numId) {
         CTPPr properties = para.getCTP().getPPr();
         if (properties == null) {
             return;
         }
         if (properties.isSetInd()) {
-            long levelLeft = (long) LIST_HANGING_TWIPS + (long) LIST_NESTING_STEP_TWIPS * depth;
+            Long measured = depth == 0 ? measuredColumns.get(numId) : null;
+            long hanging = measured != null ? measured : LIST_HANGING_TWIPS;
+            long levelLeft = measured != null ? measured
+                    : (long) LIST_HANGING_TWIPS + (long) LIST_NESTING_STEP_TWIPS * depth;
             CTInd indent = properties.getInd();
             // As applyInset writes it: a list in a container hanging left hangs with it, and in a
             // cell of a row hanging left it moves left by the hang, as a paragraph beside it does.
             indent.setLeft(BigInteger.valueOf(leftIndentTwips(insetLeft + cellTextShift) + levelLeft));
-            indent.setHanging(BigInteger.valueOf(LIST_HANGING_TWIPS));
+            indent.setHanging(BigInteger.valueOf(hanging));
         }
     }
 
@@ -3005,24 +3046,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * paragraph.
      *
      * <p>This is the part of the opt-in marker/content list the semantic export
-     * can reproduce, and it reproduces it exactly. The geometry — the measured
-     * marker column, the shared content origin — is not written, for the reason
-     * {@code hangingIndent} documents; the gap after a marker that is a picture
-     * alone is, as a tab to where the layout starts the text. Which piece of an item is bold
-     * is not geometry: Word carries a style per run inside a paragraph, so
-     * writing the item's plain reading in one face would be dropping something
-     * Word can hold.</p>
+     * can reproduce, and it reproduces it exactly. A top-level item of a list that
+     * does not nest, whose marker the layout set in a column of its own, writes its
+     * marker, a tab, and hangs its lines at that column, where the gap covers what
+     * Word may set the marker wider ({@link #setInAColumn}, {@link #drawnWidth}).
+     * Which piece of an item is bold is not geometry: Word carries a style per run
+     * inside a paragraph, so writing the item's plain reading in one face would be
+     * dropping something Word can hold.</p>
      *
      * <p>The same is true of a marker. A marker written as text keeps the colour
      * and face it was given, because those are run properties Word has. A marker
      * that draws a disc or an icon is written as the picture it draws, the way a
      * shape or an icon in a line is, rather than as a glyph the author did not ask
-     * for — and is followed by that tab, or, where the layout measured no gap or the
+     * for — and is followed by that tab, or, where the layout measured no column or the
      * picture reaches the stop, by the same space as a text marker.</p>
      *
-     * @param markerToText how far right of its marker the layout starts the item's text, or
-     *                     empty when that is not this item's — a nested item, or one with a
-     *                     marker of its own
+     * @param measured the list the item's marker column is measured from, or {@code null}
+     *                 when it is not this item's — a nested item, or one with a marker of
+     *                 its own
      */
     private void writeRichListLine(XWPFDocument document, DocumentTextStyle style,
                                    com.demcha.compose.document.node.ListMarker marker,
@@ -3030,7 +3071,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                    int depth,
                                    java.util.OptionalDouble lineHeight,
                                    java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line,
-                                   String path, java.util.OptionalDouble markerToText) {
+                                   String path, com.demcha.compose.document.node.ListNode measured) {
         warnDroppedInlineRuns(marker.runs(), path);
         warnDroppedInlineRuns(item.runs(), path);
         line = line.map(listLine -> itemLine(listLine, item.runs()));
@@ -3040,7 +3081,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyItemLineGap(para);
         XWPFRun leading = para.createRun();
         applyStyle(leading, style);
-        leading.setText("  ".repeat(depth) + (marker.isRich() ? "" : marker.prefix()));
+        // A marker of text the layout set in a column of its own is followed by a tab to where
+        // it starts the text, and the item's lines hang there, as the page sets them — where the
+        // gap after the marker covers what Word may set it wider: its size to the half point,
+        // in the page's face where the export embeds it or names a standard one set in the same
+        // widths, and the half point of clearance for the rest. Panel's skills,
+        // wrapped back under their bullets, stood 7.8pt left of the page's on their second line.
+        boolean textTab = measured != null && depth == 0 && setInAColumn(measured, marker);
+        String letters = marker.isRich() ? "" : marker.prefix().stripTrailing();
+        leading.setText("  ".repeat(depth) + (marker.isRich() ? "" : textTab ? letters : marker.prefix()));
+        if (textTab) {
+            XWPFRun gap = para.createRun();
+            applyStyle(gap, style);
+            gap.addTab();
+            hangFrom(para, layout.markerToText(measured, letters).getAsDouble());
+        }
+        java.util.OptionalDouble markerToText = measured != null && depth == 0 && !nests(measured)
+                ? layout.markerToText(measured) : java.util.OptionalDouble.empty();
         PictureReach pictures = PictureReach.NONE;
         if (marker.isRich()) {
             pictures = writeInlineTextRuns(para, style, marker.runs(), path, line);
@@ -3064,7 +3121,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     // space is 2.5. Not where the picture, its edges included, reaches the stop: the tab
                     // would run on to Word's next default stop, half an inch on.
                     gap.addTab();
-                    tabTo(para, markerToText.getAsDouble());
+                    hangFrom(para, markerToText.getAsDouble());
                 } else {
                     gap.setText(" ");
                 }
@@ -3100,25 +3157,73 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Sets a left tab stop a distance right of where a paragraph's first line starts: past its
-     * left indent and its first-line indent, as Word measures a tab stop from the column's edge.
+     * Whether a list's marker of text stands in a column the layout set, which its item's text
+     * is tabbed to (see {@link #writeRichListLine}).
+     */
+    private boolean setInAColumn(com.demcha.compose.document.node.ListNode list,
+                                 com.demcha.compose.document.node.ListMarker marker) {
+        if (marker.isRich() || nests(list)) {
+            return false;
+        }
+        String letters = marker.prefix().stripTrailing();
+        java.util.OptionalDouble toText = letters.isEmpty()
+                ? java.util.OptionalDouble.empty() : layout.markerToText(list, letters);
+        return toText.isPresent()
+               && toText.getAsDouble() > wordsMarkerWidth(list, letters, list.textStyle()) + MARKER_TEXT_CLEARANCE;
+    }
+
+    /**
+     * Whether a list nests items under its top level. Only its top level's column is measured,
+     * from its first marker: a nested level kept at its stated column could then stand left of
+     * its parent's text, at a markerGap past ten points, so a nesting list keeps the stated
+     * columns throughout.
+     */
+    private static boolean nests(com.demcha.compose.document.node.ListNode list) {
+        return list.nestedItems().stream().anyMatch(item -> !item.children().isEmpty());
+    }
+
+    /** How much more than a marker of text's width, as Word may set it, its gap must leave, in points. */
+    private static final double MARKER_TEXT_CLEARANCE = 0.5;
+
+    /**
+     * How wide Word may set a list's marker of text: the page's width grown to the size Word
+     * sets it in, to the half point. It holds where the export embeds the page's face or names a
+     * standard one set in the same widths; a face it may not embed is Word's to substitute, and
+     * only {@link #MARKER_TEXT_CLEARANCE} covers that.
+     */
+    private double wordsMarkerWidth(com.demcha.compose.document.node.ListNode list, String letters,
+                                    DocumentTextStyle style) {
+        double width = layout.markerWidth(list, letters).orElse(Double.POSITIVE_INFINITY);
+        double size = style != null && style.size() > 0 ? style.size() : Double.NaN;
+        return Double.isFinite(size) ? width * Math.max(1, wordsSize(size) / size) : width;
+    }
+
+    /**
+     * Hangs a list item's lines a distance right of where its first line starts, past its left
+     * indent and its first-line indent, with a left tab stop there for the tab after its marker:
+     * its first line starts where it did, its marker there, and its text and every line after
+     * it at the stop, as the page sets an item in a marker column. Word measures a tab stop from
+     * the column's edge, as it does an indent.
      *
      * @param points how far right of the first line's start, in points
      */
-    private static void tabTo(XWPFParagraph para, double points) {
+    private static void hangFrom(XWPFParagraph para, double points) {
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
-        long start = 0;
-        if (properties.isSetInd()) {
-            CTInd indent = properties.getInd();
-            start = twipsOf(indent.isSetLeft() ? indent.getLeft() : null)
-                    + twipsOf(indent.isSetFirstLine() ? indent.getFirstLine() : null)
-                    - twipsOf(indent.isSetHanging() ? indent.getHanging() : null);
+        CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
+        long start = twipsOf(indent.isSetLeft() ? indent.getLeft() : null)
+                     + twipsOf(indent.isSetFirstLine() ? indent.getFirstLine() : null)
+                     - twipsOf(indent.isSetHanging() ? indent.getHanging() : null);
+        long hang = Math.round(points * POINT_TO_TWIP);
+        if (indent.isSetFirstLine()) {
+            indent.unsetFirstLine();
         }
+        indent.setLeft(BigInteger.valueOf(start + hang));
+        indent.setHanging(BigInteger.valueOf(hang));
         org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTabs tabs =
                 properties.isSetTabs() ? properties.getTabs() : properties.addNewTabs();
         CTTabStop stop = tabs.addNewTab();
         stop.setVal(STTabJc.LEFT);
-        stop.setPos(BigInteger.valueOf(start + Math.round(points * POINT_TO_TWIP)));
+        stop.setPos(BigInteger.valueOf(start + hang));
     }
 
     /**

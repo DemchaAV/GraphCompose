@@ -8,6 +8,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A `hangingIndent(true)` list's top level takes the page's marker column in DOCX, text
+  markers too.** The export gave a Word list's levels a stated 9pt column and a list of
+  paragraphs a space after its marker, and wrapped every item's lines back under its marker:
+  `Panel`'s skills stood 7.8pt left of the page's on their second lines. The top level of a
+  list the layout set in a marker column now takes that column, the marker's width and
+  `markerGap`, as its indent and hanging — a Word list's level, or a tab and a hanging indent
+  on each item of a list of paragraphs, plain items included — so its text and wrapped lines
+  stand where the page sets them, a picture marker's included. A marker of text counts as
+  wide as the page sets it grown to Word's half-point size, and the column is used only where
+  the gap leaves half a point past that: Word sets it in the page's face where the export
+  embeds it, or in a standard face set in the same widths; a face the export may not embed is
+  the reader's editor's to substitute, and may set wider. Such a level names the list's face
+  and size, which Word draws its marker in: an item at an exact line left it the document's,
+  and a list set smaller than the body would have had a bullet wider than its column. A list
+  that nests items, a marker made of runs, a marker the gap does not clear, and a list without
+  the flag keep the stated columns and the space. `Panel`'s and `SerifHeadline`'s six such
+  lines now stand within 0.2pt across in both editors; lines more than 2pt off across fall
+  from 136 to 130 in Word, and in LibreOffice from 102 to 96 on Windows and 388 to 382 on
+  Linux.
 - **A list item whose marker is a picture starts its text where the page does in DOCX.** The
   picture — a dot, an icon — was followed by a space, a little over two points where the page
   leaves the `markerGap` asked for: `TealPulse`'s skills, highlights and certifications, a
@@ -15,8 +34,9 @@ follow semantic versioning; release dates are ISO 8601.
   `OrangeOps`' 6pt in Word. A top-level item of a `hangingIndent(true)` list whose marker is
   the list's and a picture alone is now followed by a tab to a stop the layout's measure past
   the item's start — the picture's width and the gap — where the picture, its edges included,
-  clears that stop, as Word draws a picture at the size it is written; a marker of text, which
-  Word sets in its own widths, keeps its space. Those lines now stand within 0.1pt across.
+  clears that stop, as Word draws a picture at the size it is written, and its lines hang
+  there (the entry above, which also takes a list that nests items out). Those lines now
+  stand within 0.1pt across.
   Lines more than 2pt off across fall from 175 to 136 in Word, from 130 to 102 in LibreOffice
   on Windows and from 427 to 388 on Linux. `ListBuilder.hangingIndent` and `markerGap` say what
   DOCX now keeps.

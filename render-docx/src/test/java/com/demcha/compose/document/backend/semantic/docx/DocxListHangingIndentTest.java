@@ -18,37 +18,26 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * {@code hangingIndent} is fixed-layout geometry, and the semantic DOCX export does not
- * lay text out — so it exports a list of text markers exactly the same way whether the
- * flag is set or not. (A top-level marker that is a picture alone is the exception, its
- * first line's text tabbed to where the layout puts it: {@code DocxListMarkerGapTest}.)
+ * What {@code hangingIndent} changes in the semantic DOCX export: the column a list's top
+ * level sets its marker in, taken from the layout, and nothing else — the same paragraphs,
+ * the same text, the same nesting, the same Word list.
  *
- * <p>That is a decision rather than an omission, and it was made against measurements.
- * Word places content at absolute indents and has no way to be told "start the text one
- * marker width plus a gap from here"; every mechanism that looks like it would (a hanging
- * indent, a hanging indent with a tab stop, real Word numbering) positions content
- * absolutely, so the distance left beside the marker is always the column minus the
- * marker's own width — a number only Word knows. Reproducing the geometry would mean
- * measuring the marker, and the semantic backend has no font runtime to measure with, by
- * design: its only dependencies are the core model and POI.</p>
- *
- * <p>The approximations were built and rendered through Word before being rejected. A
- * reserved-column approximation renders a gap that is not the configured one — a 0pt gap
- * came out as 5.72pt, a 4pt gap as 9.68pt — and a marker wider than the column misaligns
- * outright. Shipping that would mean {@code markerGap(8)} rendering as something other
- * than 8.</p>
- *
- * <p>A list <em>is</em> real Word numbering now, which the old wording of this test read
- * as ruling out. It does not: numbering was rejected as a way to honour {@code markerGap},
- * and it still does not honour it. What it buys is behaviour — Enter continues the list —
- * at the price of a marker column that is a stated constant rather than the configured
- * gap. So the decision this test pins is unchanged and its subject is narrower than it
- * was: not "no numbering", but "the flag and the gap change nothing about the output" of a
- * list of text markers.</p>
+ * <p>Word places content at absolute indents and has no way to be told "start the text one
+ * marker width plus a gap from here", so the distance it leaves beside a marker is the
+ * column less the marker's own width as Word sets it. Without the layout's measure that was
+ * a number only Word knew: a reserved column rendered a gap other than the one configured —
+ * a 0pt gap came out as 5.72pt, a 4pt gap as 9.68pt — and a marker wider than the column
+ * misaligned outright, so the export kept a stated column. The layout now sets the marker
+ * in a column of its own, and where the export embeds the page's face or names a standard
+ * one set in the same widths, Word sets the marker in the same widths, a few hundredths
+ * wider at most for its size to the half point. Where the gap covers that, the top level's
+ * column is the page's ({@code DocxListMarkerGapTest});
+ * where it does not, or the list is not laid out so, the stated column stays, and the gap
+ * never becomes characters in the text.</p>
  *
  * @author Artem Demchyshyn
  */
-class DocxHangingIndentIsIgnoredTest {
+class DocxListHangingIndentTest {
 
     @Test
     void aFlatListExportsIdenticallyWithAndWithoutHangingIndent() throws Exception {
@@ -73,21 +62,21 @@ class DocxHangingIndentIsIgnoredTest {
     }
 
     @Test
-    void theGapIsNotRepresentedAtAllSoEveryValueExportsTheSame() throws Exception {
-        // If the gap ever leaked into DOCX — as spaces, as indentation, or as the
-        // level's own indent — these would stop agreeing, which is the failure this
-        // test exists to catch.
-        List<String> zeroText = listTexts(l -> l.bullet().hangingIndent(true).markerGap(0).items("Alpha"));
-        List<Integer> zeroIndent = levelIndents(l -> l.bullet().hangingIndent(true).markerGap(0).items("Alpha"));
-        for (double gap : List.of(4.0, 8.0, 16.0)) {
+    void theGapSetsTheLevelsColumnWhereItCoversTheMarkerAndNeverTheText() throws Exception {
+        // No gap leaves nothing to cover Word setting the bullet a little wider: the stated
+        // column stays. Every gap that does sets the column the bullet's width and itself
+        // past the item's start, and the text stays the item's.
+        assertThat(levelIndents(l -> l.bullet().hangingIndent(true).markerGap(0).items("Alpha")))
+                .containsExactly(180, 180);
+        List<Integer> four = levelIndents(l -> l.bullet().hangingIndent(true).markerGap(4).items("Alpha"));
+        assertThat(four.get(0)).as("as wide as it hangs").isEqualTo(four.get(1));
+        for (double gap : List.of(8.0, 16.0)) {
             assertThat(listTexts(l -> l.bullet().hangingIndent(true).markerGap(gap).items("Alpha")))
-                    .as("text at gap %s", gap)
-                    .isEqualTo(zeroText);
-            assertThat(levelIndents(l -> l.bullet().hangingIndent(true).markerGap(gap).items("Alpha")))
-                    .as("level indent at gap %s", gap)
-                    .isEqualTo(zeroIndent);
+                    .as("text at gap %s", gap).containsExactly("Alpha");
+            assertThat(levelIndents(l -> l.bullet().hangingIndent(true).markerGap(gap).items("Alpha")).get(0))
+                    .as("level indent at gap %s, the gap's points past gap 4's", gap)
+                    .isCloseTo((int) (four.get(0) + Math.round((gap - 4) * 20)), org.assertj.core.data.Offset.offset(1));
         }
-        assertThat(zeroText).containsExactly("Alpha");
     }
 
     @Test
@@ -111,6 +100,18 @@ class DocxHangingIndentIsIgnoredTest {
         assertThat(markerPerDepth(shape.andThen(l -> l.hangingIndent(true).markerGap(12))))
                 .isEqualTo(markerPerDepth(shape))
                 .containsExactly("•", "◦", "▪");
+    }
+
+    @Test
+    void aListThatNestsKeepsTheStatedColumnsAtEveryLevel() throws Exception {
+        // Only the top level's column is measured: kept stated, a nested level would stand
+        // left of its parent's text at a 12pt gap.
+        Consumer<ListBuilder> shape = list -> list.name("Outline")
+                .addItem("alpha", l1 -> l1.addItem("beta", l2 -> l2.addItem("gamma")));
+
+        assertThat(levelIndents(shape.andThen(l -> l.hangingIndent(true).markerGap(12))))
+                .isEqualTo(levelIndents(shape))
+                .startsWith(180, 180, 300, 180);
     }
 
     @Test
@@ -149,7 +150,7 @@ class DocxHangingIndentIsIgnoredTest {
     }
 
     @Test
-    void theSameNumberingIsWrittenEitherWayAndNothingIsApproximatedOnTheParagraph() throws Exception {
+    void theFlagChangesTheLevelsColumnAndNothingOnTheParagraph() throws Exception {
         try (XWPFDocument withFlag = export(flow -> flow.addList(list -> list
                 .name("Flat").bullet().hangingIndent(true).markerGap(16)
                 .items("Alpha", "Beta")));
@@ -163,15 +164,15 @@ class DocxHangingIndentIsIgnoredTest {
                 CTPPr properties = paragraph.getCTP().getPPr();
                 assertThat(properties.isSetNumPr()).as("the item belongs to a list").isTrue();
                 assertThat(properties.isSetInd())
-                        .as("no w:ind on the paragraph — the geometry is the level's, "
-                            + "and it is not approximated from the gap")
+                        .as("no w:ind on the paragraph — the geometry is the level's")
                         .isFalse();
                 assertThat(properties.isSetTabs()).as("no tab stops").isFalse();
                 assertThat(paragraph.getRuns()).as("one run, as before").hasSize(1);
             }
-            assertThat(indentsOf(withFlag))
-                    .as("the flag changes no part of the list definition")
-                    .isEqualTo(indentsOf(without));
+            assertThat(indentsOf(without)).as("the stated column").containsExactly(180, 180);
+            List<Integer> measured = indentsOf(withFlag);
+            assertThat(measured.get(0)).as("the column the layout set the bullet in, the 16pt gap and the bullet")
+                    .isEqualTo(measured.get(1)).isGreaterThan(16 * 20);
         }
     }
 

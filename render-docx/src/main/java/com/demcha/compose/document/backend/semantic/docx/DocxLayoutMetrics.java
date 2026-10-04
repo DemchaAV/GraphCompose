@@ -700,15 +700,55 @@ final class DocxLayoutMetrics {
      * @return the distance in points, or empty when the list laid out no marker beside its text
      */
     OptionalDouble markerToText(DocumentNode list) {
+        return markerToText(list, null);
+    }
+
+    /**
+     * How far right of its marker a list's first item's text starts, the marker drawn or, when
+     * {@code markerText} is given, a marker of that text laid out as a fragment of its own.
+     *
+     * @param list       the list
+     * @param markerText the marker's letters, or {@code null} for a drawn marker
+     * @return the distance in points, or empty when the list laid out no such marker beside its text
+     */
+    OptionalDouble markerToText(DocumentNode list, String markerText) {
         List<PlacedFragment> own = fragmentsOf(list);
+        int index = markerFragment(own, markerText);
+        return index < 0 ? OptionalDouble.empty() : OptionalDouble.of(own.get(index + 1).x() - own.get(index).x());
+    }
+
+    /**
+     * How wide a list's first item's marker is as the page sets it, the marker drawn or of the
+     * text given (see {@link #markerToText(DocumentNode, String)}).
+     */
+    OptionalDouble markerWidth(DocumentNode list, String markerText) {
+        List<PlacedFragment> own = fragmentsOf(list);
+        int index = markerFragment(own, markerText);
+        if (index < 0 || !(own.get(index).payload() instanceof ParagraphFragmentPayload marker)) {
+            return OptionalDouble.empty();
+        }
+        return OptionalDouble.of(marker.lines().stream().mapToDouble(ParagraphLine::width).max().orElse(0));
+    }
+
+    /** Where among a list's fragments its first marker beside its text is, or -1. */
+    private static int markerFragment(List<PlacedFragment> own, String markerText) {
         for (int index = 0; index + 1 < own.size(); index++) {
             if (own.get(index).payload() instanceof ParagraphFragmentPayload marker
                 && own.get(index + 1).payload() instanceof ParagraphFragmentPayload text
-                && drawsOnly(marker) && !drawsOnly(text)) {
-                return OptionalDouble.of(own.get(index + 1).x() - own.get(index).x());
+                && isMarker(marker, markerText) && !isMarker(text, markerText) && !drawsOnly(text)) {
+                return index;
             }
         }
-        return OptionalDouble.empty();
+        return -1;
+    }
+
+    private static boolean isMarker(ParagraphFragmentPayload paragraph, String markerText) {
+        if (markerText == null) {
+            return drawsOnly(paragraph);
+        }
+        String letters = markerText.strip();
+        return !letters.isEmpty() && paragraph.lines().size() == 1
+               && paragraph.lines().get(0).text().strip().equals(letters);
     }
 
     /** Whether a paragraph fragment holds nothing but drawings — a list's drawn marker. */

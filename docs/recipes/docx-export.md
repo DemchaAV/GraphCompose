@@ -368,18 +368,27 @@ changing what was asked for:
 - **A drawn marker** — one made of runs, an icon or a disc. It has no Word list analogue,
   so the item keeps the run path it already used. A top-level item of a
   `hangingIndent(true)` list whose marker is a picture alone is followed by a tab to a stop
-  where the layout starts its text — the picture's width and `markerGap` past the item's
-  start, where the picture, its edges included, clears that stop — Word draws a picture at
-  the size it is written; any other marker by a space.
+  where the layout starts its text, its lines hanging there — the picture's width and
+  `markerGap` past the item's start, where the picture, its edges included, clears that stop,
+  as Word draws a picture at the size it is written; any other drawn marker by a space.
 - **A list whose siblings at one depth carry different markers.** A Word list definition
   names one marker per level, and silently replacing one of them with the other would be
   worse than writing both as text.
 - **Rich items**, whose runs the numbered path does not write.
 
-The marker column is a stated constant — 180 twips, plus 120 for each nesting level —
-chosen near the single space the old text form left. It is a convention, not a
-measurement: measuring the marker needs a font runtime this backend does not have, which
-is the same reason `markerGap` is unrepresentable here.
+The marker column of a list's top level is the page's when the layout set the marker in a
+column of its own — a `hangingIndent(true)` list — and the gap after it covers what Word may
+set the marker wider: the marker's width and `markerGap`. Word sets a marker of text at its
+size to the half point, in the page's face where the export embeds it or in a standard face
+set in the same widths, so that is a few hundredths at most; the gap must leave half a point
+past it. (A face the export may not embed is the reader's editor's to substitute, and may set
+the marker wider.) A Word list's top level then takes that column as its indent and hanging;
+a list that is not one — rich items, a drawn marker — writes the marker, a tab to a stop
+there, and hangs the item's lines there, so its wrapped lines stand under its text as on the
+page. A marker made of runs keeps its space. A list that nests items keeps stated columns
+throughout — its nested levels are not measured, and one kept stated could stand left of its
+parent's text. Otherwise the column is a stated constant, 180 twips plus 120 for each nesting
+level, chosen near the single space the old text form left.
 
 ## What a panel keeps and loses
 
@@ -703,27 +712,23 @@ tint it was flattened to. Recorded, like the other two.
   running past a shape container's foot takes its overhang from the gap
   below. An outline no
   shape shows is reported as dropped.
-- **`hangingIndent(true)` → the ordinary list form.** A list that opts
-  into marker/content geometry exports as one that did not — the same Word
-  list, the same levels, the same markers, the same items, text and
-  nesting — but for one thing: after a top-level marker that is the list's and
-  a picture alone (see "What a list becomes"), the first line's text stands
-  where the layout puts it. Otherwise the marker column is the level's own and
-  `markerGap` has no effect here.
+- **`hangingIndent(true)` → the ordinary list form, in the page's column.** A
+  list that opts into marker/content geometry exports as one that did not — the
+  same Word list, the same levels, the same markers, the same items, text and
+  nesting — but its top level's marker column is the page's, where the gap
+  covers what Word may set the marker wider (see "What a list becomes"): its
+  text and its wrapped lines stand where the layout puts them. A list that nests
+  items, and a marker the gap does not clear, keep the stated columns.
 
-  That one exception rests on what the rest lacks: a picture is drawn at the
-  size it is written, and the layout has placed its text, so a tab stop there
-  is the page's distance. For a marker of text it is not: Word places content at
-  absolute indents and has no way to be told "start the text one marker
-  width plus a gap from here", so every mechanism that looks like it
-  would — a hanging indent, a hanging indent with a tab stop, real Word
-  numbering — leaves a distance beside the marker equal to the column
-  minus the marker's own width, a number only Word knows. Honouring the
-  gap would mean knowing the marker's width as the reader's editor sets
-  it, in whatever font it substitutes — which the export cannot know. The
-  approximations were built and rendered through Word before being
-  rejected — a reserved column renders a gap that is not the one
-  configured, and a marker wider than the column misaligns outright.
+  Word places content at absolute indents and has no way to be told "start the
+  text one marker width plus a gap from here", so the distance beside a marker
+  is the column less the marker's width as Word sets it. Without the layout's
+  measure that was a number only Word knew, and the approximations built and
+  rendered through Word were rejected — a reserved column renders a gap that is
+  not the one configured, and a marker wider than the column misaligns outright.
+  The layout's column, the page's face (embedded, or a standard one set in the
+  same widths), and the gap kept clear of the marker's half-point growth are
+  what make it the page's distance.
 
 ## What is skipped
 

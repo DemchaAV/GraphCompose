@@ -213,6 +213,54 @@ class DocxListMarkerGapTest {
     }
 
     @Test
+    void aNestedItemWithNoMarkerStandsWhereThePageSetsItsText() throws Exception {
+        // Panel's project descriptions, set under their names: written two spaces in, they
+        // started 3.2pt short of the page's and wrapped back 7.8pt short.
+        String body = "Editorial-magazine document toolkit built on GraphCompose: cinematic covers, pull "
+                      + "quotes, multi-column flow, sidebar callouts and the rest of a magazine's furniture.";
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
+                .addList(list -> list.marker("•").markerFor(1, com.demcha.compose.document.node.ListMarker.none())
+                        .markerGap(GAP).hangingIndent(true)
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.DEFAULT.withSize(8.6))
+                        .addItem(rich -> rich.bold("Magazine"), child -> child.addItem(rich -> rich.plain(body)))))) {
+            XWPFParagraph description = item(document, "furniture.");
+
+            assertThat(description.getText()).as("no spaces ahead of it").startsWith("Editorial");
+            assertThat(leftIndent(description)).as("all its lines at the bullet's width and its gap")
+                    .isGreaterThan(Math.round(GAP * 20)).isLessThan(Math.round((GAP + 8.6) * 20));
+            assertThat(DocxTwips.of(description.getCTP().getPPr().getInd().getRight()))
+                    .as("measured at Word's 8.5pt, a little narrower").isPositive();
+
+            // Its name, the top level of a list that nests only such items, takes the page's
+            // column too: kept at a space, it started the gap less a space left of its description.
+            XWPFParagraph name = item(document, "Magazine");
+            assertThat(name.getText()).as("the bullet, a tab, the name").isEqualTo("•\tMagazine");
+            assertThat(tabStop(name)).as("the name where its description stands")
+                    .isEqualTo(leftIndent(description));
+        }
+    }
+
+    @Test
+    void aListThatNestsAnItemWithAMarkerKeepsItsTopLevelAtASpace() throws Exception {
+        // That item keeps its spaces, a level in: a top level at the page's column would stand
+        // right of it.
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
+                .addList(list -> list.marker("•").markerGap(GAP).hangingIndent(true)
+                        .addItem(rich -> rich.bold("Parent"), child -> child.addItem(rich -> rich.plain("Child")))))) {
+            assertThat(item(document, "Parent").getText()).isEqualTo("• Parent");
+        }
+    }
+
+    @Test
+    void aNestedItemWithAMarkerKeepsItsSpaces() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
+                .addList(list -> list.marker("•").markerGap(GAP).hangingIndent(true)
+                        .addItem(rich -> rich.bold("Parent"), child -> child.addItem(rich -> rich.plain("Child")))))) {
+            assertThat(item(document, "Child").getText()).startsWith("  ");
+        }
+    }
+
+    @Test
     void aNestedItemsDrawnMarkerKeepsItsSpace() throws Exception {
         // A nested item stands after its depth's indent, which the list's measure of its first
         // item's marker does not hold.

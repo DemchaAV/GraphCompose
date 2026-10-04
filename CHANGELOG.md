@@ -8,15 +8,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
-- **Text typed at the end of a DOCX shows.** A document that ends with a table ends with the
-  paragraph Word requires after it. That paragraph was always a point tall with its mark
-  hidden, so that it could not open a blank page, and whatever a reader typed at the end of
-  the document took that formatting: 70 lines typed in Word at the end of `CompactMono`
-  showed none of them. Where the last page has room for two lines of the
-  document's text below the table, the paragraph is now an ordinary one. That is 17 of the 62
-  corpus documents. The other 16 that end in a table fill their last page to the foot, keep the
-  hairline, and the export report says so (`closing paragraph`, `APPROXIMATED`). Neither Word
-  nor LibreOffice moves a line or adds a page anywhere in the corpus.
+- **A reader can type below a DOCX's closing table.** A document that ends with a table ends
+  with the paragraph Word requires after it. That paragraph was always a point tall with its
+  mark hidden, so that it could not open a blank page, and no one could type below the table.
+  Measured in Word on `CompactMono`:
+  - typed at the caret Word gives the document's end, 70 lines ran into the table's last
+    cell, a narrow column, over five more pages;
+  - inserted at the very end, they went into the hidden paragraph and none of them showed.
+
+  Where the last page has room for two lines of the document's text below the table, the
+  paragraph is now an ordinary one. That is 17 of the 62 corpus documents, and in all 17 the
+  same 70 lines now run onto a new page under the table, visible, with the footer. The other
+  16 that end in a table fill their last page to the foot and keep the hairline; the export
+  report says so (`closing paragraph`, `APPROXIMATED`). Neither Word nor LibreOffice moves a
+  line or adds a page anywhere in the corpus.
 - **A DOCX panel in the body starts its text the whole padding in.** A panel's table took half
   its left border off its cell's left margin and its indent, for an editor that keeps the
   border inside the cell; for a panel in the body, Word 16 and LibreOffice on Windows centre

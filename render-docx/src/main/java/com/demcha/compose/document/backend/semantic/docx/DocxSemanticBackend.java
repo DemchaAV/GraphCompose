@@ -4564,9 +4564,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * text tall, and one that finds no room under a table reaching the page's foot opens a blank
      * page. Where the last page has the room, that paragraph is an ordinary one, which is where
      * a reader types to add to the document. Where it has not, it is a point tall and its mark is
-     * hidden ({@link #hideTheClosingMark}), and what is typed there is hidden too: Word gave the
-     * 70 lines its editing protocol typed at the end of {@code CompactMono} to that paragraph,
-     * none of them shown and the CV still one page.</p>
+     * hidden ({@link #hideTheClosingMark}), and no one can type below the table. Measured in Word
+     * on {@code CompactMono}, typed at the caret Word gives the document's end, 70 lines ran
+     * into the table's last cell, a narrow column, over five more pages. Inserted at the very
+     * end, they went into the hidden paragraph and none of them showed.</p>
      *
      * @param room how far above its bottom margin the last page's content ends, in points
      * @return the paragraph written to close a section that ends with a table, or null
@@ -4586,8 +4587,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     sectioned ? "section " + (sectionIndex + 1) : null,
                     "the last page has no room for a line below the closing table, so the paragraph "
                     + "after it is a point tall — at the end of the document, its mark hidden where it "
-                    + "holds nothing else: text typed there takes that formatting, on point-tall lines "
-                    + "or hidden");
+                    + "holds nothing else: text typed at the end of the document goes into the table's "
+                    + "last cell, or into that paragraph, on point-tall lines or hidden");
             return collapsed(closing);
         }
         return null;

@@ -222,24 +222,31 @@ class DocxContainerPaintTest {
     }
 
     @Test
-    void aPanelBledLeftOfItsCellKeepsItsTextsWidth() throws Exception {
-        // Its negative margin is not a border's half: given up, its text would narrow and wrap.
-        try (XWPFDocument document = export(page -> page.addRow(row -> row
-                .spacing(14)
-                .weights(1, 1)
-                .addSection("Bled", bled -> bled
-                        .fillColor(SURFACE)
-                        .margin(new DocumentInsets(0, 0, 0, -10))
-                        .padding(DocumentInsets.of(12))
-                        .addParagraph(p -> p.text(LONG)))
-                .addSection("Main", main -> main.addParagraph(p -> p.text(LONG)))))) {
-            XWPFTable bled = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
-            double placed = placedCardWidth(page -> page.addRow(row -> row.spacing(14).weights(1, 1)
-                    .addSection("Bled", b -> b.fillColor(SURFACE).margin(new DocumentInsets(0, 0, 0, -10))
-                            .padding(DocumentInsets.of(12)).addParagraph(p -> p.text(LONG)))
-                    .addSection("Main", main -> main.addParagraph(p -> p.text(LONG)))));
+    void aBorderedPanelHungFurtherLeftThanItsBorderKeepsItsTextsWidth() throws Exception {
+        // It gives up no more than its left side gave its text: not a negative margin's bleed,
+        // and not the half border a padding thinner than it could not give back. Either given
+        // up, its text would narrow and wrap.
+        java.util.Map<String, Consumer<com.demcha.compose.document.dsl.SectionBuilder>> panels = new java.util.LinkedHashMap<>();
+        panels.put("bled 10pt left", panel -> panel.margin(new DocumentInsets(0, 0, 0, -10))
+                .padding(DocumentInsets.of(12)));
+        panels.put("with no left padding", panel -> panel.padding(new DocumentInsets(6, 6, 6, 0)));
+        for (var entry : panels.entrySet()) {
+            Consumer<PageFlowBuilder> content = page -> page.addRow(row -> row
+                    .spacing(14)
+                    .weights(1, 1)
+                    .addSection("Panel", panel -> {
+                        // Words a letter wide, so its lines fill it and it is as wide as its cell.
+                        panel.fillColor(SURFACE).accentLeft(ACCENT, 8).addParagraph(p -> p.text("i ".repeat(120)));
+                        entry.getValue().accept(panel);
+                    })
+                    .addSection("Main", main -> main.addParagraph(p -> p.text(LONG))));
+            try (XWPFDocument document = export(content)) {
+                XWPFTable panel = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
+                double padding = entry.getKey().startsWith("bled") ? 24 : 6;
 
-            assertThat(textWidth(bled)).as("its text as wide as the page's line").isGreaterThanOrEqualTo(placed - 24);
+                assertThat(textWidth(panel)).as("its text as wide as the page's line, %s", entry.getKey())
+                        .isGreaterThanOrEqualTo(placedCardWidth(content) - padding);
+            }
         }
     }
 

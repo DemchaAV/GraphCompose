@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A paragraph or a list in DOCX keeps its own sides on a layer, and its edge in a cell.**
+  A paragraph under a layer stack or a shape container took none of its own margin or
+  padding: `SubscriptionInvoice`'s metadata labels, padded 9.6pt past their bars in a layered
+  row, stood at the bars, 9.5pt left of the page's, and `MidnightNavy`'s certifications
+  12.4pt. They take them now, as a paragraph anywhere else does, and so does a list. In a
+  cell, the couple of points an editor is given to set a line wider came off both sides: a
+  left-aligned line padded 2pt or more started 2pt left of the page's, and a right-aligned
+  one ended 2pt right of it — `ObsidianInvoice`'s and `PaymentsInvoice`'s amounts,
+  `OrangeOps`' certifications, `NavySidebar`'s lists. Those points now come off the side a
+  left-to-right line does not lean on, and off a list's right; a centred line, and a
+  right-to-left one, still gives them up on both sides. Lines more than 2pt off across fall
+  from 130 to 101 in Word, and in LibreOffice from 96 to 77 on Windows and 382 to 364 on
+  Linux; nothing moves down. A right-aligned line ends where the page ends it, so one Word
+  sets wider — at its size to the half point — starts further left: `WorkspaceInvoice`'s
+  footer link, 8.5pt for the page's 8.27, ends within 0.05pt and starts 1.5pt left of the
+  page's.
 - **A `hangingIndent(true)` list's top level takes the page's marker column in DOCX, text
   markers too.** The export gave a Word list's levels a stated 9pt column and a list of
   paragraphs a space after its marker, and wrapped every item's lines back under its marker:

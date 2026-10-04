@@ -82,8 +82,8 @@ class DocxHangingLeftTest {
             XWPFParagraph after = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().stream()
                     .filter(paragraph -> paragraph.getText().equals("Senior Engineer")).findFirst().orElseThrow();
             assertThat(DocxTwips.of(after.getCTP().getPPr().getInd().getLeft()))
-                    .as("the text after the heading keeps its own indent, 8pt less the 2pt a cell keeps")
-                    .isEqualTo(6 * 20L);
+                    .as("the text after the heading keeps its own 8pt indent, the side it is set from")
+                    .isEqualTo(8 * 20L);
         }
     }
 

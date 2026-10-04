@@ -288,8 +288,9 @@ class DocxListNumberingTest {
     }
 
     @Test
-    void aListInACellKeepsItsMarginLessTheEditorsSlack() throws Exception {
-        // As a paragraph in a cell does: a couple of points of each side stay the editor's.
+    void aListInACellKeepsAllOfItsLeftMargin() throws Exception {
+        // Its markers are set from its left edge: the couple of points a cell keeps for the
+        // editor come off its right.
         try (XWPFDocument document = export(flow -> flow.addRow("Page", row -> row
                 .columns(DocumentRowColumn.fixed(200), DocumentRowColumn.weight(1))
                 .addSection("Left", section -> section.addList(list -> list.name("Cell").bullet()
@@ -299,7 +300,7 @@ class DocxListNumberingTest {
                     .filter(p -> p.getText().equals("alpha"))
                     .findFirst().orElseThrow();
 
-            assertThat(DocxTwips.of(item.getCTP().getPPr().getInd().getLeft())).isEqualTo((30 - 2) * 20L + 180);
+            assertThat(DocxTwips.of(item.getCTP().getPPr().getInd().getLeft())).isEqualTo(30 * 20L + 180);
         }
     }
 

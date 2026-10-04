@@ -2867,12 +2867,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // without it their markers stood under the badge, the text a line short in Word.
         double outerLeft = insetLeft;
         double outerRight = insetRight;
-        if (overlayDepth == 0) {
-            double spare = currentCell != null ? EDITOR_SLACK_POINTS : 0;
-            double left = (list == leftMarginInCell ? 0 : list.margin().left()) + list.padding().left();
-            insetLeft += Math.max(0, left - spare);
-            insetRight += Math.max(0, list.margin().right() + list.padding().right() - spare);
-        }
+        // Under an overlay too, and the editor's couple of points in a cell come off the right
+        // alone: an item's marker is set from its left edge.
+        double spare = currentCell != null ? EDITOR_SLACK_POINTS : 0;
+        insetLeft += Math.max(0, (list == leftMarginInCell ? 0 : list.margin().left()) + list.padding().left());
+        insetRight += Math.max(0, list.margin().right() + list.padding().right() - spare);
         try {
             writeListItems(document, list, numId);
         } finally {
@@ -5531,17 +5530,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Word — a line short, and everything under it that much high.
         double outerLeft = insetLeft;
         double outerRight = insetRight;
-        // Not under an overlay, where holdIn places each layer's margin box and a paragraph
-        // there keeps the width it was given. In a cell, a couple of points of each side stay
-        // the editor's: Word sets a line a little wider than the page, and VioletGrid's narrow
-        // centred cells broke a word more, running the CV to a second page. A cell of a row the
+        // Under an overlay too: holdIn places a layer's margin box, and a paragraph's own sides
+        // are inside it — SubscriptionInvoice's metadata labels, padded past their bars in a
+        // layered row, stood at the bars in Word, 9.5pt left of the page's. In a cell, a couple
+        // of points stay the editor's: Word sets a line a little wider than the page, and
+        // VioletGrid's narrow centred cells broke a word more, running the CV to a second page.
+        // A left-to-right line's come off the side it does not lean on, and it keeps the edge
+        // it is set from: taken off the left, every left-aligned line padded 2pt or more in a
+        // cell started 2pt left of the page's, every right-aligned one ended 2pt right of it.
+        // A centred line, and a right-to-left one, is spared on both sides. A cell of a row the
         // layout placed already starts where the paragraph does, past its left margin.
-        if (overlayDepth == 0) {
-            double spare = currentCell != null ? EDITOR_SLACK_POINTS : 0;
-            double left = (node == leftMarginInCell ? 0 : node.margin().left()) + node.padding().left();
-            insetLeft += Math.max(0, left - spare);
-            insetRight += Math.max(0, node.margin().right() + node.padding().right() - spare);
-        }
+        double spare = currentCell != null ? EDITOR_SLACK_POINTS : 0;
+        boolean leftToRight = ParagraphDirection.resolve(node) != TextDirection.RTL;
+        boolean fromTheLeft = leftToRight && node.align() == TextAlign.LEFT;
+        boolean fromTheRight = leftToRight && node.align() == TextAlign.RIGHT;
+        double left = (node == leftMarginInCell ? 0 : node.margin().left()) + node.padding().left();
+        insetLeft += Math.max(0, left - (fromTheLeft ? 0 : spare));
+        insetRight += Math.max(0, node.margin().right() + node.padding().right() - (fromTheRight ? 0 : spare));
         XWPFParagraph para;
         double room;
         try {

@@ -192,6 +192,79 @@ class DocxContainerPaintTest {
         }
     }
 
+    @Test
+    void aPanelHungLeftOfItsRowCellEndsInsideTheCellAsWordStartsIt() throws Exception {
+        // Word starts it half its border in from the cell's text, not hung left of it, and a
+        // table running past the cell widens the cell: CompactMono's rail, a 3pt accent at its
+        // column's edge, pushed the main column 2.3pt right in Word.
+        try (XWPFDocument document = export(page -> page.addRow(row -> row
+                .spacing(14)
+                .weights(0.78, 1.62)
+                .addSection("Rail", rail -> rail
+                        .fillColor(SURFACE)
+                        .accentLeft(ACCENT, 3)
+                        .padding(DocumentInsets.of(11))
+                        .addParagraph(p -> p.text(LONG)))
+                .addSection("Main", main -> main.addParagraph(p -> p.text(LONG)))))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+            XWPFTable rail = cell.getTables().get(0);
+            double indent = DocxTwips.of(rail.getCTTbl().getTblPr().getTblInd().getW()) / 20.0;
+            double width = DocxTwips.of(rail.getCTTbl().getTblPr().getTblW().getW()) / 20.0;
+
+            assertThat(indent).as("hung half its border left, where its text stands in both editors").isEqualTo(-1.5);
+            assertThat(1.5 + width).as("from half its border in, it ends inside the cell").isLessThanOrEqualTo(room(cell) + 0.05);
+            assertThat(textWidth(rail)).as("its text no narrower than the page's line")
+                    .isGreaterThanOrEqualTo(placedCardWidth(page -> page.addRow(row -> row.spacing(14).weights(0.78, 1.62)
+                            .addSection("Rail", r -> r.fillColor(SURFACE).accentLeft(ACCENT, 3)
+                                    .padding(DocumentInsets.of(11)).addParagraph(p -> p.text(LONG)))
+                            .addSection("Main", main -> main.addParagraph(p -> p.text(LONG))))) - 22);
+        }
+    }
+
+    @Test
+    void aBorderedPanelHungFurtherLeftThanItsBorderKeepsItsTextsWidth() throws Exception {
+        // It gives up no more than its left side gave its text: not a negative margin's bleed,
+        // and not the half border a padding thinner than it could not give back. Either given
+        // up, its text would narrow and wrap.
+        java.util.Map<String, Consumer<com.demcha.compose.document.dsl.SectionBuilder>> panels = new java.util.LinkedHashMap<>();
+        panels.put("bled 10pt left", panel -> panel.margin(new DocumentInsets(0, 0, 0, -10))
+                .padding(DocumentInsets.of(12)));
+        panels.put("with no left padding", panel -> panel.padding(new DocumentInsets(6, 6, 6, 0)));
+        for (var entry : panels.entrySet()) {
+            Consumer<PageFlowBuilder> content = page -> page.addRow(row -> row
+                    .spacing(14)
+                    .weights(1, 1)
+                    .addSection("Panel", panel -> {
+                        // Words a letter wide, so its lines fill it and it is as wide as its cell.
+                        panel.fillColor(SURFACE).accentLeft(ACCENT, 8).addParagraph(p -> p.text("i ".repeat(120)));
+                        entry.getValue().accept(panel);
+                    })
+                    .addSection("Main", main -> main.addParagraph(p -> p.text(LONG))));
+            try (XWPFDocument document = export(content)) {
+                XWPFTable panel = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
+                double padding = entry.getKey().startsWith("bled") ? 24 : 6;
+
+                assertThat(textWidth(panel)).as("its text as wide as the page's line, %s", entry.getKey())
+                        .isGreaterThanOrEqualTo(placedCardWidth(content) - padding);
+            }
+        }
+    }
+
+    /** What a cell leaves its content across, as Word measures it: its width less its margins. */
+    private static double room(XWPFTableCell cell) {
+        var properties = cell.getCTTc().getTcPr();
+        return (DocxTwips.of(properties.getTcW().getW()) - DocxTwips.of(properties.getTcMar().getLeft().getW())
+                - DocxTwips.of(properties.getTcMar().getRight().getW())) / 20.0;
+    }
+
+    /** How wide a panel's table leaves its text: its width less its cell's margins. */
+    private static double textWidth(XWPFTable panel) {
+        var properties = panel.getRow(0).getCell(0).getCTTc().getTcPr();
+        return (DocxTwips.of(panel.getCTTbl().getTblPr().getTblW().getW())
+                - DocxTwips.of(properties.getTcMar().getLeft().getW())
+                - DocxTwips.of(properties.getTcMar().getRight().getW())) / 20.0;
+    }
+
     private static double placedCardWidth(Consumer<PageFlowBuilder> content) throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(400, 400)

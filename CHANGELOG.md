@@ -8,6 +8,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A panel with a left border in a DOCX cell no longer widens the cell in Word.** A panel's
+  table hangs half its left border left of the text it is written in, so both editors put its
+  text where the page does. In a cell, Word starts the table half that border in from the
+  cell's text instead, and a nested table running past its cell widens the cell, fixed layout
+  or not: `CompactMono`'s rail, its 3pt accent at its column's edge, pushed the main column
+  2.3pt right, every line of it with it. Such a panel now gives up what runs past the cell's
+  edge as Word starts it, no more than its left side had given its text — the half border
+  the table is wider by, and what its left margin gave back of the other half — so its text
+  keeps the page's width, and both editors end the rail at 195.9pt, 0.9pt of slack past the
+  page's 195.0. A panel bled left by a negative margin keeps the rest of its width.
+  `CompactMono`'s 28 main-column lines stand within 0.1pt across in Word, and
+  `SubscriptionInvoice`'s and `CobaltRota`'s panels' lines move nearer the page in both
+  editors. Lines more than 2pt off across fall from 101 to 72 in Word; nothing moves down in
+  either editor.
 - **A paragraph or a list in DOCX keeps its own sides on a layer, and its edge in a cell.**
   A paragraph under a layer stack or a shape container took none of its own margin or
   padding: `SubscriptionInvoice`'s metadata labels, padded 9.6pt past their bars in a layered

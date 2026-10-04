@@ -25,6 +25,10 @@
     One or more exported .docx files. All are copied into the output directory before the first
     is edited, and only the copies are opened.
 
+.PARAMETER Scenario
+    The scenarios to run, by the names the protocol records them under; all of them when
+    left out.
+
 .PARAMETER OutputDir
     Where the inputs' copies, the edited copies, their PDFs and edit-protocol-corpus.json are
     written. Keep it outside a module's target directory: a build's clean removes it.
@@ -37,7 +41,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string[]]$Docx,
-    [Parameter(Mandatory = $true)][string]$OutputDir
+    [Parameter(Mandatory = $true)][string]$OutputDir,
+    [string[]]$Scenario
 )
 
 $ErrorActionPreference = 'Stop'
@@ -218,6 +223,7 @@ function Get-FooterOn {
 # An edit Word refuses is a result of that scenario, not the end of the document's protocol.
 function Invoke-Scenario {
     param($Word, $Source, [string]$Name, [scriptblock]$Edit, [scriptblock]$Verify, [switch]$Pdf)
+    if ($Scenario -and $Name -notin $Scenario) { return $null }
     try {
         return Invoke-ScenarioOnce $Word $Source $Name $Edit $Verify -Pdf:$Pdf
     } catch {
@@ -423,11 +429,18 @@ function Invoke-Protocol {
 
     # 7. Type at the end of the document until it runs onto a new page, as a person does: the
     #    caret Word gives the document's end, Enter first where the last paragraph holds text.
-    #    What was typed stands below everything else, outside any table, visible, on lines it
-    #    fits, and the page count follows. The footer the new page shows is recorded.
+    #    What was typed stands below everything else, outside any table, visible, and the page
+    #    count follows. Typing on from a paragraph's text, the letters are in that text's size,
+    #    on the lines the page set it on; typing in an empty paragraph, they fit its lines. The
+    #    footer the new page shows is recorded.
     $results += Invoke-Scenario $Word $Source 'add-a-page' -Pdf -Edit {
         param($doc, $state)
         $last = $doc.Paragraphs($doc.Paragraphs.Count)
+        if ((Get-Text $last).Length -gt 0) {
+            $lastLetter = Get-TextRange $last
+            $lastLetter.MoveStart(1, $lastLetter.End - $lastLetter.Start - 1) | Out-Null
+            $state.continues = [double]$lastLetter.Font.Size
+        }
         $end = $doc.Content
         $end.Collapse(0)
         $end.Select()
@@ -463,10 +476,14 @@ function Invoke-Protocol {
         $hidden = $text.Font.Hidden -ne 0
         $size = $text.Font.Size
         $format = $typed.Format
-        $squeezed = $format.LineSpacingRule -eq $WD_LINE_SPACE_EXACTLY -and $format.LineSpacing -lt $size * $EXACT_LINE_SHARE
+        # A paragraph's exact lines are set for its own text; typed on at another size, the
+        # letters stand on lines meant for others. An empty one's lines are judged against the
+        # letters alone.
+        $squeezed = if ($null -ne $state.continues) { [double]$size -ne $state.continues } else {
+            $format.LineSpacingRule -eq $WD_LINE_SPACE_EXACTLY -and $format.LineSpacing -lt $size * $EXACT_LINE_SHARE }
         $footer = Get-FooterOn $doc.Sections($doc.Sections.Count) $lastPage
-        $detail = "$($state.lines) lines typed, pages $($state.pagesBefore) -> $($state.pagesAfter), the last on page $lastPage at ${size}pt, hidden=$hidden, exact $($format.LineSpacing)pt lines too short=$squeezed, footer there '$footer'"
-        if ($hidden -or $squeezed) { return New-Result 'add-a-page' 'FAIL' "what was typed at the end cannot be read; $detail" }
+        $detail = "$($state.lines) lines typed, pages $($state.pagesBefore) -> $($state.pagesAfter), the last on page $lastPage at ${size}pt continuing $($state.continues)pt text, hidden=$hidden, on exact $($format.LineSpacing)pt lines not set for it=$squeezed, footer there '$footer'"
+        if ($hidden -or $squeezed) { return New-Result 'add-a-page' 'FAIL' "what was typed at the end cannot be read as the page set it; $detail" }
         if ($state.pagesAfter -le $state.pagesBefore -or $lastPage -ne $state.pagesAfter) { return New-Result 'add-a-page' 'FAIL' $detail }
         New-Result 'add-a-page' 'PASS' $detail
     }

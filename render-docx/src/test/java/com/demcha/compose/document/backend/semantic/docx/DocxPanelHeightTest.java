@@ -132,8 +132,9 @@ class DocxPanelHeightTest {
     }
 
     @Test
-    void theEmptyParagraphClosingADocumentThatEndsInATableIsNotLaidOut() throws Exception {
-        try (XWPFDocument document = export(page -> page.addTable(t -> t
+    void theEmptyParagraphClosingADocumentThatEndsInATableAtThePagesFootIsNotLaidOut() throws Exception {
+        // 360pt inside the margins: the table ends a few points above the foot.
+        try (XWPFDocument document = export(page -> page.spacer(1, 320).addTable(t -> t
                 .columns(DocumentTableColumn.fixed(120)).row("Last")))) {
             List<IBodyElement> body = document.getBodyElements();
             XWPFParagraph closing = (XWPFParagraph) body.get(body.size() - 1);

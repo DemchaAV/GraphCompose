@@ -19,7 +19,7 @@ follow semantic versioning; release dates are ISO 8601.
   chip keeps its own style there, since the chip's letters are styled for a fill the mark does
   not carry. Measured with the Word
   editing protocol over the 62 corpus documents:
-  - Enter and typing continues in the text's size and face in 61, against 37;
+  - Enter and typing continues in the text's size and face in all 62, against 37;
   - text typed at a document's end stands as the page sets its last paragraph in 6 more.
 
   The remaining "type at the end" failures are documents ending in a table, where the typing

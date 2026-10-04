@@ -46,6 +46,17 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+$SCENARIOS = 'lengthen-a-paragraph', 'shorten-a-paragraph', 'insert-a-paragraph', 'restyle-body-through-normal',
+    'insert-a-table-row', 'delete-a-table-row', 'continue-a-list', 'add-a-page', 'round-trip'
+# `-File` hands "a,b" over as one string: split it, and refuse a name no scenario has rather
+# than run nothing and report an empty protocol.
+$Scenario = @($Scenario | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+$unknown = @($Scenario | Where-Object { $_ -notin $SCENARIOS })
+if ($unknown.Count -gt 0) {
+    throw "no scenario is called $($unknown -join ', '); the scenarios are $($SCENARIOS -join ', ')"
+}
+
 New-Item -ItemType Directory -Force $OutputDir | Out-Null
 $OutputDir = (Resolve-Path $OutputDir).Path
 
@@ -65,6 +76,10 @@ $WD_HEADER_FOOTER_EVEN_PAGES = 3
 # An exact line shorter than this share of its letters' size cuts them on Word's screen: Word
 # sets a single line of its faces at 1.15 to 1.2 of the size.
 $EXACT_LINE_SHARE = 1.1
+
+# The smallest size typed text is read at, in points: a paragraph that holds only pictures has
+# its runs and mark a point tall, and text typed on from it would continue at that point.
+$READABLE_POINTS = 4
 
 $ADDED = ' The editing protocol appended this sentence to make the paragraph about twice as long, so that it has to rewrap and whatever stands below it has to move down to make room for it.'
 
@@ -479,8 +494,8 @@ function Invoke-Protocol {
         # A paragraph's exact lines are set for its own text; typed on at another size, the
         # letters stand on lines meant for others. An empty one's lines are judged against the
         # letters alone.
-        $squeezed = if ($null -ne $state.continues) { [double]$size -ne $state.continues } else {
-            $format.LineSpacingRule -eq $WD_LINE_SPACE_EXACTLY -and $format.LineSpacing -lt $size * $EXACT_LINE_SHARE }
+        $squeezed = [double]$size -lt $READABLE_POINTS -or $(if ($null -ne $state.continues) { [double]$size -ne $state.continues } else {
+            $format.LineSpacingRule -eq $WD_LINE_SPACE_EXACTLY -and $format.LineSpacing -lt $size * $EXACT_LINE_SHARE })
         $footer = Get-FooterOn $doc.Sections($doc.Sections.Count) $lastPage
         $detail = "$($state.lines) lines typed, pages $($state.pagesBefore) -> $($state.pagesAfter), the last on page $lastPage at ${size}pt continuing $($state.continues)pt text, hidden=$hidden, on exact $($format.LineSpacing)pt lines not set for it=$squeezed, footer there '$footer'"
         if ($hidden -or $squeezed) { return New-Result 'add-a-page' 'FAIL' "what was typed at the end cannot be read as the page set it; $detail" }

@@ -39,8 +39,8 @@ class DocxPanelInsetTest {
                     .as("the padding is the cell's margin; the text adds nothing to it")
                     .isTrue();
             assertThat(DocxTwips.of(margins.getLeft().getW()))
-                    .as("less half the 3pt accent, which the editor keeps inside the cell")
-                    .isEqualTo(Math.round(12.5 * 20));
+                    .as("all the padding: both editors centre the 3pt accent on the edge, as the page does")
+                    .isEqualTo(14 * 20L);
             assertThat(DocxTwips.of(margins.getRight().getW())).isEqualTo(14 * 20L);
         }
     }

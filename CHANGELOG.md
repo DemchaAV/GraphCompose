@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX panel in the body starts its text the whole padding in.** A panel's table took half
+  its left border off its cell's left margin and its indent, for an editor that keeps the
+  border inside the cell; for a panel in the body, Word 16 and LibreOffice on Windows centre
+  the border on the table's edge, as the page does, and start the text at the indent. Every
+  line in `ModernInvoice`'s, `ModernProposal`'s and `ClassicInvoice`'s header panels, behind a
+  4pt accent, stood 2pt left of the page's in Word, `NordicClean`'s and `ModernReceipt`'s
+  1.5pt, and `EditorialProposal`'s and `NorthlineProposal`'s up to 0.55pt; they stand within
+  0.2pt now. The left margin is now the whole padding, the table no wider on that side, and the
+  indent the text's place. Lines more than 2pt off across fall from 12 to 4 in Word; nothing
+  moves down. `ObsidianInvoice`'s items, set in a table inside a panel with a thin border all
+  round and already a little right of the page's, move by half that border, up to 0.36pt
+  further, and `ModernReceipt`'s status chip, whose padding is not in the file, 1.56pt. The
+  LibreOffice build on the Linux CI reads a body table's indent as its edge, its text a margin
+  further in: these panels' lines stood 8.6 to 14.6pt right of the page's there already, and
+  stand the border's width further, up to 4pt — 78 lines further, none nearer, past 2pt across
+  still 301.
 - **A centred or right-aligned DOCX line of its own stands as wide as the page sets it.**
   Word states a type size in half points, and a line set at a size the page gives to the tenth
   is that much wider or narrower, a centred or right-aligned one moving its first letter with

@@ -3522,12 +3522,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Writes a painting container as a one-cell table; see {@link #writeContainerChildren}.
      *
      * <p>The geometry is the page's, translated. The page centres a panel's border on its
-     * edge and measures the padding from the edge; the editor keeps a cell's border inside
-     * the cell and starts the cell's margin after it. So each margin is the padding less half
-     * that side's border, and the table is wider than the panel by half of each side border:
-     * the text then lands the padding in from the panel's edge, and the border straddles the
-     * edge, as on the page. Measured in LibreOffice against the engine's render, the band, the
-     * accent bar and the text of a card with a 3pt accent land on the page's pixels.</p>
+     * edge and measures the padding from the edge; in a cell, the editor keeps a cell's border
+     * inside the cell and starts the cell's margin after it. So each margin is the padding less
+     * half that side's border, and the table is wider than the panel by half of each side
+     * border: the text then lands the padding in from the panel's edge, and the border
+     * straddles the edge, as on the page. A panel in the body is the exception on its left:
+     * Word 16 and LibreOffice on Windows centre a body table's left border on its edge and
+     * start its text at its indent, the margin past that edge, so its left margin is the whole
+     * padding, its indent the text's place and the table no wider on that side — measured on
+     * {@code ModernInvoice}'s 4pt accent, half of it taken off stood every line 2pt left of the
+     * page's in both. LibreOffice's build on the Linux CI reads the indent as the table's edge
+     * instead, its text a margin further in: there those panels stood about a padding right of
+     * the page's already, and stand the border's width further.</p>
      *
      * <p>The table sits where the container's margin box starts, the enclosing insets and its
      * own left margin in. A table in the body is placed by its first cell's text, so its
@@ -3592,7 +3598,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double width = panelWidth(node);
 
         double edge = insetLeft + margin.left();
-        double indent = currentCell == null ? edge + padding.left() - halfLeft : edge - halfLeft;
+        // In the body the indent places the text, the padding in, and the margin is the whole
+        // padding (see writePanel).
+        boolean inTheBody = currentCell == null;
+        double indent = inTheBody ? edge + padding.left() : edge - halfLeft;
         // In a cell, Word starts a nested table no further left than the cell's text, draws its
         // right border outside the table's right edge — measured in its PDF, a table ending at
         // 566.0pt had its right border from 566.2 to 566.9 — and on screen cuts off whatever
@@ -3611,7 +3620,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         hideTableGrid(table);
         XWPFTableCell cell = table.getRow(0).getCell(0);
         if (Double.isFinite(width) && width > 0) {
-            double outer = width + halfLeft + halfRight;
+            // In the body the table starts at the panel's edge, its left border centred there.
+            double outer = width + (inTheBody ? 0 : halfLeft) + halfRight;
             if (room > 0 && outer > room) {
                 // No more than the right margin holds: past that the text would narrow and wrap,
                 // which is worse than a border the cell's edge covers.
@@ -3642,7 +3652,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         paintCellSides(cell, paint.borders());
         DocumentInsets margins = insideTheBorders(padding, borders);
         applyCellPadding(cell, new DocumentInsets(margins.top(), Math.max(0, margins.right() - shortOfTheEdge),
-                margins.bottom(), margins.left()));
+                margins.bottom(), inTheBody ? padding.left() : margins.left()));
         if (node.keepTogether() && layout.onOnePage(node)) {
             table.getRow(0).setCantSplitRow(true);
         }
@@ -3710,10 +3720,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             holdRowAtLeast(table.getRow(0), shape.outline().height() - bordersOutside);
         }
 
-        // In the body it is written even when it is 0. The indent places the cell's text, less
-        // half its left border, and with none Word 16 places the table's edge on the margin
-        // instead, its text a padding further in (measured): IndigoProposal's about band, bled to the paper's edge by a negative margin its
-        // padding takes back, stood 27.6pt right of the page's, fill and text.
+        // In the body it is written even when it is 0. The indent places the cell's text, and
+        // with none Word 16 places the table's edge on the margin instead, its text a padding
+        // further in (measured): IndigoProposal's about band, bled to the paper's edge by a
+        // negative margin its padding takes back, stood 27.6pt right of the page's, fill and text.
         if (indent != 0 || currentCell == null) {
             CTTblPr tableProperties = table.getCTTbl().getTblPr();
             CTTblWidth tableIndent = tableProperties.isSetTblInd()
@@ -3811,7 +3821,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * A panel's padding as a cell's margins: less half the border on each side, the half that
      * lies inside the panel on the page and inside the cell's margin in the editor (see
-     * {@link #writePanel}).
+     * {@link #writePanel}). A panel in the body writes its whole left padding instead, its text
+     * placed by its indent ({@link #writePanelPiece}).
      */
     private static DocumentInsets insideTheBorders(DocumentInsets padding, DocumentBorders borders) {
         return new DocumentInsets(

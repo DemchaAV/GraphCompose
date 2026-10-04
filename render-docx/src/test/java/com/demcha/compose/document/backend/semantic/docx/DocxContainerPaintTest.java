@@ -151,9 +151,11 @@ class DocxContainerPaintTest {
 
     @Test
     void aBorderStraddlesThePanelsEdgeAsOnThePage() throws Exception {
-        // The page centres a border on the panel's edge; the editor keeps it inside the cell.
-        // Half of it comes off the margin, the table widens by half of each side's, and the
-        // table moves out by half the left one, so the text and the border land on the page's.
+        // The page centres a border on the panel's edge and sets its text the padding in. Both
+        // editors centre a body table's left border on its edge and start its text the cell's
+        // margin past that edge, the indent placing the text: the margin is the padding, and the
+        // indent the padding too. Measured on ModernInvoice's 4pt accent, half of it taken off
+        // the margin stood every line in the panel 2pt left of the page's, in both editors.
         Consumer<PageFlowBuilder> content = page -> page.addSection("Card", card -> card
                 .fillColor(SURFACE)
                 .accentLeft(ACCENT, 3)
@@ -164,13 +166,14 @@ class DocxContainerPaintTest {
             XWPFTable table = document.getTables().get(0);
             var margins = onlyCell(document).getCTTc().getTcPr().getTcMar();
 
-            assertThat(DocxTwips.of(margins.getLeft().getW())).isEqualTo(250L);
+            assertThat(DocxTwips.of(margins.getLeft().getW())).as("the padding, all of it").isEqualTo(280L);
             assertThat(DocxTwips.of(margins.getTop().getW())).as("no border on top").isEqualTo(280L);
             assertThat(DocxTwips.of(table.getCTTbl().getTblPr().getTblW().getW()))
-                    .isEqualTo(Math.round((placed + DocxSemanticBackend.EDITOR_COLUMN_SLACK_POINTS + 1.5) * 20));
+                    .as("no wider on its left, where its border is centred on its edge")
+                    .isEqualTo(Math.round((placed + DocxSemanticBackend.EDITOR_COLUMN_SLACK_POINTS) * 20));
             assertThat(DocxTwips.of(table.getCTTbl().getTblPr().getTblInd().getW()))
-                    .as("a body table is placed by its text: the padding, less half the border")
-                    .isEqualTo(250L);
+                    .as("a body table is placed by its text: the padding")
+                    .isEqualTo(280L);
         }
     }
 

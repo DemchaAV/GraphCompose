@@ -23,7 +23,7 @@ follow semantic versioning; release dates are ISO 8601.
   place or whose items it does not report one by one — an item split across pages — keep the
   spaces, and so does the top level of a list that nests any of them. Lines more than 2pt off
   across fall from 49 to 23 in Word, and in LibreOffice from 54 to 29 on Windows and 335 to
-  311 on Linux; in LibreOffice the foot of `MinimalUnderlined`'s first page, 14pt high, comes
+  310 on Linux; in LibreOffice the foot of `MinimalUnderlined`'s first page, 14pt high, comes
   within 1.4pt of the page's, and lines more than 2pt off down fall from 127 to 118 on Windows
   and 245 to 236 on Linux.
 - **A DOCX list without `hangingIndent` wraps where the page does.** The page sets an item's

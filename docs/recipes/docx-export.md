@@ -407,7 +407,13 @@ items is laid out flattened, its markers in its text, and keeps the stated colum
 A list that nests items keeps stated columns throughout — its nested levels are not
 measured, and one kept stated could stand left of its parent's text. So does any other list
 the layout did not place: the column is then a stated constant, 180 twips plus 120 for each
-nesting level, chosen near the single space the old text form left.
+nesting level, chosen near the single space the old text form left. In a list of paragraphs,
+a nested rich item with no marker — a description under a name — is the exception: every line
+of it stands where the layout set its text, as far past the list's edge, rather than two
+spaces a level in, and its measure is weighed at Word's half-point sizes as a paragraph's is,
+so it breaks at the page's words. A nested item with a marker, one of plain text, one the
+layout sets flush with its parent, and every item of a list whose items the layout does not
+report one by one — one running onto the next page — keep the spaces.
 
 ## What a panel keeps and loses
 

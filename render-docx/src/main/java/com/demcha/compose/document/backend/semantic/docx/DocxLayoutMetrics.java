@@ -373,13 +373,13 @@ final class DocxLayoutMetrics {
      * <p>A list lays each item out as a fragment of its own. A list whose markers stand in a
      * column of their own lays the marker out as one more fragment, level with its item's
      * text and as tall: the two are one item, its text's lines the item's, and the marker's
-     * single line does not make the item a wrapped one.</p>
+     * single line does not make the item a wrapped one. The text is the fragment to the right.</p>
      *
      * @param list a list node
-     * @return every item's lines, empty when the list laid out nothing
+     * @return every item's text, empty when the list laid out nothing
      */
-    List<List<ParagraphLine>> itemLines(DocumentNode list) {
-        List<List<ParagraphLine>> items = new ArrayList<>();
+    List<ItemText> itemLines(DocumentNode list) {
+        List<ItemText> items = new ArrayList<>();
         PlacedFragment previous = null;
         for (PlacedFragment fragment : fragmentsOf(list)) {
             if (!(fragment.payload() instanceof ParagraphFragmentPayload paragraph)) {
@@ -389,14 +389,24 @@ final class DocxLayoutMetrics {
                                && previous.pageIndex() == fragment.pageIndex()
                                && Math.abs(previous.y() - fragment.y()) < 0.01
                                && Math.abs(previous.height() - fragment.height()) < 0.01;
+            ItemText text = new ItemText(paragraph.lines(), fragment.x() + paragraph.padding().left());
             if (!sameItem) {
-                items.add(paragraph.lines());
-            } else if (paragraph.lines().size() > items.get(items.size() - 1).size()) {
-                items.set(items.size() - 1, paragraph.lines());
+                items.add(text);
+            } else if (text.x() > items.get(items.size() - 1).x()) {
+                items.set(items.size() - 1, text);
             }
             previous = fragment;
         }
         return items;
+    }
+
+    /**
+     * An item's text as a list laid it out.
+     *
+     * @param lines its lines
+     * @param x     where its text starts across the page, in points
+     */
+    record ItemText(List<ParagraphLine> lines, double x) {
     }
 
     /**

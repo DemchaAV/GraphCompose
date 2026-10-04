@@ -76,6 +76,49 @@ class DocxWordSizeMeasureTest {
     }
 
     @Test
+    void aCentredOrRightAlignedLineOfItsOwnIsSpacedToThePagesWidth() throws Exception {
+        // CenteredHeadline's 8.3pt contact line, set at 8.5, stood 10pt wider in Word, its first
+        // letter 4pt left of the page's. The difference is spread over its letters.
+        // Word spaces letters in whole tenths, to the nearest: narrowed at 8.3pt (set at 8.5),
+        // widened at 6.2pt (set at 6).
+        int letters = SHORT.codePointCount(0, SHORT.length());
+        for (double size : new double[] {8.3, 6.2}) {
+            double asked = widthAlone(SHORT, size);
+            double wordSize = Math.round(size * 2) / 2.0;
+            int expected = (int) Math.round((asked - asked * wordSize / size) / letters * 20);
+            assertThat(expected).as("spaced at %spt", size).isNotZero();
+            for (TextAlign align : new TextAlign[] {TextAlign.CENTER, TextAlign.RIGHT}) {
+                try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page
+                        .addParagraph(p -> p.text(SHORT).textStyle(DocumentTextStyle.DEFAULT.withSize(size)).align(align)))) {
+                    assertThat(text(document, "Platform engineer").getRuns())
+                            .as("each run spaced the page's width less Word's, a letter at a time, %s at %spt", align, size)
+                            .allSatisfy(run -> assertThat(run.getCharacterSpacing()).isEqualTo(expected));
+                }
+            }
+        }
+    }
+
+    @Test
+    void aLineSetFromItsLeftATrackedLineAndANearOneAreNotSpaced() throws Exception {
+        // From its left, the line's first letter is the page's. A tracked line Word sets in
+        // twentieths and spaces after its last letter too, which the size alone does not tell;
+        // a difference under a point is within what Word rounds its glyphs by.
+        DocumentTextStyle tracked = DocumentTextStyle.DEFAULT.withSize(8.3)
+                .withLetterSpacing(com.demcha.compose.document.style.DocumentLetterSpacing.points(1));
+        try (XWPFDocument left = DocxExports.withLayout(400, 400, 20, page -> page
+                     .addParagraph(p -> p.text(SHORT).textStyle(DocumentTextStyle.DEFAULT.withSize(8.3)).align(TextAlign.LEFT)));
+             XWPFDocument spaced = DocxExports.withLayout(400, 400, 20, page -> page
+                     .addParagraph(p -> p.text(SHORT).textStyle(tracked).align(TextAlign.CENTER)));
+             XWPFDocument near = DocxExports.withLayout(400, 400, 20, page -> page
+                     .addParagraph(p -> p.text("Platform engineer").textStyle(DocumentTextStyle.DEFAULT.withSize(8.4))
+                             .align(TextAlign.CENTER)))) {
+            assertThat(text(left, "Platform engineer").getRuns()).allSatisfy(run -> assertThat(run.getCharacterSpacing()).isZero());
+            assertThat(text(spaced, "Platform engineer").getRuns()).allSatisfy(run -> assertThat(run.getCharacterSpacing()).isEqualTo(20));
+            assertThat(text(near, "Platform engineer").getRuns()).allSatisfy(run -> assertThat(run.getCharacterSpacing()).isZero());
+        }
+    }
+
+    @Test
     void aShortCentredLineIsLeftWhereThePageSetsIt() throws Exception {
         // Its box has room for it as Word sets it, so neither edge moves.
         try (XWPFDocument document = DocxExports.withLayout(400, 400, 20, page -> page
@@ -85,6 +128,21 @@ class DocxWordSizeMeasureTest {
 
             assertThat(leftIndent(paragraph)).isZero();
             assertThat(rightIndent(paragraph)).isZero();
+        }
+    }
+
+    @Test
+    void aCentredLineWordSetsNarrowerIsGivenRoomForThePagesWidth() throws Exception {
+        // Its letters are spaced back to the page's width, which needs the few hundredths of
+        // room past it as much as a line Word sets wider: without them, 7.2pt set at 7 and spaced
+        // back to its box broke a word onto a second line.
+        double room = fillingRoom(HEADING, 7.2);
+        try (XWPFDocument document = filledBy(HEADING, 7.2, TextAlign.CENTER, room)) {
+            XWPFParagraph heading = text(document, "INFORMATION");
+            double measure = room - (leftIndent(heading) + rightIndent(heading)) / 20.0;
+
+            assertThat(measure).as("the page's line and a few hundredths more")
+                    .isGreaterThan(widthAlone(HEADING, 7.2) * 1.02);
         }
     }
 

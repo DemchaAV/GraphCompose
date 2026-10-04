@@ -327,7 +327,15 @@ it. In a table cell, where Word draws no text past the cell's left edge, the lef
 gives no more than it has, and the right edge gives the rest, the line moving by that much.
 Any other centred or right-aligned paragraph keeps the page's measure: in one of several
 lines a wider measure takes another word onto a line, and a short line's box already has
-room for it. A list's items, a line pair's line, text over the flow and a header's or
+room for it. A centred or right-aligned paragraph of one line moves its first letter by the
+line's difference — by half of it, or all of it — so where Word sets it a point or more
+wider or narrower than the page, its letters are spaced by the difference (`w:spacing`, in
+twentieths of a point, the size left as Word sets it) and its ends stand within a fraction of
+a point of the page's; such a line is given room for the page's width and a few hundredths
+more, as one Word sets wider is. A line that already carries tracking is left as it is: Word
+rounds tracking its own way and spaces the last letter too, which the size does not tell. So is a difference under a point — measured, `ObsidianInvoice`'s 9.34pt
+amounts, half a point wider by the size alone, came out as wide as the page's in Word. Text
+typed into a spaced line takes the same spacing. A list's items, a line pair's line, text over the flow and a header's or
 footer's line keep the page's measure too.
 
 ## Named styles, so the document can be restyled

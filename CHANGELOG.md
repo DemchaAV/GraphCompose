@@ -8,6 +8,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A centred or right-aligned DOCX line of its own stands as wide as the page sets it.**
+  Word states a type size in half points, and a line set at a size the page gives to the tenth
+  is that much wider or narrower; a centred line moves its first letter by half the difference
+  and a right-aligned one by all of it: `CenteredHeadline`'s 8.3pt contact line, set at 8.5,
+  stood 10pt wider in Word, its first letter 4pt left of the page's, and `ClassicSerif`'s
+  8.7pt one 4pt right. Where the difference is a point or more, its letters are now spaced by
+  it (`w:spacing`), the size left as Word sets it, so the line's ends stand within a fraction
+  of a point of the page's, and the line is given room for the page's width as one Word sets
+  wider is; a line already tracked, and a difference under a point, are left as they are. Lines
+  more than 2pt off across fall from 23 to 12 in Word (74 lines nearer the page, one 0.02pt
+  further) and from 29 to 18 in LibreOffice on Windows (70 nearer, five at most 0.11pt
+  further); nothing moves down.
 - **A nested list item with no marker stands where the page sets its text in DOCX.** In a
   list of paragraphs — rich items — a nested item was written two spaces a level in, with no
   indent: the project descriptions `Panel`, `Executive`, `ModernProfessional`,

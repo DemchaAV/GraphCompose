@@ -5163,9 +5163,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
+    /** How wide the page set a line: its spans', text, pictures and tracking, in points. */
+    private static double askedWidth(com.demcha.compose.document.layout.payloads.ParagraphLine line) {
+        double asked = 0;
+        for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
+            asked += Math.max(0, span.width());
+        }
+        return asked;
+    }
+
     /**
      * The measure a paragraph of one line needs in Word, in points: its box, or its line as wide
-     * as Word sets it and a few hundredths more ({@link #ONE_LINE_FACE_SLACK}), whichever is
+     * as Word sets it — or as the page does, where Word sets it narrower and its letters are
+     * spaced back to it — and a few hundredths more ({@link #ONE_LINE_FACE_SLACK}), whichever is
      * wider.
      */
     private double oneLinesMeasure(ParagraphNode node, double room) {
@@ -5176,7 +5186,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     && span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan run
                     && run.textStyle() != null && run.textStyle().size() > 0);
             if (text) {
-                set = Math.max(set, widthAtWordsSize(line));
+                // As wide as the page's line at least: a centred or right-aligned line of its own
+                // that Word sets narrower has its letters spaced back to it
+                // (setTheLineAsWideAsThePage), and needs the room past it as much as any.
+                set = Math.max(set, Math.max(widthAtWordsSize(line), askedWidth(line)));
             }
         }
         return Math.max(room, set * (1 + ONE_LINE_FACE_SLACK));
@@ -5783,10 +5796,73 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // the page's line does (see DocxStackedLines).
         DocxStackedLines.Line stacked = stackedLineHeights.get(node);
         writeParagraphRuns(para, node, rightToLeft, stacked == null ? 0 : stacked.topAbove(), stacked == null);
+        if (!rightToLeft) {
+            setTheLineAsWideAsThePage(para, node);
+        }
         closeAnchor(para, anchor);
         lastWrittenNode = node;
         lastWrittenParagraph = para;
     }
+
+    /**
+     * Spaces a centred or right-aligned line's letters so Word sets it as wide as the page does.
+     *
+     * <p>Word states a type size in half points, so it sets a size the page gives to the tenth a
+     * little larger or smaller, and a line that much wider or narrower. A line set from its left
+     * keeps its first letter where the page puts it; a centred line moves it by half the
+     * difference and a right-aligned one by all of it: {@code CenteredHeadline}'s 8.3pt contact
+     * line, set at 8.5, stood 10pt wider in Word, its first letter 4pt left of the page's, and
+     * {@code ClassicSerif}'s 8.7pt one 4pt right. The size is left as Word sets it; the
+     * difference is spread over the letters as character spacing ({@code w:spacing}, in
+     * twentieths of a point), so the line's ends stand within a fraction of a point of the
+     * page's. Only a line of its own: a paragraph that wraps breaks at the page's
+     * words through its measure ({@link #measureAtWordsSize}), and its lines' ends are the
+     * measure's. Under a point it is left alone: {@code ObsidianInvoice}'s 9.34pt amounts, set
+     * at 9.5 and half a point wider by the size alone, measured as wide as the page's in Word,
+     * and spacing them moved them half a point off.</p>
+     */
+    private void setTheLineAsWideAsThePage(XWPFParagraph para, ParagraphNode node) {
+        if (node.align() != TextAlign.CENTER && node.align() != TextAlign.RIGHT || layout.lineCount(node) != 1) {
+            return;
+        }
+        List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines = layout.lines(node);
+        if (lines.size() != 1) {
+            return;
+        }
+        double difference = askedWidth(lines.get(0)) - widthAtWordsSize(lines.get(0));
+        int letters = 0;
+        // Every run, an internal link's included, which the paragraph's own list leaves out.
+        List<XWPFRun> runs = runsIn(para).stream().map(run -> new XWPFRun(run, para)).toList();
+        for (XWPFRun run : runs) {
+            String text = run.text();
+            letters += text == null ? 0 : text.codePointCount(0, text.length());
+            if (run.getCharacterSpacing() != 0) {
+                // Tracked already: Word rounds it its own way and spaces the last letter too,
+                // which the size alone does not tell — TealPulse's tracked tagline, spaced on it,
+                // stood a point further off than it was.
+                return;
+            }
+        }
+        if (letters == 0 || !(Math.abs(difference) >= LINE_WIDTH_CLEARANCE)) {
+            return;
+        }
+        // In twentieths of a point, to the nearest: measured on the corpus, the twentieth brought
+        // 75 lines in Word nearer the page and none further, whole tenths 64. A line widened back
+        // to the page's has the page's room and a few hundredths more (oneLinesMeasure).
+        int twentieths = (int) Math.round(difference / letters * 20.0);
+        if (twentieths == 0) {
+            return;
+        }
+        for (XWPFRun run : runs) {
+            String text = run.text();
+            if (text != null && !text.isEmpty()) {
+                run.setCharacterSpacing(run.getCharacterSpacing() + twentieths);
+            }
+        }
+    }
+
+    /** How far a line of its own may stand from the page's width before its letters are spaced, in points. */
+    private static final double LINE_WIDTH_CLEARANCE = 1.0;
 
     /**
      * Indents a paragraph's lines by the blank prefix the page sets them after.

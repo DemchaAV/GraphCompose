@@ -54,6 +54,30 @@ class DocxParagraphMarkTest {
     }
 
     @Test
+    void aRichListItemsMarkCarriesItsLastRunsStyleNotTheLists() throws Exception {
+        // A rich item writes each run in its own style; Enter after one ending in a larger run
+        // continues in that run's size, not the list's.
+        DocumentTextStyle large = DocumentTextStyle.builder().size(13).build();
+        try (XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addList(list -> list
+                        .bullet()
+                        .hangingIndent(true)
+                        .textStyle(DocumentTextStyle.builder().size(9).build())
+                        .addItem(rich -> rich.plain("Small, then ").style("large", large))))) {
+            java.util.List<XWPFParagraph> paragraphs = new java.util.ArrayList<>(document.getParagraphs());
+            document.getTables().forEach(table -> table.getRows().forEach(row ->
+                    row.getTableCells().forEach(cell -> paragraphs.addAll(cell.getParagraphs()))));
+            XWPFParagraph item = paragraphs.stream()
+                    .filter(p -> p.getText().contains("Small, then")).findFirst()
+                    .orElseThrow(() -> new AssertionError(paragraphs.stream().map(XWPFParagraph::getText).toList()));
+
+            assertThat(item.getCTP().getPPr().getRPr().getSzArray(0).getVal())
+                    .as("the last run's 13pt, half points").hasToString("26");
+        }
+    }
+
+    @Test
     void aHairlineOfTextInACellIsNotAsTallAsBodyText() throws Exception {
         // A heading rule drawn as a filled cell holding half-point text: with the mark at the
         // document's size, the cell came out a line of body text tall.

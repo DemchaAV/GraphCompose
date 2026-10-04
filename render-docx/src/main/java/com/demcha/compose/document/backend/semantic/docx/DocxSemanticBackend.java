@@ -2734,9 +2734,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 followTheMarkerWithASpace(level);
             }
             if (measured && list.textStyle() != null) {
-                // Word draws the marker in the paragraph mark's style, and an item at an exact
-                // line leaves its mark the document's: a list set smaller, or in another face,
-                // would get a marker wider than the one the column was measured against.
+                // Word draws the marker in the paragraph mark's style, which carries what the
+                // item's text ends in (styleTheMark): stated on the level, the marker keeps the
+                // list's own face, size and colour, the ones the column was measured against.
                 applyDefaultRunProperties(level.addNewRPr(), list.textStyle());
             }
         }
@@ -3284,15 +3284,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
             }
         }
+        // The mark takes what the item's text ends in, its last run's style where it has one.
+        DocumentTextStyle markStyle = style;
         if (item.isRich()) {
             pictures = pictures.max(writeInlineTextRuns(para, style, item.runs(), path, line));
+            for (InlineRun run : item.runs()) {
+                InlineTextRun text = textOf(run);
+                if (text != null) {
+                    markStyle = text.textStyle() == null ? style : text.textStyle();
+                }
+            }
         } else {
             XWPFRun label = para.createRun();
             applyStyle(label, style);
             setTextBrokenAtLines(label, item.label());
         }
         makeRoomForPictures(para, pictures);
-        styleTheMark(para, style);
+        styleTheMark(para, markStyle);
     }
 
     /** How far past a list marker's picture its tab stop must stand for the tab to reach it, in points. */
@@ -6104,7 +6112,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTPPr properties = target.getCTP().isSetPPr() ? target.getCTP().getPPr() : target.getCTP().addNewPPr();
         org.openxmlformats.schemas.wordprocessingml.x2006.main.CTParaRPr mark =
                 properties.isSetRPr() ? properties.getRPr() : properties.addNewRPr();
-        // Through the typed setters, which put each element where the schema orders it.
+        // Through the typed setters, which put each element where the schema orders it. Each
+        // replaces what the mark held: the mark is set here, before anything else writes on it.
         mark.setRFontsArray(text.getRFontsArray());
         mark.setBArray(text.getBArray());
         mark.setBCsArray(text.getBCsArray());

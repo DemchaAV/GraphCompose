@@ -3430,6 +3430,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 shortOfTheEdge = Math.min(outer - room, insideTheBorders(padding, borders).right());
                 outer -= shortOfTheEdge;
             }
+            if (currentCell != null && indent < 0 && halfLeft > 0 && Double.isFinite(currentCellWidth)) {
+                // Word starts a panel its left border hangs left of its cell half that border in
+                // from the cell's text, and a table that then runs past the cell widens the cell,
+                // fixed layout or not: CompactMono's rail, a 3pt accent at its column's edge,
+                // pushed the main column 2.3pt right in Word. It gives up what runs past, no more
+                // than the border's width, which its margins had given its text: its text keeps
+                // the page's width and the slack, and both editors end the rail the slack past
+                // the page's. A panel bled left by a negative margin keeps the rest, as its text
+                // would otherwise narrow and wrap.
+                outer -= Math.max(0, Math.min(2 * halfLeft, halfLeft + outer - (currentCellWidth - insetRight)));
+            }
             setTableWidth(table, outer);
             writeGrid(table, new double[]{outer});
             CTTcPr properties = cellProperties(cell);

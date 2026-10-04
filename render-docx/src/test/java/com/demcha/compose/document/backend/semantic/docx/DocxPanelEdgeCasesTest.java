@@ -183,11 +183,13 @@ class DocxPanelEdgeCasesTest {
             var margins = nested.getRow(0).getCell(0).getCTTc().getTcPr().getTcMar();
 
             assertThat(DocxTwips.of(margins.getRight().getW())).as("all its right margin given up").isZero();
-            // As wide as its cell, every border inside its margins: the room less 1pt of padding
-            // each side, and the four half borders the margins give back.
+            // Every border inside its margins: the room less 1pt of padding each side, and the four
+            // half borders the margins give back, less the left border's width the table gives up,
+            // which Word starts half that border in from the cell's text and which would otherwise
+            // run past the cell and widen it. Its text is still wider than the page's.
             assertThat(width - DocxTwips.of(margins.getLeft().getW()) - DocxTwips.of(margins.getRight().getW()))
-                    .as("its text as wide as on the page")
-                    .isCloseTo(room - 40 + 60, org.assertj.core.data.Offset.offset(3L));
+                    .as("its text as wide as on the page, and the right border's width more")
+                    .isCloseTo(room - 40 + 60 - 30, org.assertj.core.data.Offset.offset(3L));
         }
     }
 

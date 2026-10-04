@@ -373,7 +373,8 @@ final class DocxLayoutMetrics {
      * <p>A list lays each item out as a fragment of its own. A list whose markers stand in a
      * column of their own lays the marker out as one more fragment, level with its item's
      * text and as tall: the two are one item, its text's lines the item's, and the marker's
-     * single line does not make the item a wrapped one. The text is the fragment to the right.</p>
+     * single line does not make the item a wrapped one. The text is the fragment to the right,
+     * or the later where the two start together — a marker that draws nothing, with no gap.</p>
      *
      * @param list a list node
      * @return every item's text, empty when the list laid out nothing
@@ -392,7 +393,7 @@ final class DocxLayoutMetrics {
             ItemText text = new ItemText(paragraph.lines(), fragment.x() + paragraph.padding().left());
             if (!sameItem) {
                 items.add(text);
-            } else if (text.x() > items.get(items.size() - 1).x()) {
+            } else if (text.x() >= items.get(items.size() - 1).x()) {
                 items.set(items.size() - 1, text);
             }
             previous = fragment;

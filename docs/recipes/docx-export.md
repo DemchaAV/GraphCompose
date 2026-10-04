@@ -411,9 +411,12 @@ nesting level, chosen near the single space the old text form left. In a list of
 a nested rich item with no marker — a description under a name — is the exception: every line
 of it stands where the layout set its text, as far past the list's edge, rather than two
 spaces a level in, and its measure is weighed at Word's half-point sizes as a paragraph's is,
-so it breaks at the page's words. A nested item with a marker, one of plain text, one the
-layout sets flush with its parent, and every item of a list whose items the layout does not
-report one by one — one running onto the next page — keep the spaces.
+so it breaks at the page's words. A list that nests only such items sets its top level at the
+page's column too, its marker a tab ahead of its text, so a name and the description under it
+start together. A nested item with a marker, one of plain text, one the layout sets no further
+in than the list's edge, and every item of a list the layout did not place or whose items it
+does not report one by one — an item split across pages — keep the spaces, and so does the
+top level of a list that nests any of them.
 
 ## What a panel keeps and loses
 

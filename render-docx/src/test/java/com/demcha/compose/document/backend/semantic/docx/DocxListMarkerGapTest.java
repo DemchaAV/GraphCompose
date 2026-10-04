@@ -230,6 +230,24 @@ class DocxListMarkerGapTest {
                     .isGreaterThan(Math.round(GAP * 20)).isLessThan(Math.round((GAP + 8.6) * 20));
             assertThat(DocxTwips.of(description.getCTP().getPPr().getInd().getRight()))
                     .as("measured at Word's 8.5pt, a little narrower").isPositive();
+
+            // Its name, the top level of a list that nests only such items, takes the page's
+            // column too: kept at a space, it started the gap less a space left of its description.
+            XWPFParagraph name = item(document, "Magazine");
+            assertThat(name.getText()).as("the bullet, a tab, the name").isEqualTo("•\tMagazine");
+            assertThat(tabStop(name)).as("the name where its description stands")
+                    .isEqualTo(leftIndent(description));
+        }
+    }
+
+    @Test
+    void aListThatNestsAnItemWithAMarkerKeepsItsTopLevelAtASpace() throws Exception {
+        // That item keeps its spaces, a level in: a top level at the page's column would stand
+        // right of it.
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
+                .addList(list -> list.marker("•").markerGap(GAP).hangingIndent(true)
+                        .addItem(rich -> rich.bold("Parent"), child -> child.addItem(rich -> rich.plain("Child")))))) {
+            assertThat(item(document, "Parent").getText()).isEqualTo("• Parent");
         }
     }
 

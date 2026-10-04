@@ -392,12 +392,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** The gap between the wrapped lines of an item of the list being written. */
     private double listLineGap;
 
-    // Where the list being written starts its items on the page, in points; NaN unknown.
+    /** Where the list being written starts its items on the page, in points; NaN unknown. */
     private double listTextLeft = Double.NaN;
+    /** Whether the layout's items are matched to the list's, one by one: each then has its place. */
+    private boolean listItemsMatched;
     /**
      * How the layout set each item of the list being written still to come, first item first:
      * its lines and where its text starts; empty when they cannot be told apart, and then no
-     * item gets the gap, its measure or its place.
+     * item gets the gap or its place, and its measure is only ever widened.
      */
     private java.util.ArrayDeque<DocxLayoutMetrics.ItemText> listItemLines =
             new java.util.ArrayDeque<>();
@@ -2915,6 +2917,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         listItemLines = laidOut.size() == itemCount(list)
                 ? new java.util.ArrayDeque<>(laidOut)
                 : new java.util.ArrayDeque<>();
+        boolean previousMatched = listItemsMatched;
+        listItemsMatched = !laidOut.isEmpty() && laidOut.size() == itemCount(list);
         // Where the list's items start on the page, past its margin and padding: an item's text
         // stands its own distance past it (see indentAsTheItemIs).
         double previousTextLeft = listTextLeft;
@@ -2940,6 +2944,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             listLineGap = previousLineGap;
             listItemLines = previousItemLines;
             listTextLeft = previousTextLeft;
+            listItemsMatched = previousMatched;
         }
         owePendingSpacingAfter(list.margin().bottom() + list.padding().bottom());
     }
@@ -3248,7 +3253,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             gap.addTab();
             hangFrom(para, layout.markerToText(measured, letters).getAsDouble());
         }
-        java.util.OptionalDouble markerToText = measured != null && depth == 0 && !nests(measured)
+        java.util.OptionalDouble markerToText = measured != null && depth == 0 && !nestsBesideItsText(measured)
                 ? layout.markerToText(measured) : java.util.OptionalDouble.empty();
         PictureReach pictures = PictureReach.NONE;
         if (marker.isRich()) {
@@ -3314,7 +3319,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private boolean setInAColumn(com.demcha.compose.document.node.ListNode list,
                                  com.demcha.compose.document.node.ListMarker marker) {
-        if (marker.isRich() || nests(list)) {
+        if (marker.isRich() || nestsBesideItsText(list)) {
             return false;
         }
         String letters = marker.prefix().stripTrailing();
@@ -3332,6 +3337,36 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static boolean nests(com.demcha.compose.document.node.ListNode list) {
         return list.nestedItems().stream().anyMatch(item -> !item.children().isEmpty());
+    }
+
+    /**
+     * Whether a list of paragraphs nests an item that does not stand at its own text, which a top
+     * level at the page's column could then stand right of.
+     *
+     * <p>A nested rich item with no marker stands where the layout set its text
+     * ({@link #indentAsTheItemIs}), where the layout's items are matched to the list's. A list
+     * that nests only those sets its top level at the page's column too: kept at a space, the
+     * name of {@code writeBulletedPair}'s project started the gap less a space left of the
+     * description set under it.</p>
+     */
+    private boolean nestsBesideItsText(com.demcha.compose.document.node.ListNode list) {
+        if (!nests(list)) {
+            return false;
+        }
+        if (!listItemsMatched) {
+            return true;
+        }
+        java.util.ArrayDeque<com.demcha.compose.document.node.ListItem> nested = new java.util.ArrayDeque<>();
+        list.nestedItems().forEach(item -> nested.addAll(item.children()));
+        while (!nested.isEmpty()) {
+            com.demcha.compose.document.node.ListItem item = nested.pop();
+            com.demcha.compose.document.node.ListMarker marker = item.marker();
+            if (!item.isRich() || marker == null || marker.isRich() || !marker.prefix().isBlank()) {
+                return true;
+            }
+            nested.addAll(item.children());
+        }
+        return false;
     }
 
     /** How much more than a marker of text's width, as Word may set it, its gap must leave, in points. */
@@ -5210,8 +5245,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * The measure lines the page laid out in a room need in Word, as {@link #wordsMeasure(ParagraphNode,
-     * double)} weighs them; NaN where no line holds text.
+     * The measure lines the page laid out in a room need in Word: each line weighed by its own
+     * text grown or shrunk to Word's size, held a point short of that share and never short of
+     * the widest line and a point; a single line keeps its room or the share, whichever is wider.
+     * The paragraph's reasons are {@link #wordsMeasure(ParagraphNode, double)}'s. NaN where no
+     * line holds text.
      */
     private static double wordsMeasure(List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
                                        double room) {

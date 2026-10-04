@@ -16,12 +16,16 @@ follow semantic versioning; release dates are ISO 8601.
   now. A nested rich item with no marker now stands, every line of it, as far past the list's
   edge as the layout set its text, where the layout's items are matched to the list's, and its
   measure is weighed at Word's half-point sizes as a paragraph's is, so it breaks at the page's
-  words. A nested item of plain text, one the layout sets flush with its parent, and every item
-  of a list whose items the layout does not report one by one — one running onto the next page —
-  keep the spaces. Lines more than 2pt off across fall from 49 to 24 in
-  Word and from 54 to 30 in LibreOffice on Windows; in LibreOffice the second page of
-  `MinimalUnderlined`, 14pt high, comes within 1.4pt of the page's, and lines more than 2pt
-  off down fall from 127 to 118. A nested item with a marker keeps its spaces.
+  words. A list that nests only such items sets its top level at the page's column too, its
+  marker a tab ahead of its text: kept at a space, the project's name started the gap less a
+  space left of its description. A nested item with a marker, one of plain text, one the
+  layout sets no further in than the list's edge, and every item of a list the layout did not
+  place or whose items it does not report one by one — an item split across pages — keep the
+  spaces, and so does the top level of a list that nests any of them. Lines more than 2pt off
+  across fall from 49 to 23 in Word, and in LibreOffice from 54 to 29 on Windows and 335 to
+  311 on Linux; in LibreOffice the foot of `MinimalUnderlined`'s first page, 14pt high, comes
+  within 1.4pt of the page's, and lines more than 2pt off down fall from 127 to 118 on Windows
+  and 245 to 236 on Linux.
 - **A DOCX list without `hangingIndent` wraps where the page does.** The page sets an item's
   first line as the marker, a space and the text, and every wrapped line after the spaces that
   cover the marker and that space; the Word list's levels were a stated 9pt column, a tab

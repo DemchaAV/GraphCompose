@@ -15,7 +15,9 @@ follow semantic versioning; release dates are ISO 8601.
   11pt in `ClassicInvoice`. Typing at the end of a document set them on the last paragraph's
   exact lines at the document's size, 14pt letters on lines set for 10pt text. Each paragraph's
   mark now carries what its text ends in — face, size, colour, weight, slant, decoration and
-  tracking, as its last run has them, a rich list item's included. Measured with the Word
+  tracking, as its last run has them, a rich list item's included; a paragraph ending in a
+  chip keeps its own style there, since the chip's letters are styled for a fill the mark does
+  not carry. Measured with the Word
   editing protocol over the 62 corpus documents:
   - Enter and typing continues in the text's size and face in 61, against 37;
   - text typed at a document's end stands as the page sets its last paragraph in 6 more.

@@ -347,7 +347,7 @@ function Invoke-Protocol {
         $p = $doc.Paragraphs($state.index)
         $state.style = $p.Style.NameLocal
         $lastLetter = Get-TextRange $p
-        $lastLetter.MoveStart(1, $lastLetter.End - $lastLetter.Start - 1) | Out-Null
+        $lastLetter.Start = $lastLetter.End - 1
         $state.size = $lastLetter.Font.Size
         $state.font = $lastLetter.Font.Name
         Send-EnterAndType $doc $p 'A paragraph the protocol inserted to see whether it joins the flow'
@@ -453,7 +453,7 @@ function Invoke-Protocol {
         $last = $doc.Paragraphs($doc.Paragraphs.Count)
         if ((Get-Text $last).Length -gt 0) {
             $lastLetter = Get-TextRange $last
-            $lastLetter.MoveStart(1, $lastLetter.End - $lastLetter.Start - 1) | Out-Null
+            $lastLetter.Start = $lastLetter.End - 1
             $state.continues = [double]$lastLetter.Font.Size
         }
         $end = $doc.Content

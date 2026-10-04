@@ -19,8 +19,8 @@ import java.io.ByteArrayInputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A paragraph whose line height the editor sets sizes its mark as its text: the mark is a
- * character on the last line and counts towards its height.
+ * A paragraph's mark carries what its text ends in: it is what Word continues from on Enter,
+ * and a character on the last line that counts towards a line the editor sets the height of.
  *
  * @author Artem Demchyshyn
  */
@@ -48,8 +48,9 @@ class DocxParagraphMarkTest {
             var mark = properties.getRPr();
             assertThat(mark.getSzArray(0).getVal()).as("its last run's size, half points").hasToString("22");
             assertThat(mark.sizeOfBArray()).as("bold, as its last run").isEqualTo(1);
-            assertThat(mark.getColorArray(0).getVal()).as("in its colour")
-                    .isEqualTo(paragraph.getRuns().get(paragraph.getRuns().size() - 1).getCTR().getRPr().getColorArray(0).getVal());
+            Object colour = mark.getColorArray(0).getVal();
+            assertThat(colour instanceof byte[] bytes ? java.util.HexFormat.of().withUpperCase().formatHex(bytes)
+                    : String.valueOf(colour)).as("in its colour").isEqualTo("1E5AA0");
         }
     }
 
@@ -96,14 +97,35 @@ class DocxParagraphMarkTest {
     }
 
     @Test
-    void aLineWrittenAtAnExactHeightLeavesItsMarkAlone() throws Exception {
+    void anExactLineInTheDocumentsOwnStyleLeavesItsMarkSilent() throws Exception {
+        // The text restates Normal, so its runs say nothing and neither does its mark: a global
+        // restyle reaches both, and Enter continues in Normal.
         try (XWPFDocument document = export(page -> page
-                .addParagraph(p -> p.text("Body"))
-                .addParagraph(p -> p.text("Small print").textStyle(DocumentTextStyle.DEFAULT.withSize(6))))) {
-            CTPPr small = document.getParagraphs().get(1).getCTP().getPPr();
+                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addParagraph(p -> p.text("More body text")))) {
+            CTPPr properties = document.getParagraphs().get(1).getCTP().getPPr();
 
-            assertThat(small.getSpacing().getLineRule()).hasToString("exact");
-            assertThat(small.isSetRPr()).isFalse();
+            assertThat(properties.getSpacing().getLineRule()).hasToString("exact");
+            assertThat(properties.isSetRPr()).isFalse();
+        }
+    }
+
+    @Test
+    void aParagraphEndingInAChipContinuesInItsOwnStyleNotTheChips() throws Exception {
+        // The chip's letters are white for its red fill, which the mark does not carry: Enter
+        // after it would type white on the page.
+        DocumentTextStyle onBadge = DocumentTextStyle.builder().size(9).color(DocumentColor.WHITE).build();
+        try (XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addParagraph(p -> p.inlineText("Status: ")
+                        .inlineHighlight("overdue", onBadge, DocumentColor.rgb(214, 56, 56), 0,
+                                DocumentInsets.zero())))) {
+            XWPFParagraph paragraph = document.getParagraphs().stream()
+                    .filter(p -> p.getText().startsWith("Status")).findFirst().orElseThrow();
+            CTPPr properties = paragraph.getCTP().getPPr();
+
+            assertThat(properties.isSetRPr() && properties.getRPr().sizeOfColorArray() > 0)
+                    .as("not the chip's white").isFalse();
         }
     }
 

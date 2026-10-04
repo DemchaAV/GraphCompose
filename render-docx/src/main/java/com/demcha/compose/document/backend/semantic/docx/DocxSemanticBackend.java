@@ -2734,9 +2734,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 followTheMarkerWithASpace(level);
             }
             if (measured && list.textStyle() != null) {
-                // Word draws the marker in the paragraph mark's style, which carries what the
-                // item's text ends in (styleTheMark): stated on the level, the marker keeps the
-                // list's own face, size and colour, the ones the column was measured against.
+                // Word draws the marker in the paragraph mark's style. A numbered item is a list
+                // line in the list's style, so its mark is too (styleTheMark); the level states
+                // the list's face, size and colour as well, the ones the column was measured
+                // against. The page draws the marker in the list's style, decoration included.
                 applyDefaultRunProperties(level.addNewRPr(), list.textStyle());
             }
         }
@@ -3291,7 +3292,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             for (InlineRun run : item.runs()) {
                 InlineTextRun text = textOf(run);
                 if (text != null) {
-                    markStyle = text.textStyle() == null ? style : text.textStyle();
+                    // A chip's letters are styled for a fill the mark does not carry.
+                    markStyle = text.textStyle() == null || backgroundOf(run) != null ? style : text.textStyle();
                 }
             }
         } else {
@@ -6082,9 +6084,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * and the letters take its last paragraph's. A mark left unstyled takes the document's own
      * size and face. Word's editing protocol, run over the corpus, found the new paragraph in
      * another size in 25 of 62 documents: 9pt after 10.5pt in {@code NavySidebar}, 14pt after
-     * 11pt in {@code ClassicInvoice}. In 9 more, what was typed at the end stood at the
-     * document's size on the last paragraph's exact lines, which were too short for it:
-     * 14pt letters on 9.25pt lines.</p>
+     * 11pt in {@code ClassicInvoice}. In 6 more, what was typed at the end stood at the
+     * document's size on the last paragraph's exact lines, which were set for smaller text:
+     * 14pt letters on lines set for 10pt. A paragraph ending in a chip keeps its own style on
+     * the mark: the chip's letters are styled for its fill, which the mark does not carry.</p>
      *
      * <p>The mark is also a character on the paragraph's last line, and its size counts towards
      * that line's height where the line is not exact. A line of half-point text — a coloured
@@ -6464,8 +6467,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // rest of that sentence rather than something the phrase overrides away.
             DocumentLinkTarget target = text.linkTarget() != null ? text.linkTarget() : node.linkTarget();
             XWPFRun docRun = newRun(para, target);
-            markStyle = text.textStyle() == null ? node.textStyle() : text.textStyle();
-            applyStyle(docRun, markStyle);
+            DocumentTextStyle runStyle = text.textStyle() == null ? node.textStyle() : text.textStyle();
+            // A chip's letters are styled for its fill, which the mark does not carry: white on
+            // a red badge would continue as white on the page. Its paragraph's style goes on.
+            markStyle = backgroundOf(run) != null ? node.textStyle() : runStyle;
+            applyStyle(docRun, runStyle);
             applyRunDirection(docRun, rightToLeft);
             applyInlineBackground(docRun, backgroundOf(run), path);
             setTextBrokenAtLines(docRun, text.text());

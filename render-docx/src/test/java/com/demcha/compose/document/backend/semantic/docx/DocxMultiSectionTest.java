@@ -176,6 +176,23 @@ class DocxMultiSectionTest {
     }
 
     @Test
+    void aSectionEndingInATableWithRoomBelowIsClosedByAnOrdinaryParagraphCarryingItsSection() throws Exception {
+        // The page has room below the table, so the paragraph closing the section is one a
+        // reader can type in, and it is the one that carries the section's properties.
+        DocumentSession tableOnly = session(300, 400, 24);
+        tableOnly.pageFlow(page -> page.addTable(t -> t.autoColumns(2).row("Net", "100")));
+        try (XWPFDocument document = export(tableOnly, landscapeBody())) {
+            var body = document.getBodyElements();
+            int table = body.indexOf(document.getTables().get(0));
+            XWPFParagraph carrier = (XWPFParagraph) body.get(table + 1);
+            var properties = carrier.getCTP().getPPr();
+            assertThat(properties.isSetSectPr()).isTrue();
+            assertThat(properties.isSetSpacing() && properties.getSpacing().isSetLineRule())
+                    .as("no exact line").isFalse();
+        }
+    }
+
+    @Test
     void aSectionThatWritesNothingStillEndsAsItsOwnSection() throws Exception {
         // An empty session writes no body element, so the last paragraph is still the one
         // closing the cover; handing it the empty section's properties would fold the cover

@@ -769,7 +769,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // The paragraph closing a section that ends with a table is also the one that
                 // carries the drawings nothing else on the last page carried.
                 reportDrawingsLeftOver(document,
-                        dropTheSpaceAtTheEnd(document, roomBelowTheFlow(context.layoutGraph())));
+                        dropTheSpaceAtTheEnd(document, roomBelowTheFlow(context.layoutGraph()),
+                                index == sections.size() - 1));
             }
             hideTheClosingMark(document);
             hideTheCellClosingMarks(document.getTables());
@@ -4569,10 +4570,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * into the table's last cell, a narrow column, over five more pages. Inserted at the very
      * end, they went into the hidden paragraph and none of them showed.</p>
      *
-     * @param room how far above its bottom margin the last page's content ends, in points
+     * <p>Where there is no layout to measure the room in, the paragraph is the hairline, and the
+     * report says nothing more than that the section was not laid out.</p>
+     *
+     * @param room        how far above its bottom margin the last page's content ends, in points,
+     *                    or NaN where there is no layout to say
+     * @param lastSection whether the section is the document's last, whose closing paragraph is
+     *                    the document's end
      * @return the paragraph written to close a section that ends with a table, or null
      */
-    private XWPFParagraph dropTheSpaceAtTheEnd(XWPFDocument document, double room) {
+    private XWPFParagraph dropTheSpaceAtTheEnd(XWPFDocument document, double room, boolean lastSection) {
         pendingSpacingAfter = 0;
         carriedSpacingBefore = 0;
         pullBelow = 0;
@@ -4583,12 +4590,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (room >= roomForAClosingLine()) {
                 return closing;
             }
-            report.add(DocxExportReport.Severity.APPROXIMATED, "closing paragraph",
-                    sectioned ? "section " + (sectionIndex + 1) : null,
-                    "the last page has no room for a line below the closing table, so the paragraph "
-                    + "after it is a point tall — at the end of the document, its mark hidden where it "
-                    + "holds nothing else: text typed at the end of the document goes into the table's "
-                    + "last cell, or into that paragraph, on point-tall lines or hidden");
+            if (!Double.isNaN(room)) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, "closing paragraph",
+                        sectioned ? "section " + (sectionIndex + 1) : null,
+                        "the last page has no room for a line below the closing table, so the paragraph "
+                        + "after it is a point tall: " + (lastSection
+                                ? "text typed at the end of the document goes into the table's last cell, "
+                                  + "or into that paragraph, whose mark is hidden where it holds nothing else"
+                                : "text typed after the table is set on point-tall lines"));
+            }
             return collapsed(closing);
         }
         return null;
@@ -4608,18 +4618,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** The size a closing line is reckoned at where the document's text has none. */
     private static final double DEFAULT_CLOSING_TEXT_POINTS = 12;
 
-    /** How tall an editor sets a line of text against its size: Word's Lato and Calibri are 1.2. */
+    /**
+     * How tall an editor sets a line of text against its size: Word sets Lato and Calibri at 1.2,
+     * and this is that with a little to spare. A face set taller — Poppins about 1.5 — leaves
+     * one line of room to spare rather than more.
+     */
     private static final double EDITOR_LINE_SHARE = 1.25;
 
     /**
      * How far above its bottom margin a section's content ends on its last page, in points; 0
-     * where there is no layout to say. Only the content counts: a page's backgrounds, its zones
+     * where its last page holds no content, and NaN where there is no layout to say. Only the
+     * content counts: a page's backgrounds, its zones
      * with the fields in them and a timeline's rail — fragments under a path of the layout's
      * own, starting {@code @} — are drawn elsewhere and take no room in the flow.
      */
     private static double roomBelowTheFlow(com.demcha.compose.document.layout.LayoutGraph graph) {
         if (graph == null || graph.totalPages() <= 0) {
-            return 0;
+            return Double.NaN;
         }
         int lastPage = graph.totalPages() - 1;
         double lowest = Double.NaN;

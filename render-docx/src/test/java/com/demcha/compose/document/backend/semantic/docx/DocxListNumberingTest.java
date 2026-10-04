@@ -255,8 +255,8 @@ class DocxListNumberingTest {
                 var indent = item.getCTP().getPPr().getInd();
 
                 assertThat(DocxTwips.of(indent.getLeft())).as("the margin, then the level's own indent")
-                        .isEqualTo(30 * 20L + 180);
-                assertThat(DocxTwips.of(indent.getHanging())).isEqualTo(180L);
+                        .isEqualTo(30 * 20L + DocxListLevels.column(document));
+                assertThat(DocxTwips.of(indent.getHanging())).isEqualTo(DocxListLevels.column(document));
                 assertThat(DocxTwips.of(indent.getRight())).isEqualTo(20 * 20L);
             }
         }
@@ -300,7 +300,85 @@ class DocxListNumberingTest {
                     .filter(p -> p.getText().equals("alpha"))
                     .findFirst().orElseThrow();
 
-            assertThat(DocxTwips.of(item.getCTP().getPPr().getInd().getLeft())).isEqualTo(30 * 20L + 180);
+            assertThat(DocxTwips.of(item.getCTP().getPPr().getInd().getLeft()))
+                    .isEqualTo(30 * 20L + DocxListLevels.column(document));
+        }
+    }
+
+    @Test
+    void aListWithoutTheFlagWrapsItsItemsWhereThePageDoes() throws Exception {
+        // The page sets the marker, a space and the text, and every wrapped line after the
+        // spaces covering the marker: ModernInvoice's notes wrapped at a stated 9pt in Word,
+        // 2.7pt left of the page's.
+        long[] columns = new long[2];
+        for (int i = 0; i < 2; i++) {
+            DocumentTextStyle style = DocumentTextStyle.DEFAULT.withSize(i == 0 ? 10 : 20);
+            try (XWPFDocument document = export(flow -> flow.addList(list -> list.bullet().textStyle(style)
+                    .items("Alpha", "Beta")))) {
+                var level = DocxListLevels.levelZero(document);
+                columns[i] = DocxListLevels.column(document);
+
+                assertThat(DocxTwips.of(level.getPPr().getInd().getHanging())).as("hung as far as it starts")
+                        .isEqualTo(columns[i]);
+                assertThat(DocxListLevels.markerFollowedByASpace(document)).as("the marker a space ahead").isTrue();
+                assertThat(level.getRPr().getSzArray(0).getVal().toString())
+                        .as("the marker and its space in the list's size").isEqualTo(String.valueOf(i == 0 ? 20 : 40));
+            }
+        }
+        assertThat(columns[1]).as("spaces twice the size, twice as wide").isCloseTo(2 * columns[0],
+                org.assertj.core.data.Offset.offset(2L));
+        assertThat(columns[0]).as("not the stated 9pt").isNotEqualTo(180L);
+    }
+
+    @Test
+    void aListThatNestsKeepsTheStatedColumnsWithoutTheFlag() throws Exception {
+        // A nested level's prefix is not measured: kept stated, a top level at the page's would
+        // stand right of the text of the items under it.
+        try (XWPFDocument document = export(flow -> flow.add(nested(2)))) {
+            assertThat(DocxListLevels.column(document)).isEqualTo(180L);
+            assertThat(DocxListLevels.markerFollowedByASpace(document)).isFalse();
+        }
+        // A tree of leaves is laid out flattened too, its marker in its text, no prefix before
+        // a wrapped line.
+        try (XWPFDocument document = export(flow -> flow.addList(list -> list.bullet()
+                .addItem("Leaf", leaf -> { }).addItem("Another", leaf -> { })))) {
+            assertThat(DocxListLevels.column(document)).isEqualTo(180L);
+            assertThat(DocxListLevels.markerFollowedByASpace(document)).isFalse();
+        }
+    }
+
+    @Test
+    void anItemInThePagesPrefixColumnIsMeasuredAtWordsSize() throws Exception {
+        // In the page's column alone, TerracottaRail's 8.6pt items, set at 8.5, took onto a line a
+        // word the page breaks onto the next. Narrowed as much as Word sets them narrower, and a
+        // point; widened where Word sets them wider; an item of one line is never narrowed. Only
+        // the right side is the item's own: its column stays the level's.
+        String wrapping = "Coordinated with contractors and consultants to maintain programme, budget and design "
+                          + "intent across every stage of the work, from the first sketch to the last handover.";
+        for (double size : new double[] {8.6, 8.4}) {
+            try (XWPFDocument document = export(flow -> flow.addList(list -> list.bullet()
+                    .textStyle(DocumentTextStyle.DEFAULT.withSize(size)).items(wrapping, "One line")))) {
+                List<XWPFParagraph> items = items(document);
+                double room = 523 - DocxListLevels.column(document) / 20.0;
+                double proportional = -(room * (8.5 / size - 1) - 1);
+                var long_ = items.get(0).getCTP().getPPr().getInd();
+                var short_ = items.get(1).getCTP().getPPr().getInd();
+                double right = DocxTwips.of(long_.getRight()) / 20.0;
+
+                assertThat(long_.isSetLeft() || long_.isSetHanging() || long_.isSetFirstLine())
+                        .as("no column of its own at %spt, so it follows its level", size).isFalse();
+                if (size < 8.5) {
+                    assertThat(right).as("widened at least as Word sets it wider, less a point")
+                            .isLessThanOrEqualTo(proportional + 0.05);
+                } else {
+                    // Its widest line fills its measure to within the point held short: narrowed
+                    // in proportion, that line would lose its last word in Word.
+                    assertThat(right).as("narrowed, but not past its widest line and a point")
+                            .isPositive().isLessThan(proportional - 1);
+                }
+                assertThat(short_ == null || !short_.isSetRight() || DocxTwips.of(short_.getRight()) <= 0)
+                        .as("the item of one line at %spt is not narrowed", size).isTrue();
+            }
         }
     }
 

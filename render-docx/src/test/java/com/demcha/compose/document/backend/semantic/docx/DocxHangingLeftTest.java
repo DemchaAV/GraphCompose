@@ -117,7 +117,8 @@ class DocxHangingLeftTest {
 
             assertThat(firstColumn + title / 20.0).as("the title where the page starts it, less the hang")
                     .isCloseTo(DASH + TITLE_PADDING - HANG, offset(0.1));
-            assertThat(item - title).as("the level's own indent, and nothing else between them").isEqualTo(180L);
+            assertThat(item - title).as("the level's own indent, and nothing else between them")
+                    .isEqualTo(DocxListLevels.column(document));
         }
     }
 

@@ -388,10 +388,26 @@ past it. (A face the export may not embed is the reader's editor's to substitute
 the marker wider.) A Word list's top level then takes that column as its indent and hanging;
 a list that is not one — rich items, a drawn marker — writes the marker, a tab to a stop
 there, and hangs the item's lines there, so its wrapped lines stand under its text as on the
-page. A marker made of runs keeps its space. A list that nests items keeps stated columns
-throughout — its nested levels are not measured, and one kept stated could stand left of its
-parent's text. Otherwise the column is a stated constant, 180 twips plus 120 for each nesting
-level, chosen near the single space the old text form left.
+page. A marker made of runs keeps its space.
+
+A Word list without `hangingIndent` takes the page's column too. The page sets its first line
+as the marker, a space and the text, and every wrapped line after the spaces that cover the
+marker and that space; the top level's indent and hanging are the width of those spaces in
+the list's style, and its marker is followed by a space rather than a tab (`w:suff`), so
+both lines stand where the page sets them. Such a level names the list's face and size, which
+Word draws the marker and its space in. Where Word sets the list's size to the half point,
+wider or narrower than the page's, an item that wraps is given a right indent that grows or
+shrinks its measure in the same proportion, less a point and never short of its widest line
+as Word sets it and a point more, so it breaks at the page's words; an item of one line, and
+one whose lines the layout does not report — every item of a list one of whose items runs
+onto the next page —, is only given room. The item's own indent is its right side alone, so
+it keeps its level's column and follows the level when it is edited. A list built as a tree of
+items is laid out flattened, its markers in its text, and keeps the stated column.
+
+A list that nests items keeps stated columns throughout — its nested levels are not
+measured, and one kept stated could stand left of its parent's text. So does any other list
+the layout did not place: the column is then a stated constant, 180 twips plus 120 for each
+nesting level, chosen near the single space the old text form left.
 
 ## What a panel keeps and loses
 

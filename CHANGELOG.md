@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX list without `hangingIndent` wraps where the page does.** The page sets an item's
+  first line as the marker, a space and the text, and every wrapped line after the spaces that
+  cover the marker and that space; the Word list's levels were a stated 9pt column, a tab
+  after the marker: `ModernInvoice`'s and `ClassicInvoice`'s notes wrapped 2.6pt left of the
+  page's, `MidnightNavy`'s and `SlateOrange`'s bullets 3.7 and 2.6pt right. The top level of a
+  list the layout placed that does not nest now takes the width of those spaces in the list's
+  style as its indent and hanging, its marker followed by a space (`w:suff`) in the list's face
+  and size. Where Word sets that size to the half point, an item that wraps is measured in the
+  same proportion, less a point and never short of its widest line as Word sets it, so it
+  breaks at the page's words: in the page's column alone,
+  `TerracottaRail`'s 8.6pt items, set at 8.5, took a word onto a line the page breaks it from,
+  and the column under them rose 11.5pt. The item's own `w:ind` is its right side alone, so it
+  keeps its level's column. Lines more than 2pt off across fall from 72 to 49 in Word, and in
+  LibreOffice from 77 to 54 on Windows and 358 to 335 on Linux; nothing moves down, and four
+  lines more are found in `MidnightNavy` in both editors and in `OrangeOps` in Word and on
+  Linux, their items now breaking as the page breaks them.
 - **A panel with a left border in a DOCX cell no longer widens the cell in Word.** A panel's
   table hangs half its left border left of the text it is written in, so both editors put its
   text where the page does. In a cell, Word starts the table half that border in from the

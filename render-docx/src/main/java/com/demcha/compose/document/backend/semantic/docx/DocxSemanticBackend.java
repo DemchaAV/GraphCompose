@@ -772,6 +772,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             hideTheClosingMark(document);
             hideTheCellClosingMarks(document.getTables());
+            stateTheCompatibilityMode(document);
             if (deterministicTimestamp != null) {
                 DocxDeterminism.pinCoreProperties(document, deterministicTimestamp);
             }
@@ -927,6 +928,32 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         return false;
+    }
+
+    /** The Word version whose layout the export is measured against: Word 2010's, 14. */
+    private static final String COMPATIBILITY_MODE = "14";
+
+    /**
+     * States the Word version whose layout rules the document follows ({@code w:compat}).
+     *
+     * <p>A document that states none is read in each editor's own default. Word 16 reads it in
+     * a compatibility mode in which a table's indent places its first cell's text; the
+     * LibreOffice build on the Linux CI reads it as a current document, in which the indent
+     * places the table's edge and the text a cell's margin further in: every panel in the body
+     * stood about a padding right of the page's there, and {@code ObsidianInvoice}'s items
+     * table 12.5pt. Stated, both read the document by the same rules. Written last in the
+     * settings, after everything POI writes there, where the schema orders it after them.</p>
+     */
+    private static void stateTheCompatibilityMode(XWPFDocument document) {
+        String w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+        try (org.apache.xmlbeans.XmlCursor cursor = document.getSettings().getCTSettings().newCursor()) {
+            cursor.toEndToken();
+            cursor.beginElement(new javax.xml.namespace.QName(w, "compat", "w"));
+            cursor.beginElement(new javax.xml.namespace.QName(w, "compatSetting", "w"));
+            cursor.insertAttributeWithValue(new javax.xml.namespace.QName(w, "name", "w"), "compatibilityMode");
+            cursor.insertAttributeWithValue(new javax.xml.namespace.QName(w, "uri", "w"), "http://schemas.microsoft.com/office/word");
+            cursor.insertAttributeWithValue(new javax.xml.namespace.QName(w, "val", "w"), COMPATIBILITY_MODE);
+        }
     }
 
     /**

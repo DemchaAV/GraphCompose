@@ -94,15 +94,14 @@ inside the content column and leave the marker where it is.
 
 It is off by default and stays off; existing lists are untouched.
 
-> **Fixed-layout, but for a drawn marker's gap.** PDF and PPTX honour this.
-> A DOCX list is a real Word list either way — same levels, same markers —
-> but the marker column is the level's own rather than the gap configured
-> here. The semantic DOCX export writes one Word paragraph per item and lets
-> Word lay it out, so it keeps the marker in the text — same paragraphs, same
-> text, same nesting. One exception: a top-level item whose marker is the
-> list's and a picture alone (a dot, an icon) has its first line's text tabbed
-> to where the layout puts it, the picture's width and the gap past the
-> item's start. See [DOCX export](docx-export.md).
+> **In DOCX, the top level's column.** PDF and PPTX honour this in full. A
+> DOCX list is a real Word list either way — same levels, same markers, same
+> paragraphs, text and nesting. Its top level takes the column the layout set
+> the marker in, the marker's width and the gap — its text and wrapped lines
+> stand where the page puts them — where the gap covers what Word may set the
+> marker wider, by half a point past it — the default 4pt gap does after a
+> bullet. A list that nests items, and a marker the gap does not clear, keep a stated
+> column. See [DOCX export](docx-export.md).
 
 ## Nested lists
 

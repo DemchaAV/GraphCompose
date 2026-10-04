@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A `hangingIndent(true)` list's top level takes the page's marker column in DOCX, text
+  markers too.** The export gave a Word list's levels a stated 9pt column and a list of
+  paragraphs a space after its marker, and wrapped every item's lines back under its marker:
+  `Panel`'s skills stood 7.8pt left of the page's on their second lines. The top level of a
+  list the layout set in a marker column now takes that column, the marker's width and
+  `markerGap`, as its indent and hanging — a Word list's level, or a tab and a hanging indent
+  on each item of a list of paragraphs, plain items included — so its text and wrapped lines
+  stand where the page sets them, a picture marker's included. A marker of text counts as
+  wide as the page sets it grown to Word's half-point size, in the page's face — embedded, or
+  a standard face Word sets in the same widths — and the column is used only where the gap
+  leaves half a point past that; a list that nests items, a marker the gap does not clear,
+  and a list without the flag keep the stated columns. The test that
+  held the flag to changing nothing, `DocxHangingIndentIsIgnoredTest`, is now
+  `DocxListHangingIndentTest` and holds it to the column. `Panel`'s and `SerifHeadline`'s
+  six such lines now stand within 0.2pt across in both editors; lines more than 2pt off
+  across fall from 136 to 130 in Word and from 102 to 96 in LibreOffice.
 - **A list item whose marker is a picture starts its text where the page does in DOCX.** The
   picture — a dot, an icon — was followed by a space, a little over two points where the page
   leaves the `markerGap` asked for: `TealPulse`'s skills, highlights and certifications, a

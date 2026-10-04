@@ -36,14 +36,83 @@ class DocxListMarkerGapTest {
 
                 assertThat(paragraph.getText()).isEqualTo("\t" + item);
                 assertThat(tabStop(paragraph)).as("past the column's 30pt indent, the dot and its gap")
-                        .isEqualTo(leftIndent(paragraph) + Math.round((DOT + GAP) * 20));
-                assertThat(leftIndent(paragraph)).as("the item starts at the column's indent").isEqualTo(600);
+                        .isEqualTo(firstLineStart(paragraph) + Math.round((DOT + GAP) * 20));
+                assertThat(firstLineStart(paragraph)).as("the item starts at the column's indent").isEqualTo(600);
+                assertThat(leftIndent(paragraph)).as("and its lines hang at its text").isEqualTo(tabStop(paragraph));
             }
         }
     }
 
     @Test
-    void aMarkerOfTextKeepsItsSpace() throws Exception {
+    void aWordListOfATextMarkerTakesTheColumnTheLayoutSetsIt() throws Exception {
+        // MidnightNavy's and Panel's bullets: the level's marker column was a stated 9pt.
+        try (XWPFDocument wide = DocxExports.withLayout(400, 300, 20, page -> page
+                     .addList(list -> list.marker("•").markerGap(GAP).hangingIndent(true).items("Alpha", "Beta")));
+             XWPFDocument stated = DocxExports.withLayout(400, 300, 20, page -> page
+                     .addList(list -> list.marker("•").markerGap(GAP).items("Alpha", "Beta")))) {
+            long[] column = levelZero(wide);
+
+            assertThat(column[0]).as("the column, as wide as it hangs").isEqualTo(column[1]);
+            assertThat(column[0]).as("the bullet's width and the gap").isGreaterThan(Math.round(GAP * 20));
+            assertThat(levelZero(stated)).as("a list the layout set no column for keeps the stated one")
+                    .containsExactly(180, 180);
+        }
+    }
+
+    @Test
+    void aWordListInAPaddedColumnTakesItsInsetAndTheColumn() throws Exception {
+        // The column's inset written on the paragraph replaces the level's indent, so the
+        // level's column is added back on top of it.
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
+                .addSection("Column", column -> column.padding(new DocumentInsets(0, 0, 0, 30))
+                        .addList(list -> list.marker("•").markerGap(GAP).hangingIndent(true).items("Alpha"))))) {
+            long[] column = levelZero(document);
+            XWPFParagraph paragraph = item(document, "Alpha");
+
+            assertThat(leftIndent(paragraph)).isEqualTo(600 + column[0]);
+            assertThat(firstLineStart(paragraph)).as("its marker at the column's inset").isEqualTo(600);
+        }
+    }
+
+    @Test
+    void aTextMarkersRichItemWithTooLittleGapKeepsItsSpace() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
+                .addList(list -> list.marker("•").markerGap(0).hangingIndent(true)
+                        .addItem(rich -> rich.bold("Label:").plain(" description"))))) {
+            XWPFParagraph paragraph = item(document, "description");
+
+            assertThat(paragraph.getText()).isEqualTo("• Label: description");
+            assertThat(paragraph.getCTP().getPPr().isSetTabs()).isFalse();
+        }
+    }
+
+    @Test
+    void aTextMarkerWithTooLittleGapKeepsTheStatedColumn() throws Exception {
+        // Word may set the bullet a few hundredths wider; with no gap to cover that, a column
+        // at the page's would leave it past its tab.
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
+                .addList(list -> list.marker("•").markerGap(0).hangingIndent(true).items("Alpha")))) {
+            assertThat(levelZero(document)).containsExactly(180, 180);
+        }
+    }
+
+    @Test
+    void aTextMarkersRichItemHangsAtTheColumnTheLayoutSetsIt() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
+                .addList(list -> list.marker("•").markerGap(GAP).hangingIndent(true)
+                        .addItem(rich -> rich.bold("Label:").plain(" a description long enough to run onto a "
+                                + "second line in the column it is set in, so its lines hang"))))) {
+            XWPFParagraph paragraph = item(document, "lines hang");
+
+            assertThat(paragraph.getText()).startsWith("•\tLabel:");
+            assertThat(firstLineStart(paragraph)).isZero();
+            assertThat(leftIndent(paragraph)).as("every line after the first at the text").isEqualTo(tabStop(paragraph))
+                    .isGreaterThan(Math.round(GAP * 20));
+        }
+    }
+
+    @Test
+    void aRichMarkerOfTextKeepsItsSpace() throws Exception {
         // Word sets a text marker in its own widths: a stop past it could fall short of it.
         try (XWPFDocument document = DocxExports.withLayout(400, 300, 20, page -> page
                 .addList(list -> list.marker(m -> m.color("•", DocumentColor.rgb(0, 128, 128)))
@@ -97,7 +166,7 @@ class DocxListMarkerGapTest {
 
             assertThat(paragraph.getText()).startsWith("\t");
             assertThat(tabStop(paragraph)).as("in a cell, from the cell's text edge")
-                    .isEqualTo(leftIndent(paragraph) + Math.round((DOT + GAP) * 20));
+                    .isEqualTo(firstLineStart(paragraph) + Math.round((DOT + GAP) * 20));
         }
     }
 
@@ -135,6 +204,21 @@ class DocxListMarkerGapTest {
         var stops = paragraph.getCTP().getPPr().getTabs().getTabArray();
         assertThat(stops).hasSize(1);
         return DocxTwips.of(stops[0].getPos());
+    }
+
+    /** The left and hanging indents of a document's first list definition's top level. */
+    private static long[] levelZero(XWPFDocument document) {
+        var indent = document.getNumbering().getAbstractNum(java.math.BigInteger.ZERO).getAbstractNum()
+                .getLvlArray(0).getPPr().getInd();
+        return new long[] {DocxTwips.of(indent.getLeft()), DocxTwips.of(indent.getHanging())};
+    }
+
+    /** Where an item's first line starts: its left indent less what it hangs by. */
+    private static long firstLineStart(XWPFParagraph paragraph) {
+        var properties = paragraph.getCTP().getPPr();
+        long hanging = properties == null || !properties.isSetInd() || !properties.getInd().isSetHanging()
+                ? 0 : DocxTwips.of(properties.getInd().getHanging());
+        return leftIndent(paragraph) - hanging;
     }
 
     private static long leftIndent(XWPFParagraph paragraph) {

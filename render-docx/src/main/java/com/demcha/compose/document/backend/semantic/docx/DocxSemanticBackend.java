@@ -204,6 +204,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // Geometry-only node kinds already warned about this export pass.
     private final java.util.Set<String> warnedNodeKinds =
             java.util.concurrent.ConcurrentHashMap.newKeySet();
+    // The page zone content already reported this export. By identity: a zone's content is built
+    // once a section and written into each kind of header Word is given, and two logos of one
+    // kind and no name are two losses.
+    private final java.util.Set<DocumentNode> zonePartsReported =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     private final AtomicBoolean containerRadiusWarned = new AtomicBoolean(false);
     // The fill of the panel being written into, or null: a table cell with no fill of its own
     // is drawn white by the engine, and inside a filled panel has to say so rather than let the
@@ -682,6 +687,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         chartWarned.set(false);
         containerRadiusWarned.set(false);
         warnedNodeKinds.clear();
+        zonePartsReported.clear();
         surfaceBehind = null;
         overlayDepth = 0;
         bandDepth = 0;
@@ -755,6 +761,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     writeStylesPart(document);
                     DocxFontTable.write(document, whole, fonts, report);
                     applyMetadata(document, metadataOf(sections));
+                    reportUnwrittenOutputOptions(sections);
                 }
                 earlierZones.addAll(applyPageZones(document, context.outputOptions().zones(),
                         context.outputOptions().headersAndFooters(), evenAndOdd, earlierZones));
@@ -1100,8 +1107,39 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 props.getCoreProperties().setKeywords(metadata.getKeywords());
             }
         }
-        // The watermark and protection are still ignored. The text header and footer are
-        // written with the page zones — see applyPageZones.
+        // The text header and footer are written with the page zones — see applyPageZones; the
+        // watermark, protection and viewer preferences are not written, and are reported
+        // (reportUnwrittenOutputOptions).
+    }
+
+    /**
+     * Reports what a section's output options ask of the file that a Word file is not given: a
+     * watermark, a protection and viewer preferences are the PDF backend's alone. Without the
+     * note an export asked to protect a document hands back an open one, and says nothing.
+     */
+    private void reportUnwrittenOutputOptions(List<SemanticSection> sections) {
+        boolean protection = false;
+        boolean viewerPreferences = false;
+        for (int i = 0; i < sections.size(); i++) {
+            DocumentOutputOptions options = sections.get(i).context().outputOptions();
+            // A watermark belongs to its section's pages; a protection and viewer preferences
+            // belong to the whole file, as a multi-section PDF takes the first a section sets.
+            if (options.watermark() != null) {
+                report.add(DocxExportReport.Severity.DROPPED, "watermark",
+                        sections.size() > 1 ? "section " + (i + 1) : null,
+                        "the DOCX export writes no watermark, so the pages have none");
+            }
+            protection |= options.protection() != null;
+            viewerPreferences |= options.viewerPreferences() != null;
+        }
+        if (protection) {
+            report.add(DocxExportReport.Severity.DROPPED, "protection", null,
+                    "the DOCX export writes no protection, so the file opens and edits without a password");
+        }
+        if (viewerPreferences) {
+            report.add(DocxExportReport.Severity.DROPPED, "viewer preferences", null,
+                    "the DOCX export writes no viewer preferences, so Word opens the file its own way");
+        }
     }
 
     /**
@@ -1656,6 +1694,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         tab.setPos(java.math.BigInteger.valueOf(Math.round(contentWidth * TWIPS_PER_POINT)));
 
         List<DocumentNode> parts = content instanceof RowNode row ? row.children() : List.of(content);
+        // A zone's row is its children on one line; its paint is lost as a body row's is, and
+        // said once, though the line is written into each kind of header the zone is given.
+        if (content instanceof RowNode row && zonePartsReported.add(row)) {
+            reportUnwrittenRowPaint(row, true);
+        }
         for (DocumentNode part : parts) {
             appendZonePart(para, part);
         }
@@ -1735,6 +1778,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             LOG.warn("docx.zone.unsupportedNode kind={} — a page zone maps paragraphs, page fields"
                     + " and spacers onto a Word header/footer; other nodes are skipped",
                     node.nodeKind());
+        }
+        // A zone's content is written into each kind of header Word is given — the first page's,
+        // the even pages', the rest —, so the same logo would be reported once per kind: once is
+        // what the caller needs.
+        if (zonePartsReported.add(node)) {
+            report.add(DocxExportReport.Severity.DROPPED, "page zone content", null,
+                    "a page zone's " + node.nodeKind()
+                    + (node.name().isEmpty() ? "" : " '" + node.name() + "'")
+                    + " is not written: a Word header or footer is written from the zone's "
+                    + "paragraphs, page fields and spacers only");
         }
     }
 
@@ -2368,12 +2421,47 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // Drawn: by the node, or, composed in a cell, by its table.
             return;
         }
+        String why = droppedBecause(node);
         if (warnedNodeKinds.add(node.nodeKind())) {
-            LOG.warn("DocxSemanticBackend: dropping '{}' node(s) — geometry has no semantic "
-                     + "Word analogue; use the PDF backend for pixel-perfect output", node.nodeKind());
+            LOG.warn("DocxSemanticBackend: dropping '{}' node(s) — {}; use the PDF backend for "
+                     + "pixel-perfect output", node.nodeKind(), why);
         }
         report.add(DocxExportReport.Severity.DROPPED, node.nodeKind(), layout.pathOf(node),
-                "geometry has no semantic Word analogue, so it is not in the document at all");
+                why + ", so it is not in the document");
+    }
+
+    /** Why a node the export neither writes nor draws is dropped, as the report says it. */
+    private static String droppedBecause(DocumentNode node) {
+        if (node instanceof PageFieldNode) {
+            return "a page field is written in a page zone, as a Word header's or footer's field, "
+                   + "and not in the body";
+        }
+        if (!isBuiltIn(node)) {
+            return "a node kind the DOCX export does not know: not its text, its pictures" + heldNodes(node);
+        }
+        return "its geometry has no semantic Word analogue";
+    }
+
+    /**
+     * Whether a node is one of GraphCompose's own kinds, every one of which this export knows:
+     * the public node records, and the wrappers the layout adds itself. A prefix would not do —
+     * a caller's node in a package of its own under the same root is still unknown here.
+     */
+    private static boolean isBuiltIn(DocumentNode node) {
+        String pkg = node.getClass().getPackageName();
+        return pkg.equals(DocumentNode.class.getPackageName())
+               || pkg.equals(com.demcha.compose.document.layout.LayoutAnchorNode.class.getPackageName());
+    }
+
+    /**
+     * How a report names what an unknown node holds, which is lost with it: counted where the
+     * node says, and otherwise named without a number — a definition can lay out children the
+     * node does not list.
+     */
+    private static String heldNodes(DocumentNode node) {
+        int held = node.children().size();
+        return held == 0 ? ", nor anything it holds"
+                : ", nor the " + held + (held == 1 ? " node" : " nodes") + " it holds";
     }
 
     /**
@@ -2431,6 +2519,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             if (node instanceof com.demcha.compose.document.node.PathNode path && losesStyle(path)) {
                 message.append("; its gradient paint, dash pattern, caps and joins are not carried");
+            }
+            if (!isBuiltIn(node)) {
+                message.append("; a node kind the DOCX export does not know: only the shapes it "
+                        + "paints itself are written, not its text, its pictures").append(heldNodes(node));
             }
             report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
                     message.toString());
@@ -9610,10 +9702,58 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return style == null ? DocumentTableStyle.empty() : style;
     }
 
+    /**
+     * Reports the paint a row asks for that its table is not given: the page paints a row's
+     * fill, outline and side borders round its columns (RowDefinition), and the row's table is
+     * written without them. A corner radius on its own paints nothing, so it is not reported.
+     *
+     * <p>A row composed in a table cell is the exception: what the cell paints is drawn as
+     * shapes where it frames no text (drawCellDrawing), and the layout does not say which of
+     * those boxes is the row's, so the note says which way it went rather than that it was
+     * lost.</p>
+     */
+    private void reportUnwrittenRowPaint(RowNode node, boolean inAZone) {
+        List<String> paint = new ArrayList<>();
+        if (node.fillColor() != null) {
+            paint.add("fill");
+        }
+        if (node.stroke() != null && node.stroke().width() > 0) {
+            paint.add("outline");
+        }
+        if (paintsASide(node.borders())) {
+            paint.add("borders");
+        }
+        if (paint.isEmpty()) {
+            return;
+        }
+        String what = "the row's " + String.join(", ", paint) + (paint.size() == 1 ? " is" : " are");
+        if (inAZone) {
+            // A zone's content is not in the layout, so it is no cell's either.
+            report.add(DocxExportReport.Severity.DROPPED, "row paint", null,
+                    what + " not written: a page zone's row is written as one line of the header or "
+                    + "footer");
+        } else if (composedInACell(node)) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "row paint", layout.pathOf(node),
+                    what + " drawn as a shape behind its cell where it frames no text, and not written "
+                    + "where it does");
+        } else {
+            report.add(DocxExportReport.Severity.DROPPED, "row paint", layout.pathOf(node),
+                    what + " not written: its columns are, as a table with no shading or borders");
+        }
+    }
+
+    /** Whether any side of a set of borders is drawn: a side of no width draws nothing. */
+    private static boolean paintsASide(com.demcha.compose.document.style.DocumentBorders borders) {
+        return java.util.stream.Stream.of(borders.top(), borders.right(), borders.bottom(), borders.left())
+                .anyMatch(side -> side != null && side.width() > 0);
+    }
+
     private void writeRow(XWPFDocument document, RowNode node) throws Exception {
         // Represent rows as a single one-row table so downstream editors get a
         // visual side-by-side layout; each cell holds its child as it is written
         // anywhere else (writeCellBody).
+        // Before the empty row returns: a row of no columns the page still paints.
+        reportUnwrittenRowPaint(node, false);
         if (node.children().isEmpty()) {
             return;
         }

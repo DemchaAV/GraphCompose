@@ -484,7 +484,9 @@ How it lands:
   padding takes back. Unwritten, Word 16 puts the table's edge on the margin and the text a
   padding further in (measured).
 - **Nesting.** A panel inside a panel is a table inside its cell. So is a row, with no fill
-  of its own, so the panel shows through it. A table keeps its own cell fills, and a cell
+  of its own, so the panel shows through it. A row's own fill, outline and side borders
+  (`RowBuilder.fillColor`, `stroke`, `borders`) are not written yet, in or out of a panel,
+  and the export report names them (`row paint`). A table keeps its own cell fills, and a cell
   no style fills is written white, as the page draws it on the card. Word draws a table's
   right border outside its right edge and, on screen, cuts off what passes its cell's edge
   and draws the cell's gridline there; a bordered panel reaching its cell's text edge ends its
@@ -914,7 +916,9 @@ its size, the same matrix the PDF draws, so it scans, with its data as the
 picture's description. Its data is part of the picture — changing it means
 exporting again — and the report says so, and names a link or a transform on it
 as not carried. In a page zone a barcode is still skipped.
-Watermarks and protection options are also ignored by the current exporter.
+A watermark, a protection and viewer preferences are not written; the export report names
+each one the document sets (`watermark`, `protection`, `viewer preferences`), so a file
+asked to be protected is not handed back open in silence.
 
 A text header or footer (`session.header(...)` / `session.footer(...)`, a
 `DocumentHeaderFooter`) is not: it exports as a line of a real Word header
@@ -948,6 +952,9 @@ Word header or footer part, with the page number as a live field, and it
 sits as far from its page edge as the page puts it — the distance is read
 from where the zone's content landed in the resolved layout and written as
 `w:pgMar/@w:header` or `@w:footer`, rather than left to Word's 36pt.
+A zone is written from its paragraphs, page fields and spacers: anything else in it — a
+logo, a panel, a table — is not written, and the export report names it once
+(`page zone content`).
 
 A zone drawn on some pages only (`appliesTo(...)`) lands on the same pages when Word can
 say so. Word has a header and footer for the first page, for even pages and for the rest,

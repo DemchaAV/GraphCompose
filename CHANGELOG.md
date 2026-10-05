@@ -8,6 +8,35 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **The DOCX export report names what it used to leave out in silence.** Four kinds of loss
+  reached the Word file with no more than a log line, or nothing, so a caller reading the
+  report was told the document lost nothing:
+  - a row's fill, outline and side borders (`RowBuilder.fillColor`, `stroke`, `borders`): the
+    row is written as a table with no shading or borders, and a page zone's row as one line.
+    Now `DROPPED`, `row paint`, naming which of the three, a row of no columns included; a
+    corner radius with nothing to round paints nothing and is not named. A row composed in a
+    table cell is `APPROXIMATED` instead: what a cell paints is drawn as a shape where it
+    frames no text, and the layout does not say which box is the row's;
+  - anything in a page zone but paragraphs, page fields and spacers, such as a logo: now
+    `DROPPED`, `page zone content`, once for each, though a zone is written into each kind of
+    header or footer it is given — and two logos of no name are two notes;
+  - a watermark, a protection and viewer preferences: now `DROPPED`, `watermark` (once per
+    section that sets one), `protection` and `viewer preferences` (once for the file) — a file
+    asked to be protected opens and edits without a password, and the report says so;
+  - a node kind of the caller's own (a `DocumentNode` with its own `NodeDefinition`): it was
+    reported as dropped geometry "with no semantic Word analogue". It is now named as a kind
+    the export does not know, losing its text, its pictures and what it holds — counted where
+    the node lists its children; the shapes it paints itself are still drawn, and say the
+    same. A page field in the body, not a page zone, is dropped for that reason rather than
+    for its geometry.
+
+  Which kinds are the export's own is decided by the node's package, exactly: a caller's node
+  in a package under the same root is not taken for a built-in one. A new test,
+  `DocxNodeFieldLedgerTest`, records for every field of every public node class in the node
+  and layout packages, and every output option, whether the export writes it, reports it, has
+  nothing to carry, or leaves a gap that names what is lost — 29 fields have nothing to carry
+  and 55 such gaps remain, each named. A node kind that is not a record, or a kind or field
+  added to the engine, fails it until someone decides.
 - **A DOCX timeline's dots, and drawings centred on a line, move with their text too.** A
   drawing in a table cell went into that cell only when the cell held it across, and a dot
   set in a column of its own beside its entry's text — `CharcoalGold`'s timeline, a row of

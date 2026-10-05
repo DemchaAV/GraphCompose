@@ -25,16 +25,16 @@ import java.util.Locale;
  *
  * <p>A timeline's rail and the dots on it, a badge's circle, a ring round a portrait: the export
  * wrote none of them, since none is text, and a CV came out as its words on a bare page. Each is
- * a DrawingML shape anchored to the page at the layout's position, behind the text, in the order
+ * a floating DrawingML shape at the layout's position, behind the text, in the order
  * the page paints them — a rectangle, a rectangle with rounded corners, an ellipse or a line,
  * filled and outlined as on the page.</p>
  *
- * <p>The shape does not move with the text. It is anchored in a paragraph written on the same
- * page, so it stays on the page it belongs to; within the page it stands where the layout put it,
- * which is where the text around it stands too as long as the text lands where the page sets it.
- * A reader who then edits the text moves the text, not the drawing — a drawing is decoration,
- * and Word treats a floating shape the same way. A drawing that is all a table cell holds is
- * the exception ({@link #drawingInCell}): anchored in that cell, it moves with its row.</p>
+ * <p>A shape standing beside a paragraph's text is anchored in that paragraph and placed down from
+ * its top ({@link #drawingInParagraph}, or {@link #drawingInCell} for one in a table cell): a
+ * reader who edits the text above moves the paragraph, and the shape with it. A shape beside no
+ * paragraph is placed from the page's edges and stays there whatever the text does. Which is
+ * which, {@link DocxDrawingAnchors} decides. A drawing that is all a table cell holds is anchored
+ * in that cell ({@link #drawingInCell}), and moves with its row.</p>
  *
  * <p>A picture a badge holds is drawn the same way, over the badge: written in the flow, as a
  * paragraph of its own, it stood on its own line above the title beside the badge instead of in
@@ -301,9 +301,26 @@ final class DocxDrawings {
     }
 
     /**
+     * A shape or a picture as a drawing anchored in a paragraph of the body, placed across from
+     * the page's left edge and down from that paragraph's top, so it moves with the paragraph
+     * wherever Word sets it.
+     *
+     * @param shape        the shape
+     * @param id           an identifier for the drawing, unique in the document
+     * @param order        its place among the drawings: a later one is drawn over an earlier one
+     * @param paragraphTop where the page puts the paragraph's top, the space above its first line
+     *                     included, in points from the page's top edge
+     * @return the drawing, to be added to a run of that paragraph
+     */
+    static CTDrawing drawingInParagraph(Shape shape, long id, int order, double paragraphTop) {
+        return drawing(shape, id, order, new CellOrigin(Double.NaN, paragraphTop));
+    }
+
+    /**
      * Where the page puts a cell's text column and a paragraph's top in it.
      *
-     * @param x   from the page's left edge, in points
+     * @param x   from the page's left edge, in points; NaN for a paragraph of the body, whose
+     *            shapes are placed across from the page's left edge
      * @param top from the page's top edge, in points
      */
     record CellOrigin(double x, double top) {
@@ -314,6 +331,7 @@ final class DocxDrawings {
         long cy = Units.toEMU(shape.height());
         boolean picture = shape.kind() == Kind.PICTURE;
         String graphic = picture ? pictureGraphic(shape, id, cx, cy) : shapeGraphic(shape, cx, cy);
+        boolean inCell = origin != null && !Double.isNaN(origin.x());
         String xml = "<w:drawing"
                 + " xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\""
                 + " xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\""
@@ -325,10 +343,10 @@ final class DocxDrawings {
                 + "<wp:anchor distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\" simplePos=\"0\""
                 + " relativeHeight=\"" + stackHeight(order) + "\" behindDoc=\"" + (shape.front() ? 0 : 1)
                 + "\" locked=\"0\""
-                + " layoutInCell=\"" + (origin == null ? 0 : 1) + "\" allowOverlap=\"1\">"
+                + " layoutInCell=\"" + (inCell ? 1 : 0) + "\" allowOverlap=\"1\">"
                 + "<wp:simplePos x=\"0\" y=\"0\"/>"
-                + "<wp:positionH relativeFrom=\"" + (origin == null ? "page" : "column") + "\"><wp:posOffset>"
-                + Units.toEMU(origin == null ? shape.x() : shape.x() - origin.x())
+                + "<wp:positionH relativeFrom=\"" + (inCell ? "column" : "page") + "\"><wp:posOffset>"
+                + Units.toEMU(inCell ? shape.x() - origin.x() : shape.x())
                 + "</wp:posOffset></wp:positionH>"
                 + "<wp:positionV relativeFrom=\"" + (origin == null ? "page" : "paragraph") + "\"><wp:posOffset>"
                 + Units.toEMU(origin == null ? shape.top() : shape.top() - origin.top())

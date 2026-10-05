@@ -13,7 +13,8 @@
     What it decides by itself is objective: text kept or lost, a paragraph grown or shrunk and
     still above the block after it, a row held to an exact height that would hide what the edit
     added, the body size following the Normal style, a list continued by Enter, text typed at
-    the end of the document readable below everything else, a save that changes nothing. It
+    the end of the document readable below everything else, a drawing moving with the text it
+    stands beside, a save that changes nothing. It
     reads letters' size, face and visibility from the text alone, not the paragraph mark, which
     a range's font reports with it. Whether an edited page still looks right is read by a
     person from the PDFs written beside the lengthened copy and the new-page copy.
@@ -48,7 +49,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $SCENARIOS = 'lengthen-a-paragraph', 'shorten-a-paragraph', 'insert-a-paragraph', 'restyle-body-through-normal',
-    'insert-a-table-row', 'delete-a-table-row', 'continue-a-list', 'add-a-page', 'round-trip'
+    'insert-a-table-row', 'delete-a-table-row', 'continue-a-list', 'add-a-page', 'drawings-follow-text', 'round-trip'
 # `-File` hands "a,b" over as one string: split it, and refuse a name no scenario has rather
 # than run nothing and report an empty protocol.
 $Scenario = @($Scenario | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
@@ -63,6 +64,7 @@ $OutputDir = (Resolve-Path $OutputDir).Path
 # Word constants, numeric so the script needs no type library.
 $WD_STATISTIC_PAGES = 2
 $WD_ACTIVE_END_PAGE = 3
+$WD_HORIZONTAL_POSITION_ON_PAGE = 5
 $WD_VERTICAL_POSITION_ON_PAGE = 6
 $WD_WITHIN_TABLE = 12
 $WD_ROW_HEIGHT_EXACTLY = 2
@@ -72,6 +74,8 @@ $WD_LINE_SPACE_EXACTLY = 4
 $WD_HEADER_FOOTER_PRIMARY = 1
 $WD_HEADER_FOOTER_FIRST_PAGE = 2
 $WD_HEADER_FOOTER_EVEN_PAGES = 3
+$WD_RELATIVE_TO_MARGIN = 0
+$WD_RELATIVE_TO_PAGE = 1
 
 # An exact line shorter than this share of its letters' size cuts them on Word's screen: Word
 # sets a single line of its faces at 1.15 to 1.2 of the size.
@@ -233,6 +237,70 @@ function Get-FooterOn {
         $kind = $WD_HEADER_FOOTER_EVEN_PAGES
     }
     return ($Section.Footers($kind).Range.Text -replace "[`r`a0-9]", '').Trim()
+}
+
+# Where each floating drawing of the main story stands, by its name: its place as Get-Place
+# counts it, and its left edge. One placed from the page stands at its offset on the page its
+# anchor lands on; one placed from its paragraph or its column, at its offset from them.
+function Get-DrawingPlaces {
+    param($Doc)
+    $places = @{}
+    foreach ($shape in $Doc.Shapes) {
+        # A page's background belongs to the page, not to the text on it.
+        if ($shape.Name -like 'Page background*') { continue }
+        if ($places.ContainsKey($shape.Name)) { $places[$shape.Name] = $null; continue }
+        $anchor = $shape.Anchor.Paragraphs(1).Range.Duplicate
+        $anchor.Collapse(1)
+        $page = [double]$anchor.Information($WD_ACTIVE_END_PAGE)
+        $place = switch ($shape.RelativeVerticalPosition) {
+            $WD_RELATIVE_TO_PAGE { $page * 10000 + $shape.Top }
+            $WD_RELATIVE_TO_MARGIN { $page * 10000 + $Doc.Sections(1).PageSetup.TopMargin + $shape.Top }
+            default { (Get-Place $anchor) + $shape.Top }
+        }
+        $left = if ($shape.RelativeHorizontalPosition -eq $WD_RELATIVE_TO_PAGE) { $shape.Left } `
+            else { [double]$anchor.Information($WD_HORIZONTAL_POSITION_ON_PAGE) + $shape.Left }
+        $places[$shape.Name] = @{ place = $place; left = $left }
+    }
+    return $places
+}
+
+# Where each paragraph with text starts, by its index: its place, and how far across its text
+# can run — from its first letter to the right edge of its cell, or of the page's margin.
+function Get-ParagraphPlaces {
+    param($Doc)
+    $places = @{}
+    $setup = $Doc.Sections(1).PageSetup
+    $marginRight = $setup.PageWidth - $setup.RightMargin
+    for ($i = 1; $i -le $Doc.Paragraphs.Count; $i++) {
+        $p = $Doc.Paragraphs($i)
+        if ((Get-Text $p).Length -eq 0) { continue }
+        $start = $p.Range.Duplicate
+        $start.Collapse(1)
+        $left = [double]$start.Information($WD_HORIZONTAL_POSITION_ON_PAGE)
+        $right = $marginRight
+        if ($start.Information($WD_WITHIN_TABLE)) {
+            try { $right = $left - $p.LeftIndent + $p.Range.Cells(1).Width } catch { }
+        }
+        $places[$i] = @{ place = Get-Place $start; left = $left; right = $right }
+    }
+    return $places
+}
+
+# The paragraph a drawing belongs beside: of those with text starting on its page, the nearest
+# to its top-left corner, up or down from the paragraph's start and across from its text. A dot stands
+# at the start of its entry, a rail at its first entry's, a skill's bar beside its label.
+function Find-Owner {
+    param($Drawing, $Paragraphs)
+    $page = [Math]::Floor($Drawing.place / 10000)
+    $best = $null; $nearest = [double]::MaxValue
+    foreach ($index in $Paragraphs.Keys) {
+        $p = $Paragraphs[$index]
+        if ([Math]::Floor($p.place / 10000) -ne $page) { continue }
+        $across = [Math]::Max(0, $p.left - $Drawing.left) + [Math]::Max(0, $Drawing.left - $p.right)
+        $distance = [Math]::Abs($p.place - $Drawing.place) + $across
+        if ($distance -lt $nearest) { $best = $index; $nearest = $distance }
+    }
+    return $best
 }
 
 # An edit Word refuses is a result of that scenario, not the end of the document's protocol.
@@ -503,7 +571,47 @@ function Invoke-Protocol {
         New-Result 'add-a-page' 'PASS' $detail
     }
 
-    # 8. Save and reopen with no edit.
+    # 8. Lengthen the same paragraph as the first scenario, and see that each drawing beside
+    #    text the edit moved — a timeline's dot, a rail, an icon, a badge — moved with it, by as
+    #    much and onto the same page. A drawing is held to the paragraph nearest its top-left
+    #    corner when the document opens.
+    $results += Invoke-Scenario $Word $Source 'drawings-follow-text' -Edit {
+        param($doc, $state)
+        $state.index = Find-BodyParagraph $doc
+        if ($state.index -lt 0 -or $doc.Shapes.Count -eq 0) { return $false }
+        $state.drawings = Get-DrawingPlaces $doc
+        $state.paragraphs = Get-ParagraphPlaces $doc
+        $state.owners = @{}
+        foreach ($name in $state.drawings.Keys) {
+            if ($null -eq $state.drawings[$name]) { continue }
+            $owner = Find-Owner $state.drawings[$name] $state.paragraphs
+            if ($null -ne $owner) { $state.owners[$name] = $owner }
+        }
+        $p = $doc.Paragraphs($state.index)
+        $state.target = (Get-Text $p).Substring(0, 30)
+        (Get-TextRange $p).InsertAfter($ADDED)
+    } -Verify {
+        param($doc, $state)
+        $drawings = Get-DrawingPlaces $doc
+        $paragraphs = Get-ParagraphPlaces $doc
+        $moved = 0; $followed = 0; $lost = 0; $stray = @()
+        foreach ($name in $state.owners.Keys) {
+            $owner = $state.owners[$name]
+            if (-not $drawings.ContainsKey($name) -or $null -eq $drawings[$name] -or -not $paragraphs.ContainsKey($owner)) { $lost++; continue }
+            $ownerMoved = $paragraphs[$owner].place - $state.paragraphs[$owner].place
+            if ([Math]::Abs($ownerMoved) -le 0.5) { continue }
+            $moved++
+            $drawingMoved = $drawings[$name].place - $state.drawings[$name].place
+            if ([Math]::Abs($drawingMoved - $ownerMoved) -le 1) { $followed++; continue }
+            $stray += "$name by $([Math]::Round($drawingMoved, 1)) beside '$((Get-Text $doc.Paragraphs($owner)) -replace '^(.{0,24}).*', '$1')' by $([Math]::Round($ownerMoved, 1))"
+        }
+        $detail = "'$($state.target)…' lengthened; $($state.owners.Count) drawings, $moved beside text that moved, $followed of them followed it, $lost not found again"
+        if ($stray.Count -gt 0) { $detail += "; not following: " + (($stray | Select-Object -First 3) -join '; ') }
+        if ($stray.Count -gt 0 -or $lost -gt 0) { return New-Result 'drawings-follow-text' 'FAIL' $detail }
+        New-Result 'drawings-follow-text' 'PASS' $detail
+    }
+
+    # 9. Save and reopen with no edit.
     $results += Invoke-Scenario $Word $Source 'round-trip' -Edit {
         param($doc, $state)
     } -Verify {

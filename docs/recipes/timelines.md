@@ -235,12 +235,13 @@ only in the degenerate case of a single marker row taller than a whole page.
 |---|---|---|
 | **PDF** | ✅ drawn, one fragment per page, beneath the markers | ✅ |
 | **PPTX** | ✅ same payload, same per-page fragments | ✅ |
-| **DOCX** | ⚠️ drawn as a shape anchored to the page | ✅ entries, titles, meta and bodies all export |
+| **DOCX** | ⚠️ drawn as shapes, anchored beside the entries' text | ✅ entries, titles, meta and bodies all export |
 
 DOCX is a semantic export: it writes the entries as text from the document tree, and reads the
 rail from the resolved layout, drawing it on each page as a line anchored where the layout put
-it, behind the text, with the markers as the shapes they are. The drawing stays where it is
-when the entries' text is edited. See the
+it, behind the text, with the markers as the shapes they are. A marker or a rail standing beside an entry's
+text is anchored in that entry's paragraph and moves with it when the text above is edited;
+one beside no text stays where the page puts it. See the
 [backend capability matrix](../architecture/backend-capability-matrix.md).
 
 ## Text styles

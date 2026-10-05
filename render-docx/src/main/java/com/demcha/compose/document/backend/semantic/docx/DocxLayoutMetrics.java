@@ -786,6 +786,39 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * Where the page sets a node's first lines of text: the content box of the first fragment
+     * holding them, inside the paragraph's padding.
+     *
+     * @param node any node that lays out as paragraph lines
+     * @return the box, or empty when the node laid out nothing
+     */
+    java.util.Optional<TextBox> firstTextBox(DocumentNode node) {
+        for (PlacedFragment fragment : textFragmentsOf(node)) {
+            if (fragment.payload() instanceof ParagraphFragmentPayload paragraph && !paragraph.lines().isEmpty()) {
+                double top = ParagraphLineGeometry.contentTop(fragment.y(), fragment.height(), paragraph.padding().top());
+                ParagraphLine first = paragraph.lines().get(0);
+                return java.util.Optional.of(new TextBox(fragment.pageIndex(),
+                        fragment.x() + paragraph.padding().left(),
+                        fragment.x() + fragment.width() - paragraph.padding().right(),
+                        top, top - first.lineHeight() + first.baselineOffsetFromBottom()));
+            }
+        }
+        return java.util.Optional.empty();
+    }
+
+    /**
+     * The content box of a node's first fragment of text, and its first line's baseline.
+     *
+     * @param page     the page, counted within the section
+     * @param left     its left edge, from the page's left edge
+     * @param right    its right edge, from the page's left edge
+     * @param top      its top edge, measured up from the foot of the page
+     * @param baseline its first line's baseline, measured up from the foot of the page
+     */
+    record TextBox(int page, double left, double right, double top, double baseline) {
+    }
+
+    /**
      * Every line a node laid out, page after page, in order.
      *
      * @param node any node that lays out as paragraph lines

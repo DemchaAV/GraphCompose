@@ -21,8 +21,8 @@ follow semantic versioning; release dates are ISO 8601.
   text that a paragraph node is written as offers its place yet; beside a table's own cell text or a list's
   items, in the gap between two columns or far from any text, a shape stays on the page. Word's
   editing protocol, with a new `drawings-follow-text` scenario that lengthens a paragraph, finds
-  132 of the 228 shapes
-  beside text that moved moving with it, against 12, and 21 of the 35 documents with drawings
+  104 of the 228 shapes
+  beside text that moved moving with it, against 12, and 19 of the 35 documents with drawings
   passing, against 15. Unedited, no shape stands more than 1.5pt from where it stood in Word.
   In LibreOffice the same holds but for `OrangeOps`'s header separator, which follows its line
   of text where LibreOffice already sets that line 78pt low.

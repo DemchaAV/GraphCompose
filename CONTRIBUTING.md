@@ -365,6 +365,28 @@ Choose the smallest tests that match the change:
   Each run also writes `measured-<editor>-acceptance.md`: which presets the editor sets as the
   page does — the same pages, 95% of the lines found, a median of 1pt or less, no more than 10%
   past 2pt — and what keeps the rest short of it. CI shows LibreOffice's in the job summary.
+  The corpus also answers for how a document edits in Word.
+  `scripts/docx-visual/edit-protocol-corpus.ps1` runs over the DOCX that
+  `-Dgraphcompose.docxFidelity=export` leaves in `qa/target/docx-fidelity/engine`. For each
+  document it makes nine edits, each on a copy that it saves and reopens:
+  - lengthen the longest paragraph, and shorten it;
+  - press Enter after it and type;
+  - restyle Normal;
+  - add a table row, and delete one;
+  - continue a list;
+  - type at the end until a new page opens;
+  - save with no edit.
+
+  It records what it can decide alone in `edit-protocol-corpus.json`:
+  - text kept, and a paragraph grown or shrunk and still above the block after it;
+  - the body size following Normal;
+  - typed text standing below everything else, outside any table, visible, in the size of the
+    text it continues (or, after an empty paragraph, on lines that fit it).
+
+  It reads the letters' size and visibility from the text, without the paragraph mark. Beside
+  the lengthened copy and the new-page copy it writes PDFs, from which a person judges whether
+  a page still looks right. It takes about a minute a document; `-Scenario` runs only the
+  scenarios named, by the names the JSON records.
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 

@@ -19,12 +19,64 @@ import java.io.ByteArrayInputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A paragraph whose line height the editor sets sizes its mark as its text: the mark is a
- * character on the last line and counts towards its height.
+ * A paragraph's mark carries what its text ends in: it is what Word continues from on Enter,
+ * and a character on the last line that counts towards a line the editor sets the height of.
  *
  * @author Artem Demchyshyn
  */
 class DocxParagraphMarkTest {
+
+    @Test
+    void aParagraphsMarkCarriesWhatItsTextEndsInSoEnterContinuesIt() throws Exception {
+        // Word gives the paragraph Enter opens its mark's formatting. With the mark left at the
+        // document's own, the new paragraph's letters came out another size: 9pt after 10.5pt
+        // in NavySidebar, 14pt after 11pt in ClassicInvoice. Lines written exact are included:
+        // the mark does not grow them, but it is what typing continues.
+        DocumentColor accent = DocumentColor.rgb(30, 90, 160);
+        try (XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addParagraph(p -> p
+                        .inlineText("Plain, then ")
+                        .inlineText("bold and coloured", DocumentTextStyle.builder().size(11)
+                                .decoration(com.demcha.compose.document.style.DocumentTextDecoration.BOLD)
+                                .color(accent).build())))) {
+            XWPFParagraph paragraph = document.getParagraphs().stream()
+                    .filter(p -> p.getText().startsWith("Plain")).findFirst().orElseThrow();
+            CTPPr properties = paragraph.getCTP().getPPr();
+
+            assertThat(properties.getSpacing().getLineRule()).as("an exact line").hasToString("exact");
+            var mark = properties.getRPr();
+            assertThat(mark.getSzArray(0).getVal()).as("its last run's size, half points").hasToString("22");
+            assertThat(mark.sizeOfBArray()).as("bold, as its last run").isEqualTo(1);
+            Object colour = mark.getColorArray(0).getVal();
+            assertThat(colour instanceof byte[] bytes ? java.util.HexFormat.of().withUpperCase().formatHex(bytes)
+                    : String.valueOf(colour)).as("in its colour").isEqualTo("1E5AA0");
+        }
+    }
+
+    @Test
+    void aRichListItemsMarkCarriesItsLastRunsStyleNotTheLists() throws Exception {
+        // A rich item writes each run in its own style; Enter after one ending in a larger run
+        // continues in that run's size, not the list's.
+        DocumentTextStyle large = DocumentTextStyle.builder().size(13).build();
+        try (XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addList(list -> list
+                        .bullet()
+                        .hangingIndent(true)
+                        .textStyle(DocumentTextStyle.builder().size(9).build())
+                        .addItem(rich -> rich.plain("Small, then ").style("large", large))))) {
+            java.util.List<XWPFParagraph> paragraphs = new java.util.ArrayList<>(document.getParagraphs());
+            document.getTables().forEach(table -> table.getRows().forEach(row ->
+                    row.getTableCells().forEach(cell -> paragraphs.addAll(cell.getParagraphs()))));
+            XWPFParagraph item = paragraphs.stream()
+                    .filter(p -> p.getText().contains("Small, then")).findFirst()
+                    .orElseThrow(() -> new AssertionError(paragraphs.stream().map(XWPFParagraph::getText).toList()));
+
+            assertThat(item.getCTP().getPPr().getRPr().getSzArray(0).getVal())
+                    .as("the last run's 13pt, half points").hasToString("26");
+        }
+    }
 
     @Test
     void aHairlineOfTextInACellIsNotAsTallAsBodyText() throws Exception {
@@ -45,14 +97,35 @@ class DocxParagraphMarkTest {
     }
 
     @Test
-    void aLineWrittenAtAnExactHeightLeavesItsMarkAlone() throws Exception {
+    void anExactLineInTheDocumentsOwnStyleLeavesItsMarkSilent() throws Exception {
+        // The text restates Normal, so its runs say nothing and neither does its mark: a global
+        // restyle reaches both, and Enter continues in Normal.
         try (XWPFDocument document = export(page -> page
-                .addParagraph(p -> p.text("Body"))
-                .addParagraph(p -> p.text("Small print").textStyle(DocumentTextStyle.DEFAULT.withSize(6))))) {
-            CTPPr small = document.getParagraphs().get(1).getCTP().getPPr();
+                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addParagraph(p -> p.text("More body text")))) {
+            CTPPr properties = document.getParagraphs().get(1).getCTP().getPPr();
 
-            assertThat(small.getSpacing().getLineRule()).hasToString("exact");
-            assertThat(small.isSetRPr()).isFalse();
+            assertThat(properties.getSpacing().getLineRule()).hasToString("exact");
+            assertThat(properties.isSetRPr()).isFalse();
+        }
+    }
+
+    @Test
+    void aParagraphEndingInAChipContinuesInItsOwnStyleNotTheChips() throws Exception {
+        // The chip's letters are white for its red fill, which the mark does not carry: Enter
+        // after it would type white on the page.
+        DocumentTextStyle onBadge = DocumentTextStyle.builder().size(9).color(DocumentColor.WHITE).build();
+        try (XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addParagraph(p -> p.inlineText("Status: ")
+                        .inlineHighlight("overdue", onBadge, DocumentColor.rgb(214, 56, 56), 0,
+                                DocumentInsets.zero())))) {
+            XWPFParagraph paragraph = document.getParagraphs().stream()
+                    .filter(p -> p.getText().startsWith("Status")).findFirst().orElseThrow();
+            CTPPr properties = paragraph.getCTP().getPPr();
+
+            assertThat(properties.isSetRPr() && properties.getRPr().sizeOfColorArray() > 0)
+                    .as("not the chip's white").isFalse();
         }
     }
 
@@ -85,7 +158,13 @@ class DocxParagraphMarkTest {
 
             assertThat(properties.getSpacing().getLineRule()).hasToString("exact");
             assertThat(((Number) properties.getSpacing().getLine()).intValue()).as("the face's ascent and descent, no leading").isBetween(16 * 20, 24 * 20);
-            assertThat(properties.isSetRPr()).as("an exact line needs no mark").isFalse();
+            // An exact line does not grow for its mark, but Enter at its end continues from it.
+            assertThat(properties.getRPr().getSzArray(0).getVal())
+                    .as("the mark in the text's size, half points").hasToString("40");
+            assertThat(properties.getRPr().getRFontsArray(0).getAscii())
+                    .as("and in its face, as its run names it")
+                    .isEqualTo(document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0)
+                            .getRuns().get(0).getFontFamily());
         }
     }
 

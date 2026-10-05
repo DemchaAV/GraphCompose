@@ -360,6 +360,13 @@ paragraph and lines 1.08 tall, and the page has neither. A paragraph's space aro
 written where the page has some. A reader who wants Word's airier defaults back can set
 them on `Normal`.
 
+Each paragraph's mark — the character closing it — carries what its text ends in: face, size,
+colour, weight, slant, decoration and tracking, written as its last run's are. It does so on a
+line of exact height too, which the mark does not grow. Word continues from the mark: press
+Enter at the end of a paragraph and type, and the new paragraph is in the text's formatting,
+not the document's own; type at the end of the document, and the letters take its last
+paragraph's.
+
 A paragraph that declared an outline level — `bookmark(new DocumentBookmarkOptions(name,
 level))` — also carries Word's own `HeadingN` style, which is what fills the Navigation
 Pane, the outline view and a generated table of contents. The style states the outline

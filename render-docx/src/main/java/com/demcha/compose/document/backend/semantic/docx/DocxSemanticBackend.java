@@ -2734,9 +2734,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 followTheMarkerWithASpace(level);
             }
             if (measured && list.textStyle() != null) {
-                // Word draws the marker in the paragraph mark's style, and an item at an exact
-                // line leaves its mark the document's: a list set smaller, or in another face,
-                // would get a marker wider than the one the column was measured against.
+                // Word draws the marker in the paragraph mark's style. A numbered item is a list
+                // line in the list's style, so its mark is too (styleTheMark); the level states
+                // the list's face, size and colour as well, the ones the column was measured
+                // against. The page draws the marker in the list's style, decoration included.
                 applyDefaultRunProperties(level.addNewRPr(), list.textStyle());
             }
         }
@@ -3284,15 +3285,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
             }
         }
+        // The mark takes what the item's text ends in, its last run's style where it has one.
+        DocumentTextStyle markStyle = style;
         if (item.isRich()) {
             pictures = pictures.max(writeInlineTextRuns(para, style, item.runs(), path, line));
+            for (InlineRun run : item.runs()) {
+                InlineTextRun text = textOf(run);
+                if (text != null) {
+                    // A chip's letters are styled for a fill the mark does not carry.
+                    markStyle = text.textStyle() == null || backgroundOf(run) != null ? style : text.textStyle();
+                }
+            }
         } else {
             XWPFRun label = para.createRun();
             applyStyle(label, style);
             setTextBrokenAtLines(label, item.label());
         }
         makeRoomForPictures(para, pictures);
-        styleTheMark(para, style);
+        styleTheMark(para, markStyle);
     }
 
     /** How far past a list marker's picture its tab stop must stand for the tab to reach it, in points. */
@@ -6072,51 +6082,58 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final double LINES_SHORT_TOLERANCE = 0.1;
 
     /**
-     * Sets a paragraph's mark in its text's size and face, where the editor may grow the line.
+     * Sets a paragraph's mark in its text's character formatting: face, size, colour, weight,
+     * slant, decoration and tracking, as {@link #applyStyle} writes them on its runs.
      *
-     * <p>The mark closing a paragraph is a character on its last line, and its size counts
-     * towards that line's height. Left unstyled it takes the document's own size and face, so a
-     * line of half-point text — a coloured cell a hairline tall, the way a heading rule is drawn
-     * in a table — came out as tall as a line of body text in both editors: {@code SlateOrange}'s
-     * rules under its credentials headings were 8pt bars. A line written at an exact height
-     * does not grow for the mark and is left alone; one the layout did not measure, and one
-     * written at least a picture's height, are the ones it reaches. Called once the line's rule
-     * is settled, pictures included.</p>
+     * <p>The mark is what Word continues from. Press Enter at the end of a paragraph and type,
+     * and the new paragraph's letters take the mark's formatting. Type at the end of a document,
+     * and the letters take its last paragraph's. A mark left unstyled takes the document's own
+     * size and face. Word's editing protocol, run over the corpus, found the new paragraph in
+     * another size in 25 of 62 documents: 9pt after 10.5pt in {@code NavySidebar}, 14pt after
+     * 11pt in {@code ClassicInvoice}. In 6 more, what was typed at the end stood at the
+     * document's size on the last paragraph's exact lines, which were set for smaller text:
+     * 14pt letters on lines set for 10pt. A paragraph ending in a chip keeps its own style on
+     * the mark: the chip's letters are styled for its fill, which the mark does not carry.</p>
+     *
+     * <p>The mark is also a character on the paragraph's last line, and its size counts towards
+     * that line's height where the line is not exact. A line of half-point text — a coloured
+     * cell a hairline tall, the way a heading rule is drawn in a table — came out as tall as a
+     * line of body text in both editors while the mark was in the document's size:
+     * {@code SlateOrange}'s rules under its credentials headings were 8pt bars. Called once the
+     * line's rule is settled, pictures included.</p>
      *
      * @param target the paragraph, its runs written
-     * @param style  the text style of the paragraph's text
+     * @param style  the text style of the paragraph's text, its last run's where they differ
      */
     private void styleTheMark(XWPFParagraph target, DocumentTextStyle style) {
-        if (style == null || !(style.size() > 0) || hasAnExactLine(target)) {
+        if (style == null || !(style.size() > 0)) {
             return;
         }
-        DocumentTextStyle defaults = documentDefaultStyle;
-        boolean sameSize = defaults != null && Math.round(style.size() * HALF_POINTS_PER_POINT)
-                                               == Math.round(defaults.size() * HALF_POINTS_PER_POINT);
-        String family = wordFamilyOf(style.fontName());
-        boolean sameFace = family == null
-                           || defaults != null && family.equals(wordFamilyOf(defaults.fontName()));
-        if (sameSize && sameFace) {
+        // Styled as a run would be, on a run of no paragraph's, and moved onto the mark: one
+        // reading of the style, the same properties the text carries, and none it does not.
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR scratch =
+                org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR.Factory.newInstance();
+        applyStyle(new XWPFRun(scratch, (IRunBody) target), style);
+        if (!scratch.isSetRPr()) {
             return;
         }
+        CTRPr text = scratch.getRPr();
         CTPPr properties = target.getCTP().isSetPPr() ? target.getCTP().getPPr() : target.getCTP().addNewPPr();
         org.openxmlformats.schemas.wordprocessingml.x2006.main.CTParaRPr mark =
                 properties.isSetRPr() ? properties.getRPr() : properties.addNewRPr();
-        if (!sameFace) {
-            // The face the runs are set in, the way applyStyle names it on them: a mark in the
-            // document's face grows the line by that face's height, not the text's.
-            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFonts fonts =
-                    mark.sizeOfRFontsArray() > 0 ? mark.getRFontsArray(0) : mark.addNewRFonts();
-            fonts.setAscii(family);
-            fonts.setHAnsi(family);
-            fonts.setCs(family);
-            fonts.setEastAsia(family);
-        }
-        if (!sameSize) {
-            BigInteger halfPoints = BigInteger.valueOf(Math.max(1, Math.round(style.size() * HALF_POINTS_PER_POINT)));
-            (mark.sizeOfSzArray() > 0 ? mark.getSzArray(0) : mark.addNewSz()).setVal(halfPoints);
-            (mark.sizeOfSzCsArray() > 0 ? mark.getSzCsArray(0) : mark.addNewSzCs()).setVal(halfPoints);
-        }
+        // Through the typed setters, which put each element where the schema orders it. Each
+        // replaces what the mark held: the mark is set here, before anything else writes on it.
+        mark.setRFontsArray(text.getRFontsArray());
+        mark.setBArray(text.getBArray());
+        mark.setBCsArray(text.getBCsArray());
+        mark.setIArray(text.getIArray());
+        mark.setICsArray(text.getICsArray());
+        mark.setStrikeArray(text.getStrikeArray());
+        mark.setColorArray(text.getColorArray());
+        mark.setSpacingArray(text.getSpacingArray());
+        mark.setSzArray(text.getSzArray());
+        mark.setSzCsArray(text.getSzCsArray());
+        mark.setUArray(text.getUArray());
     }
 
     /** Whether a paragraph's lines are written at an exact height, which no mark changes. */
@@ -6458,8 +6475,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // rest of that sentence rather than something the phrase overrides away.
             DocumentLinkTarget target = text.linkTarget() != null ? text.linkTarget() : node.linkTarget();
             XWPFRun docRun = newRun(para, target);
-            markStyle = text.textStyle() == null ? node.textStyle() : text.textStyle();
-            applyStyle(docRun, markStyle);
+            DocumentTextStyle runStyle = text.textStyle() == null ? node.textStyle() : text.textStyle();
+            // A chip's letters are styled for its fill, which the mark does not carry: white on
+            // a red badge would continue as white on the page. Its paragraph's style goes on.
+            markStyle = backgroundOf(run) != null ? node.textStyle() : runStyle;
+            applyStyle(docRun, runStyle);
             applyRunDirection(docRun, rightToLeft);
             applyInlineBackground(docRun, inlineRuns, index, path, rightToLeft);
             setTextBrokenAtLines(docRun, text.text());

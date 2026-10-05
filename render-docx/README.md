@@ -108,8 +108,10 @@ What is not written — each one is named in the export report
   children in order, without their positions and without the clip; a rotation or scale is
   not carried. A layer stack whose layers are side-by-side columns is the exception: it is
   written as one table row, a cell per column.
-- **In a page zone**, a barcode or a rule.
-- **Watermarks and protection options.**
+- **Watermarks, protection and viewer preferences**, each named in the export report.
+- **A row's own fill, outline and side borders**, named in the export report as `row paint`.
+- **In a page zone, anything but paragraphs, page fields and spacers** — a logo, a barcode,
+  a rule — named in the export report as `page zone content`.
 - **`markerGap`** on a hanging-indent list: Word places the item text at its own indent.
 
 Multi-section documents export through `MultiSectionDocument.toDocxBytes()`,

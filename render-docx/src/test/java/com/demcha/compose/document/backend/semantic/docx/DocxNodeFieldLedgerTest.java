@@ -101,7 +101,7 @@ class DocxNodeFieldLedgerTest {
     static {
         node(AlignNode.class, "name:INERT", "child:WRITTEN", "align:WRITTEN", "margin:WRITTEN");
         node(BarcodeNode.class, "name:INERT", "barcodeOptions:WRITTEN", "width:WRITTEN", "height:WRITTEN",
-                "linkTarget:REPORTED", "bookmarkOptions:GAP:its outline entry",
+                "linkTarget:REPORTED", "bookmarkOptions:REPORTED",
                 "padding:GAP:its left and right sides", "margin:GAP:its left and right sides",
                 "transform:REPORTED", "anchor:WRITTEN");
         node(CanvasLayerNode.class, "name:INERT",
@@ -113,25 +113,25 @@ class DocxNodeFieldLedgerTest {
                 "margin:GAP:the space round the chart's table", "padding:GAP:the space round the chart's table");
         node(ContainerNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
                 "margin:WRITTEN", "fillColor:WRITTEN", "stroke:WRITTEN", "cornerRadius:REPORTED", "borders:WRITTEN",
-                "anchor:WRITTEN", "bookmarkOptions:GAP:its outline entry",
+                "anchor:WRITTEN", "bookmarkOptions:REPORTED",
                 "flowWidth:GAP:the width of an unpainted container");
         node(EllipseNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:WRITTEN",
-                "stroke:WRITTEN", "linkTarget:GAP:its link", "bookmarkOptions:GAP:its outline entry",
+                "stroke:WRITTEN", "linkTarget:REPORTED", "bookmarkOptions:REPORTED",
                 "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
-                "anchor:GAP:its bookmark; a page reference to it is written as text");
+                "anchor:REPORTED");
         node(ImageNode.class, "name:INERT", "imageData:WRITTEN", "width:WRITTEN", "height:WRITTEN",
-                "scale:WRITTEN", "fitMode:WRITTEN", "linkTarget:GAP:its link",
-                "bookmarkOptions:GAP:its outline entry", "padding:GAP:its left and right sides",
-                "margin:GAP:its left and right sides", "transform:GAP:its rotation and scale; it is written upright",
+                "scale:WRITTEN", "fitMode:WRITTEN", "linkTarget:REPORTED",
+                "bookmarkOptions:REPORTED", "padding:GAP:its left and right sides",
+                "margin:GAP:its left and right sides", "transform:REPORTED",
                 "anchor:WRITTEN");
         node(LayerStackNode.class, "name:INERT", "layers:WRITTEN", "padding:WRITTEN", "margin:WRITTEN",
                 "clipToBounds:GAP:the clip");
         node(LineNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "startX:WRITTEN", "startY:WRITTEN",
                 "endX:WRITTEN", "endY:WRITTEN", "stroke:WRITTEN",
-                "linkTarget:GAP:the link of a line drawn as a shape (a rule reports it)",
-                "bookmarkOptions:GAP:its outline entry", "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
-                "dashPattern:GAP:the dash of a line drawn as a shape (a rule reports it)",
-                "anchor:GAP:the bookmark of a line drawn as a shape", "lineCap:GAP:its caps",
+                "linkTarget:REPORTED",
+                "bookmarkOptions:REPORTED", "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
+                "dashPattern:REPORTED",
+                "anchor:REPORTED:drawn; a rule in the flow is bookmarked", "lineCap:REPORTED:a cap other than butt; whether an editor ends a drawn butt line flat is not measured",
                 "fillWidth:WRITTEN", "keepWithNext:GAP:the keep of a line drawn as a shape");
         node(ListNode.class, "name:INERT", "items:WRITTEN", "nestedItems:WRITTEN", "marker:WRITTEN",
                 "textStyle:WRITTEN", "align:GAP:a centred or right-aligned list is written flush left",
@@ -171,24 +171,25 @@ class DocxNodeFieldLedgerTest {
                 "slot:WRITTEN", "child:WRITTEN");
         node(SectionNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
                 "margin:WRITTEN", "fillColor:WRITTEN", "stroke:WRITTEN", "cornerRadius:REPORTED", "borders:WRITTEN",
-                "keepTogether:WRITTEN", "anchor:WRITTEN", "bleed:GAP:the paint's bleed past the section",
-                "bookmarkOptions:GAP:its outline entry", "keepWithNext:WRITTEN",
+                "keepTogether:WRITTEN",
+                "anchor:GAP:the bookmark of a section written as a layer stack's column; a page reference to it points at none", "bleed:GAP:the paint's bleed past the section",
+                "bookmarkOptions:REPORTED", "keepWithNext:WRITTEN",
                 "flowWidth:GAP:the width of an unpainted section");
         node(ShapeContainerNode.class, "name:INERT", "outline:WRITTEN", "layers:WRITTEN",
                 "clipPolicy:GAP:the clip of a container written as a badge, a line pair or over the flow",
                 "fillColor:WRITTEN", "stroke:WRITTEN", "padding:WRITTEN", "margin:WRITTEN",
                 "transform:GAP:the transform of a container whose outline paints nothing");
         node(ShapeNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:WRITTEN",
-                "stroke:WRITTEN", "cornerRadius:GAP:unequal corners, drawn at the largest radius",
-                "linkTarget:GAP:its link", "bookmarkOptions:GAP:its outline entry", "padding:WRITTEN",
-                "margin:WRITTEN", "transform:REPORTED", "fillPaint:GAP:a gradient fill",
-                "anchor:GAP:the bookmark of a shape drawn as a shape");
+                "stroke:WRITTEN", "cornerRadius:REPORTED:unequal corners, drawn at the largest radius",
+                "linkTarget:REPORTED", "bookmarkOptions:REPORTED", "padding:WRITTEN",
+                "margin:WRITTEN", "transform:REPORTED", "fillPaint:REPORTED",
+                "anchor:REPORTED:drawn; a rule in the flow is bookmarked");
         node(SpacerNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN",
                 "padding:GAP:its padding in the body flow", "margin:GAP:its margin in the body flow",
                 "grow:WRITTEN");
         node(TableNode.class, "name:INERT", "columns:WRITTEN", "rows:WRITTEN", "defaultCellStyle:WRITTEN",
-                "rowStyles:WRITTEN", "columnStyles:WRITTEN", "width:WRITTEN", "linkTarget:GAP:its link",
-                "bookmarkOptions:GAP:its outline entry", "padding:GAP:its left and right sides",
+                "rowStyles:WRITTEN", "columnStyles:WRITTEN", "width:WRITTEN", "linkTarget:REPORTED",
+                "bookmarkOptions:REPORTED", "padding:GAP:its left and right sides",
                 "margin:WRITTEN", "repeatedHeaderRowCount:WRITTEN", "anchor:WRITTEN");
     }
 

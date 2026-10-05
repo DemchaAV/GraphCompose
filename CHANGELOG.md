@@ -8,6 +8,31 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's report names what each written or drawn node goes without.** The export
+  wrote these nodes and said nothing of what it left behind: a linked logo became an unlinked
+  picture, a rotated photo stood upright, a dashed line was drawn solid, and an anchor on a
+  drawn shape left a page reference or a link to it pointing at no bookmark. Each node's
+  report note now names:
+  - on a shape, ellipse or line drawn as a shape: its link, its outline entry, its anchor (a
+    drawing holds no bookmark), a shape's gradient fill and unequal corners (drawn at the
+    largest radius), a line's dash pattern (drawn solid) and caps (not written, so the editor
+    ends the line its own way) — added to the note the drawing already had;
+  - on a line or thin bar written as a rule: a bar's link (a line's was already
+    `rule link`), either's outline entry, and a line's caps (a border ends flat), in a note
+    `written as a paragraph border`; a rule keeps its anchor as a bookmark;
+  - on a picture in the flow, a table, a section or a container — the page flow itself, a
+    panel, a column of a layer stack, a section laid over the flow —: its link, its outline
+    entry, and a picture's transform, in a note on the node; a picture laid beside its text
+    and a barcode add them to the note they had;
+  - on a drawing composed in a table cell, whose drawing is its table's: its link, outline
+    entry and anchor; its paint and stroke stay the table's note's to name.
+
+  A shape painted only with a gradient is dropped for that reason, rather than for its
+  geometry. None changes what is written: the 62 documents of the DOCX fidelity corpus export
+  to the same bytes. In `DocxNodeFieldLedgerTest` 21 node fields move from a gap to
+  `REPORTED`, and one written field is a gap after all — a section's anchor where the section
+  is a layer stack's column, whose bookmark is not written though a page reference to it is a
+  `PAGEREF`; 35 node-field gaps remain, each named.
 - **The DOCX export report names what it used to leave out in silence, or misnamed.** Three
   kinds of loss reached the Word file with no more than a log line, or nothing, so a caller
   reading the report was told the document lost nothing, and a fourth was reported for the wrong

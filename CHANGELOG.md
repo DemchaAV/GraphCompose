@@ -8,6 +8,26 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's report names the geometry a block is written without.** A logo given a
+  left margin stood at the column's edge, a spacer with a margin held only its height and
+  everything under it rose, and a section fixed to half the column ran its text the column's
+  width — and the report listed no loss. Each block's note now names:
+  - on a picture or a barcode: its left margin and padding, which are not written (its
+    paragraph sets it from the left, where its right side moves nothing); a picture drawn
+    beside its text or over its badge names its padding, which it is fitted to its box with;
+  - on a page reference: its side margins and padding, and, where its anchor has no bookmark,
+    its number written as text — said on the reference, where a table of contents' entry is;
+  - on a table: its left padding (its margin is its indent);
+  - on a spacer: its margin and padding above and below, as it is written as its height alone;
+  - on a chart: its margin and padding, which are not written round its data table;
+  - on an unpainted section or container, and a panel composed in a table cell: a
+    `fixedWidth` narrower than its column, which its paragraphs and lists run the width of.
+
+  In a band, whose space below is measured from the page, a spacer's and a chart's insets are
+  written, and no note is made. None changes what is written. In `DocxNodeFieldLedgerTest` 11
+  node fields move from a gap to `REPORTED`; 23 node-field gaps remain, each named — among
+  them a table's padding, since a padded table's rows are not matched to the layout's, and the
+  fixed width of a layer stack's column.
 - **A DOCX export's report names what each written or drawn node goes without.** The export
   wrote these nodes and said nothing of what it left behind: a linked logo became an unlinked
   picture, a rotated photo stood upright, a dashed line was drawn solid, and a link to an anchor

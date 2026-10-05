@@ -2550,6 +2550,38 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
+    /**
+     * What of a block's sides its paragraph or table leaves out: a picture, a barcode and a page
+     * reference are written at the edge the containers round them set, with none of their own
+     * margin or padding, and a table holds its margin but not its padding. A cell of a row the
+     * layout placed already starts past a block's left margin.
+     *
+     * <p>Only the left side moves a block its paragraph sets from the left — a picture, a
+     * barcode, a table on the grid the layout resolved; a page reference's alignment can set it
+     * from either side, and both count.</p>
+     *
+     * @param node          the block written
+     * @param marginWritten whether its side margins are written, so only its padding can be lost
+     * @param right         whether its right side counts as well as its left
+     * @return the phrases, empty when every side that counts is written
+     */
+    private List<String> sidesLost(DocumentNode node, boolean marginWritten, boolean right) {
+        List<String> lost = new ArrayList<>(2);
+        double marginLeft = node == leftMarginInCell ? 0 : node.margin().left();
+        if (!marginWritten && (marginLeft != 0 || right && node.margin().right() != 0)) {
+            lost.add(right ? "its side margins are not in the file" : "its left margin is not in the file");
+        }
+        if (node.padding().left() != 0 || right && node.padding().right() != 0) {
+            lost.add(right ? "its side padding is not in the file" : "its left padding is not in the file");
+        }
+        return lost;
+    }
+
+    /** Whether any side of an inset is set. */
+    private static boolean isInset(DocumentInsets insets) {
+        return insets.top() != 0 || insets.right() != 0 || insets.bottom() != 0 || insets.left() != 0;
+    }
+
     /** Why a node the export neither writes nor draws is dropped, as the report says it. */
     private static String droppedBecause(DocumentNode node) {
         if (node instanceof PageFieldNode) {
@@ -3724,9 +3756,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * fixed-layout backend, where charts compile into ordinary primitives.
      */
     private void writeChartFallback(XWPFDocument document, ChartNode node) throws Exception {
+        // The table is written as it is, with nothing owed round it for the chart's own insets
+        // — except in a band, whose space below its lowest block is measured from the page.
+        boolean inset = bandDepth == 0 && (isInset(node.margin()) || isInset(node.padding()));
         report.add(DocxExportReport.Severity.APPROXIMATED, "chart", layout.pathOf(node),
                 "exported as its data table — a categories-by-series table in the chart's own "
-                + "value format — because the drawn chart is layout geometry");
+                + "value format — because the drawn chart is layout geometry"
+                + (inset ? "; its margin and padding are not written round the table" : ""));
         if (chartWarned.compareAndSet(false, true)) {
             LOG.warn("docx.export.chart-fallback kind={} — the semantic DOCX export has no "
                     + "layout pass, so charts are exported as their data table. "
@@ -3782,7 +3818,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // hangBelowItsBox does a shape container's, so that line keeps its own height.
         holdStackedLines(node.children(), Double.NaN);
         ContainerPaint paint = paintOf(node);
-        reportWrittenWithout(node, paint.isEmpty() ? "written as its contents" : "written as a panel");
+        // A panel the layout placed is a table that wide; an unpainted box is only its contents,
+        // and its paragraphs and lists run the width its margins leave them, as does a panel
+        // composed in a table cell, which takes the cell's. A cell of a row the layout placed
+        // starts past its left margin; an auto column is a point wider than its content.
+        double room = availableWidth() - (node == leftMarginInCell ? 0 : node.margin().left())
+                      - node.margin().right();
+        boolean narrowed = (paint.isEmpty() || layout.placedWidth(node).isEmpty()) && node.flowWidth().isFixed()
+                           && Double.isFinite(room)
+                           && node.flowWidth().points() < room - EDITOR_COLUMN_SLACK_POINTS - 0.5;
+        reportWrittenWithout(node, paint.isEmpty() ? "written as its contents" : "written as a panel",
+                narrowed ? List.of("its fixed width is not in the file, so its paragraphs and lists run "
+                                   + "the width of the column it stands in") : List.of());
         if (paint.isEmpty()) {
             writeContainerBody(document, node);
             return;
@@ -6226,15 +6273,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         String bookmark = bookmarkedAnchors.contains(node.anchor())
                 ? bookmarkNames.nameFor(node.anchor())
                 : null;
+        List<String> lost = new ArrayList<>();
         if (bookmark == null) {
             XWPFRun run = para.createRun();
             applyStyle(run, node.textStyle());
             run.setText(shown);
+            lost.add("its anchor has no bookmark in the Word file, so its page number is written as "
+                     + "text that an edit does not update");
         } else {
             // A complex field, as a page field is (see appendField): a simple one's number is
             // repainted without its style when the field updates.
             appendField(para, " PAGEREF " + bookmark + " \\h ", shown, node.textStyle());
         }
+        // Unlike a paragraph's (writeParagraph), its own sides do not hold its line in.
+        lost.addAll(sidesLost(node, false, true));
+        reportWrittenWithout(node, "written as a paragraph", lost);
     }
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
@@ -8101,7 +8154,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         .setPrst(org.openxmlformats.schemas.drawingml.x2006.main.STShapeType.ELLIPSE);
             }
         }
-        reportWrittenWithout(node, "written as an inline picture");
+        reportWrittenWithout(node, "written as an inline picture", sidesLost(node, false, false));
     }
 
     /**
@@ -8339,6 +8392,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (String lost : carriedWithout(image, false)) {
             message.append("; ").append(lost);
         }
+        if (isInset(image.padding())) {
+            // Its placement holds its padding, and the picture is fitted to the placement.
+            message.append("; its padding is not in the file: the picture is fitted to its box with "
+                    + "the padding in it");
+        }
         report.add(DocxExportReport.Severity.APPROXIMATED, image.nodeKind(), layout.pathOf(image),
                 message.toString());
     }
@@ -8379,6 +8437,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             message.append("; its transform is not carried, so it is drawn upright at its size");
         }
         for (String lost : carriedWithout(node, false)) {
+            message.append("; ").append(lost);
+        }
+        for (String lost : sidesLost(node, false, false)) {
             message.append("; ").append(lost);
         }
         report.add(DocxExportReport.Severity.APPROXIMATED, "barcode", layout.pathOf(node), message.toString());
@@ -8582,7 +8643,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeTableWithItsOwnSpacing(XWPFDocument document, DocumentNode node)
             throws Exception {
         if (node instanceof TableNode table && !table.rows().isEmpty()) {
-            reportWrittenWithout(node, "written as a Word table");
+            reportWrittenWithout(node, "written as a Word table", sidesLost(node, true, false));
         }
         // The layout starts a block it moves to a new page at the block's own top edge: what
         // the page above holds below its last block, and the gap between the two, stay there.
@@ -11942,6 +12003,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             pullLeft = 0;
         }
         owePendingSpacingAfter(height);
+        // The page gives a spacer its margin and padding above and below as well; here it is
+        // its height alone. In a band the space below its lowest block is measured from the
+        // page, a spacer's insets in it.
+        DocumentInsets margin = node.margin();
+        DocumentInsets padding = node.padding();
+        if (bandDepth == 0
+            && (margin.top() != 0 || margin.bottom() != 0 || padding.top() != 0 || padding.bottom() != 0)) {
+            reportWrittenWithout(node, "written as its height",
+                    List.of("its margin and padding above and below are not written with it"));
+        }
     }
 
     /** Clears the text hanging below a band: it reaches the next block only (see {@link #writeLinePair}). */

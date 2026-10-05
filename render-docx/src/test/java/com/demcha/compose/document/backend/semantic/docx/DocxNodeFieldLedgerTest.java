@@ -102,7 +102,7 @@ class DocxNodeFieldLedgerTest {
         node(AlignNode.class, "name:INERT", "child:WRITTEN", "align:WRITTEN", "margin:WRITTEN");
         node(BarcodeNode.class, "name:INERT", "barcodeOptions:WRITTEN", "width:WRITTEN", "height:WRITTEN",
                 "linkTarget:REPORTED", "bookmarkOptions:REPORTED",
-                "padding:GAP:its left and right sides", "margin:GAP:its left and right sides",
+                "padding:REPORTED:its left side; its right moves nothing in a paragraph set from the left", "margin:REPORTED:its left side; its right moves nothing in a paragraph set from the left",
                 "transform:REPORTED", "anchor:WRITTEN");
         node(CanvasLayerNode.class, "name:INERT",
                 "width:GAP:the room the canvas holds in the flow",
@@ -110,19 +110,19 @@ class DocxNodeFieldLedgerTest {
                 "placements:GAP:where its text, pictures and tables stand; they are written one after another",
                 "clipPolicy:GAP:the clip", "padding:WRITTEN", "margin:WRITTEN");
         node(ChartNode.class, "name:INERT", "spec:REPORTED", "style:REPORTED:in the chart's note",
-                "margin:GAP:the space round the chart's table", "padding:GAP:the space round the chart's table");
+                "margin:REPORTED:in the chart's note; in a band they are the space below it", "padding:REPORTED:in the chart's note; in a band they are the space below it");
         node(ContainerNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
                 "margin:WRITTEN", "fillColor:WRITTEN", "stroke:WRITTEN", "cornerRadius:REPORTED", "borders:WRITTEN",
                 "anchor:REPORTED:as a layer stack's column, which has no bookmark; in the flow it is bookmarked",
-                "bookmarkOptions:REPORTED", "flowWidth:GAP:the width of an unpainted container");
+                "bookmarkOptions:REPORTED", "flowWidth:GAP:the width of a container written as a layer stack's column; an unpainted one's, and a panel's in a table cell, are reported");
         node(EllipseNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:WRITTEN",
                 "stroke:WRITTEN", "linkTarget:REPORTED", "bookmarkOptions:REPORTED",
                 "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
                 "anchor:REPORTED");
         node(ImageNode.class, "name:INERT", "imageData:WRITTEN", "width:WRITTEN", "height:WRITTEN",
                 "scale:WRITTEN", "fitMode:WRITTEN", "linkTarget:REPORTED",
-                "bookmarkOptions:REPORTED", "padding:GAP:its left and right sides",
-                "margin:GAP:its left and right sides", "transform:REPORTED",
+                "bookmarkOptions:REPORTED", "padding:REPORTED:its left side; its right moves nothing in a paragraph set from the left; drawn beside its text or over its badge, all of it",
+                "margin:REPORTED:its left side; its right moves nothing in a paragraph set from the left", "transform:REPORTED",
                 "anchor:WRITTEN");
         node(LayerStackNode.class, "name:INERT", "layers:WRITTEN", "padding:WRITTEN", "margin:WRITTEN",
                 "clipToBounds:GAP:the clip");
@@ -145,9 +145,9 @@ class DocxNodeFieldLedgerTest {
                 "align:GAP:its alignment in a page zone", "padding:GAP:its sides in a page zone",
                 "margin:GAP:its sides in a page zone");
         node(PageReferenceNode.class, "name:INERT",
-                "anchor:GAP:the live field, where the anchor has no bookmark; the number is written as text",
+                "anchor:REPORTED:where the anchor has no bookmark, its number is written as text",
                 "textStyle:WRITTEN", "align:WRITTEN", "placeholderText:WRITTEN",
-                "padding:GAP:its left and right sides", "margin:GAP:its left and right sides");
+                "padding:REPORTED:its sides", "margin:REPORTED:its sides");
         node(ParagraphNode.class, "name:INERT", "text:WRITTEN", "inlineRuns:WRITTEN", "textStyle:WRITTEN",
                 "align:WRITTEN", "lineSpacing:WRITTEN", "bulletOffset:GAP:the letters of a prefix that has any",
                 "indentStrategy:WRITTEN", "linkTarget:WRITTEN", "bookmarkOptions:GAP:the outline entry's own title",
@@ -175,7 +175,7 @@ class DocxNodeFieldLedgerTest {
                 "anchor:REPORTED:as a layer stack's column, which has no bookmark; in the flow it is bookmarked",
                 "bleed:GAP:the paint's bleed past the section",
                 "bookmarkOptions:REPORTED", "keepWithNext:WRITTEN",
-                "flowWidth:GAP:the width of an unpainted section");
+                "flowWidth:GAP:the width of a section written as a layer stack's column; an unpainted one's, and a panel's in a table cell, are reported");
         node(ShapeContainerNode.class, "name:INERT", "outline:WRITTEN", "layers:WRITTEN",
                 "clipPolicy:GAP:the clip of a container written as a badge, a line pair or over the flow",
                 "fillColor:WRITTEN", "stroke:WRITTEN", "padding:WRITTEN", "margin:WRITTEN",
@@ -186,11 +186,12 @@ class DocxNodeFieldLedgerTest {
                 "margin:WRITTEN", "transform:REPORTED", "fillPaint:REPORTED",
                 "anchor:REPORTED:drawn; a rule in the flow is bookmarked");
         node(SpacerNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN",
-                "padding:GAP:its padding in the body flow", "margin:GAP:its margin in the body flow",
+                "padding:REPORTED:above and below; in a band they are the space below it", "margin:REPORTED:above and below; in a band they are the space below it",
                 "grow:WRITTEN");
         node(TableNode.class, "name:INERT", "columns:WRITTEN", "rows:WRITTEN", "defaultCellStyle:WRITTEN",
                 "rowStyles:WRITTEN", "columnStyles:WRITTEN", "width:WRITTEN", "linkTarget:REPORTED",
-                "bookmarkOptions:REPORTED", "padding:GAP:its left and right sides",
+                "bookmarkOptions:REPORTED",
+                "padding:GAP:a padded table's rows, not matched to the layout's, lose its grid, row heights and unbroken rows; its left padding is reported",
                 "margin:WRITTEN", "repeatedHeaderRowCount:WRITTEN", "anchor:WRITTEN");
     }
 

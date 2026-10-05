@@ -113,8 +113,8 @@ class DocxNodeFieldLedgerTest {
                 "margin:GAP:the space round the chart's table", "padding:GAP:the space round the chart's table");
         node(ContainerNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
                 "margin:WRITTEN", "fillColor:WRITTEN", "stroke:WRITTEN", "cornerRadius:REPORTED", "borders:WRITTEN",
-                "anchor:WRITTEN", "bookmarkOptions:REPORTED",
-                "flowWidth:GAP:the width of an unpainted container");
+                "anchor:REPORTED:as a layer stack's column, which has no bookmark; in the flow it is bookmarked",
+                "bookmarkOptions:REPORTED", "flowWidth:GAP:the width of an unpainted container");
         node(EllipseNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:WRITTEN",
                 "stroke:WRITTEN", "linkTarget:REPORTED", "bookmarkOptions:REPORTED",
                 "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
@@ -172,7 +172,8 @@ class DocxNodeFieldLedgerTest {
         node(SectionNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
                 "margin:WRITTEN", "fillColor:WRITTEN", "stroke:WRITTEN", "cornerRadius:REPORTED", "borders:WRITTEN",
                 "keepTogether:WRITTEN",
-                "anchor:GAP:the bookmark of a section written as a layer stack's column; a page reference to it points at none", "bleed:GAP:the paint's bleed past the section",
+                "anchor:REPORTED:as a layer stack's column, which has no bookmark; in the flow it is bookmarked",
+                "bleed:GAP:the paint's bleed past the section",
                 "bookmarkOptions:REPORTED", "keepWithNext:WRITTEN",
                 "flowWidth:GAP:the width of an unpainted section");
         node(ShapeContainerNode.class, "name:INERT", "outline:WRITTEN", "layers:WRITTEN",

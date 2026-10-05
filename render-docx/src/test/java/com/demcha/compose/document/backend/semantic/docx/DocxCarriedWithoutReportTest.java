@@ -54,12 +54,13 @@ class DocxCarriedWithoutReportTest {
                         .cornerRadius(DocumentCornerRadius.of(2, 8, 2, 8))
                         .linkTo("target").bookmark(OUTLINE).anchor("box")));
 
-        assertThat(detailOf(report, "ShapeNode")).contains("drawn as a shape")
+        assertThat(detailOf(report, "ShapeNode")).startsWith("drawn as a shape")
                 .contains("its gradient fill is not carried")
                 .contains("its corners are drawn at the largest of their radii")
                 .contains("its link is not carried")
                 .contains("its outline entry is not written")
-                .contains("its anchor has no bookmark in the Word file");
+                .contains("its anchor has no bookmark in the Word file: a link to it points at none, "
+                          + "and a page reference to it is a fixed number rather than a field");
     }
 
     @Test
@@ -69,7 +70,8 @@ class DocxCarriedWithoutReportTest {
                 .addEllipse(ellipse -> ellipse.size(30, 30).fillColor(INK)
                         .linkTo("target").bookmark(OUTLINE).anchor("dot")));
 
-        assertThat(detailOf(report, "EllipseNode")).contains("its link is not carried")
+        assertThat(detailOf(report, "EllipseNode")).startsWith("drawn as a shape")
+                .contains("its link is not carried")
                 .contains("its outline entry is not written").contains("its anchor has no bookmark");
     }
 
@@ -81,7 +83,7 @@ class DocxCarriedWithoutReportTest {
                         .dashed(DocumentDashPattern.of(4, 2)).lineCap(DocumentLineCap.ROUND).linkTo("target")
                         .bookmark(OUTLINE).anchor("rail")));
 
-        assertThat(detailOf(report, "LineNode")).contains("drawn as a shape")
+        assertThat(detailOf(report, "LineNode")).startsWith("drawn as a shape")
                 .contains("its dash pattern is not carried, so it is drawn solid")
                 .contains("its caps are not written, so the editor ends it its own way")
                 .contains("its link is not carried").contains("its outline entry is not written")
@@ -116,7 +118,7 @@ class DocxCarriedWithoutReportTest {
                 .addImage(image -> image.source(DocumentImageData.fromBytes(png())).size(80, 40)
                         .transform(DocumentTransform.rotate(15)).linkTo("target").bookmark(OUTLINE)));
 
-        assertThat(detailOf(report, "ImageNode")).startsWith("written as a picture in the flow")
+        assertThat(detailOf(report, "ImageNode")).startsWith("written as an inline picture")
                 .contains("its transform is not carried, so it is drawn upright at its size")
                 .contains("its link is not carried").contains("its outline entry is not written");
     }
@@ -139,21 +141,42 @@ class DocxCarriedWithoutReportTest {
                 .addBarcode(barcode -> barcode.qrCode().data("GC-1").size(60, 60).bookmark(OUTLINE)));
 
         assertThat(detailOf(report, "SectionNode")).isEqualTo("written as its contents; its outline entry is not written");
-        assertThat(detailOf(report, "barcode")).contains("its outline entry is not written");
+        assertThat(detailOf(report, "barcode")).startsWith("written as a picture of the symbol")
+                .contains("its outline entry is not written");
     }
 
     @Test
     void aDrawingComposedInATableCellNamesWhatItGoesWithout() throws Exception {
         DocxExportReport report = reportOf(page -> page
                 .addParagraph(p -> p.text("Target").anchor("target"))
-                .addTable(table -> table.columns(DocumentTableColumn.fixed(200))
+                .addTable(table -> table.columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
                         .rowCells(DocumentTableCell.node(new ShapeBuilder().size(20, 20)
-                                .fill(DocumentPaint.linear(SURFACE, INK)).stroke(DocumentStroke.of(INK, 1))
-                                .linkTo("target").build()))));
+                                        .fill(DocumentPaint.linear(SURFACE, INK)).stroke(DocumentStroke.of(INK, 1))
+                                        .cornerRadius(DocumentCornerRadius.of(8, 8, 0, 0))
+                                        .linkTo("target").build()),
+                                DocumentTableCell.node(new com.demcha.compose.document.dsl.LineBuilder().vertical(20)
+                                        .thickness(1).color(INK).lineCap(DocumentLineCap.ROUND).build()))));
 
         assertThat(detailOf(report, "ShapeNode")).startsWith("composed in a table cell, whose drawing is its table's")
+                .contains("its corners are drawn at the largest of their radii")
                 .contains("its link is not carried")
-                .as("its paint is the table's note's to name").doesNotContain("gradient");
+                .as("its gradient is the table's note's to name").doesNotContain("gradient");
+        assertThat(detailOf(report, "LineNode")).startsWith("composed in a table cell, whose drawing is its table's")
+                .contains("its caps are not written, so the editor ends it its own way");
+    }
+
+    @Test
+    void aShapeComposedInACellPaintedOnlyWithAGradientIsDroppedForThat() throws Exception {
+        // The table draws the solid box beside it, and still nothing draws a gradient alone.
+        DocxExportReport report = reportOf(page -> page
+                .addTable(table -> table.columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                        .rowCells(DocumentTableCell.node(new ShapeBuilder().size(20, 20).fillColor(INK).build()),
+                                DocumentTableCell.node(new ShapeBuilder().size(20, 20)
+                                        .fill(DocumentPaint.linear(SURFACE, INK)).build()))));
+
+        assertThat(detailOf(report, "ShapeNode")).startsWith("it is painted only with a gradient");
+        assertThat(report.bySubject().get("ShapeNode").get(0).severity())
+                .isEqualTo(DocxExportReport.Severity.DROPPED);
     }
 
     @Test
@@ -169,6 +192,50 @@ class DocxCarriedWithoutReportTest {
                         com.demcha.compose.document.node.LayerAlign.TOP_LEFT)));
 
         assertThat(detailOf(report, "SectionNode")).isEqualTo("written as a column of its layer stack; its outline entry is not written");
+    }
+
+    @Test
+    void aLayerColumnNamesItsAnchorThatNoBookmarkMarks() throws Exception {
+        // A column is written as what it holds, with no bookmark round it, while a link or a page
+        // reference to its anchor still names one.
+        String lost = "written as a column of its layer stack; its anchor has no bookmark in the Word file: "
+                      + "a link or a page reference to it names a bookmark the file does not hold";
+        DocxExportReport report = reportOf(page -> page.addLayerStack(stack -> stack
+                .layer(new com.demcha.compose.document.dsl.SectionBuilder().anchor("left")
+                        .margin(new DocumentInsets(0, 220, 0, 0)).addParagraph("Left column").build(),
+                        com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                .layer(new com.demcha.compose.document.node.ContainerNode("Right",
+                        List.of(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Right column").build()),
+                        0, DocumentInsets.zero(), new DocumentInsets(0, 0, 0, 200), null, null, null, null, "right"),
+                        com.demcha.compose.document.node.LayerAlign.TOP_LEFT)));
+
+        assertThat(detailOf(report, "SectionNode")).isEqualTo(lost);
+        assertThat(detailOf(report, "ContainerNode")).isEqualTo(lost);
+    }
+
+    @Test
+    void aSectionInsideANodeLaidOverTheFlowNamesItsOutlineEntry() throws Exception {
+        DocxExportReport report = reportOf(page -> page
+                .add(laidOverTheFlow(new com.demcha.compose.document.dsl.SectionBuilder().bookmark(OUTLINE)
+                        .addParagraph("Studio").build()))
+                .addParagraph("Masthead"));
+
+        assertThat(detailOf(report, "SectionNode"))
+                .isEqualTo("written over the flow as what it holds; its outline entry is not written");
+    }
+
+    @Test
+    void aPaintedSectionInsideANodeLaidOverTheFlowNamesItsOutlineEntryOnce() throws Exception {
+        // Its fill is drawn as a shape and its text set in text boxes: two notes, one loss.
+        DocxExportReport report = reportOf(page -> page
+                .add(laidOverTheFlow(new com.demcha.compose.document.dsl.SectionBuilder().fillColor(SURFACE)
+                        .bookmark(OUTLINE).addParagraph("Studio").build()))
+                .addParagraph("Masthead"));
+
+        assertThat(report.bySubject().get("SectionNode"))
+                .extracting(DocxExportReport.Note::detail)
+                .filteredOn(detail -> detail.contains("its outline entry is not written"))
+                .containsExactly("written over the flow as what it holds; its outline entry is not written");
     }
 
     @Test
@@ -215,6 +282,20 @@ class DocxCarriedWithoutReportTest {
                 .addShape(shape -> shape.size(200, 2).fillColor(INK)));
 
         assertThat(report.bySubject()).doesNotContainKeys("ImageNode", "TableNode", "SectionNode", "ShapeNode");
+    }
+
+    /**
+     * A sidebar laid over the flow, holding the given layer: an overlay its margins give no room,
+     * pulled up over the page's top margin and handing its height back below.
+     */
+    private static com.demcha.compose.document.node.DocumentNode laidOverTheFlow(
+            com.demcha.compose.document.node.DocumentNode layer) {
+        double height = 120;
+        return new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Sidebar")
+                .rectangle(100, height).clipPolicy(com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE)
+                .margin(new DocumentInsets(-20, 0, 20 - height, -20))
+                .position(layer, 10, 10, com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                .build();
     }
 
     private static String detailOf(DocxExportReport report, String subject) {

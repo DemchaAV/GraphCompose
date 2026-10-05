@@ -47,7 +47,7 @@
 
         <!-- Runtime / library dependencies -->
         <flexmark.version>0.64.8</flexmark.version>
-        <logback.version>1.6.4</logback.version>
+        <logback.version>1.6.5</logback.version>
         <lombok.version>1.18.48</lombok.version>
         <slf4j.version>2.0.20</slf4j.version>
 
@@ -56,7 +56,7 @@
         <junit.bom.version>6.1.3</junit.bom.version>
         <mockito.version>5.24.0</mockito.version>
         <byteBuddy.version>1.18.14</byteBuddy.version>
-        <archunit.version>1.5.0</archunit.version>
+        <archunit.version>1.5.1</archunit.version>
         <jqwik.version>1.10.1</jqwik.version>
 
         <!-- Bundled fonts / emoji, pulled in at test scope only. Pinned to the

@@ -1919,6 +1919,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **Word's editing protocol fails a restyle that leaves text on lines too short for it.**
+  `restyle-body-through-normal` checked only that the body's letters grew with Normal by 2pt,
+  and passed every corpus document. Most paragraphs of an exported DOCX stand on exact lines,
+  which keep their height when the letters grow: Word then sets `cv-editorial_blue`'s summary in
+  11.5pt letters on the 10.3pt lines its 9.5pt letters had, the lines overlap, and on screen
+  Word also cuts the letters' tops, which its PDF export does not show. The scenario now also
+  fails when a paragraph whose letters grew keeps an exact line that did not grow with them and
+  now stands below 1.15 of their size, or sits in a row of exact height, and names the first
+  such paragraphs. A line the page set tighter than that for its own letters is the page's
+  leading and is not counted. On a document Word wrote itself the scenario passes. Over the 62
+  corpus documents in Word 16.0.20430 it fails in all 62: of the 1,984 paragraphs whose letters
+  grew, 1,804 stand on such lines, none in a row of exact height, while the body still follows
+  Normal in all 62. A scenario a document has nothing to edit for — no table, no list, no
+  drawing — is now recorded `N/A` with what the document lacks, instead of missing from the
+  protocol's JSON, and a run of one scenario writes each document's results as a list, as a run
+  of several does.
 - **The DOCX fidelity corpus holds a line where it stands across, as well as down.** It measured
   how far from the page's an editor set each line up or down, and nothing across: a table's
   left margin the export dropped (fixed in #831) stood `PaymentsInvoice`'s bank details 36.7pt

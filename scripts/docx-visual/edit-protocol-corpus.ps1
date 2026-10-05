@@ -12,15 +12,17 @@
     Each scenario edits a copy, saves it, reopens it from disk and records what it measured.
     What it decides by itself is objective: text kept or lost, a paragraph grown or shrunk and
     still above the block after it, a row held to an exact height that would hide what the edit
-    added, the body size following the Normal style, a list continued by Enter, text typed at
-    the end of the document readable below everything else, a drawing moving with the text it
-    stands beside, a save that changes nothing. It
-    reads letters' size, face and visibility from the text alone, not the paragraph mark, which
-    a range's font reports with it. Whether an edited page still looks right is read by a
-    person from the PDFs written beside the lengthened copy and the new-page copy.
+    added, the body size following the Normal style on lines and rows that still have room for
+    it, a list continued by Enter, text typed at the end of the document readable below
+    everything else, a drawing moving with the text it stands beside, a save that changes
+    nothing. It reads letters' size, face and visibility from the text alone, not the paragraph
+    mark, which a range's font reports with it. Whether an edited page still looks right is
+    read by a person from the PDFs written beside the lengthened copy and the new-page copy.
 
-    Word is not installed by the build. When it is absent the protocol records NOT_RUN and the
-    script exits 2; a scenario that does not pass exits 1.
+    A scenario a document has nothing to edit for — no table, no list, no drawing — is recorded
+    N/A with what the document lacks. Word is not installed by the build. When it is absent the
+    protocol records NOT_RUN and the script exits 2; a scenario that neither passes nor is N/A
+    exits 1.
 
 .PARAMETER Docx
     One or more exported .docx files. All are copied into the output directory before the first
@@ -81,9 +83,27 @@ $WD_RELATIVE_TO_PAGE = 1
 # sets a single line of its faces at 1.15 to 1.2 of the size.
 $EXACT_LINE_SHARE = 1.1
 
+# The smallest share of its letters' size Word sets a single line of its faces at. An exact line
+# the page set for its letters can be tighter — the page's leading is its own — so a restyle is
+# judged by what it changes: letters that grew on an exact line that kept its height, now below
+# this share of them, stand on a line too short for them.
+$NATURAL_LINE_SHARE = 1.15
+
 # The smallest size typed text is read at, in points: a paragraph that holds only pictures has
 # its runs and mark a point tall, and text typed on from it would continue at that point.
 $READABLE_POINTS = 4
+
+# What a document lacks when a scenario has nothing in it to edit.
+$NOT_APPLICABLE = @{
+    'lengthen-a-paragraph'        = 'no paragraph of 40 letters or more outside a field or a frame'
+    'shorten-a-paragraph'         = 'no paragraph of 40 letters or more outside a field or a frame'
+    'insert-a-paragraph'          = 'no paragraph of 40 letters or more outside a field or a frame'
+    'restyle-body-through-normal' = 'no paragraph whose letters are all one size'
+    'insert-a-table-row'          = 'no table of three rows or more whose rows Word reaches one by one'
+    'delete-a-table-row'          = 'no table of three rows or more whose rows Word reaches one by one'
+    'continue-a-list'             = 'no list item with text'
+    'drawings-follow-text'        = 'no paragraph to lengthen, or no floating drawing'
+}
 
 $ADDED = ' The editing protocol appended this sentence to make the paragraph about twice as long, so that it has to rewrap and whatever stands below it has to move down to make room for it.'
 
@@ -214,6 +234,48 @@ function Test-ExactRow {
     try { return $Range.Cells(1).HeightRule -eq $WD_ROW_HEIGHT_EXACTLY } catch { return $false }
 }
 
+# The size of a paragraph's largest letters: its text's size, or, where its runs differ, the
+# largest of its words' — a word of mixed sizes read letter by letter.
+function Get-LargestLetters {
+    param($Paragraph)
+    $text = Get-TextRange $Paragraph
+    $size = [double]$text.Font.Size
+    if ($size -lt 1000) { return $size }
+    $largest = 0
+    foreach ($word in $text.Words) {
+        $size = [double]$word.Font.Size
+        if ($size -lt 1000) { $largest = [Math]::Max($largest, $size); continue }
+        foreach ($letter in $word.Characters) {
+            $size = [double]$letter.Font.Size
+            if ($size -lt 1000) { $largest = [Math]::Max($largest, $size) }
+        }
+    }
+    return $largest
+}
+
+# The size of each paragraph's largest letters, by its index, for the paragraphs with text.
+function Get-LargestLetterSizes {
+    param($Doc)
+    $sizes = @{}
+    for ($i = 1; $i -le $Doc.Paragraphs.Count; $i++) {
+        $p = $Doc.Paragraphs($i)
+        if ((Get-Text $p).Length -eq 0) { continue }
+        $sizes[$i] = Get-LargestLetters $p
+    }
+    return $sizes
+}
+
+# The height of each exact line, by paragraph index, for the paragraphs given.
+function Get-ExactLines {
+    param($Doc, $Indexes)
+    $lines = @{}
+    foreach ($i in $Indexes) {
+        $format = $Doc.Paragraphs($i).Format
+        if ($format.LineSpacingRule -eq $WD_LINE_SPACE_EXACTLY) { $lines[$i] = [double]$format.LineSpacing }
+    }
+    return $lines
+}
+
 # The letters' size of each paragraph with text, by its index; mixed sizes are left out.
 function Get-TextSizes {
     param($Doc)
@@ -331,8 +393,10 @@ function Invoke-ScenarioOnce {
         $doc.Close([ref]$true)
         [Runtime.InteropServices.Marshal]::ReleaseComObject($doc) | Out-Null
     }
+    # A document with nothing the scenario edits is recorded so, not left out: a result missing
+    # from the protocol reads as one that passed.
     if ($applies -eq $false) {
-        return $null
+        return New-Result $Name 'N/A' $NOT_APPLICABLE[$Name]
     }
     $reopened = $Word.Documents.Open($copy, [ref]$false, [ref]$true)
     try {
@@ -433,7 +497,10 @@ function Invoke-Protocol {
 
     # 4. Restyle the body through Normal by +2pt: the paragraphs whose letters are at the body
     #    size — the size most of the document's letters are set in — grow by those 2pt. A run
-    #    with a size of its own swallows the edit.
+    #    with a size of its own swallows the edit. The larger letters still have room: no
+    #    paragraph whose letters grew keeps an exact line that did not grow with them and now
+    #    stands below a natural line for them, and none sits in a row of exact height. Word cuts
+    #    both on its screen and not in its PDF, so they are read from the lines, not a picture.
     $results += Invoke-Scenario $Word $Source 'restyle-body-through-normal' -Edit {
         param($doc, $state)
         $sizes = Get-TextSizes $doc
@@ -444,6 +511,8 @@ function Invoke-Protocol {
         if ($weights.Count -eq 0) { return $false }
         $state.bodySize = ($weights.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 1).Key
         $state.bodyParagraphs = @($sizes.Keys | Where-Object { $sizes[$_] -eq $state.bodySize })
+        $state.lettersBefore = Get-LargestLetterSizes $doc
+        $state.linesBefore = Get-ExactLines $doc $state.lettersBefore.Keys
         $state.normalBefore = $doc.Styles($WD_STYLE_NORMAL).Font.Size
         $doc.Styles($WD_STYLE_NORMAL).Font.Size = $state.normalBefore + 2
     } -Verify {
@@ -455,7 +524,25 @@ function Invoke-Protocol {
         $total = $state.bodyParagraphs.Count
         $share = if ($total -gt 0) { [Math]::Round(100.0 * $followed / $total) } else { 0 }
         $detail = "body size $($state.bodySize)pt (Normal $($state.normalBefore)pt): $followed of $total paragraphs grew with Normal by 2pt ($share%), pages $($state.pagesBefore) -> $($state.pagesAfter)"
-        if ($share -lt 90) { return New-Result 'restyle-body-through-normal' 'FAIL' $detail }
+        # The paragraphs are compared by index: a restyle adds and removes none.
+        if ($state.paragraphsAfter -ne $state.paragraphsBefore) {
+            return New-Result 'restyle-body-through-normal' 'FAIL' "the restyle changed the paragraphs $($state.paragraphsBefore) -> $($state.paragraphsAfter); $detail"
+        }
+        $letters = Get-LargestLetterSizes $doc
+        $grown = @($letters.Keys | Where-Object { $state.lettersBefore.ContainsKey($_) -and $letters[$_] -gt $state.lettersBefore[$_] } | Sort-Object)
+        $lines = Get-ExactLines $doc $grown
+        # An exact line that kept the share of its letters it was set at — a line the restyle
+        # grew too — is the page's leading; one that kept its height under larger letters is not.
+        $squeezed = @($grown | Where-Object {
+            $lines.ContainsKey($_) -and $state.linesBefore.ContainsKey($_) -and
+            $lines[$_] + 0.5 -lt $state.linesBefore[$_] * $letters[$_] / $state.lettersBefore[$_] -and
+            $lines[$_] -lt $letters[$_] * $NATURAL_LINE_SHARE })
+        $hidden = @($grown | Where-Object { Test-ExactRow $doc.Paragraphs($_).Range })
+        $detail += ", $($grown.Count) grew: $($squeezed.Count) on exact lines that did not grow with their letters, $($hidden.Count) in rows of exact height"
+        $examples = @($squeezed | Select-Object -First 3 | ForEach-Object {
+            "'$((Get-Text $doc.Paragraphs($_)) -replace '^(.{0,24}).*', '$1')' $($state.lettersBefore[$_]) -> $($letters[$_])pt letters on $([Math]::Round($lines[$_], 2))pt lines" })
+        if ($examples.Count -gt 0) { $detail += '; ' + ($examples -join '; ') }
+        if ($share -lt 90 -or $squeezed.Count -gt 0 -or $hidden.Count -gt 0) { return New-Result 'restyle-body-through-normal' 'FAIL' $detail }
         New-Result 'restyle-body-through-normal' 'PASS' $detail
     }
 
@@ -646,7 +733,9 @@ $documents = @()
 try {
     foreach ($source in $sources) {
         try {
-            $scenarios = Invoke-Protocol $word $source
+            # PowerShell hands a one-element array back as its element: a run of one scenario would
+            # write that scenario's result where the JSON holds a list.
+            $scenarios = @(Invoke-Protocol $word $source)
             $documents += [ordered]@{ document = $source.BaseName; scenarios = $scenarios }
         } catch {
             $documents += [ordered]@{ document = $source.BaseName; error = $_.Exception.Message; scenarios = @() }
@@ -669,6 +758,6 @@ try {
     documents       = $documents
 } | ConvertTo-Json -Depth 6 | Set-Content -Path (Join-Path $OutputDir 'edit-protocol-corpus.json') -Encoding utf8
 
-$failed = @($documents | Where-Object { $_.error -or ($_.scenarios | Where-Object { $_.status -ne 'PASS' }) })
+$failed = @($documents | Where-Object { $_.error -or ($_.scenarios | Where-Object { $_.status -notin 'PASS', 'N/A' }) })
 Write-Host "$($documents.Count) documents, $($failed.Count) with a scenario not passing. Protocol: $(Join-Path $OutputDir 'edit-protocol-corpus.json')"
 if ($failed.Count -gt 0) { exit 1 }

@@ -380,13 +380,17 @@ Choose the smallest tests that match the change:
 
   It records what it can decide alone in `edit-protocol-corpus.json`:
   - text kept, and a paragraph grown or shrunk and still above the block after it;
-  - the body size following Normal;
+  - the body size following Normal, with room for it: no paragraph whose letters grew is left
+    on an exact line that did not grow with them and now stands below 1.15 of their size, and
+    none sits in a row of exact height;
   - typed text standing below everything else, outside any table, visible, in the size of the
     text it continues (or, after an empty paragraph, on lines that fit it);
   - each drawing beside text the lengthening moved moving with it, by as much and onto the same
     page. A drawing belongs to the paragraph nearest its top-left corner, up or down from where
     the paragraph starts and across from its text; a page's backgrounds are left out.
 
+  A scenario a document has nothing to edit for — no table, no list, no drawing — is recorded
+  `N/A` with what the document lacks, rather than left out of the JSON.
   It reads the letters' size and visibility from the text, without the paragraph mark. Beside
   the lengthened copy and the new-page copy it writes PDFs, from which a person judges whether
   a page still looks right. It takes about a minute a document; `-Scenario` runs only the

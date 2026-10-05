@@ -112,10 +112,12 @@ class DocxVerticalSpacingTest {
     }
 
     @Test
-    void aDocumentThatEndsWithATableEndsWithAParagraphAPointTall() throws Exception {
+    void aDocumentWhoseTableEndsAtThePagesFootEndsWithAParagraphAPointTall() throws Exception {
         // Word puts a paragraph after a closing table whatever the file says: left to it, that
-        // paragraph is a line of body text tall and opens a blank page under a full one.
+        // paragraph is a line of body text tall and opens a blank page under a full one. 560pt
+        // inside the margins, so the row ends a few points above the foot.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .spacer(1, 540)
                 .addRow(row -> row.addParagraph(p -> p.text("Left")).addParagraph(p -> p.text("Right"))))) {
             var body = document.getBodyElements();
             assertThat(body.get(body.size() - 1)).isInstanceOf(XWPFParagraph.class);
@@ -124,6 +126,63 @@ class DocxVerticalSpacingTest {
             assertThat(spacing.getLineRule())
                     .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
             assertThat(DocxTwips.of(spacing.getLine())).as("a point").isEqualTo(20L);
+            assertThat(last.getCTP().getPPr().getRPr().sizeOfVanishArray()).as("its mark hidden").isEqualTo(1);
+        }
+    }
+
+    @Test
+    void aClosingParagraphLeftAPointTallIsReported() throws Exception {
+        java.util.function.Function<Double, DocxExportReport> reportOf = spacer -> {
+            java.util.concurrent.atomic.AtomicReference<DocxExportReport> captured =
+                    new java.util.concurrent.atomic.AtomicReference<>();
+            try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                    .pageSize(400, 600).margin(com.demcha.compose.document.style.DocumentInsets.of(20)).create()) {
+                session.pageFlow(page -> page.spacer(1, spacer)
+                        .addRow(row -> row.addParagraph(p -> p.text("Left")).addParagraph(p -> p.text("Right"))));
+                session.export(new DocxSemanticBackend(captured::set));
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+            return captured.get();
+        };
+        assertThat(reportOf.apply(540.0).bySubject()).as("no room below the table").containsKey("closing paragraph");
+        assertThat(reportOf.apply(1.0).bySubject()).as("room below the table").doesNotContainKey("closing paragraph");
+    }
+
+    @Test
+    void aPageBackgroundTakesNoRoomFromTheClosingParagraph() throws Exception {
+        // A background fills the page to its foot, under the content: it is the layout's own
+        // fragment, not the flow's, so the room below the table is still the page's.
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(com.demcha.compose.document.style.DocumentInsets.of(20)).create()) {
+            session.pageBackground(com.demcha.compose.document.style.DocumentColor.rgb(240, 244, 248));
+            session.pageFlow(page -> page
+                    .addRow(row -> row.addParagraph(p -> p.text("Left")).addParagraph(p -> p.text("Right"))));
+            try (XWPFDocument document = new XWPFDocument(
+                    new java.io.ByteArrayInputStream(session.export(new DocxSemanticBackend())))) {
+                var body = document.getBodyElements();
+                var properties = ((XWPFParagraph) body.get(body.size() - 1)).getCTP().getPPr();
+                assertThat(properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetLineRule())
+                        .as("an ordinary closing paragraph").isTrue();
+            }
+        }
+    }
+
+    @Test
+    void aDocumentWhoseTableLeavesRoomBelowEndsWithAnOrdinaryParagraph() throws Exception {
+        // The paragraph after the closing table is where a reader types to add to the document.
+        // A point tall with its mark hidden, what Word's editing protocol typed there was hidden
+        // too; where the page has the room, it is an ordinary paragraph.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addRow(row -> row.addParagraph(p -> p.text("Left")).addParagraph(p -> p.text("Right"))))) {
+            var body = document.getBodyElements();
+            XWPFParagraph last = (XWPFParagraph) body.get(body.size() - 1);
+            var properties = last.getCTP().getPPr();
+            assertThat(body.get(body.size() - 2)).isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
+            assertThat(properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetLineRule())
+                    .as("no exact line").isTrue();
+            assertThat(properties == null || !properties.isSetRPr() || properties.getRPr().sizeOfVanishArray() == 0)
+                    .as("no hidden mark").isTrue();
         }
     }
 

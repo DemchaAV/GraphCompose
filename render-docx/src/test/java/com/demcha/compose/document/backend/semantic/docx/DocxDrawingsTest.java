@@ -132,7 +132,6 @@ class DocxDrawingsTest {
             String body = document.getDocument().xmlText();
             List<String> anchors = anchors(body);
             String picture = anchors.stream().filter(a -> a.contains("<pic:pic")).findFirst().orElseThrow();
-            double top = 400 - glyph.get().y() - glyph.get().height();
 
             assertThat(body).as("no picture is written in the flow").doesNotContain("<wp:inline");
             assertThat(anchors).hasSize(2);
@@ -143,7 +142,10 @@ class DocxDrawingsTest {
             // Placed down from the title beside the badge, the badge with it: they move together.
             assertThat(paragraphCarrying(document, "<pic:pic")).isEqualTo("EXPERIENCE");
             assertThat(paragraphCarrying(document, "prst=\"ellipse\"")).isEqualTo("EXPERIENCE");
-            assertThat(top).isPositive();
+            // Placed down from the same paragraph's top, the 11pt glyph stands in the middle of its
+            // 22pt disc.
+            String disc = anchors.stream().filter(a -> a.contains("prst=\"ellipse\"")).findFirst().orElseThrow();
+            assertThat(offsetDown(picture) - offsetDown(disc)).isCloseTo((22 - 11) / 2.0, within(0.01));
             assertThat(relativeHeight(document, "<pic:pic")).as("over the circle")
                     .isGreaterThan(relativeHeight(document, "prst=\"ellipse\""));
             assertThat(document.getAllPictures()).hasSize(1);

@@ -838,14 +838,15 @@ it as approximated. A shape standing beside a paragraph's text — a timeline's 
 entry, an icon by its heading, a skill's bar by its label — is anchored in that paragraph
 and placed down from its top, so it moves with the paragraph when a reader edits the text
 above it. The paragraph is the one whose text is nearest the shape, within 48pt across
-and down together, that the shape hangs from rather than rising above; one in a table cell
-carries the shape only when its cell holds it across, its line is set from the left and its
-row is not a repeated header,
-and places it from the cell's text column. The paragraph's top is where Word places from:
+and down together, when the shape hangs from it rather than rising above it; one in a table
+cell carries the shape only when its cell holds it across, its line is set from the left and
+its row is not a repeated header, and places it from the cell's text column. When the
+nearest paragraph cannot carry the shape, it stays on the page rather than going to a
+paragraph further off, which is not the text it stands by. The paragraph's top is where Word places from:
 the space written above its first line included, and the line where Word stands it — an
 exact line's baseline four fifths of the way down it, raised by the run's position —
 measured in Word 16.0.20430 and LibreOffice to a tenth of a point. Only the first paragraph
-a paragraph node is written as offers its place, in a column's cell too; a table's own cell
+holding text that a paragraph node is written as offers its place, in a column's cell too; a table's own cell
 text and a list's items do not yet.
 
 A shape beside no paragraph stays where the page puts it whatever the text does. It is

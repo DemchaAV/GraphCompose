@@ -4663,7 +4663,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // The baseline the page draws the first line on, seated as the page seats it.
         layout.firstTextBox(node).ifPresent(box ->
                 anchors.seat(box.page(), node, para, box.left(), box.right(), canvasHeight - box.top(),
-                        canvasHeight - box.baseline() - seatShift(node), canvasHeight - box.bottom()));
+                        canvasHeight - box.baseline() - seatShift(node)));
     }
 
     /**

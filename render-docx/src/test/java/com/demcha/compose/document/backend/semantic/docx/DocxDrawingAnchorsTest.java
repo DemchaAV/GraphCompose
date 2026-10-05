@@ -40,8 +40,9 @@ class DocxDrawingAnchorsTest {
         XWPFParagraph second = text(document, "Second");
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, first, true);
-        anchors.seat(0, first, first, 40, 300, 40, 50, 60);
-        anchors.seat(0, second, second, 40, 300, 100, 110, 120);
+        // Both within reach, and the dot hangs from both: 32pt from the first, 2pt from the second.
+        anchors.seat(0, first, first, 40, 300, 70, 80);
+        anchors.seat(0, second, second, 40, 300, 100, 110);
 
         anchors.queue(List.of(dot(30, 102)));
         anchors.endSection(0, null, document::createParagraph);
@@ -56,12 +57,60 @@ class DocxDrawingAnchorsTest {
     }
 
     @Test
+    void reachIsFortyEightPointsAcrossAndDownTogether() {
+        // 40pt down and 8pt across is in reach; 40pt down and 9pt across is not. The dot is 6pt
+        // wide, so one 8pt left of the text starts at 40 - 8 - 6.
+        assertThat(seated(dot(26, 140), 300)).as("48pt").isTrue();
+        assertThat(seated(dot(25, 140), 300)).as("49pt").isFalse();
+        // Across alone: a dot level with the text, 49pt right of where it ends.
+        assertThat(seated(dot(349, 100), 300)).as("49pt across").isFalse();
+    }
+
+    /** Whether a dot is anchored beside a paragraph whose text starts at (40, 100). */
+    private static boolean seated(DocxDrawings.Shape dot, double right) {
+        XWPFDocument document = new XWPFDocument();
+        XWPFParagraph paragraph = text(document, "Text");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, paragraph, true);
+        anchors.seat(0, paragraph, paragraph, 40, right, 100, 110);
+        anchors.queue(List.of(dot));
+        anchors.endSection(0, null, document::createParagraph);
+        return drawingsIn(paragraph).get(0).contains("<wp:positionV relativeFrom=\"paragraph\">");
+    }
+
+    @Test
+    void aParagraphWithSomethingAboveItsLineOffersNoTop() {
+        // Word sets a top border, contextual spacing and space reckoned in lines or by itself
+        // between the paragraph's top and its line: its line's top does not tell where it starts.
+        List<java.util.function.Consumer<CTPPr>> above = List.of(
+                properties -> properties.addNewPBdr().addNewTop().setVal(
+                        org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder.SINGLE),
+                properties -> properties.addNewContextualSpacing(),
+                properties -> properties.addNewSpacing().setBeforeLines(BigInteger.valueOf(100)),
+                properties -> properties.addNewSpacing().setBeforeAutospacing(
+                        org.openxmlformats.schemas.officeDocument.x2006.sharedTypes.STOnOff1.ON));
+        for (java.util.function.Consumer<CTPPr> something : above) {
+            XWPFDocument document = new XWPFDocument();
+            XWPFParagraph paragraph = text(document, "Text");
+            something.accept(paragraph.getCTP().addNewPPr());
+            DocxDrawingAnchors anchors = anchors();
+            anchors.paragraphOn(0, paragraph, true);
+            anchors.seat(0, paragraph, paragraph, 40, 300, 100, 110);
+            anchors.queue(List.of(dot(30, 102)));
+            anchors.endSection(0, null, document::createParagraph);
+
+            assertThat(drawingsIn(paragraph).get(0)).as(paragraph.getCTP().getPPr().xmlText())
+                    .contains("<wp:positionV relativeFrom=\"page\">");
+        }
+    }
+
+    @Test
     void aShapeOutOfReachOfEveryParagraphStaysWhereThePagePutsIt() {
         XWPFDocument document = new XWPFDocument();
         XWPFParagraph first = text(document, "First");
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, first, true);
-        anchors.seat(0, first, first, 40, 300, 40, 50, 60);
+        anchors.seat(0, first, first, 40, 300, 40, 50);
 
         anchors.queue(List.of(dot(30, 200)));
         anchors.endSection(0, null, document::createParagraph);
@@ -78,7 +127,7 @@ class DocxDrawingAnchorsTest {
         XWPFParagraph first = text(document, "First");
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, first, true);
-        anchors.seat(0, first, first, 40, 300, 120, 130, 140);
+        anchors.seat(0, first, first, 40, 300, 120, 130);
 
         anchors.queue(List.of(dot(30, 100)));
         anchors.endSection(0, null, document::createParagraph);
@@ -93,7 +142,7 @@ class DocxDrawingAnchorsTest {
         XWPFParagraph first = text(document, "First");
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, first, true);
-        anchors.seat(0, first, first, 40, 300, 100, 110, 120);
+        anchors.seat(0, first, first, 40, 300, 100, 110);
 
         anchors.queue(List.of(dot(30, 99.5)));
         anchors.endSection(0, null, document::createParagraph);
@@ -114,7 +163,7 @@ class DocxDrawingAnchorsTest {
         paragraph.getRuns().get(0).getCTR().addNewRPr().addNewPosition().setVal(BigInteger.valueOf(-2));
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, paragraph, true);
-        anchors.seat(0, paragraph, paragraph, 40, 300, 163.5, 172, 182);
+        anchors.seat(0, paragraph, paragraph, 40, 300, 163.5, 172);
 
         anchors.queue(List.of(dot(30, 150)));
         anchors.endSection(0, null, document::createParagraph);
@@ -135,7 +184,7 @@ class DocxDrawingAnchorsTest {
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, paragraph, false);
         // The text starts 10pt into a cell whose left edge the page puts at 100.
-        anchors.seat(0, paragraph, paragraph, 110, 290, 60, 70, 80);
+        anchors.seat(0, paragraph, paragraph, 110, 290, 60, 70);
 
         anchors.queue(List.of(dot(103, 62)));
         anchors.endSection(0, null, document::createParagraph);
@@ -158,7 +207,7 @@ class DocxDrawingAnchorsTest {
         DocxDrawingAnchors anchors = anchors();
         XWPFParagraph body = text(document, "Body");
         anchors.paragraphOn(0, body, true);
-        anchors.seat(0, paragraph, paragraph, 100, 290, 60, 70, 80);
+        anchors.seat(0, paragraph, paragraph, 100, 290, 60, 70);
 
         anchors.queue(List.of(dot(80, 62)));
         anchors.endSection(0, null, document::createParagraph);
@@ -168,27 +217,52 @@ class DocxDrawingAnchorsTest {
     }
 
     @Test
-    void aCellDoesNotCarryAShapeHangingBelowItsText() {
-        // An icon beside the note under a totals table stands within reach of the table's last
-        // cell; laid out in that cell, it would hang below the row, and LibreOffice moved the
-        // row's text for it.
+    void aCellStatingNoMarginTakesWordsOwn() {
+        // Neither the cell nor its table states a left margin: Word's own 5.4pt stands between
+        // the cell's edge and its column, so a cell 200pt wide from 100 holds a dot at 100.
+        XWPFDocument document = new XWPFDocument();
+        XWPFTable table = document.createTable(1, 1);
+        if (table.getCTTbl().getTblPr().isSetTblCellMar()) {
+            table.getCTTbl().getTblPr().unsetTblCellMar();
+        }
+        XWPFTableCell cell = table.getRow(0).getCell(0);
+        width(cell, 200);
+        XWPFParagraph paragraph = cell.getParagraphs().get(0);
+        paragraph.createRun().setText("Entry");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, paragraph, false);
+        anchors.seat(0, paragraph, paragraph, 105.4, 290, 60, 70);
+
+        anchors.queue(List.of(dot(100, 62)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        String drawing = drawingsIn(paragraph).get(0);
+        assertThat(offsetAcross(drawing)).isCloseTo(100 - 105.4, within(0.01));
+        assertThat(offsetDown(drawing)).isCloseTo(2, within(0.01));
+    }
+
+    @Test
+    void aShapeItsNearestParagraphCannotHoldIsNotGivenToOneFurtherOff() {
+        // An icon centred on a note's line stands a little above the note's top; the totals
+        // table's last cell above is within reach too, but it is not the text the icon is by.
         XWPFDocument document = new XWPFDocument();
         XWPFTable table = document.createTable(1, 1);
         XWPFTableCell cell = table.getRow(0).getCell(0);
         width(cell, 200);
-        XWPFParagraph paragraph = cell.getParagraphs().get(0);
-        paragraph.createRun().setText("Total due");
         cell.getCTTc().getTcPr().addNewTcMar().addNewLeft().setW(BigInteger.valueOf(0));
+        XWPFParagraph total = cell.getParagraphs().get(0);
+        total.createRun().setText("Total due");
+        XWPFParagraph note = text(document, "Thank you");
         DocxDrawingAnchors anchors = anchors();
-        XWPFParagraph body = text(document, "Body");
-        anchors.paragraphOn(0, body, true);
-        anchors.seat(0, paragraph, paragraph, 110, 290, 60, 70, 74);
+        anchors.paragraphOn(0, note, true);
+        anchors.seat(0, total, total, 110, 290, 60, 70);
+        anchors.seat(0, note, note, 110, 290, 106, 116);
 
-        anchors.queue(List.of(dot(120, 100)));
+        anchors.queue(List.of(dot(120, 104)));
         anchors.endSection(0, null, document::createParagraph);
 
-        assertThat(drawingsIn(paragraph)).isEmpty();
-        assertThat(drawingsIn(body)).singleElement().asString().contains("<wp:positionV relativeFrom=\"page\">");
+        assertThat(drawingsIn(total)).isEmpty();
+        assertThat(drawingsIn(note)).singleElement().asString().contains("<wp:positionV relativeFrom=\"page\">");
     }
 
     @Test
@@ -204,7 +278,7 @@ class DocxDrawingAnchorsTest {
         DocxDrawingAnchors anchors = anchors();
         XWPFParagraph body = text(document, "Body");
         anchors.paragraphOn(0, body, true);
-        anchors.seat(0, paragraph, paragraph, 110, 290, 60, 70, 80);
+        anchors.seat(0, paragraph, paragraph, 110, 290, 60, 70);
 
         anchors.queue(List.of(dot(120, 62)));
         anchors.endSection(0, null, document::createParagraph);
@@ -222,8 +296,8 @@ class DocxDrawingAnchorsTest {
         Object owner = new Object();
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, spacer, true);
-        anchors.seat(0, owner, spacer, 40, 300, 100, 110, 120);
-        anchors.seat(0, owner, entry, 40, 300, 100, 110, 120);
+        anchors.seat(0, owner, spacer, 40, 300, 100, 110);
+        anchors.seat(0, owner, entry, 40, 300, 100, 110);
 
         anchors.queue(List.of(dot(30, 102)));
         anchors.endSection(0, null, document::createParagraph);
@@ -248,7 +322,7 @@ class DocxDrawingAnchorsTest {
         DocxDrawingAnchors anchors = anchors();
         XWPFParagraph body = text(document, "Body");
         anchors.paragraphOn(0, body, true);
-        anchors.seat(0, paragraph, paragraph, 110, 290, 60, 70, 80);
+        anchors.seat(0, paragraph, paragraph, 110, 290, 60, 70);
 
         anchors.queue(List.of(dot(120, 62)));
         anchors.endSection(0, null, document::createParagraph);
@@ -269,7 +343,7 @@ class DocxDrawingAnchorsTest {
         run.addNewRPr().addNewPosition().setVal(BigInteger.valueOf(-2));
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, paragraph, true);
-        anchors.seat(0, paragraph, paragraph, 40, 300, 163.5, 172, 182);
+        anchors.seat(0, paragraph, paragraph, 40, 300, 163.5, 172);
 
         anchors.queue(List.of(dot(30, 150)));
         anchors.endSection(0, null, document::createParagraph);
@@ -284,7 +358,7 @@ class DocxDrawingAnchorsTest {
         paragraph.getCTP().addNewPPr().addNewContextualSpacing().setVal("0");
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, paragraph, true);
-        anchors.seat(0, paragraph, paragraph, 40, 300, 100, 110, 120);
+        anchors.seat(0, paragraph, paragraph, 40, 300, 100, 110);
 
         anchors.queue(List.of(dot(30, 102)));
         anchors.endSection(0, null, document::createParagraph);
@@ -299,7 +373,7 @@ class DocxDrawingAnchorsTest {
         XWPFParagraph paragraph = text(document, "Title");
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, paragraph, true);
-        anchors.seat(0, paragraph, paragraph, 40, 300, 40, 50, 60);
+        anchors.seat(0, paragraph, paragraph, 40, 300, 40, 50);
 
         anchors.queue(List.of(dot(10, 42), dot(20, 42)));
         anchors.endSection(0, null, document::createParagraph);

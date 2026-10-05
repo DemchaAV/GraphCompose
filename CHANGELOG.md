@@ -12,11 +12,13 @@ follow semantic versioning; release dates are ISO 8601.
   timeline's dot, an icon by a heading, a skill's bar, a badge — were placed from the page's
   edges, so when a reader edited the text above one, the text moved and the shape stayed. A shape
   standing beside a paragraph's text is now anchored in that paragraph and placed down from its
-  top: the nearest paragraph within 48pt that it hangs from, and one in a table cell only when
-  the cell holds it across, its line is set from the left and its row is not a repeated header. The paragraph's top is where
+  top: the paragraph whose text is nearest, within 48pt, when the shape hangs from it rather than
+  rising above it and, in a table cell, when the cell holds it across, its line is set from the
+  left and its row is not a repeated header. When the nearest paragraph cannot hold the shape, it
+  stays on the page rather than going to one further off. The paragraph's top is where
   Word places from, the space above its first line included and its line where Word stands it,
-  measured in Word 16.0.20430 and LibreOffice to a tenth of a point. Only the first paragraph a
-  paragraph node is written as offers its place yet; beside a table's own cell text or a list's
+  measured in Word 16.0.20430 and LibreOffice to a tenth of a point. Only the first paragraph holding
+  text that a paragraph node is written as offers its place yet; beside a table's own cell text or a list's
   items, in the gap between two columns or far from any text, a shape stays on the page. Word's
   editing protocol, with a new `drawings-follow-text` scenario that lengthens a paragraph, finds
   132 of the 228 shapes

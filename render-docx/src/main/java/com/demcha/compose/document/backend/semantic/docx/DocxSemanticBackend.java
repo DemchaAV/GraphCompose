@@ -2027,6 +2027,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // Inside a node laid over the flow every container is only what it holds: its text
             // goes in text boxes, not in columns, a line pair, a band or a panel in the flow.
             drawOutlineOf(node);
+            reportWrittenWithout(node, "written over the flow as what it holds");
             for (DocumentNode child : inPaintOrder(node)) {
                 writeNode(document, child);
             }
@@ -2418,8 +2419,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the summary and the report is the record.</p>
      */
     private void warnUnsupported(DocumentNode node) {
-        if (drawOwnFragments(node) || drawnByItsTable(node)) {
-            // Drawn: by the node, or, composed in a cell, by its table.
+        if (drawOwnFragments(node)) {
+            return;
+        }
+        if (drawnByItsTable(node)) {
+            // Composed in a cell, what it paints is its table's to draw, and the table's note
+            // names the gradient and the dash it leaves out; this one names the rest.
+            List<String> lost = carriedWithout(node, true, false);
+            if (!lost.isEmpty()) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
+                        "composed in a table cell, whose drawing is its table's; " + String.join("; ", lost));
+            }
             return;
         }
         String why = droppedBecause(node);
@@ -2433,6 +2443,113 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 why + ", so it is not in the document");
     }
 
+    /**
+     * What a node the export writes or draws goes without, as the phrases a report note lists
+     * after what the node became: its link, its outline entry, and — drawn as a shape — the
+     * anchor, paint and stroke a drawing does not carry, or an image's transform. Empty when it
+     * loses none of them. A drawn shape's transform and a path's paint are said where the
+     * drawing is ({@link #drawOwnFragments}), and a rule's link and dash where the rule is.
+     *
+     * @param node  the node written or drawn
+     * @param drawn whether the node is drawn as a floating shape rather than written in the flow
+     * @return the phrases, in the order a note lists them
+     */
+    private static List<String> carriedWithout(DocumentNode node, boolean drawn) {
+        return carriedWithout(node, drawn, true);
+    }
+
+    /**
+     * As {@link #carriedWithout(DocumentNode, boolean)}, leaving out a gradient fill and a dash
+     * pattern when {@code paint} is false: a table's own note names those for every drawing its
+     * cells hold.
+     *
+     * @param node  the node written or drawn
+     * @param drawn whether the node is drawn as a floating shape rather than written in the flow
+     * @param paint whether to name a gradient fill and a dash pattern the drawing leaves out
+     * @return the phrases, in the order a note lists them
+     */
+    private static List<String> carriedWithout(DocumentNode node, boolean drawn, boolean paint) {
+        List<String> lost = new ArrayList<>();
+        DocumentLinkTarget link = null;
+        DocumentBookmarkOptions outline = null;
+        String anchor = null;
+        if (node instanceof com.demcha.compose.document.node.ShapeNode shape) {
+            link = shape.linkTarget();
+            outline = shape.bookmarkOptions();
+            anchor = shape.anchor();
+            if (drawn && paint && shape.fillPaint() != null
+                && !(shape.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)) {
+                lost.add("its gradient fill is not carried");
+            }
+            if (drawn && shape.cornerRadius() != null && !shape.cornerRadius().isUniform()) {
+                lost.add("its corners are drawn at the largest of their radii");
+            }
+        } else if (node instanceof com.demcha.compose.document.node.EllipseNode ellipse) {
+            link = ellipse.linkTarget();
+            outline = ellipse.bookmarkOptions();
+            anchor = ellipse.anchor();
+        } else if (node instanceof com.demcha.compose.document.node.LineNode line) {
+            link = drawn ? line.linkTarget() : null;
+            outline = line.bookmarkOptions();
+            anchor = line.anchor();
+            if (drawn && paint && line.dashPattern() != null && !line.dashPattern().isSolid()) {
+                lost.add("its dash pattern is not carried, so it is drawn solid");
+            }
+            // A drawn line's outline is written with no cap, which leaves its ends to the editor;
+            // a border has no caps, and ends flat.
+            if (line.lineCap() != null && line.lineCap() != com.demcha.compose.document.style.DocumentLineCap.BUTT) {
+                lost.add(drawn ? "its caps are not written, so the editor ends it its own way"
+                        : "its caps are not carried: a border ends flat");
+            }
+        } else if (node instanceof ImageNode image) {
+            link = image.linkTarget();
+            outline = image.bookmarkOptions();
+            if (image.transform() != null && !image.transform().isIdentity()) {
+                lost.add("its transform is not carried, so it is drawn upright at its size");
+            }
+        } else if (node instanceof com.demcha.compose.document.node.BarcodeNode barcode) {
+            outline = barcode.bookmarkOptions();
+        } else if (node instanceof TableNode table) {
+            link = table.linkTarget();
+            outline = table.bookmarkOptions();
+        } else if (node instanceof SectionNode section) {
+            outline = section.bookmarkOptions();
+        } else if (node instanceof ContainerNode container) {
+            outline = container.bookmarkOptions();
+        }
+        if (link != null) {
+            lost.add("its link is not carried");
+        }
+        if (outline != null) {
+            lost.add("its outline entry is not written");
+        }
+        // A drawing is no paragraph a bookmark can hold; a rule is one, and holds its own. A page
+        // reference to an anchor no bookmark marks is written as the number the layout found.
+        if (drawn && anchor != null && !anchor.isBlank()) {
+            lost.add("its anchor has no bookmark in the Word file: a link to it points at none, and "
+                     + "a page reference to it is a fixed number rather than a field");
+        }
+        return lost;
+    }
+
+    /** Reports what a node written into the flow goes without, if anything (carriedWithout). */
+    private void reportWrittenWithout(DocumentNode node, String writtenAs) {
+        reportWrittenWithout(node, writtenAs, List.of());
+    }
+
+    /**
+     * As {@link #reportWrittenWithout(DocumentNode, String)}, with what else the path that
+     * wrote it left out.
+     */
+    private void reportWrittenWithout(DocumentNode node, String writtenAs, List<String> alsoLost) {
+        List<String> lost = new ArrayList<>(carriedWithout(node, false));
+        lost.addAll(alsoLost);
+        if (!lost.isEmpty()) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
+                    writtenAs + "; " + String.join("; ", lost));
+        }
+    }
+
     /** Why a node the export neither writes nor draws is dropped, as the report says it. */
     private static String droppedBecause(DocumentNode node) {
         if (node instanceof PageFieldNode) {
@@ -2442,7 +2559,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!isBuiltIn(node)) {
             return "a node kind the DOCX export does not know: not its text, its pictures" + heldNodes(node);
         }
+        if (node instanceof com.demcha.compose.document.node.ShapeNode shape && paintedOnlyWithAGradient(shape)) {
+            return "it is painted only with a gradient, which the export does not draw";
+        }
         return "its geometry has no semantic Word analogue";
+    }
+
+    /**
+     * Whether a shape's one paint is a gradient fill: the layout gives a shape so filled no flat
+     * colour, and with no stroke round it there is nothing a drawing shows.
+     */
+    private static boolean paintedOnlyWithAGradient(com.demcha.compose.document.node.ShapeNode shape) {
+        return shape.fillPaint() != null
+               && !(shape.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)
+               && (shape.stroke() == null || shape.stroke().width() <= 0);
     }
 
     /**
@@ -2522,6 +2652,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             if (node instanceof com.demcha.compose.document.node.PathNode path && losesStyle(path)) {
                 message.append("; its gradient paint, dash pattern, caps and joins are not carried");
+            }
+            if (isDrawing(node)) {
+                // A section's or a container's own losses are named where it is written.
+                for (String lost : carriedWithout(node, true)) {
+                    message.append("; ").append(lost);
+                }
             }
             if (!isBuiltIn(node)) {
                 message.append("; a node kind the DOCX export does not know: only the shapes it "
@@ -3646,6 +3782,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // hangBelowItsBox does a shape container's, so that line keeps its own height.
         holdStackedLines(node.children(), Double.NaN);
         ContainerPaint paint = paintOf(node);
+        reportWrittenWithout(node, paint.isEmpty() ? "written as its contents" : "written as a panel");
         if (paint.isEmpty()) {
             writeContainerBody(document, node);
             return;
@@ -7964,6 +8101,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         .setPrst(org.openxmlformats.schemas.drawingml.x2006.main.STShapeType.ELLIPSE);
             }
         }
+        reportWrittenWithout(node, "written as an inline picture");
     }
 
     /**
@@ -8194,11 +8332,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 relationship);
         drewInCell = false;
         queueDrawings(List.of(picture), inFront);
+        StringBuilder message = new StringBuilder(drewInCell
+                ? how + ", anchored in the table cell it fills, where the layout puts it in the cell: "
+                  + "it moves with the row"
+                : how + ", where the layout puts it, " + ANCHORED_BESIDE_ITS_TEXT);
+        for (String lost : carriedWithout(image, false)) {
+            message.append("; ").append(lost);
+        }
         report.add(DocxExportReport.Severity.APPROXIMATED, image.nodeKind(), layout.pathOf(image),
-                drewInCell
-                        ? how + ", anchored in the table cell it fills, where the layout puts it in the cell: "
-                          + "it moves with the row"
-                        : how + ", where the layout puts it, " + ANCHORED_BESIDE_ITS_TEXT);
+                message.toString());
     }
 
     /**
@@ -8235,6 +8377,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         if (node.transform() != null && !node.transform().isIdentity()) {
             message.append("; its transform is not carried, so it is drawn upright at its size");
+        }
+        for (String lost : carriedWithout(node, false)) {
+            message.append("; ").append(lost);
         }
         report.add(DocxExportReport.Severity.APPROXIMATED, "barcode", layout.pathOf(node), message.toString());
     }
@@ -8313,6 +8458,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     "drawn in Word's own dash for a border, which keeps the rule dashed but not "
                     + "the pattern's lengths");
         }
+        // A line's link is the rule link above; a filled bar's, and either's outline entry, here.
+        reportWrittenWithout(node, "written as a paragraph border");
     }
 
     /** Word's border for a rule's dash: dots where the dashes are no longer than the stroke. */
@@ -8434,6 +8581,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeTableWithItsOwnSpacing(XWPFDocument document, DocumentNode node)
             throws Exception {
+        if (node instanceof TableNode table && !table.rows().isEmpty()) {
+            reportWrittenWithout(node, "written as a Word table");
+        }
         // The layout starts a block it moves to a new page at the block's own top edge: what
         // the page above holds below its last block, and the gap between the two, stay there.
         boolean onANewPage = currentCell == null && startsAPageOfItsOwn(node);
@@ -8545,8 +8695,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // A node kind the table's drawing does not cover is reported as ever.
             return false;
         }
-        if (node instanceof com.demcha.compose.document.node.PathNode path && !drawsAFlatColour(path)) {
-            // A path painted only with a gradient is no shape the table draws.
+        if (node instanceof com.demcha.compose.document.node.PathNode path && !drawsAFlatColour(path)
+            || node instanceof com.demcha.compose.document.node.ShapeNode shape && paintedOnlyWithAGradient(shape)) {
+            // A path or a box painted only with a gradient is no shape the table draws.
             return false;
         }
         boolean box = node instanceof com.demcha.compose.document.node.ShapeNode
@@ -10086,6 +10237,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                 pullBelow = 0;
                                 resumeSpacing = plan.resume(node);
                             }
+                            // A column layer is written as what it holds, never dispatched itself:
+                            // no bookmark goes round it, though bookmarkedAnchorsIn counts one.
+                            String anchor = blockAnchorOf(node, true);
+                            reportWrittenWithout(node, "written as a column of its layer stack",
+                                    anchor == null || anchor.isBlank() ? List.of()
+                                            : List.of("its anchor has no bookmark in the Word file: a link "
+                                                      + "or a page reference to it names a bookmark the file "
+                                                      + "does not hold"));
                             writeChildren(document, node.children(), spacingOf(node));
                             if (layer > 0 && blocksWritten == blocksBefore && holdsMovedContent(node)) {
                                 // A layer that wrote nothing — its content all written in an

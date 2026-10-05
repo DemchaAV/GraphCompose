@@ -891,9 +891,19 @@ borders Word draws outside it: Word starts a cell's content below its top border
 margin where that is wider, and draws both borders outside the row's height. Measured,
 `MerchantInvoice`'s payment panel, its height set by its content in LibreOffice, stands that
 border's width shorter there. The body's
-shapes stand above the page backgrounds, which LibreOffice stacks together with them. Two limits, each named in the report:
+shapes stand above the page backgrounds, which LibreOffice stacks together with them. Each of these limits is named in the report:
 
 - A transform is not carried: a rotated or scaled shape is drawn upright at its size.
+- A drawing carries no link, no outline entry and no bookmark: a link to a drawn shape's
+  anchor points at none, and a page reference to it is a fixed number. A gradient fill,
+  unequal corners (drawn at the largest radius) and a line's dash pattern (drawn solid) are
+  not carried either, and a line's caps are not written, which leaves its ends to the editor.
+  A rule — a line or a thin bar written as a paragraph border — keeps its anchor; its note
+  names a lost outline entry, caps (a border ends flat) or a bar's link, a line's link being
+  reported as `rule link`.
+  A picture, a table, a section or a container names a link or an outline entry it loses the
+  same way, and a section or a container written as a column of a layer stack names its anchor,
+  which no bookmark marks there.
 - A timeline's rail stands under every other shape on its page, where the page puts it
   under the markers only; a filled card drawn under a timeline covers it.
 
@@ -914,8 +924,8 @@ heading, is left to the row it sits in, which is held as tall as the page makes 
 A barcode in the body is not skipped: it exports as a picture of the symbol at
 its size, the same matrix the PDF draws, so it scans, with its data as the
 picture's description. Its data is part of the picture — changing it means
-exporting again — and the report says so, and names a link or a transform on it
-as not carried. In a page zone a barcode is still skipped.
+exporting again — and the report says so, and names a link, a transform or an
+outline entry on it as not carried. In a page zone a barcode is still skipped.
 A watermark, a protection and viewer preferences are not written; the export report names
 each one the document sets (`watermark`, `protection`, `viewer preferences`), so a file
 asked to be protected is not handed back open in silence.

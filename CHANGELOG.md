@@ -19,10 +19,10 @@ follow semantic versioning; release dates are ISO 8601.
   24pt at most, as a dot centred on the paragraph's first line does; both editors place it
   there and draw it whole. In a table cell it still rises by a stroke's width at most: a rule
   placed 1pt above its paragraph in a contact row's cell moved that row's text 1.8pt in
-  LibreOffice on Linux. Word's editing protocol finds __FOLLOWED__ shapes beside text that
-  moved moving with it, against 104 of 228, and __PASSING__ of the 35 documents with drawings
-  passing, against 19. Unedited, no shape stands more than __WORDMAX__pt from where it stood in
-  Word, and no line of text moves in Word or LibreOffice on Windows.
+  LibreOffice on Linux. Word's editing protocol finds 132 of the 231 shapes beside text
+  that moved moving with it, against 104 of 228, and 20 of the 35 documents with drawings
+  passing, against 19. Unedited, no shape stands more than 1.5pt from where it stood in Word,
+  and no line of text moves in Word or in LibreOffice on Windows or Linux.
 - **A DOCX's drawings move with the text they stand beside.** Most shapes the page paints — a
   timeline's dot, an icon by a heading, a skill's bar, a badge — were placed from the page's
   edges, so when a reader edited the text above one, the text moved and the shape stayed. A shape

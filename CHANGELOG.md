@@ -8,6 +8,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A reader can type below a DOCX's closing table.** A document that ends with a table ends
+  with the paragraph Word requires after it. That paragraph was always a point tall with its
+  mark hidden, so that it could not open a blank page, and no one could type below the table.
+  Measured in Word on `CompactMono`:
+  - typed at the caret Word gives the document's end, 70 lines ran into the table's last
+    cell, a narrow column, over five more pages;
+  - inserted at the very end, they went into the hidden paragraph and none of them showed.
+
+  Where the last page has room for two lines of the document's text below the table, the
+  paragraph is now an ordinary one. That is 17 of the 62 corpus documents, and in all 17 the
+  same 70 lines now run onto a new page under the table, visible, with the footer. The other
+  16 that end in a table fill their last page to the foot and keep the hairline; the export
+  report says so (`closing paragraph`, `APPROXIMATED`). Neither Word nor LibreOffice moves a
+  line or adds a page anywhere in the corpus.
 - **A DOCX chip takes the room its padding takes on the page.** A chip's fill is written as
   run shading, which covers the letters and nothing more, so its horizontal padding was not
   in the file. `ModernReceipt`'s status chip, right-aligned with 9pt of padding on each side,

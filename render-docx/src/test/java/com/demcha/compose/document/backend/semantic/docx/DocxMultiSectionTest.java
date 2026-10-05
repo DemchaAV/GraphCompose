@@ -158,17 +158,37 @@ class DocxMultiSectionTest {
     @Test
     void aSectionEndingInATableIsClosedByAParagraphOfItsOwn() throws Exception {
         DocumentSession tableOnly = session(300, 400, 24);
-        tableOnly.pageFlow(page -> page.addTable(t -> t.autoColumns(2).row("Net", "100")));
+        // 352pt inside the margins: the table ends a few points above the foot.
+        tableOnly.pageFlow(page -> page.spacer(1, 330).addTable(t -> t.autoColumns(2).row("Net", "100")));
         try (XWPFDocument document = export(tableOnly, landscapeBody())) {
             assertThat(sectionsOf(document)).hasSize(2);
-            XWPFParagraph carrier = document.getParagraphArray(0);
-            assertThat(document.getBodyElements().get(0))
-                    .as("the table comes first, and the section ends after it")
-                    .isSameAs(document.getTables().get(0));
+            var body = document.getBodyElements();
+            int table = body.indexOf(document.getTables().get(0));
+            XWPFParagraph carrier = (XWPFParagraph) body.get(table + 1);
+            assertThat(carrier.getCTP().getPPr())
+                    .as("the paragraph after the table has properties to carry")
+                    .isNotNull();
             assertThat(carrier.getCTP().getPPr().isSetSectPr()).isTrue();
             assertThat(DocxTwips.of(carrier.getCTP().getPPr().getSpacing().getLine()))
                     .as("a point tall, so a table filling its page does not spill the carrier onto another")
                     .isEqualTo(20L);
+        }
+    }
+
+    @Test
+    void aSectionEndingInATableWithRoomBelowIsClosedByAnOrdinaryParagraphCarryingItsSection() throws Exception {
+        // The page has room below the table, so the paragraph closing the section is one a
+        // reader can type in, and it is the one that carries the section's properties.
+        DocumentSession tableOnly = session(300, 400, 24);
+        tableOnly.pageFlow(page -> page.addTable(t -> t.autoColumns(2).row("Net", "100")));
+        try (XWPFDocument document = export(tableOnly, landscapeBody())) {
+            var body = document.getBodyElements();
+            int table = body.indexOf(document.getTables().get(0));
+            XWPFParagraph carrier = (XWPFParagraph) body.get(table + 1);
+            var properties = carrier.getCTP().getPPr();
+            assertThat(properties.isSetSectPr()).isTrue();
+            assertThat(properties.isSetSpacing() && properties.getSpacing().isSetLineRule())
+                    .as("no exact line").isFalse();
         }
     }
 

@@ -768,7 +768,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 raiseRows();
                 // The paragraph closing a section that ends with a table is also the one that
                 // carries the drawings nothing else on the last page carried.
-                reportDrawingsLeftOver(document, dropTheSpaceAtTheEnd(document));
+                reportDrawingsLeftOver(document,
+                        dropTheSpaceAtTheEnd(document, roomBelowTheFlow(context.layoutGraph()),
+                                index == sections.size() - 1));
             }
             hideTheClosingMark(document);
             hideTheCellClosingMarks(document.getTables());
@@ -842,8 +844,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * section that wrote nothing into the body at all — an empty session, or one of shapes
      * this export drops — whose last paragraph is still the one closing the section before
      * it. Handing that paragraph these properties would overwrite the earlier section's,
-     * folding two sections into one. The added paragraph is one invisible point tall, so it
-     * cannot push a full page onto a page of its own.</p>
+     * folding two sections into one. A section ending in a table already ends with the paragraph
+     * {@link #dropTheSpaceAtTheEnd} writes after it, which carries them; one that wrote nothing
+     * gets an added paragraph a point tall, so it cannot push a full page onto a page of its
+     * own.</p>
      */
     private void endSection(XWPFDocument document) {
         CTBody body = document.getDocument().getBody();
@@ -932,7 +936,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Hides the mark of the empty paragraph a document ending in a table must end with.
      *
-     * <p>Word ends a document on a paragraph, so one follows a closing table, a point tall.
+     * <p>Word ends a document on a paragraph, so one follows a closing table, a point tall where
+     * the last page has no room for an ordinary one ({@link #dropTheSpaceAtTheEnd}).
      * Where the table ends a point from the page's foot, that point does not fit, and the
      * paragraph opened a page of its own: {@code ModernReceipt}'s QR code ends 0.5pt above the
      * margin, and once its panels held the page's height the receipt ran to a blank second page
@@ -944,10 +949,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static void hideTheClosingMark(XWPFDocument document) {
         List<IBodyElement> body = document.getBodyElements();
         if (body.size() < 2 || !(body.get(body.size() - 1) instanceof XWPFParagraph last)
-            || !(body.get(body.size() - 2) instanceof XWPFTable) || !structureAlone(last)) {
+            || !(body.get(body.size() - 2) instanceof XWPFTable) || !structureAlone(last) || !hairline(last, CLOSING_LINE_POINTS)) {
             return;
         }
         hide(last);
+    }
+
+    /**
+     * Whether a paragraph is a hairline {@code points} tall holding no space above or below it:
+     * one written only to close a table ({@link #collapsed}, a cell's separator). An ordinary
+     * closing paragraph, where the page has the room for one, is left where a reader can type.
+     */
+    private static boolean hairline(XWPFParagraph paragraph, double points) {
+        CTSpacing spacing = paragraph.getCTP().getPPr() != null && paragraph.getCTP().getPPr().isSetSpacing()
+                ? paragraph.getCTP().getPPr().getSpacing() : null;
+        return spacing != null && spacing.isSetLineRule()
+               && spacing.getLineRule() == STLineSpacingRule.EXACT
+               && twipsOf(spacing.getLine()) == Math.round(points * POINT_TO_TWIP)
+               && twipsOf(spacing.getBefore()) == 0 && twipsOf(spacing.getAfter()) == 0;
     }
 
     /**
@@ -972,15 +991,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         || !(elements.get(elements.size() - 2) instanceof XWPFTable) || !structureAlone(last)) {
                         continue;
                     }
-                    CTSpacing spacing = last.getCTP().getPPr() != null && last.getCTP().getPPr().isSetSpacing()
-                            ? last.getCTP().getPPr().getSpacing() : null;
-                    boolean hairline = spacing != null && spacing.isSetLineRule()
-                                       && spacing.getLineRule() == STLineSpacingRule.EXACT
-                                       && twipsOf(spacing.getLine()) == Math.round(SEPARATOR_POINTS * POINT_TO_TWIP);
-                    if (!hairline || twipsOf(spacing.getBefore()) != 0 || twipsOf(spacing.getAfter()) != 0) {
-                        continue;
+                    if (hairline(last, SEPARATOR_POINTS)) {
+                        hide(last);
                     }
-                    hide(last);
                 }
             }
         }
@@ -1012,6 +1025,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
+    /** How tall a paragraph that exists only for Word's structure is written, in points. */
+    private static final double CLOSING_LINE_POINTS = 1;
+
     /** Makes a paragraph that exists only for Word's structure take a single point. */
     private static XWPFParagraph collapsed(XWPFParagraph paragraph) {
         CTPPr properties = paragraph.getCTP().isSetPPr()
@@ -1021,7 +1037,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         spacing.setBefore(BigInteger.ZERO);
         spacing.setAfter(BigInteger.ZERO);
         spacing.setLineRule(STLineSpacingRule.EXACT);
-        spacing.setLine(BigInteger.valueOf(Math.round(POINT_TO_TWIP)));
+        spacing.setLine(BigInteger.valueOf(Math.round(CLOSING_LINE_POINTS * POINT_TO_TWIP)));
         return paragraph;
     }
 
@@ -4557,21 +4573,91 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * tables such a cell ends with in turn — unless the cell is painted or has a bottom edge
      * drawn, where that space is part of the box the reader sees.</p>
      *
+     * <p>Word cannot end a section with a table: a paragraph follows it, a line of the document's
+     * text tall, and one that finds no room under a table reaching the page's foot opens a blank
+     * page. Where the last page has the room, that paragraph is an ordinary one, which is where
+     * a reader types to add to the document. Where it has not, it is a point tall and its mark is
+     * hidden ({@link #hideTheClosingMark}), and no one can type below the table. Measured in Word
+     * on {@code CompactMono}, typed at the caret Word gives the document's end, 70 lines ran
+     * into the table's last cell, a narrow column, over five more pages. Inserted at the very
+     * end, they went into the hidden paragraph and none of them showed.</p>
+     *
+     * <p>Where there is no layout to measure the room in, the paragraph is the hairline, and the
+     * report says nothing more than that the section was not laid out.</p>
+     *
+     * @param room        how far above its bottom margin the last page's content ends, in points,
+     *                    or NaN where there is no layout to say
+     * @param lastSection whether the section is the document's last, whose closing paragraph is
+     *                    the document's end
      * @return the paragraph written to close a section that ends with a table, or null
      */
-    private XWPFParagraph dropTheSpaceAtTheEnd(XWPFDocument document) {
+    private XWPFParagraph dropTheSpaceAtTheEnd(XWPFDocument document, double room, boolean lastSection) {
         pendingSpacingAfter = 0;
         carriedSpacingBefore = 0;
         pullBelow = 0;
         List<IBodyElement> body = document.getBodyElements();
         if (!body.isEmpty() && body.get(body.size() - 1) instanceof XWPFTable table) {
             dropTheSpaceBelow(table);
-            // Word cannot end a section with a table: it puts a paragraph of its own after it,
-            // a line of the document's text tall, and one that finds no room under a table
-            // reaching the page's foot opens a blank page. This one is a point tall.
-            return collapsed(document.createParagraph());
+            XWPFParagraph closing = document.createParagraph();
+            if (room >= roomForAClosingLine()) {
+                return closing;
+            }
+            if (!Double.isNaN(room)) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, "closing paragraph",
+                        sectioned ? "section " + (sectionIndex + 1) : null,
+                        "the last page has no room for a line below the closing table, so the paragraph "
+                        + "after it is a point tall: " + (lastSection
+                                ? "text typed at the end of the document goes into the table's last cell, "
+                                  + "or into that paragraph, whose mark is hidden where it holds nothing else"
+                                : "text typed after the table is set on point-tall lines"));
+            }
+            return collapsed(closing);
         }
         return null;
+    }
+
+    /**
+     * The room an ordinary closing paragraph needs below the last table, in points: a line of the
+     * document's text, as tall as an editor sets one of its size, and as much again to spare for
+     * where an editor sets the content above it lower than the page does.
+     */
+    private double roomForAClosingLine() {
+        double size = documentDefaultStyle != null && documentDefaultStyle.size() > 0
+                ? documentDefaultStyle.size() : DEFAULT_CLOSING_TEXT_POINTS;
+        return 2 * size * EDITOR_LINE_SHARE;
+    }
+
+    /** The size a closing line is reckoned at where the document's text has none. */
+    private static final double DEFAULT_CLOSING_TEXT_POINTS = 12;
+
+    /**
+     * How tall an editor sets a line of text against its size: Word sets Lato and Calibri at 1.2,
+     * and this is that with a little to spare. A face set taller — Poppins about 1.5 — leaves
+     * one line of room to spare rather than more.
+     */
+    private static final double EDITOR_LINE_SHARE = 1.25;
+
+    /**
+     * How far above its bottom margin a section's content ends on its last page, in points; 0
+     * where its last page holds no content, and NaN where there is no layout to say. Only the
+     * content counts: a page's backgrounds, its zones
+     * with the fields in them and a timeline's rail — fragments under a path of the layout's
+     * own, starting {@code @} — are drawn elsewhere and take no room in the flow.
+     */
+    private static double roomBelowTheFlow(com.demcha.compose.document.layout.LayoutGraph graph) {
+        if (graph == null || graph.totalPages() <= 0) {
+            return Double.NaN;
+        }
+        int lastPage = graph.totalPages() - 1;
+        double lowest = Double.NaN;
+        for (com.demcha.compose.document.layout.PlacedFragment fragment : graph.fragments()) {
+            if (fragment.pageIndex() != lastPage || fragment.path() == null || fragment.path().startsWith("@")) {
+                continue;
+            }
+            // A fragment's y is its bottom edge, measured up from the page's foot.
+            lowest = Double.isNaN(lowest) ? fragment.y() : Math.min(lowest, fragment.y());
+        }
+        return Double.isNaN(lowest) ? 0 : lowest - graph.canvas().margin().bottom();
     }
 
     /** Leaves out the space below the last line of each cell of a table's last row that shows none of it. */

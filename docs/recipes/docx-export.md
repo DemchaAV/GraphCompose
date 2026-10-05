@@ -259,8 +259,15 @@ end of a section none is written: the page ends there, and space below the last 
 only push that line onto a page of its own. The same holds for the last line of each cell
 of a table the section ends with, and of the tables such a cell ends with, unless the cell
 is painted or has its bottom edge drawn. A document that ends with a table ends with a
-paragraph a point tall after it: Word writes one there in any case, and its own is a line of
-text tall.
+paragraph after it: Word writes one there in any case, a line of text tall. Where the last
+page has room for two such lines below the table, that paragraph is an ordinary one, which
+is where a reader types to add to the document. Where it has not — a page filled to its
+foot — it is a point tall, so it cannot open a blank page. At the document's end its mark is
+also hidden, where it holds nothing else. Then no one can type below the table. In Word, text
+typed at the end of the document goes into the table's last cell, and text inserted at the
+very end goes into the hidden paragraph and does not show. The export report says so
+(`closing paragraph`, `APPROXIMATED`). An export with no layout behind it has no room to
+measure, and keeps the point-tall paragraph.
 
 The horizontal half is carried as an indent: outside any panel, every paragraph by each enclosing container's
 margin and padding, a row or a table by the same amount as `w:tblInd`, its own left margin

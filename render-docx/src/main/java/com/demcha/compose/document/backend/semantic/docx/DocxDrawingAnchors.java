@@ -31,7 +31,8 @@ import java.util.function.Supplier;
  * top ({@link #seat}): Word moves it with the paragraph, wherever an edit above takes it. Placed
  * from the page's edges, it stayed where the page had put it while the text moved away from it.
  * The paragraph is the one whose text is nearest, within {@link #REACH}, when the shape rises
- * above its top by the shape's own height at most, as a dot centred on its first line does. In a
+ * above its top by the shape's own height at most, as a dot centred on its first line does — in a
+ * table cell by a stroke's width at most. In a
  * table cell, the cell that holds the shape across takes it — the paragraph's own, or another of
  * its row, as a timeline's dot in a column of its own beside its entry's text — placed from that
  * cell's first paragraph (see {@link Seat#place}). When the nearest paragraph cannot place the
@@ -351,10 +352,11 @@ final class DocxDrawingAnchors {
     private static final double SLACK = 1;
 
     /**
-     * The furthest a shape rises above its paragraph's top, in points: as far as a dot or an
-     * icon's disc centred on a line — the corpus's largest disc is 22.6pt — where Word and
-     * LibreOffice were measured placing 6pt and 10pt dots up to 8pt above their paragraphs. A
-     * taller shape — a rail, an accent bar — rising further stands by other text.
+     * The furthest a shape rises above its paragraph's top in the body, in points: as far as a
+     * dot or an icon's disc centred on a line of text does — NavySidebar's 22.6pt badge is the
+     * corpus's largest — where Word and LibreOffice were measured placing 6pt and 10pt dots up
+     * to 8pt above their paragraphs. A taller shape — a rail, an accent bar — rising further
+     * stands by other text.
      */
     private static final double FURTHEST_RISE = 24;
 
@@ -446,7 +448,8 @@ final class DocxDrawingAnchors {
 
         /**
          * Where Word places a shape beside this paragraph's text from, or {@code null} where it
-         * cannot. The shape may rise above the paragraph's top by its own height at most.
+         * cannot. The shape may rise above the paragraph's top as {@code risesNoFurther} allows:
+         * by its own height in the body, by a stroke's width in a table cell.
          *
          * <p>A paragraph of the body places it across from the page's edge. One in a table cell
          * places it from the cell's text column; a cell that does not hold the shape across hands
@@ -458,13 +461,10 @@ final class DocxDrawingAnchors {
          */
         Place place(DocxDrawings.Shape shape) {
             double top = paragraphTop();
-            if (!risesNoFurther(shape, top)) {
-                return null;
-            }
             if (!(paragraph.getBody() instanceof XWPFTableCell cell)) {
-                return new Place(paragraph, Double.POSITIVE_INFINITY, top);
+                return risesNoFurther(shape, top, false) ? new Place(paragraph, Double.POSITIVE_INFINITY, top) : null;
             }
-            if (cell.getTableRow().isRepeatHeader() || !leftAligned(paragraph)) {
+            if (!risesNoFurther(shape, top, true) || cell.getTableRow().isRepeatHeader() || !leftAligned(paragraph)) {
                 return null;
             }
             double width = widthOf(cell);
@@ -475,26 +475,32 @@ final class DocxDrawingAnchors {
             if (holdsAcross(shape, cellLeft, width)) {
                 return new Place(paragraph, cellLeft + leftMargin(cell), top);
             }
-            Place inTheRow = inTheRow(shape, cell, cellLeft, width, top);
-            return inTheRow != null && risesNoFurther(shape, inTheRow.top()) ? inTheRow : null;
+            return inTheRow(shape, cell, cellLeft, width, top);
         }
 
         /**
-         * Whether a shape rises above a paragraph's top by no more than its own height, as a dot
-         * centred on the paragraph's first line does, nor more than {@link #FURTHEST_RISE}. NaN
-         * for a top not known is no.
+         * Whether a shape rises above a paragraph's top no further than it may: in the body, by
+         * its own height, as a dot centred on the paragraph's first line does, and
+         * {@link #FURTHEST_RISE} at most; in a table cell, by a stroke's width. A 20.5pt rule
+         * placed 1pt above its paragraph in a cell of a contact row moved that row's text 1.8pt up
+         * in the Linux LibreOffice the build checks with, though not in Word or LibreOffice on
+         * Windows. NaN for a top not known is no.
          */
-        private static boolean risesNoFurther(DocxDrawings.Shape shape, double top) {
-            return shape.top() >= top - Math.max(SLACK, Math.min(shape.height(), FURTHEST_RISE));
+        private static boolean risesNoFurther(DocxDrawings.Shape shape, double top, boolean inCell) {
+            double rise = inCell ? SLACK : Math.max(SLACK, Math.min(shape.height(), FURTHEST_RISE));
+            return shape.top() >= top - rise;
         }
 
         /**
          * The place in the cell of this paragraph's row that holds a shape across, from that
-         * cell's first paragraph; {@code null} when none does or its top is not known.
+         * cell's first paragraph; {@code null} when none does, its top is not known, or a cell
+         * crossed on the way has no width in twips — the walk stops there rather than guess.
          *
          * <p>Measured in Word 16.0.20430 and LibreOffice: in a row whose cells set their content
-         * from the top, the first paragraph of each starts at the row's top, less its cell's top
-         * margin; so a shape is placed from a neighbour's first paragraph as from this one's.</p>
+         * from the top, the first paragraph of each starts at the row's top. Both give every cell
+         * of a row the row's largest top margin (see {@code DocxSemanticBackend.evenTheRowsMargins}),
+         * so a neighbour's first paragraph starts where this one does, whatever margin it states.
+         * One with a border above it is not taken: its border stands between its top and its line.</p>
          */
         private Place inTheRow(DocxDrawings.Shape shape, XWPFTableCell cell, double cellLeft, double width,
                                double top) {
@@ -502,7 +508,6 @@ final class DocxDrawingAnchors {
             if (opening.isEmpty() || opening.get(0) != paragraph || !alignedToTheTop(cell)) {
                 return null;
             }
-            double rowTop = top - topMargin(cell);
             List<XWPFTableCell> cells = cell.getTableRow().getTableCells();
             int at = -1;
             for (int index = 0; index < cells.size(); index++) {
@@ -521,7 +526,7 @@ final class DocxDrawingAnchors {
                 }
                 edge -= neighbour;
                 if (holdsAcross(shape, edge, neighbour)) {
-                    return openingPlace(cells.get(index), edge, rowTop);
+                    return openingPlace(cells.get(index), edge, top);
                 }
             }
             edge = cellLeft + width;
@@ -531,7 +536,7 @@ final class DocxDrawingAnchors {
                     return null;
                 }
                 if (holdsAcross(shape, edge, neighbour)) {
-                    return openingPlace(cells.get(index), edge, rowTop);
+                    return openingPlace(cells.get(index), edge, top);
                 }
                 edge += neighbour;
             }
@@ -539,14 +544,14 @@ final class DocxDrawingAnchors {
         }
 
         /** The place at the start of a cell whose left edge stands where given; {@code null} when unknown. */
-        private static Place openingPlace(XWPFTableCell cell, double cellLeft, double rowTop) {
+        private static Place openingPlace(XWPFTableCell cell, double cellLeft, double top) {
             CTTcPr properties = cell.getCTTc().getTcPr();
             List<IBodyElement> opening = cell.getBodyElements();
             if (properties != null && properties.isSetVMerge() || !alignedToTheTop(cell) || opening.isEmpty()
-                || !(opening.get(0) instanceof XWPFParagraph first)) {
+                || !(opening.get(0) instanceof XWPFParagraph first) || borderedAbove(first)) {
                 return null;
             }
-            return new Place(first, cellLeft + leftMargin(cell), rowTop + topMargin(cell));
+            return new Place(first, cellLeft + leftMargin(cell), top);
         }
 
         /** Where the paragraph's text's left edge stands without its indent; NaN when not known. */
@@ -577,17 +582,10 @@ final class DocxDrawingAnchors {
                    || properties.getVAlign().getVal() == org.openxmlformats.schemas.wordprocessingml.x2006.main.STVerticalJc.TOP;
         }
 
-        /** A cell's top margin as written, in points: Word's own is none. */
-        private static double topMargin(XWPFTableCell cell) {
-            CTTcPr cellProperties = cell.getCTTc().getTcPr();
-            if (cellProperties != null && cellProperties.isSetTcMar() && cellProperties.getTcMar().isSetTop()) {
-                return points(cellProperties.getTcMar().getTop(), 0);
-            }
-            CTTblPr table = cell.getTableRow().getTable().getCTTbl().getTblPr();
-            if (table != null && table.isSetTblCellMar() && table.getTblCellMar().isSetTop()) {
-                return points(table.getTblCellMar().getTop(), 0);
-            }
-            return 0;
+        /** Whether a paragraph has a border above it. */
+        private static boolean borderedAbove(XWPFParagraph paragraph) {
+            CTPPr properties = paragraph.getCTP().getPPr();
+            return properties != null && properties.isSetPBdr() && properties.getPBdr().isSetTop();
         }
 
         /** Whether a paragraph's lines start at its left indent: not centred, set right or right to left. */

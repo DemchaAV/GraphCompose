@@ -380,17 +380,23 @@ Choose the smallest tests that match the change:
 
   It records what it can decide alone in `edit-protocol-corpus.json`:
   - text kept, and a paragraph grown or shrunk and still above the block after it;
-  - the body size following Normal;
+  - the body size following Normal, with room for it wherever the restyle reaches — the main
+    text, the headers and footers, the text drawings hold: no paragraph whose letters grew
+    stands on exact lines shorter than 1.1 of them, none sits in a row or frame of exact
+    height, and no drawing's text runs past it;
   - typed text standing below everything else, outside any table, visible, in the size of the
     text it continues (or, after an empty paragraph, on lines that fit it);
   - each drawing beside text the lengthening moved moving with it, by as much and onto the same
     page. A drawing belongs to the paragraph nearest its top-left corner, up or down from where
     the paragraph starts and across from its text; a page's backgrounds are left out.
 
-  It reads the letters' size and visibility from the text, without the paragraph mark. Beside
-  the lengthened copy and the new-page copy it writes PDFs, from which a person judges whether
-  a page still looks right. It takes about a minute a document; `-Scenario` runs only the
-  scenarios named, by the names the JSON records.
+  A scenario a document has nothing to edit for — no table, no list, no drawing beside text —
+  is recorded `N/A` with what the document lacks, rather than left out of the JSON.
+
+  The protocol reads the letters' size and visibility from the text, without the paragraph
+  mark. Beside the lengthened copy and the new-page copy it writes PDFs, from which a person
+  judges whether a page still looks right. It takes about a minute a document; `-Scenario`
+  runs only the scenarios named, by the names the JSON records.
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 

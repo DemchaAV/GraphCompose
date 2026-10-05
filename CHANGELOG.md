@@ -1919,6 +1919,28 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **Word's editing protocol fails a restyle that leaves text without room for it.**
+  `restyle-body-through-normal` checked only that the body's letters grew with Normal by 2pt,
+  and passed every corpus document. Most paragraphs of an exported DOCX stand on exact lines,
+  which keep their height when the letters grow: Word then sets `cv-editorial_blue`'s profile in
+  11.5pt letters on the 10.3pt lines its 9.5pt letters had, the lines overlap, and on screen
+  Word also cuts the letters' tops, which its PDF export does not show. The scenario now reads
+  every paragraph the restyle reaches — the main text, each section's headers and footers, the
+  text drawings hold — and fails when one whose letters grew stands on exact lines shorter than
+  1.1 of them (the share `add-a-page` already holds typed text to), sits in a row or frame of
+  exact height, or when a drawing's text no longer fits it, naming the first of each. A
+  paragraph the restyle did not grow is not judged: the page sets many exact lines tighter than
+  that for their own letters. On documents Word wrote itself the scenario passes, and fails on a
+  header line on an exact line, a footer line in a frame of exact height and a text box its text
+  just fills. Over the 62 corpus documents in Word 16.0.20430 it fails in 60: of the 1,989
+  paragraphs whose letters grew, 1,730 stand on exact lines too short for them, none in a row or
+  frame of exact height, and one drawing's text overflows; `MintEditorial` and
+  `MintEditorialLetter` pass: none of their exact lines falls below that share. The body still
+  follows Normal in all 62. A scenario a document has nothing to edit for — no table, no list,
+  no drawing beside text — is now recorded `N/A` with what the document lacks, instead of
+  missing from the protocol's JSON; an edit is read as having nothing to edit only when it says
+  so with `$false`, not when it ends on a call that returns 0; and a run of one scenario writes
+  each document's results as a list, as a run of several does.
 - **The DOCX fidelity corpus holds a line where it stands across, as well as down.** It measured
   how far from the page's an editor set each line up or down, and nothing across: a table's
   left margin the export dropped (fixed in #831) stood `PaymentsInvoice`'s bank details 36.7pt

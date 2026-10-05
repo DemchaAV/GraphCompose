@@ -256,7 +256,8 @@ class DocxPanelEdgeCasesTest {
             XWPFTableCell striped = card(document).getTables().get(0).getRow(0).getCell(0);
             XWPFRun chip = striped.getTables().get(0).getRow(0).getCell(0).getParagraphs().stream()
                     .flatMap(p -> p.getRuns().stream())
-                    .filter(run -> "render()".equals(run.text()))
+                    // The chip's last letter is a run of its own, spaced by its padding.
+                    .filter(run -> "render(".equals(run.text()))
                     .findFirst()
                     .orElseThrow();
 

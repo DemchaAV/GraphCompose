@@ -97,6 +97,80 @@ class DocxDocumentStyleTest {
     }
 
     @Test
+    void textWrittenInRunsShouldWeighInTheRunsStyleNotTheParagraphs() throws Exception {
+        // A paragraph made of runs leaves its own style unused: weighed in it, the body text
+        // of a proposal elected the engine's 14pt default and every body run carried 10.5pt.
+        try (XWPFDocument document = exported(page -> {
+            page.addParagraph(p -> p.text("Heading").textStyle(HEADING));
+            page.addParagraph(p -> p.inlineText(LONG_BODY, BODY));
+        })) {
+            CTRPr defaults = document.getStyles().getCtStyles().getDocDefaults()
+                    .getRPrDefault().getRPr();
+            assertThat(defaults.getSzArray(0).getVal().toString()).as("the runs' 10.5pt").isEqualTo("21");
+        }
+    }
+
+    @Test
+    void textInTableCellsShouldWeighInTheStyleTheirCellsResolveTo() throws Exception {
+        // An invoice's text is mostly in its tables: unweighed, Normal was elected from the few
+        // paragraphs around them.
+        try (XWPFDocument document = exported(page -> {
+            page.addParagraph(p -> p.text("Invoice").textStyle(HEADING));
+            page.addTable(t -> t
+                    .columns(com.demcha.compose.document.table.DocumentTableColumn.auto(),
+                            com.demcha.compose.document.table.DocumentTableColumn.auto())
+                    .defaultCellStyle(com.demcha.compose.document.table.DocumentTableStyle.builder()
+                            .textStyle(BODY).build())
+                    .row("Consulting, discovery and delivery", "1,200.00")
+                    .row("Platform licence for the quarter", "3,400.00"));
+        })) {
+            CTRPr defaults = document.getStyles().getCtStyles().getDocDefaults()
+                    .getRPrDefault().getRPr();
+            assertThat(defaults.getSzArray(0).getVal().toString()).as("the cells' 10.5pt").isEqualTo("21");
+        }
+    }
+
+    @Test
+    void emptyTableCellsShouldWeighNothing() throws Exception {
+        // A grid of empty cells in the engine's default face holds no body text; counted at a
+        // character each, forty of them outweighed the body's paragraph.
+        try (XWPFDocument document = exported(page -> {
+            page.addParagraph(p -> p.text("Body text, short.").textStyle(BODY));
+            page.addTable(t -> {
+                t.columns(com.demcha.compose.document.table.DocumentTableColumn.auto(),
+                        com.demcha.compose.document.table.DocumentTableColumn.auto());
+                for (int i = 0; i < 20; i++) {
+                    t.row("", "");
+                }
+            });
+        })) {
+            CTRPr defaults = document.getStyles().getCtStyles().getDocDefaults()
+                    .getRPrDefault().getRPr();
+            assertThat(defaults.getSzArray(0).getVal().toString()).as("the body's 10.5pt").isEqualTo("21");
+        }
+    }
+
+    @Test
+    void bodyTextInTwoColoursShouldWeighAsOneFaceAndSize() throws Exception {
+        // ProposalNorthline sets its 9pt text in its body colour and a muted one: weighed apart,
+        // each half lost to the 10pt the rest of the text is set in.
+        DocumentTextStyle muted = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA).size(10.5).color(DocumentColor.rgb(110, 110, 120)).build();
+        DocumentTextStyle larger = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA).size(12).color(DocumentColor.rgb(24, 28, 38)).build();
+        try (XWPFDocument document = exported(page -> {
+            page.addParagraph(p -> p.text("x".repeat(60)).textStyle(BODY));
+            page.addParagraph(p -> p.text("y".repeat(60)).textStyle(muted));
+            page.addParagraph(p -> p.text("z".repeat(80)).textStyle(larger));
+        })) {
+            CTRPr defaults = document.getStyles().getCtStyles().getDocDefaults()
+                    .getRPrDefault().getRPr();
+            assertThat(defaults.getSzArray(0).getVal().toString())
+                    .as("120 characters at 10.5pt over 80 at 12pt").isEqualTo("21");
+        }
+    }
+
+    @Test
     void theDefaultShouldBeChosenByCharactersNotByParagraphCount() throws Exception {
         // Four short headings against one long body paragraph. Counting paragraphs elects
         // the heading style and leaves every body run carrying a direct size; counting

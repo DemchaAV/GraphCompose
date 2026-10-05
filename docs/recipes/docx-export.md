@@ -349,7 +349,9 @@ and a header's or footer's line keep the page's measure too.
 ## Named styles, so the document can be restyled
 
 The export writes a styles part whose `Normal` carries the document's own body text —
-the style the most characters are set in, not the one the most nodes use. Runs that only
+the style the most characters are set in, not the one the most nodes use. Each piece of text
+counts in the style it is written in: a run in its own, a table cell's in the style its
+cascade resolves to. Runs that only
 restate it stay silent, so changing `Normal` in Word changes the body the way a reader
 expects. A run whose font, size or colour differs keeps saying so, so headings, chips and
 accents are unaffected.

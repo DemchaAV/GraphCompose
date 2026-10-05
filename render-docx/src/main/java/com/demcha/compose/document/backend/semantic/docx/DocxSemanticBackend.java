@@ -1361,6 +1361,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             appendTab(para, style);
             appendBandSlot(para, band.getRightText(), style, numbers);
         }
+        // Its mark in its text's style, as a body paragraph's, so Enter in the band continues it
+        // rather than Normal.
+        styleTheMark(para, style);
         if (separated) {
             CTPBdr borders = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
             CTBorder edge = band.getZone() == DocumentHeaderFooterZone.HEADER
@@ -4346,8 +4349,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (DocumentNode root : graph.roots()) {
             weighTextStyles(root, weights, byKey);
         }
-        return weights.entrySet().stream()
+        // Face and size first, then colour among the styles of that face and size: body text set
+        // in two colours is one body still, and weighed apart its halves lost to a third style.
+        // ProposalNorthline's 9pt text, in its body colour and a muted one, lost to its 10pt.
+        java.util.Map<StyleKey, Long> byFaceAndSize = new java.util.HashMap<>();
+        weights.forEach((key, weight) -> byFaceAndSize.merge(key.withoutColour(), weight, Long::sum));
+        return byFaceAndSize.entrySet().stream()
                 .max(java.util.Map.Entry.comparingByValue())
+                .flatMap(face -> weights.entrySet().stream()
+                        .filter(entry -> entry.getKey().withoutColour().equals(face.getKey()))
+                        .max(java.util.Map.Entry.comparingByValue()))
                 .map(entry -> byKey.get(entry.getKey()))
                 .orElse(null);
     }
@@ -4387,8 +4398,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     if (cell.hasComposedContent()) {
                         weighTextStyles(cell.content(), weights, byKey);
                     } else {
-                        long weight = cell.lines().stream().mapToLong(DocxSemanticBackend::textWeight).sum();
-                        weigh(resolveCellTextStyle(table, placement), weight, weights, byKey);
+                        // By its letters alone: a grid of empty cells holds no body text, and
+                        // counted at one each would outweigh the document's.
+                        long weight = cell.lines().stream().mapToLong(String::length).sum();
+                        if (weight > 0) {
+                            weigh(resolveCellTextStyle(table, placement), weight, weights, byKey);
+                        }
                     }
                 }
             }
@@ -4464,6 +4479,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return new StyleKey(FontLibrary.resolveFamily(style.fontName()),
                     Math.round(style.size() * HALF_POINTS_PER_POINT),
                     style.color() == null ? null : style.color().color().getRGB());
+        }
+
+        /** The same face and size, any colour. */
+        StyleKey withoutColour() {
+            return new StyleKey(fontName, halfPoints, null);
         }
     }
 

@@ -102,7 +102,7 @@ class DocxRunStyleTest {
         // means the chip's monospace face now reaches Word. Its background does not.
         List<XWPFRun> runs = paragraphRuns(flow -> flow.addParagraph(paragraph -> paragraph
                 .textStyle(BASE)
-                .inlineText("call ")
+                .inlineText("to render the document, call ")
                 .inlineCode("run()")));
 
         assertThat(runs).hasSize(2);

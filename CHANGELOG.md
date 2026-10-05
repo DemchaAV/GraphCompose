@@ -22,6 +22,27 @@ follow semantic versioning; release dates are ISO 8601.
   16 that end in a table fill their last page to the foot and keep the hairline; the export
   report says so (`closing paragraph`, `APPROXIMATED`). Neither Word nor LibreOffice moves a
   line or adds a page anywhere in the corpus.
+- **A DOCX chip takes the room its padding takes on the page.** A chip's fill is written as
+  run shading, which covers the letters and nothing more, so its horizontal padding was not
+  in the file. `ModernReceipt`'s status chip, right-aligned with 9pt of padding on each side,
+  stood 9.16pt right of the page's in Word; it stands 0.16pt right now. The padding is
+  written as character spacing (`w:spacing`) in two places. After the chip's last letter it
+  is shaded with the chip; after the letter before the chip it is not, unless that letter
+  ends another chip, whose fill it then takes. Each of those letters, with its accents, goes
+  in a run of its own where its run holds anything else, inside the same link where it is in
+  one. A centred or right-aligned line spaced to the page's width adds its
+  spacing to the padding's and reckons the padding at its own width, not grown to Word's type
+  size. It is the only chip in the corpus with padding beside its letters, and no other line
+  moves, in Word or in LibreOffice. LibreOffice sets no spacing after a line's last letter, so
+  there the status chip stays where it was (9.21 → 9.26pt); mid-line it sets it as Word does.
+  Not written, and so reported:
+  - the left padding of a chip that opens its line or follows a picture;
+  - any space after right-to-left letters: in a right-to-left paragraph, and for Hebrew or
+    Arabic in a left-to-right one;
+  - any space after a symbol or an emoji, which Java 17 does not keep whole.
+
+  The export report says, chip by chip, how each side was written, in place of the old "its
+  padding is not in the file".
 - **Enter in a DOCX continues the text it follows.** Word gives a new paragraph its mark's
   formatting, and the export left the mark of most paragraphs — every one written at an exact
   line height — in the document's own size and face. Pressing Enter at the end of a paragraph

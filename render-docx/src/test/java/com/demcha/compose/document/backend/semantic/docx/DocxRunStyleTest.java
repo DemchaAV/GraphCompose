@@ -105,7 +105,9 @@ class DocxRunStyleTest {
                 .inlineText("call ")
                 .inlineCode("run()")));
 
-        assertThat(runs).hasSize(2);
+        // The chip's padding is space after the letter before it and after its own last
+        // letter, each of those letters a run of its own.
+        assertThat(runs).extracting(XWPFRun::text).containsExactly("call", " ", "run(", ")");
         // The surrounding text is the document's own body style, so its face comes from
         // Normal and the run says nothing — that is what lets a reader restyle the
         // document. The claim this test makes is about the chip, and it is unchanged: the
@@ -113,8 +115,8 @@ class DocxRunStyleTest {
         assertThat(runs.get(0).getFontFamily())
                 .describedAs("plain text takes its face from the Normal style")
                 .isNull();
-        assertThat(runs.get(1).getText(0)).isEqualTo("run()");
-        assertThat(runs.get(1).getFontFamily()).isEqualTo("Courier");
+        assertThat(runs.get(2).getFontFamily()).isEqualTo("Courier");
+        assertThat(runs.get(3).getFontFamily()).isEqualTo("Courier");
     }
 
     @Test

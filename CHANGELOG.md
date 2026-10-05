@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Enter in a DOCX continues the text it follows.** Word gives a new paragraph its mark's
+  formatting, and the export left the mark of most paragraphs — every one written at an exact
+  line height — in the document's own size and face. Pressing Enter at the end of a paragraph
+  and typing set the new letters in another size: 9pt after 10.5pt in `NavySidebar`, 14pt after
+  11pt in `ClassicInvoice`. Typing at the end of a document set them on the last paragraph's
+  exact lines at the document's size, 14pt letters on lines set for 10pt text. Each paragraph's
+  mark now carries what its text ends in — face, size, colour, weight, slant, decoration and
+  tracking, as its last run has them, a rich list item's included; a paragraph ending in a
+  chip keeps its own style there, since the chip's letters are styled for a fill the mark does
+  not carry. Measured with the Word
+  editing protocol over the 62 corpus documents:
+  - Enter and typing continues in the text's size and face in all 62, against 37;
+  - text typed at a document's end stands as the page sets its last paragraph in 6 more.
+
+  The remaining "type at the end" failures are documents ending in a table, where the typing
+  goes into its last cell. A numbering marker that its level states no style for now takes the
+  item's — the style the page draws it in — rather than the document's. Word's corpus lines are
+  unchanged; LibreOffice sets 20 lines up to 0.2pt lower, none across.
 - **A DOCX panel in the body starts its text the whole padding in.** A panel's table took half
   its left border off its cell's left margin and its indent, for an editor that keeps the
   border inside the cell; for a panel in the body, Word 16 and LibreOffice on Windows centre

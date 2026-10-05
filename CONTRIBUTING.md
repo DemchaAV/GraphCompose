@@ -380,11 +380,13 @@ Choose the smallest tests that match the change:
   It records what it can decide alone in `edit-protocol-corpus.json`:
   - text kept, and a paragraph grown or shrunk and still above the block after it;
   - the body size following Normal;
-  - typed text standing below everything else, outside any table, visible, on lines it fits.
+  - typed text standing below everything else, outside any table, visible, in the size of the
+    text it continues (or, after an empty paragraph, on lines that fit it).
 
   It reads the letters' size and visibility from the text, without the paragraph mark. Beside
   the lengthened copy and the new-page copy it writes PDFs, from which a person judges whether
-  a page still looks right. It takes about a minute a document.
+  a page still looks right. It takes about a minute a document; `-Scenario` runs only the
+  scenarios named, by the names the JSON records.
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 

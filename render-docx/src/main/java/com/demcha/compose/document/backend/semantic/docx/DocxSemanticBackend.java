@@ -3436,7 +3436,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                        List<InlineRun> runs, String path,
                                        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line) {
         PictureReach pictures = PictureReach.NONE;
-        for (InlineRun run : runs) {
+        for (int index = 0; index < runs.size(); index++) {
+            InlineRun run = runs.get(index);
             InlineTextRun text = textOf(run);
             if (text == null) {
                 pictures = pictures.max(writeInlinePicture(para, run, null, path, line));
@@ -3447,8 +3448,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // a link in a sentence and dead text in a bullet.
             XWPFRun docRun = newRun(para, text.linkTarget());
             applyStyle(docRun, text.textStyle() == null ? style : text.textStyle());
-            applyInlineBackground(docRun, backgroundOf(run), path);
+            applyInlineBackground(docRun, runs, index, path, false);
             setTextBrokenAtLines(docRun, text.text());
+            spaceAfterTheLastLetter(para, docRun, text.text(), roomAfter(runs, index));
         }
         return pictures;
     }
@@ -5272,7 +5274,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan run
                 && run.textStyle() != null && run.textStyle().size() > 0) {
                 double tracking = run.textStyle().letterSpacing() * run.text().codePointCount(0, run.text().length());
-                set += (span.width() - tracking) * wordsSize(run.textStyle().size()) / run.textStyle().size() + tracking;
+                // A chip's padding is written as a distance (spaceAfterTheLastLetter), not grown.
+                double padding = run.background() == null ? 0 : run.background().padding().horizontal();
+                set += (span.width() - tracking - padding) * wordsSize(run.textStyle().size()) / run.textStyle().size()
+                       + tracking + padding;
             } else {
                 set += span.width();
             }
@@ -5892,7 +5897,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (XWPFRun run : runs) {
             String text = run.text();
             if (text != null && !text.isEmpty()) {
-                run.setCharacterSpacing(twentieths);
+                // Added to a chip's padding where its last letter carries it.
+                run.setCharacterSpacing(run.getCharacterSpacing() + twentieths);
             }
         }
     }
@@ -6445,7 +6451,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFRun textBefore = null;
         java.util.Map<XWPFRun, Double> givenBack = new java.util.LinkedHashMap<>();
         java.util.Map<XWPFRun, String> lettersOf = new java.util.HashMap<>();
-        for (InlineRun run : node.inlineRuns()) {
+        List<InlineRun> inlineRuns = node.inlineRuns();
+        for (int index = 0; index < inlineRuns.size(); index++) {
+            InlineRun run = inlineRuns.get(index);
             InlineTextRun text = textOf(run);
             if (text == null) {
                 PictureReach reach = writeInlinePicture(para, run, node.linkTarget(), path, line);
@@ -6473,14 +6481,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             markStyle = backgroundOf(run) != null ? node.textStyle() : runStyle;
             applyStyle(docRun, runStyle);
             applyRunDirection(docRun, rightToLeft);
-            applyInlineBackground(docRun, backgroundOf(run), path);
+            applyInlineBackground(docRun, inlineRuns, index, path, rightToLeft);
             setTextBrokenAtLines(docRun, text.text());
             if (widthOwed > 0) {
                 givenBack.merge(docRun, widthOwed, Double::sum);
             }
             widthOwed = 0;
-            textBefore = docRun;
-            lettersOf.put(docRun, text.text());
+            XWPFRun lastLetter = spaceAfterTheLastLetter(para, docRun, text.text(),
+                    rightToLeft ? 0 : roomAfter(inlineRuns, index));
+            lettersOf.put(docRun, docRun.text());
+            lettersOf.put(lastLetter, lastLetter.text());
+            textBefore = lastLetter;
             wroteARun = true;
         }
         givenBack.forEach((textRun, room) -> giveBackWidth(textRun, lettersOf.get(textRun), room));
@@ -6798,6 +6809,142 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (tenths != 0) {
             run.setCharacterSpacing((int) (run.getCharacterSpacing() - tenths * 2));
         }
+    }
+
+    /**
+     * The room the page leaves after a text run's letters for a chip's padding, in points: the
+     * run's own right padding where it is a chip, and the left padding of a chip written next.
+     */
+    private static double roomAfter(List<InlineRun> runs, int index) {
+        double room = 0;
+        InlineBackground own = backgroundOf(runs.get(index));
+        if (own != null) {
+            room += Math.max(0, own.padding().right());
+        }
+        if (index + 1 < runs.size() && textOf(runs.get(index + 1)) != null) {
+            InlineBackground next = backgroundOf(runs.get(index + 1));
+            if (next != null) {
+                room += Math.max(0, next.padding().left());
+            }
+        }
+        return room;
+    }
+
+    /**
+     * How a chip's left padding is written ({@link #spaceAfterTheLastLetter}), for the export
+     * report: as unshaded space after the text before it, as space in the fill of a chip right
+     * before it, or — null — not at all, where no text the space can follow comes before it.
+     */
+    private static String leftPaddingAs(List<InlineRun> runs, int index, boolean rightToLeft) {
+        InlineTextRun before = rightToLeft || index == 0 ? null : textOf(runs.get(index - 1));
+        if (before == null || !takesSpaceAfter(before.text())) {
+            return null;
+        }
+        return backgroundOf(runs.get(index - 1)) != null
+                ? "space after the chip before it, in that chip's fill"
+                : "unshaded space after the text before it";
+    }
+
+    /** Whether a run's text takes a space after its last letter ({@link #lastSpaceableLetter}). */
+    private static boolean takesSpaceAfter(String text) {
+        String[] lines = LINE_BREAK.split(text == null ? "" : text, -1);
+        return lastSpaceableLetter(lines[lines.length - 1]) >= 0;
+    }
+
+    /**
+     * Where a line's last letter starts, its marks with it, when a space after it can be written;
+     * -1 when it cannot. Not after an empty line. Not in a line holding right-to-left letters:
+     * in a left-to-right paragraph the last of them in the run's order stands at their left, and
+     * an Arabic one set in a run of its own would lose its join. Not after a symbol or an emoji:
+     * the JDK 17 baseline's {@link java.text.BreakIterator} does not keep a flag or a joined
+     * emoji sequence whole, and a run boundary inside one draws it as its parts.
+     */
+    private static int lastSpaceableLetter(String line) {
+        if (line.isEmpty() || line.codePoints().anyMatch(DocxSemanticBackend::isRightToLeftLetter)) {
+            return -1;
+        }
+        java.text.BreakIterator characters = java.text.BreakIterator.getCharacterInstance();
+        characters.setText(line);
+        int last = Math.max(0, characters.preceding(line.length()));
+        if (last > 0 && isPartOfAnEmoji(line.codePointBefore(last))
+            || line.substring(last).codePoints().anyMatch(DocxSemanticBackend::isPartOfAnEmoji)) {
+            return -1;
+        }
+        return last;
+    }
+
+    private static boolean isRightToLeftLetter(int codePoint) {
+        byte direction = Character.getDirectionality(codePoint);
+        return direction == Character.DIRECTIONALITY_RIGHT_TO_LEFT
+               || direction == Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC;
+    }
+
+    /** A symbol, or a joiner, selector, skin tone or flag letter an emoji sequence is built of. */
+    private static boolean isPartOfAnEmoji(int codePoint) {
+        return Character.getType(codePoint) == Character.OTHER_SYMBOL
+               || codePoint == 0x200D
+               || codePoint >= 0xFE00 && codePoint <= 0xFE0F
+               || codePoint >= 0x1F3FB && codePoint <= 0x1F3FF
+               || codePoint >= 0x1F1E6 && codePoint <= 0x1F1FF;
+    }
+
+    /**
+     * Spaces a run's last letter from what follows it by the room a chip's padding takes.
+     *
+     * <p>A chip's horizontal padding widens its run on the page, and Word's run shading covers
+     * the letters alone, so the padding was not in the file. {@code ModernReceipt}'s status
+     * chip, right-aligned with 9pt of padding on each side, stood 9.16pt right of the page's in
+     * Word. The room is written where Word can hold it: as character spacing
+     * ({@code w:spacing}) after the last letter, which Word sets after every letter of a run
+     * and shades with it — so a chip's right padding is shaded as on the page — and after the
+     * last letter of the text before a chip, for its left padding, which is unshaded, or in the
+     * fill of a chip right before it. The last letter — the last character as a reader sees one,
+     * its accents with it — goes in a run of its own with the same properties, inside the same
+     * link, so the letters before it keep their spacing and a linked phrase stays one link; in
+     * text broken over lines, the last letter of its last line. No space is written where there
+     * is no such letter ({@link #lastSpaceableLetter}): a chip opening its paragraph or its
+     * line, or following a picture, keeps its left padding out of the file, and so does a
+     * right-to-left paragraph both sides, its letters spaced in the run's order rather than
+     * toward the side the padding stands on. {@link #chipLost} says which. LibreOffice sets no
+     * spacing after the last letter of a line, so there the status chip, which ends its line,
+     * stands where it did; mid-line it sets it as Word does.</p>
+     *
+     * @param points the room after the run's letters, in points
+     * @return the run holding the last letter: {@code run} itself unless it was split
+     */
+    private static XWPFRun spaceAfterTheLastLetter(XWPFParagraph para, XWPFRun run, String text, double points) {
+        int twentieths = (int) Math.round(points * 20);
+        // The run's last line, which setTextBrokenAtLines wrote as its last w:t.
+        String[] lines = LINE_BREAK.split(text == null ? "" : text, -1);
+        String line = lines[lines.length - 1];
+        int last = lastSpaceableLetter(line);
+        if (twentieths <= 0 || last < 0) {
+            return run;
+        }
+        XWPFRun lastLetter = run;
+        if (last > 0 || lines.length > 1) {
+            run.setText(line.substring(0, last), lines.length - 1);
+            lastLetter = runAfter(para, run);
+            if (run.getCTR().isSetRPr()) {
+                lastLetter.getCTR().setRPr(run.getCTR().getRPr());
+            }
+            lastLetter.setText(line.substring(last), 0);
+        }
+        lastLetter.setCharacterSpacing(lastLetter.getCharacterSpacing() + twentieths);
+        return lastLetter;
+    }
+
+    /**
+     * A new run straight after the last one written, inside the same link where that is in
+     * one: a second {@code w:hyperlink} would make one linked phrase two links.
+     */
+    private static XWPFRun runAfter(XWPFParagraph para, XWPFRun run) {
+        try (org.apache.xmlbeans.XmlCursor cursor = run.getCTR().newCursor()) {
+            if (cursor.toParent() && cursor.getObject() instanceof CTHyperlink link) {
+                return new XWPFRun(link.addNewR(), (IRunBody) para);
+            }
+        }
+        return para.createRun();
     }
 
     /** A line break in text, as the page breaks lines at it (see {@code ParagraphWrapping}). */
@@ -7215,10 +7362,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * follows.</p>
      *
      * <p>What Word cannot express is the chip's <em>shape</em>. Shading covers the glyph
-     * box, so the rounded corners and the padding that widens the run on the page are not
-     * in the file. All three are recorded rather than quietly approximated.</p>
+     * box, so the rounded corners are not in the file, nor is the padding above and below the
+     * letters. The room the padding takes beside them is written as space after a letter
+     * ({@link #spaceAfterTheLastLetter}), shaded on the chip's right only. What is lost is
+     * recorded rather than quietly approximated.</p>
      */
-    private void applyInlineBackground(XWPFRun run, InlineBackground background, String path) {
+    private void applyInlineBackground(XWPFRun run, List<InlineRun> runs, int index, String path,
+                                       boolean rightToLeft) {
+        InlineBackground background = backgroundOf(runs.get(index));
         if (background == null) {
             return;
         }
@@ -7232,7 +7383,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         shading.setVal(STShd.CLEAR);
         shading.setColor("auto");
         shading.setFill(toHexColor(flatten(background.fill().color(), colourUnder(run))));
-        String lost = chipLost(background);
+        String lost = chipLost(background, leftPaddingAs(runs, index, rightToLeft),
+                !rightToLeft && takesSpaceAfter(textOf(runs.get(index)).text()));
         if (lost != null) {
             if (warnedNodeKinds.add("inline-background")) {
                 LOG.warn("DocxSemanticBackend: an inline chip keeps its fill as run shading, "
@@ -7243,14 +7395,30 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
-    /** What a chip loses on the way to run shading, or null when the mapping is exact. */
-    private static String chipLost(InlineBackground background) {
+    /**
+     * What a chip loses on the way to run shading, or null when the mapping is exact.
+     *
+     * <p>Its padding beside its letters is written as space after a letter
+     * ({@link #spaceAfterTheLastLetter}) where one can take it, said chip by chip.</p>
+     *
+     * @param leftAs       how its left padding is written, or null where it is not
+     * @param rightWritten whether its right padding is written
+     */
+    private static String chipLost(InlineBackground background, String leftAs, boolean rightWritten) {
         List<String> lost = new ArrayList<>(3);
         if (background.cornerRadius() > 0) {
             lost.add("its rounded corners are square");
         }
-        if (background.padding().horizontal() > 0 || background.padding().vertical() > 0) {
-            lost.add("its padding is not in the file");
+        if (background.padding().left() > 0) {
+            lost.add(leftAs == null
+                    ? "its left padding is not in the file"
+                    : "its left padding is " + leftAs);
+        }
+        if (background.padding().right() > 0 && !rightWritten) {
+            lost.add("its right padding is not in the file");
+        }
+        if (background.padding().vertical() > 0) {
+            lost.add("its padding above and below its letters is not in the file");
         }
         if (background.fill().color().getAlpha() < 255) {
             // The colour on the page is right. What is gone is the translucency itself:

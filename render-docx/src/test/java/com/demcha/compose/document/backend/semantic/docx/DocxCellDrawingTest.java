@@ -20,7 +20,7 @@ import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.xmlbeans.XmlObject;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor;
-import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.STRelFromV;
+import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.STRelFromH;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +55,7 @@ class DocxCellDrawingTest {
                     .containsExactly(new Anchor("column", 0, "paragraph", 0, 12));
             assertThat(DocxTwips.of(carrier.getCTP().getPPr().getSpacing().getLine()))
                     .as("its paragraph as tall as the icon").isEqualTo(240);
-            assertThat(pageAnchoredShapes(document)).as("none left on the page").isZero();
+            assertThat(shapesOutOfTheirCells(document)).as("none left out of its cell").isZero();
         }
     }
 
@@ -76,7 +76,7 @@ class DocxCellDrawingTest {
                     .contains("FF0000").doesNotContain("0000FF");
             assertThat(second).as("the blue one in the second").contains("layoutInCell=\"1\"")
                     .contains("0000FF").doesNotContain("FF0000");
-            assertThat(pageAnchoredShapes(document)).isZero();
+            assertThat(shapesOutOfTheirCells(document)).isZero();
         }
     }
 
@@ -107,7 +107,7 @@ class DocxCellDrawingTest {
             // Word repeats the header row, the icon anchored in it with it, on every page: the
             // layout's copy there is not drawn again on the page.
             assertThat(table.getRow(0).getCtRow().getTrPr().sizeOfTblHeaderArray()).as("a repeated header").isPositive();
-            assertThat(pageAnchoredShapes(document)).as("no second copy of the header's icon").isZero();
+            assertThat(shapesOutOfTheirCells(document)).as("no second copy of the header's icon").isZero();
         }
     }
 
@@ -129,7 +129,7 @@ class DocxCellDrawingTest {
 
             assertThat(xmlOfIcon(table, 0)).doesNotContain("layoutInCell=\"1\"");
             assertThat(xmlOfIcon(table, 1)).contains("layoutInCell=\"1\"").contains("0000FF").doesNotContain("FF0000");
-            assertThat(pageAnchoredShapes(document)).as("the first mark and its line, on the page").isEqualTo(2);
+            assertThat(shapesOutOfTheirCells(document)).as("the first mark and its line, out of the cell").isEqualTo(2);
         }
     }
 
@@ -171,7 +171,7 @@ class DocxCellDrawingTest {
 
             assertThat(xmlOfIcon(table, 1)).contains("layoutInCell=\"1\"").contains("FF0000");
             assertThat(xmlOfIcon(table, 2)).contains("layoutInCell=\"1\"").contains("0000FF");
-            assertThat(pageAnchoredShapes(document)).isZero();
+            assertThat(shapesOutOfTheirCells(document)).isZero();
         }
     }
 
@@ -188,7 +188,7 @@ class DocxCellDrawingTest {
                         .weights(16, 12, 272).add(inset).add(ICON.node(12)).addParagraph(p -> p.text("LABEL"))
                         .build()))))) {
             assertThat(document.getDocument().xmlText()).doesNotContain("layoutInCell=\"1\"");
-            assertThat(pageAnchoredShapes(document)).as("both marks, on the page").isEqualTo(2);
+            assertThat(shapesOutOfTheirCells(document)).as("both marks, out of the cell").isEqualTo(2);
         }
     }
 
@@ -204,7 +204,7 @@ class DocxCellDrawingTest {
                 .rowCells(DocumentTableCell.node(new RowBuilder().name("Band").verticalAlign(RowVerticalAlign.CENTER)
                         .weights(20, 280).add(padded).addParagraph(p -> p.text("LABEL")).build()))))) {
             assertThat(xmlOfIcon(document.getTables().get(0), 0)).doesNotContain("layoutInCell=\"1\"");
-            assertThat(pageAnchoredShapes(document)).isEqualTo(1);
+            assertThat(shapesOutOfTheirCells(document)).isEqualTo(1);
         }
     }
 
@@ -228,7 +228,7 @@ class DocxCellDrawingTest {
             XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
 
             assertThat(anchors(cell.getParagraphs().get(0))).isEmpty();
-            assertThat(pageAnchoredShapes(document)).as("the disc and its mark, on the page").isEqualTo(2);
+            assertThat(shapesOutOfTheirCells(document)).as("the disc and its mark, out of the cell").isEqualTo(2);
         }
     }
 
@@ -245,7 +245,7 @@ class DocxCellDrawingTest {
             String body = document.getDocument().xmlText();
 
             assertThat(body).as("no drawing taken into a cell").doesNotContain("layoutInCell=\"1\"");
-            assertThat(pageAnchoredShapes(document)).as("the line, drawn on the page as before").isEqualTo(1);
+            assertThat(shapesOutOfTheirCells(document)).as("the line, out of the cell as before").isEqualTo(1);
         }
     }
 
@@ -262,7 +262,7 @@ class DocxCellDrawingTest {
                                 .build())
                         .addParagraph(p -> p.text("LABEL"))))) {
             assertThat(document.getDocument().xmlText()).doesNotContain("layoutInCell=\"1\"");
-            assertThat(pageAnchoredShapes(document)).as("the mark and its line, on the page").isEqualTo(2);
+            assertThat(shapesOutOfTheirCells(document)).as("the mark and its line, out of the cell").isEqualTo(2);
         }
     }
 
@@ -279,7 +279,7 @@ class DocxCellDrawingTest {
                                 .build())
                         .addParagraph(p -> p.text("LABEL"))))) {
             assertThat(document.getDocument().xmlText()).doesNotContain("layoutInCell=\"1\"");
-            assertThat(pageAnchoredShapes(document)).as("both marks, on the page").isEqualTo(2);
+            assertThat(shapesOutOfTheirCells(document)).as("both marks, out of the cell").isEqualTo(2);
         }
     }
 
@@ -294,7 +294,7 @@ class DocxCellDrawingTest {
 
             assertThat(anchors(cell.getParagraphs().get(0))).as("the icon, in its own cell")
                     .containsExactly(new Anchor("column", 0, "paragraph", 0, 12));
-            assertThat(pageAnchoredShapes(document)).isZero();
+            assertThat(shapesOutOfTheirCells(document)).isZero();
         }
     }
 
@@ -373,10 +373,14 @@ class DocxCellDrawingTest {
         return Math.round(emu / 12700.0 * 10) / 10.0;
     }
 
-    /** How many shapes the document places from the page's edges. */
-    private static long pageAnchoredShapes(XWPFDocument document) {
+    /**
+     * How many shapes the document places across from the page's edge, out of any cell: down
+     * from the page's top edge, or from the top of the body paragraph beside them.
+     */
+    private static long shapesOutOfTheirCells(XWPFDocument document) {
         return anchorsIn(document.getDocument()).stream()
-                .filter(anchor -> anchor.getPositionV().getRelativeFrom() == STRelFromV.PAGE)
+                .filter(anchor -> anchor.getPositionH().getRelativeFrom() == STRelFromH.PAGE
+                                  && !anchor.getLayoutInCell())
                 .count();
     }
 }

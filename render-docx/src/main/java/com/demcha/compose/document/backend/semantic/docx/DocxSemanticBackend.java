@@ -188,6 +188,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final double POINT_TO_TWIP = 20.0;
     /** The least difference between Word's baseline and the page's that is moved: one half point. */
     private static final double LEAST_BASELINE_SHIFT_POINTS = 0.5;
+    /** How a drawing the page paints is anchored, as the report says it (see DocxDrawingAnchors). */
+    private static final String ANCHORED_BESIDE_ITS_TEXT = "anchored in the paragraph whose text it stands "
+            + "beside, so it moves with that text when the text above is edited, or to the page where it "
+            + "stands beside none";
     private static final Logger LOG = LoggerFactory.getLogger(DocxSemanticBackend.class);
     // The page's content width, so an image is held to the same bound layout holds it to.
     // Set per export; Double.MAX_VALUE means "no canvas, so nothing to clamp against".
@@ -281,6 +285,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The page the node being written starts on, as the layout placed it, counted within the
     // section being written.
     private int currentPage;
+    // The innermost node being written: a paragraph written for a paragraph node is offered to
+    // the shapes beside its text.
+    private DocumentNode writing;
 
     /** The page the last block written in the flow ended on, -1 before the first. */
     private int lastEndPage = -1;
@@ -689,6 +696,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         cellTextShift = 0;
         nextDrawingId = 100_000;
         anchors.reset();
+        writing = null;
         currentPage = 0;
         lastEndPage = -1;
         topEdgeHeldAbove = null;
@@ -758,8 +766,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 for (com.demcha.compose.document.layout.PlacedFragment pass : layout.passFragments()) {
                     if (queueDrawing(pass, drawsInFront())) {
                         report.add(DocxExportReport.Severity.APPROXIMATED, "timeline rail", pass.path(),
-                                "drawn as a line anchored to the page where the layout puts it: it stays "
-                                + "there when the text around it is edited");
+                                "drawn as a line where the layout puts it, " + ANCHORED_BESIDE_ITS_TEXT);
                     }
                 }
                 for (DocumentNode root : section.graph().roots()) {
@@ -1741,9 +1748,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             currentPage = placed.startPage();
         }
         boolean inTheBody = currentCell == null;
+        DocumentNode outer = writing;
+        writing = node;
         try {
             writePlacedNode(document, node);
         } finally {
+            writing = outer;
             if (placed != null && inTheBody) {
                 lastEndPage = Math.max(lastEndPage, placed.endPage());
             }
@@ -2406,8 +2416,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             StringBuilder message = new StringBuilder(drewInCell
                     ? "drawn as a shape anchored in the table cell it fills, where the layout puts it "
                       + "in the cell: it moves with the row"
-                    : "drawn as a shape anchored to the page where the "
-                      + "layout puts it: it stays there when the text around it is edited");
+                    : "drawn as a shape where the layout puts it, " + ANCHORED_BESIDE_ITS_TEXT);
             if (badgeText != null) {
                 message.append("; its text is held in the shape, which stands in front of the text");
             } else if (front) {
@@ -2521,8 +2530,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * The cell a drawing is written alone in, when its shapes can be anchored in that cell's
      * paragraph rather than on the page; {@code null} when they cannot.
      *
-     * <p>Every other shape is placed from the page's edges (see {@link DocxDrawingAnchors}), which
-     * holds it where the page puts it — and, in a table, off the row it belongs to wherever Word
+     * <p>Every other shape is anchored as {@link DocxDrawingAnchors} decides: beside the text it
+     * stands by, or else from the page's edges, which hold it where the page puts it — and, in a
+     * table, off the row it belongs to wherever Word
      * sets the rows above a little taller or shorter than the page. {@code CobaltRota}'s band
      * icons, each alone in the first column of its navy strip, stood 4pt, 9pt and 14pt above
      * their labels, the last out of its strip. A drawing that is all its cell holds is placed
@@ -4637,7 +4647,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pendingSpacingAfter = 0;
         lastBodyParagraph = para;
         anchors.paragraphOn(currentPage, para, currentCell == null);
+        offerASeat(para);
         return para;
+    }
+
+    /**
+     * Offers a paragraph written for a paragraph node to the shapes standing beside its text
+     * (see {@link DocxDrawingAnchors}), with where the page sets that text's first line: the
+     * first of them that holds text takes the place.
+     */
+    private void offerASeat(XWPFParagraph para) {
+        if (!(writing instanceof ParagraphNode node) || Double.isNaN(canvasHeight)) {
+            return;
+        }
+        // The baseline the page draws the first line on, seated as the page seats it.
+        layout.firstTextBox(node).ifPresent(box ->
+                anchors.seat(box.page(), node, para, box.left(), box.right(), canvasHeight - box.top(),
+                        canvasHeight - box.baseline() - seatShift(node)));
     }
 
     /**
@@ -8077,8 +8103,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 drewInCell
                         ? how + ", anchored in the table cell it fills, where the layout puts it in the cell: "
                           + "it moves with the row"
-                        : how + ", anchored to the page where the layout puts it: it stays "
-                          + "there when the text around it is edited");
+                        : how + ", where the layout puts it, " + ANCHORED_BESIDE_ITS_TEXT);
     }
 
     /**
@@ -8495,8 +8520,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (drew) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "cell drawing", layout.pathOf(table),
                     "what its cells draw is drawn as shapes where the layout puts it — anchored in the "
-                    + "cell a drawing is all of, and to the page otherwise, where it stays when the text "
-                    + "around it is edited; a clip, a transform, a gradient or a dash on it is not carried");
+                    + "cell a drawing is all of, and otherwise " + ANCHORED_BESIDE_ITS_TEXT
+                    + "; a clip, a transform, a gradient or a dash on it is not carried");
         }
         return new CellDrawing(drew, skipped, pending);
     }

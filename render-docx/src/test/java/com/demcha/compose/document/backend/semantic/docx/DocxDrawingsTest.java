@@ -28,10 +28,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * Drawing the export has no Word element for — a dot, a ring round a portrait, a timeline's
- * rail — is a shape anchored to the page where the page draws it, behind the text.
+ * rail — is a floating shape where the page draws it, behind the text, anchored beside the text
+ * it stands by or else to the page.
  *
  * @author Artem Demchyshyn
  */
@@ -58,9 +60,12 @@ class DocxDrawingsTest {
                     .contains("behindDoc=\"1\"")
                     .contains("<wp:positionH relativeFrom=\"page\"><wp:posOffset>"
                               + Units.toEMU(dot.get().x()) + "</wp:posOffset>")
-                    .contains("<wp:positionV relativeFrom=\"page\"><wp:posOffset>"
-                              + Units.toEMU(top) + "</wp:posOffset>")
+                    .contains("<wp:positionV relativeFrom=\"paragraph\">")
                     .contains("srgbClr val=\"1A5694\"");
+            // Held by the paragraph above it, which Word sets at the page's top margin: placed
+            // down from that paragraph, it stands where the page puts it, and moves with it.
+            assertThat(paragraphCarrying(document, "prst=\"ellipse\"")).isEqualTo("Above");
+            assertThat(offsetDown(anchor)).isCloseTo(top - 20, within(0.5));
             assertThat(document.getParagraphs()).extracting(p -> p.getText())
                     .as("the text around it is written as before")
                     .contains("Above", "Below");
@@ -134,8 +139,11 @@ class DocxDrawingsTest {
             assertThat(picture).contains("r:embed=\"")
                     .contains("<wp:positionH relativeFrom=\"page\"><wp:posOffset>"
                               + Units.toEMU(glyph.get().x()) + "</wp:posOffset>")
-                    .contains("<wp:positionV relativeFrom=\"page\"><wp:posOffset>"
-                              + Units.toEMU(top) + "</wp:posOffset>");
+                    .contains("<wp:positionV relativeFrom=\"paragraph\">");
+            // Placed down from the title beside the badge, the badge with it: they move together.
+            assertThat(paragraphCarrying(document, "<pic:pic")).isEqualTo("EXPERIENCE");
+            assertThat(paragraphCarrying(document, "prst=\"ellipse\"")).isEqualTo("EXPERIENCE");
+            assertThat(top).isPositive();
             assertThat(relativeHeight(document, "<pic:pic")).as("over the circle")
                     .isGreaterThan(relativeHeight(document, "prst=\"ellipse\""));
             assertThat(document.getAllPictures()).hasSize(1);
@@ -258,8 +266,10 @@ class DocxDrawingsTest {
 
     @Test
     void anIconDrawnBesideItsLabelInAPaintedPanelStandsInFrontOfItsShading() throws Exception {
-        // Behind the text, the panel's shading hid the tile. It is anchored to the page: placed
-        // from a paragraph in a nested cell, Word measured it from the outer cell's top.
+        // Behind the text, the panel's shading hid the tile. It is anchored beside its label, in
+        // the label's cell and laid out in it: placed from the page instead, a shape anchored in a
+        // nested cell was measured by Word from the outer cell's top. Laid out in the cell, Word
+        // 16.0.20430 and LibreOffice both place it from its paragraph, nested or not.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
                         .addContainer(row -> row.name("Fact").rectangle(300, 30)
@@ -273,18 +283,80 @@ class DocxDrawingsTest {
                                         34, 0, LayerAlign.CENTER_LEFT)))))) {
             assertThat(anchors(document.getDocument().xmlText())).hasSize(2)
                     .allMatch(anchor -> anchor.contains("behindDoc=\"0\""))
-                    .allMatch(anchor -> anchor.contains("<wp:positionV relativeFrom=\"page\">"));
+                    .allMatch(anchor -> anchor.contains("layoutInCell=\"1\""))
+                    .allMatch(anchor -> anchor.contains("<wp:positionV relativeFrom=\"paragraph\">"));
+            assertThat(cellParagraphCarrying(document, "roundRect")).isEqualTo("Compliant");
         }
     }
 
+    /** The text of the table-cell paragraph, at any depth, whose XML holds a marker. */
+    private static String cellParagraphCarrying(XWPFDocument document, String marker) {
+        java.util.Deque<org.apache.poi.xwpf.usermodel.XWPFTable> tables = new java.util.ArrayDeque<>(document.getTables());
+        while (!tables.isEmpty()) {
+            for (org.apache.poi.xwpf.usermodel.XWPFTableRow row : tables.pop().getRows()) {
+                for (org.apache.poi.xwpf.usermodel.XWPFTableCell cell : row.getTableCells()) {
+                    tables.addAll(cell.getTables());
+                    for (org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph : cell.getParagraphs()) {
+                        if (paragraph.getCTP().xmlText().contains(marker)) {
+                            return paragraph.getText();
+                        }
+                    }
+                }
+            }
+        }
+        throw new AssertionError("no cell paragraph holds " + marker);
+    }
+
     @Test
-    void aPanelsDrawingWithNoParagraphBesideItIsAnchoredToThePage() throws Exception {
+    void aPanelsDrawingWithNoParagraphInItIsAnchoredBesideTheParagraphAboveIt() throws Exception {
+        // The panel holds no paragraph; the one above it is the text the drawing stands by, and
+        // the panel moves with it.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addParagraph(p -> p.text("Above"))
                 .addSection("Card", s -> s.fillColor(DocumentColor.rgb(220, 230, 240))
                         .add(new com.demcha.compose.document.dsl.EllipseBuilder().name("Dot").circle(16)
                                 .fillColor(ACCENT).build()))))) {
             assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .contains("layoutInCell=\"0\"")
+                    .contains("<wp:positionH relativeFrom=\"page\">")
+                    .contains("<wp:positionV relativeFrom=\"paragraph\">");
+            assertThat(paragraphCarrying(document, "prst=\"ellipse\"")).isEqualTo("Above");
+        }
+    }
+
+    @Test
+    void aShapeBesideASeatedTitleIsPlacedFromWhereWordStandsTheTitle() throws Exception {
+        // A display title seated by its top: the page draws its baseline off where its line's
+        // box puts it, and the export raises it in Word's line to match. The title is the page's
+        // first paragraph, which Word sets at the top margin: placed down from it, the rule under
+        // the title stands where the page draws it.
+        AtomicReference<PlacedFragment> rule = new AtomicReference<>();
+        try (XWPFDocument document = export(null, session -> {
+            session.pageFlow(page -> page
+                    .addParagraph(p -> p.text("INVOICE").verticalAlign(
+                                    com.demcha.compose.document.node.TextVerticalAlign.TOP)
+                            .textStyle(com.demcha.compose.document.style.DocumentTextStyle.builder()
+                                    .fontName(com.demcha.compose.font.FontName.SPECTRAL).size(30)
+                                    .color(DocumentColor.BLACK).build()))
+                    .addEllipse(e -> e.name("Rule").size(60, 4).fillColor(ACCENT)));
+            rule.set(fragmentNamed(session, "Rule"));
+        })) {
+            String anchor = anchors(document.getDocument().xmlText()).get(0);
+            double top = 400 - rule.get().y() - rule.get().height();
+
+            assertThat(paragraphCarrying(document, "prst=\"ellipse\"")).isEqualTo("INVOICE");
+            assertThat(offsetDown(anchor)).isCloseTo(top - 20, within(0.5));
+        }
+    }
+
+    @Test
+    void aShapeWithNoParagraphWithinReachStaysOnThePage() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addParagraph(p -> p.text("Above"))
+                .addSpacer(s -> s.height(80))
+                .addEllipse(e -> e.name("Dot").circle(16).fillColor(ACCENT))))) {
+            assertThat(anchors(document.getDocument().xmlText())).singleElement().asString()
+                    .contains("<wp:positionH relativeFrom=\"page\">")
                     .contains("<wp:positionV relativeFrom=\"page\">");
         }
     }
@@ -485,9 +557,9 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void aFirstPageLaidOutInATableGetsABodyParagraphBeforeItForItsShapes() throws Exception {
-        // Two columns written as one row: the page has no body paragraph, and a shape anchored
-        // in the sidebar's cell was printed clipped to it. A hairline paragraph opens the page.
+    void aShapeBesideAColumnsTextIsAnchoredInItsCellAndMovesWithIt() throws Exception {
+        // Two columns written as one row. The ring stands over the main column's text, in the
+        // space its paragraph holds above itself: placed down from that paragraph, in its cell.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
                 .addLayerStack(stack -> stack
                         .layer(column("Side", 0, 260, side -> side.addParagraph(p -> p.text("Contact"))),
@@ -495,6 +567,29 @@ class DocxDrawingsTest {
                         .layer(column("Main", 100, 0, main -> main
                                 .addEllipse(e -> e.name("Ring").circle(40).fillColor(ACCENT))
                                 .addParagraph(p -> p.text("Body"))),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT))))) {
+            assertThat(document.getBodyElements().get(0)).as("no hairline opens the page")
+                    .isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
+            org.apache.poi.xwpf.usermodel.XWPFParagraph body = document.getTables().get(0).getRow(0)
+                    .getTableCells().stream().flatMap(cell -> cell.getParagraphs().stream())
+                    .filter(paragraph -> paragraph.getText().equals("Body")).findFirst().orElseThrow();
+            String anchor = anchors(body.getCTP().xmlText()).get(0);
+            assertThat(anchor).contains("prst=\"ellipse\"").contains("layoutInCell=\"1\"")
+                    .contains("<wp:positionH relativeFrom=\"column\">")
+                    .contains("<wp:positionV relativeFrom=\"paragraph\">");
+        }
+    }
+
+    @Test
+    void aFirstPageLaidOutInATableGetsABodyParagraphBeforeItForItsShapes() throws Exception {
+        // Two columns written as one row: the page has no body paragraph, and the ring has no
+        // paragraph beside it in its own column. A hairline paragraph opens the page for it.
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addLayerStack(stack -> stack
+                        .layer(column("Side", 0, 260, side -> side.addParagraph(p -> p.text("Contact"))),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                        .layer(column("Main", 100, 0, main -> main
+                                .addEllipse(e -> e.name("Ring").circle(40).fillColor(ACCENT))),
                                 com.demcha.compose.document.node.LayerAlign.TOP_LEFT))))) {
             List<org.apache.poi.xwpf.usermodel.IBodyElement> body = document.getBodyElements();
 
@@ -718,9 +813,9 @@ class DocxDrawingsTest {
         second.pageFlow(page -> page.addLayerStack(stack -> stack
                 .layer(column("Side", 0, 260, side -> side.addParagraph(p -> p.text("Contact"))),
                         com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                // The ring alone in its column: no paragraph stands beside it.
                 .layer(column("Main", 100, 0, main -> main
-                                .addEllipse(e -> e.name("Ring").circle(40).fillColor(ACCENT))
-                                .addParagraph(p -> p.text("Body"))),
+                                .addEllipse(e -> e.name("Ring").circle(40).fillColor(ACCENT))),
                         com.demcha.compose.document.node.LayerAlign.TOP_LEFT)));
         byte[] docx;
         try (com.demcha.compose.document.api.MultiSectionDocument document = GraphCompose.documents()
@@ -878,6 +973,14 @@ class DocxDrawingsTest {
                 .filter(fragment -> fragment.path() != null && fragment.path().contains(name))
                 .findFirst()
                 .orElseThrow();
+    }
+
+    /** How far down from what it is placed from a drawing stands, in points. */
+    private static double offsetDown(String anchor) {
+        Matcher matcher = Pattern.compile("<wp:positionV relativeFrom=\"\\w+\"><wp:posOffset>(-?\\d+)<")
+                .matcher(anchor);
+        assertThat(matcher.find()).isTrue();
+        return Long.parseLong(matcher.group(1)) / 12700.0;
     }
 
     /** Every anchored drawing in a part's XML, in document order. */

@@ -727,8 +727,8 @@ tint it was flattened to. That is recorded with the rest.
   widened by that much, as Word cuts a cell's content at its edge. What a table cell composes
   (`DocumentTableCell.node(...)`) has no place of its own in the layout:
   its drawing belongs to the table, and the table draws it — an icon, a
-  tile, a disc under a number — anchored to the page where the page draws
-  it. A layer stack of shapes that is all its cell holds — an icon alone in
+  tile, a disc under a number — where the page draws it, anchored as any
+  other shape is. A layer stack of shapes that is all its cell holds — an icon alone in
   the first column of a band — is anchored in that cell instead: the cell's
   paragraph is held at the drawing's height and carries it, placed from its
   top and the cell's text column, which is taken to start where the drawing
@@ -759,7 +759,7 @@ tint it was flattened to. That is recorded with the rest.
   chip is cut as far as its letters allow. A label set from the shape's top
   or bottom edge, or moved up or down, is written as it was. A badge's glyph — a smaller picture in a filled or outlined
   container that clips it to its outline (`CLIP_PATH`) and holds nothing
-  else but drawing — is drawn as a picture anchored to the page over the
+  else but drawing — is drawn as a floating picture over the
   badge, where the page draws it, rather than written as a line of its own
   above the text beside the badge. Inside a filled panel the badge and its
   glyph are drawn in front of the panel's shading, which both editors paint
@@ -832,12 +832,26 @@ The placement was measured in LibreOffice; Word has not been measured yet.
 
 Vertical and slanted lines, ellipses, rectangles and rounded bars — standalone, in a
 layer stack, as a shape container's outline, or drawn by the layout itself, such as a
-timeline's rail — are **drawn as shapes**: each is a DrawingML shape anchored to the
-page, behind the text, at the place, size, fill and outline the layout gives it, and
-the report lists it as approximated. A shape stays where it is when the text around it
-is edited. It is anchored at the start of the first body paragraph written on its page,
+timeline's rail — are **drawn as shapes**: each is a floating DrawingML shape, behind
+the text, at the place, size, fill and outline the layout gives it, and the report lists
+it as approximated. A shape standing beside a paragraph's text — a timeline's dot by its
+entry, an icon by its heading, a skill's bar by its label — is anchored in that paragraph
+and placed down from its top, so it moves with the paragraph when a reader edits the text
+above it. The paragraph is the one whose text is nearest the shape, within 48pt across
+and down together, that the shape hangs from rather than rising above; one in a table cell
+carries the shape only when its cell holds it across, its line is set from the left and its
+row is not a repeated header,
+and places it from the cell's text column. The paragraph's top is where Word places from:
+the space written above its first line included, and the line where Word stands it — an
+exact line's baseline four fifths of the way down it, raised by the run's position —
+measured in Word 16.0.20430 and LibreOffice to a tenth of a point. Only the first paragraph
+a paragraph node is written as offers its place, in a column's cell too; a table's own cell
+text and a list's items do not yet.
+
+A shape beside no paragraph stays where the page puts it whatever the text does. It is
+anchored at the start of the first body paragraph written on its page,
 whether that was written before the shape or after — not in a table cell's, which Word
-prints the shape clipped to. A page with no body paragraph — one laid out entirely in a
+measures it from. A page with no body paragraph — one laid out entirely in a
 table, as a two-column CV is — gets one: on the section's first page a paragraph a
 hairline tall opens before the table; on its last, the paragraph closing the section
 carries it; on any other page, the first paragraph of a cell on it does, where Word may
@@ -852,10 +866,11 @@ step number — is one shape holding that text centred in it, drawn in front. Th
 its text in its own box, reaching out to its edges past the preset's inner text rectangle:
 Word shrinks a text box that does not wrap to the width of its letters, and wraps an
 ellipse's text in the square inscribed in it. Initials in a corner, in two styles, right to
-left or linked are written in the flow as before. Every shape is placed from the page's
-edges: Word lays a shape anchored in a table cell out inside the cell and measures a nested
-cell's shape from the outer cell's top, so a shape placed from a paragraph in a panel landed
-wherever the nesting put it. Word draws a panel's top and bottom borders outside the cell's
+left or linked are written in the flow as before. A shape beside text in a panel is anchored in
+that text's paragraph in the cell and laid out in the cell, placed from the cell's text
+column and the paragraph's top, which Word and LibreOffice both measure from the paragraph,
+nested or not; placed from the page's edges instead, Word measured a nested cell's shape from
+the outer cell's top. Word draws a panel's top and bottom borders outside the cell's
 shading, where the page strokes them on the panel's edge, so the top border comes out of the
 space above the panel, and the bottom border out of the space the panel holds below itself
 or, past that, out of the space above the paragraph, table or panel that follows. A panel with

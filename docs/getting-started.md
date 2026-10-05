@@ -205,7 +205,7 @@ document.pageFlow(page -> page
 The PDF backend honours every clip policy via graphics-state
 `saveGraphicsState()` / `clip(path)` / `restoreGraphicsState()` markers
 emitted by the layout layer; the DOCX backend renders layers inline
-without clipping, draws the outline as a shape anchored to the page, and
+without clipping, draws the outline as a floating shape, and
 logs a one-time capability warning. See
 [`docs/recipes/shape-as-container.md`](recipes/shape-as-container.md)
 for the full recipe.

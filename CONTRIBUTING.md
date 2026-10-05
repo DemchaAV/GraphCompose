@@ -368,20 +368,24 @@ Choose the smallest tests that match the change:
   The corpus also answers for how a document edits in Word.
   `scripts/docx-visual/edit-protocol-corpus.ps1` runs over the DOCX that
   `-Dgraphcompose.docxFidelity=export` leaves in `qa/target/docx-fidelity/engine`. For each
-  document it makes nine edits, each on a copy that it saves and reopens:
+  document it makes ten edits, each on a copy that it saves and reopens:
   - lengthen the longest paragraph, and shorten it;
   - press Enter after it and type;
   - restyle Normal;
   - add a table row, and delete one;
   - continue a list;
   - type at the end until a new page opens;
+  - lengthen the longest paragraph again, watching the drawings;
   - save with no edit.
 
   It records what it can decide alone in `edit-protocol-corpus.json`:
   - text kept, and a paragraph grown or shrunk and still above the block after it;
   - the body size following Normal;
   - typed text standing below everything else, outside any table, visible, in the size of the
-    text it continues (or, after an empty paragraph, on lines that fit it).
+    text it continues (or, after an empty paragraph, on lines that fit it);
+  - each drawing beside text the lengthening moved moving with it, by as much and onto the same
+    page. A drawing belongs to the paragraph nearest its top-left corner, up or down from where
+    the paragraph starts and across from its text; a page's backgrounds are left out.
 
   It reads the letters' size and visibility from the text, without the paragraph mark. Beside
   the lengthened copy and the new-page copy it writes PDFs, from which a person judges whether

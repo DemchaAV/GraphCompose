@@ -67,6 +67,8 @@ final class DocxDrawingAnchors {
     private final Map<Integer, List<Seat>> seats = new HashMap<>();
     // The paragraphs offered as seats in the section, in the order they were written.
     private final List<Offer> offers = new ArrayList<>();
+    // How far down, from the page's top edge, the text written in each table cell reaches, by page.
+    private final Map<Integer, Map<XWPFTableCell, Double>> cellFoot = new HashMap<>();
     // Identifiers unique in the document, shared with the other drawings the export writes.
     private final LongSupplier ids;
     // The order the shapes are painted in, across the document.
@@ -83,6 +85,7 @@ final class DocxDrawingAnchors {
         cellParagraph.clear();
         seats.clear();
         offers.clear();
+        cellFoot.clear();
         order = 0;
     }
 
@@ -141,27 +144,52 @@ final class DocxDrawingAnchors {
      * @param right     the text's right edge, from the page's left edge
      * @param top       the top of its first line, from the page's top edge
      * @param baseline  its first line's baseline, from the page's top edge
+     * @param bottom    the text's bottom edge on that page, from the page's top edge
      */
     void seat(int page, Object owner, XWPFParagraph paragraph, double left, double right, double top,
-              double baseline) {
+              double baseline, double bottom) {
         if (page >= 0) {
-            offers.add(new Offer(page, owner, new Seat(paragraph, left, right, top, baseline)));
+            offers.add(new Offer(page, owner, new Seat(paragraph, left, right, top, baseline), bottom));
         }
     }
 
-    /** A paragraph offered as a seat, and what its text is written for. */
-    private record Offer(int page, Object owner, Seat seat) {
+    /** A paragraph offered as a seat, what its text is written for, and where that text ends. */
+    private record Offer(int page, Object owner, Seat seat, double bottom) {
     }
 
-    /** Takes, for each piece of text offered, the first of its paragraphs that holds text. */
+    /**
+     * Takes, for each piece of text offered, the first of its paragraphs that holds text, and
+     * notes how far down each table cell's text reaches on each page.
+     */
     private void takeTheSeats() {
         java.util.Set<Object> taken = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         for (Offer offer : offers) {
+            if (offer.seat().paragraph().getBody() instanceof XWPFTableCell cell) {
+                cellFoot.computeIfAbsent(offer.page(), ignored -> new java.util.IdentityHashMap<>())
+                        .merge(cell, offer.bottom(), Math::max);
+            }
             if (offer.seat().holdsText() && taken.add(offer.owner())) {
                 seats.computeIfAbsent(offer.page(), ignored -> new ArrayList<>()).add(offer.seat());
             }
         }
         offers.clear();
+    }
+
+    /**
+     * Whether a shape stands beside the text written in the seat's table cell rather than below
+     * it: it starts above that text's foot and reaches past it by half its height at most, as a
+     * tile centred beside a one-line label does. A cell holding a shape below its text moved the
+     * row's text in the Linux LibreOffice the build checks with: an icon beside the note under
+     * a totals table, taken into the table's last cell, set two invoices' 'Total due' 2pt and
+     * 4pt up. A seat in the body holds any shape.
+     */
+    private boolean holdsDown(Seat seat, DocxDrawings.Shape shape) {
+        if (!(seat.paragraph().getBody() instanceof XWPFTableCell cell)) {
+            return true;
+        }
+        Double foot = cellFoot.getOrDefault(shape.page(), Map.of()).get(cell);
+        return foot != null && shape.top() < foot
+               && shape.top() + shape.height() <= foot + shape.height() / 2 + SLACK;
     }
 
     /**
@@ -255,6 +283,7 @@ final class DocxDrawingAnchors {
         bodyParagraph.clear();
         cellParagraph.clear();
         seats.clear();
+        cellFoot.clear();
         return new Leftovers(inCells, dropped);
     }
 
@@ -300,7 +329,7 @@ final class DocxDrawingAnchors {
             // laid out in a cell from rising out of it, and set one 45pt above its paragraph's top
             // at the head of the next page.
             if (by <= REACH && by < nearestBy && shape.top() >= seat.paragraphTop() - SLACK
-                && !Double.isNaN(seat.column(shape))) {
+                && !Double.isNaN(seat.column(shape)) && holdsDown(seat, shape)) {
                 nearest = seat;
                 nearestBy = by;
             }

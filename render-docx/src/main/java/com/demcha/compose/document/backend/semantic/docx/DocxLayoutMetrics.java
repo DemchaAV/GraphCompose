@@ -800,7 +800,8 @@ final class DocxLayoutMetrics {
                 return java.util.Optional.of(new TextBox(fragment.pageIndex(),
                         fragment.x() + paragraph.padding().left(),
                         fragment.x() + fragment.width() - paragraph.padding().right(),
-                        top, top - first.lineHeight() + first.baselineOffsetFromBottom()));
+                        top, top - first.lineHeight() + first.baselineOffsetFromBottom(),
+                        fragment.y() + paragraph.padding().bottom()));
             }
         }
         return java.util.Optional.empty();
@@ -814,8 +815,9 @@ final class DocxLayoutMetrics {
      * @param right    its right edge, from the page's left edge
      * @param top      its top edge, measured up from the foot of the page
      * @param baseline its first line's baseline, measured up from the foot of the page
+     * @param bottom   its bottom edge on that page, measured up from the foot of the page
      */
-    record TextBox(int page, double left, double right, double top, double baseline) {
+    record TextBox(int page, double left, double right, double top, double baseline, double bottom) {
     }
 
     /**

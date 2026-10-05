@@ -980,7 +980,11 @@ class DocxDrawingsTest {
         Matcher matcher = Pattern.compile("<wp:positionV relativeFrom=\"\\w+\"><wp:posOffset>(-?\\d+)<")
                 .matcher(anchor);
         assertThat(matcher.find()).isTrue();
-        return Long.parseLong(matcher.group(1)) / 12700.0;
+        try {
+            return Long.parseLong(matcher.group(1)) / 12700.0;
+        } catch (NumberFormatException notAnOffset) {
+            throw new AssertionError("not an offset in EMU: " + matcher.group(1), notAnOffset);
+        }
     }
 
     /** Every anchored drawing in a part's XML, in document order. */

@@ -82,7 +82,9 @@ class DocxParagraphMarkTest {
     void aHairlineOfTextInACellIsNotAsTallAsBodyText() throws Exception {
         // A heading rule drawn as a filled cell holding half-point text: with the mark at the
         // document's size, the cell came out a line of body text tall.
-        try (XWPFDocument document = export(page -> page.addTable(t -> t
+        try (XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addTable(t -> t
                 .columns(DocumentTableColumn.fixed(120))
                 .rowCells(DocumentTableCell.node(new ParagraphBuilder().name("Rule").text(" ").lineSpacing(0)
                                 .textStyle(DocumentTextStyle.DEFAULT.withSize(0.5)).build())
@@ -209,7 +211,7 @@ class DocxParagraphMarkTest {
         // A contact block: an icon and runs styled on their own, the paragraph's style left at its
         // default, on two lines. A mark in that default grew every such line in both editors.
         try (XWPFDocument document = export(page -> page
-                .addParagraph(p -> p.text("Body text sets the document's size"))
+                .addParagraph(p -> p.text("Body text sets the document's size. ".repeat(12)))
                 .addParagraph(p -> p
                         .inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png()), 14, 14)
                         .inlineText(" billing@example.com".repeat(12), DocumentTextStyle.DEFAULT.withSize(6))))) {

@@ -4352,18 +4352,78 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 .orElse(null);
     }
 
+    /**
+     * Weighs each piece of text by the style it is written in: a run in its own style, a
+     * paragraph's or list item's plain text in its node's, a table cell's in the style its
+     * cascade resolves to, and a composed cell's node as any other node.
+     *
+     * <p>A paragraph made of runs was weighed in its paragraph's style, which its runs set
+     * aside, and table cells were not weighed at all. Where most of a document's text is in
+     * runs or cells — invoices, proposals, a rota — Normal was elected from the few paragraphs
+     * left, and the body text carried a direct size that restyling Normal did not reach: Word's
+     * editing protocol found the body following Normal in none of {@code ProposalEditorial}'s or
+     * {@code CobaltRota}'s paragraphs, Normal 14pt or 12pt over body text of 10pt and 10.5pt.</p>
+     */
     private static void weighTextStyles(DocumentNode node,
                                         java.util.Map<StyleKey, Long> weights,
                                         java.util.Map<StyleKey, DocumentTextStyle> byKey) {
-        if (node instanceof ParagraphNode paragraph && paragraph.textStyle() != null) {
-            weigh(paragraph.textStyle(), textWeight(paragraph.text()), weights, byKey);
-        } else if (node instanceof com.demcha.compose.document.node.ListNode list
-                   && list.textStyle() != null) {
-            long weight = list.items().stream().mapToLong(DocxSemanticBackend::textWeight).sum();
-            weigh(list.textStyle(), weight, weights, byKey);
+        if (node instanceof ParagraphNode paragraph) {
+            if (!paragraph.inlineRuns().isEmpty()) {
+                weighRuns(paragraph.inlineRuns(), paragraph.textStyle(), weights, byKey);
+            } else if (paragraph.textStyle() != null) {
+                weigh(paragraph.textStyle(), textWeight(paragraph.text()), weights, byKey);
+            }
+        } else if (node instanceof com.demcha.compose.document.node.ListNode list) {
+            if (!list.nestedItems().isEmpty()) {
+                weighItems(list.nestedItems(), list.textStyle(), weights, byKey);
+            } else if (list.textStyle() != null) {
+                long weight = list.items().stream().mapToLong(DocxSemanticBackend::textWeight).sum();
+                weigh(list.textStyle(), weight, weights, byKey);
+            }
+        } else if (node instanceof TableNode table) {
+            for (List<TableGrid.Placement> row : TableGrid.resolve(table)) {
+                for (TableGrid.Placement placement : row) {
+                    DocumentTableCell cell = placement.cell();
+                    if (cell.hasComposedContent()) {
+                        weighTextStyles(cell.content(), weights, byKey);
+                    } else {
+                        long weight = cell.lines().stream().mapToLong(DocxSemanticBackend::textWeight).sum();
+                        weigh(resolveCellTextStyle(table, placement), weight, weights, byKey);
+                    }
+                }
+            }
         }
         for (DocumentNode child : node.children()) {
             weighTextStyles(child, weights, byKey);
+        }
+    }
+
+    /** Weighs a list's items, a rich one by its runs and a plain one by its label in the list's style. */
+    private static void weighItems(List<com.demcha.compose.document.node.ListItem> items,
+                                   DocumentTextStyle style,
+                                   java.util.Map<StyleKey, Long> weights,
+                                   java.util.Map<StyleKey, DocumentTextStyle> byKey) {
+        for (com.demcha.compose.document.node.ListItem item : items) {
+            if (item.isRich()) {
+                weighRuns(item.runs(), style, weights, byKey);
+            } else if (style != null) {
+                weigh(style, textWeight(item.label()), weights, byKey);
+            }
+            weighItems(item.children(), style, weights, byKey);
+        }
+    }
+
+    /** Weighs text runs, each in its own style or, where it has none, in the style it falls back to. */
+    private static void weighRuns(List<InlineRun> runs,
+                                  DocumentTextStyle fallback,
+                                  java.util.Map<StyleKey, Long> weights,
+                                  java.util.Map<StyleKey, DocumentTextStyle> byKey) {
+        for (InlineRun run : runs) {
+            InlineTextRun text = textOf(run);
+            DocumentTextStyle style = text == null ? null : text.textStyle() != null ? text.textStyle() : fallback;
+            if (style != null) {
+                weigh(style, textWeight(text.text()), weights, byKey);
+            }
         }
     }
 
@@ -9186,7 +9246,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>The same order the layout pipeline merges in: the table's default, then the
      * column's, then the row's, then the cell's own.</p>
      */
-    private DocumentTextStyle resolveCellTextStyle(TableNode node, TableGrid.Placement placement) {
+    private static DocumentTextStyle resolveCellTextStyle(TableNode node, TableGrid.Placement placement) {
         DocumentTextStyle authored = resolveCellValue(node, placement, DocumentTableStyle::textStyle);
         return authored != null ? authored : DEFAULT_CELL_FACE;
     }
@@ -9231,7 +9291,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * then the row's, then the cell's own — applied per field rather than per style object, so
      * a table-wide border survives a row that only overrides the fill.</p>
      */
-    private <T> T resolveCellValue(TableNode node, TableGrid.Placement placement,
+    private static <T> T resolveCellValue(TableNode node, TableGrid.Placement placement,
                                    Function<DocumentTableStyle, T> field) {
         T resolved = null;
         for (DocumentTableStyle candidate : List.of(

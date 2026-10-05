@@ -97,6 +97,40 @@ class DocxDocumentStyleTest {
     }
 
     @Test
+    void textWrittenInRunsShouldWeighInTheRunsStyleNotTheParagraphs() throws Exception {
+        // A paragraph made of runs leaves its own style unused: weighed in it, the body text
+        // of a proposal elected the engine's 14pt default and every body run carried 10.5pt.
+        try (XWPFDocument document = exported(page -> {
+            page.addParagraph(p -> p.text("Heading").textStyle(HEADING));
+            page.addParagraph(p -> p.inlineText(LONG_BODY, BODY));
+        })) {
+            CTRPr defaults = document.getStyles().getCtStyles().getDocDefaults()
+                    .getRPrDefault().getRPr();
+            assertThat(defaults.getSzArray(0).getVal().toString()).as("the runs' 10.5pt").isEqualTo("21");
+        }
+    }
+
+    @Test
+    void textInTableCellsShouldWeighInTheStyleTheirCellsResolveTo() throws Exception {
+        // An invoice's text is mostly in its tables: unweighed, Normal was elected from the few
+        // paragraphs around them.
+        try (XWPFDocument document = exported(page -> {
+            page.addParagraph(p -> p.text("Invoice").textStyle(HEADING));
+            page.addTable(t -> t
+                    .columns(com.demcha.compose.document.table.DocumentTableColumn.auto(),
+                            com.demcha.compose.document.table.DocumentTableColumn.auto())
+                    .defaultCellStyle(com.demcha.compose.document.table.DocumentTableStyle.builder()
+                            .textStyle(BODY).build())
+                    .row("Consulting, discovery and delivery", "1,200.00")
+                    .row("Platform licence for the quarter", "3,400.00"));
+        })) {
+            CTRPr defaults = document.getStyles().getCtStyles().getDocDefaults()
+                    .getRPrDefault().getRPr();
+            assertThat(defaults.getSzArray(0).getVal().toString()).as("the cells' 10.5pt").isEqualTo("21");
+        }
+    }
+
+    @Test
     void theDefaultShouldBeChosenByCharactersNotByParagraphCount() throws Exception {
         // Four short headings against one long body paragraph. Counting paragraphs elects
         // the heading style and leaves every body run carrying a direct size; counting

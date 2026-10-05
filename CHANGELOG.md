@@ -8,6 +8,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Restyling Normal reaches a DOCX's body text when the body is in runs or tables.** Normal is
+  elected from the style the most characters are set in, and the count left two kinds of text
+  out. A paragraph made of runs counted in its paragraph's style, which its runs set aside, and
+  table cells did not count at all. Where most of the text sits in runs or cells — invoices,
+  proposals, a rota — Normal came from the few paragraphs left, and the body carried a direct
+  size that restyling Normal did not reach: Normal 14pt over 10pt text in `ProposalEditorial`,
+  12pt over 10.5pt in `CobaltRota`. Each piece of text now counts in the style it is written
+  in, a table cell's in the style its cascade resolves to. Word's editing protocol finds the
+  body following Normal in 61 of the 62 corpus documents, against 54; `ProposalNorthline`
+  still elects 10pt over its 9pt body. LibreOffice sets `VioletGrid` on one page, as the PDF,
+  instead of two, its 37 lines past 2pt down to none; 65 lines move in all, 50 nearer, and the
+  15 further are `CobaltRota`'s by 0.05–0.4pt across. In Word one line moves:
+  `CobaltRota`'s "quayside bar" heading, 0.36pt further across.
 - **Enter in a DOCX continues the text it follows.** Word gives a new paragraph its mark's
   formatting, and the export left the mark of most paragraphs — every one written at an exact
   line height — in the document's own size and face. Pressing Enter at the end of a paragraph

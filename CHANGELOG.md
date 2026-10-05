@@ -8,22 +8,35 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX timeline's dots, and drawings centred on a line, move with their text too.** A
+  drawing in a table cell went into that cell only when the cell held it across, and a dot
+  set in a column of its own beside its entry's text — `CharcoalGold`'s timeline, a row of
+  date, gap, dot, gap and text — had no paragraph to go to, so it stayed on the page. It now goes
+  into the first paragraph of the cell of the same row that holds it, placed from the row's top.
+  Measured in Word 16.0.20430 and LibreOffice, both start each cell's first paragraph there,
+  less its top margin, where the cells set their content from the top. A drawing may now also
+  rise above its paragraph's top by its own height, 24pt at most, as a dot centred on the
+  paragraph's first line does; both editors place it there, out of a cell's top too, and draw
+  it whole. Word's editing protocol finds 132 of the 231 shapes beside text that moved moving
+  with it, against 104, and 20 of the 35 documents with drawings passing, against 19. Unedited,
+  no shape stands more than 1.5pt from where it stood in Word; no line of text moves in Word or
+  LibreOffice.
 - **A DOCX's drawings move with the text they stand beside.** Most shapes the page paints — a
   timeline's dot, an icon by a heading, a skill's bar, a badge — were placed from the page's
   edges, so when a reader edited the text above one, the text moved and the shape stayed. A shape
   standing beside a paragraph's text is now anchored in that paragraph and placed down from its
-  top: the paragraph whose text is nearest, within 48pt, when the shape hangs from it rather than
-  rising above it and, in a table cell, when the cell holds it across, its line is set from the
-  left and its row is not a repeated header. When the nearest paragraph cannot hold the shape, it
-  stays on the page rather than going to one further off. The paragraph's top is where
-  Word places from, the space above its first line included and its line where Word stands it,
-  measured in Word 16.0.20430 and LibreOffice to a tenth of a point. Only the first paragraph holding
-  text that a paragraph node is written as offers its place yet; beside a table's own cell text or a list's
+  top: the paragraph whose text is nearest, within 48pt, when the shape does not rise above its
+  top and, in a table cell, when the cell holds it across, its line is set from the left and its
+  row is not a repeated header. When the nearest paragraph cannot hold the shape, it stays on the
+  page rather than going to one further off. The paragraph's top is where Word places from, the
+  space above its first line included and its line where Word stands it, measured in Word
+  16.0.20430 and LibreOffice to a tenth of a point. Only the first paragraph holding text that a
+  paragraph node is written as offers its place yet; beside a table's own cell text or a list's
   items, in the gap between two columns or far from any text, a shape stays on the page. Word's
   editing protocol, with a new `drawings-follow-text` scenario that lengthens a paragraph, finds
-  104 of the 228 shapes
-  beside text that moved moving with it, against 12, and 19 of the 35 documents with drawings
-  passing, against 15. Unedited, no shape stands more than 1.5pt from where it stood in Word.
+  104 of the 228 shapes beside text that moved moving with it, against 12, and 19 of the 35
+  documents with drawings passing, against 15. Unedited, no shape stands more than 1.5pt from
+  where it stood in Word.
   In LibreOffice the same holds but for `OrangeOps`'s header separator, which follows its line
   of text where LibreOffice already sets that line 78pt low.
 - **Restyling Normal reaches a DOCX's body text when the body is in runs or tables.** Normal is

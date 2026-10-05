@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
@@ -29,11 +30,13 @@ import java.util.function.Supplier;
  * heading, a skill's bar by its label — is anchored in that paragraph and placed down from its
  * top ({@link #seat}): Word moves it with the paragraph, wherever an edit above takes it. Placed
  * from the page's edges, it stayed where the page had put it while the text moved away from it.
- * The paragraph is the one whose text is nearest, within {@link #REACH}, when the shape hangs from
- * it rather than rising above it and, for a paragraph in a table cell, when its cell holds the
- * shape across; when the nearest cannot hold it, the shape is left to the page rather than given
- * to one further off. The shapes wait for the section's end, since the paragraph a shape stands
- * beside may be written after it.</p>
+ * The paragraph is the one whose text is nearest, within {@link #REACH}, when the shape rises
+ * above its top by the shape's own height at most, as a dot centred on its first line does. In a
+ * table cell, the cell that holds the shape across takes it — the paragraph's own, or another of
+ * its row, as a timeline's dot in a column of its own beside its entry's text — placed from that
+ * cell's first paragraph (see {@link Seat#place}). When the nearest paragraph cannot place the
+ * shape, it is left to the page rather than given to one further off. The shapes wait for the
+ * section's end, since the paragraph a shape stands beside may be written after it.</p>
  *
  * <p>A shape beside no paragraph is positioned from the page's edges, so any paragraph on its
  * page carries it to the right place — but only one on that page: an anchor takes its shape to
@@ -218,13 +221,14 @@ final class DocxDrawingAnchors {
         Map<Integer, Integer> inCells = new TreeMap<>();
         Map<Integer, Integer> dropped = new TreeMap<>();
         takeTheSeats();
-        Map<Seat, List<Ordered>> beside = new java.util.LinkedHashMap<>();
+        // By the paragraph each is anchored in, which keeps no equality but its own.
+        Map<XWPFParagraph, List<Placed>> beside = new java.util.LinkedHashMap<>();
         pending.forEach((page, all) -> {
             List<Ordered> shapes = new ArrayList<>();
             for (Ordered shape : all) {
-                Seat seat = seatBeside(shape.shape());
-                if (seat != null) {
-                    beside.computeIfAbsent(seat, ignored -> new ArrayList<>()).add(shape);
+                Place place = placeBeside(shape.shape());
+                if (place != null) {
+                    beside.computeIfAbsent(place.paragraph(), ignored -> new ArrayList<>()).add(new Placed(shape, place));
                 } else {
                     shapes.add(shape);
                 }
@@ -296,7 +300,7 @@ final class DocxDrawingAnchors {
      * cell's row, and the Linux LibreOffice the build checks with set the row's 'Total due' 2pt
      * and 4pt up in two invoices.</p>
      */
-    private Seat seatBeside(DocxDrawings.Shape shape) {
+    private Place placeBeside(DocxDrawings.Shape shape) {
         Seat nearest = null;
         double nearestBy = Double.POSITIVE_INFINITY;
         for (Seat seat : seats.getOrDefault(shape.page(), List.of())) {
@@ -308,26 +312,27 @@ final class DocxDrawingAnchors {
                 nearestBy = by;
             }
         }
-        // A shape hangs from its paragraph's top, never above it: LibreOffice keeps a shape laid
-        // out in a cell from rising out of it, and set one 45pt above its paragraph's top at the
-        // head of the next page.
-        return nearest != null && shape.top() >= nearest.paragraphTop() - SLACK
-               && !Double.isNaN(nearest.column(shape)) ? nearest : null;
+        // A shape rises above its paragraph's top by its own height at most, as a dot centred on
+        // the paragraph's first line does: Word and LibreOffice place it there, out of a cell's
+        // top too, and draw it whole. One rising further stands by other text: LibreOffice set an
+        // 11pt rule 45pt above its paragraph's top at the head of the next page.
+        return nearest == null ? null : nearest.place(shape);
     }
 
     /**
      * Anchors shapes in the paragraph whose text they stand nearest, placed down from its top,
      * in the order they are drawn: they move with the paragraph wherever an edit takes it.
      */
-    private void anchorBeside(Seat seat, List<Ordered> shapes) {
-        double paragraphTop = seat.paragraphTop();
-        XWPFRun run = seat.paragraph().insertNewRun(0);
-        for (Ordered ordered : shapes) {
-            double column = seat.column(ordered.shape());
-            // A shape reaching up to a stroke's width past the paragraph's top is placed at its top:
-            // for a skill bar 0.13pt above its paragraph in a cell, Word 16.0.20430 reported no
-            // offset at all, but a Top of -999997.
-            double top = Math.min(paragraphTop, ordered.shape().top());
+    private void anchorBeside(XWPFParagraph paragraph, List<Placed> shapes) {
+        XWPFRun run = paragraph.insertNewRun(0);
+        for (Placed placed : shapes) {
+            Ordered ordered = placed.ordered();
+            double column = placed.place().column();
+            // A shape less than a stroke's width above the paragraph's top is placed at its top:
+            // Word 16.0.20430 draws an offset of -0.13pt where it says, but reports it to a reader
+            // as a Top of -999997. A shape higher still keeps its own offset, which Word reports.
+            double rise = placed.place().top() - ordered.shape().top();
+            double top = rise > 0 && rise <= SLACK ? ordered.shape().top() : placed.place().top();
             run.getCTR().addNewDrawing().set(Double.isInfinite(column)
                     ? DocxDrawings.drawingInParagraph(ordered.shape(), ids.getAsLong(), ordered.order(), top)
                     : DocxDrawings.drawingInCell(ordered.shape(), ids.getAsLong(), ordered.order(),
@@ -344,6 +349,14 @@ final class DocxDrawingAnchors {
 
     /** A stroke's width either side a shape may reach past its paragraph's top or its cell, in points. */
     private static final double SLACK = 1;
+
+    /**
+     * The furthest a shape rises above its paragraph's top, in points: as far as a dot or an
+     * icon's disc centred on a line — the corpus's largest disc is 22.6pt — where Word and
+     * LibreOffice were measured placing 6pt and 10pt dots up to 8pt above their paragraphs. A
+     * taller shape — a rail, an accent bar — rising further stands by other text.
+     */
+    private static final double FURTHEST_RISE = 24;
 
     /** Word's room for a cell's text either side, where neither the cell nor its table states one. */
     private static final double DEFAULT_CELL_MARGIN = 5.4;
@@ -432,39 +445,149 @@ final class DocxDrawingAnchors {
         }
 
         /**
-         * Where Word places a shape across from: infinite for a paragraph of the body, placed
-         * from the page's edge; for one in a table cell, the cell's text column, where the page
-         * puts it; NaN for a cell that does not hold the shape across — one in the gap between
-         * two columns belongs to neither —, for a line not set from the cell's left, and for a
-         * repeated header row, which Word repeats on every page with what is anchored in it.
+         * Where Word places a shape beside this paragraph's text from, or {@code null} where it
+         * cannot. The shape may rise above the paragraph's top by its own height at most.
+         *
+         * <p>A paragraph of the body places it across from the page's edge. One in a table cell
+         * places it from the cell's text column; a cell that does not hold the shape across hands
+         * it to the cell of the same row that does, from that cell's first paragraph — a
+         * timeline's dot stands in a column of its own beside its entry's text, in a cell holding
+         * nothing else. None takes it for a line not set from the cell's left, whose indent is
+         * written short of the page's, or in a repeated header row, which Word repeats on every
+         * page with what is anchored in it.</p>
          */
-        double column(DocxDrawings.Shape shape) {
+        Place place(DocxDrawings.Shape shape) {
+            double top = paragraphTop();
+            if (!risesNoFurther(shape, top)) {
+                return null;
+            }
             if (!(paragraph.getBody() instanceof XWPFTableCell cell)) {
-                return Double.POSITIVE_INFINITY;
+                return new Place(paragraph, Double.POSITIVE_INFINITY, top);
             }
-            CTTcPr cellProperties = cell.getCTTc().getTcPr();
-            // A line centred or set right in a cell is written with the editor's slack taken off
-            // its indent, so its text's left edge is not where Word's column starts.
-            if (cell.getTableRow().isRepeatHeader() || !leftAligned(paragraph)
-                || cellProperties == null || !cellProperties.isSetTcW()
-                || cellProperties.getTcW().getType() != STTblWidth.DXA
-                || !(cellProperties.getTcW().getW() instanceof Number width)) {
-                return Double.NaN;
+            if (cell.getTableRow().isRepeatHeader() || !leftAligned(paragraph)) {
+                return null;
             }
-            double margin = leftMargin(cell);
-            CTPPr properties = paragraph.getCTP().getPPr();
-            double indent = 0;
-            if (properties != null && properties.isSetInd() && properties.getInd().isSetLeft()) {
-                if (!(properties.getInd().getLeft() instanceof Number twips)) {
-                    return Double.NaN;
+            double width = widthOf(cell);
+            double cellLeft = textLeft() - leftMargin(cell);
+            if (Double.isNaN(width) || Double.isNaN(cellLeft)) {
+                return null;
+            }
+            if (holdsAcross(shape, cellLeft, width)) {
+                return new Place(paragraph, cellLeft + leftMargin(cell), top);
+            }
+            Place inTheRow = inTheRow(shape, cell, cellLeft, width, top);
+            return inTheRow != null && risesNoFurther(shape, inTheRow.top()) ? inTheRow : null;
+        }
+
+        /**
+         * Whether a shape rises above a paragraph's top by no more than its own height, as a dot
+         * centred on the paragraph's first line does, nor more than {@link #FURTHEST_RISE}. NaN
+         * for a top not known is no.
+         */
+        private static boolean risesNoFurther(DocxDrawings.Shape shape, double top) {
+            return shape.top() >= top - Math.max(SLACK, Math.min(shape.height(), FURTHEST_RISE));
+        }
+
+        /**
+         * The place in the cell of this paragraph's row that holds a shape across, from that
+         * cell's first paragraph; {@code null} when none does or its top is not known.
+         *
+         * <p>Measured in Word 16.0.20430 and LibreOffice: in a row whose cells set their content
+         * from the top, the first paragraph of each starts at the row's top, less its cell's top
+         * margin; so a shape is placed from a neighbour's first paragraph as from this one's.</p>
+         */
+        private Place inTheRow(DocxDrawings.Shape shape, XWPFTableCell cell, double cellLeft, double width,
+                               double top) {
+            List<IBodyElement> opening = cell.getBodyElements();
+            if (opening.isEmpty() || opening.get(0) != paragraph || !alignedToTheTop(cell)) {
+                return null;
+            }
+            double rowTop = top - topMargin(cell);
+            List<XWPFTableCell> cells = cell.getTableRow().getTableCells();
+            int at = -1;
+            for (int index = 0; index < cells.size(); index++) {
+                if (cells.get(index).getCTTc() == cell.getCTTc()) {
+                    at = index;
                 }
-                indent = twips.doubleValue() / 20;
             }
-            double column = left - indent;
-            double cellLeft = column - margin;
-            boolean holds = shape.x() >= cellLeft - SLACK
-                            && shape.x() + shape.width() <= cellLeft + width.doubleValue() / 20 + SLACK;
-            return holds ? column : Double.NaN;
+            if (at < 0) {
+                return null;
+            }
+            double edge = cellLeft;
+            for (int index = at - 1; index >= 0; index--) {
+                double neighbour = widthOf(cells.get(index));
+                if (Double.isNaN(neighbour)) {
+                    return null;
+                }
+                edge -= neighbour;
+                if (holdsAcross(shape, edge, neighbour)) {
+                    return openingPlace(cells.get(index), edge, rowTop);
+                }
+            }
+            edge = cellLeft + width;
+            for (int index = at + 1; index < cells.size(); index++) {
+                double neighbour = widthOf(cells.get(index));
+                if (Double.isNaN(neighbour)) {
+                    return null;
+                }
+                if (holdsAcross(shape, edge, neighbour)) {
+                    return openingPlace(cells.get(index), edge, rowTop);
+                }
+                edge += neighbour;
+            }
+            return null;
+        }
+
+        /** The place at the start of a cell whose left edge stands where given; {@code null} when unknown. */
+        private static Place openingPlace(XWPFTableCell cell, double cellLeft, double rowTop) {
+            CTTcPr properties = cell.getCTTc().getTcPr();
+            List<IBodyElement> opening = cell.getBodyElements();
+            if (properties != null && properties.isSetVMerge() || !alignedToTheTop(cell) || opening.isEmpty()
+                || !(opening.get(0) instanceof XWPFParagraph first)) {
+                return null;
+            }
+            return new Place(first, cellLeft + leftMargin(cell), rowTop + topMargin(cell));
+        }
+
+        /** Where the paragraph's text's left edge stands without its indent; NaN when not known. */
+        private double textLeft() {
+            CTPPr properties = paragraph.getCTP().getPPr();
+            if (properties != null && properties.isSetInd() && properties.getInd().isSetLeft()) {
+                return properties.getInd().getLeft() instanceof Number twips ? left - twips.doubleValue() / 20
+                        : Double.NaN;
+            }
+            return left;
+        }
+
+        private static boolean holdsAcross(DocxDrawings.Shape shape, double cellLeft, double width) {
+            return shape.x() >= cellLeft - SLACK && shape.x() + shape.width() <= cellLeft + width + SLACK;
+        }
+
+        /** A cell's width as written, in points; NaN where it is not written in twips. */
+        private static double widthOf(XWPFTableCell cell) {
+            CTTcPr properties = cell.getCTTc().getTcPr();
+            return properties != null && properties.isSetTcW() && properties.getTcW().getType() == STTblWidth.DXA
+                   && properties.getTcW().getW() instanceof Number width ? width.doubleValue() / 20 : Double.NaN;
+        }
+
+        /** Whether a cell sets its content from its top. */
+        private static boolean alignedToTheTop(XWPFTableCell cell) {
+            CTTcPr properties = cell.getCTTc().getTcPr();
+            return properties == null || !properties.isSetVAlign()
+                   || properties.getVAlign().getVal() == org.openxmlformats.schemas.wordprocessingml.x2006.main.STVerticalJc.TOP;
+        }
+
+        /** A cell's top margin as written, in points: Word's own is none. */
+        private static double topMargin(XWPFTableCell cell) {
+            CTTcPr cellProperties = cell.getCTTc().getTcPr();
+            if (cellProperties != null && cellProperties.isSetTcMar() && cellProperties.getTcMar().isSetTop()) {
+                return points(cellProperties.getTcMar().getTop(), 0);
+            }
+            CTTblPr table = cell.getTableRow().getTable().getCTTbl().getTblPr();
+            if (table != null && table.isSetTblCellMar() && table.getTblCellMar().isSetTop()) {
+                return points(table.getTblCellMar().getTop(), 0);
+            }
+            return 0;
         }
 
         /** Whether a paragraph's lines start at its left indent: not centred, set right or right to left. */
@@ -486,18 +609,33 @@ final class DocxDrawingAnchors {
         private static double leftMargin(XWPFTableCell cell) {
             CTTcPr cellProperties = cell.getCTTc().getTcPr();
             if (cellProperties != null && cellProperties.isSetTcMar() && cellProperties.getTcMar().isSetLeft()) {
-                return points(cellProperties.getTcMar().getLeft());
+                return points(cellProperties.getTcMar().getLeft(), DEFAULT_CELL_MARGIN);
             }
             CTTblPr table = cell.getTableRow().getTable().getCTTbl().getTblPr();
             if (table != null && table.isSetTblCellMar() && table.getTblCellMar().isSetLeft()) {
-                return points(table.getTblCellMar().getLeft());
+                return points(table.getTblCellMar().getLeft(), DEFAULT_CELL_MARGIN);
             }
             return DEFAULT_CELL_MARGIN;
         }
 
-        private static double points(CTTblWidth width) {
-            return width.getW() instanceof Number twips ? twips.doubleValue() / 20 : DEFAULT_CELL_MARGIN;
+        private static double points(CTTblWidth width, double otherwise) {
+            return width.getW() instanceof Number twips ? twips.doubleValue() / 20 : otherwise;
         }
+    }
+
+    /**
+     * Where a shape is anchored and placed from.
+     *
+     * @param paragraph the paragraph it is anchored in
+     * @param column    where Word's column starts, from the page's left edge; infinite for a
+     *                  paragraph of the body, whose shapes are placed from the page's edge
+     * @param top       where the paragraph's top stands, from the page's top edge
+     */
+    record Place(XWPFParagraph paragraph, double column, double top) {
+    }
+
+    /** A shape and where it is placed from. */
+    private record Placed(Ordered ordered, Place place) {
     }
 
     private void anchor(XWPFParagraph carrier, List<Ordered> shapes) {

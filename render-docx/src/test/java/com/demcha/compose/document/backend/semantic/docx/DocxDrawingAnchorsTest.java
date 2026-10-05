@@ -120,9 +120,9 @@ class DocxDrawingAnchorsTest {
     }
 
     @Test
-    void aShapeIsNeverPlacedAboveTheTopOfItsParagraph() {
-        // The ring stands 20pt above the only paragraph near it. Placed from that paragraph, it
-        // would hang above it, which LibreOffice does not keep in a table cell.
+    void aShapeRisingAboveItsParagraphByMoreThanItsHeightIsNotPlacedFromIt() {
+        // The 6pt ring stands 20pt above the only paragraph near it: it stands by other text.
+        // LibreOffice set a rule placed 45pt above its paragraph at the head of the next page.
         XWPFDocument document = new XWPFDocument();
         XWPFParagraph first = text(document, "First");
         DocxDrawingAnchors anchors = anchors();
@@ -134,6 +134,22 @@ class DocxDrawingAnchorsTest {
 
         assertThat(drawingsIn(first)).singleElement().asString()
                 .contains("<wp:positionV relativeFrom=\"page\">");
+    }
+
+    @Test
+    void aDotCentredOnTheFirstLineRisesAboveItsParagraphsTopByItsOffset() {
+        // A 6pt dot 4pt above the paragraph's top, as one centred on a line with no space above:
+        // both editors place it 4pt above, out of a cell's top too, and draw it whole.
+        XWPFDocument document = new XWPFDocument();
+        XWPFParagraph first = text(document, "Date");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, first, true);
+        anchors.seat(0, first, first, 40, 300, 100, 110);
+
+        anchors.queue(List.of(dot(30, 96)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        assertThat(offsetDown(drawingsIn(first).get(0))).isCloseTo(-4, within(0.01));
     }
 
     @Test
@@ -243,8 +259,9 @@ class DocxDrawingAnchorsTest {
 
     @Test
     void aShapeItsNearestParagraphCannotHoldIsNotGivenToOneFurtherOff() {
-        // An icon centred on a note's line stands a little above the note's top; the totals
-        // table's last cell above is within reach too, but it is not the text the icon is by.
+        // The 6pt icon stands 8pt above the note nearest it, more than its height: the note does
+        // not take it. The totals table's last cell above is within reach and could, but it is not
+        // the text the icon is by.
         XWPFDocument document = new XWPFDocument();
         XWPFTable table = document.createTable(1, 1);
         XWPFTableCell cell = table.getRow(0).getCell(0);
@@ -258,11 +275,180 @@ class DocxDrawingAnchorsTest {
         anchors.seat(0, total, total, 110, 290, 60, 70);
         anchors.seat(0, note, note, 110, 290, 106, 116);
 
-        anchors.queue(List.of(dot(120, 104)));
+        anchors.queue(List.of(dot(120, 98)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(total)).isEmpty();
         assertThat(drawingsIn(note)).singleElement().asString().contains("<wp:positionV relativeFrom=\"page\">");
+    }
+
+    @Test
+    void aDotInAColumnOfItsOwnIsAnchoredInItsCellFromTheRowsTop() {
+        // A timeline's entry: a 10pt column holding the dot and nothing else, beside a 200pt
+        // column holding the text, from 100. The text's cell does not hold the dot; the dot's own
+        // cell does, and its first paragraph starts where the text's does, at the row's top.
+        XWPFDocument document = new XWPFDocument();
+        XWPFTable table = document.createTable(1, 2);
+        XWPFTableCell dotCell = table.getRow(0).getCell(0);
+        XWPFTableCell textCell = table.getRow(0).getCell(1);
+        width(dotCell, 10);
+        width(textCell, 200);
+        noLeftMargin(dotCell);
+        noLeftMargin(textCell);
+        XWPFParagraph dotParagraph = dotCell.getParagraphs().get(0);
+        XWPFParagraph entry = textCell.getParagraphs().get(0);
+        entry.createRun().setText("Senior Engineer");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, entry, false);
+        anchors.seat(0, entry, entry, 100, 300, 60, 70);
+
+        anchors.queue(List.of(dot(92, 62)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        assertThat(drawingsIn(entry)).isEmpty();
+        String drawing = drawingsIn(dotParagraph).get(0);
+        assertThat(drawing).contains("layoutInCell=\"1\"").contains("<wp:positionH relativeFrom=\"column\">");
+        assertThat(offsetAcross(drawing)).as("from the dot's cell, at 90").isCloseTo(2, within(0.01));
+        assertThat(offsetDown(drawing)).as("from the row's top, the text's paragraph top").isCloseTo(2, within(0.01));
+    }
+
+    @Test
+    void aNeighbourCellsTopMarginMovesItsFirstParagraphDown() {
+        // The text's cell states no top margin, the dot's 3pt: its first paragraph starts 3pt
+        // below the text's, and the dot is placed from there.
+        XWPFDocument document = new XWPFDocument();
+        XWPFTable table = document.createTable(1, 2);
+        XWPFTableCell dotCell = table.getRow(0).getCell(0);
+        XWPFTableCell textCell = table.getRow(0).getCell(1);
+        width(dotCell, 10);
+        width(textCell, 200);
+        noLeftMargin(dotCell);
+        noLeftMargin(textCell);
+        dotCell.getCTTc().getTcPr().getTcMar().addNewTop().setW(BigInteger.valueOf(60));
+        XWPFParagraph dotParagraph = dotCell.getParagraphs().get(0);
+        XWPFParagraph entry = textCell.getParagraphs().get(0);
+        entry.createRun().setText("Senior Engineer");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, entry, false);
+        anchors.seat(0, entry, entry, 100, 300, 60, 70);
+
+        anchors.queue(List.of(dot(92, 66)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        assertThat(offsetDown(drawingsIn(dotParagraph).get(0))).isCloseTo(66 - 63, within(0.01));
+    }
+
+    @Test
+    void aNeighbourCellIsNotUsedWhereARowsTopIsNotKnown() {
+        // The text is not the first thing in its cell, or the neighbour centres its content:
+        // neither tells where the neighbour's first paragraph starts.
+        for (boolean centred : new boolean[]{false, true}) {
+            XWPFDocument document = new XWPFDocument();
+            XWPFTable table = document.createTable(1, 2);
+            XWPFTableCell dotCell = table.getRow(0).getCell(0);
+            XWPFTableCell textCell = table.getRow(0).getCell(1);
+            width(dotCell, 10);
+            width(textCell, 200);
+            noLeftMargin(dotCell);
+            noLeftMargin(textCell);
+            XWPFParagraph entry = textCell.getParagraphs().get(0);
+            if (centred) {
+                dotCell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
+            } else {
+                entry = textCell.addParagraph();
+            }
+            entry.createRun().setText("Senior Engineer");
+            DocxDrawingAnchors anchors = anchors();
+            XWPFParagraph body = text(document, "Body");
+            anchors.paragraphOn(0, body, true);
+            anchors.seat(0, entry, entry, 100, 300, 60, 70);
+
+            anchors.queue(List.of(dot(92, 62)));
+            anchors.endSection(0, null, document::createParagraph);
+
+            assertThat(drawingsIn(dotCell.getParagraphs().get(0))).as("centred=" + centred).isEmpty();
+            assertThat(drawingsIn(body)).singleElement().asString().contains("<wp:positionV relativeFrom=\"page\">");
+        }
+    }
+
+    @Test
+    void aNeighbourCellToTheRightTakesAShapeTooButNotOneMergedFromAbove() {
+        // The text's 200pt cell from 100, then a 10pt cell at 300 holding a mark.
+        for (boolean merged : new boolean[]{false, true}) {
+            XWPFDocument document = new XWPFDocument();
+            XWPFTable table = document.createTable(1, 2);
+            XWPFTableCell textCell = table.getRow(0).getCell(0);
+            XWPFTableCell markCell = table.getRow(0).getCell(1);
+            width(textCell, 200);
+            width(markCell, 10);
+            noLeftMargin(textCell);
+            noLeftMargin(markCell);
+            if (merged) {
+                markCell.getCTTc().getTcPr().addNewVMerge();
+            }
+            XWPFParagraph entry = textCell.getParagraphs().get(0);
+            entry.createRun().setText("Senior Engineer");
+            DocxDrawingAnchors anchors = anchors();
+            anchors.paragraphOn(0, text(document, "Body"), true);
+            anchors.seat(0, entry, entry, 100, 290, 60, 70);
+
+            anchors.queue(List.of(dot(302, 62)));
+            anchors.endSection(0, null, document::createParagraph);
+
+            List<String> drawings = drawingsIn(markCell.getParagraphs().get(0));
+            if (merged) {
+                assertThat(drawings).as("a cell merged from the row above starts elsewhere").isEmpty();
+            } else {
+                assertThat(offsetAcross(drawings.get(0))).isCloseTo(2, within(0.01));
+            }
+        }
+    }
+
+    @Test
+    void aShapeRisesNoFurtherAboveTheNeighbourCellsParagraphThanAboveItsOwn() {
+        // The dot's cell holds its content 10pt down: a 6pt dot 4pt above the text's top stands
+        // 14pt above that cell's first paragraph, more than its height.
+        XWPFDocument document = new XWPFDocument();
+        XWPFTable table = document.createTable(1, 2);
+        XWPFTableCell dotCell = table.getRow(0).getCell(0);
+        XWPFTableCell textCell = table.getRow(0).getCell(1);
+        width(dotCell, 10);
+        width(textCell, 200);
+        noLeftMargin(dotCell);
+        noLeftMargin(textCell);
+        dotCell.getCTTc().getTcPr().getTcMar().addNewTop().setW(BigInteger.valueOf(200));
+        XWPFParagraph entry = textCell.getParagraphs().get(0);
+        entry.createRun().setText("Senior Engineer");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, text(document, "Body"), true);
+        anchors.seat(0, entry, entry, 100, 300, 60, 70);
+
+        anchors.queue(List.of(dot(92, 56)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        assertThat(drawingsIn(dotCell.getParagraphs().get(0))).isEmpty();
+    }
+
+    @Test
+    void aTallShapeRisesNoFurtherThanADisc() {
+        // A 40pt bar 30pt above its paragraph's top, within its own height but further than any
+        // dot or disc rises: it stands by other text.
+        XWPFDocument document = new XWPFDocument();
+        XWPFParagraph first = text(document, "First");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, first, true);
+        anchors.seat(0, first, first, 40, 300, 100, 110);
+
+        anchors.queue(List.of(new DocxDrawings.Shape(DocxDrawings.Kind.RECT, 30, 70, 2, 40, Color.BLUE, null,
+                0, 0, false, 0)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        assertThat(drawingsIn(first)).singleElement().asString().contains("<wp:positionV relativeFrom=\"page\">");
+    }
+
+    private static void noLeftMargin(XWPFTableCell cell) {
+        CTTcPr properties = cell.getCTTc().getTcPr();
+        (properties.isSetTcMar() ? properties.getTcMar() : properties.addNewTcMar()).addNewLeft().setW(BigInteger.ZERO);
     }
 
     @Test

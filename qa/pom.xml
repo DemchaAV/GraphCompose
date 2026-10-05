@@ -41,13 +41,13 @@
         <junit.bom.version>6.1.3</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
         <mockito.version>5.24.0</mockito.version>
-        <logback.version>1.6.4</logback.version>
+        <logback.version>1.6.5</logback.version>
         <pdfbox.version>3.0.8</pdfbox.version>
         <javafx.version>21.0.12</javafx.version>
         <!-- ArchUnit for the cross-module boundary guards below. Roughly in step
              with the engine pom's archunit.version; a drift is harmless (test-only,
              each module runs its own test JVM), so it is not version-guarded. -->
-        <archunit.version>1.5.0</archunit.version>
+        <archunit.version>1.5.1</archunit.version>
         <!-- graphcompose.fonts.version / graphcompose.emoji.version and
              maven.deploy.skip=true are inherited from the aggregator parent. -->
     </properties>

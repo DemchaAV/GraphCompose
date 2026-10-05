@@ -58,7 +58,7 @@
         <lombok.version>1.18.48</lombok.version>
         <junit.bom.version>6.1.3</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
-        <logback.version>1.6.4</logback.version>
+        <logback.version>1.6.5</logback.version>
 
         <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
         <maven.jar.plugin.version>3.5.1</maven.jar.plugin.version>

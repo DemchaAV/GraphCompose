@@ -1783,7 +1783,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // the even pages', the rest —, so the same logo would be reported once per kind: once is
         // what the caller needs.
         if (zonePartsReported.add(node)) {
-            report.add(DocxExportReport.Severity.DROPPED, "page zone content", null,
+            report.add(DocxExportReport.Severity.DROPPED, "page zone content",
+                    sectioned ? "section " + (sectionIndex + 1) : null,
                     "a page zone's " + node.nodeKind()
                     + (node.name().isEmpty() ? "" : " '" + node.name() + "'")
                     + " is not written: a Word header or footer is written from the zone's "
@@ -2423,8 +2424,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         String why = droppedBecause(node);
         if (warnedNodeKinds.add(node.nodeKind())) {
+            // Once a kind, so without what the first of them held.
             LOG.warn("DocxSemanticBackend: dropping '{}' node(s) — {}; use the PDF backend for "
-                     + "pixel-perfect output", node.nodeKind(), why);
+                     + "pixel-perfect output", node.nodeKind(),
+                    isBuiltIn(node) ? why : "a node kind the DOCX export does not know");
         }
         report.add(DocxExportReport.Severity.DROPPED, node.nodeKind(), layout.pathOf(node),
                 why + ", so it is not in the document");
@@ -9723,23 +9726,48 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (paintsASide(node.borders())) {
             paint.add("borders");
         }
-        if (paint.isEmpty()) {
+        if (paint.isEmpty() || !standsTall(node)) {
             return;
         }
-        String what = "the row's " + String.join(", ", paint) + (paint.size() == 1 ? " is" : " are");
+        String what = "the row's " + (node.cornerRadius().isZero() ? "" : "rounded ") + listed(paint)
+                      + (paint.size() == 1 ? " is" : " are");
         if (inAZone) {
             // A zone's content is not in the layout, so it is no cell's either.
-            report.add(DocxExportReport.Severity.DROPPED, "row paint", null,
+            report.add(DocxExportReport.Severity.DROPPED, "row paint", sectioned ? "section " + (sectionIndex + 1) : null,
                     what + " not written: a page zone's row is written as one line of the header or "
                     + "footer");
-        } else if (composedInACell(node)) {
+        } else if (composedInACell(node) && cellDrawing.drew()) {
+            // What a cell paints the table draws as shapes, where it frames no text
+            // (drawCellDrawing); the layout does not say which of those boxes is the row's.
             report.add(DocxExportReport.Severity.APPROXIMATED, "row paint", layout.pathOf(node),
-                    what + " drawn as a shape behind its cell where it frames no text, and not written "
-                    + "where it does");
+                    what + (cellDrawing.skippedBoxes()
+                            ? " drawn as a shape where it frames no text, and not written where it does"
+                            : " drawn as a shape where the layout puts it in its cell"));
         } else {
             report.add(DocxExportReport.Severity.DROPPED, "row paint", layout.pathOf(node),
-                    what + " not written: its columns are, as a table with no shading or borders");
+                    what + (composedInACell(node)
+                            ? " not written: a table cell's paint is drawn only where it frames no text, "
+                              + "and this table's cells drew none"
+                            : " not written: its columns are, as a table with no shading or borders"));
         }
+    }
+
+    /**
+     * Whether a row stands tall enough to be painted: the page paints a row's box only where
+     * the layout gives it some height, which a row of no columns and no padding does not have.
+     */
+    private boolean standsTall(RowNode node) {
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(node);
+        if (placed != null) {
+            return placed.placementHeight() > 0.01;
+        }
+        return !node.children().isEmpty() || node.padding().top() + node.padding().bottom() > 0;
+    }
+
+    /** A short list as a sentence names it: {@code a}, {@code a and b}, {@code a, b and c}. */
+    private static String listed(List<String> items) {
+        return items.size() == 1 ? items.get(0)
+                : String.join(", ", items.subList(0, items.size() - 1)) + " and " + items.get(items.size() - 1);
     }
 
     /** Whether any side of a set of borders is drawn: a side of no width draws nothing. */

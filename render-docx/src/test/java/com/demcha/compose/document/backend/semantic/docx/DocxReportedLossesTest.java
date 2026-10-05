@@ -23,6 +23,8 @@ import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.table.DocumentTableCell;
+import com.demcha.compose.document.table.DocumentTableColumn;
 import org.junit.jupiter.api.Test;
 
 import javax.imageio.ImageIO;
@@ -60,7 +62,7 @@ class DocxReportedLossesTest {
         assertThat(notes).as("one note for the row").hasSize(1);
         assertThat(notes.get(0).severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
         assertThat(notes.get(0).path()).contains("Totals");
-        assertThat(notes.get(0).detail()).contains("fill, outline, borders are not written");
+        assertThat(notes.get(0).detail()).contains("the row's fill, outline and borders are not written");
     }
 
     @Test
@@ -147,6 +149,65 @@ class DocxReportedLossesTest {
                 .fillColor(SURFACE).padding(DocumentInsets.of(8)))));
 
         assertThat(report.bySubject()).containsKey("row paint");
+    }
+
+    @Test
+    void aRowOfNoColumnsAndNoHeightIsNotReported() throws Exception {
+        // The page paints a row's box only where the layout gives it some height.
+        DocxExportReport report = reportOf(session -> session.pageFlow(page -> page
+                .addParagraph("Before").addRow(row -> row.fillColor(SURFACE)).addParagraph("After")));
+
+        assertThat(report.bySubject()).doesNotContainKey("row paint");
+    }
+
+    @Test
+    void aRoundedRowSaysItsPaintWasRounded() throws Exception {
+        DocxExportReport report = reportOf(session -> session.pageFlow(page -> page.addRow(row -> row
+                .fillColor(SURFACE).cornerRadius(6).addParagraph("Left").addParagraph("Right"))));
+
+        assertThat(report.bySubject().get("row paint")).singleElement()
+                .extracting(DocxExportReport.Note::detail).asString().contains("the row's rounded fill is not written");
+    }
+
+    @Test
+    void aFilledRowRoundTextInATableCellIsDroppedNotApproximated() throws Exception {
+        // A cell's paint is drawn as a shape only where it frames no text; round a label and a
+        // value it is not drawn at all.
+        DocxExportReport report = reportOf(session -> session.pageFlow(page -> page.addTable(table -> table
+                .columns(DocumentTableColumn.fixed(300))
+                .rowCells(DocumentTableCell.node(new RowBuilder().fillColor(SURFACE)
+                        .addParagraph("Due").addParagraph("120.00").build())))));
+
+        assertThat(report.bySubject().get("row paint")).singleElement().satisfies(note -> {
+            assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
+            assertThat(note.detail()).contains("drawn only where it frames no text");
+        });
+    }
+
+    @Test
+    void aFilledRowRoundNoTextInATableCellIsApproximated() throws Exception {
+        // Round no text, the cell's drawing draws the row's box as a shape in the cell.
+        DocxExportReport report = reportOf(session -> session.pageFlow(page -> page.addTable(table -> table
+                .columns(DocumentTableColumn.fixed(300))
+                .rowCells(DocumentTableCell.node(new RowBuilder().fillColor(SURFACE).padding(DocumentInsets.of(6))
+                        .addSpacer(40).addSpacer(40).build())))));
+
+        assertThat(report.bySubject().get("row paint")).singleElement()
+                .extracting(DocxExportReport.Note::severity).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
+    }
+
+    @Test
+    void aZonesLossesInASectionedFileNameTheirSection() throws Exception {
+        AtomicReference<DocxExportReport> captured = new AtomicReference<>();
+        try (com.demcha.compose.document.api.MultiSectionDocument document = GraphCompose.documents()
+                .section(withALogoHeader("Cover"))
+                .section(withALogoHeader("Body"))
+                .create()) {
+            document.export(new DocxSemanticBackend(captured::set));
+        }
+
+        assertThat(captured.get().bySubject().get("page zone content")).extracting(DocxExportReport.Note::path)
+                .containsExactly("section 1", "section 2");
     }
 
     @Test
@@ -323,6 +384,15 @@ class DocxReportedLossesTest {
                 page.addParagraph("A paragraph long enough to run the document onto further pages: " + i);
             }
         });
+    }
+
+    private static DocumentSession withALogoHeader(String text) {
+        DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create();
+        session.chrome().zone(DocumentPageZone.header(30, page -> new RowBuilder()
+                .addImage(image -> image.source(DocumentImageData.fromBytes(png())).size(24, 24))
+                .addParagraph(text).build()));
+        session.pageFlow(page -> page.addParagraph(text));
+        return session;
     }
 
     private static DocumentSession protectedWatermarked(String text) {

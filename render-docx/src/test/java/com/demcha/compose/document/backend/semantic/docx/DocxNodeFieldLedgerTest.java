@@ -57,6 +57,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * it has no entry for, so the decision is made when the field is added, not when a reader finds
  * the loss.</p>
  *
+ * <p>A node's entries are about the body. A page zone is written as one line of its
+ * paragraphs' runs, page fields and tabs, which loses more of a paragraph and a row than the
+ * body does; that is recorded once, as the {@code zones} output option's gap.</p>
+ *
  * <p>The entries are claims about the export, not proofs of it: a {@code WRITTEN} field is
  * proved by the export's own tests, a {@code REPORTED} one by a report test, and a {@code GAP}
  * is a loss the report does not yet name, each with what is lost. Closing a gap moves its entry,
@@ -89,7 +93,10 @@ class DocxNodeFieldLedgerTest {
             "protection:REPORTED",
             "viewerPreferences:REPORTED",
             "headersAndFooters:WRITTEN",
-            "zones:WRITTEN");
+            // The node entries below are the body's. A zone is written as one line of its
+            // paragraphs' runs, page fields and tabs, which is a gap of its own.
+            "zones:GAP:in a page zone, a paragraph's alignment, spacing and direction and a row's columns, gap "
+            + "and padding; whatever else a zone holds is reported");
 
     static {
         node(AlignNode.class, "name:INERT", "child:WRITTEN", "align:WRITTEN", "margin:WRITTEN");
@@ -187,8 +194,10 @@ class DocxNodeFieldLedgerTest {
 
     @Test
     void everyNodeKindGraphComposeShipsHasAnEntry() throws Exception {
-        assertThat(names(publicNodeClasses()))
-                .as("the public node classes of %s: a kind with no entry has fields nobody decided "
+        // Every concrete one, nested or not, public or not: the export counts all of them as its
+        // own (DocxSemanticBackend.isBuiltIn), so none may go undecided.
+        assertThat(names(nodeClasses()))
+                .as("the node classes of %s: a kind with no entry has fields nobody decided "
                     + "the DOCX export's answer for", PACKAGES)
                 .containsExactlyInAnyOrderElementsOf(names(NODES.keySet()));
     }
@@ -197,7 +206,7 @@ class DocxNodeFieldLedgerTest {
     void everyNodeKindGraphComposeShipsIsARecord() throws Exception {
         // The ledger reads a node's fields as its record components; a node class that is not a
         // record would have fields this test cannot see, and so no decision for any of them.
-        assertThat(publicNodeClasses()).as("public node classes that are not records")
+        assertThat(nodeClasses()).as("node classes that are not records")
                 .filteredOn(kind -> !kind.isRecord()).isEmpty();
     }
 
@@ -238,6 +247,11 @@ class DocxNodeFieldLedgerTest {
                 unexplained.add(kind.getSimpleName() + "." + field);
             }
         }));
+        OUTPUT_OPTIONS.forEach((option, entry) -> {
+            if (entry.fate() == Fate.GAP && entry.note().isBlank()) {
+                unexplained.add("DocumentOutputOptions." + option);
+            }
+        });
         assertThat(unexplained).as("a gap names what the Word file loses").isEmpty();
     }
 
@@ -274,8 +288,11 @@ class DocxNodeFieldLedgerTest {
     private static final List<String> PACKAGES = List.of(DocumentNode.class.getPackageName(),
             com.demcha.compose.document.layout.LayoutAnchorNode.class.getPackageName());
 
-    /** The public, concrete node classes the core module ships in {@link #PACKAGES}. */
-    private static List<Class<?>> publicNodeClasses() throws IOException, URISyntaxException, ClassNotFoundException {
+    /**
+     * The concrete node classes the core module ships in {@link #PACKAGES} — nested ones, and
+     * ones not public, included.
+     */
+    private static List<Class<?>> nodeClasses() throws IOException, URISyntaxException, ClassNotFoundException {
         Path source = Path.of(DocumentNode.class.getProtectionDomain().getCodeSource().getLocation().toURI());
         List<String> classFiles = new ArrayList<>();
         for (String pkg : PACKAGES) {
@@ -294,11 +311,13 @@ class DocxNodeFieldLedgerTest {
         }
         List<Class<?>> kinds = new ArrayList<>();
         for (String file : classFiles) {
-            if (!file.endsWith(".class") || file.contains("$")) {
+            if (!file.endsWith(".class") || file.endsWith("package-info.class")) {
                 continue;
             }
-            Class<?> type = Class.forName(file.substring(0, file.length() - ".class".length()).replace('/', '.'));
-            if (DocumentNode.class.isAssignableFrom(type) && Modifier.isPublic(type.getModifiers())
+            // Loaded without initialising: a nested class's binary name keeps its '$'.
+            Class<?> type = Class.forName(file.substring(0, file.length() - ".class".length()).replace('/', '.'),
+                    false, DocumentNode.class.getClassLoader());
+            if (DocumentNode.class.isAssignableFrom(type)
                 && !type.isInterface() && !Modifier.isAbstract(type.getModifiers())) {
                 kinds.add(type);
             }

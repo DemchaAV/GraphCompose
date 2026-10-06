@@ -445,6 +445,15 @@ in than the list's edge, and every item of a list the layout did not place or wh
 does not report one by one — an item split across pages — keep the spaces, and so does the
 top level of a list that nests any of them.
 
+The report names what a list's items lose, on the list (`ListNode`): its items are written
+flush left where it is centred or right-aligned; its lineSpacing is not written where the
+layout's items are not its own and one wraps — an item run onto the next page wraps, even split
+a line apiece — nor in a list composed in a table cell, whose wrapping is not measured; its
+continuationIndent is not written where an item wraps in a list the page sets it in, a
+markerless list or a tree of items without `hangingIndent`; and it counts the items that stand
+at a stated column, a space past their marker or two spaces a level in, rather than where the
+page sets them.
+
 ## What a panel keeps and loses
 
 A container that paints — a fill, per-side borders, a uniform stroke — exports as a table of

@@ -419,6 +419,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private double listTextLeft = Double.NaN;
     /** Whether the layout's items are matched to the list's, one by one: each then has its place. */
     private boolean listItemsMatched;
+    /** How many items of the list being written do not stand where the page sets them (itemSet). */
+    private int listItemsOffTheirColumn;
     /**
      * How the layout set each item of the list being written still to come, first item first:
      * its lines and where its text starts; empty when they cannot be told apart, and then no
@@ -838,12 +840,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         layout = DocxLayoutMetrics.of(section.graph(), context.layoutGraph());
         if (layout.isEmpty()) {
             // Said once per section, naming it when there are several: without measurements
-            // the line height is Word's and so is every auto column, and a caller comparing
-            // this file against the rendered page deserves to know that before they look.
+            // the line height is Word's, a lineSpacing is put between no lines, and every auto
+            // column is Word's, and a caller comparing this file against the rendered page
+            // deserves to know that before they look.
             report.add(DocxExportReport.Severity.APPROXIMATED, "measured geometry",
                     sectioned ? "section " + (index + 1) : null,
                     (sectioned ? "this section" : "this document")
-                    + " could not be laid out, so line heights and auto column "
+                    + " could not be laid out, so line heights, the space between lines and auto column "
                     + "widths are the editor's rather than the engine's");
         }
         carriedSpacingBefore = 0;
@@ -3381,6 +3384,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 : new java.util.ArrayDeque<>();
         boolean previousMatched = listItemsMatched;
         listItemsMatched = !laidOut.isEmpty() && laidOut.size() == itemCount(list);
+        boolean matched = listItemsMatched;
+        int previousOffTheirColumn = listItemsOffTheirColumn;
+        listItemsOffTheirColumn = 0;
         // Where the list's items start on the page, past its margin and padding: an item's text
         // stands its own distance past it (see indentAsTheItemIs).
         double previousTextLeft = listTextLeft;
@@ -3396,9 +3402,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double spare = currentCell != null ? EDITOR_SLACK_POINTS : 0;
         insetLeft += Math.max(0, (list == leftMarginInCell ? 0 : list.margin().left()) + list.padding().left());
         insetRight += Math.max(0, list.margin().right() + list.padding().right() - spare);
+        int offTheirColumn;
         try {
             writeListItems(document, list, numId);
         } finally {
+            offTheirColumn = listItemsOffTheirColumn;
             insetLeft = outerLeft;
             insetRight = outerRight;
             pendingItemSpacing = previousItemSpacing;
@@ -3407,8 +3415,85 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             listItemLines = previousItemLines;
             listTextLeft = previousTextLeft;
             listItemsMatched = previousMatched;
+            listItemsOffTheirColumn = previousOffTheirColumn;
         }
         owePendingSpacingAfter(list.margin().bottom() + list.padding().bottom());
+        reportWrittenWithout(list, numId != null ? "written as a Word list" : "written as a paragraph per item",
+                listLost(list, laidOut, matched, offTheirColumn));
+    }
+
+    /**
+     * What a list's items lose, as the phrases its note lists.
+     *
+     * <p>Its alignment: every item is written flush left. Its lineSpacing, where the layout's
+     * items are not matched to the list's and one of them wraps — an item run onto the next page
+     * is laid out as a piece on each, and wraps whatever its pieces hold — or, composed in a table
+     * cell, where the list has no lines of its own to read: the gap is put between an item's lines
+     * only by its laid-out lines (see {@link #applyItemLineGap}). With no layout at all, the
+     * section's own note says the space between lines is the editor's. Its continuationIndent,
+     * which the page sets before every wrapped line of a list whose markers are not drawn before
+     * them (a hidden marker, or a tree flattened into its labels, without {@code hangingIndent}),
+     * where an item wraps. And how many of its items do not stand where the page sets them
+     * ({@link #itemSet}): with {@code hangingIndent}, its marker column and markerGap. A list
+     * that writes no item loses none of it.</p>
+     *
+     * @param laidOut        the items as the layout laid them out
+     * @param matched        whether those are the list's own, one for one
+     * @param offTheirColumn how many of its items do not stand where the page sets them
+     */
+    private List<String> listLost(com.demcha.compose.document.node.ListNode list,
+                                  List<DocxLayoutMetrics.ItemText> laidOut, boolean matched, int offTheirColumn) {
+        List<String> lost = new ArrayList<>();
+        int items = itemCount(list);
+        if (items == 0) {
+            // It writes no paragraph, so nothing of it is lost.
+            return lost;
+        }
+        if (list.align() != TextAlign.LEFT) {
+            lost.add("its items are written flush left, where the page sets them "
+                     + (list.align() == TextAlign.CENTER ? "centred" : "right-aligned"));
+        }
+        // Whether an item wraps, by the layout's own lines; with none of its own to read, not known.
+        // An item run onto the next page is laid out as a piece on each, maybe of one line apiece,
+        // and has more than one line whatever its pieces hold.
+        boolean wraps = laidOut.size() > items || laidOut.stream().anyMatch(item -> item.lines().size() > 1);
+        String unmeasured = layout.isEmpty() || laidOut.isEmpty() ? " — whether an item wraps is not measured" : "";
+        if (list.lineSpacing() > 0 && !layout.isEmpty() && !matched && (laidOut.isEmpty() || wraps)) {
+            lost.add("its lineSpacing is not written between a wrapped item's lines" + unmeasured);
+        }
+        boolean continued = !list.marker().isVisible() || !list.nestedItems().isEmpty();
+        if (!list.hangingIndent() && continued && !list.continuationIndent().isEmpty()
+            && (!unmeasured.isEmpty() || wraps)) {
+            lost.add("its continuationIndent is not written before a wrapped item's lines" + unmeasured);
+        }
+        if (offTheirColumn > 0) {
+            lost.add(offTheirColumn + " of its " + items + " items stand at a stated column — 9pt in, "
+                     + "6pt more a level — or a space past their marker or two spaces a level in, not where "
+                     + "the page sets them");
+        }
+        return lost;
+    }
+
+    /**
+     * Counts an item of the list being written that does not stand where the page sets it: a
+     * Word list's item at the stated column of its level (see {@link #numberingFor}), and an
+     * item of a {@code hangingIndent} list a space past its marker or two spaces a level in. A
+     * stated column is not measured against the page's, so one the page's happens to equal counts.
+     */
+    private void itemSet(boolean whereThePageSetsIt) {
+        if (!whereThePageSetsIt) {
+            listItemsOffTheirColumn++;
+        }
+    }
+
+    /**
+     * Whether an item written as its marker's letters, two spaces a level ahead of them, stands
+     * where the page sets it: without {@code hangingIndent} the page sets those very letters (its
+     * tree flattened into them); with it, a column past the marker, or at the edge with none.
+     */
+    private static boolean asItsLetters(com.demcha.compose.document.node.ListNode list, int depth,
+                                        com.demcha.compose.document.node.ListMarker marker) {
+        return !list.hangingIndent() || depth == 0 && marker.prefix().isBlank();
     }
 
     /**
@@ -3497,21 +3582,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (list.marker().isRich()) {
                 // A drawn marker's pieces are runs, so the row is written the way
                 // any row with runs in it is; its item is still just a label.
-                writeRichListLine(document, list.textStyle(), list.marker(),
+                itemSet(writeRichListLine(document, list.textStyle(), list.marker(),
                         com.demcha.compose.document.node.ListItem.of(normalized), 0, lineHeight, layout.firstLine(list),
-                        layout.pathOf(list), list);
+                        layout.pathOf(list), list));
             } else if (numId != null) {
                 // Word draws the marker, so the text is the item and nothing else.
                 writeListLine(document, list.textStyle(), normalized, 0, numId, lineHeight);
+                itemSet(measuredColumns.containsKey(numId));
             } else if (setInAColumn(list, list.marker())) {
                 // A list that is not a Word list, its marker in a column the layout set: the item
                 // is written as a rich one is, its text tabbed to that column.
-                writeRichListLine(document, list.textStyle(), list.marker(),
+                itemSet(writeRichListLine(document, list.textStyle(), list.marker(),
                         com.demcha.compose.document.node.ListItem.of(normalized), 0, lineHeight, layout.firstLine(list),
-                        layout.pathOf(list), list);
+                        layout.pathOf(list), list));
             } else {
                 writeListLine(document, list.textStyle(),
                         list.marker().prefix() + normalized, 0, null, lineHeight);
+                itemSet(asItsLetters(list, 0, list.marker()));
             }
         }
         for (com.demcha.compose.document.node.ListItem item : list.nestedItems()) {
@@ -3537,16 +3624,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // A nested item stands after its depth's indent, and an item may carry a marker of
             // its own: the list's measure of its first item's marker is only a top-level item's
             // that carries the list's.
-            writeRichListLine(document, list.textStyle(), marker, item, depth, lineHeight, layout.firstLine(list),
-                    layout.pathOf(list), depth == 0 && marker.equals(list.marker()) ? list : null);
+            itemSet(writeRichListLine(document, list.textStyle(), marker, item, depth, lineHeight,
+                    layout.firstLine(list), layout.pathOf(list), depth == 0 && marker.equals(list.marker()) ? list : null));
         } else if (numId != null) {
             writeListLine(document, list.textStyle(), item.label(), depth, numId, lineHeight);
+            itemSet(depth == 0 && measuredColumns.containsKey(numId));
         } else if (depth == 0 && marker.equals(list.marker()) && setInAColumn(list, marker)) {
-            writeRichListLine(document, list.textStyle(), marker, item, depth, lineHeight, layout.firstLine(list),
-                    layout.pathOf(list), list);
+            itemSet(writeRichListLine(document, list.textStyle(), marker, item, depth, lineHeight,
+                    layout.firstLine(list), layout.pathOf(list), list));
         } else {
             writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth, null,
                     lineHeight);
+            itemSet(asItsLetters(list, depth, marker));
         }
         for (com.demcha.compose.document.node.ListItem child : item.children()) {
             writeNestedItem(document, list, child, depth + 1, numId);
@@ -3678,8 +3767,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param measured the list the item's marker column is measured from, or {@code null}
      *                 when it is not this item's — a nested item, or one with a marker of
      *                 its own
+     * @return whether its text stands where the page sets it: tabbed to the marker column the
+     *         layout set, at the layout's own place for it, or at the edge with no marker before it
      */
-    private void writeRichListLine(XWPFDocument document, DocumentTextStyle style,
+    private boolean writeRichListLine(XWPFDocument document, DocumentTextStyle style,
                                    com.demcha.compose.document.node.ListMarker marker,
                                    com.demcha.compose.document.node.ListItem item,
                                    int depth,
@@ -3717,6 +3808,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         java.util.OptionalDouble markerToText = measured != null && depth == 0 && !nestsBesideItsText(measured)
                 ? layout.markerToText(measured) : java.util.OptionalDouble.empty();
+        boolean pictureTab = false;
         PictureReach pictures = PictureReach.NONE;
         if (marker.isRich()) {
             pictures = writeInlineTextRuns(para, style, marker.runs(), path, line);
@@ -3741,6 +3833,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     // would run on to Word's next default stop, half an inch on.
                     gap.addTab();
                     hangFrom(para, markerToText.getAsDouble());
+                    pictureTab = true;
                 } else {
                     gap.setText(" ");
                 }
@@ -3764,6 +3857,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         makeRoomForPictures(para, pictures);
         styleTheMark(para, markStyle);
+        return atItsText || textTab || pictureTab
+               || depth == 0 && !marker.isRich() && marker.prefix().isBlank();
     }
 
     /** How far past a list marker's picture its tab stop must stand for the tab to reach it, in points. */

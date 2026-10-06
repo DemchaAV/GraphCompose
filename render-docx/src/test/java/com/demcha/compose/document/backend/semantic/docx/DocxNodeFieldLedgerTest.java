@@ -138,12 +138,16 @@ class DocxNodeFieldLedgerTest {
                 "anchor:REPORTED:drawn; a rule in the flow is bookmarked", "lineCap:REPORTED:a cap other than butt; whether an editor ends a drawn butt line flat is not measured",
                 "fillWidth:WRITTEN", "keepWithNext:REPORTED:of a line drawn in the flow the page keeps blocks together in");
         node(ListNode.class, "name:INERT", "items:WRITTEN", "nestedItems:WRITTEN", "marker:WRITTEN",
-                "textStyle:WRITTEN", "align:GAP:a centred or right-aligned list is written flush left",
-                "lineSpacing:GAP:the gap between an item's lines where the layout's item count differs",
-                "itemSpacing:WRITTEN", "continuationIndent:GAP:the indent of an item's wrapped lines",
+                "textStyle:WRITTEN", "align:REPORTED",
+                "lineSpacing:REPORTED:where the layout's items are not its own and one wraps, an item run "
+                + "onto the next page among them; composed in a table cell, its wrapping not measured; "
+                + "with no layout, in the section's note",
+                "itemSpacing:WRITTEN",
+                "continuationIndent:REPORTED:where an item wraps in a markerless list or a tree of items "
+                + "without hangingIndent, the only lists the page sets it in",
                 "normalizeMarkers:WRITTEN", "padding:WRITTEN", "margin:WRITTEN",
-                "hangingIndent:GAP:the marker column of a nesting list's deeper levels",
-                "markerGap:GAP:the gap of a nesting list's deeper levels");
+                "hangingIndent:REPORTED:where an item stands at a stated column or a space past its marker",
+                "markerGap:REPORTED:where an item stands at a stated column or a space past its marker");
         node(PageBreakNode.class, "name:INERT", "margin:INERT");
         node(PageFieldNode.class, "name:INERT", "kind:WRITTEN", "textStyle:WRITTEN",
                 "align:GAP:its alignment in a page zone", "padding:GAP:its sides in a page zone",

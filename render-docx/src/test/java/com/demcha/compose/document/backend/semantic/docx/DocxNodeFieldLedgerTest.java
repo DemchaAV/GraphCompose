@@ -74,8 +74,9 @@ class DocxNodeFieldLedgerTest {
         /** Not in the Word file, and named in the export's report when the author set it. */
         REPORTED,
         /**
-         * Nothing for a Word file to carry: a name the report addresses the node by, or an
-         * identity the layout resolves a wrapper's place by.
+         * Nothing for a Word file to carry: a name the report addresses the node by, an
+         * identity the layout resolves a wrapper's place by, or a field the page itself does
+         * not apply.
          */
         INERT,
         /** Lost, in some or all cases, without a report note yet; the entry says what. */
@@ -106,18 +107,18 @@ class DocxNodeFieldLedgerTest {
                 "margin:REPORTED:its left side; its right moves nothing in a paragraph set from the left",
                 "transform:REPORTED", "anchor:WRITTEN");
         node(CanvasLayerNode.class, "name:INERT",
-                "width:GAP:the room the canvas holds in the flow",
-                "height:GAP:the room the canvas holds in the flow",
-                "placements:GAP:where its text, pictures and tables stand; they are written one after another",
-                "clipPolicy:GAP:the clip", "padding:WRITTEN", "margin:WRITTEN");
+                "width:REPORTED:the width its text wraps at",
+                "height:GAP:the room it holds as its row's tallest cell, or ending a band or a layer "
+                + "stack's column; in a flow something follows it in, it is reported",
+                "placements:REPORTED:where what it writes stands; its drawings stand where it places them",
+                "clipPolicy:INERT:the page clips no canvas", "padding:WRITTEN", "margin:WRITTEN");
         node(ChartNode.class, "name:INERT", "spec:REPORTED", "style:REPORTED:in the chart's note",
                 "margin:REPORTED:in the chart's note; above and below; below a block a band or a column measures from, written",
                 "padding:REPORTED:in the chart's note; above and below; below a block a band or a column measures from, written");
         node(ContainerNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
                 "margin:WRITTEN", "fillColor:WRITTEN", "stroke:WRITTEN", "cornerRadius:REPORTED", "borders:WRITTEN",
                 "anchor:REPORTED:as a layer stack's column, which has no bookmark; in the flow it is bookmarked",
-                "bookmarkOptions:REPORTED", "flowWidth:GAP:the width of a container written as a layer stack's column; "
-                + "an unpainted one's, and a panel's in a table cell, are reported");
+                "bookmarkOptions:REPORTED", "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
         node(EllipseNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:WRITTEN",
                 "stroke:WRITTEN", "linkTarget:REPORTED", "bookmarkOptions:REPORTED",
                 "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
@@ -135,7 +136,7 @@ class DocxNodeFieldLedgerTest {
                 "bookmarkOptions:REPORTED", "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
                 "dashPattern:REPORTED",
                 "anchor:REPORTED:drawn; a rule in the flow is bookmarked", "lineCap:REPORTED:a cap other than butt; whether an editor ends a drawn butt line flat is not measured",
-                "fillWidth:WRITTEN", "keepWithNext:GAP:the keep of a line drawn as a shape");
+                "fillWidth:WRITTEN", "keepWithNext:REPORTED:of a line drawn in the flow the page keeps blocks together in");
         node(ListNode.class, "name:INERT", "items:WRITTEN", "nestedItems:WRITTEN", "marker:WRITTEN",
                 "textStyle:WRITTEN", "align:GAP:a centred or right-aligned list is written flush left",
                 "lineSpacing:GAP:the gap between an item's lines where the layout's item count differs",
@@ -177,10 +178,9 @@ class DocxNodeFieldLedgerTest {
                 "margin:WRITTEN", "fillColor:WRITTEN", "stroke:WRITTEN", "cornerRadius:REPORTED", "borders:WRITTEN",
                 "keepTogether:WRITTEN",
                 "anchor:REPORTED:as a layer stack's column, which has no bookmark; in the flow it is bookmarked",
-                "bleed:GAP:the paint's bleed past the section",
+                "bleed:REPORTED:of a panel the page bleeds, in the flow it pages",
                 "bookmarkOptions:REPORTED", "keepWithNext:WRITTEN",
-                "flowWidth:GAP:the width of a section written as a layer stack's column; "
-                + "an unpainted one's, and a panel's in a table cell, are reported");
+                "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
         node(ShapeContainerNode.class, "name:INERT", "outline:WRITTEN", "layers:WRITTEN",
                 "clipPolicy:GAP:the clip of a container written as a badge, a line pair or over the flow",
                 "fillColor:WRITTEN", "stroke:WRITTEN", "padding:WRITTEN", "margin:WRITTEN",

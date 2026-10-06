@@ -248,6 +248,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // layer stack they sit in is written as columns (DocxLayerColumns).
     private final java.util.Set<DocumentNode> standIns =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // The lines drawn in the flow whose keep with the next block Word is not given (keepGoesUnheld).
+    private final java.util.Set<DocumentNode> keepsUnheld = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // How many boxes the page places rather than flows — a row's or a table's cell, a layer
+    // stack's column — the writing stands in (inThePagedFlow).
+    private int slotDepth;
+    // The blocks something is written after in the flow they stand in.
+    private final java.util.Set<DocumentNode> followedInFlow = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // Where the blocks are placed whose space below a band or a column measures from the page,
     // their own margin and padding below them included (DocxLayerColumns.Band#closing).
     private final java.util.Set<com.demcha.compose.document.layout.PlacedNode> closingBlocks =
@@ -693,6 +700,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         warnedNodeKinds.clear();
         zonePartsReported.clear();
         closingBlocks.clear();
+        keepsUnheld.clear();
+        followedInFlow.clear();
+        slotDepth = 0;
         surfaceBehind = null;
         overlayDepth = 0;
         bandDepth = 0;
@@ -781,8 +791,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                 "drawn as a line where the layout puts it, " + ANCHORED_BESIDE_ITS_TEXT);
                     }
                 }
-                for (DocumentNode root : section.graph().roots()) {
-                    writeNode(document, root);
+                List<DocumentNode> roots = section.graph().roots();
+                for (int root = 0; root < roots.size(); root++) {
+                    if (root + 1 < roots.size() && !(roots.get(root + 1) instanceof PageBreakNode)) {
+                        followedInFlow.add(roots.get(root));
+                    }
+                    writeNode(document, roots.get(root));
                 }
                 raiseRows();
                 // The paragraph closing a section that ends with a table is also the one that
@@ -2724,6 +2738,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     message.append("; ").append(lost);
                 }
             }
+            if (keepsUnheld.remove(node)) {
+                message.append("; its keep with the next block is not carried, so a page can end between "
+                        + "the two");
+            }
             if (!isBuiltIn(node)) {
                 message.append("; a node kind the DOCX export does not know: only the shapes it "
                         + "paints itself are written, not its text, its pictures").append(heldNodes(node));
@@ -3862,9 +3880,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean narrowed = (paint.isEmpty() || layout.placedWidth(node).isEmpty()) && node.flowWidth().isFixed()
                            && known && holdsWrappedText(node)
                            && node.flowWidth().points() < room - EDITOR_COLUMN_SLACK_POINTS - 0.5;
-        reportWrittenWithout(node, paint.isEmpty() ? "written as its contents" : "written as a panel",
-                narrowed ? List.of("its fixed width is not in the file, so its paragraphs and lists run "
-                                   + "the width of the column it stands in") : List.of());
+        List<String> alsoLost = new ArrayList<>();
+        if (narrowed) {
+            alsoLost.add("its fixed width is not in the file, so its paragraphs and lists run the width of "
+                         + "the column it stands in");
+        }
+        if (node instanceof com.demcha.compose.document.node.CanvasLayerNode canvas) {
+            alsoLost.addAll(canvasLosses(canvas, known ? room : Double.NaN));
+        }
+        // A panel is a table as wide as its box, where the page paints its fill and borders past
+        // it in the flow it pages (inThePagedFlow).
+        if (!paint.isEmpty() && node.bleed().any() && inThePagedFlow()) {
+            alsoLost.add("its bleed is not in the file, so its fill and borders stop at its box, not at "
+                         + "the page's edge");
+        }
+        reportWrittenWithout(node, paint.isEmpty() ? "written as its contents" : "written as a panel", alsoLost);
         if (paint.isEmpty()) {
             writeContainerBody(document, node);
             return;
@@ -4249,13 +4279,50 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeChildren(XWPFDocument document, List<DocumentNode> children, double spacing)
             throws Exception {
+        writeChildren(document, children, spacing, false);
+    }
+
+    /**
+     * Writes a flow's children one after another.
+     *
+     * @param lastFollowed whether something is written after the flow, so its last child is
+     *                     followed too
+     */
+    private void writeChildren(XWPFDocument document, List<DocumentNode> children, double spacing,
+                               boolean lastFollowed) throws Exception {
         for (int index = 0; index < children.size(); index++) {
             DocumentNode child = children.get(index);
             if (index > 0 && spacing > 0 && !(child instanceof PageBreakNode)) {
                 owePendingSpacingAfter(spacing);
             }
+            if (index + 1 < children.size() ? !(children.get(index + 1) instanceof PageBreakNode) : lastFollowed) {
+                followedInFlow.add(child);
+            }
+            if (index + 1 < children.size() && keepGoesUnheld(child, children.get(index + 1))) {
+                keepsUnheld.add(child);
+            }
             writeNode(document, child);
         }
+    }
+
+    /**
+     * Whether a line drawn in the flow, kept with the next block, is written apart from it: a
+     * drawing writes no paragraph to keep with the next, and its drawing is anchored in a
+     * paragraph near it, so a page can end between the two whatever the next block is.
+     */
+    private boolean keepGoesUnheld(DocumentNode node, DocumentNode next) {
+        return inThePagedFlow() && node instanceof com.demcha.compose.document.node.LineNode line
+               && line.keepWithNext() && ruleOf(node) == null && !(next instanceof PageBreakNode);
+    }
+
+    /**
+     * Whether what is being written stands in the flow the page lays out page by page: the body
+     * and the panels and boxes in it, not a row's cell, a table's composed cell, a layer stack's
+     * column or anything laid over another. Only there does the page keep a block with the next
+     * and bleed a section's paint toward its edges; everywhere else it places a fixed box.
+     */
+    private boolean inThePagedFlow() {
+        return overlayDepth == 0 && slotDepth == 0;
     }
 
     /** The space a container puts between its children, zero for any other node. */
@@ -4287,7 +4354,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             placeAcross(align, align.child());
         }
         try {
-            writeChildren(document, node.children(), spacingOf(node));
+            writeChildren(document, node.children(), spacingOf(node), followedInFlow.remove(node));
         } finally {
             insetLeft = outerLeft;
             insetRight = outerRight;
@@ -10322,6 +10389,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 List<DocumentNode> layers = columns.get(index).layers();
                 double previous = currentCellWidth;
                 currentCellWidth = usableWidthOf(cell, index, 1);
+                // A column's layers are boxes the page places, not its flow.
+                slotDepth++;
                 try {
                     writeInCell(cell, () -> {
                         for (int layer = 0; layer < layers.size(); layer++) {
@@ -10339,12 +10408,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                             }
                             // A column layer is written as what it holds, never dispatched itself:
                             // no bookmark goes round it, though bookmarkedAnchorsIn counts one.
+                            List<String> columnLost = new ArrayList<>(2);
                             String anchor = blockAnchorOf(node, true);
-                            reportWrittenWithout(node, "written as a column of its layer stack",
-                                    anchor == null || anchor.isBlank() ? List.of()
-                                            : List.of("its anchor has no bookmark in the Word file: a link "
-                                                      + "or a page reference to it names a bookmark the file "
-                                                      + "does not hold"));
+                            if (anchor != null && !anchor.isBlank()) {
+                                columnLost.add("its anchor has no bookmark in the Word file: a link or a "
+                                               + "page reference to it names a bookmark the file does not hold");
+                            }
+                            // Its column runs between its neighbours' bands, not to the width it is fixed at.
+                            com.demcha.compose.document.layout.PlacedNode placedLayer = layout.placement(node);
+                            if (node.flowWidth().isFixed() && holdsWrappedText(node) && placedLayer != null
+                                && Double.isFinite(currentCellWidth)
+                                && placedLayer.placementWidth() - node.padding().horizontal()
+                                   < availableWidth() - EDITOR_COLUMN_SLACK_POINTS - 0.5) {
+                                columnLost.add("its fixed width is not in the file, so its paragraphs and "
+                                               + "lists run the width of its column");
+                            }
+                            reportWrittenWithout(node, "written as a column of its layer stack", columnLost);
                             writeChildren(document, node.children(), spacingOf(node));
                             if (layer > 0 && blocksWritten == blocksBefore && holdsMovedContent(node)) {
                                 // A layer that wrote nothing — its content all written in an
@@ -10360,6 +10439,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         }
                     });
                 } finally {
+                    slotDepth--;
                     currentCellWidth = previous;
                     resumeSpacing = Double.NaN;
                 }
@@ -10598,6 +10678,57 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static boolean holdsWrappedText(DocumentNode node) {
         return node instanceof ParagraphNode || node instanceof com.demcha.compose.document.node.ListNode
                || node.children().stream().anyMatch(DocxSemanticBackend::holdsWrappedText);
+    }
+
+    /**
+     * What a canvas written as its contents leaves out. Its drawings stand where it places them
+     * (drawOwnFragments); what it writes — text, pictures, tables — is written one block after
+     * another inside its margin and padding, so the places it gives them, the room it holds and
+     * the width its text wraps at are not in the file.
+     *
+     * @param canvas the canvas
+     * @param room   the width its margins leave it where it is written, or NaN when not known
+     * @return the phrases, empty when what it writes is one block at its corner, as tall as it,
+     *         or when nothing follows it to move
+     */
+    private List<String> canvasLosses(com.demcha.compose.document.node.CanvasLayerNode canvas, double room) {
+        List<String> lost = new ArrayList<>(3);
+        List<com.demcha.compose.document.node.CanvasChild> written = new ArrayList<>();
+        for (com.demcha.compose.document.node.CanvasChild child : canvas.placements()) {
+            if (!onlyDrawn(child.node())) {
+                written.add(child);
+            }
+        }
+        // Written one after another from its corner, they stand where it places them only where
+        // it stacks them that way, each at the foot of the one before.
+        double stacked = 0;
+        boolean placedApart = false;
+        for (com.demcha.compose.document.node.CanvasChild child : written) {
+            if (child.x() != 0 || Math.abs(child.y() - stacked) > 0.5) {
+                placedApart = true;
+            }
+            com.demcha.compose.document.layout.PlacedNode placed = layout.placement(child.node());
+            stacked += placed == null ? 0
+                    : placed.placementHeight() + child.node().margin().top() + child.node().margin().bottom();
+        }
+        if (placedApart) {
+            lost.add("what it writes is written from its corner, one block after another, not where it places it");
+        }
+        // In the flow — itself the only overlay round what it writes, a stack of one layer aside —
+        // it takes the room of what it writes, where the page gives it its height; that moves
+        // what follows it, where anything does (followedInFlow). Composed in a table cell, it has
+        // no placement, nor has what it writes, to measure by.
+        if (layout.placement(canvas) != null && overlayDepth - oneLayerDepth == 1
+            && followedInFlow.contains(canvas) && Math.abs(canvas.height() - stacked) > 0.5) {
+            lost.add("its height is not held: what follows starts below what it writes");
+        }
+        boolean writesText = written.stream().anyMatch(child -> holdsWrappedText(child.node()));
+        if (Double.isFinite(room) && writesText
+            && canvas.width() < room - canvas.padding().horizontal() - EDITOR_COLUMN_SLACK_POINTS - 0.5) {
+            lost.add("its width is not in the file, so its paragraphs and lists run the width of the column "
+                     + "it stands in");
+        }
+        return lost;
     }
 
     /** Whether a node is a paragraph of text or holds one. */
@@ -11849,11 +11980,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         writeInCell(cell, () -> {
             DrawingCell outer = drawingCell;
             drawingCell = alone;
+            // A row's cell and a table's composed cell are boxes the page places, not its flow.
+            slotDepth++;
             try {
                 for (DocumentNode child : children) {
                     writeNode(cell.getXWPFDocument(), child);
                 }
             } finally {
+                slotDepth--;
                 drawingCell = outer;
             }
         });

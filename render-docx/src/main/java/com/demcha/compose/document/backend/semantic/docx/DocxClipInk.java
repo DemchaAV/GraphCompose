@@ -203,49 +203,84 @@ final class DocxClipInk {
 
     /** Points on the outer edge of what a fragment paints, or none for a marker. */
     private static List<double[]> inkOf(PlacedFragment fragment, boolean croppedToAnEllipse, LetterReach letters) {
-        Object payload = fragment.payload();
         List<double[]> ink = new ArrayList<>();
-        if (payload instanceof TransformBeginPayload || payload instanceof TransformEndPayload
-            || payload instanceof AnchorMarkerPayload || payload instanceof BookmarkMarkerPayload
-            || payload instanceof LayoutAnchorPayload) {
-            return ink;
-        }
-        if (payload instanceof ShapeFragmentPayload shape) {
-            box(ink, fragment, shape);
-        } else if (payload instanceof EllipseFragmentPayload ellipse) {
-            Shape outline = DocxInkOutline.ellipse(fragment.x(), fragment.y(), fragment.width(), fragment.height());
-            if (ellipse.fillColor() != null) {
-                DocxInkOutline.filled(ink, outline);
-            }
-            DocxInkOutline.stroked(ink, outline, widthOf(ellipse.stroke()), DocumentLineCap.BUTT, DocumentLineJoin.MITER);
-        } else if (payload instanceof LineFragmentPayload line) {
-            DocxInkOutline.stroked(ink, DocxInkOutline.line(fragment.x() + line.startX(), fragment.y() + line.startY(),
-                            fragment.x() + line.endX(), fragment.y() + line.endY()),
-                    widthOf(line.stroke()), line.lineCap(), DocumentLineJoin.MITER);
-        } else if (payload instanceof PathFragmentPayload path) {
-            Shape outline = DocxInkOutline.path(path.segments(), fragment);
-            if (path.fillColor() != null) {
-                DocxInkOutline.filled(ink, outline);
-            }
-            DocxInkOutline.stroked(ink, outline, widthOf(path.stroke()), path.lineCap(), path.lineJoin());
-        } else if (payload instanceof PolygonFragmentPayload polygon) {
-            Shape outline = DocxInkOutline.polygon(polygon.points(), fragment);
-            if (polygon.fillColor() != null) {
-                DocxInkOutline.filled(ink, outline);
-            }
-            DocxInkOutline.stroked(ink, outline, widthOf(polygon.stroke()), DocumentLineCap.BUTT, DocumentLineJoin.MITER);
-        } else if (payload instanceof ParagraphFragmentPayload paragraph) {
-            text(ink, fragment, paragraph, letters);
-        } else if (payload instanceof ImageFragmentPayload image) {
-            double[] drawn = drawn(fragment, image);
-            DocxInkOutline.filled(ink, croppedToAnEllipse
-                    ? DocxInkOutline.ellipse(drawn[0], drawn[1], drawn[2], drawn[3])
-                    : DocxInkOutline.box(drawn[0], drawn[1], drawn[0] + drawn[2], drawn[1] + drawn[3]));
-        } else {
-            // A barcode, a table's row, and anything else: its box.
-            DocxInkOutline.filled(ink, DocxInkOutline.box(fragment, DocumentCornerRadius.ZERO));
-        }
+        // The payloads are records, so a fragment's own class finds how it paints; a barcode, a
+        // table's row and anything else paint their box.
+        PAINTERS.getOrDefault(fragment.payload().getClass(), DocxClipInk::boxOf)
+                .paint(ink, fragment, croppedToAnEllipse, letters);
         return ink;
+    }
+
+    /** How one kind of fragment paints. */
+    @FunctionalInterface
+    private interface Painter {
+        void paint(List<double[]> ink, PlacedFragment fragment, boolean croppedToAnEllipse, LetterReach letters);
+    }
+
+    /** A marker: it paints nothing. */
+    private static final Painter NOTHING = (ink, fragment, cropped, letters) -> {
+    };
+
+    private static final java.util.Map<Class<?>, Painter> PAINTERS = java.util.Map.ofEntries(
+            java.util.Map.entry(ShapeFragmentPayload.class,
+                    (ink, fragment, cropped, letters) -> box(ink, fragment, (ShapeFragmentPayload) fragment.payload())),
+            java.util.Map.entry(EllipseFragmentPayload.class, (ink, fragment, cropped, letters) -> ellipse(ink, fragment)),
+            java.util.Map.entry(LineFragmentPayload.class, (ink, fragment, cropped, letters) -> line(ink, fragment)),
+            java.util.Map.entry(PathFragmentPayload.class, (ink, fragment, cropped, letters) -> path(ink, fragment)),
+            java.util.Map.entry(PolygonFragmentPayload.class, (ink, fragment, cropped, letters) -> polygon(ink, fragment)),
+            java.util.Map.entry(ParagraphFragmentPayload.class,
+                    (ink, fragment, cropped, letters) -> text(ink, fragment, (ParagraphFragmentPayload) fragment.payload(),
+                            letters)),
+            java.util.Map.entry(ImageFragmentPayload.class, (ink, fragment, cropped, letters) -> picture(ink, fragment, cropped)),
+            java.util.Map.entry(TransformBeginPayload.class, NOTHING),
+            java.util.Map.entry(TransformEndPayload.class, NOTHING),
+            java.util.Map.entry(AnchorMarkerPayload.class, NOTHING),
+            java.util.Map.entry(BookmarkMarkerPayload.class, NOTHING),
+            java.util.Map.entry(LayoutAnchorPayload.class, NOTHING));
+
+    private static void boxOf(List<double[]> ink, PlacedFragment fragment, boolean cropped, LetterReach letters) {
+        DocxInkOutline.filled(ink, DocxInkOutline.box(fragment, DocumentCornerRadius.ZERO));
+    }
+
+    private static void ellipse(List<double[]> ink, PlacedFragment fragment) {
+        EllipseFragmentPayload ellipse = (EllipseFragmentPayload) fragment.payload();
+        Shape outline = DocxInkOutline.ellipse(fragment.x(), fragment.y(), fragment.width(), fragment.height());
+        if (ellipse.fillColor() != null) {
+            DocxInkOutline.filled(ink, outline);
+        }
+        DocxInkOutline.stroked(ink, outline, widthOf(ellipse.stroke()), DocumentLineCap.BUTT, DocumentLineJoin.MITER);
+    }
+
+    private static void line(List<double[]> ink, PlacedFragment fragment) {
+        LineFragmentPayload line = (LineFragmentPayload) fragment.payload();
+        DocxInkOutline.stroked(ink, DocxInkOutline.line(fragment.x() + line.startX(), fragment.y() + line.startY(),
+                        fragment.x() + line.endX(), fragment.y() + line.endY()),
+                widthOf(line.stroke()), line.lineCap(), DocumentLineJoin.MITER);
+    }
+
+    private static void path(List<double[]> ink, PlacedFragment fragment) {
+        PathFragmentPayload path = (PathFragmentPayload) fragment.payload();
+        Shape outline = DocxInkOutline.path(path.segments(), fragment);
+        if (path.fillColor() != null) {
+            DocxInkOutline.filled(ink, outline);
+        }
+        DocxInkOutline.stroked(ink, outline, widthOf(path.stroke()), path.lineCap(), path.lineJoin());
+    }
+
+    private static void polygon(List<double[]> ink, PlacedFragment fragment) {
+        PolygonFragmentPayload polygon = (PolygonFragmentPayload) fragment.payload();
+        Shape outline = DocxInkOutline.polygon(polygon.points(), fragment);
+        if (polygon.fillColor() != null) {
+            DocxInkOutline.filled(ink, outline);
+        }
+        DocxInkOutline.stroked(ink, outline, widthOf(polygon.stroke()), DocumentLineCap.BUTT, DocumentLineJoin.MITER);
+    }
+
+    private static void picture(List<double[]> ink, PlacedFragment fragment, boolean croppedToAnEllipse) {
+        double[] drawn = drawn(fragment, (ImageFragmentPayload) fragment.payload());
+        DocxInkOutline.filled(ink, croppedToAnEllipse
+                ? DocxInkOutline.ellipse(drawn[0], drawn[1], drawn[2], drawn[3])
+                : DocxInkOutline.box(drawn[0], drawn[1], drawn[0] + drawn[2], drawn[1] + drawn[3]));
     }
 
     /**

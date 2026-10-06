@@ -1007,6 +1007,18 @@ A zone is written from its paragraphs, page fields and spacers: anything else in
 logo, a panel, a table — is not written, and the export report names it once
 (`page zone content`).
 
+The zone's line is Word's: its parts one after another from the page's left margin, and
+those after the first spacer against its right margin, at the right tab the line holds.
+Where the page sets a part elsewhere — by the zone's padding, a row's columns and gap, or
+the part's own alignment and sides — off the baseline most parts share, over more than one
+line or after a prefix, the export report counts it (`page zone`): "1 of its 3 parts stands
+off where the page sets them". Past a part Word sets at another width — after a prefix,
+auto-sized, over more lines than one — or in a zone the page builds otherwise than the file,
+it says where a part stands is not measured. It names what a paragraph in the zone loses of
+its own too: its right-to-left direction, a prefix's letters, the size an auto-sized one is
+fitted to, its outline entry. The line's height and the room its parts hold above and below
+are Word's, and an anchor in a zone has no bookmark; none of these is named yet.
+
 A zone drawn on some pages only (`appliesTo(...)`) lands on the same pages when Word can
 say so. Word has a header and footer for the first page, for even pages and for the rest,
 so the predicate is asked over sample pages and sorted into those kinds:

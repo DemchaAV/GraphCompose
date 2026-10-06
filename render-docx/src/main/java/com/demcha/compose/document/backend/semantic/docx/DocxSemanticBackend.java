@@ -406,6 +406,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** The page's top margin in points, or {@code NaN} when the export has no canvas. */
     private double canvasTopMargin = Double.NaN;
 
+    /** The page's left margin in points, where a header or footer starts; {@code NaN} with no canvas. */
+    private double canvasLeftMargin = Double.NaN;
+
     /** Whether this export writes more than one section — see {@link #exportSections}. */
     private boolean sectioned;
 
@@ -870,6 +873,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
         canvasHeight = context.canvas() == null ? Double.NaN : context.canvas().height();
         canvasTopMargin = context.canvas() == null ? Double.NaN : context.canvas().margin().top();
+        canvasLeftMargin = context.canvas() == null ? Double.NaN : context.canvas().margin().left();
     }
 
     /**
@@ -1241,7 +1245,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             int at = index;
             boolean header = zone.getZone() == DocumentHeaderFooterZone.HEADER;
             writers.add(new ZoneWriter(zone.getZone(), pageClassesOf(zone),
-                    part -> writeZoneLine(part, content), () -> placeZone(document, zone, at, header)));
+                    part -> writeZoneLine(part, content), () -> {
+                        placeZone(document, zone, at, header);
+                        reportZoneLine(at, header, content);
+                    }));
         }
         boolean titlePage = false;
         for (ZoneWriter writer : writers) {
@@ -1728,6 +1735,230 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (DocumentNode part : parts) {
             appendZonePart(para, part);
         }
+    }
+
+    /**
+     * Names what a page zone loses as the one line of a Word header or footer it is written as
+     * ({@link #writeZoneLine}).
+     *
+     * <p>Word sets the line's parts one after another from the page's left margin, and those
+     * after the first spacer against its right margin, at the right tab the line holds; a part
+     * after a second spacer goes to no tab the line holds. The page sets each part where the
+     * zone's padding, a row's columns and gap and the part's own alignment and sides put it, on
+     * a baseline of its own. A part stands where the page sets it when its line starts — or,
+     * against the right margin, ends — within a point of Word's, on the baseline most of the
+     * zone's parts share, which Word sets them all on, and is one line: the zone's line is
+     * written with none of what holds a body paragraph's breaks where the page sets them. A part
+     * a prefix stands before does not, the prefix being unwritten. Word's place for a part
+     * follows from the widths of those before it on its side of the line; past a part whose
+     * width Word does not keep — of more lines than one, after a prefix, or auto-sized to a size
+     * the file does not hold — or one the layout does not show, it is not measured.</p>
+     *
+     * <p>A paragraph's own losses are named too: its right-to-left text is written left to
+     * right, its prefix's letters are not written, its text is written at its style's size,
+     * and its outline entry is not written.</p>
+     *
+     * @param zoneIndex the zone's position in the section's zone list
+     * @param header    whether the zone is a header
+     * @param content   the zone's content, as written
+     */
+    private void reportZoneLine(int zoneIndex, boolean header, DocumentNode content) {
+        List<DocumentNode> parts = content instanceof RowNode row ? row.children() : List.of(content);
+        java.util.Map<DocumentNode, String> paths = DocxLayoutMetrics.pathsWithin(content);
+        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex);
+        boolean measured = !laid.isEmpty() && !Double.isNaN(canvasLeftMargin);
+        // Each text part's side of the line: 0 from the left margin, 1 against the right, 2
+        // after a second spacer, where the line holds no tab for it.
+        java.util.Map<DocumentNode, Integer> side = new java.util.IdentityHashMap<>();
+        List<DocumentNode> texts = new ArrayList<>();
+        int spacers = 0;
+        for (DocumentNode part : parts) {
+            if (part instanceof SpacerNode) {
+                spacers++;
+            } else if (part instanceof ParagraphNode || part instanceof PageFieldNode) {
+                texts.add(part);
+                side.put(part, Math.min(spacers, 2));
+            }
+        }
+        // Where Word starts each part from the left margin, and ends each one against the right,
+        // as far as the widths before it on its side are ones Word keeps.
+        java.util.Map<DocumentNode, Double> wordsStart = new java.util.IdentityHashMap<>();
+        java.util.Map<DocumentNode, Double> wordsEnd = new java.util.IdentityHashMap<>();
+        double x = canvasLeftMargin;
+        for (DocumentNode part : texts) {
+            com.demcha.compose.document.layout.PlacedFragment fragment = laid.get(paths.get(part));
+            if (side.get(part) != 0 || fragment == null) {
+                break;
+            }
+            wordsStart.put(part, x);
+            if (!widthKept(part, fragment)) {
+                break;
+            }
+            x += wordsWidthOf(fragment);
+        }
+        double end = canvasLeftMargin + contentWidth;
+        List<DocumentNode> againstTheRight = texts.stream().filter(part -> side.get(part) == 1).toList();
+        for (int index = againstTheRight.size() - 1; index >= 0; index--) {
+            DocumentNode part = againstTheRight.get(index);
+            com.demcha.compose.document.layout.PlacedFragment fragment = laid.get(paths.get(part));
+            if (fragment == null) {
+                break;
+            }
+            wordsEnd.put(part, end);
+            if (!widthKept(part, fragment)) {
+                break;
+            }
+            end -= wordsWidthOf(fragment);
+        }
+        // Where the page sets each part's first line: its start, its end and its baseline.
+        java.util.Map<DocumentNode, double[]> onThePage = new java.util.IdentityHashMap<>();
+        List<Double> baselines = new ArrayList<>();
+        for (DocumentNode part : texts) {
+            com.demcha.compose.document.layout.PlacedFragment fragment = laid.get(paths.get(part));
+            if (measured && fragment != null) {
+                double[] line = firstLineOnThePage(fragment);
+                onThePage.put(part, line);
+                baselines.add(line[2]);
+            }
+        }
+        double baseline = sharedBaseline(baselines);
+        int off = 0;
+        int unread = 0;
+        for (DocumentNode part : texts) {
+            double[] line = onThePage.get(part);
+            Double wordStart = wordsStart.get(part);
+            Double wordEnd = wordsEnd.get(part);
+            if (line != null && side.get(part) == 2) {
+                off++;
+            } else if (line == null || wordStart == null && wordEnd == null) {
+                unread++;
+            } else {
+                boolean across = wordStart != null ? Math.abs(line[0] - wordStart) <= LINE_WIDTH_CLEARANCE
+                        : Math.abs(line[1] - wordEnd) <= LINE_WIDTH_CLEARANCE;
+                com.demcha.compose.document.layout.PlacedFragment fragment = laid.get(paths.get(part));
+                boolean oneLine = ((com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload)
+                        fragment.payload()).lines().size() == 1;
+                boolean prefixed = part instanceof ParagraphNode paragraph && setsAPrefixBeforeTheFirstLine(paragraph);
+                if (!across || !oneLine || prefixed || Math.abs(line[2] - baseline) > LINE_WIDTH_CLEARANCE) {
+                    off++;
+                }
+            }
+        }
+        java.util.Set<String> lost = new java.util.LinkedHashSet<>();
+        if (!texts.isEmpty() && unread == texts.size()) {
+            lost.add("whether its text stands where the page sets it is not measured");
+        } else {
+            if (off > 0) {
+                lost.add(texts.size() == 1 ? "its text stands off where the page sets it"
+                        : off + " of its " + texts.size() + " parts " + (off == 1 ? "stands" : "stand")
+                          + " off where the page sets them");
+            }
+            if (unread > 0) {
+                lost.add("where " + unread + " of them " + (unread == 1 ? "stands" : "stand") + " is not measured");
+            }
+        }
+        for (DocumentNode part : texts) {
+            if (part instanceof ParagraphNode paragraph) {
+                com.demcha.compose.document.layout.PlacedFragment fragment = laid.get(paths.get(part));
+                List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines = fragment == null ? List.of()
+                        : ((com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload) fragment.payload()).lines();
+                lost.addAll(zoneParagraphLost(paragraph, lines));
+            }
+        }
+        if (!lost.isEmpty()) {
+            String kind = header ? "header" : "footer";
+            report.add(DocxExportReport.Severity.APPROXIMATED, "page zone",
+                    sectioned ? "section " + (sectionIndex + 1) : null,
+                    "a " + kind + " written as one line of Word's " + kind + "; " + String.join("; ", lost));
+        }
+    }
+
+    /**
+     * What a paragraph of a page zone loses of its own on the zone's line: its direction, its
+     * prefix's letters, the size its text is fitted to, and its outline entry.
+     *
+     * @param lines the lines the page laid it out in, empty where they are not read
+     */
+    private List<String> zoneParagraphLost(ParagraphNode node, List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
+        List<String> lost = new ArrayList<>(4);
+        if (ParagraphDirection.resolve(node) == TextDirection.RTL) {
+            lost.add("its right-to-left text is written left to right");
+        }
+        if (setsAPrefixBeforeTheFirstLine(node) && !node.bulletOffset().isBlank()) {
+            lost.add("its bulletOffset's letters, \"" + node.bulletOffset().strip() + "\", are not written before "
+                     + "its first line");
+        }
+        String size = autoSizeLost(node, lines);
+        if (size != null) {
+            lost.add(size);
+        }
+        if (node.bookmarkOptions() != null) {
+            lost.add("its outline entry is not written");
+        }
+        return lost;
+    }
+
+    /** The width Word sets a part of a zone's line at: its laid-out line at Word's size. */
+    private static double wordsWidthOf(com.demcha.compose.document.layout.PlacedFragment fragment) {
+        return widthAtWordsSize(((com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload) fragment.payload())
+                .lines().get(0));
+    }
+
+    /**
+     * Whether Word sets a part of a zone's line as wide as the page sets it, give or take its
+     * half-point size: one line, with no prefix it does not write and at the size the page fits
+     * its text to.
+     */
+    private static boolean widthKept(DocumentNode part, com.demcha.compose.document.layout.PlacedFragment fragment) {
+        List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines =
+                ((com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload) fragment.payload()).lines();
+        return lines.size() == 1 && !(part instanceof ParagraphNode paragraph
+                                      && (setsAPrefixBeforeTheFirstLine(paragraph) || autoSizeLost(paragraph, lines) != null));
+    }
+
+    /**
+     * Where the page sets a fragment's first line, from the page's left edge and its foot: its
+     * start, its end and its baseline, seated as the PDF backend seats it
+     * ({@link com.demcha.compose.document.backend.fixed.pdf.handlers.ParagraphSeating}).
+     */
+    private double[] firstLineOnThePage(com.demcha.compose.document.layout.PlacedFragment fragment) {
+        com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload text =
+                (com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload) fragment.payload();
+        com.demcha.compose.document.layout.payloads.ParagraphLine line = text.lines().get(0);
+        double start = com.demcha.compose.document.layout.payloads.ParagraphLineGeometry.lineStartX(text.align(),
+                fragment.x() + text.padding().left(),
+                fragment.width() - text.padding().left() - text.padding().right(), line.width());
+        double baseline = com.demcha.compose.document.layout.payloads.ParagraphLineGeometry.baselineY(
+                com.demcha.compose.document.layout.payloads.ParagraphLineGeometry.contentTop(fragment.y(),
+                        fragment.height(), text.padding().top()),
+                line.lineHeight(), line.baselineOffsetFromBottom());
+        if (text.verticalAlign() != null && text.verticalAlign() != TextVerticalAlign.DEFAULT) {
+            baseline += com.demcha.compose.document.backend.fixed.pdf.handlers.ParagraphSeating
+                    .shift(line, measuredFonts(), text.verticalAlign());
+        }
+        return new double[]{start, start + line.width(), baseline};
+    }
+
+    /**
+     * The baseline Word sets a zone's line on, as the page's parts stand: the one most of them
+     * share within a point, the first of those where as many share another.
+     */
+    private static double sharedBaseline(List<Double> baselines) {
+        double shared = Double.NaN;
+        int most = 0;
+        for (double baseline : baselines) {
+            int sharing = 0;
+            for (double other : baselines) {
+                if (Math.abs(other - baseline) <= LINE_WIDTH_CLEARANCE) {
+                    sharing++;
+                }
+            }
+            if (sharing > most) {
+                most = sharing;
+                shared = baseline;
+            }
+        }
+        return shared;
     }
 
     private void appendZonePart(XWPFParagraph para, DocumentNode part) {
@@ -6331,9 +6562,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // The left side starts where its line starts, prefix and all; the right side does too
         // where a left tab holds its start, and where a right tab holds its end it ends there.
         reportWrittenWithout(pair.left(), "written as one side of a line it shares",
-                paragraphLost(pair.left(), laysOutAPrefix(pair.left()), leftHeads ? line : null));
+                paragraphLost(pair.left(), laysOutAPrefix(pair.left(), layout.lines(pair.left())),
+                        leftHeads ? line : null));
         reportWrittenWithout(pair.right(), "written as one side of a line it shares",
-                paragraphLost(pair.right(), pair.fromItsStart() && laysOutAPrefix(pair.right()),
+                paragraphLost(pair.right(), pair.fromItsStart() && laysOutAPrefix(pair.right(), layout.lines(pair.right())),
                         leftHeads ? null : line));
         if ((pair.left().keepWithNext() && layout.onOnePage(pair.left()))
             || (pair.right().keepWithNext() && layout.onOnePage(pair.right()))) {
@@ -6749,7 +6981,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private List<String> paragraphLost(ParagraphNode node, boolean roomLost, String listedAs) {
         List<String> lost = new ArrayList<>(4);
-        String size = autoSizeLost(node);
+        String size = autoSizeLost(node, layout.lines(node));
         if (size != null) {
             lost.add(size);
         }
@@ -6785,7 +7017,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * lines than one is broken in Word without the prefix's room, and its lines take more words.
      */
     private boolean roomLostInItsBox(ParagraphNode node) {
-        return laysOutAPrefix(node) && !(layout.lineCount(node) == 1 && setFromTheEndAwayFromItsPrefix(node));
+        return laysOutAPrefix(node, layout.lines(node))
+               && !(layout.lineCount(node) == 1 && setFromTheEndAwayFromItsPrefix(node));
     }
 
     /**
@@ -6794,13 +7027,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * size alone, saying the fitted one is not measured, where the layout does not tell it; or
      * {@code null} when it loses nothing, or nothing laid out takes the paragraph's style — a run
      * with a style of its own keeps its size on the page.
+     *
+     * @param lines the lines the page laid the paragraph out in, empty where they are not read
      */
-    private String autoSizeLost(ParagraphNode node) {
-        if (node.autoSize() == null || !holdsTextInTheParagraphsStyle(node) && !laysOutAPrefix(node)) {
+    private static String autoSizeLost(ParagraphNode node, List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
+        if (node.autoSize() == null || !holdsTextInTheParagraphsStyle(node) && !laysOutAPrefix(node, lines)) {
             return null;
         }
         double written = wordsSize(node.textStyle().size());
-        double fitted = fittedSize(node);
+        double fitted = fittedSize(node, lines);
         if (Double.isNaN(fitted)) {
             return "its text is written at " + pointsOf(written) + "pt — the size the page fits it to is not measured";
         }
@@ -6827,21 +7062,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Whether the page lays out a paragraph's prefix, in the paragraph's style: before a first line
      * that holds something, or before a line after it that holds something, or where its lines
      * are not read.
+     *
+     * @param lines the lines the page laid the paragraph out in, empty where they are not read
      */
-    private boolean laysOutAPrefix(ParagraphNode node) {
+    private static boolean laysOutAPrefix(ParagraphNode node, List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
         DocumentTextIndent strategy = node.indentStrategy();
         return setsAPrefixBeforeTheFirstLine(node)
                || !node.bulletOffset().isEmpty()
                   && (strategy == DocumentTextIndent.FROM_SECOND_LINE || strategy == DocumentTextIndent.ALL_LINES)
-                  && holdsALineAfterTheFirst(node);
+                  && holdsALineAfterTheFirst(lines);
     }
 
     /**
-     * Whether a paragraph lays out a line after its first that holds something, or its lines are
-     * not read: an empty line, the page sets no prefix before.
+     * Whether a paragraph's lines hold a line after the first that holds something, or are not
+     * read: an empty line, the page sets no prefix before.
      */
-    private boolean holdsALineAfterTheFirst(ParagraphNode node) {
-        List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines = layout.lines(node);
+    private static boolean holdsALineAfterTheFirst(List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
         if (lines.isEmpty()) {
             return true;
         }
@@ -6877,7 +7113,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * of its own is laid out at that style's size, so the paragraph's size is one no such run has;
      * where the lines hold a single size, it is that one.
      */
-    private double fittedSize(ParagraphNode node) {
+    private static double fittedSize(ParagraphNode node, List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
         java.util.Set<Double> ownSizes = new java.util.HashSet<>();
         for (InlineRun run : node.inlineRuns()) {
             InlineTextRun text = textOf(run);
@@ -6886,7 +7122,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         java.util.Set<Double> laidOut = new java.util.LinkedHashSet<>();
-        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : layout.lines(node)) {
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
             for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
                 if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan text
                     && text.width() > 0 && text.textStyle() != null) {

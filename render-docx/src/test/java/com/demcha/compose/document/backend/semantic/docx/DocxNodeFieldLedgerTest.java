@@ -59,7 +59,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>A node's entries are about the body. A page zone is written as one line of its
  * paragraphs' runs, page fields and tabs, which loses more of a paragraph and a row than the
- * body does; that is recorded once, as the {@code zones} output option's gap.</p>
+ * body does: where its parts stand and what its paragraphs lose of their own is reported, and
+ * what is not is recorded once, as the {@code zones} output option's gap.</p>
  *
  * <p>The entries are claims about the export, not proofs of it: a {@code WRITTEN} field is
  * proved by the export's own tests, a {@code REPORTED} one by a report test, and a {@code GAP}
@@ -95,9 +96,11 @@ class DocxNodeFieldLedgerTest {
             "viewerPreferences:REPORTED",
             "headersAndFooters:WRITTEN",
             // The node entries below are the body's. A zone is written as one line of its
-            // paragraphs' runs, page fields and tabs, which is a gap of its own.
-            "zones:GAP:in a page zone, a paragraph's alignment, spacing, direction, prefix, fitted size and "
-            + "outline entry and a row's columns, gap and padding; whatever else a zone holds is reported");
+            // paragraphs' runs, page fields and tabs; what of that the report does not name is
+            // a gap of its own.
+            "zones:GAP:in a page zone, its line's height and the room its parts hold above and below their "
+            + "text, which Word sets its own way, and a paragraph's anchor; where its parts stand across the "
+            + "line and on its baseline, and what else a zone holds, is reported");
 
     static {
         node(AlignNode.class, "name:INERT", "child:WRITTEN", "align:WRITTEN", "margin:WRITTEN");
@@ -154,8 +157,11 @@ class DocxNodeFieldLedgerTest {
                 + "two spaces a level in");
         node(PageBreakNode.class, "name:INERT", "margin:INERT");
         node(PageFieldNode.class, "name:INERT", "kind:WRITTEN", "textStyle:WRITTEN",
-                "align:GAP:its alignment in a page zone", "padding:GAP:its sides in a page zone",
-                "margin:GAP:its sides in a page zone");
+                "align:REPORTED:where it stands the field off the place Word sets it on the zone's line",
+                "padding:REPORTED:at its sides, where they stand the field off the place Word sets it on the "
+                + "zone's line; above and below, in the zones option's gap",
+                "margin:REPORTED:at its sides, where they stand the field off the place Word sets it on the "
+                + "zone's line; above and below, in the zones option's gap");
         node(PageReferenceNode.class, "name:INERT",
                 "anchor:REPORTED:where the anchor has no bookmark, its number is written as text",
                 "textStyle:WRITTEN", "align:WRITTEN", "placeholderText:WRITTEN",

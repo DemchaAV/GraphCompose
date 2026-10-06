@@ -35,7 +35,7 @@ class DocxListReportTest {
     private static final String LONG = "A highlight long enough to run past the end of its line, "
                                        + "and on past the end of the next one, in a narrow page";
     private static final String TWO_LINES = "One highlight that wraps onto exactly two lines here";
-    private static final String STATED =" stand at a stated column — 9pt in, 6pt more a level — or a space past "
+    private static final String STATED = " stand at a stated column — 9pt in, 6pt more a level — or a space past "
                                          + "their marker or two spaces a level in, not where the page sets them";
 
     @Test
@@ -108,6 +108,26 @@ class DocxListReportTest {
     }
 
     @Test
+    void aMarkerThePageDrawsAloneForABlankItemIsNamed() throws Exception {
+        // With hangingIndent the page keeps a blank item whose marker shows as a row of its own,
+        // a marker before nothing; the export writes no paragraph for a blank item. Its row is no
+        // item run onto the next page, and the list's lineSpacing is not named for it.
+        assertThat(listNote(page -> page.addList(list -> list.name("Skills").hangingIndent(true).lineSpacing(4)
+                .items("Java", "", "Kotlin"))))
+                .isEqualTo("written as a Word list; 1 row the page draws as a marker alone, for a blank item, "
+                           + "is not written");
+        assertThat(listNote(page -> page.addList(list -> list.name("Skills").hangingIndent(true)
+                .items("", " "))))
+                .isEqualTo("writes no paragraph; 2 rows the page draws as a marker alone, for blank items, "
+                           + "are not written");
+
+        assertThat(listNotes(page -> page.addList(list -> list.name("Skills").items("Java", "", "Kotlin"))))
+                .as("without hangingIndent the page skips a blank item too").isEmpty();
+        assertThat(listNotes(page -> page.addList(list -> list.name("Skills").hangingIndent(true).noMarker()
+                .items("Java", "", "Kotlin")))).as("a blank item with no marker draws nothing").isEmpty();
+    }
+
+    @Test
     void anItemThatDoesNotStandWhereThePageSetsItIsCounted() throws Exception {
         // A hangingIndent list that nests keeps the stated columns: its levels are not measured.
         assertThat(listNote(page -> page.addList(list -> list.name("Skills").hangingIndent(true)
@@ -175,6 +195,13 @@ class DocxListReportTest {
         assertThat(report.bySubject().get("measured geometry")).extracting(DocxExportReport.Note::detail)
                 .containsExactly("this document could not be laid out, so line heights, the space between lines "
                                  + "and auto column widths are the editor's rather than the engine's");
+
+        // With no lines of its own to read, a continuationIndent is named whether or not an item wraps.
+        DocxExportReport continued = DocxExports.reportWithoutLayout(400, 600, 40, page -> page
+                .addList(list -> list.name("Notes").noMarker().continuationIndent("    ").items("Short")));
+        assertThat(continued.bySubject().get("ListNode")).extracting(DocxExportReport.Note::detail)
+                .containsExactly("written as a paragraph per item; its continuationIndent is not written before a "
+                                 + "wrapped item's lines — whether an item wraps is not measured");
     }
 
     private static String listNote(Consumer<PageFlowBuilder> content) throws Exception {
@@ -200,6 +227,7 @@ class DocxListReportTest {
             session.pageFlow(content::accept);
             session.export(new DocxSemanticBackend(captured::set));
         }
+        assertThat(captured.get()).as("the sink is called once the bytes exist").isNotNull();
         return captured.get().bySubject().getOrDefault("ListNode", List.of()).stream()
                 .map(DocxExportReport.Note::detail).toList();
     }

@@ -112,7 +112,13 @@ What is not written — each one is named in the export report
 - **A row's own fill, outline and side borders**, named in the export report as `row paint`.
 - **In a page zone, anything but paragraphs, page fields and spacers** — a logo, a barcode,
   a rule — named in the export report as `page zone content`.
-- **`markerGap`** on a hanging-indent list: Word places the item text at its own indent.
+- **A list's own geometry where Word cannot hold it**, named in the export report on the list:
+  - a centred or right-aligned list's alignment;
+  - its `lineSpacing` where the layout's items are not its own;
+  - its `continuationIndent`;
+  - the marker column and `markerGap` of an item at a stated column — a list that nests, or a gap
+    too narrow for its marker — while a flat hanging-indent list keeps the page's column;
+  - a row the page draws as a marker alone, for a blank item.
 
 Multi-section documents export through `MultiSectionDocument.toDocxBytes()`,
 `writeDocx(...)` and `buildDocx(...)` (Experimental): each section becomes a Word section

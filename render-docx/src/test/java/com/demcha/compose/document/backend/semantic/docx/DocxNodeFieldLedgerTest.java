@@ -174,7 +174,7 @@ class DocxNodeFieldLedgerTest {
                 "margin:REPORTED:the sides its alignment sets it from");
         node(ParagraphNode.class, "name:INERT",
                 "text:REPORTED:where the page reads it as markdown, its marks written as letters; where its "
-                + "lines are not read, not measured; any other is written",
+                + "lines are not read and the page's parser drops a mark, not measured; any other is written",
                 "inlineRuns:WRITTEN", "textStyle:WRITTEN",
                 "align:WRITTEN", "lineSpacing:WRITTEN",
                 "bulletOffset:REPORTED:its letters before the first line; over the flow, as a side of an "

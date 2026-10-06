@@ -128,8 +128,7 @@ What is not written — each one is named in the export report
   - the size an auto-sized paragraph's text is fitted to, where Word, to its half point, holds it
     apart from its style's;
   - the marks of a paragraph the session reads as markdown (the default; `markdown(false)` turns
-    it off), written as letters
-    with none of their style;
+    it off), written as letters with none of their style;
   - the letters of a `bulletOffset` prefix; and, where it moves a line, the room a prefix sets
     lines in by in a paragraph written over the flow, as a side of an overlay's left-and-right
     pair or as a badge's initials;

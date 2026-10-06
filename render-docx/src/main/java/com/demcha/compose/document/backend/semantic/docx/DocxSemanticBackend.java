@@ -3711,8 +3711,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * where an item wraps or its lines cannot be read. How many of its items do not stand where
      * the page sets them: with {@code hangingIndent}, its marker column and markerGap. A stated
      * column is not measured against the page's, so one the page's happens to equal counts too.
-     * And the rows the page draws as a marker alone, which the export does not write
-     * ({@link #markerOnlyRows}).</p>
+     * The rows the page draws as a marker alone, which the export does not write
+     * ({@link #markerOnlyRows}). And the marks of items the page reads as markdown, which are
+     * written as letters ({@link #itemsMarkdownLost}).</p>
      *
      * @param laidOut       the items as the layout laid them out
      * @param atTheirColumn how many of its items stand where the page sets them
@@ -3739,51 +3740,50 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * What a list's items lose where the page reads them as markdown, as a paragraph's text is read
      * ({@link #markdownLost}): an item of plain text holding a mark of emphasis or code is set as
-     * markdown, its marks dropped, and written as authored. Read off the list's laid-out lines,
-     * which hold fewer marks than its items' text — a rich item's runs and a marker laid out with
-     * every mark they hold — where the page read one; {@code null} where they hold as many. Where
-     * they are not read, the phrase says whether the page read them is not measured.
+     * markdown, its marks dropped, and written as authored. Its text is read as the page lays it
+     * out, a marker typed before it taken off
+     * ({@link com.demcha.compose.document.node.ListMarker#normalizeItemText}); its laid-out lines
+     * are the items', without a marker laid out on its own. A marker laid out in an item's line,
+     * and a rich item's runs, hold every mark they had.
      */
     private String itemsMarkdownLost(com.demcha.compose.document.node.ListNode list) {
         List<String> plain = new ArrayList<>();
         List<String> all = new ArrayList<>();
         if (list.nestedItems().isEmpty()) {
-            plain.addAll(list.items());
-            all.addAll(list.items());
+            for (String item : list.items()) {
+                String text = com.demcha.compose.document.node.ListMarker.normalizeItemText(item, list.normalizeMarkers());
+                plain.add(text);
+                all.add(text);
+            }
         } else {
-            collectItemTexts(list.nestedItems(), plain, all);
+            collectItemTexts(list.nestedItems(), list.normalizeMarkers(), plain, all);
         }
-        if (plain.stream().noneMatch(text -> text.indexOf('*') >= 0 || text.indexOf('_') >= 0 || text.indexOf('`') >= 0)) {
+        if (plain.stream().noneMatch(DocxSemanticBackend::holdsAMarkdownTrigger)) {
             return null;
         }
-        List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines = layout.lines(list);
-        if (lines.isEmpty()) {
-            return "its items' markdown marks are written as letters — whether the page reads them is not measured";
+        List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines = new ArrayList<>();
+        for (DocxLayoutMetrics.ItemText item : layout.itemLines(list)) {
+            lines.addAll(item.lines());
         }
-        if (lines.stream().allMatch(line -> line.text().isBlank())) {
-            return null;
-        }
-        int laidOut = 0;
-        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
-            laidOut += markdownMarksIn(line.text());
-        }
-        int authored = all.stream().mapToInt(DocxSemanticBackend::markdownMarksIn).sum();
-        return laidOut < authored
-                ? "its items' markdown marks are written as letters, where the page sets the text they mark and drops them"
-                : null;
+        return marksDropped("its items'", lines, all.stream().mapToInt(DocxSemanticBackend::markdownMarksIn).sum(), 0,
+                plain);
     }
 
-    /** Every item's text in a tree of items: a plain item's label, and a rich item's runs' text too. */
-    private static void collectItemTexts(List<com.demcha.compose.document.node.ListItem> items, List<String> plain,
-                                         List<String> all) {
+    /**
+     * Every item's text in a tree of items, as the page lays it out: a plain item's label, a marker
+     * typed before it taken off, and a rich item's runs' text too.
+     */
+    private static void collectItemTexts(List<com.demcha.compose.document.node.ListItem> items, boolean normalizeMarkers,
+                                         List<String> plain, List<String> all) {
         for (com.demcha.compose.document.node.ListItem item : items) {
             if (item.runs().isEmpty()) {
-                plain.add(item.label());
-                all.add(item.label());
+                String text = com.demcha.compose.document.node.ListMarker.normalizeItemText(item.label(), normalizeMarkers);
+                plain.add(text);
+                all.add(text);
             } else {
                 all.add(InlineRun.plainText(item.runs()));
             }
-            collectItemTexts(item.children(), plain, all);
+            collectItemTexts(item.children(), normalizeMarkers, plain, all);
         }
     }
 
@@ -7152,30 +7152,34 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * The characters markdown marks are made of — emphasis, code, an escape, a heading, a link, a
-     * quote, a strike — which the page drops where it reads a paragraph as markdown.
+     * The characters markdown syntax is made of — emphasis, code, a heading, a link, a quote, an
+     * escape — counted alike in a text and in the lines the page lays it out in: the page drops
+     * those its parser reads as syntax, and keeps the rest.
      */
     private static final String MARKDOWN_MARKS = "*_`\\#[]()>~";
 
     /**
+     * Whether text holds a mark the page reads markdown on: emphasis or code
+     * ({@code ParagraphWrapping.containsMarkdownSyntax}).
+     */
+    private static boolean holdsAMarkdownTrigger(String text) {
+        return text.indexOf('*') >= 0 || text.indexOf('_') >= 0 || text.indexOf('`') >= 0;
+    }
+
+    /**
      * Whether the page may read a paragraph as markdown, where its session asks it to: plain text,
-     * with no runs, holding a mark of emphasis or code ({@code ParagraphWrapping.containsMarkdownSyntax}).
-     * Any other paragraph is laid out with every mark it holds, so its lines need not be read.
+     * with no runs, holding a mark it reads markdown on ({@link #holdsAMarkdownTrigger}). Any other
+     * paragraph is laid out with every mark it holds, so its lines need not be read.
      */
     private static boolean readsAsMarkdown(ParagraphNode node) {
-        return node.inlineRuns().isEmpty()
-               && (node.text().indexOf('*') >= 0 || node.text().indexOf('_') >= 0 || node.text().indexOf('`') >= 0);
+        return node.inlineRuns().isEmpty() && holdsAMarkdownTrigger(node.text());
     }
 
     /**
      * What a paragraph read as markdown loses: the page sets the text its marks style, and drops
      * the marks, where its session reads markdown; the file writes the text as authored, marks and
-     * all, and none of their style. Read off the laid-out lines, which hold fewer marks than the
-     * text where the page read it — less the marks of a prefix the page sets before the first
-     * line; {@code null} where they hold as many, or hold no text at all, as the lines of a
-     * paragraph given no width do. Where they are not read — with no layout, or composed in a
-     * table cell whose text the page set otherwise than authored — a session reads markdown unless
-     * told not to, and the phrase says whether the page read it is not measured.
+     * all, and none of their style. Read off the laid-out lines ({@link #marksDropped}), less the
+     * marks of a prefix the page sets before the first line.
      *
      * @param lines the lines the page laid the paragraph out in, empty where they are not read
      * @param whose whose text the phrase names
@@ -7185,19 +7189,58 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!readsAsMarkdown(node)) {
             return null;
         }
+        return marksDropped(whose, lines, markdownMarksIn(node.text()),
+                setsAPrefixBeforeTheFirstLine(node) ? markdownMarksIn(node.bulletOffset()) : 0, List.of(node.text()));
+    }
+
+    /**
+     * Whether the page dropped markdown marks from text it laid out, and the phrase that names it:
+     * where its lines, less a prefix's marks, hold fewer than the text did; {@code null} where they
+     * hold as many, or hold no text at all, as the lines of text given no width do. Where they are
+     * not read — with no layout, or composed in a table cell whose text the page set otherwise than
+     * authored — a session reads markdown unless told not to, and the phrase says whether the page
+     * read them is not measured, where the page's parser drops a mark from the text.
+     *
+     * @param whose       whose text the phrase names
+     * @param lines       the lines the page laid the text out in, empty where they are not read
+     * @param authored    how many marks the text holds as the page lays it out
+     * @param prefixMarks how many marks a prefix the page sets before the first line holds
+     * @param texts       the text the page may read as markdown
+     */
+    private static String marksDropped(String whose, List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
+                                       int authored, int prefixMarks, List<String> texts) {
         if (lines.isEmpty()) {
-            return whose + " markdown marks are written as letters — whether the page reads them is not measured";
+            return texts.stream().anyMatch(DocxSemanticBackend::parserDropsAMark)
+                    ? whose + " markdown marks are written as letters — whether the page reads them is not measured"
+                    : null;
         }
         if (lines.stream().allMatch(line -> line.text().isBlank())) {
             return null;
         }
-        int laidOut = setsAPrefixBeforeTheFirstLine(node) ? -markdownMarksIn(node.bulletOffset()) : 0;
+        int laidOut = -prefixMarks;
         for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
             laidOut += markdownMarksIn(line.text());
         }
-        return laidOut < markdownMarksIn(node.text())
+        return laidOut < authored
                 ? whose + " markdown marks are written as letters, where the page sets the text they mark and drops them"
                 : null;
+    }
+
+    /**
+     * Whether the page's markdown parser drops a mark from text, reading it as the page does where
+     * its session reads markdown: an underscore inside a word, which it keeps, drops none.
+     */
+    private static boolean parserDropsAMark(String text) {
+        if (!holdsAMarkdownTrigger(text)) {
+            return false;
+        }
+        StringBuilder parsed = new StringBuilder();
+        for (com.demcha.compose.engine.components.content.text.TextDataBody body
+                : new com.demcha.compose.engine.text.markdown.MarkDownParser().getBody(text,
+                        com.demcha.compose.engine.components.content.text.TextStyle.DEFAULT_STYLE)) {
+            parsed.append(body.text());
+        }
+        return markdownMarksIn(parsed.toString()) < markdownMarksIn(text);
     }
 
     private static int markdownMarksIn(String text) {

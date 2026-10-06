@@ -121,11 +121,14 @@ What is not written — each one is named in the export report
   - its `continuationIndent`;
   - the marker column and `markerGap` of an item at a stated column — a list that nests, or a gap
     too narrow for its marker — while a flat hanging-indent list keeps the page's column;
-  - a row the page draws as a marker alone, for a blank item.
+  - a row the page draws as a marker alone, for a blank item;
+  - the marks of items the page reads as markdown, written as letters.
 - **What a paragraph's own fields set where Word cannot hold it**, named in the export report on
   the paragraph outside a header or footer (a page zone's are named on the zone):
   - the size an auto-sized paragraph's text is fitted to, where Word, to its half point, holds it
     apart from its style's;
+  - the marks of a paragraph the session reads as markdown (the default; `markdown(false)` turns
+    it off), written as letters with none of their style;
   - the letters of a `bulletOffset` prefix; and, where it moves a line, the room a prefix sets
     lines in by in a paragraph written over the flow, as a side of an overlay's left-and-right
     pair or as a badge's initials;

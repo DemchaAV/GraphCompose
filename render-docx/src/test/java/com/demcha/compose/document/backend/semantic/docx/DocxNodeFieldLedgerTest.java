@@ -167,10 +167,11 @@ class DocxNodeFieldLedgerTest {
                 + "overlay's pair or as a badge's text, the room it sets lines in by where that moves one",
                 "indentStrategy:WRITTEN", "linkTarget:WRITTEN",
                 "bookmarkOptions:REPORTED:a title that is not the text Word lists it by, a pair's whole line for "
-                + "a side of one; a level past Word's ninth; the right side's of a pair whose left holds the level",
+                + "a side of one; a level past Word's ninth that shares it with another; the right side's of a "
+                + "pair whose left holds the level",
                 "padding:WRITTEN", "margin:WRITTEN",
-                "autoSize:REPORTED:the size the page fits the text in the paragraph's style to; with no layout, "
-                + "not measured",
+                "autoSize:REPORTED:the size the page fits the text in the paragraph's style to, where Word holds "
+                + "it apart; where the layout does not tell it, not measured",
                 "verticalAlign:WRITTEN", "anchor:WRITTEN", "direction:WRITTEN");
         node(PathNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "segments:WRITTEN",
                 "fillColor:WRITTEN", "fillPaint:REPORTED", "stroke:WRITTEN", "strokePaint:REPORTED",

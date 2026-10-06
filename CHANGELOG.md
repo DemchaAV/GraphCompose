@@ -17,18 +17,21 @@ follow semantic versioning; release dates are ISO 8601.
   - Word's outline listed a heading by the text of its Word paragraph, not by its
     `DocumentBookmarkOptions` title, and at no level past the ninth;
   - a line an overlay's left-and-right pair shares is one Word paragraph: Word listed both sides'
-    text under the left one's level, and the right one's entry was lost.
+    text under one level, the left one's where it has one, and where both have one the right
+    one's entry was lost.
 
   The paragraph's note (`ParagraphNode`) now names:
   - the size its text is written at and the size the page fits it to, where Word, which holds a
-    size to the half point, sets them apart. Both are read from the layout's lines; a prefix the
-    page sets in the paragraph's style counts as its text. Where the lines are not read or do not
-    tell the size, the note says the fitted size is not measured;
+    size to the half point, sets them apart. The fitted size is read from the layout's lines; a
+    prefix the page sets in the paragraph's style counts as its text. Where the lines are not
+    read or do not tell the size, the note says the fitted size is not measured;
   - its prefix's letters before its first line. On a path that writes no prefix, it also names
-    the room the prefix sets lines in by, where that moves a line: not where the line is set from
-    the end the prefix does not stand at;
-  - an outline title that is not the text Word lists, a level past Word's ninth, and the right
-    side's outline entry where the left side holds the line's level.
+    the room the prefix sets lines in by, where that moves a line: a side of a pair Word holds
+    by its start, and a text box or a badge, but not one line set from the end away from its
+    prefix;
+  - an outline title that is not the text Word lists, a level past Word's ninth that shares it
+    with another, which the page nests apart, and the right side's outline entry where the left
+    side holds the line's level.
 
   A paragraph set in a text box over the flow carries these on the note it already had. A page
   zone's paragraphs are not named yet: that stays a gap of the `zones` option. Across

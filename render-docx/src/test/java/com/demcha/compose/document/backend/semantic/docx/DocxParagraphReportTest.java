@@ -4,6 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.dsl.ShapeBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
@@ -45,7 +46,7 @@ class DocxParagraphReportTest {
     void anAutoSizedParagraphsTextIsNamedWhereThePageFitsItToAnotherSize() throws Exception {
         Consumer<PageFlowBuilder> shrunk = page -> page.addParagraph(p -> p.name("Headline").text(HEADLINE)
                 .textStyle(DocumentTextStyle.DEFAULT.withSize(24)).autoSize(24, 6));
-        double fitted = laidOutSize(shrunk);
+        double fitted = firstSpan(shrunk).textStyle().size();
         assertThat(fitted).as("the page fits it smaller").isLessThan(24);
         assertThat(paragraphNote(shrunk))
                 .isEqualTo("written as a paragraph; its text is written at 24pt, where the page fits it to "
@@ -71,8 +72,10 @@ class DocxParagraphReportTest {
         Consumer<PageFlowBuilder> prefixed = page -> page.addParagraph(p -> p
                 .textStyle(DocumentTextStyle.DEFAULT.withSize(24)).inlineText(HEADLINE, TEN)
                 .bulletOffset("    ").indentStrategy(DocumentTextIndent.ALL_LINES).autoSize(24, 6));
-        double fitted = laidOutSize(prefixed);
-        assertThat(fitted).as("the prefix, laid out first, at the fitted size").isLessThan(24);
+        ParagraphTextSpan prefix = firstSpan(prefixed);
+        assertThat(prefix.text()).as("the prefix, laid out first").isBlank();
+        double fitted = prefix.textStyle().size();
+        assertThat(fitted).as("at the fitted size, not the run's").isLessThan(24).isNotEqualTo(10.0);
         assertThat(paragraphNote(prefixed))
                 .isEqualTo("written as a paragraph; its text is written at 24pt, where the page fits it to "
                            + points(fitted) + "pt");
@@ -89,6 +92,11 @@ class DocxParagraphReportTest {
                 .inlineText("Hi ", DocumentTextStyle.DEFAULT.withSize(12)).inlineText("there")
                 .autoSize(24))))
                 .isEqualTo("written as a paragraph; its text is written at 10pt, where the page fits it to 24pt");
+        // On a side of a pair as in the body.
+        assertThat(paragraphNote(page -> page.add(pair(new ParagraphBuilder().name("Title").text("ENGINEER")
+                .textStyle(TEN).autoSize(14).build(), "2022"))))
+                .isEqualTo("written as one side of a line it shares; its text is written at 10pt, where the page "
+                           + "fits it to 14pt");
         // Fitted to the size a run has of its own, it is that size.
         assertThat(paragraphNote(page -> page.addParagraph(p -> p.textStyle(TEN)
                 .inlineText("Hi ", DocumentTextStyle.DEFAULT.withSize(24)).inlineText("there")
@@ -120,6 +128,8 @@ class DocxParagraphReportTest {
         assertThat(paragraphNotes(prefixed("   ", DocumentTextIndent.ALL_LINES, HEADLINE))).isEmpty();
         // A first line ended at once holds nothing to set a prefix before.
         assertThat(paragraphNotes(prefixed("• ", DocumentTextIndent.FIRST_LINE, "\nShip it"))).isEmpty();
+        // Nor one of characters the page drops.
+        assertThat(paragraphNotes(prefixed("• ", DocumentTextIndent.FIRST_LINE, "⁠\nShip it"))).isEmpty();
         assertThat(paragraphNotes(prefixed("• ", DocumentTextIndent.NONE, "Ship it"))).isEmpty();
         // In a paragraph of runs, the first line is the runs' up to their first line break.
         assertThat(paragraphNote(page -> page.addParagraph(p -> p.inlineText("Ship ").inlineText("it", TEN)
@@ -139,10 +149,21 @@ class DocxParagraphReportTest {
         assertThat(paragraphNotes(page -> page.add(pair(new ParagraphBuilder().name("Title").text("ENGINEER")
                 .bulletOffset("   ").indentStrategy(DocumentTextIndent.FROM_SECOND_LINE).build(), "2022"))))
                 .isEmpty();
-        // Nor does one before a line set from its other end: the right side's dates end where they end.
+        // Nor does one before a right side a right tab holds by its end, whichever way it is aligned.
         assertThat(paragraphNotes(page -> page.add(pair(new ParagraphBuilder().name("Title").text("ENGINEER").build(),
                 new ParagraphBuilder().name("Dates").text("2022").align(TextAlign.RIGHT).bulletOffset("   ")
                         .indentStrategy(DocumentTextIndent.FIRST_LINE).build())))).isEmpty();
+        assertThat(paragraphNotes(page -> page.add(pair(new ParagraphBuilder().name("Title").text("ENGINEER").build(),
+                new ParagraphBuilder().name("Dates").text("2022").align(TextAlign.CENTER).bulletOffset("   ")
+                        .indentStrategy(DocumentTextIndent.FIRST_LINE).build())))).isEmpty();
+        // A right side a left tab holds by its start starts where its prefix does.
+        assertThat(paragraphNote(page -> page.add(new ShapeContainerBuilder().name("BankRow").rectangle(CONTENT, 14)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(new ParagraphBuilder().name("Label").text("IBAN").build(), 0, 0, LayerAlign.CENTER_LEFT)
+                .position(new ParagraphBuilder().name("Value").text("GB36 SRLG").bulletOffset("   ")
+                        .indentStrategy(DocumentTextIndent.FIRST_LINE).build(), 80, 0, LayerAlign.CENTER_LEFT)
+                .build())))
+                .isEqualTo("written as one side of a line it shares; " + room);
         // A prefix's letters are named on any path, beside the room.
         assertThat(paragraphNote(page -> page.add(pair(new ParagraphBuilder().name("Title").text("ENGINEER")
                 .bulletOffset("• ").indentStrategy(DocumentTextIndent.FIRST_LINE).build(), "2022"))))
@@ -162,6 +183,15 @@ class DocxParagraphReportTest {
                 .direction(TextDirection.RTL).align(TextAlign.RIGHT).bulletOffset("   ")
                 .indentStrategy(DocumentTextIndent.FIRST_LINE).build())).addParagraph("Masthead")))
                 .contains(boxed + "; " + room);
+        // An empty line after the first takes no prefix.
+        assertThat(paragraphNotes(page -> page.add(sidebar(new ParagraphBuilder().name("Monogram").text("L\n")
+                .bulletOffset("   ").indentStrategy(DocumentTextIndent.FROM_SECOND_LINE).build())).addParagraph("Masthead")))
+                .contains(boxed);
+        // Over more lines than one, Word breaks the lines without the prefix's room, however aligned.
+        assertThat(paragraphNotes(page -> page.add(sidebar(new ParagraphBuilder().name("Tagline")
+                .text("Design studio of record since the spring").align(TextAlign.RIGHT).bulletOffset("   ")
+                .indentStrategy(DocumentTextIndent.FROM_SECOND_LINE).build())).addParagraph("Masthead")))
+                .contains(boxed + "; " + room);
         // A badge's initials, which a blank prefix moves off its centre.
         assertThat(paragraphNote(page -> page.add(new ShapeContainerBuilder().name("Badge").circle(40)
                 .fillColor(DocumentColor.rgb(30, 50, 90))
@@ -180,6 +210,8 @@ class DocxParagraphReportTest {
                 .bookmark(new DocumentBookmarkOptions("Results of the year", 1))))).isEmpty();
         assertThat(paragraphNotes(page -> page.addParagraph(p -> p.text("Results of the year")
                 .bookmark(new DocumentBookmarkOptions("Results  of the year", 1))))).isEmpty();
+        assertThat(paragraphNotes(page -> page.addParagraph(p -> p.text("Results of the year")
+                .bookmark(new DocumentBookmarkOptions("Results of the year", 1))))).as("a no-break space").isEmpty();
         assertThat(paragraphNote(page -> page.addParagraph(p -> p.text("RESULTS")
                 .bookmark(new DocumentBookmarkOptions("Results", 1)))))
                 .isEqualTo("written as a paragraph; its outline entry shows \"RESULTS\", not its title \"Results\"");
@@ -192,37 +224,46 @@ class DocxParagraphReportTest {
     }
 
     @Test
-    void anOutlineLevelPastWordsNinthIsNamed() throws Exception {
+    void anOutlineLevelPastWordsNinthIsNamedWhereItSharesTheNinthWithAnother() throws Exception {
+        // Word's ninth level holds a deeper one as the page's outline does, one step below the last.
+        assertThat(paragraphNotes(page -> page.addParagraph(p -> p.text("Top")
+                        .bookmark(new DocumentBookmarkOptions("Top", 0)))
+                .addParagraph(p -> p.text("Deeper").bookmark(new DocumentBookmarkOptions("Deeper", 9)))))
+                .isEmpty();
+        // Beside the ninth itself, it is one level with it where the page nests it below.
         assertThat(paragraphNotes(page -> page.addParagraph(p -> p.text("Deep")
-                .bookmark(new DocumentBookmarkOptions("Deep", 8))))).as("Word's ninth").isEmpty();
-        assertThat(paragraphNote(page -> page.addParagraph(p -> p.text("Deeper")
-                .bookmark(new DocumentBookmarkOptions("Deeper", 9)))))
-                .isEqualTo("written as a paragraph; its outline entry is written at Word's ninth level, where the "
-                           + "page nests it deeper");
+                        .bookmark(new DocumentBookmarkOptions("Deep", 8)))
+                .addParagraph(p -> p.text("Deeper").bookmark(new DocumentBookmarkOptions("Deeper", 9)))))
+                .containsExactly("written as a paragraph; its outline entry is written at Word's ninth level, which "
+                                 + "it shares with a level the page nests apart from it");
     }
 
     @Test
     void aPairsLineIsOneHeadingListedByAllOfItsText() throws Exception {
         String shared = "written as one side of a line it shares; ";
         // The line is the left side's heading, listed by both sides' text; the right side's entry is lost.
-        assertThat(paragraphNotes(page -> page.add(pair(heading("ENGINEER", "ENGINEER 2022", 1),
-                heading("2022", "2022", 2)))))
+        assertThat(paragraphNotes(page -> page.add(pair(title("ENGINEER 2022"), dates("2022")))))
                 .containsExactly(shared + "its outline entry is not written");
-        assertThat(paragraphNotes(page -> page.add(pair(heading("ENGINEER", "ENGINEER", 1), "2022"))))
+        assertThat(paragraphNotes(page -> page.add(pair(title("ENGINEER"), "2022"))))
                 .containsExactly(shared + "its outline entry shows \"ENGINEER 2022\", not its title \"ENGINEER\"");
         // With none on its left, the line is the right side's heading.
         assertThat(paragraphNotes(page -> page.add(pair(new ParagraphBuilder().name("Title").text("ENGINEER")
-                .build(), heading("2022", "ENGINEER 2022", 2))))).isEmpty();
+                .build(), dates("ENGINEER 2022"))))).isEmpty();
         assertThat(paragraphNotes(page -> page.add(pair(new ParagraphBuilder().name("Title").text("ENGINEER")
-                .build(), heading("2022", "2022", 2)))))
+                .build(), dates("2022")))))
                 .containsExactly(shared + "its outline entry shows \"ENGINEER 2022\", not its title \"2022\"");
     }
 
-    /** A paragraph of a pair that declares an outline entry, the right one aligned right. */
-    private static DocumentNode heading(String text, String title, int level) {
-        return new ParagraphBuilder().name(level == 1 ? "Title" : "Dates").text(text)
-                .align(level == 1 ? TextAlign.LEFT : TextAlign.RIGHT)
-                .bookmark(new DocumentBookmarkOptions(title, level)).build();
+    /** A pair's left side, "ENGINEER", declaring an outline entry at the first level under a title. */
+    private static DocumentNode title(String outlineTitle) {
+        return new ParagraphBuilder().name("Title").text("ENGINEER")
+                .bookmark(new DocumentBookmarkOptions(outlineTitle, 1)).build();
+    }
+
+    /** A pair's right side, "2022" aligned right, declaring an outline entry at the second level under a title. */
+    private static DocumentNode dates(String outlineTitle) {
+        return new ParagraphBuilder().name("Dates").text("2022").align(TextAlign.RIGHT)
+                .bookmark(new DocumentBookmarkOptions(outlineTitle, 2)).build();
     }
 
     private static Consumer<PageFlowBuilder> prefixed(String prefix, DocumentTextIndent strategy, String text) {
@@ -247,7 +288,7 @@ class DocxParagraphReportTest {
         return new ShapeContainerBuilder().name("Sidebar")
                 .rectangle(100, 120).clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                 .margin(new DocumentInsets(-30, 0, -90, -30))
-                .position(new com.demcha.compose.document.dsl.ShapeBuilder().name("Block").size(100, 120)
+                .position(new ShapeBuilder().name("Block").size(100, 120)
                         .fillColor(DocumentColor.rgb(160, 80, 50)).build(), 0, 0, LayerAlign.TOP_LEFT, 0)
                 .position(text, 10, 10, LayerAlign.TOP_LEFT, 1)
                 .build();
@@ -257,8 +298,8 @@ class DocxParagraphReportTest {
         return BigDecimal.valueOf(Math.round(size * 100) / 100.0).stripTrailingZeros().toPlainString();
     }
 
-    /** The size of the first letters the page lays out. */
-    private static double laidOutSize(Consumer<PageFlowBuilder> content) throws Exception {
+    /** The first text the page lays out. */
+    private static ParagraphTextSpan firstSpan(Consumer<PageFlowBuilder> content) throws Exception {
         try (DocumentSession session = session(content)) {
             return session.layoutGraph().fragments().stream()
                     .map(fragment -> fragment.payload())
@@ -268,7 +309,7 @@ class DocxParagraphReportTest {
                     .flatMap(line -> line.spans().stream())
                     .filter(ParagraphTextSpan.class::isInstance)
                     .map(ParagraphTextSpan.class::cast)
-                    .findFirst().orElseThrow().textStyle().size();
+                    .findFirst().orElseThrow();
         }
     }
 

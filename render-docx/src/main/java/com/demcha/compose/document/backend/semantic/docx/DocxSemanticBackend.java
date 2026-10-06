@@ -480,6 +480,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The outline levels this document asks for, so the styles part defines those and no
     // others. Filled before the styles part is written, which comes before the body.
     private java.util.Set<Integer> headingLevels = java.util.Set.of();
+    // The outline levels the document declares from Word's ninth on, which Word holds as one: two
+    // of them are levels the page nests apart and the file does not.
+    private java.util.Set<Integer> outlineLevelsFromWordsNinth = java.util.Set.of();
     // Anchors this export writes a bookmark for, so a page reference knows it has a target.
     private java.util.Set<String> bookmarkedAnchors = java.util.Set.of();
     // Where the finished report goes, when the caller configured somewhere for it to go.
@@ -743,7 +746,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         prefixColumns.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
-        headingLevels = headingLevelsIn(whole);
+        java.util.NavigableSet<Integer> outlineLevels = outlineLevelsIn(whole);
+        headingLevels = outlineLevels.stream().map(level -> Math.min(level, MAX_HEADING_LEVEL))
+                .collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new));
+        outlineLevelsFromWordsNinth = outlineLevels.tailSet(MAX_HEADING_LEVEL, true);
         bookmarkedAnchors = bookmarkedAnchorsIn(whole);
         wordFamilies = DocxFontTable.familiesByName(fonts);
         measuredFamilies = List.copyOf(fonts);
@@ -2347,7 +2353,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 paragraphXml(para))));
         List<String> lost = new ArrayList<>();
         lost.add("laid over the flow, which gives it no room: set in a text box where the page sets it");
-        lost.addAll(paragraphLost(node, false, null));
+        lost.addAll(paragraphLost(node, roomLostInItsBox(node), null));
         report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
                 String.join("; ", lost));
     }
@@ -4978,23 +4984,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return anchors;
     }
 
-    private static java.util.Set<Integer> headingLevelsIn(DocumentGraph graph) {
-        java.util.Set<Integer> levels = new java.util.TreeSet<>();
+    /** Every outline level the document's paragraphs declare, as declared: past Word's nine too. */
+    private static java.util.NavigableSet<Integer> outlineLevelsIn(DocumentGraph graph) {
+        java.util.NavigableSet<Integer> levels = new java.util.TreeSet<>();
         for (DocumentNode root : graph.roots()) {
-            collectHeadingLevels(root, levels);
+            collectOutlineLevels(root, levels);
         }
         return levels;
     }
 
-    private static void collectHeadingLevels(DocumentNode node, java.util.Set<Integer> levels) {
-        if (node instanceof ParagraphNode paragraph) {
-            Integer level = headingLevelOf(paragraph);
-            if (level != null) {
-                levels.add(level);
-            }
+    private static void collectOutlineLevels(DocumentNode node, java.util.Set<Integer> levels) {
+        if (node instanceof ParagraphNode paragraph && paragraph.bookmarkOptions() != null) {
+            levels.add(paragraph.bookmarkOptions().level());
         }
         for (DocumentNode child : node.children()) {
-            collectHeadingLevels(child, levels);
+            collectOutlineLevels(child, levels);
         }
     }
 
@@ -6321,12 +6325,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         closeAnchor(para, rightAnchor);
         // A Word paragraph has one outline level, and its outline lists the whole line by it: the
         // left side's level where it has one, the right side's where not; the other's is lost.
-        String line = collapsedWhitespace(outlineTextOf(pair.left()) + " " + outlineTextOf(pair.right()));
         boolean leftHeads = headingLevelOf(pair.left()) != null;
+        String line = leftHeads || headingLevelOf(pair.right()) != null
+                ? collapsedWhitespace(outlineTextOf(pair.left()) + " " + outlineTextOf(pair.right())) : null;
+        // The left side starts where its line starts, prefix and all; the right side does too
+        // where a left tab holds its start, and where a right tab holds its end it ends there.
         reportWrittenWithout(pair.left(), "written as one side of a line it shares",
-                paragraphLost(pair.left(), false, leftHeads ? line : null));
+                paragraphLost(pair.left(), laysOutAPrefix(pair.left()), leftHeads ? line : null));
         reportWrittenWithout(pair.right(), "written as one side of a line it shares",
-                paragraphLost(pair.right(), false, leftHeads ? null : line));
+                paragraphLost(pair.right(), pair.fromItsStart() && laysOutAPrefix(pair.right()),
+                        leftHeads ? null : line));
         if ((pair.left().keepWithNext() && layout.onOnePage(pair.left()))
             || (pair.right().keepWithNext() && layout.onOnePage(pair.right()))) {
             para.setKeepNext(true);
@@ -6717,26 +6725,29 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         closeAnchor(para, anchor);
         lastWrittenNode = node;
         lastWrittenParagraph = para;
-        reportWrittenWithout(node, "written as a paragraph", paragraphLost(node, true, outlineTextOf(node)));
+        reportWrittenWithout(node, "written as a paragraph",
+                paragraphLost(node, false, node.bookmarkOptions() == null ? null : outlineTextOf(node)));
     }
 
     /**
-     * What a paragraph's own fields lose on the way to Word, whichever path wrote it: the size an
-     * auto-sized paragraph's text is fitted to, its {@code bulletOffset} and its outline entry.
+     * What a paragraph's own fields lose on the way to Word, on any path that writes it in the
+     * body: the size an auto-sized paragraph's text is fitted to, its {@code bulletOffset} and its
+     * outline entry. A page zone's paragraphs are written apart, and these are not named for them.
      *
      * <p>Its text is written at its style's size, not the one the page fits it to. A prefix's
      * letters are never written. A path that does not write a prefix as a distance
-     * ({@link #indentAsThePrefixDoes}) leaves out the room it sets lines in by, too, wherever that
-     * moves a line: not where the line is set from the end the prefix stands off. Word's outline
-     * lists a heading by the text of its Word paragraph, at no level past the ninth.</p>
+     * ({@link #indentAsThePrefixDoes}) may leave out the room it sets lines in by, too; which
+     * path does is the caller's to say. Word's outline lists a heading by the text of its Word
+     * paragraph, and holds no level past the ninth.</p>
      *
-     * @param node           the paragraph written
-     * @param prefixAsIndent whether the path writes a blank prefix as the paragraph's indent
-     * @param listedAs       the text Word's outline lists the paragraph's heading by, or {@code null}
-     *                       where the path writes no outline level for it
+     * @param node     the paragraph written
+     * @param roomLost whether the path leaves out the room the paragraph's prefix sets a line in
+     *                 by, where that moves the line
+     * @param listedAs the text Word's outline lists the paragraph's heading by, or {@code null}
+     *                 where the path writes no outline level for it
      * @return the phrases, empty when nothing of these is lost
      */
-    private List<String> paragraphLost(ParagraphNode node, boolean prefixAsIndent, String listedAs) {
+    private List<String> paragraphLost(ParagraphNode node, boolean roomLost, String listedAs) {
         List<String> lost = new ArrayList<>(4);
         String size = autoSizeLost(node);
         if (size != null) {
@@ -6746,19 +6757,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (setsAPrefixBeforeTheFirstLine(node) && !prefix.isBlank()) {
             lost.add("its bulletOffset's letters, \"" + prefix.strip() + "\", are not written before its first line");
         }
-        if (!prefixAsIndent && laysOutAPrefix(node) && !setFromTheEndThePrefixStandsOff(node)) {
+        if (roomLost) {
             lost.add("the room its bulletOffset sets its lines in by is not written");
         }
         DocumentBookmarkOptions outline = node.bookmarkOptions();
         if (outline != null) {
             if (listedAs == null) {
+                // Not reached by a text box or a badge, which hold no paragraph with an outline entry.
                 lost.add("its outline entry is not written");
             } else {
                 if (!collapsedWhitespace(outline.title()).equals(listedAs)) {
                     lost.add("its outline entry shows \"" + listedAs + "\", not its title \"" + outline.title() + "\"");
                 }
-                if (outline.level() > MAX_HEADING_LEVEL) {
-                    lost.add("its outline entry is written at Word's ninth level, where the page nests it deeper");
+                if (outline.level() > MAX_HEADING_LEVEL && outlineLevelsFromWordsNinth.size() > 1) {
+                    lost.add("its outline entry is written at Word's ninth level, which it shares with a level "
+                             + "the page nests apart from it");
                 }
             }
         }
@@ -6766,21 +6779,32 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * What an auto-sized paragraph's text loses of its size: written at its style's, where the
-     * page fits it to another Word holds apart, to the half point; or {@code null} when it does
-     * not, or nothing laid out takes the paragraph's style — a run with a style of its own keeps
-     * its size on the page.
+     * Whether a paragraph set in a box of its own, by its alignment, loses the room its prefix
+     * sets a line in by: where the page lays out a prefix, unless the paragraph is one line set
+     * from the end away from its prefix, whose text the prefix does not move. A paragraph of more
+     * lines than one is broken in Word without the prefix's room, and its lines take more words.
+     */
+    private boolean roomLostInItsBox(ParagraphNode node) {
+        return laysOutAPrefix(node) && !(layout.lineCount(node) == 1 && setFromTheEndAwayFromItsPrefix(node));
+    }
+
+    /**
+     * What an auto-sized paragraph's text loses of its size: the size the file holds it at, to
+     * Word's half point, and the one the page fits it to, where Word sets the two apart; the
+     * size alone, saying the fitted one is not measured, where the layout does not tell it; or
+     * {@code null} when it loses nothing, or nothing laid out takes the paragraph's style — a run
+     * with a style of its own keeps its size on the page.
      */
     private String autoSizeLost(ParagraphNode node) {
         if (node.autoSize() == null || !holdsTextInTheParagraphsStyle(node) && !laysOutAPrefix(node)) {
             return null;
         }
-        double written = node.textStyle().size();
+        double written = wordsSize(node.textStyle().size());
         double fitted = fittedSize(node);
         if (Double.isNaN(fitted)) {
             return "its text is written at " + pointsOf(written) + "pt — the size the page fits it to is not measured";
         }
-        return wordsSize(fitted) != wordsSize(written)
+        return wordsSize(fitted) != written
                 ? "its text is written at " + pointsOf(written) + "pt, where the page fits it to " + pointsOf(fitted) + "pt"
                 : null;
     }
@@ -6801,15 +6825,32 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether the page lays out a paragraph's prefix, in the paragraph's style: before a first line
-     * that holds something, or before the lines after it where it lays out more than one or its
-     * lines are not read.
+     * that holds something, or before a line after it that holds something, or where its lines
+     * are not read.
      */
     private boolean laysOutAPrefix(ParagraphNode node) {
         DocumentTextIndent strategy = node.indentStrategy();
         return setsAPrefixBeforeTheFirstLine(node)
                || !node.bulletOffset().isEmpty()
                   && (strategy == DocumentTextIndent.FROM_SECOND_LINE || strategy == DocumentTextIndent.ALL_LINES)
-                  && layout.lineCount(node) != 1;
+                  && holdsALineAfterTheFirst(node);
+    }
+
+    /**
+     * Whether a paragraph lays out a line after its first that holds something, or its lines are
+     * not read: an empty line, the page sets no prefix before.
+     */
+    private boolean holdsALineAfterTheFirst(ParagraphNode node) {
+        List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines = layout.lines(node);
+        if (lines.isEmpty()) {
+            return true;
+        }
+        for (int index = 1; index < lines.size(); index++) {
+            if (!lines.get(index).text().isBlank()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Whether the page sets a paragraph's prefix before its first line, which holds something. */
@@ -6821,10 +6862,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Whether a paragraph's lines are set from the end its prefix does not stand at, where the
-     * prefix moves none of their text: aligned right, or left in a right-to-left paragraph.
+     * Whether a paragraph's lines are set from the end away from its prefix, where the prefix
+     * moves none of their text: aligned right, or aligned left in a right-to-left paragraph,
+     * whose prefix stands at the right.
      */
-    private static boolean setFromTheEndThePrefixStandsOff(ParagraphNode node) {
+    private static boolean setFromTheEndAwayFromItsPrefix(ParagraphNode node) {
         return ParagraphDirection.resolve(node) == TextDirection.RTL
                 ? node.align() == TextAlign.LEFT : node.align() == TextAlign.RIGHT;
     }
@@ -6832,8 +6874,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * The size the page sets a paragraph's text in where it takes the paragraph's style, read off
      * its laid-out lines; {@code NaN} when they are not read, or do not tell it. A run with a style
-     * of its own is laid out at that style's size, so the paragraph's is a size no such run has
-     * or, where every size laid out is one, that one.
+     * of its own is laid out at that style's size, so the paragraph's size is one no such run has;
+     * where the lines hold a single size, it is that one.
      */
     private double fittedSize(ParagraphNode node) {
         java.util.Set<Double> ownSizes = new java.util.HashSet<>();
@@ -6862,27 +6904,34 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether a paragraph's first line holds anything, which the page sets a prefix before: an
-     * empty one, ended by a line break at once, it sets none before.
+     * empty one, ended by a line break before anything the page keeps, it sets none before.
      */
     private static boolean firstLineHoldsSomething(ParagraphNode node) {
         if (node.inlineRuns().isEmpty()) {
-            return startsALine(node.text());
+            return !firstLineOf(node.text()).isEmpty();
         }
         for (InlineRun run : node.inlineRuns()) {
             // A picture, a shape or a chip: the node keeps no chip without text.
             if (!(run instanceof InlineTextRun text)) {
                 return true;
             }
-            if (!text.text().isEmpty()) {
-                return startsALine(text.text());
+            if (!firstLineOf(text.text()).isEmpty()) {
+                return true;
+            }
+            if (text.text().indexOf('\n') >= 0 || text.text().indexOf('\r') >= 0) {
+                return false;
             }
         }
         return false;
     }
 
-    /** Whether text puts something on the line it starts, rather than ending it at once. */
-    private static boolean startsALine(String text) {
-        return !text.isEmpty() && text.charAt(0) != '\n' && text.charAt(0) != '\r';
+    /** Text up to its first line break, without the control characters the page drops from it. */
+    private static String firstLineOf(String text) {
+        int end = 0;
+        while (end < text.length() && text.charAt(end) != '\n' && text.charAt(end) != '\r') {
+            end++;
+        }
+        return com.demcha.compose.engine.text.TextControlSanitizer.removeExceptFormattingControls(text.substring(0, end));
     }
 
     /** A paragraph's text as Word's outline lists it: its letters, one space for each run of white space. */
@@ -6900,9 +6949,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return collapsedWhitespace(text.toString());
     }
 
+    /** A run of white space, no-break spaces among it, which a heading shows as one space. */
+    private static final java.util.regex.Pattern OUTLINE_SPACE =
+            java.util.regex.Pattern.compile("[\\s\\u00A0\\u2007\\u202F]+");
+
     /** Text with its ends trimmed and each run of white space in it one space, as Word's outline shows a heading. */
     private static String collapsedWhitespace(String text) {
-        return text.strip().replaceAll("\\s+", " ");
+        return OUTLINE_SPACE.matcher(text).replaceAll(" ").strip();
     }
 
     /** A size in points as a note gives it: to the hundredth, with no trailing zeros. */
@@ -8861,7 +8914,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } finally {
             badgeText = null;
         }
-        reportWrittenWithout(initials, "written as its badge's text", paragraphLost(initials, false, null));
+        reportWrittenWithout(initials, "written as its badge's text",
+                paragraphLost(initials, roomLostInItsBox(initials), null));
     }
 
     /** A paragraph's text when it is text alone, or {@code null} when it holds anything else. */

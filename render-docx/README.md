@@ -89,7 +89,8 @@ What maps:
   the shape.
 - **Links and navigation.** A link is a `w:hyperlink`, to an address or to one of the
   document's anchors; an `anchor(...)` is a bookmark; a `bookmark(...)` outline level is
-  Word's `HeadingN` style, so the paragraph is in the Navigation Pane, listed by its text.
+  Word's `HeadingN` style, so the paragraph is in the Navigation Pane, listed by the text of its
+  Word paragraph.
 - **Horizontal rules.** A horizontal line or an `addDivider` bar is a paragraph border.
 - **Barcodes and QR codes** are pictures of the same matrix the PDF draws, so they scan.
 - **Charts** are a table of their data.
@@ -120,14 +121,15 @@ What is not written — each one is named in the export report
     too narrow for its marker — while a flat hanging-indent list keeps the page's column;
   - a row the page draws as a marker alone, for a blank item.
 - **What a paragraph's own fields set where Word cannot hold it**, named in the export report on
-  the paragraph:
-  - the size an auto-sized paragraph's text is fitted to, where it is not its style's;
-  - the letters of a `bulletOffset` prefix, and the room a prefix sets lines in by, where it moves
-    one, in a paragraph written over the flow, as a side of an overlay's left-and-right pair or as
-    a badge's initials;
+  the paragraph outside a header or footer (a page zone's paragraphs are not named yet):
+  - the size an auto-sized paragraph's text is fitted to, where Word, to its half point, holds it
+    apart from its style's;
+  - the letters of a `bulletOffset` prefix; and, where it moves a line, the room a prefix sets
+    lines in by in a paragraph written over the flow, as a side of an overlay's left-and-right
+    pair or as a badge's initials;
   - an outline entry's title where it is not the text Word lists the heading by — for a side of
-    an overlay's pair, the whole line — a level past Word's ninth, and the right side's entry of a
-    pair whose left side holds the line's level.
+    an overlay's pair, the whole line — a level past Word's ninth that shares it with another, and
+    the right side's entry of a pair whose left side holds the line's level.
 
 Multi-section documents export through `MultiSectionDocument.toDocxBytes()`,
 `writeDocx(...)` and `buildDocx(...)` (Experimental): each section becomes a Word section

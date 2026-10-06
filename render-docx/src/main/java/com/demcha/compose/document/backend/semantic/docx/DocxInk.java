@@ -6,6 +6,7 @@ import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.PDVectorFont;
 
 import java.awt.geom.Rectangle2D;
@@ -72,5 +73,28 @@ final class DocxInk {
             }
         }
         return new double[]{above, below};
+    }
+
+    /**
+     * Whether the letters of a line are read in the units the layout measured them in: not
+     * where a face is a Type 1 face the PDF does not embed, as the standard fonts are. PDFBox
+     * reads such a face's outlines through a font standing in for it, in that font's own units
+     * — Helvetica's capitals came out twice as tall through a 2048-unit stand-in — and which
+     * stand-in it finds depends on the fonts installed where it runs.
+     *
+     * @param line  the laid-out line
+     * @param fonts the fonts the layout measured it with
+     */
+    static boolean readInTheLayoutsUnits(ParagraphLine line, FontLibrary fonts) {
+        for (ParagraphSpan span : line.spans()) {
+            if (span instanceof ParagraphTextSpan text) {
+                PdfFont font = fonts.getFont(text.textStyle().fontName(), PdfFont.class).orElse(null);
+                if (font != null && font.fontType(text.textStyle().decoration()) instanceof PDType1Font type1
+                    && !type1.isEmbedded()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

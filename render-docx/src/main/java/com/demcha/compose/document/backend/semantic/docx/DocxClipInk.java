@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.AnchorMarkerPayload;
 import com.demcha.compose.document.layout.payloads.BookmarkMarkerPayload;
@@ -23,9 +24,13 @@ import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentLineCap;
 import com.demcha.compose.document.style.DocumentLineJoin;
 import com.demcha.compose.document.style.ShapeOutline;
+import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 
+import java.awt.Shape;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -38,14 +43,17 @@ import java.util.function.Predicate;
  * a label longer than its chip. Most clips cut nothing — an icon drawn inside its box, a disc's
  * initials, a chip's label whose line stands past the chip while its letters stay inside.</p>
  *
- * <p>What is painted is measured from the layout's fragments as the Word file draws them,
- * upright, a transform not being carried: a fill to its outline, a fill of a gradient alone not
- * at all, as the file draws none; a stroke as the PDF paints it ({@link DocxInkOutline}), a box's
- * side borders each a line of its own, ended flat at its corners; a picture to its box, or to the
- * ellipse the file crops it to; and a line of text across the width it was set at and from its
- * letters' tops to their feet, read from the outlines of its glyphs (see {@link DocxInk}), or
- * over its whole line where those are not known. Ink within half a point of the clip is not
- * counted as cut.</p>
+ * <p>What is painted is measured from the layout's fragments as the page paints it
+ * ({@link DocxInkOutline}), upright, as the file writes it, a transform not being carried: a
+ * fill to its outline, and a fill of a gradient alone not at all, the file drawing none; a
+ * stroke with its cap and its join; a box's side borders each a line of its own, ended flat at
+ * its corners; a picture to the box it is drawn in — fitted inside its own where it is
+ * contained — or to the ellipse the file crops it to; and a line of text across the width it was
+ * set at and from its letters' tops to their feet, read from the outlines of its glyphs (see
+ * {@link DocxInk}), or over its whole line where those are not known. What a clip inside it cuts
+ * away is that clip's loss, not this one's. Ink within half a point of the clip is not counted as
+ * cut. A highlight's chip behind its run, a table row's border and a fill over a hole in a clip
+ * are not measured.</p>
  *
  * <p>{@code PptxClipSafety} asks the stricter question of the same fragments — whether a clip
  * provably cuts nothing, so that a slide may keep its shapes — and so takes any stroked path, and
@@ -55,7 +63,10 @@ import java.util.function.Predicate;
 final class DocxClipInk {
 
     /** How far ink may stand past a clip before the clip is taken to cut it. */
-    static final double TOLERANCE = 0.5;
+    private static final double TOLERANCE = 0.5;
+
+    /** The most bands a clip's outline is indexed in, by height. */
+    private static final int MAX_BANDS = 256;
 
     private DocxClipInk() {
     }
@@ -88,9 +99,22 @@ final class DocxClipInk {
     static boolean cuts(PlacedFragment clip, List<PlacedFragment> painted,
                         Predicate<PlacedFragment> croppedToAnEllipse, LetterReach letters) {
         Region region = regionOf((ShapeClipBeginPayload) clip.payload(), clip);
+        // The clips opened inside this one, innermost first: what they cut away the page never
+        // paints, so only what stands inside all of them counts here.
+        Deque<Inner> inner = new ArrayDeque<>();
         for (PlacedFragment fragment : painted) {
+            if (fragment.payload() instanceof ShapeClipBeginPayload begin) {
+                inner.push(new Inner(begin.ownerPath(), regionOf(begin, fragment)));
+                continue;
+            }
+            if (fragment.payload() instanceof ShapeClipEndPayload end) {
+                if (!inner.isEmpty() && inner.peek().ownerPath().equals(end.ownerPath())) {
+                    inner.pop();
+                }
+                continue;
+            }
             for (double[] point : inkOf(fragment, croppedToAnEllipse.test(fragment), letters)) {
-                if (!region.holds(point[0], point[1])) {
+                if (keptByEvery(inner, point) && !region.holds(point[0], point[1])) {
                     return true;
                 }
             }
@@ -102,6 +126,19 @@ final class DocxClipInk {
     @FunctionalInterface
     private interface Region {
         boolean holds(double x, double y);
+    }
+
+    /** A clip opened inside the one measured. */
+    private record Inner(String ownerPath, Region region) {
+    }
+
+    private static boolean keptByEvery(Deque<Inner> inner, double[] point) {
+        for (Inner clip : inner) {
+            if (!clip.region().holds(point[0], point[1])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static Region regionOf(ShapeClipBeginPayload clip, PlacedFragment box) {
@@ -131,28 +168,10 @@ final class DocxClipInk {
             return roundedRegion(bounds, left, bottom, right, top,
                     corners.topLeft(), corners.topRight(), corners.bottomRight(), corners.bottomLeft());
         }
-        List<List<double[]>> rings = new ArrayList<>();
-        if (outline instanceof ShapeOutline.Polygon polygon) {
-            rings.add(DocxInkOutline.ring(polygon.points(), box));
-        } else {
-            for (DocxInkOutline.Run run : DocxInkOutline.flatten(((ShapeOutline.Path) outline).segments(), box)) {
-                rings.add(run.points());
-            }
-        }
-        // Past the outline's own box a point is outside it, without walking its edges.
-        double[] extent = {Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY,
-                Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY};
-        for (List<double[]> ring : rings) {
-            for (double[] point : ring) {
-                extent[0] = Math.min(extent[0], point[0]);
-                extent[1] = Math.min(extent[1], point[1]);
-                extent[2] = Math.max(extent[2], point[0]);
-                extent[3] = Math.max(extent[3], point[1]);
-            }
-        }
-        return (x, y) -> x >= extent[0] - TOLERANCE && x <= extent[2] + TOLERANCE
-                         && y >= extent[1] - TOLERANCE && y <= extent[3] + TOLERANCE
-                         && (winding(rings, x, y) != 0 || nearAnEdge(rings, x, y));
+        Shape shape = outline instanceof ShapeOutline.Polygon polygon
+                ? DocxInkOutline.polygon(polygon.points(), box)
+                : DocxInkOutline.path(((ShapeOutline.Path) outline).segments(), box);
+        return new Edges(DocxInkOutline.rings(shape))::holds;
     }
 
     /** A box whose corners are rounded, each radius clamped to half the smaller side. */
@@ -186,83 +205,108 @@ final class DocxClipInk {
     private static List<double[]> inkOf(PlacedFragment fragment, boolean croppedToAnEllipse, LetterReach letters) {
         Object payload = fragment.payload();
         List<double[]> ink = new ArrayList<>();
-        if (payload instanceof ShapeClipBeginPayload || payload instanceof ShapeClipEndPayload
-            || payload instanceof TransformBeginPayload || payload instanceof TransformEndPayload
+        if (payload instanceof TransformBeginPayload || payload instanceof TransformEndPayload
             || payload instanceof AnchorMarkerPayload || payload instanceof BookmarkMarkerPayload
             || payload instanceof LayoutAnchorPayload) {
             return ink;
         }
         if (payload instanceof ShapeFragmentPayload shape) {
-            DocumentCornerRadius radius = shape.cornerRadius() == null ? DocumentCornerRadius.ZERO : shape.cornerRadius();
-            if (shape.fillColor() != null) {
-                DocxInkOutline.roundedBox(ink, fragment, 0, radius);
-            }
-            SideBorders sides = shape.sideBorders();
-            if (sides != null && sides.hasAny()) {
-                // Each side is a line of its own, ended flat at the box's corners, in place of
-                // the stroke round it.
-                double left = fragment.x();
-                double bottom = fragment.y();
-                double right = left + fragment.width();
-                double top = bottom + fragment.height();
-                side(ink, sides.top(), left, top, right, top);
-                side(ink, sides.right(), right, top, right, bottom);
-                side(ink, sides.bottom(), left, bottom, right, bottom);
-                side(ink, sides.left(), left, top, left, bottom);
-            } else if (halfOf(shape.stroke()) > 0) {
-                DocxInkOutline.roundedBox(ink, fragment, halfOf(shape.stroke()), radius);
-            }
+            box(ink, fragment, shape);
         } else if (payload instanceof EllipseFragmentPayload ellipse) {
-            double reach = halfOf(ellipse.stroke());
-            if (ellipse.fillColor() != null || reach > 0) {
-                DocxInkOutline.ellipse(ink, fragment, reach);
+            Shape outline = DocxInkOutline.ellipse(fragment.x(), fragment.y(), fragment.width(), fragment.height());
+            if (ellipse.fillColor() != null) {
+                DocxInkOutline.filled(ink, outline);
             }
+            DocxInkOutline.stroked(ink, outline, widthOf(ellipse.stroke()), DocumentLineCap.BUTT, DocumentLineJoin.MITER);
         } else if (payload instanceof LineFragmentPayload line) {
-            double half = halfOf(line.stroke());
-            if (half > 0) {
-                DocxInkOutline.stroke(ink, List.of(
-                                new double[]{fragment.x() + line.startX(), fragment.y() + line.startY()},
-                                new double[]{fragment.x() + line.endX(), fragment.y() + line.endY()}),
-                        false, half, line.lineCap(), DocumentLineJoin.MITER);
-            }
+            DocxInkOutline.stroked(ink, DocxInkOutline.line(fragment.x() + line.startX(), fragment.y() + line.startY(),
+                            fragment.x() + line.endX(), fragment.y() + line.endY()),
+                    widthOf(line.stroke()), line.lineCap(), DocumentLineJoin.MITER);
         } else if (payload instanceof PathFragmentPayload path) {
-            double half = halfOf(path.stroke());
-            for (DocxInkOutline.Run run : DocxInkOutline.flatten(path.segments(), fragment)) {
-                if (path.fillColor() != null) {
-                    DocxInkOutline.filled(ink, run.points());
-                }
-                if (half > 0) {
-                    DocxInkOutline.stroke(ink, run.points(), run.closed(), half, path.lineCap(), path.lineJoin());
-                }
+            Shape outline = DocxInkOutline.path(path.segments(), fragment);
+            if (path.fillColor() != null) {
+                DocxInkOutline.filled(ink, outline);
             }
+            DocxInkOutline.stroked(ink, outline, widthOf(path.stroke()), path.lineCap(), path.lineJoin());
         } else if (payload instanceof PolygonFragmentPayload polygon) {
-            double half = halfOf(polygon.stroke());
-            if (!polygon.points().isEmpty()) {
-                List<double[]> ring = DocxInkOutline.ring(polygon.points(), fragment);
-                if (polygon.fillColor() != null) {
-                    DocxInkOutline.filled(ink, ring);
-                }
-                if (half > 0) {
-                    DocxInkOutline.stroke(ink, ring, true, half, DocumentLineCap.BUTT, DocumentLineJoin.MITER);
-                }
+            Shape outline = DocxInkOutline.polygon(polygon.points(), fragment);
+            if (polygon.fillColor() != null) {
+                DocxInkOutline.filled(ink, outline);
             }
+            DocxInkOutline.stroked(ink, outline, widthOf(polygon.stroke()), DocumentLineCap.BUTT, DocumentLineJoin.MITER);
         } else if (payload instanceof ParagraphFragmentPayload paragraph) {
             text(ink, fragment, paragraph, letters);
-        } else if (payload instanceof ImageFragmentPayload && croppedToAnEllipse) {
-            DocxInkOutline.ellipse(ink, fragment, 0);
+        } else if (payload instanceof ImageFragmentPayload image) {
+            double[] drawn = drawn(fragment, image);
+            DocxInkOutline.filled(ink, croppedToAnEllipse
+                    ? DocxInkOutline.ellipse(drawn[0], drawn[1], drawn[2], drawn[3])
+                    : DocxInkOutline.box(drawn[0], drawn[1], drawn[0] + drawn[2], drawn[1] + drawn[3]));
         } else {
-            // A picture, a barcode, a table's row, and anything else: its box.
-            DocxInkOutline.roundedBox(ink, fragment, 0, DocumentCornerRadius.ZERO);
+            // A barcode, a table's row, and anything else: its box.
+            DocxInkOutline.filled(ink, DocxInkOutline.box(fragment, DocumentCornerRadius.ZERO));
         }
         return ink;
     }
 
     /**
+     * A box's paint, as the page paints it: none for a box of no size; its fill, a fill of a
+     * gradient alone being none the file draws; and either each of its side borders as a line of
+     * its own, ended flat at its corners, or its stroke round it.
+     */
+    private static void box(List<double[]> ink, PlacedFragment fragment, ShapeFragmentPayload shape) {
+        if (!(fragment.width() > 0) || !(fragment.height() > 0)) {
+            return;
+        }
+        DocumentCornerRadius radius = shape.cornerRadius() == null ? DocumentCornerRadius.ZERO : shape.cornerRadius();
+        Shape outline = DocxInkOutline.box(fragment, radius);
+        if (shape.fillColor() != null) {
+            DocxInkOutline.filled(ink, outline);
+        }
+        SideBorders sides = shape.sideBorders();
+        if (sides != null && sides.hasAny()) {
+            double left = fragment.x();
+            double bottom = fragment.y();
+            double right = left + fragment.width();
+            double top = bottom + fragment.height();
+            side(ink, sides.top(), left, top, right, top);
+            side(ink, sides.right(), right, top, right, bottom);
+            side(ink, sides.bottom(), left, bottom, right, bottom);
+            side(ink, sides.left(), left, top, left, bottom);
+        } else {
+            DocxInkOutline.stroked(ink, outline, widthOf(shape.stroke()), DocumentLineCap.BUTT, DocumentLineJoin.MITER);
+        }
+    }
+
+    private static void side(List<double[]> ink, Stroke stroke, double x1, double y1, double x2, double y2) {
+        DocxInkOutline.stroked(ink, DocxInkOutline.line(x1, y1, x2, y2), widthOf(stroke),
+                DocumentLineCap.BUTT, DocumentLineJoin.MITER);
+    }
+
+    /**
+     * Where the page draws a picture, {@code {x, y, width, height}}: fitted inside its box and
+     * centred there where it is contained, as the file writes it at that size too; across its box
+     * otherwise, covering it or stretched over it.
+     */
+    private static double[] drawn(PlacedFragment fragment, ImageFragmentPayload image) {
+        double[] box = {fragment.x(), fragment.y(), fragment.width(), fragment.height()};
+        ImageData data = image.imageData();
+        if (image.fitMode() != DocumentImageFitMode.CONTAIN || data == null || data.getMetadata() == null) {
+            return box;
+        }
+        double sourceWidth = Math.max(1, data.getMetadata().width());
+        double sourceHeight = Math.max(1, data.getMetadata().height());
+        double scale = Math.min(fragment.width() / sourceWidth, fragment.height() / sourceHeight);
+        double width = sourceWidth * scale;
+        double height = sourceHeight * scale;
+        return new double[]{fragment.x() + (fragment.width() - width) / 2,
+                fragment.y() + (fragment.height() - height) / 2, width, height};
+    }
+
+    /**
      * Each line of a paragraph, across the width it was set at and from its letters' tops to
-     * their feet on the baseline the page sets it on — over its whole line where its letters'
-     * reach is not known, or is said to run past the line the layout measured for them: an
-     * outline read in other units than the layout's, as a face the PDF stands another in for
-     * gives, is not to be trusted.
+     * their feet on the baseline the page sets it on, wherever that is — past the line, for a
+     * title set tighter than its face or a line seated at its foot — or over its whole line where
+     * its letters' reach is not known.
      */
     private static void text(List<double[]> ink, PlacedFragment fragment, ParagraphFragmentPayload paragraph,
                              LetterReach letters) {
@@ -275,74 +319,109 @@ final class DocxClipInk {
         for (ParagraphLine line : paragraph.lines()) {
             if (line.width() > 0) {
                 double start = ParagraphLineGeometry.lineStartX(paragraph.align(), innerX, innerWidth, line.width());
-                double lineBottom = lineTop - line.lineHeight();
-                double baseline = ParagraphLineGeometry.baselineY(lineTop, line.lineHeight(),
-                        line.baselineOffsetFromBottom());
                 double[] reach = letters.of(paragraph, line);
-                if (reach == null || baseline + reach[0] > lineTop + TOLERANCE
-                    || baseline - reach[1] < lineBottom - TOLERANCE) {
-                    DocxInkOutline.box(ink, start, lineBottom, start + line.width(), lineTop);
+                if (reach == null) {
+                    DocxInkOutline.filled(ink, DocxInkOutline.box(start, lineTop - line.lineHeight(),
+                            start + line.width(), lineTop));
                 } else if (reach[0] + reach[1] > 0) {
-                    DocxInkOutline.box(ink, start, baseline - reach[1], start + line.width(), baseline + reach[0]);
+                    double baseline = ParagraphLineGeometry.baselineY(lineTop, line.lineHeight(),
+                            line.baselineOffsetFromBottom());
+                    DocxInkOutline.filled(ink, DocxInkOutline.box(start, baseline - reach[1],
+                            start + line.width(), baseline + reach[0]));
                 }
             }
             lineTop = ParagraphLineGeometry.nextLineTop(lineTop, line.lineHeight(), paragraph.lineGap());
         }
     }
 
-    /** One side of a box, drawn as a line of its own. */
-    private static void side(List<double[]> ink, Stroke stroke, double x1, double y1, double x2, double y2) {
-        double half = halfOf(stroke);
-        if (half > 0) {
-            DocxInkOutline.stroke(ink, List.of(new double[]{x1, y1}, new double[]{x2, y2}), false, half,
-                    DocumentLineCap.BUTT, DocumentLineJoin.MITER);
-        }
-    }
+    /**
+     * The edges of a clip's outline, indexed by height so that a point is tested against the
+     * edges at its own height rather than every edge of a long path.
+     */
+    private static final class Edges {
+        private final double left;
+        private final double bottom;
+        private final double right;
+        private final double top;
+        private final double bandHeight;
+        private final List<List<double[]>> bands = new ArrayList<>();
 
-    /** The non-zero winding number of the rings round a point. */
-    private static int winding(List<List<double[]>> rings, double x, double y) {
-        int winding = 0;
-        for (List<double[]> ring : rings) {
-            for (int index = 0; index < ring.size(); index++) {
-                double[] from = ring.get(index);
-                double[] to = ring.get((index + 1) % ring.size());
-                if (from[1] <= y) {
-                    if (to[1] > y && cross(from, to, x, y) > 0) {
+        Edges(List<List<double[]>> rings) {
+            List<double[]> edges = new ArrayList<>();
+            double minX = Double.POSITIVE_INFINITY;
+            double minY = Double.POSITIVE_INFINITY;
+            double maxX = Double.NEGATIVE_INFINITY;
+            double maxY = Double.NEGATIVE_INFINITY;
+            for (List<double[]> ring : rings) {
+                for (int index = 0; index < ring.size(); index++) {
+                    double[] from = ring.get(index);
+                    double[] to = ring.get((index + 1) % ring.size());
+                    edges.add(new double[]{from[0], from[1], to[0], to[1]});
+                    minX = Math.min(minX, from[0]);
+                    minY = Math.min(minY, from[1]);
+                    maxX = Math.max(maxX, from[0]);
+                    maxY = Math.max(maxY, from[1]);
+                }
+            }
+            left = minX;
+            bottom = minY;
+            right = maxX;
+            top = maxY;
+            int count = Math.max(1, Math.min(MAX_BANDS, edges.size() / 8));
+            bandHeight = maxY > minY ? (maxY - minY) / count : 1;
+            for (int band = 0; band < count; band++) {
+                bands.add(new ArrayList<>());
+            }
+            for (double[] edge : edges) {
+                int from = band(Math.min(edge[1], edge[3]) - TOLERANCE);
+                int to = band(Math.max(edge[1], edge[3]) + TOLERANCE);
+                for (int band = from; band <= to; band++) {
+                    bands.get(band).add(edge);
+                }
+            }
+        }
+
+        private int band(double y) {
+            return Math.max(0, Math.min(bands.size() - 1, (int) Math.floor((y - bottom) / bandHeight)));
+        }
+
+        /** Inside the outline by the non-zero rule, or within the tolerance of its edge. */
+        boolean holds(double x, double y) {
+            if (!(x >= left - TOLERANCE && x <= right + TOLERANCE && y >= bottom - TOLERANCE && y <= top + TOLERANCE)) {
+                return false;
+            }
+            int winding = 0;
+            for (double[] edge : bands.get(band(y))) {
+                if (nearTheEdge(edge, x, y)) {
+                    return true;
+                }
+                if (edge[1] <= y) {
+                    if (edge[3] > y && cross(edge, x, y) > 0) {
                         winding++;
                     }
-                } else if (to[1] <= y && cross(from, to, x, y) < 0) {
+                } else if (edge[3] <= y && cross(edge, x, y) < 0) {
                     winding--;
                 }
             }
+            return winding != 0;
         }
-        return winding;
-    }
 
-    /** Which side of the line from one point to another a point stands, by sign. */
-    private static double cross(double[] from, double[] to, double x, double y) {
-        return (to[0] - from[0]) * (y - from[1]) - (x - from[0]) * (to[1] - from[1]);
-    }
-
-    /** Whether a point is within the tolerance of an edge of the rings. */
-    private static boolean nearAnEdge(List<List<double[]>> rings, double x, double y) {
-        for (List<double[]> ring : rings) {
-            for (int index = 0; index < ring.size(); index++) {
-                double[] from = ring.get(index);
-                double[] to = ring.get((index + 1) % ring.size());
-                double dx = to[0] - from[0];
-                double dy = to[1] - from[1];
-                double length = dx * dx + dy * dy;
-                double t = length == 0 ? 0 : Math.max(0, Math.min(1, ((x - from[0]) * dx + (y - from[1]) * dy) / length));
-                if (Math.hypot(x - from[0] - t * dx, y - from[1] - t * dy) <= TOLERANCE) {
-                    return true;
-                }
-            }
+        /** Which side of an edge a point stands, by sign. */
+        private static double cross(double[] edge, double x, double y) {
+            return (edge[2] - edge[0]) * (y - edge[1]) - (x - edge[0]) * (edge[3] - edge[1]);
         }
-        return false;
+
+        private static boolean nearTheEdge(double[] edge, double x, double y) {
+            double dx = edge[2] - edge[0];
+            double dy = edge[3] - edge[1];
+            double length = dx * dx + dy * dy;
+            double t = length == 0 ? 0 : Math.max(0, Math.min(1, ((x - edge[0]) * dx + (y - edge[1]) * dy) / length));
+            return Math.hypot(x - edge[0] - t * dx, y - edge[1] - t * dy) <= TOLERANCE;
+        }
     }
 
-    private static double halfOf(Stroke stroke) {
-        return stroke == null ? 0 : Math.max(0, stroke.width()) / 2;
+    private static double widthOf(Stroke stroke) {
+        return stroke == null ? 0 : Math.max(0, stroke.width());
     }
 
     private static double square(double value) {

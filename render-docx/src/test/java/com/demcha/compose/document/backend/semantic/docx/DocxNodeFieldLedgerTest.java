@@ -129,7 +129,7 @@ class DocxNodeFieldLedgerTest {
                 "margin:REPORTED:its left side; its right moves nothing in a paragraph set from the left", "transform:REPORTED",
                 "anchor:WRITTEN");
         node(LayerStackNode.class, "name:INERT", "layers:WRITTEN", "padding:WRITTEN", "margin:WRITTEN",
-                "clipToBounds:REPORTED:where it cuts what its layers paint");
+                "clipToBounds:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table");
         node(LineNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "startX:WRITTEN", "startY:WRITTEN",
                 "endX:WRITTEN", "endY:WRITTEN", "stroke:WRITTEN",
                 "linkTarget:REPORTED",

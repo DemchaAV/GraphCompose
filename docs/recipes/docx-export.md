@@ -716,14 +716,16 @@ tint it was flattened to. That is recorded with the rest.
   a graphics-state path clip, so the container's layers are written
   inline, in source order, without clipping — again with one warning per
   export. The report names the clip — a shape container's, and a layer
-  stack's that clips to its bounds — wherever it cuts what the layers paint,
-  measured from the layout's fragments as the file draws them, upright, and
-  text from the outlines of its letters: a square tile's corners in a disc, a
-  label run past its chip, an ornament set past a sidebar's side — and one
-  composed in a table's cell, which has no place of its own, on its table.
-  One that cuts nothing — an icon inside its box, a disc's initials, a photo
-  filling its circle, a label whose line stands past its chip while its
-  letters stay inside — is not named. The outline is drawn as a shape where the page draws it — a
+  stack's that clips to its bounds — wherever it cuts what the layers paint:
+  a square tile's corners in a disc, a label run past its chip, an ornament
+  set past a sidebar's side. One composed in a table's cell, which has no
+  place of its own, is named on its table. What is painted is measured from
+  the layout's fragments as the page paints it, upright as the file writes
+  it, and text from the outlines of its letters. A clip that cuts nothing is
+  not named: an icon inside its box, a disc's initials, a photo filling its
+  circle, a label whose line stands past its chip while its letters stay
+  inside. Exported with no layout behind it, every node that clips is named.
+  The outline is drawn as a shape where the page draws it — a
   star, a diamond or a path as custom geometry — and a picture that fills
   a container clipped to an ellipse takes the ellipse's shape: a portrait
   is round inside its ring. A picture the layout placed is written the

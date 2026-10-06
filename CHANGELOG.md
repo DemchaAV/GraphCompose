@@ -19,14 +19,20 @@ follow semantic versioning; release dates are ISO 8601.
   - on every path, a `clipped shape container` or `clipped layer stack` note names a clip that
     cuts what the node's layers paint, and a `clipped cell content` note on a table names one
     composed in its cells;
-  - what is painted is measured from the layout's fragments as the file draws them, upright
-    (`DocxClipInk`): a fill to its outline; a stroke half its width either side of its line,
-    with its caps, its joins and a box's side borders each drawn as the PDF draws them; a
-    picture cropped to the ellipse it fills as cropped; a line of text from its letters' tops
-    to their feet, read from their glyphs' outlines, or over its whole line where those are not
-    known;
+  - what is painted is measured from the layout's fragments as the page paints it, upright as
+    the file writes it (`DocxClipInk`):
+    - a fill to its outline, a gradient alone being none the file draws;
+    - a stroke as `java.awt.BasicStroke` makes it, with its cap, its join and the PDF's miter
+      limit, and a box's side borders each a line of its own;
+    - a picture where it is drawn, fitted in its box where it is contained, and cropped to the
+      ellipse it fills where the file crops it;
+    - a line of text from its letters' tops to their feet, read from their glyphs' outlines, or
+      over its whole line where those are not known — always for a standard face the PDF does
+      not embed, whose outlines are read through a stand-in font in its own units;
+  - what a clip inside another cuts away is named on that clip, not on the one round it;
   - a clip that cuts nothing is not named, and the `cell drawing` note no longer speaks of
-    clips;
+    clips; with no layout behind the export, every node that clips is named, its cut not
+    measured;
   - the note every shape container's layers were written with is now `shape container`: "its
     layers are written inline, one after another in source order", with no claim of a clip;
   - a shape container turned by a transform whose outline draws nothing — unpainted, or an

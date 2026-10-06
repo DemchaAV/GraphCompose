@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.EllipseFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
@@ -24,6 +25,7 @@ import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentTransform;
 import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.document.style.ShapePoint;
+import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
@@ -218,6 +220,31 @@ class DocxClipInkTest {
     }
 
     @Test
+    void aContainedPictureIsMeasuredWhereItIsDrawnInItsBox() {
+        // A 100×20 picture contained in a 60×70 box: the page draws it 60×12, centred in the box.
+        PlacedFragment clip = clip(new ShapeOutline.Rectangle(W, H), ClipPolicy.CLIP_BOUNDS);
+        ImageData wide = ImageData.create(png(100, 20));
+
+        assertThat(cuts(clip, at(0, -5, 60, 70, new ImageFragmentPayload(wide, DocumentImageFitMode.CONTAIN, null, null))))
+                .isFalse();
+        assertThat(cuts(clip, at(0, -5, 60, 70, new ImageFragmentPayload(wide, DocumentImageFitMode.STRETCH, null, null))))
+                .as("stretched over its box").isTrue();
+    }
+
+    @Test
+    void whatAClipInsideCutsAwayIsThatClipsLoss() {
+        // A disc inside the box holds a bar running past both: the disc cuts it, inside the box.
+        PlacedFragment clip = clip(new ShapeOutline.Rectangle(W, H), ClipPolicy.CLIP_BOUNDS);
+        PlacedFragment disc = at(20, 10, 40, 40, new ShapeClipBeginPayload(new ShapeOutline.Ellipse(40, 40),
+                ClipPolicy.CLIP_PATH, "root/card/disc"));
+        PlacedFragment bar = at(30, -40, 20, 140, shape(0));
+        PlacedFragment closed = at(20, 10, 0, 0, new ShapeClipEndPayload("root/card/disc"));
+
+        assertThat(cuts(clip, disc, bar, closed)).isFalse();
+        assertThat(cuts(clip, disc, closed, bar)).as("the bar after the disc closes").isTrue();
+    }
+
+    @Test
     void markersPaintNothingAndATransformIsNotApplied() {
         PlacedFragment clip = clip(new ShapeOutline.Rectangle(W, H), ClipPolicy.CLIP_BOUNDS);
 
@@ -245,8 +272,9 @@ class DocxClipInkTest {
         assertThat(DocxClipInk.cuts(clip, List.of(label), fragment -> false, UNKNOWN))
                 .as("its whole line, where its letters' reach is not known").isTrue();
         assertThat(DocxClipInk.cuts(clip, List.of(at(0, 0.5, W, 9, paragraph(40, 9, Padding.zero()))),
-                fragment -> false, (paragraph, line) -> new double[]{20, 0}))
-                .as("its whole line, inside the chip, where its letters are said to run past it").isFalse();
+                fragment -> false, UNKNOWN)).as("a line inside the chip").isFalse();
+        assertThat(DocxClipInk.cuts(clip, List.of(at(0, 0.5, W, 9, paragraph(40, 9, Padding.zero()))),
+                fragment -> false, tall)).as("its letters where they reach, past their line").isTrue();
         assertThat(DocxClipInk.cuts(clip, List.of(at(0, -1, W, 12, paragraph(W + 10, 12, Padding.zero()))),
                 fragment -> false, digits)).as("a label set wider than its chip").isTrue();
         assertThat(DocxClipInk.cuts(clip, List.of(at(0, -1, W, 12, paragraph(40, 12, null))),
@@ -284,6 +312,16 @@ class DocxClipInkTest {
 
     private static PlacedFragment at(double x, double y, double width, double height, Object payload) {
         return new PlacedFragment("root/card/layer", 0, 0, X + x, Y + y, width, height, null, null, payload);
+    }
+
+    private static byte[] png(int width, int height) {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(width, height,
+                    java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (java.io.IOException failure) {
+            throw new IllegalStateException(failure);
+        }
     }
 
     private static ShapeFragmentPayload shape(double strokeWidth) {

@@ -8,6 +8,7 @@ import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.ShapeBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.style.ClipPolicy;
@@ -28,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * The clip of a layer stack or a shape container, and the transform of a container whose outline
- * draws nothing, are in the report wherever the export loses them.
+ * draws nothing, are in the report on each path the export writes them by.
  *
  * <p>A Word file has no clip a container can set round its layers: what the page cut away was
  * written whole, and the report named a container's clip on one path only — and there of every
@@ -57,7 +58,7 @@ class DocxClipReportTest {
     }
 
     @Test
-    void aClipThatCutsNothingIsNotNamed() throws Exception {
+    void aClipThatCutsNothingOrNoClipAtAllIsNotNamed() throws Exception {
         DocxExportReport inside = reportOf(page -> page
                 .addParagraph("Above")
                 .addLayerStack(stack -> stack.name("Stack").clipToBounds()
@@ -77,7 +78,7 @@ class DocxClipReportTest {
                         .center(box(40, 40)).build())
                 .addParagraph("Below"));
 
-        // A rota's shift chip, set as CobaltRota sets it: its label's line two points taller than
+        // A rota's shift chip in CobaltRota's face: its label's line two points taller than
         // the chip, its digits inside it.
         DocxExportReport chip = reportOf(page -> page
                 .addParagraph("Above")
@@ -89,14 +90,26 @@ class DocxClipReportTest {
                         .build())
                 .addParagraph("Below"));
 
+        // The same label in Helvetica, which the PDF does not embed: its line fits the chip, and
+        // it is measured by its line, not by outlines read through a stand-in in other units.
+        DocxExportReport standard = reportOf(page -> page
+                .addParagraph("Above")
+                .add(new ShapeContainerBuilder().name("Chip").roundedRect(90, 12, 4).fillColor(SURFACE)
+                        .clipPolicy(ClipPolicy.CLIP_PATH)
+                        .center(new ParagraphBuilder().text("08:00-16:00")
+                                .textStyle(DocumentTextStyle.DEFAULT.withSize(8.2)).build())
+                        .build())
+                .addParagraph("Below"));
+
         assertThat(inside.bySubject()).doesNotContainKeys("clipped layer stack", "clipped shape container");
         assertThat(chip.bySubject()).doesNotContainKeys("clipped layer stack", "clipped shape container");
+        assertThat(standard.bySubject()).doesNotContainKeys("clipped layer stack", "clipped shape container");
         assertThat(notClipping.bySubject()).doesNotContainKeys("clipped layer stack", "clipped shape container");
         assertThat(overflowVisible.bySubject()).doesNotContainKeys("clipped layer stack", "clipped shape container");
     }
 
     @Test
-    void aDrawingClippedToItsCircleNamesTheCornersItShows() throws Exception {
+    void aDrawingPastItsCircleOrItsBoxNamesTheClip() throws Exception {
         // A square filling a disc: the page rounds its corners off, the file draws them.
         DocxExportReport report = reportOf(page -> page
                 .addParagraph("Above")
@@ -218,6 +231,57 @@ class DocxClipReportTest {
     }
 
     @Test
+    void aContainedPictureIsMeasuredWhereThePageDrawsIt() throws Exception {
+        // A wide picture contained in a box taller than its tile: the page draws it a strip
+        // across the tile's middle, and the file writes it that size.
+        DocxExportReport report = reportOf(page -> page
+                .addParagraph("Above")
+                .add(new ShapeContainerBuilder().name("Tile").rectangle(60, 60).fillColor(SURFACE)
+                        .clipPolicy(ClipPolicy.CLIP_BOUNDS)
+                        .center(new ImageBuilder().name("Logo").source(DocumentImageData.fromBytes(png(100, 20)))
+                                .size(60, 70).fitMode(DocumentImageFitMode.CONTAIN).build())
+                        .build())
+                .addParagraph("Below"));
+
+        assertThat(report.bySubject()).doesNotContainKey("clipped shape container");
+    }
+
+    @Test
+    void anOuterClipIsNotNamedForWhatAClipInsideItCutsAway() throws Exception {
+        // A disc in a card holds a bar running past both: the disc cuts it inside the card, and
+        // only the disc's clip loses anything.
+        DocxExportReport report = reportOf(page -> page
+                .addParagraph("Above")
+                .addLayerStack(card -> card.name("Card").clipToBounds()
+                        .layer(box(100, 100), LayerAlign.TOP_LEFT, 0)
+                        .layer(new ShapeContainerBuilder().name("Disc").circle(40).fillColor(SURFACE)
+                                .clipPolicy(ClipPolicy.CLIP_PATH).center(box(40, 160)).build(),
+                                LayerAlign.CENTER, 1))
+                .addParagraph("Below"));
+
+        assertThat(report.bySubject()).doesNotContainKey("clipped layer stack");
+        assertThat(detailOf(report, "clipped shape container")).isEqualTo(PAST_ITS_OUTLINE);
+    }
+
+    @Test
+    void withNoLayoutEveryClipIsNamedItsCutNotMeasured() throws Exception {
+        // A bare export has nothing to measure by: a clip is named whether it cuts or not.
+        DocxExportReport report = DocxExports.reportWithoutLayout(400, 600, 40, page -> page
+                .addParagraph("Above")
+                .add(new ShapeContainerBuilder().name("Badge").circle(40).fillColor(INK)
+                        .center(new ParagraphBuilder().text("JR").build()).build())
+                .addLayerStack(stack -> stack.name("Icon").clipToBounds().layer(box(20, 20)))
+                .add(new ShapeContainerBuilder().name("Free").circle(40).fillColor(INK)
+                        .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE).center(box(10, 10)).build())
+                .addParagraph("Below"));
+
+        assertThat(detailOf(report, "clipped shape container")).isEqualTo(PAST_ITS_OUTLINE
+                + " — with no layout behind the export, whether they do is not measured");
+        assertThat(detailOf(report, "clipped layer stack")).isEqualTo(PAST_ITS_BOX
+                + " — with no layout behind the export, whether they do is not measured");
+    }
+
+    @Test
     void aTurnedContainerWhoseOutlineDrawsNothingNamesItsTransform() throws Exception {
         DocxExportReport unpainted = reportOf(page -> page
                 .addParagraph("Above")
@@ -280,8 +344,12 @@ class DocxClipReportTest {
     }
 
     private static byte[] png() {
+        return png(20, 20);
+    }
+
+    private static byte[] png(int width, int height) {
         try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
-            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(20, 20,
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(width, height,
                     java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
             return out.toByteArray();
         } catch (Exception failure) {

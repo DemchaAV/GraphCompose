@@ -246,7 +246,9 @@ goes into the line: Word has one line height for a paragraph and no gap between 
 so a paragraph that wraps is written with its lines taller. The page has one gap fewer than
 lines; what the space above the paragraph can spare of that one comes off it, and the rest is
 shared out over the lines, so the paragraph keeps its height on the page. Each list item holds
-the gap only when it wraps. A paragraph on one line has no gap to hold.
+the gap only when it wraps, and only where the layout's items are the list's own, one for one;
+where they are not, the report names the gap (see "What a list becomes"). A paragraph on one
+line has no gap to hold.
 
 A gap is written **once, above**. The space a block holds below itself waits for the next
 paragraph and is written there as `w:before`, together with whatever that paragraph asks
@@ -444,6 +446,16 @@ start together. A nested item with a marker, one of plain text, one the layout s
 in than the list's edge, and every item of a list the layout did not place or whose items it
 does not report one by one — an item split across pages — keep the spaces, and so does the
 top level of a list that nests any of them.
+
+The report names what a list's items lose, on the list (`ListNode`): its items are written
+flush left where it is centred or right-aligned; its lineSpacing is not written where the
+layout's items are not its own and one wraps — an item run onto the next page wraps, even split
+a line apiece — nor in a list composed in a table cell, whose wrapping is not measured; its
+continuationIndent is not written in a list the page sets it in, a markerless list or a tree of
+items without `hangingIndent`, where an item wraps or its wrapping is not measured; it counts
+the items that stand at a stated column, a space past their marker or two spaces a level in,
+rather than where the page sets them; and it names the rows a `hangingIndent` list draws as a
+marker alone for blank items, which the export does not write.
 
 ## What a panel keeps and loses
 

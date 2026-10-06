@@ -8,6 +8,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's report names what a list's items lose.** A centred or right-aligned list was
+  written flush left, a list's lineSpacing went unwritten wherever the layout's items were not
+  its own, its continuationIndent was never written before a wrapped line, and an item at the
+  stated column — a list that nests with `hangingIndent`, a gap its marker does not clear, a tree
+  of items — stood off the page's column, and a blank item a `hangingIndent` list draws as its
+  marker alone was not written; the report named none of them. The list's note (`ListNode`) now
+  names:
+  - its alignment: its items are written flush left;
+  - its lineSpacing, where the layout's items are not the list's own and one wraps — an item run
+    onto the next page wraps, even split a line apiece — and in a list composed in a table cell,
+    which has no lines of its own to read, saying whether an item wraps is not measured;
+  - its continuationIndent, in a list the page sets it in — a markerless list, or a tree of
+    items, without `hangingIndent` — where an item wraps or, its lines unread, saying so;
+  - how many of its items stand at a stated column, 9pt in and 6pt more a level, or a space past
+    their marker or two spaces a level in, not where the page sets them;
+  - the rows the page draws as a marker alone, for blank items.
+
+  With no layout behind the export, the section's `measured geometry` note says the space
+  between lines is the editor's too. Across the DOCX fidelity corpus the report names one list:
+  `SlateOrange`'s certifications, composed in a table cell, at the stated column. None of this
+  changes what is written: the 62 documents of the corpus export to the same bytes. In
+  `DocxNodeFieldLedgerTest` a list's `align`, `lineSpacing`, `continuationIndent`,
+  `hangingIndent` and `markerGap` move from a gap to `REPORTED`, and its `items` from `WRITTEN`
+  to `REPORTED` for a blank item drawn as a marker alone; 7 node-field gaps remain.
 - **A DOCX export's report names a clip where it cuts something, and a turned container's
   transform where no outline names it.** A Word file has no clip a container can set round its
   layers: a sidebar's ornament set past its side, a square tile's corners in a disc, a label

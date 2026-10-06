@@ -7,6 +7,8 @@ import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.ParagraphLineGeometry;
+import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
+import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.InlineRun;
@@ -49,11 +51,13 @@ final class DocxLayoutMetrics {
 
     /** What an export with no compiled layout uses: every question answers "unknown". */
     static final DocxLayoutMetrics EMPTY =
-            new DocxLayoutMetrics(new IdentityHashMap<>(), Map.of(), Map.of(), 0);
+            new DocxLayoutMetrics(new IdentityHashMap<>(), Map.of(), Map.of(), List.of(), 0);
 
     private final Map<DocumentNode, String> paths;
     private final Map<String, List<PlacedFragment>> fragments;
     private final Map<String, PlacedNode> placed;
+    // Every fragment, in the order the page paints them.
+    private final List<PlacedFragment> painted;
     private final int pageCount;
     // A table's measured cells by name, filled on first use — see cellLineHeightsOf.
     private final Map<DocumentNode, Map<String, Double>> cellLineHeights = new IdentityHashMap<>();
@@ -66,14 +70,18 @@ final class DocxLayoutMetrics {
     private Map<DocumentNode, PlacedFragment> composedText;
     // The text and pictures of each page, indexed on first use — see textOnPage.
     private Map<Integer, List<PlacedFragment>> textByPage;
+    // Each page's fragments in paint order, indexed on first use — see clipsOf.
+    private Map<Integer, List<PlacedFragment>> paintedByPage;
 
     private DocxLayoutMetrics(Map<DocumentNode, String> paths,
                               Map<String, List<PlacedFragment>> fragments,
                               Map<String, PlacedNode> placed,
+                              List<PlacedFragment> painted,
                               int pageCount) {
         this.paths = paths;
         this.fragments = fragments;
         this.placed = placed;
+        this.painted = painted;
         this.pageCount = pageCount;
     }
 
@@ -95,7 +103,7 @@ final class DocxLayoutMetrics {
         if (layout == null) {
             // No measurements, but the paths still name the nodes — which is what a
             // diagnostic note needs to say where in the document it came from.
-            return new DocxLayoutMetrics(paths, Map.of(), Map.of(), 0);
+            return new DocxLayoutMetrics(paths, Map.of(), Map.of(), List.of(), 0);
         }
         Map<String, List<PlacedFragment>> fragments = new HashMap<>();
         for (PlacedFragment fragment : layout.fragments()) {
@@ -105,7 +113,7 @@ final class DocxLayoutMetrics {
         for (PlacedNode node : layout.nodes()) {
             placed.putIfAbsent(node.path(), node);
         }
-        return new DocxLayoutMetrics(paths, fragments, placed, layout.totalPages());
+        return new DocxLayoutMetrics(paths, fragments, placed, layout.fragments(), layout.totalPages());
     }
 
     /**
@@ -1140,6 +1148,65 @@ final class DocxLayoutMetrics {
      */
     List<PlacedFragment> ownFragments(DocumentNode node) {
         return fragmentsOf(node);
+    }
+
+    /**
+     * What a node clips, on each page it opens a clip: the fragment opening the clip, and what
+     * the page paints after it until the clip closes — the node's layers, and anything they
+     * clip in turn.
+     *
+     * @param node a node of the graph
+     * @return its clips, empty when it opens none or there is no layout
+     */
+    List<Clip> clipsOf(DocumentNode node) {
+        List<Clip> clips = new ArrayList<>();
+        for (PlacedFragment opening : fragmentsOf(node)) {
+            if (!(opening.payload() instanceof ShapeClipBeginPayload begin)) {
+                continue;
+            }
+            List<PlacedFragment> page = paintedOn(opening.pageIndex());
+            int from = indexOf(page, opening);
+            if (from < 0) {
+                continue;
+            }
+            int to = from + 1;
+            // Up to the close of this clip; a clip the page never closes runs to the page's end.
+            while (to < page.size() && !(page.get(to).payload() instanceof ShapeClipEndPayload end
+                                         && end.ownerPath().equals(begin.ownerPath()))) {
+                to++;
+            }
+            clips.add(new Clip(opening, page.subList(from + 1, to)));
+        }
+        return clips;
+    }
+
+    /**
+     * A clip a node opens on a page.
+     *
+     * @param opening the fragment opening it, whose box the clip's outline is set in
+     * @param painted what the page paints inside it, in paint order
+     */
+    record Clip(PlacedFragment opening, List<PlacedFragment> painted) {
+    }
+
+    private List<PlacedFragment> paintedOn(int page) {
+        if (paintedByPage == null) {
+            paintedByPage = new HashMap<>();
+            for (PlacedFragment fragment : painted) {
+                paintedByPage.computeIfAbsent(fragment.pageIndex(), key -> new ArrayList<>()).add(fragment);
+            }
+        }
+        return paintedByPage.getOrDefault(page, List.of());
+    }
+
+    /** The position of a fragment in a page's list, by identity: two fragments may be equal. */
+    private static int indexOf(List<PlacedFragment> page, PlacedFragment fragment) {
+        for (int index = 0; index < page.size(); index++) {
+            if (page.get(index) == fragment) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     /**

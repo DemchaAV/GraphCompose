@@ -2033,6 +2033,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeNodeContent(XWPFDocument document, DocumentNode node) throws Exception {
+        reportClipCut(node);
         ParagraphNode initials = node instanceof ShapeContainerNode badge ? textBadgeParagraph(badge) : null;
         if (initials != null) {
             writeTextBadge(document, (ShapeContainerNode) node, initials);
@@ -2079,6 +2080,115 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (overlay) {
                 openOverlays.pop();
             }
+        }
+    }
+
+    /**
+     * Names the clip a node opens where it cuts what the node's layers paint
+     * ({@link DocxClipInk}): the Word file has no clip a container can set round its layers, so
+     * what the page cuts away is written whole, however the node is written. The page opens one
+     * for a layer stack that clips to its bounds and a shape container whose policy clips; one
+     * composed in a table's cell has no place of its own, and its clip is among the table's
+     * fragments, named on the table. A clip that cuts nothing — an icon drawn inside its box, a
+     * disc's initials, a photo filling its circle — loses nothing and is not named. A picture
+     * filling the ellipse that clips it is cropped to that ellipse in the file (see
+     * {@link #fillsItsEllipse}), and is measured as cropped. With no layout behind the export,
+     * every node that clips is named, its cut not measured.
+     */
+    private void reportClipCut(DocumentNode node) {
+        if (layout.isEmpty()) {
+            // With no layout there is nothing to measure by: a node that clips is named as one
+            // that may cut, rather than taken for one that cuts nothing.
+            com.demcha.compose.document.style.ClipPolicy policy = clipPolicyOf(node);
+            if (policy != null && policy != com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE) {
+                reportClipLost(node, policy, " — with no layout behind the export, whether they do is not measured");
+            }
+            return;
+        }
+        List<DocxLayoutMetrics.Clip> clips = layout.clipsOf(node);
+        if (clips.isEmpty()) {
+            return;
+        }
+        java.util.Set<String> cropped = new java.util.HashSet<>();
+        collectCroppedPictures(node, clipContainer, cropped);
+        for (DocxLayoutMetrics.Clip clip : clips) {
+            if (DocxClipInk.cuts(clip.opening(), clip.painted(),
+                    fragment -> fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ImageFragmentPayload
+                                && cropped.contains(fragment.path()),
+                    this::letterReach)) {
+                if (node instanceof TableNode) {
+                    report.add(DocxExportReport.Severity.APPROXIMATED, "clipped cell content", layout.pathOf(node),
+                            "a clip composed in its cells is not in the file, so what is painted past it is "
+                            + "written whole");
+                } else {
+                    reportClipLost(node, ((com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload)
+                            clip.opening().payload()).policy(), "");
+                }
+                return;
+            }
+        }
+    }
+
+    /** The clip a layer stack or a shape container sets, or {@code null} for any other node. */
+    private static com.demcha.compose.document.style.ClipPolicy clipPolicyOf(DocumentNode node) {
+        if (node instanceof ShapeContainerNode container) {
+            return container.clipPolicy();
+        }
+        if (node instanceof com.demcha.compose.document.node.LayerStackNode stack) {
+            return stack.clipToBounds() ? com.demcha.compose.document.style.ClipPolicy.CLIP_BOUNDS : null;
+        }
+        return null;
+    }
+
+    private void reportClipLost(DocumentNode node, com.demcha.compose.document.style.ClipPolicy policy, String unmeasured) {
+        report.add(DocxExportReport.Severity.APPROXIMATED,
+                node instanceof ShapeContainerNode ? "clipped shape container"
+                : node instanceof com.demcha.compose.document.node.LayerStackNode ? "clipped layer stack"
+                : "clipped " + node.nodeKind(),
+                layout.pathOf(node), "its clip is not in the file, so what its layers paint past its "
+                                     + (policy == com.demcha.compose.document.style.ClipPolicy.CLIP_PATH ? "outline" : "box")
+                                     + " is written whole" + unmeasured);
+    }
+
+    /**
+     * How far a laid-out line's letters reach above and below the baseline the page sets it on,
+     * read from their glyphs' outlines (see {@link DocxInk}) and moved as the page seats the
+     * line; {@code null} where the fonts the layout measured with do not say — measuring here
+     * must not fail the export.
+     */
+    private double[] letterReach(com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload paragraph,
+                                 com.demcha.compose.document.layout.payloads.ParagraphLine line) {
+        try {
+            // A standard face, not embedded, is read through a stand-in in that font's units.
+            if (!DocxInk.readInTheLayoutsUnits(line, measuredFonts())) {
+                return null;
+            }
+            double[] reach = DocxInk.of(line, measuredFonts());
+            if (reach == null) {
+                return null;
+            }
+            double seated = paragraph.verticalAlign() == TextVerticalAlign.DEFAULT ? 0
+                    : com.demcha.compose.document.backend.fixed.pdf.handlers.ParagraphSeating
+                            .shift(line, measuredFonts(), paragraph.verticalAlign());
+            return new double[]{reach[0] + seated, reach[1] - seated};
+        } catch (RuntimeException unknownFace) {
+            return null;
+        }
+    }
+
+    /**
+     * The paths of the pictures under a node that fill the ellipse clipping them, each clipped
+     * by the nearest shape container round it that clips to its outline.
+     */
+    private void collectCroppedPictures(DocumentNode node, ShapeContainerNode clip, java.util.Set<String> into) {
+        ShapeContainerNode nearest = node instanceof ShapeContainerNode container
+                                     && container.clipPolicy() == com.demcha.compose.document.style.ClipPolicy.CLIP_PATH
+                ? container : clip;
+        for (DocumentNode child : node.children()) {
+            if (child instanceof ImageNode image && fillsItsEllipse(image, nearest)) {
+                into.add(layout.pathOf(image));
+            }
+            collectCroppedPictures(child, nearest, into);
         }
     }
 
@@ -2754,12 +2864,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Draws the outline a shape container paints round its layers, or reports it lost when no
-     * shape shows it — a path, a polygon, a star.
+     * shape shows it. Where no outline is drawn, it names the transform that turns the
+     * container's layers, which only a drawn outline's note otherwise names.
      */
     private void drawOutlineOf(DocumentNode node) {
-        if (!drawOwnFragments(node) && !drawnByItsTable(node)
-            && node instanceof ShapeContainerNode container
-            && (container.fillColor() != null || container.stroke() != null && container.stroke().width() > 0)) {
+        if (drawOwnFragments(node) || drawnByItsTable(node) || !(node instanceof ShapeContainerNode container)) {
+            // A drawn outline's note names its transform; a table's note, its cells'.
+            return;
+        }
+        if (container.fillColor() != null || container.stroke() != null && container.stroke().width() > 0) {
             String outline = container.outline().getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT);
             report.add(DocxExportReport.Severity.DROPPED, "shape container outline", layout.pathOf(node),
                     composedInACell(node)
@@ -2767,6 +2880,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                               + "layout to be drawn at, so it is not in the document"
                             : "a " + outline + " outline has no shape this export draws, so it is not in the "
                               + "document");
+        }
+        // With no outline drawn, nothing else names the transform its layers are turned by.
+        if (container.transform() != null && !container.transform().isIdentity()) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
+                    "its transform is not carried, so what it holds stands upright at its size");
         }
     }
 
@@ -6112,21 +6230,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writePanel(document, node, new ContainerPaint(node.fillColor(), bordersOf(null, node.stroke())));
             return;
         }
-        // POI/DOCX has no portable equivalent of a graphics-state path clip.
-        // The fallback rule (recorded in docs/canonical-legacy-parity.md) is
-        // to render the container's layers inline, in source order, without
-        // clipping; a picture clipped to an ellipse takes the ellipse's shape.
-        report.add(DocxExportReport.Severity.APPROXIMATED, "clipped shape container",
-                layout.pathOf(node),
-                "DOCX has no graphics-state clip, so the layers are written inline, in source "
-                + "order, without being clipped to the outline");
+        // The container's layers are written inline, in source order; a clip that cuts them is
+        // named where every container is written (reportClipCut), and a picture clipped to an
+        // ellipse takes the ellipse's shape.
+        report.add(DocxExportReport.Severity.APPROXIMATED, "shape container", layout.pathOf(node),
+                "its layers are written inline, one after another in source order");
         // The outline itself is drawing — a badge's circle, a ring round a portrait — and is
         // drawn where the page draws it, behind the layers now held in to where it sets them.
         drawOutlineOf(node);
         if (shapeContainerWarned.compareAndSet(false, true)) {
             LOG.warn("docx.export.shape-container-fallback "
                     + "outline='{}' clipPolicy={} — DOCX has no graphics-state clip; "
-                    + "rendering layers inline without clipping. "
+                    + "rendering layers inline; the report names a clip that cuts them. "
                     + "(One warning per export; use the PDF backend for full fidelity.)",
                     node.outline().getClass().getSimpleName(),
                     node.clipPolicy());
@@ -8933,7 +9048,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             report.add(DocxExportReport.Severity.APPROXIMATED, "cell drawing", layout.pathOf(table),
                     "what its cells draw is drawn as shapes where the layout puts it — anchored in the "
                     + "cell a drawing is all of, and otherwise " + ANCHORED_BESIDE_ITS_TEXT
-                    + "; a clip, a transform, a gradient or a dash on it is not carried");
+                    + "; a transform, a gradient or a dash on it is not carried");
+            // A clip its cells set is named where it cuts something (reportClipCut).
         }
         return new CellDrawing(drew, skipped, pending);
     }

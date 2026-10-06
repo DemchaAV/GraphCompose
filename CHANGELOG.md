@@ -8,6 +8,41 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's report names a clip where it cuts something, and a turned container's
+  transform where no outline names it.** A Word file has no clip a container can set round its
+  layers: a sidebar's ornament set past its side, a square tile's corners in a disc, a label
+  run past its chip are written whole. The report named a shape container's clip on one path
+  only, and there of every one, `OVERFLOW_VISIBLE` included; a table's `cell drawing` note said
+  of every drawing its cells hold that a clip on it is not carried. It named no layer stack's
+  `clipToBounds`, and no clip of a container written as a badge, a title and its dates, over
+  the flow or as drawing alone. Now:
+  - on every path, a `clipped shape container` or `clipped layer stack` note names a clip that
+    cuts what the node's layers paint, and a `clipped cell content` note on a table names one
+    composed in its cells;
+  - what is painted is measured from the layout's fragments as the page paints it, upright as
+    the file writes it (`DocxClipInk`):
+    - a fill to its outline, a gradient alone being none the file draws;
+    - a stroke as `java.awt.BasicStroke` makes it, with its cap, its join and the PDF's miter
+      limit, and a box's side borders each a line of its own;
+    - a picture where it is drawn, fitted in its box where it is contained, and cropped to the
+      ellipse it fills where the file crops it;
+    - a line of text from its letters' tops to their feet, read from their glyphs' outlines, or
+      over its whole line where those are not known — always for a standard face the PDF does
+      not embed, whose outlines are read through a stand-in font in its own units;
+  - what a clip inside another cuts away is named on that clip, not on the one round it;
+  - a clip that cuts nothing is not named, and the `cell drawing` note no longer speaks of
+    clips; with no layout behind the export, every node that clips is named, its cut not
+    measured;
+  - the note every shape container's layers were written with is now `shape container`: "its
+    layers are written inline, one after another in source order", with no claim of a clip;
+  - a shape container turned by a transform whose outline draws nothing — unpainted, or an
+    outline no shape shows — names it: what it holds stands upright at its size.
+
+  Measured across the DOCX fidelity corpus, the report names one clip: `LumaStudioInvoice`'s
+  sidebar ornament. None of this changes what is written: the 62 documents of the corpus export
+  to the same bytes. In `DocxNodeFieldLedgerTest` a layer stack's `clipToBounds` and a shape
+  container's `clipPolicy` and `transform` move from a gap to `REPORTED`; 12 node-field gaps
+  remain.
 - **A DOCX export's report names what a container written as its contents leaves of its own
   layout.** A canvas's caption set at its middle came out at its top with everything under it
   risen to meet it, a band bled to the page's edges stopped at its box, a column fixed

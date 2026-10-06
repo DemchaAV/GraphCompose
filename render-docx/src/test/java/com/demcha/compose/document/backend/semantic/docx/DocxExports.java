@@ -54,6 +54,20 @@ final class DocxExports {
         return new XWPFDocument(new ByteArrayInputStream(docx));
     }
 
+    /** The report of an export with no layout behind it, the way a bare caller makes one. */
+    static DocxExportReport reportWithoutLayout(double pageWidth, double pageHeight, double margin,
+                                                Consumer<PageFlowBuilder> content) throws Exception {
+        Captured captured = new Captured();
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        try (DocumentSession session = session(pageWidth, pageHeight, margin, content)) {
+            session.export(captured);
+            new DocxSemanticBackend(report::set).export(captured.graph,
+                    new SemanticExportContext(captured.canvas, List.of(), null, null));
+        }
+        return report.get();
+    }
+
     /** Exports with neither a layout nor a canvas, as a caller holding only the graph does. */
     static XWPFDocument withoutCanvas(Consumer<PageFlowBuilder> content) throws Exception {
         Captured captured = new Captured();

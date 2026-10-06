@@ -8,6 +8,27 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's report names what a container written as its contents leaves of its own
+  layout.** A canvas's caption set at its middle came out at its top with everything under it
+  risen to meet it, a band bled to the page's edges stopped at its box, and a column fixed
+  narrower than its band ran its text the band's width — and the report listed no loss. The
+  container's note now names:
+  - on a canvas: that what it writes is written from its corner, one block after another,
+    not where it places it; that its height is not held, where what it writes is not as tall
+    as it and something follows it in its flow — a timeline's marker, alone in its row's cell,
+    moves nothing; and its width, where its text wraps narrower than the column — its
+    drawings stand where it places them;
+  - on a painted section the page bleeds — in the flow it pages, not in a row, a layer or a
+    cell, where the page bleeds none —: its bleed, which stops its fill and borders at its box;
+  - on a section or container written as a layer stack's column: a fixed width narrower than
+    its band;
+  - on a line drawn in the body flow and kept with a block that writes a table first — a
+    table, a row, a chart, a panel, a stack written as columns —: that the keep is not carried.
+
+  A canvas's `clipPolicy` is recorded as having nothing to carry: the page clips no canvas.
+  None changes what is written: the 62 documents of the DOCX fidelity corpus export to the
+  same bytes. In `DocxNodeFieldLedgerTest` 7 node fields move from a gap to `REPORTED` and one
+  to `INERT`; 14 node-field gaps remain, each named.
 - **A DOCX table with padding on its sides keeps the layout's grid, row heights and unbroken
   rows.** The page draws a table's rows inside its padding, narrower than the table's
   placement by that much, and the export matched a table's rows to the layout by the

@@ -197,8 +197,7 @@ class DocxNodeFieldLedgerTest {
         node(TableNode.class, "name:INERT", "columns:WRITTEN", "rows:WRITTEN", "defaultCellStyle:WRITTEN",
                 "rowStyles:WRITTEN", "columnStyles:WRITTEN", "width:WRITTEN", "linkTarget:REPORTED",
                 "bookmarkOptions:REPORTED",
-                "padding:GAP:with side padding, its rows are not matched to the layout's and lose its grid, "
-                + "row heights, unbroken rows and the anchoring of drawings in them; its left padding is reported",
+                "padding:WRITTEN",
                 "margin:WRITTEN", "repeatedHeaderRowCount:WRITTEN", "anchor:WRITTEN");
     }
 

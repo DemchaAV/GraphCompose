@@ -29,8 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * What of a block's own geometry the export does not write is in its report note: the sides of
- * a picture, a barcode or a page reference, a table's padding, the room a spacer holds past its
- * height, the space round a chart's table, the fixed width of an unpainted box.
+ * a picture, a barcode or a page reference, the room a spacer holds past its height, the space
+ * round a chart's table, the fixed width of an unpainted box.
  *
  * <p>Each was left out in silence: a logo given a left margin stood at the column's edge, a
  * spacer with a margin held only its height and everything under it rose, and a section fixed
@@ -91,26 +91,6 @@ class DocxBlockGeometryReportTest {
                 .margin(new DocumentInsets(0, 0, 0, 30)))))
                 .as("the file does not carry it").isEqualTo(bodyOf(page -> page
                         .addBarcode(barcode -> barcode.qrCode().data("GC-1").size(60, 60))));
-    }
-
-    @Test
-    void aTableNamesItsSidePaddingAndHoldsItsMargin() throws Exception {
-        DocxExportReport padded = reportOf(page -> page
-                .addTable(table -> table.columns(DocumentTableColumn.fixed(200)).row("Cell")
-                        .margin(new DocumentInsets(0, 0, 0, 10)).padding(new DocumentInsets(0, 0, 0, 30))));
-        DocxExportReport indented = reportOf(page -> page
-                .addTable(table -> table.columns(DocumentTableColumn.fixed(200)).row("Cell")
-                        .margin(new DocumentInsets(0, 0, 0, 30))));
-
-        assertThat(detailOf(padded, "TableNode"))
-                .isEqualTo("written as a Word table; its left padding is not in the file");
-        assertThat(indented.bySubject()).as("a table's margin is its indent").doesNotContainKey("TableNode");
-        String marginOnly = indentOf(bodyOf(page -> page.addTable(table -> table
-                .columns(DocumentTableColumn.fixed(200)).row("Cell").margin(new DocumentInsets(0, 0, 0, 10)))));
-        assertThat(marginOnly).as("its margin is its indent").isNotEmpty();
-        assertThat(indentOf(bodyOf(page -> page.addTable(table -> table.columns(DocumentTableColumn.fixed(200))
-                .row("Cell").margin(new DocumentInsets(0, 0, 0, 10)).padding(new DocumentInsets(0, 0, 0, 30))))))
-                .as("its indent does not carry its padding").isEqualTo(marginOnly);
     }
 
     @Test
@@ -327,12 +307,6 @@ class DocxBlockGeometryReportTest {
                 return document.getDocument().getBody().xmlText();
             }
         }
-    }
-
-    /** A table's {@code w:tblInd} in the body's XML, or none. */
-    private static String indentOf(String body) {
-        java.util.regex.Matcher indent = java.util.regex.Pattern.compile("<w:tblInd [^>]*/>").matcher(body);
-        return indent.find() ? indent.group() : "";
     }
 
     private static String detailOf(DocxExportReport report, String subject) {

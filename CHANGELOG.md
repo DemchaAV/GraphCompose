@@ -8,6 +8,33 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's report names a paragraph or a list item the page reads as markdown.** A
+  session reads markdown unless it is told not to (`markdown(false)`). It reads a paragraph, or a
+  list item, of plain text holding a mark of emphasis or code:
+  - text its emphasis marks style is set bold or italic;
+  - a heading is set larger;
+  - the marks are dropped, a code span's backticks and a link's address among them.
+
+  The DOCX export writes the text as authored, so Word showed `**bold**` with its asterisks and
+  none of the bold, without a note. The note now says the markdown marks are written as letters:
+  - the paragraph's note (`ParagraphNode`);
+  - a zone paragraph's, on its `page zone` note;
+  - a list's, for its items (`ListNode`).
+
+  It is read from the laid-out lines, which hold fewer marks than the text where the page read
+  it — less a prefix's own marks. So a paragraph the page sets as authored is not named:
+  - markdown off;
+  - no mark;
+  - an underscore inside a word, which markdown keeps;
+  - runs, which the page never reads.
+
+  Where the lines are not read — with no layout, or composed in a table cell whose text the page
+  set otherwise than authored — the note says whether the page reads the marks is not measured.
+  Across the DOCX fidelity corpus the report names one paragraph: `TimelineMinimal`'s open-source
+  project line, whose `*(Open source)*` the page sets in italic and Word showed with its
+  asterisks. None of this changes what is written: the 62 documents of the corpus export to the
+  same bytes. In `DocxNodeFieldLedgerTest` a paragraph's `text` and a list's `nestedItems` move
+  from `WRITTEN` to `REPORTED`, and a list's `items` name it too.
 - **A DOCX export's report names where a page zone's parts stand, and what its paragraphs
   lose.** A page zone is written as one Word line. Word sets its parts one after another from
   the page's left margin, and those after the first spacer against its right margin, on one

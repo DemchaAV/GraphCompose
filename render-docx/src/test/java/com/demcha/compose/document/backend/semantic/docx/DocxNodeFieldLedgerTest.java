@@ -141,8 +141,10 @@ class DocxNodeFieldLedgerTest {
                 "anchor:REPORTED:drawn; a rule in the flow is bookmarked", "lineCap:REPORTED:a cap other than butt; whether an editor ends a drawn butt line flat is not measured",
                 "fillWidth:WRITTEN", "keepWithNext:REPORTED:of a line drawn in the flow the page keeps blocks together in");
         node(ListNode.class, "name:INERT",
-                "items:REPORTED:a blank one a hangingIndent list draws as its marker alone; any other is written",
-                "nestedItems:WRITTEN", "marker:WRITTEN",
+                "items:REPORTED:a blank one a hangingIndent list draws as its marker alone, and the marks of one "
+                + "the page reads as markdown; any other is written",
+                "nestedItems:REPORTED:the marks of one the page reads as markdown; any other is written",
+                "marker:WRITTEN",
                 "textStyle:WRITTEN", "align:REPORTED",
                 "lineSpacing:REPORTED:where the layout's items are not its own and one wraps, an item run "
                 + "onto the next page among them; composed in a table cell, its wrapping not measured; "
@@ -170,7 +172,10 @@ class DocxNodeFieldLedgerTest {
                 "textStyle:WRITTEN", "align:WRITTEN", "placeholderText:WRITTEN",
                 "padding:REPORTED:the sides its alignment sets it from",
                 "margin:REPORTED:the sides its alignment sets it from");
-        node(ParagraphNode.class, "name:INERT", "text:WRITTEN", "inlineRuns:WRITTEN", "textStyle:WRITTEN",
+        node(ParagraphNode.class, "name:INERT",
+                "text:REPORTED:where the page reads it as markdown, its marks written as letters; where its "
+                + "lines are not read, not measured; any other is written",
+                "inlineRuns:WRITTEN", "textStyle:WRITTEN",
                 "align:WRITTEN", "lineSpacing:WRITTEN",
                 "bulletOffset:REPORTED:its letters before the first line; over the flow, as a side of an "
                 + "overlay's pair or as a badge's text, the room it sets lines in by where that moves one",

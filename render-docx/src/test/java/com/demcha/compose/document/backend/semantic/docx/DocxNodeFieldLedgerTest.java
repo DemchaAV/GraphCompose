@@ -108,7 +108,8 @@ class DocxNodeFieldLedgerTest {
                 "transform:REPORTED", "anchor:WRITTEN");
         node(CanvasLayerNode.class, "name:INERT",
                 "width:REPORTED:the width its text wraps at",
-                "height:REPORTED:the room it holds in the flow, where something follows it",
+                "height:GAP:the room it holds as its row's tallest cell, or ending a band or a layer "
+                + "stack's column; in a flow something follows it in, it is reported",
                 "placements:REPORTED:where what it writes stands; its drawings stand where it places them",
                 "clipPolicy:INERT:the page clips no canvas", "padding:WRITTEN", "margin:WRITTEN");
         node(ChartNode.class, "name:INERT", "spec:REPORTED", "style:REPORTED:in the chart's note",
@@ -135,7 +136,7 @@ class DocxNodeFieldLedgerTest {
                 "bookmarkOptions:REPORTED", "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
                 "dashPattern:REPORTED",
                 "anchor:REPORTED:drawn; a rule in the flow is bookmarked", "lineCap:REPORTED:a cap other than butt; whether an editor ends a drawn butt line flat is not measured",
-                "fillWidth:WRITTEN", "keepWithNext:REPORTED:of a line drawn in the body flow before a block that writes a table first");
+                "fillWidth:WRITTEN", "keepWithNext:REPORTED:of a line drawn in the flow the page keeps blocks together in");
         node(ListNode.class, "name:INERT", "items:WRITTEN", "nestedItems:WRITTEN", "marker:WRITTEN",
                 "textStyle:WRITTEN", "align:GAP:a centred or right-aligned list is written flush left",
                 "lineSpacing:GAP:the gap between an item's lines where the layout's item count differs",

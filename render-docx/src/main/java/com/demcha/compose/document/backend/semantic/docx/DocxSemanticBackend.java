@@ -250,7 +250,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // The lines drawn in the flow whose keep with the next block Word is not given (keepGoesUnheld).
     private final java.util.Set<DocumentNode> keepsUnheld = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
-    // The blocks something is written after in the flow they stand in, read once each.
+    // How many boxes the page places rather than flows — a row's or a table's cell, a layer
+    // stack's column — the writing stands in (inThePagedFlow).
+    private int slotDepth;
+    // The blocks something is written after in the flow they stand in.
     private final java.util.Set<DocumentNode> followedInFlow = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // Where the blocks are placed whose space below a band or a column measures from the page,
     // their own margin and padding below them included (DocxLayerColumns.Band#closing).
@@ -699,6 +702,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         closingBlocks.clear();
         keepsUnheld.clear();
         followedInFlow.clear();
+        slotDepth = 0;
         surfaceBehind = null;
         overlayDepth = 0;
         bandDepth = 0;
@@ -787,8 +791,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                 "drawn as a line where the layout puts it, " + ANCHORED_BESIDE_ITS_TEXT);
                     }
                 }
-                for (DocumentNode root : section.graph().roots()) {
-                    writeNode(document, root);
+                List<DocumentNode> roots = section.graph().roots();
+                for (int root = 0; root < roots.size(); root++) {
+                    if (root + 1 < roots.size() && !(roots.get(root + 1) instanceof PageBreakNode)) {
+                        followedInFlow.add(roots.get(root));
+                    }
+                    writeNode(document, roots.get(root));
                 }
                 raiseRows();
                 // The paragraph closing a section that ends with a table is also the one that
@@ -2045,7 +2053,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         if (node instanceof com.demcha.compose.document.node.LayerStackNode stack) {
-            DocxLayerColumns.Plan columns = columnsOf(stack);
+            DocxLayerColumns.Plan columns = DocxLayerColumns.of(stack, layout,
+                    candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
+                                 && paintOf(candidate).isEmpty(),
+                    candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
+                                 && !paintOf(candidate).isEmpty(),
+                    this::drawnOverTheColumns);
             if (columns != null) {
                 // Side by side, nothing in the stack overlaps: it is not an overlay.
                 writeLayerColumns(document, stack, columns);
@@ -2726,8 +2739,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
             }
             if (keepsUnheld.remove(node)) {
-                message.append("; its keep with the next block is not carried, so the table after it may "
-                        + "start a page without it");
+                message.append("; its keep with the next block is not carried, so a page can end between "
+                        + "the two");
             }
             if (!isBuiltIn(node)) {
                 message.append("; a node kind the DOCX export does not know: only the shapes it "
@@ -3876,8 +3889,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             alsoLost.addAll(canvasLosses(canvas, known ? room : Double.NaN));
         }
         // A panel is a table as wide as its box, where the page paints its fill and borders past
-        // it — in the flow it pages, not in a row, a layer or a cell, which it bleeds in none of.
-        if (!paint.isEmpty() && node.bleed().any() && paintsPastItsBox(node)) {
+        // it in the flow it pages (inThePagedFlow).
+        if (!paint.isEmpty() && node.bleed().any() && inThePagedFlow()) {
             alsoLost.add("its bleed is not in the file, so its fill and borders stop at its box, not at "
                          + "the page's edge");
         }
@@ -4282,7 +4295,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (index > 0 && spacing > 0 && !(child instanceof PageBreakNode)) {
                 owePendingSpacingAfter(spacing);
             }
-            if (index + 1 < children.size() || lastFollowed) {
+            if (index + 1 < children.size() ? !(children.get(index + 1) instanceof PageBreakNode) : lastFollowed) {
                 followedInFlow.add(child);
             }
             if (index + 1 < children.size() && keepGoesUnheld(child, children.get(index + 1))) {
@@ -4294,64 +4307,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether a line drawn in the flow, kept with the next block, is written apart from it: a
-     * drawing writes no paragraph to keep, and its room is the space after the paragraph before
-     * it where a table follows — space under a paragraph a page can end below. Before a
-     * paragraph the room is that paragraph's space above, and the two stand together.
+     * drawing writes no paragraph to keep with the next, and its drawing is anchored in a
+     * paragraph near it, so a page can end between the two whatever the next block is.
      */
     private boolean keepGoesUnheld(DocumentNode node, DocumentNode next) {
-        // The layout keeps a block with the next only in the flow it pages, the body's.
-        return overlayDepth == 0 && currentCell == null && node instanceof com.demcha.compose.document.node.LineNode line
-               && line.keepWithNext() && ruleOf(node) == null && writesATableFirst(next);
+        return inThePagedFlow() && node instanceof com.demcha.compose.document.node.LineNode line
+               && line.keepWithNext() && ruleOf(node) == null && !(next instanceof PageBreakNode);
     }
 
     /**
-     * Whether the first thing a block writes is a table: a table, a row, a chart's data, a
-     * panel, a stack written as columns, or an unpainted box whose first block is one of them.
+     * Whether what is being written stands in the flow the page lays out page by page: the body
+     * and the panels and boxes in it, not a row's cell, a table's composed cell, a layer stack's
+     * column or anything laid over another. Only there does the page keep a block with the next
+     * and bleed a section's paint toward its edges; everywhere else it places a fixed box.
      */
-    private boolean writesATableFirst(DocumentNode node) {
-        if (node instanceof TableNode || node instanceof RowNode || node instanceof ChartNode) {
-            return true;
-        }
-        if (node instanceof SectionNode || node instanceof ContainerNode) {
-            return !paintOf(node).isEmpty() || !node.children().isEmpty() && writesATableFirst(node.children().get(0));
-        }
-        return node instanceof com.demcha.compose.document.node.LayerStackNode stack && columnsOf(stack) != null;
-    }
-
-    /** How a stack's layers are written as side-by-side columns, or null when they form none. */
-    private DocxLayerColumns.Plan columnsOf(com.demcha.compose.document.node.LayerStackNode stack) {
-        return DocxLayerColumns.of(stack, layout,
-                candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
-                             && paintOf(candidate).isEmpty(),
-                candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
-                             && !paintOf(candidate).isEmpty(),
-                this::drawnOverTheColumns);
-    }
-
-    /**
-     * Whether a node's own paint reaches past its box: the page bleeds a section's fill and
-     * borders toward its edges where it pages it, and nowhere else. A side is measured on every
-     * page; the top and the bottom only where it stands on one.
-     */
-    private boolean paintsPastItsBox(DocumentNode node) {
-        com.demcha.compose.document.layout.PlacedNode box = layout.placement(node);
-        if (box == null) {
-            return false;
-        }
-        boolean onePage = box.startPage() == box.endPage();
-        for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
-            double slack = 1;
-            if (fragment.x() < box.placementX() - slack
-                || fragment.x() + fragment.width() > box.placementX() + box.placementWidth() + slack) {
-                return true;
-            }
-            if (onePage && fragment.pageIndex() == box.startPage()
-                && (fragment.y() < box.placementY() - slack
-                    || fragment.y() + fragment.height() > box.placementY() + box.placementHeight() + slack)) {
-                return true;
-            }
-        }
-        return false;
+    private boolean inThePagedFlow() {
+        return overlayDepth == 0 && slotDepth == 0;
     }
 
     /** The space a container puts between its children, zero for any other node. */
@@ -10418,6 +10389,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 List<DocumentNode> layers = columns.get(index).layers();
                 double previous = currentCellWidth;
                 currentCellWidth = usableWidthOf(cell, index, 1);
+                // A column's layers are boxes the page places, not its flow.
+                slotDepth++;
                 try {
                     writeInCell(cell, () -> {
                         for (int layer = 0; layer < layers.size(); layer++) {
@@ -10466,6 +10439,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         }
                     });
                 } finally {
+                    slotDepth--;
                     currentCellWidth = previous;
                     resumeSpacing = Double.NaN;
                 }
@@ -10725,22 +10699,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 written.add(child);
             }
         }
-        if (written.size() > 1 || written.size() == 1 && (written.get(0).x() != 0 || written.get(0).y() != 0)) {
+        // Written one after another from its corner, they stand where it places them only where
+        // it stacks them that way, each at the foot of the one before.
+        double stacked = 0;
+        boolean placedApart = false;
+        for (com.demcha.compose.document.node.CanvasChild child : written) {
+            if (child.x() != 0 || Math.abs(child.y() - stacked) > 0.5) {
+                placedApart = true;
+            }
+            com.demcha.compose.document.layout.PlacedNode placed = layout.placement(child.node());
+            stacked += placed == null ? 0
+                    : placed.placementHeight() + child.node().margin().top() + child.node().margin().bottom();
+        }
+        if (placedApart) {
             lost.add("what it writes is written from its corner, one block after another, not where it places it");
         }
         // In the flow — itself the only overlay round what it writes, a stack of one layer aside —
         // it takes the room of what it writes, where the page gives it its height; that moves
-        // what follows it, where anything does (followedInFlow).
-        if (overlayDepth - oneLayerDepth == 1 && followedInFlow.remove(canvas)) {
-            double stacked = 0;
-            for (com.demcha.compose.document.node.CanvasChild child : written) {
-                com.demcha.compose.document.layout.PlacedNode placed = layout.placement(child.node());
-                stacked += placed == null ? 0
-                        : placed.placementHeight() + child.node().margin().top() + child.node().margin().bottom();
-            }
-            if (Math.abs(canvas.height() - stacked) > 0.5) {
-                lost.add("its height is not held: what follows starts below what it writes");
-            }
+        // what follows it, where anything does (followedInFlow). Composed in a table cell, it has
+        // no placement, nor has what it writes, to measure by.
+        if (layout.placement(canvas) != null && overlayDepth - oneLayerDepth == 1
+            && followedInFlow.contains(canvas) && Math.abs(canvas.height() - stacked) > 0.5) {
+            lost.add("its height is not held: what follows starts below what it writes");
         }
         boolean writesText = written.stream().anyMatch(child -> holdsWrappedText(child.node()));
         if (Double.isFinite(room) && writesText
@@ -12000,11 +11980,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         writeInCell(cell, () -> {
             DrawingCell outer = drawingCell;
             drawingCell = alone;
+            // A row's cell and a table's composed cell are boxes the page places, not its flow.
+            slotDepth++;
             try {
                 for (DocumentNode child : children) {
                     writeNode(cell.getXWPFDocument(), child);
                 }
             } finally {
+                slotDepth--;
                 drawingCell = outer;
             }
         });

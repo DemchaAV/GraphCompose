@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * What a container written as its contents leaves of its own layout is in its report note: a
  * canvas's places, room and width, a panel's bleed, the fixed width of a layer stack's column,
- * and the keep of a line drawn before a table.
+ * and the keep of a line drawn in the flow.
  *
  * <p>Each was left out in silence: a canvas's caption set at its middle came out at its top
  * with everything under it risen to meet it, a band bled to the page's edges stopped at its
@@ -141,7 +141,10 @@ class DocxFlowContainerReportTest {
     }
 
     @Test
-    void aLineDrawnBeforeATableNamesTheKeepItIsWrittenWithout() throws Exception {
+    void aLineDrawnInTheFlowNamesTheKeepItIsWrittenWithout() throws Exception {
+        // Its drawing is anchored in a paragraph near it, and nothing keeps that paragraph with
+        // the next block: a page can end between them before a table, a paragraph, in a panel.
+        String lost = "; its keep with the next block is not carried, so a page can end between the two";
         DocxExportReport beforeATable = reportOf(page -> page
                 .addParagraph("Above")
                 .addLine(line -> line.vertical(30).thickness(1).color(INK).keepWithNext())
@@ -150,33 +153,82 @@ class DocxFlowContainerReportTest {
                 .addParagraph("Above")
                 .addLine(line -> line.vertical(30).thickness(1).color(INK).keepWithNext())
                 .addParagraph("Kept"));
+        DocxExportReport inAPanel = reportOf(page -> page
+                .addSection(panel -> panel.fillColor(SURFACE)
+                        .addLine(line -> line.vertical(30).thickness(1).color(INK).keepWithNext())
+                        .addParagraph("Kept")));
 
-        assertThat(detailOf(beforeATable, "LineNode")).startsWith("drawn as a shape")
-                .endsWith("; its keep with the next block is not carried, so the table after it may start a "
-                          + "page without it");
-        assertThat(detailOf(beforeAParagraph, "LineNode")).as("its room is that paragraph's space above")
-                .doesNotContain("keep");
+        assertThat(detailOf(beforeATable, "LineNode")).startsWith("drawn as a shape").endsWith(lost);
+        assertThat(detailOf(beforeAParagraph, "LineNode")).startsWith("drawn as a shape").endsWith(lost);
+        assertThat(detailOf(inAPanel, "LineNode")).startsWith("drawn as a shape").endsWith(lost);
     }
 
     @Test
-    void aLineKeptWithAChartNamesTheKeepAndOneInARowCellNone() throws Exception {
-        com.demcha.compose.document.chart.ChartData data = com.demcha.compose.document.chart.ChartData.builder()
-                .categories("Q1", "Q2").series("2025", 12.4, 15.1).build();
-        DocxExportReport beforeAChart = reportOf(page -> page
-                .addParagraph("Above")
-                .addLine(line -> line.vertical(30).thickness(1).color(INK).keepWithNext())
-                .add(new com.demcha.compose.document.node.ChartNode(
-                        com.demcha.compose.document.chart.ChartSpec.bar().data(data).build())));
-        // A row's cell is no flow the page keeps blocks together in.
+    void aLineKeptWhereThePageKeepsNothingNamesNoKeep() throws Exception {
+        // A row's cell is a box the page places, not its flow; a page break ends the page anyway.
         DocxExportReport inARowCell = reportOf(page -> page.addRow(row -> row.weights(1, 1)
                 .addSection(section -> section
                         .addLine(line -> line.vertical(30).thickness(1).color(INK).keepWithNext())
                         .addTable(table -> table.columns(DocumentTableColumn.fixed(100)).row("Kept")))
                 .addParagraph("Beside")));
+        DocxExportReport beforeABreak = reportOf(page -> page
+                .addParagraph("Above")
+                .addLine(line -> line.vertical(30).thickness(1).color(INK).keepWithNext())
+                .addPageBreak(pageBreak -> { })
+                .addParagraph("Next page"));
 
-        assertThat(detailOf(beforeAChart, "LineNode")).endsWith("; its keep with the next block is not carried, "
-                + "so the table after it may start a page without it");
         assertThat(detailOf(inARowCell, "LineNode")).doesNotContain("keep");
+        assertThat(detailOf(beforeABreak, "LineNode")).doesNotContain("keep");
+    }
+
+    @Test
+    void aPanelBledAcrossPagesNamesItsBleed() throws Exception {
+        // The page bleeds it toward the top of every page it stands on.
+        DocxExportReport report = reportOf(page -> page.addSection(band -> {
+            band.fillColor(SURFACE).bleedToEdge(DocumentEdge.TOP);
+            for (int line = 0; line < 60; line++) {
+                band.addParagraph("Line " + line + " of a band long enough to run onto a second page");
+            }
+        }));
+
+        assertThat(report.bySubject().get("SectionNode")).extracting(DocxExportReport.Note::detail)
+                .contains("written as a panel; its bleed is not in the file, so its fill and borders stop at its "
+                          + "box, not at the page's edge");
+    }
+
+    @Test
+    void aCanvasComposedInATableCellIsNotMeasuredForItsRoom() throws Exception {
+        // In a composed cell nothing has a placement: what it writes cannot be measured.
+        DocxExportReport report = reportOf(page -> page
+                .addTable(table -> table.columns(DocumentTableColumn.fixed(200))
+                        .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(new SectionBuilder()
+                                .add(new com.demcha.compose.document.dsl.CanvasLayerBuilder(180, 20)
+                                        .position(new SpacerBuilder().height(20).build(), 0, 0).build())
+                                .addParagraph("After").build()))));
+
+        assertThat(report.bySubject()).doesNotContainKey("CanvasLayerNode");
+    }
+
+    @Test
+    void aCanvasBeforeAPageBreakMovesNothing() throws Exception {
+        DocxExportReport report = reportOf(page -> page
+                .addCanvas(100, 80, canvas -> canvas.position(new ShapeBuilder().size(40, 40).fillColor(INK).build(),
+                        20, 20))
+                .addPageBreak(pageBreak -> { })
+                .addParagraph("Next page"));
+
+        assertThat(report.bySubject()).doesNotContainKey("CanvasLayerNode");
+    }
+
+    @Test
+    void aCanvasStackingWhatItWritesFromItsCornerKeepsItsPlaces() throws Exception {
+        DocxExportReport report = reportOf(page -> page
+                .addCanvas(360, 50, canvas -> canvas
+                        .position(new SpacerBuilder().height(20).build(), 0, 0)
+                        .position(new SpacerBuilder().height(30).build(), 0, 20))
+                .addParagraph("Below"));
+
+        assertThat(report.bySubject()).doesNotContainKey("CanvasLayerNode");
     }
 
     @Test

@@ -900,7 +900,7 @@ final class DocxLayoutMetrics {
         if (placedTable == null || placedTable.placementWidth() <= 0) {
             return null;
         }
-        double width = placedTable.placementWidth();
+        double width = rowsWidth(placedTable);
 
         TreeSet<Double> boundaries = new TreeSet<>();
         for (PlacedFragment fragment : ownRows(node)) {
@@ -970,7 +970,7 @@ final class DocxLayoutMetrics {
         if (placedTable == null || placedTable.placementWidth() <= 0) {
             return List.of();
         }
-        double width = placedTable.placementWidth();
+        double width = rowsWidth(placedTable);
         List<PlacedFragment> rows = new ArrayList<>();
         for (PlacedFragment fragment : fragmentsOf(table)) {
             if (!(fragment.payload() instanceof TableRowFragmentPayload row) || row.cells().isEmpty()) {
@@ -985,6 +985,16 @@ final class DocxLayoutMetrics {
             }
         }
         return rows;
+    }
+
+    /**
+     * How wide a table's rows are: its placement less its padding on either side, which the
+     * page draws the rows inside. Measured against the placement itself, a table with side
+     * padding matched none of its rows, and lost its grid, its row heights and its unbroken
+     * rows to Word's own.
+     */
+    private static double rowsWidth(PlacedNode table) {
+        return table.placementWidth() - table.padding().left() - table.padding().right();
     }
 
     private List<PlacedFragment> fragmentsOf(DocumentNode node) {

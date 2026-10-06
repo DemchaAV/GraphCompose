@@ -8,6 +8,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX table with padding on its sides keeps the layout's grid, row heights and unbroken
+  rows.** The page draws a table's rows inside its padding, narrower than the table's
+  placement by that much, and the export matched a table's rows to the layout by the
+  placement's width: a table with side padding matched none, and was written without the
+  layout's grid, with no row heights and rows Word could break, its drawings anchored outside
+  its rows, and its rows standing its padding left of the page's. Its rows are now measured inside the padding,
+  and the padding holds the table in as its margin does — its left side in the indent, both
+  in the room its columns are given — so a table with side padding is written as one with
+  those margins. In `DocxNodeFieldLedgerTest` a table's padding moves from a gap to
+  `WRITTEN`; 22 node-field gaps remain.
 - **A DOCX export's report names the geometry a block is written without.** A logo given a
   left margin stood at the column's edge, a spacer with a margin held only its height and
   everything under it rose, and a section fixed to half the column ran its text the column's
@@ -19,7 +29,6 @@ follow semantic versioning; release dates are ISO 8601.
   - on a page reference: the margin and padding on the side or sides its alignment sets it
     from, and, where the export writes no bookmark for its anchor, that its number is written
     as text — the shape the anchor is on says so too, and a table of contents' entry now does;
-  - on a table: its left padding (its margin is its indent);
   - on a spacer: its margin and padding above and below; on a chart, those and the ones on its
     left, which are not written round its data table. Below the lowest block of a band, or of
     a layer another resumes after in its column, the space is measured from the page, the
@@ -29,9 +38,8 @@ follow semantic versioning; release dates are ISO 8601.
     width of.
 
   None changes what is written. In `DocxNodeFieldLedgerTest` 11 node fields move from a gap to
-  `REPORTED`; 23 node-field gaps remain, each named — among them a table's padding, since a
-  table with side padding is not matched to the rows the layout placed, and the fixed width of
-  a layer stack's column.
+  `REPORTED`; 23 node-field gaps remain, each named — among them the fixed width of a layer
+  stack's column.
 - **A DOCX export's report names what each written or drawn node goes without.** The export
   wrote these nodes and said nothing of what it left behind: a linked logo became an unlinked
   picture, a rotated photo stood upright, a dashed line was drawn solid, and a link to an anchor

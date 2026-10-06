@@ -2556,26 +2556,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * What of a block's sides its paragraph or table leaves out: a picture, a barcode and a page
-     * reference are written at the edge the containers round them set, with none of their own
-     * margin or padding, and a table holds its margin but not its padding. A cell of a row the
-     * layout placed already starts past a block's left margin.
+     * What of a block's sides its paragraph leaves out: a picture, a barcode and a page reference
+     * are written at the edge the containers round them set, with none of their own margin or
+     * padding. A cell of a row the layout placed already starts past a block's left margin.
      *
-     * <p>A side counts where it moves the block: only the left for a picture, a barcode or a
-     * table, which their paragraph or indent sets from the left; for a page reference, the side
-     * or sides its alignment sets it from.</p>
+     * <p>A side counts where it moves the block: only the left for a picture or a barcode, which
+     * its paragraph sets from the left; for a page reference, the side or sides its alignment
+     * sets it from.</p>
      *
-     * @param node          the block written
-     * @param marginWritten whether its side margins are written, so only its padding can be lost
-     * @param left          whether its left side counts
-     * @param right         whether its right side counts
+     * @param node  the block written
+     * @param left  whether its left side counts
+     * @param right whether its right side counts
      * @return the phrases, empty when every side that counts is written
      */
-    private List<String> sidesLost(DocumentNode node, boolean marginWritten, boolean left, boolean right) {
+    private List<String> sidesLost(DocumentNode node, boolean left, boolean right) {
         List<String> lost = new ArrayList<>(2);
         String side = left && right ? "side" : left ? "left" : "right";
         double marginLeft = node == leftMarginInCell ? 0 : node.margin().left();
-        if (!marginWritten && (left && marginLeft != 0 || right && node.margin().right() != 0)) {
+        if (left && marginLeft != 0 || right && node.margin().right() != 0) {
             lost.add("its " + side + (left && right ? " margins are" : " margin is") + " not in the file");
         }
         if (left && node.padding().left() != 0 || right && node.padding().right() != 0) {
@@ -6323,7 +6321,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             appendField(para, " PAGEREF " + bookmark + " \\h ", shown, node.textStyle());
         }
         // Unlike a paragraph's (writeParagraph), its own sides do not hold its line in.
-        lost.addAll(sidesLost(node, false, node.align() != TextAlign.RIGHT, node.align() != TextAlign.LEFT));
+        lost.addAll(sidesLost(node, node.align() != TextAlign.RIGHT, node.align() != TextAlign.LEFT));
         reportWrittenWithout(node, "written as a paragraph", lost);
     }
 
@@ -8191,7 +8189,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         .setPrst(org.openxmlformats.schemas.drawingml.x2006.main.STShapeType.ELLIPSE);
             }
         }
-        reportWrittenWithout(node, "written as an inline picture", sidesLost(node, false, true, false));
+        reportWrittenWithout(node, "written as an inline picture", sidesLost(node, true, false));
     }
 
     /**
@@ -8476,7 +8474,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (String lost : carriedWithout(node, false)) {
             message.append("; ").append(lost);
         }
-        for (String lost : sidesLost(node, false, true, false)) {
+        for (String lost : sidesLost(node, true, false)) {
             message.append("; ").append(lost);
         }
         report.add(DocxExportReport.Severity.APPROXIMATED, "barcode", layout.pathOf(node), message.toString());
@@ -8680,7 +8678,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeTableWithItsOwnSpacing(XWPFDocument document, DocumentNode node)
             throws Exception {
         if (node instanceof TableNode table && !table.rows().isEmpty()) {
-            reportWrittenWithout(node, "written as a Word table", sidesLost(node, true, true, false));
+            reportWrittenWithout(node, "written as a Word table");
         }
         // The layout starts a block it moves to a new page at the block's own top edge: what
         // the page above holds below its last block, and the gap between the two, stay there.
@@ -8725,8 +8723,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double outerLeft = insetLeft;
         double outerRight = insetRight;
         // A row's column already starts past the margin of the block the layout placed in it.
-        insetLeft += node == leftMarginInCell ? 0 : node.margin().left();
-        insetRight += node.margin().right();
+        // A table's padding holds its rows in too, as the page draws them inside it; a row's
+        // rides in its cells' margins instead (writeRow).
+        boolean table = node instanceof TableNode;
+        insetLeft += (node == leftMarginInCell ? 0 : node.margin().left()) + (table ? node.padding().left() : 0);
+        insetRight += node.margin().right() + (table ? node.padding().right() : 0);
         try {
             if (node instanceof RowNode row) {
                 writeRow(document, row);
@@ -11255,8 +11256,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 autoColumns++;
             }
         }
+        // Its padding is already among the insets it is held in by (writeTableWithItsOwnSpacing).
         double available = Double.isFinite(nestedTableWidth()) ? nestedTableWidth() : availableWidth();
-        double room = available - node.padding().horizontal() - sum(measured);
+        double room = available - sum(measured);
         if (autoColumns == 0 || !(room > 0)) {
             return measured;
         }
@@ -11488,7 +11490,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Word to about one character per line, which is not a document anybody can read.</p>
      */
     private double nestedTableWidth() {
-        // Less what the table is held in by, its own margins included (writeTableWithItsOwnSpacing).
+        // Less what the table is held in by, its own margins and padding included (writeTableWithItsOwnSpacing).
         return currentCellWidth - Math.max(0, insetLeft) - Math.max(0, insetRight);
     }
 

@@ -8,6 +8,45 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps a colour's translucency where Word can hold it, and names where it
+  cannot.** A translucent colour (`DocumentColor.rgba(...)`, `withOpacity(...)`) was written at full
+  strength, without a note, on text, a table cell's shading, a panel's fill and borders, and a
+  table's rules. A rule was flattened against the panel around it or white, and a header's
+  separator against white, also without a note.
+  - **Text keeps its transparency**, as Word's text fill (`w14:textFill`), with `w:color` holding
+    the colour as authored: Word takes the colour from the fill and LibreOffice from `w:color`,
+    each with the fill's transparency, so both draw the page's tint.
+    - A translucent body colour is the Normal style's. A run, or a list's marker, of an opaque
+      colour writes an opaque fill of its own, so it does not take the style's.
+    - The fill is the last of a run's properties, and a part holding one marks its namespace
+      `mc:Ignorable`.
+    - Word saves such text into a PDF as drawing, without a text layer.
+  - **Where Word holds an opaque colour only** — a cell's shading, a border, a rule — the colour
+    is flattened against what the page paints under it, read from the layout: the fills drawn
+    before the block at its centre, a page background included, a row's own fill (which is not
+    written) left out. Each is named in the report as `translucency`:
+    - a panel's fill and borders, once per panel;
+    - a table cell's fill and rules, once per table;
+    - a rule drawn as a paragraph border;
+    - a text header's or footer's separator, once per band, flattened against white, since it
+      runs across the page.
+  - A panel's borders and a cell's rules are flattened against the block's own fill, which the
+    page draws them over.
+  - A wholly transparent fill writes no shading; a wholly transparent border is drawn in the
+    colour under it, so it keeps its room in the row.
+  - A chip's shading is flattened against what the page paints under its paragraph where no
+    shading of the file's is under it, a page background included.
+  - Where a picture, a barcode, a gradient or a fill under a transform is under the block, or it
+    is composed in a table cell, the surface it is written on stands in: the flattened panel or
+    cell around it, or white.
+  - Drawings, page backgrounds and pictures already kept their alpha.
+
+  Across the DOCX fidelity corpus one document's bytes change: `NavySidebar`'s four sidebar
+  rules, white at 115/255 over the sidebar's navy (32, 44, 59), are written `858B93` instead of
+  white. Word renders the rule at (133, 138, 146), where the PDF draws (131, 138, 146) and Word
+  drew (255, 255, 255) before. The report names the four rules: 955 notes, from 951. The other 61
+  documents are byte-identical.
+
 - **A DOCX export's report names a paragraph or a list item the page reads as markdown.** A
   session reads markdown unless it is told not to (`markdown(false)`). It reads a paragraph, or a
   list item, of plain text holding a mark of emphasis or code:

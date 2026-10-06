@@ -192,6 +192,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final String ANCHORED_BESIDE_ITS_TEXT = "anchored in the paragraph whose text it stands "
             + "beside, so it moves with that text when the text above is edited, or to the page where it "
             + "stands beside none";
+    /**
+     * The report's subject for a translucent colour Word holds only opaque — a cell's shading, a
+     * border — flattened against the colour under it (see {@link DocxTranslucency}).
+     */
+    private static final String TRANSLUCENCY = "translucency";
     private static final Logger LOG = LoggerFactory.getLogger(DocxSemanticBackend.class);
     // The page's content width, so an image is held to the same bound layout holds it to.
     // Set per export; Double.MAX_VALUE means "no canvas, so nothing to clamp against".
@@ -209,6 +214,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // kind and no name are two losses.
     private final java.util.Set<DocumentNode> zonePartsReported =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // The text bands whose translucent separator is already reported this export: a band is
+    // written into each kind of header or footer Word is given.
+    private final java.util.Set<DocumentHeaderFooter> separatorsReported =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // Whether any text fill was written this export, so the finished parts are settled only then.
+    private boolean textFillsWritten;
     private final AtomicBoolean containerRadiusWarned = new AtomicBoolean(false);
     // The fill of the panel being written into, or null: a table cell with no fill of its own
     // is drawn white by the engine, and inside a filled panel has to say so rather than let the
@@ -705,6 +716,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         containerRadiusWarned.set(false);
         warnedNodeKinds.clear();
         zonePartsReported.clear();
+        separatorsReported.clear();
+        textFillsWritten = false;
         closingBlocks.clear();
         keepsUnheld.clear();
         followedInFlow.clear();
@@ -816,6 +829,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             hideTheClosingMark(document);
             hideTheCellClosingMarks(document.getTables());
+            if (textFillsWritten) {
+                DocxTranslucency.settle(document);
+            }
             if (deterministicTimestamp != null) {
                 DocxDeterminism.pinCoreProperties(document, deterministicTimestamp);
             }
@@ -1463,9 +1479,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             CTBorder edge = band.getZone() == DocumentHeaderFooterZone.HEADER
                     ? (borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom())
                     : (borders.isSetTop() ? borders.getTop() : borders.addNewTop());
+            // The separator runs the width of the page, over whatever fills the page draws across it,
+            // so there is no one colour under it to flatten a translucent one against but the page's.
+            java.awt.Color colour = band.getSeparatorColor().color();
             paintEdge(edge, STBorder.SINGLE, BigInteger.valueOf(ruleEighths(band.getSeparatorThickness())),
-                    toHexColor(flatten(band.getSeparatorColor().color(), java.awt.Color.WHITE)));
+                    toHexColor(DocxTranslucency.flatten(colour, java.awt.Color.WHITE)));
             edge.setSpace(BigInteger.valueOf(Math.round(DocxTextBands.separatorSpace(band))));
+            if (DocxTranslucency.translucent(colour) && separatorsReported.add(band)) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, TRANSLUCENCY,
+                        sectioned ? "section " + (sectionIndex + 1) : null,
+                        "a page " + zoneName(band) + "'s separator is flattened against white, because a "
+                        + "paragraph border is opaque");
+            }
         }
     }
 
@@ -3481,7 +3506,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // line in the list's style, so its mark is too (styleTheMark); the level states
                 // the list's face, size and colour as well, the ones the column was measured
                 // against. The page draws the marker in the list's style, decoration included.
-                applyDefaultRunProperties(level.addNewRPr(), list.textStyle());
+                // Over a translucent Normal style an opaque marker writes an opaque fill of its own, as
+                // a run does, so it does not take the style's.
+                applyDefaultRunProperties(level.addNewRPr(), list.textStyle(), normalIsTranslucent());
             }
         }
         BigInteger abstractId = document.createNumbering()
@@ -4628,8 +4655,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             cellWidth.setType(STTblWidth.DXA);
             cellWidth.setW(BigInteger.valueOf(toTwips(outer)));
         }
-        applyCellPaint(cell, paint.fill(), null);
-        paintCellSides(cell, paint.borders());
+        // Word's shading and borders are opaque: a translucent fill or border is flattened against
+        // what the page paints under the panel, and the panel's content is set on that.
+        boolean translucentFill = DocxTranslucency.flattensFill(paint.fill());
+        boolean translucentSides = DocxTranslucency.flattensSides(paint.borders());
+        // Read from the page's fragments, so only where something is flattened against it.
+        java.awt.Color under = translucentFill || translucentSides ? colourUnder(node) : java.awt.Color.WHITE;
+        DocumentColor fill = DocxTranslucency.flattenedFill(paint.fill(), under);
+        applyCellPaint(cell, fill, null);
+        // The page draws the borders over the panel's fill, centred on its edge: against the fill
+        // where the panel has one, the side of them the panel holds.
+        paintCellSides(cell, DocxTranslucency.flattenedBorders(paint.borders(), fill != null ? fill.color() : under));
+        if (first) {
+            reportFlattenedPaint(node, translucentFill, translucentSides, "its fill", "its borders");
+        }
         DocumentInsets margins = insideTheBorders(padding, borders);
         applyCellPadding(cell, new DocumentInsets(margins.top(), Math.max(0, margins.right() - shortOfTheEdge),
                 margins.bottom(), inTheBody ? padding.left() : margins.left()));
@@ -4644,8 +4683,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         cell.removeParagraph(0);
         DocumentColor outerSurface = surfaceBehind;
         double outerCellWidth = currentCellWidth;
-        if (paint.fill() != null) {
-            surfaceBehind = paint.fill();
+        if (fill != null) {
+            surfaceBehind = fill;
         }
         currentCellWidth = Double.isFinite(width) ? width - padding.left() - padding.right() : Double.NaN;
         XWPFTableCell outerPanelCell = panelCell;
@@ -4814,6 +4853,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private static double strokeWidth(DocumentStroke stroke) {
         return stroke == null ? 0 : Math.max(0, stroke.width());
+    }
+
+    /**
+     * Names in the report a node's translucent fill or strokes, which a cell's shading and its
+     * borders hold only opaque, so they are flattened against the colour under them.
+     *
+     * @param fill       whether a fill is flattened
+     * @param strokes    whether a stroke is
+     * @param fillName   what the report calls the fill, as "its fill"
+     * @param strokeName what it calls the strokes, as "its borders"
+     */
+    private void reportFlattenedPaint(DocumentNode node, boolean fill, boolean strokes,
+                                      String fillName, String strokeName) {
+        List<String> flattened = new ArrayList<>(2);
+        if (fill) {
+            flattened.add(fillName);
+        }
+        if (strokes) {
+            flattened.add(strokeName);
+        }
+        if (!flattened.isEmpty()) {
+            // "its fill" is one; "its borders", "its cells' fills" and two of them are more.
+            boolean plural = flattened.size() > 1 || flattened.get(0).endsWith("s");
+            report.add(DocxExportReport.Severity.APPROXIMATED, TRANSLUCENCY, layout.pathOf(node),
+                    String.join(" and ", flattened) + (plural ? " are" : " is") + " flattened against the colour "
+                    + "under " + (plural ? "them" : "it") + ", because a Word cell's shading and borders are opaque");
+        }
     }
 
     /**
@@ -5171,6 +5237,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void applyDefaultRunProperties(CTRPr properties, DocumentTextStyle defaults) {
+        applyDefaultRunProperties(properties, defaults, false);
+    }
+
+    /**
+     * Writes a style's font, size and colour on run properties: the document's defaults, the
+     * Normal style's, or a list level's for its marker.
+     *
+     * @param overATranslucentStyle whether these properties sit over a Normal style whose colour is
+     *                              translucent, which an opaque colour here must override in full
+     */
+    private void applyDefaultRunProperties(CTRPr properties, DocumentTextStyle defaults,
+                                           boolean overATranslucentStyle) {
         if (defaults.fontName() != null) {
             // All four slots, exactly as XWPFRun.setFontFamily writes them on a run.
             // w:ascii alone covers only ASCII: High-ANSI characters read w:hAnsi, Hebrew
@@ -5192,7 +5270,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         if (defaults.color() != null) {
             properties.addNewColor().setVal(toHexColor(defaults.color().color()));
+            // Both editors take a text fill's transparency from the style a run follows.
+            textFillsWritten |= DocxTranslucency.writeTextAlpha(properties, defaults.color().color(),
+                    overATranslucentStyle);
         }
+    }
+
+    /** Whether the Normal style's colour is translucent, so its text fill is what a run follows. */
+    private boolean normalIsTranslucent() {
+        return documentDefaultStyle != null && documentDefaultStyle.color() != null
+               && documentDefaultStyle.color().color().getAlpha() < 255;
     }
 
     /**
@@ -7669,6 +7756,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         mark.setSzArray(text.getSzArray());
         mark.setSzCsArray(text.getSzCsArray());
         mark.setUArray(text.getUArray());
+        // A list's marker is drawn in the mark's style where its level states none — a nested
+        // level, a list the layout did not measure — so the mark takes the text's fill too.
+        DocxTranslucency.copyTextFill(text, mark);
     }
 
     /** Whether a paragraph's lines are written at an exact height, which no mark changes. */
@@ -8890,10 +8980,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A {@code w:shd} fill is opaque, and the chip this sugar reaches for most —
      * {@code code(...)} — is a fifth-opacity grey. Written at full strength it is a solid
      * slab where the page has a tint, so a translucent fill is flattened first against what
-     * Word paints underneath it: the paragraph's own shading, the cell's, or the page. The
-     * chip then agrees with the file it is in — including where that file already differs
-     * from the page, since a translucent <em>container</em> fill lands opaque too. What it
-     * stops being is translucent: recoloured underneath in Word, the chip no longer
+     * Word paints underneath it: the paragraph's own shading, the cell's, or else what the page
+     * paints under the paragraph ({@link #colourUnder(XWPFRun, String)}). The chip then agrees
+     * with the file it is in, a translucent <em>container</em> fill under it flattened too. What
+     * it stops being is translucent: recoloured underneath in Word, the chip no longer
      * follows.</p>
      *
      * <p>What Word cannot express is the chip's <em>shape</em>. Shading covers the glyph
@@ -8917,7 +9007,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 : properties.addNewShd();
         shading.setVal(STShd.CLEAR);
         shading.setColor("auto");
-        shading.setFill(toHexColor(flatten(background.fill().color(), colourUnder(run))));
+        java.awt.Color fill = background.fill().color();
+        shading.setFill(toHexColor(fill.getAlpha() < 255 ? DocxTranslucency.flatten(fill, colourUnder(run, path)) : fill));
         String lost = chipLost(background, leftPaddingAs(runs, index, rightToLeft),
                 !rightToLeft && takesSpaceAfter(textOf(runs.get(index)).text()));
         if (lost != null) {
@@ -8967,15 +9058,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * The colour Word will paint under {@code run} — the shading this export itself wrote
-     * on the run's paragraph or on the cell holding it, then the fill of the panel around an
-     * unshaded cell, and otherwise the page's white.
+     * on the run's paragraph or on the cell holding it; then, where neither is shaded, what the
+     * page paints under the paragraph ({@link #colourUnder(DocumentNode)}).
      *
      * <p>Read back from the file being written rather than tracked in a field, so it is
      * whatever was actually written and cannot drift from it. Read, and only read:
      * {@code cellProperties} would create the {@code w:tcPr} it cannot find, so an
      * unstyled cell holding a chip would come away carrying an empty one.</p>
+     *
+     * @param path the paragraph's path, or {@code null} where it has none
      */
-    private java.awt.Color colourUnder(XWPFRun run) {
+    private java.awt.Color colourUnder(XWPFRun run, String path) {
         XWPFParagraph para = run.getParent() instanceof XWPFParagraph parent ? parent : null;
         CTPPr paragraphProperties = para == null || !para.getCTP().isSetPPr()
                 ? null
@@ -8994,6 +9087,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (cellFill != null) {
             return cellFill;
         }
+        return layout.colourUnder(path).orElseGet(this::surfaceColour);
+    }
+
+    /**
+     * The colour the page paints under a node, at its centre, where the layout tells it
+     * ({@link DocxLayoutMetrics#colourUnder(DocumentNode)}); otherwise the surface this export
+     * set the node on — the flattened fill of the panel or cell around it — or the page's white.
+     */
+    private java.awt.Color colourUnder(DocumentNode node) {
+        return layout.colourUnder(node).orElseGet(this::surfaceColour);
+    }
+
+    /** The fill of the panel or cell being written into, as written; the page's white outside one. */
+    private java.awt.Color surfaceColour() {
         // A cell with no shading of its own — a row's, inside a card — shows the panel's.
         return surfaceBehind != null ? surfaceBehind.color() : java.awt.Color.WHITE;
     }
@@ -9013,26 +9120,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return null;
         }
         return new java.awt.Color(rgb[0] & 0xFF, rgb[1] & 0xFF, rgb[2] & 0xFF);
-    }
-
-    /**
-     * Composites a colour over what sits beneath it, so a translucent fill survives a
-     * format that has no alpha. An opaque colour is returned untouched.
-     */
-    private static java.awt.Color flatten(java.awt.Color colour, java.awt.Color under) {
-        int alpha = colour.getAlpha();
-        if (alpha >= 255) {
-            return colour;
-        }
-        double weight = alpha / 255.0;
-        return new java.awt.Color(
-                blend(colour.getRed(), under.getRed(), weight),
-                blend(colour.getGreen(), under.getGreen(), weight),
-                blend(colour.getBlue(), under.getBlue(), weight));
-    }
-
-    private static int blend(int over, int under, double weight) {
-        return (int) Math.round(over * weight + under * (1 - weight));
     }
 
     /**
@@ -9559,16 +9646,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             pendingSpacingAfter = Math.max(0, pendingSpacingAfter - excess);
         }
 
-        // A border is opaque, so a translucent rule is flattened against what lies under it, as a
-        // chip is; one that is not drawn at all keeps its place and draws nothing.
+        // A border is opaque, so a translucent rule is flattened against what the page paints under
+        // it, as a chip is; one that is not drawn at all keeps its place and draws nothing.
         java.awt.Color colour = rule.colour().color();
         if (colour.getAlpha() > 0) {
             CTPBdr borders = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
             CTBorder bottom = borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom();
-            java.awt.Color under = surfaceBehind != null ? surfaceBehind.color() : java.awt.Color.WHITE;
             paintEdge(bottom, dashOf(rule), BigInteger.valueOf(ruleEighths(rule.thickness())),
-                    toHexColor(flatten(colour, under)));
+                    toHexColor(colour.getAlpha() < 255 ? DocxTranslucency.flatten(colour, colourUnder(node)) : colour));
             bottom.setSpace(BigInteger.ZERO);
+        }
+        if (DocxTranslucency.translucent(colour)) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, TRANSLUCENCY, layout.pathOf(node),
+                    "the rule is flattened against the colour under it, because a paragraph border is opaque");
         }
         if (node instanceof com.demcha.compose.document.node.LineNode lineNode && lineNode.linkTarget() != null) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "rule link", layout.pathOf(node),
@@ -10415,6 +10505,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // the column count.
         XWPFTable table = newTable(document, rowCount, 1);
         applyTableWidth(table, node, columnCount);
+        boolean translucentFills = false;
+        boolean translucentRules = false;
         for (int rowIdx = 0; rowIdx < rowCount; rowIdx++) {
             XWPFTableRow row = table.getRow(rowIdx);
             List<TableGrid.Placement> physical = new ArrayList<>();
@@ -10432,10 +10524,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 XWPFTableCell cell = row.getCell(i);
                 applySpans(cell, placement, rowIdx);
                 // The covered positions of a merge take the paint too, so a merged
-                // region reads as one cell rather than as a striped run of them.
-                DocumentColor fill = resolveCellFill(node, placement);
+                // region reads as one cell rather than as a striped run of them. A translucent
+                // fill or rule is flattened against what the page paints under the cell, as Word's
+                // shading and borders are opaque.
+                DocumentColor authoredFill = resolveCellFill(node, placement);
                 DocumentStroke stroke = resolveCellStroke(node, placement);
-                applyCellPaint(cell, fill, stroke);
+                boolean translucentFill = DocxTranslucency.flattensFill(authoredFill);
+                boolean translucentRule = DocxTranslucency.flattensStroke(stroke);
+                translucentFills |= translucentFill;
+                translucentRules |= translucentRule;
+                java.awt.Color under = translucentFill || translucentRule
+                        ? layout.colourUnderCell(node, placement.row(), placement.column()).orElseGet(this::surfaceColour)
+                        : java.awt.Color.WHITE;
+                DocumentColor fill = DocxTranslucency.flattenedFill(authoredFill, under);
+                // The page draws the rules over the cells' fills, in a pass after them.
+                applyCellPaint(cell, fill, DocxTranslucency.flattenedStroke(stroke, fill != null ? fill.color() : under));
                 int next = placement.row() + placement.rowSpan();
                 DocumentStroke underneath = next < rowCount ? resolveCellStroke(node, cover[next][placement.column()]) : null;
                 applyCellPadding(cell, clearOfTheRules(resolveCellPadding(node, placement), stroke,
@@ -10473,6 +10576,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         breakRowsWhereTheLayoutDoes(table, node);
         indentTable(table);
         carryDrawingsInRows(table, node);
+        reportFlattenedPaint(node, translucentFills, translucentRules, "its cells' fills", "its cells' rules");
     }
 
     /**
@@ -10565,9 +10669,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * {@code w:shd} for the fill and {@code w:tcBorders} for the four edges — so this is
      * mapping rather than approximation.</p>
      *
-     * <p>What does not survive is transparency. A {@code w:shd} fill is opaque, so a colour
-     * carrying an opacity below 1 lands at full strength; the alternative would be blending it
-     * against a background this backend does not resolve, Word owning the flow.</p>
+     * <p>What does not survive is transparency: {@code w:shd} and {@code w:tcBorders} are
+     * opaque, so the caller hands over a translucent fill or stroke already flattened against
+     * what the page paints under it ({@link DocxTranslucency#flatten}) and names it in the
+     * report.</p>
      */
     private void applyCellPaint(XWPFTableCell cell, DocumentColor fill, DocumentStroke stroke) {
         if (fill == null && stroke == null) {
@@ -13297,8 +13402,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // colours built from the same channels are unequal unless they are the
                 // same object, and a style built inline per paragraph would keep writing
                 // a colour the Normal style already says.
+                // getRGB carries the alpha, so a run whose colour differs from Normal's only in
+                // strength writes its own.
                 || style.color().color().getRGB() != defaults.color().color().getRGB())) {
             run.setColor(toHexColor(style.color().color()));
+            textFillsWritten |= DocxTranslucency.writeTextAlpha(
+                    run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr(),
+                    style.color().color(), normalIsTranslucent());
         }
         if (style.decoration() != null) {
             switch (style.decoration()) {
@@ -13354,7 +13464,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (color == null) {
             return "000000";
         }
-        return String.format("%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
+        return DocxTranslucency.hex(color);
     }
 
     /**

@@ -88,13 +88,25 @@ class DocxNodeFieldLedgerTest {
     private record Entry(Fate fate, String note) {
     }
 
+    // A text colour's alpha is written, as Word's text fill, and a drawing's in DrawingML; what a
+    // cell's shading or a border holds is opaque, so a translucent one is flattened and reported.
+    private static final String PANEL_TRANSLUCENCY = "its translucency, as a panel's, flattened against the colour "
+                                                     + "under it, a border's against the panel's fill where it has "
+                                                     + "one; any other is written";
+    private static final String RULE_TRANSLUCENCY = "its translucency, as a rule's, flattened against the colour "
+                                                    + "under it; drawn, its alpha is written; any other is written";
+    private static final String CELL_TRANSLUCENCY = "the translucency of a cell's fill, flattened against the colour "
+                                                    + "under the cell, and of its rules, against its fill where it has "
+                                                    + "one; any other is written";
+
     private static final Map<Class<?>, Map<String, Entry>> NODES = new LinkedHashMap<>();
     private static final Map<String, Entry> OUTPUT_OPTIONS = fields(
             "metadata:WRITTEN",
             "watermark:REPORTED",
             "protection:REPORTED",
             "viewerPreferences:REPORTED",
-            "headersAndFooters:WRITTEN",
+            "headersAndFooters:REPORTED:a band's translucent separator, flattened against white; any other is "
+            + "written, or reported where Word's parts cannot hold it",
             // The node entries below are the body's. A zone is written as one line of its
             // paragraphs' runs, page fields and tabs; what of that the report does not name is
             // a gap of its own.
@@ -119,7 +131,8 @@ class DocxNodeFieldLedgerTest {
                 "margin:REPORTED:in the chart's note; above and below; below a block a band or a column measures from, written",
                 "padding:REPORTED:in the chart's note; above and below; below a block a band or a column measures from, written");
         node(ContainerNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
-                "margin:WRITTEN", "fillColor:WRITTEN", "stroke:WRITTEN", "cornerRadius:REPORTED", "borders:WRITTEN",
+                "margin:WRITTEN", "fillColor:REPORTED:" + PANEL_TRANSLUCENCY, "stroke:REPORTED:" + PANEL_TRANSLUCENCY,
+                "cornerRadius:REPORTED", "borders:REPORTED:" + PANEL_TRANSLUCENCY,
                 "anchor:REPORTED:as a layer stack's column, which has no bookmark; in the flow it is bookmarked",
                 "bookmarkOptions:REPORTED", "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
         node(EllipseNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:WRITTEN",
@@ -134,16 +147,18 @@ class DocxNodeFieldLedgerTest {
         node(LayerStackNode.class, "name:INERT", "layers:WRITTEN", "padding:WRITTEN", "margin:WRITTEN",
                 "clipToBounds:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table");
         node(LineNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "startX:WRITTEN", "startY:WRITTEN",
-                "endX:WRITTEN", "endY:WRITTEN", "stroke:WRITTEN",
+                "endX:WRITTEN", "endY:WRITTEN", "stroke:REPORTED:" + RULE_TRANSLUCENCY,
                 "linkTarget:REPORTED",
                 "bookmarkOptions:REPORTED", "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
                 "dashPattern:REPORTED",
                 "anchor:REPORTED:drawn; a rule in the flow is bookmarked", "lineCap:REPORTED:a cap other than butt; whether an editor ends a drawn butt line flat is not measured",
                 "fillWidth:WRITTEN", "keepWithNext:REPORTED:of a line drawn in the flow the page keeps blocks together in");
         node(ListNode.class, "name:INERT",
-                "items:REPORTED:a blank one a hangingIndent list draws as its marker alone, and the marks of one "
-                + "the page reads as markdown; any other is written",
-                "nestedItems:REPORTED:the marks of one the page reads as markdown; any other is written",
+                "items:REPORTED:a blank one a hangingIndent list draws as its marker alone, the marks of one "
+                + "the page reads as markdown, and a chip's translucent fill, flattened against the colour under "
+                + "it; any other is written",
+                "nestedItems:REPORTED:the marks of one the page reads as markdown, and a chip's translucent fill, "
+                + "flattened against the colour under it; any other is written",
                 "marker:WRITTEN",
                 "textStyle:WRITTEN", "align:REPORTED",
                 "lineSpacing:REPORTED:where the layout's items are not its own and one wraps, an item run "
@@ -175,8 +190,9 @@ class DocxNodeFieldLedgerTest {
         node(ParagraphNode.class, "name:INERT",
                 "text:REPORTED:where the page reads it as markdown, its marks written as letters; where its "
                 + "lines are not read and the page's parser drops a mark, not measured; any other is written",
-                "inlineRuns:WRITTEN", "textStyle:WRITTEN",
-                "align:WRITTEN", "lineSpacing:WRITTEN",
+                "inlineRuns:REPORTED:a chip's translucent fill, flattened against the colour under it, with what "
+                + "else of its shape Word cannot hold; a run's translucent colour is written as Word's text fill",
+                "textStyle:WRITTEN", "align:WRITTEN", "lineSpacing:WRITTEN",
                 "bulletOffset:REPORTED:its letters before the first line; over the flow, as a side of an "
                 + "overlay's pair or as a badge's text, the room it sets lines in by where that moves one",
                 "indentStrategy:WRITTEN", "linkTarget:WRITTEN",
@@ -204,7 +220,8 @@ class DocxNodeFieldLedgerTest {
         node(com.demcha.compose.document.layout.HorizontalBandContentNode.class, "name:INERT", "key:INERT",
                 "slot:WRITTEN", "child:WRITTEN");
         node(SectionNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
-                "margin:WRITTEN", "fillColor:WRITTEN", "stroke:WRITTEN", "cornerRadius:REPORTED", "borders:WRITTEN",
+                "margin:WRITTEN", "fillColor:REPORTED:" + PANEL_TRANSLUCENCY, "stroke:REPORTED:" + PANEL_TRANSLUCENCY,
+                "cornerRadius:REPORTED", "borders:REPORTED:" + PANEL_TRANSLUCENCY,
                 "keepTogether:WRITTEN",
                 "anchor:REPORTED:as a layer stack's column, which has no bookmark; in the flow it is bookmarked",
                 "bleed:REPORTED:of a panel the page bleeds, in the flow it pages",
@@ -212,9 +229,13 @@ class DocxNodeFieldLedgerTest {
                 "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
         node(ShapeContainerNode.class, "name:INERT", "outline:WRITTEN", "layers:WRITTEN",
                 "clipPolicy:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table",
-                "fillColor:WRITTEN", "stroke:WRITTEN", "padding:WRITTEN", "margin:WRITTEN",
+                "fillColor:REPORTED:its translucency, as a panel's, flattened against the colour under it; "
+                + "drawn, its alpha is written; any other is written",
+                "stroke:REPORTED:its translucency, as a panel's border, flattened against the panel's fill or "
+                + "the colour under it; drawn, its alpha is written; any other is written",
+                "padding:WRITTEN", "margin:WRITTEN",
                 "transform:REPORTED");
-        node(ShapeNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:WRITTEN",
+        node(ShapeNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:REPORTED:" + RULE_TRANSLUCENCY,
                 "stroke:WRITTEN", "cornerRadius:REPORTED:unequal corners, drawn at the largest radius",
                 "linkTarget:REPORTED", "bookmarkOptions:REPORTED", "padding:WRITTEN",
                 "margin:WRITTEN", "transform:REPORTED", "fillPaint:REPORTED",
@@ -223,8 +244,9 @@ class DocxNodeFieldLedgerTest {
                 "padding:REPORTED:above and below; below a block a band or a column measures from, written",
                 "margin:REPORTED:above and below; below a block a band or a column measures from, written",
                 "grow:WRITTEN");
-        node(TableNode.class, "name:INERT", "columns:WRITTEN", "rows:WRITTEN", "defaultCellStyle:WRITTEN",
-                "rowStyles:WRITTEN", "columnStyles:WRITTEN", "width:WRITTEN", "linkTarget:REPORTED",
+        node(TableNode.class, "name:INERT", "columns:WRITTEN", "rows:REPORTED:" + CELL_TRANSLUCENCY,
+                "defaultCellStyle:REPORTED:" + CELL_TRANSLUCENCY, "rowStyles:REPORTED:" + CELL_TRANSLUCENCY,
+                "columnStyles:REPORTED:" + CELL_TRANSLUCENCY, "width:WRITTEN", "linkTarget:REPORTED",
                 "bookmarkOptions:REPORTED",
                 "padding:WRITTEN",
                 "margin:WRITTEN", "repeatedHeaderRowCount:WRITTEN", "anchor:WRITTEN");

@@ -22,17 +22,21 @@ Opacities outside `[0, 1]` are rejected at construction.
 
 ## What honours alpha (and what does not)
 
-In the PDF backend, alpha applies to **shape fills and strokes**:
+In the PDF backend, alpha applies on every surface:
 
 - rectangles, panels (`softPanel(...)`), and chart bars
 - ellipses, including chart point markers
 - polygons (pie/donut slices, line-chart area fills)
 - inline shapes
 - chart value-label halo chips
+- text runs, lines, side borders, table fills and rules, and barcodes
 
-**Text and lines render fully opaque** regardless of alpha, and the
-semantic DOCX export ignores the alpha channel entirely. If a translucent
-colour reaches one of those, you get the opaque colour — never an error.
+The semantic DOCX export keeps the alpha where Word can hold it — text, as
+Word's text fill, and drawings and pictures — and flattens it where Word
+holds an opaque colour only: a table cell's shading, a border, a rule. A
+flattened colour is composited against what the page paints under it, so it
+looks as the PDF does on first opening, and the export report names it. See
+[Translucent colours](docx-export.md#translucent-colours) in the DOCX recipe.
 
 ## Opaque colours stay byte-identical
 

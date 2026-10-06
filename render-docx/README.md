@@ -69,7 +69,8 @@ footer sits from its page edge
 What maps:
 
 - **Text.** Paragraphs keep their alignment and their runs; a run carries its font family,
-  size, colour, bold, italic, underline and strikethrough. A block's margin and padding
+  size, colour — a translucent one with its transparency, as Word's text fill — bold, italic,
+  underline and strikethrough. A block's margin and padding
   become paragraph spacing. The fonts the document is set in are embedded, where there is a
   file behind them.
 - **Lists** are real Word lists — a numbering definition, one level per nesting depth, the
@@ -78,8 +79,7 @@ What maps:
   and text style take the most specific value in the table / column / row / cell cascade;
   padding becomes the cell's margins and `textAnchor` its alignment; header rows repeat on
   each page and every row is kept whole. A composed cell is written by the same writers as
-  anywhere else, so it can hold an image, a list or a nested table. A fill is opaque in
-  Word.
+  anywhere else, so it can hold an image, a list or a nested table.
 - **Rows** are a one-row table whose columns are where the layout placed each child.
 - **Panels.** A container with a fill or a border is a one-cell table carrying them; rounded
   corners come out square, and the report says so.
@@ -111,6 +111,10 @@ What is not written — each one is named in the export report
   written as one table row, a cell per column.
 - **Watermarks, protection and viewer preferences**, each named in the export report.
 - **A row's own fill, outline and side borders**, named in the export report as `row paint`.
+- **Translucency where Word holds an opaque colour only** — a cell's shading, a border, a rule,
+  a text header's separator, a chip's run shading: the colour is flattened against what the page
+  paints under it and named in the export report (`translucency`, a chip's on its `inline chip`
+  note). Text, drawings and pictures keep their alpha.
 - **In a page zone, anything but paragraphs, page fields and spacers** — a logo, a barcode,
   a rule — named in the export report as `page zone content`.
 - **Where a page zone's parts stand on Word's line, and what a paragraph in it loses of its

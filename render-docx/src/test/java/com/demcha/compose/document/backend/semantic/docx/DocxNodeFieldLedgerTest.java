@@ -96,8 +96,8 @@ class DocxNodeFieldLedgerTest {
             "headersAndFooters:WRITTEN",
             // The node entries below are the body's. A zone is written as one line of its
             // paragraphs' runs, page fields and tabs, which is a gap of its own.
-            "zones:GAP:in a page zone, a paragraph's alignment, spacing and direction and a row's columns, gap "
-            + "and padding; whatever else a zone holds is reported");
+            "zones:GAP:in a page zone, a paragraph's alignment, spacing, direction, prefix, fitted size and "
+            + "outline entry and a row's columns, gap and padding; whatever else a zone holds is reported");
 
     static {
         node(AlignNode.class, "name:INERT", "child:WRITTEN", "align:WRITTEN", "margin:WRITTEN");
@@ -162,9 +162,15 @@ class DocxNodeFieldLedgerTest {
                 "padding:REPORTED:the sides its alignment sets it from",
                 "margin:REPORTED:the sides its alignment sets it from");
         node(ParagraphNode.class, "name:INERT", "text:WRITTEN", "inlineRuns:WRITTEN", "textStyle:WRITTEN",
-                "align:WRITTEN", "lineSpacing:WRITTEN", "bulletOffset:GAP:the letters of a prefix that has any",
-                "indentStrategy:WRITTEN", "linkTarget:WRITTEN", "bookmarkOptions:GAP:the outline entry's own title",
-                "padding:WRITTEN", "margin:WRITTEN", "autoSize:GAP:the size the text was fitted to",
+                "align:WRITTEN", "lineSpacing:WRITTEN",
+                "bulletOffset:REPORTED:its letters before the first line; over the flow, as a side of an "
+                + "overlay's pair or as a badge's text, the room it sets lines in by where that moves one",
+                "indentStrategy:WRITTEN", "linkTarget:WRITTEN",
+                "bookmarkOptions:REPORTED:a title that is not the text Word lists it by, a pair's whole line for "
+                + "a side of one; a level past Word's ninth; the right side's of a pair whose left holds the level",
+                "padding:WRITTEN", "margin:WRITTEN",
+                "autoSize:REPORTED:the size the page fits the text in the paragraph's style to; with no layout, "
+                + "not measured",
                 "verticalAlign:WRITTEN", "anchor:WRITTEN", "direction:WRITTEN");
         node(PathNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "segments:WRITTEN",
                 "fillColor:WRITTEN", "fillPaint:REPORTED", "stroke:WRITTEN", "strokePaint:REPORTED",

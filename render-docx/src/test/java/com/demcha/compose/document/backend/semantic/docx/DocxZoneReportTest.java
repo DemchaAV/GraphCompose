@@ -103,7 +103,7 @@ class DocxZoneReportTest {
                 .build())))
                 .containsExactly(FOOTER + "1 of its 2 parts stands off where the page sets them");
         // After a spacer, the page keeps its gap between the parts; Word sets them against each other.
-        assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").gap(8)
+        assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line").spacing(8)
                 .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
                 .flexSpacer()
                 .addParagraph(p -> p.text("v2.4").textStyle(CHROME))

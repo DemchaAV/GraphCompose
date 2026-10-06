@@ -510,12 +510,14 @@ final class DocxLayoutMetrics {
      */
     Map<String, PlacedFragment> zoneText(int zoneIndex) {
         java.util.regex.Pattern zone =
-                java.util.regex.Pattern.compile("^@page-zone\\[(\\d+)]\\[" + zoneIndex + "]");
+                java.util.regex.Pattern.compile("^@page-zone\\[\\d+]\\[" + zoneIndex + "]");
+        // The page a zone's fragment is drawn on is the one its path names.
         int first = Integer.MAX_VALUE;
-        for (String path : fragments.keySet()) {
-            java.util.regex.Matcher matcher = zone.matcher(path);
-            if (matcher.find()) {
-                first = Math.min(first, Integer.parseInt(matcher.group(1)));
+        for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
+            if (zone.matcher(entry.getKey()).find()) {
+                for (PlacedFragment fragment : entry.getValue()) {
+                    first = Math.min(first, fragment.pageIndex());
+                }
             }
         }
         if (first == Integer.MAX_VALUE) {

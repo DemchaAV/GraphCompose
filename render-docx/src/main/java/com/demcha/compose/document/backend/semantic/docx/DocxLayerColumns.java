@@ -65,9 +65,12 @@ final class DocxLayerColumns {
      * @param moves    what is written in place of a stand-in instead (see {@link Moves})
      * @param drawn    the layers holding only what is drawn where the page puts it — a column's
      *                 mark, the rule between two columns — which belong to no column
+     * @param closing  where the blocks a resume is measured from are placed: the space below each
+     *                 is the page's, its own margin and padding below it included
      */
     record Plan(double width, List<Column> columns, Set<DocumentNode> standIns,
-                Map<DocumentNode, Double> resumes, Moves moves, List<DocumentNode> drawn) {
+                Map<DocumentNode, Double> resumes, Moves moves, List<DocumentNode> drawn,
+                Set<PlacedNode> closing) {
 
         /**
          * The space above a layer's first block when it follows another layer in its cell.
@@ -160,11 +163,12 @@ final class DocxLayerColumns {
         columns.sort(Comparator.comparingDouble(Column::left));
         Set<DocumentNode> standIns = Collections.newSetFromMap(new IdentityHashMap<>());
         Map<DocumentNode, Double> resumes = new IdentityHashMap<>();
+        Set<PlacedNode> closing = Collections.newSetFromMap(new IdentityHashMap<>());
         Moves moves = new Moves();
         for (Column column : columns) {
-            flow(column.layers(), layout, node -> false, painted, standIns, resumes, moves);
+            flow(column.layers(), layout, node -> false, painted, standIns, resumes, closing, moves);
         }
-        return new Plan(width, List.copyOf(columns), standIns, resumes, moves, List.copyOf(drawnLayers));
+        return new Plan(width, List.copyOf(columns), standIns, resumes, moves, List.copyOf(drawnLayers), closing);
     }
 
     /**
@@ -215,9 +219,11 @@ final class DocxLayerColumns {
      *                 aside
      * @param below    from the text of its lowest written block to the stack's bottom; below zero
      *                 when that text runs past the bottom, by as much as it hangs below it
+     * @param closing  where the blocks {@code below} and a resume are measured from are placed: the
+     *                 space below each is the page's, its own margin and padding below it included
      */
     record Band(List<DocumentNode> layers, Set<DocumentNode> standIns, Map<DocumentNode, Double> resumes,
-                double above, double below) {
+                double above, double below, Set<PlacedNode> closing) {
 
         /** @see Plan#resume(DocumentNode) */
         double resume(DocumentNode layer) {
@@ -252,10 +258,11 @@ final class DocxLayerColumns {
         List<DocumentNode> layers = stack.children();
         Set<DocumentNode> standIns = Collections.newSetFromMap(new IdentityHashMap<>());
         Map<DocumentNode, Double> resumes = new IdentityHashMap<>();
+        Set<PlacedNode> closing = Collections.newSetFromMap(new IdentityHashMap<>());
         // A band's layers are written over each other in one run, where a stand-in's place
         // is where the later layer writes its content anyway: nothing moves.
         Moves none = new Moves();
-        flow(layers, layout, drawing, node -> false, standIns, resumes, none);
+        flow(layers, layout, drawing, node -> false, standIns, resumes, closing, none);
         // A stack nested in a layer is a band of its own, and its stand-ins are not written
         // either: the band's first and lowest blocks are measured past them too, or a badge's
         // place-holding spacer would set where the initials over it start.
@@ -279,7 +286,8 @@ final class DocxLayerColumns {
         double above = box.placementY() + box.placementHeight()
                        - (top.placementY() + top.placementHeight()) - first.margin().top();
         double below = lowest.placementY() + lowest.padding().bottom() - box.placementY();
-        return new Band(layers, standIns, resumes, Math.max(0, above), below);
+        closing.add(lowest);
+        return new Band(layers, standIns, resumes, Math.max(0, above), below, closing);
     }
 
     /**
@@ -296,17 +304,22 @@ final class DocxLayerColumns {
     private static void nestedStandIns(DocumentNode node, DocxLayoutMetrics layout,
                                        Predicate<DocumentNode> drawing, Set<DocumentNode> standIns) {
         if (node instanceof LayerStackNode nested) {
-            flow(nested.children(), layout, drawing, candidate -> false, standIns, new IdentityHashMap<>(), new Moves());
+            flow(nested.children(), layout, drawing, candidate -> false, standIns, new IdentityHashMap<>(),
+                    Collections.newSetFromMap(new IdentityHashMap<>()), new Moves());
         }
         for (DocumentNode child : node.children()) {
             nestedStandIns(child, layout, drawing, standIns);
         }
     }
 
-    /** The stand-ins among layers that share a band, and each later layer's resume. */
+    /**
+     * The stand-ins among layers that share a band, each later layer's resume, and where the
+     * block each resume is measured from is placed.
+     */
     private static void flow(List<DocumentNode> layers, DocxLayoutMetrics layout,
                              Predicate<DocumentNode> drawing, Predicate<DocumentNode> painted,
-                             Set<DocumentNode> standIns, Map<DocumentNode, Double> resumes, Moves moves) {
+                             Set<DocumentNode> standIns, Map<DocumentNode, Double> resumes,
+                             Set<PlacedNode> closing, Moves moves) {
         if (layers.size() < 2) {
             return;
         }
@@ -352,10 +365,14 @@ final class DocxLayerColumns {
             }
         }
         for (int index = 1; index < layers.size(); index++) {
+            PlacedNode[] from = new PlacedNode[1];
             double resume = resume(layers.subList(0, index), layers.get(index), layout, standIns, drawing,
-                    painted, moves);
+                    painted, moves, from);
             if (!Double.isNaN(resume)) {
                 resumes.put(layers.get(index), resume);
+                if (from[0] != null) {
+                    closing.add(from[0]);
+                }
             }
         }
     }
@@ -430,10 +447,11 @@ final class DocxLayerColumns {
      */
     private static double resume(List<DocumentNode> above, DocumentNode layer,
                                  DocxLayoutMetrics layout, Set<DocumentNode> standIns,
-                                 Predicate<DocumentNode> drawing, Predicate<DocumentNode> painted, Moves moves) {
+                                 Predicate<DocumentNode> drawing, Predicate<DocumentNode> painted, Moves moves,
+                                 PlacedNode[] from) {
         double bottom = Double.NaN;
         for (DocumentNode earlier : above) {
-            bottom = lowestEdge(earlier, layout, written(standIns, moves, true), drawing, painted, null, bottom);
+            bottom = lowestEdge(earlier, layout, written(standIns, moves, true), drawing, painted, null, bottom, from);
         }
         // A filled stand-in is where what fills it is written, so it counts as a first block.
         DocumentNode first = firstLeaf(layer, layout, written(standIns, moves, true), drawing);
@@ -449,10 +467,14 @@ final class DocxLayerColumns {
      * The lowest edge on the page a written leaf under {@code node} ends at: its text's bottom,
      * or the bottom of the outermost painted panel it sits in. Measured up from the page's foot,
      * so lower is smaller; {@code NaN} while none is found.
+     *
+     * @param from set to where the leaf whose text ends at the edge is placed, or to null where
+     *             the edge is a panel's
      */
     private static double lowestEdge(DocumentNode node, DocxLayoutMetrics layout,
                                      Predicate<DocumentNode> written, Predicate<DocumentNode> drawing,
-                                     Predicate<DocumentNode> painted, PlacedNode panel, double lowest) {
+                                     Predicate<DocumentNode> painted, PlacedNode panel, double lowest,
+                                     PlacedNode[] from) {
         if (!written.test(node)) {
             return lowest;
         }
@@ -466,10 +488,14 @@ final class DocxLayerColumns {
             boolean onePage = outer != null && outer.startPage() == outer.endPage()
                               && outer.startPage() == placed.startPage();
             double edge = onePage ? outer.placementY() : placed.placementY() + placed.padding().bottom();
-            return Double.isNaN(lowest) || edge < lowest ? edge : lowest;
+            if (Double.isNaN(lowest) || edge < lowest) {
+                from[0] = onePage ? null : placed;
+                return edge;
+            }
+            return lowest;
         }
         for (DocumentNode child : node.children()) {
-            lowest = lowestEdge(child, layout, written, drawing, painted, outer, lowest);
+            lowest = lowestEdge(child, layout, written, drawing, painted, outer, lowest, from);
         }
         return lowest;
     }

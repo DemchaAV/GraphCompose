@@ -8,6 +8,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's report names the geometry a block is written without.** A logo given a
+  left margin stood at the column's edge, a spacer with a margin held only its height and
+  everything under it rose, and a section fixed to half the column ran its text the column's
+  width — and the report listed no loss. Each block's note now names:
+  - on a picture or a barcode: its left margin and padding, which are not written (its
+    paragraph sets it from the left, where its right side moves nothing); a picture drawn
+    beside its text or over its badge names its padding, since it is fitted to a box that
+    holds it;
+  - on a page reference: the margin and padding on the side or sides its alignment sets it
+    from, and, where the export writes no bookmark for its anchor, that its number is written
+    as text — the shape the anchor is on says so too, and a table of contents' entry now does;
+  - on a table: its left padding (its margin is its indent);
+  - on a spacer: its margin and padding above and below; on a chart, those and the ones on its
+    left, which are not written round its data table. Below the lowest block of a band, or of
+    a layer another resumes after in its column, the space is measured from the page, the
+    block's own margin and padding included, so that side is written and not named;
+  - on an unpainted section or container holding text, and on a panel composed in a table
+    cell: a `fixedWidth` narrower than its column, which its paragraphs and lists run the
+    width of.
+
+  None changes what is written. In `DocxNodeFieldLedgerTest` 11 node fields move from a gap to
+  `REPORTED`; 23 node-field gaps remain, each named — among them a table's padding, since a
+  table with side padding is not matched to the rows the layout placed, and the fixed width of
+  a layer stack's column.
 - **A DOCX export's report names what each written or drawn node goes without.** The export
   wrote these nodes and said nothing of what it left behind: a linked logo became an unlinked
   picture, a rotated photo stood upright, a dashed line was drawn solid, and a link to an anchor

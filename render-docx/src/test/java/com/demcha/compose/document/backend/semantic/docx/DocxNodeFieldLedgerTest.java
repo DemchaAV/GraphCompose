@@ -129,7 +129,7 @@ class DocxNodeFieldLedgerTest {
                 "margin:REPORTED:its left side; its right moves nothing in a paragraph set from the left", "transform:REPORTED",
                 "anchor:WRITTEN");
         node(LayerStackNode.class, "name:INERT", "layers:WRITTEN", "padding:WRITTEN", "margin:WRITTEN",
-                "clipToBounds:GAP:the clip");
+                "clipToBounds:REPORTED:where it cuts what its layers paint");
         node(LineNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "startX:WRITTEN", "startY:WRITTEN",
                 "endX:WRITTEN", "endY:WRITTEN", "stroke:WRITTEN",
                 "linkTarget:REPORTED",
@@ -182,9 +182,9 @@ class DocxNodeFieldLedgerTest {
                 "bookmarkOptions:REPORTED", "keepWithNext:WRITTEN",
                 "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
         node(ShapeContainerNode.class, "name:INERT", "outline:WRITTEN", "layers:WRITTEN",
-                "clipPolicy:GAP:the clip of a container written as a badge, a line pair or over the flow",
+                "clipPolicy:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table",
                 "fillColor:WRITTEN", "stroke:WRITTEN", "padding:WRITTEN", "margin:WRITTEN",
-                "transform:GAP:the transform of a container whose outline paints nothing");
+                "transform:REPORTED");
         node(ShapeNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:WRITTEN",
                 "stroke:WRITTEN", "cornerRadius:REPORTED:unequal corners, drawn at the largest radius",
                 "linkTarget:REPORTED", "bookmarkOptions:REPORTED", "padding:WRITTEN",

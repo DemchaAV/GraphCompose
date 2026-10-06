@@ -113,6 +113,8 @@ What is not written — each one is named in the export report
 - **A row's own fill, outline and side borders**, named in the export report as `row paint`.
 - **In a page zone, anything but paragraphs, page fields and spacers** — a logo, a barcode,
   a rule — named in the export report as `page zone content`.
+- **Where a page zone's parts stand on Word's line, and what a paragraph in it loses of its
+  own**, named in the export report as `page zone`.
 - **A list's own geometry where Word cannot hold it**, named in the export report on the list:
   - a centred or right-aligned list's alignment;
   - its `lineSpacing` where the layout's items are not its own;
@@ -121,7 +123,7 @@ What is not written — each one is named in the export report
     too narrow for its marker — while a flat hanging-indent list keeps the page's column;
   - a row the page draws as a marker alone, for a blank item.
 - **What a paragraph's own fields set where Word cannot hold it**, named in the export report on
-  the paragraph outside a header or footer (a page zone's paragraphs are not named yet):
+  the paragraph outside a header or footer (a page zone's are named on the zone):
   - the size an auto-sized paragraph's text is fitted to, where Word, to its half point, holds it
     apart from its style's;
   - the letters of a `bulletOffset` prefix; and, where it moves a line, the room a prefix sets

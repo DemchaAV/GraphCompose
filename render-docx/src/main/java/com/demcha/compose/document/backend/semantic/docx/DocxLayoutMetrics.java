@@ -497,6 +497,62 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * The text a page zone's content laid out, on the first page the zone is drawn on: each
+     * node's first fragment of paragraph lines, by its path within the content.
+     *
+     * <p>A zone's content is compiled on its own, its paths as a document's of that one root,
+     * and spliced in under {@code @page-zone[page][index]} (see {@link #zoneDistanceFromEdge}).
+     * The export builds the content again, so it finds its nodes here by those paths
+     * ({@link #pathsWithin}).</p>
+     *
+     * @param zoneIndex the zone's position in the section's zone list
+     * @return the fragments by path, empty when the layout carries no such zone
+     */
+    Map<String, PlacedFragment> zoneText(int zoneIndex) {
+        java.util.regex.Pattern zone =
+                java.util.regex.Pattern.compile("^@page-zone\\[\\d+]\\[" + zoneIndex + "]");
+        // The page a zone's fragment is drawn on is the one its path names.
+        int first = Integer.MAX_VALUE;
+        for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
+            if (zone.matcher(entry.getKey()).find()) {
+                for (PlacedFragment fragment : entry.getValue()) {
+                    first = Math.min(first, fragment.pageIndex());
+                }
+            }
+        }
+        if (first == Integer.MAX_VALUE) {
+            return Map.of();
+        }
+        String prefix = "@page-zone[" + first + "][" + zoneIndex + "]";
+        Map<String, PlacedFragment> text = new HashMap<>();
+        for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
+            if (!entry.getKey().startsWith(prefix)) {
+                continue;
+            }
+            for (PlacedFragment fragment : entry.getValue()) {
+                if (fragment.payload() instanceof ParagraphFragmentPayload paragraph && !paragraph.lines().isEmpty()) {
+                    text.putIfAbsent(entry.getKey().substring(prefix.length()), fragment);
+                    break;
+                }
+            }
+        }
+        return text;
+    }
+
+    /**
+     * The paths the layout gives a tree compiled as a document of its own root: a page zone's
+     * content, which the layout lays out apart from the body.
+     *
+     * @param root the tree's root
+     * @return each node's path
+     */
+    static Map<DocumentNode, String> pathsWithin(DocumentNode root) {
+        Map<DocumentNode, String> paths = new IdentityHashMap<>();
+        indexPaths(root, null, 0, paths);
+        return paths;
+    }
+
+    /**
      * The path the layout graph addresses a node by, for a note that has to say where in
      * the document it came from.
      *

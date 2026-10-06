@@ -272,7 +272,8 @@ measure, and keeps the point-tall paragraph.
 
 The horizontal half is carried as an indent: outside any panel, every paragraph by each enclosing container's
 margin and padding, a row or a table by the same amount as `w:tblInd`, its own left margin
-added unless it is a row's column, whose cell already starts past it — see "What a panel
+added unless it is a row's column, whose cell already starts past it, and a table's left
+padding added too, since the page draws its rows inside it — see "What a panel
 keeps and loses". A table that opens a layer of a stack written as a band, or of a column
 layer, starts where the layer resumes, its own top margin below that; at the top of a cell an
 empty hairline line above it holds that space, as it does for a row.

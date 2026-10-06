@@ -13,10 +13,10 @@ follow semantic versioning; release dates are ISO 8601.
   placement by that much, and the export matched a table's rows to the layout by the
   placement's width: a table with side padding matched none, and was written without the
   layout's grid, with no row heights and rows Word could break, its drawings anchored outside
-  its rows, and its rows standing its padding left of the page's. Its rows are now measured inside the padding,
-  and the padding holds the table in as its margin does — its left side in the indent, both
-  in the room its columns are given — so a table with side padding is written as one with
-  those margins. In `DocxNodeFieldLedgerTest` a table's padding moves from a gap to
+  its rows, and its rows standing its padding left of the page's. Its rows are now measured
+  inside the padding, and the padding holds the table in as its margin does — its left side in
+  the indent, both in the room its columns are given — so a table with side padding is written
+  as one with those margins. In `DocxNodeFieldLedgerTest` a table's padding moves from a gap to
   `WRITTEN`; 22 node-field gaps remain.
 - **A DOCX export's report names the geometry a block is written without.** A logo given a
   left margin stood at the column's edge, a spacer with a margin held only its height and

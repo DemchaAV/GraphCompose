@@ -4,7 +4,9 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.TableBuilder;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.Test;
@@ -28,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DocxPaddedTableTest {
 
     @Test
-    void aTableWithSidePaddingIsWrittenAsOneWithThoseMarginsIs() throws Exception {
+    void aTableWithSidePaddingIsWrittenAsOneWithThoseMargins() throws Exception {
         // The page draws both tables' rows at the same place and width.
         String padded = bodyOf(page -> page.addTable(table -> rows(table.columns(
                 DocumentTableColumn.fixed(120), DocumentTableColumn.fixed(140)), 2)
@@ -75,11 +77,43 @@ class DocxPaddedTableTest {
     @Test
     void aTableComposedInACellIsHeldInByItsPadding() throws Exception {
         String body = bodyOf(page -> page.addTable(outer -> outer.columns(DocumentTableColumn.fixed(240))
-                .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(new TableBuilder()
+                .rowCells(DocumentTableCell.node(new TableBuilder()
                         .columns(DocumentTableColumn.fixed(120)).row("Inner")
                         .padding(new DocumentInsets(0, 0, 0, 15)).build()))));
 
         assertThat(body).as("its indent in the cell, the padding").containsPattern("<w:tblInd[^>]*w:w=\"300\"");
+    }
+
+    @Test
+    void aTableHeldInByAnAlignmentWrapperIsWrittenAsAMarginedOneThereToo() throws Exception {
+        // The wrapper holds the table in to its margin box; its margin or its padding then
+        // lands on its rows either way.
+        String padded = bodyOf(page -> page.addAligned(com.demcha.compose.document.node.HorizontalAlign.CENTER,
+                rows(new TableBuilder().columns(DocumentTableColumn.fixed(160)), 1)
+                        .padding(new DocumentInsets(0, 10, 0, 30)).build()));
+        String margined = bodyOf(page -> page.addAligned(com.demcha.compose.document.node.HorizontalAlign.CENTER,
+                rows(new TableBuilder().columns(DocumentTableColumn.fixed(160)), 1)
+                        .margin(new DocumentInsets(0, 10, 0, 30)).build()));
+
+        assertThat(padded).isEqualTo(margined).contains("<w:tblLayout w:type=\"fixed\"/>");
+    }
+
+    @Test
+    void aDrawingInAPaddedTablesCellIsAnchoredInItsRow() throws Exception {
+        // A drawing a cell is all of is anchored in that cell, found by the cell's box on the
+        // page, which the table's padding offsets.
+        String padded = bodyOf(page -> page.addTable(table -> table
+                .columns(DocumentTableColumn.fixed(120), DocumentTableColumn.fixed(140))
+                .rowCells(DocumentTableCell.node(new com.demcha.compose.document.dsl.ShapeBuilder().size(20, 20)
+                        .fillColor(DocumentColor.rgb(26, 86, 148)).build()), DocumentTableCell.text("Label"))
+                .padding(new DocumentInsets(0, 10, 0, 30))));
+        String margined = bodyOf(page -> page.addTable(table -> table
+                .columns(DocumentTableColumn.fixed(120), DocumentTableColumn.fixed(140))
+                .rowCells(DocumentTableCell.node(new com.demcha.compose.document.dsl.ShapeBuilder().size(20, 20)
+                        .fillColor(DocumentColor.rgb(26, 86, 148)).build()), DocumentTableCell.text("Label"))
+                .margin(new DocumentInsets(0, 10, 0, 30))));
+
+        assertThat(padded).isEqualTo(margined).contains("<wp:anchor");
     }
 
     @Test

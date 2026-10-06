@@ -171,7 +171,7 @@ final class DocxTranslucency {
      *
      * <p>Word reads the transparency — not the opacity — as hundred-thousandths: three quarters
      * transparent is {@code 75000}. The fill declares its own namespace, so a part with no
-     * translucent text is not touched; {@link #settle} puts it last among the run's properties,
+     * text fill is not touched; {@link #settle} puts it last among the run's properties,
      * where Word writes it, once nothing more is written on them.</p>
      *
      * <p>A run follows its style's text fill where it writes none, and Word draws the fill's
@@ -249,11 +249,12 @@ final class DocxTranslucency {
         if (document.getNumbering() != null && !document.getNumbering().getAbstractNums().isEmpty()) {
             roots.add(parentOf(document.getNumbering().getAbstractNums().get(0).getCTAbstractNum()));
         }
-        for (XWPFHeaderFooter part : document.getHeaderList()) {
-            roots.add(part._getHdrFtr());
-        }
-        for (XWPFHeaderFooter part : document.getFooterList()) {
-            roots.add(part._getHdrFtr());
+        // From the document's relations: a header or footer made in this export is related to the
+        // document, but POI lists in getHeaderList() and getFooterList() only the parts it read.
+        for (org.apache.poi.ooxml.POIXMLDocumentPart part : document.getRelations()) {
+            if (part instanceof XWPFHeaderFooter headerOrFooter) {
+                roots.add(headerOrFooter._getHdrFtr());
+            }
         }
         for (XmlObject root : roots) {
             if (root != null) {
@@ -281,18 +282,25 @@ final class DocxTranslucency {
                 source.moveXml(target);
             }
         }
+        String ignorable;
         try (XmlCursor cursor = root.newCursor()) {
-            String ignorable = cursor.getAttributeText(IGNORABLE);
-            if (ignorable == null) {
-                cursor.toNextToken();
-                cursor.insertNamespace("w14", W14);
-                cursor.insertNamespace("mc", MC);
-                cursor.insertAttributeWithValue(IGNORABLE, "w14");
-            } else if (!(" " + ignorable + " ").contains(" w14 ")) {
-                cursor.setAttributeText(IGNORABLE, ignorable + " w14");
-                cursor.toNextToken();
+            ignorable = cursor.getAttributeText(IGNORABLE);
+            if (ignorable != null && (" " + ignorable + " ").contains(" w14 ")) {
+                return;
+            }
+            // Declared first, each once, so the attribute below takes the prefixes they name.
+            boolean declaresW14 = W14.equals(cursor.namespaceForPrefix("w14"));
+            boolean declaresMc = MC.equals(cursor.namespaceForPrefix("mc"));
+            cursor.toNextToken();
+            if (!declaresW14) {
                 cursor.insertNamespace("w14", W14);
             }
+            if (!declaresMc) {
+                cursor.insertNamespace("mc", MC);
+            }
+        }
+        try (XmlCursor cursor = root.newCursor()) {
+            cursor.setAttributeText(IGNORABLE, ignorable == null ? "w14" : ignorable + " w14");
         }
     }
 }

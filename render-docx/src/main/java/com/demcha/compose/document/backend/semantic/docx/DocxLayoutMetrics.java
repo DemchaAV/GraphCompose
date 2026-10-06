@@ -1253,6 +1253,10 @@ final class DocxLayoutMetrics {
      * @return that colour, or empty where nothing tells, as {@link #colourUnder(DocumentNode)}
      */
     java.util.Optional<java.awt.Color> colourUnderCell(DocumentNode table, int row, int column) {
+        if (isEmpty()) {
+            // Nothing to tell, and the index with no layout is shared: its caches stay empty.
+            return java.util.Optional.empty();
+        }
         List<CellBox> boxes = cellBoxes(table, row, column);
         if (boxes.isEmpty()) {
             return java.util.Optional.empty();

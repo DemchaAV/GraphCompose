@@ -1480,7 +1480,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     ? (borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom())
                     : (borders.isSetTop() ? borders.getTop() : borders.addNewTop());
             // The separator runs the width of the page, over whatever fills the page draws across it,
-            // so there is no one colour under it to flatten a translucent one against but the page's.
+            // so there is no one colour under it to flatten a translucent one against but the page's
+            // white.
             java.awt.Color colour = band.getSeparatorColor().color();
             paintEdge(edge, STBorder.SINGLE, BigInteger.valueOf(ruleEighths(band.getSeparatorThickness())),
                     toHexColor(DocxTranslucency.flatten(colour, java.awt.Color.WHITE)));
@@ -9058,8 +9059,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * The colour Word will paint under {@code run} — the shading this export itself wrote
-     * on the run's paragraph or on the cell holding it; then, where neither is shaded, what the
-     * page paints under the paragraph ({@link #colourUnder(DocumentNode)}).
+     * on the run's paragraph, on the cell holding it, or on the panel or cell around an unshaded
+     * one; on the page, what the page paints under the paragraph ({@link #colourUnder(DocumentNode)}).
      *
      * <p>Read back from the file being written rather than tracked in a field, so it is
      * whatever was actually written and cannot drift from it. Read, and only read:
@@ -9087,16 +9088,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (cellFill != null) {
             return cellFill;
         }
-        return layout.colourUnder(path).orElseGet(this::surfaceColour);
+        return surfaceBehind != null ? surfaceBehind.color() : layout.colourUnder(path).orElse(java.awt.Color.WHITE);
     }
 
     /**
-     * The colour the page paints under a node, at its centre, where the layout tells it
-     * ({@link DocxLayoutMetrics#colourUnder(DocumentNode)}); otherwise the surface this export
-     * set the node on — the flattened fill of the panel or cell around it — or the page's white.
+     * The colour Word paints under a node: inside a panel or cell this export shaded, that
+     * shading as written — a panel flattened at its own centre is one colour wherever its
+     * content stands —; on the page, what the page paints under the node at its centre, where
+     * the layout tells it ({@link DocxLayoutMetrics#colourUnder(DocumentNode)}), or white.
      */
     private java.awt.Color colourUnder(DocumentNode node) {
-        return layout.colourUnder(node).orElseGet(this::surfaceColour);
+        return surfaceBehind != null ? surfaceBehind.color() : layout.colourUnder(node).orElse(java.awt.Color.WHITE);
     }
 
     /** The fill of the panel or cell being written into, as written; the page's white outside one. */
@@ -10533,9 +10535,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 boolean translucentRule = DocxTranslucency.flattensStroke(stroke);
                 translucentFills |= translucentFill;
                 translucentRules |= translucentRule;
-                java.awt.Color under = translucentFill || translucentRule
-                        ? layout.colourUnderCell(node, placement.row(), placement.column()).orElseGet(this::surfaceColour)
-                        : java.awt.Color.WHITE;
+                java.awt.Color under = !(translucentFill || translucentRule) ? java.awt.Color.WHITE
+                        : surfaceBehind != null ? surfaceBehind.color()
+                        : layout.colourUnderCell(node, placement.row(), placement.column()).orElse(java.awt.Color.WHITE);
                 DocumentColor fill = DocxTranslucency.flattenedFill(authoredFill, under);
                 // The page draws the rules over the cells' fills, in a pass after them.
                 applyCellPaint(cell, fill, DocxTranslucency.flattenedStroke(stroke, fill != null ? fill.color() : under));

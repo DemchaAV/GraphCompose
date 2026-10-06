@@ -112,9 +112,10 @@ What is not written — each one is named in the export report
 - **Watermarks, protection and viewer preferences**, each named in the export report.
 - **A row's own fill, outline and side borders**, named in the export report as `row paint`.
 - **Translucency where Word holds an opaque colour only** — a cell's shading, a border, a rule,
-  a text header's separator, a chip's run shading: the colour is flattened against what the page
-  paints under it and named in the export report (`translucency`, a chip's on its `inline chip`
-  note). Text, drawings and pictures keep their alpha.
+  a chip's run shading: the colour is flattened against what Word paints under it — the panel or
+  cell the export shaded, or what the page paints there — and a text header's separator against
+  white; each is named in the export report (`translucency`, a chip's on its `inline chip` note).
+  Text, drawings and pictures keep their alpha.
 - **In a page zone, anything but paragraphs, page fields and spacers** — a logo, a barcode,
   a rule — named in the export report as `page zone content`.
 - **Where a page zone's parts stand on Word's line, and what a paragraph in it loses of its

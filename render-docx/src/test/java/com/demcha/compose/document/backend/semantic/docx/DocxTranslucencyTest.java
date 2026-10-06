@@ -143,7 +143,7 @@ class DocxTranslucencyTest {
     }
 
     @Test
-    void aWhollyTransparentFillIsNoShadingAndARuleKeepsItsRoomInTheColourUnder() throws Exception {
+    void aWhollyTransparentFillIsNoShadingAndABorderKeepsItsRoomInTheColourUnder() throws Exception {
         try (Exported exported = export(navyPage(), page -> page
                 .addSection("Card", card -> card.fillColor(DocumentColor.rgba(0, 90, 200, 0))
                         .borders(DocumentBorders.all(DocumentStroke.of(DocumentColor.rgba(200, 0, 0, 0), 2)))
@@ -324,9 +324,7 @@ class DocxTranslucencyTest {
                 .addList(list -> list.name("Points").textStyle(DocumentTextStyle.DEFAULT
                                 .withColor(DocumentColor.rgb(0, 0, 0)))
                         .addItem("Languages", child -> child.addItem("Java").addItem("Kotlin"))))) {
-            XWPFParagraph nested = run(exported.document(), "Java").getParent() instanceof XWPFParagraph paragraph
-                    ? paragraph : null;
-            assertThat(nested).isNotNull();
+            XWPFParagraph nested = (XWPFParagraph) run(exported.document(), "Java").getParent();
             // A nested level states no style of its own, so its marker is drawn in the mark's.
             assertThat(textFill(nested.getCTP().getPPr().getRPr())).as("an opaque fill over the faint style")
                     .isEqualTo("000000@");
@@ -365,7 +363,116 @@ class DocxTranslucencyTest {
     }
 
     @Test
-    void withNoLayoutAFillIsFlattenedAgainstTheSurfaceItIsWrittenOn() throws Exception {
+    void everyPartHoldingATextFillEndsItsPropertiesWithItAndMarksItsNamespaceIgnorable() throws Exception {
+        // A translucent body colour is the Normal style's, so every opaque run anywhere — a header's
+        // and a footer's text, a page number, a table cell's — writes an opaque fill of its own.
+        DocumentTextStyle faint = DocumentTextStyle.DEFAULT.withColor(DocumentColor.rgba(0, 0, 0, 153));
+        DocumentTableStyle tinted = DocumentTableStyle.builder().textStyle(new DocumentTextStyle(
+                DocumentTextStyle.DEFAULT.fontName(), 10,
+                com.demcha.compose.document.style.DocumentTextDecoration.UNDERLINE, DocumentColor.rgba(200, 0, 0, 64)))
+                .build();
+        try (Exported exported = export(session -> session.header(DocumentHeaderFooter.builder()
+                        .zone(DocumentHeaderFooterZone.HEADER).height(30).fontSize(10).leftText("Header").build())
+                .footer(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.FOOTER).height(20).fontSize(8)
+                        .rightText("Page {page}").build()),
+                page -> page.addParagraph(p -> p.text("The body of the page is set in a faint black, and there is "
+                                                     + "more of it than of anything else.").textStyle(faint))
+                        .add(new com.demcha.compose.document.dsl.TableBuilder().name("Rota")
+                                .columns(DocumentTableColumn.fixed(200))
+                                .rowCells(DocumentTableCell.text("Underlined in the cell").withStyle(tinted)).build()))) {
+            assertThat(textFill(run(exported.document(), "Underlined in the cell").getCTR().getRPr()))
+                    .as("a table cell's run").isEqualTo("C80000@74902");
+            java.util.Map<String, String> parts = xmlParts(exported.bytes());
+            assertThat(parts.keySet()).as("the header and the footer hold fills")
+                    .anyMatch(name -> name.startsWith("word/header") && parts.get(name).contains("w14:textFill"))
+                    .anyMatch(name -> name.startsWith("word/footer") && parts.get(name).contains("w14:textFill"));
+            parts.forEach((name, xml) -> {
+                int fills = count(xml, "<w14:textFill");
+                if (fills > 0) {
+                    String root = xml.substring(xml.indexOf('<', xml.indexOf("?>") + 2), xml.indexOf('>', xml.indexOf("?>") + 2));
+                    assertThat(root).as(name + "'s root").contains("mc:Ignorable=\"w14\"");
+                    assertThat(count(xml, "</w14:textFill></w:rPr>")).as(name + ": each fill last of its properties")
+                            .isEqualTo(fills);
+                }
+            });
+        }
+    }
+
+    @Test
+    void aPanelSplitByAPageBreakIsOneColourAndNamedOnce() throws Exception {
+        try (Exported exported = export(navyPage(), page -> page.addSection("Card", card -> card.fillColor(HALF_BLUE)
+                .addParagraph("First").addPageBreak(pageBreak -> { }).addParagraph("Second")))) {
+            assertThat(exported.document().getTables()).as("a table a piece").hasSize(2)
+                    .allSatisfy(table -> assertThat(shading(table.getRow(0).getCell(0))).isEqualTo("0E4184"));
+            assertThat(notes(exported)).containsExactly(FILL_NOTE);
+        }
+    }
+
+    @Test
+    void aMergedTranslucentCellIsFlattenedAsOne() throws Exception {
+        DocumentTableStyle tint = DocumentTableStyle.builder().fillColor(HALF_BLUE).build();
+        try (Exported exported = export(navyPage(), page -> page.add(new com.demcha.compose.document.dsl.TableBuilder()
+                .name("Rota").columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(DocumentTableCell.text("A").withStyle(tint).rowSpan(2), DocumentTableCell.text("B"))
+                .rowCells(DocumentTableCell.text("C"))
+                .build()))) {
+            var table = exported.document().getTables().get(0);
+            assertThat(shading(table.getRow(0).getCell(0))).isEqualTo("0E4184");
+            assertThat(shading(table.getRow(1).getCell(0))).as("the merge's covered row").isEqualTo("0E4184");
+            assertThat(notes(exported)).containsExactly("its cells' fills are flattened against the colour under "
+                                                        + "them, because a Word cell's shading and borders are opaque");
+        }
+    }
+
+    @Test
+    void aRuleInAFilledRowIsFlattenedAgainstWhatWordShows() throws Exception {
+        // The export does not write a row's own fill, so what Word shows under the rule is the page.
+        try (Exported exported = export(null, page -> page.addRow(row -> row.fillColor(NAVY)
+                .addLine(line -> line.horizontal(100).stroke(DocumentStroke.of(DocumentColor.rgba(0, 0, 0, 128), 1)))
+                .addParagraph("Beside")))) {
+            CTBorder bottom = allParagraphs(exported.document()).stream()
+                    .filter(p -> p.getCTP().getPPr() != null && p.getCTP().getPPr().isSetPBdr())
+                    .findFirst().orElseThrow().getCTP().getPPr().getPBdr().getBottom();
+            // Black at 128/255 over white, not over the row's navy.
+            assertThat(hex(bottom.getColor())).isEqualTo("7F7F7F");
+        }
+    }
+
+    @Test
+    void contentInAFlattenedPanelIsSetOnThePanelAsWritten() throws Exception {
+        // The panel stands over the page's navy column and its white side, and is flattened at its
+        // centre, over the navy: a chip in its right half composites over the panel Word paints there,
+        // not over the white the page has under the chip.
+        try (Exported exported = export(session -> session.pageBackgrounds(List.of(
+                        PageBackgroundFill.leftColumn(0.6, NAVY))),
+                page -> page.addSection("Card", card -> card.fillColor(HALF_BLUE)
+                        .addRow(row -> row.addParagraph("Left")
+                                .addParagraph(p -> p.inlineText("Call ").inlineCode("render()")))
+                        .addRow(row -> row.addParagraph("Left").addLine(line -> line.horizontal(100)
+                                .stroke(DocumentStroke.of(DocumentColor.rgba(0, 0, 0, 128), 1))))
+                        // A table in the panel's right half, over the page's white side.
+                        .add(new com.demcha.compose.document.dsl.TableBuilder().name("Tint")
+                                .columns(DocumentTableColumn.fixed(80)).margin(new DocumentInsets(0, 0, 0, 260))
+                                .rowCells(DocumentTableCell.text("Cell").withStyle(DocumentTableStyle.builder()
+                                        .fillColor(HALF_BLUE).build())).build())))) {
+            XWPFTableCell tinted = allCells(exported.document()).stream()
+                    .filter(cell -> cell.getText().contains("Cell") && cell.getTables().isEmpty())
+                    .findFirst().orElseThrow();
+            // 0/90/200 at 128/255 over 14/65/132.
+            assertThat(shading(tinted)).as("a translucent cell in the panel").isEqualTo("074EA6");
+            assertThat(shading(allCells(exported.document()).get(0))).isEqualTo("0E4184");
+            // 175/184/193 at 51/255 over 14/65/132.
+            assertThat(runShading(run(exported.document(), "render("))).isEqualTo("2E5990");
+            CTBorder rule = allParagraphs(exported.document()).stream()
+                    .filter(p -> p.getCTP().getPPr() != null && p.getCTP().getPPr().isSetPBdr())
+                    .findFirst().orElseThrow().getCTP().getPPr().getPBdr().getBottom();
+            // Black at 128/255 over 14/65/132, not over the panel-on-white the page has under the rule.
+            assertThat(hex(rule.getColor())).isEqualTo("072042");
+        }
+    }
+
+    @Test
+    void withNoLayoutATranslucentFillIsStillNamed() throws Exception {
         DocxExportReport report = DocxExports.reportWithoutLayout(400, 400, 20, page -> page
                 .addSection("Card", card -> card.fillColor(HALF_BLUE).addParagraph("Inside")));
         assertThat(report.bySubject().get("translucency")).extracting(DocxExportReport.Note::detail)
@@ -381,6 +488,27 @@ class DocxTranslucencyTest {
         public void close() throws Exception {
             document.close();
         }
+    }
+
+    /** The package's XML parts, by name. */
+    private static java.util.Map<String, String> xmlParts(byte[] docx) throws Exception {
+        java.util.Map<String, String> parts = new java.util.TreeMap<>();
+        try (java.util.zip.ZipInputStream zip = new java.util.zip.ZipInputStream(new ByteArrayInputStream(docx))) {
+            for (java.util.zip.ZipEntry entry; (entry = zip.getNextEntry()) != null; ) {
+                if (entry.getName().endsWith(".xml")) {
+                    parts.put(entry.getName(), new String(zip.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
+                }
+            }
+        }
+        return parts;
+    }
+
+    private static int count(String text, String of) {
+        int count = 0;
+        for (int at = text.indexOf(of); at >= 0; at = text.indexOf(of, at + of.length())) {
+            count++;
+        }
+        return count;
     }
 
     private static byte[] png() {

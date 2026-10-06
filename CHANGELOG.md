@@ -18,13 +18,14 @@ follow semantic versioning; release dates are ISO 8601.
     each with the fill's transparency, so both draw the page's tint.
     - A translucent body colour is the Normal style's. A run, or a list's marker, of an opaque
       colour writes an opaque fill of its own, so it does not take the style's.
-    - The fill is the last of a run's properties, and a part holding one marks its namespace
-      `mc:Ignorable`.
+    - The fill is the last of a run's properties, and each part holding one — the body, the
+      styles, the numbering, a header or footer — marks its namespace `mc:Ignorable`.
     - Word saves such text into a PDF as drawing, without a text layer.
   - **Where Word holds an opaque colour only** — a cell's shading, a border, a rule — the colour
-    is flattened against what the page paints under it, read from the layout: the fills drawn
-    before the block at its centre, a page background included, a row's own fill (which is not
-    written) left out. Each is named in the report as `translucency`:
+    is flattened against what Word paints under it. Inside a panel or cell the export shaded, that
+    is the shading as written; on the page, it is read from the layout: the fills drawn before the
+    block at its centre, a page background included, a row's own fill (which is not written) left
+    out. Each is named in the report as `translucency`:
     - a panel's fill and borders, once per panel;
     - a table cell's fill and rules, once per table;
     - a rule drawn as a paragraph border;
@@ -34,11 +35,10 @@ follow semantic versioning; release dates are ISO 8601.
     page draws them over.
   - A wholly transparent fill writes no shading; a wholly transparent border is drawn in the
     colour under it, so it keeps its room in the row.
-  - A chip's shading is flattened against what the page paints under its paragraph where no
-    shading of the file's is under it, a page background included.
-  - Where a picture, a barcode, a gradient or a fill under a transform is under the block, or it
-    is composed in a table cell, the surface it is written on stands in: the flattened panel or
-    cell around it, or white.
+  - A chip's shading is flattened the same way where its paragraph has no shading of its own,
+    and named on its `inline chip` note.
+  - On the page, where a picture, a barcode, a gradient or a fill under a transform is under the
+    block, or it is composed in a table cell, white stands in.
   - Drawings, page backgrounds and pictures already kept their alpha.
 
   Across the DOCX fidelity corpus one document's bytes change: `NavySidebar`'s four sidebar

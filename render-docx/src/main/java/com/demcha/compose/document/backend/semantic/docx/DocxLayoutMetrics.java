@@ -72,6 +72,10 @@ final class DocxLayoutMetrics {
     private Map<Integer, List<PlacedFragment>> textByPage;
     // Each page's fragments in paint order, indexed on first use — see clipsOf.
     private Map<Integer, List<PlacedFragment>> paintedByPage;
+    // A table's first own row on each page, filled on first use — see colourUnderCell.
+    private final Map<DocumentNode, Map<Integer, PlacedFragment>> firstRows = new IdentityHashMap<>();
+    // The node at each path, indexed on first use — see aRowsOwnFill.
+    private Map<String, DocumentNode> nodesByPath;
 
     private DocxLayoutMetrics(Map<DocumentNode, String> paths,
                               Map<String, List<PlacedFragment>> fragments,
@@ -1204,6 +1208,200 @@ final class DocxLayoutMetrics {
      */
     List<PlacedFragment> ownFragments(DocumentNode node) {
         return fragmentsOf(node);
+    }
+
+    /**
+     * The colour the page shows under a node: what it painted before the node's first fragment,
+     * at that fragment's centre, each fill laid over the one before on the page's white.
+     *
+     * <p>For a translucent colour Word can only hold opaque, flattened against it, so the file
+     * shows on first opening the colour the page shows — a white rule at half strength over a
+     * page's navy sidebar is a pale navy, not white.</p>
+     *
+     * @param node a node of the graph
+     * @return that colour, or empty where nothing tells: no layout, no fragment of the node's
+     *         own — content composed in a table cell has none — or something under it whose colour
+     *         at that point the layout does not carry: a picture, a barcode, a gradient, a fill
+     *         under a transform
+     */
+    java.util.Optional<java.awt.Color> colourUnder(DocumentNode node) {
+        return colourUnder(paths.get(node));
+    }
+
+    /**
+     * The colour the page shows under the node at a path, as {@link #colourUnder(DocumentNode)}.
+     *
+     * @param path a node's path, or {@code null}
+     * @return that colour, or empty where nothing tells
+     */
+    java.util.Optional<java.awt.Color> colourUnder(String path) {
+        List<PlacedFragment> own = path == null ? List.of() : fragments.getOrDefault(path, List.of());
+        if (own.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        PlacedFragment first = own.get(0);
+        return colourUnder(first, first.x() + first.width() / 2, first.y() + first.height() / 2);
+    }
+
+    /**
+     * The colour the page shows under one of a table's cells, at the cell's centre, painted
+     * before the table's first row on the page where the cell first stands.
+     *
+     * @param table  the table node
+     * @param row    the cell's logical row
+     * @param column the cell's first column
+     * @return that colour, or empty where nothing tells, as {@link #colourUnder(DocumentNode)}
+     */
+    java.util.Optional<java.awt.Color> colourUnderCell(DocumentNode table, int row, int column) {
+        if (isEmpty()) {
+            // Nothing to tell, and the index with no layout is shared: its caches stay empty.
+            return java.util.Optional.empty();
+        }
+        List<CellBox> boxes = cellBoxes(table, row, column);
+        if (boxes.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        CellBox box = boxes.get(0);
+        PlacedFragment firstRow = firstRows.computeIfAbsent(table, node -> {
+            Map<Integer, PlacedFragment> byPage = new HashMap<>();
+            for (PlacedFragment rowFragment : ownRows(node)) {
+                byPage.putIfAbsent(rowFragment.pageIndex(), rowFragment);
+            }
+            return byPage;
+        }).get(box.page());
+        return firstRow == null ? java.util.Optional.empty()
+                : colourUnder(firstRow, (box.left() + box.right()) / 2, (box.bottom() + box.top()) / 2);
+    }
+
+    /**
+     * What the page painted at a point before a fragment, over its white, as Word shows it:
+     * rectangles, ellipses, polygons, paths and table cells in their fill colours, a row's own fill
+     * left out, as the export does not write it ({@code row paint}). A picture, a barcode, a
+     * gradient, a fill drawn under a transform, or what the layout paints in a payload this does
+     * not know, covering the point, leaves the colour unknown.
+     */
+    private java.util.Optional<java.awt.Color> colourUnder(PlacedFragment above, double x, double y) {
+        List<PlacedFragment> page = paintedOn(above.pageIndex());
+        int until = indexOf(page, above);
+        if (until < 0) {
+            return java.util.Optional.empty();
+        }
+        java.awt.Color colour = java.awt.Color.WHITE;
+        int turned = 0;
+        for (int index = 0; index < until; index++) {
+            PlacedFragment fragment = page.get(index);
+            Object payload = fragment.payload();
+            if (payload instanceof com.demcha.compose.document.layout.payloads.TransformBeginPayload) {
+                turned++;
+                continue;
+            }
+            if (payload instanceof com.demcha.compose.document.layout.payloads.TransformEndPayload) {
+                turned = Math.max(0, turned - 1);
+                continue;
+            }
+            if (payload == null || PAINTS_NO_FILL.contains(payload.getClass()) || aRowsOwnFill(fragment)) {
+                continue;
+            }
+            java.awt.Color fill = solidFillAt(fragment, x, y);
+            if (!colourKnownAt(fragment, x, y) || (fill != null && turned > 0)) {
+                return java.util.Optional.empty();
+            }
+            if (fill != null) {
+                colour = DocxTranslucency.flatten(fill, colour);
+            }
+        }
+        return java.util.Optional.of(colour);
+    }
+
+    /**
+     * The payloads that paint no fill: text and strokes are ink over what is under them, and the
+     * rest mark a place or open and close a clip.
+     */
+    private static final java.util.Set<Class<?>> PAINTS_NO_FILL = java.util.Set.of(
+            ParagraphFragmentPayload.class,
+            com.demcha.compose.document.layout.payloads.LineFragmentPayload.class,
+            ShapeClipBeginPayload.class,
+            ShapeClipEndPayload.class,
+            com.demcha.compose.document.layout.payloads.AnchorMarkerPayload.class,
+            com.demcha.compose.document.layout.payloads.BookmarkMarkerPayload.class,
+            com.demcha.compose.document.layout.payloads.LayoutAnchorPayload.class);
+
+    /** Whether a fragment is a row's own fill, which the export does not write. */
+    private boolean aRowsOwnFill(PlacedFragment fragment) {
+        if (!(fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload)) {
+            return false;
+        }
+        if (nodesByPath == null) {
+            nodesByPath = new HashMap<>();
+            paths.forEach((node, path) -> nodesByPath.putIfAbsent(path, node));
+        }
+        return nodesByPath.get(fragment.path()) instanceof com.demcha.compose.document.node.RowNode;
+    }
+
+    /**
+     * The solid colour a fragment fills a point with, or null where it fills none there — a
+     * gradient included, which has no one colour ({@link #colourKnownAt} says so).
+     */
+    private static java.awt.Color solidFillAt(PlacedFragment fragment, double x, double y) {
+        Object payload = fragment.payload();
+        if (payload instanceof TableRowFragmentPayload row) {
+            java.awt.Color fill = null;
+            for (TableResolvedCell cell : row.cells()) {
+                double left = fragment.x() + cell.x();
+                double bottom = fragment.y() + cell.yOffset();
+                if (cell.style() != null && cell.style().fillColor() != null
+                    && x >= left && x <= left + cell.width() && y >= bottom && y <= bottom + cell.height()) {
+                    fill = cell.style().fillColor();
+                }
+            }
+            return fill;
+        }
+        if (payload instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload shape) {
+            java.awt.Color fill = shape.fillPaint() == null ? shape.fillColor() : solidColourOf(shape.fillPaint());
+            return fill != null && DocxInkOutline.box(fragment, shape.cornerRadius()).contains(x, y) ? fill : null;
+        }
+        if (payload instanceof com.demcha.compose.document.layout.payloads.EllipseFragmentPayload ellipse) {
+            return ellipse.fillColor() != null && DocxInkOutline.ellipse(fragment.x(), fragment.y(),
+                    fragment.width(), fragment.height()).contains(x, y) ? ellipse.fillColor() : null;
+        }
+        if (payload instanceof com.demcha.compose.document.layout.payloads.PolygonFragmentPayload polygon) {
+            return polygon.fillColor() != null
+                   && DocxInkOutline.polygon(polygon.points(), fragment).contains(x, y) ? polygon.fillColor() : null;
+        }
+        if (payload instanceof com.demcha.compose.document.layout.payloads.PathFragmentPayload path) {
+            java.awt.Color fill = path.fillPaint() == null ? path.fillColor() : solidColourOf(path.fillPaint());
+            return fill != null && DocxInkOutline.path(path.segments(), fragment).contains(x, y) ? fill : null;
+        }
+        return null;
+    }
+
+    /**
+     * Whether the colour a fragment paints at a point is one the layout carries: false for a
+     * gradient over the point, and for a picture, a barcode or a payload this does not know whose
+     * box holds it.
+     */
+    private static boolean colourKnownAt(PlacedFragment fragment, double x, double y) {
+        Object payload = fragment.payload();
+        if (payload instanceof TableRowFragmentPayload
+            || payload instanceof com.demcha.compose.document.layout.payloads.EllipseFragmentPayload
+            || payload instanceof com.demcha.compose.document.layout.payloads.PolygonFragmentPayload) {
+            return true;
+        }
+        if (payload instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload shape) {
+            return shape.fillPaint() == null || solidColourOf(shape.fillPaint()) != null
+                   || !DocxInkOutline.box(fragment, shape.cornerRadius()).contains(x, y);
+        }
+        if (payload instanceof com.demcha.compose.document.layout.payloads.PathFragmentPayload path) {
+            return path.fillPaint() == null || solidColourOf(path.fillPaint()) != null
+                   || !DocxInkOutline.path(path.segments(), fragment).contains(x, y);
+        }
+        return x < fragment.x() || x > fragment.x() + fragment.width()
+               || y < fragment.y() || y > fragment.y() + fragment.height();
+    }
+
+    /** A paint's one colour, or null for a gradient, which has none. */
+    private static java.awt.Color solidColourOf(com.demcha.compose.document.style.DocumentPaint paint) {
+        return paint instanceof com.demcha.compose.document.style.DocumentPaint.Solid solid ? solid.color().color() : null;
     }
 
     /**

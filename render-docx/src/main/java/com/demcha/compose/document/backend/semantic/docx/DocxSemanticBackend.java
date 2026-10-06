@@ -248,6 +248,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // layer stack they sit in is written as columns (DocxLayerColumns).
     private final java.util.Set<DocumentNode> standIns =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // Where the blocks are placed whose space below a band or a column measures from the page,
+    // their own margin and padding below them included (DocxLayerColumns.Band#closing).
+    private final java.util.Set<com.demcha.compose.document.layout.PlacedNode> closingBlocks =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // What the stacks being written write in a stand-in's place instead (DocxLayerColumns.Moves),
     // and the blocks being written there now rather than skipped in their own layer.
     private final List<DocxLayerColumns.Moves> moves = new ArrayList<>();
@@ -688,6 +692,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         containerRadiusWarned.set(false);
         warnedNodeKinds.clear();
         zonePartsReported.clear();
+        closingBlocks.clear();
         surfaceBehind = null;
         overlayDepth = 0;
         bandDepth = 0;
@@ -2556,23 +2561,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * margin or padding, and a table holds its margin but not its padding. A cell of a row the
      * layout placed already starts past a block's left margin.
      *
-     * <p>Only the left side moves a block its paragraph sets from the left — a picture, a
-     * barcode, a table on the grid the layout resolved; a page reference's alignment can set it
-     * from either side, and both count.</p>
+     * <p>A side counts where it moves the block: only the left for a picture, a barcode or a
+     * table, which their paragraph or indent sets from the left; for a page reference, the side
+     * or sides its alignment sets it from.</p>
      *
      * @param node          the block written
      * @param marginWritten whether its side margins are written, so only its padding can be lost
-     * @param right         whether its right side counts as well as its left
+     * @param left          whether its left side counts
+     * @param right         whether its right side counts
      * @return the phrases, empty when every side that counts is written
      */
-    private List<String> sidesLost(DocumentNode node, boolean marginWritten, boolean right) {
+    private List<String> sidesLost(DocumentNode node, boolean marginWritten, boolean left, boolean right) {
         List<String> lost = new ArrayList<>(2);
+        String side = left && right ? "side" : left ? "left" : "right";
         double marginLeft = node == leftMarginInCell ? 0 : node.margin().left();
-        if (!marginWritten && (marginLeft != 0 || right && node.margin().right() != 0)) {
-            lost.add(right ? "its side margins are not in the file" : "its left margin is not in the file");
+        if (!marginWritten && (left && marginLeft != 0 || right && node.margin().right() != 0)) {
+            lost.add("its " + side + (left && right ? " margins are" : " margin is") + " not in the file");
         }
-        if (node.padding().left() != 0 || right && node.padding().right() != 0) {
-            lost.add(right ? "its side padding is not in the file" : "its left padding is not in the file");
+        if (left && node.padding().left() != 0 || right && node.padding().right() != 0) {
+            lost.add("its " + side + " padding is not in the file");
         }
         return lost;
     }
@@ -2580,6 +2587,34 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** Whether any side of an inset is set. */
     private static boolean isInset(DocumentInsets insets) {
         return insets.top() != 0 || insets.right() != 0 || insets.bottom() != 0 || insets.left() != 0;
+    }
+
+    /**
+     * The sides a block written with none of its own insets — a spacer, a chart's table — loses
+     * them on: above, below and, for a block set from the left, on the left. Below is written
+     * where the block closes a band, or a layer another resumes after in its column: that space
+     * is measured from the page, the block's own margin and padding below it included. A cell
+     * of a row the layout placed starts past its left margin.
+     *
+     * @param node the block
+     * @param left whether its left side counts
+     * @return "above", "below", "on the left", those it sets and loses, in that order
+     */
+    private List<String> insetSidesLost(DocumentNode node, boolean left) {
+        DocumentInsets margin = node.margin();
+        DocumentInsets padding = node.padding();
+        List<String> sides = new ArrayList<>(3);
+        if (margin.top() != 0 || padding.top() != 0) {
+            sides.add("above");
+        }
+        if ((margin.bottom() != 0 || padding.bottom() != 0) && !closingBlocks.contains(layout.placement(node))) {
+            sides.add("below");
+        }
+        double marginLeft = node == leftMarginInCell ? 0 : margin.left();
+        if (left && (marginLeft != 0 || padding.left() != 0)) {
+            sides.add("on the left");
+        }
+        return sides;
     }
 
     /** Why a node the export neither writes nor draws is dropped, as the report says it. */
@@ -3756,13 +3791,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * fixed-layout backend, where charts compile into ordinary primitives.
      */
     private void writeChartFallback(XWPFDocument document, ChartNode node) throws Exception {
-        // The table is written as it is, with nothing owed round it for the chart's own insets
-        // — except in a band, whose space below its lowest block is measured from the page.
-        boolean inset = bandDepth == 0 && (isInset(node.margin()) || isInset(node.padding()));
+        // The table is written as it is, set from the left with nothing owed round it for the
+        // chart's own insets, but where the page measures the space below it (insetSidesLost).
+        List<String> sides = insetSidesLost(node, true);
         report.add(DocxExportReport.Severity.APPROXIMATED, "chart", layout.pathOf(node),
                 "exported as its data table — a categories-by-series table in the chart's own "
                 + "value format — because the drawn chart is layout geometry"
-                + (inset ? "; its margin and padding are not written round the table" : ""));
+                + (sides.isEmpty() ? "" : "; its margin and padding " + listed(sides)
+                                          + " are not written round the table"));
         if (chartWarned.compareAndSet(false, true)) {
             LOG.warn("docx.export.chart-fallback kind={} — the semantic DOCX export has no "
                     + "layout pass, so charts are exported as their data table. "
@@ -3822,10 +3858,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // and its paragraphs and lists run the width its margins leave them, as does a panel
         // composed in a table cell, which takes the cell's. A cell of a row the layout placed
         // starts past its left margin; an auto column is a point wider than its content.
+        boolean known = currentCell != null ? Double.isFinite(currentCellWidth) : contentWidth < Double.MAX_VALUE;
         double room = availableWidth() - (node == leftMarginInCell ? 0 : node.margin().left())
                       - node.margin().right();
         boolean narrowed = (paint.isEmpty() || layout.placedWidth(node).isEmpty()) && node.flowWidth().isFixed()
-                           && Double.isFinite(room)
+                           && known && holdsWrappedText(node)
                            && node.flowWidth().points() < room - EDITOR_COLUMN_SLACK_POINTS - 0.5;
         reportWrittenWithout(node, paint.isEmpty() ? "written as its contents" : "written as a panel",
                 narrowed ? List.of("its fixed width is not in the file, so its paragraphs and lists run "
@@ -6286,7 +6323,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             appendField(para, " PAGEREF " + bookmark + " \\h ", shown, node.textStyle());
         }
         // Unlike a paragraph's (writeParagraph), its own sides do not hold its line in.
-        lost.addAll(sidesLost(node, false, true));
+        lost.addAll(sidesLost(node, false, node.align() != TextAlign.RIGHT, node.align() != TextAlign.LEFT));
         reportWrittenWithout(node, "written as a paragraph", lost);
     }
 
@@ -8154,7 +8191,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         .setPrst(org.openxmlformats.schemas.drawingml.x2006.main.STShapeType.ELLIPSE);
             }
         }
-        reportWrittenWithout(node, "written as an inline picture", sidesLost(node, false, false));
+        reportWrittenWithout(node, "written as an inline picture", sidesLost(node, false, true, false));
     }
 
     /**
@@ -8439,7 +8476,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (String lost : carriedWithout(node, false)) {
             message.append("; ").append(lost);
         }
-        for (String lost : sidesLost(node, false, false)) {
+        for (String lost : sidesLost(node, false, true, false)) {
             message.append("; ").append(lost);
         }
         report.add(DocxExportReport.Severity.APPROXIMATED, "barcode", layout.pathOf(node), message.toString());
@@ -8643,7 +8680,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeTableWithItsOwnSpacing(XWPFDocument document, DocumentNode node)
             throws Exception {
         if (node instanceof TableNode table && !table.rows().isEmpty()) {
-            reportWrittenWithout(node, "written as a Word table", sidesLost(node, true, false));
+            reportWrittenWithout(node, "written as a Word table", sidesLost(node, true, true, false));
         }
         // The layout starts a block it moves to a new page at the block's own top edge: what
         // the page above holds below its last block, and the gap between the two, stay there.
@@ -10274,6 +10311,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         writeRowColumns(table, cells);
         standIns.addAll(plan.standIns());
+        closingBlocks.addAll(plan.closing());
         moves.add(plan.moves());
         try {
             XWPFTableRow row = table.getRow(0);
@@ -10330,6 +10368,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         } finally {
             standIns.removeAll(plan.standIns());
+            closingBlocks.removeAll(plan.closing());
             moves.remove(plan.moves());
         }
         // After the columns, as the stack lays them over the columns: a card's mark stands over
@@ -10383,6 +10422,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
         standIns.addAll(band.standIns());
+        closingBlocks.addAll(band.closing());
         double outerLeft = insetLeft;
         double outerRight = insetRight;
         insetLeft += stack.margin().left() + stack.padding().left();
@@ -10415,6 +10455,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             insetLeft = outerLeft;
             insetRight = outerRight;
             standIns.removeAll(band.standIns());
+            closingBlocks.removeAll(band.closing());
         }
         // Nothing was written after all: the space the stack opened with is still owed.
         double unwritten = Double.isNaN(resumeSpacing) ? 0 : resumeSpacing;
@@ -10550,6 +10591,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             collectDrawnPictures(child, pictures);
         }
+    }
+
+    /** Whether a node is or holds what wraps at its box's width: a paragraph or a list. */
+    private static boolean holdsWrappedText(DocumentNode node) {
+        return node instanceof ParagraphNode || node instanceof com.demcha.compose.document.node.ListNode
+               || node.children().stream().anyMatch(DocxSemanticBackend::holdsWrappedText);
     }
 
     /** Whether a node is a paragraph of text or holds one. */
@@ -12004,14 +12051,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         owePendingSpacingAfter(height);
         // The page gives a spacer its margin and padding above and below as well; here it is
-        // its height alone. In a band the space below its lowest block is measured from the
-        // page, a spacer's insets in it.
-        DocumentInsets margin = node.margin();
-        DocumentInsets padding = node.padding();
-        if (bandDepth == 0
-            && (margin.top() != 0 || margin.bottom() != 0 || padding.top() != 0 || padding.bottom() != 0)) {
+        // its height alone. The space below a band, or below a layer another resumes after in
+        // its column, is measured from the page, the margin and padding below its block in it.
+        List<String> sides = insetSidesLost(node, false);
+        if (!sides.isEmpty()) {
             reportWrittenWithout(node, "written as its height",
-                    List.of("its margin and padding above and below are not written with it"));
+                    List.of("its margin and padding " + listed(sides) + " are not written with it"));
         }
     }
 

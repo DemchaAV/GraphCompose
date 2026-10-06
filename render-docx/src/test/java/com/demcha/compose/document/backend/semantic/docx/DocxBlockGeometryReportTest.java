@@ -83,10 +83,10 @@ class DocxBlockGeometryReportTest {
     void aBarcodeNamesItsSides() throws Exception {
         DocxExportReport report = reportOf(page -> page
                 .addBarcode(barcode -> barcode.qrCode().data("GC-1").size(60, 60)
-                        .margin(new DocumentInsets(0, 0, 0, 30))));
+                        .margin(new DocumentInsets(0, 0, 0, 30)).padding(new DocumentInsets(0, 0, 0, 4))));
 
         assertThat(detailOf(report, "barcode")).startsWith("written as a picture of the symbol")
-                .endsWith("its left margin is not in the file");
+                .endsWith("; its left margin is not in the file; its left padding is not in the file");
         assertThat(bodyOf(page -> page.addBarcode(barcode -> barcode.qrCode().data("GC-1").size(60, 60)
                 .margin(new DocumentInsets(0, 0, 0, 30)))))
                 .as("the file does not carry it").isEqualTo(bodyOf(page -> page
@@ -114,14 +114,26 @@ class DocxBlockGeometryReportTest {
     }
 
     @Test
-    void aPageReferenceNamesItsSides() throws Exception {
-        DocxExportReport report = reportOf(page -> page
+    void aPageReferenceNamesTheSidesItsAlignmentSetsItFrom() throws Exception {
+        DocxExportReport left = reportOf(page -> page
                 .addParagraph(p -> p.text("Target").anchor("target"))
                 .add(new PageReferenceNode("", "target", DocumentTextStyle.DEFAULT, TextAlign.LEFT, "",
-                        DocumentInsets.zero(), new DocumentInsets(0, 0, 0, 30))));
+                        new DocumentInsets(0, 6, 0, 4), new DocumentInsets(0, 12, 0, 30))));
+        DocxExportReport centred = reportOf(page -> page
+                .addParagraph(p -> p.text("Target").anchor("target"))
+                .add(new PageReferenceNode("", "target", DocumentTextStyle.DEFAULT, TextAlign.CENTER, "",
+                        new DocumentInsets(0, 6, 0, 4), DocumentInsets.zero())));
+        DocxExportReport right = reportOf(page -> page
+                .addParagraph(p -> p.text("Target").anchor("target"))
+                .add(new PageReferenceNode("", "target", DocumentTextStyle.DEFAULT, TextAlign.RIGHT, "",
+                        new DocumentInsets(0, 0, 0, 4), new DocumentInsets(0, 0, 0, 30))));
 
-        assertThat(detailOf(report, "PageReferenceNode"))
-                .isEqualTo("written as a paragraph; its side margins are not in the file");
+        assertThat(detailOf(left, "PageReferenceNode")).isEqualTo(
+                "written as a paragraph; its left margin is not in the file; its left padding is not in the file");
+        assertThat(detailOf(centred, "PageReferenceNode"))
+                .isEqualTo("written as a paragraph; its side padding is not in the file");
+        assertThat(right.bySubject()).as("set from the right, its left side moves nothing")
+                .doesNotContainKey("PageReferenceNode");
         assertThat(bodyOf(page -> page.addParagraph(p -> p.text("Target").anchor("target"))
                 .add(new PageReferenceNode("", "target", DocumentTextStyle.DEFAULT, TextAlign.LEFT, "",
                         DocumentInsets.zero(), new DocumentInsets(0, 0, 0, 30)))))
@@ -148,8 +160,8 @@ class DocxBlockGeometryReportTest {
                 .addSpacer(spacer -> spacer.height(10).margin(new DocumentInsets(20, 0, 0, 0)))
                 .addParagraph("Below"));
 
-        assertThat(detailOf(report, "SpacerNode")).isEqualTo("written as its height; its margin and padding "
-                + "above and below are not written with it");
+        assertThat(detailOf(report, "SpacerNode"))
+                .isEqualTo("written as its height; its margin and padding above are not written with it");
         assertThat(bodyOf(page -> page.addParagraph("Above")
                 .addSpacer(spacer -> spacer.height(10).margin(new DocumentInsets(20, 0, 0, 0)))
                 .addParagraph("Below")))
@@ -165,7 +177,7 @@ class DocxBlockGeometryReportTest {
                         new DocumentInsets(20, 0, 20, 30), DocumentInsets.zero())));
 
         assertThat(detailOf(report, "chart")).startsWith("exported as its data table")
-                .endsWith("; its margin and padding are not written round the table");
+                .endsWith("; its margin and padding above, below and on the left are not written round the table");
         assertThat(bodyOf(page -> page.add(new ChartNode("", ChartSpec.bar().data(data).build(), null,
                 new DocumentInsets(20, 0, 20, 30), DocumentInsets.zero()))))
                 .as("the file does not carry them").isEqualTo(bodyOf(page -> page
@@ -220,19 +232,87 @@ class DocxBlockGeometryReportTest {
     }
 
     @Test
-    void aSpacerClosingABandHasItsInsetsWrittenAsTheSpaceBelow() throws Exception {
+    void aSpacerClosingABandHasItsInsetsBelowWrittenAsTheSpaceBelow() throws Exception {
         // A title and its date at either end of a band: the space below the band is measured
-        // from its lowest block, the spacer's margin included.
-        DocxExportReport report = reportOf(page -> page
-                .addLayerStack(stack -> stack
-                        .layer(new com.demcha.compose.document.dsl.SectionBuilder().addParagraph("Title")
-                                .addSpacer(spacer -> spacer.height(4).margin(new DocumentInsets(0, 0, 10, 0)))
-                                .build(), LayerAlign.TOP_LEFT)
-                        .layer(new com.demcha.compose.document.dsl.ParagraphBuilder().text("May 2026")
-                                .align(TextAlign.RIGHT).build(), LayerAlign.TOP_RIGHT))
-                .addParagraph("Below"));
+        // from its lowest block, the spacer's margin below it included.
+        DocxExportReport report = reportOf(band(new DocumentInsets(0, 0, 10, 0), false));
 
         assertThat(report.bySubject()).doesNotContainKey("SpacerNode");
+        assertThat(bodyOf(band(new DocumentInsets(0, 0, 10, 0), false)))
+                .as("its margin below is the band's space below").isNotEqualTo(bodyOf(band(DocumentInsets.zero(), false)));
+    }
+
+    @Test
+    void aSpacerInABandNamesTheInsetsNoMeasureTakesIn() throws Exception {
+        // Its margin above is no band's measure; nor is any inset of a spacer between two of
+        // a layer's blocks.
+        DocxExportReport closing = reportOf(band(new DocumentInsets(10, 0, 10, 0), false));
+        DocxExportReport between = reportOf(band(new DocumentInsets(10, 0, 6, 0), true));
+
+        assertThat(detailOf(closing, "SpacerNode"))
+                .isEqualTo("written as its height; its margin and padding above are not written with it");
+        assertThat(detailOf(between, "SpacerNode"))
+                .isEqualTo("written as its height; its margin and padding above and below are not written with it");
+    }
+
+    @Test
+    void aSpacerClosingALayerAnotherResumesAfterInItsColumnLosesNothingBelow() throws Exception {
+        // Two layers share the left column; the second resumes at the page's distance below the
+        // first's lowest block, the spacer's margin below it included.
+        DocxExportReport report = reportOf(page -> page.addLayerStack(stack -> stack
+                .layer(new com.demcha.compose.document.dsl.SectionBuilder().bookmark(
+                                new com.demcha.compose.document.node.DocumentBookmarkOptions("Left"))
+                        .margin(new DocumentInsets(0, 200, 0, 0)).addParagraph("Left, first")
+                        .addSpacer(spacer -> spacer.height(4).margin(new DocumentInsets(0, 0, 10, 0))).build(),
+                        LayerAlign.TOP_LEFT)
+                .layer(new com.demcha.compose.document.dsl.SectionBuilder()
+                        .margin(new DocumentInsets(60, 200, 0, 0)).addParagraph("Left, second").build(),
+                        LayerAlign.TOP_LEFT)
+                .layer(new com.demcha.compose.document.dsl.SectionBuilder()
+                        .margin(new DocumentInsets(0, 0, 0, 220)).addParagraph("Right").build(),
+                        LayerAlign.TOP_LEFT)));
+
+        assertThat(detailOf(report, "SectionNode")).as("the stack is written as columns")
+                .startsWith("written as a column of its layer stack");
+        assertThat(report.bySubject()).doesNotContainKey("SpacerNode");
+    }
+
+    @Test
+    void aPanelComposedInATableCellNamesTheFixedWidthItRunsPast() throws Exception {
+        DocxExportReport report = reportOf(page -> page
+                .addTable(table -> table.columns(DocumentTableColumn.fixed(240))
+                        .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(
+                                new com.demcha.compose.document.dsl.SectionBuilder().fixedWidth(120)
+                                        .fillColor(SURFACE).addParagraph("In a panel in a cell").build()))));
+
+        assertThat(detailOf(report, "SectionNode")).isEqualTo("written as a panel; its fixed width is not in the "
+                + "file, so its paragraphs and lists run the width of the column it stands in");
+    }
+
+    @Test
+    void aFixedWidthUnderAnAlignmentWrapperIsHeldIn() throws Exception {
+        DocxExportReport report = reportOf(page -> page
+                .addAligned(com.demcha.compose.document.node.HorizontalAlign.CENTER,
+                        new com.demcha.compose.document.dsl.SectionBuilder().fixedWidth(150)
+                                .addParagraph("Held in to where the page places it").build()));
+
+        assertThat(report.bySubject()).doesNotContainKey("SectionNode");
+    }
+
+    /** A band: a title, a spacer with the given margin and, when asked, a subtitle, beside a date. */
+    private static Consumer<PageFlowBuilder> band(DocumentInsets spacerMargin, boolean subtitle) {
+        return page -> {
+            com.demcha.compose.document.dsl.SectionBuilder title = new com.demcha.compose.document.dsl.SectionBuilder()
+                    .addParagraph("Title").addSpacer(spacer -> spacer.height(4).margin(spacerMargin));
+            if (subtitle) {
+                title.addParagraph("Subtitle");
+            }
+            page.addLayerStack(stack -> stack
+                            .layer(title.build(), LayerAlign.TOP_LEFT)
+                            .layer(new com.demcha.compose.document.dsl.ParagraphBuilder().text("May 2026")
+                                    .align(TextAlign.RIGHT).build(), LayerAlign.TOP_RIGHT))
+                    .addParagraph("Below");
+        };
     }
 
     /** The exported body's XML, to compare a document with and without what is not written. */

@@ -505,7 +505,7 @@ final class DocxLayoutMetrics {
      * The export builds the content again, so it finds its nodes here by those paths
      * ({@link #pathsWithin}).</p>
      *
-     * @param zoneIndex the zone's position in the session's zone list
+     * @param zoneIndex the zone's position in the section's zone list
      * @return the fragments by path, empty when the layout carries no such zone
      */
     Map<String, PlacedFragment> zoneText(int zoneIndex) {

@@ -8,6 +8,8 @@ import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.layout.DocumentGraph;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
+import com.demcha.compose.document.node.PageFieldKind;
+import com.demcha.compose.document.node.PageFieldNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.output.DocumentHeaderFooterZone;
@@ -60,6 +62,36 @@ class DocxZoneReportTest {
                 .as("a paragraph's own side, in a header").containsExactly("a header written as one line of Word's header; " + OFF);
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> page.pageNumber(CHROME))))
                 .as("a page number set from the left").isEmpty();
+        // The page sets a field in a box a point wider than its number, which its alignment moves
+        // it within; its own side moves it as a paragraph's does.
+        assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new PageFieldNode("Number", PageFieldKind.NUMBER,
+                CHROME, TextAlign.RIGHT, DocumentInsets.zero(), DocumentInsets.zero())))).as("aligned right").isEmpty();
+        assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new PageFieldNode("Number", PageFieldKind.NUMBER,
+                CHROME, TextAlign.LEFT, DocumentInsets.zero(), new DocumentInsets(0, 0, 0, 12)))))
+                .as("set in by its margin").containsExactly(FOOTER + OFF);
+        // A row of a spacer and a page number sets the number against the right margin, as Word does.
+        assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line")
+                .flexSpacer()
+                .add(page.pageNumber(CHROME))
+                .build()))).isEmpty();
+    }
+
+    @Test
+    void theLineTheReportReadsIsTheOneWritten() throws Exception {
+        // One right tab, at the right margin, which the report's line holds its right side at.
+        try (DocumentSession session = session(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line")
+                .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
+                .flexSpacer()
+                .add(page.pageNumber(CHROME))
+                .build()))) {
+            try (org.apache.poi.xwpf.usermodel.XWPFDocument document = new org.apache.poi.xwpf.usermodel.XWPFDocument(
+                    new java.io.ByteArrayInputStream(session.export(new DocxSemanticBackend())))) {
+                var tabs = document.getFooterArray(0).getParagraphs().get(0).getCTP().getPPr().getTabs();
+                assertThat(tabs.sizeOfTabArray()).isEqualTo(1);
+                assertThat(tabs.getTabArray(0).getVal().toString()).isEqualTo("right");
+                assertThat(DocxTwips.of(tabs.getTabArray(0).getPos())).isEqualTo(Math.round((300 - 2 * 36) * 20.0));
+            }
+        }
     }
 
     @Test
@@ -103,21 +135,46 @@ class DocxZoneReportTest {
 
     @Test
     void aPartOnABaselineOfItsOwnOrOfMoreLinesThanOneIsCounted() throws Exception {
-        // Word sets a line's parts on one baseline; the page sets a larger one lower, from the top.
+        // Word sets a line's parts on one baseline, its tallest part's; the page sets the parts from
+        // the top, the smaller ones higher.
         assertThat(zoneNotes(DocumentPageZone.footer(40, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
                 .flexSpacer()
                 .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
                 .build())))
                 .containsExactly(FOOTER + "1 of its 2 parts stands off where the page sets them");
-        // The baseline Word sets the line on is the one most parts share, whatever their order.
         assertThat(zoneNotes(DocumentPageZone.footer(40, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
                 .flexSpacer()
                 .addParagraph(p -> p.text("v2.4").textStyle(CHROME))
                 .add(page.pageNumber(CHROME))
                 .build())))
-                .containsExactly(FOOTER + "1 of its 3 parts stands off where the page sets them");
+                .as("both smaller parts move onto the tallest one's baseline")
+                .containsExactly(FOOTER + "2 of its 3 parts stand off where the page sets them");
+        assertThat(zoneNotes(DocumentPageZone.header(40, page -> new RowBuilder().name("Line")
+                .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
+                .flexSpacer()
+                .addParagraph(p -> p.text("v2.4").textStyle(CHROME))
+                .add(page.pageNumber(CHROME))
+                .build())))
+                .as("in a header too").containsExactly("a header written as one line of Word's header; 2 of its 3 "
+                                                        + "parts stand off where the page sets them");
+        // Word stands the line at the footer's foot, which a smaller part set lower holds: the
+        // larger part moves down onto it, and the smaller one onto the larger one's baseline.
+        assertThat(zoneNotes(DocumentPageZone.footer(60, page -> new RowBuilder().name("Line")
+                .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
+                .flexSpacer()
+                .addParagraph(p -> p.text("v2.4").textStyle(CHROME).margin(new DocumentInsets(30, 0, 0, 0)))
+                .build())))
+                .containsExactly(FOOTER + "2 of its 2 parts stand off where the page sets them");
+        // A part the page seats off its baseline is set on Word's.
+        assertThat(zoneNotes(DocumentPageZone.footer(40, page -> new RowBuilder().name("Line")
+                .addParagraph(p -> p.text("Confidential").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
+                .flexSpacer()
+                .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18))
+                        .verticalAlign(com.demcha.compose.document.node.TextVerticalAlign.CENTER))
+                .build())))
+                .containsExactly(FOOTER + "1 of its 2 parts stands off where the page sets them");
         // The zone's line holds none of what keeps a body paragraph's breaks where the page sets them.
         assertThat(zoneNotes(DocumentPageZone.footer(40, page -> text(
                 "Confidential and proprietary: not for distribution outside the company").build())))
@@ -128,16 +185,17 @@ class DocxZoneReportTest {
     void aZoneParagraphsOwnLossesAreNamed() throws Exception {
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> text("Confidential")
                 .direction(TextDirection.RTL).align(TextAlign.LEFT).build())))
-                .singleElement().asString().contains("its right-to-left text is written left to right");
+                .singleElement().asString().contains("a paragraph's right-to-left text is written left to right");
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> text("Confidential").bulletOffset("• ")
                 .indentStrategy(DocumentTextIndent.FIRST_LINE).build())))
                 .as("a prefix Word does not write stands the text off, and its letters are lost")
-                .containsExactly(FOOTER + OFF + "; its bulletOffset's letters, \"•\", are not written before its first line");
+                .containsExactly(FOOTER + OFF + "; a paragraph's bulletOffset letters, \"•\", are not written before "
+                                 + "its first line");
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> text("Hi").autoSize(14).build())))
-                .containsExactly(FOOTER + "its text is written at 8pt, where the page fits it to 14pt");
+                .containsExactly(FOOTER + "a paragraph's text is written at 8pt, where the page fits it to 14pt");
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> text("Confidential")
                 .bookmark(new DocumentBookmarkOptions("Confidential", 0)).build())))
-                .containsExactly(FOOTER + "its outline entry is not written");
+                .containsExactly(FOOTER + "a paragraph's outline entry is not written");
     }
 
     @Test
@@ -150,22 +208,35 @@ class DocxZoneReportTest {
                 .flexSpacer()
                 .add(page.pageNumber(CHROME))
                 .build())))
-                .containsExactly(FOOTER + "1 of its 3 parts stands off where the page sets them; where 1 of them "
-                                 + "stands is not measured; its bulletOffset's letters, \"•\", are not written before "
-                                 + "its first line");
-        // Nor after a part auto-sized to a size the file does not hold.
+                .containsExactly(FOOTER + "1 of its 3 parts stands off where the page sets them; where 1 of its 3 "
+                                 + "parts stands is not measured; a paragraph's bulletOffset letters, \"•\", are not "
+                                 + "written before its first line");
+        // Nor after a part auto-sized to a size the file does not hold; set lower than Word's
+        // baseline, the part after it stands off all the same.
         assertThat(zoneNotes(DocumentPageZone.footer(40, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Hi").textStyle(CHROME).autoSize(14))
                 .addParagraph(p -> p.text("Acme").textStyle(CHROME))
+                .addParagraph(p -> p.text("Co").textStyle(CHROME))
                 .build())))
-                .containsExactly(FOOTER + "where 1 of them stands is not measured; its text is written at 8pt, where "
-                                 + "the page fits it to 14pt");
+                .containsExactly(FOOTER + "2 of its 3 parts stand off where the page sets them; a paragraph's text is "
+                                 + "written at 8pt, where the page fits it to 14pt");
+        // Against the right margin, the part a prefix stands before ends where Word ends it; the
+        // part before it, Word sets the prefix's width off.
+        assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line")
+                .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
+                .flexSpacer()
+                .addParagraph(p -> p.text("v2.4").textStyle(CHROME))
+                .addParagraph(p -> p.text("Acme").textStyle(CHROME).bulletOffset("   ")
+                        .indentStrategy(DocumentTextIndent.FIRST_LINE))
+                .add(page.pageNumber(CHROME))
+                .build())))
+                .containsExactly(FOOTER + "where 1 of its 4 parts stands is not measured");
     }
 
     @Test
-    void aZoneThePageBuildsOtherwiseThanTheFileIsNotMeasured() throws Exception {
+    void aZoneWhoseNodesThePageNestsOtherwiseIsNotMeasured() throws Exception {
         // Written once for every page, the zone is built as for no page in particular: the last,
-        // as far as it can tell, where the page's first is not.
+        // as far as it can tell, where the page's first is not, and its nodes are another tree.
         AtomicReference<DocxExportReport> captured = new AtomicReference<>();
         try (DocumentSession session = GraphCompose.document().pageSize(300, 400).margin(DocumentInsets.of(36)).create()) {
             session.chrome().zone(DocumentPageZone.footer(30, page -> page.isLast()

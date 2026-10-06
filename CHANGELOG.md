@@ -10,32 +10,36 @@ follow semantic versioning; release dates are ISO 8601.
 
 - **A DOCX export's report names where a page zone's parts stand, and what its paragraphs
   lose.** A page zone is written as one Word line. Word sets its parts one after another from
-  the page's left margin, and those after the first spacer against its right margin. The page
-  sets each part by the zone's padding, a row's columns and gap and the part's own alignment
-  and sides. So these moved in Word without a note:
+  the page's left margin, and those after the first spacer against its right margin, on one
+  baseline, its tallest part's. The page sets each part by the zone's padding, a row's columns
+  and gap and a paragraph's alignment, and each part's sides, on a baseline of its own. So
+  these moved in Word without a note:
   - a centred line, a padded zone, a row's column or gap;
-  - a page field's alignment and sides.
+  - a page field's sides;
+  - a smaller part beside a larger one, which Word sets on the larger one's baseline.
 
   A zone paragraph's right-to-left direction, prefix letters, fitted size and outline entry
   went unnamed too. A `page zone` note now:
   - counts the parts that stand off where the page sets them. Each part is read from the
-    layout's zone fragments on the first page the zone is drawn on. A part stands where Word
-    sets it when it meets all of these:
-    - its line starts within a point of Word's, or, against the right margin, ends there;
-    - it sits on the baseline most parts share;
+    layout's zone fragments on the first page the zone is drawn on. A part stands where the
+    page sets it when it meets all of these:
+    - its line starts within a point and a half of Word's, or, against the right margin, ends
+      there;
+    - it sits on Word's baseline: its tallest part's, with the line standing at the zone's edge;
     - it is one line;
-    - no prefix stands before it.
+    - no prefix stands before it, on the line's left side.
 
-    Past a part Word sets at another width, in a zone the page builds otherwise than the file,
-    and with no layout, the note says where the parts stand is not measured;
+    Past a part Word sets at another width, in a zone whose nodes the page names or nests
+    otherwise than the file, and with no layout, the note says where the parts stand is not
+    measured;
   - names a zone paragraph's right-to-left text written left to right, its prefix's letters,
     the size its text is fitted to, and its outline entry.
 
   None of this changes what is written, and no document of the DOCX fidelity corpus has a page
-  zone. In `DocxNodeFieldLedgerTest` a page field's `align`, `padding` and `margin` move from a
-  gap to `REPORTED` at its sides. The `zones` option keeps a gap for the line's height and the
-  room its parts hold above and below, and a zone paragraph's anchor. 1 node-field gap remains,
-  `CanvasLayerNode.height`.
+  zone. In `DocxNodeFieldLedgerTest` a page field's `padding` and `margin` move from a gap to
+  `REPORTED`, and its `align` to `INERT`: the page sets a field in a box a point wider than its
+  number. The `zones` option keeps a gap for the line's height and the room its parts hold above
+  and below, and a zone paragraph's anchor. 1 node-field gap remains, `CanvasLayerNode.height`.
 - **A DOCX export's report names what a paragraph's own fields lose.** Several of a paragraph's
   own fields were lost without a note:
   - an auto-sized paragraph's text was written at its style's size, not the one the page fits it

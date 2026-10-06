@@ -157,11 +157,14 @@ class DocxNodeFieldLedgerTest {
                 + "two spaces a level in");
         node(PageBreakNode.class, "name:INERT", "margin:INERT");
         node(PageFieldNode.class, "name:INERT", "kind:WRITTEN", "textStyle:WRITTEN",
-                "align:REPORTED:where it stands the field off the place Word sets it on the zone's line",
-                "padding:REPORTED:at its sides, where they stand the field off the place Word sets it on the "
-                + "zone's line; above and below, in the zones option's gap",
-                "margin:REPORTED:at its sides, where they stand the field off the place Word sets it on the "
-                + "zone's line; above and below, in the zones option's gap");
+                "align:INERT:the page sets a field in a box a point wider than its number, which its "
+                + "alignment moves it no further within",
+                "padding:REPORTED:at its sides, and above and below beside other parts, where they stand the "
+                + "field off the place Word sets it on the zone's line; a lone field's above and below, in the "
+                + "zones option's gap",
+                "margin:REPORTED:at its sides, and above and below beside other parts, where they stand the "
+                + "field off the place Word sets it on the zone's line; a lone field's above and below, in the "
+                + "zones option's gap");
         node(PageReferenceNode.class, "name:INERT",
                 "anchor:REPORTED:where the anchor has no bookmark, its number is written as text",
                 "textStyle:WRITTEN", "align:WRITTEN", "placeholderText:WRITTEN",

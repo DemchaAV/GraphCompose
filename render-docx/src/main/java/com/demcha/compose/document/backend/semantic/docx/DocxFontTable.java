@@ -314,10 +314,18 @@ final class DocxFontTable {
         faces.add(new Face(slot.element(), obfuscated.bytes(), obfuscated.fontKey()));
     }
 
-    /** Collects every face the tree names, wherever a style can sit. */
+    /**
+     * Collects every face the tree names, wherever a style can sit, and the faces a paragraph's
+     * markdown sets pieces of it in ({@link DocxMarkdown}): the table is written before any
+     * paragraph is, so a face the pieces ask for is shipped whether or not the page sets them —
+     * a session that reads no markdown ships one it does not use.
+     */
     private static void collectFonts(DocumentNode node, Map<FontName, Set<Slot>> into) {
         if (node instanceof ParagraphNode paragraph) {
             add(paragraph.textStyle(), into);
+            if (paragraph.textStyle() != null && DocxMarkdown.mayRead(paragraph)) {
+                DocxMarkdown.read(paragraph.text(), paragraph.textStyle()).forEach(piece -> add(piece.style(), into));
+            }
             for (InlineRun run : paragraph.inlineRuns()) {
                 if (run instanceof InlineTextRun text) {
                     add(text.textStyle(), into);

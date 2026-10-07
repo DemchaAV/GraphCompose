@@ -24,12 +24,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * What a container written as its contents leaves of its own layout is in its report note: a
- * canvas's places, room and width, a panel's bleed, the fixed width of a layer stack's column,
- * and the keep of a line drawn in the flow.
+ * canvas's places and width, a panel's bleed, the fixed width of a layer stack's column, and the
+ * keep of a line drawn in the flow.
  *
- * <p>Each was left out in silence: a canvas's caption set at its middle came out at its top
- * with everything under it risen to meet it, a band bled to the page's edges stopped at its
- * box, and a column fixed narrower than its neighbours left it ran its text their way.</p>
+ * <p>Each was left out in silence: a canvas's caption set at its middle came out at its top, a
+ * band bled to the page's edges stopped at its box, and a column fixed narrower than its
+ * neighbours left it ran its text their way. A canvas's room is held in Word
+ * ({@code DocxCanvasRoomTest}).</p>
  */
 class DocxFlowContainerReportTest {
 
@@ -37,7 +38,8 @@ class DocxFlowContainerReportTest {
     private static final DocumentColor SURFACE = DocumentColor.rgb(238, 243, 249);
 
     @Test
-    void aCanvasNamesThePlacesRoomAndWidthItIsWrittenWithout() throws Exception {
+    void aCanvasNamesThePlacesAndWidthItIsWrittenWithout() throws Exception {
+        // Its room is held under what it writes (DocxCanvasRoomTest).
         DocxExportReport report = reportOf(page -> page
                 .addCanvas(200, 120, canvas -> canvas.position(new ParagraphBuilder()
                         .text("Set forty points in and sixty down, wrapping inside two hundred").build(), 40, 60))
@@ -45,21 +47,8 @@ class DocxFlowContainerReportTest {
 
         assertThat(detailOf(report, "CanvasLayerNode")).isEqualTo("written as its contents; "
                 + "what it writes is written from its corner, one block after another, not where it places it; "
-                + "its height is not held: what follows starts below what it writes; "
                 + "its width is not in the file, so its paragraphs and lists run the width of the column it "
                 + "stands in");
-    }
-
-    @Test
-    void aCanvasThatOnlyDrawsHoldsNoRoom() throws Exception {
-        // Its drawings stand where it places them, and nothing is written to hold its height.
-        DocxExportReport report = reportOf(page -> page
-                .addCanvas(100, 80, canvas -> canvas.position(new ShapeBuilder().size(40, 40).fillColor(INK).build(),
-                        20, 20))
-                .addParagraph("Below"));
-
-        assertThat(detailOf(report, "CanvasLayerNode"))
-                .isEqualTo("written as its contents; its height is not held: what follows starts below what it writes");
     }
 
     @Test
@@ -72,7 +61,7 @@ class DocxFlowContainerReportTest {
     }
 
     @Test
-    void aCanvasNothingFollowsMovesNothing() throws Exception {
+    void aCanvasThatOnlyDrawsAtTheEndOfTheFlowIsNotNamed() throws Exception {
         DocxExportReport report = reportOf(page -> page
                 .addParagraph("Above")
                 .addCanvas(100, 80, canvas -> canvas.position(new ShapeBuilder().size(40, 40).fillColor(INK).build(),
@@ -91,14 +80,12 @@ class DocxFlowContainerReportTest {
                 .addParagraph("Below"));
 
         assertThat(detailOf(report, "CanvasLayerNode")).isEqualTo("written as its contents; "
-                + "what it writes is written from its corner, one block after another, not where it places it; "
-                + "its height is not held: what follows starts below what it writes");
+                + "what it writes is written from its corner, one block after another, not where it places it");
     }
 
     @Test
-    void aTimelinesMarkerHoldsItsRowAndMovesNothing() throws Exception {
-        // Each marker is a canvas alone in its row's cell: nothing follows it there, and the row
-        // is as tall as its tallest cell.
+    void aTimelinesMarkersAreNotNamed() throws Exception {
+        // Each marker is a canvas that only draws, alone in its row's cell, which holds its room.
         DocxExportReport report = reportOf(page -> page
                 .addTimeline(timeline -> timeline
                         .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(8, INK), entry -> entry
@@ -197,20 +184,7 @@ class DocxFlowContainerReportTest {
     }
 
     @Test
-    void aCanvasComposedInATableCellIsNotMeasuredForItsRoom() throws Exception {
-        // In a composed cell nothing has a placement: what it writes cannot be measured.
-        DocxExportReport report = reportOf(page -> page
-                .addTable(table -> table.columns(DocumentTableColumn.fixed(200))
-                        .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(new SectionBuilder()
-                                .add(new com.demcha.compose.document.dsl.CanvasLayerBuilder(180, 20)
-                                        .position(new SpacerBuilder().height(20).build(), 0, 0).build())
-                                .addParagraph("After").build()))));
-
-        assertThat(report.bySubject()).doesNotContainKey("CanvasLayerNode");
-    }
-
-    @Test
-    void aCanvasBeforeAPageBreakMovesNothing() throws Exception {
+    void aCanvasThatOnlyDrawsBeforeAPageBreakIsNotNamed() throws Exception {
         DocxExportReport report = reportOf(page -> page
                 .addCanvas(100, 80, canvas -> canvas.position(new ShapeBuilder().size(40, 40).fillColor(INK).build(),
                         20, 20))

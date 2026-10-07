@@ -8,6 +8,44 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX canvas holds its height.** The page gives a canvas its height whatever it holds. The
+  export writes what it holds one block after another, and dropped the room under it, so what
+  followed stood that much higher. The report named the loss only where something followed the
+  canvas in the flow. Elsewhere the room was lost without a note:
+  - a canvas that wrote something and was its row's tallest cell;
+  - a canvas that ended a layer stack's column, or a timeline entry's body;
+  - a canvas in a shape container's layer, followed there or ending it;
+  - a canvas that only drew, between the blocks of a band's layer.
+
+  What changes:
+  - **The room under what it writes** is written as the space below it. The next block takes
+    it: as its space above, or as the space below the paragraph before a table. A cell the
+    canvas ends holds it on its last paragraph. So a row is as tall as its tallest canvas, and a
+    column as long as the canvas ending it. At the end of the body, or before a page break,
+    nothing follows to move, and nothing is written.
+  - **A canvas that only draws** holds its whole box, its edges included, in a flow, a row's
+    cell, a column or a band's layer, as a stack of drawings does in the flow. Inside a shape
+    container's layer it holds it too. Where something round it measures that room already, it
+    holds none of its own, its edges included, so the room is not counted twice:
+    - before the first block a band's layer writes, which the band sets the page's distance
+      down to, past the drawing;
+    - drawings held whole round it: a stack's, a shape container's or a canvas's;
+    - a stack of several layers, a shape container or a canvas it is a layer of;
+    - a block that a canvas round it writes nothing of, and so counts as taking no room.
+
+    A timeline's marker, alone in its row's cell, holds its room in the cell.
+  - **The report names what Word cannot hold:**
+    - what a canvas writes, one block under another, running past its height, which Word makes
+      room for and the page does not;
+    - a drawing in what it writes, which takes no room in Word, so what stands below the
+      drawing stands higher by its room;
+    - a height nothing measures: in a table's composed cell, or with no layout.
+  - Across the DOCX fidelity corpus eight documents' bytes change, each in its timeline's marker
+    cells, which now hold their markers' room: `CharcoalGold`, `MidnightNavy`, `NavySidebar`,
+    `ProfessionalSidebar`, `SerifHeadline`, `TerracottaRail`, `VioletGrid` and `ModernReceipt`.
+    Word and LibreOffice render all eight as they did, every word and drawing where it stood.
+  - Ledger: `CanvasLayerNode.height` moves from a gap to `REPORTED`; no node-field gap remains.
+
 - **A DOCX export keeps a colour's translucency where Word can hold it, and names where it
   cannot.** A translucent colour (`DocumentColor.rgba(...)`, `withOpacity(...)`) was written at full
   strength, without a note, on text, a table cell's shading, a panel's fill and borders, and a
@@ -212,7 +250,7 @@ follow semantic versioning; release dates are ISO 8601.
     - that what it writes is written from its corner, one block after another, not where it
       places it — unless it stacks it that way;
     - that its height is not held, where it stands in a flow and something follows it there
-      — a timeline's marker, alone in its row's cell, moves nothing;
+      — no longer named, as the room is written: see "A DOCX canvas holds its height";
     - its width, where its text wraps narrower than the column;
   - on a painted section in the flow the page lays out page by page — the body and the panels
     in it, not a row's or a table's cell, a layer or a layer stack's column, where the page

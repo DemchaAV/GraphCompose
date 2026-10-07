@@ -75,7 +75,7 @@ class DocxParagraphReportTest {
     }
 
     @Test
-    void onlyTheTextThatTakesTheParagraphsStyleIsFitted() throws Exception {
+    void aParagraphOfRunsInStylesOfTheirOwnHasNoFittedSizeToLose() throws Exception {
         // A run with a style of its own is laid out at its own size, as it is written: with no
         // text in the paragraph's style, nothing is fitted to lose.
         assertThat(paragraphNotes(page -> page.addParagraph(p -> p.textStyle(TEN)

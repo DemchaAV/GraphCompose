@@ -1163,12 +1163,16 @@ final class DocxLayoutMetrics {
 
     /**
      * Whether a fragment's lines set a paragraph's markdown pieces as they are read
-     * ({@link DocxMarkdown#laidOutIn}). A fragment whose lines lead with a prefix's letters carries
-     * other text than the pieces, and is never offered.
+     * ({@link DocxMarkdown#laidOutIn}) — an auto-sized paragraph's at sizes in proportion
+     * ({@link DocxMarkdown#scaleIn}), the size the page fits it to not known before its lines are
+     * found. A fragment whose lines lead with a prefix's letters carries other text than the
+     * pieces, and is never offered.
      */
     private static boolean setsThePieces(ParagraphNode paragraph, List<DocxMarkdown.Piece> pieces, PlacedFragment fragment) {
-        return DocxMarkdown.laidOutIn(pieces, ((ParagraphFragmentPayload) fragment.payload()).lines(), "",
-                paragraph.autoSize() != null);
+        List<ParagraphLine> lines = ((ParagraphFragmentPayload) fragment.payload()).lines();
+        return paragraph.autoSize() != null
+                ? !Double.isNaN(DocxMarkdown.scaleIn(pieces, lines, ""))
+                : DocxMarkdown.laidOutIn(pieces, lines, "");
     }
 
     /** The fragments of a text still waiting for a paragraph, or {@code null} where none is. */

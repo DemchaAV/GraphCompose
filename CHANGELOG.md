@@ -8,22 +8,26 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
-- **A DOCX export writes an auto-sized paragraph's text at the size the page fits it to.** The page fits a paragraph with `autoSize(...)` to the largest size its line
-  holds, smaller or larger than its style's. The export wrote the text at its style's size: Word
-  broke a shrunk headline onto more lines than the page's and set everything under it lower, and
-  showed a grown one at its style's size. The report named both sizes.
+- **A DOCX export writes an auto-sized paragraph's text at the size the page fits it to.** The
+  page fits a paragraph with `autoSize(...)` to the largest size its line holds, smaller or
+  larger than its style's. The export wrote the text at its style's size: Word broke a shrunk
+  headline onto more lines than the page's and set everything under it lower, and showed a grown
+  one at its style's size. The report named both sizes.
   - **The text that takes the paragraph's style is written at the fitted size**, read off the
     layout's lines. A run with a style of its own keeps it, as on the page. The paragraph's mark,
-    which Word continues from, takes the fitted size too, and a prefix the page sets before the
-    lines is measured at it.
+    which Word continues from, takes the fitted size where the text ending it takes the
+    paragraph's style, and a prefix the page sets before the lines is measured at it.
   - **Markdown pieces are read at it.** A heading is written at its multiple of the fitted size, as
     the page sets it, and named where it stands taller than its line, as any heading is.
   - **Every path that writes a paragraph does it:** the body, a table cell, text over the flow, a
     side of an overlay's left-and-right pair, a badge's initials and a page zone's line. A zone's
     line is the page's, where it was its style's.
-  - **Still written at its style's size, and named**, where the layout does not tell the fitted
-    size: with no layout, or in lines whose sizes are each a run's own, as a paragraph fitted to
-    12pt beside runs of 12pt and 10pt of their own. The note says the fitted size is not measured.
+  - **Still written at its style's size, and named**, where the layout's lines do not tell the
+    fitted size. None are read: with no layout, or for a page zone the page sets with other text
+    on the first page it draws it than the zone is written with. Or their sizes do not say which
+    is the paragraph's: a paragraph fitted to 12pt beside runs of 12pt and 10pt of their own, or
+    Arabic the page reads as markdown, which it shapes before it reads the marks. The note says
+    the fitted size is not measured.
 
   Measured in Word 16 and LibreOffice on a page of auto-sized paragraphs, each word now stands
   within half a point of the page's baseline, at the page's size. A shrunk headline is one line,
@@ -81,7 +85,8 @@ follow semantic versioning; release dates are ISO 8601.
     bold at its larger size, a line break where the page starts a line. A linked paragraph's
     pieces stay in one link, and Word's outline lists a heading by the text written. An
     auto-sized paragraph's pieces were written at its style's size, a heading's at its multiple of
-    it, as its text was (since written at the size the page fits it to: see "A DOCX export writes an auto-sized paragraph's text at the size the page fits it to").
+    it, as its text was (since written at the size the page fits it to: see "A DOCX export
+    writes an auto-sized paragraph's text at the size the page fits it to").
   - **The page's own lines decide it.** The pieces are written only where the lines the page laid
     the paragraph out in hold the pieces' letters in their faces, families, colours and tracking,
     at their sizes to a hundredth of a point — or, where the page fits the text to a size of its
@@ -102,7 +107,8 @@ follow semantic versioning; release dates are ISO 8601.
     line as tall as the paragraph's own and draws its letters past it; written in that exact line,
     Word cuts their tops on screen. An auto-sized paragraph's heading, written at a multiple of its
     style's size, may fit the line the page fits the text to, and is named only where it does not
-    (since written at its multiple of the fitted size, as the page sets it: see "A DOCX export writes an auto-sized paragraph's text at the size the page fits it to").
+    (since written at its multiple of the fitted size, as the page sets it: see "A DOCX export
+    writes an auto-sized paragraph's text at the size the page fits it to").
   - **The font table ships the faces the pieces of a paragraph outside table cells and page zones
     are set in** — the paragraphs it reads. It is written before any paragraph, so it reads them
     off the text: a session that reads no markdown ships a face it does not use.
@@ -138,7 +144,9 @@ follow semantic versioning; release dates are ISO 8601.
   - **The line is taller where it needs to be:**
     - for a picture in a zone paragraph, which Word stands on the baseline, so the exact line
       does not cut its top;
-    - for a part the page fits smaller, which Word writes at its style's size.
+    - for a part the page fits smaller, which Word writes at its style's size (since written at
+      the fitted size where its lines tell it: see "A DOCX export writes an auto-sized
+      paragraph's text at the size the page fits it to").
   - **A tallest part the page sets in more lines than one** is written as as many exact lines.
     Word grows a footer up from its distance, so a footer of two lines stands a line further from
     the edge, its first line on the page's first baseline.
@@ -310,7 +318,9 @@ follow semantic versioning; release dates are ISO 8601.
     otherwise than the file, and with no layout, the note says where the parts stand is not
     measured;
   - names a zone paragraph's right-to-left text written left to right, its prefix's letters,
-    the size its text is fitted to, and its outline entry.
+    the size its text is fitted to (since written at it where its lines tell it: see "A DOCX
+    export writes an auto-sized paragraph's text at the size the page fits it to"), and its
+    outline entry.
 
   None of this changes what is written, and no document of the DOCX fidelity corpus has a page
   zone. In `DocxNodeFieldLedgerTest` a page field's `padding` and `margin` move from a gap to
@@ -336,7 +346,8 @@ follow semantic versioning; release dates are ISO 8601.
     size to the half point, sets them apart. The fitted size is read from the layout's lines; a
     prefix the page sets in the paragraph's style counts as its text. Where the lines are not
     read or do not tell the size, the note says the fitted size is not measured (since written at
-    the fitted size, and named only where it is not measured: see "A DOCX export writes an auto-sized paragraph's text at the size the page fits it to");
+    the fitted size, and named only where it is not measured: see "A DOCX export writes an
+    auto-sized paragraph's text at the size the page fits it to");
   - its prefix's letters before its first line. On a path that writes no prefix, it also names
     the room the prefix sets lines in by, where that moves a line: a side of a pair Word holds
     by its start, and a text box or a badge, but not one line set from the end away from its

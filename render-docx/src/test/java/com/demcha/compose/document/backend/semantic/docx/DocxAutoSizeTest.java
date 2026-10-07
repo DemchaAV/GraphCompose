@@ -16,6 +16,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
@@ -24,6 +25,8 @@ import com.demcha.compose.font.FontName;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.xmlbeans.SimpleValue;
+import org.apache.xmlbeans.XmlObject;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -32,23 +35,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 
 /**
  * An auto-sized paragraph's text is written at the size the page fits it to, smaller or larger
  * than its style's, on every path that writes a paragraph: the file holds what the page draws.
  * A run with a style of its own keeps it, as on the page. Where the page's lines do not tell the
- * size — no layout, or lines in sizes each a run's own — the text is written at its style's size,
- * and named.
+ * size — no lines read, or lines in sizes that do not say which is the paragraph's — the text is
+ * written at its style's size, and named.
  */
 class DocxAutoSizeTest {
 
     private static final String HEADLINE = "A headline far too long for one line at its size";
     private static final DocumentTextStyle TEN = DocumentTextStyle.DEFAULT.withSize(10);
     private static final double CONTENT = 180;
+    private static final String W = "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' ";
+    private static final String UNMEASURED = "the size the page fits it to is not measured";
 
     @Test
     void aParagraphIsWrittenAtTheSizeThePageFitsItTo() throws Exception {
@@ -76,8 +80,7 @@ class DocxAutoSizeTest {
                 .inlineText("Hi ", DocumentTextStyle.DEFAULT.withSize(12)).inlineText("there").autoSize(24)));
         assertThat(export.paragraphWith("there").getRuns()).filteredOn(run -> !run.text().isEmpty())
                 .extracting(XWPFRun::text, XWPFRun::getFontSizeAsDouble)
-                .containsExactly(org.assertj.core.groups.Tuple.tuple("Hi ", 12.0),
-                        org.assertj.core.groups.Tuple.tuple("there", 24.0));
+                .containsExactly(tuple("Hi ", 12.0), tuple("there", 24.0));
         assertThat(export.notes()).isEmpty();
 
         // A paragraph ending in a chip has its own style on the mark, not the chip's: at the fitted size.
@@ -110,7 +113,54 @@ class DocxAutoSizeTest {
     }
 
     @Test
-    void everyPathThatWritesAParagraphWritesItAtTheSizeThePageFitsItTo() throws Exception {
+    void markdownPiecesAreWrittenAtTheSizeThePageFitsThemTo() throws Exception {
+        // Tracked in a share of the size, the pieces' tracking is the one the page resolves at the
+        // fitted size.
+        DocumentTextStyle tracked = DocumentTextStyle.builder().size(24)
+                .letterSpacing(DocumentLetterSpacing.ofFontSize(0.05)).build();
+        Export export = export(page -> page.addParagraph(p -> p.name("Revenue")
+                .text("Revenue **grew** this quarter by a long way").textStyle(tracked).autoSize(24, 6)));
+        double fitted = export.firstSize("Revenue");
+        assertThat(fitted).isLessThan(24);
+        assertThat(export.paragraphWith("grew").getRuns()).filteredOn(run -> !run.text().isEmpty())
+                .extracting(XWPFRun::text, XWPFRun::isBold, XWPFRun::getFontSizeAsDouble)
+                .containsExactly(tuple("Revenue ", false, wordsSize(fitted)), tuple("grew", true, wordsSize(fitted)),
+                        tuple(" this quarter by a long way", false, wordsSize(fitted)));
+        assertThat(export.notes()).isEmpty();
+
+        // Composed in a table cell, matched to its lines as the page reads it.
+        Export cell = export(page -> page.add(new TableBuilder().name("Sums").columns(DocumentTableColumn.fixed(120))
+                .rowCells(DocumentTableCell.node(new ParagraphBuilder().name("Total").text("Total **due** now")
+                        .textStyle(TEN).autoSize(20, 6).build()))
+                .build()));
+        double total = cell.sizeOf("due");
+        assertThat(total).isNotEqualTo(10.0);
+        assertThat(cell.document().getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0).getRuns())
+                .extracting(XWPFRun::text, XWPFRun::isBold, XWPFRun::getFontSizeAsDouble)
+                .containsExactly(tuple("Total ", false, wordsSize(total)), tuple("due", true, wordsSize(total)),
+                        tuple(" now", false, wordsSize(total)));
+        assertThat(cell.notes()).isEmpty();
+
+        // A heading at a multiple of a fitted size off Word's half point is named at the size the
+        // file holds it at.
+        Export heading = export(page -> page.addParagraph(p -> p.name("Second")
+                .text("## A second level heading far too long_x").textStyle(DocumentTextStyle.DEFAULT.withSize(24))
+                .autoSize(new com.demcha.compose.document.style.DocumentTextAutoSize(24.5, 4.5, 1.0))));
+        double laid = heading.firstSize("Second");
+        assertThat(laid * 2).as("off the half point").isNotEqualTo(Math.rint(laid * 2));
+        assertThat(heading.paragraphWith("second").getRuns()).filteredOn(run -> run.text().contains("second"))
+                .singleElement().satisfies(run -> assertThat(run.getFontSizeAsDouble()).isEqualTo(wordsSize(laid)));
+        assertThat(heading.notes()).singleElement().asString()
+                .contains("its markdown heading is written at " + points(wordsSize(laid)) + "pt in a line ");
+    }
+
+    private static String points(double size) {
+        return java.math.BigDecimal.valueOf(size).stripTrailingZeros().toPlainString();
+    }
+
+    @Test
+    void theOtherPathsThatWriteAParagraphWriteItAtTheSizeThePageFitsItTo() throws Exception {
+        // The body is above; a page zone's line is DocxZoneLineTest's.
         // A paragraph composed in a table cell.
         Export cell = export(page -> page.add(new TableBuilder().name("Sums").columns(DocumentTableColumn.fixed(120))
                 .rowCells(DocumentTableCell.node(new ParagraphBuilder().name("Total").text("Total due this month")
@@ -133,6 +183,7 @@ class DocxAutoSizeTest {
         assertThat(pair.firstSize("Title")).isEqualTo(14.0);
         assertThat(pair.paragraphWith("ENGINEER").getRuns()).filteredOn(run -> "ENGINEER".equals(run.text()))
                 .singleElement().satisfies(run -> assertThat(run.getFontSizeAsDouble()).isEqualTo(14.0));
+        assertThat(pair.notes()).isEmpty();
 
         // Text over the flow, in a text box.
         Export box = export(page -> page.add(new ShapeContainerBuilder().name("Sidebar")
@@ -145,19 +196,22 @@ class DocxAutoSizeTest {
                 .build()).addParagraph("Masthead"));
         assertThat(box.firstSize("Monogram")).isEqualTo(30.0);
         assertThat(box.xml()).contains("<wps:txbx>");
-        assertThat(sizesBefore(box.xml(), "LM")).isNotEmpty().containsOnly(30.0);
+        assertThat(sizesOf(box.document(), "LM")).isNotEmpty().containsOnly(30.0);
+        assertThat(box.notes()).as("the box's own note, and nothing of the size").isNotEmpty()
+                .noneMatch(note -> note.contains("is written at"));
 
         // A badge's initials, in its shape.
         Export badge = export(page -> page.add(badge("JR")));
         double initials = badge.firstSize("Initials");
         assertThat(initials).isGreaterThan(8);
         assertThat(badge.xml()).contains("<wps:txbx>");
-        assertThat(sizesBefore(badge.xml(), "JR")).isNotEmpty().containsOnly(wordsSize(initials));
+        assertThat(sizesOf(badge.document(), "JR")).isNotEmpty().containsOnly(wordsSize(initials));
         assertThat(badge.notes()).isEmpty();
         // Initials the page reads as markdown, in one face at the fitted size, stay in the shape.
         Export marked = export(page -> page.add(badge("*JR*")));
-        assertThat(marked.xml()).contains("<wps:txbx>").contains("<w:i w:val=\"on\"/>").doesNotContain("*JR*");
-        assertThat(sizesBefore(marked.xml(), "JR")).isNotEmpty().containsOnly(wordsSize(marked.firstSize("Initials")));
+        assertThat(marked.xml()).contains("<wps:txbx>").doesNotContain("*JR*");
+        assertThat(italicOf(marked.document(), "JR")).isNotEmpty().containsOnly(true);
+        assertThat(sizesOf(marked.document(), "JR")).isNotEmpty().containsOnly(wordsSize(marked.firstSize("Initials")));
         assertThat(marked.notes()).isEmpty();
     }
 
@@ -179,24 +233,27 @@ class DocxAutoSizeTest {
                 .inlineText("B ", DocumentTextStyle.DEFAULT.withSize(11)).inlineText("C").autoSize(14)));
         assertThat(export.paragraphWith("A B C").getRuns()).filteredOn(run -> !run.text().isEmpty())
                 .extracting(XWPFRun::getFontSizeAsDouble).containsExactly(14.0, 11.0, 8.0);
-        assertThat(export.notes()).containsExactly("written as a paragraph; its text is written at 8pt — the size the "
-                                                   + "page fits it to is not measured");
+        assertThat(export.notes()).containsExactly("written as a paragraph; its text is written at 8pt — " + UNMEASURED);
 
-        // Read as markdown in other letters than the pieces, over lines of two sizes — a heading's
-        // and the body's — the lines do not tell which is its own either.
-        Export arabic = export(page -> page.addParagraph(p -> p.text("# مرحبا_\nسطر *ب*")
-                .textStyle(DocumentTextStyle.builder().fontName(FontName.AMIRI).size(10).build()).autoSize(20, 6)));
-        assertThat(arabic.notes()).singleElement().asString().startsWith("written as a paragraph; its text is written "
-                                                                         + "at 10pt — the size the page fits it to is "
-                                                                         + "not measured");
+        // Read as markdown in other letters than the pieces — Arabic, which the page shapes before
+        // it reads the marks — its lines do not tell which size is its own: over two lines, a
+        // heading's and the body's; over one, a heading's alone, twice the fitted size.
+        DocumentTextStyle amiri = DocumentTextStyle.builder().fontName(FontName.AMIRI).size(10).build();
+        for (String text : List.of("# مرحبا_\nسطر *ب*", "# مرحبا_")) {
+            Export arabic = export(page -> page.addParagraph(HEADLINE + " " + HEADLINE)
+                    .addParagraph(p -> p.text(text).textStyle(amiri).autoSize(20, 6)));
+            assertThat(arabic.notes()).as(text).singleElement().asString()
+                    .startsWith("written as a paragraph; its text is written at 10pt — " + UNMEASURED);
+            assertThat(sizesOf(arabic.document(), text.replace("\n", ""))).as(text).containsOnly(10.0);
+        }
 
         // With no layout, nothing tells it.
-        XWPFDocument unlaid = DocxExports.withoutLayout(240, 600, 30, page -> page
-                .addParagraph(p -> p.text(HEADLINE + " " + HEADLINE).textStyle(TEN))
-                .addParagraph(p -> p.text("Hi").textStyle(DocumentTextStyle.DEFAULT.withSize(24)).autoSize(24, 6)));
-        assertThat(unlaid.getParagraphs().stream().filter(paragraph -> paragraph.getText().equals("Hi")).findFirst()
-                .orElseThrow().getRuns()).singleElement()
-                .satisfies(run -> assertThat(run.getFontSizeAsDouble()).isEqualTo(24.0));
+        Consumer<PageFlowBuilder> unlaid = page -> page.addParagraph(p -> p.text(HEADLINE + " " + HEADLINE).textStyle(TEN))
+                .addParagraph(p -> p.text("Hi").textStyle(DocumentTextStyle.DEFAULT.withSize(24)).autoSize(24, 6));
+        assertThat(sizesOf(DocxExports.withoutLayout(240, 600, 30, unlaid), "Hi")).containsExactly(24.0);
+        assertThat(DocxExports.reportWithoutLayout(240, 600, 30, unlaid).bySubject().get("ParagraphNode"))
+                .extracting(DocxExportReport.Note::detail)
+                .containsExactly("written as a paragraph; its text is written at 24pt — " + UNMEASURED);
     }
 
     private static double wordsSize(double size) {
@@ -207,15 +264,35 @@ class DocxAutoSizeTest {
         return ((Number) paragraph.getCTP().getPPr().getRPr().getSzArray(0).getVal()).doubleValue() / 2;
     }
 
-    /** The sizes the runs reading a text are written at, wherever in the body they stand — a text box's or a shape's too. */
-    private static List<Double> sizesBefore(String xml, String text) {
-        Matcher matcher = Pattern.compile("<w:sz w:val=\"(\\d+)\"/>(?:(?!</w:r>).)*<w:t>" + Pattern.quote(text) + "</w:t>",
-                Pattern.DOTALL).matcher(xml);
+    /** The runs reading a text, wherever in the body they stand: a text box's and a shape's too. */
+    private static List<XmlObject> runsReading(XWPFDocument document, String text) {
+        List<XmlObject> runs = new ArrayList<>();
+        for (XmlObject run : document.getDocument().getBody().selectPath(W + ".//w:r")) {
+            StringBuilder letters = new StringBuilder();
+            for (XmlObject letter : run.selectPath(W + "./w:t")) {
+                letters.append(((SimpleValue) letter).getStringValue());
+            }
+            if (letters.toString().equals(text)) {
+                runs.add(run);
+            }
+        }
+        return runs;
+    }
+
+    /** The sizes the runs reading a text are written at, wherever in the body they stand. */
+    private static List<Double> sizesOf(XWPFDocument document, String text) {
         List<Double> sizes = new ArrayList<>();
-        while (matcher.find()) {
-            sizes.add(Integer.parseInt(matcher.group(1)) / 2.0);
+        for (XmlObject run : runsReading(document, text)) {
+            for (XmlObject size : run.selectPath(W + "./w:rPr/w:sz/@w:val")) {
+                sizes.add(Double.parseDouble(((SimpleValue) size).getStringValue()) / 2);
+            }
         }
         return sizes;
+    }
+
+    /** Whether each run reading a text, wherever in the body it stands, is written italic. */
+    private static List<Boolean> italicOf(XWPFDocument document, String text) {
+        return runsReading(document, text).stream().map(run -> run.selectPath(W + "./w:rPr/w:i").length > 0).toList();
     }
 
     private record Export(XWPFDocument document, DocxExportReport report, Map<String, List<PlacedFragment>> fragments) {

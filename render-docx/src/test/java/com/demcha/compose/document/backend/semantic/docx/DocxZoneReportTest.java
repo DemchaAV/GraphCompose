@@ -191,7 +191,7 @@ class DocxZoneReportTest {
                 .as("a prefix Word does not write stands the text off, and its letters are lost")
                 .containsExactly(FOOTER + OFF + "; a paragraph's bulletOffset letters, \"•\", are not written before "
                                  + "its first line");
-        // Auto-sized, its text is written at the size the page fits it to, where its lines tell it.
+        // Auto-sized, it is not named where its lines tell the size the page fits it to, which is written.
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> text("Hi").autoSize(14).build()))).isEmpty();
         // Fitted to 12pt, the size its first run has of its own, its lines do not tell which size is its own.
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new ParagraphBuilder().name("ZoneLine")

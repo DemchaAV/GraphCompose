@@ -8,6 +8,55 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX page zone's text stands on the page's baseline.** A page zone is written as one line
+  of a Word header or footer. The line was Word's single line for its face. Its top sat at the
+  zone content's top in a header, and its foot at the content's foot in a footer. So the line's
+  height, and the room a lone part's padding holds above and below its text, were Word's, and
+  nothing named them. In LibreOffice a header's text stood up to a point higher than on the
+  page. Two zones of one kind — a cover's header on the first page, the running header on the
+  rest — shared one distance from the edge, the last zone's, and the cover's header stood 16pt
+  high in both editors. A zone paragraph's anchor had no bookmark, without a note.
+  - **The zone's line is an exact line**, as tall as its tallest part's line on the page. It
+    stands as far from its page edge as puts that part's baseline where the page has it, since
+    both editors stand an exact line's baseline four fifths of the way down it (measured on
+    exact lines). A lone part's padding and margin above and below are in that distance.
+  - **The line is taller where it needs to be:**
+    - for a picture in a zone paragraph, which Word stands on the baseline, so the exact line
+      does not cut its top;
+    - for a part the page fits smaller, which Word writes at its style's size.
+  - **A tallest part the page sets in more lines than one** is written as as many exact lines.
+    Word grows a footer up from its distance, so a footer of two lines stands a line further from
+    the edge, its first line on the page's first baseline.
+  - **A zone the layout measures that shares its kind with another page zone** stands in a frame
+    (`w:framePr`) at its own height, as a text band does. The frame is at least its lines tall,
+    so a part Word sets in more lines goes on below them.
+  - **Measured** in Word 16.0.20430 and LibreOffice 26.8 on 8pt and 18pt Lato headers and 8pt
+    Lato footers. A lone part's text, and a line's tallest part's, stood within 0.1pt of the
+    page's baseline in each editor, the cover's header included. A smaller part beside a taller
+    one stays on Word's one baseline, and the note counts it.
+  - **Text the page sets right against the edge** stands off the page's baseline, as the line
+    stops at the edge: lower in a header, by what its ascent falls short of four fifths of its
+    line, and higher in a footer, by what its descent falls short of a fifth. In the default face
+    only a header's is, about 0.4pt at 18pt. Past a point and a half, the note names it.
+  - **The `page zone` note:**
+    - counts a part off the baseline Word sets the line on, and says where the parts after a
+      part of more lines than one stand is not measured, since Word sets them on a later line;
+    - names a zone paragraph's anchor, which has no bookmark, since a zone is written into a part
+      each kind of page repeats;
+    - names a picture the page sets anywhere but on the baseline;
+    - names a zone's lines that reach past the page margin by more than half a point. The margin
+      is then written negative, as for a text band, so Word holds the body at it; LibreOffice
+      moves the body clear. Within half a point — text under about 22pt set against the margin in
+      the default face — Word moves the body by as much, unnamed;
+    - says where the zone's text stands is not measured where the zone's content is built
+      otherwise for the first page it is drawn on than as written — other text, another face or
+      size, other pictures. The line is Word's there;
+    - names a zone whose content is none for no page in particular: it is not written.
+  - No document of the DOCX fidelity corpus has a page zone; its bytes are unchanged.
+  - Ledger: the `zones` option moves from a gap to `REPORTED`, and a lone or tallest page field's
+    padding and margin above and below are written. No entry is a gap any more, and `GAP` is no
+    longer a fate an entry can take.
+
 - **A DOCX canvas holds its height.** The page gives a canvas its height whatever it holds. The
   export writes what it holds one block after another, and dropped the room under it, so what
   followed stood that much higher. The report named the loss only where something followed the
@@ -135,7 +184,9 @@ follow semantic versioning; release dates are ISO 8601.
     page sets it when it meets all of these:
     - its line starts within a point and a half of Word's, or, against the right margin, ends
       there;
-    - it sits on Word's baseline: its tallest part's, with the line standing at the zone's edge;
+    - it sits on Word's baseline: its tallest part's, with the line standing at the zone's edge
+      (since placed by that part's baseline: see "A DOCX page zone's text stands on the page's
+      baseline");
     - it is one line;
     - no prefix stands before it, on the line's left side.
 
@@ -149,7 +200,9 @@ follow semantic versioning; release dates are ISO 8601.
   zone. In `DocxNodeFieldLedgerTest` a page field's `padding` and `margin` move from a gap to
   `REPORTED`, and its `align` to `INERT`: the page sets a field in a box a point wider than its
   number. The `zones` option keeps a gap for the line's height and the room its parts hold above
-  and below, and a zone paragraph's anchor. 1 node-field gap remains, `CanvasLayerNode.height`.
+  and below, and a zone paragraph's anchor (since closed: see "A DOCX page zone's text stands on
+  the page's baseline"). 1 node-field gap remains, `CanvasLayerNode.height` (since closed: see
+  "A DOCX canvas holds its height").
 - **A DOCX export's report names what a paragraph's own fields lose.** Several of a paragraph's
   own fields were lost without a note:
   - an auto-sized paragraph's text was written at its style's size, not the one the page fits it
@@ -359,7 +412,8 @@ follow semantic versioning; release dates are ISO 8601.
   lost: 29 fields have nothing to carry, 55 node fields are gaps, and so are page zones, where
   a paragraph's alignment, spacing and direction and a row's columns are not written. A node
   class that is not a record, or a kind or field added to the engine, fails it until someone
-  decides.
+  decides. (The gaps have since closed, and a gap is no longer a fate: see "A DOCX page zone's
+  text stands on the page's baseline".)
 - **A DOCX timeline's dots, and drawings centred on a line, move with their text too.** A
   drawing in a table cell went into that cell only when the cell held it across, and a dot
   set in a column of its own beside its entry's text — `CharcoalGold`'s timeline, a row of

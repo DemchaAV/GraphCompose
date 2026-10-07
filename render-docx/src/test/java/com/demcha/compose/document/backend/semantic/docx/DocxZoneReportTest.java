@@ -159,14 +159,14 @@ class DocxZoneReportTest {
                 .build())))
                 .as("in a header too").containsExactly("a header written as one line of Word's header; 2 of its 3 "
                                                         + "parts stand off where the page sets them");
-        // Word stands the line at the footer's foot, which a smaller part set lower holds: the
-        // larger part moves down onto it, and the smaller one onto the larger one's baseline.
+        // Word's line stands on its tallest part's baseline, where the page sets that part: a
+        // smaller part the page sets lower moves up onto it, and the larger one stays.
         assertThat(zoneNotes(DocumentPageZone.footer(60, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
                 .flexSpacer()
                 .addParagraph(p -> p.text("v2.4").textStyle(CHROME).margin(new DocumentInsets(30, 0, 0, 0)))
                 .build())))
-                .containsExactly(FOOTER + "2 of its 2 parts stand off where the page sets them");
+                .containsExactly(FOOTER + "1 of its 2 parts stands off where the page sets them");
         // A part the page seats off its baseline is set on Word's.
         assertThat(zoneNotes(DocumentPageZone.footer(40, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Confidential").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))

@@ -47,8 +47,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * What the DOCX export does with every field of every node, and with every output option:
- * writes it, reports it when the author set it, has nothing for Word to carry, or leaves a
- * known gap that names what is lost.
+ * writes it, reports it when the author set it, or has nothing for Word to carry. There is no
+ * fourth answer: a field the export neither writes nor names is not one this ledger can hold.
  *
  * <p>The export's report promises a caller that what the file does not carry is said, not
  * approximated in silence. That promise is only as good as the fields someone thought about:
@@ -59,32 +59,32 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>A node's entries are about the body. A page zone is written as one line of its
  * paragraphs' runs, page fields and tabs, which loses more of a paragraph and a row than the
- * body does: where its parts stand and what its paragraphs lose of their own is reported, and
- * what is not is recorded once, as the {@code zones} output option's gap.</p>
+ * body does: where its parts stand and what its paragraphs lose of their own is reported, once,
+ * as the {@code zones} output option's entry.</p>
  *
  * <p>The entries are claims about the export, not proofs of it: a {@code WRITTEN} field is
- * proved by the export's own tests, a {@code REPORTED} one by a report test, and a {@code GAP}
- * is a loss the report does not yet name, each with what is lost. Closing a gap moves its entry,
- * in the same change that makes the export write or report it.</p>
+ * proved by the export's own tests, a {@code REPORTED} one by a report test. A field added later
+ * takes one of the three fates in the change that adds it.</p>
  */
 class DocxNodeFieldLedgerTest {
 
     private enum Fate {
         /** Reaches the Word file, directly or through the geometry the layout resolved. */
         WRITTEN,
-        /** Not in the Word file, and named in the export's report when the author set it. */
+        /**
+         * Not in the Word file in some or all cases, and named in the export's report there when
+         * the author set it; the entry says which, where it is not every case.
+         */
         REPORTED,
         /**
          * Nothing for a Word file to carry: a name the report addresses the node by, an
          * identity the layout resolves a wrapper's place by, or a field the page itself does
          * not apply.
          */
-        INERT,
-        /** Lost, in some or all cases, without a report note yet; the entry says what. */
-        GAP
+        INERT
     }
 
-    /** A field's fate, and for a gap what is lost, for a report what names it. */
+    /** A field's fate, and a note on it: for a report the cases it names, for another fate why. */
     private record Entry(Fate fate, String note) {
     }
 
@@ -108,11 +108,14 @@ class DocxNodeFieldLedgerTest {
             "headersAndFooters:REPORTED:a band's translucent separator, flattened against white; any other is "
             + "written, or reported where Word's parts cannot hold it",
             // The node entries below are the body's. A zone is written as one line of its
-            // paragraphs' runs, page fields and tabs; what of that the report does not name is
-            // a gap of its own.
-            "zones:GAP:in a page zone, its line's height and the room its parts hold above and below their "
-            + "text, which Word sets its own way, and a paragraph's anchor; where its parts stand across the "
-            + "line and on its baseline, and what else a zone holds, is reported");
+            // paragraphs' runs, page fields and tabs, and has its own entry here.
+            "zones:REPORTED:where its parts stand across the line and off the baseline Word sets it on, what "
+            + "its paragraphs lose of their own — an anchor, a picture's place among them — what else a zone "
+            + "holds, lines reaching past the page margin, a line the layout does not measure, and a zone "
+            + "built as nothing for no page in particular; its line's height, its lines, its tallest part's "
+            + "baseline and the room that part holds above and below its text are written, as exact lines "
+            + "placed from the edge, in a frame at its height where a measured zone shares its kind with "
+            + "another page zone");
 
     static {
         node(AlignNode.class, "name:INERT", "child:WRITTEN", "align:WRITTEN", "margin:WRITTEN");
@@ -181,11 +184,11 @@ class DocxNodeFieldLedgerTest {
                 "align:INERT:the page sets a field in a box a point wider than its number, which its "
                 + "alignment moves it no further within",
                 "padding:REPORTED:at its sides, and above and below beside other parts, where they stand the "
-                + "field off the place Word sets it on the zone's line; a lone field's above and below, in the "
-                + "zones option's gap",
+                + "field off the place Word sets it on the zone's line; a lone or tallest field's above and "
+                + "below are written, where its line stands",
                 "margin:REPORTED:at its sides, and above and below beside other parts, where they stand the "
-                + "field off the place Word sets it on the zone's line; a lone field's above and below, in the "
-                + "zones option's gap");
+                + "field off the place Word sets it on the zone's line; a lone or tallest field's above and "
+                + "below are written, where its line stands");
         node(PageReferenceNode.class, "name:INERT",
                 "anchor:REPORTED:where the anchor has no bookmark, its number is written as text",
                 "textStyle:WRITTEN", "align:WRITTEN", "placeholderText:WRITTEN",
@@ -292,7 +295,7 @@ class DocxNodeFieldLedgerTest {
             }
         });
         assertThat(undecided).as("fields with no entry: decide whether the DOCX export writes them, "
-                                 + "reports them, or leaves a gap, and say which here").isEmpty();
+                                 + "reports them, or has nothing to carry, and say which here").isEmpty();
         assertThat(stale).as("entries for fields the node no longer has").isEmpty();
     }
 
@@ -303,27 +306,11 @@ class DocxNodeFieldLedgerTest {
                 .containsExactlyInAnyOrderElementsOf(OUTPUT_OPTIONS.keySet());
     }
 
-    @Test
-    void everyGapSaysWhatIsLost() {
-        List<String> unexplained = new ArrayList<>();
-        NODES.forEach((kind, entries) -> entries.forEach((field, entry) -> {
-            if (entry.fate() == Fate.GAP && entry.note().isBlank()) {
-                unexplained.add(kind.getSimpleName() + "." + field);
-            }
-        }));
-        OUTPUT_OPTIONS.forEach((option, entry) -> {
-            if (entry.fate() == Fate.GAP && entry.note().isBlank()) {
-                unexplained.add("DocumentOutputOptions." + option);
-            }
-        });
-        assertThat(unexplained).as("a gap names what the Word file loses").isEmpty();
-    }
-
     private static void node(Class<? extends DocumentNode> kind, String... specs) {
         NODES.put(kind, fields(specs));
     }
 
-    /** {@code field:FATE}, or {@code field:GAP:what is lost}. */
+    /** {@code field:FATE}, or {@code field:FATE:a note}, as {@code field:REPORTED:the cases the report names}. */
     private static Map<String, Entry> fields(String... specs) {
         Map<String, Entry> entries = new LinkedHashMap<>();
         for (String spec : specs) {

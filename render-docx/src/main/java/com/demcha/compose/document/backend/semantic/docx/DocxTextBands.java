@@ -106,11 +106,24 @@ final class DocxTextBands {
     static double distanceFromEdge(DocumentHeaderFooter band) {
         double line = lineHeight(band);
         if (band.getZone() == DocumentHeaderFooterZone.HEADER) {
-            double baseline = band.getHeight() - band.getFontSize() / 2.0;
-            return Math.max(0, baseline - line * BASELINE_SHARE);
+            return distanceFromEdge(true, band.getHeight() - band.getFontSize() / 2.0, line);
         }
-        double baseline = band.getHeight() - band.getFontSize();
-        return Math.max(0, baseline - line * (1 - BASELINE_SHARE));
+        return distanceFromEdge(false, band.getHeight() - band.getFontSize(), line);
+    }
+
+    /**
+     * How far from its page edge an exact line stands to set its baseline where the page has
+     * it, in points: from the top of the page to the top of a header's line, or from the bottom
+     * of the page to the bottom of a footer's. A line that would stand past the edge stops at
+     * it, its baseline as far in as that leaves.
+     *
+     * @param header           whether the line is a header's
+     * @param baselineFromEdge how far the page sets the baseline from the edge: down from the
+     *                         page's top for a header, up from its foot for a footer
+     * @param line             the exact line's height
+     */
+    static double distanceFromEdge(boolean header, double baselineFromEdge, double line) {
+        return Math.max(0, baselineFromEdge - line * (header ? BASELINE_SHARE : 1 - BASELINE_SHARE));
     }
 
     /**

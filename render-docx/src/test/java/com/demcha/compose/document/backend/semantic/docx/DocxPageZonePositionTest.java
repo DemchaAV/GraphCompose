@@ -25,8 +25,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>Nothing was written, so Word used its own distance — 36pt — and the probe's footer sat
  * 14.5pt higher than the page draws it, on every page. The engine does not state the
  * distance either: a zone is a band of a given height against the edge, with its content
- * laid out inside it from the top. So the distance is read from where the content landed
- * in the resolved layout.</p>
+ * laid out inside it from the top. So the distance is read from the resolved layout — from the
+ * baseline the zone's text stands on there (DocxZoneLineTest), or, with none, from where its
+ * content landed.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -49,12 +50,15 @@ class DocxPageZonePositionTest {
     }
 
     @Test
-    void aHeadersDistanceIsItsContentsTopFromThePageTop() throws Exception {
-        // A header's content starts at the band's top, so its padding is exactly the gap
-        // between the page's top edge and the content.
-        long distance = headerDistance(zone(DocumentHeaderFooterZone.HEADER, 40, new DocumentInsets(9, 0, 0, 0)));
+    void aHeadersDistanceFollowsItsPadding() throws Exception {
+        // A header's content starts at the band's top, its padding down: 10pt more padding stands
+        // it 10pt further from the edge. Where its baseline stands is DocxZoneLineTest's.
+        long shallow = headerDistance(zone(DocumentHeaderFooterZone.HEADER, 40, new DocumentInsets(9, 0, 0, 0)));
+        long deep = headerDistance(zone(DocumentHeaderFooterZone.HEADER, 40, new DocumentInsets(19, 0, 0, 0)));
 
-        assertThat(distance).isEqualTo(Math.round(9 * TWIPS_PER_POINT));
+        assertThat(deep - shallow).isEqualTo(Math.round(10 * TWIPS_PER_POINT));
+        assertThat(shallow).as("inside the band, and not Word's 720-twip default")
+                .isGreaterThanOrEqualTo(0L).isLessThan(Math.round(9 * TWIPS_PER_POINT));
     }
 
     @Test

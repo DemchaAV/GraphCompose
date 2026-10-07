@@ -9,12 +9,13 @@ follow semantic versioning; release dates are ISO 8601.
 ### Public API
 
 - **A DOCX canvas holds its height.** The page gives a canvas its height whatever it holds. The
-  export wrote what it holds one block after another and dropped the room under it, so what
+  export writes what it holds one block after another, and dropped the room under it, so what
   followed stood that much higher. The report named the loss only where something followed the
   canvas in the flow. Elsewhere the room was lost without a note:
   - a canvas that wrote something and was its row's tallest cell;
-  - a canvas that ended a layer stack's column;
-  - a canvas in a shape container's layer, followed there or ending it.
+  - a canvas that ended a layer stack's column, or a timeline entry's body;
+  - a canvas in a shape container's layer, followed there or ending it;
+  - a canvas that only drew, between the blocks of a band's layer.
 
   What changes:
   - **The room under what it writes** is written as the space below it. The next block takes
@@ -22,18 +23,20 @@ follow semantic versioning; release dates are ISO 8601.
     canvas ends holds it on its last paragraph. So a row is as tall as its tallest canvas, and a
     column as long as the canvas ending it. At the end of the body, or before a page break,
     nothing follows to move, and nothing is written.
-  - **A canvas that only draws** holds its whole room in a flow, a row's cell or a column, as a
-    stack of drawings does in the flow. Inside a shape container's layer it holds it too.
-    Where something round it measures that room already, it holds none of its own, so the room
-    is not counted twice:
-    - a band, whose space round what it writes is measured past the drawing;
-    - drawings held whole round it, a canvas's or a stack's;
-    - a stack, a shape container or a canvas it is a layer of.
+  - **A canvas that only draws** holds its whole box, its edges included, in a flow, a row's
+    cell, a column or a band's layer, as a stack of drawings does in the flow. Inside a shape
+    container's layer it holds it too. Where something round it measures that room already, it
+    holds none of its own, its edges included, so the room is not counted twice:
+    - before the first block a band's layer writes, which the band sets the page's distance
+      down to, past the drawing;
+    - drawings held whole round it: a stack's, a shape container's or a canvas's;
+    - a stack of several layers, a shape container or a canvas it is a layer of;
+    - a block that a canvas round it writes nothing of, and so counts as taking no room.
 
     A timeline's marker, alone in its row's cell, holds its room in the cell.
   - **The report names what Word cannot hold:**
-    - what a canvas writes running past its height, which Word makes room for and the page does
-      not;
+    - what a canvas writes, one block under another, running past its height, which Word makes
+      room for and the page does not;
     - a drawing in what it writes, which takes no room in Word, so what stands below the
       drawing stands higher by its room;
     - a height nothing measures: in a table's composed cell, or with no layout.

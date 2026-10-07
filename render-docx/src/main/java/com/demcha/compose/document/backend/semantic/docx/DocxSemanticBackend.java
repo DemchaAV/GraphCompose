@@ -235,8 +235,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // How many of those overlays are layer stacks of one layer, which lay nothing over anything.
     private int oneLayerDepth;
     // How many of the nodes the writer is inside are stacks or shape containers of drawings held
-    // whole (holdTheSpaceOf), whose room holds all they hold. A band holds the room round what it
-    // writes too (bandDepth). A canvas inside either holds no room of its own (writeCanvas).
+    // whole (holdTheSpaceOf), whose room holds all they hold. A canvas inside one that only draws
+    // holds no room of its own (writeCanvas).
     private int roomHeldAround;
     // The overlays being written, innermost first (see drawsInFront).
     private final java.util.Deque<DocumentNode> openOverlays = new java.util.ArrayDeque<>();
@@ -11809,13 +11809,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Whether a block a canvas writes holds, in a flow of its own, a drawing that takes no room
      * in Word. Inside a canvas a shape, a line or a stack of drawings is drawn where the page
      * puts it and holds no room (dispatchNode, writeNodeContentOf), so what stands below it in
-     * that flow stands higher in Word, and the block shorter. A canvas in it holds its own room
-     * ({@link #writeCanvas}); an overlay's layers stand over one another, and take none on the
-     * page either.
+     * that flow stands higher in Word, and the block shorter. The flows are a section's, a
+     * container's, an alignment's and an anchor's, and a stack of one layer's, which lays
+     * nothing over anything. A canvas that only draws holds its own room ({@link #writeCanvas});
+     * an overlay's layers stand over one another, and take none on the page either.
      */
     private boolean holdsADrawingWithNoRoom(DocumentNode block) {
         if (!(block instanceof SectionNode || block instanceof ContainerNode
-              || block instanceof com.demcha.compose.document.node.AlignNode)) {
+              || block instanceof com.demcha.compose.document.node.AlignNode
+              || block instanceof com.demcha.compose.document.layout.LayoutAnchorNode || isOneLayer(block))) {
             return false;
         }
         for (DocumentNode child : block.children()) {
@@ -11837,12 +11839,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * paragraph. At the end of the body's flow, or before a page break there, it moves nothing
      * and is not owed.</p>
      *
-     * <p>One that writes nothing holds its whole room where it stands (holdTheSpaceOf), as a
-     * stack of drawings does in the flow, its drawings drawn where the page puts them. Not where
-     * what is round it measures that room already: in a band, whose space round what it writes
-     * is measured past its drawings; in a stack of drawings held whole, or a canvas that only
-     * draws, which holds its whole box; laid over the flow; or as a layer laid over another, whose
-     * overlay holds the room of its layers.</p>
+     * <p>One that writes nothing is its drawings, drawn where the page puts them, and holds its
+     * whole box where it stands (holdTheSpaceOf), as a stack of drawings does in the flow.
+     * Nothing in it owes more: not a container in it that writes nothing, whose edges are inside
+     * the box, nor a canvas in it holding its own — what was owed before its drawings stands
+     * after them. Not where what is round it measures that room already:
+     * before the first block a band's layer writes, which the band sets the page's distance down
+     * to, past the drawing (resumeSpacing); in a stack of drawings or a canvas that only draws,
+     * held whole; or where the layout lays it over another layer, or a canvas round it counts what
+     * it stands in as taking no room ({@link #roomMeasuredRound}). There it owes nothing, its
+     * edges included.</p>
      *
      * <p>Where what it writes runs past its height, Word makes room for it that the page does
      * not; where a drawing in what it writes takes no room in Word, what stands below it stands
@@ -11859,32 +11865,45 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // shape container measures its room from; a stack of one layer lays nothing over anything.
         boolean moves = followed || currentCell != null || overlayDepth - oneLayerDepth > 1;
         reportWrittenWithout(canvas, "written as its contents", canvasLosses(canvas, writes, followed, moves, room));
-        if (writes.nothing() && moves && roomHeldAround == 0 && bandDepth == 0 && overTheFlowDepth == 0
-            && !laidOverAnother(canvas) && holdTheSpaceOf(canvas)) {
-            followedInFlow.remove(canvas);
-            // The room held is its whole box: nothing in it owes more — not a container in it that
-            // writes nothing, whose edges are inside the box, nor a canvas in it holding its own.
-            double owed = pendingSpacingAfter;
-            for (DocumentNode child : canvas.children()) {
-                writeNode(document, child);
+        if (!writes.nothing()) {
+            writeContainerBody(document, canvas);
+            double left = canvas.height() - writes.height();
+            if (writes.measured() && moves && left > 0.5) {
+                owePendingSpacingAfter(left);
             }
-            pendingSpacingAfter = owed;
             return;
         }
-        writeContainerBody(document, canvas);
-        double left = canvas.height() - writes.height();
-        if (!writes.nothing() && writes.measured() && moves && left > 0.5) {
-            owePendingSpacingAfter(left);
+        followedInFlow.remove(canvas);
+        // A band sets the page's distance down to its first block past the drawing; a layer
+        // stack's column, to its first leaf, drawing and all (DocxLayerColumns).
+        boolean measuredByABand = bandDepth > 0 && !Double.isNaN(resumeSpacing);
+        boolean held = moves && !measuredByABand && roomHeldAround == 0 && !roomMeasuredRound(canvas)
+                       && holdTheSpaceOf(canvas);
+        // Held or not, nothing it holds owes more: what was owed before its drawings stands.
+        double owed = pendingSpacingAfter;
+        for (DocumentNode child : canvas.children()) {
+            writeNode(document, child);
         }
+        pendingSpacingAfter = owed;
     }
 
     /**
-     * Whether a node is a layer the layout lays over another: a layer of a stack of several, of
-     * a shape container — over its outline — or of a canvas.
+     * Whether the room of a canvas that only draws is measured by what is round it: the layout
+     * lays it over another layer — of a stack of several, of a shape container, over its outline,
+     * or of a canvas — or it stands in a block the nearest canvas round it writes nothing of,
+     * which that canvas counts as taking no room ({@link #canvasWrites}).
      */
-    private boolean laidOverAnother(DocumentNode node) {
-        DocumentNode parent = layout.parentOf(node);
-        return parent != null && isOverlay(parent) && !isOneLayer(parent);
+    private boolean roomMeasuredRound(DocumentNode canvas) {
+        DocumentNode parent = layout.parentOf(canvas);
+        if (parent != null && isOverlay(parent) && !isOneLayer(parent)) {
+            return true;
+        }
+        DocumentNode block = canvas;
+        while (parent != null && !(parent instanceof com.demcha.compose.document.node.CanvasLayerNode)) {
+            block = parent;
+            parent = layout.parentOf(parent);
+        }
+        return parent != null && onlyDrawn(block);
     }
 
     /**
@@ -11892,16 +11911,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * (drawOwnFragments); what it writes — text, pictures, tables — is written one block after
      * another inside its margin and padding, so the places it gives them and the width its text
      * wraps at are not in the file. Its room is written ({@link #writeCanvas}), except where what
-     * it writes runs past it, where a drawing in what it writes takes no room in Word, and where
-     * it is not measured — composed in a table cell, or with no layout.
+     * it writes, one block under another, runs past it, where a drawing in what it writes takes no
+     * room in Word, and where it is not measured — composed in a table cell, or with no layout.
      *
      * @param canvas   the canvas
      * @param writes   what it writes
      * @param followed whether something follows it in its flow
      * @param moves    whether its room moves anything (see {@link #writeCanvas})
      * @param room     the width its margins leave it where it is written, or NaN when not known
-     * @return the phrases, empty when what it writes stands where it places it, no taller than it,
-     *         and no narrower than the column it stands in
+     * @return the phrases, empty when it is measured, and what it writes stands where it places
+     *         it, no taller than it, holding no drawing that takes no room, and no narrower than
+     *         the column it stands in
      */
     private List<String> canvasLosses(com.demcha.compose.document.node.CanvasLayerNode canvas, CanvasWrites writes,
                                       boolean followed, boolean moves, double room) {
@@ -11910,12 +11930,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             lost.add("what it writes is written from its corner, one block after another, not where it places it");
         }
         if (!writes.measured()) {
-            // Named only where it writes something, or where something follows it to move.
-            if (!writes.nothing() || followed) {
+            // Named only where it writes something, or where something follows it to move, or
+            // where it ends a cell with no layout, whose row nothing holds to the page's height.
+            if (!writes.nothing() || followed || currentCell != null && layout.isEmpty()) {
                 lost.add("its height is not measured, so it holds only the room of what it writes");
             }
         } else if (moves && writes.height() > canvas.height() + 0.5) {
-            lost.add("what it writes runs past its height, which Word makes room for and the page does not");
+            lost.add("what it writes, one block under another, runs past its height, which Word makes room for "
+                     + "and the page does not");
         }
         if (writes.drawingInside()) {
             lost.add("a drawing in what it writes takes no room in Word, so what stands below the drawing stands "
@@ -12757,6 +12779,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             insetRight += sides[1];
         }
         try {
+            // What follows the band in its flow follows what it holds: a canvas ending an entry's
+            // body holds its room above the next entry (writeCanvas).
+            if (followedInFlow.remove(band)) {
+                followedInFlow.add(band.child());
+            }
             writeNode(document, band.child());
         } finally {
             insetLeft = outerLeft;

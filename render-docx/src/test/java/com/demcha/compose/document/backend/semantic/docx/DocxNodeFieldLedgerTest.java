@@ -123,11 +123,12 @@ class DocxNodeFieldLedgerTest {
                 "transform:REPORTED", "anchor:WRITTEN");
         node(CanvasLayerNode.class, "name:INERT",
                 "width:REPORTED:the width its text wraps at",
-                "height:REPORTED:where what it writes runs past it, where a drawing in what it writes takes "
-                + "no room in Word, and where it is not measured, composed in a table cell or with no "
-                + "layout; inside a band or drawings held whole, or as a layer laid over another, the room is "
-                + "theirs; any other is written, as the room under what it "
-                + "writes, or as its whole room where it only draws",
+                "height:REPORTED:where what it writes, one block under another, runs past it, where a drawing "
+                + "in what it writes takes no room in Word, and where it is not measured, composed in a table "
+                + "cell or with no layout; where it only draws, before a band's layer's first block, inside "
+                + "drawings held whole, as a layer laid over another or in a block a canvas round it counts "
+                + "as taking no room, the room is theirs; any other is written, as the room under what it "
+                + "writes, or as its whole box where it only draws",
                 "placements:REPORTED:where what it writes stands; its drawings stand where it places them",
                 "clipPolicy:INERT:the page clips no canvas", "padding:WRITTEN", "margin:WRITTEN");
         node(ChartNode.class, "name:INERT", "spec:REPORTED", "style:REPORTED:in the chart's note",

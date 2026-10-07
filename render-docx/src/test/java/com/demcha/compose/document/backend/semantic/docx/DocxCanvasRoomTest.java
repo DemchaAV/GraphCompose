@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -44,11 +45,14 @@ import static org.assertj.core.api.Assertions.within;
  * tallest, at the end of a layer stack's column, and in a shape container's layer. It is the
  * space below what it writes now, and the report names only what Word cannot hold: what it writes
  * running past its height, a drawing in what it writes that takes no room, and a height nothing
- * measures. Where what is round a canvas measures its room already — a band, another canvas — it
- * holds none of its own, so the room is not counted twice.</p>
+ * measures. A canvas that only draws holds none of its own where what is round it measures that
+ * room already — before the first block a band's layer writes, in drawings held whole, as a
+ * layer laid over another, or in a block a canvas round it counts as taking no room — so the
+ * room is not counted twice.</p>
  *
- * <p>Each expected distance is the page's, read from the layout's placements; each Word distance
- * is read from the file — the space above and below each paragraph, and its exact line.</p>
+ * <p>Each expected distance is the page's, read from the layout's placements, or the difference
+ * two layouts make; each Word distance is read from the file — the space above and below each
+ * paragraph, and its exact line.</p>
  */
 class DocxCanvasRoomTest {
 
@@ -107,28 +111,30 @@ class DocxCanvasRoomTest {
                         .add(new ShapeBuilder().size(40, 40).fillColor(INK).build()).build(), 0, 0))
                 .add(paragraph("Below")));
 
-        assertThat(gapInWord(exported.document(), "Above", "Below")).isCloseTo(80, within(0.1));
+        assertThat(gapInWord(exported.document(), "Above", "Below"))
+                .isCloseTo(gapOnThePage(exported.layout(), "Above", "Below"), within(0.1));
     }
 
     @Test
     void aCanvasInAStackOfOneLayerHoldsItsRoomInTheFlow() throws Exception {
+        // A stack of one layer lays nothing over anything: a canvas in its layer stands in a flow.
         Exported writing = export(page -> page
                 .addLayerStack(stack -> stack.layer(new CanvasLayerBuilder(360, 80)
                         .position(paragraph("Caption"), 0, 0).build(), LayerAlign.TOP_LEFT))
                 .add(paragraph("Below")));
         Exported drawing = export(page -> page
                 .add(paragraph("Above"))
-                .addLayerStack(stack -> stack.layer(new CanvasLayerBuilder(360, 80)
-                        .position(new ShapeBuilder().size(40, 40).fillColor(INK).build(), 0, 0).build(),
-                        LayerAlign.TOP_LEFT))
-                .add(paragraph("Below")));
+                .addLayerStack(stack -> stack.layer(new SectionBuilder()
+                        .add(new CanvasLayerBuilder(360, 80)
+                                .position(new ShapeBuilder().size(40, 40).fillColor(INK).build(), 0, 0).build())
+                        .add(paragraph("Caption")).build(), LayerAlign.TOP_LEFT)));
 
         assertThat(gapInWord(writing.document(), "Caption", "Below"))
                 .isCloseTo(gapOnThePage(writing.layout(), "Caption", "Below"), within(0.1))
                 .isGreaterThan(40);
-        assertThat(gapInWord(drawing.document(), "Above", "Below")).as("the canvas only draws")
-                .isCloseTo(gapOnThePage(drawing.layout(), "Above", "Below"), within(0.1))
-                .isCloseTo(80, within(0.1));
+        assertThat(gapInWord(drawing.document(), "Above", "Caption")).as("the canvas only draws, the caption under it")
+                .isCloseTo(gapOnThePage(drawing.layout(), "Above", "Caption"), within(0.1))
+                .isGreaterThan(40);
     }
 
     @Test
@@ -203,41 +209,138 @@ class DocxCanvasRoomTest {
         // A band measures the space above what it writes on the page, past the canvas's drawing:
         // held again, the title would stand the canvas's height low.
         Exported exported = export(page -> page
-                .addLayerStack(stack -> stack
+                .addLayerStack(stack -> stack.name("Band")
                         .layer(new ShapeBuilder().size(360, 80).fillColor(DocumentColor.rgb(238, 243, 249)).build(),
                                 LayerAlign.TOP_LEFT)
                         .layer(new SectionBuilder()
-                                .add(new CanvasLayerBuilder(60, 24)
-                                        .position(new ShapeBuilder().size(24, 24).fillColor(INK).build(), 0, 0)
-                                        .build())
+                                .add(drawingCanvas("Logo", 60, 24))
                                 .add(paragraph("Title"))
                                 .build(), LayerAlign.TOP_LEFT))
                 .add(paragraph("Next")));
+        PlacedNode band = placed(exported.layout(), "Band");
         PlacedNode title = placed(exported.layout(), "Title");
-        double contentTop = exported.layout().canvas().height() - 20;
 
         assertThat(before(paragraphOf(exported.document(), "Title"))).as("the page's distance down to it, once")
-                .isCloseTo(contentTop - (title.placementY() + title.placementHeight()), within(0.1))
-                .isCloseTo(24, within(0.1));
+                .isCloseTo(band.placementY() + band.placementHeight() - (title.placementY() + title.placementHeight()),
+                        within(0.1))
+                .isCloseTo(placed(exported.layout(), "Logo").placementHeight(), within(0.1));
+    }
+
+    @Test
+    void aCanvasThatOnlyDrawsBetweenABandLayersBlocksHoldsItsRoom() throws Exception {
+        // The band measures where its layer's first block stands, and how far its last stands
+        // from its foot; between them, its layer is a flow.
+        Exported exported = export(page -> page
+                .addLayerStack(stack -> stack
+                        .layer(new ShapeBuilder().size(360, 120).fillColor(DocumentColor.rgb(238, 243, 249)).build(),
+                                LayerAlign.TOP_LEFT)
+                        .layer(new SectionBuilder()
+                                .add(paragraph("Title"))
+                                .add(drawingCanvas("Logo", 60, 24))
+                                .add(paragraph("Subtitle"))
+                                .build(), LayerAlign.TOP_LEFT))
+                .add(paragraph("Next")));
+
+        assertThat(gapInWord(exported.document(), "Title", "Subtitle"))
+                .isCloseTo(gapOnThePage(exported.layout(), "Title", "Subtitle"), within(0.1))
+                .isGreaterThan(20);
+    }
+
+    @Test
+    void aCanvasWritingInABandLayerHoldsItsRoomBeforeWhatFollowsThere() throws Exception {
+        Exported exported = export(page -> page
+                .addLayerStack(stack -> stack
+                        .layer(new ShapeBuilder().size(360, 140).fillColor(DocumentColor.rgb(238, 243, 249)).build(),
+                                LayerAlign.TOP_LEFT)
+                        .layer(new SectionBuilder()
+                                .add(new CanvasLayerBuilder(360, 60).position(paragraph("Caption"), 0, 0).build())
+                                .add(paragraph("Subtitle"))
+                                .build(), LayerAlign.TOP_LEFT))
+                .add(paragraph("Next")));
+
+        assertThat(gapInWord(exported.document(), "Caption", "Subtitle"))
+                .isCloseTo(gapOnThePage(exported.layout(), "Caption", "Subtitle"), within(0.1))
+                .isGreaterThan(40);
+    }
+
+    @Test
+    void aCanvasThatOnlyDrawsOpeningALaterLayerOfAColumnHoldsItsRoom() throws Exception {
+        // A later layer of a column resumes the page's distance from the content above it down to
+        // its own first leaf, the canvas's drawing: unlike a band's, it leaves the canvas's room
+        // to the canvas.
+        Exported exported = export(600, page -> page.addLayerStack(stack -> stack
+                .layer(new SectionBuilder().margin(new DocumentInsets(0, 300, 0, 0))
+                        .add(paragraph("Heading")).build(), LayerAlign.TOP_LEFT)
+                .layer(new SectionBuilder().margin(new DocumentInsets(0, 300, 0, 0))
+                        .padding(new DocumentInsets(30, 0, 0, 0))
+                        .add(drawingCanvas("Logo", 60, 24))
+                        .add(paragraph("Caption")).build(), LayerAlign.TOP_LEFT)
+                .layer(new SectionBuilder().margin(new DocumentInsets(0, 0, 0, 280))
+                        .add(paragraph("Right")).build(), LayerAlign.TOP_LEFT))
+                .add(paragraph("Below")));
+
+        assertThat(gapInWord(exported.document(), "Heading", "Caption"))
+                .isCloseTo(gapOnThePage(exported.layout(), "Heading", "Caption"), within(0.1))
+                .isGreaterThan(40);
+    }
+
+    @Test
+    void aCanvasEndingAPaintedPanelHoldsItsRoomInThePanel() throws Exception {
+        Exported exported = export(page -> page
+                .addSection("Panel", panel -> panel.fillColor(DocumentColor.rgb(238, 243, 249))
+                        .add(new CanvasLayerBuilder(360, 80).position(paragraph("Caption"), 0, 0).build()))
+                .add(paragraph("Below")));
+
+        assertThat(heightInWord(cellHolding(exported.document(), "Caption"))).as("the panel as tall as the page's")
+                .isCloseTo(placed(exported.layout(), "Panel").placementHeight(), within(0.1));
     }
 
     @Test
     void aCanvasThatOnlyDrawsInsideAnotherCanvasHoldsNoRoomOfItsOwn() throws Exception {
-        // The outer canvas holds its whole room under what it writes; the seal it lays at its
-        // corner holds none of its own, or the outer one would stand the seal's height taller.
-        Exported exported = export(page -> page
-                .addCanvas(360, 200, canvas -> canvas
-                        .position(new CanvasLayerBuilder(60, 60)
-                                .position(new ShapeBuilder().size(60, 60).fillColor(INK).build(), 0, 0).build(), 0, 0)
-                        .position(paragraph("Caption"), 0, 60))
-                .add(paragraph("Below")));
-        XWPFParagraph caption = paragraphOf(exported.document(), "Caption");
+        // The outer canvas holds its whole room under what it writes. What it lays at its corner,
+        // a seal or a block holding one, takes no room among what it writes, and holds none of its
+        // own — its edges included — or the outer canvas would stand that much taller.
+        for (DocumentNode corner : List.of(
+                drawingCanvas("Seal", 60, 60),
+                new CanvasLayerBuilder(60, 60).name("Seal").padding(DocumentInsets.of(6))
+                        .position(new ShapeBuilder().size(48, 48).fillColor(INK).build(), 0, 0).build(),
+                new SectionBuilder().add(drawingCanvas("Seal", 60, 60)).build())) {
+            Exported exported = export(page -> page
+                    .add(new CanvasLayerBuilder(360, 200).name("Outer")
+                            .position(corner, 0, 0)
+                            .position(paragraph("Caption"), 0, 80).build())
+                    .add(paragraph("Below")));
+            XWPFParagraph caption = paragraphOf(exported.document(), "Caption");
 
-        assertThat(before(caption) + lineOf(caption) + gapInWord(exported.document(), "Caption", "Below"))
-                .as("the outer canvas's 200pt, its caption written at its corner")
-                .isCloseTo(200, within(0.1));
-        assertThat(detailOf(exported.report())).isEqualTo("written as its contents; what it writes is written from "
-                + "its corner, one block after another, not where it places it");
+            assertThat(before(caption) + lineOf(caption) + gapInWord(exported.document(), "Caption", "Below"))
+                    .as("the outer canvas's height, its caption written at its corner")
+                    .isCloseTo(placed(exported.layout(), "Outer").placementHeight(), within(0.1));
+            assertThat(detailOf(exported.report())).isEqualTo("written as its contents; what it writes is written "
+                    + "from its corner, one block after another, not where it places it");
+        }
+    }
+
+    @Test
+    void aCanvasThatOnlyDrawsLaidOverAnotherLayerHoldsNoRoomOfItsOwn() throws Exception {
+        // A layer of a shape container stands over its other layers on the page: its room is the
+        // container's, and what the container writes stands where it does without the canvas.
+        Function<Boolean, Consumer<PageFlowBuilder>> card = withTheCanvas -> page -> {
+            ShapeContainerBuilder container = new ShapeContainerBuilder().name("Card").rectangle(300, 120);
+            if (withTheCanvas) {
+                container.layer(drawingCanvas("Seal", 60, 60), LayerAlign.TOP_LEFT);
+            }
+            page.add(paragraph("Above"))
+                    .add(container.layer(paragraph("One"), LayerAlign.TOP_LEFT)
+                            .layer(paragraph("Two"), LayerAlign.BOTTOM_LEFT).build())
+                    .add(paragraph("Below"));
+        };
+        Exported with = export(card.apply(true));
+        Exported without = export(card.apply(false));
+
+        assertThat(gapInWord(with.document(), "Above", "One"))
+                .isCloseTo(gapInWord(without.document(), "Above", "One"), within(0.01));
+        assertThat(gapInWord(with.document(), "Two", "Below"))
+                .isCloseTo(gapInWord(without.document(), "Two", "Below"), within(0.01));
     }
 
     @Test
@@ -247,8 +350,7 @@ class DocxCanvasRoomTest {
         Exported inACanvas = export(page -> page
                 .add(paragraph("Above"))
                 .addCanvas(100, 80, canvas -> canvas.position(new SectionBuilder()
-                        .add(new CanvasLayerBuilder(40, 40)
-                                .position(new ShapeBuilder().size(40, 40).fillColor(INK).build(), 0, 0).build())
+                        .add(drawingCanvas("Inner", 40, 40))
                         .add(new ShapeBuilder().size(40, 20).fillColor(INK).build()).build(), 0, 0))
                 .add(paragraph("Below")));
         Exported inAStack = export(page -> page
@@ -256,17 +358,39 @@ class DocxCanvasRoomTest {
                 .addLayerStack(stack -> stack
                         .layer(new ShapeBuilder().size(100, 80).fillColor(INK).build(), LayerAlign.TOP_LEFT)
                         .layer(new SectionBuilder()
-                                .add(new CanvasLayerBuilder(40, 40)
-                                        .position(new ShapeBuilder().size(40, 40).fillColor(INK).build(), 0, 0).build())
+                                .add(drawingCanvas("Inner", 40, 40))
                                 .add(new ShapeBuilder().size(40, 20).fillColor(INK).build()).build(),
                                 LayerAlign.TOP_LEFT))
                 .add(paragraph("Below")));
 
-        assertThat(gapInWord(inACanvas.document(), "Above", "Below")).as("the outer canvas's 80pt")
-                .isCloseTo(80, within(0.1));
-        assertThat(gapInWord(inAStack.document(), "Above", "Below")).as("the stack's 80pt")
-                .isCloseTo(gapOnThePage(inAStack.layout(), "Above", "Below"), within(0.1))
-                .isCloseTo(80, within(0.1));
+        assertThat(gapInWord(inACanvas.document(), "Above", "Below")).as("the outer canvas's room")
+                .isCloseTo(gapOnThePage(inACanvas.layout(), "Above", "Below"), within(0.1));
+        assertThat(gapInWord(inAStack.document(), "Above", "Below")).as("the stack's room")
+                .isCloseTo(gapOnThePage(inAStack.layout(), "Above", "Below"), within(0.1));
+    }
+
+    @Test
+    void aCanvasEndingATimelineEntrysBodyHoldsItsRoomAboveTheNextEntry() throws Exception {
+        // On the rail, an entry's body is laid out under its row, in the content column; a canvas
+        // ending it holds its room above the next entry. Two canvases 60pt apart move the next
+        // entry 60pt on the page, and the space under the caption as much in Word.
+        Exported tall = export(timelineEndingABodyWithACanvas(80));
+        Exported short_ = export(timelineEndingABodyWithACanvas(20));
+        double onThePage = top(short_.layout(), "Engineer") - top(tall.layout(), "Engineer");
+
+        assertThat(after(paragraphOf(tall.document(), "Caption")) - after(paragraphOf(short_.document(), "Caption")))
+                .isCloseTo(onThePage, within(0.1))
+                .isCloseTo(60, within(0.1));
+    }
+
+    private static Consumer<PageFlowBuilder> timelineEndingABodyWithACanvas(double height) {
+        return page -> page.addTimeline(timeline -> timeline.markerOnRail()
+                .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(8, INK), entry -> entry
+                        .title("Senior Engineer")
+                        .add(body -> body.add(new CanvasLayerBuilder(300, height)
+                                .position(paragraph("Caption"), 0, 0).build())))
+                .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(8, INK), entry -> entry
+                        .content(content -> content.add(paragraph("Engineer")))));
     }
 
     @Test
@@ -298,23 +422,29 @@ class DocxCanvasRoomTest {
                 .addCanvas(360, 10, canvas -> canvas.position(paragraph("Caption"), 0, 0))
                 .add(paragraph("Below")));
 
-        assertThat(detailOf(exported.report())).isEqualTo("written as its contents; what it writes runs past its "
-                + "height, which Word makes room for and the page does not");
+        assertThat(detailOf(exported.report())).isEqualTo("written as its contents; what it writes, one block "
+                + "under another, runs past its height, which Word makes room for and the page does not");
         assertThat(gapInWord(exported.document(), "Caption", "Below")).as("no room owed under it").isZero();
     }
 
     @Test
     void aDrawingInWhatACanvasWritesIsNamedForTheRoomWordGivesItNone() throws Exception {
         // Inside a canvas a shape is drawn where the page puts it, and holds no room: the label
-        // under it stands its height high.
-        Exported exported = export(page -> page
-                .addCanvas(360, 100, canvas -> canvas.position(new SectionBuilder()
-                        .add(new ShapeBuilder().size(300, 40).fillColor(INK).build())
-                        .add(paragraph("Label")).build(), 0, 0))
-                .add(paragraph("Below")));
+        // under it stands its height high — in a section, and in a stack of one layer, which lays
+        // nothing over anything.
+        DocumentNode inASection = new SectionBuilder()
+                .add(new ShapeBuilder().size(300, 40).fillColor(INK).build())
+                .add(paragraph("Label")).build();
+        DocumentNode inAStackOfOneLayer = new com.demcha.compose.document.dsl.LayerStackBuilder()
+                .layer(inASection, LayerAlign.TOP_LEFT).build();
+        for (DocumentNode block : List.of(inASection, inAStackOfOneLayer)) {
+            Exported exported = export(page -> page
+                    .addCanvas(360, 100, canvas -> canvas.position(block, 0, 0))
+                    .add(paragraph("Below")));
 
-        assertThat(detailOf(exported.report())).isEqualTo("written as its contents; a drawing in what it writes "
-                + "takes no room in Word, so what stands below the drawing stands higher by its room");
+            assertThat(detailOf(exported.report())).isEqualTo("written as its contents; a drawing in what it writes "
+                    + "takes no room in Word, so what stands below the drawing stands higher by its room");
+        }
     }
 
     @Test
@@ -351,6 +481,19 @@ class DocxCanvasRoomTest {
     }
 
     @Test
+    void aCanvasThatOnlyDrawsEndingARowsCellWithNoLayoutNamesTheHeightNothingMeasures() throws Exception {
+        // With no layout, nothing holds the row to the page's height.
+        DocxExportReport report = DocxExports.reportWithoutLayout(400, 600, 20, page -> page
+                .addRow(row -> row.columns(DocumentRowColumn.fixed(120), DocumentRowColumn.weight(1))
+                        .addSection("Marker", cell -> cell.add(drawingCanvas("Seal", 40, 40)))
+                        .add(paragraph("Beside"))));
+
+        assertThat(report.bySubject().get("CanvasLayerNode")).extracting(DocxExportReport.Note::detail)
+                .containsExactly("written as its contents; its height is not measured, so it holds only the room "
+                                 + "of what it writes");
+    }
+
+    @Test
     void aCanvasThatOnlyDrawsAndIsFollowedByNothingWithNoLayoutIsNotNamed() throws Exception {
         DocxExportReport report = DocxExports.reportWithoutLayout(400, 600, 20, page -> page
                 .add(paragraph("Above"))
@@ -372,12 +515,25 @@ class DocxCanvasRoomTest {
         XWPFTableCell marker = exported.document().getTables().get(0).getRow(0).getCell(0);
 
         assertThat(marker.getParagraphs()).hasSize(1);
-        assertThat(before(marker.getParagraphs().get(0))).as("the marker's 8pt").isCloseTo(8, within(0.1));
+        assertThat(before(marker.getParagraphs().get(0))).as("the marker's room")
+                .isCloseTo(placed(exported.layout(), "marker").placementHeight(), within(0.1));
         assertThat(exported.report().bySubject()).doesNotContainKey("CanvasLayerNode");
     }
 
     private static DocumentNode paragraph(String text) {
         return new ParagraphBuilder().name(text).text(text).margin(DocumentInsets.zero()).build();
+    }
+
+    /** A canvas that only draws: a square as large as it, at its corner. */
+    private static DocumentNode drawingCanvas(String name, double width, double height) {
+        return new CanvasLayerBuilder(width, height).name(name)
+                .position(new ShapeBuilder().size(width, height).fillColor(INK).build(), 0, 0).build();
+    }
+
+    /** Where the page sets a placed block's top, measured up from the page's foot. */
+    private static double top(LayoutGraph layout, String name) {
+        PlacedNode placed = placed(layout, name);
+        return placed.placementY() + placed.placementHeight();
     }
 
     private static String detailOf(DocxExportReport report) {

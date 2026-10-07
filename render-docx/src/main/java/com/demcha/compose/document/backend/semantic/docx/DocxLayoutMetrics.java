@@ -76,7 +76,7 @@ final class DocxLayoutMetrics {
     private Map<Integer, List<PlacedFragment>> paintedByPage;
     // A table's first own row on each page, filled on first use — see colourUnderCell.
     private final Map<DocumentNode, Map<Integer, PlacedFragment>> firstRows = new IdentityHashMap<>();
-    // The node at each path, indexed on first use — see parentOf.
+    // The node at each path, indexed on first use — see aRowsOwnFill.
     private Map<String, DocumentNode> nodesByPath;
 
     private DocxLayoutMetrics(Map<DocumentNode, String> paths,
@@ -1370,7 +1370,9 @@ final class DocxLayoutMetrics {
     /**
      * What the page painted at a point before a fragment, over its white, as Word shows it:
      * rectangles, ellipses, polygons, paths and table cells in their fill colours, a row's own fill
-     * among them, which the export writes as its panel's shading. A picture, a barcode, a
+     * left out. Written, that fill is its panel's shading, and only what the row holds stands on
+     * it, read off the panel as written; what the page lays over the row from outside it Word
+     * writes before or after the panel, over what is under the row. A picture, a barcode, a
      * gradient, a fill drawn under a transform, or what the layout paints in a payload this does
      * not know, covering the point, leaves the colour unknown.
      */
@@ -1393,7 +1395,7 @@ final class DocxLayoutMetrics {
                 turned = Math.max(0, turned - 1);
                 continue;
             }
-            if (payload == null || PAINTS_NO_FILL.contains(payload.getClass())) {
+            if (payload == null || PAINTS_NO_FILL.contains(payload.getClass()) || aRowsOwnFill(fragment)) {
                 continue;
             }
             java.awt.Color fill = solidFillAt(fragment, x, y);
@@ -1419,6 +1421,17 @@ final class DocxLayoutMetrics {
             com.demcha.compose.document.layout.payloads.AnchorMarkerPayload.class,
             com.demcha.compose.document.layout.payloads.BookmarkMarkerPayload.class,
             com.demcha.compose.document.layout.payloads.LayoutAnchorPayload.class);
+
+    /**
+     * Whether a fragment is a row's own fill, which nothing written outside the row's panel stands
+     * on in Word (see {@link #colourUnder(PlacedFragment, double, double)}).
+     */
+    private boolean aRowsOwnFill(PlacedFragment fragment) {
+        if (!(fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload)) {
+            return false;
+        }
+        return nodesByPath().get(fragment.path()) instanceof com.demcha.compose.document.node.RowNode;
+    }
 
     /** The nodes this index knows, by path, built when first asked. */
     private Map<String, DocumentNode> nodesByPath() {

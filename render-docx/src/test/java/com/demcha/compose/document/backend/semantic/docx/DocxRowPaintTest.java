@@ -69,6 +69,10 @@ class DocxRowPaintTest {
         assertThat(exported.report().bySubject()).doesNotContainKey("row paint").doesNotContainKey("RowNode");
         // Laid out as one piece, never across a page break: its panel is kept whole too.
         assertThat(panel.getRow(0).isCantSplitRow()).isTrue();
+        // The panel holds the row's height; the columns, held as well, would grow it.
+        var columnsRow = columns.getRow(0).getCtRow();
+        assertThat(columnsRow.isSetTrPr() && columnsRow.getTrPr().sizeOfTrHeightArray() > 0)
+                .as("the columns are not held").isFalse();
     }
 
     @Test
@@ -96,10 +100,19 @@ class DocxRowPaintTest {
 
     @Test
     void anOutlineAndASidesBorderAreItsPanelsBorders() throws Exception {
-        CTTcBorders outlined = panelCell(export(page -> page.addRow(row -> row.stroke(RULE)
-                .addParagraph("Left").addParagraph("Right")))).getCTTc().getTcPr().getTcBorders();
+        Exported outlinedRow = export(page -> page.addRow(row -> row.name("Outlined").stroke(RULE)
+                .addParagraph("Left").addParagraph("Right")));
+        CTTcBorders outlined = panelCell(outlinedRow).getCTTc().getTcPr().getTcBorders();
         assertThat(List.of(outlined.getTop(), outlined.getLeft(), outlined.getBottom(), outlined.getRight()))
                 .allSatisfy(side -> assertThat(side.xgetColor().getStringValue()).isEqualToIgnoringCase("1A5694"));
+        // Word draws the borders above and below outside the row, where the page takes no room.
+        assertThat(outlinedRow.report().bySubject().get("RowNode")).singleElement().satisfies(note -> {
+            assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
+            assertThat(note.path()).contains("Outlined");
+            assertThat(note.detail()).isEqualTo("written as a panel; its borders above and below are drawn outside "
+                                                + "the panel's row in Word: where no space round the row takes them, "
+                                                + "what follows stands up to 2pt lower than the page sets it");
+        });
 
         Exported underlined = export(page -> page.addRow(row -> row.borders(DocumentBorders.bottom(RULE))
                 .addParagraph("Left").addParagraph("Right")));
@@ -108,6 +121,8 @@ class DocxRowPaintTest {
         assertThat(bottom.isSetTop() && bottom.getTop().getVal() != STBorder.NONE && bottom.getTop().getVal() != STBorder.NIL)
                 .as("no top border").isFalse();
         assertThat(underlined.report().bySubject()).doesNotContainKey("row paint");
+        assertThat(underlined.report().bySubject().get("RowNode")).extracting(DocxExportReport.Note::detail)
+                .singleElement().asString().endsWith("up to 1pt lower than the page sets it");
     }
 
     @Test
@@ -149,6 +164,103 @@ class DocxRowPaintTest {
         assertThat(rowCell.getColor()).isEqualToIgnoringCase("1E325A");
         XWPFTableCell tile = rowCell.getTables().get(0).getRow(0).getCell(0).getTables().get(0).getRow(0).getCell(0);
         assertThat(tile.getColor()).isEqualToIgnoringCase("8F99AD");
+    }
+
+    @Test
+    void aFilledRowInABandOfLayersKeepsItsNoteAndNothingIsSetOnItsFill() throws Exception {
+        // A band measures the space round its first block to the text inside it, which a panel's
+        // margins would hold again: the row is written as its columns alone, its paint named, and
+        // the panel the page lays over it, written after it, stands on what Word shows there.
+        Exported exported = export(page -> page.addLayerStack(stack -> stack
+                .back(new com.demcha.compose.document.dsl.RowBuilder().name("Under").fillColor(DocumentColor.rgb(30, 50, 90))
+                        .padding(DocumentInsets.of(20)).addParagraph("Under").addParagraph("Row").build())
+                .center(new com.demcha.compose.document.dsl.SectionBuilder().name("Over")
+                        .fillColor(DocumentColor.rgba(255, 255, 255, 128)).addParagraph("Over").build())));
+
+        assertThat(cellsShaded(exported.document())).as("the row's navy is not written; white over white")
+                .containsOnly("FFFFFF");
+        assertThat(exported.report().bySubject().get("row paint")).singleElement().satisfies(note -> {
+            assertThat(note.path()).contains("Under");
+            assertThat(note.detail()).isEqualTo("the row's fill is not written: a band of layers or a stack's "
+                                                + "column measures the space round it to its text, which its "
+                                                + "panel's margins would hold again");
+        });
+
+        // So in the middle of a band's layer, between blocks the band measures.
+        Exported middle = export(page -> page.addLayerStack(stack -> stack
+                .back(new com.demcha.compose.document.dsl.SectionBuilder().addParagraph("Top")
+                        .addRow(row -> row.name("Middle").fillColor(SURFACE).padding(DocumentInsets.of(6))
+                                .addParagraph("Left").addParagraph("Right"))
+                        .addParagraph("Bottom").build())
+                .center(new com.demcha.compose.document.dsl.SectionBuilder().addParagraph("Tag").build())));
+        assertThat(middle.report().bySubject().get("row paint")).extracting(DocxExportReport.Note::path)
+                .singleElement().asString().contains("Middle");
+    }
+
+    @Test
+    void aRowWhosePaddingOrColumnHangsPastItsEdgeKeepsItsNote() throws Exception {
+        String kept = "the row's fill is not written: its padding, or a column's margin into it, is below zero, "
+                      + "which a Word table cell's margins do not hold";
+        Exported hanging = export(page -> page.addRow(row -> row.fillColor(SURFACE).padding(DocumentInsets.of(8))
+                .addParagraph(p -> p.text("Left").margin(new DocumentInsets(0, 0, 0, -4))).addParagraph("Right")));
+        assertThat(hanging.report().bySubject().get("row paint")).extracting(DocxExportReport.Note::detail)
+                .containsExactly(kept);
+        assertThat(hanging.document().getTables().get(0).getRow(0).getTableCells()).as("its columns alone").hasSize(2);
+
+        Exported negative = export(page -> page.addRow(row -> row.fillColor(SURFACE)
+                .padding(new DocumentInsets(0, 0, 0, -10)).addParagraph("Left").addParagraph("Right")));
+        assertThat(negative.report().bySubject().get("row paint")).extracting(DocxExportReport.Note::detail)
+                .containsExactly(kept);
+    }
+
+    @Test
+    void aPaintedRowTheLayoutMovesToANewPageKeepsTheSpaceAboveItThere() throws Exception {
+        // The layout keeps the row's top margin on the new page; Word drops a paragraph's space
+        // above at a page's top and keeps a line's height, so a line kept with the panel holds it.
+        // The space below the paragraph before stays on the page above, below that paragraph.
+        Exported exported = export(page -> page.addSpacer(spacer -> spacer.height(500))
+                .addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(10)))
+                .addRow(row -> row.name("Moved").fillColor(SURFACE).margin(new DocumentInsets(24, 0, 0, 0))
+                        .padding(DocumentInsets.of(6)).addParagraph("Left").addParagraph("Right")));
+
+        List<org.apache.poi.xwpf.usermodel.IBodyElement> body = exported.document().getBodyElements();
+        int panel = body.indexOf(exported.document().getTables().get(0));
+        assertThat(body.get(panel - 1)).isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFParagraph.class)
+                .satisfies(element -> {
+                    var line = ((org.apache.poi.xwpf.usermodel.XWPFParagraph) element).getCTP().getPPr();
+                    assertThat(line.isSetKeepNext()).as("kept with the panel").isTrue();
+                    assertThat(twips(line.getSpacing().getLine())).as("the margin, 24pt").isEqualTo(480);
+                });
+        assertThat(body.get(panel - 2)).isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFParagraph.class)
+                .satisfies(element -> {
+                    var before = (org.apache.poi.xwpf.usermodel.XWPFParagraph) element;
+                    assertThat(before.getText()).isEqualTo("Before");
+                    assertThat(twips(before.getCTP().getPPr().getSpacing().getAfter()))
+                            .as("its own 10pt, on the page above").isEqualTo(200);
+                });
+        assertThat(exported.report().bySubject()).doesNotContainKey("row paint");
+    }
+
+    /** Every cell shading in the document, nested tables included. */
+    private static List<String> cellsShaded(XWPFDocument document) {
+        List<String> fills = new java.util.ArrayList<>();
+        for (XWPFTable table : document.getTables()) {
+            collectShading(table, fills);
+        }
+        return fills;
+    }
+
+    private static void collectShading(XWPFTable table, List<String> into) {
+        for (var row : table.getRows()) {
+            for (XWPFTableCell cell : row.getTableCells()) {
+                if (cell.getColor() != null) {
+                    into.add(cell.getColor().toUpperCase(java.util.Locale.ROOT));
+                }
+                for (XWPFTable nested : cell.getTables()) {
+                    collectShading(nested, into);
+                }
+            }
+        }
     }
 
     @Test

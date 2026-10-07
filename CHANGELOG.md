@@ -14,24 +14,32 @@ follow semantic versioning; release dates are ISO 8601.
   paint as lost (`row paint`).
   - **A row that paints is written as a panel**, as a painted container is: a table of one cell
     carrying the fill as its shading and the outline and side borders as its borders, its
-    margins the row's padding. The columns are a table nested in the cell, laid out as the
-    row's own less the padding the cell's margins hold. The panel is kept whole across a page
-    break, as the row is.
+    margins the row's padding, as a panel's are. The columns are a table nested in the cell,
+    laid out as the row's own less the padding the cell's margins hold; the panel holds the
+    row's height. The panel is kept whole across a page break, as the row is, and a row the
+    layout moves to a new page keeps the space above it there.
   - **A corner radius squares**, and is named (`corner radius`), as a panel's is. A translucent
     fill or border is flattened against what the page paints under it, and named.
-  - **What sits on the row is set on its fill.** A chip, a rule or a translucent panel in one of
-    its columns is flattened against the row's fill, which Word now shows under it, where it was
-    flattened against the page under the row.
-  - **Still named as `row paint`:** a row composed in a table cell, whose table draws its box as
-    a shape where it frames no text, and a row in a page zone's line.
+  - **What stands on the row is set on its fill.** A chip, a rule or a translucent panel in one
+    of its columns is flattened against the panel's shading as written, where it was flattened
+    against the page under the row.
+  - **Borders above and below are named.** Word draws them outside the panel's row, where the
+    page strokes them on the box's edge: where no space round the row takes them, what follows
+    stands up to their width lower (`RowNode`, `APPROXIMATED`). Measured, five rows with a 1pt
+    bottom border one under the other set what follows 5.4pt low in Word and LibreOffice, as five
+    containers with that border do.
+  - **Still named as `row paint`**, its columns written alone:
+    - composed in a table cell, whose table draws its box as a shape where it frames no text;
+    - in a page zone's line;
+    - in a band of overlapping layers, or where a stack's column measures the space above or
+      below it to the text inside it, which the panel's margins would hold again;
+    - with a padding below zero, or a first or last column whose margin hangs into it.
 
   Measured in Word 16 and LibreOffice on a page of painted rows, a filled row's shading covers
-  the box the page fills, to a tenth of a point, and its text stands where the page sets it.
-  An outline or a side's border with no space above or below to take it stands the content
-  under it up to the border's width low, as a bordered container's panel does in the same
-  place. No row in the DOCX fidelity corpus paints its box, and the 62 documents are
-  byte-identical. In `DocxNodeFieldLedgerTest` a row's `fillColor`, `stroke` and `borders` stay
-  `REPORTED`, for the cell and the zone.
+  the box the page fills, to a tenth of a point, and its text stands where the page sets it. No
+  row in the DOCX fidelity corpus paints its box, and the 62 documents are byte-identical. In
+  `DocxNodeFieldLedgerTest` a row's `fillColor`, `stroke` and `borders` stay `REPORTED`, for
+  the cases above.
 
 - **A DOCX export writes an auto-sized paragraph's text at the size the page fits it to.** The
   page fits a paragraph with `autoSize(...)` to the largest size its line holds, smaller or
@@ -271,8 +279,7 @@ follow semantic versioning; release dates are ISO 8601.
     is flattened against what Word paints under it. Inside a panel or cell the export shaded, that
     is the shading as written; on the page, it is read from the layout: the fills drawn before the
     block at its centre, a page background included, a row's own fill (which is not written) left
-    out (since counted, the fill written: see "A DOCX export writes a row's fill, outline and side
-    borders, as a panel holding its columns"). Each is named in the report as `translucency`:
+    out. Each is named in the report as `translucency`:
     - a panel's fill and borders, once per panel;
     - a table cell's fill and rules, once per table;
     - a rule drawn as a paragraph border;
@@ -550,9 +557,9 @@ follow semantic versioning; release dates are ISO 8601.
   - a row's fill, outline and side borders (`RowBuilder.fillColor`, `stroke`, `borders`): the
     row is written as a table with no shading or borders, and a page zone's row as one line.
     Now `DROPPED`, `row paint`, naming which of them, and `rounded` where a corner radius
-    rounds them (since written in the flow, as a panel: see "A DOCX export writes a row's fill,
-    outline and side borders, as a panel holding its columns"); a row of no columns is named where the layout gives it height, as the page
-    paints only then. A row composed in a table cell is `DROPPED` where the cell drew none of
+    rounds them; a row of no columns is named where the layout gives it height, as the page
+    paints only then (since written in the flow, as a panel: see "A DOCX export writes a row's
+    fill, outline and side borders, as a panel holding its columns"). A row composed in a table cell is `DROPPED` where the cell drew none of
     its paint — round text it never draws any — and `APPROXIMATED` where the table drew
     shapes, since a cell's paint is drawn where it frames no text and the layout does not say
     which box is the row's;

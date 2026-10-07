@@ -24,25 +24,34 @@ follow semantic versioning; release dates are ISO 8601.
     - for a picture in a zone paragraph, which Word stands on the baseline, so the exact line
       does not cut its top;
     - for a part the page fits smaller, which Word writes at its style's size.
-  - **A zone that shares its kind with another page zone** stands in a frame (`w:framePr`) at
-    its own height, as a text band does. The frame is at least the line tall, so a part of more
-    lines goes on below it.
-  - **Measured** in Word 16.0.20430 and LibreOffice 26.8 on headers and footers in 8pt and 18pt
-    Lato. A lone part's text, and a line's tallest part's, stood within 0.1pt of the page's
-    baseline in each editor, the cover's header included. A smaller part beside a taller one
-    stays on Word's one baseline, and the note counts it. Text the page sets right against the
-    edge stands lower by what its ascent falls short of four fifths of its line, about 0.4pt at
-    18pt; past a point and a half, the note names it.
+  - **A tallest part the page sets in more lines than one** is written as as many exact lines.
+    Word grows a footer up from its distance, so a footer of two lines stands a line further from
+    the edge, its first line on the page's first baseline.
+  - **A zone the layout measures that shares its kind with another page zone** stands in a frame
+    (`w:framePr`) at its own height, as a text band does. The frame is at least its lines tall,
+    so a part Word sets in more lines goes on below them.
+  - **Measured** in Word 16.0.20430 and LibreOffice 26.8 on 8pt and 18pt Lato headers and 8pt
+    Lato footers. A lone part's text, and a line's tallest part's, stood within 0.1pt of the
+    page's baseline in each editor, the cover's header included. A smaller part beside a taller
+    one stays on Word's one baseline, and the note counts it.
+  - **Text the page sets right against the edge** stands off the page's baseline, as the line
+    stops at the edge: lower in a header, by what its ascent falls short of four fifths of its
+    line, and higher in a footer, by what its descent falls short of a fifth. In the default face
+    only a header's is, about 0.4pt at 18pt. Past a point and a half, the note names it.
   - **The `page zone` note:**
-    - counts a part off the baseline Word sets the line on;
+    - counts a part off the baseline Word sets the line on, and says where the parts after a
+      part of more lines than one stand is not measured, since Word sets them on a later line;
     - names a zone paragraph's anchor, which has no bookmark, since a zone is written into a part
       each kind of page repeats;
     - names a picture the page sets anywhere but on the baseline;
-    - names a line that reaches past the page margin by more than half a point. The margin is
-      then written negative, as for a text band, so Word holds the body at it; LibreOffice moves
-      the body clear;
-    - says the line is not measured where the zone's content reads otherwise on the first page it
-      is drawn on — content that asks which page it is on. The line is Word's there.
+    - names a zone's lines that reach past the page margin by more than half a point. The margin
+      is then written negative, as for a text band, so Word holds the body at it; LibreOffice
+      moves the body clear. Within half a point — text under about 22pt set against the margin in
+      the default face — Word moves the body by as much, unnamed;
+    - says where the zone's text stands is not measured where the zone's content is built
+      otherwise for the first page it is drawn on than as written — other text, another face or
+      size, other pictures. The line is Word's there;
+    - names a zone whose content is none for no page in particular: it is not written.
   - No document of the DOCX fidelity corpus has a page zone; its bytes are unchanged.
   - Ledger: the `zones` option moves from a gap to `REPORTED`, and a lone or tallest page field's
     padding and margin above and below are written. No entry is a gap any more, and `GAP` is no

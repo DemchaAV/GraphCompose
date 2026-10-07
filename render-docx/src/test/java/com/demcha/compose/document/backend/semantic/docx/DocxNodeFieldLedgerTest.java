@@ -111,10 +111,11 @@ class DocxNodeFieldLedgerTest {
             // paragraphs' runs, page fields and tabs, and has its own entry here.
             "zones:REPORTED:where its parts stand across the line and off the baseline Word sets it on, what "
             + "its paragraphs lose of their own — an anchor, a picture's place among them — what else a zone "
-            + "holds, a line reaching past the page margin, and a line the layout does not measure; its line's "
-            + "height, its tallest part's baseline and the room that part holds above and below its text are "
-            + "written, as an exact line placed from the edge, in a frame at its height where a zone shares "
-            + "its kind with another page zone");
+            + "holds, lines reaching past the page margin, a line the layout does not measure, and a zone "
+            + "built as nothing for no page in particular; its line's height, its lines, its tallest part's "
+            + "baseline and the room that part holds above and below its text are written, as exact lines "
+            + "placed from the edge, in a frame at its height where a measured zone shares its kind with "
+            + "another page zone");
 
     static {
         node(AlignNode.class, "name:INERT", "child:WRITTEN", "align:WRITTEN", "margin:WRITTEN");

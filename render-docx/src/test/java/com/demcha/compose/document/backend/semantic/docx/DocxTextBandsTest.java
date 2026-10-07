@@ -66,6 +66,15 @@ class DocxTextBandsTest {
     }
 
     @Test
+    void anExactLineStandsItsBaselineWhereThePageSetsItAndStopsAtTheEdge() {
+        // A header's 10pt line puts its baseline 8pt below its top, a footer's 2pt above its foot.
+        assertThat(DocxTextBands.distanceFromEdge(true, 20, 10)).isCloseTo(12, within(1e-9));
+        assertThat(DocxTextBands.distanceFromEdge(false, 6, 10)).isCloseTo(4, within(1e-9));
+        assertThat(DocxTextBands.distanceFromEdge(true, 5, 10)).as("past the top edge").isZero();
+        assertThat(DocxTextBands.distanceFromEdge(false, 1, 10)).as("past the foot").isZero();
+    }
+
+    @Test
     void aBandTooLowForItsLineStartsAtTheEdge() {
         DocumentHeaderFooter header = DocumentHeaderFooter.builder()
                 .zone(DocumentHeaderFooterZone.HEADER).height(4).fontSize(12).build();

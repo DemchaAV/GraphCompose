@@ -13,8 +13,11 @@ import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.RowNode;
 import com.demcha.compose.document.style.DocumentTextStyle;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * The parts of a page zone's line, as a Word header or footer writes them: what they are, what
@@ -55,6 +58,27 @@ final class DocxZoneParts {
             }
         }
         return true;
+    }
+
+    /**
+     * The parts of content written that content built for a page does not read as, one by one
+     * ({@link #readAlike}): every part where the two hold another number of parts, or the page's
+     * is not known. A part read alike was laid out on that page as it is written.
+     *
+     * @param written the content as written
+     * @param drawn   the content as built for the page, or {@code null} where it is not known
+     * @return the parts read otherwise, by identity; none where the two read alike
+     */
+    static Set<DocumentNode> partsReadOtherwise(DocumentNode written, DocumentNode drawn) {
+        Set<DocumentNode> otherwise = Collections.newSetFromMap(new IdentityHashMap<>());
+        List<DocumentNode> parts = of(written);
+        List<DocumentNode> others = drawn == null ? List.of() : of(drawn);
+        for (int index = 0; index < parts.size(); index++) {
+            if (parts.size() != others.size() || !partAlike(parts.get(index), others.get(index))) {
+                otherwise.add(parts.get(index));
+            }
+        }
+        return otherwise;
     }
 
     private static boolean partAlike(DocumentNode part, DocumentNode other) {

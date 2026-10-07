@@ -83,56 +83,59 @@ class DocxMarkdownTest {
         List<DocxMarkdown.Piece> pieces = DocxMarkdown.read("Some **bold** text", BODY);
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some", TextDecoration.DEFAULT, 10),
                 span(" ", TextDecoration.DEFAULT, 10), span("bold", TextDecoration.BOLD, 10),
-                span(" text", TextDecoration.DEFAULT, 10))), "", false)).isTrue();
+                span(" text", TextDecoration.DEFAULT, 10))), "")).isTrue();
         // Broken over two lines, the space at the break dropped.
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some ", TextDecoration.DEFAULT, 10),
-                span("bold", TextDecoration.BOLD, 10)), line(span("text", TextDecoration.DEFAULT, 10))), "", false)).isTrue();
+                span("bold", TextDecoration.BOLD, 10)), line(span("text", TextDecoration.DEFAULT, 10))), "")).isTrue();
         // An auto-sized paragraph's text, at a size its style does not hold, in proportion.
         List<ParagraphLine> fitted = List.of(line(span("A *b*", TextDecoration.BOLD, 14)),
                 line(span("c", TextDecoration.DEFAULT, 7)));
-        assertThat(DocxMarkdown.laidOutIn(DocxMarkdown.read("# A *b*\nc", BODY), fitted, "", true)).isTrue();
-        assertThat(DocxMarkdown.laidOutIn(DocxMarkdown.read("# A *b*\nc", BODY), fitted, "", false))
-                .as("in proportion, where the page fits no size of its own").isFalse();
+        assertThat(DocxMarkdown.scaleIn(DocxMarkdown.read("# A *b*\nc", BODY), fitted, ""))
+                .as("the share they are set at").isCloseTo(0.7, org.assertj.core.data.Offset.offset(1e-9));
+        assertThat(DocxMarkdown.laidOutIn(DocxMarkdown.read("# A *b*\nc", BODY), fitted, ""))
+                .as("in proportion, not at their sizes").isFalse();
+        assertThat(DocxMarkdown.laidOutIn(DocxMarkdown.read("# A *b*\nc", BODY.withSize(7)), fitted, ""))
+                .as("read at the size the page fits the text to").isTrue();
         // A prefix the page sets before the first line leads its letters.
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("• ", TextDecoration.DEFAULT, 10),
                 span("Some ", TextDecoration.DEFAULT, 10), span("bold", TextDecoration.BOLD, 10),
-                span(" text", TextDecoration.DEFAULT, 10))), "• ", false)).isTrue();
+                span(" text", TextDecoration.DEFAULT, 10))), "• ")).isTrue();
         // Marks alone the page sets as nothing, which are not taken for the page's.
         assertThat(DocxMarkdown.read("***", BODY)).isEmpty();
-        assertThat(DocxMarkdown.laidOutIn(List.of(), List.of(line()), "", false)).isFalse();
+        assertThat(DocxMarkdown.laidOutIn(List.of(), List.of(line()), "")).isFalse();
 
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some **bold** text", TextDecoration.DEFAULT, 10))),
-                "", false)).as("the marks laid out: the session reads no markdown").isFalse();
-        assertThat(DocxMarkdown.laidOutIn(List.of(), List.of(line(span("***", TextDecoration.DEFAULT, 10))), "", false))
+                "")).as("the marks laid out: the session reads no markdown").isFalse();
+        assertThat(DocxMarkdown.laidOutIn(List.of(), List.of(line(span("***", TextDecoration.DEFAULT, 10))), ""))
                 .as("marks alone laid out").isFalse();
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some bold text", TextDecoration.DEFAULT, 10))),
-                "", false)).as("another face").isFalse();
-        assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some ", TextDecoration.DEFAULT, 10),
-                span("bold", TextDecoration.BOLD, 12), span(" text", TextDecoration.DEFAULT, 10))), "", true))
-                .as("sizes out of proportion").isFalse();
+                "")).as("another face").isFalse();
+        assertThat(DocxMarkdown.scaleIn(pieces, List.of(line(span("Some ", TextDecoration.DEFAULT, 10),
+                span("bold", TextDecoration.BOLD, 12), span(" text", TextDecoration.DEFAULT, 10))), ""))
+                .as("sizes out of proportion").isNaN();
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some ", TextDecoration.DEFAULT, 10),
                 span("bold", TextDecoration.BOLD, 10), span(" text", TextDecoration.DEFAULT, 10, FontName.COURIER,
-                        Color.BLACK))), "", false)).as("another family").isFalse();
+                        Color.BLACK))), "")).as("another family").isFalse();
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some ", TextDecoration.DEFAULT, 10),
                 span("bold", TextDecoration.BOLD, 10), span(" text", TextDecoration.DEFAULT, 10, BODY.fontName(),
-                        Color.RED))), "", false)).as("another colour").isFalse();
+                        Color.RED))), "")).as("another colour").isFalse();
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some ", TextDecoration.DEFAULT, 10),
                 span("bold", TextDecoration.BOLD, 10), new ParagraphTextSpan(" text",
                         new TextStyle(BODY.fontName(), 10, TextDecoration.DEFAULT, BODY.color().color(), 0.5), 25, 10,
-                        null, null, false))), "", false)).as("another tracking").isFalse();
+                        null, null, false))), "")).as("another tracking").isFalse();
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some ", TextDecoration.DEFAULT, 10),
-                span("bolt", TextDecoration.BOLD, 10), span(" text", TextDecoration.DEFAULT, 10))), "", false))
+                span("bolt", TextDecoration.BOLD, 10), span(" text", TextDecoration.DEFAULT, 10))), ""))
                 .as("another letter").isFalse();
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some ", TextDecoration.DEFAULT, 10),
-                span("bold", TextDecoration.BOLD, 10))), "", false)).as("a letter short").isFalse();
+                span("bold", TextDecoration.BOLD, 10))), "")).as("a letter short").isFalse();
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("- Some ", TextDecoration.DEFAULT, 10),
-                span("bold", TextDecoration.BOLD, 10), span(" text", TextDecoration.DEFAULT, 10))), "• ", false))
+                span("bold", TextDecoration.BOLD, 10), span(" text", TextDecoration.DEFAULT, 10))), "• "))
                 .as("a prefix of other letters").isFalse();
-        assertThat(DocxMarkdown.laidOutIn(pieces, List.of(), "", false)).as("no lines").isFalse();
+        assertThat(DocxMarkdown.laidOutIn(pieces, List.of(), "")).as("no lines").isFalse();
         List<ParagraphSpan> withAPicture = new ArrayList<>(line(span("Some ", TextDecoration.DEFAULT, 10),
                 span("bold", TextDecoration.BOLD, 10), span(" text", TextDecoration.DEFAULT, 10)).spans());
         withAPicture.add(new ParagraphShapeSpan(List.of(), 4, 4, null, 0, null));
-        assertThat(DocxMarkdown.laidOutIn(pieces, List.of(new ParagraphLine("", 0, 10, 10, 8, 2, withAPicture)), "", false))
+        assertThat(DocxMarkdown.laidOutIn(pieces, List.of(new ParagraphLine("", 0, 10, 10, 8, 2, withAPicture)), ""))
                 .as("anything but text").isFalse();
     }
 

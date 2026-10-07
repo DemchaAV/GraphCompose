@@ -295,9 +295,8 @@ final class DocxMarkdown {
     /**
      * Whether the page laid the pieces out in its lines: the lines' letters, less a prefix's
      * leading them, are the pieces' letters, each in the same face, family, colour and tracking,
-     * and at the same size, to {@link #SIZE_CLEARANCE} — or, where the page fits the text to a
-     * size of its own, at sizes in the same proportion, its tracking, resolved at that size, not
-     * compared. Pieces of no letter
+     * and at the same size, to {@link #SIZE_CLEARANCE}. An auto-sized paragraph's pieces are read
+     * at the size the page fits its text to ({@link #scaleIn}). Pieces of no letter
      * — text the parser reads into nothing, which the page sets as nothing — are not taken for the
      * page's: written, the paragraph would be blank, and a blank paragraph is what the export
      * writes elsewhere for no line at all. White space is not compared: the page drops it where it
@@ -306,11 +305,31 @@ final class DocxMarkdown {
      * @param pieces the pieces read off the text
      * @param lines  the lines the page laid the text out in; none never holds the pieces
      * @param prefix the prefix the page sets before the first line, empty where it sets none
-     * @param fitted whether the page fits the text to a size of its own, an auto-sized paragraph's
      */
-    static boolean laidOutIn(List<Piece> pieces, List<ParagraphLine> lines, String prefix, boolean fitted) {
+    static boolean laidOutIn(List<Piece> pieces, List<ParagraphLine> lines, String prefix) {
+        return !Double.isNaN(laidOutAt(pieces, lines, prefix, false));
+    }
+
+    /**
+     * How many times the size it was read at the page sets text read into pieces, where it fits
+     * the text to a size of its own: the share its first letter is set at, where the page laid the
+     * pieces out as {@link #laidOutIn} asks but at sizes in that proportion, their tracking,
+     * resolved at another size, not compared; {@code NaN} where it did not. Pieces read at the
+     * paragraph's style's size and taken by this share are the size the page fits the paragraph's
+     * text to, a heading's a multiple of it.
+     *
+     * @param pieces the pieces read off the text
+     * @param lines  the lines the page laid the text out in
+     * @param prefix the prefix the page sets before the first line, empty where it sets none
+     */
+    static double scaleIn(List<Piece> pieces, List<ParagraphLine> lines, String prefix) {
+        return laidOutAt(pieces, lines, prefix, true);
+    }
+
+    /** The share the pieces are found set at, 1 unless fitted; {@code NaN} where they are not found. */
+    private static double laidOutAt(List<Piece> pieces, List<ParagraphLine> lines, String prefix, boolean fitted) {
         if (lines.isEmpty()) {
-            return false;
+            return Double.NaN;
         }
         List<Letter> written = new ArrayList<>();
         for (Piece piece : pieces) {
@@ -323,7 +342,7 @@ final class DocxMarkdown {
         for (ParagraphLine line : lines) {
             for (ParagraphSpan span : line.spans()) {
                 if (!(span instanceof ParagraphTextSpan text) || text.textStyle() == null) {
-                    return false;
+                    return Double.NaN;
                 }
                 TextStyle style = text.textStyle();
                 lettersOf(text.text(), style.decoration(), style.size(), style.letterSpacing(), style.fontName(),
@@ -333,11 +352,11 @@ final class DocxMarkdown {
         List<Letter> leading = new ArrayList<>();
         lettersOf(prefix, null, 0, 0, null, null, leading);
         if (written.isEmpty() || laid.size() != leading.size() + written.size()) {
-            return false;
+            return Double.NaN;
         }
         for (int index = 0; index < leading.size(); index++) {
             if (laid.get(index).codePoint() != leading.get(index).codePoint()) {
-                return false;
+                return Double.NaN;
             }
         }
         double ratio = fitted ? laid.get(leading.size()).size() / written.get(0).size() : 1;
@@ -348,10 +367,10 @@ final class DocxMarkdown {
                 || !Objects.equals(page.family(), file.family()) || page.argb() != file.argb()
                 || Math.abs(page.size() - file.size() * ratio) > SIZE_CLEARANCE
                 || !fitted && Math.abs(page.tracking() - file.tracking()) > SIZE_CLEARANCE) {
-                return false;
+                return Double.NaN;
             }
         }
-        return true;
+        return ratio;
     }
 
     /** One letter as the page or the file sets it: its tracking in points, its colour as packed ARGB. */

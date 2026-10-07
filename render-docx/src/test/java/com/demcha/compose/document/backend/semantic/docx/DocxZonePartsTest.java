@@ -58,6 +58,26 @@ class DocxZonePartsTest {
     }
 
     @Test
+    void thePartsReadOtherwiseAreNamedOneByOne() {
+        DocumentNode written = new RowBuilder().name("Line")
+                .addParagraph(p -> p.text("Acme").textStyle(style(8)))
+                .addParagraph(p -> p.text("End").textStyle(style(8)))
+                .build();
+        DocumentNode drawn = new RowBuilder().name("Line")
+                .addParagraph(p -> p.text("Acme").textStyle(style(8)))
+                .addParagraph(p -> p.text("Continued").textStyle(style(8)))
+                .build();
+
+        assertThat(DocxZoneParts.partsReadOtherwise(written, drawn)).as("the second part alone")
+                .containsExactly(written.children().get(1));
+        assertThat(DocxZoneParts.partsReadOtherwise(written, written)).as("read alike").isEmpty();
+        assertThat(DocxZoneParts.partsReadOtherwise(written, null)).as("nothing built")
+                .containsExactlyInAnyOrderElementsOf(written.children());
+        assertThat(DocxZoneParts.partsReadOtherwise(written, paragraph("Acme", style(8))))
+                .as("another count of parts").containsExactlyInAnyOrderElementsOf(written.children());
+    }
+
+    @Test
     void aRunsFaceOrAPicturesSizeOrPlaceMakesItReadOtherwise() {
         assertThat(DocxZoneParts.readAlike(withPicture(24, InlineImageAlignment.BASELINE, style(8)),
                 withPicture(24, InlineImageAlignment.BASELINE, style(8)))).isTrue();

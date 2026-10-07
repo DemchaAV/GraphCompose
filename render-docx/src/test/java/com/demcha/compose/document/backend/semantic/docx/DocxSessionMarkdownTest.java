@@ -165,19 +165,45 @@ class DocxSessionMarkdownTest {
     }
 
     @Test
-    void anAutoSizedParagraphIsWrittenInThePiecesAtItsStylesSize() throws Exception {
-        Export export = export(true, page -> page.addParagraph(p -> p.text("Fit **this** text")
+    void anAutoSizedParagraphIsWrittenInThePiecesAtTheSizeThePageFitsItTo() throws Exception {
+        Export export = export(true, page -> page.addParagraph(p -> p.name("Fit").text("Fit **this** text")
                 .textStyle(DocumentTextStyle.builder().size(10).build()).autoSize(20, 6)));
         XWPFParagraph paragraph = export.paragraphWith("this");
-        assertThat(paragraph.getRuns()).extracting(XWPFRun::text, XWPFRun::isBold).containsExactly(
-                org.assertj.core.groups.Tuple.tuple("Fit ", false), org.assertj.core.groups.Tuple.tuple("this", true),
-                org.assertj.core.groups.Tuple.tuple(" text", false));
-        assertThat(export.notes("ParagraphNode")).noneMatch(note -> note.contains("markdown"));
-        // A heading at a multiple of the style's size fits the taller line the page fits the text to.
+        assertThat(paragraph.getRuns()).extracting(XWPFRun::text, XWPFRun::isBold, XWPFRun::getFontSizeAsDouble)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple("Fit ", false, 20.0),
+                        org.assertj.core.groups.Tuple.tuple("this", true, 20.0),
+                        org.assertj.core.groups.Tuple.tuple(" text", false, 20.0));
+        assertThat(export.notes("ParagraphNode")).isEmpty();
+        // A heading at its multiple of the size the page fits the text to, 30pt, as the page sets
+        // it: drawn past the paragraph's line, which Word cuts it in, and named.
         Export heading = export(true, page -> page.addParagraph(p -> p.text("# Big_x")
                 .textStyle(DocumentTextStyle.builder().size(10).build()).autoSize(30, 6)));
-        assertThat(heading.paragraphWith("Big").getText()).isEqualTo("Big_x");
-        assertThat(heading.notes("ParagraphNode")).noneMatch(note -> note.contains("markdown"));
+        XWPFParagraph big = heading.paragraphWith("Big");
+        assertThat(big.getText()).isEqualTo("Big_x");
+        assertThat(big.getRuns()).singleElement().satisfies(run -> assertThat(run.getFontSizeAsDouble()).isEqualTo(60.0));
+        assertThat(heading.notes("ParagraphNode")).singleElement().asString()
+                .startsWith("written as a paragraph; its markdown heading is written at 60pt in a line ")
+                .endsWith(HEADING_CUT);
+        // After a prefix the page sets before its first line, the share is read past the prefix.
+        Export prefixed = export(true, page -> page.addParagraph(p -> p.text("# Big_x").bulletOffset("• ")
+                .indentStrategy(com.demcha.compose.document.style.DocumentTextIndent.FIRST_LINE)
+                .textStyle(DocumentTextStyle.builder().size(10).build()).autoSize(30, 6)));
+        assertThat(prefixed.paragraphWith("Big").getRuns()).filteredOn(run -> run.text().contains("Big"))
+                .singleElement().satisfies(run -> assertThat(run.getFontSizeAsDouble()).isEqualTo(60.0));
+        // Fitted far below its style's 30pt, a heading at twice the fitted size is still smaller
+        // than the style's; it stands taller than the line the page fits the text to, and is named.
+        Export small = export(true, page -> page.addParagraph(p -> p.text("# A heading far too long_for one line")
+                .textStyle(DocumentTextStyle.builder().size(30).build()).autoSize(30, 6)));
+        assertThat(small.paragraphWith("heading").getRuns()).filteredOn(run -> run.text().contains("heading"))
+                .singleElement().satisfies(run -> assertThat(run.getFontSizeAsDouble()).isLessThan(30.0));
+        assertThat(small.notes("ParagraphNode")).singleElement().asString().endsWith(HEADING_CUT);
+        // Over two lines it is fitted to its least size, its heading at twice that and its body at it.
+        Export two = export(true, page -> page.addParagraph(p -> p.text("# Head_x\nbody *y*")
+                .textStyle(DocumentTextStyle.builder().size(10).build()).autoSize(20, 6)));
+        assertThat(two.paragraphWith("Head").getRuns()).filteredOn(run -> run.text().contains("_") || run.text().equals("y"))
+                .extracting(XWPFRun::text, XWPFRun::getFontSizeAsDouble)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple("Head_x", 12.0),
+                        org.assertj.core.groups.Tuple.tuple("y", 6.0));
     }
 
     @Test

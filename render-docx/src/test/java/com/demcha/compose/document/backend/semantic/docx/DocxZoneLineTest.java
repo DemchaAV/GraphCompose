@@ -15,6 +15,7 @@ import org.apache.pdfbox.text.TextPosition;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFHeaderFooter;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFramePr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
@@ -218,20 +219,85 @@ class DocxZoneLineTest {
     }
 
     @Test
-    void aPartFittedSmallerIsGivenItsStylesLine() throws Exception {
-        // Word writes it at its style's 18pt, where the page fits it smaller: in a line the page's
-        // height, its letters' tops would be cut.
+    void aPartFittedSmallerIsWrittenAtTheSizeThePageFitsItToInThePagesLine() throws Exception {
         Exported exported = export(DocumentPageZone.builder().zone(DocumentHeaderFooterZone.HEADER).height(40)
                 .padding(new DocumentInsets(4, 0, 0, 0))
                 .content(page -> new ParagraphBuilder()
                         .text("A running header far too long to set at its eighteen points across this page")
                         .textStyle(DocumentTextStyle.DEFAULT.withSize(18)).autoSize(18, 6).build())
                 .build());
+        double written = exported.headerLine().getRuns().get(0).getFontSizeAsDouble();
+        assertThat(written).as("fitted smaller than its style's 18pt, to Word's half point")
+                .isLessThan(18).isEqualTo(Math.round(exported.size("running") * 2) / 2.0);
+        Exported unfitted = export(zone(DocumentHeaderFooterZone.HEADER, 40, new DocumentInsets(4, 0, 0, 0), "Acme",
+                DocumentTextStyle.DEFAULT.withSize(written)));
+
+        assertThat(lineOf(exported.headerLine())).as("the page's line, as a part's of that size is")
+                .isCloseTo(lineOf(unfitted.headerLine()), within(0.05));
+        assertThat(exported.report().bySubject()).doesNotContainKey("page zone");
+    }
+
+    @Test
+    void aPartThePageSetsOtherwiseOnItsFirstPageTakesNoSizeFromIt() throws Exception {
+        // Written for no page in particular, it reads "End"; the page set a longer line on page 1,
+        // fitted smaller. Its lines there are other text's, and tell nothing of the size "End" is
+        // fitted to: it is written at its style's size, and named.
+        Exported exported = export(session -> session.chrome().zone(DocumentPageZone.footer(40,
+                page -> new ParagraphBuilder().text(page.isLast() ? "End"
+                                : "Continued on the next page of this report, where its totals are")
+                        .textStyle(DocumentTextStyle.DEFAULT.withSize(10)).autoSize(14, 6).build())), true);
+        assertThat(exported.size("Continued")).as("page 1's line, fitted smaller").isLessThan(10);
+
+        assertThat(exported.footerLine().getRuns()).singleElement()
+                .satisfies(run -> assertThat(run.getFontSizeAsDouble()).isEqualTo(10.0));
+        assertThat(exported.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
+                .containsExactly("a footer written as one line of Word's footer; whether its text stands where the "
+                                 + "page sets it is not measured; a paragraph's text is written at 10pt — the size "
+                                 + "the page fits it to is not measured");
+    }
+
+    @Test
+    void aPartThePageSetsAsWrittenKeepsItsLinesBesideOneItSetsOtherwise() throws Exception {
+        // Beside a part the page sets with other text on page 1, a part it sets as written there
+        // is still read from its own lines: its markdown written as the page sets it.
+        Exported exported = export(session -> session.chrome().zone(DocumentPageZone.footer(40,
+                page -> new RowBuilder().name("Line")
+                        .addParagraph(p -> p.text("**Acme**").textStyle(CHROME))
+                        .addParagraph(p -> p.text(page.isLast() ? "End" : "Continued on the next page of this report")
+                                .textStyle(DocumentTextStyle.DEFAULT.withSize(10)).autoSize(14, 6))
+                        .build())), true);
+
+        assertThat(exported.footerLine().getRuns()).filteredOn(run -> "Acme".equals(run.text())).singleElement()
+                .satisfies(run -> assertThat(run.isBold()).isTrue());
+        assertThat(exported.footerLine().getText()).doesNotContain("*");
+        assertThat(exported.footerLine().getRuns()).filteredOn(run -> "End".equals(run.text())).singleElement()
+                .satisfies(run -> assertThat(run.getFontSizeAsDouble()).isEqualTo(10.0));
+        assertThat(exported.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
+                .singleElement().asString().doesNotContain("markdown")
+                .endsWith("a paragraph's text is written at 10pt — the size the page fits it to is not measured");
+    }
+
+    @Test
+    void aPartWhoseLinesDoNotTellTheSizeThePageFitsItToIsGivenItsStylesLine() throws Exception {
+        // Fitted to 12pt, the size its first run has of its own: the lines hold 12 and 10, each a
+        // run's own, and do not tell which is the paragraph's. Written at its style's 18pt, in a
+        // line the page's height its letters' tops would be cut.
+        Exported exported = export(DocumentPageZone.builder().zone(DocumentHeaderFooterZone.HEADER).height(40)
+                .padding(new DocumentInsets(4, 0, 0, 0))
+                .content(page -> new ParagraphBuilder().textStyle(DocumentTextStyle.DEFAULT.withSize(18))
+                        .inlineText("A ", DocumentTextStyle.DEFAULT.withSize(12))
+                        .inlineText("B ", DocumentTextStyle.DEFAULT.withSize(10))
+                        .inlineText("C").autoSize(12, 6).build())
+                .build());
         Exported unfitted = export(zone(DocumentHeaderFooterZone.HEADER, 40, new DocumentInsets(4, 0, 0, 0), "Acme",
                 DocumentTextStyle.DEFAULT.withSize(18)));
 
+        assertThat(exported.headerLine().getRuns()).extracting(XWPFRun::getFontSizeAsDouble).containsExactly(12.0, 10.0, 18.0);
         assertThat(lineOf(exported.headerLine())).as("the 18pt style's line")
                 .isCloseTo(lineOf(unfitted.headerLine()), within(0.05));
+        assertThat(exported.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
+                .singleElement().asString()
+                .endsWith("a paragraph's text is written at 18pt — the size the page fits it to is not measured");
     }
 
     @Test
@@ -579,8 +645,20 @@ class DocxZoneLineTest {
             return document.getFooterList().get(0).getParagraphs().get(0);
         }
 
+        /**
+         * The size the page sets a word's first letter in, on the first page it draws it: its font's,
+         * unscaled — {@code getFontSizeInPt} rounds to a whole point.
+         */
+        double size(String word) {
+            return text.get(firstLetterOf(word)).getFontSize();
+        }
+
         /** Where the page sets a word's baseline, from its top, on the first page it draws it. */
         double baseline(String word) {
+            return text.get(firstLetterOf(word)).getYDirAdj();
+        }
+
+        private int firstLetterOf(String word) {
             StringBuilder letters = new StringBuilder();
             for (int start = 0; start < text.size(); start++) {
                 letters.setLength(0);
@@ -588,7 +666,7 @@ class DocxZoneLineTest {
                     letters.append(text.get(index).getUnicode());
                 }
                 if (letters.toString().equals(word)) {
-                    return text.get(start).getYDirAdj();
+                    return start;
                 }
             }
             throw new AssertionError("the page draws no " + word);

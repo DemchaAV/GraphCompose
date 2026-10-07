@@ -209,8 +209,10 @@ class DocxNodeFieldLedgerTest {
                 + "a side of one; a level past Word's ninth that shares it with another; the right side's of a "
                 + "pair whose left holds the level",
                 "padding:WRITTEN", "margin:WRITTEN",
-                "autoSize:REPORTED:the size the page fits the text in the paragraph's style to, where Word holds "
-                + "it apart; where the layout does not tell it, not measured",
+                "autoSize:REPORTED:where the layout does not tell the size the page fits the text in the "
+                + "paragraph's style to — no lines read, lines in sizes that do not say which is the "
+                + "paragraph's, or one paragraph added at more than one place — the text written at its "
+                + "style's, not measured; any other is written, at the size the page fits it to",
                 "verticalAlign:WRITTEN", "anchor:WRITTEN", "direction:WRITTEN");
         node(PathNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "segments:WRITTEN",
                 "fillColor:WRITTEN", "fillPaint:REPORTED", "stroke:WRITTEN", "strokePaint:REPORTED",

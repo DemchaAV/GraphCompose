@@ -51,9 +51,11 @@ final class DocxLayoutMetrics {
 
     /** What an export with no compiled layout uses: every question answers "unknown". */
     static final DocxLayoutMetrics EMPTY =
-            new DocxLayoutMetrics(new IdentityHashMap<>(), Map.of(), Map.of(), List.of(), 0);
+            new DocxLayoutMetrics(new IdentityHashMap<>(), java.util.Set.of(), Map.of(), Map.of(), List.of(), 0);
 
     private final Map<DocumentNode, String> paths;
+    // Nodes one instance of which stands at more than one place — see placedMoreThanOnce.
+    private final java.util.Set<DocumentNode> repeated;
     private final Map<String, List<PlacedFragment>> fragments;
     private final Map<String, PlacedNode> placed;
     // Every fragment, in the order the page paints them.
@@ -78,11 +80,13 @@ final class DocxLayoutMetrics {
     private Map<String, DocumentNode> nodesByPath;
 
     private DocxLayoutMetrics(Map<DocumentNode, String> paths,
+                              java.util.Set<DocumentNode> repeated,
                               Map<String, List<PlacedFragment>> fragments,
                               Map<String, PlacedNode> placed,
                               List<PlacedFragment> painted,
                               int pageCount) {
         this.paths = paths;
+        this.repeated = repeated;
         this.fragments = fragments;
         this.placed = placed;
         this.painted = painted;
@@ -104,10 +108,15 @@ final class DocxLayoutMetrics {
         for (int index = 0; index < graph.roots().size(); index++) {
             indexPaths(graph.roots().get(index), null, index, paths);
         }
+        java.util.Set<DocumentNode> seen = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
+        java.util.Set<DocumentNode> repeated = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
+        for (DocumentNode root : graph.roots()) {
+            countPlaces(root, seen, repeated);
+        }
         if (layout == null) {
             // No measurements, but the paths still name the nodes — which is what a
             // diagnostic note needs to say where in the document it came from.
-            return new DocxLayoutMetrics(paths, Map.of(), Map.of(), List.of(), 0);
+            return new DocxLayoutMetrics(paths, repeated, Map.of(), Map.of(), List.of(), 0);
         }
         Map<String, List<PlacedFragment>> fragments = new HashMap<>();
         for (PlacedFragment fragment : layout.fragments()) {
@@ -117,7 +126,39 @@ final class DocxLayoutMetrics {
         for (PlacedNode node : layout.nodes()) {
             placed.putIfAbsent(node.path(), node);
         }
-        return new DocxLayoutMetrics(paths, fragments, placed, layout.fragments(), layout.totalPages());
+        return new DocxLayoutMetrics(paths, repeated, fragments, placed, layout.fragments(), layout.totalPages());
+    }
+
+    /** Walks every place a node stands — in the flow, and in a table's composed cells — adding those seen twice. */
+    private static void countPlaces(DocumentNode node, java.util.Set<DocumentNode> seen,
+                                    java.util.Set<DocumentNode> repeated) {
+        if (node == null) {
+            return;
+        }
+        if (!seen.add(node)) {
+            repeated.add(node);
+        }
+        if (node instanceof TableNode table) {
+            for (List<DocumentTableCell> row : table.rows()) {
+                for (DocumentTableCell cell : row) {
+                    if (cell != null) {
+                        countPlaces(cell.content(), seen, repeated);
+                    }
+                }
+            }
+        }
+        for (DocumentNode child : node.children()) {
+            countPlaces(child, seen, repeated);
+        }
+    }
+
+    /**
+     * Whether one instance of a node stands at more than one place: added twice to the flow, or
+     * in the flow and in a table's composed cell. The layout lays out each place apart, at a width
+     * of its own, and this index, keyed by the node, finds the lines of only one of them.
+     */
+    boolean placedMoreThanOnce(DocumentNode node) {
+        return repeated.contains(node);
     }
 
     /**
@@ -1163,12 +1204,16 @@ final class DocxLayoutMetrics {
 
     /**
      * Whether a fragment's lines set a paragraph's markdown pieces as they are read
-     * ({@link DocxMarkdown#laidOutIn}). A fragment whose lines lead with a prefix's letters carries
-     * other text than the pieces, and is never offered.
+     * ({@link DocxMarkdown#laidOutIn}) — an auto-sized paragraph's at sizes in proportion
+     * ({@link DocxMarkdown#scaleIn}), the size the page fits it to not known before its lines are
+     * found. A fragment whose lines lead with a prefix's letters carries other text than the
+     * pieces, and is never offered.
      */
     private static boolean setsThePieces(ParagraphNode paragraph, List<DocxMarkdown.Piece> pieces, PlacedFragment fragment) {
-        return DocxMarkdown.laidOutIn(pieces, ((ParagraphFragmentPayload) fragment.payload()).lines(), "",
-                paragraph.autoSize() != null);
+        List<ParagraphLine> lines = ((ParagraphFragmentPayload) fragment.payload()).lines();
+        return paragraph.autoSize() != null
+                ? !Double.isNaN(DocxMarkdown.scaleIn(pieces, lines, ""))
+                : DocxMarkdown.laidOutIn(pieces, lines, "");
     }
 
     /** The fragments of a text still waiting for a paragraph, or {@code null} where none is. */

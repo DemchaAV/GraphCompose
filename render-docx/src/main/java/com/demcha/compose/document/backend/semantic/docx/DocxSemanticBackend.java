@@ -308,7 +308,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private final java.util.Map<ParagraphNode, List<DocxMarkdown.Piece>> markdownWritten =
             new java.util.IdentityHashMap<>();
     // Auto-sized paragraphs whose text in their style was written at the size the page fits it to
-    // (writtenStyle): their notes do not name the size. A path that writes one otherwise leaves it
+    // (fittedStyle): their notes do not name the size. A path that writes one otherwise leaves it
     // out, and it is named.
     private final java.util.Set<ParagraphNode> fittedWritten =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -1875,9 +1875,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             reportUnwrittenRowPaint(row, true);
         }
         java.util.Map<DocumentNode, String> paths = DocxLayoutMetrics.pathsWithin(content);
-        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = zoneTextAsWritten(zoneIndex, placement);
+        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex);
         for (DocumentNode part : parts) {
-            appendZonePart(para, part, zoneLinesOf(part, paths, laid));
+            appendZonePart(para, part, zoneLinesOf(part, paths, laid, placement));
         }
     }
 
@@ -1885,13 +1885,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * The lines the page laid a part of a zone out in on the first page it draws the zone on,
      * found by the part's path within the zone's content.
      *
-     * @return the lines, empty where the layout shows none of the part
+     * @return the lines, empty where the layout shows none of the part, or set it there otherwise
+     *         than it is written ({@link ZonePlacement#laidOtherwise}): another's lines tell nothing
+     *         of it
      */
     private static List<com.demcha.compose.document.layout.payloads.ParagraphLine> zoneLinesOf(
             DocumentNode part, java.util.Map<DocumentNode, String> paths,
-            java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid) {
+            java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid, ZonePlacement placement) {
         com.demcha.compose.document.layout.PlacedFragment fragment = laid.get(paths.get(part));
-        return fragment == null || !(fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload text)
+        return fragment == null || placement.laidOtherwise().contains(part)
+               || !(fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload text)
                 ? List.of() : text.lines();
     }
 
@@ -1916,25 +1919,29 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>Where the page set the zone on the first page it draws it otherwise than the zone is
      * written — other text, another face or size, other pictures ({@link DocxZoneParts#readAlike})
-     * — the line is not measured, and Word's own, and the lines the page set there tell nothing
-     * of the parts written: not the pieces of their markdown, nor the size an auto-sized one is
-     * fitted to.</p>
+     * — the line is not measured, and Word's own. A part the page set there otherwise has lines
+     * of another's, which tell nothing of it: not the size an auto-sized one is fitted to, nor the
+     * pieces of its markdown. A part it set there as written keeps them.</p>
      *
-     * @param line     the exact line's height in points, NaN where no part's text is laid out
-     * @param lines    how many lines the part of the most takes on the page
-     * @param distance from the page's top edge to the paragraph's top in a header, from its foot
-     *                 to the paragraph's foot in a footer, in points
-     * @param baseline the baseline Word sets the first line on, measured up from the page's foot
-     * @param asLaid   whether the page set the zone on the first page it draws it as it is
-     *                 written, so its lines there are the parts' own
+     * @param line          the exact line's height in points, NaN where no part's text is laid out
+     * @param lines         how many lines the part of the most takes on the page
+     * @param distance      from the page's top edge to the paragraph's top in a header, from its
+     *                      foot to the paragraph's foot in a footer, in points
+     * @param baseline      the baseline Word sets the first line on, measured up from the page's foot
+     * @param laidOtherwise the parts the page set on the first page it draws the zone otherwise
+     *                      than they are written ({@link DocxZoneParts#partsReadOtherwise}), whose
+     *                      lines there are not their own
      */
-    private record ZonePlacement(double line, int lines, double distance, double baseline, boolean asLaid) {
+    private record ZonePlacement(double line, int lines, double distance, double baseline,
+                                 java.util.Set<DocumentNode> laidOtherwise) {
 
         private static final ZonePlacement UNMEASURED =
-                new ZonePlacement(Double.NaN, 0, Double.NaN, Double.NaN, true);
+                new ZonePlacement(Double.NaN, 0, Double.NaN, Double.NaN, java.util.Set.of());
 
-        private static final ZonePlacement LAID_OTHERWISE =
-                new ZonePlacement(Double.NaN, 0, Double.NaN, Double.NaN, false);
+        /** Not measured, its parts named laid otherwise among them. */
+        static ZonePlacement laidOtherwise(java.util.Set<DocumentNode> parts) {
+            return new ZonePlacement(Double.NaN, 0, Double.NaN, Double.NaN, parts);
+        }
 
         /** Whether the layout laid out the text the line is placed by. */
         boolean measured() {
@@ -1953,10 +1960,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (Double.isNaN(canvasHeight) || firstPage < 0) {
             return ZonePlacement.UNMEASURED;
         }
-        // The page set the zone otherwise there than it is written: its line is not measured by it.
-        if (!DocxZoneParts.readAlike(content, zone.getContent().apply(
-                PageContext.paginated(firstPage + 1, Math.max(firstPage + 1, layout.pageCount()))))) {
-            return ZonePlacement.LAID_OTHERWISE;
+        // The page set the zone otherwise there than it is written: its line is not measured by it,
+        // and a part set otherwise takes nothing from its lines there.
+        DocumentNode drawn = zone.getContent().apply(
+                PageContext.paginated(firstPage + 1, Math.max(firstPage + 1, layout.pageCount())));
+        if (!DocxZoneParts.readAlike(content, drawn)) {
+            return ZonePlacement.laidOtherwise(DocxZoneParts.partsReadOtherwise(content, drawn));
         }
         java.util.Map<DocumentNode, String> paths = DocxLayoutMetrics.pathsWithin(content);
         java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex);
@@ -2001,17 +2010,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double distance = DocxTextBands.distanceFromEdge(header,
                 header ? canvasHeight - tallest.baseline() : tallest.baseline() - (mostLines - 1) * line, line);
         double baseline = header ? canvasHeight - distance - above : distance + (mostLines - 1) * line + (line - above);
-        return new ZonePlacement(line, mostLines, distance, baseline, true);
-    }
-
-    /**
-     * The fragments the page laid a zone's parts out in, by path within its content: on the first
-     * page it draws the zone on, and none where it set the zone there otherwise than it is written
-     * ({@link ZonePlacement#asLaid}), whose lines are other text's.
-     */
-    private java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> zoneTextAsWritten(
-            int zoneIndex, ZonePlacement placement) {
-        return placement.asLaid() ? layout.zoneText(zoneIndex) : java.util.Map.of();
+        return new ZonePlacement(line, mostLines, distance, baseline, java.util.Set.of());
     }
 
     /**
@@ -2086,7 +2085,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void reportZoneLine(int zoneIndex, boolean header, DocumentNode content, ZonePlacement placement) {
         List<DocumentNode> parts = DocxZoneParts.of(content);
         java.util.Map<DocumentNode, String> paths = DocxLayoutMetrics.pathsWithin(content);
-        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = zoneTextAsWritten(zoneIndex, placement);
+        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex);
         // Read where the line is placed by what the page set: not where the page set other text.
         boolean measured = placement.measured() && !laid.isEmpty() && !Double.isNaN(canvasLeftMargin);
         // Each text part's side of the line: 0 from the left margin, 1 against the right, 2
@@ -2180,7 +2179,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         for (DocumentNode part : texts) {
             if (part instanceof ParagraphNode paragraph) {
-                lost.addAll(zoneParagraphLost(paragraph, zoneLinesOf(part, paths, laid)));
+                lost.addAll(zoneParagraphLost(paragraph, zoneLinesOf(part, paths, laid, placement)));
             }
         }
         if (!lost.isEmpty()) {
@@ -2252,7 +2251,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * half-point size: one line, with no prefix it does not write and at the size the page fits
      * its text to.
      */
-    private static boolean widthKept(DocumentNode part, com.demcha.compose.document.layout.PlacedFragment fragment) {
+    private boolean widthKept(DocumentNode part, com.demcha.compose.document.layout.PlacedFragment fragment) {
         List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines =
                 ((com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload) fragment.payload()).lines();
         return lines.size() == 1 && !(part instanceof ParagraphNode paragraph
@@ -7665,16 +7664,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * What an auto-sized paragraph's text loses of its size, read off what was written: the size
      * the file holds it at, to Word's half point, saying the one the page fits it to is not
      * measured, where its text in its style was not written at the fitted size
-     * ({@link #fittedWritten}) — its lines are not read, or are in sizes that do not say which is
-     * the paragraph's. {@code null} where it was, or nothing laid out takes the paragraph's style
-     * — a run with a style of its own keeps its size on the page.
+     * ({@link #fittedWritten}) — its lines are not read, are in sizes that do not say which is
+     * the paragraph's, or are one place's of several ({@link #fittedStyle}). {@code null} where it
+     * was, or nothing laid out takes the paragraph's style — a run with a style of its own keeps
+     * its size on the page.
      *
      * @param lines the lines the page laid the paragraph out in, empty where they are not read
      */
     private String autoSizeLost(ParagraphNode node, List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
                                 String whose) {
-        if (node.autoSize() == null || fittedWritten.contains(node)
-            || !holdsTextInTheParagraphsStyle(node) && !laysOutAPrefix(node, lines)) {
+        if (node.autoSize() == null || fittedWritten.contains(node) || !laysOutInItsStyle(node, lines)) {
             return null;
         }
         return whose + " text is written at " + pointsOf(wordsSize(node.textStyle().size()))
@@ -7683,16 +7682,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether an auto-sized paragraph is to be written at its style's size where the page fits it
-     * to another: its text in its style laid out in lines that do not tell the fitted size
-     * ({@link #fittedSize}), as {@link #writtenStyle} reads them. Read before the paragraph is
-     * written, by what it holds a line for.
+     * to another: its text in its style laid out where the lines do not tell the fitted size
+     * ({@link #fittedStyle}). Read before the paragraph is written, by what it holds a line for.
      *
      * @param lines the lines the page laid the paragraph out in, empty where they are not read
      */
-    private static boolean fittedSizeUntold(ParagraphNode node,
-                                            List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
-        return node.autoSize() != null && (holdsTextInTheParagraphsStyle(node) || laysOutAPrefix(node, lines))
-               && Double.isNaN(fittedSize(node, lines));
+    private boolean fittedSizeUntold(ParagraphNode node,
+                                     List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
+        return node.autoSize() != null && laysOutInItsStyle(node, lines) && fittedStyle(node, lines) == null;
+    }
+
+    /**
+     * Whether the page lays out anything of a paragraph in the paragraph's own style, the size an
+     * auto-sized one is fitted to: its plain text or a run with no style of its own, or the prefix
+     * it sets before its lines.
+     *
+     * @param lines the lines the page laid the paragraph out in, empty where they are not read
+     */
+    private static boolean laysOutInItsStyle(ParagraphNode node,
+                                             List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
+        return holdsTextInTheParagraphsStyle(node) || laysOutAPrefix(node, lines);
     }
 
     /**
@@ -7721,7 +7730,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * @param lines the lines the page laid the paragraph out in, empty where they are not read
      */
-    private static List<DocxMarkdown.Piece> markdownPieces(ParagraphNode node,
+    private List<DocxMarkdown.Piece> markdownPieces(ParagraphNode node,
                                                            List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
         if (!DocxMarkdown.mayRead(node)) {
             return null;
@@ -7858,10 +7867,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (lines.stream().allMatch(line -> line.text().isBlank())) {
             return null;
         }
-        int laidOut = -prefixMarks;
-        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
-            laidOut += markdownMarksIn(line.text());
-        }
+        int laidOut = markdownMarksIn(lines) - prefixMarks;
         return laidOut < authored
                 ? whose + " markdown marks are written as letters, where the page sets the text they mark and drops them"
                 : null;
@@ -7875,6 +7881,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static boolean parserDropsAMark(String text) {
         return DocxMarkdown.holdsAMark(text)
                && markdownMarksIn(DocxMarkdown.text(DocxMarkdown.read(text, DocumentTextStyle.DEFAULT))) < markdownMarksIn(text);
+    }
+
+    /** The markdown marks the page's lines hold, a prefix's among them. */
+    private static int markdownMarksIn(List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
+        int marks = 0;
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
+            marks += markdownMarksIn(line.text());
+        }
+        return marks;
     }
 
     private static int markdownMarksIn(String text) {
@@ -7973,11 +7988,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // kept every mark. Where it dropped one it read the text into pieces — Arabic, which it
             // shapes before it reads the marks, among them — a heading's at a multiple of the
             // paragraph's size, and one size there may be the heading's.
-            int laidOut = -markdownMarksIn(prefix);
-            for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
-                laidOut += markdownMarksIn(line.text());
-            }
-            if (laidOut < markdownMarksIn(node.text())) {
+            if (markdownMarksIn(lines) - markdownMarksIn(prefix) < markdownMarksIn(node.text())) {
                 return Double.NaN;
             }
         }
@@ -8009,22 +8020,36 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * The style a paragraph's text is written in where it takes the paragraph's: an auto-sized
-     * paragraph's at the size the page fits it to, where its lines tell it ({@link #fittedSize});
-     * the node's own style otherwise, the very instance, so a writer tells whether it wrote the
-     * fitted size ({@link #fittedWritten}) — an auto-sized one's then named ({@link #autoSizeLost}).
-     * A run with a style of its own keeps it, on the page and in the file.
+     * An auto-sized paragraph's style at the size the page fits its text to, where its lines tell
+     * it ({@link #fittedSize}); {@code null} where it is not auto-sized, or they do not. They do
+     * not for a node one instance of which stands at more than one place
+     * ({@link DocxLayoutMetrics#placedMoreThanOnce}): the page fits it at each apart, and its
+     * lines are one place's.
      *
      * @param lines the lines the page laid the paragraph out in, empty where they are not read
      */
-    private static DocumentTextStyle writtenStyle(ParagraphNode node,
-                                                  List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
+    private DocumentTextStyle fittedStyle(ParagraphNode node,
+                                          List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
         DocumentTextStyle style = node.textStyle();
-        if (node.autoSize() == null || style == null) {
-            return style;
+        if (node.autoSize() == null || style == null || layout.placedMoreThanOnce(node)) {
+            return null;
         }
         double fitted = fittedSize(node, lines);
-        return Double.isNaN(fitted) ? style : style.withSize(fitted);
+        return Double.isNaN(fitted) ? null : style.withSize(fitted);
+    }
+
+    /**
+     * The style a paragraph's text is written in where it takes the paragraph's: an auto-sized
+     * paragraph's at the size the page fits it to, where its lines tell it ({@link #fittedStyle});
+     * its own otherwise — an auto-sized one's then named ({@link #autoSizeLost}). A run with a
+     * style of its own keeps it, on the page and in the file.
+     *
+     * @param lines the lines the page laid the paragraph out in, empty where they are not read
+     */
+    private DocumentTextStyle writtenStyle(ParagraphNode node,
+                                           List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
+        DocumentTextStyle fitted = fittedStyle(node, lines);
+        return fitted != null ? fitted : node.textStyle();
     }
 
     /**
@@ -8682,8 +8707,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(node);
         boolean wroteARun = false;
         PictureReach pictures = PictureReach.NONE;
-        DocumentTextStyle written = writtenStyle(node, lines);
-        if (written != node.textStyle()) {
+        DocumentTextStyle fitted = fittedStyle(node, lines);
+        DocumentTextStyle written = fitted != null ? fitted : node.textStyle();
+        if (fitted != null) {
             fittedWritten.add(node);
         }
         // The mark closes the last line, so it is sized as the text that ends it.
@@ -8771,7 +8797,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         styleTheMark(para, markStyle);
         // A paragraph the layout laid out none of — composed in a table cell, a page zone's, or
-        // one of an export without a layout — has its style's line.
+        // one of an export without a layout — has the line of the style its text is written in.
         double pageLine = pictures.pageLine() > 0 ? pictures.pageLine()
                 : pictures.pageLine() == 0 ? styleLineHeight(written) : 0;
         if (pageLine > 0 && pictures.reach() >= pageLine - PICTURE_FILLS_ITS_LINE) {
@@ -10116,8 +10142,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private String badgeParagraphXml(XWPFDocument document, ParagraphNode paragraph) {
         XWPFParagraph para = detachedParagraph(document);
         para.setAlignment(ParagraphAlignment.CENTER);
-        DocumentTextStyle style = writtenStyle(paragraph, layout.lines(paragraph));
-        if (style != paragraph.textStyle()) {
+        DocumentTextStyle fitted = fittedStyle(paragraph, layout.lines(paragraph));
+        DocumentTextStyle style = fitted != null ? fitted : paragraph.textStyle();
+        if (fitted != null) {
             fittedWritten.add(paragraph);
         }
         String text = badgeTextOf(paragraph);

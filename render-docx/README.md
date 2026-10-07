@@ -139,8 +139,8 @@ What is not written — each one is named in the export report
 - **What a paragraph's own fields set where Word cannot hold it**, named in the export report on
   the paragraph outside a header or footer (a page zone's are named on the zone):
   - the size an auto-sized paragraph's text is fitted to, where the layout does not tell it (no
-    lines read, or lines in sizes that do not say which is the paragraph's); elsewhere the text
-    is written at it;
+    lines read, lines in sizes that do not say which is the paragraph's, or one paragraph added
+    at more than one place); elsewhere the text is written at it;
   - the marks of a paragraph the session reads as markdown (the default; `markdown(false)` turns
     it off), where they are written as letters: the paragraph is written as the page sets it —
     its marks dropped, each piece in the page's face and size — wherever the page's lines show

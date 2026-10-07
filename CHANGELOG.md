@@ -16,18 +16,26 @@ follow semantic versioning; release dates are ISO 8601.
   - **The text that takes the paragraph's style is written at the fitted size**, read off the
     layout's lines. A run with a style of its own keeps it, as on the page. The paragraph's mark,
     which Word continues from, takes the fitted size where the text ending it takes the
-    paragraph's style, and a prefix the page sets before the lines is measured at it.
+    paragraph's style or a chip ends it, and a prefix the page sets before the lines is measured
+    at it.
   - **Markdown pieces are read at it.** A heading is written at its multiple of the fitted size, as
-    the page sets it, and named where it stands taller than its line, as any heading is.
+    the page sets it, and named where it stands taller than its line, as any heading is. A
+    heading's note now names its size as Word holds it, to the half point — any paragraph's
+    heading, and a list item's.
   - **Every path that writes a paragraph does it:** the body, a table cell, text over the flow, a
     side of an overlay's left-and-right pair, a badge's initials and a page zone's line. A zone's
     line is the page's, where it was its style's.
   - **Still written at its style's size, and named**, where the layout's lines do not tell the
-    fitted size. None are read: with no layout, or for a page zone the page sets with other text
-    on the first page it draws it than the zone is written with. Or their sizes do not say which
-    is the paragraph's: a paragraph fitted to 12pt beside runs of 12pt and 10pt of their own, or
-    Arabic the page reads as markdown, which it shapes before it reads the marks. The note says
-    the fitted size is not measured.
+    fitted size. The note says the fitted size is not measured.
+    - None are read: with no layout, for a paragraph composed in a table cell that no line of
+      its table carries, and for a part of a page zone the layout shows none of, or sets
+      otherwise on the first page it draws the zone — other text, face, size or pictures. A part
+      the page sets as written there keeps its lines, and its markdown is read from them.
+    - Their sizes do not say which is the paragraph's: a paragraph fitted to 12pt beside runs of
+      12pt and 10pt of their own, or Arabic the page reads as markdown, which it shapes before
+      it reads the marks.
+    - They are one place's: one paragraph added at more than one place, which the page fits at
+      each apart.
 
   Measured in Word 16 and LibreOffice on a page of auto-sized paragraphs, each word now stands
   within half a point of the page's baseline, at the page's size. A shrunk headline is one line,
@@ -90,7 +98,10 @@ follow semantic versioning; release dates are ISO 8601.
   - **The page's own lines decide it.** The pieces are written only where the lines the page laid
     the paragraph out in hold the pieces' letters in their faces, families, colours and tracking,
     at their sizes to a hundredth of a point — or, where the page fits the text to a size of its
-    own, at sizes in the same proportion. A session that reads no markdown lays the marks out, and
+    own, at sizes in the same proportion (since read at the fitted size and compared exactly, a
+    table cell's lines matched in proportion: see "A DOCX export writes an auto-sized
+    paragraph's text at the size the page fits it to"). A session that reads no markdown lays
+    the marks out, and
     the text is written as it stands, as before; so is text the parser changes nothing of, an
     underscore inside a word.
   - **The faces are the page's.** Where the session reads markdown, its parser sets every piece in

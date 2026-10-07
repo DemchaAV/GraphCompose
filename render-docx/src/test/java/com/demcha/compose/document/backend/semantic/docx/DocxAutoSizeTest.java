@@ -12,6 +12,7 @@ import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
+import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
@@ -43,8 +44,8 @@ import static org.assertj.core.groups.Tuple.tuple;
  * An auto-sized paragraph's text is written at the size the page fits it to, smaller or larger
  * than its style's, on every path that writes a paragraph: the file holds what the page draws.
  * A run with a style of its own keeps it, as on the page. Where the page's lines do not tell the
- * size — no lines read, or lines in sizes that do not say which is the paragraph's — the text is
- * written at its style's size, and named.
+ * size — no lines read, lines in sizes that do not say which is the paragraph's, or one place's of
+ * the several a paragraph is added at — the text is written at its style's size, and named.
  */
 class DocxAutoSizeTest {
 
@@ -71,7 +72,33 @@ class DocxAutoSizeTest {
         assertThat(grown.firstSize("Hi")).isEqualTo(24.0);
         assertThat(grown.paragraphWith("Hi").getRuns()).singleElement()
                 .satisfies(run -> assertThat(run.getFontSizeAsDouble()).isEqualTo(24.0));
+        assertThat(markSize(grown.paragraphWith("Hi"))).isEqualTo(24.0);
         assertThat(grown.notes()).isEmpty();
+    }
+
+    @Test
+    void textThePageLaysOutWithEveryMarkIsWrittenAtTheOneSizeItsLinesHold() throws Exception {
+        // A session that reads no markdown lays the marks out, in the one size it fits the text to.
+        Export authored = export(false, page -> page.addParagraph(p -> p.name("Draft")
+                .text("**Draft** status of the report for the quarter").textStyle(DocumentTextStyle.DEFAULT.withSize(24))
+                .autoSize(24, 6)));
+        double fitted = authored.firstSize("Draft");
+        assertThat(fitted).isLessThan(24);
+        assertThat(authored.paragraphWith("Draft").getRuns()).singleElement().satisfies(run -> {
+            assertThat(run.text()).isEqualTo("**Draft** status of the report for the quarter");
+            assertThat(run.getFontSizeAsDouble()).isEqualTo(wordsSize(fitted));
+        });
+        assertThat(authored.notes()).isEmpty();
+
+        // So does one that reads it, where the parser keeps the mark: an underscore inside a word, in
+        // Arabic, whose letters the page shapes before it reads the marks.
+        Export arabic = export(page -> page.addParagraph(HEADLINE + " " + HEADLINE).addParagraph(p -> p.name("Kept")
+                .text("مرحبا_بالعالم").textStyle(DocumentTextStyle.builder().fontName(FontName.AMIRI).size(10).build())
+                .autoSize(20, 6)));
+        double kept = arabic.firstSize("Kept");
+        assertThat(kept).isNotEqualTo(10.0);
+        assertThat(sizesOf(arabic.document(), "مرحبا_بالعالم")).containsOnly(halfPoints(kept));
+        assertThat(arabic.notes()).isEmpty();
     }
 
     @Test
@@ -142,7 +169,8 @@ class DocxAutoSizeTest {
         assertThat(cell.notes()).isEmpty();
 
         // A heading at a multiple of a fitted size off Word's half point is named at the size the
-        // file holds it at.
+        // file holds it at. Fitted on a grid of whole points from 24.5, the size is a half point,
+        // and the second level's heading, half as large again, a quarter off one.
         Export heading = export(page -> page.addParagraph(p -> p.name("Second")
                 .text("## A second level heading far too long_x").textStyle(DocumentTextStyle.DEFAULT.withSize(24))
                 .autoSize(new com.demcha.compose.document.style.DocumentTextAutoSize(24.5, 4.5, 1.0))));
@@ -196,7 +224,7 @@ class DocxAutoSizeTest {
                 .build()).addParagraph("Masthead"));
         assertThat(box.firstSize("Monogram")).isEqualTo(30.0);
         assertThat(box.xml()).contains("<wps:txbx>");
-        assertThat(sizesOf(box.document(), "LM")).isNotEmpty().containsOnly(30.0);
+        assertThat(sizesOf(box.document(), "LM")).isNotEmpty().containsOnly(halfPoints(30));
         assertThat(box.notes()).as("the box's own note, and nothing of the size").isNotEmpty()
                 .noneMatch(note -> note.contains("is written at"));
 
@@ -205,13 +233,13 @@ class DocxAutoSizeTest {
         double initials = badge.firstSize("Initials");
         assertThat(initials).isGreaterThan(8);
         assertThat(badge.xml()).contains("<wps:txbx>");
-        assertThat(sizesOf(badge.document(), "JR")).isNotEmpty().containsOnly(wordsSize(initials));
+        assertThat(sizesOf(badge.document(), "JR")).isNotEmpty().containsOnly(halfPoints(initials));
         assertThat(badge.notes()).isEmpty();
         // Initials the page reads as markdown, in one face at the fitted size, stay in the shape.
         Export marked = export(page -> page.add(badge("*JR*")));
         assertThat(marked.xml()).contains("<wps:txbx>").doesNotContain("*JR*");
         assertThat(italicOf(marked.document(), "JR")).isNotEmpty().containsOnly(true);
-        assertThat(sizesOf(marked.document(), "JR")).isNotEmpty().containsOnly(wordsSize(marked.firstSize("Initials")));
+        assertThat(sizesOf(marked.document(), "JR")).isNotEmpty().containsOnly(halfPoints(marked.firstSize("Initials")));
         assertThat(marked.notes()).isEmpty();
     }
 
@@ -244,13 +272,23 @@ class DocxAutoSizeTest {
                     .addParagraph(p -> p.text(text).textStyle(amiri).autoSize(20, 6)));
             assertThat(arabic.notes()).as(text).singleElement().asString()
                     .startsWith("written as a paragraph; its text is written at 10pt — " + UNMEASURED);
-            assertThat(sizesOf(arabic.document(), text.replace("\n", ""))).as(text).containsOnly(10.0);
+            assertThat(sizesOf(arabic.document(), text.replace("\n", ""))).as(text).containsOnly(halfPoints(10));
         }
+
+        // One paragraph added at two places is fitted at each apart; its lines are one place's.
+        ParagraphNode shared = new ParagraphBuilder().name("Shared").text("Shared heading text here").textStyle(TEN)
+                .autoSize(30, 6).build();
+        Export twice = export(page -> page.addParagraph(HEADLINE + " " + HEADLINE).add(shared)
+                .add(new TableBuilder().name("Narrow").columns(DocumentTableColumn.fixed(60))
+                        .rowCells(DocumentTableCell.node(shared)).build()));
+        assertThat(sizesOf(twice.document(), "Shared heading text here")).hasSize(2).containsOnly(halfPoints(10));
+        assertThat(twice.notes()).hasSize(2)
+                .allSatisfy(note -> assertThat(note).endsWith("its text is written at 10pt — " + UNMEASURED));
 
         // With no layout, nothing tells it.
         Consumer<PageFlowBuilder> unlaid = page -> page.addParagraph(p -> p.text(HEADLINE + " " + HEADLINE).textStyle(TEN))
                 .addParagraph(p -> p.text("Hi").textStyle(DocumentTextStyle.DEFAULT.withSize(24)).autoSize(24, 6));
-        assertThat(sizesOf(DocxExports.withoutLayout(240, 600, 30, unlaid), "Hi")).containsExactly(24.0);
+        assertThat(sizesOf(DocxExports.withoutLayout(240, 600, 30, unlaid), "Hi")).containsExactly(halfPoints(24));
         assertThat(DocxExports.reportWithoutLayout(240, 600, 30, unlaid).bySubject().get("ParagraphNode"))
                 .extracting(DocxExportReport.Note::detail)
                 .containsExactly("written as a paragraph; its text is written at 24pt — " + UNMEASURED);
@@ -279,15 +317,23 @@ class DocxAutoSizeTest {
         return runs;
     }
 
-    /** The sizes the runs reading a text are written at, wherever in the body they stand. */
-    private static List<Double> sizesOf(XWPFDocument document, String text) {
-        List<Double> sizes = new ArrayList<>();
+    /**
+     * The sizes the runs reading a text are written at, wherever in the body they stand, as the
+     * file states them: in Word's half points ({@link #halfPoints}).
+     */
+    private static List<String> sizesOf(XWPFDocument document, String text) {
+        List<String> sizes = new ArrayList<>();
         for (XmlObject run : runsReading(document, text)) {
             for (XmlObject size : run.selectPath(W + "./w:rPr/w:sz/@w:val")) {
-                sizes.add(Double.parseDouble(((SimpleValue) size).getStringValue()) / 2);
+                sizes.add(((SimpleValue) size).getStringValue());
             }
         }
         return sizes;
+    }
+
+    /** A size in points as Word states it, in half points to the nearest. */
+    private static String halfPoints(double size) {
+        return Long.toString(Math.round(size * 2));
     }
 
     /** Whether each run reading a text, wherever in the body it stands, is written italic. */
@@ -334,10 +380,15 @@ class DocxAutoSizeTest {
     }
 
     private static Export export(Consumer<PageFlowBuilder> content) throws Exception {
+        return export(true, content);
+    }
+
+    private static Export export(boolean markdown, Consumer<PageFlowBuilder> content) throws Exception {
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
         byte[] docx;
         Map<String, List<PlacedFragment>> fragments;
-        try (DocumentSession session = GraphCompose.document().pageSize(240, 600).margin(DocumentInsets.of(30)).create()) {
+        try (DocumentSession session = GraphCompose.document().pageSize(240, 600).margin(DocumentInsets.of(30))
+                .markdown(markdown).create()) {
             session.pageFlow(content::accept);
             fragments = session.layoutGraph().fragments().stream()
                     .collect(java.util.stream.Collectors.groupingBy(PlacedFragment::path));

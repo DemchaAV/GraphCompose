@@ -257,6 +257,27 @@ class DocxZoneLineTest {
     }
 
     @Test
+    void aPartThePageSetsAsWrittenKeepsItsLinesBesideOneItSetsOtherwise() throws Exception {
+        // Beside a part the page sets with other text on page 1, a part it sets as written there
+        // is still read from its own lines: its markdown written as the page sets it.
+        Exported exported = export(session -> session.chrome().zone(DocumentPageZone.footer(40,
+                page -> new RowBuilder().name("Line")
+                        .addParagraph(p -> p.text("**Acme**").textStyle(CHROME))
+                        .addParagraph(p -> p.text(page.isLast() ? "End" : "Continued on the next page of this report")
+                                .textStyle(DocumentTextStyle.DEFAULT.withSize(10)).autoSize(14, 6))
+                        .build())), true);
+
+        assertThat(exported.footerLine().getRuns()).filteredOn(run -> "Acme".equals(run.text())).singleElement()
+                .satisfies(run -> assertThat(run.isBold()).isTrue());
+        assertThat(exported.footerLine().getText()).doesNotContain("*");
+        assertThat(exported.footerLine().getRuns()).filteredOn(run -> "End".equals(run.text())).singleElement()
+                .satisfies(run -> assertThat(run.getFontSizeAsDouble()).isEqualTo(10.0));
+        assertThat(exported.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
+                .singleElement().asString().doesNotContain("markdown")
+                .endsWith("a paragraph's text is written at 10pt — the size the page fits it to is not measured");
+    }
+
+    @Test
     void aPartWhoseLinesDoNotTellTheSizeThePageFitsItToIsGivenItsStylesLine() throws Exception {
         // Fitted to 12pt, the size its first run has of its own: the lines hold 12 and 10, each a
         // run's own, and do not tell which is the paragraph's. Written at its style's 18pt, in a
@@ -624,7 +645,10 @@ class DocxZoneLineTest {
             return document.getFooterList().get(0).getParagraphs().get(0);
         }
 
-        /** The size the page sets a word's first letter in, on the first page it draws it: its font's, unscaled. */
+        /**
+         * The size the page sets a word's first letter in, on the first page it draws it: its font's,
+         * unscaled — {@code getFontSizeInPt} rounds to a whole point.
+         */
         double size(String word) {
             return text.get(firstLetterOf(word)).getFontSize();
         }

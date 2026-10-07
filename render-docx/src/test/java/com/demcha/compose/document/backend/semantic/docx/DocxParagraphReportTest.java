@@ -49,6 +49,9 @@ class DocxParagraphReportTest {
         assertThat(firstSpan(shrunk).textStyle().size()).as("the page fits it smaller").isLessThan(24);
         assertThat(paragraphNotes(shrunk)).isEmpty();
         assertThat(paragraphNotes(page -> page.addParagraph(p -> p.text("Hi").textStyle(TEN).autoSize(24)))).isEmpty();
+        // So is one fitted to its own style's size.
+        assertThat(paragraphNotes(page -> page.addParagraph(p -> p.text("Hi")
+                .textStyle(DocumentTextStyle.DEFAULT.withSize(24)).autoSize(24, 6)))).isEmpty();
         // So is a prefix the page sets in the paragraph's style, where every run keeps its own.
         assertThat(paragraphNotes(page -> page.addParagraph(p -> p
                 .textStyle(DocumentTextStyle.DEFAULT.withSize(24)).inlineText(HEADLINE, TEN)

@@ -68,12 +68,15 @@ class DocxListParityTest {
 
     @Test
     void boldLeadIsNotMistakenForAMarker() throws Exception {
-        List<String> texts = exportTexts(flow -> flow
-                .addList("**bold** lead stays intact"));
-
-        // The session reads markdown, and the item is written as the page sets it: its bold
-        // lead's marks dropped, not one of them taken off as a typed marker.
-        assertThat(texts).contains("bold lead stays intact");
+        // A session that reads no markdown sets the item as authored, its bold lead whole.
+        try (XWPFDocument document = export(false, flow -> flow.addList("**bold** lead stays intact"))) {
+            assertThat(document.getParagraphs()).extracting(XWPFParagraph::getText)
+                    .contains("**bold** lead stays intact");
+        }
+        // One that reads it sets the bold lead's text bold, its marks dropped, and the item is
+        // written so: not one of them was taken off as a typed marker.
+        assertThat(exportTexts(flow -> flow.addList("**bold** lead stays intact")))
+                .contains("bold lead stays intact");
     }
 
     @Test
@@ -139,10 +142,16 @@ class DocxListParityTest {
 
     private static XWPFDocument export(
             Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> author) throws Exception {
+        return export(true, author);
+    }
+
+    private static XWPFDocument export(boolean markdown,
+            Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> author) throws Exception {
         byte[] docxBytes;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(595, 842)
                 .margin(DocumentInsets.of(36))
+                .markdown(markdown)
                 .create()) {
             var flow = session.dsl().pageFlow().name("Flow");
             author.accept(flow);

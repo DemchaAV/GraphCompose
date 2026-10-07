@@ -1,6 +1,8 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.dsl.ListBuilder;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
+import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.layout.payloads.ParagraphShapeSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
@@ -162,6 +164,30 @@ class DocxMarkdownTest {
                 .as("nothing after the lead").isNull();
         assertThat(DocxMarkdown.split(List.of(piece("◦", DocumentTextDecoration.DEFAULT, 10)), "◦ "))
                 .as("pieces shorter than the lead").isNull();
+    }
+
+    @Test
+    void aListsItemsAreReadAsThePageLaysThemOut() {
+        String indent = Character.toString(0x00A0).repeat(2);
+        // A flat list sets its marker before the item's first line, apart from its text, a typed
+        // marker taken off; with hangingIndent the marker stands in a column of its own.
+        assertThat(DocxMarkdown.items(new ListBuilder().items("* **Java**", "", "Kotlin").build())).containsExactly(
+                new DocxMarkdown.ItemReading("**Java**", "", "• "), new DocxMarkdown.ItemReading("Kotlin", "", "• "));
+        assertThat(DocxMarkdown.items(new ListBuilder().hangingIndent(true).items("**Java**").build()))
+                .containsExactly(new DocxMarkdown.ItemReading("**Java**", "", ""));
+        assertThat(DocxMarkdown.items(new ListBuilder().noMarker().items("**Java**").build()))
+                .containsExactly(new DocxMarkdown.ItemReading("**Java**", "", ""));
+        // A tree of items is laid out in labels, each after its depth's indent and its marker.
+        assertThat(DocxMarkdown.items(new ListBuilder().markerFor(1, ListMarker.none())
+                .addItem("**A**", child -> child.addItem("b_c", grand -> grand.addItem("*d*")))
+                .addItem(rich -> rich.bold("runs")).build())).containsExactly(
+                new DocxMarkdown.ItemReading("• **A**", "• ", ""),
+                new DocxMarkdown.ItemReading(indent + "b_c", indent, ""),
+                new DocxMarkdown.ItemReading(indent + indent + "▪ *d*", indent + indent + "▪ ", ""));
+        // With hangingIndent, its label alone, a typed marker taken off.
+        assertThat(DocxMarkdown.items(new ListBuilder().hangingIndent(true)
+                .addItem("- **A**", child -> child.addItem("b")).build())).containsExactly(
+                new DocxMarkdown.ItemReading("**A**", "", ""), new DocxMarkdown.ItemReading("b", "", ""));
     }
 
     @Test

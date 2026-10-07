@@ -3950,7 +3950,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 : new java.util.ArrayDeque<>();
         boolean previousMatched = listItemsMatched;
         listItemsMatched = !laidOut.isEmpty() && laidOut.size() == itemCount(list);
-        boolean matched = listItemsMatched;
         List<ItemWritten> previousWritten = listItemsWritten;
         List<ItemWritten> written = new ArrayList<>();
         listItemsWritten = written;
@@ -3986,7 +3985,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         owePendingSpacingAfter(list.margin().bottom() + list.padding().bottom());
         reportWrittenWithout(list, itemCount(list) == 0 ? "writes no paragraph"
                 : numId != null ? "written as a Word list" : "written as a paragraph per item",
-                listLost(list, laidOut, atTheirColumn, matched, written));
+                listLost(list, laidOut, atTheirColumn, written));
     }
 
     /**
@@ -4009,14 +4008,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * @param laidOut       the items as the layout laid them out
      * @param atTheirColumn how many of its items stand where the page sets them
-     * @param matched       whether the layout's items are matched to the list's, one by one
      * @param written       its items of plain text as written
      */
     private List<String> listLost(com.demcha.compose.document.node.ListNode list,
                                   List<DocxLayoutMetrics.ItemText> laidOut, int atTheirColumn,
-                                  boolean matched, List<ItemWritten> written) {
+                                  List<ItemWritten> written) {
         List<String> lost = new ArrayList<>();
         int items = itemCount(list);
+        // The layout's items matched to the list's one by one, as writeList matches them.
+        boolean matched = !laidOut.isEmpty() && laidOut.size() == items;
         int markerRows = markerOnlyRows(list);
         if (items > 0) {
             lost.addAll(itemsLost(list, laidOut, items, markerRows, atTheirColumn));
@@ -4033,10 +4033,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * What a list's items lose where the page reads them as markdown, each item matched to the
      * lines the page laid it out in. An item of plain text holding a mark of emphasis or code is
      * written in the pieces the page sets it in where its lines say so ({@link #itemPieces}); a
-     * heading among them in a line Word cuts it in is named ({@link #headingCut}). One the page
-     * reads into nothing is written as authored and named; one written as authored, its marks
-     * and all, is named where its lines, less the prefix the page sets before its first line, hold
-     * fewer marks than it ({@link #marksDropped}).
+     * heading among them in a line Word cuts it in is named ({@link #headingCut}). One whose marker
+     * Word draws in the list's face, where the page sets it in another, is written as authored and
+     * named, whatever marks the page keeps of it. One the page reads into nothing is written as
+     * authored and named; any other written as authored, its marks and all, is named where its
+     * lines, less the prefix the page sets before its first line, hold fewer marks than it
+     * ({@link #marksDropped}).
      *
      * @param items   how many items the list writes
      * @param written its items of plain text as written
@@ -4052,8 +4054,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 break;
             }
         }
+        long refused = written.stream().filter(ItemWritten::refused).count();
+        if (refused > 0) {
+            boolean one = refused == 1;
+            lost.add(refused + " of its " + items + " items " + (one ? "is" : "are")
+                     + " written as authored, where the page reads " + (one ? "it" : "them")
+                     + " as markdown and sets " + (one ? "its marker" : "their markers")
+                     + " in another face than the list's, the face Word draws a list's marker in");
+        }
         List<ItemWritten> asAuthored = written.stream()
-                .filter(item -> item.pieces() == null && DocxMarkdown.holdsAMark(item.reading().text())).toList();
+                .filter(item -> item.pieces() == null && !item.refused() && DocxMarkdown.holdsAMark(item.reading().text()))
+                .toList();
         List<ItemWritten> nothing = asAuthored.stream().filter(item -> setsNoneOfIt(item, list.textStyle())).toList();
         if (!nothing.isEmpty()) {
             boolean one = nothing.size() == 1;
@@ -4104,8 +4115,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * What a list's items lose where the page reads them as markdown, its items not matched to the
-     * layout's — composed in a table cell, or one run onto the next page — and so each written as
-     * authored, as a paragraph's text is ({@link #markdownLost}): an item of plain text holding a
+     * layout's — with no layout, composed in a table cell, one run onto the next page, or a blank
+     * item of a {@code hangingIndent} list the page draws as a marker alone — and so each written
+     * as authored, as a paragraph's text is ({@link #markdownLost}): an item of plain text holding a
      * mark of emphasis or code is set as markdown, its marks dropped. Its text is read as the page
      * lays it out, a marker typed before it taken off
      * ({@link com.demcha.compose.document.node.ListMarker#normalizeItemText}); its laid-out lines
@@ -4137,72 +4149,29 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * A list item's text as the page reads it where its session reads markdown.
-     *
-     * @param text   the text the page lays the item out in and reads
-     * @param lead   the characters it opens with that the file writes apart from the item's own
-     *               text: a nested item's indent and marker, which a list with no
-     *               {@code hangingIndent} lays out in its text; empty for none
-     * @param prefix the prefix the page sets before its first line, apart from its text: a flat
-     *               list's marker, where it has no {@code hangingIndent}; empty for none
-     */
-    private record ItemReading(String text, String lead, String prefix) {
-    }
-
-    /**
      * A list item of plain text as written.
      *
      * @param reading its text as the page reads it
      * @param lines   the lines the page laid it out in, empty where its list's items are not matched
      * @param pieces  the pieces it was written in, {@code null} where it was written as authored
+     * @param refused whether it was written as authored though its lines hold the pieces the page
+     *                sets it in: Word draws its marker, which the page sets in another face
      */
-    private record ItemWritten(ItemReading reading,
+    private record ItemWritten(DocxMarkdown.ItemReading reading,
                                List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
-                               List<DocxMarkdown.Piece> pieces) {
+                               List<DocxMarkdown.Piece> pieces, boolean refused) {
     }
 
     /**
-     * The indent a list with no {@code hangingIndent} sets a nested item's text in, a level at a
-     * time: two no-break spaces, which the markdown parser reads as letters
-     * ({@code TextFlowSupport}, where it flattens a tree of items into labels).
-     */
-    private static final String NESTED_ITEM_INDENT = Character.toString(0x00A0).repeat(2);
-
-    /** A flat list's item as the page reads it. */
-    private static ItemReading flatItemReading(com.demcha.compose.document.node.ListNode list, String normalized) {
-        return new ItemReading(normalized, "",
-                !list.hangingIndent() && list.marker().isVisible() ? list.marker().prefix() : "");
-    }
-
-    /**
-     * A nested item as the page reads it: with {@code hangingIndent} its label, a marker typed
-     * before it taken off; without it, its label after its depth's indent and its marker, as the
-     * page flattens a tree of items into labels, none taken off. {@code null} for an item of runs.
-     */
-    private static ItemReading nestedItemReading(com.demcha.compose.document.node.ListNode list,
-                                                 com.demcha.compose.document.node.ListItem item, int depth,
-                                                 com.demcha.compose.document.node.ListMarker marker) {
-        if (item.isRich()) {
-            return null;
-        }
-        if (list.hangingIndent()) {
-            return new ItemReading(com.demcha.compose.document.node.ListMarker
-                    .normalizeItemText(item.label(), list.normalizeMarkers()), "", "");
-        }
-        String lead = NESTED_ITEM_INDENT.repeat(depth) + (marker.isVisible() ? marker.prefix() : "");
-        return new ItemReading(lead + item.label(), lead, "");
-    }
-
-    /**
-     * An item's text in the pieces the page sets it in, after the lead the file writes apart, where
-     * the page reads it as markdown and the lines it laid the item out in say so
-     * ({@link #pagePieces}); {@code null} where it is written as authored: its list's items are
-     * not matched to the layout's, or the lead is not set as the page sets the rest of the
-     * pieces' first.
+     * An item's text in the pieces the page sets it in, split at the end of the lead the file
+     * writes apart from them, where the page reads it as markdown and the lines it laid the item
+     * out in hold the pieces ({@link #pagePieces}); {@code null} where it is written as authored:
+     * its list's items are not matched to the layout's, its lines do not hold the pieces, or the
+     * pieces do not open with the lead's characters in one style ({@link DocxMarkdown#split}).
      *
      * @param laidOut how the layout set the item, {@code null} where its list's items are not matched
      */
-    private static DocxMarkdown.Split itemPieces(ItemReading reading, DocumentTextStyle style,
+    private static DocxMarkdown.Split itemPieces(DocxMarkdown.ItemReading reading, DocumentTextStyle style,
                                                  DocxLayoutMetrics.ItemText laidOut) {
         if (reading == null || laidOut == null) {
             return null;
@@ -4215,18 +4184,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Writes an item's text: as authored in one run, or in the pieces the page sets it in, and
      * records it for the list's note.
      *
-     * @param before  what the file writes before the item's own text — its indent and marker,
-     *                where Word does not draw the marker — in the lead's style where the page
-     *                sets the lead in the pieces
-     * @param label   the item's text as authored
-     * @param laidOut how the layout set the item, {@code null} where its list's items are not matched
+     * @param before          what the file writes before the item's own text — its indent and
+     *                        marker, where Word does not draw the marker — in the lead's style
+     *                        where the page sets the lead in the pieces
+     * @param label           the item's text as authored
+     * @param wordDrawsMarker whether Word draws the item's marker, a Word list's
+     * @param laidOut         how the layout set the item, {@code null} where its list's items are
+     *                        not matched
      */
     private void writeItemText(XWPFParagraph para, DocumentTextStyle style, String before, String label,
-                               ItemReading reading, DocxLayoutMetrics.ItemText laidOut) {
+                               boolean wordDrawsMarker, DocxMarkdown.ItemReading reading,
+                               DocxLayoutMetrics.ItemText laidOut) {
         DocxMarkdown.Split split = itemPieces(reading, style, laidOut);
-        // Word draws a list's marker in the list's style. Where the page sets the lead in another —
-        // its parser sets a bold list's nested marker regular — the item is written as authored.
-        if (split != null && before.isEmpty() && split.lead() != null && !split.lead().equals(style)) {
+        // Word draws a Word list's marker in the list's style. Where the page sets the marker it
+        // reads with the item in another — its parser sets a bold list's marker regular — the item
+        // is written as authored, and named.
+        boolean refused = split != null && wordDrawsMarker && split.lead() != null && !split.lead().equals(style);
+        if (refused) {
             split = null;
         }
         if (split == null) {
@@ -4247,7 +4221,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         if (reading != null) {
             listItemsWritten.add(new ItemWritten(reading, laidOut == null ? List.of() : laidOut.lines(),
-                    split == null ? null : split.after()));
+                    split == null ? null : split.after(), refused));
         }
     }
 
@@ -4434,7 +4408,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 continue;
             }
             java.util.OptionalDouble lineHeight = layout.lineHeight(list);
-            ItemReading reading = flatItemReading(list, normalized);
+            DocxMarkdown.ItemReading reading = DocxMarkdown.flatItem(list, normalized);
             boolean atItsColumn;
             if (list.marker().isRich()) {
                 // A drawn marker's pieces are runs, so the row is written the way
@@ -4484,7 +4458,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         ? item.marker()
                         : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth);
         java.util.OptionalDouble lineHeight = layout.lineHeight(list);
-        ItemReading reading = nestedItemReading(list, item, depth, marker);
+        DocxMarkdown.ItemReading reading = DocxMarkdown.nestedItem(list, item, depth, marker);
         boolean atItsColumn;
         if (item.isRich() || marker.isRich()) {
             // A nested item stands after its depth's indent, and an item may carry a marker of
@@ -4528,7 +4502,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *                and the nesting indent as characters
      */
     private void writeListLine(XWPFDocument document, DocumentTextStyle style,
-                               String marker, String label, ItemReading reading, int depth, BigInteger numId,
+                               String marker, String label, DocxMarkdown.ItemReading reading, int depth,
+                               BigInteger numId,
                                java.util.OptionalDouble lineHeight) {
         spaceBeforeTheNextItem();
         XWPFParagraph para = newBodyParagraph(document);
@@ -4543,7 +4518,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 measureTheItemAtWordsSize(para, style, lines, measuredColumns.get(numId));
             }
         }
-        writeItemText(para, style, numId != null ? "" : "  ".repeat(depth) + marker, label, reading, laidOut);
+        writeItemText(para, style, numId != null ? "" : "  ".repeat(depth) + marker, label, numId != null, reading,
+                laidOut);
         styleTheMark(para, style);
     }
 
@@ -4656,7 +4632,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                    java.util.OptionalDouble lineHeight,
                                    java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line,
                                    String path, com.demcha.compose.document.node.ListNode measured,
-                                   ItemReading reading) {
+                                   DocxMarkdown.ItemReading reading) {
         warnDroppedInlineRuns(marker.runs(), path);
         warnDroppedInlineRuns(item.runs(), path);
         line = line.map(listLine -> itemLine(listLine, item.runs()));
@@ -4730,7 +4706,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
             }
         } else {
-            writeItemText(para, style, "", item.label(), reading, laidOut);
+            writeItemText(para, style, "", item.label(), false, reading, laidOut);
         }
         makeRoomForPictures(para, pictures);
         styleTheMark(para, markStyle);
@@ -7800,8 +7776,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @return the phrase, or {@code null} where every piece fits its line
      */
     private String headingCut(List<DocxMarkdown.Piece> pieces, DocumentTextStyle style,
-                                     List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
-                                     String whose, String owner) {
+                              List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
+                              String whose, String owner) {
         if (pieces == null || style == null || lines.isEmpty()) {
             return null;
         }

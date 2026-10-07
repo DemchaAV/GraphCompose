@@ -3,6 +3,9 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.ParagraphSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
+import com.demcha.compose.document.node.ListItem;
+import com.demcha.compose.document.node.ListMarker;
+import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -61,6 +64,83 @@ final class DocxMarkdown {
      */
     static boolean mayRead(ParagraphNode node) {
         return (node.inlineRuns() == null || node.inlineRuns().isEmpty()) && holdsAMark(node.text());
+    }
+
+    /**
+     * The indent a list with no {@code hangingIndent} sets an item of a tree of items in, a level
+     * at a time: two no-break spaces ({@code TextFlowSupport}, where it flattens the tree into
+     * labels), which the parser reads as letters.
+     */
+    private static final String NESTED_ITEM_INDENT = Character.toString(0x00A0).repeat(2);
+
+    /**
+     * A list item's text as the page lays it out, and reads it where its session reads markdown.
+     *
+     * @param text   the text the page lays the item out in and reads
+     * @param lead   the characters it opens with that the file writes apart from the item's own
+     *               text: the indent and marker a list of a tree of items with no
+     *               {@code hangingIndent} lays out in its text; empty for none
+     * @param prefix the prefix the page sets before its first line, apart from its text: a flat
+     *               list's marker, where it has no {@code hangingIndent}; empty for none
+     */
+    record ItemReading(String text, String lead, String prefix) {
+    }
+
+    /**
+     * A flat list's item as the page reads it: its text, a marker typed before it taken off, after
+     * the list's marker where the page sets that before its first line.
+     *
+     * @param normalized the item's text, a typed marker taken off
+     */
+    static ItemReading flatItem(ListNode list, String normalized) {
+        return new ItemReading(normalized, "",
+                !list.hangingIndent() && list.marker().isVisible() ? list.marker().prefix() : "");
+    }
+
+    /**
+     * An item of a tree of items as the page reads it: with {@code hangingIndent}, its label, a
+     * marker typed before it taken off; without it, its label after its depth's indent and its
+     * marker, as the page flattens the tree into labels, nothing taken off.
+     *
+     * @param marker the marker the item takes, its own or its depth's
+     * @return its reading, {@code null} for an item of runs, which the page never reads
+     */
+    static ItemReading nestedItem(ListNode list, ListItem item, int depth, ListMarker marker) {
+        if (item.isRich()) {
+            return null;
+        }
+        if (list.hangingIndent()) {
+            return new ItemReading(ListMarker.normalizeItemText(item.label(), list.normalizeMarkers()), "", "");
+        }
+        String lead = NESTED_ITEM_INDENT.repeat(depth) + (marker.isVisible() ? marker.prefix() : "");
+        return new ItemReading(lead + item.label(), lead, "");
+    }
+
+    /**
+     * Every item of plain text a list writes, as the page reads it: its flat items, then its tree
+     * of items depth first, each taking its own marker or its depth's.
+     */
+    static List<ItemReading> items(ListNode list) {
+        List<ItemReading> readings = new ArrayList<>();
+        for (String item : list.items()) {
+            String normalized = ListMarker.normalizeItemText(item, list.normalizeMarkers());
+            if (!normalized.isBlank()) {
+                readings.add(flatItem(list, normalized));
+            }
+        }
+        addItems(list, list.nestedItems(), 0, readings);
+        return List.copyOf(readings);
+    }
+
+    private static void addItems(ListNode list, List<ListItem> items, int depth, List<ItemReading> into) {
+        for (ListItem item : items) {
+            ItemReading reading = nestedItem(list, item,
+                    depth, item.marker() != null ? item.marker() : ListMarker.defaultForDepth(depth));
+            if (reading != null) {
+                into.add(reading);
+            }
+            addItems(list, item.children(), depth + 1, into);
+        }
     }
 
     /**

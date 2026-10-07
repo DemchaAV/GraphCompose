@@ -16,27 +16,30 @@ follow semantic versioning; release dates are ISO 8601.
     and written in the pieces the page sets it in where those lines hold them, as a paragraph is:
     - a flat list's item, after the marker the page sets before its first line;
     - an item whose marker stands in a column of its own (`hangingIndent`);
-    - a nested item of a list with no `hangingIndent`, which the page lays out after its indent
-      and its marker and reads with them: the item's own text is written after them.
+    - an item, at any level, of a list built as a tree of items (`addItem(label, children)`) with
+      no `hangingIndent`, which the page lays out after its indent and its marker and reads with
+      them: the item's own text is written after them.
   - **The marker stays where it was.** Word draws a Word list's. A list written as a paragraph per
     item writes its marker and nesting indent as characters before the pieces, in the face the
     page sets them in.
   - **A heading written taller than its item's line is named**, as a paragraph's is.
-  - **The font table ships the faces an item's pieces are set in.**
+  - **The font table ships the faces the page sets an item's pieces in**, read off the text the
+    page reads: a tree's marker with its item, a marker typed before an item taken off.
   - **Still written as authored, and named:**
-    - the items of a list not matched one by one to the layout's: composed in a table cell, an
-      item run onto the next page, or a `hangingIndent` list with a blank item the page draws as a
-      marker alone;
-    - a nested item of a Word list whose marker the page sets in another face than the list's —
-      the parser sets a bold list's marker regular — since Word draws it in the list's;
-    - a nested item whose marker the parser reads as markdown with it, as `*a*`;
+    - the items of a list not matched one by one to the layout's: with no layout, composed in a
+      table cell, an item run onto the next page, or a `hangingIndent` list with a blank item the
+      page draws as a marker alone;
+    - an item of a Word list built as a tree of items whose marker the page reads with it and sets
+      in another face than the list's — the parser sets a bold list's marker regular — since Word
+      draws it in the list's; it is named whatever marks the page keeps of it;
+    - an item of a tree whose marker the parser reads as markdown with it, as `*a*`;
     - one the page sets in other letters than its text, as Arabic;
     - an item the parser reads into nothing, as `***`: the page sets none of its text, and the
       note now says so, where it named the item's marks.
 
   Across the DOCX fidelity corpus no list item is read as markdown, and the 62 documents are
-  byte-identical. `DocxMarkdown.split` takes a nested item's indent and marker off its pieces, with
-  a unit test.
+  byte-identical. `DocxMarkdown` reads each item as the page lays it out, and `DocxMarkdown.split`
+  takes a tree's indent and marker off an item's pieces, with unit tests.
 
 - **A DOCX export writes a paragraph the page reads as markdown as the page sets it.** A session
   reads markdown unless it is told not to (`markdown(false)`). The page then sets a paragraph of

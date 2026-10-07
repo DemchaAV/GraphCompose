@@ -1106,9 +1106,9 @@ final class DocxLayoutMetrics {
      * Gothic A1 line the page sets at 9.1 — and every row of such a table ran taller than the
      * page's. Cells are laid out in order, and so is what each holds, so the paragraphs are
      * walked in that order and each takes the first fragment not yet taken whose text is
-     * its own as authored; those left then take one whose text is theirs as the page reads their
-     * markdown, marks dropped. A paragraph whose text no fragment carries is left without one, as
-     * before.</p>
+     * its own as authored; those left then take the first whose lines set their markdown as the
+     * page reads it, marks dropped, in its faces and sizes. A paragraph whose text no fragment
+     * carries so is left without one, as before.</p>
      */
     private Map<DocumentNode, PlacedFragment> matchComposedText() {
         Map<DocumentNode, PlacedFragment> matched = new IdentityHashMap<>();
@@ -1142,19 +1142,33 @@ final class DocxLayoutMetrics {
                 }
             }
             // Then by its text as the page reads its markdown, where its session does: marks
-            // dropped. Only once every paragraph has taken its own text, so that one read as
-            // markdown takes no fragment a paragraph of that text as authored stands in.
+            // dropped, and only a fragment whose lines set the pieces as they are read. A paragraph
+            // of the same text as authored may have taken this one's own fragment: the one left
+            // is in another face or size, and taken, its lines would cut this one's letters.
             for (ParagraphNode paragraph : unmatched) {
                 if (DocxMarkdown.mayRead(paragraph) && paragraph.textStyle() != null) {
-                    java.util.ArrayDeque<PlacedFragment> waiting = waitingFor(byText,
-                            DocxMarkdown.text(DocxMarkdown.read(paragraph.text(), paragraph.textStyle())));
-                    if (waiting != null) {
-                        matched.put(paragraph, waiting.poll());
+                    List<DocxMarkdown.Piece> pieces = DocxMarkdown.read(paragraph.text(), paragraph.textStyle());
+                    java.util.ArrayDeque<PlacedFragment> waiting = waitingFor(byText, DocxMarkdown.text(pieces));
+                    PlacedFragment fragment = waiting == null ? null : waiting.stream()
+                            .filter(candidate -> setsThePieces(paragraph, pieces, candidate)).findFirst().orElse(null);
+                    if (fragment != null) {
+                        waiting.remove(fragment);
+                        matched.put(paragraph, fragment);
                     }
                 }
             }
         }
         return matched;
+    }
+
+    /**
+     * Whether a fragment's lines set a paragraph's markdown pieces as they are read
+     * ({@link DocxMarkdown#laidOutIn}). A fragment whose lines lead with a prefix's letters carries
+     * other text than the pieces, and is never offered.
+     */
+    private static boolean setsThePieces(ParagraphNode paragraph, List<DocxMarkdown.Piece> pieces, PlacedFragment fragment) {
+        return DocxMarkdown.laidOutIn(pieces, ((ParagraphFragmentPayload) fragment.payload()).lines(), "",
+                paragraph.autoSize() != null);
     }
 
     /** The fragments of a text still waiting for a paragraph, or {@code null} where none is. */

@@ -15,40 +15,46 @@ follow semantic versioning; release dates are ISO 8601.
   export wrote the text as authored, so Word showed `**bold**` with its asterisks and none of the
   bold, and the report named it.
   - **The text is read as the page reads it** — line by line, through the page's own parser, a
-    list marker opening a line kept — and written as one run a piece, in the face, family, colour
-    and size the page sets it in: `**Java**` is a bold run reading `Java`, a heading line bold at
-    its larger size, a line break where the page starts a line. A linked paragraph's pieces stay
-    in one link, and Word's outline lists a heading by the text written. An auto-sized paragraph's pieces are written at
-    its style's size, a heading's at its multiple of it, as its text was.
+    list marker opening a line kept — and written as one run a piece, in the face, family, colour,
+    tracking and size the page sets it in: `**Java**` is a bold run reading `Java`, a heading line
+    bold at its larger size, a line break where the page starts a line. A linked paragraph's
+    pieces stay in one link, and Word's outline lists a heading by the text written. An
+    auto-sized paragraph's pieces are written at its style's size, a heading's at its multiple of
+    it, as its text was.
   - **The page's own lines decide it.** The pieces are written only where the lines the page laid
-    the paragraph out in hold the pieces' letters in their faces, families and colours, at their
-    sizes — or, where the page fits the text to a size of its own, at sizes in the same
-    proportion. A session that reads no markdown lays the marks out, and the text is written as
-    it stands, as before.
+    the paragraph out in hold the pieces' letters in their faces, families, colours and tracking,
+    at their sizes to a hundredth of a point — or, where the page fits the text to a size of its
+    own, at sizes in the same proportion. A session that reads no markdown lays the marks out, and
+    the text is written as it stands, as before; so is text the parser changes nothing of, an
+    underscore inside a word.
   - **The faces are the page's.** Where the session reads markdown, its parser sets every piece in
     a face of its own and leaves the paragraph's aside: a bold paragraph's `Senior_Engineer`
     stands regular on the page, and is written so.
   - **Every path that writes a paragraph does it:** the body, a table cell, text over the flow,
-    the line an overlay's two sides share, a badge's initials and a page zone's line. A paragraph
-    composed in a table cell is matched to its lines by its text as the page reads it, where no
-    line carries it as authored. A badge's initials are counted as the page sets them: `**JR**` is
-    now a badge's two bold letters; initials in two faces, `*J*R`, are written in the flow, as
-    initials in two runs' faces are.
-  - **A heading the page sets larger than its line is named.** The page sets a markdown heading in
-    a line as tall as the paragraph's own and draws its letters past it; written in that exact
-    line, Word cuts their tops on screen.
+    the line an overlay's two sides share, a badge's initials and a page zone's line.
+    - A paragraph composed in a table cell is matched to its lines by its text as the page reads
+      it, where no line carries it as authored, and only to lines that set its pieces so.
+    - A badge's initials are counted as the page sets them: `**JR**` is now a badge's two bold
+      letters. Initials in two faces, `*J*R`, or a heading, are written in the flow, as initials
+      in two runs' faces are.
+  - **A heading written taller than its line is named.** The page sets a markdown heading in a
+    line as tall as the paragraph's own and draws its letters past it; written in that exact line,
+    Word cuts their tops on screen. An auto-sized paragraph's heading, written at a multiple of its
+    style's size, may fit the line the page fits the text to, and is named only where it does not.
   - **The font table ships the faces the pieces of a paragraph outside table cells and page zones
     are set in** — the paragraphs it reads. It is written before any paragraph, so it reads them
     off the text: a session that reads no markdown ships a face it does not use.
   - **Still written as authored, and named:**
     - a paragraph whose lines are not read — with no layout, composed in a table cell whose text
-      no line of its table carries, or a page zone's the layout shows none of — where the note
+      no line of its table carries so, or a page zone's the layout shows none of — where the note
       says whether the page reads its marks is not measured;
     - one the page sets in other letters than its text, as Arabic, which the page shapes before it
       reads the marks;
-    - one of marks alone, a lone `*` or a rule of `***`, which the page reads as an empty list item
-      or a rule and sets as nothing, and which went unnamed;
+    - text the parser reads into nothing, which the page sets as nothing and which went unnamed:
+      a lone `*`, an empty list item; `***`, a rule; a line set four spaces in, a block of code;
     - a list's items, as before.
+  - **With no layout**, a paragraph is read line by line for the note too: a list marker opening
+    a line, `* a_b`, is no longer counted as a mark the page drops.
 
   Across the DOCX fidelity corpus one document's bytes change: `TimelineMinimal`'s open-source
   project line is written in regular Lato, where Word drew it bold, with `(Open source)` in italic
@@ -208,13 +214,13 @@ follow semantic versioning; release dates are ISO 8601.
   - a marker typed before a list item;
   - runs, which the page never reads.
 
-  Where the lines are not read — with no layout, or composed in a table cell, whose paragraphs are
-  matched to their lines by text and whose lists not at all — the note says whether the page reads
+  Where the lines are not read — with no layout, or composed in a table cell whose paragraph no
+  line its table laid out carries, and a list there at all — the note says whether the page reads
   the marks is not measured, where the page's own parser drops a mark from the text.
   Across the DOCX fidelity corpus the report named one paragraph, `TimelineMinimal`'s open-source
   project line, whose `*(Open source)*` the page sets in italic and Word showed with its
-  asterisks — now written as the page sets it. None of this changed what is written: the 62 documents of the corpus export to the
-  same bytes. In `DocxNodeFieldLedgerTest` a paragraph's `text` and a list's `nestedItems` move
+  asterisks — now written as the page sets it. None of this changed what is written: the 62
+  documents of the corpus export to the same bytes. In `DocxNodeFieldLedgerTest` a paragraph's `text` and a list's `nestedItems` move
   from `WRITTEN` to `REPORTED`, and a list's `items` name it too.
 - **A DOCX export's report names where a page zone's parts stand, and what its paragraphs
   lose.** A page zone is written as one Word line. Word sets its parts one after another from

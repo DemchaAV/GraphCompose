@@ -41,9 +41,10 @@ class DocxMarkdownReportTest {
     void aParagraphThePageReadsAsMarkdownIsWrittenSoAndNotNamed() throws Exception {
         assertThat(paragraphNotes(true, page -> page.addParagraph("Some **bold** and `code` text"))).isEmpty();
         assertThat(paragraphNotes(true, page -> page.addParagraph("# Title *now*"))).as("a heading, past its line")
-                .containsExactly("written as a paragraph; its markdown heading is written at the size the page sets it, "
-                                 + "28pt, in a line only as tall as the paragraph's own: the page draws its letters past "
-                                 + "the line, and Word cuts their tops on screen");
+                .singleElement().asString()
+                .startsWith("written as a paragraph; its markdown heading is written at 28pt in a line ")
+                .endsWith("pt tall, as tall as the paragraph's own line on the page: the page draws its letters past "
+                          + "the line, and Word cuts their tops on screen");
         assertThat(paragraphNotes(true, page -> page.addParagraph("`x`"))).as("a code span alone").isEmpty();
         // A prefix with a mark of its own is laid out with it, and leads the letters the page sets.
         assertThat(paragraphNotes(true, page -> page.addParagraph(p -> p.text("Some *emphasis* here")

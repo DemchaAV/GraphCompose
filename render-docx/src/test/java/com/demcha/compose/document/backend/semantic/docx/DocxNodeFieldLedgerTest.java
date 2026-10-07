@@ -196,7 +196,7 @@ class DocxNodeFieldLedgerTest {
                 "margin:REPORTED:the sides its alignment sets it from");
         node(ParagraphNode.class, "name:INERT",
                 "text:REPORTED:where the page reads it as markdown, written as the page sets it where its lines "
-                + "hold the pieces read so, a heading larger than its line named; its marks written as letters "
+                + "hold the pieces read so, a heading written taller than its line named; its marks written as letters "
                 + "where the lines hold other letters or none, and not measured where they are not read and the "
                 + "page's parser drops a mark; any other is written",
                 "inlineRuns:REPORTED:a chip's translucent fill, flattened against the colour under it, with what "

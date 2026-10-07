@@ -135,10 +135,10 @@ What is not written — each one is named in the export report
   - the marks of a paragraph the session reads as markdown (the default; `markdown(false)` turns
     it off), where they are written as letters: the paragraph is written as the page sets it —
     its marks dropped, each piece in the page's face and size — wherever the page's lines show
-    how, and as authored where they do not (no layout, a cell whose text no line carries), hold
-    other letters (Arabic, which the page shapes first) or hold none (marks alone, which the page
-    sets as nothing); and a markdown heading the page
-    sets larger than its line, which Word cuts on screen;
+    how, and as authored where they do not (no layout, a cell whose text no line carries, a
+    page zone's part the layout shows none of), hold other letters (Arabic, which the page shapes
+    first) or hold none (text the parser reads into nothing, which the page sets as nothing); and
+    a markdown heading written taller than its line, which Word cuts on screen;
   - the letters of a `bulletOffset` prefix; and, where it moves a line, the room a prefix sets
     lines in by in a paragraph written over the flow, as a side of an overlay's left-and-right
     pair or as a badge's initials;

@@ -29,7 +29,7 @@ import java.util.Objects;
  * it reads in a face of its own — bold, italic, both or neither, whatever the paragraph's style
  * — and a heading's at a multiple of the size. The pieces are read here the same way
  * ({@link #read}), and are the text the page sets only where its laid-out lines hold the same
- * letters in the same faces, families, colours and sizes ({@link #laidOutIn}): a session that
+ * letters in the same faces, families, colours, tracking and sizes ({@link #laidOutIn}): a session that
  * reads no markdown lays the marks out, and the pieces hold none.</p>
  */
 final class DocxMarkdown {
@@ -160,15 +160,17 @@ final class DocxMarkdown {
 
     /**
      * Whether the page laid the pieces out in its lines: the lines' letters, less a prefix's
-     * leading them, are the pieces' letters, each in the same face, family and colour, and at the
-     * same size — or, where the page fits the text to a size of its own, at sizes in the same
-     * proportion. Pieces of no letter — marks alone, which the page sets as nothing — are not taken
-     * for the page's: written, the paragraph would be blank, and a blank paragraph is what the
-     * export writes elsewhere for no line at all. White space is not compared: the page drops it
-     * where it breaks a line.
+     * leading them, are the pieces' letters, each in the same face, family, colour and tracking,
+     * and at the same size, to {@link #SIZE_CLEARANCE} — or, where the page fits the text to a
+     * size of its own, at sizes in the same proportion, its tracking, resolved at that size, not
+     * compared. Pieces of no letter
+     * — text the parser reads into nothing, which the page sets as nothing — are not taken for the
+     * page's: written, the paragraph would be blank, and a blank paragraph is what the export
+     * writes elsewhere for no line at all. White space is not compared: the page drops it where it
+     * breaks a line.
      *
      * @param pieces the pieces read off the text
-     * @param lines  the lines the page laid the text out in, at least one
+     * @param lines  the lines the page laid the text out in; none never holds the pieces
      * @param prefix the prefix the page sets before the first line, empty where it sets none
      * @param fitted whether the page fits the text to a size of its own, an auto-sized paragraph's
      */
@@ -179,7 +181,8 @@ final class DocxMarkdown {
         List<Letter> written = new ArrayList<>();
         for (Piece piece : pieces) {
             DocumentTextStyle style = piece.style();
-            lettersOf(piece.text(), pageFace(style.decoration()), style.size(), style.fontName(),
+            double tracking = style.letterSpacing() == null ? 0 : style.letterSpacing().resolve(style.size());
+            lettersOf(piece.text(), pageFace(style.decoration()), style.size(), tracking, style.fontName(),
                     style.color() == null ? null : style.color().color(), written);
         }
         List<Letter> laid = new ArrayList<>();
@@ -189,11 +192,12 @@ final class DocxMarkdown {
                     return false;
                 }
                 TextStyle style = text.textStyle();
-                lettersOf(text.text(), style.decoration(), style.size(), style.fontName(), style.color(), laid);
+                lettersOf(text.text(), style.decoration(), style.size(), style.letterSpacing(), style.fontName(),
+                        style.color(), laid);
             }
         }
         List<Letter> leading = new ArrayList<>();
-        lettersOf(prefix, null, 0, null, null, leading);
+        lettersOf(prefix, null, 0, 0, null, null, leading);
         if (written.isEmpty() || laid.size() != leading.size() + written.size()) {
             return false;
         }
@@ -207,26 +211,27 @@ final class DocxMarkdown {
             Letter page = laid.get(leading.size() + index);
             Letter file = written.get(index);
             if (page.codePoint() != file.codePoint() || page.face() != file.face()
-                || !Objects.equals(page.family(), file.family()) || page.rgb() != file.rgb()
-                || Math.abs(page.size() - file.size() * ratio) > SIZE_CLEARANCE) {
+                || !Objects.equals(page.family(), file.family()) || page.argb() != file.argb()
+                || Math.abs(page.size() - file.size() * ratio) > SIZE_CLEARANCE
+                || !fitted && Math.abs(page.tracking() - file.tracking()) > SIZE_CLEARANCE) {
                 return false;
             }
         }
         return true;
     }
 
-    /** One letter as the page or the file sets it, its colour as packed ARGB. */
-    private record Letter(int codePoint, TextDecoration face, double size, FontName family, int rgb) {
+    /** One letter as the page or the file sets it: its tracking in points, its colour as packed ARGB. */
+    private record Letter(int codePoint, TextDecoration face, double size, double tracking, FontName family, int argb) {
     }
 
-    private static void lettersOf(String text, TextDecoration face, double size, FontName family, Color color,
-                                  List<Letter> into) {
+    private static void lettersOf(String text, TextDecoration face, double size, double tracking, FontName family,
+                                  Color color, List<Letter> into) {
         if (text == null) {
             return;
         }
-        int rgb = color == null ? 0 : color.getRGB();
+        int argb = color == null ? 0 : color.getRGB();
         text.codePoints()
                 .filter(codePoint -> !Character.isWhitespace(codePoint))
-                .forEach(codePoint -> into.add(new Letter(codePoint, face, size, family, rgb)));
+                .forEach(codePoint -> into.add(new Letter(codePoint, face, size, tracking, family, argb)));
     }
 }

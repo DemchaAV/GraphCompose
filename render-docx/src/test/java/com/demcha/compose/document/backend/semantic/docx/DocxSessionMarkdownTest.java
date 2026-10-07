@@ -44,16 +44,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  * A paragraph the page reads as markdown is written as the page sets it: its marks dropped, the
  * text they mark in the face — and a heading at the size — the page sets it in, and nothing named
  * but a heading the page draws past its line. The page's own lines say whether it reads the
- * paragraph so; where they hold the marks, or other letters than the pieces, the paragraph is
- * written as authored and named.
+ * paragraph so: where they hold the marks, as a session that reads no markdown lays them out, it
+ * is written as it stands; where they hold other letters, it is written as authored and named.
  */
 class DocxSessionMarkdownTest {
 
     private static final String MARKS = "its markdown marks are written as letters, where the page sets the text "
                                         + "they mark and drops them";
-    private static final String HEADING_CUT = "its markdown heading is written at the size the page sets it, 20pt, "
-                                              + "in a line only as tall as the paragraph's own: the page draws its "
-                                              + "letters past the line, and Word cuts their tops on screen";
+    private static final String HEADING_CUT = "pt tall, as tall as the paragraph's own line on the page: the page draws "
+                                              + "its letters past the line, and Word cuts their tops on screen";
+    private static final String NOTHING = "its text is written as authored, where the page reads it as markdown and "
+                                          + "sets nothing";
+    private static final String MARKS_UNMEASURED = "markdown marks are written as letters — whether the page reads them "
+                                                   + "is not measured";
 
     @Test
     void aParagraphIsWrittenInThePiecesThePageSetsIt() throws Exception {
@@ -79,7 +82,9 @@ class DocxSessionMarkdownTest {
         assertThat(paragraph.getCTP().xmlText()).as("a line break where the page starts a line").contains("<w:br/>");
         assertThat(paragraph.getText()).contains("- dash").doesNotContain("#").doesNotContain("*");
         // The page sets the heading in a line as tall as the paragraph's own, and draws it past.
-        assertThat(export.notes("ParagraphNode")).containsExactly("written as a paragraph; " + HEADING_CUT);
+        assertThat(export.notes("ParagraphNode")).singleElement().asString()
+                .startsWith("written as a paragraph; its markdown heading is written at 20pt in a line ")
+                .endsWith(HEADING_CUT);
 
         // The paragraph's mark closes its last line, sized as the piece that ends it.
         XWPFParagraph heading = export(true, page -> page.addParagraph(p -> p.text("# Title *x*")
@@ -118,13 +123,13 @@ class DocxSessionMarkdownTest {
     }
 
     @Test
-    void marksAloneThePageSetsAsNothingAreWrittenAsTheyStandAndNamed() throws Exception {
-        // The page reads `***` as a rule and a lone `*` as an empty list item, and sets nothing.
-        for (String marks : List.of("***", "*")) {
-            Export export = export(true, page -> page.addParagraph("Above").addParagraph(marks).addParagraph("Below"));
-            assertThat(export.document().getDocument().xmlText()).contains(">" + marks + "<");
-            assertThat(export.notes("ParagraphNode")).containsExactly("written as a paragraph; its markdown marks are "
-                    + "written as letters, where the page reads them as marks alone and sets nothing");
+    void textThePageReadsIntoNothingIsWrittenAsItStandsAndNamed() throws Exception {
+        // The page reads `***` as a rule, a lone `*` as an empty list item and a line set four
+        // spaces in as a block of code it keeps no text of, and sets nothing.
+        for (String text : List.of("***", "*", "    code *x*")) {
+            Export export = export(true, page -> page.addParagraph("Above").addParagraph(text).addParagraph("Below"));
+            assertThat(export.document().getDocument().xmlText()).contains(">" + text + "<");
+            assertThat(export.notes("ParagraphNode")).as(text).containsExactly("written as a paragraph; " + NOTHING);
         }
         Export off = export(false, page -> page.addParagraph("***"));
         assertThat(off.document().getDocument().xmlText()).as("markdown off, the page sets the marks").contains(">***<");
@@ -138,6 +143,41 @@ class DocxSessionMarkdownTest {
         assertThat(paragraph.getText()).isEqualTo("Some **bold** text");
         assertThat(paragraph.getRuns()).singleElement().satisfies(run -> assertThat(run.isBold()).isFalse());
         assertThat(export.notes("ParagraphNode")).isEmpty();
+        // Text the parser keeps whole, its white space and a tab among it, as it stands in either session.
+        for (boolean markdown : List.of(false, true)) {
+            assertThat(export(markdown, page -> page.addParagraph("a_b\tc")).paragraphWith("a_b").getText())
+                    .as("markdown " + markdown).isEqualTo("a_b\tc");
+        }
+    }
+
+    @Test
+    void textTheParserReadsAsThePageDoesIsWrittenSoWhateverItHolds() throws Exception {
+        // Each of these the page reads through its parser; were the pieces read here otherwise
+        // than the page reads them, the paragraph would be written as authored and named.
+        DocumentTextStyle tracked = DocumentTextStyle.builder().size(10)
+                .letterSpacing(com.demcha.compose.document.style.DocumentLetterSpacing.ofFontSize(0.05)).build();
+        for (String text : List.of("1. a *b*", "> *q* r", "\\*x\\* *y*", "***nested** emph*", "`a_b` *c*",
+                "[*x*](https://example.org) y", "a &amp; *b*", "x  *y*  z", "## Sub *x*\nbody *y*")) {
+            Export export = export(true, page -> page.addParagraph(p -> p.text(text).textStyle(tracked)));
+            assertThat(export.notes("ParagraphNode")).as(text)
+                    .noneMatch(note -> note.contains("markdown marks are written as letters"));
+        }
+    }
+
+    @Test
+    void anAutoSizedParagraphIsWrittenInThePiecesAtItsStylesSize() throws Exception {
+        Export export = export(true, page -> page.addParagraph(p -> p.text("Fit **this** text")
+                .textStyle(DocumentTextStyle.builder().size(10).build()).autoSize(20, 6)));
+        XWPFParagraph paragraph = export.paragraphWith("this");
+        assertThat(paragraph.getRuns()).extracting(XWPFRun::text, XWPFRun::isBold).containsExactly(
+                org.assertj.core.groups.Tuple.tuple("Fit ", false), org.assertj.core.groups.Tuple.tuple("this", true),
+                org.assertj.core.groups.Tuple.tuple(" text", false));
+        assertThat(export.notes("ParagraphNode")).noneMatch(note -> note.contains("markdown"));
+        // A heading at a multiple of the style's size fits the taller line the page fits the text to.
+        Export heading = export(true, page -> page.addParagraph(p -> p.text("# Big_x")
+                .textStyle(DocumentTextStyle.builder().size(10).build()).autoSize(30, 6)));
+        assertThat(heading.paragraphWith("Big").getText()).isEqualTo("Big_x");
+        assertThat(heading.notes("ParagraphNode")).noneMatch(note -> note.contains("markdown"));
     }
 
     @Test
@@ -181,10 +221,10 @@ class DocxSessionMarkdownTest {
         // A heading in a zone stands taller than the zone's line, as in the body.
         zoneFooter("# Confidential *now*", report);
         assertThat(report.get().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
-                .containsExactly("a footer written as one line of Word's footer; a paragraph's markdown heading is "
-                                 + "written at the size the page sets it, 16pt, in a line only as tall as the "
-                                 + "paragraph's own: the page draws its letters past the line, and Word cuts their "
-                                 + "tops on screen");
+                .singleElement().asString()
+                .startsWith("a footer written as one line of Word's footer; a paragraph's markdown heading is written "
+                            + "at 16pt in a line ")
+                .endsWith(HEADING_CUT);
     }
 
     private static String zoneFooter(String text, AtomicReference<DocxExportReport> report) throws Exception {
@@ -231,6 +271,26 @@ class DocxSessionMarkdownTest {
     }
 
     @Test
+    void aCellReadAsMarkdownTakesNoLineThatSetsItsPiecesOtherwise() throws Exception {
+        // A paragraph of the same text as authored after it takes its line first; the one left is
+        // in a smaller, regular face, and held to it, its bold letters would be cut. It takes none:
+        // Word's own line, its marks named as not measured.
+        Export export = export(true, page -> page.add(new com.demcha.compose.document.dsl.TableBuilder().name("Sums")
+                .columns(DocumentTableColumn.fixed(110), DocumentTableColumn.fixed(110))
+                .rowCells(DocumentTableCell.node(new ParagraphBuilder().name("Bold").text("**Total**").build()),
+                        DocumentTableCell.node(new ParagraphBuilder().name("Small").text("Total")
+                                .textStyle(DocumentTextStyle.DEFAULT.withSize(6)).build()))
+                .build()));
+        XWPFParagraph bold = export.document().getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr properties = bold.getCTP().getPPr();
+        assertThat(properties != null && properties.isSetSpacing() && properties.getSpacing().isSetLineRule()
+                   && properties.getSpacing().getLineRule()
+                      == org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT)
+                .as("held to no line of another's").isFalse();
+        assertThat(export.notes("ParagraphNode")).containsExactly("written as a paragraph; its " + MARKS_UNMEASURED);
+    }
+
+    @Test
     void aBadgesInitialsAreWrittenAsThePageSetsThem() throws Exception {
         Export export = export(true, page -> page.add(badge("*JR*")));
         String body = export.document().getDocument().xmlText();
@@ -245,6 +305,11 @@ class DocxSessionMarkdownTest {
         assertThat(twoFaces.paragraphWith("JR").getRuns()).filteredOn(run -> !run.text().isEmpty())
                 .extracting(XWPFRun::text, XWPFRun::isItalic)
                 .containsExactly(org.assertj.core.groups.Tuple.tuple("J", true), org.assertj.core.groups.Tuple.tuple("R", false));
+        // A heading the page draws past its line is written in the flow, where its line is the
+        // page's and the cut is named; in the shape Word would grow the line instead.
+        Export heading = export(true, page -> page.add(badge("# *J*")));
+        assertThat(heading.document().getDocument().xmlText()).doesNotContain("<wps:txbx>");
+        assertThat(heading.notes("ParagraphNode")).singleElement().asString().contains("markdown heading").endsWith(HEADING_CUT);
     }
 
     @Test
@@ -276,8 +341,10 @@ class DocxSessionMarkdownTest {
                 .position(new ParagraphBuilder().name("Monogram").text("**LM**").build(), 10, 10, LayerAlign.TOP_LEFT, 1)
                 .build()).addParagraph("Masthead"));
         String body = export.document().getDocument().xmlText();
-        assertThat(body).contains("<wps:txbx>").contains(">LM<").doesNotContain("**LM**");
-        assertThat(export.notes("ParagraphNode")).allSatisfy(note -> assertThat(note).doesNotContain("markdown"));
+        assertThat(body).contains("<wps:txbx>").doesNotContain("**LM**")
+                .matches("(?s).*<w:b w:val=\"on\"/>(?:(?!</w:r>).)*<w:t>LM</w:t>.*");
+        assertThat(export.notes("ParagraphNode")).isNotEmpty()
+                .allSatisfy(note -> assertThat(note).doesNotContain("markdown"));
     }
 
     private static com.demcha.compose.document.node.DocumentNode badge(String initials) {
@@ -289,6 +356,7 @@ class DocxSessionMarkdownTest {
     void theFacesThePiecesAreSetInTravelWithTheDocument() throws Exception {
         Export export = export(true, page -> page.addParagraph(p -> p.text("Set **in** Lato *here*")
                 .textStyle(DocumentTextStyle.builder().fontName(FontName.LATO).build())));
+        assertThat(export.paragraphWith("Lato").getText()).as("written in its pieces").isEqualTo("Set in Lato here");
         String table = partXml(export.document(), "/word/fontTable.xml");
         assertThat(table).contains("<w:embedRegular").contains("<w:embedBold").contains("<w:embedItalic")
                 .doesNotContain("<w:embedBoldItalic");

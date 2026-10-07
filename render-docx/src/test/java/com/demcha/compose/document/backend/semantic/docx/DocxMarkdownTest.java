@@ -115,6 +115,10 @@ class DocxMarkdownTest {
                 span("bold", TextDecoration.BOLD, 10), span(" text", TextDecoration.DEFAULT, 10, BODY.fontName(),
                         Color.RED))), "", false)).as("another colour").isFalse();
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some ", TextDecoration.DEFAULT, 10),
+                span("bold", TextDecoration.BOLD, 10), new ParagraphTextSpan(" text",
+                        new TextStyle(BODY.fontName(), 10, TextDecoration.DEFAULT, BODY.color().color(), 0.5), 25, 10,
+                        null, null, false))), "", false)).as("another tracking").isFalse();
+        assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some ", TextDecoration.DEFAULT, 10),
                 span("bolt", TextDecoration.BOLD, 10), span(" text", TextDecoration.DEFAULT, 10))), "", false))
                 .as("another letter").isFalse();
         assertThat(DocxMarkdown.laidOutIn(pieces, List.of(line(span("Some ", TextDecoration.DEFAULT, 10),

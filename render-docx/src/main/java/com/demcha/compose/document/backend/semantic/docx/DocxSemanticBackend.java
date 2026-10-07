@@ -2192,7 +2192,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (marks != null) {
             lost.add(marks);
         }
-        String heading = markdownHeadingCut(node, "a paragraph's");
+        String heading = markdownHeadingCut(node, lines, "a paragraph's");
         if (heading != null) {
             lost.add(heading);
         }
@@ -7436,7 +7436,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (marks != null) {
             lost.add(marks);
         }
-        String heading = markdownHeadingCut(node, "its");
+        String heading = markdownHeadingCut(node, layout.lines(node), "its");
         if (heading != null) {
             lost.add(heading);
         }
@@ -7516,12 +7516,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * markdown ({@link DocxMarkdown}): the pieces its marks style, in their faces and sizes, the
      * marks dropped — {@code **Java**} a bold run reading {@code Java}. {@code null} where the
      * paragraph is written as authored: the page reads none of it, its lines are not read — with
-     * no layout — or hold other letters, faces or sizes than the pieces, as the lines of a session
-     * that reads no markdown, which lays the marks out, do, or it is marks alone, which the page
-     * sets as nothing. Its note then names the marks
-     * ({@link #markdownLost}). Pieces the page sets as the text stands — an underscore inside a
-     * word, in a session that reads none — are the text as authored, and writing them is writing
-     * it.
+     * no layout — or hold other letters, faces, families, colours, sizes or tracking than the
+     * pieces, as the lines of a session that reads no markdown, which lays the marks out, do, or
+     * the parser reads it into nothing, which the page sets as nothing. Its note then names what
+     * the page sets otherwise ({@link #markdownLost}). Pieces that change nothing — every mark
+     * kept, every piece in the paragraph's own style, as an underscore inside a word is — leave the
+     * text to be written as it stands.
      *
      * <p>The pieces are the page's own: where its session reads markdown, the parser sets each
      * one in its own face, the paragraph's left aside — a bold paragraph's {@code file_name}
@@ -7535,33 +7535,49 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return null;
         }
         List<DocxMarkdown.Piece> pieces = DocxMarkdown.read(node.text(), node.textStyle());
+        // Pieces that change nothing — every mark kept, every piece in the paragraph's style —
+        // leave the text to be written as it stands, its white space and all.
+        if (pieces.stream().allMatch(piece -> piece.style().equals(node.textStyle()))
+            && markdownMarksIn(DocxMarkdown.text(pieces)) == markdownMarksIn(node.text())) {
+            return null;
+        }
         return DocxMarkdown.laidOutIn(pieces, lines, setsAPrefixBeforeTheFirstLine(node) ? node.bulletOffset() : "",
                 node.autoSize() != null) ? pieces : null;
     }
 
     /**
      * What a paragraph written in the pieces the page reads its markdown into
-     * ({@link #markdownPieces}) loses of them: a heading the page sets larger than the
-     * paragraph's line, the line its own — it draws the heading's letters past it, where Word
-     * cuts their tops on screen in the exact line the paragraph is written in.
+     * ({@link #markdownPieces}) loses of them: a heading written taller than the line the page
+     * sets it in, by more than {@link #HEADING_CLEARANCE}. The page sets a heading line as tall
+     * as the paragraph's own and draws the heading's letters past it; Word cuts their tops on
+     * screen in the exact line the paragraph is written in. An auto-sized paragraph's heading,
+     * written at a multiple of its style's size, may fit the line the page fits its text to.
      *
+     * @param lines the lines the page laid the paragraph out in
      * @param whose whose heading the phrase names
-     * @return the phrase, or {@code null} where no piece is larger than the paragraph's text
+     * @return the phrase, or {@code null} where every piece fits its line
      */
-    private String markdownHeadingCut(ParagraphNode node, String whose) {
+    private String markdownHeadingCut(ParagraphNode node, List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
+                                      String whose) {
         List<DocxMarkdown.Piece> pieces = markdownWritten.get(node);
-        if (pieces == null || node.textStyle() == null) {
+        if (pieces == null || node.textStyle() == null || lines.isEmpty()) {
             return null;
         }
+        double line = lines.stream().mapToDouble(com.demcha.compose.document.layout.payloads.ParagraphLine::lineHeight)
+                .max().orElse(0);
         for (DocxMarkdown.Piece piece : pieces) {
-            if (piece.style().size() > node.textStyle().size()) {
-                return whose + " markdown heading is written at the size the page sets it, " + pointsOf(piece.style().size())
-                       + "pt, in a line only as tall as the paragraph's own: the page draws its letters past the line, "
-                       + "and Word cuts their tops on screen";
+            if (piece.style().size() > node.textStyle().size()
+                && styleLineHeight(piece.style()) > line + HEADING_CLEARANCE) {
+                return whose + " markdown heading is written at " + pointsOf(piece.style().size()) + "pt in a line "
+                       + pointsOf(line) + "pt tall, as tall as the paragraph's own line on the page: the page draws its "
+                       + "letters past the line, and Word cuts their tops on screen";
             }
         }
         return null;
     }
+
+    /** How much taller than its line a heading's own line may be before Word cuts its letters, in points. */
+    private static final double HEADING_CLEARANCE = 0.5;
 
     /**
      * What a paragraph read as markdown loses where it is written as authored, not in the pieces
@@ -7578,13 +7594,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!DocxMarkdown.mayRead(node) || markdownWritten.containsKey(node)) {
             return null;
         }
-        // Marks alone — a lone `*`, a rule of `***` — the page reads as an empty list item or a
-        // rule, and sets as nothing; the file holds them as letters.
+        // Text the parser reads into nothing — a lone `*`, an empty list item; `***`, a rule; a
+        // line set four spaces in, a block of code it keeps no text of — the page sets as
+        // nothing; the file holds it as authored.
         if (!lines.isEmpty() && lines.stream().allMatch(line -> line.text().isBlank()) && !node.text().isBlank()
             && DocxMarkdown.text(DocxMarkdown.read(node.text(), node.textStyle() == null
                     ? DocumentTextStyle.DEFAULT : node.textStyle())).isBlank()) {
-            return whose + " markdown marks are written as letters, where the page reads them as marks alone and "
-                   + "sets nothing";
+            return whose + " text is written as authored, where the page reads it as markdown and sets nothing";
         }
         return marksDropped(whose, lines, markdownMarksIn(node.text()),
                 setsAPrefixBeforeTheFirstLine(node) ? markdownMarksIn(node.bulletOffset()) : 0, List.of(node.text()));
@@ -9751,9 +9767,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     .anyMatch(run -> run instanceof InlineTextRun text && text.linkTarget() != null)) {
             return null;
         }
-        // Read as the page reads its markdown, where it does: in one face, as a run's text is.
+        // Read as the page reads its markdown, where it does: in one face, as a run's text is, and
+        // at the paragraph's size — a heading the page draws past its line is written in the
+        // flow, its line the page's, and named there.
         List<DocxMarkdown.Piece> pieces = badgePieces(paragraph);
-        if (pieces != null && pieces.stream().map(DocxMarkdown.Piece::style).distinct().count() > 1) {
+        if (pieces != null && (pieces.stream().map(DocxMarkdown.Piece::style).distinct().count() > 1
+                               || pieces.get(0).style().size() != paragraph.textStyle().size())) {
             return null;
         }
         String text = pieces != null ? DocxMarkdown.text(pieces) : badgeTextOf(paragraph);

@@ -191,8 +191,14 @@ class DocxZoneReportTest {
                 .as("a prefix Word does not write stands the text off, and its letters are lost")
                 .containsExactly(FOOTER + OFF + "; a paragraph's bulletOffset letters, \"•\", are not written before "
                                  + "its first line");
-        assertThat(zoneNotes(DocumentPageZone.footer(30, page -> text("Hi").autoSize(14).build())))
-                .containsExactly(FOOTER + "a paragraph's text is written at 8pt, where the page fits it to 14pt");
+        // Auto-sized, its text is written at the size the page fits it to, where its lines tell it.
+        assertThat(zoneNotes(DocumentPageZone.footer(30, page -> text("Hi").autoSize(14).build()))).isEmpty();
+        // Fitted to 12pt, the size its first run has of its own, its lines do not tell which size is its own.
+        assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new ParagraphBuilder().name("ZoneLine")
+                .textStyle(CHROME).inlineText("A ", CHROME.withSize(12)).inlineText("B ", CHROME.withSize(10))
+                .inlineText("C").autoSize(12).build())))
+                .containsExactly(FOOTER + "a paragraph's text is written at 8pt — the size the page fits it to is not "
+                                 + "measured");
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> text("Confidential")
                 .bookmark(new DocumentBookmarkOptions("Confidential", 0)).build())))
                 .containsExactly(FOOTER + "a paragraph's outline entry is not written");
@@ -211,15 +217,23 @@ class DocxZoneReportTest {
                 .containsExactly(FOOTER + "1 of its 3 parts stands off where the page sets them; where 1 of its 3 "
                                  + "parts stands is not measured; a paragraph's bulletOffset letters, \"•\", are not "
                                  + "written before its first line");
-        // Nor after a part auto-sized to a size the file does not hold; set lower than Word's
-        // baseline, the part after it stands off all the same.
+        // A part auto-sized is written at the size the page fits it to, as wide as the page sets
+        // it; set lower than Word's baseline, the parts after it stand off.
         assertThat(zoneNotes(DocumentPageZone.footer(40, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Hi").textStyle(CHROME).autoSize(14))
                 .addParagraph(p -> p.text("Acme").textStyle(CHROME))
                 .addParagraph(p -> p.text("Co").textStyle(CHROME))
                 .build())))
-                .containsExactly(FOOTER + "2 of its 3 parts stand off where the page sets them; a paragraph's text is "
-                                 + "written at 8pt, where the page fits it to 14pt");
+                .containsExactly(FOOTER + "2 of its 3 parts stand off where the page sets them");
+        // Past a part auto-sized to a size its lines do not tell, where a part on its baseline
+        // stands is not measured.
+        assertThat(zoneNotes(DocumentPageZone.footer(40, page -> new RowBuilder().name("Line")
+                .addParagraph(p -> p.textStyle(CHROME).inlineText("A ", CHROME.withSize(12))
+                        .inlineText("B ", CHROME.withSize(10)).inlineText("C").autoSize(12))
+                .addParagraph(p -> p.text("Acme").textStyle(CHROME.withSize(12)))
+                .build())))
+                .containsExactly(FOOTER + "where 1 of its 2 parts stands is not measured; a paragraph's text is "
+                                 + "written at 8pt — the size the page fits it to is not measured");
         // Against the right margin, the part a prefix stands before ends where Word ends it; the
         // part before it, Word sets the prefix's width off.
         assertThat(zoneNotes(DocumentPageZone.footer(30, page -> new RowBuilder().name("Line")

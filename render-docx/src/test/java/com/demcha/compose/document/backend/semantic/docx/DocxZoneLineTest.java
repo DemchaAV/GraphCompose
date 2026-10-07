@@ -15,6 +15,7 @@ import org.apache.pdfbox.text.TextPosition;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFHeaderFooter;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFramePr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
@@ -218,20 +219,44 @@ class DocxZoneLineTest {
     }
 
     @Test
-    void aPartFittedSmallerIsGivenItsStylesLine() throws Exception {
-        // Word writes it at its style's 18pt, where the page fits it smaller: in a line the page's
-        // height, its letters' tops would be cut.
+    void aPartFittedSmallerIsWrittenAtTheSizeThePageFitsItToInThePagesLine() throws Exception {
         Exported exported = export(DocumentPageZone.builder().zone(DocumentHeaderFooterZone.HEADER).height(40)
                 .padding(new DocumentInsets(4, 0, 0, 0))
                 .content(page -> new ParagraphBuilder()
                         .text("A running header far too long to set at its eighteen points across this page")
                         .textStyle(DocumentTextStyle.DEFAULT.withSize(18)).autoSize(18, 6).build())
                 .build());
+        double written = exported.headerLine().getRuns().get(0).getFontSizeAsDouble();
+        assertThat(written).as("fitted smaller than its style's 18pt").isLessThan(18);
+        Exported unfitted = export(zone(DocumentHeaderFooterZone.HEADER, 40, new DocumentInsets(4, 0, 0, 0), "Acme",
+                DocumentTextStyle.DEFAULT.withSize(written)));
+
+        assertThat(lineOf(exported.headerLine())).as("the page's line, as a part's of that size is")
+                .isCloseTo(lineOf(unfitted.headerLine()), within(0.05));
+        assertThat(exported.report().bySubject()).doesNotContainKey("page zone");
+    }
+
+    @Test
+    void aPartWhoseLinesDoNotTellTheSizeThePageFitsItToIsGivenItsStylesLine() throws Exception {
+        // Fitted to 12pt, the size its first run has of its own: the lines hold 12 and 10, each a
+        // run's own, and do not tell which is the paragraph's. Written at its style's 18pt, in a
+        // line the page's height its letters' tops would be cut.
+        Exported exported = export(DocumentPageZone.builder().zone(DocumentHeaderFooterZone.HEADER).height(40)
+                .padding(new DocumentInsets(4, 0, 0, 0))
+                .content(page -> new ParagraphBuilder().textStyle(DocumentTextStyle.DEFAULT.withSize(18))
+                        .inlineText("A ", DocumentTextStyle.DEFAULT.withSize(12))
+                        .inlineText("B ", DocumentTextStyle.DEFAULT.withSize(10))
+                        .inlineText("C").autoSize(12, 6).build())
+                .build());
         Exported unfitted = export(zone(DocumentHeaderFooterZone.HEADER, 40, new DocumentInsets(4, 0, 0, 0), "Acme",
                 DocumentTextStyle.DEFAULT.withSize(18)));
 
+        assertThat(exported.headerLine().getRuns()).extracting(XWPFRun::getFontSizeAsDouble).containsExactly(12.0, 10.0, 18.0);
         assertThat(lineOf(exported.headerLine())).as("the 18pt style's line")
                 .isCloseTo(lineOf(unfitted.headerLine()), within(0.05));
+        assertThat(exported.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
+                .singleElement().asString()
+                .endsWith("a paragraph's text is written at 18pt — the size the page fits it to is not measured");
     }
 
     @Test

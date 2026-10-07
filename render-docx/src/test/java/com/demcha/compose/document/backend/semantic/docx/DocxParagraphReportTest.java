@@ -20,7 +20,6 @@ import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -29,8 +28,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * What a paragraph's own fields lose in the Word file is in the report: the size an auto-sized
- * paragraph's text is fitted to, the prefix its {@code bulletOffset} sets before its lines, and its
- * outline entry's title and level.
+ * paragraph's text is fitted to, where its lines do not tell it, the prefix its {@code bulletOffset}
+ * sets before its lines, and its outline entry's title and level.
  *
  * <p>Each was drawn by the page and left out of the file without a note. A paragraph that keeps
  * them — its text at the size the page fits it to, a blank prefix written as its indent, an outline
@@ -43,65 +42,45 @@ class DocxParagraphReportTest {
     private static final double CONTENT = 180;
 
     @Test
-    void anAutoSizedParagraphsTextIsNamedWhereThePageFitsItToAnotherSize() throws Exception {
+    void anAutoSizedParagraphsTextIsNamedOnlyWhereItsLinesDoNotTellTheSizeThePageFitsItTo() throws Exception {
+        // Written at the size the page fits it to, smaller or larger than its style's, it loses nothing.
         Consumer<PageFlowBuilder> shrunk = page -> page.addParagraph(p -> p.name("Headline").text(HEADLINE)
                 .textStyle(DocumentTextStyle.DEFAULT.withSize(24)).autoSize(24, 6));
-        double fitted = firstSpan(shrunk).textStyle().size();
-        assertThat(fitted).as("the page fits it smaller").isLessThan(24);
-        assertThat(paragraphNote(shrunk))
-                .isEqualTo("written as a paragraph; its text is written at 24pt, where the page fits it to "
-                           + points(fitted) + "pt");
-        // Up to a size above its style's, a line that fits at it is set at it.
-        assertThat(paragraphNote(page -> page.addParagraph(p -> p.text("Hi").textStyle(TEN).autoSize(24))))
-                .isEqualTo("written as a paragraph; its text is written at 10pt, where the page fits it to 24pt");
-        // Fitted to its own size, it loses nothing.
-        assertThat(paragraphNotes(page -> page.addParagraph(p -> p.text("Hi")
-                .textStyle(DocumentTextStyle.DEFAULT.withSize(24)).autoSize(24, 6)))).isEmpty();
+        assertThat(firstSpan(shrunk).textStyle().size()).as("the page fits it smaller").isLessThan(24);
+        assertThat(paragraphNotes(shrunk)).isEmpty();
+        assertThat(paragraphNotes(page -> page.addParagraph(p -> p.text("Hi").textStyle(TEN).autoSize(24)))).isEmpty();
+        // So is a prefix the page sets in the paragraph's style, where every run keeps its own.
+        assertThat(paragraphNotes(page -> page.addParagraph(p -> p
+                .textStyle(DocumentTextStyle.DEFAULT.withSize(24)).inlineText(HEADLINE, TEN)
+                .bulletOffset("    ").indentStrategy(DocumentTextIndent.ALL_LINES).autoSize(24, 6)))).isEmpty();
+        // Fitted to the size a run has of its own, the lines hold no other: it is that size.
+        assertThat(paragraphNotes(page -> page.addParagraph(p -> p.textStyle(TEN)
+                .inlineText("Hi ", DocumentTextStyle.DEFAULT.withSize(24)).inlineText("there")
+                .autoSize(24)))).isEmpty();
+        // Fitted to 12pt beside runs of 12pt and 10pt of their own, the lines do not tell which is its.
+        String unmeasured = "its text is written at 10pt — the size the page fits it to is not measured";
+        assertThat(paragraphNote(page -> page.addParagraph(p -> p.textStyle(TEN)
+                .inlineText("A ", DocumentTextStyle.DEFAULT.withSize(12))
+                .inlineText("B ", DocumentTextStyle.DEFAULT.withSize(10)).inlineText("C").autoSize(12))))
+                .isEqualTo("written as a paragraph; " + unmeasured);
+        // On a side of a pair as in the body.
+        assertThat(paragraphNote(page -> page.add(pair(new ParagraphBuilder().name("Title").textStyle(TEN)
+                .inlineText("A ", DocumentTextStyle.DEFAULT.withSize(12))
+                .inlineText("B ", DocumentTextStyle.DEFAULT.withSize(10)).inlineText("C").autoSize(12).build(),
+                "2022"))))
+                .isEqualTo("written as one side of a line it shares; " + unmeasured);
         // Not auto-sized, it is not named.
         assertThat(paragraphNotes(page -> page.addParagraph(p -> p.text(HEADLINE)
                 .textStyle(DocumentTextStyle.DEFAULT.withSize(24))))).isEmpty();
-        // Word holds a size to the half point: 10.3 and 10.5 are one size in the file.
-        assertThat(paragraphNotes(page -> page.addParagraph(p -> p.text("Hi")
-                .textStyle(DocumentTextStyle.DEFAULT.withSize(10.3)).autoSize(10.5)))).isEmpty();
-    }
-
-    @Test
-    void aPrefixThePageSetsInTheFittedSizeIsNamedWhereEveryRunKeepsItsOwn() throws Exception {
-        // The page sets the prefix in the paragraph's style at the fitted size; the indent it is
-        // written as is measured at the style's.
-        Consumer<PageFlowBuilder> prefixed = page -> page.addParagraph(p -> p
-                .textStyle(DocumentTextStyle.DEFAULT.withSize(24)).inlineText(HEADLINE, TEN)
-                .bulletOffset("    ").indentStrategy(DocumentTextIndent.ALL_LINES).autoSize(24, 6));
-        ParagraphTextSpan prefix = firstSpan(prefixed);
-        assertThat(prefix.text()).as("the prefix, laid out first").isBlank();
-        double fitted = prefix.textStyle().size();
-        assertThat(fitted).as("at the fitted size, not the run's").isLessThan(24).isNotEqualTo(10.0);
-        assertThat(paragraphNote(prefixed))
-                .isEqualTo("written as a paragraph; its text is written at 24pt, where the page fits it to "
-                           + points(fitted) + "pt");
     }
 
     @Test
     void onlyTheTextThatTakesTheParagraphsStyleIsFitted() throws Exception {
-        // A run with a style of its own is laid out at its own size, as it is written.
+        // A run with a style of its own is laid out at its own size, as it is written: with no
+        // text in the paragraph's style, nothing is fitted to lose.
         assertThat(paragraphNotes(page -> page.addParagraph(p -> p.textStyle(TEN)
-                .inlineText("Hi ", TEN).inlineText("there", DocumentTextStyle.DEFAULT.withSize(12))
-                .autoSize(24)))).isEmpty();
-        // Beside one, a run with none takes the size the page fits the paragraph to.
-        assertThat(paragraphNote(page -> page.addParagraph(p -> p.textStyle(TEN)
-                .inlineText("Hi ", DocumentTextStyle.DEFAULT.withSize(12)).inlineText("there")
-                .autoSize(24))))
-                .isEqualTo("written as a paragraph; its text is written at 10pt, where the page fits it to 24pt");
-        // On a side of a pair as in the body.
-        assertThat(paragraphNote(page -> page.add(pair(new ParagraphBuilder().name("Title").text("ENGINEER")
-                .textStyle(TEN).autoSize(14).build(), "2022"))))
-                .isEqualTo("written as one side of a line it shares; its text is written at 10pt, where the page "
-                           + "fits it to 14pt");
-        // Fitted to the size a run has of its own, it is that size.
-        assertThat(paragraphNote(page -> page.addParagraph(p -> p.textStyle(TEN)
-                .inlineText("Hi ", DocumentTextStyle.DEFAULT.withSize(24)).inlineText("there")
-                .autoSize(24))))
-                .isEqualTo("written as a paragraph; its text is written at 10pt, where the page fits it to 24pt");
+                .inlineText("A ", DocumentTextStyle.DEFAULT.withSize(12))
+                .inlineText("B ", DocumentTextStyle.DEFAULT.withSize(10)).autoSize(12)))).isEmpty();
     }
 
     @Test
@@ -292,10 +271,6 @@ class DocxParagraphReportTest {
                         .fillColor(DocumentColor.rgb(160, 80, 50)).build(), 0, 0, LayerAlign.TOP_LEFT, 0)
                 .position(text, 10, 10, LayerAlign.TOP_LEFT, 1)
                 .build();
-    }
-
-    private static String points(double size) {
-        return BigDecimal.valueOf(Math.round(size * 100) / 100.0).stripTrailingZeros().toPlainString();
     }
 
     /** The first text the page lays out. */

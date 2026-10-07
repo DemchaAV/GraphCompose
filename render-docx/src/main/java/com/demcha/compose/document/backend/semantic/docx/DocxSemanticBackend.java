@@ -1965,8 +1965,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines =
                         ((com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload) fragment.payload()).lines();
                 picture = Math.max(picture, DocxZoneParts.tallestPicture(paragraph));
-                // Written at its style's size where the page fits its text smaller, it needs the
-                // style's line, or its letters' tops are cut.
+                // Written at its style's size where its lines do not tell the size the page fits
+                // its text to, it needs the style's line, or its letters' tops are cut.
                 if (autoSizeLost(paragraph, lines, "its") != null) {
                     styled = Math.max(styled, styleLineHeight(paragraph.textStyle()));
                 }
@@ -2040,7 +2040,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * right margin, ends within it of Word's end; a part a prefix stands before starts off it,
      * the prefix being unwritten. Word's place for a part follows from the widths of those
      * before it on its side of the line: past a part whose width Word does not keep — of more
-     * lines than one, after a prefix, or auto-sized to a size the file does not hold — or one
+     * lines than one, after a prefix, or auto-sized to a size its lines do not tell — or one
      * the layout does not show, where it stands across the line is not measured; past a part of
      * more lines than one — Word sets the parts after it on a later line — where they stand is
      * not measured at all. A zone whose nodes the page names or nests otherwise than the file,
@@ -2048,7 +2048,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>A paragraph's own losses are named too ({@link #zoneParagraphLost}): its right-to-left
      * text is written left to right, its prefix's letters are not written, its text is written
-     * at its style's size or with the markdown marks the page reads as letters, a markdown heading
+     * at its style's size where the size the page fits it to is not measured, or with the
+     * markdown marks the page reads as letters, a markdown heading
      * stands taller than its line, its outline entry is not
      * written, its anchor has no bookmark, and a picture the page sets off the baseline stands
      * on it.</p>
@@ -4157,7 +4158,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (laidOut == null) {
             return null;
         }
-        List<DocxMarkdown.Piece> pieces = pagePieces(reading.text(), style, laidOut.lines(), reading.prefix(), false);
+        List<DocxMarkdown.Piece> pieces = pagePieces(reading.text(), style, laidOut.lines(), reading.prefix());
         return pieces == null ? null : DocxMarkdown.split(pieces, reading.lead());
     }
 
@@ -5872,6 +5873,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * left, and the body text carried a direct size that restyling Normal did not reach: Word's
      * editing protocol found the body following Normal in none of {@code ProposalEditorial}'s or
      * {@code CobaltRota}'s paragraphs, Normal 14pt or 12pt over body text of 10pt and 10.5pt.</p>
+     *
+     * <p>An auto-sized paragraph's text is weighed at its style's size: the election is made for
+     * the whole document before any section is laid out, and the size the page fits it to is not
+     * known yet.</p>
      */
     private static void weighTextStyles(DocumentNode node,
                                         java.util.Map<StyleKey, Long> weights,
@@ -7559,7 +7564,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * reads as markdown, its {@code bulletOffset} and its outline entry. A page zone's paragraphs
      * are written apart, and named on the zone's note ({@link #zoneParagraphLost}).
      *
-     * <p>Its text is written at its style's size, not the one the page fits it to, and in the pieces
+     * <p>Its text is written at the size the page fits it to where the layout tells it
+     * ({@link #writtenStyle}), at its style's where not ({@link #autoSizeLost}), and in the pieces
      * the page reads its markdown into where the page tells them ({@link #markdownPieces}) — a
      * heading among them in a line Word cuts it in ({@link #markdownHeadingCut}) — as authored,
      * its marks and all, where not ({@link #markdownLost}). A prefix's
@@ -7631,26 +7637,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * What an auto-sized paragraph's text loses of its size: the size the file holds it at, to
-     * Word's half point, and the one the page fits it to, where Word sets the two apart; the
-     * size alone, saying the fitted one is not measured, where the layout does not tell it; or
-     * {@code null} when it loses nothing, or nothing laid out takes the paragraph's style — a run
-     * with a style of its own keeps its size on the page.
+     * Word's half point, saying the one the page fits it to is not measured, where the layout does
+     * not tell it — no layout, or lines in sizes that do not say which is the paragraph's. {@code
+     * null} where the lines tell it, and the text is written at it ({@link #writtenStyle}), or
+     * nothing laid out takes the paragraph's style — a run with a style of its own keeps its size
+     * on the page.
      *
      * @param lines the lines the page laid the paragraph out in, empty where they are not read
      */
     private static String autoSizeLost(ParagraphNode node, List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
                                        String whose) {
-        if (node.autoSize() == null || !holdsTextInTheParagraphsStyle(node) && !laysOutAPrefix(node, lines)) {
+        if (node.autoSize() == null || !holdsTextInTheParagraphsStyle(node) && !laysOutAPrefix(node, lines)
+            || !Double.isNaN(fittedSize(node, lines))) {
             return null;
         }
-        double written = wordsSize(node.textStyle().size());
-        double fitted = fittedSize(node, lines);
-        if (Double.isNaN(fitted)) {
-            return whose + " text is written at " + pointsOf(written) + "pt — the size the page fits it to is not measured";
-        }
-        return wordsSize(fitted) != written
-                ? whose + " text is written at " + pointsOf(written) + "pt, where the page fits it to " + pointsOf(fitted) + "pt"
-                : null;
+        return whose + " text is written at " + pointsOf(wordsSize(node.textStyle().size()))
+               + "pt — the size the page fits it to is not measured";
     }
 
     /**
@@ -7674,7 +7676,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>The pieces are the page's own: where its session reads markdown, the parser sets each
      * one in its own face, the paragraph's left aside — a bold paragraph's {@code file_name}
-     * stands regular on the page, and is written so.</p>
+     * stands regular on the page, and is written so. An auto-sized paragraph's are read at the
+     * size the page fits its text to ({@link #writtenStyle}), a heading's at its multiple of it.</p>
      *
      * @param lines the lines the page laid the paragraph out in, empty where they are not read
      */
@@ -7683,8 +7686,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!DocxMarkdown.mayRead(node)) {
             return null;
         }
-        return pagePieces(node.text(), node.textStyle(), lines,
-                setsAPrefixBeforeTheFirstLine(node) ? node.bulletOffset() : "", node.autoSize() != null);
+        return pagePieces(node.text(), writtenStyle(node, lines), lines,
+                setsAPrefixBeforeTheFirstLine(node) ? node.bulletOffset() : "");
     }
 
     /**
@@ -7693,13 +7696,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * that change nothing — every mark kept, every piece in the text's own style — leave the text
      * to be written as it stands, its white space and all.
      *
+     * @param style  the style the page sets the text in, at the size it fits it to where it does
      * @param lines  the lines the page laid the text out in, empty where they are not read
      * @param prefix the prefix the page sets before the first line, empty where it sets none
-     * @param fitted whether the page fits the text to a size of its own
      */
     private static List<DocxMarkdown.Piece> pagePieces(String text, DocumentTextStyle style,
                                                        List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
-                                                       String prefix, boolean fitted) {
+                                                       String prefix) {
         if (!DocxMarkdown.holdsAMark(text) || style == null || lines.isEmpty()) {
             return null;
         }
@@ -7708,7 +7711,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             && markdownMarksIn(DocxMarkdown.text(pieces)) == markdownMarksIn(text)) {
             return null;
         }
-        return DocxMarkdown.laidOutIn(pieces, lines, prefix, fitted) ? pieces : null;
+        return DocxMarkdown.laidOutIn(pieces, lines, prefix, false) ? pieces : null;
     }
 
     /**
@@ -7716,8 +7719,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * ({@link #markdownPieces}) loses of them: a heading written taller than the line the page
      * sets it in, by more than {@link #HEADING_CLEARANCE}. The page sets a heading line as tall
      * as the paragraph's own and draws the heading's letters past it; Word cuts their tops on
-     * screen in the exact line the paragraph is written in. An auto-sized paragraph's heading,
-     * written at a multiple of its style's size, may fit the line the page fits its text to.
+     * screen in the exact line the paragraph is written in. An auto-sized paragraph's heading is
+     * written at its multiple of the size the page fits the text to, as the page sets it.
      *
      * @param lines the lines the page laid the paragraph out in
      * @param whose whose heading the phrase names
@@ -7725,7 +7728,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private String markdownHeadingCut(ParagraphNode node, List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
                                       String whose) {
-        return headingCut(markdownWritten.get(node), node.textStyle(), lines, whose, "paragraph's");
+        return headingCut(markdownWritten.get(node), writtenStyle(node, lines), lines, whose, "paragraph's");
     }
 
     /**
@@ -7907,25 +7910,40 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * The size the page sets a paragraph's text in where it takes the paragraph's style, read off
-     * its laid-out lines; {@code NaN} when they are not read, or do not tell it. A run with a style
-     * of its own is laid out at that style's size, so the paragraph's size is one no such run has;
-     * where the lines hold a single size, it is that one.
+     * its laid-out lines; {@code NaN} when they are not read, or do not tell it.
+     *
+     * <p>A paragraph the page reads as markdown sets a heading at a multiple of that size: the
+     * share it sets the pieces it reads at ({@link DocxMarkdown#scaleIn}) tells it. Plain text
+     * otherwise is laid out in one size, which is it; in more, the size is not told. A run with a
+     * style of its own is laid out at that style's size, so the paragraph's size is one no such
+     * run has; where the lines hold a single size, it is that one.</p>
      */
     private static double fittedSize(ParagraphNode node, List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
-        java.util.Set<Double> ownSizes = new java.util.HashSet<>();
-        for (InlineRun run : node.inlineRuns()) {
-            InlineTextRun text = textOf(run);
-            if (text != null && text.textStyle() != null) {
-                ownSizes.add(text.textStyle().size());
+        DocumentTextStyle style = node.textStyle();
+        if (DocxMarkdown.mayRead(node) && style != null && style.size() > 0) {
+            double scale = DocxMarkdown.scaleIn(DocxMarkdown.read(node.text(), style), lines,
+                    setsAPrefixBeforeTheFirstLine(node) ? node.bulletOffset() : "");
+            if (scale > 0) {
+                return style.size() * scale;
             }
         }
         java.util.Set<Double> laidOut = new java.util.LinkedHashSet<>();
         for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
             for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
                 if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan text
-                    && text.width() > 0 && text.textStyle() != null) {
+                    && text.width() > 0 && text.textStyle() != null && text.textStyle().size() > 0) {
                     laidOut.add(text.textStyle().size());
                 }
+            }
+        }
+        if (node.inlineRuns().isEmpty()) {
+            return laidOut.size() == 1 ? laidOut.iterator().next() : Double.NaN;
+        }
+        java.util.Set<Double> ownSizes = new java.util.HashSet<>();
+        for (InlineRun run : node.inlineRuns()) {
+            InlineTextRun text = textOf(run);
+            if (text != null && text.textStyle() != null) {
+                ownSizes.add(text.textStyle().size());
             }
         }
         for (double size : laidOut) {
@@ -7934,6 +7952,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         return laidOut.size() == 1 ? laidOut.iterator().next() : Double.NaN;
+    }
+
+    /**
+     * The style a paragraph's text is written in where it takes the paragraph's: an auto-sized
+     * paragraph's at the size the page fits it to, where its lines tell it ({@link #fittedSize});
+     * its own otherwise — an auto-sized one's then named ({@link #autoSizeLost}). A run with a
+     * style of its own keeps it, on the page and in the file.
+     *
+     * @param lines the lines the page laid the paragraph out in, empty where they are not read
+     */
+    private static DocumentTextStyle writtenStyle(ParagraphNode node,
+                                                  List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
+        DocumentTextStyle style = node.textStyle();
+        if (node.autoSize() == null || style == null) {
+            return style;
+        }
+        double fitted = fittedSize(node, lines);
+        return Double.isNaN(fitted) ? style : style.withSize(fitted);
     }
 
     /**
@@ -8052,7 +8088,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * start after as many spaces as cover it ({@link #spacesCovering}), a distance written as any
      * other. Its letters are text the export does not write, so the first line is not moved for
      * them. An auto-sized paragraph's prefix is measured at the size the export writes its text
-     * in, not the one the page fits it to.</p>
+     * in ({@link #writtenStyle}): the one the page fits it to, which the page measures it at,
+     * where the layout tells it.</p>
      */
     private void indentAsThePrefixDoes(XWPFParagraph para, ParagraphNode node) {
         String prefix = node.bulletOffset();
@@ -8063,7 +8100,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean blank = prefix.isBlank();
         boolean first = blank && (strategy == DocumentTextIndent.FIRST_LINE || strategy == DocumentTextIndent.ALL_LINES);
         boolean wrapped = strategy == DocumentTextIndent.FROM_SECOND_LINE || strategy == DocumentTextIndent.ALL_LINES;
-        DocumentTextStyle style = node.textStyle();
+        DocumentTextStyle style = writtenStyle(node, layout.lines(node));
         long wrappedTwips = wrapped ? toTwips(styleWidth(style, blank ? prefix : spacesCovering(style, prefix))) : 0;
         long firstTwips = first ? toTwips(styleWidth(style, prefix)) : 0;
         if (wrappedTwips <= 0 && firstTwips <= 0) {
@@ -8568,16 +8605,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node, boolean rightToLeft,
                                     double lineTopAbove, boolean ownLine) {
-        writeParagraphRuns(para, node, rightToLeft, lineTopAbove, ownLine,
-                DocxMarkdown.mayRead(node) ? layout.lines(node) : List.of());
+        writeParagraphRuns(para, node, rightToLeft, lineTopAbove, ownLine, layout.lines(node));
     }
 
     /**
      * Writes a paragraph's runs, its text in the pieces the page sets it in where the page reads
-     * it as markdown ({@link #markdownPieces}).
+     * it as markdown ({@link #markdownPieces}), and the text that takes the paragraph's style at
+     * the size the page fits it to where it is auto-sized ({@link #writtenStyle}).
      *
      * @param lines the lines the page laid the paragraph out in, which say whether it reads the
-     *              paragraph's markdown; empty where they are not read
+     *              paragraph's markdown and the size it fits its text to; empty where they are not
+     *              read
      */
     private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node, boolean rightToLeft,
                                     double lineTopAbove, boolean ownLine,
@@ -8589,8 +8627,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(node);
         boolean wroteARun = false;
         PictureReach pictures = PictureReach.NONE;
+        DocumentTextStyle written = writtenStyle(node, lines);
         // The mark closes the last line, so it is sized as the text that ends it.
-        DocumentTextStyle markStyle = node.textStyle();
+        DocumentTextStyle markStyle = written;
         // A shape's picture is wider than its box on either side: the text just before it gives
         // back the room on the left, so its ink starts where the page starts it, and the text
         // just after it the room on the right (giveBackWidth).
@@ -8622,10 +8661,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // rest of that sentence rather than something the phrase overrides away.
             DocumentLinkTarget target = text.linkTarget() != null ? text.linkTarget() : node.linkTarget();
             XWPFRun docRun = newRun(para, target);
-            DocumentTextStyle runStyle = text.textStyle() == null ? node.textStyle() : text.textStyle();
+            DocumentTextStyle runStyle = text.textStyle() == null ? written : text.textStyle();
             // A chip's letters are styled for its fill, which the mark does not carry: white on
             // a red badge would continue as white on the page. Its paragraph's style goes on.
-            markStyle = backgroundOf(run) != null ? node.textStyle() : runStyle;
+            markStyle = backgroundOf(run) != null ? written : runStyle;
             applyStyle(docRun, runStyle);
             applyRunDirection(docRun, rightToLeft);
             applyInlineBackground(docRun, inlineRuns, index, path, rightToLeft);
@@ -8657,7 +8696,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             markdownWritten.put(node, pieces);
         } else if (!wroteARun) {
             XWPFRun docRun = newRun(para, node.linkTarget());
-            applyStyle(docRun, node.textStyle());
+            applyStyle(docRun, written);
             applyRunDirection(docRun, rightToLeft);
             setTextBrokenAtLines(docRun, node.text());
         }
@@ -8676,7 +8715,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // A paragraph the layout laid out none of — composed in a table cell, a page zone's, or
         // one of an export without a layout — has its style's line.
         double pageLine = pictures.pageLine() > 0 ? pictures.pageLine()
-                : pictures.pageLine() == 0 ? styleLineHeight(node.textStyle()) : 0;
+                : pictures.pageLine() == 0 ? styleLineHeight(written) : 0;
         if (pageLine > 0 && pictures.reach() >= pageLine - PICTURE_FILLS_ITS_LINE) {
             letThePicturesSetTheLine(para);
             if (ownLine) {
@@ -9950,11 +9989,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return null;
         }
         // Read as the page reads its markdown, where it does: in one face, as a run's text is, and
-        // at the paragraph's size — a heading the page draws past its line is written in the
-        // flow, its line the page's, and named there.
+        // at the size the paragraph's text is written at — a heading the page draws past its line
+        // is written in the flow, its line the page's, and named there.
         List<DocxMarkdown.Piece> pieces = badgePieces(paragraph);
         if (pieces != null && (pieces.stream().map(DocxMarkdown.Piece::style).distinct().count() > 1
-                               || pieces.get(0).style().size() != paragraph.textStyle().size())) {
+                               || pieces.get(0).style().size() != writtenStyle(paragraph, layout.lines(paragraph)).size())) {
             return null;
         }
         String text = pieces != null ? DocxMarkdown.text(pieces) : badgeTextOf(paragraph);
@@ -10011,14 +10050,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * A badge's text as the paragraph its shape holds, styled as a run of the body is.
+     * A badge's text as the paragraph its shape holds, styled as a run of the body is: an
+     * auto-sized one's at the size the page fits it to ({@link #writtenStyle}).
      *
      * @return the paragraph as {@code w:p} markup
      */
     private String badgeParagraphXml(XWPFDocument document, ParagraphNode paragraph) {
         XWPFParagraph para = detachedParagraph(document);
         para.setAlignment(ParagraphAlignment.CENTER);
-        DocumentTextStyle style = paragraph.textStyle();
+        DocumentTextStyle style = writtenStyle(paragraph, layout.lines(paragraph));
         String text = badgeTextOf(paragraph);
         List<DocxMarkdown.Piece> pieces = badgePieces(paragraph);
         if (pieces != null) {

@@ -714,11 +714,15 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   and on its left are not written round the table; its report note says so. See [charts.md](charts.md).
 - **A canvas → its contents.** A canvas's drawings stand where it places them; what it
   writes — text, pictures, tables — is written one block after another inside its margin and
-  padding. The places it gives them, the room it holds and the width its text wraps at are
-  not carried, and the report names each one it loses — the room where something follows the
-  canvas in its flow, so a timeline's marker, alone in its row's cell, has no note; a canvas
-  that is its row's tallest cell does not yet have one either. A canvas's clip policy paints
-  nothing on the page either.
+  padding. The places it gives them and the width its text wraps at are not carried, and the
+  report names each one it loses. Its height is held: the room under what it writes is the
+  space below it, which the next block takes or the cell it ends holds. One that only draws
+  holds its whole room in a flow, a cell, a column or a shape container's layer — not in a
+  band or in drawings held whole round it, which hold that room already, nor as a layer of a
+  stack, a shape container or a canvas. The report names what Word cannot hold: what it writes running past its height, a
+  drawing in what it writes, which takes no room in Word, and a height not measured, in a
+  table's composed cell or with no layout. A canvas's clip policy paints nothing on the page
+  either.
 - **Columns drawn as layers → one table row.** A two-column page can lay its
   columns out as the layers of one stack, each inset to its band, so the name
   is drawn before the sidebar. Word has no layers. When every layer is a plain

@@ -123,8 +123,11 @@ class DocxNodeFieldLedgerTest {
                 "transform:REPORTED", "anchor:WRITTEN");
         node(CanvasLayerNode.class, "name:INERT",
                 "width:REPORTED:the width its text wraps at",
-                "height:GAP:the room it holds as its row's tallest cell, or ending a band or a layer "
-                + "stack's column; in a flow something follows it in, it is reported",
+                "height:REPORTED:where what it writes runs past it, where a drawing in what it writes takes "
+                + "no room in Word, and where it is not measured, composed in a table cell or with no "
+                + "layout; inside a band or drawings held whole, or as a layer laid over another, the room is "
+                + "theirs; any other is written, as the room under what it "
+                + "writes, or as its whole room where it only draws",
                 "placements:REPORTED:where what it writes stands; its drawings stand where it places them",
                 "clipPolicy:INERT:the page clips no canvas", "padding:WRITTEN", "margin:WRITTEN");
         node(ChartNode.class, "name:INERT", "spec:REPORTED", "style:REPORTED:in the chart's note",

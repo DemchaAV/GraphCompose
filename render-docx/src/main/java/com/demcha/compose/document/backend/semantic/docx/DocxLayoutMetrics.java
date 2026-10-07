@@ -1331,11 +1331,16 @@ final class DocxLayoutMetrics {
         if (!(fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload)) {
             return false;
         }
+        return nodesByPath().get(fragment.path()) instanceof com.demcha.compose.document.node.RowNode;
+    }
+
+    /** The nodes this index knows, by path, built when first asked. */
+    private Map<String, DocumentNode> nodesByPath() {
         if (nodesByPath == null) {
             nodesByPath = new HashMap<>();
             paths.forEach((node, path) -> nodesByPath.putIfAbsent(path, node));
         }
-        return nodesByPath.get(fragment.path()) instanceof com.demcha.compose.document.node.RowNode;
+        return nodesByPath;
     }
 
     /**
@@ -1555,6 +1560,18 @@ final class DocxLayoutMetrics {
 
     /** The highest child index the layout placed under each parent path, built when first asked. */
     private Map<String, Integer> lastChildIndex;
+
+    /**
+     * The node the layout placed a node in.
+     *
+     * @param node a placed node
+     * @return its parent, or {@code null} when the node was not placed or its parent is not a
+     *         node this index knows
+     */
+    DocumentNode parentOf(DocumentNode node) {
+        PlacedNode box = placedFor(node);
+        return box == null || box.parentPath() == null ? null : nodesByPath().get(box.parentPath());
+    }
 
     /** The placed node for a semantic node, or null when this index knows neither. */
     private PlacedNode placedFor(DocumentNode node) {

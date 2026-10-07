@@ -468,18 +468,20 @@ list's item is read after the marker the page sets before its first line; an ite
 stands in a column of its own, as its text alone; an item, at any level, of a list built as a
 tree of items without `hangingIndent`, which the page lays out after its indent and its marker
 and reads with them, as its own text after them. The marker stays where it was: Word draws a
-Word list's, and a list of paragraphs writes its marker and nesting indent as characters before
-the pieces, in the face the page sets them in. The font table ships the faces the page sets the
-pieces in. The report names a heading written taller than its item's line, which Word cuts on
-screen. An item is written as authored, its marks as letters, and named where its list's items
-are not matched one by one to the layout's — with no layout, composed in a table cell, an item
-run onto the next page, a `hangingIndent` list with a blank item the page draws as a marker
-alone — where its lines hold other letters than its pieces, as Arabic, or where the parser reads
-the marker of a tree's item as markdown with it, as `*a*`. An item of a Word list built as a tree
-whose marker the page sets in another face than the list's — its parser sets a bold list's marker
-regular — is written as authored too, since Word draws the marker in the list's, and named
-whatever marks the page keeps of it. An item the parser reads into nothing, as `***`, is written
-as authored, and named as an item the page sets none of the text of.
+Word list's — the parser sets the marker it reads with a tree's item regular, a bold list's too,
+and Word draws such a list's bullets regular (measured in Word 16) — and a list of paragraphs
+writes its marker and nesting indent as characters before the pieces, in the face the page sets
+them in. The font table ships the faces the page sets the pieces in. The report names a heading
+written taller than its item's line, which Word cuts on screen. An item is written as authored,
+its marks as letters, where its list's items are not matched one by one to the layout's — with
+no layout, composed in a table cell, an item run onto the next page, a `hangingIndent` list with
+a blank item the page draws as a marker alone — where its lines hold other letters than its
+pieces, as Arabic, or where the parser reads the marker of a tree's item as markdown with it, as
+`*a*`; the report names it where the page drops a mark from it. An item the parser reads into
+nothing, as `***`, is written as authored, and named as an item the page sets none of the text
+of. An item written as authored whose marks the page keeps all of is not named where the page
+changes only its face — `node_js` in a bold list in a table cell, set regular — or letters no
+mark is made of, as an ordered item's number, `1.`; nor is a paragraph's.
 
 ## What a panel keeps and loses
 

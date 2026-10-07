@@ -142,7 +142,7 @@ class DocxMarkdownTest {
         String indent = Character.toString(0x00A0).repeat(2);
         List<DocxMarkdown.Piece> pieces = DocxMarkdown.read(indent + "◦ **Java** lead", BODY);
         DocxMarkdown.Split split = DocxMarkdown.split(pieces, indent + "◦ ");
-        assertThat(split.lead()).isEqualTo(BODY);
+        assertThat(split.leadStyle()).isEqualTo(BODY);
         assertThat(split.after()).containsExactly(piece("Java", DocumentTextDecoration.BOLD, 10),
                 piece(" lead", DocumentTextDecoration.DEFAULT, 10));
         // The lead may end inside a piece and span pieces of one style.

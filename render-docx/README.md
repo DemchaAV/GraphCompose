@@ -127,14 +127,15 @@ What is not written — each one is named in the export report
   - the marker column and `markerGap` of an item at a stated column — a list that nests, or a gap
     too narrow for its marker — while a flat hanging-indent list keeps the page's column;
   - a row the page draws as a marker alone, for a blank item;
-  - the marks of items the page reads as markdown, where they are written as letters: an item is
-    written as the page sets it — its marks dropped, each piece in the page's face and size —
-    wherever its lines show how, and as authored where its list's items are not matched one by one
-    to the layout's (no layout, a cell, an item run onto the next page, a hanging-indent list with a
-    blank item), its lines hold other letters, the parser reads a tree's marker as markdown with it
-    (`*a*`), or the page sets none of its text; a Word list's item whose marker the page sets in
-    another face than the list's, written as authored whatever marks the page keeps; and a
-    markdown heading written taller than its line.
+  - the marks of items the page reads as markdown, where they are written as letters and the page
+    drops one: an item is written as the page sets it — its marks dropped, each piece in the
+    page's face and size — wherever its lines show how, and as authored where its list's items are
+    not matched one by one to the layout's (no layout, a cell, an item run onto the next page, a
+    hanging-indent list with a blank item), its lines hold other letters, the parser reads a
+    tree's marker as markdown with it (`*a*`), or the page sets none of its text, which is named
+    as such; and a markdown heading written taller than its line. An item written as authored
+    whose marks the page keeps is not named where the page changes only its face or letters no
+    mark is made of (`1.`).
 - **What a paragraph's own fields set where Word cannot hold it**, named in the export report on
   the paragraph outside a header or footer (a page zone's are named on the zone):
   - the size an auto-sized paragraph's text is fitted to, where Word, to its half point, holds it

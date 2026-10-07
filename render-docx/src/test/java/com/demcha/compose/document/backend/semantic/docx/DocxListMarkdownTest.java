@@ -124,21 +124,20 @@ class DocxListMarkdownTest {
     }
 
     @Test
-    void anItemWhoseMarkerWordDrawsInAnotherFaceIsWrittenAsAuthoredAndNamed() throws Exception {
-        // Word draws a Word list's marker in the list's face, where the page sets it regular: the
-        // item is written as authored, and named whatever marks the page keeps of it.
+    void aBoldWordListsTreeItemsAreWrittenInThePiecesThePageSetsThemIn() throws Exception {
+        // The page's parser sets the marker of a bold list's tree of items, read with the item,
+        // regular, and Word draws the bullets of such a list regular: the item's own text is
+        // written in its pieces, a mark the parser keeps set regular too.
         Export word = export(true, list -> list.textStyle(BOLD).addItem("**Lead** item",
                 child -> child.addItem("Kot_lin").addItem("Plain")));
-        assertThat(word.paragraphWith("Lead").getNumID()).isNotNull();
-        assertThat(word.paragraphWith("Lead").getText()).isEqualTo("**Lead** item");
-        assertThat(word.paragraphWith("Kot_lin").getRuns()).extracting(XWPFRun::isBold).containsExactly(true);
-        assertThat(word.notes()).singleElement().asString().endsWith("; 2 of its 3 items are written as authored, "
-                + "where the page reads them as markdown and sets their markers in another face than the list's, the "
-                + "face Word draws a list's marker in");
-        Export one = export(true, list -> list.textStyle(BOLD).addItem("snake_case", child -> child.addItem("sub")));
-        assertThat(one.notes()).singleElement().asString().endsWith("; 1 of its 2 items is written as authored, where "
-                + "the page reads it as markdown and sets its marker in another face than the list's, the face Word "
-                + "draws a list's marker in");
+        XWPFParagraph lead = word.paragraphWith("Lead");
+        assertThat(lead.getNumID()).isNotNull();
+        assertThat(lead.getRuns()).extracting(XWPFRun::text).containsExactly("Lead", " item");
+        assertThat(lead.getRuns()).extracting(XWPFRun::isBold).containsExactly(true, false);
+        assertThat(word.paragraphWith("Kot_lin").getRuns()).extracting(XWPFRun::isBold).containsExactly(false);
+        // An item the page does not read keeps the list's face.
+        assertThat(word.paragraphWith("Plain").getRuns()).extracting(XWPFRun::isBold).containsExactly(true);
+        assertThat(word.notes()).noneMatch(note -> note.contains("markdown"));
     }
 
     @Test
@@ -153,7 +152,7 @@ class DocxListMarkdownTest {
 
     @Test
     void aHeadingInAnItemIsWrittenAndNamedWhereWordCutsIt() throws Exception {
-        Export export = export(true, list -> list.items("# Title *x*", "Kotlin"));
+        Export export = export(true, list -> list.items("# Title *x*", "Kotlin", "# Other *y*"));
         XWPFRun title = export.paragraphWith("Title").getRuns().get(0);
         assertThat(title.text()).isEqualTo("Title *x*");
         assertThat(title.isBold()).isTrue();
@@ -188,6 +187,14 @@ class DocxListMarkdownTest {
         Export blank = export(true, list -> list.hangingIndent(true).items("**Java**", "", "Kotlin"));
         assertThat(blank.paragraphWith("Java").getText()).isEqualTo("**Java**");
         assertThat(blank.notes()).singleElement().asString().endsWith("; " + MARKS);
+        // A marker of marks the page sets before each item's first line is not counted for the items.
+        Export marked = export(true, list -> list.marker("*").items("A", "B", "C",
+                "**Long** " + "item that runs on and on. ".repeat(40)));
+        assertThat(marked.notes()).singleElement().asString().endsWith("; " + MARKS);
+        // An item of runs keeps every mark it holds, on the page and in the count alike.
+        Export rich = export(true, list -> list.hangingIndent(true).addItem(runs -> runs.plain("x ** y ** z"))
+                .addItem("**Long** " + "item that runs on and on. ".repeat(40), child -> { }));
+        assertThat(rich.notes()).singleElement().asString().endsWith("; " + MARKS);
     }
 
     @Test
@@ -222,8 +229,8 @@ class DocxListMarkdownTest {
                 .items("مرحبا **بالعالم**"));
         assertThat(export.document().getDocument().xmlText()).contains("**");
         assertThat(export.notes()).singleElement().asString().endsWith("; " + MARKS);
-        // The marker the page sets before the item's first line holds marks of its own, which are
-        // not the item's: its lines hold as many as the item, less the marker's none.
+        // The marker the page sets before the item's first line holds marks of its own, which the
+        // page keeps: its lines hold as many marks as the item, and none of them the item's.
         Export marked = export(true, list -> list.marker("**")
                 .textStyle(DocumentTextStyle.builder().fontName(FontName.AMIRI).build()).items("مرحبا *بالعالم*"));
         assertThat(marked.notes()).singleElement().asString().endsWith("; " + MARKS);

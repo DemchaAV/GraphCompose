@@ -46,6 +46,13 @@ final class DocxMarkdown {
     /** How far apart two sizes may be and still be the same, in points. */
     private static final double SIZE_CLEARANCE = 0.01;
 
+    /**
+     * The indent a list with no {@code hangingIndent} sets an item of a tree of items in, a level
+     * at a time: two no-break spaces ({@code TextFlowSupport}, where it flattens the tree into
+     * labels), which the parser reads as letters.
+     */
+    private static final String NESTED_ITEM_INDENT = Character.toString(0x00A0).repeat(2);
+
     private DocxMarkdown() {
     }
 
@@ -65,13 +72,6 @@ final class DocxMarkdown {
     static boolean mayRead(ParagraphNode node) {
         return (node.inlineRuns() == null || node.inlineRuns().isEmpty()) && holdsAMark(node.text());
     }
-
-    /**
-     * The indent a list with no {@code hangingIndent} sets an item of a tree of items in, a level
-     * at a time: two no-break spaces ({@code TextFlowSupport}, where it flattens the tree into
-     * labels), which the parser reads as letters.
-     */
-    private static final String NESTED_ITEM_INDENT = Character.toString(0x00A0).repeat(2);
 
     /**
      * A list item's text as the page lays it out, and reads it where its session reads markdown.
@@ -233,10 +233,10 @@ final class DocxMarkdown {
      * Pieces read off text that opens with a lead the file writes apart from them, split at the
      * lead's end.
      *
-     * @param lead  the style the page sets the lead in, {@code null} where there is no lead
-     * @param after the pieces after the lead
+     * @param leadStyle the style the page sets the lead in, {@code null} where there is no lead
+     * @param after     the pieces after the lead
      */
-    record Split(DocumentTextStyle lead, List<Piece> after) {
+    record Split(DocumentTextStyle leadStyle, List<Piece> after) {
     }
 
     /**

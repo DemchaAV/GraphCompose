@@ -3917,12 +3917,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Semantic list mapping: each item becomes a marker-prefixed paragraph in
-     * the list's text style. Flat items run through the same
-     * {@code ListMarker.normalizeItemText} step as fixed-layout rendering
-     * (author-typed markers stripped, blank items skipped); nested items
-     * indent two spaces per depth and use their own marker when one is set,
-     * falling back to {@code ListMarker.defaultForDepth} otherwise.
+     * Semantic list mapping: each item becomes a paragraph, a Word list's or one
+     * with its marker as characters, in the list's text style, or in the pieces the
+     * page sets it in where it reads the item as markdown ({@link #writeItemText}).
+     * Flat items run through the same {@code ListMarker.normalizeItemText} step as
+     * fixed-layout rendering (author-typed markers stripped, blank items skipped);
+     * nested items indent two spaces per depth and use their own marker when one is
+     * set, falling back to {@code ListMarker.defaultForDepth} otherwise.
      */
     private void writeList(XWPFDocument document,
                            com.demcha.compose.document.node.ListNode list) {
@@ -4033,12 +4034,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * What a list's items lose where the page reads them as markdown, each item matched to the
      * lines the page laid it out in. An item of plain text holding a mark of emphasis or code is
      * written in the pieces the page sets it in where its lines say so ({@link #itemPieces}); a
-     * heading among them in a line Word cuts it in is named ({@link #headingCut}). One whose marker
-     * Word draws in the list's face, where the page sets it in another, is written as authored and
-     * named, whatever marks the page keeps of it. One the page reads into nothing is written as
-     * authored and named; any other written as authored, its marks and all, is named where its
-     * lines, less the prefix the page sets before its first line, hold fewer marks than it
-     * ({@link #marksDropped}).
+     * heading among them in a line Word cuts it in is named ({@link #headingCut}). One the page
+     * reads into nothing is written as authored and named; any other written as authored, its
+     * marks and all, is named where its lines, less the prefix the page sets before its first line,
+     * hold fewer marks than it ({@link #marksDropped}).
      *
      * @param items   how many items the list writes
      * @param written its items of plain text as written
@@ -4054,17 +4053,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 break;
             }
         }
-        long refused = written.stream().filter(ItemWritten::refused).count();
-        if (refused > 0) {
-            boolean one = refused == 1;
-            lost.add(refused + " of its " + items + " items " + (one ? "is" : "are")
-                     + " written as authored, where the page reads " + (one ? "it" : "them")
-                     + " as markdown and sets " + (one ? "its marker" : "their markers")
-                     + " in another face than the list's, the face Word draws a list's marker in");
-        }
         List<ItemWritten> asAuthored = written.stream()
-                .filter(item -> item.pieces() == null && !item.refused() && DocxMarkdown.holdsAMark(item.reading().text()))
-                .toList();
+                .filter(item -> item.pieces() == null && DocxMarkdown.holdsAMark(item.reading().text())).toList();
         List<ItemWritten> nothing = asAuthored.stream().filter(item -> setsNoneOfIt(item, list.textStyle())).toList();
         if (!nothing.isEmpty()) {
             boolean one = nothing.size() == 1;
@@ -4119,32 +4109,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * item of a {@code hangingIndent} list the page draws as a marker alone — and so each written
      * as authored, as a paragraph's text is ({@link #markdownLost}): an item of plain text holding a
      * mark of emphasis or code is set as markdown, its marks dropped. Its text is read as the page
-     * lays it out, a marker typed before it taken off
-     * ({@link com.demcha.compose.document.node.ListMarker#normalizeItemText}); its laid-out lines
-     * are the items', without a marker laid out on its own. A marker laid out in an item's line,
-     * and a rich item's runs, hold every mark they had.
+     * lays it out ({@link DocxMarkdown#items}): a marker typed before it taken off, a tree's indent
+     * and marker read with it. Its laid-out lines are the items', without a marker laid out on its
+     * own, and less the marks of the marker the page sets before a flat item's first line. A rich
+     * item's runs hold every mark they had.
      */
     private List<String> itemsMarkdownUnmatched(com.demcha.compose.document.node.ListNode list) {
-        List<String> plain = new ArrayList<>();
-        List<String> all = new ArrayList<>();
-        if (list.nestedItems().isEmpty()) {
-            for (String item : list.items()) {
-                String text = com.demcha.compose.document.node.ListMarker.normalizeItemText(item, list.normalizeMarkers());
-                plain.add(text);
-                all.add(text);
-            }
-        } else {
-            collectItemTexts(list.nestedItems(), list.normalizeMarkers(), plain, all);
-        }
+        List<DocxMarkdown.ItemReading> readings = DocxMarkdown.items(list);
+        List<String> plain = readings.stream().map(DocxMarkdown.ItemReading::text).toList();
         if (plain.stream().noneMatch(DocxMarkdown::holdsAMark)) {
             return List.of();
         }
+        List<String> all = new ArrayList<>(plain);
+        collectRichTexts(list.nestedItems(), all);
         List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines = new ArrayList<>();
         for (DocxLayoutMetrics.ItemText item : layout.itemLines(list)) {
             lines.addAll(item.lines());
         }
         String marks = marksDropped("its items'", lines, all.stream().mapToInt(DocxSemanticBackend::markdownMarksIn).sum(),
-                0, plain);
+                readings.stream().mapToInt(reading -> markdownMarksIn(reading.prefix())).sum(), plain);
         return marks == null ? List.of() : List.of(marks);
     }
 
@@ -4154,12 +4137,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param reading its text as the page reads it
      * @param lines   the lines the page laid it out in, empty where its list's items are not matched
      * @param pieces  the pieces it was written in, {@code null} where it was written as authored
-     * @param refused whether it was written as authored though its lines hold the pieces the page
-     *                sets it in: Word draws its marker, which the page sets in another face
      */
     private record ItemWritten(DocxMarkdown.ItemReading reading,
                                List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
-                               List<DocxMarkdown.Piece> pieces, boolean refused) {
+                               List<DocxMarkdown.Piece> pieces) {
     }
 
     /**
@@ -4173,7 +4154,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static DocxMarkdown.Split itemPieces(DocxMarkdown.ItemReading reading, DocumentTextStyle style,
                                                  DocxLayoutMetrics.ItemText laidOut) {
-        if (reading == null || laidOut == null) {
+        if (laidOut == null) {
             return null;
         }
         List<DocxMarkdown.Piece> pieces = pagePieces(reading.text(), style, laidOut.lines(), reading.prefix(), false);
@@ -4184,25 +4165,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Writes an item's text: as authored in one run, or in the pieces the page sets it in, and
      * records it for the list's note.
      *
-     * @param before          what the file writes before the item's own text — its indent and
-     *                        marker, where Word does not draw the marker — in the lead's style
-     *                        where the page sets the lead in the pieces
-     * @param label           the item's text as authored
-     * @param wordDrawsMarker whether Word draws the item's marker, a Word list's
-     * @param laidOut         how the layout set the item, {@code null} where its list's items are
-     *                        not matched
+     * <p>Where Word draws the marker of a tree's item the page reads with it, it draws it as the
+     * page's parser sets it: a list built as a tree of items without {@code hangingIndent} states
+     * no face on its levels, and Word draws their bullets regular, a bold list's included
+     * (measured in Word 16), where the parser sets the marker it reads regular.</p>
+     *
+     * @param before  what the file writes before the item's own text — its indent and marker,
+     *                where Word does not draw the marker — in the lead's style where the page sets
+     *                the lead in the pieces
+     * @param label   the item's text as authored
+     * @param laidOut how the layout set the item, {@code null} where its list's items are not matched
      */
     private void writeItemText(XWPFParagraph para, DocumentTextStyle style, String before, String label,
-                               boolean wordDrawsMarker, DocxMarkdown.ItemReading reading,
-                               DocxLayoutMetrics.ItemText laidOut) {
+                               DocxMarkdown.ItemReading reading, DocxLayoutMetrics.ItemText laidOut) {
         DocxMarkdown.Split split = itemPieces(reading, style, laidOut);
-        // Word draws a Word list's marker in the list's style. Where the page sets the marker it
-        // reads with the item in another — its parser sets a bold list's marker regular — the item
-        // is written as authored, and named.
-        boolean refused = split != null && wordDrawsMarker && split.lead() != null && !split.lead().equals(style);
-        if (refused) {
-            split = null;
-        }
         if (split == null) {
             XWPFRun run = para.createRun();
             applyStyle(run, style);
@@ -4210,7 +4186,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else {
             if (!before.isEmpty()) {
                 XWPFRun lead = para.createRun();
-                applyStyle(lead, split.lead() != null ? split.lead() : style);
+                applyStyle(lead, split.leadStyle() != null ? split.leadStyle() : style);
                 setTextBrokenAtLines(lead, before);
             }
             for (DocxMarkdown.Piece piece : split.after()) {
@@ -4219,27 +4195,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 setTextBrokenAtLines(run, piece.text());
             }
         }
-        if (reading != null) {
-            listItemsWritten.add(new ItemWritten(reading, laidOut == null ? List.of() : laidOut.lines(),
-                    split == null ? null : split.after(), refused));
-        }
+        listItemsWritten.add(new ItemWritten(reading, laidOut == null ? List.of() : laidOut.lines(),
+                split == null ? null : split.after()));
     }
 
-    /**
-     * Every item's text in a tree of items, as the page lays it out: a plain item's label, a marker
-     * typed before it taken off, and a rich item's runs' text too.
-     */
-    private static void collectItemTexts(List<com.demcha.compose.document.node.ListItem> items, boolean normalizeMarkers,
-                                         List<String> plain, List<String> all) {
+    /** The text of every item of runs in a tree of items, which the page lays out as it stands. */
+    private static void collectRichTexts(List<com.demcha.compose.document.node.ListItem> items, List<String> into) {
         for (com.demcha.compose.document.node.ListItem item : items) {
-            if (item.runs().isEmpty()) {
-                String text = com.demcha.compose.document.node.ListMarker.normalizeItemText(item.label(), normalizeMarkers);
-                plain.add(text);
-                all.add(text);
-            } else {
-                all.add(InlineRun.plainText(item.runs()));
+            if (item.isRich()) {
+                into.add(InlineRun.plainText(item.runs()));
             }
-            collectItemTexts(item.children(), normalizeMarkers, plain, all);
+            collectRichTexts(item.children(), into);
         }
     }
 
@@ -4490,9 +4456,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * text the export used before Word numbering existed here.
      *
      * <p>Its text is written in the pieces the page sets it in where the page reads it as
-     * markdown ({@link #writeItemText}). The paragraph's mark keeps the list's style whatever
-     * piece ends the item: Word draws a list's marker in the mark's style, and the page draws it
-     * in the list's.</p>
+     * markdown ({@link #writeItemText}); the paragraph's mark keeps the list's style whatever
+     * piece ends the item.</p>
      *
      * @param marker  the marker written as characters before the item's text, after the nesting
      *                indent, where Word does not draw it
@@ -4518,8 +4483,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 measureTheItemAtWordsSize(para, style, lines, measuredColumns.get(numId));
             }
         }
-        writeItemText(para, style, numId != null ? "" : "  ".repeat(depth) + marker, label, numId != null, reading,
-                laidOut);
+        writeItemText(para, style, numId != null ? "" : "  ".repeat(depth) + marker, label, reading, laidOut);
         styleTheMark(para, style);
     }
 
@@ -4706,7 +4670,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
             }
         } else {
-            writeItemText(para, style, "", item.label(), false, reading, laidOut);
+            writeItemText(para, style, "", item.label(), reading, laidOut);
         }
         makeRoomForPictures(para, pictures);
         styleTheMark(para, markStyle);

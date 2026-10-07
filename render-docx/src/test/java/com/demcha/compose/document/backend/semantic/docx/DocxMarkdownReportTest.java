@@ -76,7 +76,7 @@ class DocxMarkdownReportTest {
     }
 
     @Test
-    void aListsItemsThePageReadsAsMarkdownAreWrittenSoAndNotNamed() throws Exception {
+    void aListsItemsThePageReadsAsMarkdownAreNotNamed() throws Exception {
         assertThat(listNotes(true, page -> page.addList(list -> list.name("Skills").items("**Java** lead", "Kotlin"))))
                 .isEmpty();
         assertThat(listNotes(true, page -> page.addList(list -> list.name("Skills").hangingIndent(true)

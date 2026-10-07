@@ -42,10 +42,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * What a document asks for that the Word file is not given is in the report, not only in the
  * file's absence.
  *
- * <p>A row's fill, a logo in a page header, a watermark, a protection and a node kind the
- * export does not know were each left out of the Word file with no more than a log line, or
- * nothing: a caller reading the report was told the document lost nothing. Each is now a note
- * naming what the file does not carry.</p>
+ * <p>A row's fill in a page zone or a table cell, a logo in a page header, a watermark, a
+ * protection and a node kind the export does not know were each left out of the Word file with no
+ * more than a log line, or nothing: a caller reading the report was told the document lost nothing.
+ * Each is now a note naming what the file does not carry. A row's paint in the flow is written
+ * ({@link DocxRowPaintTest}).</p>
  */
 class DocxReportedLossesTest {
 
@@ -53,25 +54,13 @@ class DocxReportedLossesTest {
     private static final DocumentStroke RULE = DocumentStroke.of(DocumentColor.rgb(26, 86, 148), 1);
 
     @Test
-    void aRowsFillOutlineAndBordersAreReportedAsNotWritten() throws Exception {
+    void aRowsFillOutlineAndBordersInTheFlowAreWrittenNotReported() throws Exception {
+        // Written as a panel holding its columns (DocxRowPaintTest), they are no loss.
         DocxExportReport report = reportOf(session -> session.pageFlow(page -> page.addRow(row -> row
                 .name("Totals").fillColor(SURFACE).stroke(RULE).borders(DocumentBorders.bottom(RULE))
                 .addParagraph("Subtotal").addParagraph("120.00"))));
 
-        List<DocxExportReport.Note> notes = report.bySubject().get("row paint");
-        assertThat(notes).as("one note for the row").hasSize(1);
-        assertThat(notes.get(0).severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
-        assertThat(notes.get(0).path()).contains("Totals");
-        assertThat(notes.get(0).detail()).contains("the row's fill, outline and borders are not written");
-    }
-
-    @Test
-    void aRowWithAFillAloneSaysSo() throws Exception {
-        DocxExportReport report = reportOf(session -> session.pageFlow(page -> page.addRow(row -> row
-                .fillColor(SURFACE).addParagraph("Left").addParagraph("Right"))));
-
-        assertThat(report.bySubject().get("row paint")).singleElement()
-                .extracting(DocxExportReport.Note::detail).asString().contains("the row's fill is not written");
+        assertThat(report.bySubject()).doesNotContainKey("row paint");
     }
 
     @Test
@@ -144,29 +133,12 @@ class DocxReportedLossesTest {
     }
 
     @Test
-    void aRowOfNoColumnsThePagePaintsIsReported() throws Exception {
-        DocxExportReport report = reportOf(session -> session.pageFlow(page -> page.addRow(row -> row
-                .fillColor(SURFACE).padding(DocumentInsets.of(8)))));
-
-        assertThat(report.bySubject()).containsKey("row paint");
-    }
-
-    @Test
     void aRowOfNoColumnsAndNoHeightIsNotReported() throws Exception {
         // The page paints a row's box only where the layout gives it some height.
         DocxExportReport report = reportOf(session -> session.pageFlow(page -> page
                 .addParagraph("Before").addRow(row -> row.fillColor(SURFACE)).addParagraph("After")));
 
         assertThat(report.bySubject()).doesNotContainKey("row paint");
-    }
-
-    @Test
-    void aRoundedRowSaysItsPaintWasRounded() throws Exception {
-        DocxExportReport report = reportOf(session -> session.pageFlow(page -> page.addRow(row -> row
-                .fillColor(SURFACE).cornerRadius(6).addParagraph("Left").addParagraph("Right"))));
-
-        assertThat(report.bySubject().get("row paint")).singleElement()
-                .extracting(DocxExportReport.Note::detail).asString().contains("the row's rounded fill is not written");
     }
 
     @Test

@@ -245,13 +245,13 @@ class DocxTranslucencyTest {
     }
 
     @Test
-    void aRowsOwnFillIsNotWhatIsUnderItsChip() throws Exception {
-        // The export does not write a row's own fill — the report names it as row paint — so what
-        // Word shows under the chip is the page's white, and the chip is flattened against that.
+    void aRowsOwnFillIsWhatIsUnderItsChip() throws Exception {
+        // The row's fill is written, as its panel's shading: what Word shows under the chip is the
+        // row's navy, and the chip is flattened against that, not against the page's white.
         try (Exported exported = export(null, page -> page.addRow(row -> row.fillColor(NAVY)
                 .addParagraph(p -> p.inlineText("Call ").inlineCode("render()")).addParagraph("Beside")))) {
-            assertThat(exported.report().bySubject()).as("the row's fill is not written").containsKey("row paint");
-            assertThat(runShading(run(exported.document(), "render("))).isEqualTo("EFF1F3");
+            assertThat(exported.report().bySubject()).as("the row's fill is written").doesNotContainKey("row paint");
+            assertThat(runShading(run(exported.document(), "render("))).isEqualTo("39445A");
         }
     }
 
@@ -426,15 +426,15 @@ class DocxTranslucencyTest {
 
     @Test
     void aRuleInAFilledRowIsFlattenedAgainstWhatWordShows() throws Exception {
-        // The export does not write a row's own fill, so what Word shows under the rule is the page.
+        // The row's fill is written, as its panel's shading: what Word shows under the rule is navy.
         try (Exported exported = export(null, page -> page.addRow(row -> row.fillColor(NAVY)
                 .addLine(line -> line.horizontal(100).stroke(DocumentStroke.of(DocumentColor.rgba(0, 0, 0, 128), 1)))
                 .addParagraph("Beside")))) {
             CTBorder bottom = allParagraphs(exported.document()).stream()
                     .filter(p -> p.getCTP().getPPr() != null && p.getCTP().getPPr().isSetPBdr())
                     .findFirst().orElseThrow().getCTP().getPPr().getPBdr().getBottom();
-            // Black at 128/255 over white, not over the row's navy.
-            assertThat(hex(bottom.getColor())).isEqualTo("7F7F7F");
+            // Black at 128/255 over the row's navy, not over white.
+            assertThat(hex(bottom.getColor())).isEqualTo("0E1320");
         }
     }
 

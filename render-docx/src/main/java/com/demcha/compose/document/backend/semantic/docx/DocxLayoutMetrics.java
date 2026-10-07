@@ -76,7 +76,7 @@ final class DocxLayoutMetrics {
     private Map<Integer, List<PlacedFragment>> paintedByPage;
     // A table's first own row on each page, filled on first use — see colourUnderCell.
     private final Map<DocumentNode, Map<Integer, PlacedFragment>> firstRows = new IdentityHashMap<>();
-    // The node at each path, indexed on first use — see aRowsOwnFill.
+    // The node at each path, indexed on first use — see parentOf.
     private Map<String, DocumentNode> nodesByPath;
 
     private DocxLayoutMetrics(Map<DocumentNode, String> paths,
@@ -1370,7 +1370,7 @@ final class DocxLayoutMetrics {
     /**
      * What the page painted at a point before a fragment, over its white, as Word shows it:
      * rectangles, ellipses, polygons, paths and table cells in their fill colours, a row's own fill
-     * left out, as the export does not write it ({@code row paint}). A picture, a barcode, a
+     * among them, which the export writes as its panel's shading. A picture, a barcode, a
      * gradient, a fill drawn under a transform, or what the layout paints in a payload this does
      * not know, covering the point, leaves the colour unknown.
      */
@@ -1393,7 +1393,7 @@ final class DocxLayoutMetrics {
                 turned = Math.max(0, turned - 1);
                 continue;
             }
-            if (payload == null || PAINTS_NO_FILL.contains(payload.getClass()) || aRowsOwnFill(fragment)) {
+            if (payload == null || PAINTS_NO_FILL.contains(payload.getClass())) {
                 continue;
             }
             java.awt.Color fill = solidFillAt(fragment, x, y);
@@ -1419,14 +1419,6 @@ final class DocxLayoutMetrics {
             com.demcha.compose.document.layout.payloads.AnchorMarkerPayload.class,
             com.demcha.compose.document.layout.payloads.BookmarkMarkerPayload.class,
             com.demcha.compose.document.layout.payloads.LayoutAnchorPayload.class);
-
-    /** Whether a fragment is a row's own fill, which the export does not write. */
-    private boolean aRowsOwnFill(PlacedFragment fragment) {
-        if (!(fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload)) {
-            return false;
-        }
-        return nodesByPath().get(fragment.path()) instanceof com.demcha.compose.document.node.RowNode;
-    }
 
     /** The nodes this index knows, by path, built when first asked. */
     private Map<String, DocumentNode> nodesByPath() {

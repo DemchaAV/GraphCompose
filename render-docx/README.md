@@ -110,7 +110,9 @@ What is not written — each one is named in the export report
   not carried. A layer stack whose layers are side-by-side columns is the exception: it is
   written as one table row, a cell per column.
 - **Watermarks, protection and viewer preferences**, each named in the export report.
-- **A row's own fill, outline and side borders**, named in the export report as `row paint`.
+- **A row's own fill, outline and side borders** composed in a table cell — drawn as a shape where
+  they frame no text — or in a page zone's line, named in the export report as `row paint`. In
+  the flow a row that paints is written as a panel holding its columns.
 - **Translucency where Word holds an opaque colour only** — a cell's shading, a border, a rule,
   a chip's run shading: the colour is flattened against what Word paints under it — the panel or
   cell the export shaded, or what the page paints there — and a text header's separator against

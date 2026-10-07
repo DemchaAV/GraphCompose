@@ -99,6 +99,11 @@ class DocxNodeFieldLedgerTest {
                                                     + "under the cell, and of its rules, against its fill where it has "
                                                     + "one; any other is written";
 
+    // A row in the flow is written as a panel holding its columns, its paint the panel's.
+    private static final String ROW_PAINT = "composed in a table cell, drawn as a shape where it frames no text "
+                                            + "and not written where it does, and in a page zone's line; its "
+                                            + "translucency, as a panel's; any other is written, as a panel";
+
     private static final Map<Class<?>, Map<String, Entry>> NODES = new LinkedHashMap<>();
     private static final Map<String, Entry> OUTPUT_OPTIONS = fields(
             "metadata:WRITTEN",
@@ -220,9 +225,11 @@ class DocxNodeFieldLedgerTest {
         node(PolygonNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "points:WRITTEN",
                 "fillColor:WRITTEN", "stroke:WRITTEN", "padding:WRITTEN", "margin:WRITTEN");
         node(RowNode.class, "name:INERT", "children:WRITTEN", "weights:WRITTEN", "gap:WRITTEN", "padding:WRITTEN",
-                "margin:WRITTEN", "fillColor:REPORTED", "stroke:REPORTED",
-                "cornerRadius:REPORTED:with the paint it rounds; with none it paints nothing",
-                "borders:REPORTED", "columns:WRITTEN", "verticalAlign:WRITTEN", "arrangement:WRITTEN");
+                "margin:WRITTEN",
+                "fillColor:REPORTED:" + ROW_PAINT, "stroke:REPORTED:" + ROW_PAINT,
+                "cornerRadius:REPORTED:a panel's corners, which a Word table cell does not round; with no paint "
+                + "it paints nothing",
+                "borders:REPORTED:" + ROW_PAINT, "columns:WRITTEN", "verticalAlign:WRITTEN", "arrangement:WRITTEN");
         // The wrappers the layout adds round a timeline's parts, public records the export writes
         // through to their child.
         node(com.demcha.compose.document.layout.LayoutAnchorNode.class, "name:INERT", "id:INERT", "child:WRITTEN");

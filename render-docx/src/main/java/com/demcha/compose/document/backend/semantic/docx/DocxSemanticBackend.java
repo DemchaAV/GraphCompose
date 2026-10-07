@@ -374,6 +374,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private String badgeText;
     // The cell of the panel being written, painted or framed; null outside a panel.
     private XWPFTableCell panelCell;
+    // The painted row whose columns are being written in its own panel, its padding the panel's
+    // (writePaintedRow); null otherwise.
+    private RowNode rowInItsPanel;
     // The text style the document is mostly written in, promoted to Word's Normal style.
     // Null until an export computes it, and when the graph carries no text at all.
     private DocumentTextStyle documentDefaultStyle;
@@ -767,6 +770,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         composedCellBoxes = List.of();
         anchoredInCells.clear();
         panelCell = null;
+        rowInItsPanel = null;
         moves.clear();
         writingInAStandIn.clear();
         stackedLineHeights.clear();
@@ -3099,7 +3103,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else if (node instanceof PageBreakNode) {
             writePageBreak(document);
         } else if (node instanceof RowNode row) {
-            writeTableWithItsOwnSpacing(document, row);
+            if (writtenAsAPanel(row)) {
+                writePaintedRow(document, row);
+            } else {
+                writeTableWithItsOwnSpacing(document, row);
+            }
         } else if (node instanceof ShapeContainerNode shapeContainer) {
             writeShapeContainer(document, shapeContainer, null);
         } else if (node instanceof ChartNode chart) {
@@ -5003,7 +5011,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (index > 0) {
                 writePageBreak(document);
             }
-            writePanelPiece(document, node, paint, pieces.get(index), index == 0, index == pieces.size() - 1);
+            List<DocumentNode> piece = pieces.get(index);
+            writePanelPiece(document, node, paint, () -> writeChildren(document, piece, spacingOf(node)),
+                    index == 0, index == pieces.size() - 1);
         }
     }
 
@@ -5013,9 +5023,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static final double CLEAR_OF_THE_GRIDLINE_POINTS = 0.5;
 
-    /** Writes one table of a panel: the whole panel, or the part of it between page breaks. */
+    /**
+     * Writes one table of a panel: the whole panel, or the part of it between page breaks.
+     *
+     * @param content what the panel's cell holds: a container's children, or a row's columns
+     *                ({@link #writePaintedRow})
+     */
     private void writePanelPiece(XWPFDocument document, DocumentNode node, ContainerPaint paint,
-                                 List<DocumentNode> children, boolean first, boolean last) throws Exception {
+                                 CellContent content, boolean first, boolean last) throws Exception {
         DocumentInsets margin = node.margin();
         DocumentInsets padding = node.padding();
         DocumentBorders borders = paint.borders() == null ? DocumentBorders.NONE : paint.borders();
@@ -5106,7 +5121,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         DocumentInsets margins = insideTheBorders(padding, borders);
         applyCellPadding(cell, new DocumentInsets(margins.top(), Math.max(0, margins.right() - shortOfTheEdge),
                 margins.bottom(), inTheBody ? padding.left() : margins.left()));
-        if (node.keepTogether() && layout.onOnePage(node)) {
+        // A row is laid out as one piece, never across a page break (writeRow): so is its panel.
+        if ((node.keepTogether() || node instanceof RowNode) && layout.onOnePage(node)) {
             table.getRow(0).setCantSplitRow(true);
         }
         if (node instanceof ShapeContainerNode) {
@@ -5127,7 +5143,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             cutTheLabelToItsOutline(node, borders, cell);
         }
         try {
-            writeInCell(cell, () -> writeChildren(cell.getXWPFDocument(), children, spacingOf(node)));
+            writeInCell(cell, content);
         } finally {
             surfaceBehind = outerSurface;
             currentCellWidth = outerCellWidth;
@@ -6060,6 +6076,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return new ContainerPaint(container.fillColor(),
                     bordersOf(container.borders(), container.stroke()));
         }
+        if (node instanceof RowNode row) {
+            // The page paints a row's box as it paints a container's: one decoration.
+            return new ContainerPaint(row.fillColor(), bordersOf(row.borders(), row.stroke()));
+        }
         return new ContainerPaint(null, null);
     }
 
@@ -6083,6 +6103,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 ? hasRadius(section.cornerRadius())
                 : node instanceof ContainerNode container
                   ? hasRadius(container.cornerRadius())
+                  : node instanceof RowNode row
+                    ? hasRadius(row.cornerRadius())
                   : node instanceof ShapeContainerNode shape
                     && (shape.outline() instanceof com.demcha.compose.document.style.ShapeOutline.RoundedRectangle round
                         && round.cornerRadius() > 0
@@ -11784,6 +11806,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * lost.</p>
      */
     private void reportUnwrittenRowPaint(RowNode node, boolean inAZone) {
+        if (!inAZone && writtenAsAPanel(node)) {
+            return;
+        }
         List<String> paint = new ArrayList<>();
         if (node.fillColor() != null) {
             paint.add("fill");
@@ -11818,6 +11843,69 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                               + "and this table's cells drew none"
                             : " not written: its columns are, as a table with no shading or borders"));
         }
+    }
+
+    /** Whether a row paints its box: a fill, an outline, or a side's border of some width. */
+    private static boolean paintsItsBox(RowNode node) {
+        return node.fillColor() != null || node.stroke() != null && node.stroke().width() > 0
+               || paintsASide(node.borders());
+    }
+
+    /**
+     * Whether a row is written as a panel holding its columns ({@link #writePaintedRow}): it
+     * paints its box, stands tall enough to be painted, and has a place of its own in the layout,
+     * or no layout at all. Composed in a table cell, where its table draws what the cell paints
+     * ({@link #drawCellDrawing}), it is not; nor in a page zone's line, which writes it apart.
+     */
+    private boolean writtenAsAPanel(RowNode node) {
+        return paintsItsBox(node) && standsTall(node) && !composedInACell(node);
+    }
+
+    /**
+     * Writes a row that paints its box as a panel holding its columns.
+     *
+     * <p>The page paints a row's fill, outline and side borders round its columns as it paints a
+     * container's — {@code RowDefinition} emits the same decoration — and Word holds a box's fill
+     * and borders on a table cell ({@link #writePanel}): its shading behind the row, its borders
+     * at the row's full height, its margins the row's padding. The columns are a table nested in
+     * that cell, laid out as the row's own less the padding the cell's margins hold
+     * ({@link #rowInItsPanel}). A corner radius, which a cell does not round, is named; a
+     * translucent fill or border is flattened against what the page paints under it, and named,
+     * as a panel's is.</p>
+     */
+    private void writePaintedRow(XWPFDocument document, RowNode row) throws Exception {
+        reportWrittenWithout(row, "written as a panel");
+        warnContainerRadiusDropped(row);
+        writePanelPiece(document, row, paintOf(row), () -> {
+            RowNode outer = rowInItsPanel;
+            rowInItsPanel = row;
+            try {
+                writeRow(document, row);
+            } finally {
+                rowInItsPanel = outer;
+            }
+        }, true, true);
+    }
+
+    /**
+     * Takes a row's padding out of its first and last columns, where the cell of its own panel
+     * holds it as margins ({@link #writePaintedRow}): the first column's leading and the last's
+     * trailing keep what is a child's margin or the gap, and the columns are that much narrower.
+     *
+     * @return how much narrower the columns are together, in points
+     */
+    private static double withoutTheRowsPadding(RowNode node, List<CellColumn> columns) {
+        if (columns.isEmpty()) {
+            return 0;
+        }
+        CellColumn first = columns.get(0);
+        double left = Math.min(Math.max(0, node.padding().left()), first.leading());
+        columns.set(0, new CellColumn(first.width() - left, first.leading() - left, first.trailing()));
+        int lastIndex = columns.size() - 1;
+        CellColumn last = columns.get(lastIndex);
+        double right = Math.min(Math.max(0, node.padding().right()), last.trailing());
+        columns.set(lastIndex, new CellColumn(last.width() - right, last.leading(), last.trailing() - right));
+        return left + right;
     }
 
     /**
@@ -11880,8 +11968,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean inAPanel = surfaceBehind != null && panelCell != null;
         com.demcha.compose.document.layout.PlacedNode placedRow = layout.placement(node);
         double rowOverhang = 0;
-        // A row has no fill of its own: inside a panel it is a table nested in the panel's
-        // cell, and a cell with no shading shows the panel's through it.
+        // A row's cells are unshaded: inside a panel — its own, where it paints (writePaintedRow), or
+        // a container's — it is a table nested in the panel's cell, and shows the panel's through them.
         for (int i = 0; i < node.children().size(); i++) {
             XWPFTableCell cell = row.getCell(i);
             cell.removeParagraph(0);
@@ -12805,30 +12893,36 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *         does — past the child's left margin — and how much of the hang they took
      */
     private RowGeometry applyRowGeometry(XWPFTable table, RowNode node, double hang) {
+        // In the cell of its own panel the row is its columns alone: the cell's margins hold its
+        // padding (writePaintedRow).
+        boolean inItsPanel = node == rowInItsPanel;
+        double padded = inItsPanel ? node.padding().left() + node.padding().right() : 0;
         double[] starts = layout.rowChildStarts(node);
         if (starts != null) {
             // The layout placed each child, so every way a row can divide — the two that
             // measure their children included — is already answered.
             List<CellColumn> columns = new ArrayList<>(withRowEditorSlack(node, placedColumns(node, starts)));
             holdTheLastFixedColumn(node, columns);
+            double width = starts[0] - (inItsPanel ? withoutTheRowsPadding(node, columns) : 0);
             double taken = takeHang(node, columns, hang);
-            setTableWidth(table, Math.min(starts[0], widthOf(columns) + taken) - taken);
+            setTableWidth(table, Math.min(width, widthOf(columns) + taken) - taken);
             writeRowColumns(table, columns);
             return new RowGeometry(true, taken);
         }
 
-        double available = availableWidth();
+        double available = availableWidth() + padded;
         if (!Double.isFinite(available) || available <= 0) {
             return new RowGeometry(false, 0);
         }
         double[] slots = resolveRowSlots(node, available);
         if (slots == null) {
-            setTableWidth(table, available);
+            setTableWidth(table, available - padded);
             return new RowGeometry(false, 0);
         }
         List<CellColumn> columns = new ArrayList<>(statedColumns(node, slots));
+        double width = available - (inItsPanel ? withoutTheRowsPadding(node, columns) : 0);
         double taken = takeHang(node, columns, hang);
-        setTableWidth(table, Math.min(available, widthOf(columns) + taken) - taken);
+        setTableWidth(table, Math.min(width, widthOf(columns) + taken) - taken);
         writeRowColumns(table, columns);
         return new RowGeometry(false, taken);
     }

@@ -127,7 +127,12 @@ What is not written — each one is named in the export report
   - the marker column and `markerGap` of an item at a stated column — a list that nests, or a gap
     too narrow for its marker — while a flat hanging-indent list keeps the page's column;
   - a row the page draws as a marker alone, for a blank item;
-  - the marks of items the page reads as markdown, written as letters.
+  - the marks of items the page reads as markdown, where they are written as letters: an item is
+    written as the page sets it — its marks dropped, each piece in the page's face and size —
+    wherever its lines show how, and as authored where its list's items are not matched one by one
+    to the layout's (a cell, an item run onto the next page, a hanging-indent list with a blank
+    item), its lines hold other letters, a Word list's nested marker stands in another face on the
+    page, or the page sets none of its text; and a markdown heading written taller than its line.
 - **What a paragraph's own fields set where Word cannot hold it**, named in the export report on
   the paragraph outside a header or footer (a page zone's are named on the zone):
   - the size an auto-sized paragraph's text is fitted to, where Word, to its half point, holds it

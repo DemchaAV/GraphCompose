@@ -8,6 +8,36 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes a list item the page reads as markdown as the page sets it.** The page
+  reads a list item of plain text holding a mark of emphasis or code as it reads a paragraph (the
+  entry below). The export wrote the item as authored, `**Java**` with its asterisks, and named it
+  on the list's note.
+  - **Each item is read as the page lays it out**, matched to the lines the page laid it out in,
+    and written in the pieces the page sets it in where those lines hold them, as a paragraph is:
+    - a flat list's item, after the marker the page sets before its first line;
+    - an item whose marker stands in a column of its own (`hangingIndent`);
+    - a nested item of a list with no `hangingIndent`, which the page lays out after its indent
+      and its marker and reads with them: the item's own text is written after them.
+  - **The marker stays where it was.** Word draws a Word list's. A list written as a paragraph per
+    item writes its marker and nesting indent as characters before the pieces, in the face the
+    page sets them in.
+  - **A heading written taller than its item's line is named**, as a paragraph's is.
+  - **The font table ships the faces an item's pieces are set in.**
+  - **Still written as authored, and named:**
+    - the items of a list not matched one by one to the layout's: composed in a table cell, an
+      item run onto the next page, or a `hangingIndent` list with a blank item the page draws as a
+      marker alone;
+    - a nested item of a Word list whose marker the page sets in another face than the list's —
+      the parser sets a bold list's marker regular — since Word draws it in the list's;
+    - a nested item whose marker the parser reads as markdown with it, as `*a*`;
+    - one the page sets in other letters than its text, as Arabic;
+    - an item the parser reads into nothing, as `***`: the page sets none of its text, and the
+      note now says so, where it named the item's marks.
+
+  Across the DOCX fidelity corpus no list item is read as markdown, and the 62 documents are
+  byte-identical. `DocxMarkdown.split` takes a nested item's indent and marker off its pieces, with
+  a unit test.
+
 - **A DOCX export writes a paragraph the page reads as markdown as the page sets it.** A session
   reads markdown unless it is told not to (`markdown(false)`). The page then sets a paragraph of
   plain text holding a mark of emphasis or code: the text its marks style bold or italic, a
@@ -51,8 +81,7 @@ follow semantic versioning; release dates are ISO 8601.
     - one the page sets in other letters than its text, as Arabic, which the page shapes before it
       reads the marks;
     - text the parser reads into nothing, which the page sets as nothing and which went unnamed:
-      a lone `*`, an empty list item; `***`, a rule; a line set four spaces in, a block of code;
-    - a list's items, as before.
+      a lone `*`, an empty list item; `***`, a rule; a line set four spaces in, a block of code.
   - **With no layout**, a paragraph is read line by line for the note too: a list marker opening
     a line, `* a_b`, is no longer counted as a mark the page drops.
 
@@ -198,8 +227,8 @@ follow semantic versioning; release dates are ISO 8601.
 
   The DOCX export wrote the text as authored, so Word showed `**bold**` with its asterisks and
   none of the bold, without a note. The note now says the markdown marks are written as letters,
-  where they still are — a paragraph is written as the page sets it wherever the page's lines show
-  how (the entry above):
+  where they still are — a paragraph or a list item is written as the page sets it wherever the
+  page's lines show how (the entries above):
   - the paragraph's note (`ParagraphNode`);
   - a zone paragraph's, on its `page zone` note;
   - a list's, for its items (`ListNode`).

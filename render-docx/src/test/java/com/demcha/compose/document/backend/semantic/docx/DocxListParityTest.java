@@ -71,7 +71,9 @@ class DocxListParityTest {
         List<String> texts = exportTexts(flow -> flow
                 .addList("**bold** lead stays intact"));
 
-        assertThat(texts).contains("**bold** lead stays intact");
+        // The session reads markdown, and the item is written as the page sets it: its bold
+        // lead's marks dropped, not one of them taken off as a typed marker.
+        assertThat(texts).contains("bold lead stays intact");
     }
 
     @Test

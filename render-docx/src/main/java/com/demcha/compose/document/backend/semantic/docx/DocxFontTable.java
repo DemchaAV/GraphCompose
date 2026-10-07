@@ -5,6 +5,7 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.InlineHighlightRun;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
+import com.demcha.compose.document.node.ListItem;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TableNode;
@@ -315,10 +316,10 @@ final class DocxFontTable {
     }
 
     /**
-     * Collects every face the tree names, wherever a style can sit, and the faces a paragraph's
-     * markdown sets pieces of it in ({@link DocxMarkdown}): the table is written before any
-     * paragraph is, so a face the pieces ask for is shipped whether or not the page sets them —
-     * a session that reads no markdown ships one it does not use.
+     * Collects every face the tree names, wherever a style can sit, and the faces the markdown of
+     * a paragraph or a list's item sets pieces of it in ({@link DocxMarkdown}): the table is
+     * written before any paragraph is, so a face the pieces ask for is shipped whether or not the
+     * page sets them — a session that reads no markdown ships one it does not use.
      */
     private static void collectFonts(DocumentNode node, Map<FontName, Set<Slot>> into) {
         if (node instanceof ParagraphNode paragraph) {
@@ -335,6 +336,10 @@ final class DocxFontTable {
             }
         } else if (node instanceof ListNode list) {
             add(list.textStyle(), into);
+            if (list.textStyle() != null) {
+                list.items().forEach(item -> addPieces(item, list.textStyle(), into));
+                addPieces(list.nestedItems(), list.textStyle(), into);
+            }
         } else if (node instanceof TableNode table) {
             add(styleOf(table.defaultCellStyle()), into);
             table.rowStyles().values().forEach(style -> add(styleOf(style), into));
@@ -343,6 +348,23 @@ final class DocxFontTable {
         }
         for (DocumentNode child : node.children()) {
             collectFonts(child, into);
+        }
+    }
+
+    /** The faces the markdown of a tree of items of plain text sets pieces of them in. */
+    private static void addPieces(List<ListItem> items, DocumentTextStyle style, Map<FontName, Set<Slot>> into) {
+        for (ListItem item : items) {
+            if (!item.isRich()) {
+                addPieces(item.label(), style, into);
+            }
+            addPieces(item.children(), style, into);
+        }
+    }
+
+    /** The faces the markdown of an item's text sets pieces of it in. */
+    private static void addPieces(String text, DocumentTextStyle style, Map<FontName, Set<Slot>> into) {
+        if (DocxMarkdown.holdsAMark(text)) {
+            DocxMarkdown.read(text, style).forEach(piece -> add(piece.style(), into));
         }
     }
 

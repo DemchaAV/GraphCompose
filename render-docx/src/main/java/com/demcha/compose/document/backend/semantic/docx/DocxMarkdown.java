@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * A paragraph's text as the page sets it where its session reads markdown: the pieces its marks
- * style, each in its face and size, the marks the parser reads dropped.
+ * A paragraph's or a list item's text as the page sets it where its session reads markdown: the
+ * pieces its marks style, each in its face and size, the marks the parser reads dropped.
  *
  * <p>The page reads the text line by line, each through {@link MarkDownParser}, a line opening
  * with {@code -}, {@code *} or {@code +} and a space keeping that marker and the space in the
@@ -147,6 +147,60 @@ final class DocxMarkdown {
         } else {
             pieces.add(new Piece(text, style));
         }
+    }
+
+    /**
+     * Pieces read off text that opens with a lead the file writes apart from them, split at the
+     * lead's end.
+     *
+     * @param lead  the style the page sets the lead in, {@code null} where there is no lead
+     * @param after the pieces after the lead
+     */
+    record Split(DocumentTextStyle lead, List<Piece> after) {
+    }
+
+    /**
+     * Splits pieces read off text that opens with a lead — a nested item's indent and marker, which
+     * a list with no {@code hangingIndent} lays out in the item's text — at the lead's end.
+     *
+     * @param pieces the pieces read off the text
+     * @param lead   the characters the text opens with, empty for none
+     * @return the split, or {@code null} where the pieces do not open with the lead's characters,
+     *         every one in one style, or hold nothing after it
+     */
+    static Split split(List<Piece> pieces, String lead) {
+        if (lead.isEmpty()) {
+            return new Split(null, pieces);
+        }
+        DocumentTextStyle style = null;
+        List<Piece> after = new ArrayList<>();
+        int taken = 0;
+        int index = 0;
+        for (; index < pieces.size() && taken < lead.length(); index++) {
+            Piece piece = pieces.get(index);
+            if (style != null && !piece.style().equals(style)) {
+                return null;
+            }
+            style = piece.style();
+            String left = lead.substring(taken);
+            if (piece.text().length() <= left.length()) {
+                if (!left.startsWith(piece.text())) {
+                    return null;
+                }
+                taken += piece.text().length();
+            } else {
+                if (!piece.text().startsWith(left)) {
+                    return null;
+                }
+                after.add(new Piece(piece.text().substring(left.length()), piece.style()));
+                taken = lead.length();
+            }
+        }
+        if (taken < lead.length()) {
+            return null;
+        }
+        after.addAll(pieces.subList(index, pieces.size()));
+        return after.isEmpty() ? null : new Split(style, List.copyOf(after));
     }
 
     /** The pieces' text, as Word's paragraph holds it. */

@@ -3,6 +3,9 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.ParagraphSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
+import com.demcha.compose.document.node.ListItem;
+import com.demcha.compose.document.node.ListMarker;
+import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.style.DocumentLetterSpacing;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -20,8 +23,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * A paragraph's text as the page sets it where its session reads markdown: the pieces its marks
- * style, each in its face and size, the marks the parser reads dropped.
+ * A paragraph's or a list item's text as the page sets it where its session reads markdown: the
+ * pieces its marks style, each in its face and size, the marks the parser reads dropped.
  *
  * <p>The page reads the text line by line, each through {@link MarkDownParser}, a line opening
  * with {@code -}, {@code *} or {@code +} and a space keeping that marker and the space in the
@@ -43,6 +46,13 @@ final class DocxMarkdown {
     /** How far apart two sizes may be and still be the same, in points. */
     private static final double SIZE_CLEARANCE = 0.01;
 
+    /**
+     * The indent a list with no {@code hangingIndent} sets an item of a tree of items in, a level
+     * at a time: two no-break spaces ({@code TextFlowSupport}, where it flattens the tree into
+     * labels), which the parser reads as letters.
+     */
+    private static final String NESTED_ITEM_INDENT = Character.toString(0x00A0).repeat(2);
+
     private DocxMarkdown() {
     }
 
@@ -61,6 +71,76 @@ final class DocxMarkdown {
      */
     static boolean mayRead(ParagraphNode node) {
         return (node.inlineRuns() == null || node.inlineRuns().isEmpty()) && holdsAMark(node.text());
+    }
+
+    /**
+     * A list item's text as the page lays it out, and reads it where its session reads markdown.
+     *
+     * @param text   the text the page lays the item out in and reads
+     * @param lead   the characters it opens with that the file writes apart from the item's own
+     *               text: the indent and marker a list of a tree of items with no
+     *               {@code hangingIndent} lays out in its text; empty for none
+     * @param prefix the prefix the page sets before its first line, apart from its text: a flat
+     *               list's marker, where it has no {@code hangingIndent}; empty for none
+     */
+    record ItemReading(String text, String lead, String prefix) {
+    }
+
+    /**
+     * A flat list's item as the page reads it: its text, a marker typed before it taken off, after
+     * the list's marker where the page sets that before its first line.
+     *
+     * @param normalized the item's text, a typed marker taken off
+     */
+    static ItemReading flatItem(ListNode list, String normalized) {
+        return new ItemReading(normalized, "",
+                !list.hangingIndent() && list.marker().isVisible() ? list.marker().prefix() : "");
+    }
+
+    /**
+     * An item of a tree of items as the page reads it: with {@code hangingIndent}, its label, a
+     * marker typed before it taken off; without it, its label after its depth's indent and its
+     * marker, as the page flattens the tree into labels, nothing taken off.
+     *
+     * @param marker the marker the item takes, its own or its depth's
+     * @return its reading, {@code null} for an item of runs, which the page never reads
+     */
+    static ItemReading nestedItem(ListNode list, ListItem item, int depth, ListMarker marker) {
+        if (item.isRich()) {
+            return null;
+        }
+        if (list.hangingIndent()) {
+            return new ItemReading(ListMarker.normalizeItemText(item.label(), list.normalizeMarkers()), "", "");
+        }
+        String lead = NESTED_ITEM_INDENT.repeat(depth) + (marker.isVisible() ? marker.prefix() : "");
+        return new ItemReading(lead + item.label(), lead, "");
+    }
+
+    /**
+     * Every item of plain text a list writes, as the page reads it: its flat items, then its tree
+     * of items depth first, each taking its own marker or its depth's.
+     */
+    static List<ItemReading> items(ListNode list) {
+        List<ItemReading> readings = new ArrayList<>();
+        for (String item : list.items()) {
+            String normalized = ListMarker.normalizeItemText(item, list.normalizeMarkers());
+            if (!normalized.isBlank()) {
+                readings.add(flatItem(list, normalized));
+            }
+        }
+        addItems(list, list.nestedItems(), 0, readings);
+        return List.copyOf(readings);
+    }
+
+    private static void addItems(ListNode list, List<ListItem> items, int depth, List<ItemReading> into) {
+        for (ListItem item : items) {
+            ItemReading reading = nestedItem(list, item,
+                    depth, item.marker() != null ? item.marker() : ListMarker.defaultForDepth(depth));
+            if (reading != null) {
+                into.add(reading);
+            }
+            addItems(list, item.children(), depth + 1, into);
+        }
     }
 
     /**
@@ -147,6 +227,60 @@ final class DocxMarkdown {
         } else {
             pieces.add(new Piece(text, style));
         }
+    }
+
+    /**
+     * Pieces read off text that opens with a lead the file writes apart from them, split at the
+     * lead's end.
+     *
+     * @param leadStyle the style the page sets the lead in, {@code null} where there is no lead
+     * @param after     the pieces after the lead
+     */
+    record Split(DocumentTextStyle leadStyle, List<Piece> after) {
+    }
+
+    /**
+     * Splits pieces read off text that opens with a lead — a nested item's indent and marker, which
+     * a list with no {@code hangingIndent} lays out in the item's text — at the lead's end.
+     *
+     * @param pieces the pieces read off the text
+     * @param lead   the characters the text opens with, empty for none
+     * @return the split, or {@code null} where the pieces do not open with the lead's characters,
+     *         every one in one style, or hold nothing after it
+     */
+    static Split split(List<Piece> pieces, String lead) {
+        if (lead.isEmpty()) {
+            return new Split(null, pieces);
+        }
+        DocumentTextStyle style = null;
+        List<Piece> after = new ArrayList<>();
+        int taken = 0;
+        int index = 0;
+        for (; index < pieces.size() && taken < lead.length(); index++) {
+            Piece piece = pieces.get(index);
+            if (style != null && !piece.style().equals(style)) {
+                return null;
+            }
+            style = piece.style();
+            String left = lead.substring(taken);
+            if (piece.text().length() <= left.length()) {
+                if (!left.startsWith(piece.text())) {
+                    return null;
+                }
+                taken += piece.text().length();
+            } else {
+                if (!piece.text().startsWith(left)) {
+                    return null;
+                }
+                after.add(new Piece(piece.text().substring(left.length()), piece.style()));
+                taken = lead.length();
+            }
+        }
+        if (taken < lead.length()) {
+            return null;
+        }
+        after.addAll(pieces.subList(index, pieces.size()));
+        return after.isEmpty() ? null : new Split(style, List.copyOf(after));
     }
 
     /** The pieces' text, as Word's paragraph holds it. */

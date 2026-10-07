@@ -19,11 +19,11 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A paragraph the page reads as markdown is written as the page sets it, and not named
- * ({@link DocxSessionMarkdownTest}); where the page's lines do not tell how it sets it — with no
- * layout — it is written as authored and named. A list item the page reads as markdown is named in
- * the report: the page sets the text its marks style and drops the marks, and the Word file holds
- * the text as authored, marks and all — on the list's note.
+ * A paragraph or a list item the page reads as markdown is written as the page sets it, and not
+ * named ({@link DocxSessionMarkdownTest}, {@link DocxListMarkdownTest}); where the page's lines do
+ * not tell how it sets it — with no layout, or a list composed in a table cell — it is written as
+ * authored and named: the page sets the text its marks style and drops the marks, and the Word file
+ * holds the text as authored, marks and all — a list's items on the list's note.
  *
  * <p>A session reads markdown unless it is told not to ({@code markdown(false)}), in a paragraph
  * or a list item of plain text holding a mark of emphasis or code. Text the page sets as authored —
@@ -34,9 +34,6 @@ class DocxMarkdownReportTest {
 
     private static final String UNMEASURED = "markdown marks are written as letters — whether the page reads them is "
                                              + "not measured";
-    private static final String ITEMS = "its items' markdown marks are written as letters, where the page sets the "
-                                        + "text they mark and drops them";
-
     @Test
     void aParagraphThePageReadsAsMarkdownIsWrittenSoAndNotNamed() throws Exception {
         assertThat(paragraphNotes(true, page -> page.addParagraph("Some **bold** and `code` text"))).isEmpty();
@@ -79,15 +76,15 @@ class DocxMarkdownReportTest {
     }
 
     @Test
-    void aListsItemsThePageReadsAsMarkdownAreNamed() throws Exception {
+    void aListsItemsThePageReadsAsMarkdownAreNotNamed() throws Exception {
         assertThat(listNotes(true, page -> page.addList(list -> list.name("Skills").items("**Java** lead", "Kotlin"))))
-                .containsExactly("written as a Word list; " + ITEMS);
+                .isEmpty();
         assertThat(listNotes(true, page -> page.addList(list -> list.name("Skills").hangingIndent(true)
                 .items("**Java** lead", "Kotlin"))))
-                .as("markers in a column of their own").containsExactly("written as a Word list; " + ITEMS);
+                .as("markers in a column of their own").isEmpty();
         assertThat(listNotes(true, page -> page.addList(list -> list.name("Skills")
                 .addItem("Languages", child -> child.addItem("**Java**").addItem("Kotlin")))))
-                .as("a tree of items").singleElement().asString().endsWith("; " + ITEMS);
+                .as("a tree of items").noneMatch(note -> note.contains("markdown"));
         // As the page lays an item out: a marker typed before it is taken off, and none is lost.
         assertThat(listNotes(false, page -> page.addList(list -> list.name("Skills").items("* Java", "* Kotlin"))))
                 .as("a marker typed before an item, markdown off").isEmpty();

@@ -315,10 +315,10 @@ final class DocxFontTable {
     }
 
     /**
-     * Collects every face the tree names, wherever a style can sit, and the faces a paragraph's
-     * markdown sets pieces of it in ({@link DocxMarkdown}): the table is written before any
-     * paragraph is, so a face the pieces ask for is shipped whether or not the page sets them —
-     * a session that reads no markdown ships one it does not use.
+     * Collects every face the tree names, wherever a style can sit, and the faces the markdown of
+     * a paragraph or a list's item sets pieces of it in ({@link DocxMarkdown}): the table is
+     * written before any paragraph is, so a face the pieces ask for is shipped whether or not the
+     * page sets them — a session that reads no markdown ships one it does not use.
      */
     private static void collectFonts(DocumentNode node, Map<FontName, Set<Slot>> into) {
         if (node instanceof ParagraphNode paragraph) {
@@ -335,6 +335,15 @@ final class DocxFontTable {
             }
         } else if (node instanceof ListNode list) {
             add(list.textStyle(), into);
+            if (list.textStyle() != null) {
+                // Read as the page reads them: a typed marker taken off, a tree's indent and
+                // marker read with the item, in the face the page sets them in.
+                for (DocxMarkdown.ItemReading item : DocxMarkdown.items(list)) {
+                    if (DocxMarkdown.holdsAMark(item.text())) {
+                        DocxMarkdown.read(item.text(), list.textStyle()).forEach(piece -> add(piece.style(), into));
+                    }
+                }
+            }
         } else if (node instanceof TableNode table) {
             add(styleOf(table.defaultCellStyle()), into);
             table.rowStyles().values().forEach(style -> add(styleOf(style), into));

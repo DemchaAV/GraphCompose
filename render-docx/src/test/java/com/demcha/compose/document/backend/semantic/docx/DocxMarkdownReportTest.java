@@ -19,9 +19,11 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A paragraph or a list item the page reads as markdown is named in the report: the page sets the
- * text its marks style and drops the marks, and the Word file holds the text as authored, marks and
- * all — on the paragraph's note, a zone paragraph's on the zone's, a list's items' on the list's.
+ * A paragraph the page reads as markdown is written as the page sets it, and not named
+ * ({@link DocxSessionMarkdownTest}); where the page's lines do not tell how it sets it — with no
+ * layout — it is written as authored and named. A list item the page reads as markdown is named in
+ * the report: the page sets the text its marks style and drops the marks, and the Word file holds
+ * the text as authored, marks and all — on the list's note.
  *
  * <p>A session reads markdown unless it is told not to ({@code markdown(false)}), in a paragraph
  * or a list item of plain text holding a mark of emphasis or code. Text the page sets as authored —
@@ -30,31 +32,29 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class DocxMarkdownReportTest {
 
-    private static final String MARKS = "its markdown marks are written as letters, where the page sets the text "
-                                        + "they mark and drops them";
     private static final String UNMEASURED = "markdown marks are written as letters — whether the page reads them is "
                                              + "not measured";
     private static final String ITEMS = "its items' markdown marks are written as letters, where the page sets the "
                                         + "text they mark and drops them";
 
     @Test
-    void aParagraphThePageReadsAsMarkdownIsNamed() throws Exception {
-        assertThat(paragraphNotes(true, page -> page.addParagraph("Some **bold** and `code` text")))
-                .containsExactly("written as a paragraph; " + MARKS);
-        assertThat(paragraphNotes(true, page -> page.addParagraph("# Title *now*"))).as("a heading")
-                .containsExactly("written as a paragraph; " + MARKS);
-        assertThat(paragraphNotes(true, page -> page.addParagraph("`x`"))).as("a code span alone")
-                .containsExactly("written as a paragraph; " + MARKS);
-        // A prefix with a mark of its own is laid out with it; the paragraph's marks still go.
+    void aParagraphThePageReadsAsMarkdownIsWrittenSoAndNotNamed() throws Exception {
+        assertThat(paragraphNotes(true, page -> page.addParagraph("Some **bold** and `code` text"))).isEmpty();
+        assertThat(paragraphNotes(true, page -> page.addParagraph("# Title *now*"))).as("a heading, past its line")
+                .containsExactly("written as a paragraph; its markdown heading is written at the size the page sets it, "
+                                 + "28pt, in a line only as tall as the paragraph's own: the page draws its letters past "
+                                 + "the line, and Word cuts their tops on screen");
+        assertThat(paragraphNotes(true, page -> page.addParagraph("`x`"))).as("a code span alone").isEmpty();
+        // A prefix with a mark of its own is laid out with it, and leads the letters the page sets.
         assertThat(paragraphNotes(true, page -> page.addParagraph(p -> p.text("Some *emphasis* here")
                 .bulletOffset("* ").indentStrategy(DocumentTextIndent.FIRST_LINE))))
-                .containsExactly("written as a paragraph; " + MARKS + "; its bulletOffset's letters, \"*\", are not "
-                                 + "written before its first line");
+                .containsExactly("written as a paragraph; its bulletOffset's letters, \"*\", are not written before "
+                                 + "its first line");
         assertThat(paragraphNotes(true, page -> page.addParagraph(p -> p.text("*x*")
                 .bulletOffset("** ").indentStrategy(DocumentTextIndent.FIRST_LINE))))
                 .as("as many marks in the prefix as the text drops")
-                .containsExactly("written as a paragraph; " + MARKS + "; its bulletOffset's letters, \"**\", are not "
-                                 + "written before its first line");
+                .containsExactly("written as a paragraph; its bulletOffset's letters, \"**\", are not written before "
+                                 + "its first line");
     }
 
     @Test
@@ -106,11 +106,13 @@ class DocxMarkdownReportTest {
                 .containsExactly("written as a paragraph; its " + UNMEASURED);
         assertThat(DocxExports.reportWithoutLayout(300, 400, 30, page -> page.addParagraph("Plain text"))
                 .bySubject()).as("no mark").doesNotContainKey("ParagraphNode");
-        // Composed in a table cell, a paragraph is matched to its lines by its text, which the page
-        // set otherwise than authored; a list's lines are not matched at all.
+        // Read line by line, as the page does: a list marker opening a line is kept.
+        assertThat(DocxExports.reportWithoutLayout(300, 400, 30, page -> page.addParagraph("* a_b"))
+                .bySubject()).as("a marker the page keeps, a mark it keeps").doesNotContainKey("ParagraphNode");
+        // Composed in a table cell, a paragraph is matched to its lines by its text as the page reads
+        // it, and written so; a list's lines are not matched at all.
         assertThat(paragraphNotes(true, page -> page.add(cell(new ParagraphBuilder().name("Note")
-                .text("Some **bold** text").build()))))
-                .containsExactly("written as a paragraph; its " + UNMEASURED);
+                .text("Some **bold** text").build())))).isEmpty();
         assertThat(paragraphNotes(true, page -> page.add(cell(new ParagraphBuilder().name("Note")
                 .text("Install node_js first").build())))).as("a mark the parser keeps").isEmpty();
         assertThat(listNotes(true, page -> page.add(cell(new com.demcha.compose.document.dsl.ListBuilder()
@@ -122,10 +124,8 @@ class DocxMarkdownReportTest {
     }
 
     @Test
-    void aZoneParagraphThePageReadsAsMarkdownIsNamedOnTheZone() throws Exception {
-        assertThat(zoneNotes(true)).containsExactly("a footer written as one line of Word's footer; a paragraph's "
-                                                    + "markdown marks are written as letters, where the page sets the "
-                                                    + "text they mark and drops them");
+    void aZoneParagraphThePageReadsAsMarkdownIsWrittenSoAndNotNamed() throws Exception {
+        assertThat(zoneNotes(true)).isEmpty();
         assertThat(zoneNotes(false)).as("markdown off").isEmpty();
     }
 

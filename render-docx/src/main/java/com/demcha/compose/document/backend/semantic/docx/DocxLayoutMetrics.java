@@ -1106,7 +1106,9 @@ final class DocxLayoutMetrics {
      * Gothic A1 line the page sets at 9.1 — and every row of such a table ran taller than the
      * page's. Cells are laid out in order, and so is what each holds, so the paragraphs are
      * walked in that order and each takes the first fragment not yet taken whose text is
-     * its own. A paragraph whose text no fragment carries is left without one, as before.</p>
+     * its own as authored; those left then take one whose text is theirs as the page reads their
+     * markdown, marks dropped. A paragraph whose text no fragment carries is left without one, as
+     * before.</p>
      */
     private Map<DocumentNode, PlacedFragment> matchComposedText() {
         Map<DocumentNode, PlacedFragment> matched = new IdentityHashMap<>();
@@ -1130,15 +1132,37 @@ final class DocxLayoutMetrics {
                             .add(fragment);
                 }
             }
+            List<ParagraphNode> unmatched = new ArrayList<>();
             for (ParagraphNode paragraph : paragraphs) {
-                String text = comparable(authoredText(paragraph));
-                java.util.ArrayDeque<PlacedFragment> waiting = text.isEmpty() ? null : byText.get(text);
-                if (waiting != null && !waiting.isEmpty()) {
+                java.util.ArrayDeque<PlacedFragment> waiting = waitingFor(byText, authoredText(paragraph));
+                if (waiting != null) {
                     matched.put(paragraph, waiting.poll());
+                } else {
+                    unmatched.add(paragraph);
+                }
+            }
+            // Then by its text as the page reads its markdown, where its session does: marks
+            // dropped. Only once every paragraph has taken its own text, so that one read as
+            // markdown takes no fragment a paragraph of that text as authored stands in.
+            for (ParagraphNode paragraph : unmatched) {
+                if (DocxMarkdown.mayRead(paragraph) && paragraph.textStyle() != null) {
+                    java.util.ArrayDeque<PlacedFragment> waiting = waitingFor(byText,
+                            DocxMarkdown.text(DocxMarkdown.read(paragraph.text(), paragraph.textStyle())));
+                    if (waiting != null) {
+                        matched.put(paragraph, waiting.poll());
+                    }
                 }
             }
         }
         return matched;
+    }
+
+    /** The fragments of a text still waiting for a paragraph, or {@code null} where none is. */
+    private static java.util.ArrayDeque<PlacedFragment> waitingFor(Map<String, java.util.ArrayDeque<PlacedFragment>> byText,
+                                                                  String text) {
+        String key = comparable(text);
+        java.util.ArrayDeque<PlacedFragment> waiting = key.isEmpty() ? null : byText.get(key);
+        return waiting == null || waiting.isEmpty() ? null : waiting;
     }
 
     /** The paragraphs a table's composed cells hold, nested tables' included, in layout order. */

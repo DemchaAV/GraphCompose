@@ -1265,10 +1265,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             int at = index;
             boolean header = zone.getZone() == DocumentHeaderFooterZone.HEADER;
+            ZonePlacement placement = zonePlacement(at, header, zone, content);
+            // A zone that shares its kind with another page zone stands at its own height on the
+            // page, as a band does (writeBand): Word holds one distance from the edge for a kind,
+            // and lines stacked in one part would keep the order the zones were added in. Beside a
+            // band of its kind it stays in the flow, the band framed.
+            boolean framed = placement.measured() && sectionZones.stream()
+                    .anyMatch(other -> other != zone && other.getZone() == zone.getZone() && other.getContent() != null);
             writers.add(new ZoneWriter(zone.getZone(), pageClassesOf(zone),
-                    part -> writeZoneLine(part, content), () -> {
-                        placeZone(document, zone, at, header);
-                        reportZoneLine(at, header, content);
+                    part -> writeZoneLine(part, content, placement, framed, header), () -> {
+                        placeZone(document, zone, at, header, placement, framed);
+                        reportZoneLine(at, header, content, placement);
                     }));
         }
         boolean titlePage = false;
@@ -1431,15 +1438,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph para = part.createParagraph();
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         if (inFrame) {
-            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFramePr frame = properties.addNewFramePr();
-            frame.setW(BigInteger.valueOf(toTwips(contentWidth)));
-            frame.setH(BigInteger.valueOf(toTwips(line + border)));
-            frame.setHRule(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule.EXACT);
-            frame.setHAnchor(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHAnchor.MARGIN);
-            frame.setX(BigInteger.ZERO);
-            frame.setVAnchor(org.openxmlformats.schemas.wordprocessingml.x2006.main.STVAnchor.PAGE);
-            frame.setY(BigInteger.valueOf(frameTop));
-            frame.setWrap(org.openxmlformats.schemas.wordprocessingml.x2006.main.STWrap.THROUGH);
+            frameAcrossTheMargins(properties, frameTop, line + border,
+                    org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule.EXACT);
         }
         CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
         spacing.setBefore(BigInteger.ZERO);
@@ -1703,6 +1703,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 : DocxPageClasses.PageClass.LATER_ODD;
     }
 
+    /** How far past the page margin a zone's line may reach and the body stay where it is, in points. */
+    private static final double ZONE_REACH_CLEARANCE = 0.5;
+
     /**
      * Puts a header or footer as far from its page edge as the page puts it.
      *
@@ -1710,19 +1713,39 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * sat 14.5pt higher than the page draws it, on every page. Word holds the distance as
      * {@code w:pgMar/@w:header} and {@code @w:footer}, so this is a mapping.</p>
      *
-     * <p>The distance is where the zone's content landed in the resolved layout, which is
-     * the number the page was drawn with. Without a layout it falls back to the zone's own
-     * padding on that edge — a band's content is laid from its top, so for a footer that is
-     * the nearer estimate rather than the exact one, and it is only reached when the
-     * document could not be laid out at all.</p>
+     * <p>The distance is the one that stands the zone's line on its tallest part's baseline
+     * ({@link #zonePlacement}). Where the layout shows none of the zone's text, it is where the
+     * zone's content landed in the resolved layout, the highest edge of a header's and the
+     * lowest of a footer's. Without a layout it falls back to the zone's own padding on that
+     * edge — a band's content is laid from its top, so for a footer that is the nearer estimate
+     * rather than the exact one, and it is only reached when the document could not be laid
+     * out at all.</p>
+     *
+     * <p>A framed zone stands at its own height whatever the distance, and leaves a distance
+     * already written to what the part's flow holds: a zone of its kind in the flow, or a text
+     * band. With none written, it writes its own, where the paragraph the frame is placed from
+     * stands.</p>
+     *
+     * <p>Its line reaching past a positive page margin, into the body, further than
+     * {@link #ZONE_REACH_CLEARANCE}, the margin is written negative and the reach named, as for
+     * a text band ({@link #placeBand}).</p>
+     *
+     * @param placement where the zone's line stands in Word
+     * @param framed    whether the zone stands in a frame (see {@link #writeZoneLine})
      */
-    private void placeZone(XWPFDocument document, DocumentPageZone zone, int index, boolean header) {
+    private void placeZone(XWPFDocument document, DocumentPageZone zone, int index, boolean header,
+                           ZonePlacement placement, boolean framed) {
         CTSectPr sectPr = document.getDocument().getBody().isSetSectPr()
                 ? document.getDocument().getBody().getSectPr()
                 : document.getDocument().getBody().addNewSectPr();
         CTPageMar margin = sectPr.isSetPgMar() ? sectPr.getPgMar() : sectPr.addNewPgMar();
+        if (framed && (header ? margin.getHeader() : margin.getFooter()) != null) {
+            return;
+        }
         double pageHeight = canvasHeight;
-        OptionalDouble measured = Double.isNaN(pageHeight)
+        OptionalDouble measured = placement.measured()
+                ? OptionalDouble.of(placement.distance())
+                : Double.isNaN(pageHeight)
                 ? OptionalDouble.empty()
                 : layout.zoneDistanceFromEdge(index, header, pageHeight);
         DocumentInsets padding = zone.getPadding() == null ? DocumentInsets.zero() : zone.getPadding();
@@ -1731,6 +1754,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             margin.setHeader(BigInteger.valueOf(toTwips(distance)));
         } else {
             margin.setFooter(BigInteger.valueOf(toTwips(distance)));
+        }
+        // An exact line reaches as far from the edge as it is placed and tall; past a positive
+        // margin Word moves the body clear of it, as of a band (placeBand). A frame moves nothing.
+        // Text set against the margin reaches a fraction of a point past it — its line's top four
+        // fifths above the baseline rather than its ascent — which moves the body by no more.
+        double reach = placement.measured() ? placement.distance() + placement.line() : Double.NaN;
+        Object edge = header ? margin.getTop() : margin.getBottom();
+        if (!framed && !Double.isNaN(reach) && edge instanceof Number pageMargin && pageMargin.longValue() >= 0
+            && toTwips(reach) > pageMargin.longValue() + toTwips(ZONE_REACH_CLEARANCE)) {
+            if (header) {
+                margin.setTop(BigInteger.valueOf(-Math.max(1, twipsOf(margin.getTop()))));
+            } else {
+                margin.setBottom(BigInteger.valueOf(-Math.max(1, twipsOf(margin.getBottom()))));
+            }
+            String kind = header ? "header" : "footer";
+            report.add(DocxExportReport.Severity.APPROXIMATED, "page zone", sectioned ? "section " + (sectionIndex + 1) : null,
+                    "a " + kind + " whose line reaches " + Math.round(reach * 10) / 10.0 + "pt from the page edge, past "
+                    + "the page margin, which is written negative so that Word holds the body at the margin, as the "
+                    + "page does; LibreOffice moves the body clear of it");
         }
     }
 
@@ -1741,8 +1783,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * than stacked paragraphs: a row's children become runs in document order, and
      * a flex spacer becomes the tab that carries the rest to the right margin —
      * which is how a Word footer is built by hand anyway.</p>
+     *
+     * <p>Where the layout shows its text, the line is exact and as tall as {@link #zonePlacement}
+     * says, which with the distance {@link #placeZone} writes stands it on the tallest part's
+     * baseline; framed, where the zone shares its kind with another page zone, the frame stands
+     * at the line's own height on the page, at least the line tall.</p>
      */
-    private void writeZoneLine(XWPFHeaderFooter target, DocumentNode content) {
+    private void writeZoneLine(XWPFHeaderFooter target, DocumentNode content, ZonePlacement placement,
+                               boolean framed, boolean header) {
+        long frameTop = framed
+                ? toTwips(header ? placement.distance() : canvasHeight - placement.distance() - placement.line())
+                : 0;
+        List<XWPFParagraph> before = target.getParagraphs();
+        if (framed && !before.isEmpty() && sameFrameHeight(before.get(before.size() - 1), frameTop)) {
+            // Word takes adjacent paragraphs with the same frame for one frame.
+            collapsed(target.createParagraph());
+        }
         XWPFParagraph para = target.createParagraph();
         para.setSpacingBefore(0);
         para.setSpacingAfter(0);
@@ -1753,6 +1809,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTPPr properties = para.getCTP().isSetPPr()
                 ? para.getCTP().getPPr()
                 : para.getCTP().addNewPPr();
+        if (placement.measured()) {
+            // An exact line, its baseline four fifths down it as in either editor, stands the
+            // zone's text on the baseline the page sets it on (zonePlacement).
+            if (framed) {
+                // At least the line: a part of more lines than one goes on below it, not hidden.
+                frameAcrossTheMargins(properties, frameTop, placement.line(),
+                        org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule.AT_LEAST);
+            }
+            CTSpacing spacing = properties.getSpacing();
+            spacing.setLineRule(STLineSpacingRule.EXACT);
+            spacing.setLine(BigInteger.valueOf(Math.round(placement.line() * POINT_TO_TWIP)));
+        }
         CTTabStop tab = properties.addNewTabs().addNewTab();
         tab.setVal(STTabJc.RIGHT);
         tab.setPos(java.math.BigInteger.valueOf(Math.round(zoneRightTab() * TWIPS_PER_POINT)));
@@ -1766,6 +1834,168 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         for (DocumentNode part : parts) {
             appendZonePart(para, part);
         }
+    }
+
+    /**
+     * Where a page zone's line stands in Word.
+     *
+     * <p>The page sets each part of a zone on a baseline of its own. Word's line has one, its
+     * tallest part's, and in an exact line both editors stand it four fifths of the way down
+     * (measured on exact lines: {@link DocxTextBands#BASELINE_SHARE}). So the line is exact, as
+     * tall as its tallest part's line on the page — and as a picture in it, which Word stands on
+     * the baseline, and a part written at its style's larger size, need — and it stands as far
+     * from its page edge as puts that part's baseline where the page has it: what a lone part's
+     * padding and margin hold above and below its text is in that distance. A line the page sets
+     * past the edge stops at it, its baseline as much lower. A line placed by its parts' edges
+     * instead, its top at the highest part's top in a header, stands a header's text its padding
+     * above it high.</p>
+     *
+     * <p>Where the page set other text in the zone on the first page it draws it than the zone
+     * is written with, the line is not measured, and Word's own.</p>
+     *
+     * @param line     the exact line's height in points, NaN where no part's text is laid out
+     * @param distance from the page's top edge to the line's top in a header, from its foot to
+     *                 the line's foot in a footer, in points
+     * @param baseline the baseline Word sets the line on, measured up from the page's foot
+     */
+    private record ZonePlacement(double line, double distance, double baseline) {
+
+        private static final ZonePlacement UNMEASURED = new ZonePlacement(Double.NaN, Double.NaN, Double.NaN);
+
+        /** Whether the layout laid out the text the line is placed by. */
+        boolean measured() {
+            return !Double.isNaN(line);
+        }
+    }
+
+    /** Where a zone's line stands in Word (see {@link ZonePlacement}). */
+    private ZonePlacement zonePlacement(int zoneIndex, boolean header, DocumentPageZone zone, DocumentNode content) {
+        int firstPage = layout.zoneFirstPage(zoneIndex);
+        if (Double.isNaN(canvasHeight) || firstPage < 0) {
+            return ZonePlacement.UNMEASURED;
+        }
+        // The page set other text there than the zone is written with: its line is not
+        // measured by it.
+        if (!readsAsWritten(content, zone.getContent().apply(
+                PageContext.paginated(firstPage + 1, Math.max(firstPage + 1, layout.pageCount()))))) {
+            return ZonePlacement.UNMEASURED;
+        }
+        java.util.Map<DocumentNode, String> paths = DocxLayoutMetrics.pathsWithin(content);
+        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex);
+        ZoneLine tallest = null;
+        double picture = 0;
+        double styled = 0;
+        for (DocumentNode part : zoneParts(content)) {
+            com.demcha.compose.document.layout.PlacedFragment fragment =
+                    part instanceof ParagraphNode || part instanceof PageFieldNode ? laid.get(paths.get(part)) : null;
+            if (fragment == null) {
+                continue;
+            }
+            ZoneLine first = firstLineOnThePage(fragment);
+            if (tallest == null || first.above() + first.below() > tallest.above() + tallest.below()) {
+                tallest = first;
+            }
+            if (part instanceof ParagraphNode paragraph) {
+                List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines =
+                        ((com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload) fragment.payload()).lines();
+                picture = Math.max(picture, tallestPicture(paragraph));
+                // Written at its style's size where the page fits its text smaller, it needs the
+                // style's line, or its letters' tops are cut.
+                if (autoSizeLost(paragraph, lines, "its") != null) {
+                    styled = Math.max(styled, styleLineHeight(paragraph.textStyle()));
+                }
+            }
+        }
+        // As tall as its tallest part's line on the page, as a body paragraph's exact line is,
+        // and tall enough for a picture in it, which Word stands on the baseline and an exact
+        // line cuts off at its top, and for a part written at a larger size than the page's.
+        double line = tallest == null ? 0
+                : Math.max(Math.max(tallest.above() + tallest.below(), styled),
+                        picture / DocxTextBands.BASELINE_SHARE);
+        if (!(line > 0)) {
+            return ZonePlacement.UNMEASURED;
+        }
+        double above = DocxTextBands.BASELINE_SHARE * line;
+        // A line the page sets past the edge stands at it, its baseline as far in as that leaves.
+        double distance = Math.max(0, header ? canvasHeight - tallest.baseline() - above
+                : tallest.baseline() - (line - above));
+        double baseline = header ? canvasHeight - distance - above : distance + (line - above);
+        return new ZonePlacement(line, distance, baseline);
+    }
+
+    /**
+     * Whether a zone's content reads as written on the first page the zone is drawn on, which the
+     * line is read from: the zone is written once, for no page in particular, and content asking
+     * which page it is on can set other text there. Its parts are compared one by one — each
+     * paragraph's text, each page field's kind.
+     *
+     * @param written the content as written
+     * @param drawn   the content as built for that page, or {@code null} where it is not known
+     */
+    private static boolean readsAsWritten(DocumentNode written, DocumentNode drawn) {
+        if (drawn == null) {
+            return false;
+        }
+        List<DocumentNode> parts = zoneParts(written);
+        List<DocumentNode> others = zoneParts(drawn);
+        if (parts.size() != others.size()) {
+            return false;
+        }
+        for (int index = 0; index < parts.size(); index++) {
+            DocumentNode part = parts.get(index);
+            DocumentNode other = others.get(index);
+            boolean same = part instanceof ParagraphNode paragraph
+                    ? other instanceof ParagraphNode drawnParagraph
+                      && java.util.Objects.equals(paragraph.text(), drawnParagraph.text())
+                    : part instanceof PageFieldNode field
+                    ? other instanceof PageFieldNode drawnField && field.kind() == drawnField.kind()
+                    : part.getClass() == other.getClass();
+            if (!same) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * How tall the tallest picture among a zone paragraph's runs stands above its baseline in
+     * Word: the paragraph's lines are not the body's, so a picture is written on the baseline
+     * (writeInlinePicture), as tall as it is drawn.
+     */
+    private static double tallestPicture(ParagraphNode paragraph) {
+        double tallest = 0;
+        for (InlineRun run : paragraph.inlineRuns()) {
+            if (run instanceof InlineImageRun image) {
+                tallest = Math.max(tallest, image.height());
+            } else if (run instanceof InlineSvgRun svg) {
+                tallest = Math.max(tallest, svg.height());
+            } else if (run instanceof InlineShapeRun shape) {
+                // Drawn with its stroke's reach and the empty margin a shape keeps round its ink.
+                tallest = Math.max(tallest, DocxShapePictures.of(shape).height());
+            }
+        }
+        return tallest;
+    }
+
+    /**
+     * Frames a header's or footer's paragraph across the margins at a height on the page, where
+     * the part's flow does not move it and it moves nothing in the body.
+     *
+     * @param top    the frame's top, from the page's top edge, in twips
+     * @param height the frame's height in points
+     * @param rule   whether the frame is that height exactly, or at least, growing down
+     */
+    private void frameAcrossTheMargins(CTPPr properties, long top, double height,
+                                       org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule.Enum rule) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFramePr frame = properties.addNewFramePr();
+        frame.setW(BigInteger.valueOf(toTwips(contentWidth)));
+        frame.setH(BigInteger.valueOf(toTwips(height)));
+        frame.setHRule(rule);
+        frame.setHAnchor(org.openxmlformats.schemas.wordprocessingml.x2006.main.STHAnchor.MARGIN);
+        frame.setX(BigInteger.ZERO);
+        frame.setVAnchor(org.openxmlformats.schemas.wordprocessingml.x2006.main.STVAnchor.PAGE);
+        frame.setY(BigInteger.valueOf(top));
+        frame.setWrap(org.openxmlformats.schemas.wordprocessingml.x2006.main.STWrap.THROUGH);
     }
 
     /** The parts a zone's line is written from, in order: a row's children, or the zone's one node. */
@@ -1793,8 +2023,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * after the first spacer against its right margin, at the right tab the line holds; a part
      * after a second spacer goes to no tab the line holds. The page sets each part where the
      * zone's padding, a row's columns and gap and the part's own alignment and sides put it, on
-     * a baseline of its own. Word's line has one baseline, its tallest part's, and stands at the
-     * zone's edge — the foot of a footer, the head of a header ({@link #placeZone}). A part
+     * a baseline of its own. Word's line has one baseline, the one it is placed on
+     * ({@link #zonePlacement}): its tallest part's, where the page sets that part, or a little
+     * lower where the line stops at the page's edge. A part
      * stands where the page sets it when it is one line — the zone's line is written with none
      * of what holds a body paragraph's breaks where the page sets them — on Word's baseline, and
      * its line starts within {@link #ZONE_PLACE_CLEARANCE} of Word's start, or, against the
@@ -1808,17 +2039,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>A paragraph's own losses are named too: its right-to-left text is written left to
      * right, its prefix's letters are not written, its text is written at its style's size,
-     * and its outline entry is not written.</p>
+     * its outline entry is not written, and its anchor has no bookmark.</p>
      *
      * @param zoneIndex the zone's position in the section's zone list
      * @param header    whether the zone is a header
      * @param content   the zone's content, as written
+     * @param placement where the line stands in Word
      */
-    private void reportZoneLine(int zoneIndex, boolean header, DocumentNode content) {
+    private void reportZoneLine(int zoneIndex, boolean header, DocumentNode content, ZonePlacement placement) {
         List<DocumentNode> parts = zoneParts(content);
         java.util.Map<DocumentNode, String> paths = DocxLayoutMetrics.pathsWithin(content);
         java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex);
-        boolean measured = !laid.isEmpty() && !Double.isNaN(canvasLeftMargin);
+        // Read where the line is placed by what the page set: not where the page set other text.
+        boolean measured = placement.measured() && !laid.isEmpty() && !Double.isNaN(canvasLeftMargin);
         // Each text part's side of the line: 0 from the left margin, 1 against the right, 2
         // after a second spacer, where the line holds no tab for it.
         java.util.Map<DocumentNode, Integer> side = new java.util.IdentityHashMap<>();
@@ -1870,7 +2103,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 onThePage.put(part, firstLineOnThePage(fragment));
             }
         }
-        double baseline = wordsBaseline(onThePage.values(), header);
+        // Read from the same text the line is placed by: where none is, no part is read either.
+        double baseline = placement.baseline();
         int off = 0;
         int unread = 0;
         for (DocumentNode part : texts) {
@@ -1921,7 +2155,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * What a paragraph of a page zone loses of its own on the zone's line: its direction, its
-     * prefix's letters, the size its text is fitted to, its markdown marks, and its outline entry.
+     * prefix's letters, the size its text is fitted to, its markdown marks, its outline entry,
+     * its anchor's bookmark, and where it sets a picture off the baseline. A zone is written into
+     * a part each kind of page repeats, which is no one place in the document a bookmark could
+     * mark; on the page, a link to it lands on the last page drawing it, and a page reference
+     * does not find it.
      *
      * @param lines the lines the page laid it out in, empty where they are not read
      */
@@ -1945,7 +2183,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (node.bookmarkOptions() != null) {
             lost.add("a paragraph's outline entry is not written");
         }
+        if (node.anchor() != null && !node.anchor().isBlank()) {
+            lost.add("a paragraph's anchor has no bookmark in the Word file: a link to it points at none");
+        }
+        if (node.inlineRuns().stream().anyMatch(DocxSemanticBackend::setOffTheBaseline)) {
+            lost.add("a paragraph's picture stands on the line's baseline, not where the page sets it");
+        }
         return lost;
+    }
+
+    /**
+     * Whether the page sets an inline picture anywhere but on its line's baseline: Word stands a
+     * zone paragraph's on it (writeInlinePicture), its lines not being the body's.
+     */
+    private static boolean setOffTheBaseline(InlineRun run) {
+        InlineImageAlignment alignment;
+        double offset;
+        if (run instanceof InlineImageRun image) {
+            alignment = image.alignment();
+            offset = image.baselineOffset();
+        } else if (run instanceof InlineSvgRun svg) {
+            alignment = svg.alignment();
+            offset = svg.baselineOffset();
+        } else if (run instanceof InlineShapeRun shape) {
+            alignment = shape.alignment();
+            offset = shape.baselineOffset();
+        } else {
+            return false;
+        }
+        return alignment != InlineImageAlignment.BASELINE || offset != 0;
     }
 
     /** How many of a zone's parts a phrase is about, with its verb: "1 of its 3 parts stands". */
@@ -2010,27 +2276,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         return new ZoneLine(start, start + line.width(), baseline, top, top - line.lineHeight(), above, below,
                 text.lines().size() == 1);
-    }
-
-    /**
-     * The baseline Word sets a zone's line on, where the page sets its parts: the tallest part's,
-     * Word having one baseline for a line, with the line standing at the zone's edge — its foot at
-     * the lowest foot of the parts in a footer, its head at the highest head in a header.
-     * {@code NaN} where no part is read.
-     */
-    private static double wordsBaseline(java.util.Collection<ZoneLine> lines, boolean header) {
-        ZoneLine tallest = null;
-        double edge = header ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
-        for (ZoneLine line : lines) {
-            if (tallest == null || line.above() + line.below() > tallest.above() + tallest.below()) {
-                tallest = line;
-            }
-            edge = header ? Math.max(edge, line.top()) : Math.min(edge, line.bottom());
-        }
-        if (tallest == null) {
-            return Double.NaN;
-        }
-        return header ? edge - tallest.above() : edge + tallest.below();
     }
 
     private void appendZonePart(XWPFParagraph para, DocumentNode part) {
@@ -8615,9 +8860,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * paragraph, so every line of it is then at least the picture's reach, and otherwise the
      * editor's own measure of its text, which in LibreOffice is taller than the page's —
      * where the page makes only the line holding the picture taller. A paragraph written with
-     * no exact height — a page zone's, one with no layout — grows to its pictures on its own
-     * and is left alone. A paragraph of one line is held to the page's line instead where it
-     * can be ({@link #holdPicturesInTheLine}).</p>
+     * no exact height — one with no layout, a page zone's the layout does not measure — grows
+     * to its pictures on its own and is left alone; a page zone's exact line is already as tall
+     * as its pictures need ({@link #zonePlacement}). A paragraph of one line is held to the
+     * page's line instead where it can be ({@link #holdPicturesInTheLine}).</p>
      */
     private static void makeRoomForPictures(XWPFParagraph para, PictureReach pictures) {
         CTPPr properties = para.getCTP().getPPr();

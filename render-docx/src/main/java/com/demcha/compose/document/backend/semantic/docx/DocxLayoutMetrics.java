@@ -513,18 +513,8 @@ final class DocxLayoutMetrics {
      * @return the fragments by path, empty when the layout carries no such zone
      */
     Map<String, PlacedFragment> zoneText(int zoneIndex) {
-        java.util.regex.Pattern zone =
-                java.util.regex.Pattern.compile("^@page-zone\\[\\d+]\\[" + zoneIndex + "]");
-        // The page a zone's fragment is drawn on is the one its path names.
-        int first = Integer.MAX_VALUE;
-        for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
-            if (zone.matcher(entry.getKey()).find()) {
-                for (PlacedFragment fragment : entry.getValue()) {
-                    first = Math.min(first, fragment.pageIndex());
-                }
-            }
-        }
-        if (first == Integer.MAX_VALUE) {
+        int first = zoneFirstPage(zoneIndex);
+        if (first < 0) {
             return Map.of();
         }
         String prefix = "@page-zone[" + first + "][" + zoneIndex + "]";
@@ -541,6 +531,27 @@ final class DocxLayoutMetrics {
             }
         }
         return text;
+    }
+
+    /**
+     * The first page a page zone is drawn on, which {@link #zoneText} reads it from.
+     *
+     * @param zoneIndex the zone's position in the section's zone list
+     * @return the page's index, counted from 0, or -1 when the layout carries no such zone
+     */
+    int zoneFirstPage(int zoneIndex) {
+        java.util.regex.Pattern zone =
+                java.util.regex.Pattern.compile("^@page-zone\\[\\d+]\\[" + zoneIndex + "]");
+        // The page a zone's fragment is drawn on is the one its path names.
+        int first = Integer.MAX_VALUE;
+        for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
+            if (zone.matcher(entry.getKey()).find()) {
+                for (PlacedFragment fragment : entry.getValue()) {
+                    first = Math.min(first, fragment.pageIndex());
+                }
+            }
+        }
+        return first == Integer.MAX_VALUE ? -1 : first;
     }
 
     /**

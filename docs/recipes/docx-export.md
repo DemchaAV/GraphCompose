@@ -1048,17 +1048,36 @@ deterministic export byte-identical only within one day unless
 `-Dgraphcompose.renderDate` pins it, as for the PDF.
 
 A page zone (`session.chrome().zone(...)`) exports as a real
-Word header or footer part, with the page number as a live field, and it
-sits as far from its page edge as the page puts it — the distance is read
-from where the zone's content landed in the resolved layout and written as
-`w:pgMar/@w:header` or `@w:footer`, rather than left to Word's 36pt.
+Word header or footer part, with the page number as a live field, and its text stands on the
+baseline the page sets it on. The zone's line is an exact line as tall as its tallest part's
+line on the page, and it stands as far from its page edge — `w:pgMar/@w:header` or `@w:footer`,
+rather than Word's 36pt — as puts that part's baseline where the page has it, both editors
+standing an exact line's baseline four fifths of the way down it. So what a lone part's padding
+and margin hold above and below its text is in that distance. The line is taller where a
+picture in it needs the room above the baseline, as Word stands a zone's picture on it, and
+where a part the page fits smaller is written at its style's size. Measured in Word 16.0.20430
+and LibreOffice 26.8 on headers and footers in 8pt and 18pt Lato, a lone part's text, and a
+line's tallest part's, stood within 0.1pt of the page's baseline; a smaller part beside it stays
+on Word's one baseline, and is counted. Text the page sets right against the edge stands lower
+by what its ascent falls short of four fifths of its line — about 0.4pt at 18pt — the line
+stopping at the edge; past a point and a half, the report names it. A line reaching past the
+page margin, into the body, is held there as a text band's is: the margin is written negative,
+and the report names it.
+
+A zone that shares its kind with another page zone — a cover's header on the first page, the
+running header on the rest — stands in a frame (`w:framePr`) at its own height, at least its
+line tall, since Word holds one distance from the edge for a kind; written in the flow, the
+cover's header stood 16pt high. Beside a text band of its kind, the band is framed. Where the
+layout shows no text of the zone, or the zone's content reads otherwise on the first page it is
+drawn on than it is written — content asking which page it is on — the line is Word's, the
+distance is read from where its content landed, and the report says the line is not measured.
 A zone is written from its paragraphs, page fields and spacers: anything else in it — a
 logo, a panel, a table — is not written, and the export report names it once
 (`page zone content`).
 
-The zone's line is Word's: its parts one after another from the page's left margin, and
-those after the first spacer against its right margin, at the right tab the line holds, all
-on one baseline, its tallest part's. Where the page sets a part elsewhere — by the zone's
+Word sets the line's parts one after another from the page's left margin, and those after
+the first spacer against its right margin, at the right tab the line holds, all on one
+baseline, its tallest part's. Where the page sets a part elsewhere — by the zone's
 padding, a row's columns and gap, a paragraph's alignment or a part's own sides — off that
 baseline, over more than one line or after a prefix, the export report counts it (`page
 zone`): "1 of its 3 parts stands off where the page sets them". A page field's alignment
@@ -1067,8 +1086,9 @@ at another width — after a prefix, auto-sized to a size the file does not hold
 lines than one — or in a zone whose nodes the page names or nests otherwise than the file, it
 says where a part stands is not measured. It names what a paragraph in the zone loses of its
 own too: its right-to-left direction, a prefix's letters, the size an auto-sized one is fitted
-to, its outline entry. The line's height and the room its parts hold above and below are
-Word's, and an anchor in a zone has no bookmark; none of these is named yet.
+to, its outline entry, its anchor, which has no bookmark — a zone is written into a part each
+kind of page repeats, no one place a bookmark could mark, and a link to it points at none — and
+a picture the page sets anywhere but on the baseline, where Word stands it.
 
 A zone drawn on some pages only (`appliesTo(...)`) lands on the same pages when Word can
 say so. Word has a header and footer for the first page, for even pages and for the rest,

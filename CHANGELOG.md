@@ -8,6 +8,47 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export sets what follows a panel where the page sets it, and names what Word sets
+  lower.** Word sets a panel's content below its whole top border and its margin inside the
+  table's row, and ends the row its margin and its whole bottom border past the content; the
+  page strokes each border on the panel's edge. The export took each border whole out of the
+  space round the panel: a padded card with a gap below it stood what followed half a border
+  high, and a card with neither stood it the border lower, named for a row's panel only.
+  - **Half a border reaches past the panel**, and as much of its inner half as the padding
+    falls short of it. The space round the panel takes that first, the border then standing
+    where the page strokes it; then the panel's padding, the border then drawn that much inside
+    the panel's edge and its content where the page sets it; above, then, the room over its
+    first line. What none of them takes is named: on the panel for its top border, as a row's
+    was, and on the block that stands lower for its bottom one (`space above`).
+  - **The height held is the content's.** Word and LibreOffice read a panel's written row height
+    as its content's, its margins and both borders round it: held a point above its content's
+    height, an outlined card padded 4pt stood a point taller than the page's. A panel holds the
+    page's height less its padding, and less what the room over its first line gave its top
+    border. A shape container, its layers centred in it, holds its outline's height less both
+    its borders and its margins, which keep inside it, and nothing of them is named; a padded
+    outlined one was held one border less only.
+  - **What a panel's content leaves below itself** past where the page ends it — a last line held
+    to an icon, the border of a card ending the panel — comes out of the room the page leaves
+    under that content, then out of the panel's padding below, then out of the space under the
+    panel; what none of them takes is named (`space above`). A card's border ending a row's cell
+    reaches past the row only by what the row's room under that cell does not hold.
+  - **The paragraph Word keeps between any two tables** — a tenth of a point, without which
+    Word merges them — is named on the second where the space between them does not take it
+    (`space above`), together with a border reaching it.
+
+  Measured in Word 16 and LibreOffice alike on cards with 2pt borders — above, below and all
+  round — with no padding and with 1 and 4pt of it, with and without space round them, stacked
+  and in a row's columns, every line stood where the page sets it, or as much lower as the
+  report names: within 0.15pt in Word and 0.05pt in LibreOffice. In the DOCX fidelity corpus
+  25 of the 62 documents change, and the report names 15 more notes: the tenth of a point
+  between two tables, 14 times, and `ObsidianInvoice`'s totals row, 0.72pt below a border
+  nothing takes. Twelve documents stand nearer the page in Word — the engineering cover
+  letter's median line from 1.27pt to 0.13pt — and eight further, `cv-panel`,
+  `invoice-subscription`, `cv-modern_professional` and `cv-classic_serif` most: there the
+  whole border taken out of the space had made up for other errors, a heading's baseline left
+  up to half a point from where Word seats it in an exact line, a spacer of no height written
+  as a tenth of a point, rounding to the twip inside a card. The fidelity baselines record both.
+
 - **A DOCX export writes a row's fill, outline and side borders, as a panel holding its
   columns.** A row paints its box as a container does — `RowBuilder.fillColor`, `stroke`,
   `borders` — and the export wrote its columns as a table with no shading or borders, naming the
@@ -23,14 +64,12 @@ follow semantic versioning; release dates are ISO 8601.
   - **What stands on the row is set on its fill.** A chip, a rule or a translucent panel in one
     of its columns is flattened against the panel's shading as written, where it was flattened
     against the page under the row.
-  - **Borders above and below are named.** Word draws them outside the panel's row, where the
-    page strokes them on the box's edge: where no space round the row takes them, what follows
-    stands up to their width lower (`RowNode`, `APPROXIMATED`). Measured, five rows with a 1pt
-    bottom border one under the other set what follows 5.4pt low in Word and LibreOffice: their
-    borders' 5pt, and a tenth of a point for each hairline paragraph Word needs between two
-    tables, as five containers with that border do. A top border wider than the row's padding
-    stands its columns that much lower too, where the space above does not take it, and the
-    note says so.
+  - **Borders above and below reach past its box**, as a panel's do: what of them neither the
+    space round the row nor its padding takes stands its columns, or what follows, that much
+    lower, and is named (see the entry above on what follows a panel). Measured, five rows with
+    a 1pt bottom border and no padding, one under the other, set what follows 5.4pt low in Word
+    and LibreOffice: their borders' 5pt, and a tenth of a point for each hairline paragraph Word
+    needs between two tables.
   - **Still named as `row paint`**, its columns written alone:
     - composed in a table cell, whose table draws its box as a shape where it frames no text;
     - in a page zone's line;

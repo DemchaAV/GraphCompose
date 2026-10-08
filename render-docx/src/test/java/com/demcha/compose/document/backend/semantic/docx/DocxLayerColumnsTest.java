@@ -101,6 +101,30 @@ class DocxLayerColumnsTest {
     }
 
     @Test
+    void aLaterLayerThatWritesNothingLeavesTheRaiseOwedInTheCell() throws Exception {
+        // The later layer only holds the title's place: written of it is nothing, and the raised
+        // title still owes below it what it was raised by, at the cell's end.
+        com.demcha.compose.document.style.DocumentTextStyle spectral = com.demcha.compose.document.style
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.SPECTRAL).size(30).build();
+        try (Export export = export(stack -> stack
+                .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addParagraph(p -> p.name("Title").text("Title")
+                        .textStyle(spectral).margin(DocumentInsets.top(20)))), LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", SIDEBAR, 0, main -> main
+                        .addSpacer(spacer -> spacer.name("TitlePlace").width(100).height(80))), LayerAlign.TOP_LEFT),
+                true)) {
+            XWPFTableCell main = export.document().getTables().get(0).getRow(0).getCell(1);
+            XWPFParagraph title = main.getParagraphs().get(main.getParagraphs().size() - 1);
+            long raised = 20 * 20L - spacingBefore(title);
+            var spacing = title.getCTP().getPPr().getSpacing();
+
+            assertThat(title.getText()).as("the premise: the title ends the cell").isEqualTo("Title");
+            assertThat(raised).as("the premise: the title raised into the space above it").isGreaterThan(20);
+            assertThat(spacing.isSetAfter() ? DocxTwips.of(spacing.getAfter()) : 0).isEqualTo(raised);
+        }
+    }
+
+    @Test
     void aLaterLayerUnderAPanelTakesNoRaiseThePanelAlreadyOwedInside() throws Exception {
         // The first layer ends in a painted card whose line is raised: the card's cell owes the
         // raise below that line, inside the card, and the later layer's gap from the card's foot
@@ -376,11 +400,24 @@ class DocxLayerColumnsTest {
     }
 
     private static Export export(Consumer<LayerStackBuilder> layers) throws Exception {
+        return export(layers, false);
+    }
+
+    /**
+     * @param followed whether a paragraph follows the stack, so its table does not close the
+     *                 document and its cells keep the space below their last lines
+     */
+    private static Export export(Consumer<LayerStackBuilder> layers, boolean followed) throws Exception {
         DocumentSession session = GraphCompose.document()
                 .pageSize(PAGE_WIDTH, 600)
                 .margin(DocumentInsets.of(MARGIN))
                 .create();
-        session.pageFlow(page -> page.addLayerStack(stack -> layers.accept(stack.name("Columns"))));
+        session.pageFlow(page -> {
+            page.addLayerStack(stack -> layers.accept(stack.name("Columns")));
+            if (followed) {
+                page.addParagraph("Below");
+            }
+        });
         XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(session.export(new DocxSemanticBackend())));
         return new Export(session, document);
     }

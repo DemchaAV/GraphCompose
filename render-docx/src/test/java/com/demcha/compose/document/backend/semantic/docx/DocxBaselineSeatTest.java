@@ -320,6 +320,35 @@ class DocxBaselineSeatTest {
     }
 
     @Test
+    void aPanelsFirstLineLeavesItsTopBorderTheSpaceAboveIt() throws Exception {
+        // A 2pt top border on a card with no padding reaches 2pt past the card into its content,
+        // and the 1pt above its first line takes what it can of that. Raised into the same 1pt,
+        // the line would give it back, the card grow by what the line owed, and the note say
+        // more than the line stands off.
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.addParagraph("Before")
+                    .addSection("Card", card -> card.fillColor(com.demcha.compose.document.style.DocumentColor.rgb(238, 243, 249))
+                            .borders(com.demcha.compose.document.style.DocumentBorders.top(
+                                    com.demcha.compose.document.style.DocumentStroke.of(
+                                            com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 2)))
+                            .addParagraph(p -> p.text("Inside").margin(DocumentInsets.top(1))))
+                    .addParagraph("After"));
+            try (XWPFDocument document = new XWPFDocument(
+                    new java.io.ByteArrayInputStream(session.export(new DocxSemanticBackend(report::set))))) {
+                XWPFParagraph inside = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
+
+                assertThat(inside.getText()).isEqualTo("Inside");
+                assertThat(before(inside)).as("all of it given to the border").isZero();
+                assertThat(after(inside)).as("nothing owed for a raise").isZero();
+                assertThat(report.get().bySubject().get("SectionNode")).singleElement()
+                        .satisfies(note -> assertThat(note.detail()).startsWith("its content stands 1pt lower"));
+            }
+        }
+    }
+
+    @Test
     void aLineOfTheDefaultTextIsRaisedByWhatTheSpacingTestsAllowFor() throws Exception {
         assertThat(raiseOf(DocumentTextStyle.DEFAULT)).isEqualTo(DocxExports.DEFAULT_LINE_RAISE);
         assertThat(raiseOf(DocumentTextStyle.DEFAULT.withSize(7))).isEqualTo(DocxExports.SMALL_LINE_RAISE);

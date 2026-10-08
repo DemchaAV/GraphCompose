@@ -24,17 +24,19 @@ follow semantic versioning; release dates are ISO 8601.
     down, it would take its room out of the space below it, which is not known when it is written.
   - A column's later layer, which measures the space to itself from the page, takes back the raise
     of the line above it.
-  - Not a line pair's shared line, which moved would move its other half; not a line in a band, a
-    shape container, a canvas or a text box, whose writers measure what follows them from the page;
-    not a line cut to fit, a stack's or one held to its pictures; and not a paragraph the layout
-    moves to a new page, whose space above Word drops there, or breaks over one, whose lines on
-    the next page the space above does not move.
+  - Not a line pair's shared line, which moved would move its other half; not a line in an
+    overlay — a band, a layer stack, a shape container, a canvas, a text box — whose writers
+    measure what follows them from the page; not a line cut to fit, a container's stacked lines or
+    one held to its pictures; not a paragraph the layout moves to a new page, whose space above
+    Word drops there, or breaks over one, whose lines on the next page the space above does not
+    move; and not into the space above a panel's first line that its top border takes.
 
-  In the DOCX fidelity corpus 27 documents stand nearer the page in Word, the sum of their medians
-  1.6pt nearer — `letter-blue_banner`'s median line from 0.39pt to 0.18pt, `cv-modern_professional`'s
+  In the DOCX fidelity corpus 27 documents stand nearer the page in Word, the sum of the medians
+  1.65pt nearer — `letter-blue_banner`'s median line from 0.39pt to 0.18pt, `cv-modern_professional`'s
   from 0.32pt to 0.18pt — and 21 in LibreOffice on Windows, `cv-modern_professional`'s from 0.28pt
   to 0.04pt. Two move a step of Word's grid further: `invoice-luma_studio`'s company lines, raised
-  where the page sets them, now show their block standing 0.3pt high (median 0.13pt to 0.14pt),
+  where the page sets them, now show their block standing 0.2 to 0.3pt high (median 0.13pt to
+  0.14pt),
   and `letter-panel`'s median from 0.14pt to 0.16pt; in LibreOffice two medians move 0.01pt. The
   report names nothing more.
 

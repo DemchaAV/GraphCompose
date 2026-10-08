@@ -145,9 +145,47 @@ class DocxZoneLineTest {
 
         assertThat(PAGE_HEIGHT - fromTheTop(exported.margin().getFooter()) - (lineOf(line) - share(line))
                    - lineOf(line)).as("the first line's baseline").isCloseTo(exported.baseline("Acme"), within(0.1));
+        assertThat(line.getRuns()).as("on Word's own lines, none raised off them")
+                .allSatisfy(run -> assertThat(run.getCTR().isSetRPr() && run.getCTR().getRPr().sizeOfPositionArray() > 0)
+                        .isFalse());
         assertThat(exported.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
                 .containsExactly("a footer written as one line of Word's footer; 1 of its 2 parts stands off where "
                                  + "the page sets them");
+    }
+
+    @Test
+    void aSmallerPartBesideALargerOneIsRaisedToThePagesBaseline() throws Exception {
+        // The page sets the parts from the top, the smaller one higher; Word's line stands on the
+        // larger one's baseline, and the smaller one is raised off it to its own.
+        Exported exported = export(footerRow(p -> p.text("Confidential").textStyle(CHROME),
+                p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18))));
+        XWPFParagraph line = exported.footerLine();
+        double baseline = PAGE_HEIGHT - fromTheTop(exported.margin().getFooter()) - (lineOf(line) - share(line));
+        XWPFRun smaller = line.getRuns().get(0);
+
+        assertThat(smaller.text()).isEqualTo("Confidential");
+        assertThat(baseline).as("the larger one's").isCloseTo(exported.baseline("Acme"), within(0.1));
+        assertThat(baseline - ((Number) smaller.getCTR().getRPr().getPositionArray(0).getVal()).doubleValue() / 2)
+                .as("the smaller one's, raised").isCloseTo(exported.baseline("Confidential"), within(0.5));
+    }
+
+    @Test
+    void noPartIsRaisedInAZoneOfMoreLinesThanOne() throws Exception {
+        // Word sets "v2.4" on the second line, after the break; raised off the first line's
+        // baseline to the page's, it would stand a line and more off it.
+        Exported exported = export(DocumentPageZone.builder().zone(DocumentHeaderFooterZone.FOOTER).height(40)
+                .padding(new DocumentInsets(4, 0, 0, 0))
+                .content(page -> new RowBuilder().name("Line")
+                        .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
+                        .addParagraph(p -> p.text("First\nSecond").textStyle(CHROME))
+                        .flexSpacer()
+                        .addParagraph(p -> p.text("v2.4").textStyle(CHROME))
+                        .build())
+                .build());
+
+        assertThat(exported.footerLine().getRuns()).as("on Word's own lines, none raised off them")
+                .allSatisfy(run -> assertThat(run.getCTR().isSetRPr() && run.getCTR().getRPr().sizeOfPositionArray() > 0)
+                        .isFalse());
     }
 
     @Test
@@ -496,24 +534,44 @@ class DocxZoneLineTest {
     @Test
     void aLineThePageSetsAtTheEdgeStandsAtIt() throws Exception {
         // An exact line's baseline is four fifths down it; text set against the page's top edge
-        // stands a little higher than that, and the line stops at the edge.
+        // stands a little higher than that, and the line stops at the edge. The text is raised
+        // back onto the page's baseline, within half a point, as far as the line holds it.
         Exported exported = export(zone(DocumentHeaderFooterZone.HEADER, 40, DocumentInsets.zero(), "Acme",
                 DocumentTextStyle.DEFAULT.withSize(18)));
+        XWPFRun text = exported.headerLine().getRuns().get(0);
 
         assertThat(fromTheTop(exported.margin().getHeader())).isZero();
-        assertThat(share(exported.headerLine()) - exported.baseline("Acme")).as("lower than the page's, by a hair")
+        assertThat(share(exported.headerLine()) - exported.baseline("Acme")).as("the line's, lower than the page's")
                 .isBetween(0.0, 1.0);
+        assertThat(share(exported.headerLine()) - raiseOf(text))
+                .as("the text's, raised").isCloseTo(exported.baseline("Acme"), within(0.5));
         assertThat(exported.report().bySubject()).as("within the place a part keeps").doesNotContainKey("page zone");
     }
 
     @Test
-    void aLineStoppedAtTheEdgeFurtherThanAPartKeepsItsPlaceIsNamed() throws Exception {
-        // At 80pt the line's top would stand 1.8pt past the page's edge: stopped there, the text
-        // stands that much lower than the page sets it.
+    void aLineStoppedAtTheEdgeFurtherThanAPartKeepsItsPlaceRaisesItBack() throws Exception {
+        // At 80pt the line's top would stand 1.8pt past the page's edge: stopped there, its baseline
+        // stands that much lower than the page sets the text, which is raised back onto the page's,
+        // its letters within the page as the line is.
         Exported exported = export(zone(DocumentHeaderFooterZone.HEADER, 120, DocumentInsets.zero(), "Acme",
                 DocumentTextStyle.DEFAULT.withSize(80)));
+        XWPFRun text = exported.headerLine().getRuns().get(0);
+        double raise = raiseOf(text);
 
-        assertThat(share(exported.headerLine()) - exported.baseline("Acme")).isGreaterThan(1.5);
+        assertThat(share(exported.headerLine()) - exported.baseline("Acme")).as("the line's").isGreaterThan(1.5);
+        assertThat(share(exported.headerLine()) - raise).as("the text's").isCloseTo(exported.baseline("Acme"),
+                within(0.5));
+        assertThat(exported.report().bySubject()).doesNotContainKey("page zone");
+    }
+
+    @Test
+    void textThePageSetsPastTheEdgeIsNamed() throws Exception {
+        // Pulled 10pt up past the page's top, its letters would rise out of the line raised back.
+        Exported exported = export(DocumentPageZone.builder().zone(DocumentHeaderFooterZone.HEADER).height(40)
+                .content(page -> new ParagraphBuilder().text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18))
+                        .margin(new DocumentInsets(-10, 0, 0, 0)).build())
+                .build());
+
         assertThat(exported.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
                 .containsExactly("a header written as one line of Word's header; its text stands off where the page "
                                  + "sets it");
@@ -615,6 +673,13 @@ class DocxZoneLineTest {
 
     private static double fromTheTop(Object twips) {
         return DocxTwips.of(twips) / 20.0;
+    }
+
+    /** How far a run is raised off its line's baseline, in points: its {@code w:position}, or none. */
+    private static double raiseOf(XWPFRun run) {
+        var properties = run.getCTR().getRPr();
+        return properties == null || properties.sizeOfPositionArray() == 0 ? 0
+                : ((Number) properties.getPositionArray(0).getVal()).doubleValue() / 2;
     }
 
     /** A header's or a footer's paragraph reading the text. */

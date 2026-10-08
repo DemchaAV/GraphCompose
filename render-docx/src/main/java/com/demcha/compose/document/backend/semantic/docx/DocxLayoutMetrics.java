@@ -4,6 +4,7 @@ import com.demcha.compose.document.layout.DocumentGraph;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
+import com.demcha.compose.document.layout.payloads.ImageFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.ParagraphLineGeometry;
@@ -554,24 +555,42 @@ final class DocxLayoutMetrics {
      * @return the fragments by path, empty when the layout carries no such zone
      */
     Map<String, PlacedFragment> zoneText(int zoneIndex) {
+        return zoneFragments(zoneIndex, fragment -> fragment.payload() instanceof ParagraphFragmentPayload paragraph
+                                                    && !paragraph.lines().isEmpty());
+    }
+
+    /**
+     * The pictures a page zone's content laid out, on the first page the zone is drawn on: each
+     * node's first picture fragment, the box the page draws it in, by its path within the content
+     * (see {@link #zoneText}).
+     *
+     * @param zoneIndex the zone's position in the section's zone list
+     * @return the fragments by path, empty when the layout carries no such zone
+     */
+    Map<String, PlacedFragment> zonePictures(int zoneIndex) {
+        return zoneFragments(zoneIndex, fragment -> fragment.payload() instanceof ImageFragmentPayload);
+    }
+
+    /** Each node's first fragment a page zone laid out that is of a kind, by its path within the content. */
+    private Map<String, PlacedFragment> zoneFragments(int zoneIndex, java.util.function.Predicate<PlacedFragment> kind) {
         int first = zoneFirstPage(zoneIndex);
         if (first < 0) {
             return Map.of();
         }
         String prefix = "@page-zone[" + first + "][" + zoneIndex + "]";
-        Map<String, PlacedFragment> text = new HashMap<>();
+        Map<String, PlacedFragment> found = new HashMap<>();
         for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
             if (!entry.getKey().startsWith(prefix)) {
                 continue;
             }
             for (PlacedFragment fragment : entry.getValue()) {
-                if (fragment.payload() instanceof ParagraphFragmentPayload paragraph && !paragraph.lines().isEmpty()) {
-                    text.putIfAbsent(entry.getKey().substring(prefix.length()), fragment);
+                if (kind.test(fragment)) {
+                    found.putIfAbsent(entry.getKey().substring(prefix.length()), fragment);
                     break;
                 }
             }
         }
-        return text;
+        return found;
     }
 
     /**

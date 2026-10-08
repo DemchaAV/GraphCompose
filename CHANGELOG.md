@@ -59,6 +59,45 @@ follow semantic versioning; release dates are ISO 8601.
   of no height written as a tenth of a point, rounding to the twip inside a card, a step between
   a table's header and its first row. The fidelity baselines record both.
 
+- **A DOCX page zone writes its picture — a logo — in its line, where the page draws it.** A
+  page zone is written as one line of a Word header or footer. An `ImageNode` in it was not
+  written, and was named `DROPPED`, `page zone content`.
+  - **The picture is an inline picture in the line**, at the size the page draws it: fitted
+    inside its box where it is contained, the box's size and cropped where it covers it. Its link
+    is its run's.
+  - **Word stands it on the line's baseline.** Where it is the line's tallest part, the line is
+    placed by its foot, which then stands where the page draws it, and is tall enough to hold it:
+    a 24pt logo makes a 30pt exact line, its baseline four fifths down.
+  - **A one-line part the page sets on a baseline of its own is raised or lowered to it**
+    (`w:position`, in half points), in a zone of one line, and the exact line grows to hold
+    what is raised. The text beside a logo, set from the logo's top or its middle, would
+    otherwise stand on the logo's foot, 9 to 18pt low. A smaller text beside a larger one is
+    raised too, where it stood on the larger one's baseline. A part is lowered only as far as
+    the line holds below Word's baseline — a fifth of it, or as far as its tallest part reaches;
+    one set lower stands on Word's baseline, and the note counts it. A picture that is not the
+    line's tallest part is raised as a text is. A line that stops at the page's edge raises its
+    tallest part back onto the page's baseline too: an 80pt title against the top edge stood
+    1.8pt low before, and was named. Text the page sets past the edge itself is left off its
+    baseline, and named.
+  - **What a picture loses on the line is named** in the `page zone` note: its transform, its
+    outline entry and its anchor's bookmark. A picture the zone lays out on the first page it
+    is drawn on in another box — another size, fit or insets — or, where its own proportions
+    set what is drawn (a side left unstated, or a picture contained in its box), another
+    picture, is written, and where it stands is named not measured.
+  - **Measured** in Word 16 and LibreOffice on a 48 by 24pt logo in a header and in a footer:
+    alone, beside 8pt text set from its top and from its middle, after 18pt text, and beside a
+    page number. Each logo stood where the page draws it, to a tenth of a point, in both editors.
+    In Word each text's baseline stood within half a point of the page's: a run is raised by
+    whole half points, and to the next one towards the line's baseline where the nearest would
+    pass the line's edge. LibreOffice raises a run about a seventh further than `w:position`
+    says, does not raise a page field, which stands on the logo's foot there, and stands every
+    picture on the line's baseline, a raised one included.
+  - Anything else in a page zone — a shape, a barcode, a container — is still `DROPPED`, `page
+    zone content`.
+  - No document of the DOCX fidelity corpus has a page zone; its bytes are unchanged. In
+    `DocxNodeFieldLedgerTest` the `zones` entry writes each part's own baseline and the zone's
+    pictures, and names a part set lower than the line holds or past the page's edge.
+
 - **A DOCX export writes a row's fill, outline and side borders, as a panel holding its
   columns.** A row paints its box as a container does — `RowBuilder.fillColor`, `stroke`,
   `borders` — and the export wrote its columns as a table with no shading or borders, naming the
@@ -255,11 +294,14 @@ follow semantic versioning; release dates are ISO 8601.
   - **Measured** in Word 16.0.20430 and LibreOffice 26.8 on 8pt and 18pt Lato headers and 8pt
     Lato footers. A lone part's text, and a line's tallest part's, stood within 0.1pt of the
     page's baseline in each editor, the cover's header included. A smaller part beside a taller
-    one stays on Word's one baseline, and the note counts it.
+    one stays on Word's one baseline, and the note counts it (since raised to its own: see "A
+    DOCX page zone writes its picture — a logo — in its line, where the page draws it").
   - **Text the page sets right against the edge** stands off the page's baseline, as the line
     stops at the edge: lower in a header, by what its ascent falls short of four fifths of its
     line, and higher in a footer, by what its descent falls short of a fifth. In the default face
-    only a header's is, about 0.4pt at 18pt. Past a point and a half, the note names it.
+    only a header's is, about 0.4pt at 18pt. Past a point and a half, the note names it (since
+    raised back onto it: see "A DOCX page zone writes its picture — a logo — in its line, where
+    the page draws it").
   - **The `page zone` note:**
     - counts a part off the baseline Word sets the line on, and says where the parts after a
       part of more lines than one stand is not measured, since Word sets them on a later line;
@@ -411,7 +453,8 @@ follow semantic versioning; release dates are ISO 8601.
       there;
     - it sits on Word's baseline: its tallest part's, with the line standing at the zone's edge
       (since placed by that part's baseline: see "A DOCX page zone's text stands on the page's
-      baseline");
+      baseline"; and each part since raised to its own: see "A DOCX page zone writes its picture
+      — a logo — in its line, where the page draws it");
     - it is one line;
     - no prefix stands before it, on the line's left side.
 
@@ -623,7 +666,8 @@ follow semantic versioning; release dates are ISO 8601.
   - anything in a page zone but paragraphs, page fields and spacers, such as a logo: now
     `DROPPED`, `page zone content`, once for each, though a zone is written into each kind of
     header or footer it is given — two logos of no name are two notes, and in a file of several
-    sections each names its section;
+    sections each names its section (a picture since written: see "A DOCX page zone writes its
+    picture — a logo — in its line, where the page draws it");
   - a watermark, a protection and viewer preferences: now `DROPPED`, `watermark` (once per
     section that sets one), `protection` and `viewer preferences` (once for the file) — a file
     asked to be protected opens and edits without a password, and the report says so;

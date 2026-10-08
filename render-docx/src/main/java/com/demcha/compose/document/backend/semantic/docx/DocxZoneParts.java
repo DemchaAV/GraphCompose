@@ -1,6 +1,9 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.InlineHighlightRun;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineImageRun;
@@ -36,7 +39,8 @@ final class DocxZoneParts {
     /**
      * Whether content built for a page reads as the content written, as far as a zone's line is
      * set by it: its parts one by one, each paragraph's text and face and each of its runs' — the
-     * letters, their face, and a picture's size and place — and each page field's kind and face.
+     * letters, their face, and a picture's size and place — each page field's kind and face, and
+     * each picture's box ({@link #samePictureBox}).
      * Colour is left out: it sets nothing of the line, and a colour built afresh is not equal to
      * itself.
      *
@@ -93,7 +97,36 @@ final class DocxZoneParts {
             return other instanceof PageFieldNode drawn && field.kind() == drawn.kind()
                    && sameFace(field.textStyle(), drawn.textStyle());
         }
+        if (part instanceof ImageNode picture) {
+            return other instanceof ImageNode drawn && samePictureBox(picture, drawn);
+        }
         return part.getClass() == other.getClass();
+    }
+
+    /**
+     * Whether two pictures are drawn alike: in one box — the sizes, fit and insets they state —
+     * and, where their own proportions set what is drawn — a side they leave unstated, or a
+     * picture contained in its box — the same picture.
+     */
+    private static boolean samePictureBox(ImageNode picture, ImageNode other) {
+        boolean boxed = picture.width() != null && picture.height() != null
+                        && picture.fitMode() != DocumentImageFitMode.CONTAIN;
+        return Objects.equals(picture.width(), other.width()) && Objects.equals(picture.height(), other.height())
+               && Objects.equals(picture.scale(), other.scale()) && picture.fitMode() == other.fitMode()
+               && picture.padding().equals(other.padding()) && picture.margin().equals(other.margin())
+               && (boxed || samePicture(picture.imageData(), other.imageData()));
+    }
+
+    /** Whether two pictures' data are the same file or the same bytes. */
+    private static boolean samePicture(DocumentImageData picture, DocumentImageData other) {
+        if (picture == other) {
+            return true;
+        }
+        if (picture.path().isPresent() || other.path().isPresent()) {
+            return picture.path().equals(other.path());
+        }
+        return picture.bytes().isPresent() && other.bytes().isPresent()
+               && java.util.Arrays.equals(picture.bytes().get(), other.bytes().get());
     }
 
     private static boolean runsAlike(List<InlineRun> runs, List<InlineRun> others) {

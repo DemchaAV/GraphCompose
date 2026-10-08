@@ -118,14 +118,16 @@ class DocxNodeFieldLedgerTest {
             "headersAndFooters:REPORTED:a band's translucent separator, flattened against white; any other is "
             + "written, or reported where Word's parts cannot hold it",
             // The node entries below are the body's. A zone is written as one line of its
-            // paragraphs' runs, page fields and tabs, and has its own entry here.
-            "zones:REPORTED:where its parts stand across the line and off the baseline Word sets it on, what "
-            + "its paragraphs lose of their own — an anchor, a picture's place among them — what else a zone "
-            + "holds, lines reaching past the page margin, a line the layout does not measure, and a zone "
-            + "built as nothing for no page in particular; its line's height, its lines, its tallest part's "
-            + "baseline and the room that part holds above and below its text are written, as exact lines "
-            + "placed from the edge, in a frame at its height where a measured zone shares its kind with "
-            + "another page zone");
+            // paragraphs' runs, page fields, pictures and tabs, and has its own entry here.
+            "zones:REPORTED:where its parts stand across the line, a part the page sets lower than the line "
+            + "holds below Word's baseline or past the page's edge, what its paragraphs and pictures lose of "
+            + "their own — an anchor, an outline entry, a picture's transform, a picture's place among a "
+            + "paragraph's runs — what else a zone holds, lines reaching past the page margin, a line the "
+            + "layout does not measure, and a zone built as nothing for no page in particular; its line's "
+            + "height, its lines, its tallest part's baseline, each other one-line part's own, raised or "
+            + "lowered to it, and the room that part holds above and below its text are written, as exact "
+            + "lines placed from the edge, in a frame at its height where a measured zone shares its kind "
+            + "with another page zone; its pictures are written in the line at the size the page draws them");
 
     static {
         node(AlignNode.class, "name:INERT", "child:WRITTEN", "align:WRITTEN", "margin:WRITTEN");

@@ -134,40 +134,36 @@ class DocxZoneReportTest {
     }
 
     @Test
-    void aPartOnABaselineOfItsOwnOrOfMoreLinesThanOneIsCounted() throws Exception {
+    void aPartOnABaselineOfItsOwnIsRaisedToItAndOneOfMoreLinesThanOneIsCounted() throws Exception {
         // Word sets a line's parts on one baseline, its tallest part's; the page sets the parts from
-        // the top, the smaller ones higher.
+        // the top, the smaller ones higher, and each is raised to its own.
         assertThat(zoneNotes(DocumentPageZone.footer(40, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Confidential").textStyle(CHROME))
                 .flexSpacer()
                 .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
-                .build())))
-                .containsExactly(FOOTER + "1 of its 2 parts stands off where the page sets them");
+                .build()))).isEmpty();
         assertThat(zoneNotes(DocumentPageZone.footer(40, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
                 .flexSpacer()
                 .addParagraph(p -> p.text("v2.4").textStyle(CHROME))
                 .add(page.pageNumber(CHROME))
-                .build())))
-                .as("both smaller parts move onto the tallest one's baseline")
-                .containsExactly(FOOTER + "2 of its 3 parts stand off where the page sets them");
+                .build()))).as("a page field as a paragraph").isEmpty();
         assertThat(zoneNotes(DocumentPageZone.header(40, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
                 .flexSpacer()
                 .addParagraph(p -> p.text("v2.4").textStyle(CHROME))
                 .add(page.pageNumber(CHROME))
-                .build())))
-                .as("in a header too").containsExactly("a header written as one line of Word's header; 2 of its 3 "
-                                                        + "parts stand off where the page sets them");
-        // Word's line stands on its tallest part's baseline, where the page sets that part: a
-        // smaller part the page sets lower moves up onto it, and the larger one stays.
+                .build()))).as("in a header too").isEmpty();
+        // A smaller part the page sets lower than the fifth of the line below Word's baseline holds
+        // is not lowered: it moves up onto that baseline, and is counted.
         assertThat(zoneNotes(DocumentPageZone.footer(60, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
                 .flexSpacer()
                 .addParagraph(p -> p.text("v2.4").textStyle(CHROME).margin(new DocumentInsets(30, 0, 0, 0)))
                 .build())))
                 .containsExactly(FOOTER + "1 of its 2 parts stands off where the page sets them");
-        // A part the page seats off its baseline is set on Word's.
+        // A part the page seats below its baseline, past what the line holds below Word's, is set
+        // on Word's, and counted.
         assertThat(zoneNotes(DocumentPageZone.footer(40, page -> new RowBuilder().name("Line")
                 .addParagraph(p -> p.text("Confidential").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
                 .flexSpacer()

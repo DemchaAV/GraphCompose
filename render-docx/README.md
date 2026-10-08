@@ -97,8 +97,10 @@ What maps:
 - **Charts** are a table of their data.
 - **Pages.** Page size, margins and orientation; page zones (`session.chrome().zone(...)`)
   and text headers and footers (`session.header(...)` / `footer(...)`) as real Word headers
-  and footers with live page-number fields; document metadata (title, author, subject,
-  keywords).
+  and footers with live page-number fields, a zone's logo an inline picture where the page
+  draws it, and, in a zone of one line, each one-line part Word sets as the page does raised
+  or lowered to the baseline the page sets it on, as far as the line holds it; document
+  metadata (title, author, subject, keywords).
 - **Byte-identical output** with `DocxSemanticBackend.builder().deterministic(true)`.
 
 What is not written — each one is named in the export report
@@ -123,10 +125,10 @@ What is not written — each one is named in the export report
   cell the export shaded, or what the page paints there — and a text header's separator against
   white; each is named in the export report (`translucency`, a chip's on its `inline chip` note).
   Text, drawings and pictures keep their alpha.
-- **In a page zone, anything but paragraphs, page fields and spacers** — a logo, a barcode,
-  a rule — named in the export report as `page zone content`.
-- **Where a page zone's parts stand on Word's line, and what a paragraph in it loses of its
-  own**, named in the export report as `page zone`.
+- **In a page zone, anything but paragraphs, page fields, spacers and pictures** — a barcode,
+  a rule, a panel — named in the export report as `page zone content`.
+- **Where a page zone's parts stand on Word's line, and what a paragraph or a picture in it
+  loses of its own**, named in the export report as `page zone`.
 - **A list's own geometry where Word cannot hold it**, named in the export report on the list:
   - a centred or right-aligned list's alignment;
   - its `lineSpacing` where the layout's items are not its own;

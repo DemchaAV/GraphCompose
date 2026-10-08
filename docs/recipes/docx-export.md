@@ -933,8 +933,8 @@ report names it (see "Translucent colours"). Three limits:
   the flow, and is drawn as a shape like other drawing. A layer stack of one layer lays
   nothing over anything, and a line among the text in it is a rule; its other shapes, and
   a line in a stack that holds nothing but drawing, stay drawing.
-- A rule in a page zone is not written, as a zone takes paragraphs, fields and
-  spacers.
+- A rule in a page zone is not written, as a zone takes paragraphs, fields, spacers
+  and pictures.
 - Word draws one border for consecutive paragraphs whose borders and indents are
   the same, whatever the space between them, so two identical rules with no other
   paragraph between them show as one.
@@ -1098,10 +1098,10 @@ A zone the layout measures that shares its kind with another page zone — a cov
 the first page, the running header on the rest — stands in a frame (`w:framePr`) at its own
 height, at least its lines tall, since Word holds one distance from the edge for a kind; written
 in the flow, the cover's header stood 16pt high. Beside a text band of its kind, the band is
-framed. Where the layout shows no text of the zone, or the zone's content is built otherwise for
-the first page it is drawn on than it is written — other text, another face or size, other
-pictures — the line is Word's, the distance is read from where its content landed, and the
-report says where its text stands is not measured. Such a zone is not framed: two of one kind
+framed. Where the layout shows none of the zone's text or pictures, or the zone's content is
+built otherwise for the first page it is drawn on than it is written — other text, another face
+or size, another picture or picture box — the line is Word's, the distance is read from where its
+content landed, and the report says where its text or picture stands is not measured. Such a zone is not framed: two of one kind
 share Word's one distance, the last one's, and stand one under the other. A zone whose content
 is none for no page in particular is not written, and the report names it. A zone is written
 from its paragraphs, page fields, spacers and pictures. A picture — a logo — is an inline
@@ -1113,16 +1113,19 @@ which then stands where the page draws it. Anything else in a zone — a shape, 
 
 Word sets the line's parts one after another from the page's left margin, and those after
 the first spacer against its right margin, at the right tab the line holds, on one
-baseline, its tallest part's. A part the page sets on a baseline of its own — the text beside
-a logo, set from the logo's top, or a smaller text beside a larger one — is raised or lowered to
-it (`w:position`), and the exact line grows to hold what is raised; it is lowered only as far as
-the fifth of the line below Word's baseline holds. Measured on a 48 by 24pt logo beside 8pt text
-and beside a page number, each text's baseline stood within a quarter point of the page's in
-Word, the half point `w:position` counts in. LibreOffice raises a run about a seventh further
-than `w:position` says, and does not raise a page field, which stands on Word's baseline there.
-Where the page sets a part elsewhere — by the zone's padding, a row's columns and gap, a
-paragraph's alignment or a part's own sides — lower than the line holds, over more than one line
-or after a prefix, the export report counts it (`page zone`): "1 of its 3 parts stands off where
+baseline, its tallest part's. In a zone of one line, a one-line part the page sets on a
+baseline of its own — the text beside a logo, set from the logo's top, or a smaller text beside
+a larger one — is raised or lowered to it (`w:position`), and the exact line grows to hold what
+is raised; it is lowered only as far as the line holds below Word's baseline, a fifth of it or
+as far as its tallest part reaches. A run is raised by whole half points, to the next one
+towards the line's baseline where the nearest would pass the line's edge. Measured on a 48 by
+24pt logo beside 8pt text and beside a page number, each text's baseline stood within half a
+point of the page's in Word. LibreOffice raises a run about a seventh further than
+`w:position` says, does not raise a page field, which stands on Word's baseline there, and
+stands every picture on the line's baseline, a raised one included. Where the page sets a part
+elsewhere — by the zone's padding, a row's columns and gap, a paragraph's alignment or a part's
+own sides — lower than the line holds, past the page's edge, over more than one line or after a
+prefix, the export report counts it (`page zone`): "1 of its 3 parts stands off where
 the page sets them". A page field's alignment
 moves nothing: the page sets it in a box a point wider than its number. Past a part Word sets
 at another width — after a prefix, auto-sized to a size its lines do not tell, over more

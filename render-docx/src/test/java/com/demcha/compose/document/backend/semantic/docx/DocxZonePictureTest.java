@@ -103,7 +103,7 @@ class DocxZonePictureTest {
 
         assertThat(lineOf(line)).as("30pt above the logo's foot, four fifths of it").isCloseTo(37.5, within(0.1));
         assertThat(baseline).as("the logo's foot").isCloseTo(PAGE_HEIGHT - exported.picture().y(), within(0.1));
-        assertThat(baseline - positionOf(text)).isCloseTo(exported.baseline("Quarterly"), within(0.3));
+        assertThat(baseline - positionOf(text)).isCloseTo(exported.baseline("Quarterly"), within(0.5));
         assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
     }
 
@@ -133,8 +133,8 @@ class DocxZonePictureTest {
                     within(0.1));
             XWPFRun text = line.getRuns().get(line.getRuns().size() - 1);
             assertThat(text.text()).isEqualTo("Quarterly");
-            assertThat(baseline - positionOf(text)).as("raised onto its own baseline, to the half point, " + align)
-                    .isCloseTo(exported.baseline("Quarterly"), within(0.3));
+            assertThat(baseline - positionOf(text)).as("raised onto its own baseline, within half a point, " + align)
+                    .isCloseTo(exported.baseline("Quarterly"), within(0.5));
             assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
         }
     }
@@ -174,7 +174,7 @@ class DocxZonePictureTest {
         assertThat(field).as("begin, instruction, separator, result, end").hasSize(5)
                 .allSatisfy(run -> assertThat(positionOf(run)).isEqualTo(raise));
         double baseline = PAGE_HEIGHT - fromTheTop(exported.margin().getFooter()) - (lineOf(line) - share(line));
-        assertThat(baseline - raise).isCloseTo(exported.baseline("1"), within(0.3));
+        assertThat(baseline - raise).isCloseTo(exported.baseline("1"), within(0.5));
         assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
     }
 
@@ -194,7 +194,7 @@ class DocxZonePictureTest {
         assertThat(sizeOf(picture)).containsExactly(16.0, 8.0);
         assertThat(baseline).as("the text's").isCloseTo(exported.baseline("Acme"), within(0.1));
         assertThat(baseline - positionOf(picture)).as("its foot, raised").isCloseTo(PAGE_HEIGHT - exported.picture().y(),
-                within(0.3));
+                within(0.5));
     }
 
     @Test
@@ -255,6 +255,104 @@ class DocxZonePictureTest {
         assertThat(exported.document().getHeaderList()).hasSize(2)
                 .allSatisfy(header -> assertThat(header.getAllPictures()).as("the logo").hasSize(1));
         assertThat(exported.report().bySubject()).doesNotContainKey("page zone content");
+
+        // The text beside it raised alike in each.
+        Exported beside = export(session -> {
+            session.chrome().zone(zone(DocumentHeaderFooterZone.HEADER, page -> new RowBuilder().name("Line")
+                    .addImage(image -> image.name("Logo").source(LOGO).size(48, 24)).flexSpacer()
+                    .addParagraph(p -> p.text("Quarterly").textStyle(CHROME)).build()));
+            session.chrome().zone(DocumentPageZone.builder().zone(DocumentHeaderFooterZone.FOOTER).height(20)
+                    .appliesTo(page -> page.isFirst())
+                    .content(page -> new ParagraphBuilder().text("Cover").build()).build());
+        }, true);
+        List<Double> raises = new ArrayList<>();
+        for (XWPFHeaderFooter header : beside.document().getHeaderList()) {
+            List<XWPFRun> runs = header.getParagraphs().get(0).getRuns();
+            raises.add(positionOf(runs.get(runs.size() - 1)));
+        }
+        assertThat(raises).hasSize(2).allSatisfy(raise -> assertThat(raise).isEqualTo(raises.get(0)).isPositive());
+    }
+
+    @Test
+    void aParagraphInTheBodyAndAZoneTooIsRaisedAsTheZonePlacesIt() throws Exception {
+        // The same node laid out in the body as well: its body lines are not the zone's, and lend
+        // its runs nothing — neither its text's seat nor its picture's place.
+        java.util.function.Supplier<com.demcha.compose.document.node.ParagraphNode> confidential = () ->
+                new ParagraphBuilder().name("Shared").textStyle(CHROME)
+                        .inlineImage(DocumentImageData.fromBytes(png(8, 8)), 6, 6,
+                                com.demcha.compose.document.node.InlineImageAlignment.CENTER)
+                        .inlineText(" Confidential", CHROME).build();
+        com.demcha.compose.document.node.ParagraphNode shared = confidential.get();
+        Function<com.demcha.compose.document.node.ParagraphNode, DocumentPageZone> footer = part ->
+                DocumentPageZone.builder().zone(DocumentHeaderFooterZone.FOOTER).height(48)
+                        .padding(new DocumentInsets(10, 0, 0, 0))
+                        .content(page -> new RowBuilder().name("Line").add(part).flexSpacer()
+                                .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18)))
+                                .build())
+                        .build();
+        Exported apart = export(session -> session.chrome().zone(footer.apply(confidential.get())),
+                page -> page.add(confidential.get()));
+        Exported both = export(session -> session.chrome().zone(footer.apply(shared)), page -> page.add(shared));
+
+        List<Double> alone = apart.footerLine().getRuns().subList(0, 2).stream().map(DocxZonePictureTest::raiseOf)
+                .toList();
+        assertThat(alone.get(1)).as("its text raised to its own baseline").isPositive();
+        assertThat(both.footerLine().getRuns().subList(0, 2)).extracting(DocxZonePictureTest::raiseOf)
+                .as("its picture and its text as far as apart").containsExactlyElementsOf(alone);
+    }
+
+    @Test
+    void aPartThePageSetsLowerIsLoweredToTheHalfPointTheLineHolds() throws Exception {
+        // 4.3pt below the logo's foot: the nearest half point, 4.5, passes the fifth of the 30pt line
+        // below the baseline with the text's own 1.7pt below its baseline; 4 does not.
+        Exported exported = export(zone(DocumentHeaderFooterZone.HEADER, page -> new RowBuilder().name("Line")
+                .addImage(image -> image.name("Logo").source(LOGO).size(48, 24))
+                .flexSpacer()
+                .addParagraph(p -> p.text("Quarterly").textStyle(CHROME)
+                        .margin(new DocumentInsets(22.556, 0, 0, 0)))
+                .build()));
+        XWPFParagraph line = exported.headerLine();
+        XWPFRun text = line.getRuns().get(line.getRuns().size() - 1);
+        double baseline = fromTheTop(exported.margin().getHeader()) + share(line);
+
+        assertThat(positionOf(text)).as("lowered, to the half point towards the baseline").isEqualTo(-4.0);
+        assertThat(baseline - positionOf(text)).isCloseTo(exported.baseline("Quarterly"), within(0.5));
+        assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+    }
+
+    @Test
+    void aPictureThePageSetsBelowWhatTheLineHoldsIsNotLowered() throws Exception {
+        // Set at the 30pt text's foot, the logo would hang past the line's: it stands on the
+        // baseline, and is counted.
+        Exported exported = export(zone(DocumentHeaderFooterZone.HEADER, page -> new RowBuilder().name("Line")
+                .verticalAlign(RowVerticalAlign.BOTTOM)
+                .addParagraph(p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(30)))
+                .flexSpacer()
+                .addImage(image -> image.name("Logo").source(LOGO).size(16, 8))
+                .build()));
+        XWPFRun picture = exported.headerLine().getRuns().get(exported.headerLine().getRuns().size() - 1);
+
+        assertThat(picture.getCTR().isSetRPr() && picture.getCTR().getRPr().sizeOfPositionArray() > 0)
+                .as("not lowered").isFalse();
+        assertThat(exported.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
+                .containsExactly("a header written as one line of Word's header; 1 of its 2 parts stands off where "
+                                 + "the page sets them");
+    }
+
+    @Test
+    void aPaddedLogoStandsWhereThePageDrawsItsPicture() throws Exception {
+        // The layout draws the picture inside its padding: 4pt down and 4pt in from its box.
+        Exported exported = export(zone(DocumentHeaderFooterZone.HEADER,
+                page -> logo().padding(DocumentInsets.of(4)).build()));
+        XWPFParagraph line = exported.headerLine();
+
+        assertThat(sizeOf(line.getRuns().get(0))).containsExactly(48.0, 24.0);
+        assertThat(fromTheTop(exported.margin().getHeader()) + share(line)).as("its foot")
+                .isCloseTo(PAGE_HEIGHT - exported.picture().y(), within(0.1));
+        assertThat(exported.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
+                .as("Word starts it at the margin, the page 4pt in")
+                .containsExactly("a header written as one line of Word's header; its picture stands off where the "
+                                 + "page sets it");
     }
 
     @Test
@@ -287,6 +385,93 @@ class DocxZonePictureTest {
     }
 
     @Test
+    void aContainedLogoOfAnotherPictureOnItsFirstPageIsNotMeasured() throws Exception {
+        // Its box stated, a contained picture is drawn as its own proportions fit it there: a
+        // square 40 by 40 on page 1, two to one as written, 48 by 24.
+        Exported exported = export(session -> session.chrome().zone(zone(DocumentHeaderFooterZone.HEADER, 60,
+                page -> new ImageBuilder().name("Logo").size(48, 40).fitMode(DocumentImageFitMode.CONTAIN)
+                        .source(DocumentImageData.fromBytes(page.isLast() ? LOGO : png(40, 40))).build())),
+                true);
+
+        assertThat(sizeOf(exported.headerLine().getRuns().get(0))).containsExactly(48.0, 24.0);
+        assertThat(exported.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
+                .containsExactly("a header written as one line of Word's header; whether its picture stands where "
+                                 + "the page sets it is not measured");
+    }
+
+    @Test
+    void aLogoOfTheSameBytesOnEveryPageIsMeasuredWhereItsHeightIsThePicturesOwn() throws Exception {
+        // 48 wide, as tall as its picture makes it, built afresh for each page from the same bytes.
+        Exported exported = export(session -> session.chrome().zone(zone(DocumentHeaderFooterZone.HEADER,
+                page -> new ImageBuilder().name("Logo").source(DocumentImageData.fromBytes(LOGO.clone())).width(48)
+                        .build())), true);
+        XWPFParagraph line = exported.headerLine();
+
+        assertThat(fromTheTop(exported.margin().getHeader()) + share(line))
+                .isCloseTo(PAGE_HEIGHT - exported.picture().y(), within(0.1));
+        assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+    }
+
+    @Test
+    void aLogoBeforeAPageNumberAgainstTheRightMarginEndsWhereWordSetsIt() throws Exception {
+        // Against the right margin Word ends the number there and the logo before it, as wide as
+        // the page draws it.
+        Exported exported = export(zone(DocumentHeaderFooterZone.FOOTER, page -> new RowBuilder().name("Line")
+                .addParagraph(p -> p.text("Quarterly").textStyle(CHROME))
+                .flexSpacer()
+                .addImage(image -> image.name("Logo").source(LOGO).size(48, 24))
+                .add(page.pageNumber(CHROME))
+                .build()));
+
+        assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+    }
+
+    @Test
+    void aLogoThePageSetsInFromTheMarginStandsOffIt() throws Exception {
+        // Word starts the line at the left margin; the page draws the logo 20pt in.
+        Exported exported = export(zone(DocumentHeaderFooterZone.HEADER,
+                page -> logo().margin(new DocumentInsets(0, 0, 0, 20)).build()));
+
+        assertThat(exported.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
+                .containsExactly("a header written as one line of Word's header; its picture stands off where the "
+                                 + "page sets it");
+    }
+
+    @Test
+    void aFramedZonesLogoStandsWhereThePageDrawsIt() throws Exception {
+        // A cover's header on the first page and the running one on the rest share Word's one
+        // distance for a kind: each stands in a frame at its own height. So do two footers.
+        for (DocumentHeaderFooterZone kind : List.of(DocumentHeaderFooterZone.HEADER, DocumentHeaderFooterZone.FOOTER)) {
+            Exported exported = export(session -> {
+                session.chrome().zone(DocumentPageZone.builder().zone(kind).height(60)
+                        .padding(new DocumentInsets(24, 0, 0, 0)).appliesTo(page -> page.isFirst())
+                        .content(page -> logo().build()).build());
+                session.chrome().zone(DocumentPageZone.builder().zone(kind).height(60)
+                        .padding(new DocumentInsets(8, 0, 0, 0)).appliesTo(page -> !page.isFirst())
+                        .content(page -> logo().build()).build());
+            }, true);
+            List<Double> pageFeet = exported.pictures().stream().map(box -> PAGE_HEIGHT - box.y()).toList();
+
+            List<Double> wordsFeet = new ArrayList<>();
+            List<XWPFHeaderFooter> parts = new ArrayList<>(exported.document().getHeaderList());
+            parts.addAll(exported.document().getFooterList());
+            for (XWPFHeaderFooter part : parts) {
+                for (XWPFParagraph paragraph : part.getParagraphs()) {
+                    if (paragraph.getCTP().getPPr() != null && paragraph.getCTP().getPPr().isSetFramePr()) {
+                        wordsFeet.add(fromTheTop(paragraph.getCTP().getPPr().getFramePr().getY()) + share(paragraph));
+                    }
+                }
+            }
+            assertThat(pageFeet).as("the cover's logo 24pt in, the running one's 8pt, " + kind).hasSize(2);
+            assertThat(wordsFeet).as(kind.toString()).hasSize(2);
+            for (double foot : pageFeet) {
+                assertThat(wordsFeet).as(kind.toString())
+                        .anySatisfy(word -> assertThat(word).isCloseTo(foot, within(0.1)));
+            }
+        }
+    }
+
+    @Test
     void withoutALayoutALogoIsWrittenAtTheSizeItStates() throws Exception {
         byte[] docx;
         try (DocumentSession session = GraphCompose.document().pageSize(400, PAGE_HEIGHT)
@@ -302,6 +487,8 @@ class DocxZonePictureTest {
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
             XWPFParagraph line = document.getHeaderList().get(0).getParagraphs().get(0);
             assertThat(sizeOf(line.getRuns().get(0))).containsExactly(48.0, 24.0);
+            assertThat(line.getCTP().getPPr().getSpacing().isSetLineRule())
+                    .as("Word's own line, with nothing to measure it by").isFalse();
         }
     }
 
@@ -327,6 +514,13 @@ class DocxZonePictureTest {
     private static List<Double> sizeOf(XWPFRun run) {
         CTInline inline = run.getCTR().getDrawingArray(0).getInlineArray(0);
         return List.of(inline.getExtent().getCx() / 12700.0, inline.getExtent().getCy() / 12700.0);
+    }
+
+    /** How far a run is raised off its line's baseline, in points: its {@code w:position}, or none. */
+    private static double raiseOf(XWPFRun run) {
+        var properties = run.getCTR().getRPr();
+        return properties == null || properties.sizeOfPositionArray() == 0 ? 0
+                : ((Number) properties.getPositionArray(0).getVal()).doubleValue() / 2;
     }
 
     /** How far a run is raised off its line's baseline, in points: its {@code w:position}. */
@@ -401,7 +595,7 @@ class DocxZonePictureTest {
 
         /** The box the page draws the zone's one picture in, on the first page. */
         PlacedFragment picture() {
-            return pictures.get(0);
+            return pictures.stream().filter(box -> box.pageIndex() == 0).findFirst().orElseThrow();
         }
 
         /** Where the page sets a word's baseline, from its top, on the first page it draws it. */
@@ -425,21 +619,26 @@ class DocxZonePictureTest {
     }
 
     private static Exported export(Consumer<DocumentSession> chrome, boolean twoPages) throws Exception {
+        return export(chrome, page -> {
+            page.addParagraph(p -> p.text("Body"));
+            if (twoPages) {
+                page.addPageBreak(pageBreak -> { });
+                page.addParagraph(p -> p.text("More"));
+            }
+        });
+    }
+
+    private static Exported export(Consumer<DocumentSession> chrome,
+                                   Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> body) throws Exception {
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(400, PAGE_HEIGHT)
                 .margin(DocumentInsets.of(72))
                 .create()) {
             chrome.accept(session);
-            session.pageFlow(page -> {
-                page.addParagraph(p -> p.text("Body"));
-                if (twoPages) {
-                    page.addPageBreak(pageBreak -> { });
-                    page.addParagraph(p -> p.text("More"));
-                }
-            });
+            session.pageFlow(body::accept);
             List<PlacedFragment> pictures = session.layoutGraph().fragments().stream()
-                    .filter(fragment -> fragment.path().startsWith("@page-zone") && fragment.pageIndex() == 0
+                    .filter(fragment -> fragment.path().startsWith("@page-zone")
                                         && fragment.payload() instanceof ImageFragmentPayload)
                     .toList();
             List<TextPosition> text = textOf(session.toPdfBytes());

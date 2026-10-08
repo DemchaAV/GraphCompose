@@ -1,6 +1,7 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.InlineHighlightRun;
@@ -38,7 +39,8 @@ final class DocxZoneParts {
     /**
      * Whether content built for a page reads as the content written, as far as a zone's line is
      * set by it: its parts one by one, each paragraph's text and face and each of its runs' — the
-     * letters, their face, and a picture's size and place — and each page field's kind and face.
+     * letters, their face, and a picture's size and place — each page field's kind and face, and
+     * each picture's box ({@link #samePictureBox}).
      * Colour is left out: it sets nothing of the line, and a colour built afresh is not equal to
      * itself.
      *
@@ -102,15 +104,17 @@ final class DocxZoneParts {
     }
 
     /**
-     * Whether two pictures are laid out in one box: the sizes, fit and insets they state, and,
-     * where they leave a side to the picture's own proportions, the same picture.
+     * Whether two pictures are drawn alike: in one box — the sizes, fit and insets they state —
+     * and, where their own proportions set what is drawn — a side they leave unstated, or a
+     * picture contained in its box — the same picture.
      */
     private static boolean samePictureBox(ImageNode picture, ImageNode other) {
-        boolean sized = picture.width() != null && picture.height() != null;
+        boolean boxed = picture.width() != null && picture.height() != null
+                        && picture.fitMode() != DocumentImageFitMode.CONTAIN;
         return Objects.equals(picture.width(), other.width()) && Objects.equals(picture.height(), other.height())
                && Objects.equals(picture.scale(), other.scale()) && picture.fitMode() == other.fitMode()
                && picture.padding().equals(other.padding()) && picture.margin().equals(other.margin())
-               && (sized || samePicture(picture.imageData(), other.imageData()));
+               && (boxed || samePicture(picture.imageData(), other.imageData()));
     }
 
     /** Whether two pictures' data are the same file or the same bytes. */

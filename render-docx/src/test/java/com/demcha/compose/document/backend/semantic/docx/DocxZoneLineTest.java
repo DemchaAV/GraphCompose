@@ -154,6 +154,22 @@ class DocxZoneLineTest {
     }
 
     @Test
+    void aSmallerPartBesideALargerOneIsRaisedToThePagesBaseline() throws Exception {
+        // The page sets the parts from the top, the smaller one higher; Word's line stands on the
+        // larger one's baseline, and the smaller one is raised off it to its own.
+        Exported exported = export(footerRow(p -> p.text("Confidential").textStyle(CHROME),
+                p -> p.text("Acme").textStyle(DocumentTextStyle.DEFAULT.withSize(18))));
+        XWPFParagraph line = exported.footerLine();
+        double baseline = PAGE_HEIGHT - fromTheTop(exported.margin().getFooter()) - (lineOf(line) - share(line));
+        XWPFRun smaller = line.getRuns().get(0);
+
+        assertThat(smaller.text()).isEqualTo("Confidential");
+        assertThat(baseline).as("the larger one's").isCloseTo(exported.baseline("Acme"), within(0.1));
+        assertThat(baseline - ((Number) smaller.getCTR().getRPr().getPositionArray(0).getVal()).doubleValue() / 2)
+                .as("the smaller one's, raised").isCloseTo(exported.baseline("Confidential"), within(0.5));
+    }
+
+    @Test
     void noPartIsRaisedInAZoneOfMoreLinesThanOne() throws Exception {
         // Word sets "v2.4" on the second line, after the break; raised off the first line's
         // baseline to the page's, it would stand a line and more off it.
@@ -519,7 +535,7 @@ class DocxZoneLineTest {
     void aLineThePageSetsAtTheEdgeStandsAtIt() throws Exception {
         // An exact line's baseline is four fifths down it; text set against the page's top edge
         // stands a little higher than that, and the line stops at the edge. The text is raised
-        // back onto the page's baseline, to the half point, as far as the line holds it.
+        // back onto the page's baseline, within half a point, as far as the line holds it.
         Exported exported = export(zone(DocumentHeaderFooterZone.HEADER, 40, DocumentInsets.zero(), "Acme",
                 DocumentTextStyle.DEFAULT.withSize(18)));
         XWPFRun text = exported.headerLine().getRuns().get(0);
@@ -527,9 +543,8 @@ class DocxZoneLineTest {
         assertThat(fromTheTop(exported.margin().getHeader())).isZero();
         assertThat(share(exported.headerLine()) - exported.baseline("Acme")).as("the line's, lower than the page's")
                 .isBetween(0.0, 1.0);
-        assertThat(share(exported.headerLine())
-                   - ((Number) text.getCTR().getRPr().getPositionArray(0).getVal()).doubleValue() / 2)
-                .as("the text's, raised").isCloseTo(exported.baseline("Acme"), within(0.3));
+        assertThat(share(exported.headerLine()) - raiseOf(text))
+                .as("the text's, raised").isCloseTo(exported.baseline("Acme"), within(0.5));
         assertThat(exported.report().bySubject()).as("within the place a part keeps").doesNotContainKey("page zone");
     }
 
@@ -541,11 +556,11 @@ class DocxZoneLineTest {
         Exported exported = export(zone(DocumentHeaderFooterZone.HEADER, 120, DocumentInsets.zero(), "Acme",
                 DocumentTextStyle.DEFAULT.withSize(80)));
         XWPFRun text = exported.headerLine().getRuns().get(0);
-        double raise = ((Number) text.getCTR().getRPr().getPositionArray(0).getVal()).doubleValue() / 2;
+        double raise = raiseOf(text);
 
         assertThat(share(exported.headerLine()) - exported.baseline("Acme")).as("the line's").isGreaterThan(1.5);
         assertThat(share(exported.headerLine()) - raise).as("the text's").isCloseTo(exported.baseline("Acme"),
-                within(0.3));
+                within(0.5));
         assertThat(exported.report().bySubject()).doesNotContainKey("page zone");
     }
 
@@ -658,6 +673,13 @@ class DocxZoneLineTest {
 
     private static double fromTheTop(Object twips) {
         return DocxTwips.of(twips) / 20.0;
+    }
+
+    /** How far a run is raised off its line's baseline, in points: its {@code w:position}, or none. */
+    private static double raiseOf(XWPFRun run) {
+        var properties = run.getCTR().getRPr();
+        return properties == null || properties.sizeOfPositionArray() == 0 ? 0
+                : ((Number) properties.getPositionArray(0).getVal()).doubleValue() / 2;
     }
 
     /** A header's or a footer's paragraph reading the text. */

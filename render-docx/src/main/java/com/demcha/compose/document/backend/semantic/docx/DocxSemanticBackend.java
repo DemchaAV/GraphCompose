@@ -214,6 +214,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // kind and no name are two losses.
     private final java.util.Set<DocumentNode> zonePartsReported =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // Whether a page zone's line is being written: its parts stand on its baseline as the line
+    // places them (zonePlacement), not by the lines the body lays a node out in, which the same
+    // node also placed in the body would otherwise lend them.
+    private boolean writingAZoneLine;
     // The text bands whose translucent separator is already reported this export: a band is
     // written into each kind of header or footer Word is given.
     private final java.util.Set<DocumentHeaderFooter> separatorsReported =
@@ -1827,10 +1831,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * carries the rest to the right margin — which is how a Word footer is built by
      * hand anyway.</p>
      *
-     * <p>Where the layout shows its text, the line is exact and as tall as {@link #zonePlacement}
-     * says, which with the distance {@link #placeZone} writes stands it on the tallest part's
-     * baseline; framed, where the zone shares its kind with another page zone, the frame stands
-     * at the line's own height on the page, at least the line tall.</p>
+     * <p>Where the layout shows its text or pictures, the line is exact and as tall as
+     * {@link #zonePlacement} says, which with the distance {@link #placeZone} writes stands it on
+     * the tallest part's baseline, each other one-line part raised or lowered to its own as far
+     * as the line holds it ({@link ZonePlacement#raised}); framed, where the zone shares its kind
+     * with another page zone, the frame stands at the line's own height on the page, at least
+     * the line tall.</p>
      *
      * @param zoneIndex the zone's position in the section's zone list
      */
@@ -1878,12 +1884,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.util.Map<DocumentNode, String> paths = DocxLayoutMetrics.pathsWithin(content);
         java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex);
         java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> pictures = layout.zonePictures(zoneIndex);
-        for (DocumentNode part : parts) {
-            int runsBefore = runsIn(para).size();
-            appendZonePart(para, part, zoneLinesOf(part, paths, laid, placement),
-                    placement.laidOtherwise().contains(part) ? null : pictures.get(paths.get(part)));
-            raiseRunsFrom(para, runsBefore,
-                    Math.round(placement.raised().getOrDefault(part, 0.0) * HALF_POINTS_PER_POINT));
+        writingAZoneLine = true;
+        try {
+            for (DocumentNode part : parts) {
+                int runsBefore = runsIn(para).size();
+                appendZonePart(para, part, zoneLinesOf(part, paths, laid, placement),
+                        placement.laidOtherwise().contains(part) ? null : pictures.get(paths.get(part)));
+                raiseRunsFrom(para, runsBefore,
+                        Math.round(placement.raised().getOrDefault(part, 0.0) * HALF_POINTS_PER_POINT));
+            }
+        } finally {
+            writingAZoneLine = false;
         }
     }
 
@@ -1940,7 +1951,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * of another's, which tell nothing of it: not the size an auto-sized one is fitted to, nor the
      * pieces of its markdown. A part it set there as written keeps them.</p>
      *
-     * @param line          the exact line's height in points, NaN where no part's text is laid out
+     * @param line          the exact line's height in points, NaN where the layout shows none of
+     *                      the zone's text or pictures
      * @param lines         how many lines the part of the most takes on the page
      * @param distance      from the page's top edge to the paragraph's top in a header, from its
      *                      foot to the paragraph's foot in a footer, in points
@@ -1949,7 +1961,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *                      than they are written ({@link DocxZoneParts#partsReadOtherwise}), whose
      *                      lines there are not their own
      * @param raised        how far each part the page sets on a baseline of its own is raised
-     *                      from the line's to it, in points, lowered where below zero
+     *                      from the line's to it, in points, lowered where below zero: in the
+     *                      half points Word counts a run's position in
      */
     private record ZonePlacement(double line, int lines, double distance, double baseline,
                                  java.util.Set<DocumentNode> laidOtherwise,
@@ -1963,7 +1976,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return new ZonePlacement(Double.NaN, 0, Double.NaN, Double.NaN, parts, java.util.Map.of());
         }
 
-        /** Whether the layout laid out the text the line is placed by. */
+        /** Whether the layout laid out the text or picture the line is placed by. */
         boolean measured() {
             return !Double.isNaN(line);
         }
@@ -2072,13 +2085,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 header ? canvasHeight - tallest.baseline() : tallest.baseline() - (mostLines - 1) * line, line);
         double baseline = header ? canvasHeight - distance - above : distance + (mostLines - 1) * line + (line - above);
         // Raised or lowered from the line's baseline as Word sets it — a line stopping at the
-        // page's edge stands it further in — where the line holds it.
+        // page's edge stands it further in — by the half points Word counts in, where the line
+        // holds it so: to the nearest, or to the next one towards the line's baseline where the
+        // nearest passes the line's edge, half a point off at most.
         java.util.Map<DocumentNode, Double> raised = new java.util.IdentityHashMap<>();
+        double holdsAbove = Math.max(above, tallest.above()) + ZONE_LINE_HOLDS;
         for (java.util.Map.Entry<DocumentNode, ZoneLine> part : standing.entrySet()) {
-            double raise = part.getValue().baseline() - baseline;
-            if (Math.round(raise * HALF_POINTS_PER_POINT) != 0
-                && raise + part.getValue().above() <= Math.max(above, tallest.above()) + ZONE_LINE_HOLDS
-                && part.getValue().below() - raise <= Math.max(line - above, tallest.below()) + ZONE_LINE_HOLDS) {
+            ZoneLine at = part.getValue();
+            // Below, a text may reach as far as the tallest part's letters do; a picture's foot is
+            // ink, and stays within the line.
+            double holdsBelow = (part.getKey() instanceof ImageNode
+                    ? line - above : Math.max(line - above, tallest.below())) + ZONE_LINE_HOLDS;
+            double exact = (at.baseline() - baseline) * HALF_POINTS_PER_POINT;
+            double raise = Math.round(exact) / HALF_POINTS_PER_POINT;
+            if (raise + at.above() > holdsAbove || at.below() - raise > holdsBelow) {
+                raise = (exact > 0 ? Math.floor(exact) : Math.ceil(exact)) / HALF_POINTS_PER_POINT;
+            }
+            if (raise != 0 && raise + at.above() <= holdsAbove && at.below() - raise <= holdsBelow) {
                 raised.put(part.getKey(), raise);
             }
         }
@@ -2133,7 +2156,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * ({@link #zonePlacement}): its tallest part's, where the page sets that part, or off it
      * where the line stops at the page's edge. A part
      * stands where the page sets it when it is one line — the zone's line is written with none
-     * of what holds a body paragraph's breaks where the page sets them — on Word's baseline, and
+     * of what holds a body paragraph's breaks where the page sets them — on the baseline Word
+     * sets it on, the line's raised or lowered by its own position ({@link ZonePlacement#raised}), and
      * its line starts within {@link #ZONE_PLACE_CLEARANCE} of Word's start, or, against the
      * right margin, ends within it of Word's end; a part a prefix stands before starts off it,
      * the prefix being unwritten. Word's place for a part follows from the widths of those
@@ -2173,13 +2197,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Its box on the page: a text's laid-out lines, a picture's box.
         java.util.Map<DocumentNode, com.demcha.compose.document.layout.PlacedFragment> laidOut =
                 new java.util.IdentityHashMap<>();
-        List<DocumentNode> texts = new ArrayList<>();
+        List<DocumentNode> placed = new ArrayList<>();
         int spacers = 0;
         for (DocumentNode part : parts) {
             if (part instanceof SpacerNode) {
                 spacers++;
             } else if (part instanceof ParagraphNode || part instanceof PageFieldNode || part instanceof ImageNode) {
-                texts.add(part);
+                placed.add(part);
                 side.put(part, Math.min(spacers, 2));
                 com.demcha.compose.document.layout.PlacedFragment fragment =
                         (part instanceof ImageNode ? pictures : laid).get(paths.get(part));
@@ -2193,7 +2217,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.util.Map<DocumentNode, Double> wordsStart = new java.util.IdentityHashMap<>();
         java.util.Map<DocumentNode, Double> wordsEnd = new java.util.IdentityHashMap<>();
         double x = canvasLeftMargin;
-        for (DocumentNode part : texts) {
+        for (DocumentNode part : placed) {
             com.demcha.compose.document.layout.PlacedFragment fragment = laidOut.get(part);
             if (side.get(part) != 0 || fragment == null) {
                 break;
@@ -2205,7 +2229,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             x += wordsWidthOf(part, fragment);
         }
         double end = canvasLeftMargin + zoneRightTab();
-        List<DocumentNode> againstTheRight = texts.stream().filter(part -> side.get(part) == 1).toList();
+        List<DocumentNode> againstTheRight = placed.stream().filter(part -> side.get(part) == 1).toList();
         for (int index = againstTheRight.size() - 1; index >= 0; index--) {
             DocumentNode part = againstTheRight.get(index);
             com.demcha.compose.document.layout.PlacedFragment fragment = laidOut.get(part);
@@ -2220,19 +2244,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         // Where the page sets each part's first line, and draws each picture.
         java.util.Map<DocumentNode, ZoneLine> onThePage = new java.util.IdentityHashMap<>();
-        for (DocumentNode part : texts) {
+        for (DocumentNode part : placed) {
             com.demcha.compose.document.layout.PlacedFragment fragment = laidOut.get(part);
             if (measured && fragment != null) {
                 onThePage.put(part, part instanceof ImageNode ? pictureOnThePage(fragment) : firstLineOnThePage(fragment));
             }
         }
-        // Read from the same text the line is placed by: where none is, no part is read either.
+        // Read from the same parts the line is placed by: where none is, no part is read either.
         double baseline = placement.baseline();
         int off = 0;
         int unread = 0;
         // Past a part of more lines than one, Word sets the rest on a later line of its own.
         boolean broken = false;
-        for (DocumentNode part : texts) {
+        for (DocumentNode part : placed) {
             ZoneLine line = onThePage.get(part);
             Double wordStart = wordsStart.get(part);
             Double wordEnd = wordsEnd.get(part);
@@ -2240,9 +2264,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                && setsAPrefixBeforeTheFirstLine(paragraph);
             boolean afterABreak = broken;
             broken |= line != null && !line.oneLine();
-            // Word stands a part raised or lowered from the line's baseline by whole half points.
-            double wordsBaseline = baseline + Math.round(placement.raised().getOrDefault(part, 0.0)
-                                                         * HALF_POINTS_PER_POINT) / HALF_POINTS_PER_POINT;
+            // Word stands a part raised or lowered from the line's baseline as written.
+            double wordsBaseline = baseline + placement.raised().getOrDefault(part, 0.0);
             if (line == null || afterABreak) {
                 unread++;
             } else if (side.get(part) == 2 || !line.oneLine() || prefixed
@@ -2257,22 +2280,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         java.util.Set<String> lost = new java.util.LinkedHashSet<>();
         // What the line's placed parts are, to a reader: its text, its picture, or its parts.
-        boolean pictured = texts.stream().anyMatch(part -> part instanceof ImageNode);
-        boolean several = pictured && texts.size() > 1;
+        boolean pictured = placed.stream().anyMatch(part -> part instanceof ImageNode);
+        boolean several = pictured && placed.size() > 1;
         String what = !pictured ? "its text" : several ? "its parts" : "its picture";
-        if (!texts.isEmpty() && unread == texts.size()) {
+        if (!placed.isEmpty() && unread == placed.size()) {
             lost.add("whether " + what + (several ? " stand where the page sets them" : " stands where the page sets it")
                      + " is not measured");
         } else {
             if (off > 0) {
-                lost.add(texts.size() == 1 ? what + " stands off where the page sets it"
-                        : partsOf(off, texts.size()) + " off where the page sets them");
+                lost.add(placed.size() == 1 ? what + " stands off where the page sets it"
+                        : partsOf(off, placed.size()) + " off where the page sets them");
             }
             if (unread > 0) {
-                lost.add("where " + partsOf(unread, texts.size()) + " is not measured");
+                lost.add("where " + partsOf(unread, placed.size()) + " is not measured");
             }
         }
-        for (DocumentNode part : texts) {
+        for (DocumentNode part : placed) {
             if (part instanceof ParagraphNode paragraph) {
                 lost.addAll(zoneParagraphLost(paragraph, zoneLinesOf(part, paths, laid, placement)));
             } else if (part instanceof ImageNode image) {
@@ -8895,7 +8918,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 ? 0 : runsIn(para).size();
         warnDroppedInlineRuns(node);
         String path = layout.pathOf(node);
-        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(node);
+        // A zone's part has no line of the body's, though the node may be laid out there too.
+        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line =
+                writingAZoneLine ? java.util.Optional.empty() : layout.firstLine(node);
         boolean wroteARun = false;
         PictureReach pictures = PictureReach.NONE;
         DocumentTextStyle fitted = fittedStyle(node, lines);
@@ -9128,8 +9153,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Only this paragraph's runs move — a line pair writes another's in the same Word
      * paragraph — and a picture's own raise is added to, as the page moves a picture with its
      * line's seated baseline. The room made for a picture in the line is its unseated reach. A
-     * page zone's paragraph has no laid-out lines here: it is raised as a part of its zone's line
-     * ({@link #zonePlacement}).</p>
+     * page zone's paragraph is not seated here, by lines the body may lay the same node out in: it
+     * is raised as a part of its zone's line ({@link #zonePlacement}).</p>
      *
      * <p>The baseline the page seats off is not where Word puts it either (see
      * {@link #shiftToThePagesBaseline}), and the two moves are one position.</p>
@@ -9142,6 +9167,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void seatInTheLine(XWPFParagraph para, ParagraphNode node, int runsBefore, double lineTopAbove,
                                boolean heldExact) {
+        if (writingAZoneLine) {
+            return;
+        }
         raiseRunsFrom(para, runsBefore, Math.round(
                 (seatShift(node) + shiftToThePagesBaseline(para, node, lineTopAbove, heldExact)) * HALF_POINTS_PER_POINT));
     }

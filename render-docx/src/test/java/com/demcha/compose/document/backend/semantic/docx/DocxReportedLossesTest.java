@@ -42,11 +42,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * What a document asks for that the Word file is not given is in the report, not only in the
  * file's absence.
  *
- * <p>A row's fill in a page zone or a table cell, a logo in a page header, a watermark, a
+ * <p>A row's fill in a page zone or a table cell, a shape in a page header, a watermark, a
  * protection and a node kind the export does not know were each left out of the Word file with no
  * more than a log line, or nothing: a caller reading the report was told the document lost nothing.
  * Each is now a note naming what the file does not carry. A row's paint in the flow is written
- * ({@link DocxRowPaintTest}).</p>
+ * ({@link DocxRowPaintTest}), and so is a page zone's picture ({@link DocxZonePictureTest}).</p>
  */
 class DocxReportedLossesTest {
 

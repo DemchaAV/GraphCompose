@@ -2452,60 +2452,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * A picture of a page zone's line, as it is written.
+     * Writes a picture of a page zone's line as an inline picture in it, at the size the page
+     * draws it ({@link #addFittedPicture}). Word stands it on the line's baseline, which
+     * {@link #zonePlacement} puts where the page sets the picture's foot where it is the line's
+     * tallest part. Its link is its run's.
      *
-     * @param data   the picture, resolved
-     * @param box    the box the page draws it in: the layout's, or the one the picture states for
-     *               itself where the layout shows none
-     * @param width  how wide it is written: fitted inside the box where it is contained, the box's
-     *               width otherwise, a picture that covers its box cropped to it
-     * @param height how tall it is written, likewise
+     * @param fragment the box the page draws it in, {@code null} where the layout does not show
+     *                 it: then the box the picture states for itself
      */
-    private record ZonePicture(ImageData data, NodeDefinitionSupport.ImageDimensions box, double width,
-                               double height) {
-    }
-
-    /** A zone's picture at the size the page draws it ({@link ZonePicture}). */
-    private ZonePicture zonePicture(ImageNode image, com.demcha.compose.document.layout.PlacedFragment fragment) {
+    private void writeZonePicture(XWPFParagraph para, ImageNode image,
+                                  com.demcha.compose.document.layout.PlacedFragment fragment) {
         ImageData resolved = NodeDefinitionSupport.toImageData(image.imageData());
         NodeDefinitionSupport.ImageDimensions box = fragment != null && fragment.width() > 0 && fragment.height() > 0
                 ? new NodeDefinitionSupport.ImageDimensions(fragment.width(), fragment.height())
                 : NodeDefinitionSupport.resolveImageDimensions(image, zoneRightTab(), resolved);
-        if (image.fitMode() != DocumentImageFitMode.CONTAIN) {
-            return new ZonePicture(resolved, box, box.width(), box.height());
-        }
-        double sourceWidth = Math.max(1, resolved.getMetadata().width());
-        double sourceHeight = Math.max(1, resolved.getMetadata().height());
-        double scale = Math.min(box.width() / sourceWidth, box.height() / sourceHeight);
-        return new ZonePicture(resolved, box, sourceWidth * scale, sourceHeight * scale);
-    }
-
-    /**
-     * Writes a picture of a page zone's line as an inline picture in it, at the size the page
-     * draws it. Word stands it on the line's baseline, which {@link #zonePlacement} puts where
-     * the page sets the picture's foot where it is the line's tallest part. Its link is its run's.
-     *
-     * @param fragment the box the page draws it in, {@code null} where the layout does not show it
-     */
-    private void writeZonePicture(XWPFParagraph para, ImageNode image,
-                                  com.demcha.compose.document.layout.PlacedFragment fragment) {
-        ZonePicture picture = zonePicture(image, fragment);
-        byte[] bytes = picture.data().getBytes();
         XWPFRun run = newRun(para, image.linkTarget());
-        try (InputStream stream = new java.io.ByteArrayInputStream(bytes)) {
-            XWPFPicture written = run.addPicture(stream, pictureType(bytes), "image",
-                    Units.toEMU(picture.width()), Units.toEMU(picture.height()));
-            if (image.fitMode() == DocumentImageFitMode.COVER) {
-                applyCoverCrop(written, Math.max(1, picture.data().getMetadata().width()),
-                        Math.max(1, picture.data().getMetadata().height()), picture.box());
-            }
-            // POI describes a picture by the file name it is handed, which a screen reader then
-            // reads out.
-            run.getCTR().getDrawingArray(0).getInlineArray(0).getDocPr().setDescr("");
-            written.getCTPicture().getNvPicPr().getCNvPr().setDescr("");
+        try {
+            addFittedPicture(run, resolved.getBytes(), resolved, image.fitMode(), box);
         } catch (Exception failure) {
             throw new IllegalStateException("could not write a page zone's picture", failure);
         }
+        describe(run, "");
     }
 
     /**
@@ -9681,11 +9648,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } catch (Exception failure) {
             throw new IllegalStateException("could not write an inline picture", failure);
         }
-        // POI describes a picture by the file name it is handed, which a screen reader then
-        // reads out; the description is the text the icon stands for, or nothing.
-        String alt = description == null ? "" : description;
-        picture.getCTR().getDrawingArray(0).getInlineArray(0).getDocPr().setDescr(alt);
-        picture.getEmbeddedPictures().get(0).getCTPicture().getNvPicPr().getCNvPr().setDescr(alt);
+        // The description is the text the icon stands for, or nothing.
+        describe(picture, description == null ? "" : description);
         if (description != null && !description.isBlank()) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "inline icon", path,
                     "drawn as a picture, as on the page; the text it stands for (" + description
@@ -10154,13 +10118,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 box = new NodeDefinitionSupport.ImageDimensions(placedWidth, placedHeight);
             }
         }
-        double drawWidth = box.width();
-        double drawHeight = box.height();
-        if (fitMode == DocumentImageFitMode.CONTAIN) {
-            double scale = Math.min(box.width() / sourceWidth, box.height() / sourceHeight);
-            drawWidth = sourceWidth * scale;
-            drawHeight = sourceHeight * scale;
-        }
         if (drawnOverItsBadge(node, clipContainer)) {
             drawWhereThePagePutsIt(document, node, bytes, sourceWidth, sourceHeight,
                     "drawn over the badge holding it");
@@ -10178,23 +10135,57 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // probe's image ran straight into the heading under it, 24pt short of the page.
         applyVerticalSpacing(para, node);
         XWPFRun run = para.createRun();
-        try (InputStream stream = new java.io.ByteArrayInputStream(bytes)) {
-            XWPFPicture picture = run.addPicture(stream,
-                    pictureType(bytes),
-                    "image",
-                    Units.toEMU(drawWidth),
-                    Units.toEMU(drawHeight));
-            if (fitMode == DocumentImageFitMode.COVER) {
-                applyCoverCrop(picture, sourceWidth, sourceHeight, box);
-            }
-            // A portrait clipped to a circle: the picture takes the circle's shape, which both
-            // editors crop it to, instead of standing square over the ring drawn round it.
-            if (fillsItsEllipse(node, clipContainer) && picture.getCTPicture().getSpPr().isSetPrstGeom()) {
-                picture.getCTPicture().getSpPr().getPrstGeom()
-                        .setPrst(org.openxmlformats.schemas.drawingml.x2006.main.STShapeType.ELLIPSE);
-            }
+        XWPFPicture picture = addFittedPicture(run, bytes, resolved, fitMode, box);
+        // A portrait clipped to a circle: the picture takes the circle's shape, which both
+        // editors crop it to, instead of standing square over the ring drawn round it.
+        if (fillsItsEllipse(node, clipContainer) && picture.getCTPicture().getSpPr().isSetPrstGeom()) {
+            picture.getCTPicture().getSpPr().getPrstGeom()
+                    .setPrst(org.openxmlformats.schemas.drawingml.x2006.main.STShapeType.ELLIPSE);
         }
         reportWrittenWithout(node, "written as an inline picture", sidesLost(node, true, false));
+    }
+
+    /**
+     * Adds a picture to a run at the size the page draws it in its box: fitted inside the box
+     * where it is contained, across it otherwise, and cropped to it where it covers it
+     * ({@link #applyCoverCrop}).
+     *
+     * @param resolved the picture, resolved: its own size
+     * @param box      the box the page draws it in
+     * @return the picture added
+     */
+    private XWPFPicture addFittedPicture(XWPFRun run, byte[] bytes, ImageData resolved,
+                                         DocumentImageFitMode fitMode,
+                                         NodeDefinitionSupport.ImageDimensions box) throws Exception {
+        double sourceWidth = Math.max(1, resolved.getMetadata().width());
+        double sourceHeight = Math.max(1, resolved.getMetadata().height());
+        double drawWidth = box.width();
+        double drawHeight = box.height();
+        if (fitMode == DocumentImageFitMode.CONTAIN) {
+            double scale = Math.min(box.width() / sourceWidth, box.height() / sourceHeight);
+            drawWidth = sourceWidth * scale;
+            drawHeight = sourceHeight * scale;
+        }
+        XWPFPicture picture;
+        try (InputStream stream = new java.io.ByteArrayInputStream(bytes)) {
+            picture = run.addPicture(stream, pictureType(bytes), "image",
+                    Units.toEMU(drawWidth), Units.toEMU(drawHeight));
+        }
+        if (fitMode == DocumentImageFitMode.COVER) {
+            applyCoverCrop(picture, sourceWidth, sourceHeight, box);
+        }
+        return picture;
+    }
+
+    /**
+     * Describes a run's picture as a screen reader reads it out: POI describes a picture by the
+     * file name it is handed.
+     *
+     * @param description the text the picture stands for, or nothing
+     */
+    private static void describe(XWPFRun run, String description) {
+        run.getCTR().getDrawingArray(0).getInlineArray(0).getDocPr().setDescr(description);
+        run.getEmbeddedPictures().get(0).getCTPicture().getNvPicPr().getCNvPr().setDescr(description);
     }
 
     /**

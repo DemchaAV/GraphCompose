@@ -118,6 +118,10 @@ What is not written — each one is named in the export report
   in the export report as `row paint`. Elsewhere a row that paints is written as a panel holding
   its columns, what of its borders above and below Word draws past its box taken by the space
   round it and its padding, and named where neither takes it.
+- **What a block above leaves over the next** where the space between them does not take it —
+  a panel's border below, a line hanging below its block, a negative bottom margin, the tenth of
+  a point Word keeps between two tables — standing the next block that much lower, named in the
+  export report as `space above`.
 - **Translucency where Word holds an opaque colour only** — a cell's shading, a border, a rule,
   a chip's run shading: the colour is flattened against what Word paints under it — the panel or
   cell the export shaded, or what the page paints there — and a text header's separator against

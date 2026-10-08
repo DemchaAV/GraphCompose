@@ -4,6 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentColor;
@@ -101,9 +102,9 @@ class DocxPanelTailTest {
     }
 
     @Test
-    void twoTouchingCardsNameAllThatStandsTheSecondLowerAtOnce() throws Exception {
-        // The first one's border below, the second one's above, and the paragraph Word keeps
-        // between two tables: one note, the whole of it.
+    void twoTouchingCardsNameBothBordersAndTheParagraphBetweenThem() throws Exception {
+        // The first one's border below and the paragraph Word keeps between two tables stand the
+        // second lower, named together on it; its own border above stands its content lower.
         Exported exported = export(page -> page
                 .addSection("First", card -> card.fillColor(SURFACE).borders(DocumentBorders.bottom(RULE))
                         .addParagraph("One"))
@@ -117,43 +118,157 @@ class DocxPanelTailTest {
                                                 + "past the box of the panel above it (2pt) and the paragraph Word keeps "
                                                 + "between two tables (0.1pt)");
         });
-        assertThat(exported.report().bySubject().get("SectionNode")).singleElement()
-                .satisfies(note -> assertThat(note.detail()).startsWith("its content stands 2pt lower"));
+        assertThat(exported.report().bySubject().get("SectionNode")).singleElement().satisfies(note -> {
+            assertThat(note.path()).contains("Second");
+            assertThat(note.detail()).isEqualTo("its content stands 2pt lower than the page sets it, and what follows "
+                                                + "up to as much: Word sets it below the whole of its top border, and "
+                                                + "neither the space above it nor its padding takes what of the border "
+                                                + "reaches past the panel's box");
+        });
     }
 
     @Test
-    void aCardsBorderCarriedOutOfARowsCellIsNoLongerItsPaddingsToTake() throws Exception {
-        // Below the row, the border is the row's: Word makes the row as tall as its tallest cell,
-        // which the card's padding does not decide.
+    void aCardsBorderEndingARowsCellComesOutOfItsPaddingWhereTheRowHoldsNoMore() throws Exception {
+        // The card is as tall as the row, which leaves no room under it: its padding takes its
+        // border, and the row is as tall as the page's.
         Exported exported = export(page -> page.addRow(row -> row
                         .addSection("Card", card -> card.fillColor(SURFACE).borders(DocumentBorders.bottom(RULE))
                                 .padding(DocumentInsets.of(4)).addParagraph("Inside"))
                         .addParagraph("Beside"))
                 .addParagraph(p -> p.name("After").text("After")));
-        XWPFTableCell card = exported.document().getTables().get(0).getRow(0).getCell(0).getTables().get(0)
-                .getRow(0).getCell(0);
 
-        assertThat(bottomMargin(card)).as("its padding, less half the border").isEqualTo(3 * 20);
+        assertThat(bottomMargin(nestedPanel(exported))).as("its padding, less the whole border").isEqualTo(2 * 20);
+        assertThat(exported.report().bySubject()).doesNotContainKey("space above");
+    }
+
+    @Test
+    void aCardsBorderEndingARowsCellItsPaddingCannotHoldIsNamedBelowTheRow() throws Exception {
+        Exported exported = export(page -> page.addRow(row -> row
+                        .addSection("Card", card -> card.fillColor(SURFACE).borders(DocumentBorders.bottom(RULE))
+                                .addParagraph("Inside"))
+                        .addParagraph("Beside"))
+                .addParagraph(p -> p.name("After").text("After")));
+
         assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
             assertThat(note.path()).contains("After");
-            assertThat(note.detail()).isEqualTo("it stands 1pt lower than the page sets it, and what follows with it: the "
+            assertThat(note.detail()).isEqualTo("it stands 2pt lower than the page sets it, and what follows with it: the "
                                                 + "space the page leaves above it does not hold the border Word draws past "
-                                                + "the box of the panel above it (1pt)");
+                                                + "the box of the panel above it (2pt)");
         });
     }
 
     @Test
-    void aCardsBorderCarriedOutOfATablesCellIsNoLongerItsPaddingsToTake() throws Exception {
-        var card = new com.demcha.compose.document.dsl.SectionBuilder().name("Card").fillColor(SURFACE)
-                .borders(DocumentBorders.bottom(RULE)).padding(DocumentInsets.of(4))
-                .addParagraph("Inside").build();
-        Exported exported = export(page -> page.addTable(table -> table.columns(DocumentTableColumn.fixed(120))
-                        .rowCells(DocumentTableCell.node(card)))
+    void aRowsCellReachesPastTheRowByItsHangAndItsCardsBorderTogether() throws Exception {
+        // The line hanging below the card's text and the card's border below it reach one past
+        // the other: the row stands taller by both.
+        Exported exported = export(page -> page.addRow(row -> row
+                        .addSection("Card", card -> {
+                            card.fillColor(SURFACE).borders(DocumentBorders.bottom(RULE)).padding(DocumentInsets.of(1));
+                            contact(card);
+                        })
+                        .addParagraph("Beside"))
                 .addParagraph(p -> p.name("After").text("After")));
-        XWPFTableCell inner = exported.document().getTables().get(0).getRow(0).getCell(0).getTables().get(0)
-                .getRow(0).getCell(0);
+        long down = reachBelow(exported, "Iconed");
 
-        assertThat(bottomMargin(inner)).as("its padding, less half the border").isEqualTo(3 * 20);
+        assertThat(down).as("the line reaches below the page's").isPositive();
+        assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
+            assertThat(note.path()).contains("After");
+            assertThat(note.detail()).isEqualTo("it stands " + points(down + 20) + "pt lower than the page sets it, and "
+                                                + "what follows with it: the space the page leaves above it does not hold "
+                                                + "the border Word draws past the box of the panel above it (1pt) and the "
+                                                + "line hanging below the block above it (" + points(down) + "pt)");
+        });
+    }
+
+    @Test
+    void aCardAloneInATablesColumnTakesItsBorderOutOfItsPadding() throws Exception {
+        Exported exported = export(page -> page.addTable(table -> table.columns(DocumentTableColumn.fixed(120))
+                        .rowCells(DocumentTableCell.node(card(4))))
+                .addParagraph(p -> p.name("After").text("After")));
+
+        assertThat(bottomMargin(nestedPanel(exported))).as("its padding, less the whole border").isEqualTo(2 * 20);
+        assertThat(exported.report().notes()).noneSatisfy(note -> assertThat(note.detail()).contains("border"));
+    }
+
+    @Test
+    void aCardAloneInATablesColumnNamesTheBorderItsPaddingCannotHold() throws Exception {
+        // Nothing beside it holds the border: the row, and what follows, stand that much lower.
+        Exported exported = export(page -> page.addTable(table -> table.columns(DocumentTableColumn.fixed(120))
+                        .rowCells(DocumentTableCell.node(card(0))))
+                .addParagraph(p -> p.name("After").text("After")));
+
+        assertThat(exported.report().bySubject()).doesNotContainKey("space above");
+        assertThat(exported.report().bySubject().get("SectionNode")).singleElement()
+                .extracting(DocxExportReport.Note::detail).isEqualTo("in a table's cell, Word draws the border below "
+                        + "the panel ending it 2pt past that panel's box, and the row and what follows stand as much lower");
+    }
+
+    @Test
+    void aCardBesideAnotherCellInATableTakesItsBorderOutOfItsPadding() throws Exception {
+        Exported exported = export(page -> page.addTable(table -> table
+                        .columns(DocumentTableColumn.fixed(120), DocumentTableColumn.fixed(120))
+                        .rowCells(DocumentTableCell.node(card(4)), DocumentTableCell.node(tall())))
+                .addParagraph(p -> p.name("After").text("After")));
+
+        assertThat(bottomMargin(nestedPanel(exported))).as("its padding, less the whole border").isEqualTo(2 * 20);
+        assertThat(exported.report().notes()).noneSatisfy(note -> assertThat(note.detail()).contains("border"));
+    }
+
+    @Test
+    void aCardBesideATallerCellInATableIsNamedUpToItsBorder() throws Exception {
+        // The layout does not say how tall a composed cell's content is against its row: the cell
+        // beside the card may hold what its padding cannot, and the space under the table does not
+        // take it.
+        Exported exported = export(page -> page.addTable(table -> table
+                        .columns(DocumentTableColumn.fixed(120), DocumentTableColumn.fixed(120))
+                        .rowCells(DocumentTableCell.node(card(0)), DocumentTableCell.node(tall())))
+                .addParagraph(p -> p.name("After").text("After")));
+
+        assertThat(before(paragraph(exported, "After"))).as("the space under the table, whole").isZero();
+        assertThat(exported.report().bySubject()).doesNotContainKey("space above");
+        assertThat(exported.report().bySubject().get("SectionNode")).singleElement()
+                .extracting(DocxExportReport.Note::detail).isEqualTo("in a table's cell, Word draws the border below "
+                        + "the panel ending it 2pt past that panel's box, and the row and what follows stand up to as much "
+                        + "lower where no cell beside it holds the border");
+    }
+
+    /** A cell of four lines, taller than a card of one. */
+    private static DocumentNode tall() {
+        return new SectionBuilder().name("Tall").addParagraph("L1").addParagraph("L2").addParagraph("L3")
+                .addParagraph("L4").build();
+    }
+
+    @Test
+    void aCardEndingAColumnOfLayersBesideAnotherIsNamedUpToItsBorder() throws Exception {
+        // Side-by-side layers are the cells of one row, which the layout does not measure the
+        // columns' content against: what of the card's border its padding cannot hold is named,
+        // and the space under the stack takes nothing for it.
+        Exported exported = export(page -> page.addLayerStack(stack -> stack.name("Columns")
+                        .layer(column("Sidebar", 0, 240, side -> side.addSection("Card", card -> card.fillColor(SURFACE)
+                                .borders(DocumentBorders.bottom(RULE)).addParagraph("Inside"))),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                        .layer(column("Main", 120, 0, main -> main.addParagraph("Line").addParagraph("Line")
+                                .addParagraph("Line").addParagraph("Line")), com.demcha.compose.document.node.LayerAlign.TOP_LEFT))
+                .addParagraph(p -> p.name("After").text("After")));
+
+        assertThat(exported.report().bySubject()).doesNotContainKey("space above");
+        assertThat(exported.report().notes()).anySatisfy(note -> assertThat(note.detail()).isEqualTo("in a table's cell, "
+                + "Word draws the border below the panel ending it 2pt past that panel's box, and the row and what "
+                + "follows stand up to as much lower where no cell beside it holds the border"));
+    }
+
+    /** A layer of a stack, held in from the stack's sides as DocxLayerColumnsTest's columns are. */
+    private static DocumentNode column(String name, double insetLeft, double insetRight, Consumer<SectionBuilder> content) {
+        SectionBuilder layer = new SectionBuilder();
+        layer.name(name).spacing(0).padding(new DocumentInsets(0, insetRight, 0, insetLeft));
+        layer.addSection(name + "Content", section -> content.accept(section.spacing(0)));
+        return layer.build();
+    }
+
+    /** A card ruled below by {@link #RULE}, padded {@code padding} on every side. */
+    private static DocumentNode card(double padding) {
+        return new SectionBuilder().name("Card").fillColor(SURFACE).borders(DocumentBorders.bottom(RULE))
+                .padding(DocumentInsets.of(padding)).addParagraph("Inside").build();
     }
 
     @Test
@@ -168,23 +283,13 @@ class DocxPanelTailTest {
     @Test
     void anOutlinedCardHoldsTheHeightOfItsContent() throws Exception {
         // The editors read a panel's written height as its content's, its margins and both its
-        // borders round it: held less its margins and one border, an outlined card padded 4pt
-        // stood a point taller than the page's.
-        double height;
-        byte[] docx;
-        AtomicReference<DocxExportReport> report = new AtomicReference<>();
-        try (DocumentSession session = GraphCompose.document().pageSize(400, 400).margin(DocumentInsets.of(20)).create()) {
-            session.pageFlow(page -> page.addSection("Card", card -> card.fillColor(SURFACE).stroke(RULE)
-                    .padding(DocumentInsets.of(4)).addParagraph("Inside")).addParagraph("After"));
-            height = session.layoutGraph().nodes().stream().filter(node -> "Card".equals(node.semanticName()))
-                    .findFirst().orElseThrow().placementHeight();
-            docx = session.export(new DocxSemanticBackend(report::set));
-        }
-        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
-            var row = document.getTables().get(0).getRow(0);
-            assertThat(row.getHeight()).as("the page's height, less its padding").isEqualTo(Math.round((height - 8) * 20));
-            assertThat(report.get().bySubject()).doesNotContainKey("space above").doesNotContainKey("SectionNode");
-        }
+        // borders round it: the page's height, less its padding.
+        Exported exported = export(page -> page.addSection("Card", card -> card.fillColor(SURFACE).stroke(RULE)
+                .padding(DocumentInsets.of(4)).addParagraph("Inside")).addParagraph("After"));
+
+        assertThat(panel(exported).getTableRow().getHeight()).as("the page's height, less its padding")
+                .isEqualTo(Math.round((exported.heights().get("Card") - 8) * 20));
+        assertThat(exported.report().bySubject()).doesNotContainKey("space above").doesNotContainKey("SectionNode");
     }
 
     @Test
@@ -334,15 +439,99 @@ class DocxPanelTailTest {
     }
 
     @Test
-    void aMarginBelowZeroUnderAPanelIsNoBorder() throws Exception {
-        // It pulls what follows up, as a paragraph's does: the panel keeps its padding, and no
-        // border is named.
-        Exported exported = export(page -> page.addSection("Card", card -> card.fillColor(SURFACE)
+    void aMarginBelowZeroUnderAPanelPullsWhatFollowsUp() throws Exception {
+        // As a paragraph's does: out of the space under the panel, which keeps its padding.
+        Exported exported = export(page -> page.spacing(10).addSection("Card", card -> card.fillColor(SURFACE)
                         .padding(DocumentInsets.of(8)).margin(new DocumentInsets(0, 0, -4, 0)).addParagraph("Inside"))
                 .addParagraph(p -> p.name("After").text("After")));
 
         assertThat(bottomMargin(panel(exported))).isEqualTo(8 * 20);
+        assertThat(before(paragraph(exported, "After"))).as("the gap, less the pull").isEqualTo(6 * 20);
         assertThat(exported.report().bySubject()).doesNotContainKey("space above");
+    }
+
+    @Test
+    void aPullNoSpaceGivesIsNamed() throws Exception {
+        // The page sets the paragraph over the panel; Word sets no block over another.
+        Exported exported = export(page -> page.addSection("Card", card -> card.fillColor(SURFACE)
+                        .padding(DocumentInsets.of(8)).margin(new DocumentInsets(0, 0, -4, 0)).addParagraph("Inside"))
+                .addParagraph(p -> p.name("After").text("After")));
+
+        assertThat(bottomMargin(panel(exported))).as("the panel keeps its padding").isEqualTo(8 * 20);
+        assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
+            assertThat(note.path()).contains("After");
+            assertThat(note.detail()).isEqualTo("it stands 4pt lower than the page sets it, and what follows with it: the "
+                                                + "page sets it 4pt over the block above it, and Word sets no block over "
+                                                + "another");
+        });
+    }
+
+    @Test
+    void aPullATableBelowCannotGiveIsNamedWithItsTail() throws Exception {
+        Exported exported = export(page -> page.addSection("Card", card -> card.fillColor(SURFACE)
+                        .padding(DocumentInsets.of(8)).margin(new DocumentInsets(0, 0, -4, 0)).addParagraph("Inside"))
+                .addTable(this::first));
+
+        assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
+            assertThat(note.path()).contains("First");
+            assertThat(note.detail()).isEqualTo("it stands 4.1pt lower than the page sets it, and what follows with it: "
+                                                + "the space the page leaves above it does not hold the paragraph Word "
+                                                + "keeps between two tables (0.1pt); the page sets it 4pt over the block "
+                                                + "above it, and Word sets no block over another");
+        });
+    }
+
+    @Test
+    void aPullASpacerCannotGiveIsNamedOnTheSpacer() throws Exception {
+        Exported exported = export(page -> page.addParagraph(p -> p.text("Pulling").margin(new DocumentInsets(0, 0, -6, 0)))
+                .addSpacer(spacer -> spacer.name("Gap").size(0, 2))
+                .addParagraph("After"));
+
+        assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
+            assertThat(note.path()).contains("Gap");
+            assertThat(note.detail()).isEqualTo("it stands 4.1pt lower than the page sets it, and what follows with it: "
+                                                + "the page sets it 4.1pt over the block above it, and Word sets no block "
+                                                + "over another");
+        });
+    }
+
+    @Test
+    void aPullLeftOverABlockWithNoTopEdgeOfItsOwnIsNamed() throws Exception {
+        // A list item takes nothing out of a top edge of its own: the pull is named all the same.
+        Exported exported = export(page -> page.addParagraph(p -> p.text("Pulling").margin(new DocumentInsets(0, 0, -4, 0)))
+                .addList(list -> list.addItem("Only")));
+
+        assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
+            assertThat(note.path()).contains("ListNode");
+            assertThat(note.detail()).isEqualTo("it stands 4pt lower than the page sets it, and what follows with it: the "
+                                                + "page sets it 4pt over the block above it, and Word sets no block over "
+                                                + "another");
+        });
+    }
+
+    @Test
+    void aPaddedCardEndingAPanelTakesItsBorderOutOfItsOwnPaddingFirst() throws Exception {
+        Exported exported = export(page -> page.addSection("Outer", outer -> outer.fillColor(SURFACE)
+                        .padding(DocumentInsets.of(6)).addParagraph("Lead")
+                        .addSection("Inner", inner -> inner.fillColor(DocumentColor.WHITE)
+                                .borders(DocumentBorders.bottom(RULE)).padding(DocumentInsets.of(4)).addParagraph("Inside")))
+                .addParagraph(p -> p.name("After").text("After")));
+
+        assertThat(bottomMargin(nestedPanel(exported))).as("the inner card's padding, less the whole border")
+                .isEqualTo(2 * 20);
+        assertThat(bottomMargin(panel(exported))).as("the outer panel's padding, whole").isEqualTo(6 * 20);
+        assertThat(exported.report().bySubject()).doesNotContainKey("space above");
+    }
+
+    @Test
+    void theSpaceAPullTakesIsNoRoomForACardsTopBorder() throws Exception {
+        // The card's 6pt top margin is the pull's, and its padding holds its top border instead.
+        Exported exported = export(page -> page.addParagraph(p -> p.text("Pulling").margin(new DocumentInsets(0, 0, -6, 0)))
+                .addSection("Card", card -> card.fillColor(SURFACE).borders(DocumentBorders.top(RULE))
+                        .margin(new DocumentInsets(6, 0, 0, 0)).padding(DocumentInsets.of(4)).addParagraph("Inside")));
+
+        assertThat(topMargin(panel(exported))).as("its padding, less the whole border").isEqualTo(2 * 20);
+        assertThat(exported.report().bySubject()).doesNotContainKey("space above").doesNotContainKey("SectionNode");
     }
 
     @Test
@@ -363,8 +552,12 @@ class DocxPanelTailTest {
                         .borders(DocumentBorders.bottom(RULE)).addParagraph("Inside"))
                 .addList(list -> list.addItem("Only")));
 
-        assertThat(exported.report().bySubject().get("space above")).singleElement()
-                .satisfies(note -> assertThat(note.detail()).startsWith("it stands 2pt lower"));
+        assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
+            assertThat(note.path()).contains("ListNode");
+            assertThat(note.detail()).isEqualTo("it stands 2pt lower than the page sets it, and what follows with it: the "
+                                                + "space the page leaves above it does not hold the border Word draws past "
+                                                + "the box of the panel above it (2pt)");
+        });
     }
 
     @Test
@@ -382,7 +575,28 @@ class DocxPanelTailTest {
         assertThat(exported.report().bySubject()).doesNotContainKey("SectionNode");
         // The paragraph Word keeps between the two tables goes with the second, and is named.
         assertThat(exported.report().bySubject().get("space above")).singleElement()
-                .satisfies(note -> assertThat(note.detail()).doesNotContain("border"));
+                .extracting(DocxExportReport.Note::detail).isEqualTo("it stands 0.1pt lower than the page sets it, and "
+                        + "what follows with it: the space the page leaves above it does not hold the paragraph Word "
+                        + "keeps between two tables (0.1pt)");
+    }
+
+    @Test
+    void aPanelTheLayoutMovesToANewPageKeepsTheSpaceAboveItThere() throws Exception {
+        // Word drops a paragraph's space above at the top of a page, as the page keeps it: the
+        // panel's 12pt are a line of their own above it, kept with it.
+        Exported exported = export(page -> page.addParagraph("Before").addSpacer(spacer -> spacer.size(0, 470))
+                .addSection("Second", card -> card.keepTogether().fillColor(SURFACE)
+                        .margin(new DocumentInsets(12, 0, 0, 0)).padding(DocumentInsets.of(4)).addParagraph("Two")
+                        .addParagraph("Two").addParagraph("Two").addParagraph("Two").addParagraph("Two")
+                        .addParagraph("Two")));
+        List<org.apache.poi.xwpf.usermodel.IBodyElement> body = exported.document().getBodyElements();
+        int panel = body.indexOf(exported.document().getTables().get(0));
+        XWPFParagraph line = (XWPFParagraph) body.get(panel - 1);
+        CTSpacing spacing = line.getCTP().getPPr().getSpacing();
+
+        assertThat(exported.pages().get("Second")).as("the layout moves it to the next page").isEqualTo(1);
+        assertThat(DocxTwips.of(spacing.getLine())).as("its 12pt").isEqualTo(12 * 20);
+        assertThat(line.getCTP().getPPr().isSetKeepNext()).isTrue();
     }
 
     @Test
@@ -394,6 +608,8 @@ class DocxPanelTailTest {
         Exported exported = hungOverACard(gap);
 
         assertThat(reachBelow(exported, "Iconed")).as("the same line").isEqualTo(down);
+        assertThat(topMargin(panel(exported))).as("its padding less half the border, less the half point the space left")
+                .isEqualTo((4 - 1) * 20 - 10);
         assertThat(exported.report().bySubject()).doesNotContainKey("space above").doesNotContainKey("SectionNode");
     }
 
@@ -411,10 +627,14 @@ class DocxPanelTailTest {
             contact(card);
         }).addTable(this::first));
 
+        long down = reachBelow(exported, "Iconed");
+
         assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
             assertThat(note.path()).contains("First");
-            assertThat(note.detail()).contains("the line hanging below the block above it (")
-                    .contains("the paragraph Word keeps between two tables (0.1pt)");
+            assertThat(note.detail()).isEqualTo("it stands " + points(down + 2) + "pt lower than the page sets it, and "
+                                                + "what follows with it: the space the page leaves above it does not hold "
+                                                + "the line hanging below the block above it (" + points(down) + "pt) and "
+                                                + "the paragraph Word keeps between two tables (0.1pt)");
         });
     }
 
@@ -485,17 +705,32 @@ class DocxPanelTailTest {
      * the paragraph's top (the space above it written that much shorter).
      */
     private static long reachBelow(Exported exported, String name) {
-        // The icon's line, in the body or in the first panel's cell.
+        // The icon's line — "GitHub" and its icon, in contact() — wherever the tables put it.
         List<XWPFParagraph> paragraphs = new java.util.ArrayList<>(exported.document().getParagraphs());
-        exported.document().getTables().forEach(table -> paragraphs.addAll(table.getRow(0).getCell(0).getParagraphs()));
+        exported.document().getTables().forEach(table -> collect(table, paragraphs));
         XWPFParagraph iconed = paragraphs.stream().filter(p -> p.getText().startsWith("GitHub")).findFirst().orElseThrow();
         CTSpacing spacing = iconed.getCTP().getPPr().getSpacing();
+        assertThat(spacing.getLineRule()).as("held to its icon")
+                .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
         long up = 3 * 20 - (spacing.isSetBefore() ? DocxTwips.of(spacing.getBefore()) : 0);
         return DocxTwips.of(spacing.getLine()) - up - Math.round(exported.heights().get(name) * 20);
     }
 
+    private static void collect(org.apache.poi.xwpf.usermodel.XWPFTable table, List<XWPFParagraph> paragraphs) {
+        table.getRows().forEach(row -> row.getTableCells().forEach(cell -> {
+            paragraphs.addAll(cell.getParagraphs());
+            cell.getTables().forEach(nested -> collect(nested, paragraphs));
+        }));
+    }
+
+    /** The cell of the first table in the body: the panel, where the document opens with one. */
     private static XWPFTableCell panel(Exported exported) {
         return exported.document().getTables().get(0).getRow(0).getCell(0);
+    }
+
+    /** The panel nested in the first cell of the first table in the body. */
+    private static XWPFTableCell nestedPanel(Exported exported) {
+        return panel(exported).getTables().get(0).getRow(0).getCell(0);
     }
 
     private static long topMargin(XWPFTableCell cell) {

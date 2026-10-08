@@ -20,34 +20,44 @@ follow semantic versioning; release dates are ISO 8601.
     the panel's edge and its content where the page sets it; above, then, the room over its
     first line. What none of them takes is named: on the panel for its top border, as a row's
     was, and on the block that stands lower for its bottom one (`space above`).
-  - **The height held is the content's.** Word and LibreOffice read a panel's written row height
-    as its content's, its margins and both borders round it: held a point above its content's
-    height, an outlined card padded 4pt stood a point taller than the page's. A panel holds the
+  - **The height held is the content's.** Word and LibreOffice on Windows read a panel's written
+    row height as its content's, with its margins and both borders round it: held a point above
+    its content's height, an outlined card padded 4pt stood a point taller. A panel holds the
     page's height less its padding, and less what the room over its first line gave its top
-    border. A shape container, its layers centred in it, holds its outline's height less both
-    its borders and its margins, which keep inside it, and nothing of them is named; a padded
-    outlined one was held one border less only.
-  - **What a panel's content leaves below itself** past where the page ends it — a last line held
-    to an icon, the border of a card ending the panel — comes out of the room the page leaves
-    under that content, then out of the panel's padding below, then out of the space under the
-    panel; what none of them takes is named (`space above`). A card's border ending a row's cell
-    reaches past the row only by what the row's room under that cell does not hold.
-  - **The paragraph Word keeps between any two tables** — a tenth of a point, without which
-    Word merges them — is named on the second where the space between them does not take it
-    (`space above`), together with a border reaching it.
+    border, which came off it a second time. A shape container, its layers centred in it, holds
+    its outline's height less both borders and its margins, which keep inside it, and nothing of
+    them is named; a padded outlined one was held one border less only.
+  - **What a panel's content leaves below itself** — a last line held to an icon, the border of a
+    card ending the panel, which that card's padding takes first — comes out of the panel's
+    padding below, then out of the space under it; what neither takes is named (`space above`).
+    In a row's cell the line and the card's border reach past the row together, by what the
+    row's room under the cell does not hold. Ending a table's composed cell or a column of
+    side-by-side layers, whose content the layout does not measure against its row, the border
+    is named on the cell's content, its row up to that much taller, and the space below takes
+    none of it.
+  - **A pull** — a negative bottom margin, a panel's as a paragraph's — comes out of the space
+    below it and the next block's own top edge; what they cannot give stands that block lower
+    and is named (`space above`), where it was dropped unnamed.
+  - **The paragraph Word keeps between any two tables** — a tenth of a point, without which Word
+    merges them — is named on the second where the space between them does not take it, with
+    whatever else stands it lower; a container's top edge above a table counts as that space.
+  - **A panel the layout moves to a new page** keeps the space above it there, on a line of its
+    own, as a table does, and what the block above leaves below itself stays on the page above.
 
-  Measured in Word 16 and LibreOffice alike on cards with 2pt borders — above, below and all
-  round — with no padding and with 1 and 4pt of it, with and without space round them, stacked
-  and in a row's columns, every line stood where the page sets it, or as much lower as the
-  report names: within 0.15pt in Word and 0.05pt in LibreOffice. In the DOCX fidelity corpus
-  25 of the 62 documents change, and the report names 15 more notes: the tenth of a point
-  between two tables, 14 times, and `ObsidianInvoice`'s totals row, 0.72pt below a border
-  nothing takes. Twelve documents stand nearer the page in Word — the engineering cover
-  letter's median line from 1.27pt to 0.13pt — and eight further, `cv-panel`,
-  `invoice-subscription`, `cv-modern_professional` and `cv-classic_serif` most: there the
-  whole border taken out of the space had made up for other errors, a heading's baseline left
-  up to half a point from where Word seats it in an exact line, a spacer of no height written
-  as a tenth of a point, rounding to the twip inside a card. The fidelity baselines record both.
+  Measured in Word 16 and LibreOffice on Windows — cards with 2pt borders above, below and all
+  round, with no padding and with 1 and 4pt of it, with and without space round them; cards
+  outlined at 0.5 and 2pt stacked, and at 0.5pt in a row's columns — every line stood where the page
+  sets it, or as much lower as the report names: within 0.15pt in Word and 0.05pt in
+  LibreOffice.
+  In the DOCX fidelity corpus 25 of the 62 documents change, and the report names 15 more
+  notes: the tenth of a point between two tables, 14 times, and `ObsidianInvoice`'s totals row,
+  0.72pt lower for a 0.62pt border and that tenth of a point. Twelve documents stand nearer the
+  page in Word — the engineering cover letter's median line from 1.27pt to 0.13pt — and eight
+  further, `cv-panel`, `invoice-subscription`, `cv-modern_professional` and `cv-classic_serif`
+  most: where traced, the whole border taken out of the space had made up for other errors — a
+  heading's baseline left up to half a point from where Word seats it in an exact line, a spacer
+  of no height written as a tenth of a point, rounding to the twip inside a card, a step between
+  a table's header and its first row. The fidelity baselines record both.
 
 - **A DOCX export writes a row's fill, outline and side borders, as a panel holding its
   columns.** A row paints its box as a container does — `RowBuilder.fillColor`, `stroke`,
@@ -1110,21 +1120,19 @@ follow semantic versioning; release dates are ISO 8601.
   the heavier border, which LibreOffice was taken to add to it once. Both editors draw the cell's
   top and bottom borders outside that height: a 9.2pt chip outlined with a 1.125pt border stood
   10.3pt tall in Word and 10.2pt in LibreOffice, and each staff row holding one stood 1.1pt
-  taller than the page's; the rota's last row stood 6.5pt low in Word, now 2.4. Where its padding
-  does not hold the top border, the row now holds the outline's height less the borders drawn
-  outside it — the top as far as no space above took it — as a panel with a placement already
-  did. `CobaltRota`'s p90 drift falls from 6.4pt to 2.9 in Word and from 7.3pt to 3.9
-  in LibreOffice.
+  taller than the page's; the rota's last row stood 6.5pt low in Word, now 2.4. The row now
+  holds the outline's height less both borders and its margins, which keep inside it (see the
+  entry on what follows a panel). `CobaltRota`'s p90 drift falls from 6.4pt to 2.9 in Word and
+  from 7.3pt to 3.9 in LibreOffice.
 
 - **`MerchantInvoice` fits its page in Word again.** Two things pushed its footer row onto a
   second page.
   - Its payment panel opens a table cell, so no space above could take the panel's 0.875pt
     top border, which Word draws above a cell's content. Every line inside stood that much
-    low, and the row that much taller. A panel with less space above it than its top border now
-    takes what of the border neither that space nor its padding holds out of the space above
-    its first line, where that line has some; where its row holds the page's height, that
-    height is less the borders Word draws outside it. LibreOffice, where the panel's content
-    sets its height, draws `MerchantInvoice`'s panel that border's width shorter.
+    low, and the row that much taller. What of the border reaches past the panel's box and
+    neither that space nor its padding takes now comes out of the space above its first line,
+    where that line has some, and the content's height the panel holds is that much less (see
+    the entry on what follows a panel).
   - Its footer reaches 9.8pt from the page's edge, past the page's 3.4pt margin, and Word
     moved the body clear of it. A band alone of its kind reaching past the margin, by any
     more than a twentieth of a point, now writes that margin
@@ -1423,10 +1431,10 @@ follow semantic versioning; release dates are ISO 8601.
   "MW". Written apart, the letters stood in the flow and the badge where the page puts it:
   `ObsidianInvoice`'s footer "K" sat below its disc's corner, its party discs were hidden
   behind their letters under the panel's shading, and the monogram tile's letter left it for
-  the next page. A panel's top border now comes out of the space above it, and its bottom
-  border out of its bottom margin or, past that, out of the space above whatever follows: Word
-  draws them outside the cell's shading, where the page strokes them on the panel's edge, so
-  every outlined card stood its borders lower and `ObsidianInvoice`'s line items sat 1.6pt low. In Word, `ObsidianInvoice`'s line items land
+  the next page. What of a panel's borders above and below Word draws past its box now comes
+  out of the space round it (see the entry on what follows a panel): every outlined card had
+  stood that much lower, and `ObsidianInvoice`'s line items sat 1.6pt low. In Word,
+  `ObsidianInvoice`'s line items land
   within 0.2pt of the page, `ProfessionalSidebar`'s p90 drift falls from 78.8pt to 1.3, and
   `NorthlineProposal`'s cover header, which stood 12pt high, lands on the page's.
 - **Icons inside painted panels show in Word, beside the text they belong to.** A shape drawn

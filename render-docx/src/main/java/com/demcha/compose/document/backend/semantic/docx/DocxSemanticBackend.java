@@ -439,6 +439,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private XWPFTableCell borderBelowCell;
 
+    /**
+     * How far the border below the panel ending the cell just written reaches past that panel's
+     * box, in points, which the cell carries out ({@link #writeInCell}), and that panel's cell.
+     * The writer of the cell decides what it does there: what the room the cell is given does not
+     * hold, the panel's padding below takes first ({@link #takeTheCarriedBorder}).
+     */
+    private double carriedBorder;
+    private XWPFTableCell carriedBorderCell;
+
     /** The page's height in points, or {@code NaN} when the export has no canvas. */
     private double canvasHeight = Double.NaN;
 
@@ -5023,16 +5032,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         for (int index = 0; index < pieces.size(); index++) {
+            boolean onANewPage = false;
             if (index > 0) {
                 writePageBreak(document);
             } else if (currentCell == null && startsAPageOfItsOwn(node)) {
-                // What the block above leaves below itself stays on its page, as above a table
-                // the layout moves to a new page (writeTableWithItsOwnSpacing).
+                // What the block above leaves below itself stays on its page, and the space above
+                // the panel is held on its own, as at a table the layout moves to a new page
+                // (writeTableWithItsOwnSpacing).
                 leaveThePageAbove();
+                onANewPage = true;
             }
             List<DocumentNode> piece = pieces.get(index);
             writePanelPiece(document, node, paint, () -> writeChildren(document, piece, spacingOf(node)),
-                    index == 0, index == pieces.size() - 1, false);
+                    index == 0, index == pieces.size() - 1, onANewPage);
         }
     }
 
@@ -5069,10 +5081,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (first) {
             // Word draws a panel's top and bottom borders past its box where the page strokes them
             // on the box's edge, taking no room (outsideTheRow). The space above takes the reach
-            // of the top one, after what the block above leaves below itself, which the table
-            // takes and names with the rest of its tail (newTable).
+            // of the top one, after what the block above leaves below itself or pulls out of it,
+            // which the table takes and names with the rest of its tail (newTable).
             double reach = heldWhole ? 0 : outsideTheRow(borders.top(), padding.top());
-            double taken = Math.min(reach, Math.max(0, pendingSpacingAfter - hangingBelow - borderBelow));
+            double taken = Math.min(reach,
+                    Math.max(0, pendingSpacingAfter - hangingBelow - borderBelow - pullBelow));
             topNotTaken = reach - taken;
             pendingSpacingAfter -= taken;
         }
@@ -5229,13 +5242,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (last) {
             // What the content leaves below itself in Word past where the page ends it — a last
             // line hanging past it, a card's border below carried out of the cell — makes Word's
-            // panel that much taller. The room the page leaves under the content in a panel it
-            // holds taller takes it first; then the padding below, the line hanging into it as on
-            // the page; what follows takes the rest out of the space between them, as below a row
-            // (writeRow). A shape's layers are centred in the height it holds, which takes it.
-            double roomUnder = heldWhole ? Double.POSITIVE_INFINITY : roomUnderItsContent(node, placed, padding);
-            double hang = Math.max(0, cellOverhang - roomUnder);
-            double carried = Math.max(0, borderBelow - Math.max(0, roomUnder - cellOverhang));
+            // panel that much taller: a container is as tall as its content and padding, and
+            // leaves no room under the content to take it. Its padding below takes it, the line
+            // hanging into it as on the page; what follows takes the rest out of the space between
+            // them, as below a row (writeRow). A card's border is the card's padding's to take
+            // first. A shape's layers are centred in the outline's height it holds, which takes it.
+            double hang = heldWhole ? 0 : cellOverhang;
+            double carried = takeTheCarriedBorder(heldWhole ? 0 : carriedBorder);
             double fromThePaddingBelow = takeOffTheCellMargin(cell, false, hang + carried);
             hangingBelow = Math.max(hangingBelow, hang - fromThePaddingBelow);
             carried = Math.max(0, carried - Math.max(0, fromThePaddingBelow - hang));
@@ -5256,24 +5269,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * How much room the page leaves under a panel's content, above its padding, in points: what
-     * the panel's height holds below its lowest child, beyond that child's own margin. 0 where the
-     * panel's height is not held ({@link #holdThePanelsHeight}) or the layout does not say.
+     * Takes what it can of a border the cell just written carries out of the padding below of the
+     * panel ending it ({@link #carriedBorderCell}), the border then drawn that much inside that
+     * panel's edge.
+     *
+     * @return what of the border is left
      */
-    private double roomUnderItsContent(DocumentNode node, com.demcha.compose.document.layout.PlacedNode placed,
-                                       DocumentInsets padding) {
-        if (placed == null || node.children().isEmpty()) {
-            return 0;
-        }
-        double lowest = Double.POSITIVE_INFINITY;
-        for (DocumentNode child : node.children()) {
-            com.demcha.compose.document.layout.PlacedNode at = layout.placement(child);
-            if (at == null || at.startPage() != placed.startPage() || at.endPage() != placed.endPage()) {
-                return 0;
-            }
-            lowest = Math.min(lowest, at.placementY() - Math.max(0, child.margin().bottom()));
-        }
-        return Math.max(0, lowest - placed.placementY() - Math.max(0, padding.bottom()));
+    private double takeTheCarriedBorder(double border) {
+        XWPFTableCell from = carriedBorderCell;
+        carriedBorderCell = null;
+        carriedBorder = 0;
+        return from == null || !(border > 0) ? Math.max(0, border)
+                : Math.max(0, border - takeOffTheCellMargin(from, false, border));
     }
 
     /**
@@ -8665,7 +8672,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>Only a table's cell gives its padding, in a row whose margins all even
      * ({@link #everyMarginEvens}). A panel's cell keeps its: its margin is the padding less half
-     * its border, and Word sets the content no nearer the border than the border's width.</p>
+     * its border, and Word sets the content its whole border and then that margin inside the row
+     * ({@link #outsideTheRow}).</p>
      *
      * @return the twips taken, 0 when the paragraph does not open a padded cell
      */
@@ -8729,6 +8737,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         borderNotTakenOver = 0;
         tailOverNode = null;
         if (target == pullLeftOn) {
+            // What of the pull its own top edge cannot give back either stands it lower.
+            nameTheTailNotTaken(source, 0, 0, 0, pullLeft - Math.min(Math.max(0, before), pullLeft));
             before = Math.max(0, before - pullLeft);
         }
         pullLeftOn = null;
@@ -11701,6 +11711,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 : cell.getCTTc().addNewTcPr();
     }
 
+    /**
+     * Names the border below a panel ending a table's composed cell, or a column of a layer stack,
+     * that reaches past the panel's box ({@link #carriedBorder}).
+     *
+     * <p>Word makes the cell's row as tall as the panel and that reach, where the page draws the
+     * border on the panel's edge. The panel's padding below takes what it can, the border then
+     * drawn that much inside the panel's edge, as anywhere. The layout does not say how tall such
+     * a cell's content is against its row, so how much of the rest a taller cell beside it holds
+     * is not known, and the space under the table does not take it. With no cell beside it
+     * nothing holds it: the row and what follows stand the rest lower; with cells beside it, up
+     * to the rest.</p>
+     *
+     * @param content what the cell holds, which the note is about
+     * @param alone   whether the cell is the only one in its row
+     */
+    private void nameTheBorderEndingACell(DocumentNode content, boolean alone) {
+        double reach = takeTheCarriedBorder(carriedBorder);
+        if (reach > TAIL_CLEARANCE) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, content.nodeKind(), layout.pathOf(content),
+                    "in a table's cell, Word draws the border below the panel ending it " + pointsOf(reach)
+                    + "pt past that panel's box, and the row and what follows stand " + (alone ? "" : "up to ")
+                    + "as much lower" + (alone ? "" : " where no cell beside it holds the border"));
+        }
+    }
+
     private void writeCellContent(XWPFTableCell cell, TableGrid.Placement placement, TableNode node)
             throws Exception {
         DocumentTableCell source = placement.cell();
@@ -11723,6 +11758,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 currentCellWidth = previous;
                 composedCellBoxes = outerBoxes;
             }
+            nameTheBorderEndingACell(source.content(), TableGrid.columnCount(node) == 1);
             return;
         }
         List<String> lines = source.lines();
@@ -12173,11 +12209,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // MerchantInvoice's due-date text stood against its card's top without it.
         boolean inAPanel = surfaceBehind != null && panelCell != null;
         com.demcha.compose.document.layout.PlacedNode placedRow = layout.placement(node);
+        // How far the cell reaching furthest past the row's foot does, its hanging line's share and
+        // its card's border's (see below).
+        double rowReach = 0;
         double rowOverhang = 0;
-        // A card's border below the last thing in a cell reaches past the row only by what the
-        // row's room under that cell does not hold, as a hanging line does.
         double rowBorder = 0;
-        double borderAbove = borderBelow;
         // A row's cells are unshaded: inside a panel — its own, where it paints (writePaintedRow), or
         // a container's — it is a table nested in the panel's cell, and shows the panel's through them.
         for (int i = 0; i < node.children().size(); i++) {
@@ -12191,7 +12227,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             leftMarginInCell = placedColumns ? child : null;
             cellHang = -hang;
             cellOverhang = 0;
-            borderBelow = 0;
             try {
                 writeRowCellChild(cell, child);
             } finally {
@@ -12199,15 +12234,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 leftMarginInCell = previousHeld;
                 cellHang = 0;
             }
+            // A cell's last line hanging past its child and a card's border below that child reach
+            // one past the other: the row's room under the cell takes the two together, the line
+            // first. Where the layout does not say, the line is taken to fit and the border to
+            // reach whole, and is named if nothing takes it.
             double roomBelow = roomBelowInItsRow(child, placedRow, node);
-            rowOverhang = Math.max(rowOverhang, cellOverhang - roomBelow);
-            // Where the layout does not say, the border is the row's whole, and named if nothing takes it.
-            rowBorder = Math.max(rowBorder, borderBelow - (Double.isInfinite(roomBelow) ? 0 : roomBelow));
-            borderBelow = 0;
+            boolean told = !Double.isInfinite(roomBelow);
+            double overhang = told ? Math.max(0, cellOverhang - roomBelow) : 0;
+            // What of the border the room does not hold, the card's padding takes first.
+            double border = takeTheCarriedBorder(
+                    Math.max(0, carriedBorder - (told ? Math.max(0, roomBelow - cellOverhang) : 0)));
+            if (overhang + border > rowReach) {
+                rowReach = overhang + border;
+                rowOverhang = overhang;
+                rowBorder = border;
+            }
             cellOverhang = 0;
             applyRowVerticalAlign(cell, node.verticalAlign());
         }
-        borderBelow = Math.max(borderAbove, rowBorder);
+        borderBelow = rowBorder;
         borderBelowCell = null;
         giveTheLastCellItsInk(table, node, placedColumns);
         // Anywhere, a row whose tallest child is one Word holds nothing of in its cell — a
@@ -12226,12 +12271,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // A cell's last line hanging past the row's foot makes Word's row that much taller, and
         // takes as much of the gap under it, as text hanging below a band does (writeLinePair):
         // TimelineMinimal's last contact line, held to its icon, stood 1.8pt below the row, and
-        // the page under the header with it.
-        // A card's border below another cell (borderBelow) makes the row taller too: Word's row
-        // is as tall as the taller of the two, so only what passes the border is added to it.
-        if (rowOverhang - borderBelow > 0) {
-            hangingBelow = Math.max(hangingBelow, rowOverhang - borderBelow);
-        }
+        // the page under the header with it. A card's border below the last thing in a cell makes
+        // the row taller too, after the line: Word's row is as tall as the cell reaching furthest.
+        hangingBelow = Math.max(hangingBelow, rowOverhang);
     }
 
     /**
@@ -12500,6 +12542,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     slotDepth--;
                     currentCellWidth = previous;
                     resumeSpacing = Double.NaN;
+                }
+                if (!layers.isEmpty()) {
+                    nameTheBorderEndingACell(layers.get(layers.size() - 1), columns.size() == 1);
                 }
                 if (cell.getParagraphs().isEmpty()) {
                     cell.addParagraph();
@@ -13850,10 +13895,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // the space out of the page and everything below the table moved up.
         owePendingSpacingAfter(carriedSpacingBefore);
         carriedSpacingBefore = 0;
+        // A pull out of the block above comes out of that gap first, as the page sums them.
         // Text hanging below the band above took that much of the gap above this table, and
         // so did a card's border standing below the card (writePanelPiece): what the gap could
-        // not give of either, and of the paragraph between two tables, stands the table lower.
-        double hangNotTaken = Math.max(0, hangingBelow - Math.max(0, pendingSpacingAfter));
+        // not give of these, and of the paragraph between two tables, stands the table lower.
+        double pullNotGiven = Math.max(0, pullBelow - Math.max(0, pendingSpacingAfter));
+        pendingSpacingAfter = Math.max(0, pendingSpacingAfter - pullBelow);
+        pullBelow = 0;
+        double hangNotTaken = Math.max(0, hangingBelow - pendingSpacingAfter);
         double borderNotTaken = Math.max(0, borderBelow - Math.max(0, pendingSpacingAfter - hangingBelow));
         pendingSpacingAfter = Math.max(0, pendingSpacingAfter - hangingBelow - borderBelow);
         hangingBelow = 0;
@@ -13863,7 +13912,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             separatorNotTaken = Math.max(0, SEPARATOR_POINTS - pendingSpacingAfter);
             separateFromTheTableAbove(document);
         }
-        nameTheTailNotTaken(writing, borderNotTaken, hangNotTaken, separatorNotTaken);
+        nameTheTailNotTaken(writing, borderNotTaken, hangNotTaken, separatorNotTaken, pullNotGiven);
         // With no paragraph before it in the body — the table opens the document or a section,
         // or follows a page break — a hairline one carries it: ClassicInvoice opens with a row
         // under its page padding, and without it stood against the paper's top edge in Word.
@@ -14235,6 +14284,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double previousHangingOverBy = hangingOverBy;
         double previousBorderNotTakenOver = borderNotTakenOver;
         DocumentNode previousTailOverNode = tailOverNode;
+        XWPFParagraph previousPullLeftOn = pullLeftOn;
+        double previousPullLeft = pullLeft;
         double previousInsetLeft = insetLeft;
         double previousInsetRight = insetRight;
         double previousTextShift = cellTextShift;
@@ -14248,6 +14299,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         borderBelow = 0;
         borderBelowCell = null;
         forgetTheHang();
+        pullLeftOn = null;
+        pullLeft = 0;
         // A cell's content is measured from the cell's own edge, which its margins already
         // keep clear of the border; the containers around the table have nothing to add. A row
         // hanging left out of the cell holding it moves this cell's text only (see cellHang).
@@ -14284,16 +14337,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             carriedSpacingBefore = previousCarried;
             pendingSpacingAfter = previousOwed;
             pullBelow = previousPull;
-            // A card's border below the last thing in a cell stands below the row too, where
-            // Word makes the row as tall as its tallest cell; the cell beside it starts clear.
-            // The row's, it is no longer one card's padding to take.
-            borderBelowCell = previousBorderBelow >= borderBelow ? previousBorderBelowCell : null;
-            borderBelow = Math.max(previousBorderBelow, borderBelow);
+            // A card's border below the last thing in a cell reaches past the cell too, where
+            // Word makes the row as tall as its tallest cell: the writer of the cell says how far
+            // past its row, which it alone knows. The cell beside it starts clear.
+            carriedBorder = borderBelow;
+            carriedBorderCell = borderBelow > 0 ? borderBelowCell : null;
+            borderBelowCell = previousBorderBelowCell;
+            borderBelow = previousBorderBelow;
             hangingBelow = previousHangingBelow;
             hangingOver = previousHangingOver;
             hangingOverBy = previousHangingOverBy;
             borderNotTakenOver = previousBorderNotTakenOver;
             tailOverNode = previousTailOverNode;
+            pullLeftOn = previousPullLeftOn;
+            pullLeft = previousPullLeft;
             insetLeft = previousInsetLeft;
             insetRight = previousInsetRight;
             cellTextShift = previousTextShift;
@@ -14411,8 +14468,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             height -= takeTheTailOutOf(height);
             forgetTheHang();
         }
-        // So does a pull out of the paragraph above that the space above it did not give.
+        // So does a pull out of the paragraph above that the space above it did not give, and
+        // what the height cannot give back of it stands what follows lower.
         if (pullLeftOn == para) {
+            nameTheTailNotTaken(node, 0, 0, 0, pullLeft - Math.min(height, pullLeft));
             height = Math.max(0, height - pullLeft);
             pullLeftOn = null;
             pullLeft = 0;
@@ -14438,17 +14497,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Names a hang a paragraph was to take out of its own top edge and never did — nothing of
-     * its own was written above it (applyVerticalSpacing, writeSpacer) — before the next block
-     * takes the hang's place: all of it stands that paragraph lower.
+     * Names a hang, or a pull, a paragraph was to take out of its own top edge and never did —
+     * nothing of its own was written above it (applyVerticalSpacing, writeSpacer) — before the
+     * next block takes its place: all of it stands that paragraph lower.
      */
     private void nameAHangLeftOver() {
-        if (hangingOver != null) {
-            nameTheTailNotTaken(tailOverNode, borderNotTakenOver, hangingOverBy, 0);
-            hangingOver = null;
-            hangingOverBy = 0;
-            borderNotTakenOver = 0;
-            tailOverNode = null;
+        if (hangingOver != null || pullLeftOn != null) {
+            nameTheTailNotTaken(tailOverNode, hangingOver != null ? borderNotTakenOver : 0,
+                    hangingOver != null ? hangingOverBy : 0, 0, pullLeftOn != null ? pullLeft : 0);
+            forgetTheHang();
+            pullLeftOn = null;
+            pullLeft = 0;
         }
     }
 
@@ -14462,7 +14521,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private double takeTheTailOutOf(double room) {
         double hangTaken = Math.min(room, hangingOverBy);
         double borderTaken = Math.min(room - hangTaken, borderNotTakenOver);
-        nameTheTailNotTaken(tailOverNode, borderNotTakenOver - borderTaken, hangingOverBy - hangTaken, 0);
+        nameTheTailNotTaken(tailOverNode, borderNotTakenOver - borderTaken, hangingOverBy - hangTaken, 0, 0);
         return hangTaken + borderTaken;
     }
 
@@ -14486,15 +14545,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *   <li>the paragraph Word needs between two tables, which the page does not have
      *       ({@link #separateFromTheTableAbove}).</li>
      * </ul>
+     * So is a pull of the block above — an edge below zero, which the page sets this block over
+     * that one by — past what the space and the block's own top edge give back: Word sets no block
+     * over another.
      *
      * @param node the block that stands lower, or {@code null} where no block of the writer's is
      */
-    private void nameTheTailNotTaken(DocumentNode node, double border, double hang, double separator) {
+    private void nameTheTailNotTaken(DocumentNode node, double border, double hang, double separator, double pull) {
         if (border > 0 && borderBelowCell != null) {
             border = Math.max(0, border - takeOffTheCellMargin(borderBelowCell, false, border));
             borderBelowCell = null;
         }
-        double all = Math.max(0, border) + Math.max(0, hang) + Math.max(0, separator);
+        double all = Math.max(0, border) + Math.max(0, hang) + Math.max(0, separator) + Math.max(0, pull);
         if (!(all > TAIL_CLEARANCE)) {
             return;
         }
@@ -14508,9 +14570,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (separator > 0) {
             held.add("the paragraph Word keeps between two tables (" + pointsOf(separator) + "pt)");
         }
+        List<String> because = new ArrayList<>(2);
+        if (!held.isEmpty()) {
+            because.add("the space the page leaves above it does not hold " + listed(held));
+        }
+        if (pull > 0) {
+            because.add("the page sets it " + pointsOf(pull) + "pt over the block above it, and Word sets no block "
+                        + "over another");
+        }
         report.add(DocxExportReport.Severity.APPROXIMATED, "space above", node == null ? null : layout.pathOf(node),
-                "it stands " + pointsOf(all) + "pt lower than the page sets it, and what follows with it: the space the "
-                + "page leaves above it does not hold " + listed(held));
+                "it stands " + pointsOf(all) + "pt lower than the page sets it, and what follows with it: "
+                + String.join("; ", because));
     }
 
     private void writePageBreak(XWPFDocument document) {

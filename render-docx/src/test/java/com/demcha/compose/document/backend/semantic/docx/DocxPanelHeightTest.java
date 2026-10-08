@@ -212,7 +212,7 @@ class DocxPanelHeightTest {
     }
 
     @Test
-    void aPanelRuledAboveOnlyOpeningACellKeepsTheHeightItHeld() throws Exception {
+    void aPanelRuledAboveOnlyOpeningACellHoldsItsContentLessTheBorderTakenOverItsHeading() throws Exception {
         // Its one border is taken over its heading, as an outlined panel's top border is: the
         // content's height held is that much less, and nothing more comes off for it.
         XWPFTableCell ruled = panelInARow(1, 0, true);

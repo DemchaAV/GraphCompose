@@ -233,13 +233,17 @@ move nothing.
 
 A negative bottom `margin` or `padding` — a paragraph's, an image's, a barcode's or a rule's —
 pulls the next paragraph up into it the same way: it comes out of the space above that
-paragraph, its own top edge included, even where the two stand in different containers. What
-that space cannot give is not written. Before a table, a page break or the end of a cell it
-comes out of the space owed below instead. Layers that overlap on the page take none of it
+paragraph, its own top edge included, even where the two stand in different containers, and
+so does a panel's negative bottom `margin`. What that space cannot give stands the paragraph
+lower — Word sets no block over another — and is named (`space above`). Before a table it
+comes out of the space above the table the same way; before a page break or the end of a cell,
+out of the space owed below instead. Layers that overlap on the page take none of it
 from one another, as the space between them is measured from their boxes. Text that runs past
 the foot of the block it stands in — a stack's or a shape container's last line, a row cell's
 icon line — comes out of the space above what follows the same way, a stack written as a band
-included.
+included, and what that space cannot give is named (`space above`); a painted panel's last
+line comes out of its padding below first, and a shape container keeps its last line inside
+its outline.
 
 A paragraph's or a list's `lineSpacing` — the gap the page puts between two wrapped lines —
 goes into the line: Word has one line height for a paragraph and no gap between its lines,
@@ -529,18 +533,22 @@ How it lands:
   content, or the block below, that much lower, and the report names it: on the panel for its
   top border, on the block below for its bottom one (`space above`). A shape container's
   borders, its layers centred in it, stay inside its outline. Measured in Word 16 and
-  LibreOffice alike on 2pt borders with no padding and with 1 and 4pt of it, every line stood
-  where the page sets it, or as much lower as the report names: within 0.15pt in Word and
-  0.05pt in LibreOffice.
-- **Height.** Word and LibreOffice read a panel's row's written height as its content's, its
-  margins and both borders round it, so a panel the layout measures is held to the page's
-  height less its padding, and a shape container to its outline's, less its borders and margins.
+  LibreOffice on Windows alike on 2pt borders with no padding and with 1 and 4pt of it, every
+  line stood where the page sets it, or as much lower as the report names: within 0.15pt in
+  Word and 0.05pt in LibreOffice.
+- **Height.** Word and LibreOffice on Windows read a panel's row's written height as its
+  content's, its margins and both borders round it, so a panel the layout measures is held to
+  the page's height less its padding, and a shape container to its outline's, less its borders
+  and margins.
 - **What hangs below.** What a panel's content leaves below itself past where the page ends it
-  — a last line held to an icon, the border of a card ending the panel — comes out of the room
-  the page leaves under that content, then out of the panel's padding below, then out of the
-  space under the panel; the rest is named (`space above`). So is the tenth of a point of the
-  paragraph Word keeps between any two tables, which it would otherwise merge, where the space
-  between them does not take it.
+  — a last line held to an icon, the border of a card ending the panel, which that card's own
+  padding takes first — comes out of the panel's padding below, then out of the space under the
+  panel; the rest is named (`space above`). A card's border ending a row's cell reaches past the
+  row only by what the row's room under that cell does not hold; ending a table's composed cell,
+  whose content the layout does not measure against its row, it is named on the card, its row
+  standing up to that much lower. So is the tenth of a point of the paragraph Word keeps between
+  any two tables, which it would otherwise merge, where the space between them does not take
+  it.
 - **Indent.** In the body the table's `w:tblInd` places its cell's text, the padding in, and
   is written even when it is 0 — a panel bled to the paper's edge by a negative margin its
   padding takes back. Unwritten, Word 16 puts the table's edge on the margin and the text a
@@ -559,8 +567,9 @@ How it lands:
   anywhere else.
 - **Page breaks.** Word breaks no page inside a table cell, so a page break among a
   panel's children closes the panel there and opens it again after the break.
-- **Measured in LibreOffice.** Word has not been measured yet; where it places a nested
-  table differently, a panel inside a panel may sit a few points off.
+- **Measured.** Cards stacked in a row's columns, panels nested in its table, stand where the
+  page sets them in Word 16 and LibreOffice on Windows; a panel inside a panel has not been
+  measured in Word, and may sit a few points off there.
 
 Not representable, and left undone rather than approximated:
 
@@ -1011,9 +1020,10 @@ left or linked are written in the flow as before. A shape beside text in a panel
 that text's paragraph in the cell and laid out in the cell, placed from the cell's text
 column and the paragraph's top, which Word and LibreOffice both measure from the paragraph,
 nested or not; placed from the page's edges instead, Word measured a nested cell's shape from
-the outer cell's top. Word sets a panel's content below its whole top border and ends its row past its whole
-bottom border, where the page strokes both on the panel's edge; what of them reaches past the
-panel's box is taken, or named, as "What a panel keeps and loses" says. The body's
+the outer cell's top. Word sets a panel's content below its whole top border and ends its row past
+its whole bottom border, where the page strokes both on the panel's edge; what
+of them reaches past the panel's box is taken, or named, as "What a panel
+keeps and loses" says. The body's
 shapes stand above the page backgrounds, which LibreOffice stacks together with them. Each of these limits is named in the report:
 
 - A transform is not carried: a rotated or scaled shape is drawn upright at its size, and so

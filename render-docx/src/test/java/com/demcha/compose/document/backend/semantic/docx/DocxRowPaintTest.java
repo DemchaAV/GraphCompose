@@ -106,31 +106,38 @@ class DocxRowPaintTest {
         CTTcBorders outlined = panelCell(outlinedRow).getCTTc().getTcPr().getTcBorders();
         assertThat(List.of(outlined.getTop(), outlined.getLeft(), outlined.getBottom(), outlined.getRight()))
                 .allSatisfy(side -> assertThat(side.xgetColor().getStringValue()).isEqualToIgnoringCase("1A5694"));
-        // Word draws the borders above and below outside the row, where the page takes no room,
-        // and with no padding to take the top one, starts the columns below it.
+        // Word sets the columns below the whole border above, where the page strokes it on the
+        // row's edge: with no padding and no space above to take what reaches past the row's box,
+        // the columns stand that much lower.
         assertThat(outlinedRow.report().bySubject().get("RowNode")).singleElement().satisfies(note -> {
             assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
             assertThat(note.path()).contains("Outlined");
-            assertThat(note.detail()).isEqualTo("written as a panel; its borders above and below are drawn outside "
-                                                + "the panel's row in Word: where no space round the row takes them, "
-                                                + "what follows stands up to 2pt lower than the page sets it; its "
-                                                + "columns stand up to 1pt lower than the page sets them, where neither "
-                                                + "its padding nor the space above it takes its top border");
+            assertThat(note.detail()).isEqualTo("its content stands 1pt lower than the page sets it, and what follows "
+                                                + "up to as much: Word sets it below the whole of its top border, and "
+                                                + "neither the space above it nor its padding takes what of the border "
+                                                + "reaches past the panel's box");
         });
         Exported padded = export(page -> page.addRow(row -> row.stroke(RULE).padding(DocumentInsets.of(4))
                 .addParagraph("Left").addParagraph("Right")));
-        assertThat(padded.report().bySubject().get("RowNode")).extracting(DocxExportReport.Note::detail)
-                .as("its padding takes its top border").singleElement().asString().doesNotContain("its columns");
+        assertThat(padded.report().bySubject()).as("its padding takes its top border").doesNotContainKey("RowNode");
 
+        // The border below reaches past the row's box too: the block below stands that much lower
+        // where neither the space between them nor the row's padding takes it, and says so.
         Exported underlined = export(page -> page.addRow(row -> row.borders(DocumentBorders.bottom(RULE))
-                .addParagraph("Left").addParagraph("Right")));
+                .addParagraph("Left").addParagraph("Right")).addParagraph("After"));
         CTTcBorders bottom = panelCell(underlined).getCTTc().getTcPr().getTcBorders();
         assertThat(bottom.getBottom().xgetColor().getStringValue()).isEqualToIgnoringCase("1A5694");
         assertThat(bottom.isSetTop() && bottom.getTop().getVal() != STBorder.NONE && bottom.getTop().getVal() != STBorder.NIL)
                 .as("no top border").isFalse();
-        assertThat(underlined.report().bySubject()).doesNotContainKey("row paint");
-        assertThat(underlined.report().bySubject().get("RowNode")).extracting(DocxExportReport.Note::detail)
-                .singleElement().asString().endsWith("up to 1pt lower than the page sets it");
+        assertThat(underlined.report().bySubject()).doesNotContainKey("row paint").doesNotContainKey("RowNode");
+        assertThat(underlined.report().bySubject().get("space above")).singleElement()
+                .extracting(DocxExportReport.Note::detail).isEqualTo("it stands 1pt lower than the page sets it, and "
+                        + "what follows with it: the space the page leaves above it does not hold the border Word draws "
+                        + "past the box of the panel above it (1pt)");
+        Exported spaced = export(page -> page.addRow(row -> row.borders(DocumentBorders.bottom(RULE))
+                .addParagraph("Left").addParagraph("Right")).addParagraph(p -> p.text("After")
+                .margin(new DocumentInsets(4, 0, 0, 0))));
+        assertThat(spaced.report().bySubject()).as("the space between them takes it").doesNotContainKey("space above");
     }
 
     @Test

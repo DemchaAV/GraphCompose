@@ -163,17 +163,19 @@ class DocxContainerSpacingTest {
 
     @Test
     void theBordersOfTwoCardsComeOutOfTheSpaceBetweenThem() throws Exception {
-        // Word draws a row's top and bottom borders outside its shading, where the page strokes
-        // them on the card's edge: written whole, the space between two outlined cards came out
-        // their borders wider, and an invoice of three such cards ran onto a second page.
+        // Word draws a card's top and bottom borders past its shading, where the page strokes them
+        // on the card's edge: written whole, the space between two outlined cards came out wider,
+        // and an invoice of three such cards ran onto a second page. Half a border reaches past
+        // the card whatever its padding, the inner half only where the padding does not hold it
+        // (outsideTheRow): with 6pt of padding, half of each 2pt border.
         long filled = spaceBetweenTwoCards(null);
         long outlined = spaceBetweenTwoCards(DocumentStroke.of(DocumentColor.rgb(90, 90, 90), 2));
 
         assertThat(filled).as("filled cards: the section's spacing, less the separator's hairline")
                 .isBetween(12 * 20L - 2, 12 * 20L);
         assertThat(filled - outlined)
-                .as("the second card's top border and the first one's bottom border come out of it")
-                .isEqualTo(4 * 20L);
+                .as("half of the second card's top border and of the first one's bottom border come out of it")
+                .isEqualTo(2 * 20L);
     }
 
     @Test
@@ -290,11 +292,12 @@ class DocxContainerSpacingTest {
     @Test
     void aCardsBottomBorderComesOutOfTheSpaceAboveTheParagraphAfterIt() throws Exception {
         // With no margin to take it from, the border stood below the card and the paragraph
-        // after it landed a border lower than on the page.
+        // after it landed lower than on the page: by half the 2pt border, the 6pt padding holding
+        // its inner half (outsideTheRow). Taking the whole border stood the paragraph a point high.
         long filled = spaceAboveTheParagraphAfterACard(null, 0);
         long outlined = spaceAboveTheParagraphAfterACard(DocumentStroke.of(DocumentColor.rgb(90, 90, 90), 2), 0);
 
-        assertThat(filled - outlined).isEqualTo(2 * 20L);
+        assertThat(filled - outlined).isEqualTo(20L);
     }
 
     @Test
@@ -302,7 +305,7 @@ class DocxContainerSpacingTest {
         long filled = spaceAboveTheParagraphAfterACard(null, 5);
         long outlined = spaceAboveTheParagraphAfterACard(DocumentStroke.of(DocumentColor.rgb(90, 90, 90), 2), 5);
 
-        assertThat(filled - outlined).as("the border, out of the margin; nothing more").isEqualTo(2 * 20L);
+        assertThat(filled - outlined).as("what reaches past the card, out of the margin; nothing more").isEqualTo(20L);
     }
 
     private static long spaceAboveTheParagraphAfterACard(DocumentStroke stroke, double marginBelow) throws Exception {

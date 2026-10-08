@@ -93,6 +93,19 @@ class DocxNodeFieldLedgerTest {
     private static final String PANEL_TRANSLUCENCY = "its translucency, as a panel's, flattened against the colour "
                                                      + "under it, a border's against the panel's fill where it has "
                                                      + "one; any other is written";
+    // Word draws a panel's borders above and below past its box; what the space round it and its
+    // padding do not take stands the content, or the block below, lower, and is reported.
+    private static final String PANEL_BORDERS = "its translucency, as a panel's, flattened against the colour "
+                                                + "under it, a border's against the panel's fill where it has one; "
+                                                + "what of a border above Word draws past the panel's box that "
+                                                + "neither the space above it, its padding nor the room over its "
+                                                + "first line takes, on the panel; below, what neither the space "
+                                                + "below it nor its padding takes, on the block below "
+                                                + "(space above); any other is written";
+    // An edge below zero pulls the next block up; Word sets no block over another.
+    private static final String PULL = "below zero below it, the pull the space under it and the next block's own "
+                                       + "top edge do not give back, on the next block (space above); any other is "
+                                       + "written";
     private static final String RULE_TRANSLUCENCY = "its translucency, as a rule's, flattened against the colour "
                                                     + "under it; drawn, its alpha is written; any other is written";
     private static final String CELL_TRANSLUCENCY = "the translucency of a cell's fill, flattened against the colour "
@@ -105,9 +118,9 @@ class DocxNodeFieldLedgerTest {
                                             + "layers or where a stack's column measures the space round it to its "
                                             + "text, with a padding below zero or a column hanging into it, and "
                                             + "with a margin below zero above or below it or at a side in a cell; "
-                                            + "its translucency, as a panel's, borders above and below, which Word "
-                                            + "draws outside the panel's row, and a top border its padding does not "
-                                            + "take; any other is written, as a panel";
+                                            + "its translucency, as a panel's, and what of a border above or below "
+                                            + "Word draws past the panel's box nothing round it takes, as a "
+                                            + "panel's; any other is written, as a panel";
 
     private static final Map<Class<?>, Map<String, Entry>> NODES = new LinkedHashMap<>();
     private static final Map<String, Entry> OUTPUT_OPTIONS = fields(
@@ -150,8 +163,8 @@ class DocxNodeFieldLedgerTest {
                 "margin:REPORTED:in the chart's note; above and below; below a block a band or a column measures from, written",
                 "padding:REPORTED:in the chart's note; above and below; below a block a band or a column measures from, written");
         node(ContainerNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
-                "margin:WRITTEN", "fillColor:REPORTED:" + PANEL_TRANSLUCENCY, "stroke:REPORTED:" + PANEL_TRANSLUCENCY,
-                "cornerRadius:REPORTED", "borders:REPORTED:" + PANEL_TRANSLUCENCY,
+                "margin:REPORTED:" + PULL, "fillColor:REPORTED:" + PANEL_TRANSLUCENCY, "stroke:REPORTED:" + PANEL_BORDERS,
+                "cornerRadius:REPORTED", "borders:REPORTED:" + PANEL_BORDERS,
                 "anchor:REPORTED:as a layer stack's column, which has no bookmark; in the flow it is bookmarked",
                 "bookmarkOptions:REPORTED", "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
         node(EllipseNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:WRITTEN",
@@ -220,7 +233,7 @@ class DocxNodeFieldLedgerTest {
                 "bookmarkOptions:REPORTED:a title that is not the text Word lists it by, a pair's whole line for "
                 + "a side of one; a level past Word's ninth that shares it with another; the right side's of a "
                 + "pair whose left holds the level",
-                "padding:WRITTEN", "margin:WRITTEN",
+                "padding:REPORTED:" + PULL, "margin:REPORTED:" + PULL,
                 "autoSize:REPORTED:where the layout does not tell the size the page fits the text in the "
                 + "paragraph's style to — no lines read, lines in sizes that do not say which is the "
                 + "paragraph's, or one paragraph added at more than one place — the text written at its "
@@ -245,8 +258,8 @@ class DocxNodeFieldLedgerTest {
         node(com.demcha.compose.document.layout.HorizontalBandContentNode.class, "name:INERT", "key:INERT",
                 "slot:WRITTEN", "child:WRITTEN");
         node(SectionNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
-                "margin:WRITTEN", "fillColor:REPORTED:" + PANEL_TRANSLUCENCY, "stroke:REPORTED:" + PANEL_TRANSLUCENCY,
-                "cornerRadius:REPORTED", "borders:REPORTED:" + PANEL_TRANSLUCENCY,
+                "margin:REPORTED:" + PULL, "fillColor:REPORTED:" + PANEL_TRANSLUCENCY, "stroke:REPORTED:" + PANEL_BORDERS,
+                "cornerRadius:REPORTED", "borders:REPORTED:" + PANEL_BORDERS,
                 "keepTogether:WRITTEN",
                 "anchor:REPORTED:as a layer stack's column, which has no bookmark; in the flow it is bookmarked",
                 "bleed:REPORTED:of a panel the page bleeds, in the flow it pages",

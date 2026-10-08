@@ -190,28 +190,31 @@ class DocxPanelHeightTest {
 
         assertThat(beforeOf(bordered)).as("the room over the heading, less the 1pt border")
                 .isEqualTo(beforeOf(plain) - 20);
-        // The height written is already less the border LibreOffice adds to it; it is also less
-        // the border taken over the heading, which Word draws above the row's height.
-        assertThat(heightOf(outerTableOf(bordered))).as("the row's height, less the border twice")
-                .isEqualTo(heightOf(outerTableOf(plain)) - 20 - 20);
+        // The editors read the height written as the content's, its borders round it: it is less
+        // the border taken over the heading, which the content then holds no more.
+        assertThat(heightOf(outerTableOf(bordered))).as("the content's height, less the border taken over the heading")
+                .isEqualTo(heightOf(outerTableOf(plain)) - 20);
     }
 
     @Test
     void aPaddedPanelOpeningACellKeepsTheSpaceOverItsFirstLine() throws Exception {
-        // Its top margin is wider than its border, which Word then draws inside the margin.
+        // Word sets a cell's content its whole border and then its margin inside the row, the page
+        // its padding inside the panel's edge; with no space above to take the outer half of the
+        // border (outsideTheRow), the padding takes it, and the room over the heading is kept.
         XWPFTableCell bordered = panelInARow(1, 10);
         XWPFTableCell plain = panelInARow(0, 10);
 
         assertThat(beforeOf(bordered)).isEqualTo(beforeOf(plain));
-        // Its margins are half a border narrower top and bottom, its border LibreOffice's
-        // allowance: the height held is the same, nothing more taken off for Word.
+        assertThat(topMarginOf(bordered)).as("the padding, less the whole border").isEqualTo(topMarginOf(plain) - 20);
+        // The editors read a panel's written height as its content's, its margins and borders
+        // round it: the same padding holds the same content, bordered or not.
         assertThat(heightOf(outerTableOf(bordered))).isEqualTo(heightOf(outerTableOf(plain)));
     }
 
     @Test
-    void aPanelRuledAboveOnlyOpeningACellKeepsTheHeightItHeld() throws Exception {
-        // Word draws the one border outside the row's height, where LibreOffice's allowance for it
-        // already took it off; nothing more comes off for it.
+    void aPanelRuledAboveOnlyOpeningACellHoldsItsContentLessTheBorderTakenOverItsHeading() throws Exception {
+        // Its one border is taken over its heading, as an outlined panel's top border is: the
+        // content's height held is that much less, and nothing more comes off for it.
         XWPFTableCell ruled = panelInARow(1, 0, true);
         XWPFTableCell plain = panelInARow(0, 0, false);
 
@@ -264,6 +267,11 @@ class DocxPanelHeightTest {
         XWPFParagraph first = (XWPFParagraph) cell.getBodyElements().get(0);
         var spacing = first.getCTP().getPPr().getSpacing();
         return spacing.isSetBefore() ? ((Number) spacing.getBefore()).longValue() : 0;
+    }
+
+    /** A cell's top margin as written, in twips. */
+    private static long topMarginOf(XWPFTableCell cell) {
+        return ((Number) cell.getCTTc().getTcPr().getTcMar().getTop().getW()).longValue();
     }
 
     /** A table's first row's written height, which the export writes "at least". */

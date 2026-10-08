@@ -57,6 +57,12 @@ import static org.assertj.core.api.Assertions.within;
 class DocxCanvasRoomTest {
 
     private static final DocumentColor INK = DocumentColor.rgb(26, 86, 148);
+    /**
+     * What a line of the default text in the flow is raised into the space above it, in points
+     * ({@link DocxExports#DEFAULT_LINE_RAISE}): the gap Word writes above it is that much less
+     * than the page's.
+     */
+    private static final double RAISE = DocxExports.DEFAULT_LINE_RAISE / 20.0;
 
     @Test
     void whatFollowsACanvasStartsBelowItsRoomNotBelowWhatItWrites() throws Exception {
@@ -66,7 +72,7 @@ class DocxCanvasRoomTest {
 
         assertThat(gapInWord(exported.document(), "Caption", "Below"))
                 .as("the canvas's room under its caption")
-                .isCloseTo(gapOnThePage(exported.layout(), "Caption", "Below"), within(0.1))
+                .isCloseTo(gapOnThePage(exported.layout(), "Caption", "Below") - RAISE, within(0.1))
                 .isGreaterThan(80);
         assertThat(exported.report().bySubject()).doesNotContainKey("CanvasLayerNode");
     }
@@ -84,7 +90,7 @@ class DocxCanvasRoomTest {
         assertThat(gapInWord(exported.document(), "Above", "Caption")).as("its top margin and padding")
                 .isCloseTo(gapOnThePage(exported.layout(), "Above", "Caption"), within(0.1));
         assertThat(gapInWord(exported.document(), "Caption", "Below")).as("its room, padding and margin below")
-                .isCloseTo(gapOnThePage(exported.layout(), "Caption", "Below"), within(0.1));
+                .isCloseTo(gapOnThePage(exported.layout(), "Caption", "Below") - RAISE, within(0.1));
     }
 
     @Test
@@ -96,8 +102,8 @@ class DocxCanvasRoomTest {
                 .add(paragraph("Below")));
 
         assertThat(gapInWord(exported.document(), "Above", "Below"))
-                .isCloseTo(gapOnThePage(exported.layout(), "Above", "Below"), within(0.1))
-                .isCloseTo(80, within(0.1));
+                .isCloseTo(gapOnThePage(exported.layout(), "Above", "Below") - RAISE, within(0.1))
+                .isCloseTo(80 - RAISE, within(0.1));
         assertThat(exported.report().bySubject()).doesNotContainKey("CanvasLayerNode");
     }
 
@@ -112,7 +118,7 @@ class DocxCanvasRoomTest {
                 .add(paragraph("Below")));
 
         assertThat(gapInWord(exported.document(), "Above", "Below"))
-                .isCloseTo(gapOnThePage(exported.layout(), "Above", "Below"), within(0.1));
+                .isCloseTo(gapOnThePage(exported.layout(), "Above", "Below") - RAISE, within(0.1));
     }
 
     @Test
@@ -130,7 +136,7 @@ class DocxCanvasRoomTest {
                         .add(paragraph("Caption")).build(), LayerAlign.TOP_LEFT)));
 
         assertThat(gapInWord(writing.document(), "Caption", "Below"))
-                .isCloseTo(gapOnThePage(writing.layout(), "Caption", "Below"), within(0.1))
+                .isCloseTo(gapOnThePage(writing.layout(), "Caption", "Below") - RAISE, within(0.1))
                 .isGreaterThan(40);
         assertThat(gapInWord(drawing.document(), "Above", "Caption")).as("the canvas only draws, the caption under it")
                 .isCloseTo(gapOnThePage(drawing.layout(), "Above", "Caption"), within(0.1))
@@ -200,7 +206,7 @@ class DocxCanvasRoomTest {
                 .add(paragraph("Below")));
 
         assertThat(gapInWord(exported.document(), "Title", "Below"))
-                .isCloseTo(gapOnThePage(exported.layout(), "Title", "Below"), within(0.1))
+                .isCloseTo(gapOnThePage(exported.layout(), "Title", "Below") - RAISE, within(0.1))
                 .isGreaterThan(100);
     }
 
@@ -280,7 +286,7 @@ class DocxCanvasRoomTest {
                 .add(paragraph("Below")));
 
         assertThat(gapInWord(exported.document(), "Heading", "Caption"))
-                .isCloseTo(gapOnThePage(exported.layout(), "Heading", "Caption"), within(0.1))
+                .isCloseTo(gapOnThePage(exported.layout(), "Heading", "Caption") - RAISE, within(0.1))
                 .isGreaterThan(40);
     }
 
@@ -314,7 +320,7 @@ class DocxCanvasRoomTest {
 
             assertThat(before(caption) + lineOf(caption) + gapInWord(exported.document(), "Caption", "Below"))
                     .as("the outer canvas's height, its caption written at its corner")
-                    .isCloseTo(placed(exported.layout(), "Outer").placementHeight(), within(0.1));
+                    .isCloseTo(placed(exported.layout(), "Outer").placementHeight() - RAISE, within(0.1));
             assertThat(detailOf(exported.report())).isEqualTo("written as its contents; what it writes is written "
                     + "from its corner, one block after another, not where it places it");
         }
@@ -364,9 +370,9 @@ class DocxCanvasRoomTest {
                 .add(paragraph("Below")));
 
         assertThat(gapInWord(inACanvas.document(), "Above", "Below")).as("the outer canvas's room")
-                .isCloseTo(gapOnThePage(inACanvas.layout(), "Above", "Below"), within(0.1));
+                .isCloseTo(gapOnThePage(inACanvas.layout(), "Above", "Below") - RAISE, within(0.1));
         assertThat(gapInWord(inAStack.document(), "Above", "Below")).as("the stack's room")
-                .isCloseTo(gapOnThePage(inAStack.layout(), "Above", "Below"), within(0.1));
+                .isCloseTo(gapOnThePage(inAStack.layout(), "Above", "Below") - RAISE, within(0.1));
     }
 
     @Test

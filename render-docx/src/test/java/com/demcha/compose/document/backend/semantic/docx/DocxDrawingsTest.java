@@ -180,9 +180,10 @@ class DocxDrawingsTest {
                     .isCloseTo(Math.round((above.placementY() - title.placementY() - title.placementHeight()) * 20),
                             org.assertj.core.data.Offset.offset(2L));
             assertThat(twipsAfter(document, "EXPERIENCE") + twipsBefore(document, "Below"))
-                    .as("from the title past the header's foot to the line below, as on the page")
-                    .isCloseTo(Math.round((title.placementY() - below.placementY() - below.placementHeight()) * 20),
-                            org.assertj.core.data.Offset.offset(3L));
+                    .as("from the title past the header's foot to the line below, as on the page, less that"
+                        + " line's raise into it")
+                    .isCloseTo(Math.round((title.placementY() - below.placementY() - below.placementHeight()) * 20)
+                               - DocxExports.DEFAULT_LINE_RAISE, org.assertj.core.data.Offset.offset(3L));
             assertThat(header.placementHeight()).isEqualTo(40);
         }
     }
@@ -217,9 +218,10 @@ class DocxDrawingsTest {
 
             assertThat(document.getDocument().xmlText()).doesNotContain("<wp:inline");
             assertThat(twipsAfter(document, "Above") + twipsBefore(document, "Below"))
-                    .as("the badge's place, held once between the lines around it")
-                    .isCloseTo(Math.round((above.placementY() - below.placementY() - below.placementHeight()) * 20),
-                            org.assertj.core.data.Offset.offset(3L));
+                    .as("the badge's place, held once between the lines around it, less the raise of the"
+                        + " line below into it")
+                    .isCloseTo(Math.round((above.placementY() - below.placementY() - below.placementHeight()) * 20)
+                               - DocxExports.DEFAULT_LINE_RAISE, org.assertj.core.data.Offset.offset(3L));
         }
     }
 

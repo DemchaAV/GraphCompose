@@ -138,7 +138,8 @@ class DocxLineHeightTest {
             XWPFParagraph with = gapped.getParagraphs().get(1);
 
             assertThat(lineTwips(with)).isEqualTo(lineTwips(without) + 4 * 20L);
-            assertThat(before(with)).isEqualTo(before(without) - 4 * 20L);
+            assertThat(before(with)).as("the 10pt above it, less the gap its lines took")
+                    .isEqualTo((10 - 4) * 20L);
         }
     }
 
@@ -234,7 +235,8 @@ class DocxLineHeightTest {
             XWPFParagraph after = document.getParagraphs().stream()
                     .filter(paragraph -> "After".equals(paragraph.getText())).findFirst().orElseThrow();
 
-            assertThat(before(after)).as("the space above it is its own, whole").isEqualTo(10 * 20L);
+            assertThat(before(after)).as("the space above it is its own, whole, less its line's raise into it")
+                    .isEqualTo(10 * 20L - DocxExports.DEFAULT_LINE_RAISE);
         }
     }
 

@@ -42,8 +42,9 @@ class DocxSpaceOnANewPageTest {
                     .isEqualTo(Math.round(EDGE * 20));
             assertThat(spacer.getCTP().getPPr().isSetKeepNext()).as("kept with the row").isTrue();
             assertThat(spacingAfter(paragraphBefore(document, spacer)))
-                    .as("the gap stays at the foot of the page above, the edge does not")
-                    .isEqualTo(Math.round(GAP * 20));
+                    .as("the gap stays at the foot of the page above, the edge does not; with it, what the"
+                        + " line there owes below it for its raise")
+                    .isEqualTo(Math.round(GAP * 20) + DocxExports.DEFAULT_LINE_RAISE);
         }
     }
 
@@ -95,7 +96,8 @@ class DocxSpaceOnANewPageTest {
             XWPFParagraph above = paragraphBefore(document, onlyTable(document));
 
             assertThat(above.getText()).as("no line between them").isNotEmpty();
-            assertThat(spacingAfter(above)).isEqualTo(Math.round((GAP + EDGE) * 20));
+            assertThat(spacingAfter(above)).as("and what that line owes below it for its raise")
+                    .isEqualTo(Math.round((GAP + EDGE) * 20) + DocxExports.DEFAULT_LINE_RAISE);
         }
     }
 

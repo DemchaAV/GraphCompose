@@ -303,7 +303,8 @@ class DocxContainerPaintTest {
             assertThat(DocxTwips.of(lead.getCTP().getPPr().getSpacing().getAfter()))
                     .as("Word has no space above a table, so the paragraph before it holds it")
                     .isEqualTo(9 * 20L);
-            assertThat(DocxTwips.of(after.getCTP().getPPr().getSpacing().getBefore())).isEqualTo(9 * 20L);
+            assertThat(DocxTwips.of(after.getCTP().getPPr().getSpacing().getBefore()))
+                    .isEqualTo(9 * 20L - DocxExports.DEFAULT_LINE_RAISE);
             CTPPr properties = after.getCTP().getPPr();
             assertThat(properties.isSetShd()).as("the paint ends where the card ends").isFalse();
         }

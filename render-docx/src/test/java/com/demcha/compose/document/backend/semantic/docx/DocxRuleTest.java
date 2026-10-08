@@ -33,6 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DocxRuleTest {
 
     private static final DocumentColor ACCENT = DocumentColor.rgb(26, 86, 148);
+    /** What the default text's line under a rule is raised into the space above it. */
+    private static final long RAISE = DocxExports.DEFAULT_LINE_RAISE;
 
     @Test
     void aFillLineIsAParagraphBorderAcrossTheWidth() throws Exception {
@@ -89,7 +91,7 @@ class DocxRuleTest {
             CTPPr below = document.getParagraphs().get(1).getCTP().getPPr();
 
             assertThat(DocxTwips.of(rule.getSpacing().getLine())).isEqualTo(110L);
-            assertThat(DocxTwips.of(below.getSpacing().getBefore())).isEqualTo(110L);
+            assertThat(DocxTwips.of(below.getSpacing().getBefore())).isEqualTo(110L - RAISE);
         }
     }
 
@@ -262,7 +264,7 @@ class DocxRuleTest {
             CTPPr after = document.getParagraphs().get(1).getCTP().getPPr();
 
             // Box 1pt; Word takes 0.1 + 3: 2.1pt comes off the 10pt.
-            assertThat(DocxTwips.of(after.getSpacing().getBefore())).isEqualTo(158L);
+            assertThat(DocxTwips.of(after.getSpacing().getBefore())).isEqualTo(158L - RAISE);
         }
     }
 

@@ -39,6 +39,8 @@ class DocxPortraitTest {
 
     private static final double PHOTO = 123.8;
     private static final double RING = 1.6;
+    /** What the default text's line under the frame is raised into the space above it. */
+    private static final long RAISE = DocxExports.DEFAULT_LINE_RAISE;
 
     @Test
     void aPhotoInARingWiderThanItsColumnKeepsItsSize() throws Exception {
@@ -80,7 +82,7 @@ class DocxPortraitTest {
 
             assertThat(beforeOf(picture)).isEqualTo(Math.round((25 + gaps[0]) * 20));
             assertThat(beforeOf(paragraphs.get(paragraphs.indexOf(picture) + 1)))
-                    .isEqualTo(Math.round((gaps[1] + 22) * 20));
+                    .isEqualTo(Math.round((gaps[1] + 22) * 20) - RAISE);
         }
     }
 
@@ -94,7 +96,8 @@ class DocxPortraitTest {
         try (XWPFDocument document = inSidebar(frame)) {
             List<XWPFParagraph> paragraphs = sidebar(document);
             XWPFParagraph picture = pictureIn(paragraphs);
-            long below = beforeOf(paragraphs.get(paragraphs.indexOf(picture) + 1)) - 22 * 20L;
+            // Less the 22pt above the heading under it, raised into that space.
+            long below = beforeOf(paragraphs.get(paragraphs.indexOf(picture) + 1)) + RAISE - 22 * 20L;
 
             assertThat(beforeOf(picture) - 25 * 20L + 40 * 20L + below)
                     .as("the space above the picture, the picture and the space under it: the frame's 60pt")
@@ -118,7 +121,7 @@ class DocxPortraitTest {
             assertThat(beforeOf(picture)).as("none of the frame above the picture").isEqualTo(25 * 20L);
             assertThat(beforeOf(paragraphs.get(paragraphs.indexOf(picture) + 1)))
                     .as("all of what it holds under it")
-                    .isEqualTo(Math.round((gaps[0] + gaps[1] + 22) * 20));
+                    .isEqualTo(Math.round((gaps[0] + gaps[1] + 22) * 20) - RAISE);
         }
     }
 
@@ -148,7 +151,7 @@ class DocxPortraitTest {
             assertThat(beforeOf(photo)).as("the sidebar's 25pt and the ring above the photo")
                     .isEqualTo(Math.round((25 + RING) * 20));
             assertThat(beforeOf(heading)).as("the ring below the photo, and the heading's 22pt")
-                    .isEqualTo(Math.round((RING + 22) * 20));
+                    .isEqualTo(Math.round((RING + 22) * 20) - RAISE);
         }
     }
 

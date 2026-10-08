@@ -33,6 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DocxContainerSpacingTest {
 
     private static final long NINE_POINTS = 9 * 20L;
+    /** What a line of the default text is raised into the space above it, and owes below. */
+    private static final long RAISE = DocxExports.DEFAULT_LINE_RAISE;
 
     @Test
     void aSectionsSpacingStandsBetweenEachTwoOfItsChildren() throws Exception {
@@ -47,8 +49,9 @@ class DocxContainerSpacingTest {
             assertThat(paragraphs).extracting(XWPFParagraph::getText)
                     .containsExactly("Contact", "Skills", "Languages");
             assertThat(before(paragraphs.get(0))).as("nothing above the first child").isZero();
-            assertThat(before(paragraphs.get(1))).isEqualTo(NINE_POINTS);
-            assertThat(before(paragraphs.get(2))).isEqualTo(NINE_POINTS);
+            assertThat(before(paragraphs.get(1))).isEqualTo(NINE_POINTS - RAISE);
+            assertThat(before(paragraphs.get(2))).as("raised as far as the line above it was")
+                    .isEqualTo(NINE_POINTS);
         }
     }
 
@@ -78,7 +81,7 @@ class DocxContainerSpacingTest {
             List<XWPFParagraph> paragraphs = written(cell.getParagraphs());
 
             assertThat(paragraphs).extracting(XWPFParagraph::getText).containsExactly("First", "Second");
-            assertThat(before(paragraphs.get(1))).isEqualTo(NINE_POINTS);
+            assertThat(before(paragraphs.get(1))).isEqualTo(NINE_POINTS - RAISE);
         }
     }
 
@@ -95,7 +98,7 @@ class DocxContainerSpacingTest {
             List<XWPFParagraph> paragraphs = written(document.getParagraphs());
 
             assertThat(after(paragraphs.get(0))).isZero();
-            assertThat(before(paragraphs.get(1))).isEqualTo(NINE_POINTS);
+            assertThat(before(paragraphs.get(1))).isEqualTo(NINE_POINTS - RAISE);
         }
     }
 
@@ -117,7 +120,7 @@ class DocxContainerSpacingTest {
             assertThat(spacing.getLineRule().toString()).isEqualTo("exact");
             assertThat(DocxTwips.of(spacing.getLine())).as("a tenth of a point").isEqualTo(2L);
             assertThat(DocxTwips.of(spacing.getLine()) + before(all.get(2)))
-                    .as("the hairline and the space above the next entry, the spacer's height").isEqualTo(90L);
+                    .as("the hairline and the space above the next entry, the spacer's height").isEqualTo(90L - RAISE);
         }
     }
 
@@ -137,7 +140,7 @@ class DocxContainerSpacingTest {
             assertThat(spacer.getText()).isEmpty();
             assertThat(before(spacer) + DocxTwips.of(spacer.getCTP().getPPr().getSpacing().getLine()) + before(all.get(2)))
                     .as("the section's spacing either side of the spacer, its hairline included")
-                    .isEqualTo(2 * NINE_POINTS);
+                    .isEqualTo(2 * NINE_POINTS - RAISE);
         }
     }
 
@@ -157,7 +160,7 @@ class DocxContainerSpacingTest {
 
             assertThat(cell.getParagraphs()).extracting(XWPFParagraph::getText).containsExactly("", "Title");
             assertThat(DocxTwips.of(spacer.getCTP().getPPr().getSpacing().getLine()) + before(cell.getParagraphs().get(1)))
-                    .as("the card's spacing under the anchor, its hairline included").isEqualTo(NINE_POINTS);
+                    .as("the card's spacing under the anchor, its hairline included").isEqualTo(NINE_POINTS - RAISE);
         }
     }
 
@@ -214,7 +217,7 @@ class DocxContainerSpacingTest {
             assertThat(content.get(content.indexOf(spacer) - 1)).as("right under the table")
                     .isInstanceOf(XWPFTable.class);
             assertThat(DocxTwips.of(spacer.getCTP().getPPr().getSpacing().getLine()) + after(spacer) + before(after))
-                    .as("the hairline and the space below it, the spacer's height").isEqualTo(200L);
+                    .as("the hairline and the space below it, the spacer's height").isEqualTo(200L - RAISE);
         }
     }
 
@@ -273,7 +276,7 @@ class DocxContainerSpacingTest {
             // The row stands at the top of the 20pt outline, which holds 7.05pt more under it.
             assertThat(before(paragraph(document, "Java")))
                     .as("the outline under its row, its bottom padding and margin, above the paragraph after it")
-                    .isEqualTo(8 * 20L + Math.round(7.05 * 20));
+                    .isEqualTo(8 * 20L + Math.round(7.05 * 20) - RAISE);
         }
     }
 

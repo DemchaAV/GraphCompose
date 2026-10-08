@@ -71,7 +71,7 @@ class DocxSpaceAboveOnANewPageTest {
                     .isEqualTo(Math.round(GAP * 20) + HAIRLINE);
             assertThat(before(spacing(paragraphWith(document, "After"))))
                     .as("the gap below it, less the hairline the spacer has not the height for")
-                    .isEqualTo(Math.round(GAP * 20) - HAIRLINE);
+                    .isEqualTo(Math.round(GAP * 20) - HAIRLINE - DocxExports.DEFAULT_LINE_RAISE);
         }
     }
 
@@ -266,7 +266,8 @@ class DocxSpaceAboveOnANewPageTest {
             XWPFParagraph heading = paragraphWith(document, "Heading");
 
             assertThat(document.getParagraphs()).as("the spacer and the heading, no line between them").hasSize(2);
-            assertThat(before(spacing(heading))).isEqualTo(owed(CONTENT - 10 + GAP + PADDING));
+            assertThat(before(spacing(heading))).as("raised into it, on the page of the block before it")
+                    .isEqualTo(owed(CONTENT - 10 + GAP + PADDING) - DocxExports.DEFAULT_LINE_RAISE);
         }
     }
 

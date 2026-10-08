@@ -673,7 +673,8 @@ final class DocxLayoutMetrics {
     /**
      * Whether a node's line height is other than its tallest laid-out line ({@link #lineHeight}):
      * the page's distance between its lines, or a line without its prefix. The paragraph, set at
-     * that one height, can then come out shorter than the page's; at the tallest line it cannot.
+     * that one height, can then come out shorter than the page's; at the tallest line, only by its
+     * rounding to the twip.
      *
      * @param node any node that lays its text out as paragraph lines
      * @return whether the height is not the tallest line's
@@ -736,7 +737,7 @@ final class DocxLayoutMetrics {
             // the gap Word is given on top (applyLineGap) — keeps the first and last lines where
             // the page has them, never below the tallest written line, which would clip it. Nor
             // above the lines' mean height: the paragraph would come out taller than the page,
-            // and a surplus only comes out of the space below it (oweWhatTheLinesFallShort).
+            // and a surplus only comes out of the space below it (settleTheLinesWithThePage).
             if (byPitch && ownWay && pairs > 0 && textLines > 0) {
                 double pitch = pitches / pairs - Math.max(0, lineGap(node));
                 text = Math.max(text, Math.min(pitch, heights / textLines));

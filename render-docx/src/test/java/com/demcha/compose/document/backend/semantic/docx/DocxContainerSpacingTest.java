@@ -162,6 +162,23 @@ class DocxContainerSpacingTest {
     }
 
     @Test
+    void aCardsPaddingBelowTakesTheHairlineOfASpacerOfNoHeightEndingIt() throws Exception {
+        // Nothing owed below the spacer in the card: the card's padding below takes the tenth,
+        // as it takes a line hanging below its last block.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addSection("Card", card -> card
+                        .fillColor(DocumentColor.rgb(240, 240, 240))
+                        .padding(DocumentInsets.of(6))
+                        .addParagraph("Title")
+                        .addSpacer(spacer -> spacer.name("Anchor").width(200).height(0))))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(DocxTwips.of(cell.getCTTc().getTcPr().getTcMar().getBottom().getW()))
+                    .as("its 6pt padding less the hairline").isEqualTo(6 * 20 - 2);
+        }
+    }
+
+    @Test
     void aSpacerOverATableHoldsTheRestOfItsHeightBelowItsHairline() throws Exception {
         // A table has no space above it in Word, so the spacer writes the rest of its height
         // below its own line; nothing stands between them to take the hairline out again.

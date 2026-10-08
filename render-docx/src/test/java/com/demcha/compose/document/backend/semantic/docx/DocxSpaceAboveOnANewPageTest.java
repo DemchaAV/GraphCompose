@@ -69,6 +69,9 @@ class DocxSpaceAboveOnANewPageTest {
             assertThat(spacing.getLineRule()).isEqualTo(STLineSpacingRule.EXACT);
             assertThat(DocxTwips.of(spacing.getLine())).as("the gap, and the hairline's height")
                     .isEqualTo(Math.round(GAP * 20) + HAIRLINE);
+            assertThat(before(spacing(paragraphWith(document, "After"))))
+                    .as("the gap below it, less the hairline the spacer has not the height for")
+                    .isEqualTo(Math.round(GAP * 20) - HAIRLINE);
         }
     }
 

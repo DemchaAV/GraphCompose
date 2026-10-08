@@ -72,44 +72,86 @@ class DocxLineSurplusTest {
                 .addParagraph(DocxLineSurplusTest::mixed)
                 .addParagraph(p -> p.name("After").text("After")));
 
+        assertThat(surplus(exported)).as("the premise: Word's lines pass the page's").isGreaterThan(1);
         assertThat(exported.pages().get("After")).as("the premise: the layout opens a page with it")
                 .isGreaterThan(exported.pages().get("Mixed"));
         assertThat(exported.report().bySubject().get("space above")).isNull();
     }
 
     @Test
-    void aParagraphOfOneSizeLeavesTheSpaceBelowAlone() throws Exception {
-        Exported exported = export(page -> page.spacing(20)
-                .addParagraph(p -> p.name("Even").inlineText("Lead " + "small text that wraps onto a second line ".repeat(3), SMALL))
-                .addParagraph("After"));
-        double line = line(paragraph(exported.document(), "Lead"));
+    void whatABlockEndingAPageNeverTookIsNamedThere() throws Exception {
+        // A list item takes nothing out of a top edge of its own: the paragraph's hang over it
+        // stands it lower on its page, which the paragraph opening the next page leaves named.
+        double mixed = export(page -> page.addParagraph(DocxLineSurplusTest::mixed)).heights().get("Mixed");
+        double points = export(page -> page.addList(list -> list.name("Points").bullet().items("Point")))
+                .heights().get("Points");
+        Exported exported = export(page -> page.spacer(0, CONTENT - mixed - points - 2)
+                .addParagraph(DocxLineSurplusTest::mixed)
+                .addList(list -> list.name("Points").bullet().items("Point"))
+                .addParagraph(p -> p.name("After").text("After")));
 
-        assertThat(exported.heights().get("Even")).as("the premise: it wraps").isGreaterThan(1.5 * line);
-        assertThat(before(paragraph(exported.document(), "After"))).isEqualTo(400);
+        assertThat(exported.pages().get("After")).as("the premise: the layout opens a page with it")
+                .isGreaterThan(exported.pages().get("Points"));
+        assertThat(exported.report().bySubject().get("space above")).singleElement()
+                .satisfies(note -> assertThat(note.path()).contains("Points"));
+    }
+
+    @Test
+    void theSpaceBelowAParagraphOfOneSizeTakesWhatItsRoundingAdds() throws Exception {
+        // Rounded up to the twip over enough lines to pass the page by a tenth of a point and
+        // more: Word sets the lines as written, OrangeOps' achievement lines among them.
+        Exported exported = rounded(surplus -> surplus > 0.15);
+        double line = line(paragraph(exported.document(), "rounded"));
+        double page = exported.heights().get("Rounded");
+        double surplus = Math.round(page / line) * line - page;
+
+        assertThat(before(paragraph(exported.document(), "After")) / 20.0).as("the gap less what the lines pass the page by")
+                .isCloseTo(20 - surplus, within(0.05));
+        assertThat(exported.report().bySubject().get("space above")).isNull();
     }
 
     @Test
     void aParagraphWrittenAtItsTallestLineOwesNothingForItsRounding() throws Exception {
         // Rounded down to the twip, over enough lines to fall a tenth of a point and more short of
-        // the page: Word sets lines on a grid of its own, and owed, that rounding stood
-        // ModernInvoice's lines a step of it lower.
+        // the page: owed, that rounding stood ModernInvoice's lines a step of Word's grid lower.
+        Exported exported = rounded(surplus -> surplus < -0.15);
+
+        assertThat(before(paragraph(exported.document(), "After"))).as("the gap alone").isEqualTo(400);
+    }
+
+    @Test
+    void aSpacerOfNoHeightWithNoSpaceBelowItIsNamed() throws Exception {
+        Exported exported = export(page -> page.addParagraph("Above")
+                .addSpacer(spacer -> spacer.name("Anchor").width(100).height(0))
+                .addParagraph(p -> p.name("After").text("After")));
+
+        assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
+            assertThat(note.path()).contains("After");
+            assertThat(note.detail()).isEqualTo("it stands 0.1pt lower than the page sets it, and what follows with "
+                    + "it: the space the page leaves above it does not hold the line hanging below the block above "
+                    + "it (0.1pt)");
+        });
+    }
+
+    /**
+     * A one-size paragraph of many lines, followed 20pt below by another, at the first type size
+     * from 8 to 12pt whose lines, written at the twip, pass the page's by what {@code passing}
+     * accepts.
+     */
+    private static Exported rounded(java.util.function.DoublePredicate passing) throws Exception {
         String text = "rounded text that wraps onto many lines ".repeat(20);
         for (double size = 8; size < 12; size += 0.05) {
             DocumentTextStyle style = DocumentTextStyle.builder().size(size).build();
             Exported exported = export(page -> page.spacing(20)
                     .addParagraph(p -> p.name("Rounded").inlineText(text, style))
                     .addParagraph("After"));
-            XWPFParagraph rounded = paragraph(exported.document(), "rounded");
-            double line = line(rounded);
+            double line = line(paragraph(exported.document(), "rounded"));
             double page = exported.heights().get("Rounded");
-            int lines = (int) Math.round(page / line);
-            double shortBy = page - lines * line;
-            if (shortBy > 0.15) {
-                assertThat(before(paragraph(exported.document(), "After"))).as("the gap alone").isEqualTo(400);
-                return;
+            if (passing.test(Math.round(page / line) * line - page)) {
+                return exported;
             }
         }
-        throw new AssertionError("the premise: no size from 8 to 12pt rounds its lines a tenth of a point short");
+        throw new AssertionError("the premise: no size from 8 to 12pt rounds its lines that far off the page");
     }
 
     private static void mixed(ParagraphBuilder paragraph) {

@@ -34,6 +34,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DocxOverlayBandTest {
 
     private static final double BADGE = 80;
+    /** What a line of the default text in the flow is raised into the space above it. */
+    private static final long RAISE = DocxExports.DEFAULT_LINE_RAISE;
 
     @Test
     void aBadgeOverItsPlaceHolderIsWrittenWhereThePageDrawsIt() throws Exception {
@@ -51,7 +53,7 @@ class DocxOverlayBandTest {
             assertThat(before(paragraphs.get(1))).as("the initials sit where the ring centres them")
                     .isCloseTo(Math.round((6 + above) * 20), org.assertj.core.data.Offset.offset(2L));
             assertThat(before(paragraphs.get(2))).as("and the badge keeps its height below them")
-                    .isCloseTo(Math.round((below + 12) * 20), org.assertj.core.data.Offset.offset(2L));
+                    .isCloseTo(Math.round((below + 12) * 20) - RAISE, org.assertj.core.data.Offset.offset(2L));
         }
     }
 
@@ -82,7 +84,7 @@ class DocxOverlayBandTest {
             assertThat(before(paragraphs.get(1))).as("the initials where the ring centres them")
                     .isCloseTo(Math.round((6 + above) * 20), org.assertj.core.data.Offset.offset(2L));
             assertThat(before(paragraphs.get(2))).as("and the badge's height below them")
-                    .isCloseTo(Math.round(below * 20), org.assertj.core.data.Offset.offset(2L));
+                    .isCloseTo(Math.round(below * 20) - RAISE, org.assertj.core.data.Offset.offset(2L));
         }
     }
 
@@ -174,7 +176,7 @@ class DocxOverlayBandTest {
             XWPFParagraph below = document.getParagraphs().stream()
                     .filter(paragraph -> "Below".equals(paragraph.getText())).findFirst().orElseThrow();
 
-            assertThat(before(below)).isEqualTo(50L * 20);
+            assertThat(before(below)).isEqualTo(50L * 20 - RAISE);
         }
     }
 
@@ -241,7 +243,7 @@ class DocxOverlayBandTest {
             assertThat(before(initial)).as("written from where the ring sets the first initial")
                     .isCloseTo(Math.round(above * 20), org.assertj.core.data.Offset.offset(2L));
             assertThat(before(after)).as("and the ring's foot as far under the last as the page has it")
-                    .isCloseTo(Math.round((below + gap) * 20), org.assertj.core.data.Offset.offset(2L));
+                    .isCloseTo(Math.round((below + gap) * 20) - RAISE, org.assertj.core.data.Offset.offset(2L));
         }
     }
 
@@ -291,7 +293,7 @@ class DocxOverlayBandTest {
             XWPFParagraph below = document.getParagraphs().stream()
                     .filter(paragraph -> "Below".equals(paragraph.getText())).findFirst().orElseThrow();
 
-            assertThat(before(below)).isEqualTo((10 - 4) * 20L);
+            assertThat(before(below)).isEqualTo((10 - 4) * 20L - RAISE);
         }
     }
 

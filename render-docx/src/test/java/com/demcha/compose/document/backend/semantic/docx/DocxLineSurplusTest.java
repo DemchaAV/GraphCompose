@@ -37,6 +37,8 @@ class DocxLineSurplusTest {
 
     /** The page's content: 400 x 600 with a 20pt margin. */
     private static final double CONTENT = 560;
+    /** What the default text's line after the paragraph is raised into the space above it, in points. */
+    private static final double RAISE = DocxExports.DEFAULT_LINE_RAISE / 20.0;
 
     @Test
     void theSpaceBelowAParagraphWordSetsTallerTakesTheDifference() throws Exception {
@@ -45,7 +47,7 @@ class DocxLineSurplusTest {
 
         assertThat(surplus).as("the premise: Word's lines at the tallest pass the page's").isGreaterThan(1);
         assertThat(before(paragraph(exported.document(), "After")) / 20.0).as("the gap less what Word's lines pass the page by")
-                .isCloseTo(20 - surplus, within(0.05));
+                .isCloseTo(20 - surplus - RAISE, within(0.05));
         assertThat(exported.report().bySubject().get("space above")).isNull();
     }
 
@@ -106,7 +108,7 @@ class DocxLineSurplusTest {
         double surplus = Math.round(page / line) * line - page;
 
         assertThat(before(paragraph(exported.document(), "After")) / 20.0).as("the gap less what the lines pass the page by")
-                .isCloseTo(20 - surplus, within(0.05));
+                .isCloseTo(20 - surplus - RAISE, within(0.05));
         assertThat(exported.report().bySubject().get("space above")).isNull();
     }
 
@@ -116,7 +118,8 @@ class DocxLineSurplusTest {
         // the page: owed, that rounding stood ModernInvoice's lines a step of Word's grid lower.
         Exported exported = rounded(surplus -> surplus < -0.15);
 
-        assertThat(before(paragraph(exported.document(), "After"))).as("the gap alone").isEqualTo(400);
+        assertThat(before(paragraph(exported.document(), "After"))).as("the gap alone")
+                .isEqualTo(400 - DocxExports.DEFAULT_LINE_RAISE);
     }
 
     @Test

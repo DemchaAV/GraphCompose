@@ -400,7 +400,8 @@ class DocxLinePairTest {
             XWPFParagraph after = document.getParagraphs().stream()
                     .filter(paragraph -> "After".equals(paragraph.getText())).findFirst().orElseThrow();
 
-            assertThat(before(after)).as("a new page: its 10pt whole").isEqualTo(10L * 20);
+            assertThat(before(after)).as("a new page: its 10pt whole, less its line's raise into it")
+                    .isEqualTo(10L * 20 - DocxExports.DEFAULT_LINE_RAISE);
         }
     }
 
@@ -415,7 +416,8 @@ class DocxLinePairTest {
             XWPFParagraph beside = document.getTables().get(0).getRow(0).getCell(1).getParagraphs().stream()
                     .filter(paragraph -> "Beside".equals(paragraph.getText())).findFirst().orElseThrow();
 
-            assertThat(before(beside)).as("its 10pt whole").isEqualTo(10L * 20);
+            assertThat(before(beside)).as("its 10pt whole, less its line's raise into it")
+                    .isEqualTo(10L * 20 - DocxExports.DEFAULT_LINE_RAISE);
         }
     }
 

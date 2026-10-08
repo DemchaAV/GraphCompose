@@ -47,6 +47,8 @@ class DocxPanelTailTest {
     private static final SvgIcon ICON = SvgIcon.parse("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>"
             + "<circle cx='12' cy='12' r='10' fill='#1A5694'/></svg>");
     private static final DocumentTextStyle SMALL = DocumentTextStyle.DEFAULT.withSize(7);
+    /** What the default text's line after a panel is raised into the space above it. */
+    private static final long RAISE = DocxExports.DEFAULT_LINE_RAISE;
 
     @Test
     void aPaddedCardsBorderBelowComesOutOfItsPaddingWhereNoSpaceTakesIt() throws Exception {
@@ -68,7 +70,7 @@ class DocxPanelTailTest {
 
         assertThat(exported.report().bySubject()).doesNotContainKey("space above");
         assertThat(bottomMargin(panel(exported))).as("its padding, less half the border").isEqualTo(3 * 20);
-        assertThat(before(paragraph(exported, "After"))).as("the gap, less half the border").isEqualTo(9 * 20);
+        assertThat(before(paragraph(exported, "After"))).as("the gap, less half the border").isEqualTo(9 * 20 - RAISE);
     }
 
     @Test
@@ -339,7 +341,7 @@ class DocxPanelTailTest {
 
         assertThat(down).as("the line reaches below the page's").isPositive();
         assertThat(bottomMargin(panel(exported))).as("the padding less the reach").isEqualTo(5 * 20 - down);
-        assertThat(before(paragraph(exported, "After"))).as("the whole gap").isEqualTo(10 * 20);
+        assertThat(before(paragraph(exported, "After"))).as("the whole gap").isEqualTo(10 * 20 - RAISE);
     }
 
     @Test
@@ -351,7 +353,7 @@ class DocxPanelTailTest {
         long down = reachBelow(exported, "Iconed");
 
         assertThat(down).as("the line reaches below the page's").isPositive();
-        assertThat(before(paragraph(exported, "After"))).as("the gap, less the reach").isEqualTo(10 * 20 - down);
+        assertThat(before(paragraph(exported, "After"))).as("the gap, less the reach").isEqualTo(10 * 20 - down - RAISE);
         assertThat(exported.report().bySubject()).doesNotContainKey("space above");
     }
 
@@ -446,7 +448,7 @@ class DocxPanelTailTest {
                 .addParagraph(p -> p.name("After").text("After")));
 
         assertThat(bottomMargin(panel(exported))).isEqualTo(8 * 20);
-        assertThat(before(paragraph(exported, "After"))).as("the gap, less the pull").isEqualTo(6 * 20);
+        assertThat(before(paragraph(exported, "After"))).as("the gap, less the pull").isEqualTo(6 * 20 - RAISE);
         assertThat(exported.report().bySubject()).doesNotContainKey("space above");
     }
 

@@ -97,9 +97,10 @@ class DocxAdjacentTablesTest {
             XWPFParagraph title = document.getParagraphs().get(0);
             var spacing = title.getCTP().getPPr().getSpacing();
 
-            assertThat(spacing == null || !spacing.isSetAfter())
-                    .as("the card's bottom padding is below its table, not between its title and the table")
-                    .isTrue();
+            assertThat(spacing != null && spacing.isSetAfter() ? DocxTwips.of(spacing.getAfter()) : 0)
+                    .as("the card's bottom padding is below its table, not between its title and the table:"
+                        + " only what the title's line owes below it for its raise")
+                    .isEqualTo(DocxExports.DEFAULT_LINE_RAISE);
         }
     }
 

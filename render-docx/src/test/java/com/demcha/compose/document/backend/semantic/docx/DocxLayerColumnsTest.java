@@ -35,6 +35,8 @@ class DocxLayerColumnsTest {
     private static final double MARGIN = 20;
     private static final double SIDEBAR = 120;
     private static final double MAIN = PAGE_WIDTH - 2 * MARGIN - SIDEBAR;
+    /** What a line of the default text in a column is raised into the space above it. */
+    private static final long RAISE = DocxExports.DEFAULT_LINE_RAISE;
     /** A paragraph long enough to fill its column, so the stack is as wide as the page's. */
     private static final String LONG = "Led the delivery of a document platform across three teams, "
             + "from the first prototype to the release that replaced the old reporting stack.";
@@ -65,6 +67,97 @@ class DocxLayerColumnsTest {
     }
 
     @Test
+    void aLaterLayerStandsBelowTheLineAboveItAsFarAsThatLineWasRaised() throws Exception {
+        // The first layer's line, Spectral under 20pt of space, is moved up into that space and
+        // owes as much below it. The later layer measures the gap to itself from the page, where
+        // that line stood lower, so it takes the raise back with the gap.
+        com.demcha.compose.document.style.DocumentTextStyle spectral = com.demcha.compose.document.style
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.SPECTRAL).size(30).build();
+        com.demcha.compose.document.style.DocumentTextStyle lato = com.demcha.compose.document.style
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.LATO).size(10).build();
+        try (Export export = export(stack -> stack
+                .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addParagraph(p -> p.name("Title").text("Title")
+                        .textStyle(spectral).margin(DocumentInsets.top(20)))), LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", SIDEBAR, 0, main -> main
+                        .addSpacer(spacer -> spacer.name("TitlePlace").width(100).height(80))
+                        .addParagraph(p -> p.name("Role").text("Engineer").textStyle(lato))), LayerAlign.TOP_LEFT))) {
+            XWPFTableCell main = export.document().getTables().get(0).getRow(0).getCell(1);
+            XWPFParagraph title = main.getParagraphs().get(0);
+            double line = org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT
+                    .equals(title.getCTP().getPPr().getSpacing().getLineRule())
+                    ? DocxTwips.of(title.getCTP().getPPr().getSpacing().getLine()) / 20.0 : Double.NaN;
+            double raise = 0.8 * line - 1.059 * 30;
+            PlacedNode placedTitle = export.placed("Title");
+            PlacedNode role = export.placed("Role");
+            double gap = placedTitle.placementY() - (role.placementY() + role.placementHeight());
+
+            assertThat(main.getParagraphs()).extracting(XWPFParagraph::getText).containsExactly("Title", "Engineer");
+            assertThat(spacingBefore(title)).as("the premise: the title raised into the space above it")
+                    .isCloseTo(Math.round((20 - raise) * 20), org.assertj.core.data.Offset.offset(1L));
+            assertThat(spacingBefore(main.getParagraphs().get(1)))
+                    .isCloseTo(Math.round((gap + raise) * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
+    void aLaterLayerThatWritesNothingLeavesTheRaiseOwedInTheCell() throws Exception {
+        // The later layer only holds the title's place: written of it is nothing, and the raised
+        // title still owes below it what it was raised by, at the cell's end.
+        com.demcha.compose.document.style.DocumentTextStyle spectral = com.demcha.compose.document.style
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.SPECTRAL).size(30).build();
+        try (Export export = export(stack -> stack
+                .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addParagraph(p -> p.name("Title").text("Title")
+                        .textStyle(spectral).margin(DocumentInsets.top(20)))), LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", SIDEBAR, 0, main -> main
+                        .addSpacer(spacer -> spacer.name("TitlePlace").width(100).height(80))), LayerAlign.TOP_LEFT),
+                true)) {
+            XWPFTableCell main = export.document().getTables().get(0).getRow(0).getCell(1);
+            XWPFParagraph title = main.getParagraphs().get(main.getParagraphs().size() - 1);
+            long raised = 20 * 20L - spacingBefore(title);
+            var spacing = title.getCTP().getPPr().getSpacing();
+
+            assertThat(title.getText()).as("the premise: the title ends the cell").isEqualTo("Title");
+            assertThat(raised).as("the premise: the title raised into the space above it").isGreaterThan(20);
+            assertThat(spacing.isSetAfter() ? DocxTwips.of(spacing.getAfter()) : 0).isEqualTo(raised);
+        }
+    }
+
+    @Test
+    void aLaterLayerUnderAPanelTakesNoRaiseThePanelAlreadyOwedInside() throws Exception {
+        // The first layer ends in a painted card whose line is raised: the card's cell owes the
+        // raise below that line, inside the card, and the later layer's gap from the card's foot
+        // is the page's alone.
+        com.demcha.compose.document.style.DocumentTextStyle spectral = com.demcha.compose.document.style
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.SPECTRAL).size(30).build();
+        com.demcha.compose.document.style.DocumentTextStyle lato = com.demcha.compose.document.style
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.LATO).size(10).build();
+        try (Export export = export(stack -> stack
+                .layer(column("CardLayer", SIDEBAR, 0, top -> top.addSection("Card", card -> card
+                        .fillColor(DocumentColor.rgb(238, 243, 249)).padding(DocumentInsets.of(4))
+                        .addParagraph(p -> p.name("Title").text("Title").textStyle(spectral)
+                                .margin(DocumentInsets.top(20))))), LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", SIDEBAR, 0, main -> main
+                        .addSpacer(spacer -> spacer.name("CardPlace").width(100).height(100))
+                        .addParagraph(p -> p.name("Role").text("Engineer").textStyle(lato))), LayerAlign.TOP_LEFT))) {
+            XWPFTableCell main = export.document().getTables().get(0).getRow(0).getCell(1);
+            XWPFParagraph role = main.getParagraphs().stream()
+                    .filter(paragraph -> "Engineer".equals(paragraph.getText())).findFirst().orElseThrow();
+            XWPFParagraph title = main.getTables().get(0).getRow(0).getCell(0).getParagraphs().stream()
+                    .filter(paragraph -> "Title".equals(paragraph.getText())).findFirst().orElseThrow();
+            PlacedNode card = export.placed("Card");
+            PlacedNode placedRole = export.placed("Role");
+            double gap = card.placementY() - (placedRole.placementY() + placedRole.placementHeight());
+
+            assertThat(spacingBefore(title)).as("the premise: the title raised into the space above it")
+                    .isLessThan(20 * 20L);
+            assertThat(spacingBefore(role)).isCloseTo(Math.round(gap * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+    }
+
+    @Test
     void layersSharingABandFollowOneAnotherAndTheStandInIsLeftOut() throws Exception {
         // The name is drawn first, in a layer of its own; the main column holds its place with
         // a spacer and goes on with the role. In the cell the name comes first, the stand-in is
@@ -88,7 +181,7 @@ class DocxLayerColumnsTest {
             double gap = name.placementY() - (role.placementY() + role.placementHeight());
             assertThat(gap).as("the page puts the role below the name").isGreaterThan(10);
             assertThat(spacingBefore(main.getParagraphs().get(1)))
-                    .isCloseTo(Math.round(gap * 20), org.assertj.core.data.Offset.offset(1L));
+                    .isCloseTo(Math.round(gap * 20) - RAISE, org.assertj.core.data.Offset.offset(1L));
         }
     }
 
@@ -114,7 +207,7 @@ class DocxLayerColumnsTest {
             double gap = name.placementY() - (placedRole.placementY() + placedRole.placementHeight());
 
             assertThat(gap).as("the portrait stands between them on the page").isGreaterThan(30);
-            assertThat(spacingBefore(role)).isCloseTo(Math.round(gap * 20), org.assertj.core.data.Offset.offset(2L));
+            assertThat(spacingBefore(role)).isCloseTo(Math.round(gap * 20) - RAISE, org.assertj.core.data.Offset.offset(2L));
         }
     }
 
@@ -162,7 +255,7 @@ class DocxLayerColumnsTest {
                     .containsExactly("Ada Lovelace", "Engineer", LONG);
             assertThat(gap).isGreaterThan(5);
             assertThat(spacingBefore(main.getParagraphs().get(1)))
-                    .isCloseTo(Math.round(gap * 20), org.assertj.core.data.Offset.offset(1L));
+                    .isCloseTo(Math.round(gap * 20) - RAISE, org.assertj.core.data.Offset.offset(1L));
         }
     }
 
@@ -179,7 +272,7 @@ class DocxLayerColumnsTest {
                         .addParagraph(LONG)), LayerAlign.TOP_LEFT))) {
             XWPFTable table = export.document().getTables().get(0);
 
-            assertThat(spacingBefore(table.getRow(0).getCell(0).getParagraphs().get(0))).isEqualTo(25 * 20L);
+            assertThat(spacingBefore(table.getRow(0).getCell(0).getParagraphs().get(0))).isEqualTo(25 * 20L - RAISE);
             assertThat(table.getCTTbl().getTblPr().isSetTblInd()).as("the table is indented").isTrue();
             assertThat(DocxTwips.of(table.getCTTbl().getTblPr().getTblInd().getW())).isEqualTo(16 * 20L);
         }
@@ -307,11 +400,24 @@ class DocxLayerColumnsTest {
     }
 
     private static Export export(Consumer<LayerStackBuilder> layers) throws Exception {
+        return export(layers, false);
+    }
+
+    /**
+     * @param followed whether a paragraph follows the stack, so its table does not close the
+     *                 document and its cells keep the space below their last lines
+     */
+    private static Export export(Consumer<LayerStackBuilder> layers, boolean followed) throws Exception {
         DocumentSession session = GraphCompose.document()
                 .pageSize(PAGE_WIDTH, 600)
                 .margin(DocumentInsets.of(MARGIN))
                 .create();
-        session.pageFlow(page -> page.addLayerStack(stack -> layers.accept(stack.name("Columns"))));
+        session.pageFlow(page -> {
+            page.addLayerStack(stack -> layers.accept(stack.name("Columns")));
+            if (followed) {
+                page.addParagraph("Below");
+            }
+        });
         XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(session.export(new DocxSemanticBackend())));
         return new Export(session, document);
     }

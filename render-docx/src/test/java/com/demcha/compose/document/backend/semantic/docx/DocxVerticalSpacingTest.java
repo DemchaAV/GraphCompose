@@ -31,11 +31,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * the first paragraph written inside it and its bottom edge to the last, because that is
  * where a reader sees it either way.</p>
  *
+ * <p>The space above a line of the default text is written less what the line is raised into
+ * it, and that is owed below the line ({@link DocxExports#DEFAULT_LINE_RAISE}).</p>
+ *
  * @author Artem Demchyshyn
  */
 class DocxVerticalSpacingTest {
 
     private static final double TWIPS_PER_POINT = 20.0;
+    private static final long RAISE = DocxExports.DEFAULT_LINE_RAISE;
 
     @Test
     void aParagraphCarriesItsOwnMarginAndPadding() throws Exception {
@@ -46,7 +50,7 @@ class DocxVerticalSpacingTest {
                         .margin(DocumentInsets.bottom(6)))
                 .addParagraph(p -> p.text("Below")));
 
-        assertThat(before(paragraphs.get(1))).isEqualTo(Math.round(16 * TWIPS_PER_POINT));
+        assertThat(before(paragraphs.get(1))).isEqualTo(Math.round(16 * TWIPS_PER_POINT) - RAISE);
         assertThat(before(paragraphs.get(2)))
                 .as("the 6pt below it, written once, above what follows")
                 .isEqualTo(Math.round(6 * TWIPS_PER_POINT));
@@ -60,7 +64,7 @@ class DocxVerticalSpacingTest {
                 .padding(DocumentInsets.top(10))
                 .margin(DocumentInsets.top(4))));
 
-        assertThat(before(paragraphs.get(0))).isEqualTo(Math.round(14 * TWIPS_PER_POINT));
+        assertThat(before(paragraphs.get(0))).isEqualTo(Math.round(14 * TWIPS_PER_POINT) - RAISE);
     }
 
     @Test
@@ -76,11 +80,12 @@ class DocxVerticalSpacingTest {
         assertThat(paragraphs).hasSize(4);
         assertThat(before(paragraphs.get(0)))
                 .as("14pt of padding and 6pt of margin, on the paragraph that starts the card")
-                .isEqualTo(Math.round(20 * TWIPS_PER_POINT));
+                .isEqualTo(Math.round(20 * TWIPS_PER_POINT) - RAISE);
         assertThat(before(paragraphs.get(1))).as("nothing in the middle").isZero();
         assertThat(after(paragraphs.get(1))).isZero();
         assertThat(before(paragraphs.get(3)))
-                .as("and the same below the one that ends it, above what follows the card")
+                .as("and the same below the one that ends it, above what follows the card, raised as far"
+                    + " as the line above it")
                 .isEqualTo(Math.round(20 * TWIPS_PER_POINT));
     }
 
@@ -218,7 +223,7 @@ class DocxVerticalSpacingTest {
                         .padding(DocumentInsets.top(12))
                         .addParagraph(p -> p.text("Deep").padding(DocumentInsets.top(3))))));
 
-        assertThat(before(paragraphs.get(0))).isEqualTo(Math.round(23 * TWIPS_PER_POINT));
+        assertThat(before(paragraphs.get(0))).isEqualTo(Math.round(23 * TWIPS_PER_POINT) - RAISE);
     }
 
     @Test
@@ -236,7 +241,7 @@ class DocxVerticalSpacingTest {
 
         assertThat(before(paragraphs.get(paragraphs.size() - 1)))
                 .as("the bottom edge, and only it — the top one did not follow the table out")
-                .isEqualTo(160L);
+                .isEqualTo(160L - RAISE);
     }
 
     @Test
@@ -260,7 +265,7 @@ class DocxVerticalSpacingTest {
         assertThat(paragraphs).hasSize(1);
         assertThat(before(paragraphs.get(0)))
                 .as("the sidebar's 30pt of padding, then the portrait's 5 + 40 + 7")
-                .isEqualTo(Math.round(82 * TWIPS_PER_POINT));
+                .isEqualTo(Math.round(82 * TWIPS_PER_POINT) - RAISE);
     }
 
     @Test
@@ -335,7 +340,7 @@ class DocxVerticalSpacingTest {
                 .isZero();
         assertThat(before(pastADivider.get(pastADivider.size() - 1)))
                 .as("nor was it handed on by the divider the export drops, which keeps its own 4pt")
-                .isEqualTo(Math.round(4 * TWIPS_PER_POINT));
+                .isEqualTo(Math.round(4 * TWIPS_PER_POINT) - RAISE);
     }
 
     @Test
@@ -350,7 +355,7 @@ class DocxVerticalSpacingTest {
 
         assertThat(before(paragraphs.get(1)))
                 .as("the whole gap, on the side that can hold it")
-                .isEqualTo(Math.round(36 * TWIPS_PER_POINT));
+                .isEqualTo(Math.round(36 * TWIPS_PER_POINT) - RAISE);
         assertThat(after(paragraphs.get(0)))
                 .as("and nothing on the other, so adding and taking the maximum agree")
                 .isZero();
@@ -435,7 +440,7 @@ class DocxVerticalSpacingTest {
                 .isEqualTo(Math.round(9 * TWIPS_PER_POINT));
         assertThat(before(paragraphs.get(1)))
                 .as("its bottom edge, on the paragraph below it")
-                .isEqualTo(Math.round(12 * TWIPS_PER_POINT));
+                .isEqualTo(Math.round(12 * TWIPS_PER_POINT) - RAISE);
     }
 
     @Test
@@ -450,7 +455,7 @@ class DocxVerticalSpacingTest {
                 .addParagraph(p -> p.text("After")));
 
         assertThat(after(paragraphs.get(0))).isEqualTo(Math.round(14 * TWIPS_PER_POINT));
-        assertThat(before(paragraphs.get(1))).isEqualTo(Math.round(14 * TWIPS_PER_POINT));
+        assertThat(before(paragraphs.get(1))).isEqualTo(Math.round(14 * TWIPS_PER_POINT) - RAISE);
     }
 
     @Test
@@ -464,7 +469,7 @@ class DocxVerticalSpacingTest {
 
         assertThat(before(paragraphs.get(0)))
                 .as("the bottom edge and only it — the top had nothing to land on")
-                .isEqualTo(Math.round(12 * TWIPS_PER_POINT));
+                .isEqualTo(Math.round(12 * TWIPS_PER_POINT) - RAISE);
     }
 
     @Test
@@ -486,7 +491,7 @@ class DocxVerticalSpacingTest {
         // top edge is on it and its bottom edge lands on the paragraph after.
         assertThat(before(paragraphs.get(paragraphs.size() - 1)))
                 .as("the picture's bottom edge reaches the block under it")
-                .isEqualTo(Math.round(12 * TWIPS_PER_POINT));
+                .isEqualTo(Math.round(12 * TWIPS_PER_POINT) - RAISE);
     }
 
     @Test
@@ -513,7 +518,7 @@ class DocxVerticalSpacingTest {
         assertThat(before(paragraphs.get(3))).isEqualTo(Math.round(3 * TWIPS_PER_POINT));
         assertThat(before(paragraphs.get(4)))
                 .as("the list's bottom edge, on the paragraph after it")
-                .isEqualTo(Math.round(10 * TWIPS_PER_POINT));
+                .isEqualTo(Math.round(10 * TWIPS_PER_POINT) - RAISE);
     }
 
     @Test
@@ -548,7 +553,7 @@ class DocxVerticalSpacingTest {
                 .addParagraph(p -> p.text("Role").margin(new DocumentInsets(10, 0, 0, 0))));
 
         assertThat(after(body.get(0))).as("no space below the line pulled into").isZero();
-        assertThat(before(body.get(1))).isEqualTo(Math.round((10 - 4) * TWIPS_PER_POINT));
+        assertThat(before(body.get(1))).isEqualTo(Math.round((10 - 4) * TWIPS_PER_POINT) - RAISE);
     }
 
     @Test
@@ -569,7 +574,7 @@ class DocxVerticalSpacingTest {
                 .addParagraph(p -> p.text("Role").margin(new DocumentInsets(10, 0, 0, 0))));
 
         assertThat(after(body.get(0))).isZero();
-        assertThat(before(body.get(1))).isEqualTo(Math.round((2 - 4 + 10) * TWIPS_PER_POINT));
+        assertThat(before(body.get(1))).isEqualTo(Math.round((2 - 4 + 10) * TWIPS_PER_POINT) - RAISE);
     }
 
     @Test
@@ -590,7 +595,7 @@ class DocxVerticalSpacingTest {
                 .addParagraph(p -> p.text("After")));
 
         // Less the spacer's own hairline, which is part of its height.
-        assertThat(before(body.get(1))).isEqualTo(Math.round((10 - 4 - 0.1) * TWIPS_PER_POINT));
+        assertThat(before(body.get(1))).isEqualTo(Math.round((10 - 4 - 0.1) * TWIPS_PER_POINT) - RAISE);
     }
 
     @Test
@@ -602,7 +607,7 @@ class DocxVerticalSpacingTest {
 
         assertThat(before(body.stream().filter(p -> p.getText().equals("After")).findFirst().orElseThrow()))
                 .as("the paragraph after the table keeps its own edge")
-                .isEqualTo(Math.round(10 * TWIPS_PER_POINT));
+                .isEqualTo(Math.round(10 * TWIPS_PER_POINT) - RAISE);
     }
 
     private static long before(XWPFParagraph paragraph) {

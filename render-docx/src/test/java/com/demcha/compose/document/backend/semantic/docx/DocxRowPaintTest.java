@@ -325,7 +325,8 @@ class DocxRowPaintTest {
                     var before = (org.apache.poi.xwpf.usermodel.XWPFParagraph) element;
                     assertThat(before.getText()).isEqualTo("Before");
                     assertThat(twips(before.getCTP().getPPr().getSpacing().getAfter()))
-                            .as("its own 10pt, on the page above").isEqualTo(200);
+                            .as("its own 10pt, on the page above, and what its line owes below it for its raise")
+                            .isEqualTo(200 + DocxExports.DEFAULT_LINE_RAISE);
                 });
         assertThat(exported.report().bySubject()).doesNotContainKey("row paint");
     }

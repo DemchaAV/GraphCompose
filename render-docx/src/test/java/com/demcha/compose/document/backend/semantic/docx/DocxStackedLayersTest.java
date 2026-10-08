@@ -92,8 +92,8 @@ class DocxStackedLayersTest {
                            + line(paragraph(document, "Three"));
             assertThat(stack).as("as tall as the box, its last line's own 36pt running past it")
                     .isCloseTo(2 * PITCH + 34, within(0.1));
-            assertThat(before(paragraph(document, "After"))).as("the whole gap under the box")
-                    .isCloseTo(30, within(0.05));
+            assertThat(before(paragraph(document, "After"))).as("the whole gap under the box, less its line's raise")
+                    .isCloseTo(30 - DocxExports.DEFAULT_LINE_RAISE / 20.0, within(0.05));
         }
     }
 
@@ -112,8 +112,8 @@ class DocxStackedLayersTest {
             assertThat(hang).as("just below its letters, not where its own line ends")
                     .isCloseTo(last.pageBaseline() + last.inkBelow() + DocxStackedLines.INK_MARGIN - (2 * PITCH + 26),
                             within(0.1));
-            assertThat(before(paragraph(document, "After"))).as("by as much less gap under it")
-                    .isCloseTo(30 - hang, within(0.1));
+            assertThat(before(paragraph(document, "After"))).as("by as much less gap under it, and its line's raise")
+                    .isCloseTo(30 - hang - DocxExports.DEFAULT_LINE_RAISE / 20.0, within(0.1));
         }
     }
 

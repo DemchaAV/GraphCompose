@@ -188,6 +188,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final double POINT_TO_TWIP = 20.0;
     /** The least difference between Word's baseline and the page's that is moved: one half point. */
     private static final double LEAST_BASELINE_SHIFT_POINTS = 0.5;
+    /**
+     * The least raise a line is moved by in the space written above it, in points: Word sets
+     * lines on a grid of its own, 0.12pt apart (measured), and a twip less of space moves a line
+     * a step or nothing.
+     */
+    private static final double LEAST_RAISE_INTO_THE_SPACE_ABOVE = 0.1;
     /** How a drawing the page paints is anchored, as the report says it (see DocxDrawingAnchors). */
     private static final String ANCHORED_BESIDE_ITS_TEXT = "anchored in the paragraph whose text it stands "
             + "beside, so it moves with that text when the text above is edited, or to the page where it "
@@ -218,6 +224,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // places them (zonePlacement), not by the lines the body lays a node out in, which the same
     // node also placed in the body would otherwise lend them.
     private boolean writingAZoneLine;
+    // The paragraph written last that the layout moves to a new page: Word drops the space above
+    // it there (holdAParagraphsTopEdgeOnItsPage), so its line is not moved up into that space.
+    private ParagraphNode paragraphOpeningItsPage;
+    // How far the line raised last was moved up into the space above it, in points, and how many
+    // blocks had been written when it was (raiseOwedByTheLastLine).
+    private double lastRaise;
+    private long blocksAtTheLastRaise = -1;
     // The text bands whose translucent separator is already reported this export: a band is
     // written into each kind of header or footer Word is given.
     private final java.util.Set<DocumentHeaderFooter> separatorsReported =
@@ -384,6 +397,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private String badgeText;
     // The cell of the panel being written, painted or framed; null outside a panel.
     private XWPFTableCell panelCell;
+    // How much of the space above the first paragraph of panelCell its top border takes, in twips
+    // (writePanelPiece): no room to raise that paragraph's line into (raiseIntoTheSpaceAbove).
+    private long panelsFirstLineKeeps;
     // The text style the document is mostly written in, promoted to Word's Normal style.
     // Null until an export computes it, and when the graph carries no text at all.
     private DocumentTextStyle documentDefaultStyle;
@@ -778,6 +794,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         insetRight = 0;
         cellHang = 0;
         cellTextShift = 0;
+        paragraphOpeningItsPage = null;
+        panelsFirstLineKeeps = 0;
+        lastRaise = 0;
+        blocksAtTheLastRaise = -1;
         nextDrawingId = 100_000;
         anchors.reset();
         writing = null;
@@ -5370,12 +5390,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (first && last) {
             cutTheLabelToItsOutline(node, borders, cell);
         }
+        // What of the top border's reach the padding cannot take comes out of the space above the
+        // first paragraph (takeTheTopBorderInside, below): that much of it is no room to raise a
+        // line into.
+        long outerKeptAbove = panelsFirstLineKeeps;
+        panelsFirstLineKeeps = Math.max(0, toTwips(topNotTaken) - cellMargin(cell, true));
         try {
             writeInCell(cell, content);
         } finally {
             surfaceBehind = outerSurface;
             currentCellWidth = outerCellWidth;
             panelCell = outerPanelCell;
+            panelsFirstLineKeeps = outerKeptAbove;
         }
         if (cell.getParagraphs().isEmpty()) {
             // A panel with nothing Word can hold inside is its padding tall on the page, not a
@@ -7062,6 +7088,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** Writes the owed space onto the paragraph that owes it, for want of a later one. */
     private void flushSpacingAfter() {
+        // What a raised line owed below it is paid with it (raiseOwedByTheLastLine).
+        blocksAtTheLastRaise = -1;
         // A pull out of the paragraph above comes out of what it owes below, as the page sums them.
         double owed = pendingSpacingAfter - pullBelow;
         if (owed > 0 && lastBodyParagraph != null) {
@@ -7874,6 +7902,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         if (currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(node)) {
             holdAParagraphsTopEdgeOnItsPage(document, node);
+            paragraphOpeningItsPage = node;
         }
         // Its own sides hold its text in, as a container's do: SerifHeadline's summary stops at
         // the column divider through its right margin, and without it ran the page's width in
@@ -9179,7 +9208,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 takeThePicturesEdgesFromAround(para, pictures);
             }
         }
-        seatInTheLine(para, node, runsBefore, lineTopAbove + heldAbove, cutToTheInk);
+        seatInTheLine(para, node, runsBefore, lineTopAbove + heldAbove, cutToTheInk, ownLine);
     }
 
     /**
@@ -9314,21 +9343,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * is raised as a part of its zone's line ({@link #zonePlacement}).</p>
      *
      * <p>The baseline the page seats off is not where Word puts it either (see
-     * {@link #shiftToThePagesBaseline}), and the two moves are one position.</p>
+     * {@link #shiftToThePagesBaseline}): what of that the space above does not take and the
+     * page's seat are one position.</p>
      *
      * @param runsBefore   how many runs the Word paragraph held before this one's were written
      * @param lineTopAbove how far above the page's first line of the paragraph the Word line
      *                     starts, in points
      * @param heldExact    whether the line was held to its pictures' reach
      *                     ({@link #holdPicturesInTheLine}), and so is seated however little
+     * @param ownLine      whether the Word paragraph is this paragraph's alone — not a line pair's,
+     *                     a stack's or a text box's — and so its line may move for it
      */
     private void seatInTheLine(XWPFParagraph para, ParagraphNode node, int runsBefore, double lineTopAbove,
-                               boolean heldExact) {
+                               boolean heldExact, boolean ownLine) {
         if (writingAZoneLine) {
             return;
         }
-        raiseRunsFrom(para, runsBefore, Math.round(
-                (seatShift(node) + shiftToThePagesBaseline(para, node, lineTopAbove, heldExact)) * HALF_POINTS_PER_POINT));
+        boolean ownsItsLine = ownLine && runsBefore == 0;
+        raiseRunsFrom(para, runsBefore, Math.round((seatShift(node)
+                + shiftToThePagesBaseline(para, node, lineTopAbove, heldExact, ownsItsLine)) * HALF_POINTS_PER_POINT));
     }
 
     /**
@@ -9410,17 +9443,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * gap between lines included, at the paragraph's middle line: where the space above could not
      * give up a whole gap, Word's lines step a little closer than the page's, and the error is
      * shared by the first and last. 0 for a paragraph not written at an exact height: Word
-     * then seats it by its own measure of the face. A difference under
-     * {@link #LEAST_BASELINE_SHIFT_POINTS} — a quarter point for a line of Lato body text — is
-     * left as Word sets it: the position counts in half points, and every line of body text
-     * moved by one would win a quarter point at most.</p>
+     * then seats it by its own measure of the face.</p>
+     *
+     * <p>A line of its own Word sets low is raised first by moving it up into the space written
+     * above it, where that space can take it ({@link #raiseIntoTheSpaceAbove}). What that space
+     * cannot give, and a line set
+     * high, is left to the text's position, which counts in half points: a line whose difference
+     * is under {@link #LEAST_BASELINE_SHIFT_POINTS} — a quarter point for a line of Lato body text
+     * — keeps no position, as every line of body text moved by one would win a quarter point at
+     * most.</p>
      *
      * @param lineTopAbove how far above the page's first line the Word line starts, in points
      * @param heldExact    whether the line was cut to its pictures' reach, and so is seated
      *                     however little
+     * @param ownsItsLine  whether the Word paragraph holds this paragraph's text alone, and so
+     *                     its line can move for it
      */
     private double shiftToThePagesBaseline(XWPFParagraph para, ParagraphNode node, double lineTopAbove,
-                                           boolean heldExact) {
+                                           boolean heldExact, boolean ownsItsLine) {
         CTPPr properties = para.getCTP().getPPr();
         if (properties == null || !properties.isSetSpacing()) {
             return 0;
@@ -9446,10 +9486,93 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // to fit its letters where the page sets them, and is seated however little; so
                 // is one cut to its pictures' reach, whose ink stands at its edges.
                 boolean cutToFit = lineTopAbove != 0 || stackedLineHeights.containsKey(node) || heldExact;
-                return Math.abs(shift) < LEAST_BASELINE_SHIFT_POINTS && !cutToFit ? 0 : shift;
+                // The position is moved as before where the whole shift called for it, whatever
+                // the space above took off it: a line 0.6pt low with 0.2pt above it is left a tenth
+                // off by its position, not four tenths.
+                boolean moved = Math.abs(shift) >= LEAST_BASELINE_SHIFT_POINTS || cutToFit;
+                if (ownsItsLine && !cutToFit) {
+                    shift -= raiseIntoTheSpaceAbove(para, node, spacing, shift);
+                }
+                return moved ? shift : 0;
             }
         }
         return 0;
+    }
+
+    /**
+     * Raises a paragraph's line by moving it up into the space written above it, by as much of
+     * {@code raise} as that space holds, and owes as much below the paragraph: the line moves,
+     * what follows stays.
+     *
+     * <p>A text's position is no way to move it a quarter point. It counts in half points, so a
+     * line a quarter point low — Helvetica's lines, which the page seats 0.78 of the way down,
+     * stood 0.12 to 0.38pt low in Word at 8 to 18pt — is moved a half point or not at all. And
+     * LibreOffice moves raised text further than it is raised, by the face's height over its em:
+     * Spectral's 1.53 times, Poppins' 1.49, Volkhov's 1.31 (measured), so Spectral's 24pt line,
+     * raised 4pt, stood 2.4pt high there. Both editors keep a paragraph's space above as written,
+     * Word on its own 0.12pt grid, and stand an exact line's baseline four fifths of the way down
+     * it ({@link DocxTextBands#BASELINE_SHARE}): a line moved up that space stands where the page
+     * sets it in both.</p>
+     *
+     * <p>Only a raise: a line moved down takes its room out of the space below it, which is not
+     * known until what follows is written, and what that space could not take would stand all of
+     * it lower. Only a line of its own, as its caller raises: not a line pair's, a container's
+     * stacked lines, a text box's, nor one cut to its pictures. Only a paragraph in the flow or in
+     * a cell, where the space owed below it is the space above what follows: a band, a layer
+     * stack, a shape container, a canvas and the text laid over the flow — the overlays — measure
+     * what follows them from the page ({@link #writeOverlayBand}), and the space a line owed
+     * inside them would be lost. A column's later layer measures the space to itself from the
+     * page too, and takes back the raise of the line above it ({@link #raiseOwedByTheLastLine}).
+     * Not a paragraph the layout moves to a new page: Word drops its space above there
+     * ({@link #holdAParagraphsTopEdgeOnItsPage}), and what the line owed would stand all below it
+     * lower. Not a paragraph the layout breaks over a page: its lines on the next page start at
+     * that page's top, where the space above moves none of them, and what it owed would stand
+     * what follows them lower. Not the space above a panel's first paragraph that the panel's top
+     * border takes ({@link #takeTheTopBorderInside}): raised into it, the line would give it back
+     * and the panel grow by what it owed. Less than {@link #LEAST_RAISE_INTO_THE_SPACE_ABOVE} is
+     * not moved.</p>
+     *
+     * @param para    the Word paragraph
+     * @param node    the paragraph it is written for
+     * @param spacing the paragraph's spacing, its space above already written
+     * @param raise   how far Word sets the line below the page's, in points
+     * @return how far the line was raised, in points
+     */
+    private double raiseIntoTheSpaceAbove(XWPFParagraph para, ParagraphNode node, CTSpacing spacing,
+                                          double raise) {
+        // A band and the text laid over the flow are overlays too (writeOverlayBand, writeOverTheFlow).
+        if (!(raise >= LEAST_RAISE_INTO_THE_SPACE_ABOVE) || overlayDepth > 0
+            || node == paragraphOpeningItsPage || !layout.onOnePage(node)) {
+            return 0;
+        }
+        long room = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null)
+                    - (opensThePanel(para) ? panelsFirstLineKeeps : 0);
+        long raised = Math.min(room, Math.round(raise * POINT_TO_TWIP));
+        if (raised < Math.round(LEAST_RAISE_INTO_THE_SPACE_ABOVE * POINT_TO_TWIP)) {
+            return 0;
+        }
+        spacing.setBefore(BigInteger.valueOf(twipsOf(spacing.getBefore()) - raised));
+        owePendingSpacingAfter(raised / POINT_TO_TWIP);
+        lastRaise = raised / POINT_TO_TWIP;
+        blocksAtTheLastRaise = blocksWritten;
+        return raised / POINT_TO_TWIP;
+    }
+
+    /** Whether a paragraph is the first thing written in the panel's cell being written. */
+    private boolean opensThePanel(XWPFParagraph para) {
+        return panelCell != null && currentCell == panelCell && !panelCell.getBodyElements().isEmpty()
+               && panelCell.getBodyElements().get(0) instanceof XWPFParagraph first
+               && first.getCTP() == para.getCTP();
+    }
+
+    /**
+     * What the line written last owes below it for its raise into the space above it
+     * ({@link #raiseIntoTheSpaceAbove}), in points, while no block has been written after it: a
+     * column's later layer measures the space to itself from the page and drops what the layers
+     * above owe, and the line above it was set that much higher than the page sets it.
+     */
+    private double raiseOwedByTheLastLine() {
+        return blocksWritten == blocksAtTheLastRaise ? lastRaise : 0;
     }
 
     /**
@@ -12748,10 +12871,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                 carriedSpacingBefore += node.margin().top() + node.padding().top();
                             } else {
                                 // What the layers above still owe below themselves is space
-                                // the page does not have: the gap to this one is the page's.
+                                // the page does not have: the gap to this one is the page's,
+                                // from a last line set as high as it was raised.
+                                double raised = raiseOwedByTheLastLine();
                                 pendingSpacingAfter = 0;
                                 pullBelow = 0;
-                                resumeSpacing = plan.resume(node);
+                                resumeSpacing = plan.resume(node) + raised;
                             }
                             // A column layer is written as what it holds, never dispatched itself:
                             // no bookmark goes round it, though bookmarkedAnchorsIn counts one.
@@ -12772,6 +12897,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                             }
                             reportWrittenWithout(node, "written as a column of its layer stack", columnLost);
                             writeChildren(document, node.children(), spacingOf(node));
+                            if (layer > 0 && blocksWritten == blocksBefore && !holdsMovedContent(node)) {
+                                // A later layer that wrote nothing leaves the line above it raised:
+                                // what that line owes below it is still owed in the cell.
+                                pendingSpacingAfter += raiseOwedByTheLastLine();
+                            }
                             if (layer > 0 && blocksWritten == blocksBefore && holdsMovedContent(node)) {
                                 // A layer that wrote nothing — its content all written in an
                                 // earlier layer's stand-ins — owes nothing of its own: what the

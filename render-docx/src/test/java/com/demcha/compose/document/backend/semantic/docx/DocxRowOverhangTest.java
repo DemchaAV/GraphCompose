@@ -35,6 +35,8 @@ class DocxRowOverhangTest {
             + "<circle cx='12' cy='12' r='10' fill='#1A5694'/></svg>");
     private static final DocumentTextStyle SMALL = DocumentTextStyle.DEFAULT.withSize(7);
     private static final double GAP = 10;
+    /** What the small line after the row is raised into the space above it, and owes below. */
+    private static final long RAISE = DocxExports.SMALL_LINE_RAISE;
 
     @Test
     void theTallestCellsHangingLineTakesItsReachOutOfTheGapUnderTheRow() throws Exception {
@@ -48,7 +50,7 @@ class DocxRowOverhangTest {
             assertThat(iconed.getCTP().getPPr().getSpacing().getLineRule()).as("held to its icon")
                     .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
             assertThat(down).as("the line reaches below the page's").isPositive();
-            assertThat(before(after(document))).as("the gap less that reach").isEqualTo(Math.round(GAP * 20) - down);
+            assertThat(before(after(document))).as("the gap less that reach").isEqualTo(Math.round(GAP * 20) - down - RAISE);
         }
     }
 
@@ -62,7 +64,7 @@ class DocxRowOverhangTest {
                         right.addParagraph(p -> p.textStyle(SMALL).text("Line"));
                     }
                 }).document()) {
-            assertThat(before(after(document))).isEqualTo(Math.round(GAP * 20));
+            assertThat(before(after(document))).isEqualTo(Math.round(GAP * 20) - RAISE);
         }
     }
 
@@ -76,7 +78,7 @@ class DocxRowOverhangTest {
                         right.addParagraph(p -> p.textStyle(SMALL).text("Line"));
                     }
                 }, com.demcha.compose.document.node.RowVerticalAlign.BOTTOM).document()) {
-            assertThat(before(after(document))).isEqualTo(Math.round(GAP * 20));
+            assertThat(before(after(document))).isEqualTo(Math.round(GAP * 20) - RAISE);
         }
     }
 
@@ -97,7 +99,7 @@ class DocxRowOverhangTest {
 
             assertThat(spacing.isSetAfter() ? DocxTwips.of(spacing.getAfter()) : 0)
                     .as("the padding less the reach").isEqualTo(5 * 20 - down);
-            assertThat(before(after(document))).isEqualTo(Math.round(GAP * 20));
+            assertThat(before(after(document))).isEqualTo(Math.round(GAP * 20) - RAISE);
         }
     }
 

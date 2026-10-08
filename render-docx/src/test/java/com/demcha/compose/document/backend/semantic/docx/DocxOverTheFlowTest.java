@@ -75,7 +75,8 @@ class DocxOverTheFlowTest {
                 .addSection("Head", head -> head.padding(DocumentInsets.top(6)).addParagraph("Masthead")))) {
             assertThat(document.getDocument().getBody().xmlText()).as("the line is in a text box")
                     .contains("<w:txbxContent>");
-            assertThat(before(masthead(document))).as("the section's space above it").isEqualTo(6 * 20L);
+            assertThat(before(masthead(document))).as("the section's space above it, less its line's raise into it")
+                    .isEqualTo(6 * 20L - DocxExports.DEFAULT_LINE_RAISE);
         }
     }
 

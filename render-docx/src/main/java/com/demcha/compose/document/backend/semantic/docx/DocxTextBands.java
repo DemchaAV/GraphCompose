@@ -33,8 +33,10 @@ final class DocxTextBands {
      * Where both editors stand the baseline in an exact line, as a share of the line from its
      * top. Measured, it is four fifths of the line whatever the face and size: Spectral, Lato
      * and Arial at 10 to 46pt, in lines 12 to 100pt tall, within 0.1pt of it in Word and on it in
-     * LibreOffice. A band's line is placed by it here, and a paragraph's text is moved from it to
-     * the page's baseline ({@code DocxSemanticBackend#shiftToThePagesBaseline}).
+     * LibreOffice; and again on the fifteen faces the templates use and JetBrains Mono at 8 to
+     * 36pt, within 0.04pt of it in Word in median, and in the lines of the DOCX fidelity corpus,
+     * read off Word's own line tops. A band's line is placed by it here, and a paragraph's text is
+     * moved from it to the page's baseline ({@code DocxSemanticBackend#shiftToThePagesBaseline}).
      */
     static final double BASELINE_SHARE = 0.8;
 

@@ -8,6 +8,38 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export raises a line Word sets low into the space above it, where both editors keep
+  it.** Both editors stand an exact line's baseline four fifths of the way down it whatever the
+  face — measured on the fifteen faces the templates use and JetBrains Mono, 8 to 36pt — and the
+  page sets it the face's ascent below the line's top. The text was moved to the page's baseline by
+  its position, which counts in half points and was left alone under half a point: by its position
+  alone Helvetica's lines, which the page seats 0.78 of the way down, stood 0.12 to 0.38pt low in
+  Word. And LibreOffice moves raised text further than it is raised, by the face's height over its
+  em — Spectral's 1.53 times, Poppins' 1.49, Volkhov's 1.31 (measured) — so Spectral's 24pt line,
+  raised 4pt, stood 2.4pt high there (measured).
+  - A line Word sets low by a tenth of a point or more is moved up into the space written above
+    it, written to the twip, and that space is owed below it, so what follows stays where it was.
+    Both editors keep a paragraph's space above as written. What the space cannot give is left to
+    the position where the whole difference calls for one, as is a line Word sets high: moved
+    down, it would take its room out of the space below it, which is not known when it is written.
+  - A column's later layer, which measures the space to itself from the page, takes back the raise
+    of the line above it.
+  - Not a line pair's shared line, which moved would move its other half; not a line in an
+    overlay — a band, a layer stack, a shape container, a canvas, a text box — whose writers
+    measure what follows them from the page; not a line cut to fit, a container's stacked lines or
+    one held to its pictures; not a paragraph the layout moves to a new page, whose space above
+    Word drops there, or breaks over one, whose lines on the next page the space above does not
+    move; and not into the space above a panel's first line that its top border takes.
+
+  In the DOCX fidelity corpus 27 documents stand nearer the page in Word, the sum of the medians
+  1.65pt nearer — `letter-blue_banner`'s median line from 0.39pt to 0.18pt, `cv-modern_professional`'s
+  from 0.32pt to 0.18pt — and 21 in LibreOffice on Windows, `cv-modern_professional`'s from 0.28pt
+  to 0.04pt. Two move a step of Word's grid further: `invoice-luma_studio`'s company lines, raised
+  where the page sets them, now show their block standing 0.2 to 0.3pt high (median 0.13pt to
+  0.14pt),
+  and `letter-panel`'s median from 0.14pt to 0.16pt; in LibreOffice two medians move 0.01pt. The
+  report names nothing more.
+
 - **A DOCX export no longer stands what follows a width anchor, or a paragraph Word sets taller,
   lower than the page.** Both reached past the block in Word, and neither was taken out of the
   space below or named. Each now hangs below its block, as a line held to its icon does: the

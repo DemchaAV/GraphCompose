@@ -28,6 +28,17 @@ import java.util.function.Consumer;
  */
 final class DocxExports {
 
+    /**
+     * How far a line of the default text — Helvetica at 14pt — is raised into the space written
+     * above it, in twips: the page seats its baseline 10.05pt down its 12.95pt line, Word four
+     * fifths of the way down, 0.31pt lower ({@code DocxBaselineSeatTest} holds it to that). A
+     * test of the space between blocks of default text reads the space above such a line as that
+     * much less, and the space below it as that much more.
+     */
+    static final long DEFAULT_LINE_RAISE = 6;
+    /** {@link #DEFAULT_LINE_RAISE} for the default face at 7pt, the size tests set small text in. */
+    static final long SMALL_LINE_RAISE = 3;
+
     private DocxExports() {
     }
 

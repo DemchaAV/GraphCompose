@@ -371,9 +371,11 @@ class DocxInlinePictureTest {
             XWPFRun text = document.getParagraphs().get(1).getRuns().get(0);
             int textPosition = text.getCTR().isSetRPr() && text.getCTR().getRPr().sizeOfPositionArray() > 0
                     ? ((Number) text.getCTR().getRPr().getPositionArray(0).getVal()).intValue() : 0;
+            // The line below is raised into the space above it, and that is no reach of the icon's.
             return new Between(pageLine, DocxTwips.of(iconed.getLine()) / 20.0,
                     3 - DocxTwips.of(iconed.getBefore()) / 20.0,
-                    3 - (after.isSetBefore() ? DocxTwips.of(after.getBefore()) : 0) / 20.0, textPosition);
+                    3 - ((after.isSetBefore() ? DocxTwips.of(after.getBefore()) : 0) + DocxExports.SMALL_LINE_RAISE) / 20.0,
+                    textPosition);
         }
     }
 

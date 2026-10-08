@@ -113,9 +113,11 @@ What is not written — each one is named in the export report
 - **Watermarks, protection and viewer preferences**, each named in the export report.
 - **The fill, outline and side borders of a row** composed in a table cell (drawn as a shape where
   they frame no text), in a page zone's line, in a band of overlapping layers or where a stack's
-  column measures the space round it to its text, or with a padding below zero, named in the
-  export report as `row paint`. Elsewhere a row that paints is written as a panel holding its
-  columns, its borders above and below named where Word draws them outside the panel's row.
+  column measures the space round it to its text, with a padding below zero or a column
+  hanging into it, or with a margin below zero above or below it or at a side in a cell, named
+  in the export report as `row paint`. Elsewhere a row that paints is written as a panel holding
+  its columns, its borders above and below named where Word draws them outside the panel's
+  row, and its columns where its padding does not take its top border.
 - **Translucency where Word holds an opaque colour only** — a cell's shading, a border, a rule,
   a chip's run shading: the colour is flattened against what Word paints under it — the panel or
   cell the export shaded, or what the page paints there — and a text header's separator against

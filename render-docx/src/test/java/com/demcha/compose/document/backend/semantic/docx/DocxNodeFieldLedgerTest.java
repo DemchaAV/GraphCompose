@@ -103,9 +103,11 @@ class DocxNodeFieldLedgerTest {
     private static final String ROW_PAINT = "composed in a table cell, drawn as a shape where it frames no text "
                                             + "and not written where it does; in a page zone's line, in a band of "
                                             + "layers or where a stack's column measures the space round it to its "
-                                            + "text, and with a padding below zero or a column hanging into it; "
-                                            + "its translucency, as a panel's, and borders above and below, which "
-                                            + "Word draws outside the panel's row; any other is written, as a panel";
+                                            + "text, with a padding below zero or a column hanging into it, and "
+                                            + "with a margin below zero above or below it or at a side in a cell; "
+                                            + "its translucency, as a panel's, borders above and below, which Word "
+                                            + "draws outside the panel's row, and a top border its padding does not "
+                                            + "take; any other is written, as a panel";
 
     private static final Map<Class<?>, Map<String, Entry>> NODES = new LinkedHashMap<>();
     private static final Map<String, Entry> OUTPUT_OPTIONS = fields(

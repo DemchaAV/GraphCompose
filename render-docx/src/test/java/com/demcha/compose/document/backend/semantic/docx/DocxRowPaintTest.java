@@ -3,6 +3,7 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -105,14 +106,21 @@ class DocxRowPaintTest {
         CTTcBorders outlined = panelCell(outlinedRow).getCTTc().getTcPr().getTcBorders();
         assertThat(List.of(outlined.getTop(), outlined.getLeft(), outlined.getBottom(), outlined.getRight()))
                 .allSatisfy(side -> assertThat(side.xgetColor().getStringValue()).isEqualToIgnoringCase("1A5694"));
-        // Word draws the borders above and below outside the row, where the page takes no room.
+        // Word draws the borders above and below outside the row, where the page takes no room,
+        // and with no padding to take the top one, starts the columns below it.
         assertThat(outlinedRow.report().bySubject().get("RowNode")).singleElement().satisfies(note -> {
             assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
             assertThat(note.path()).contains("Outlined");
             assertThat(note.detail()).isEqualTo("written as a panel; its borders above and below are drawn outside "
                                                 + "the panel's row in Word: where no space round the row takes them, "
-                                                + "what follows stands up to 2pt lower than the page sets it");
+                                                + "what follows stands up to 2pt lower than the page sets it; its "
+                                                + "columns stand up to 1pt lower than the page sets them, where neither "
+                                                + "its padding nor the space above it takes its top border");
         });
+        Exported padded = export(page -> page.addRow(row -> row.stroke(RULE).padding(DocumentInsets.of(4))
+                .addParagraph("Left").addParagraph("Right")));
+        assertThat(padded.report().bySubject().get("RowNode")).extracting(DocxExportReport.Note::detail)
+                .as("its padding takes its top border").singleElement().asString().doesNotContain("its columns");
 
         Exported underlined = export(page -> page.addRow(row -> row.borders(DocumentBorders.bottom(RULE))
                 .addParagraph("Left").addParagraph("Right")));
@@ -211,6 +219,80 @@ class DocxRowPaintTest {
                 .padding(new DocumentInsets(0, 0, 0, -10)).addParagraph("Left").addParagraph("Right")));
         assertThat(negative.report().bySubject().get("row paint")).extracting(DocxExportReport.Note::detail)
                 .containsExactly(kept);
+    }
+
+    @Test
+    void aRowWhoseMarginIsBelowZeroAboveBelowOrAtASideInACellKeepsItsNote() throws Exception {
+        String kept = "the row's fill is not written: its margin is below zero above or below it, or at a side in a "
+                      + "cell, which its panel's place in Word does not take";
+        // Its columns' table nets a margin pulling it up against its padding; a panel owes the
+        // space round it on its own, where a pull is nothing.
+        Exported pulled = export(page -> page.addParagraph(p -> p.text("Before").margin(DocumentInsets.bottom(10)))
+                .addRow(row -> row.fillColor(SURFACE).margin(new DocumentInsets(-8, 0, -8, 0))
+                        .padding(DocumentInsets.of(8)).addParagraph("Left").addParagraph("Right"))
+                .addParagraph("After"));
+        assertThat(pulled.report().bySubject().get("row paint")).extracting(DocxExportReport.Note::detail)
+                .containsExactly(kept);
+        assertThat(cellsShaded(pulled.document())).as("its columns alone").isEmpty();
+
+        // Word starts a table no further left than its cell's text.
+        Exported bled = export(page -> page.addSection("Card", card -> card.fillColor(SURFACE)
+                .padding(DocumentInsets.of(12)).addRow(row -> row.fillColor(DocumentColor.rgb(30, 50, 90))
+                        .margin(new DocumentInsets(0, -12, 0, -12)).padding(DocumentInsets.of(12))
+                        .addParagraph("Left").addParagraph("Right"))));
+        assertThat(bled.report().bySubject().get("row paint")).extracting(DocxExportReport.Note::detail)
+                .containsExactly(kept);
+
+        // In the body Word holds a table's edge past the margin: the row bleeds as its panel.
+        Exported bleeding = export(page -> page.addRow(row -> row.fillColor(SURFACE)
+                .margin(new DocumentInsets(0, -20, 0, -20)).padding(DocumentInsets.of(20))
+                .addParagraph("Left").addParagraph("Right")));
+        assertThat(bleeding.report().bySubject()).doesNotContainKey("row paint");
+        assertThat(panelCell(bleeding).getColor()).isEqualToIgnoringCase("EEF3F9");
+    }
+
+    @Test
+    void aFilledRowAStacksColumnMeasuresRoundIsWrittenAsItsColumns() throws Exception {
+        String kept = "the row's fill is not written: a band of layers or a stack's column measures the space round "
+                      + "it to its text, which its panel's margins would hold again";
+        // The main layer goes on below the name layer after a stand-in: its first block opens
+        // where the layer resumes, measured to the text inside it.
+        Exported opening = export(page -> page.addLayerStack(stack -> stack
+                .layer(column("NameLayer", 120, 0, name -> name.addParagraph("Ada Lovelace")), LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, 240, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", 120, 0, main -> main
+                        .addSpacer(spacer -> spacer.width(100).height(20))
+                        .addRow(row -> row.name("Opening").fillColor(SURFACE).padding(DocumentInsets.of(6))
+                                .addParagraph("Engineer").addParagraph("2020")))
+                        , LayerAlign.TOP_LEFT)));
+        assertThat(opening.report().bySubject().get("row paint")).singleElement().satisfies(note -> {
+            assertThat(note.path()).contains("Opening");
+            assertThat(note.detail()).isEqualTo(kept);
+        });
+
+        // The name layer ends with a row the main layer resumes after, measured from its text.
+        Exported closing = export(page -> page.addLayerStack(stack -> stack
+                .layer(column("NameLayer", 120, 0, name -> name.addParagraph("Ada Lovelace")
+                        .addRow(row -> row.name("Closing").fillColor(SURFACE).padding(DocumentInsets.of(6))
+                                .addParagraph("Engineer").addParagraph("2020"))), LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, 240, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", 120, 0, main -> main
+                        .addSpacer(spacer -> spacer.width(100).height(40))
+                        .addParagraph("Experience")), LayerAlign.TOP_LEFT)));
+        assertThat(closing.report().bySubject().get("row paint")).singleElement().satisfies(note -> {
+            assertThat(note.path()).contains("Closing");
+            assertThat(note.detail()).isEqualTo(kept);
+        });
+    }
+
+    /** One column as a full-width layer, inset to its band, as a two-column CV lays it out. */
+    private static com.demcha.compose.document.node.DocumentNode column(
+            String name, double insetLeft, double insetRight,
+            Consumer<com.demcha.compose.document.dsl.SectionBuilder> content) {
+        com.demcha.compose.document.dsl.SectionBuilder layer = new com.demcha.compose.document.dsl.SectionBuilder();
+        layer.name(name).spacing(0).padding(new DocumentInsets(0, insetRight, 0, insetLeft));
+        layer.addSection(name + "Content", section -> content.accept(section.spacing(0)));
+        return layer.build();
     }
 
     @Test

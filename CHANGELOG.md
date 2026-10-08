@@ -26,14 +26,20 @@ follow semantic versioning; release dates are ISO 8601.
   - **Borders above and below are named.** Word draws them outside the panel's row, where the
     page strokes them on the box's edge: where no space round the row takes them, what follows
     stands up to their width lower (`RowNode`, `APPROXIMATED`). Measured, five rows with a 1pt
-    bottom border one under the other set what follows 5.4pt low in Word and LibreOffice, as five
-    containers with that border do.
+    bottom border one under the other set what follows 5.4pt low in Word and LibreOffice: their
+    borders' 5pt, and a tenth of a point for each hairline paragraph Word needs between two
+    tables, as five containers with that border do. A top border wider than the row's padding
+    stands its columns that much lower too, where the space above does not take it, and the
+    note says so.
   - **Still named as `row paint`**, its columns written alone:
     - composed in a table cell, whose table draws its box as a shape where it frames no text;
     - in a page zone's line;
     - in a band of overlapping layers, or where a stack's column measures the space above or
       below it to the text inside it, which the panel's margins would hold again;
-    - with a padding below zero, or a first or last column whose margin hangs into it.
+    - with a padding below zero, or a first or last column whose margin hangs into it;
+    - with a margin below zero above or below it, which its columns' table nets against its
+      padding and a panel does not, or at a side in a cell, where Word starts a table no further
+      left than the cell's text. In the body a row bleeding past the margin is its panel.
 
   Measured in Word 16 and LibreOffice on a page of painted rows, a filled row's shading covers
   the box the page fills, to a tenth of a point, and its text stands where the page sets it. No
@@ -278,7 +284,9 @@ follow semantic versioning; release dates are ISO 8601.
   - **Where Word holds an opaque colour only** — a cell's shading, a border, a rule — the colour
     is flattened against what Word paints under it. Inside a panel or cell the export shaded, that
     is the shading as written; on the page, it is read from the layout: the fills drawn before the
-    block at its centre, a page background included, a row's own fill (which is not written) left
+    block at its centre, a page background included, a row's own fill (which is not written; since
+    written in the flow, as a panel: see "A DOCX export writes a row's fill, outline and side
+    borders, as a panel holding its columns") left
     out. Each is named in the report as `translucency`:
     - a panel's fill and borders, once per panel;
     - a table cell's fill and rules, once per table;

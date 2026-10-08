@@ -736,7 +736,7 @@ final class DocxLayoutMetrics {
             // the gap Word is given on top (applyLineGap) — keeps the first and last lines where
             // the page has them, never below the tallest written line, which would clip it. Nor
             // above the lines' mean height: the paragraph would come out taller than the page,
-            // and a surplus cannot be owed back.
+            // and a surplus only comes out of the space below it (oweWhatTheLinesFallShort).
             if (byPitch && ownWay && pairs > 0 && textLines > 0) {
                 double pitch = pitches / pairs - Math.max(0, lineGap(node));
                 text = Math.max(text, Math.min(pitch, heights / textLines));

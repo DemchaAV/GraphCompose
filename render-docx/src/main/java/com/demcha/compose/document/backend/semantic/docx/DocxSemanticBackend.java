@@ -8643,7 +8643,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Owes below a paragraph what its lines are shorter in Word than on the page.
+     * Owes below a paragraph what its lines are shorter in Word than on the page, and hangs below
+     * it what they are taller.
      *
      * <p>Word sets a paragraph's lines one height apart, and the page sets each line its own
      * height. Where they differ the written height is the page's distance between lines
@@ -8652,12 +8653,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * terms, whose wrapped lines carry a taller prefix than their first, stood 0.6pt higher
      * with every item. Only a paragraph written at a height other than its tallest laid-out
      * line is made up to the page; one written at its tallest line, to keep its letters whole,
-     * comes out no shorter than the page and keeps that height.</p>
+     * falls short only by its line's rounding to the twip, which is not what Word sets either: it
+     * sets lines on a grid of its own (see {@link #LINES_ROUNDING_TOLERANCE}). Owed, that rounding
+     * set {@code ModernInvoice}'s lines a step of the grid lower (measured).</p>
+     *
+     * <p>Written at its tallest line, it can come out taller: the page sets a line shorter than
+     * that, a wrapped line after a large first one, at its own height. Its last line then hangs
+     * below the block, as a line held to its icon does, and what follows takes that out of the
+     * space between them; what the space cannot take is named.</p>
      */
     private void oweWhatTheLinesFallShort(XWPFParagraph target, ParagraphNode source) {
         java.util.OptionalDouble page = layout.linesHeight(source);
         CTPPr properties = target.getCTP().getPPr();
-        if (page.isEmpty() || properties == null || !hasAnExactLine(target) || !layout.lineIsNotTheTallest(source)) {
+        if (page.isEmpty() || properties == null || !hasAnExactLine(target)) {
             return;
         }
         Long line = writtenTwips(properties.getSpacing().getLine());
@@ -8667,13 +8675,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double written = layout.lineCount(source) * (line / POINT_TO_TWIP)
                          - lineTopsTakenIn.getOrDefault(target.getCTP(), 0.0);
         double shortBy = page.getAsDouble() - written;
-        if (shortBy > LINES_SHORT_TOLERANCE) {
+        if (shortBy > LINES_ROUNDING_TOLERANCE && layout.lineIsNotTheTallest(source)) {
             owePendingSpacingAfter(shortBy);
+        } else if (-shortBy > LINES_ROUNDING_TOLERANCE) {
+            // Written at its tallest line where the page sets a line shorter, a paragraph ends
+            // lower in Word: its last line hangs below the block, and what follows takes that out
+            // of the space between them (newBodyParagraph), or names it. CompactMono's sidebar, its
+            // skills two lines to a paragraph and each written 0.12pt taller than the page, ended a
+            // point low.
+            hangingBelow = Math.max(hangingBelow, -shortBy);
         }
     }
 
-    /** What a paragraph's lines may fall short of the page by, twips rounding, before it is owed. */
-    private static final double LINES_SHORT_TOLERANCE = 0.1;
+    /**
+     * What a paragraph's lines may fall short of or pass the page by, twips rounding, before it
+     * is owed below the paragraph or taken out of the space below it: Word sets lines on a grid
+     * of its own, 0.12pt apart (measured), and a twip more or less of space moves a line a step
+     * or nothing.
+     */
+    private static final double LINES_ROUNDING_TOLERANCE = 0.1;
 
     /**
      * Sets a paragraph's mark in its text's character formatting: face, size, colour, weight,
@@ -14333,15 +14353,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double edges = Math.max(0, carriedSpacingBefore);
         double above = spaceAboveOnItsPage(node);
         double kept = Double.isNaN(above) ? own + edges : Math.max(0, above) + Math.max(0, node.padding().top());
-        if (!(kept > 0.01)) {
-            return;
-        }
         // Text hanging below a band, a pull out of the block before and a card's border below
         // it stay on the page above with them, as at a table moved to a new page: the layout
-        // starts the new page from its top.
+        // starts the new page from its top, with or without an edge to hold there.
         forgetTheHang();
         pullBelow = 0;
         borderBelow = 0;
+        if (!(kept > 0.01)) {
+            return;
+        }
         carriedSpacingBefore += own;
         XWPFParagraph line = newBodyParagraph(document);
         pullLeftOn = null;
@@ -14703,6 +14723,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             pullLeft = 0;
         }
         owePendingSpacingAfter(height);
+        // A spacer shorter than its hairline — a width anchor of no height, as Panel's cards
+        // open with — has the hairline reach past it by the rest of that tenth, as a line hangs
+        // below a block: what follows takes it out of the space between them, or names it. Taken
+        // nowhere, it stood every card a tenth of a point taller in Word.
+        double past = SEPARATOR_POINTS - Math.max(0, node.height());
+        if (past > 0) {
+            hangingBelow = Math.max(hangingBelow, past);
+        }
         // The page gives a spacer its margin and padding above and below as well; here it is
         // its height alone. The space below a band, or below a layer another resumes after in
         // its column, is measured from the page, the margin and padding below its block in it.
@@ -14767,7 +14795,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *       what of it the space does not take, the panel's padding below takes, the border then
      *       drawn that much inside the panel's edge;</li>
      *   <li>a line hanging below the box of the block above — a band's text held to its marker, a
-     *       cell's last line held to its icon (hangingBelow);</li>
+     *       cell's last line held to its icon, the last line of a paragraph Word sets taller than
+     *       the page, a spacer's line past a spacer shorter than it: hangingBelow, as
+     *       {@link #oweWhatTheLinesFallShort} and {@link #writeSpacer} set it among others;</li>
      *   <li>the paragraph Word needs between two tables, which the page does not have
      *       ({@link #separateFromTheTableAbove}).</li>
      * </ul>

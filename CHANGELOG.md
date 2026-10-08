@@ -8,6 +8,29 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export no longer stands what follows a width anchor, or a paragraph Word sets taller,
+  lower than the page.** Both reached past the block in Word, and neither was taken out of the
+  space below or named. Each now hangs below its block, as a line held to its icon does: the
+  space below takes it, and what it cannot take is named (`space above`).
+  - **A spacer shorter than its line** — a width anchor of no height, as `Panel`'s and
+    `PanelLetter`'s cards open with — is written as a paragraph a tenth of a point tall, as any
+    spacer is; the rest of that tenth stood every card that much taller in Word.
+  - **A paragraph whose lines Word sets taller than the page.** Word sets every line of a
+    paragraph at one height, which the export writes as its tallest line's; the page sets each at
+    its own, so a wrapped line after a large first one stands closer on the page. A tenth of a
+    point or less is left, as is what a paragraph written at its tallest line falls short of the
+    page by rounding to the twip: Word sets lines on a grid of its own, 0.12pt apart, and owed,
+    that rounding stood `ModernInvoice`'s lines a step of it lower (measured).
+  - A paragraph the layout opens a page with, with no top edge of its own to hold there, leaves
+    what the block above leaves below itself on the page above, as one with an edge does.
+
+  In the DOCX fidelity corpus 9 of the 62 documents change, every one nearer the page in Word,
+  and the report names nothing more: `cv-panel`'s median line from 0.83pt to 0.46pt,
+  `cv-compact_mono`'s ninetieth percentile from 0.91pt to 0.36pt, the foot of its sidebar a point
+  higher, where the page sets it. In LibreOffice on Windows seven stand nearer, and `letter-panel`
+  0.06pt further in median: its text now starts where the page sets its card, and stands as far
+  off its baseline as Word and LibreOffice seat it in an exact line.
+
 - **A DOCX export sets what follows a panel where the page sets it, and names what Word sets
   lower.** Word sets a panel's content below its whole top border and its margin inside the
   table's row, and ends the row its margin and its whole bottom border past the content; the

@@ -122,6 +122,63 @@ class DocxContainerSpacingTest {
     }
 
     @Test
+    void theSpaceBelowASpacerOfNoHeightTakesItsHairline() throws Exception {
+        // Nothing on the page, it is a hairline in Word: the space below takes that back, or the
+        // next entry stood a tenth of a point lower than the page sets it.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addSection("Entries", entries -> entries
+                        .spacing(9)
+                        .addParagraph("First entry")
+                        .addSpacer(spacer -> spacer.name("Anchor").width(100).height(0))
+                        .addParagraph("Second entry")))) {
+            List<XWPFParagraph> all = document.getParagraphs();
+            XWPFParagraph spacer = all.get(1);
+
+            assertThat(spacer.getText()).isEmpty();
+            assertThat(before(spacer) + DocxTwips.of(spacer.getCTP().getPPr().getSpacing().getLine()) + before(all.get(2)))
+                    .as("the section's spacing either side of the spacer, its hairline included")
+                    .isEqualTo(2 * NINE_POINTS);
+        }
+    }
+
+    @Test
+    void theSpaceUnderACardsOpeningSpacerOfNoHeightTakesItsHairline() throws Exception {
+        // A width anchor: Panel's cards open with one, and each card stood a tenth of a point
+        // taller in Word than on the page.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addSection("Card", card -> card
+                        .spacing(9)
+                        .fillColor(DocumentColor.rgb(240, 240, 240))
+                        .padding(DocumentInsets.of(6))
+                        .addSpacer(spacer -> spacer.name("Anchor").width(200).height(0))
+                        .addParagraph("Title")))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+            XWPFParagraph spacer = cell.getParagraphs().get(0);
+
+            assertThat(cell.getParagraphs()).extracting(XWPFParagraph::getText).containsExactly("", "Title");
+            assertThat(DocxTwips.of(spacer.getCTP().getPPr().getSpacing().getLine()) + before(cell.getParagraphs().get(1)))
+                    .as("the card's spacing under the anchor, its hairline included").isEqualTo(NINE_POINTS);
+        }
+    }
+
+    @Test
+    void aCardsPaddingBelowTakesTheHairlineOfASpacerOfNoHeightEndingIt() throws Exception {
+        // Nothing owed below the spacer in the card: the card's padding below takes the tenth,
+        // as it takes a line hanging below its last block.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addSection("Card", card -> card
+                        .fillColor(DocumentColor.rgb(240, 240, 240))
+                        .padding(DocumentInsets.of(6))
+                        .addParagraph("Title")
+                        .addSpacer(spacer -> spacer.name("Anchor").width(200).height(0))))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(DocxTwips.of(cell.getCTTc().getTcPr().getTcMar().getBottom().getW()))
+                    .as("its 6pt padding less the hairline").isEqualTo(6 * 20 - 2);
+        }
+    }
+
+    @Test
     void aSpacerOverATableHoldsTheRestOfItsHeightBelowItsHairline() throws Exception {
         // A table has no space above it in Word, so the spacer writes the rest of its height
         // below its own line; nothing stands between them to take the hairline out again.

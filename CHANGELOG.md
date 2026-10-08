@@ -8,6 +8,33 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export no longer stands what follows a width anchor, or a paragraph Word sets taller,
+  lower than the page.** Both reached past the block in Word, and neither was taken out of the
+  space below or named. Each now hangs below its block, as a line held to its icon does: the
+  space below takes it, and what it cannot take is named (`space above`).
+  - **A spacer shorter than its line** — a width anchor of no height, as `Panel`'s and
+    `PanelLetter`'s cards open with — is written as a paragraph a tenth of a point tall, as a
+    spacer in the flow is; the rest of that tenth stood every card that much taller in Word.
+  - **A paragraph whose lines Word sets taller than the page.** Word sets every line of a
+    paragraph at one height, which for a paragraph of lines in more than one size the export
+    writes as its tallest line's; the page sets each at its own, so a wrapped line after a large
+    first one stands closer on the page. Lines rounded up to the twip, over enough of them, pass
+    the page too and hang the same way: `OrangeOps`' achievement lines, a 0.08pt gap between
+    them written as a tenth (measured). What rounding takes from a paragraph written at its
+    tallest line is not owed: owed, it stood `ModernInvoice`'s lines a step or two of Word's grid
+    lower (measured). A tenth of a point or less is left either way: Word sets lines on a grid
+    0.12pt apart.
+  - A paragraph the layout opens a page with, with no top edge of its own to hold there, leaves
+    what the block above leaves below itself on the page above, as one with an edge does.
+
+  In the DOCX fidelity corpus 9 of the 62 documents change, and the report names nothing more.
+  In Word all nine stand nearer the page in median — `cv-panel`'s median line from 0.83pt to
+  0.46pt, `cv-compact_mono`'s ninetieth percentile from 0.91pt to 0.36pt, the foot of its sidebar a
+  point higher, where the page sets it — and in LibreOffice on Windows seven do. `letter-panel`'s
+  text now starts where the page sets its card, and stands as far off its baseline as both
+  editors seat it in an exact line: its ninetieth percentile from 0.21pt to 0.29pt in Word, its
+  median 0.06pt further in LibreOffice.
+
 - **A DOCX export sets what follows a panel where the page sets it, and names what Word sets
   lower.** Word sets a panel's content below its whole top border and its margin inside the
   table's row, and ends the row its margin and its whole bottom border past the content; the

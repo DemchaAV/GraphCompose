@@ -56,6 +56,26 @@ class DocxSpaceAboveOnANewPageTest {
     }
 
     @Test
+    void aSpacerOfNoHeightTheGapBeforeCarriesToANewPageHoldsTheGapInItsLine() throws Exception {
+        // A spacer of no height that opens a page holds the gap the layout carries there in its
+        // line, as a taller one does.
+        try (XWPFDocument document = DocxExports.withLayout(300, 200, 20, page -> page
+                .spacing(GAP)
+                .spacer(0, CONTENT - 3)
+                .spacer(0, 0)
+                .addParagraph("After"))) {
+            CTSpacing spacing = spacing(spacerOnThePageAfter(document));
+
+            assertThat(spacing.getLineRule()).isEqualTo(STLineSpacingRule.EXACT);
+            assertThat(DocxTwips.of(spacing.getLine())).as("the gap, and the hairline's height")
+                    .isEqualTo(Math.round(GAP * 20) + HAIRLINE);
+            assertThat(before(spacing(paragraphWith(document, "After"))))
+                    .as("the gap below it, less the hairline the spacer has not the height for")
+                    .isEqualTo(Math.round(GAP * 20) - HAIRLINE);
+        }
+    }
+
+    @Test
     void aSpacerTheGapBeforeStaysAboveIsWrittenAsBefore() throws Exception {
         // 150pt leave 10: the gap fits at the foot of the first page, the spacer does not.
         try (XWPFDocument document = DocxExports.withLayout(300, 200, 20, page -> page

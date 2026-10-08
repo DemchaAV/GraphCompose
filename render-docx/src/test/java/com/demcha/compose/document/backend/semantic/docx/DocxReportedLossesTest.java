@@ -73,12 +73,12 @@ class DocxReportedLossesTest {
     }
 
     @Test
-    void aPictureInAPageZoneIsReportedOnceThoughWrittenIntoTwoHeaders() throws Exception {
+    void aShapeInAPageZoneIsReportedOnceThoughWrittenIntoTwoHeaders() throws Exception {
         // A second zone on the first page alone gives the section a first-page header, so the
-        // logo's zone is written into it and into the ordinary header: told once all the same.
+        // mark's zone is written into it and into the ordinary header: told once all the same.
         DocxExportReport report = reportOf(session -> {
             session.chrome().zone(DocumentPageZone.header(30, page -> new RowBuilder()
-                    .addImage(image -> image.name("Logo").source(DocumentImageData.fromBytes(png())).size(24, 24))
+                    .addShape(shape -> shape.name("Mark").size(24, 24).fillColor(SURFACE))
                     .addParagraph("Quarterly report")
                     .build()));
             session.chrome().zone(onTheFirstPage(DocumentPageZone.footer(20,
@@ -87,22 +87,36 @@ class DocxReportedLossesTest {
         });
 
         List<DocxExportReport.Note> notes = report.bySubject().get("page zone content");
-        assertThat(notes).as("the logo, once").hasSize(1);
+        assertThat(notes).as("the mark, once").hasSize(1);
         assertThat(notes.get(0).severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
-        assertThat(notes.get(0).detail()).contains("ImageNode 'Logo' is not written");
+        assertThat(notes.get(0).detail()).contains("ShapeNode 'Mark' is not written")
+                .contains("written from the zone's paragraphs, page fields, spacers and pictures only");
     }
 
     @Test
-    void twoPicturesOfNoNameInAPageZoneAreTwoNotes() throws Exception {
+    void twoShapesOfNoNameInAPageZoneAreTwoNotes() throws Exception {
         DocxExportReport report = reportOf(session -> {
             session.chrome().zone(DocumentPageZone.header(30, page -> new RowBuilder()
-                    .addImage(image -> image.source(DocumentImageData.fromBytes(png())).size(24, 24))
-                    .addImage(image -> image.source(DocumentImageData.fromBytes(png())).size(24, 24))
+                    .addShape(shape -> shape.size(24, 24).fillColor(SURFACE))
+                    .addShape(shape -> shape.size(24, 24).fillColor(SURFACE))
                     .build()));
             session.pageFlow(page -> page.addParagraph("Body"));
         });
 
-        assertThat(report.bySubject().get("page zone content")).as("each picture is a loss of its own").hasSize(2);
+        assertThat(report.bySubject().get("page zone content")).as("each shape is a loss of its own").hasSize(2);
+    }
+
+    @Test
+    void aPictureInAPageZoneIsWrittenNotReported() throws Exception {
+        DocxExportReport report = reportOf(session -> {
+            session.chrome().zone(DocumentPageZone.header(30, page -> new RowBuilder()
+                    .addImage(image -> image.name("Logo").source(DocumentImageData.fromBytes(png())).size(24, 24))
+                    .addParagraph("Quarterly report")
+                    .build()));
+            session.pageFlow(page -> page.addParagraph("Body"));
+        });
+
+        assertThat(report.bySubject()).doesNotContainKey("page zone content");
     }
 
     @Test
@@ -172,8 +186,8 @@ class DocxReportedLossesTest {
     void aZonesLossesInASectionedFileNameTheirSection() throws Exception {
         AtomicReference<DocxExportReport> captured = new AtomicReference<>();
         try (com.demcha.compose.document.api.MultiSectionDocument document = GraphCompose.documents()
-                .section(withALogoHeader("Cover"))
-                .section(withALogoHeader("Body"))
+                .section(withAMarkHeader("Cover"))
+                .section(withAMarkHeader("Body"))
                 .create()) {
             document.export(new DocxSemanticBackend(captured::set));
         }
@@ -358,10 +372,10 @@ class DocxReportedLossesTest {
         });
     }
 
-    private static DocumentSession withALogoHeader(String text) {
+    private static DocumentSession withAMarkHeader(String text) {
         DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create();
         session.chrome().zone(DocumentPageZone.header(30, page -> new RowBuilder()
-                .addImage(image -> image.source(DocumentImageData.fromBytes(png())).size(24, 24))
+                .addShape(shape -> shape.size(24, 24).fillColor(SURFACE))
                 .addParagraph(text).build()));
         session.pageFlow(page -> page.addParagraph(text));
         return session;

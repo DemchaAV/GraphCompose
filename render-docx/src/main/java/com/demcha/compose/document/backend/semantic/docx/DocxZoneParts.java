@@ -1,6 +1,8 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.InlineHighlightRun;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineImageRun;
@@ -93,7 +95,34 @@ final class DocxZoneParts {
             return other instanceof PageFieldNode drawn && field.kind() == drawn.kind()
                    && sameFace(field.textStyle(), drawn.textStyle());
         }
+        if (part instanceof ImageNode picture) {
+            return other instanceof ImageNode drawn && samePictureBox(picture, drawn);
+        }
         return part.getClass() == other.getClass();
+    }
+
+    /**
+     * Whether two pictures are laid out in one box: the sizes, fit and insets they state, and,
+     * where they leave a side to the picture's own proportions, the same picture.
+     */
+    private static boolean samePictureBox(ImageNode picture, ImageNode other) {
+        boolean sized = picture.width() != null && picture.height() != null;
+        return Objects.equals(picture.width(), other.width()) && Objects.equals(picture.height(), other.height())
+               && Objects.equals(picture.scale(), other.scale()) && picture.fitMode() == other.fitMode()
+               && picture.padding().equals(other.padding()) && picture.margin().equals(other.margin())
+               && (sized || samePicture(picture.imageData(), other.imageData()));
+    }
+
+    /** Whether two pictures' data are the same file or the same bytes. */
+    private static boolean samePicture(DocumentImageData picture, DocumentImageData other) {
+        if (picture == other) {
+            return true;
+        }
+        if (picture.path().isPresent() || other.path().isPresent()) {
+            return picture.path().equals(other.path());
+        }
+        return picture.bytes().isPresent() && other.bytes().isPresent()
+               && java.util.Arrays.equals(picture.bytes().get(), other.bytes().get());
     }
 
     private static boolean runsAlike(List<InlineRun> runs, List<InlineRun> others) {

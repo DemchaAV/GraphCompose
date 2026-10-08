@@ -322,7 +322,7 @@ final class DocxClipInk {
      * centred there where it is contained, as the file writes it at that size too; across its box
      * otherwise, covering it or stretched over it.
      */
-    private static double[] drawn(PlacedFragment fragment, ImageFragmentPayload image) {
+    static double[] drawn(PlacedFragment fragment, ImageFragmentPayload image) {
         double[] box = {fragment.x(), fragment.y(), fragment.width(), fragment.height()};
         ImageData data = image.imageData();
         if (image.fitMode() != DocumentImageFitMode.CONTAIN || data == null || data.getMetadata() == null) {

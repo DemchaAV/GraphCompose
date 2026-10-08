@@ -37,7 +37,7 @@ class DocxRowPaintTest {
     @Test
     void aRowsFillIsItsPanelsShadingRoundItsColumns() throws Exception {
         Exported exported = export(page -> page.addRow(row -> row.name("Totals").fillColor(SURFACE)
-                .padding(DocumentInsets.of(8)).gap(12).addParagraph("Subtotal").addParagraph("120.00")));
+                .padding(DocumentInsets.of(8)).spacing(12).addParagraph("Subtotal").addParagraph("120.00")));
 
         XWPFTable panel = exported.document().getTables().get(0);
         assertThat(panel.getRows()).hasSize(1);
@@ -78,7 +78,7 @@ class DocxRowPaintTest {
     @Test
     void withNoLayoutTheColumnsAreTheRowsOwnArithmeticLessItsPadding() throws Exception {
         XWPFDocument document = DocxExports.withoutLayout(400, 600, 20, page -> page.addRow(row -> row
-                .fillColor(SURFACE).padding(DocumentInsets.of(8)).gap(12).addParagraph("Left").addParagraph("Right")));
+                .fillColor(SURFACE).padding(DocumentInsets.of(8)).spacing(12).addParagraph("Left").addParagraph("Right")));
 
         XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
         assertThat(cell.getColor()).isEqualToIgnoringCase("EEF3F9");

@@ -1370,7 +1370,10 @@ final class DocxLayoutMetrics {
     /**
      * What the page painted at a point before a fragment, over its white, as Word shows it:
      * rectangles, ellipses, polygons, paths and table cells in their fill colours, a row's own fill
-     * left out, as the export does not write it ({@code row paint}). A picture, a barcode, a
+     * left out. Written, that fill is its panel's shading, and only what the row holds stands on
+     * it, read off the panel as written; what the page lays over the row from outside it Word
+     * writes before or after the panel, over what is under the row. Kept from its panel, the fill
+     * is not written at all. A picture, a barcode, a
      * gradient, a fill drawn under a transform, or what the layout paints in a payload this does
      * not know, covering the point, leaves the colour unknown.
      */
@@ -1420,7 +1423,10 @@ final class DocxLayoutMetrics {
             com.demcha.compose.document.layout.payloads.BookmarkMarkerPayload.class,
             com.demcha.compose.document.layout.payloads.LayoutAnchorPayload.class);
 
-    /** Whether a fragment is a row's own fill, which the export does not write. */
+    /**
+     * Whether a fragment is a row's own fill, which nothing written outside the row's panel stands
+     * on in Word (see {@link #colourUnder(PlacedFragment, double, double)}).
+     */
     private boolean aRowsOwnFill(PlacedFragment fragment) {
         if (!(fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload)) {
             return false;

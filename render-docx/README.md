@@ -81,8 +81,9 @@ What maps:
   each page and every row is kept whole. A composed cell is written by the same writers as
   anywhere else, so it can hold an image, a list or a nested table.
 - **Rows** are a one-row table whose columns are where the layout placed each child.
-- **Panels.** A container with a fill or a border is a one-cell table carrying them; rounded
-  corners come out square, and the report says so.
+- **Panels.** A container with a fill or a border is a one-cell table carrying them, as is a row
+  that paints its box, holding its columns; rounded corners come out square, and the report says
+  so.
 - **Images.** A block image keeps its size and fit mode. Pictures, SVG icons, emoji and
   shapes — dots, arrows, chevrons, checkboxes — in a line are inline pictures, placed where
   the page's alignment puts them; an icon's text is the picture's description. Code and badge chips keep their fill as run shading, without
@@ -110,7 +111,13 @@ What is not written — each one is named in the export report
   not carried. A layer stack whose layers are side-by-side columns is the exception: it is
   written as one table row, a cell per column.
 - **Watermarks, protection and viewer preferences**, each named in the export report.
-- **A row's own fill, outline and side borders**, named in the export report as `row paint`.
+- **The fill, outline and side borders of a row** composed in a table cell (drawn as a shape where
+  they frame no text), in a page zone's line, in a band of overlapping layers or where a stack's
+  column measures the space round it to its text, with a padding below zero or a column
+  hanging into it, or with a margin below zero above or below it or at a side in a cell, named
+  in the export report as `row paint`. Elsewhere a row that paints is written as a panel holding
+  its columns, its borders above and below named where Word draws them outside the panel's
+  row, and its columns where its padding does not take its top border.
 - **Translucency where Word holds an opaque colour only** — a cell's shading, a border, a rule,
   a chip's run shading: the colour is flattened against what Word paints under it — the panel or
   cell the export shaded, or what the page paints there — and a text header's separator against

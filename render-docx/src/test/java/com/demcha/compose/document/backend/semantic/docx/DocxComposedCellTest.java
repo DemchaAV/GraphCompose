@@ -290,6 +290,20 @@ class DocxComposedCellTest {
     }
 
     @Test
+    void anOddNumberOfTwipsIsGivenBackHalfRoundedDownAboveAndTheRestBelow() throws Exception {
+        // A 1.05pt outline is written at eight eighths, 20 twips: the chip's row holds 163 less 20,
+        // 143, and its letters keep its label at 160 — 17 twips, 8 above and 9 below.
+        com.demcha.compose.document.style.DocumentStroke outline = com.demcha.compose.document.style.DocumentStroke.of(
+                com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1.05);
+        XWPFTableCell around = aloneInARow(outline, DocumentInsets.of(4));
+        XWPFTableCell chip = around.getTables().get(0).getRow(0).getCell(0);
+
+        assertThat(DocxTwips.of(chip.getParagraphs().get(0).getCTP().getPPr().getSpacing().getLine())
+                   - heightOf(chip.getTableRow().getTable())).as("the premise: an odd number of twips").isEqualTo(17);
+        assertThat(verticalMarginsOf(around)).containsExactly(60L - 8, 60L - 9);
+    }
+
+    @Test
     void aCellGivesBackNoMoreThanItsMarginsHold() throws Exception {
         // 1.25pt of padding less the 1pt rule leaves 5 twips above and below, less than the 10 each.
         assertThat(verticalMarginsOf(aloneInARow(OUTLINE, DocumentInsets.of(1.25)))).containsExactly(0L, 0L);

@@ -197,8 +197,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final double LEAST_RAISE_INTO_THE_SPACE_ABOVE = 0.1;
     /**
      * The least a row of text cells is moved by its margins, in points ({@link #moveTheRowsText}),
-     * for the same reason: Word sets lines on its 0.12pt grid, and a twip of margin moves a line a
-     * step or nothing.
+     * and a cell by the height of its lines ({@link #seatByTheLines}), for the same reason: Word
+     * sets lines on its 0.12pt grid, and a twip of margin moves a line a step or nothing.
      */
     private static final double LEAST_ROW_TEXT_MOVE = 0.1;
     /** How a drawing the page paints is anchored, as the report says it (see DocxDrawingAnchors). */
@@ -332,6 +332,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // the page's, in points; NaN for a cell with no line to seat. Taken out when the row is moved:
     // see moveTheRowsText.
     private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTc, Double> textCellRaises =
+            new java.util.IdentityHashMap<>();
+    // Those cells as the layout measured them, whose letters bound how far their lines are moved by
+    // their height (seatByTheLines). Taken out with them: see moveTheRowsText.
+    private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTc, TableResolvedCell> textCellsMeasured =
             new java.util.IdentityHashMap<>();
     // The paragraph whose lines last fell short of the page and what was owed below it for that:
     // see settleTheLinesWithThePage, takeBackTheRoundingOwedBy.
@@ -838,6 +842,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         lineTopsTakenIn.clear();
         cellsGivingTheirPadding.clear();
         textCellRaises.clear();
+        textCellsMeasured.clear();
         roundingOwedBy = null;
         roundingOwed = 0;
         risenLines.clear();
@@ -12468,11 +12473,40 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (lines.stream().allMatch(line -> line == null || line.isBlank())) {
             textCellRaises.put(cell.getCTTc(), Double.NaN);
         } else if (lineHeight.isPresent()) {
-            double below = belowThePage(layout.measuredCell(node, placement.row(), placement.column()),
-                    cell.getParagraphs().get(0));
+            TableResolvedCell measured = layout.measuredCell(node, placement.row(), placement.column());
+            double below = belowThePage(measured, cell.getParagraphs().get(0));
             if (!Double.isNaN(below)) {
                 textCellRaises.put(cell.getCTTc(), below);
+                textCellsMeasured.put(cell.getCTTc(), measured);
             }
+        }
+    }
+
+    /**
+     * How far a text cell's letters reach above and below their baseline, in points
+     * ({@link DocxInk#of(String, TextStyle, FontLibrary)}), or {@code null} where they are not read:
+     * a face the measured fonts do not hold, or a standard face the export does not embed, whose
+     * letters are read through a stand-in ({@link DocxInk#readInTheLayoutsUnits}).
+     */
+    private double[] inkOf(TableResolvedCell measured) {
+        TextStyle face = measured.style().textStyle();
+        try {
+            if (!DocxInk.readInTheLayoutsUnits(face, measuredFonts())) {
+                return null;
+            }
+            double above = 0;
+            double below = 0;
+            for (String line : measured.lines()) {
+                double[] reach = DocxInk.of(line == null ? "" : line, face, measuredFonts());
+                if (reach == null) {
+                    return null;
+                }
+                above = Math.max(above, reach[0]);
+                below = Math.max(below, reach[1]);
+            }
+            return new double[]{above, below};
+        } catch (RuntimeException unknownFace) {
+            return null;
         }
     }
 
@@ -12540,7 +12574,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * of Lato, the two called opposite ways, stood 0.58pt low. The position counts in half points,
      * and LibreOffice moves text further than it is raised, by up to half as much again
      * ({@link #raiseIntoTheSpaceAbove}); from half a point up that overshoot is less than what is
-     * left, and under it more, so less is left as it is.</p>
+     * left, and under it more. Less, from a tenth of a point, is moved by the height of the cell's
+     * lines, traded for the space after them ({@link #seatByTheLines}), which both editors move it
+     * by as written. Half a point and more is not: {@code ConsultingInvoice}'s amounts, so moved,
+     * stood nearer the page in their rows in LibreOffice, but further from it on the page, the
+     * position's overshoot no longer making up for their rows standing 0.3pt low there
+     * (measured).</p>
      */
     private void moveTheRowsText(XWPFTableRow row) {
         List<XWPFTableCell> cells = row.getTableCells();
@@ -12572,11 +12611,73 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         for (int i = 0; i < cells.size(); i++) {
             double left = calls[i] - move / POINT_TO_TWIP;
+            TableResolvedCell measured = textCellsMeasured.remove(cells.get(i).getCTTc());
             if (Math.abs(left) >= LEAST_BASELINE_SHIFT_POINTS) {
                 for (XWPFParagraph para : cells.get(i).getParagraphs()) {
                     raiseRunsFrom(para, 0, Math.round(left * HALF_POINTS_PER_POINT));
                 }
+            } else if (measured != null && Math.abs(left) >= LEAST_ROW_TEXT_MOVE) {
+                double[] ink = inkOf(measured);
+                if (ink != null) {
+                    seatByTheLines(cells.get(i), left, ink);
+                }
             }
+        }
+    }
+
+    /**
+     * Moves a text cell's lines by trading the height of each for the space after it, as far as
+     * its letters and that space allow.
+     *
+     * <p>Word and LibreOffice stand an exact line's baseline four fifths of the way down it
+     * ({@link DocxTextBands#BASELINE_SHARE}). Each line written shorter, the space after it taller
+     * by as much, keeps the cell's content as tall and each line's top where it was, and stands the
+     * text four fifths of the difference higher; each written taller, the space after it shorter,
+     * that much lower. {@code CobaltRota}'s staff names, beside the day
+     * cells its chips are composed in, stood 0.25pt low in their rows in Word, 0.2pt in
+     * LibreOffice on Windows and 0.19pt in LibreOffice 24.2; written so, they stood within 0.08pt of
+     * the page's in all three, every row its height (measured). The line alone written shorter
+     * keeps the row its height in Word and on Windows, but LibreOffice 24.2 holds a row to its
+     * cells' content, the margins inside its height: the covers row, whose value cells' lines were
+     * its tallest content, came out 0.8pt shorter there.</p>
+     *
+     * <p>Only a cell whose every paragraph is one exact line, no line broken in it; a line is cut
+     * no nearer its letters than {@link DocxStackedLines#INK_MARGIN} at its top and its foot, as
+     * Word cuts an exact line's letters there on screen, and one whose letters already stand nearer
+     * is not cut. A line made taller takes no more than the space after each holds. What neither
+     * allows is left as it is.</p>
+     *
+     * @param low how far Word sets the cell's lines below the page's, in points; negative where it
+     *            sets them higher
+     * @param ink how far the cell's letters reach above and below their baseline, in points
+     */
+    private static void seatByTheLines(XWPFTableCell cell, double low, double[] ink) {
+        List<CTSpacing> lines = new ArrayList<>();
+        // The least line that keeps the letters clear of its top and its foot, its baseline four
+        // fifths of the way down it.
+        long least = (long) Math.ceil(POINT_TO_TWIP * Math.max(
+                (ink[0] + DocxStackedLines.INK_MARGIN) / DocxTextBands.BASELINE_SHARE,
+                (ink[1] + DocxStackedLines.INK_MARGIN) / (1 - DocxTextBands.BASELINE_SHARE)));
+        long most = Long.MAX_VALUE;
+        for (XWPFParagraph para : cell.getParagraphs()) {
+            CTPPr properties = para.getCTP().getPPr();
+            CTSpacing spacing = properties != null && properties.isSetSpacing() ? properties.getSpacing() : null;
+            Long line = spacing != null && spacing.isSetLineRule() && spacing.getLineRule() == STLineSpacingRule.EXACT
+                    ? writtenTwips(spacing.getLine()) : null;
+            if (line == null || para.getRuns().stream().anyMatch(run -> run.getCTR().sizeOfBrArray() > 0)) {
+                return;
+            }
+            most = Math.min(most, low > 0 ? line - least : twipsOf(spacing.isSetAfter() ? spacing.getAfter() : null));
+            lines.add(spacing);
+        }
+        long twips = Math.min(Math.round(Math.abs(low) * POINT_TO_TWIP / DocxTextBands.BASELINE_SHARE), most);
+        if (lines.isEmpty() || twips <= 0) {
+            return;
+        }
+        long cut = low > 0 ? twips : -twips;
+        for (CTSpacing spacing : lines) {
+            spacing.setLine(BigInteger.valueOf(writtenTwips(spacing.getLine()) - cut));
+            spacing.setAfter(BigInteger.valueOf(twipsOf(spacing.isSetAfter() ? spacing.getAfter() : null) + cut));
         }
     }
 

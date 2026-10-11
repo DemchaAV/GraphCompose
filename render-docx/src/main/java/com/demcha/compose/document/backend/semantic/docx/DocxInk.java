@@ -3,6 +3,7 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.ParagraphSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
+import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.font.PDFont;
@@ -42,34 +43,55 @@ final class DocxInk {
             if (!(span instanceof ParagraphTextSpan text)) {
                 return null;
             }
-            PdfFont font = fonts.getFont(text.textStyle().fontName(), PdfFont.class).orElse(null);
-            if (font == null) {
+            double[] reach = of(text.text(), text.textStyle(), fonts);
+            if (reach == null) {
                 return null;
             }
-            PDFont face = font.fontType(text.textStyle().decoration());
-            if (!(face instanceof PDVectorFont outlines)) {
-                return null;
+            above = Math.max(above, reach[0]);
+            below = Math.max(below, reach[1]);
+        }
+        return new double[]{above, below};
+    }
+
+    /**
+     * The reach of the letters of a text set in one style, in points: {@code {above, below}} its
+     * baseline, each at least 0; {@code null} when the font is not known or a glyph has no outline
+     * to read.
+     *
+     * @param text  the text
+     * @param style the style it is set in
+     * @param fonts the fonts the layout measured it with
+     */
+    static double[] of(String text, TextStyle style, FontLibrary fonts) {
+        PdfFont font = fonts.getFont(style.fontName(), PdfFont.class).orElse(null);
+        if (font == null) {
+            return null;
+        }
+        PDFont face = font.fontType(style.decoration());
+        if (!(face instanceof PDVectorFont outlines)) {
+            return null;
+        }
+        double above = 0;
+        double below = 0;
+        double scale = style.size() / 1000.0;
+        String shown = font.sanitizeForRender(style, text);
+        for (int i = 0; i < shown.length(); ) {
+            int codePoint = shown.codePointAt(i);
+            i += Character.charCount(codePoint);
+            if (Character.isWhitespace(codePoint)) {
+                continue;
             }
-            double scale = text.textStyle().size() / 1000.0;
-            String shown = font.sanitizeForRender(text.textStyle(), text.text());
-            for (int i = 0; i < shown.length(); ) {
-                int codePoint = shown.codePointAt(i);
-                i += Character.charCount(codePoint);
-                if (Character.isWhitespace(codePoint)) {
+            try {
+                byte[] bytes = face.encode(new String(Character.toChars(codePoint)));
+                int code = face.readCode(new ByteArrayInputStream(bytes));
+                Rectangle2D bounds = outlines.getNormalizedPath(code).getBounds2D();
+                if (bounds.isEmpty()) {
                     continue;
                 }
-                try {
-                    byte[] bytes = face.encode(new String(Character.toChars(codePoint)));
-                    int code = face.readCode(new ByteArrayInputStream(bytes));
-                    Rectangle2D bounds = outlines.getNormalizedPath(code).getBounds2D();
-                    if (bounds.isEmpty()) {
-                        continue;
-                    }
-                    above = Math.max(above, bounds.getMaxY() * scale);
-                    below = Math.max(below, -bounds.getMinY() * scale);
-                } catch (IOException | IllegalArgumentException unreadable) {
-                    return null;
-                }
+                above = Math.max(above, bounds.getMaxY() * scale);
+                below = Math.max(below, -bounds.getMinY() * scale);
+            } catch (IOException | IllegalArgumentException unreadable) {
+                return null;
             }
         }
         return new double[]{above, below};
@@ -87,14 +109,22 @@ final class DocxInk {
      */
     static boolean readInTheLayoutsUnits(ParagraphLine line, FontLibrary fonts) {
         for (ParagraphSpan span : line.spans()) {
-            if (span instanceof ParagraphTextSpan text) {
-                PdfFont font = fonts.getFont(text.textStyle().fontName(), PdfFont.class).orElse(null);
-                if (font != null && font.fontType(text.textStyle().decoration()) instanceof PDType1Font type1
-                    && !type1.isEmbedded()) {
-                    return false;
-                }
+            if (span instanceof ParagraphTextSpan text && !readInTheLayoutsUnits(text.textStyle(), fonts)) {
+                return false;
             }
         }
         return true;
+    }
+
+    /**
+     * Whether the letters of a text set in one style are read in the units the layout measured
+     * them in ({@link #readInTheLayoutsUnits(ParagraphLine, FontLibrary)}).
+     *
+     * @param style the style the text is set in
+     * @param fonts the fonts the layout measured it with
+     */
+    static boolean readInTheLayoutsUnits(TextStyle style, FontLibrary fonts) {
+        PdfFont font = fonts.getFont(style.fontName(), PdfFont.class).orElse(null);
+        return font == null || !(font.fontType(style.decoration()) instanceof PDType1Font type1) || type1.isEmbedded();
     }
 }

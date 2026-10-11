@@ -8,6 +8,39 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export stands a table text cell's text where the page sets it by the height of its
+  lines, where its row's margins leave less than half a point of what it calls for.** Word and
+  LibreOffice stand an exact line's baseline four fifths of the way down it, and the page sets a
+  cell's line its face's ascent below its top; a row of text cells is moved by its margins by the
+  least its cells call for. A row holding a composed cell is not — its margins would move the
+  composed content too — nor one whose cells call for opposite ways or in a vertical merge, and
+  what the margins left was moved by the text's position from half a point up, and under that
+  not at all. `CobaltRota`'s staff names, beside the day cells its chips are composed in, stood
+  0.25pt low in their rows in Word, 0.2pt in LibreOffice on Windows and 0.19pt in LibreOffice
+  24.2, and its covers label as much. Under half a point, from a tenth, each of the cell's lines
+  is now written shorter and the space after it taller by as much, or the other way as far as
+  that space holds: the cell's content keeps its height and each line its top, and the text
+  moves four fifths of the difference in both editors. Only where every paragraph of the cell is
+  one line, in a face whose letters the export reads — not a standard face it does not embed — and
+  no nearer the letters' tops and feet than three quarters of a point, where Word cuts an exact
+  line's letters on screen. The line alone written shorter keeps a row its height
+  in Word and on Windows, but LibreOffice 24.2 holds a row to its cells' content: the covers row,
+  whose value cells' lines were its tallest content, came out 0.8pt shorter there (measured).
+  From half a point up the position moves it as before: written by the line instead,
+  `ConsultingInvoice`'s amounts stood nearer the page in their rows in LibreOffice, where the
+  position moves text further than it says, and the rows themselves stand 0.3pt low there, which
+  that overshoot made up for.
+
+  In their rows, `CobaltRota`'s staff names and covers label now stand within 0.08pt of the
+  page's in Word, LibreOffice on Windows and LibreOffice 24.2, every row its height. `CobaltRota`'s
+  median moves from 0.17pt to 0.15pt in Word, its p90 from 0.38pt to 0.31pt, and from 0.08pt to
+  0.06pt in LibreOffice on Windows, its p90 from 0.30pt to 0.22pt; `LumaStudioInvoice`'s from
+  0.14pt to 0.11pt in Word, its long version's from 0.21pt to 0.17pt in Word and from 0.20pt to
+  0.12pt in LibreOffice on Windows. No document of the fidelity corpus moves further in Word or in
+  LibreOffice on Windows. LibreOffice 24.2 sets each of `CobaltRota`'s staff rows a twip shorter
+  than the page, holding them to their content, so the rows above the names stand higher there,
+  and the names, seated in their rows, a few hundredths of a point further from the page.
+
 - **A DOCX export holds a shape's row less its borders as wide as Word draws them, and a table's
   row between two others less the rules it holds.**
   - **A shape's borders come off as wide as Word draws them.** A border is written in eighths of a
@@ -64,8 +97,10 @@ follow semantic versioning; release dates are ISO 8601.
   in LibreOffice on Windows and 7 further, by up to 0.15pt — the outlined pair's. In LibreOffice
   24.2 its p90 moves from 0.90pt to 0.52pt and its median from 0.17pt to 0.22pt, 40 of its lines
   nearer and 53 further, by up to 0.3pt: the single-shift labels, now seated in their chips,
-  stand about 0.4pt high with them there, as LibreOffice 24.2 sets the chips 0.25pt higher than
-  the page and Word 0.15pt lower. No other document of the fidelity corpus moves.
+  stand about 0.4pt high with them there, as the rows above the chips come out 0.25pt shorter in
+  all in LibreOffice 24.2 than on the page, and 0.15pt taller in Word; in its own row each chip
+  stands within a tenth of a point of the page's in all three. No other document of the fidelity
+  corpus moves.
 
 - **A DOCX export counts a table's rules as Word and LibreOffice do, and holds a cell's margins and
   a chip composed in it to the twip the page gives them.**

@@ -8,6 +8,35 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export seats the label of a chip composed in a table cell where the page sets it.**
+  - **A label taller than its chip is seated from the chip's top.** The page starts a line taller
+    than a shape's outline at the outline's top and draws it past it below; the export seated it
+    from the middle the cell centres the line on, half of what the line is taller above where the
+    page draws it: `CobaltRota`'s stacked chips' labels stood 0.43pt high in their chips in Word.
+    The line is cut to the chip as before, its foot only as far as the letters, set that much
+    lower, allow — where Word sets the line on the chip's middle: the line fits the height the
+    chip's row holds, or the cell round the chip gives back all Word grows it by. Beside another
+    cell, or where the letters could not stand that low in the line, it is read from the middle
+    as before.
+  - **A label its chip holds whole is moved towards the page's baseline by the margins of the
+    chip's cell, as far as the height its row holds leaves the line room.** Word stands an exact line's baseline four fifths of the way down it and the page its
+    face's descent above its foot; a position counts in half points, and the label has no space
+    above it to rise into: `CobaltRota`'s single-shift chips' labels stood 0.29pt low in Word,
+    its legend's 0.33pt. The chip's row holds twice the distance less and the margin on the side
+    the line moves away from that much more, so the cell centres the line that far over and the
+    chip keeps its height. The page's own seat of the text off its baseline is moved with it; a
+    label whose text a position already moves, or one under a tenth of a point off, is not.
+
+  In their chips, `CobaltRota`'s single, legend and filled pair's labels now stand within a tenth
+  of a point of the page's in Word and LibreOffice on Windows. The outlined pair's, lowered by a
+  position of a whole point where they call for 0.82pt, moved from 0.43pt high to 0.3pt low in
+  Word, and from 0.42pt high to 0.52pt low in LibreOffice, which moves text further than its
+  position says. Its median moves from 0.38pt to 0.20pt in Word and from 0.31pt to 0.09pt in
+  LibreOffice on Windows, its p90 from 0.46pt to 0.38pt and from 0.39pt to 0.30pt: 89 of its lines
+  nearer in Word and 5 further, by up to 0.14pt, 99 nearer in LibreOffice and 7 further, by up to
+  0.15pt — the outlined pair's. No other document of the fidelity corpus moves. What is left in
+  Word is where the chips stand in their rows, 0.15pt low.
+
 - **A DOCX export counts a table's rules as Word and LibreOffice do, and holds a cell's margins and
   a chip composed in it to the twip the page gives them.**
   - **A rule takes two and a half twips an eighth of a point, rounded down.** Measured on ten-row
@@ -36,8 +65,8 @@ follow semantic versioning; release dates are ISO 8601.
   `CobaltRota`'s grid now stands where the page sets it, every rule under its top within a quarter
   point of the page's in Word, where they ran from 0.4pt high to 0.8pt low: its p90 from 0.99pt to
   0.46pt in Word and from 0.84pt to 0.39pt in LibreOffice on Windows. Its median moves from 0.32pt
-  to 0.38pt (0.23pt to 0.31pt): the shifts' labels stand about 0.3pt low in their chips, where a
-  composed cell's first line is not seated, which the grid standing up to 0.4pt high had hidden.
+  to 0.38pt (0.23pt to 0.31pt): the single shifts' labels stood about 0.3pt low in their chips,
+  which the grid standing up to 0.4pt high had hidden (the entry above seats them).
   In the DOCX fidelity corpus 10 documents stand nearer the page in Word — `proposal-northline`'s
   p90 from 0.71pt to 0.43pt, `cv-panel`'s median from 0.43pt to 0.31pt, `invoice-subscription`'s
   from 0.43pt to 0.33pt — and 10 in LibreOffice on Windows. Seven are further in each, by a twip

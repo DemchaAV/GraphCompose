@@ -5918,32 +5918,132 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Cuts the one line of text a shape composed in a table cell centres in it to the room its
      * outline leaves, where the page lets the line pass the outline and its letters fit inside.
      *
-     * <p>The page centres the label's line in the shape and draws it past the outline where the
-     * line is taller. Word grows the panel's row to the line: {@code CobaltRota}'s stacked shift
-     * chips, 9.2pt outlines round 8.2pt text on a 10pt line, each came out 0.8pt taller, and an
-     * outlined one its borders taller again, as Word keeps a cell's borders outside its content —
-     * every staff row with two shifts in a day stood 3.8pt taller than the page's. The line is
-     * written as tall as the room Word leaves the cell's content — the outline less the margins
-     * written and the borders, in whole twips rounded down, as the panel holds its height
-     * ({@link #holdThePanelsHeight}) — its text seated where the page sets it
-     * ({@link DocxStackedLines.Line}). Both sides are cut alike, since the cell centres the line,
-     * and no closer to the letters on either side than {@link DocxStackedLines#INK_MARGIN}: an
-     * outlined chip, its borders leaving less room than its letters, is cut as far as they allow
-     * and stays that much taller, which the cell it is in gives back out of its margins where the
-     * chip is all the cell holds ({@link #giveBackWhatTheLabelNeeds}). Only a label the shape centres top to bottom is cut:
-     * one set from an edge overflows on one side.</p>
+     * <p>The page centres the label's line in the shape where it fits, and draws one taller than
+     * the outline from the outline's top, past it below. Word grows the panel's
+     * row to the line: {@code CobaltRota}'s stacked shift chips, 9.2pt outlines round 8.2pt text
+     * on a 10pt line, each came out 0.8pt taller, and an outlined one its borders taller again, as
+     * Word keeps a cell's borders outside its content — every staff row with two shifts in a day
+     * stood 3.8pt taller than the page's. The line is written as tall as the room Word leaves the
+     * cell's content — the outline less the margins written and the borders, in whole twips
+     * rounded down, as the panel holds its height ({@link #holdThePanelsHeight}) — its text seated
+     * where the page sets it ({@link DocxStackedLines.Line}): from the outline's top, where the
+     * page starts it there, not from the middle the cell centres the line on. Read from the middle,
+     * the stacked chips' labels stood 0.43pt high in Word, half of what their line is taller than
+     * their outline. Only where Word sets the line on that middle
+     * ({@link #setOnTheShapesMiddle}) and the letters can stand that low in it: elsewhere it is read
+     * from the middle. Both sides are cut alike, since the cell centres the line, and no closer to the
+     * letters on either side than {@link DocxStackedLines#INK_MARGIN}: an outlined chip, its
+     * borders leaving less room than its letters, is cut as far as they allow and stays that much
+     * taller, which the cell it is in gives back out of its margins where the chip is all the cell
+     * holds ({@link #giveBackWhatTheLabelNeeds}). Only a label the shape centres top to bottom is
+     * cut: one set from an edge stands off the middle the cell centres it on. A label the room
+     * holds whole is written at the height that seats its text ({@link #seatTheLabelByItsLine}).</p>
      *
      * @return the label cut, or {@code null} when none is
      */
     private ParagraphNode cutTheLabelToItsOutline(DocumentNode node, DocumentBorders borders, XWPFTableCell cell) {
+        ParagraphNode label = composedLabelOf(node);
+        if (label == null) {
+            return null;
+        }
+        ShapeContainerNode shape = (ShapeContainerNode) node;
+        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(label);
+        double[] ink = inkOf(label);
+        if (line.isEmpty() || ink == null) {
+            return null;
+        }
+        // What Word leaves the content of the cell the panel is: the outline less the margins
+        // written — its padding, less the half of each border the page draws inside it — and the
+        // borders Word keeps outside the content.
+        // In whole twips, rounded down, as the panel holds its height (holdThePanelsHeight): a line
+        // written at the room rounded up grows the row the panel is in past the page's.
+        double room = twipsDown(shape.outline().height()
+                                - (cellMargin(cell, true) + cellMargin(cell, false)) / POINT_TO_TWIP
+                                - strokeWidth(borders.top()) - strokeWidth(borders.bottom())) / POINT_TO_TWIP;
+        double lineHeight = line.get().lineHeight();
+        double over = (lineHeight - room) / 2;
+        if (!(room > 0)) {
+            return null;
+        }
+        if (!(over > 0.01)) {
+            seatTheLabelByItsLine(label, line.get(), ink, room);
+            return null;
+        }
+        double baseline = line.get().baselineOffsetFromBottom();
+        // A line taller than the outline the page starts at the outline's top and draws past it
+        // below (its layers' box is the outline: LayerStackGeometry.verticalOffset): half of what it
+        // is taller lower than the middle the cell centres the written line on.
+        double low = Math.max(0, (lineHeight - shape.outline().height()) / 2);
+        double cut = cutAlike(over, lineHeight, baseline, ink, low);
+        if (low > 0 && (cut < 0 || !setOnTheShapesMiddle(node, borders, cell, lineHeight - 2 * cut))) {
+            // Read from the middle, as the cell centres it: where Word would set the line from the
+            // top of a chip it grows downwards, or no line on that middle holds the letters where
+            // the page sets them — a position would lower them out of it.
+            low = 0;
+            cut = cutAlike(over, lineHeight, baseline, ink, 0);
+        }
+        if (!(cut > 0.01) && !(low > 0.01)) {
+            return null;
+        }
+        cut = Math.max(0, cut);
+        stackedLineHeights.put(label, new DocxStackedLines.Line(lineHeight - 2 * cut, low - cut, 0));
+        return label;
+    }
+
+    /**
+     * How far a composed shape's label line is cut on each side, in points: as far as the page
+     * passes the outline, and no closer to the letters than {@link DocxStackedLines#INK_MARGIN}.
+     *
+     * <p>Both sides are cut alike: the cell centres the line, so a cut deeper on one side stood the
+     * text off the page's by half the difference — 0.42pt high for an outlined chip whose foot the
+     * letters left less room at. The text is seated where the page sets it, {@code low} below the
+     * middle, so the top of the line is cut that much further from the letters and its foot that
+     * much nearer. Below zero where the line holds less than the letters there.</p>
+     *
+     * @param over       half of what the line is taller than the room, in points
+     * @param lineHeight the page's line, in points
+     * @param baseline   the line's baseline above its foot, in points
+     * @param ink        the letters' reach above and below the baseline ({@link #inkOf})
+     * @param low        how far below the middle of the shape the page sets the line, in points
+     */
+    private static double cutAlike(double over, double lineHeight, double baseline, double[] ink, double low) {
+        return Math.min(over, Math.min(lineHeight - baseline - ink[0] + low, baseline - ink[1] - low)
+                              - DocxStackedLines.INK_MARGIN);
+    }
+
+    /**
+     * Whether Word sets a composed shape's label line on the shape's middle, as the cell centres
+     * it: where the line fits the height the shape's row holds, or where the cell round the shape
+     * gives back on both sides all that Word grows the shape by ({@link #giveBackWhatTheLabelNeeds}).
+     * Elsewhere Word grows the shape downwards and sets the line from its top.
+     *
+     * @param line the label line's height as written, in points
+     */
+    private boolean setOnTheShapesMiddle(DocumentNode node, DocumentBorders borders, XWPFTableCell cell, double line) {
+        // The height holdThePanelsHeight holds the shape's row at.
+        long held = twipsDown(((ShapeContainerNode) node).outline().height()
+                              - Math.min(strokeWidth(borders.top()), strokeWidth(borders.bottom())))
+                    - verticalMargins(cell);
+        long over = toTwips(line) - held;
+        XWPFTableCell around = currentCell;
+        return over <= 0 || aloneInItsRow == node && around != null
+                            && over / 2 <= cellMargin(around, true) && over - over / 2 <= cellMargin(around, false);
+    }
+
+    /**
+     * The one line of text a shape composed in a table cell centres in it, or {@code null}: a
+     * shape with no placement of its own, holding that paragraph and drawings and nothing else,
+     * the paragraph one line with no space above or below it and not written as a stack's.
+     */
+    private ParagraphNode composedLabelOf(DocumentNode node) {
         if (!(node instanceof ShapeContainerNode shape) || layout.placement(node) != null) {
             return null;
         }
         ParagraphNode label = null;
         for (com.demcha.compose.document.node.LayerStackNode.Layer layer : shape.layers()) {
             if (layer.node() instanceof ParagraphNode paragraph) {
-                // Only a line the page centres top to bottom passes the outline equally above
-                // and below it; one set from an edge, or moved, overflows on one side.
+                // Only a line the page centres top to bottom is set where the cell centres it, or
+                // from the shape's top where it is taller; one set from an edge, or moved, is not.
                 com.demcha.compose.document.node.LayerAlign align = layer.align();
                 boolean centred = align == com.demcha.compose.document.node.LayerAlign.CENTER
                                   || align == com.demcha.compose.document.node.LayerAlign.CENTER_LEFT
@@ -5961,35 +6061,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             || label.padding().top() != 0 || label.padding().bottom() != 0) {
             return null;
         }
-        java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line = layout.firstLine(label);
-        double[] ink = inkOf(label);
-        if (line.isEmpty() || ink == null) {
-            return null;
-        }
-        // What Word leaves the content of the cell the panel is: the outline less the margins
-        // written — its padding, less the half of each border the page draws inside it — and the
-        // borders Word keeps outside the content.
-        // In whole twips, rounded down, as the panel holds its height (holdThePanelsHeight): a line
-        // written at the room rounded up grows the row the panel is in past the page's.
-        double room = twipsDown(shape.outline().height()
-                                - (cellMargin(cell, true) + cellMargin(cell, false)) / POINT_TO_TWIP
-                                - strokeWidth(borders.top()) - strokeWidth(borders.bottom())) / POINT_TO_TWIP;
-        double lineHeight = line.get().lineHeight();
-        double over = (lineHeight - room) / 2;
-        if (!(over > 0.01) || !(room > 0)) {
-            return null;
-        }
-        double baseline = line.get().baselineOffsetFromBottom();
-        // Both sides are cut alike, as far as the page passes the outline and no closer to the
-        // letters than the margin on either side: the cell centres the line, so a cut deeper on one
-        // side stood the text off the page's by half the difference — 0.42pt high for an outlined
-        // chip whose foot the letters left less room at.
-        double cut = Math.min(over, Math.min(lineHeight - baseline - ink[0], baseline - ink[1])
-                                    - DocxStackedLines.INK_MARGIN);
-        if (!(cut > 0.01)) {
-            return null;
-        }
-        stackedLineHeights.put(label, new DocxStackedLines.Line(lineHeight - 2 * cut, -cut, 0));
         return label;
     }
 
@@ -6030,6 +6101,59 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         long below = Math.min(over - over / 2, cellMargin(around, false));
         setCellMarginTwips(around, true, cellMargin(around, true) - above);
         setCellMarginTwips(around, false, cellMargin(around, false) - below);
+    }
+
+    /**
+     * Writes the line of a label a shape composed in a table cell holds whole at the height that
+     * stands its text where the page sets it.
+     *
+     * <p>Word and LibreOffice stand an exact line's baseline four fifths of the way down it
+     * ({@link DocxTextBands#BASELINE_SHARE}), and the cell centres the line in the shape, so the
+     * text stands three tenths of the line below the shape's middle. The page centres its own line
+     * there too, and sets the text its face's descent above that line's foot, moved by its seat
+     * ({@link #seatShift}): {@code CobaltRota}'s single-shift chips, 10.4pt Carlito on a 12.7pt
+     * line, stood 0.29pt low in their chips in Word and 0.23pt in LibreOffice 24.2, and its
+     * legend's 8.2pt labels 0.33pt. The line written that much shorter — or taller, for a face the
+     * page sets lower than Word does — stands the text on the page's baseline in all of them, the shape and its
+     * row their height. A position counts in half points and is not written under one
+     * ({@link #LEAST_BASELINE_SHIFT_POINTS}). The cell's margins, moved out of the height its row
+     * holds, keep the row its height in Word, but LibreOffice 24.2 counts them inside that height:
+     * the single-shift chips came out half a point shorter there, every row holding one with them
+     * (measured).</p>
+     *
+     * <p>No shorter than keeps the letters, where the page sets them, {@link DocxStackedLines#INK_MARGIN}
+     * inside the line, nor taller than the room Word leaves the cell's content; what that leaves
+     * is the text's position. Less than {@link #LEAST_ROW_TEXT_MOVE} is not moved, and nor is a
+     * label in a standard face the export does not embed, whose letters are read through a
+     * stand-in ({@link DocxInk#readInTheLayoutsUnits}).</p>
+     *
+     * @param line the label's line as the page lays it out
+     * @param ink  the letters' reach above and below the baseline ({@link #inkOf})
+     * @param room the height Word leaves the cell's content, in points
+     */
+    private void seatTheLabelByItsLine(ParagraphNode label, com.demcha.compose.document.layout.payloads.ParagraphLine line,
+                                       double[] ink, double room) {
+        try {
+            // A standard face, not embedded, is read through a stand-in in that font's units.
+            if (!DocxInk.readInTheLayoutsUnits(line, measuredFonts())) {
+                return;
+            }
+        } catch (RuntimeException unknownFace) {
+            return;
+        }
+        double lineHeight = line.lineHeight();
+        // How far below the shape's middle the line's baseline stands, the line centred there, and
+        // the page's text, moved off that baseline by its seat. The letters' reach is the seated
+        // text's, from the line's baseline.
+        double baseline = lineHeight / 2 - line.baselineOffsetFromBottom();
+        double belowTheMiddle = baseline - seatShift(label);
+        double least = 2 * Math.max(ink[0] - baseline, baseline + ink[1]) + 2 * DocxStackedLines.INK_MARGIN;
+        double seated = Math.min(room, Math.max(least, belowTheMiddle / (DocxTextBands.BASELINE_SHARE - 0.5)));
+        if (!(Math.abs((seated - lineHeight) * (DocxTextBands.BASELINE_SHARE - 0.5)) >= LEAST_ROW_TEXT_MOVE)) {
+            return;
+        }
+        // Word's line starts half the difference below the page's, both centred on the middle.
+        stackedLineHeights.put(label, new DocxStackedLines.Line(seated, (seated - lineHeight) / 2, 0));
     }
 
     private static boolean hasRadius(com.demcha.compose.document.style.DocumentCornerRadius radius) {

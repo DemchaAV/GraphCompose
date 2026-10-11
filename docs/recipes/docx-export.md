@@ -897,9 +897,14 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   than the outline leaves it, is written that much shorter, down to the
   room Word leaves the cell's content — the outline less the margins written
   and the borders, which Word keeps outside its content — its text seated
-  where the page sets it: both sides cut alike, as the cell centres the line,
-  no closer to its letters than three quarters of a point, so an outlined
-  chip is cut as far as its letters allow. Composed in a table cell, the
+  where the page sets it, from the shape's top where the line is taller than
+  its outline, as the page starts it there and draws it past the outline
+  below — where Word sets the line on the shape's middle, as it does where the
+  line fits the height the shape's row holds or the cell round the shape gives
+  back all Word grows it by, and from the middle elsewhere:
+  both sides cut alike, as the cell centres the line, no closer to its
+  letters where the page sets them than three quarters of a point, so an
+  outlined chip is cut as far as its letters allow. Composed in a table cell, the
   shape's row is held and its label cut in whole twips rounded down: the row
   the cell is in holds the page's height, rounded once, and anything in it
   rounded up grows it. What the letters keep an outlined chip's label past
@@ -908,6 +913,16 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   cell all its row holds — as a rota's shift chips are, one to a slot — so
   that row keeps the page's height too. Beside another cell it would not:
   both editors give every cell of a row the row's largest margins. A label
+  the shape holds whole is written at the height that stands its text on the
+  page's baseline: Word and LibreOffice stand an exact line's baseline four
+  fifths of the way down it and the cell centres the line, and the page sets
+  the text its face's descent above the foot of a line it centres there — a
+  quarter of a point apart in Carlito, which a position, counted in half
+  points, does not move. The line is written shorter, or taller for a face
+  the page sets lower, no closer to its letters than three quarters of a
+  point and no taller than the room; the shape and its row keep their
+  height. Less than a tenth of a point is not moved, nor a label in a standard
+  face the export does not embed, whose letters are read through a stand-in. A label
   set from the shape's top or bottom edge, or moved up or down, is written as
   it was. A badge's glyph — a smaller picture in a filled or outlined
   container that clips it to its outline (`CLIP_PATH`) and holds nothing

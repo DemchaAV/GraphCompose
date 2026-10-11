@@ -33,7 +33,9 @@ final class DocxExports {
      * above it, in twips: the page seats its baseline 10.05pt down its 12.95pt line, Word four
      * fifths of the way down, 0.31pt lower ({@code DocxBaselineSeatTest} holds it to that). A
      * test of the space between blocks of default text reads the space above such a line as that
-     * much less, and the space below it as that much more.
+     * much less, and the space below it as that much more. A table cell's default face is the same
+     * text, and a row of such cells is moved up as much through its margins
+     * ({@code DocxCellSeatTest}).
      */
     static final long DEFAULT_LINE_RAISE = 6;
     /** {@link #DEFAULT_LINE_RAISE} for the default face at 7pt, the size tests set small text in. */

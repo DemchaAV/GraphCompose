@@ -36,6 +36,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DocxCellPaddingTest {
 
     private static final double TWIPS_PER_POINT = 20.0;
+    /**
+     * How far the rows here, of cells in the default face, are moved up through their margins to
+     * stand their text on the page's baselines ({@code DocxCellSeatTest}): their top margin is that
+     * much smaller and their bottom one that much larger than their padding gives.
+     */
+    private static final long SEAT = DocxExports.DEFAULT_LINE_RAISE;
 
     @Test
     void aStatedPaddingReachesAllFourSides() throws Exception {
@@ -47,7 +53,7 @@ class DocxCellPaddingTest {
                 .row("Padded")));
 
         // Above and below, less the engine's default 1pt rule, which Word gives room of its own.
-        assertThat(margins(cell)).containsExactly(160L, 140L, 80L, 60L);
+        assertThat(margins(cell)).containsExactly(160L - SEAT, 140L, 80L + SEAT, 60L);
     }
 
     @Test
@@ -66,9 +72,42 @@ class DocxCellPaddingTest {
                 .row("Second")));
 
         assertThat(margins(table.getRow(0).getCell(0))).as("the rule above the table, half the one between")
-                .containsExactly(110L, 140L, 125L, 140L);
+                .containsExactly(110L - SEAT, 140L, 125L + SEAT, 140L);
         assertThat(margins(table.getRow(1).getCell(0))).as("half the rule between, the rule below the table")
-                .containsExactly(125L, 140L, 110L, 140L);
+                .containsExactly(125L - SEAT, 140L, 110L + SEAT, 140L);
+    }
+
+    @Test
+    void aRuleComesOffThePaddingAsWideAsWordDrawsIt() throws Exception {
+        // Word draws a rule in eighths of a point: a 0.7pt hairline is written 6/8 and drawn 0.75pt
+        // wide. Taken off at 0.7, EditorialProposal's tables and everything under them stood a step
+        // of Word's grid lower (measured).
+        XWPFTableCell cell = firstCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(7))
+                        .stroke(DocumentStroke.of(DocumentColor.BLACK, 0.7))
+                        .build())
+                .row("Hairline")));
+
+        assertThat(((Number) cell.getCTTc().getTcPr().getTcBorders().getTop().getSz()).intValue())
+                .as("the premise: written in eighths").isEqualTo(6);
+        assertThat(margins(cell)).containsExactly(140L - 15 - SEAT, 140L, 140L - 15 + SEAT, 140L);
+    }
+
+    @Test
+    void aRuleThinnerThanWordDrawsIsWrittenAndTakenOffAtWordsThinnest() throws Exception {
+        // Word draws no single rule thinner than two eighths of a point.
+        XWPFTableCell cell = firstCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(7))
+                        .stroke(DocumentStroke.of(DocumentColor.BLACK, 0.1))
+                        .build())
+                .row("Hairline")));
+
+        assertThat(((Number) cell.getCTTc().getTcPr().getTcBorders().getTop().getSz()).intValue()).isEqualTo(2);
+        assertThat(margins(cell)).containsExactly(140L - 5 - SEAT, 140L, 140L - 5 + SEAT, 140L);
     }
 
     @Test
@@ -84,9 +123,9 @@ class DocxCellPaddingTest {
                 .row("Body")));
 
         assertThat(margins(table.getRow(0).getCell(0))).as("its own 1.5pt above, half the body's 0.5pt below")
-                .containsExactly(110L, 140L, 135L, 140L);
+                .containsExactly(110L - SEAT, 140L, 135L + SEAT, 140L);
         assertThat(margins(table.getRow(1).getCell(0))).as("half its own 0.5pt above, its own below")
-                .containsExactly(135L, 140L, 130L, 140L);
+                .containsExactly(135L - SEAT, 140L, 130L + SEAT, 140L);
     }
 
     @Test
@@ -115,8 +154,9 @@ class DocxCellPaddingTest {
                         .padding(DocumentInsets.of(1)).stroke(DocumentStroke.of(DocumentColor.BLACK, 2)).build())
                 .row("Thin")));
 
-        assertThat(margins(unruled)).containsExactly(140L, 140L, 140L, 140L);
-        assertThat(margins(thin)).as("none left above and below, the sides kept").containsExactly(0L, 20L, 0L, 20L);
+        assertThat(margins(unruled)).containsExactly(140L - SEAT, 140L, 140L + SEAT, 140L);
+        assertThat(margins(thin)).as("none left above and below, the sides kept; none to raise the text into")
+                .containsExactly(0L, 20L, 0L, 20L);
     }
 
     @Test
@@ -146,7 +186,7 @@ class DocxCellPaddingTest {
 
         long four = Math.round(4 * TWIPS_PER_POINT);
         long three = Math.round(3 * TWIPS_PER_POINT);
-        assertThat(margins(cell)).containsExactly(three, four, three, four);
+        assertThat(margins(cell)).containsExactly(three - SEAT, four, three + SEAT, four);
     }
 
     @Test
@@ -176,9 +216,9 @@ class DocxCellPaddingTest {
 
         // The first row's top, less the default 1pt rule above the table: the row's smaller top
         // as the cells' margin, the rest of the larger in the cell's first paragraph.
-        assertThat(margins(table.getRow(0).getCell(0))[0]).isEqualTo(Math.round(5 * TWIPS_PER_POINT));
+        assertThat(margins(table.getRow(0).getCell(0))[0]).isEqualTo(Math.round(5 * TWIPS_PER_POINT) - SEAT);
         assertThat(margins(table.getRow(0).getCell(1))[0] + before(table.getRow(0).getCell(1)))
-                .isEqualTo(Math.round(10 * TWIPS_PER_POINT));
+                .isEqualTo(Math.round(10 * TWIPS_PER_POINT) - SEAT);
     }
 
     @Test
@@ -197,8 +237,10 @@ class DocxCellPaddingTest {
 
         assertThat(margins(loose)[0]).as("top, as the tight cell's").isEqualTo(margins(tight)[0]);
         assertThat(margins(loose)[2]).as("bottom, as the tight cell's").isEqualTo(margins(tight)[2]);
-        assertThat(margins(loose)[0] + before(loose)).as("its own 8pt above").isEqualTo(Math.round(8 * TWIPS_PER_POINT));
-        assertThat(margins(loose)[2] + after(loose)).as("its own 6pt below").isEqualTo(Math.round(6 * TWIPS_PER_POINT));
+        assertThat(margins(loose)[0] + before(loose)).as("its own 8pt above")
+                .isEqualTo(Math.round(8 * TWIPS_PER_POINT) - SEAT);
+        assertThat(margins(loose)[2] + after(loose)).as("its own 6pt below")
+                .isEqualTo(Math.round(6 * TWIPS_PER_POINT) + SEAT);
     }
 
     @Test

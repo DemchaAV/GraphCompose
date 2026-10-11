@@ -62,8 +62,8 @@ final class DocxLayoutMetrics {
     // Every fragment, in the order the page paints them.
     private final List<PlacedFragment> painted;
     private final int pageCount;
-    // A table's measured cells by name, filled on first use — see cellLineHeightsOf.
-    private final Map<DocumentNode, Map<String, Double>> cellLineHeights = new IdentityHashMap<>();
+    // A table's measured cells by name, filled on first use — see measuredCellsOf.
+    private final Map<DocumentNode, Map<String, TableResolvedCell>> measuredCells = new IdentityHashMap<>();
     private final Map<DocumentNode, Map<String, List<CellBox>>> cellBoxes = new IdentityHashMap<>();
     // The rows of a table the layout placed, by index, filled on first use — see placedRowsOf.
     private final Map<DocumentNode, Map<String, Integer>> placedRows = new IdentityHashMap<>();
@@ -216,9 +216,22 @@ final class DocxLayoutMetrics {
      * @return the measured height, or empty when the layout does not carry one
      */
     OptionalDouble cellLineHeight(DocumentNode table, int row, int column) {
+        TableResolvedCell measured = measuredCell(table, row, column);
+        return measured == null ? OptionalDouble.empty() : OptionalDouble.of(measured.lineHeight());
+    }
+
+    /**
+     * A table cell as the layout measured it — its lines' height and the style it drew them in —
+     * found by name as {@link #cellLineHeight} finds it.
+     *
+     * @param table  the table node
+     * @param row    the cell's logical row
+     * @param column the cell's first column
+     * @return the cell, or {@code null} when the layout does not carry its lines' height
+     */
+    TableResolvedCell measuredCell(DocumentNode table, int row, int column) {
         String owner = table.name() == null || table.name().isBlank() ? table.nodeKind() : table.name();
-        Double measured = cellLineHeightsOf(table).get(owner + "__row_" + row + "__cell_" + column);
-        return measured == null ? OptionalDouble.empty() : OptionalDouble.of(measured);
+        return measuredCellsOf(table).get(owner + "__row_" + row + "__cell_" + column);
     }
 
     /**
@@ -229,14 +242,14 @@ final class DocxLayoutMetrics {
      * measured, doubling a 1000-row table's rows took its export from 545ms to 1463ms. One
      * pass per table and a lookup per cell keeps it linear.</p>
      */
-    private Map<String, Double> cellLineHeightsOf(DocumentNode table) {
-        return cellLineHeights.computeIfAbsent(table, node -> {
-            Map<String, Double> byName = new HashMap<>();
+    private Map<String, TableResolvedCell> measuredCellsOf(DocumentNode table) {
+        return measuredCells.computeIfAbsent(table, node -> {
+            Map<String, TableResolvedCell> byName = new HashMap<>();
             for (PlacedFragment fragment : fragmentsOf(node)) {
                 if (fragment.payload() instanceof TableRowFragmentPayload payload) {
                     for (TableResolvedCell cell : payload.cells()) {
                         if (cell.hasMeasuredLineHeight()) {
-                            byName.putIfAbsent(cell.name(), cell.lineHeight());
+                            byName.putIfAbsent(cell.name(), cell);
                         }
                     }
                 }
@@ -667,26 +680,6 @@ final class DocxLayoutMetrics {
      * @return the line height in points, or empty when the node laid out nothing
      */
     OptionalDouble lineHeight(DocumentNode node) {
-        return lineHeight(node, true, true);
-    }
-
-    /**
-     * Whether a node's line height is other than its tallest laid-out line ({@link #lineHeight}):
-     * the page's distance between its lines, or a line without its prefix. The paragraph, set at
-     * that one height, can then come out shorter than the page's; at the tallest line, only by its
-     * rounding to the twip.
-     *
-     * @param node any node that lays its text out as paragraph lines
-     * @return whether the height is not the tallest line's
-     */
-    boolean lineIsNotTheTallest(DocumentNode node) {
-        OptionalDouble written = lineHeight(node, true, true);
-        OptionalDouble tallest = lineHeight(node, false, false);
-        return written.isPresent() && tallest.isPresent()
-               && Math.abs(written.getAsDouble() - tallest.getAsDouble()) > 0.01;
-    }
-
-    private OptionalDouble lineHeight(DocumentNode node, boolean byPitch, boolean withoutPrefix) {
         double text = 0;
         double style = 0;
         double pitches = 0;
@@ -694,13 +687,13 @@ final class DocxLayoutMetrics {
         double heights = 0;
         int textLines = 0;
         // Only lines on one fragment, of more than one line, are written other than at their
-        // tallest: what they then fall short of the page is owed below them (linesHeight), and a
-        // line of its own is set at its laid-out height where nothing would make up a shorter one
-        // (riseIntoItsLine, holdPicturesInTheLine).
+        // tallest — what a paragraph's lines fall short of the page, at whatever height they are
+        // written, is owed below it (linesHeight) — and a line of its own is set at its laid-out
+        // height where nothing would make up a shorter one (riseIntoItsLine, holdPicturesInTheLine).
         boolean ownWay = textFragmentsOf(node).size() == 1 && lineCount(node) > 1;
         // The layout sets the prefix before the lines its strategy names, and only there.
         com.demcha.compose.document.style.DocumentTextIndent strategy =
-                withoutPrefix && ownWay && node instanceof ParagraphNode paragraphNode
+                ownWay && node instanceof ParagraphNode paragraphNode
                 && !paragraphNode.bulletOffset().isEmpty()
                         ? paragraphNode.indentStrategy()
                         : com.demcha.compose.document.style.DocumentTextIndent.NONE;
@@ -738,7 +731,7 @@ final class DocxLayoutMetrics {
             // the page has them, never below the tallest written line, which would clip it. Nor
             // above the lines' mean height: the paragraph would come out taller than the page,
             // and a surplus only comes out of the space below it (settleTheLinesWithThePage).
-            if (byPitch && ownWay && pairs > 0 && textLines > 0) {
+            if (ownWay && pairs > 0 && textLines > 0) {
                 double pitch = pitches / pairs - Math.max(0, lineGap(node));
                 text = Math.max(text, Math.min(pitch, heights / textLines));
             }

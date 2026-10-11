@@ -120,9 +120,10 @@ class DocxTablePaintTest {
                 .build());
 
         // 0.05 pt is under an eighth; rounding it to zero would ask Word for a border of no
-        // width, which is a border nobody sees.
+        // width, which is a border nobody sees. It is written at Word's thinnest, two eighths,
+        // the width Word draws a thinner one at, and the cell's padding gives up that much.
         assertThat(table.getRow(0).getCell(0).getCTTc().getTcPr().getTcBorders().getTop().getSz())
-                .isEqualTo(BigInteger.ONE);
+                .isEqualTo(BigInteger.TWO);
     }
 
     @Test

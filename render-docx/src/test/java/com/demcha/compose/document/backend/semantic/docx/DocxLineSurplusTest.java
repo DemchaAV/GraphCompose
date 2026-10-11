@@ -113,13 +113,18 @@ class DocxLineSurplusTest {
     }
 
     @Test
-    void aParagraphWrittenAtItsTallestLineOwesNothingForItsRounding() throws Exception {
+    void theSpaceBelowAParagraphOfOneSizeAddsWhatItsRoundingTakes() throws Exception {
         // Rounded down to the twip, over enough lines to fall a tenth of a point and more short of
-        // the page: owed, that rounding stood ModernInvoice's lines a step of Word's grid lower.
+        // the page: Word sets the lines as written, and what follows stood that much high —
+        // ModernInvoice's address blocks, six lines each, and the table under them 0.15pt.
         Exported exported = rounded(surplus -> surplus < -0.15);
+        double line = line(paragraph(exported.document(), "rounded"));
+        double page = exported.heights().get("Rounded");
+        double shortfall = page - Math.round(page / line) * line;
 
-        assertThat(before(paragraph(exported.document(), "After"))).as("the gap alone")
-                .isEqualTo(400 - DocxExports.DEFAULT_LINE_RAISE);
+        assertThat(before(paragraph(exported.document(), "After")) / 20.0)
+                .as("the gap and what the lines fall short of the page by")
+                .isCloseTo(20 + shortfall - RAISE, within(0.05));
     }
 
     @Test

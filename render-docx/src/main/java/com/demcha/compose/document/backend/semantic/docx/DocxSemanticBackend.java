@@ -57,6 +57,7 @@ import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
+import com.demcha.compose.engine.components.content.table.TableResolvedCell;
 import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
@@ -194,6 +195,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * a step or nothing.
      */
     private static final double LEAST_RAISE_INTO_THE_SPACE_ABOVE = 0.1;
+    /**
+     * The least a row of text cells is moved by its margins, in points ({@link #moveTheRowsText}),
+     * for the same reason: Word sets lines on its 0.12pt grid, and a twip of margin moves a line a
+     * step or nothing.
+     */
+    private static final double LEAST_ROW_TEXT_MOVE = 0.1;
     /** How a drawing the page paints is anchored, as the report says it (see DocxDrawingAnchors). */
     private static final String ANCHORED_BESIDE_ITS_TEXT = "anchored in the paragraph whose text it stands "
             + "beside, so it moves with that text when the text above is edited, or to the page where it "
@@ -321,6 +328,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // takeFromTheTopOfItsCell.
     private final java.util.Set<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTc> cellsGivingTheirPadding =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // The text cells of the table row being written, and how far Word sets each one's lines below
+    // the page's, in points; NaN for a cell with no line to seat. Taken out when the row is moved:
+    // see moveTheRowsText.
+    private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTc, Double> textCellRaises =
+            new java.util.IdentityHashMap<>();
     // Icons drawn beside the text they label rather than written: see drawnBesideItsText.
     private final java.util.Set<ImageNode> picturesDrawnBeside =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -818,6 +830,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         stackedLineHeights.clear();
         lineTopsTakenIn.clear();
         cellsGivingTheirPadding.clear();
+        textCellRaises.clear();
         risenLines.clear();
         tablesCells.clear();
         picturesDrawnBeside.clear();
@@ -8680,11 +8693,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * ({@code DocxLayoutMetrics.lineHeight}), and the paragraph comes out short by what its
      * first line's top and its last line's foot hold beyond that: {@code EditorialProposal}'s
      * terms, whose wrapped lines carry a taller prefix than their first, stood 0.6pt higher
-     * with every item. Only a paragraph written at a height other than its tallest laid-out
-     * line is made up to the page; one written at its tallest line, to keep its letters whole,
-     * falls short only by its line's rounding to the twip, which is not owed: owed, it set
-     * {@code ModernInvoice}'s lines a step or two of Word's grid lower (measured, see
-     * {@link #LINES_ROUNDING_TOLERANCE}).</p>
+     * with every item. One written at its tallest line, to keep its letters whole, falls short
+     * by its line's rounding to the twip, owed the same way: {@code ModernInvoice}'s address
+     * blocks, six lines of 11.475pt written at 11.45, stood the table under them 0.15pt high in
+     * Word and LibreOffice alike (measured, see {@link #LINES_ROUNDING_TOLERANCE}).</p>
      *
      * <p>Written at its tallest line, it can come out taller: the page sets a line shorter than
      * that, a wrapped line after a large first one, at its own height. Its last line then hangs
@@ -8708,7 +8720,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double written = layout.lineCount(source) * (line / POINT_TO_TWIP)
                          - lineTopsTakenIn.getOrDefault(target.getCTP(), 0.0);
         double shortBy = page.getAsDouble() - written;
-        if (shortBy > LINES_ROUNDING_TOLERANCE && layout.lineIsNotTheTallest(source)) {
+        if (shortBy > LINES_ROUNDING_TOLERANCE) {
             owePendingSpacingAfter(shortBy);
         } else if (-shortBy > LINES_ROUNDING_TOLERANCE) {
             hangingBelow = Math.max(hangingBelow, -shortBy);
@@ -11700,7 +11712,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!drawn(border) || !border.isSetSz() || border.getSz() == null) {
             return 0;
         }
-        return Math.round(border.getSz().doubleValue() * POINT_TO_TWIP / 8.0);
+        return eighthsInTwips(border.getSz().doubleValue());
     }
 
     private static long twipsOf(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth width) {
@@ -11794,6 +11806,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
             }
             evenTheRowsMargins(row);
+            moveTheRowsText(row);
             // The first row's share of the rule under it is the next row's rule, written next.
             if (rowIdx > 0 || rowCount == 1) {
                 holdRowHeight(table, node, rowIdx);
@@ -11918,10 +11931,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     ? properties.getTcBorders()
                     : properties.addNewTcBorders();
             if (stroke.width() > 0) {
-                // w:sz counts eighths of a point, and rounds to at least one so a hairline
-                // the author asked for stays a line rather than disappearing.
-                BigInteger eighths = BigInteger.valueOf(
-                        Math.max(1, Math.round(stroke.width() * 8.0)));
+                // A hairline the author asked for stays a line, at Word's thinnest.
+                BigInteger eighths = BigInteger.valueOf(ruleEighths(stroke.width()));
                 String colour = toHexColor(stroke.color().color());
                 paintEdge(borders.addNewTop(), STBorder.SINGLE, eighths, colour);
                 paintEdge(borders.addNewBottom(), STBorder.SINGLE, eighths, colour);
@@ -11938,6 +11949,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 paintEdge(borders.addNewRight(), STBorder.NIL, null, null);
             }
         }
+    }
+
+    /**
+     * How wide Word draws a cell's rule, in points: the width written in eighths of a point, from
+     * Word's thinnest to its thickest ({@link #ruleEighths(double)}), counted to the twip as a
+     * row's height counts it ({@link #borderTwips}); 0 for none.
+     */
+    private static double writtenRuleWidth(DocumentStroke stroke) {
+        return stroke == null || !(stroke.width() > 0) ? 0
+                : eighthsInTwips(ruleEighths(stroke.width())) / POINT_TO_TWIP;
+    }
+
+    /** A rule's {@code w:sz}, eighths of a point, in whole twips. */
+    private static long eighthsInTwips(double eighths) {
+        return Math.round(eighths * POINT_TO_TWIP / 8.0);
     }
 
     private static void paintEdge(CTBorder edge, STBorder.Enum kind, BigInteger eighths, String colour) {
@@ -11989,9 +12015,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * room for the lower row's rule: measured, a 1.5pt header over 0.5pt rows stepped as 0.5pt
      * rules do, and a 1.5pt row under 0.5pt ones as 1.5pt rules do. So each rule comes off the
      * padding where Word puts it; in a table ruled alike throughout, with padding enough, every
-     * row then stands where the page sets it. The sides keep their padding, as the columns'
-     * widths are fixed. Padding thinner than its share gives what it has, and the row stands
-     * that much taller.</p>
+     * row then stands where the page sets it. Each rule comes off as wide as Word draws it, in
+     * eighths of a point ({@link #writtenRuleWidth}): a 0.7pt hairline is drawn 0.75pt wide, and
+     * taken off at 0.7 it stood {@code EditorialProposal}'s tables, and all under them, a step of
+     * Word's grid lower (measured). The sides keep their padding, as the columns' widths are
+     * fixed. Padding thinner than its share gives what it has, and the row stands that much
+     * taller.</p>
      *
      * @param padding    the cell's padding on the page
      * @param stroke     the cell's own rule
@@ -12002,8 +12031,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static DocumentInsets clearOfTheRules(DocumentInsets padding, DocumentStroke stroke,
                                                   boolean firstRow, boolean lastRow, DocumentStroke underneath) {
-        double rule = strokeWidth(stroke);
-        double below = lastRow ? rule : strokeWidth(underneath) / 2;
+        double rule = writtenRuleWidth(stroke);
+        double below = lastRow ? rule : writtenRuleWidth(underneath) / 2;
         return new DocumentInsets(Math.max(0, padding.top() - (firstRow ? rule : rule / 2)), padding.right(),
                 Math.max(0, padding.bottom() - below), padding.left());
     }
@@ -12169,6 +12198,104 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             run.setText(lines.get(i) == null ? "" : lines.get(i), inRun++);
         }
         styleTheMark(para, textStyle);
+        if (lines.stream().allMatch(line -> line == null || line.isBlank())) {
+            textCellRaises.put(cell.getCTTc(), Double.NaN);
+        } else if (lineHeight.isPresent()) {
+            double below = belowThePage(layout.measuredCell(node, placement.row(), placement.column()),
+                    cell.getParagraphs().get(0));
+            if (!Double.isNaN(below)) {
+                textCellRaises.put(cell.getCTTc(), below);
+            }
+        }
+    }
+
+    /**
+     * How far Word sets a text cell's lines below the page's, in points, negative where Word sets
+     * them higher; NaN where the layout did not measure the cell, draws it in a face the measured
+     * fonts do not hold, or the line is not written exact.
+     *
+     * <p>The page sets each of a cell's lines its height less its face's descent below the line's
+     * top, as the PDF backend draws a cell (PdfTableRowFragmentRenderHandler); Word stands an exact
+     * line's baseline four fifths of the way down the line it was given, whatever the face
+     * ({@link DocxTextBands#BASELINE_SHARE}). Measured on cells anchored at the top, the middle and
+     * the bottom, a line of 8pt Helvetica stood 0.24pt low in Word and 0.16 in LibreOffice, Poppins
+     * 0.58 and 0.55, and Lato 0.24 and 0.25 high: as far as the two seats are apart, and nothing
+     * else in the cell moved.</p>
+     *
+     * @param measured the cell as the layout measured it, or {@code null}
+     * @param first    the cell's first paragraph, whose exact line its lines are written at
+     */
+    private double belowThePage(TableResolvedCell measured, XWPFParagraph first) {
+        CTPPr properties = first.getCTP().getPPr();
+        CTSpacing spacing = properties != null && properties.isSetSpacing() ? properties.getSpacing() : null;
+        Long line = spacing != null && spacing.isSetLineRule() && spacing.getLineRule() == STLineSpacingRule.EXACT
+                ? writtenTwips(spacing.getLine()) : null;
+        if (measured == null || line == null) {
+            return Double.NaN;
+        }
+        TextStyle face = measured.style().textStyle();
+        try {
+            return measuredFonts().getFont(face.fontName(), com.demcha.compose.engine.render.pdf.PdfFont.class)
+                    .map(font -> line / POINT_TO_TWIP * DocxTextBands.BASELINE_SHARE
+                                 - (measured.lineHeight() - font.verticalMetrics(face).baselineOffsetFromBottom()))
+                    .orElse(Double.NaN);
+        } catch (RuntimeException unknownFace) {
+            return Double.NaN;
+        }
+    }
+
+    /**
+     * Moves the text of a row of text cells to where the page sets it, by moving the row's top
+     * and bottom margins together.
+     *
+     * <p>Word sets a text cell's lines lower or higher than the page by the distance between the
+     * two seats ({@link #belowThePage}). Word and LibreOffice give every cell of a row its largest
+     * top margin and its largest bottom margin ({@link #evenTheRowsMargins}), so the margins move
+     * the text of every cell at once: the top made smaller by as much as the bottom is made larger,
+     * each cell's room is moved up that much and keeps its height, and the text in it moves with
+     * it, set at its top, its middle or its bottom; the row keeps its height. Measured, the lines
+     * then stood within 0.04pt of the page's in Word and 0.09pt in LibreOffice, raised or lowered.
+     * Space written above a cell's text would move it too, but LibreOffice sets a vertically
+     * centred cell's content as if its first paragraph had none: 3pt above it stood the line 1.5pt
+     * high there.</p>
+     *
+     * <p>Every cell of the row is moved alike, by the least that any of its cells' lines call
+     * for, so none is moved past where the page sets it, and what the others call for beyond that
+     * is left — no position makes it up, which LibreOffice would move further than it is raised;
+     * no further than the margin the text moves into holds. A row whose cells call for opposite
+     * ways is left as it is, and so is less than {@link #LEAST_ROW_TEXT_MOVE}. Only a row of text
+     * cells the layout measured, in a face the measured fonts hold: a composed cell's paragraphs
+     * are seated by their own writers where they can be, and the margins would move them again.
+     * Not a row in a vertical merge, whose cells' margins are evened apart.</p>
+     */
+    private void moveTheRowsText(XWPFTableRow row) {
+        double least = Double.NaN;
+        boolean moves = true;
+        for (XWPFTableCell cell : row.getTableCells()) {
+            // Taken out as it is read: the row is decided here, once.
+            Double below = textCellRaises.remove(cell.getCTTc());
+            CTTcPr properties = cell.getCTTc().getTcPr();
+            if (below == null || properties != null && properties.isSetVMerge()) {
+                moves = false;
+            } else if (!Double.isNaN(below)) {
+                moves &= Double.isNaN(least) || Math.signum(below) == Math.signum(least);
+                least = Double.isNaN(least) || Math.abs(below) < Math.abs(least) ? below : least;
+            }
+        }
+        if (!moves || !(Math.abs(least) >= LEAST_ROW_TEXT_MOVE)) {
+            return;
+        }
+        long move = Math.round(least * POINT_TO_TWIP);
+        for (XWPFTableCell cell : row.getTableCells()) {
+            move = move > 0 ? Math.min(move, cellMargin(cell, true)) : Math.max(move, -cellMargin(cell, false));
+        }
+        if (Math.abs(move) < Math.round(LEAST_ROW_TEXT_MOVE * POINT_TO_TWIP)) {
+            return;
+        }
+        for (XWPFTableCell cell : row.getTableCells()) {
+            setCellMarginTwips(cell, true, cellMargin(cell, true) - move);
+            setCellMarginTwips(cell, false, cellMargin(cell, false) + move);
+        }
     }
 
     /** A paragraph of a text cell: its direction, its alignment and its line height. */

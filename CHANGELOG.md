@@ -14,15 +14,17 @@ follow semantic versioning; release dates are ISO 8601.
     below the line's top; Word stands an exact line's baseline four fifths of the way down it,
     whatever the face. A cell's text stood as far off as the two are apart, at the top, the middle
     or the bottom of the cell: a line of 8pt Poppins 0.58pt low in Word and 0.55pt in LibreOffice,
-    of Helvetica 0.24 and 0.16pt, of Lato 0.24pt high (measured). Both editors give every cell of a
-    row its largest top and bottom margins, so the row's top margin is made smaller and its bottom
-    one as much larger — or the other way — by the least any of its cells calls for, no further
-    than the margin holds: every cell's text moves with its room, and the row keeps its height.
-    Measured, the lines then stood within 0.04pt of the page's in Word and 0.09pt in LibreOffice.
-    What a row's other cells call for beyond its least is left, as is a move under a tenth of a
-    point. Not a row holding a composed cell, whose paragraphs their own writers seat where they
-    can, nor a row the layout did not measure, nor one in a vertical merge or whose cells call for
-    opposite ways.
+    of Helvetica 0.24 and 0.16pt, of Lato 0.24 and 0.25pt high (measured). Both editors give every
+    cell of a row its largest top and bottom margins, so the row's top margin is made smaller and
+    its bottom one as much larger — or the other way — by the least any of its cells calls for, no
+    further than the margin holds: every cell's text moves with its room, and the row keeps its
+    height. Measured, the lines then stood within 0.04pt of the page's in Word and 0.09pt in
+    LibreOffice. A row is not moved where its cells call for opposite ways or its least call is
+    under a tenth of a point. Not a row holding a composed cell, whose paragraphs their own writers
+    seat where they can, nor a row the layout did not measure, nor one in a vertical merge. What the
+    margins leave of a cell's call, half a point and more, is moved by its text's position, as a
+    paragraph's is: a cell of 8pt Poppins beside one of Lato, the two called opposite ways, stood
+    0.58pt low.
   - **A paragraph written at its tallest line owes what its rounding takes.** Its lines are
     written to the twip, and what that took from the page's height over several lines stood what
     follows higher: `ModernInvoice`'s address blocks, six lines of 11.475pt written at 11.45,
@@ -30,18 +32,19 @@ follow semantic versioning; release dates are ISO 8601.
     paragraph written at another height owes what it falls short.
   - **A table's rules come off its padding as wide as Word draws them**, in eighths of a point: a
     0.7pt hairline is drawn 0.75pt wide, and taken off at 0.7 it stood `EditorialProposal`'s tables
-    and all under them a step of Word's grid lower. A rule thinner than Word draws one is written at
-    its thinnest, a quarter point, as a rule elsewhere is.
+    and all under them a step of Word's grid lower. A cell's rule is written from two to
+    ninety-six eighths, the range of a line border's width, as a paragraph's rule is.
 
   In the DOCX fidelity corpus 12 documents stand nearer the page in Word, the sum of the medians
-  0.93pt nearer — `invoice-classic_long`'s median line from 0.26pt to 0.06pt, `invoice-modern_long`'s
-  from 0.22pt to 0.10pt, `invoice-subscription`'s from 0.56pt to 0.43pt — and 11 in LibreOffice on
-  Windows, `invoice-classic_long`'s from 0.22pt to 0.05pt. `invoice-modern`'s moves from 0.08pt to
-  0.12pt in Word and from 0.07pt to 0.13pt in LibreOffice: its table's text, set low in its cells,
-  had stood where the page sets it only because its rows stood as much high, and the notes under
-  the table stand 0.1pt lower, where Word leaves more space after a table than the page does.
-  `cv-editorial_blue`'s skills table now stands with the column round it, which LibreOffice sets
-  0.1 to 0.3pt high: its median there from 0.09pt to 0.14pt. The report names nothing more.
+  1.45pt nearer — `invoice-consulting_long`'s median line from 0.74pt to 0.35pt,
+  `invoice-classic_long`'s from 0.26pt to 0.06pt, `invoice-subscription`'s from 0.56pt to 0.43pt —
+  and 12 in LibreOffice on Windows, 1.38pt, `invoice-consulting_long`'s from 0.69pt to 0.22pt.
+  `invoice-modern`'s moves from 0.08pt to 0.12pt in Word and from 0.07pt to 0.13pt in LibreOffice:
+  its table's text, set low in its cells, had stood where the page sets it only because its rows
+  stood as much high, and the notes under the table stand 0.1pt lower, where Word leaves more space
+  after a table than the page does. `cv-editorial_blue`'s skills table now stands with the column
+  round it, which LibreOffice sets 0.1 to 0.3pt high: its median there from 0.09pt to 0.14pt. The
+  report names nothing more.
 
 - **A DOCX export raises a line Word sets low into the space above it, where both editors keep
   it.** Both editors stand an exact line's baseline four fifths of the way down it whatever the
@@ -1421,17 +1424,17 @@ follow semantic versioning; release dates are ISO 8601.
   moved to the page's baseline (`w:position`) wherever the two stand half a point or more apart,
   from the line Word was given — a line pair's from the higher text's top, lines that took their
   gaps from the space above from that higher top, several lines at the middle one; a list item's
-  is not moved yet, and a table text cell's is moved by its row's margins. Lines a container stacks
-  tighter than their face are each written to end halfway between their own letters and the next
-  line's, read from the glyphs' outlines: Word draws an exact line's text on screen only inside the
-  line, and lines a pitch tall cut the title's descenders and capitals there. Where the last layer
-  of a shape container runs past its foot, it ends at the foot, or below its letters where they hang
-  past it. Where the page sets two lines' letters into each other the edge still falls halfway, so
-  the page does not move; a stack whose letters cannot be read, or that holds a picture, keeps each
-  line's own height, and a line with space above or below it stays out of a stack. In Word
-  `NorthlineProposal`'s median drift falls from 8.0pt to 0.8, its cover within 1.5pt of the page
-  throughout, and `EditorialProposal`'s from 5.9 to 0.4; across the 62 templates, lines more than
-  2pt off fall from 1464 to 1341.
+  is not moved yet, and a table text cell's is moved by its row's margins where its row allows (see
+  above). Lines a container stacks tighter than their face are each written to end halfway between
+  their own letters and the next line's, read from the glyphs' outlines: Word draws an exact line's
+  text on screen only inside the line, and lines a pitch tall cut the title's descenders and
+  capitals there. Where the last layer of a shape container runs past its foot, it ends at the foot,
+  or below its letters where they hang past it. Where the page sets two lines' letters into each
+  other the edge still falls halfway, so the page does not move; a stack whose letters cannot be
+  read, or that holds a picture, keeps each line's own height, and a line with space above or below
+  it stays out of a stack. In Word `NorthlineProposal`'s median drift falls from 8.0pt to 0.8, its
+  cover within 1.5pt of the page throughout, and `EditorialProposal`'s from 5.9 to 0.4; across the
+  62 templates, lines more than 2pt off fall from 1464 to 1341.
 - **A value set from its start keeps its start in Word.** Two texts one layer holds on one line —
   a label and its value, a title and its dates — are written as one Word line split by a tab
   stop, and the stop was always a right tab at the right text's end. A value aligned left in a

@@ -86,7 +86,7 @@ class DocxCellSeatTest {
             long small = Math.round((0.8 * line(row.getCell(1)) - HELVETICA_ASCENT * 7) * 20);
             long middle = Math.round((0.8 * line(row.getCell(2)) - HELVETICA_ASCENT * 10) * 20);
 
-            assertThat(small).as("the premise: the least is the middle cell's, apart from the others")
+            assertThat(small).as("the premise: the least is the 7pt cell's, apart from the others")
                     .isLessThan(middle).isLessThan(large).isPositive();
             assertThat(large).as("the default face's, as a paragraph of it is raised").isEqualTo(DocxExports.DEFAULT_LINE_RAISE);
             for (XWPFTableCell cell : row.getTableCells()) {
@@ -140,13 +140,39 @@ class DocxCellSeatTest {
 
     @Test
     void aRowWhoseCellsCallForOppositeWaysIsLeftAsItWas() throws Exception {
+        // Its margins are not moved; the cell calling for half a point and more is moved by its
+        // text's position, the other is left.
         try (XWPFDocument document = export(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
                 .rowCells(cell("Low", poppins(8), DocumentTableTextAnchor.CENTER),
                         cell("High", lato(8), DocumentTableTextAnchor.CENTER))))) {
-            for (XWPFTableCell cell : document.getTables().get(0).getRow(0).getTableCells()) {
+            XWPFTableRow row = document.getTables().get(0).getRow(0);
+            double poppins = 0.8 * line(row.getCell(0)) - POPPINS_ASCENT * 8;
+
+            for (XWPFTableCell cell : row.getTableCells()) {
                 assertThat(margins(cell)).containsExactly(PADDING, PADDING);
             }
+            assertThat(poppins).as("the premise: half a point and more").isGreaterThanOrEqualTo(0.5);
+            assertThat(position(row.getCell(0))).isEqualTo(Math.round(poppins * 2));
+            assertThat(position(row.getCell(1))).as("Lato's quarter point is left").isZero();
+        }
+    }
+
+    @Test
+    void whatTheMarginsLeaveOfHalfAPointAndMoreIsLeftToThePosition() throws Exception {
+        // The row moves by Helvetica's 6 twips; Poppins at 14pt calls for nearly a point.
+        try (XWPFDocument document = export(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(cell("Poppins", poppins(14), DocumentTableTextAnchor.CENTER),
+                        cell("Helvetica", helvetica(14), DocumentTableTextAnchor.CENTER))))) {
+            XWPFTableRow row = document.getTables().get(0).getRow(0);
+            double left = 0.8 * line(row.getCell(0)) - POPPINS_ASCENT * 14 - DocxExports.DEFAULT_LINE_RAISE / 20.0;
+
+            assertThat(margins(row.getCell(1))).containsExactly(PADDING - DocxExports.DEFAULT_LINE_RAISE,
+                    PADDING + DocxExports.DEFAULT_LINE_RAISE);
+            assertThat(left).as("the premise: half a point and more left").isGreaterThanOrEqualTo(0.5);
+            assertThat(position(row.getCell(0))).isEqualTo(Math.round(left * 2));
+            assertThat(position(row.getCell(1))).as("nothing left of Helvetica's").isZero();
         }
     }
 
@@ -175,7 +201,11 @@ class DocxCellSeatTest {
                         DocumentTableCell.node(new ParagraphBuilder().text("Composed").textStyle(poppins(8))
                                 .margin(DocumentInsets.zero()).build()).withStyle(style(poppins(8),
                                 DocumentTableTextAnchor.CENTER)))))) {
-            assertThat(margins(document.getTables().get(0).getRow(0).getCell(0))).containsExactly(PADDING, PADDING);
+            XWPFTableCell text = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(margins(text)).containsExactly(PADDING, PADDING);
+            assertThat(position(text)).as("the text cell moved by its position instead")
+                    .isEqualTo(Math.round((0.8 * line(text) - POPPINS_ASCENT * 8) * 2));
         }
     }
 
@@ -198,7 +228,10 @@ class DocxCellSeatTest {
                 .rowCells(DocumentTableCell.text("Tight").withStyle(DocumentTableStyle.builder()
                         .padding(new DocumentInsets(0.25, 4, 4, 4)).stroke(DocumentStroke.of(DocumentColor.BLACK, 0))
                         .textStyle(poppins(8)).textAnchor(DocumentTableTextAnchor.CENTER).build()))))) {
-            assertThat(margins(document.getTables().get(0).getRow(0).getCell(0))).containsExactly(0L, PADDING + 5);
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(margins(cell)).containsExactly(0L, PADDING + 5);
+            assertThat(position(cell)).as("the third of a point left is under half a point").isZero();
         }
     }
 
@@ -224,7 +257,8 @@ class DocxCellSeatTest {
             XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
             double below = 0.8 * line(cell) - GOTHIC_A1_ASCENT * 14;
 
-            assertThat(below).as("the premise: Word sets Gothic A1 low by a twip and more, under a tenth")
+            assertThat(below).as("the premise: Word sets Gothic A1 low by half a twip and more, which rounds to a "
+                                 + "twip, under a tenth")
                     .isBetween(0.025, 0.1);
             assertThat(margins(cell)).containsExactly(PADDING, PADDING);
         }
@@ -254,6 +288,13 @@ class DocxCellSeatTest {
     /** The exact line a cell's first paragraph is written at, in points. */
     private static double line(XWPFTableCell cell) {
         return DocxTwips.of(cell.getParagraphs().get(0).getCTP().getPPr().getSpacing().getLine()) / 20.0;
+    }
+
+    /** The {@code w:position} of a cell's first run, in half points; 0 for none. */
+    private static long position(XWPFTableCell cell) {
+        var properties = cell.getParagraphs().get(0).getCTP().getRArray(0).getRPr();
+        return properties == null || properties.sizeOfPositionArray() == 0 ? 0
+                : ((Number) properties.getPositionArray(0).getVal()).longValue();
     }
 
     /** A cell's top and bottom margins, in twips. */

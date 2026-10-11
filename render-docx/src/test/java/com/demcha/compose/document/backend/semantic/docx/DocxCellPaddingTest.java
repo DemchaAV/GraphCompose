@@ -96,6 +96,22 @@ class DocxCellPaddingTest {
     }
 
     @Test
+    void aRuleThickerThanWordDrawsIsWrittenAndTakenOffAtWordsThickest() throws Exception {
+        // A line border's w:sz runs from two to ninety-six eighths of a point.
+        XWPFTableCell cell = firstCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(20))
+                        .stroke(DocumentStroke.of(DocumentColor.BLACK, 13))
+                        .build())
+                .row("Heavy")));
+
+        assertThat(((Number) cell.getCTTc().getTcPr().getTcBorders().getTop().getSz()).intValue()).isEqualTo(96);
+        assertThat(margins(cell)).as("12pt off each side, less the row's seat above, more below")
+                .containsExactly(400L - 240 - SEAT, 400L, 400L - 240 + SEAT, 400L);
+    }
+
+    @Test
     void aRuleThinnerThanWordDrawsIsWrittenAndTakenOffAtWordsThinnest() throws Exception {
         // Word draws no single rule thinner than two eighths of a point.
         XWPFTableCell cell = firstCell(page -> page.addTable(t -> t

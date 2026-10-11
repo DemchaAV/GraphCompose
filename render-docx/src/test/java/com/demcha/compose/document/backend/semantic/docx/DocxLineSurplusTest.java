@@ -128,6 +128,43 @@ class DocxLineSurplusTest {
     }
 
     @Test
+    void aParagraphWhosePicturesGrowItsLinesOwesNothingForItsRounding() throws Exception {
+        // A picture centred on the text rises past its letters: Word is given its lines at least
+        // that tall and grows them, past what their rounding took.
+        String text = "rounded text that wraps onto many lines ".repeat(20);
+        for (double size = 8; size < 12; size += 0.05) {
+            DocumentTextStyle style = DocumentTextStyle.builder().size(size).build();
+            double icon = size * 0.9;
+            Exported exported = export(page -> page.spacing(20)
+                    .addParagraph(p -> p.name("Rounded")
+                            .inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png()), icon, icon,
+                                    com.demcha.compose.document.node.InlineImageAlignment.CENTER, 0, null)
+                            .inlineText(text, style))
+                    .addParagraph("After"));
+            var spacing = paragraph(exported.document(), "rounded").getCTP().getPPr().getSpacing();
+            double line = DocxTwips.of(spacing.getLine()) / 20.0;
+            double page = exported.heights().get("Rounded");
+            if (spacing.getLineRule() == org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.AT_LEAST
+                && page - Math.round(page / line) * line > 0.15) {
+                assertThat(before(paragraph(exported.document(), "After"))).as("the gap alone")
+                        .isEqualTo(400 - DocxExports.DEFAULT_LINE_RAISE);
+                return;
+            }
+        }
+        throw new AssertionError("the premise: no size from 8 to 12pt grows a rounded paragraph's lines to its picture");
+    }
+
+    private static byte[] png() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(8, 8,
+                    java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (java.io.IOException failure) {
+            throw new IllegalStateException(failure);
+        }
+    }
+
+    @Test
     void aSpacerOfNoHeightWithNoSpaceBelowItIsNamed() throws Exception {
         Exported exported = export(page -> page.addParagraph("Above")
                 .addSpacer(spacer -> spacer.name("Anchor").width(100).height(0))

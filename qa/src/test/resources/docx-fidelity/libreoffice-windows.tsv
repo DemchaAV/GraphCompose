@@ -1,4 +1,4 @@
-# libreoffice build bce0998afefd on windows
+# libreoffice build bf6ef2662401 on windows
 document	engine_pages	editor_pages	lines	matched	median	p90	over2
 cv-blue_banner	2	2	54	52	0.13	0.45	0
 cv-boxed_sections	2	2	58	58	0.23	0.36	0
@@ -28,15 +28,15 @@ cv-timeline_minimal	2	2	89	87	0.45	0.49	0
 cv-violet_grid	1	1	80	78	0.26	0.54	0
 invoice-classic	1	1	56	56	0.07	0.15	0
 invoice-classic_long	2	2	166	166	0.05	0.10	0
-invoice-consulting	1	1	92	92	0.53	0.96	0
-invoice-consulting_long	2	2	236	236	0.64	0.99	0
+invoice-consulting	1	1	92	92	0.18	0.96	0
+invoice-consulting_long	2	2	236	236	0.22	0.73	0
 invoice-luma_studio	1	1	97	97	0.12	0.46	2
 invoice-luma_studio_long	3	3	192	192	0.20	0.41	2
 invoice-merchant	1	2	94	90	0.07	0.21	0
 invoice-metered	1	1	99	99	0.05	0.68	0
 invoice-modern	1	1	54	54	0.13	0.20	0
 invoice-modern_long	2	2	162	162	0.12	0.15	0
-invoice-obsidian	1	1	81	81	0.34	1.19	0
+invoice-obsidian	1	1	81	81	0.34	0.94	0
 invoice-payments	1	1	104	104	0.09	0.23	0
 invoice-platform	1	1	111	111	0.27	0.43	0
 invoice-subscription	1	1	81	81	0.34	0.51	0
@@ -57,7 +57,7 @@ letter-panel	1	1	13	13	0.17	0.25	0
 letter-sidebar_portrait	1	1	12	12	0.41	0.49	0
 letter-timeline_minimal	1	1	15	15	0.33	0.53	0
 proposal-editorial	2	2	132	129	44.46	45.38	72
-proposal-indigo	1	1	72	70	0.27	0.65	0
+proposal-indigo	1	1	72	70	0.26	0.65	0
 proposal-modern	1	1	44	44	0.10	0.20	0
 proposal-northline	2	2	132	132	0.27	0.62	0
 receipt-modern	1	1	57	57	0.09	0.29	0

@@ -333,6 +333,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // see moveTheRowsText.
     private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTc, Double> textCellRaises =
             new java.util.IdentityHashMap<>();
+    // The paragraph whose lines last fell short of the page and what was owed below it for that:
+    // see settleTheLinesWithThePage, takeBackTheRoundingOwedBy.
+    private org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP roundingOwedBy;
+    private double roundingOwed;
     // Icons drawn beside the text they label rather than written: see drawnBesideItsText.
     private final java.util.Set<ImageNode> picturesDrawnBeside =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -831,6 +835,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         lineTopsTakenIn.clear();
         cellsGivingTheirPadding.clear();
         textCellRaises.clear();
+        roundingOwedBy = null;
+        roundingOwed = 0;
         risenLines.clear();
         tablesCells.clear();
         picturesDrawnBeside.clear();
@@ -8722,8 +8728,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double shortBy = page.getAsDouble() - written;
         if (shortBy > LINES_ROUNDING_TOLERANCE) {
             owePendingSpacingAfter(shortBy);
+            roundingOwedBy = target.getCTP();
+            roundingOwed = shortBy;
         } else if (-shortBy > LINES_ROUNDING_TOLERANCE) {
             hangingBelow = Math.max(hangingBelow, -shortBy);
+        }
+    }
+
+    /**
+     * Takes back what a paragraph's lines were owed below it for falling short of the page
+     * ({@link #settleTheLinesWithThePage}) once its pictures have made its line taller than written
+     * ({@code makeRoomForPictures}): Word grows those lines to the pictures, past what they fell short.
+     */
+    private void takeBackTheRoundingOwedBy(XWPFParagraph para) {
+        if (roundingOwedBy == para.getCTP()) {
+            pendingSpacingAfter -= roundingOwed;
+            roundingOwedBy = null;
         }
     }
 
@@ -9206,7 +9226,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // A line held to its pictures has their ink within half a point of its edges.
         boolean cutToTheInk = !Double.isNaN(heldAbove);
         if (Double.isNaN(heldAbove)) {
+            CTSpacing lineSpacing = para.getCTP().isSetPPr() && para.getCTP().getPPr().isSetSpacing()
+                    ? para.getCTP().getPPr().getSpacing() : null;
+            Long exactBefore = lineSpacing != null && lineSpacing.isSetLineRule()
+                               && lineSpacing.getLineRule() == STLineSpacingRule.EXACT ? writtenTwips(lineSpacing.getLine()) : null;
             makeRoomForPictures(para, pictures);
+            if (exactBefore != null && (lineSpacing.getLineRule() != STLineSpacingRule.EXACT
+                                        || !exactBefore.equals(writtenTwips(lineSpacing.getLine())))) {
+                // Its lines are now as tall as its pictures, not as written: what they fell short
+                // of the page by rounding is not short any more (settleTheLinesWithThePage).
+                takeBackTheRoundingOwedBy(para);
+            }
             heldAbove = 0;
         }
         styleTheMark(para, markStyle);
@@ -11952,13 +11982,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * How wide Word draws a cell's rule, in points: the width written in eighths of a point, from
-     * Word's thinnest to its thickest ({@link #ruleEighths(double)}), counted to the twip as a
-     * row's height counts it ({@link #borderTwips}); 0 for none.
+     * How wide Word draws a cell's rule, in twips: the width written in eighths of a point, from
+     * Word's thinnest to its thickest — the two to ninety-six eighths a line border's {@code w:sz}
+     * runs over (ECMA-376) — ({@link #ruleEighths(double)}), counted to the twip as a row's height
+     * counts it ({@link #borderTwips}); 0 for none.
      */
-    private static double writtenRuleWidth(DocumentStroke stroke) {
-        return stroke == null || !(stroke.width() > 0) ? 0
-                : eighthsInTwips(ruleEighths(stroke.width())) / POINT_TO_TWIP;
+    private static long ruleTwips(DocumentStroke stroke) {
+        return stroke == null || !(stroke.width() > 0) ? 0 : eighthsInTwips(ruleEighths(stroke.width()));
     }
 
     /** A rule's {@code w:sz}, eighths of a point, in whole twips. */
@@ -12016,11 +12046,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * rules do, and a 1.5pt row under 0.5pt ones as 1.5pt rules do. So each rule comes off the
      * padding where Word puts it; in a table ruled alike throughout, with padding enough, every
      * row then stands where the page sets it. Each rule comes off as wide as Word draws it, in
-     * eighths of a point ({@link #writtenRuleWidth}): a 0.7pt hairline is drawn 0.75pt wide, and
-     * taken off at 0.7 it stood {@code EditorialProposal}'s tables, and all under them, a step of
-     * Word's grid lower (measured). The sides keep their padding, as the columns' widths are
-     * fixed. Padding thinner than its share gives what it has, and the row stands that much
-     * taller.</p>
+     * eighths of a point ({@link #ruleTwips}): a 0.7pt hairline is drawn 0.75pt wide, and taken
+     * off at 0.7 it stood {@code EditorialProposal}'s tables, and all under them, a step of Word's
+     * grid lower (measured). A rule between two rows is halved, each half rounded to the twip with
+     * the margin it comes off, so an odd rule comes off a twip short: 15 twips came off as 7 and 7,
+     * and every row of {@code NorthlineProposal}'s investment table stood a twip taller. The sides
+     * keep their padding, as the columns' widths are fixed. Padding thinner than its share gives
+     * what it has, and the row stands that much taller.</p>
      *
      * @param padding    the cell's padding on the page
      * @param stroke     the cell's own rule
@@ -12031,8 +12063,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static DocumentInsets clearOfTheRules(DocumentInsets padding, DocumentStroke stroke,
                                                   boolean firstRow, boolean lastRow, DocumentStroke underneath) {
-        double rule = writtenRuleWidth(stroke);
-        double below = lastRow ? rule : writtenRuleWidth(underneath) / 2;
+        double rule = ruleTwips(stroke) / POINT_TO_TWIP;
+        double below = lastRow ? rule : ruleTwips(underneath) / POINT_TO_TWIP / 2;
         return new DocumentInsets(Math.max(0, padding.top() - (firstRow ? rule : rule / 2)), padding.right(),
                 Math.max(0, padding.bottom() - below), padding.left());
     }
@@ -12260,21 +12292,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * high there.</p>
      *
      * <p>Every cell of the row is moved alike, by the least that any of its cells' lines call
-     * for, so none is moved past where the page sets it, and what the others call for beyond that
-     * is left — no position makes it up, which LibreOffice would move further than it is raised;
-     * no further than the margin the text moves into holds. A row whose cells call for opposite
-     * ways is left as it is, and so is less than {@link #LEAST_ROW_TEXT_MOVE}. Only a row of text
-     * cells the layout measured, in a face the measured fonts hold: a composed cell's paragraphs
-     * are seated by their own writers where they can be, and the margins would move them again.
-     * Not a row in a vertical merge, whose cells' margins are evened apart.</p>
+     * for, so none is moved past where the page sets it, and no further than the margin the text
+     * moves into holds. A row whose cells call for opposite ways is not moved, and nor is one
+     * whose least call is under {@link #LEAST_ROW_TEXT_MOVE}. Only a row of text cells the layout
+     * measured, in a face the measured fonts hold: a composed cell's paragraphs are seated by their
+     * own writers where they can be, and the margins would move them again. Not a row in a
+     * vertical merge, whose cells' margins are evened apart.</p>
+     *
+     * <p>What the margins leave of a text cell's call, in a row they do not move or move by less,
+     * is moved by its text's position where that is half a point or more
+     * ({@link #LEAST_BASELINE_SHIFT_POINTS}), as a paragraph's is: a cell of 8pt Poppins beside one
+     * of Lato, the two called opposite ways, stood 0.58pt low. The position counts in half points,
+     * and LibreOffice moves text further than it is raised, by up to half as much again
+     * ({@link #raiseIntoTheSpaceAbove}); from half a point up that overshoot is less than what is
+     * left, and under it more, so less is left as it is.</p>
      */
     private void moveTheRowsText(XWPFTableRow row) {
+        List<XWPFTableCell> cells = row.getTableCells();
+        double[] calls = new double[cells.size()];
         double least = Double.NaN;
         boolean moves = true;
-        for (XWPFTableCell cell : row.getTableCells()) {
+        for (int i = 0; i < cells.size(); i++) {
             // Taken out as it is read: the row is decided here, once.
-            Double below = textCellRaises.remove(cell.getCTTc());
-            CTTcPr properties = cell.getCTTc().getTcPr();
+            Double below = textCellRaises.remove(cells.get(i).getCTTc());
+            CTTcPr properties = cells.get(i).getCTTc().getTcPr();
+            calls[i] = below == null ? Double.NaN : below;
             if (below == null || properties != null && properties.isSetVMerge()) {
                 moves = false;
             } else if (!Double.isNaN(below)) {
@@ -12282,19 +12324,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 least = Double.isNaN(least) || Math.abs(below) < Math.abs(least) ? below : least;
             }
         }
-        if (!moves || !(Math.abs(least) >= LEAST_ROW_TEXT_MOVE)) {
-            return;
+        long move = 0;
+        if (moves && Math.abs(least) >= LEAST_ROW_TEXT_MOVE) {
+            move = Math.round(least * POINT_TO_TWIP);
+            for (XWPFTableCell cell : cells) {
+                move = move > 0 ? Math.min(move, cellMargin(cell, true)) : Math.max(move, -cellMargin(cell, false));
+            }
+            for (XWPFTableCell cell : cells) {
+                setCellMarginTwips(cell, true, cellMargin(cell, true) - move);
+                setCellMarginTwips(cell, false, cellMargin(cell, false) + move);
+            }
         }
-        long move = Math.round(least * POINT_TO_TWIP);
-        for (XWPFTableCell cell : row.getTableCells()) {
-            move = move > 0 ? Math.min(move, cellMargin(cell, true)) : Math.max(move, -cellMargin(cell, false));
-        }
-        if (Math.abs(move) < Math.round(LEAST_ROW_TEXT_MOVE * POINT_TO_TWIP)) {
-            return;
-        }
-        for (XWPFTableCell cell : row.getTableCells()) {
-            setCellMarginTwips(cell, true, cellMargin(cell, true) - move);
-            setCellMarginTwips(cell, false, cellMargin(cell, false) + move);
+        for (int i = 0; i < cells.size(); i++) {
+            double left = calls[i] - move / POINT_TO_TWIP;
+            if (Math.abs(left) >= LEAST_BASELINE_SHIFT_POINTS) {
+                for (XWPFParagraph para : cells.get(i).getParagraphs()) {
+                    raiseRunsFrom(para, 0, Math.round(left * HALF_POINTS_PER_POINT));
+                }
+            }
         }
     }
 

@@ -11590,7 +11590,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * content — top and bottom margins, and a horizontal border's width, with what else of the
      * rules round it the row holds: half of the rule above the table and of the one below it more
      * in the first row and the last, and half the difference between its own and the next row's
-     * in a row between two others ({@link #outerRulesBeyondOne}). LibreOffice reads a row's height
+     * in a row between two others ({@link #rulesBeyondOne}). LibreOffice reads a row's height
      * as its cells' content and adds those to it: written whole, {@code PlatformInvoice}'s 36pt
      * rows, padded 6.1pt above and below, came out 48pt. Word does too, measured on a ruled table.
      * Less them, a row is the page's height in both.</p>
@@ -11599,7 +11599,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.util.OptionalDouble height = layout.rowHeight(node, rowIdx);
         if (height.isPresent()) {
             XWPFTableRow row = table.getRow(rowIdx);
-            holdRowAtLeast(row, height.getAsDouble(), outerRulesBeyondOne(table, rowIdx));
+            holdRowAtLeast(row, height.getAsDouble(), rulesBeyondOne(table, rowIdx));
             fitBlankLinesToTheRow(row);
         }
     }
@@ -11626,7 +11626,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * held less its own rule alone, stood half a point taller in Word, its text a quarter of a
      * point lower and all under it half a point.</p>
      */
-    private static long outerRulesBeyondOne(XWPFTable table, int rowIdx) {
+    private static long rulesBeyondOne(XWPFTable table, int rowIdx) {
         boolean first = rowIdx == 0;
         boolean last = rowIdx == table.getNumberOfRows() - 1;
         XWPFTableRow next = last ? null : table.getRow(rowIdx + 1);
@@ -11693,7 +11693,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * cell's room is that height, as much again as the row's written height leaves out, less
      * what the cell itself takes and its paragraph's space above and below — the page's row,
      * less the cell's own margins and border, and what else of the rules round it its row holds
-     * ({@link #outerRulesBeyondOne}). Taken off the written height alone, a blank row's
+     * ({@link #rulesBeyondOne}). Taken off the written height alone, a blank row's
      * line would lose its padding twice.</p>
      */
     private static void fitBlankLinesToTheRow(XWPFTableRow row) {
@@ -11906,7 +11906,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * {@link #holdRowAtLeast(XWPFTableRow, double)}, less {@code beyond} twips more of rules the
-     * row holds besides the one its cells' margins count ({@link #outerRulesBeyondOne}).
+     * row holds besides the one its cells' margins count ({@link #rulesBeyondOne}).
      */
     private static void holdRowAtLeast(XWPFTableRow row, double points, long beyond) {
         holdRowAtLeast(row, points, beyond, false);

@@ -325,10 +325,10 @@ class DocxPanelTailTest {
 
         assertThat(topMargin(cell)).as("its padding, less half its border").isEqualTo(29);
         assertThat(bottomMargin(cell)).isEqualTo(29);
-        // The heavier border at the width Word is given, nine eighths of a point; the lighter one
-        // at its own.
+        // The heavier border at the width Word is given, nine eighths of a point, counted as a row
+        // counts it, 22.5 twips rounded down; the lighter one at its own.
         assertThat(cell.getTableRow().getHeight()).as("17.5pt, less both margins and both borders")
-                .isEqualTo(Math.round((17.5 - 1.1) * 20) - 2 * 29 - Math.round(9 / 8.0 * 20));
+                .isEqualTo(Math.round((17.5 - 1.1) * 20) - 2 * 29 - 22);
     }
 
     @Test

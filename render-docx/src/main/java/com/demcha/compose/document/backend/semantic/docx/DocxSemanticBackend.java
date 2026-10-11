@@ -12636,10 +12636,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * that much lower. {@code CobaltRota}'s staff names, beside the day
      * cells its chips are composed in, stood 0.25pt low in their rows in Word, 0.2pt in
      * LibreOffice on Windows and 0.19pt in LibreOffice 24.2; written so, they stood within 0.08pt of
-     * the page's in all three, every row its height (measured). The line alone written shorter
-     * keeps the row its height in Word and on Windows, but LibreOffice 24.2 holds a row to its
-     * cells' content, the margins inside its height: the covers row, whose value cells' lines were
-     * its tallest content, came out 0.8pt shorter there.</p>
+     * the page's in all three, every row its height (measured). A line alone written shorter
+     * keeps its row its height in Word and on Windows, but LibreOffice 24.2 holds a row to its
+     * cells' content, the margins inside its height: written so on a probe, the covers values'
+     * lines among them, the covers row, whose tallest content those lines were, came out 0.8pt
+     * shorter there.</p>
      *
      * <p>Only a cell whose every paragraph is one exact line, no line broken in it; a line is cut
      * no nearer its letters than {@link DocxStackedLines#INK_MARGIN} at its top and its foot, as

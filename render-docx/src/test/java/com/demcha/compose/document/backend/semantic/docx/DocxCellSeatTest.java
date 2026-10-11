@@ -24,13 +24,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /**
- * A table text cell's lines stand on the page's baselines in Word, through the row's margins.
+ * A table text cell's lines stand on the page's baselines in Word, through the row's margins, its
+ * text's position and the height of its lines.
  *
  * <p>The page sets a cell's line its face's ascent below the line's top; Word stands an exact
  * line's baseline four fifths of the way down it. Measured, a line of 8pt Poppins stood 0.58pt
  * low in Word and 0.55 in LibreOffice, of Lato 0.24 high, whatever the cell's anchor. Every cell of
  * a row takes the row's largest margins, so the margins move every cell's text at once: the top
- * made smaller by as much as the bottom is made larger, and the row keeps its height.</p>
+ * made smaller by as much as the bottom is made larger, and the row keeps its height. What they
+ * leave is moved by the text's position from half a point up, and under it by each line's height
+ * traded for the space after it.</p>
  */
 class DocxCellSeatTest {
 
@@ -241,7 +244,7 @@ class DocxCellSeatTest {
                 .rowCells(cell("gypsy", poppins(6), DocumentTableTextAnchor.CENTER), composed("Composed"))))) {
             XWPFTableCell text = document.getTables().get(0).getRow(0).getCell(0);
 
-            assertThat(0.8 * line(text) - POPPINS_ASCENT * 6).as("the premise").isBetween(0.1, 0.5);
+            assertThat(0.8 * written(text) - POPPINS_ASCENT * 6).as("the premise").isBetween(0.1, 0.5);
             assertThat(after(text)).as("its line as it was").isZero();
             assertThat(position(text)).isZero();
         }
@@ -257,7 +260,7 @@ class DocxCellSeatTest {
             XWPFTableCell text = document.getTables().get(0).getRow(0).getCell(0);
 
             assertThat(text.getParagraphs()).as("the premise: one paragraph, its lines broken").hasSize(1);
-            assertThat(0.8 * line(text) - POPPINS_ASCENT * 6).as("the premise").isBetween(0.1, 0.5);
+            assertThat(0.8 * written(text) - POPPINS_ASCENT * 6).as("the premise").isBetween(0.1, 0.5);
             assertThat(after(text)).isZero();
         }
     }
@@ -388,7 +391,7 @@ class DocxCellSeatTest {
                 .rowCells(cell("---", helvetica(14), DocumentTableTextAnchor.CENTER), composed("Composed"))))) {
             XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
 
-            assertThat(0.8 * line(cell) - HELVETICA_ASCENT * 14).as("the premise: a tenth of a point and more, under a half")
+            assertThat(0.8 * written(cell) - HELVETICA_ASCENT * 14).as("the premise: a tenth of a point and more, under a half")
                     .isBetween(0.1, 0.5);
             assertThat(after(cell)).isZero();
         }
@@ -415,7 +418,7 @@ class DocxCellSeatTest {
     }
 
     @Test
-    void aLineIsCutNoNearerTheTopsOfItsLettersThanItsFoot() throws Exception {
+    void aLineIsCutNoNearerItsLettersTopsThanWordKeepsThem() throws Exception {
         // Poppins' ring above its capital A reaches 0.96 of an em: cut by all its call, the line
         // would stand the ring closer to its top than Word keeps letters on screen.
         try (XWPFDocument document = export(page -> page.addTable(t -> t

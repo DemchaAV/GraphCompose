@@ -23,9 +23,10 @@ follow semantic versioning; release dates are ISO 8601.
   moves four fifths of the difference in both editors. Only where every paragraph of the cell is
   one line, in a face whose letters the export reads — not a standard face it does not embed — and
   no nearer the letters' tops and feet than three quarters of a point, where Word cuts an exact
-  line's letters on screen. The line alone written shorter keeps a row its height
-  in Word and on Windows, but LibreOffice 24.2 holds a row to its cells' content: the covers row,
-  whose value cells' lines were its tallest content, came out 0.8pt shorter there (measured).
+  line's letters on screen. A line alone written shorter keeps a row its height in Word and on
+  Windows, but LibreOffice 24.2 holds a row to its cells' content: written so on a probe, the
+  covers values' lines among them, the covers row, whose tallest content those lines were, came
+  out 0.8pt shorter there (measured).
   From half a point up the position moves it as before: written by the line instead,
   `ConsultingInvoice`'s amounts stood nearer the page in their rows in LibreOffice, where the
   position moves text further than it says, and the rows themselves stand 0.3pt low there, which
@@ -36,8 +37,10 @@ follow semantic versioning; release dates are ISO 8601.
   median moves from 0.17pt to 0.15pt in Word, its p90 from 0.38pt to 0.31pt, and from 0.08pt to
   0.06pt in LibreOffice on Windows, its p90 from 0.30pt to 0.22pt; `LumaStudioInvoice`'s from
   0.14pt to 0.11pt in Word, its long version's from 0.21pt to 0.17pt in Word and from 0.20pt to
-  0.12pt in LibreOffice on Windows. No document of the fidelity corpus moves further in Word or in
-  LibreOffice on Windows. LibreOffice 24.2 sets each of `CobaltRota`'s staff rows a twip shorter
+  0.12pt in LibreOffice on Windows. No document's median moves further in Word or in LibreOffice
+  on Windows. Line by line, 21 amounts of `LumaStudioInvoice` and its long version, 0.07pt to
+  0.09pt low in LibreOffice on Windows, stand 0.11pt to 0.13pt high there, and 6, 0.04pt low in
+  Word, 0.08pt high, a step of its grid. LibreOffice 24.2 sets each of `CobaltRota`'s staff rows a twip shorter
   than the page, holding them to their content, so the rows above the names stand higher there,
   and the names, seated in their rows, a few hundredths of a point further from the page.
 

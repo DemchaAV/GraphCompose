@@ -108,6 +108,112 @@ class DocxRuledRowHeightTest {
     }
 
     @Test
+    void aRowRuledUnlikeTheNextIsHeldAtItsContentsHeight() throws Exception {
+        // A row between two others gives the rest of its own rule above it and half the next row's
+        // below. Measured, a row ruled at 0.5pt over one ruled at 1.5pt, held less its own rule
+        // alone, stood half a point taller in Word, and all under it half a point lower; the row
+        // ruled at 1.5pt was held half a point short, its content holding it. Either way round, in
+        // the middle of five rows.
+        for (double[] rules : new double[][] {{0.5, 1.5}, {1.5, 0.5}}) {
+            try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> {
+                t.columns(DocumentTableColumn.auto())
+                        .defaultCellStyle(DocumentTableStyle.builder()
+                                .padding(DocumentInsets.of(7))
+                                .stroke(DocumentStroke.of(DocumentColor.BLACK, rules[0]))
+                                .build())
+                        .rowStyle(2, DocumentTableStyle.builder().stroke(DocumentStroke.of(DocumentColor.BLACK, rules[1])).build());
+                for (int i = 0; i < 5; i++) {
+                    t.row("Row");
+                }
+            }))) {
+                var table = document.getTables().get(0);
+                long content = line(table.getRow(0));
+
+                for (int i = 0; i < 5; i++) {
+                    assertThat((long) table.getRow(i).getHeight()).as("row %s, ruled %s with %s in the middle", i,
+                            rules[0], rules[1]).isEqualTo(content);
+                }
+            }
+        }
+    }
+
+    @Test
+    void aTableRuledColumnByColumnHoldsEveryRowAsOneRuledAlike() throws Exception {
+        // Each cell gives half the rule of the cell under it, not of the heaviest in the next row:
+        // a column ruled at 1.5pt beside one at 0.5pt, alike from row to row, holds its rows where
+        // a table ruled alike does.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> {
+            t.columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                    .defaultCellStyle(DocumentTableStyle.builder()
+                            .padding(DocumentInsets.of(7))
+                            .stroke(DocumentStroke.of(DocumentColor.BLACK, 0.5))
+                            .build())
+                    .columnStyle(1, DocumentTableStyle.builder().stroke(DocumentStroke.of(DocumentColor.BLACK, 1.5)).build());
+            for (int i = 0; i < 4; i++) {
+                t.row("Row", "Row");
+            }
+        }))) {
+            var table = document.getTables().get(0);
+            long content = line(table.getRow(0));
+
+            for (int i = 0; i < 4; i++) {
+                assertThat((long) table.getRow(i).getHeight()).as("row %s", i).isEqualTo(content);
+            }
+        }
+    }
+
+    @Test
+    void aCellAfterASpanGivesHalfTheRuleOfTheCellUnderIt() throws Exception {
+        // The second row's last cell starts the third column of the grid, past a cell spanning two:
+        // the cell under it is the third column's, ruled at 0.5pt, not the second's at 1.5pt. The
+        // spanning cell takes the rule under its first column, at 0.5pt, as its padding gives up
+        // half of it (clearOfTheRules).
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(7))
+                        .stroke(DocumentStroke.of(DocumentColor.BLACK, 0.5))
+                        .build())
+                .columnStyle(1, DocumentTableStyle.builder().stroke(DocumentStroke.of(DocumentColor.BLACK, 1.5)).build())
+                .row("Row", "Row", "Row")
+                .rowCells(com.demcha.compose.document.table.DocumentTableCell.text("Row").colSpan(2),
+                        com.demcha.compose.document.table.DocumentTableCell.text("Row"))
+                .row("Row", "Row", "Row")
+                .row("Row", "Row", "Row")))) {
+            XWPFTableRow spanned = document.getTables().get(0).getRow(1);
+
+            assertThat((long) spanned.getHeight()).isEqualTo(line(spanned));
+        }
+    }
+
+    @Test
+    void aRowRuledCellByCellIsHeldLessWhatItsMostDemandingCellTakes() throws Exception {
+        // Cells ruled 1.5pt and 0.5pt over cells ruled the other way round: each gives 20 twips of
+        // rules and keeps 250 of margins, its other 10 of padding moved into its paragraph. The
+        // row is held less 270, the most any one cell takes, not the 280 the heavier cell's rule
+        // counts and the 10 more the lighter one holds beyond its own, taken from different cells.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(7))
+                        .stroke(DocumentStroke.of(DocumentColor.BLACK, 0.5))
+                        .build())
+                .row("Row", "Row")
+                .rowCells(ruled("Row", 1.5), ruled("Row", 0.5))
+                .rowCells(ruled("Row", 0.5), ruled("Row", 1.5))
+                .row("Row", "Row")))) {
+            XWPFTableRow row = document.getTables().get(0).getRow(1);
+
+            assertThat((long) row.getHeight()).as("its line and the padding in its paragraphs").isEqualTo(line(row) + 10);
+        }
+    }
+
+    private static com.demcha.compose.document.table.DocumentTableCell ruled(String text, double rule) {
+        return com.demcha.compose.document.table.DocumentTableCell.text(text)
+                .withStyle(DocumentTableStyle.builder().stroke(DocumentStroke.of(DocumentColor.BLACK, rule)).build());
+    }
+
+    @Test
     void aRowItsRulesFillIsStillHeldAtATwip() throws Exception {
         // A one-row table no taller than its two 1pt rules: the height left for its content is
         // nothing, and is written all the same, at a twip — so a blank line in such a row is still

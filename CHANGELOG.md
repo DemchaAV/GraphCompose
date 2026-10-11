@@ -8,6 +8,29 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export holds a shape's row less its borders as wide as Word draws them, and a table's
+  row between two others less the rules it holds.**
+  - **A shape's borders come off as wide as Word draws them.** A border is written in eighths of a
+    point, and a row counts it two and a half twips an eighth, rounded down; a shape container
+    held whole had the lighter of its borders taken off its row's height, and both off the room
+    it leaves its label, at the width the page strokes them. A 20.3pt chip outlined at 0.7pt,
+    which Word draws 0.75pt wide, stood a twip taller in Word and LibreOffice on Windows, and six
+    of them in a table's rows six twips lower below them; one outlined at 0.9pt, drawn 0.875pt
+    wide, was held a twip short, the row round it holding it (measured). A panel's border is now
+    written from two to ninety-six eighths of a point, as a table cell's rule is, where a hairline
+    thinner than 0.19pt was written at one eighth and a border past 12pt above the range.
+  - **A row between two others is held less the rules it holds:** the rest of its own rule above
+    it and half the rule of the cell under it, which is one rule where the two are ruled alike, as
+    it was held. A row is held less the most any one of its cells takes above and below its
+    content, its margins and those rules together. Ruled unlike the next, a row ruled at 0.5pt over one ruled at 1.5pt stood half a point
+    taller in Word and all under it half a point lower; held so, the rows of five, ruled either
+    way round in the middle, stand where the page sets them in Word (measured). LibreOffice makes
+    room at the edge between two rows for the heavier of their rules, where Word makes it for the
+    lower row's: under a row ruled heavier than it, a row and all under it stand the difference
+    lower there, 1pt for these, on Windows and in LibreOffice 24.2.
+
+  No document of the fidelity corpus moves: its DOCX are byte-identical.
+
 - **A DOCX export seats the label of a chip composed in a table cell where the page sets it.**
   - **A label taller than its chip is seated from the chip's top.** The page starts a line taller
     than a shape's outline at the outline's top and draws it past it below; the export seated it

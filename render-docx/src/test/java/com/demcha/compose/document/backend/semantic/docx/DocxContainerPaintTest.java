@@ -96,6 +96,21 @@ class DocxContainerPaintTest {
     }
 
     @Test
+    void aPanelsBorderIsWrittenFromWordsThinnestToItsThickest() throws Exception {
+        // A line border's w:sz runs from two eighths of a point to ninety-six, as a table cell's
+        // rule is written: a row counts the border at the width written.
+        for (double[] stroke : new double[][] {{0.1, 2}, {14, 96}}) {
+            try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
+                    .stroke(DocumentStroke.of(ACCENT, stroke[0]))
+                    .addParagraph(p -> p.text("Outlined"))))) {
+                var edges = onlyCell(document).getCTTc().getTcPr().getTcBorders();
+
+                assertThat(edges.getTop().getSz().intValue()).as("a %spt border", stroke[0]).isEqualTo((int) stroke[1]);
+            }
+        }
+    }
+
+    @Test
     void anUnpaintedSectionIsNotATable() throws Exception {
         try (XWPFDocument document = export(page -> page.addSection("Plain", plain -> plain
                 .padding(DocumentInsets.of(8))

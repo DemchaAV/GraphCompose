@@ -11,23 +11,29 @@ import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.document.table.DocumentTableTextAnchor;
 import com.demcha.compose.font.FontName;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.junit.jupiter.api.Test;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSpacing;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcMar;
 
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
- * A table text cell's lines stand on the page's baselines in Word, through the row's margins.
+ * A table text cell's lines stand on the page's baselines in Word, through the row's margins, its
+ * text's position and the height of its lines.
  *
  * <p>The page sets a cell's line its face's ascent below the line's top; Word stands an exact
  * line's baseline four fifths of the way down it. Measured, a line of 8pt Poppins stood 0.58pt
  * low in Word and 0.55 in LibreOffice, of Lato 0.24 high, whatever the cell's anchor. Every cell of
  * a row takes the row's largest margins, so the margins move every cell's text at once: the top
- * made smaller by as much as the bottom is made larger, and the row keeps its height.</p>
+ * made smaller by as much as the bottom is made larger, and the row keeps its height. What they
+ * leave is moved by the text's position from half a point up, and under it by each line's height
+ * traded for the space after it.</p>
  */
 class DocxCellSeatTest {
 
@@ -154,7 +160,9 @@ class DocxCellSeatTest {
             }
             assertThat(poppins).as("the premise: half a point and more").isGreaterThanOrEqualTo(0.5);
             assertThat(position(row.getCell(0))).isEqualTo(Math.round(poppins * 2));
+            assertThat(after(row.getCell(0))).as("its line as it was").isZero();
             assertThat(position(row.getCell(1))).as("Lato's quarter point is left").isZero();
+            assertThat(after(row.getCell(1))).as("with no space after its line to take").isZero();
         }
     }
 
@@ -197,15 +205,107 @@ class DocxCellSeatTest {
         // The composed paragraph is seated by its own writer; the margins would move it again.
         try (XWPFDocument document = export(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
-                .rowCells(cell("Text", poppins(8), DocumentTableTextAnchor.CENTER),
-                        DocumentTableCell.node(new ParagraphBuilder().text("Composed").textStyle(poppins(8))
-                                .margin(DocumentInsets.zero()).build()).withStyle(style(poppins(8),
-                                DocumentTableTextAnchor.CENTER)))))) {
+                .rowCells(cell("Text", poppins(8), DocumentTableTextAnchor.CENTER), composed("Composed"))))) {
             XWPFTableCell text = document.getTables().get(0).getRow(0).getCell(0);
 
             assertThat(margins(text)).containsExactly(PADDING, PADDING);
             assertThat(position(text)).as("the text cell moved by its position instead")
                     .isEqualTo(Math.round((0.8 * line(text) - POPPINS_ASCENT * 8) * 2));
+            assertThat(after(text)).as("its line as it was").isZero();
+        }
+    }
+
+    @Test
+    void aCellCallingForUnderHalfAPointTradesItsLineForTheSpaceAfterIt() throws Exception {
+        // Poppins at 6pt stands 0.42pt low in Word: under a half point, no position moves it.
+        try (XWPFDocument document = export(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(cell("Text", poppins(6), DocumentTableTextAnchor.CENTER), composed("Composed"))))) {
+            XWPFTableRow row = document.getTables().get(0).getRow(0);
+            XWPFTableCell text = row.getCell(0);
+            double low = 0.8 * written(text) - POPPINS_ASCENT * 6;
+
+            assertThat(low).as("the premise: a tenth of a point and more, under a half").isBetween(0.1, 0.5);
+            assertThat(margins(text)).containsExactly(PADDING, PADDING);
+            assertThat(after(text)).as("its line traded for the space after it, the cell as tall")
+                    .isEqualTo(Math.round(low * 20 / 0.8)).isPositive();
+            assertThat(0.8 * line(text) - POPPINS_ASCENT * 6).as("the baseline at the page's")
+                    .isCloseTo(0, within(0.02));
+            assertThat(position(text)).isZero();
+            assertThat(after(row.getCell(1))).as("the composed paragraph's line is its own").isZero();
+        }
+    }
+
+    @Test
+    void aCellWhoseLettersReachNearItsLinesFootIsLeftAsItWas() throws Exception {
+        // Poppins' descenders stand nearer the foot of its line than Word's cut leaves them.
+        try (XWPFDocument document = export(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(cell("gypsy", poppins(6), DocumentTableTextAnchor.CENTER), composed("Composed"))))) {
+            XWPFTableCell text = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(0.8 * written(text) - POPPINS_ASCENT * 6).as("the premise").isBetween(0.1, 0.5);
+            assertThat(after(text)).as("its line as it was").isZero();
+            assertThat(position(text)).isZero();
+        }
+    }
+
+    @Test
+    void aCellOfLinesBrokenInOneParagraphIsLeftAsItWas() throws Exception {
+        // A taller or shorter line would move its second line from the first.
+        try (XWPFDocument document = export(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(DocumentTableCell.lines("One", "Two").withStyle(style(poppins(6), DocumentTableTextAnchor.CENTER)),
+                        composed("Composed"))))) {
+            XWPFTableCell text = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(text.getParagraphs()).as("the premise: one paragraph, its lines broken").hasSize(1);
+            assertThat(0.8 * written(text) - POPPINS_ASCENT * 6).as("the premise").isBetween(0.1, 0.5);
+            assertThat(after(text)).isZero();
+        }
+    }
+
+    @Test
+    void aCellOfSeveralLinesTradesEachForTheSpaceAfterIt() throws Exception {
+        try (XWPFDocument document = export(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(DocumentTableCell.lines("One", "Two").withStyle(DocumentTableStyle.builder()
+                                .padding(DocumentInsets.of(4)).stroke(DocumentStroke.of(DocumentColor.BLACK, 0))
+                                .textStyle(poppins(6)).textAnchor(DocumentTableTextAnchor.CENTER).lineSpacing(2).build()),
+                        composed("Composed"))))) {
+            XWPFTableCell text = document.getTables().get(0).getRow(0).getCell(0);
+            XWPFParagraph first = text.getParagraphs().get(0);
+            XWPFParagraph second = text.getParagraphs().get(1);
+            // The last line has no space after it of its own: what it has is its cut.
+            long cut = afterOf(second);
+            double low = 0.8 * (lineOf(second) + cut) / 20.0 - POPPINS_ASCENT * 6;
+
+            assertThat(cut).isEqualTo(Math.round(low * 20 / 0.8)).isPositive();
+            assertThat(lineOf(first)).as("each line cut alike").isEqualTo(lineOf(second));
+            assertThat(afterOf(first)).as("the space between the lines, and the cut").isEqualTo(40 + cut);
+        }
+    }
+
+    @Test
+    void aCellSetHighTakesItsTallerLineFromTheSpaceAfterIt() throws Exception {
+        // Padded more than the composed cell beside it, its padding past the row's margins is
+        // written above and below its line, and the line takes from what is below it.
+        try (XWPFDocument document = export(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(DocumentTableCell.text("Lato").withStyle(DocumentTableStyle.builder()
+                                .padding(DocumentInsets.of(6)).stroke(DocumentStroke.of(DocumentColor.BLACK, 0))
+                                .textStyle(lato(8)).textAnchor(DocumentTableTextAnchor.CENTER).build()),
+                        composed("Composed"))))) {
+            XWPFTableCell text = document.getTables().get(0).getRow(0).getCell(0);
+            CTSpacing spacing = text.getParagraphs().get(0).getCTP().getPPr().getSpacing();
+            long before = DocxTwips.of(spacing.getBefore());
+            long grown = before - after(text);
+            double high = 0.8 * (line(text) - grown / 20.0) - LATO_ASCENT * 8;
+
+            assertThat(before).as("the premise: the padding past the row's margins").isEqualTo(40);
+            assertThat(high).as("the premise: Word sets Lato high").isNegative();
+            assertThat(grown).as("its line as much taller as the space after it shorter")
+                    .isEqualTo(Math.round(-high * 20 / 0.8));
         }
     }
 
@@ -264,8 +364,83 @@ class DocxCellSeatTest {
         }
     }
 
+    @Test
+    void aCallUnderATenthOfAPointLeavesTheLineAsItWas() throws Exception {
+        // Beside a composed cell, as above: a twip of line moves a line a step of Word's grid or
+        // nothing. Lato at 3pt stands high by a twip and more, padded so as to have space after it.
+        try (XWPFDocument document = export(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(DocumentTableCell.text("Lato").withStyle(DocumentTableStyle.builder()
+                                .padding(DocumentInsets.of(6)).stroke(DocumentStroke.of(DocumentColor.BLACK, 0))
+                                .textStyle(lato(3)).textAnchor(DocumentTableTextAnchor.CENTER).build()),
+                        composed("Composed"))))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(0.8 * line(cell) - LATO_ASCENT * 3).as("the premise: a twip and more, under a tenth")
+                    .isBetween(-0.1, -0.025);
+            assertThat(after(cell)).as("the space after it as its padding gives it").isEqualTo(40);
+        }
+    }
+
+    @Test
+    void aCellInAStandardFaceTheExportDoesNotEmbedKeepsItsLine() throws Exception {
+        // Its letters are read through a font standing in for it, in that font's units: not known.
+        // Hyphens, low enough that read so they would leave the line room to cut.
+        try (XWPFDocument document = export(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(cell("---", helvetica(14), DocumentTableTextAnchor.CENTER), composed("Composed"))))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(0.8 * written(cell) - HELVETICA_ASCENT * 14).as("the premise: a tenth of a point and more, under a half")
+                    .isBetween(0.1, 0.5);
+            assertThat(after(cell)).isZero();
+        }
+    }
+
+    @Test
+    void whatTheMarginsLeaveUnderHalfAPointIsMovedByTheLine() throws Exception {
+        // The row moves by Helvetica's 6 twips at 14pt; Poppins at 6pt calls for more.
+        try (XWPFDocument document = export(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(cell("Text", poppins(6), DocumentTableTextAnchor.CENTER),
+                        cell("LARGE", helvetica(14), DocumentTableTextAnchor.CENTER))))) {
+            XWPFTableRow row = document.getTables().get(0).getRow(0);
+            double left = 0.8 * written(row.getCell(0)) - POPPINS_ASCENT * 6 - DocxExports.DEFAULT_LINE_RAISE / 20.0;
+
+            for (XWPFTableCell cell : row.getTableCells()) {
+                assertThat(margins(cell)).containsExactly(PADDING - DocxExports.DEFAULT_LINE_RAISE,
+                        PADDING + DocxExports.DEFAULT_LINE_RAISE);
+            }
+            assertThat(left).as("the premise: a tenth of a point and more left").isBetween(0.1, 0.5);
+            assertThat(after(row.getCell(0))).isEqualTo(Math.round(left * 20 / 0.8)).isPositive();
+            assertThat(after(row.getCell(1))).as("nothing left of Helvetica's").isZero();
+        }
+    }
+
+    @Test
+    void aLineIsCutNoNearerItsLettersTopsThanWordKeepsThem() throws Exception {
+        // Poppins' ring above its capital A reaches 0.96 of an em: cut by all its call, the line
+        // would stand the ring closer to its top than Word keeps letters on screen.
+        try (XWPFDocument document = export(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(cell("ÅÅ", poppins(6), DocumentTableTextAnchor.CENTER), composed("Composed"))))) {
+            XWPFTableCell text = document.getTables().get(0).getRow(0).getCell(0);
+            double low = 0.8 * written(text) - POPPINS_ASCENT * 6;
+
+            assertThat(low).as("the premise").isBetween(0.1, 0.5);
+            assertThat(after(text)).as("cut, but by less than its call").isPositive()
+                    .isLessThan(Math.round(low * 20 / 0.8));
+        }
+    }
+
     private static DocumentTableCell cell(String text, DocumentTextStyle face, DocumentTableTextAnchor anchor) {
         return DocumentTableCell.text(text).withStyle(style(face, anchor));
+    }
+
+    /** A cell composed from a paragraph, in Poppins as the text cells beside it. */
+    private static DocumentTableCell composed(String text) {
+        return DocumentTableCell.node(new ParagraphBuilder().text(text).textStyle(poppins(8))
+                .margin(DocumentInsets.zero()).build()).withStyle(style(poppins(8), DocumentTableTextAnchor.CENTER));
     }
 
     private static DocumentTableStyle style(DocumentTextStyle face, DocumentTableTextAnchor anchor) {
@@ -288,6 +463,28 @@ class DocxCellSeatTest {
     /** The exact line a cell's first paragraph is written at, in points. */
     private static double line(XWPFTableCell cell) {
         return DocxTwips.of(cell.getParagraphs().get(0).getCTP().getPPr().getSpacing().getLine()) / 20.0;
+    }
+
+    /**
+     * The exact line a cell's first paragraph stood at before it was traded for the space after
+     * it, in points: for a cell with no space after its line of its own.
+     */
+    private static double written(XWPFTableCell cell) {
+        return line(cell) + after(cell) / 20.0;
+    }
+
+    /** The space after a cell's first paragraph, in twips; 0 for none. */
+    private static long after(XWPFTableCell cell) {
+        return afterOf(cell.getParagraphs().get(0));
+    }
+
+    private static long afterOf(XWPFParagraph paragraph) {
+        CTSpacing spacing = paragraph.getCTP().getPPr().getSpacing();
+        return spacing.isSetAfter() ? DocxTwips.of(spacing.getAfter()) : 0;
+    }
+
+    private static long lineOf(XWPFParagraph paragraph) {
+        return DocxTwips.of(paragraph.getCTP().getPPr().getSpacing().getLine());
     }
 
     /** The {@code w:position} of a cell's first run, in half points; 0 for none. */

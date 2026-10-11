@@ -127,6 +127,61 @@ class DocxCellPaddingTest {
     }
 
     @Test
+    void aRuleOfHalfATwipMoreIsCountedRoundedDownAsBothEditorsCountIt() throws Exception {
+        // Five eighths of a point are 12.5 twips and seven are 17.5: measured on ten-row tables,
+        // Word and LibreOffice stepped each row by 12 and by 17.
+        for (double[] rule : new double[][] {{0.625, 12}, {0.875, 17}}) {
+            XWPFTableCell cell = firstCell(page -> page.addTable(t -> t
+                    .columns(DocumentTableColumn.auto())
+                    .defaultCellStyle(DocumentTableStyle.builder()
+                            .padding(DocumentInsets.of(7))
+                            .stroke(DocumentStroke.of(DocumentColor.BLACK, rule[0]))
+                            .build())
+                    .row("Odd")));
+            long twips = (long) rule[1];
+
+            assertThat(margins(cell)).as("a %spt rule", rule[0])
+                    .containsExactly(140L - twips - SEAT, 140L, 140L - twips + SEAT, 140L);
+        }
+    }
+
+    @Test
+    void aRuleBetweenTwoRowsIsSharedInWholeTwipsTheRowAboveTakingHalfRoundedDown() throws Exception {
+        // A 0.7pt rule is written at six eighths, 15 twips. Halved and each half rounded with its
+        // margin, it came off as 7 and 7, and every row stood a twip taller than the page's.
+        XWPFTable table = firstTable(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(7))
+                        .stroke(DocumentStroke.of(DocumentColor.BLACK, 0.7))
+                        .build())
+                .row("First")
+                .row("Second")));
+
+        assertThat(margins(table.getRow(0).getCell(0))).as("the rule above the table whole, 7 of the one under it")
+                .containsExactly(140L - 15 - SEAT, 140L, 140L - 7 + SEAT, 140L);
+        assertThat(margins(table.getRow(1).getCell(0))).as("the other 8 above, the rule below the table whole")
+                .containsExactly(140L - 8 - SEAT, 140L, 140L - 15 + SEAT, 140L);
+    }
+
+    @Test
+    void aCellsTopAndBottomMarginsAreRoundedToTheTwipTogether() throws Exception {
+        // 1.6345pt above and below are 32.69 twips each: rounded apart, 33 and 33 made the cell a
+        // twip taller than the page's 65.38.
+        XWPFTableCell cell = firstCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto())
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .padding(new DocumentInsets(1.6345, 4, 1.6345, 4))
+                        .stroke(DocumentStroke.of(DocumentColor.BLACK, 0))
+                        .build())
+                .row("Pair")));
+        long[] margins = margins(cell);
+
+        assertThat(margins[0] + margins[2]).as("the pair, rounded once").isEqualTo(65L);
+        assertThat(margins[0]).as("the top to the nearest, less the row's seat").isEqualTo(33L - SEAT);
+    }
+
+    @Test
     void betweenRowsRuledDifferentlyTheLowerRowsRuleIsTheOneGivenUp() throws Exception {
         // Measured, a 1.5pt header over 0.5pt rows stepped as 0.5pt rules do: Word makes room
         // at the edge for the lower row's rule.

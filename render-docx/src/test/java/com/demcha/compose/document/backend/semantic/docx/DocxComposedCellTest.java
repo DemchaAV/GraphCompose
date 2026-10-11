@@ -261,14 +261,104 @@ class DocxComposedCellTest {
                 .isEqualTo(184);
     }
 
+    @Test
+    void aChipComposedInACellIsHeldAndItsLabelCutRoundedDownToTheTwip() throws Exception {
+        // CobaltRota's stacked chips are 183.69 twips: held at 184 and their labels cut to 184,
+        // two in a day cell stood every row they were in a twip taller than the page's in Word and
+        // LibreOffice. The row the chip is in holds the page's height, rounded once.
+        XWPFTableCell chip = aroundTheChip(null, com.demcha.compose.document.node.LayerAlign.CENTER, 8.2, 9.1846)
+                .getTables().get(0).getRow(0).getCell(0);
+
+        assertThat(heightOf(chip.getTableRow().getTable())).as("its row").isEqualTo(183);
+        assertThat(lineOf(chip)).as("its label's line").isEqualTo(183 / 20.0);
+    }
+
+    @Test
+    void theCellAnOutlinedChipIsAllOfGivesBackWhatItsLettersKeepPastItsOutline() throws Exception {
+        // Its 1.1pt borders leave the label 7pt, and its letters keep it at 160 twips (above): the
+        // chip's row holds 140, and Word grows the chip by the 20 between. The cell round it, its
+        // 4pt padding less the 1pt rule 60 twips above and below, gives them back, 10 and 10.
+        XWPFTableCell outlined = aloneInARow(OUTLINE, DocumentInsets.of(4));
+        XWPFTableCell filled = aloneInARow(null, DocumentInsets.of(4));
+        XWPFTableCell chip = outlined.getTables().get(0).getRow(0).getCell(0);
+
+        assertThat(DocxTwips.of(chip.getParagraphs().get(0).getCTP().getPPr().getSpacing().getLine())
+                   - heightOf(chip.getTableRow().getTable())).as("the premise: what Word grows the chip by")
+                .isEqualTo(20);
+        assertThat(verticalMarginsOf(outlined)).containsExactly(60L - 10, 60L - 10);
+        assertThat(verticalMarginsOf(filled)).as("a chip its label fits gives nothing back").containsExactly(60L, 60L);
+    }
+
+    @Test
+    void anOddNumberOfTwipsIsGivenBackHalfRoundedDownAboveAndTheRestBelow() throws Exception {
+        // A 1.05pt outline is written at eight eighths, 20 twips: the chip's row holds 163 less 20,
+        // 143, and its letters keep its label at 160 — 17 twips, 8 above and 9 below.
+        com.demcha.compose.document.style.DocumentStroke outline = com.demcha.compose.document.style.DocumentStroke.of(
+                com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1.05);
+        XWPFTableCell around = aloneInARow(outline, DocumentInsets.of(4));
+        XWPFTableCell chip = around.getTables().get(0).getRow(0).getCell(0);
+
+        assertThat(DocxTwips.of(chip.getParagraphs().get(0).getCTP().getPPr().getSpacing().getLine())
+                   - heightOf(chip.getTableRow().getTable())).as("the premise: an odd number of twips").isEqualTo(17);
+        assertThat(verticalMarginsOf(around)).containsExactly(60L - 8, 60L - 9);
+    }
+
+    @Test
+    void aCellGivesBackNoMoreThanItsMarginsHold() throws Exception {
+        // 1.25pt of padding less the 1pt rule leaves 5 twips above and below, less than the 10 each.
+        assertThat(verticalMarginsOf(aloneInARow(OUTLINE, DocumentInsets.of(1.25)))).containsExactly(0L, 0L);
+    }
+
+    @Test
+    void aChipBesideAnotherCellGivesNothingBack() throws Exception {
+        // Word gives every cell of a row the row's largest margins: the cell beside it keeps its 60.
+        assertThat(verticalMarginsOf(aroundTheChip(OUTLINE, com.demcha.compose.document.node.LayerAlign.CENTER,
+                8.2, 9.2))).containsExactly(60L, 60L);
+    }
+
+    /** CobaltRota's outlined chips' border. */
+    private static final com.demcha.compose.document.style.DocumentStroke OUTLINE =
+            com.demcha.compose.document.style.DocumentStroke.of(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1.1);
+
+    /** The cell of a one-column table a 9.2pt chip is all of. */
+    private static XWPFTableCell aloneInARow(com.demcha.compose.document.style.DocumentStroke stroke,
+                                             DocumentInsets padding) throws Exception {
+        DocumentNode node = chip(stroke, 9.2);
+        return onlyTableCell(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100))
+                .defaultCellStyle(com.demcha.compose.document.table.DocumentTableStyle.builder().padding(padding).build())
+                .rowCells(DocumentTableCell.node(node))));
+    }
+
+    /** A filled chip round 8.2pt Lato, outlined where a stroke is given. */
+    private static DocumentNode chip(com.demcha.compose.document.style.DocumentStroke stroke, double height) {
+        com.demcha.compose.document.dsl.ShapeContainerBuilder chip = new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .name("Stacked").roundedRect(90, height, 4).padding(DocumentInsets.zero())
+                .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(20, 160, 70))
+                .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("09:00-16:00")
+                        .textStyle(com.demcha.compose.document.style.DocumentTextStyle.builder()
+                                .fontName(com.demcha.compose.font.FontName.LATO).size(8.2).build()).build());
+        if (stroke != null) {
+            chip.stroke(stroke);
+        }
+        return chip.build();
+    }
+
     private static XWPFTableCell chipCell(com.demcha.compose.document.style.DocumentStroke stroke) throws Exception {
         return chipCell(stroke, com.demcha.compose.document.node.LayerAlign.CENTER, 8.2);
     }
 
     private static XWPFTableCell chipCell(com.demcha.compose.document.style.DocumentStroke stroke,
                                           com.demcha.compose.document.node.LayerAlign align, double size) throws Exception {
+        return aroundTheChip(stroke, align, size, 9.2).getTables().get(0).getRow(0).getCell(0);
+    }
+
+    /** The table cell a chip is composed in. */
+    private static XWPFTableCell aroundTheChip(com.demcha.compose.document.style.DocumentStroke stroke,
+                                               com.demcha.compose.document.node.LayerAlign align, double size,
+                                               double height) throws Exception {
         com.demcha.compose.document.dsl.ShapeContainerBuilder chip = new com.demcha.compose.document.dsl.ShapeContainerBuilder()
-                .name("Stacked").roundedRect(90, 9.2, 4).padding(DocumentInsets.zero())
+                .name("Stacked").roundedRect(90, height, 4).padding(DocumentInsets.zero())
                 .fillColor(com.demcha.compose.document.style.DocumentColor.rgb(20, 160, 70))
                 .layer(new com.demcha.compose.document.dsl.ParagraphBuilder().text("09:00-16:00")
                         .textStyle(com.demcha.compose.document.style.DocumentTextStyle.builder()
@@ -277,10 +367,15 @@ class DocxComposedCellTest {
             chip.stroke(stroke);
         }
         DocumentNode node = chip.build();
-        XWPFTableCell cell = onlyTableCell(page -> page.addTable(t -> t
+        return onlyTableCell(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.auto(), DocumentTableColumn.fixed(100))
                 .rowCells(DocumentTableCell.text("Mon"), DocumentTableCell.node(node))));
-        return cell.getTables().get(0).getRow(0).getCell(0);
+    }
+
+    /** A cell's top and bottom margins, in twips. */
+    private static long[] verticalMarginsOf(XWPFTableCell cell) {
+        var margins = cell.getCTTc().getTcPr().getTcMar();
+        return new long[] {DocxTwips.of(margins.getTop().getW()), DocxTwips.of(margins.getBottom().getW())};
     }
 
     private static double lineOf(XWPFTableCell chip) {

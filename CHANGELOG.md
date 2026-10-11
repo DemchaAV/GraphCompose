@@ -8,6 +8,50 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export counts a table's rules as Word and LibreOffice do, and holds a cell's margins and
+  a chip composed in it to the twip the page gives them.**
+  - **A rule takes two and a half twips an eighth of a point, rounded down.** Measured on ten-row
+    tables ruled at three, five, six, seven and nine eighths, both editors stepped each row by its
+    margins, its line and 7, 12, 15, 17 and 22 twips: a rule of 12.5 twips takes 12, one of 17.5
+    takes 17. Counted to the nearest, a row held by its height under a rule of an odd number of
+    eighths stood a twip short of the page's. A rule between two rows is shared in whole twips,
+    the row above it taking half rounded down and the row under it the rest: halved and each half
+    rounded with its margin, a rule of 15 twips came off as 7 and 7, and every row of
+    `NorthlineProposal`'s and `EditorialProposal`'s investment tables stood a twip taller. Tables
+    of one, two, three and six rows ruled at five, six, seven and nine eighths then took the page's
+    height to within a step of Word's grid and to the twip in LibreOffice (measured).
+  - **A cell's top and bottom margins are rounded to the twip together**, the top to the nearest
+    and the bottom to what the two come to less it: rounded apart, two of 32.69 twips came to 66,
+    and with its rules counted so, every row of `CobaltRota`'s staff grid whose day cell held one
+    shift stood a twip taller than the page's.
+  - **A shape composed in a table cell is held, and its label cut, in whole twips rounded down.**
+    The row the cell is in holds the page's height, rounded once; anything in it rounded up grew
+    it: two of `CobaltRota`'s 183.69-twip chips stacked in a day, each held and its label cut at
+    184, stood the row a twip taller. Where a chip's letters keep its label taller than its
+    borders leave room for, Word grows the chip by the rest, and the cell round it now gives that
+    much of its margins back, half above and half below, as far as they hold, where the chip is
+    all the cell holds and the cell all its row holds — as each of `CobaltRota`'s shifts is, in a
+    slot of its own: every staff row with a split shift in an outlined chip stood 3 twips taller.
+
+  `CobaltRota`'s grid now stands where the page sets it, every rule under its top within a quarter
+  point of the page's in Word, where they ran from 0.4pt high to 0.8pt low: its p90 from 0.99pt to
+  0.46pt in Word and from 0.84pt to 0.39pt in LibreOffice on Windows. Its median moves from 0.32pt
+  to 0.38pt (0.23pt to 0.31pt): the shifts' labels stand about 0.3pt low in their chips, where a
+  composed cell's first line is not seated, which the grid standing up to 0.4pt high had hidden.
+  In the DOCX fidelity corpus 10 documents stand nearer the page in Word — `proposal-northline`'s
+  p90 from 0.71pt to 0.43pt, `cv-panel`'s median from 0.43pt to 0.31pt, `invoice-subscription`'s
+  from 0.43pt to 0.33pt — and 10 in LibreOffice on Windows. Seven are further in each, by a twip
+  or a step of Word's grid, where their tables and panels now take the page's height and the
+  lines in and after them show what they had hidden: `invoice-classic`'s notes stand 0.2pt low
+  under its totals table, which had stood 0.13pt high, where the editors leave more space after a
+  table than the page does; `invoice-platform`'s line items, already 0.3pt high in their cells, a
+  twip higher with the rows round them where the page draws them; `letter-panel`'s body, already
+  0.25pt high, a twip higher under its panel; the line items of `invoice-consulting` and its long
+  version, already low, a step of Word's grid lower and a hundredth of a point in LibreOffice;
+  `invoice-metered`'s and `invoice-payments`' a step of the grid, or two to three twips in
+  LibreOffice. `proposal-editorial` in LibreOffice is the document it sets on a new page. The
+  report names nothing more.
+
 - **A DOCX export stands a table's text cells on the page's baselines, and what follows a
   paragraph or a ruled table where the page sets it.**
   - **A row of text cells is moved by its margins.** The page sets a cell's line its face's ascent

@@ -25,8 +25,8 @@ class DocxRuleRowTest {
 
     private static final DocumentStroke RULE = DocumentStroke.of(DocumentColor.rgb(16, 32, 80), 0.9);
 
-    /** The 0.9pt border, in twips. */
-    private static final long BORDER = 18;
+    /** The 0.9pt border, written at seven eighths: 17.5 twips, which a row counts rounded down. */
+    private static final long BORDER = 17;
 
     @Test
     void aRuleRowsEmptyLineIsCutToTheRoomItsRowLeaves() throws Exception {
@@ -43,8 +43,10 @@ class DocxRuleRowTest {
             XWPFTableRow text = document.getTables().get(0).getRow(1);
 
             // The row is written less its rules, the last row's a rule and a half (the rule
-            // below the table whole, half the one above it); the line keeps the page's height.
-            assertThat(line(text)).as("its letters would be cut").isEqualTo(rowHeight(text) + BORDER + BORDER / 2);
+            // below the table whole, its share of the one above it — what the row above leaves of
+            // it, that row taking half rounded down); the line keeps the page's height.
+            assertThat(line(text)).as("its letters would be cut")
+                    .isEqualTo(rowHeight(text) + BORDER + (BORDER - BORDER / 2));
         }
     }
 

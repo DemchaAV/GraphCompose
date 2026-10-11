@@ -252,15 +252,44 @@ class DocxComposedCellTest {
     void anOutlinedChipHoldsItsRowLessBothBorders() throws Exception {
         // Word and LibreOffice draw a cell's top and bottom borders outside the height its row
         // holds: CobaltRota's outlined chips, 9.2pt outlines with a 1.125pt border, stood 10.3pt
-        // tall in Word, and each row holding one 1.1pt taller than the page's.
+        // tall in Word, and each row holding one 1.1pt taller than the page's. A 1.125pt border is
+        // written at nine eighths, and a row counts it 22 twips.
         XWPFTableCell outlined = chipCell(com.demcha.compose.document.style.DocumentStroke.of(
                 com.demcha.compose.document.style.DocumentColor.rgb(20, 160, 70), 1.125));
         XWPFTableCell filled = chipCell(null);
 
-        assertThat(heightOf(outlined.getTableRow().getTable())).as("9.2pt less two 1.125pt borders")
-                .isEqualTo(139);
+        assertThat(heightOf(outlined.getTableRow().getTable())).as("184 twips less two borders of 22")
+                .isEqualTo(140);
         assertThat(heightOf(filled.getTableRow().getTable())).as("a chip with no border keeps its outline's")
                 .isEqualTo(184);
+    }
+
+    @Test
+    void anOutlinedChipHoldsItsRowLessItsBordersAsWordDrawsThem() throws Exception {
+        // A border is written in eighths of a point, and a row counts it two and a half twips an
+        // eighth, rounded down: a 0.7pt outline, written at six eighths, takes 15 twips, and a
+        // 0.9pt one, at seven, 17. Taken off as the page strokes them, 14 and 18, a 20.3pt chip
+        // outlined at 0.7pt stood a twip taller in Word and LibreOffice, and six of them in a
+        // table's rows six twips lower below them.
+        XWPFTableCell thin = aroundTheChip(stroke(0.7), com.demcha.compose.document.node.LayerAlign.CENTER, 8.2, 20.3)
+                .getTables().get(0).getRow(0).getCell(0);
+        XWPFTableCell thick = aroundTheChip(stroke(0.9), com.demcha.compose.document.node.LayerAlign.CENTER, 8.2, 20.3)
+                .getTables().get(0).getRow(0).getCell(0);
+
+        assertThat(heightOf(thin.getTableRow().getTable())).as("406 twips less two borders of 15").isEqualTo(376);
+        assertThat(heightOf(thick.getTableRow().getTable())).as("406 twips less two borders of 17").isEqualTo(372);
+    }
+
+    @Test
+    void anOutlinedChipsLabelHasTheRoomItsBordersLeaveAsWordDrawsThem() throws Exception {
+        // An 11.8pt chip outlined at 0.7pt leaves Lato's line 236 twips less two borders of 15,
+        // 206, short of the 212 that would seat it. Counted at 14 each, the line and the row it is
+        // held at were written 208 and 207, and stood the chip that much taller in Word.
+        XWPFTableCell chip = beside(labelledChip("09:00-16:00", com.demcha.compose.font.FontName.LATO, 8.2, 11.8,
+                DocumentInsets.zero(), stroke(0.7), null));
+
+        assertThat(lineOf(chip)).isEqualTo(206 / 20.0);
+        assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(206);
     }
 
     @Test
@@ -295,16 +324,30 @@ class DocxComposedCellTest {
 
     @Test
     void anOddNumberOfTwipsIsGivenBackHalfRoundedDownAboveAndTheRestBelow() throws Exception {
-        // A 1.05pt outline is written at eight eighths, 20 twips: the chip's row holds 163 less 20,
-        // 143, and its letters keep its label at 172 — 29 twips, 14 above and 15 below.
+        // A 1.05pt outline is written at eight eighths, 20 twips: a 9.195pt chip's row holds 183 less
+        // two of them, 143, and its letters keep its label at 172 — 29 twips, 14 above and 15 below.
         com.demcha.compose.document.style.DocumentStroke outline = com.demcha.compose.document.style.DocumentStroke.of(
                 com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1.05);
-        XWPFTableCell around = aloneInARow(outline, DocumentInsets.of(4));
+        XWPFTableCell around = aloneInARow(outline, DocumentInsets.of(4), 9.195);
         XWPFTableCell chip = around.getTables().get(0).getRow(0).getCell(0);
 
         assertThat(DocxTwips.of(chip.getParagraphs().get(0).getCTP().getPPr().getSpacing().getLine())
                    - heightOf(chip.getTableRow().getTable())).as("the premise: an odd number of twips").isEqualTo(29);
         assertThat(verticalMarginsOf(around)).containsExactly(60L - 14, 60L - 15);
+    }
+
+    @Test
+    void aCellWhoseMarginsHoldJustWhatItsChipGrowsByGivesItAllBack() throws Exception {
+        // The chip of the odd case above, its cell's margins 14 twips above and 15 below — its
+        // padding less the 1pt rule: all Word grows the chip by, given back, the label seated on
+        // the chip's middle. Its borders counted at the 1.05pt the page strokes rather than the 20
+        // twips Word draws, the chip would grow by 30, more than the margins above hold.
+        XWPFTableCell around = aloneInARow(com.demcha.compose.document.style.DocumentStroke.of(
+                        com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1.05),
+                new DocumentInsets(1.7, 4, 1.75, 4), 9.195);
+
+        assertThat(verticalMarginsOf(around)).containsExactly(0L, 0L);
+        assertThat(lineOf(around.getTables().get(0).getRow(0).getCell(0))).isEqualTo(172 / 20.0);
     }
 
     @Test
@@ -540,10 +583,21 @@ class DocxComposedCellTest {
     private static final com.demcha.compose.document.style.DocumentStroke OUTLINE =
             com.demcha.compose.document.style.DocumentStroke.of(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), 1.1);
 
+    /** An outline {@code width} wide. */
+    private static com.demcha.compose.document.style.DocumentStroke stroke(double width) {
+        return com.demcha.compose.document.style.DocumentStroke.of(com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148), width);
+    }
+
     /** The cell of a one-column table a 9.2pt chip is all of. */
     private static XWPFTableCell aloneInARow(com.demcha.compose.document.style.DocumentStroke stroke,
                                              DocumentInsets padding) throws Exception {
-        DocumentNode node = chip(stroke, 9.2);
+        return aloneInARow(stroke, padding, 9.2);
+    }
+
+    /** The cell of a one-column table a chip {@code height} tall is all of. */
+    private static XWPFTableCell aloneInARow(com.demcha.compose.document.style.DocumentStroke stroke,
+                                             DocumentInsets padding, double height) throws Exception {
+        DocumentNode node = chip(stroke, height);
         return onlyTableCell(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(100))
                 .defaultCellStyle(com.demcha.compose.document.table.DocumentTableStyle.builder().padding(padding).build())

@@ -69,12 +69,17 @@ class DocxStandInMoveTest {
     void aStandInTallerThanWhatMovesIntoItKeepsTheRestOfItsHeight() throws Exception {
         Export export = export(false, 30, 10);
         try (XWPFDocument document = export.document()) {
-            XWPFParagraph subtitle = paragraph(cellHolding(document, NAME), "Subtitle");
+            XWPFTableCell strip = cellHolding(document, NAME);
+            XWPFParagraph subtitle = paragraph(strip, "Subtitle");
             double rest = export.node("Subtitle").placementY() - export.node("SubtitlePlace").placementY();
+            // The name rises into the strip's 10pt of padding, and the subtitle, set as low, into
+            // what the name owes above it: the subtitle owes as much below it.
+            double rose = (10 * 20 - DocxTwips.of(strip.getCTTc().getTcPr().getTcMar().getTop().getW())) / 20.0;
 
             assertThat(rest).isGreaterThan(15);
+            assertThat(rose).as("the premise: the name rose").isPositive();
             assertThat(DocxTwips.of(subtitle.getCTP().getPPr().getSpacing().getAfter()) / 20.0)
-                    .isCloseTo(rest, within(0.1));
+                    .isCloseTo(rest + rose, within(0.1));
         }
     }
 

@@ -35,7 +35,9 @@ final class DocxExports {
      * test of the space between blocks of default text reads the space above such a line as that
      * much less, and the space below it as that much more. A table cell's default face is the same
      * text, and a row of such cells is moved up as much through its margins
-     * ({@code DocxCellSeatTest}).
+     * ({@code DocxCellSeatTest}); a panel's or a composed cell's first line rises as much into its
+     * top padding, and a row of columns' out of the space above its table
+     * ({@code DocxFirstLineSeatTest}).
      */
     static final long DEFAULT_LINE_RAISE = 6;
     /** {@link #DEFAULT_LINE_RAISE} for the default face at 7pt, the size tests set small text in. */

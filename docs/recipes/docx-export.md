@@ -900,7 +900,8 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   where the page sets it, from the shape's top where the line is taller than
   its outline, as the page starts it there and draws it past the outline
   below — where Word sets the line on the shape's middle, as it does where the
-  line fits or the cell round the shape gives back all Word grows it by:
+  line fits the height the shape's row holds or the cell round the shape gives
+  back all Word grows it by, and from the middle elsewhere:
   both sides cut alike, as the cell centres the line, no closer to its
   letters where the page sets them than three quarters of a point, so an
   outlined chip is cut as far as its letters allow. Composed in a table cell, the
@@ -920,7 +921,8 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   points, does not move. The line is written shorter, or taller for a face
   the page sets lower, no closer to its letters than three quarters of a
   point and no taller than the room; the shape and its row keep their
-  height. Less than a tenth of a point is not moved. A label
+  height. Less than a tenth of a point is not moved, nor a label in a standard
+  face the export does not embed, whose letters are read through a stand-in. A label
   set from the shape's top or bottom edge, or moved up or down, is written as
   it was. A badge's glyph — a smaller picture in a filled or outlined
   container that clips it to its outline (`CLIP_PATH`) and holds nothing

@@ -5919,7 +5919,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * outline leaves, where the page lets the line pass the outline and its letters fit inside.
      *
      * <p>The page centres the label's line in the shape where it fits, and draws one taller than
-     * the shape's inner box from the box's top, past the outline below it. Word grows the panel's
+     * the outline from the outline's top, past it below. Word grows the panel's
      * row to the line: {@code CobaltRota}'s stacked shift chips, 9.2pt outlines round 8.2pt text
      * on a 10pt line, each came out 0.8pt taller, and an outlined one its borders taller again, as
      * Word keeps a cell's borders outside its content — every staff row with two shifts in a day
@@ -6114,7 +6114,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * ({@link #seatShift}): {@code CobaltRota}'s single-shift chips, 10.4pt Carlito on a 12.7pt
      * line, stood 0.29pt low in their chips in Word and 0.23pt in LibreOffice 24.2, and its
      * legend's 8.2pt labels 0.33pt. The line written that much shorter — or taller, for a face the
-     * page sets higher — stands the text on the page's baseline in all of them, the shape and its
+     * page sets lower than Word does — stands the text on the page's baseline in all of them, the shape and its
      * row their height. A position counts in half points and is not written under one
      * ({@link #LEAST_BASELINE_SHIFT_POINTS}). The cell's margins, moved out of the height its row
      * holds, keep the row its height in Word, but LibreOffice 24.2 counts them inside that height:

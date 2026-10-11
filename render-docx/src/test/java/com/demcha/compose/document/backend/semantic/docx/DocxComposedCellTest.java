@@ -359,71 +359,84 @@ class DocxComposedCellTest {
     }
 
     @Test
-    void aLabelItsChipHoldsWholeIsRaisedToThePagesBaselineByTheMarginUnderIt() throws Exception {
-        // CobaltRota's single-shift chips: Carlito's 10.4pt line is 12.7pt. Word stands its
-        // baseline four fifths down it, 10.16pt; the page its 2.79pt descent above its foot, 9.9pt:
-        // 0.26pt low, too little for a position. The row holds 10 twips less and the margin under
-        // the line 10 more: the cell centres the line 5 twips higher, and the chip keeps its 17.5pt.
+    void aLabelItsChipHoldsWholeIsWrittenAtTheHeightThatSeatsItsText() throws Exception {
+        // CobaltRota's single-shift chips: Carlito's 10.4pt line is 12.7pt, and the page sets the
+        // text its 2.79pt descent above the foot, 3.55pt below the middle both centre the line on.
+        // Word and LibreOffice stand it four fifths down the line, three tenths of it below that
+        // middle — 0.26pt low on 12.7pt. Written 11.85pt, the text stands where the page sets it.
+        // The chip and its row keep their height, and no position is written.
         XWPFTableCell chip = labelled(com.demcha.compose.font.FontName.CARLITO, 10.4, 17.5);
 
-        assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(350 - 10);
-        assertThat(verticalMarginsOf(chip)).containsExactly(0L, 10L);
+        assertThat(lineOf(chip)).isEqualTo(237 / 20.0);
+        assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(350);
+        assertThat(verticalMarginsOf(chip)).containsExactly(0L, 0L);
         assertThat(positionOf(chip)).isZero();
     }
 
     @Test
-    void aLabelWordSetsHighIsLoweredByTheMarginAboveIt() throws Exception {
-        // Lato's 8.2pt line, 9.84pt and written at 197 twips, the page sets 8.09pt down it, its
-        // baseline 1.75pt above its foot; Word four fifths down, 7.88pt: 0.21pt high, 4 twips.
+    void aLabelThePageSetsLowerIsWrittenOnATallerLine() throws Exception {
+        // Lato's 8.2pt line is 9.84pt and its baseline 1.75pt above the foot: 3.17pt below the
+        // middle, which three tenths of a 10.6pt line reach.
         XWPFTableCell chip = labelled(com.demcha.compose.font.FontName.LATO, 8.2, 14);
 
-        assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(280 - 8);
-        assertThat(verticalMarginsOf(chip)).containsExactly(8L, 0L);
+        assertThat(lineOf(chip)).isEqualTo(212 / 20.0);
+        assertThat(heightOf(chip.getTableRow().getTable())).as("the chip's row is not grown").isEqualTo(280);
+        assertThat(positionOf(chip)).isZero();
     }
 
     @Test
-    void aLabelIsMovedNoFurtherThanTheHeightItsRowHoldsLeavesItsLine() throws Exception {
-        // A 13pt chip holds 260 twips round the 254 twip line: 3 a side, not the 5 it is low by.
-        XWPFTableCell chip = labelled(com.demcha.compose.font.FontName.CARLITO, 10.4, 13);
+    void aLabelsLineIsNoTallerThanTheRoomItsChipLeaves() throws Exception {
+        // A 10.3pt chip leaves Lato's line 206 twips, short of the 212 that would seat it.
+        XWPFTableCell chip = labelled(com.demcha.compose.font.FontName.LATO, 8.2, 10.3);
 
-        assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(254);
-        assertThat(verticalMarginsOf(chip)).containsExactly(0L, 6L);
+        assertThat(lineOf(chip)).isEqualTo(206 / 20.0);
+        assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(206);
     }
 
     @Test
     void aLabelThatCouldMoveLessThanATenthOfAPointIsLeftWhereItIs() throws Exception {
-        // A 12.85pt chip holds 257 twips round the 254 twip line: a twip a side, which moves a
-        // line a step of Word's 0.12pt grid or nothing.
-        XWPFTableCell chip = labelled(com.demcha.compose.font.FontName.CARLITO, 10.4, 12.85);
+        // A 10pt chip leaves Lato's 9.84pt line 10pt: its text would move 0.05pt, a step of Word's
+        // 0.12pt grid or nothing.
+        XWPFTableCell chip = labelled(com.demcha.compose.font.FontName.LATO, 8.2, 10);
 
-        assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(257);
-        assertThat(verticalMarginsOf(chip)).containsExactly(0L, 0L);
+        assertThat(lineOf(chip)).isEqualTo(197 / 20.0);
     }
 
     @Test
-    void aLabelItsPositionMovesIsNotMovedByTheMarginsToo() throws Exception {
-        // Spectral's deep descent stands Word's baseline nearly 2pt below the page's in its
-        // 18.25pt line: its text is raised two points, and the margins move it no further.
+    void aLabelsLettersKeepItsLineTallEnoughToHoldThem() throws Exception {
+        // Its descenders reach 1.8pt below a baseline 3.55pt below the middle: three quarters of a
+        // point past them, the line is no shorter than 12.2pt, not the 11.85pt that seats it.
+        XWPFTableCell chip = beside(labelledChip("gjpqy", com.demcha.compose.font.FontName.CARLITO, 10.4, 17.5,
+                DocumentInsets.zero(), null, null));
+
+        assertThat(lineOf(chip)).isEqualTo(244 / 20.0);
+    }
+
+    @Test
+    void aDeepFacesLabelIsSeatedByItsLineNotAPosition() throws Exception {
+        // Spectral's descent stands Word's baseline nearly 2pt below the page's on its 18.25pt
+        // line; written 11.9pt, the line seats it, and LibreOffice does not move a raised text
+        // further than it is raised.
         XWPFTableCell chip = labelled(com.demcha.compose.font.FontName.SPECTRAL, 12, 24);
 
-        assertThat(positionOf(chip)).isEqualTo(4);
+        assertThat(lineOf(chip)).isEqualTo(238 / 20.0);
+        assertThat(positionOf(chip)).isZero();
         assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(480);
-        assertThat(verticalMarginsOf(chip)).containsExactly(0L, 0L);
     }
 
     @Test
-    void aPaddedChipsLabelIsMovedByMarginsOverWhatItsPaddingHolds() throws Exception {
-        // Its 2pt padding is written 40 twips above and below; the line, 5 twips low, is raised
-        // by the margin under it 10 more and the row 10 less: 350 less the 80 of padding, less 10.
+    void aPaddedChipsLabelIsSeatedInsideItsPadding() throws Exception {
+        // Its 2pt padding is written 40 twips above and below, as before; the line is seated.
         XWPFTableCell chip = beside(labelledChip("09:00-16:00", com.demcha.compose.font.FontName.CARLITO, 10.4, 17.5,
                 DocumentInsets.of(2), null, null));
 
-        assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(350 - 80 - 10);
-        assertThat(verticalMarginsOf(chip)).containsExactly(40L, 50L);
+        assertThat(lineOf(chip)).isEqualTo(237 / 20.0);
+        assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(350 - 80);
+        assertThat(verticalMarginsOf(chip)).containsExactly(40L, 40L);
     }
 
     @Test
-    void aLabelTallerThanTheHeightItsRowHoldsIsNotMovedByTheMargins() throws Exception {
+    void aLabelTallerThanTheRoomWhoseLettersLeaveNothingToCutIsWrittenWhole() throws Exception {
         // A 10pt outlined chip holds 156 twips, its 1.1pt borders off; the accent above the "É" and
         // the descenders below leave its 9.84pt line nothing to cut, and Word grows the chip to it.
         XWPFTableCell chip = beside(labelledChip("Égj", com.demcha.compose.font.FontName.LATO, 8.2, 10,
@@ -448,15 +461,38 @@ class DocxComposedCellTest {
     }
 
     @Test
-    void aLabelThePageSeatsOffItsBaselineIsMovedByThatToo() throws Exception {
-        // Seated by its cap band, the page sets the text a quarter point higher than its baseline,
-        // too little for a position: with Word's 0.26pt low, half a point — 10 twips.
+    void aLabelThePageSeatsOffItsBaselineIsSeatedThereToo() throws Exception {
+        // Seated by its cap band, the page sets the text about a quarter point higher than its
+        // baseline: 3.33pt below the middle, and the line 11.1pt.
         XWPFTableCell chip = beside(labelledChip("09:00-16:00", com.demcha.compose.font.FontName.CARLITO, 10.4, 17.5,
                 DocumentInsets.zero(), null, com.demcha.compose.document.node.TextVerticalAlign.CENTER));
 
+        assertThat(lineOf(chip)).isEqualTo(222 / 20.0);
         assertThat(positionOf(chip)).isZero();
-        assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(350 - 20);
-        assertThat(verticalMarginsOf(chip)).containsExactly(0L, 20L);
+    }
+
+    @Test
+    void aLabelThePageSeatsByItsCapsIsHeldByItsLettersAndRaisedTheRest() throws Exception {
+        // Seated at its line's top, the page raises the text about 3.2pt, nearly to the middle.
+        // Its capitals, raised with it, keep the line 14.9pt tall — measured from the line's own
+        // baseline, which the letters' reach is read from — and the 4pt it still calls for is
+        // its position.
+        XWPFTableCell chip = beside(labelledChip("09:00-16:00", com.demcha.compose.font.FontName.CARLITO, 10.4, 17.5,
+                DocumentInsets.zero(), null, com.demcha.compose.document.node.TextVerticalAlign.TOP));
+
+        assertThat(lineOf(chip)).isEqualTo(298 / 20.0);
+        assertThat(positionOf(chip)).isEqualTo(8);
+    }
+
+    @Test
+    void aLabelInAStandardFaceTheExportDoesNotEmbedIsNotSeatedByItsLine() throws Exception {
+        // Helvetica's letters are read through a stand-in, in another font's units, twice as tall:
+        // seated by them, a 10pt label's line came out 26pt. It keeps the page's 9.25pt.
+        XWPFTableCell chip = beside(labelledChip("Shift 09:00", com.demcha.compose.font.FontName.HELVETICA, 10, 40,
+                DocumentInsets.zero(), null, null));
+
+        assertThat(lineOf(chip)).isEqualTo(185 / 20.0);
+        assertThat(positionOf(chip)).isZero();
     }
 
     /** The cell of a filled chip of a height, centring one line in a face and size. */

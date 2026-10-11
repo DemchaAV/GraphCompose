@@ -912,13 +912,15 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   cell all its row holds — as a rota's shift chips are, one to a slot — so
   that row keeps the page's height too. Beside another cell it would not:
   both editors give every cell of a row the row's largest margins. A label
-  the shape holds whole is moved towards the page's baseline by the margins
-  of the shape's cell, out of the height its row holds and as far as that
-  leaves the line room, so the shape keeps its height: Word stands an exact
-  line's baseline four fifths of the way down it and the page its face's
-  descent above its foot, a quarter of a point apart in Carlito, which a
-  position — counted in half points — does not move. Not a label whose text
-  a position already moves, nor by less than a tenth of a point. A label
+  the shape holds whole is written at the height that stands its text on the
+  page's baseline: Word and LibreOffice stand an exact line's baseline four
+  fifths of the way down it and the cell centres the line, and the page sets
+  the text its face's descent above the foot of a line it centres there — a
+  quarter of a point apart in Carlito, which a position, counted in half
+  points, does not move. The line is written shorter, or taller for a face
+  the page sets lower, no closer to its letters than three quarters of a
+  point and no taller than the room; the shape and its row keep their
+  height. Less than a tenth of a point is not moved. A label
   set from the shape's top or bottom edge, or moved up or down, is written as
   it was. A badge's glyph — a smaller picture in a filled or outlined
   container that clips it to its outline (`CLIP_PATH`) and holds nothing

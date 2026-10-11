@@ -18,24 +18,29 @@ follow semantic versioning; release dates are ISO 8601.
     chip's row holds, or the cell round the chip gives back all Word grows it by. Beside another
     cell, or where the letters could not stand that low in the line, it is read from the middle
     as before.
-  - **A label its chip holds whole is moved towards the page's baseline by the margins of the
-    chip's cell, as far as the height its row holds leaves the line room.** Word stands an exact line's baseline four fifths of the way down it and the page its
-    face's descent above its foot; a position counts in half points, and the label has no space
-    above it to rise into: `CobaltRota`'s single-shift chips' labels stood 0.29pt low in Word,
-    its legend's 0.33pt. The chip's row holds twice the distance less and the margin on the side
-    the line moves away from that much more, so the cell centres the line that far over and the
-    chip keeps its height. The page's own seat of the text off its baseline is moved with it; a
-    label whose text a position already moves, or one under a tenth of a point off, is not.
+  - **A label its chip holds whole is written at the height that seats its text.** Word and
+    LibreOffice stand an exact line's baseline four fifths of the way down it, and the cell centres
+    the line in the chip, so the text stands three tenths of the line below the chip's middle; the
+    page sets it its face's descent above the foot of a line it centres there. `CobaltRota`'s
+    single-shift chips' labels, 10.4pt Carlito on a 12.7pt line, stood 0.29pt low in Word and
+    0.23pt in LibreOffice, its legend's 0.33pt. The line is written that much shorter — 11.85pt —
+    or, for a face the page sets lower, taller, as far as the letters and the chip's room allow;
+    the chip and its row keep their height. A position counts in half points and is not written
+    under one, and the chip cell's margins, moved out of the height its row holds, shorten the
+    row in LibreOffice 24.2, which counts them inside that height.
 
   In their chips, `CobaltRota`'s single, legend and filled pair's labels now stand within a tenth
-  of a point of the page's in Word and LibreOffice on Windows. The outlined pair's, lowered by a
-  position of a whole point where they call for 0.82pt, moved from 0.43pt high to 0.3pt low in
-  Word, and from 0.42pt high to 0.52pt low in LibreOffice, which moves text further than its
-  position says. Its median moves from 0.38pt to 0.20pt in Word and from 0.31pt to 0.09pt in
-  LibreOffice on Windows, its p90 from 0.46pt to 0.38pt and from 0.39pt to 0.30pt: 89 of its lines
-  nearer in Word and 5 further, by up to 0.14pt, 99 nearer in LibreOffice and 7 further, by up to
-  0.15pt — the outlined pair's. No other document of the fidelity corpus moves. What is left in
-  Word is where the chips stand in their rows, 0.15pt low.
+  of a point of the page's in Word, LibreOffice on Windows and LibreOffice 24.2. The outlined
+  pair's, lowered by a position of a whole point where they call for 0.82pt, moved from 0.43pt
+  high to 0.3pt low in Word, and from 0.42pt high to 0.52pt low in LibreOffice on Windows, which
+  moves text further than its position says. Its median moves from 0.38pt to 0.17pt in Word and
+  from 0.31pt to 0.08pt in LibreOffice on Windows, its p90 from 0.46pt to 0.38pt and from 0.39pt
+  to 0.30pt: 87 of its lines nearer in Word and 5 further, by up to 0.14pt, 97 nearer in
+  LibreOffice and 7 further, by up to 0.15pt — the outlined pair's. In LibreOffice 24.2 its p90
+  moves from 0.90pt to 0.52pt and its median from 0.17pt to 0.22pt: the single-shift labels, now
+  seated in their chips, stand 0.3pt high with them there, as LibreOffice 24.2 sets the chips
+  0.25pt higher than the page and Word 0.15pt lower. No other document of the fidelity corpus
+  moves.
 
 - **A DOCX export counts a table's rules as Word and LibreOffice do, and holds a cell's margins and
   a chip composed in it to the twip the page gives them.**

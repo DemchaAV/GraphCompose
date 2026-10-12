@@ -457,7 +457,8 @@ final class DocxLayoutMetrics {
                                && previous.pageIndex() == fragment.pageIndex()
                                && Math.abs(previous.y() - fragment.y()) < 0.01
                                && Math.abs(previous.height() - fragment.height()) < 0.01;
-            ItemText text = new ItemText(paragraph.lines(), fragment.x() + paragraph.padding().left());
+            ItemText text = new ItemText(paragraph.lines(), fragment.x() + paragraph.padding().left(),
+                    fragment.pageIndex());
             if (!sameItem) {
                 items.add(text);
             } else if (text.x() >= items.get(items.size() - 1).x()) {
@@ -473,8 +474,9 @@ final class DocxLayoutMetrics {
      *
      * @param lines its lines
      * @param x     where its text starts across the page, in points
+     * @param page  the page it was set on
      */
-    record ItemText(List<ParagraphLine> lines, double x) {
+    record ItemText(List<ParagraphLine> lines, double x, int page) {
     }
 
     /**

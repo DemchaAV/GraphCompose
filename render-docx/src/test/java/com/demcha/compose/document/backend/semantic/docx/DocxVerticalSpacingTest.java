@@ -510,16 +510,18 @@ class DocxVerticalSpacingTest {
                         .items("First", "Second", "Third"))
                 .addParagraph(p -> p.text("After")));
 
+        // Each item's line rises into the space above it as a paragraph's does, and owes as much
+        // to the line under it, which rises into it in turn.
         assertThat(before(paragraphs.get(1)))
                 .as("the list's top edge, above its first item, and no item gap yet")
-                .isEqualTo(Math.round(4 * TWIPS_PER_POINT));
+                .isEqualTo(Math.round(4 * TWIPS_PER_POINT) - RAISE);
         assertThat(before(paragraphs.get(2)))
                 .as("the gap between two items")
                 .isEqualTo(Math.round(3 * TWIPS_PER_POINT));
         assertThat(before(paragraphs.get(3))).isEqualTo(Math.round(3 * TWIPS_PER_POINT));
         assertThat(before(paragraphs.get(4)))
                 .as("the list's bottom edge, on the paragraph after it")
-                .isEqualTo(Math.round(10 * TWIPS_PER_POINT) - RAISE);
+                .isEqualTo(Math.round(10 * TWIPS_PER_POINT));
     }
 
     @Test

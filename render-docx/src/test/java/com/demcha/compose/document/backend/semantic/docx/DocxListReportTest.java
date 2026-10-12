@@ -63,13 +63,20 @@ class DocxListReportTest {
                 .addList(list -> list.name("Highlights").lineSpacing(4).textStyle(DocumentTextStyle.DEFAULT.withSize(10))
                         .items(TWO_LINES, "Short"))))
                 .isEqualTo("written as a Word list; its lineSpacing is not written between a wrapped item's lines");
-        // Composed in a table cell, it has no lines of its own to match or to read, nor a column.
+        // Composed in a table cell, it is matched to the lines its table laid out for it, and its
+        // wrapped item is given the gap; it has no placement of its own to measure a column by.
         assertThat(listNote(page -> page.addTable(table -> table.name("Facts")
                 .columns(DocumentTableColumn.fixed(160))
                 .rowCells(DocumentTableCell.node(new ListBuilder().name("Highlights").lineSpacing(4)
                         .items(LONG).build())))))
-                .isEqualTo("written as a Word list; its lineSpacing is not written between a wrapped item's lines"
-                           + " — whether an item wraps is not measured; 1 of its 1 items" + STATED);
+                .isEqualTo("written as a Word list; 1 of its 1 items" + STATED);
+        // One holding an item of runs is matched to none of them.
+        assertThat(listNote(page -> page.addTable(table -> table.name("Facts")
+                .columns(DocumentTableColumn.fixed(160))
+                .rowCells(DocumentTableCell.node(new ListBuilder().name("Highlights").lineSpacing(4).hangingIndent(true)
+                        .items(LONG).addItem(text -> text.plain("Rich")).build())))))
+                .startsWith("written as a paragraph per item; its lineSpacing is not written between a wrapped item's"
+                            + " lines — whether an item wraps is not measured");
 
         // On one page, every item's own lines are given the gap.
         assertThat(listNotes(page -> page.addList(list -> list.name("Highlights").lineSpacing(4)

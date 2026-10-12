@@ -150,19 +150,24 @@ class DocxListItemSeatTest {
     }
 
     @Test
-    void anItemOfAListInATablesComposedCellIsLeftAsWordSetsIt() throws Exception {
-        // A list in a table's composed cell lays out no lines of its own: its items are matched to
-        // none, and are written at no exact height of the page's to seat them in.
+    void anItemOfAListInATablesComposedCellRisesIntoTheGapAboveItAsAParagraphThereDoes() throws Exception {
+        // A list in a table's composed cell is seated on the lines its table laid out for it. Word
+        // keeps the row whole on its page, so the second item rises into the gap above it and owes
+        // as much below; the first, under no space of its own, is moved by its position.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(200))
-                .rowCells(DocumentTableCell.node(new ListBuilder().noMarker().textStyle(spectral(30))
-                        .items("Inside").build()))))) {
-            XWPFParagraph inside = inACell(document, "Inside");
-            CTSpacing spacing = spacing(inside);
+                .rowCells(DocumentTableCell.node(new ListBuilder().noMarker().textStyle(spectral(30)).itemSpacing(10)
+                        .items("One", "Two").build()))))) {
+            XWPFParagraph one = inACell(document, "One");
+            XWPFParagraph two = inACell(document, "Two");
+            double raise = 0.8 * line(two) - SPECTRAL_ASCENT * 30;
 
-            assertThat(spacing == null || !spacing.isSetLineRule()).as("the premise: no line the page measured").isTrue();
-            assertThat(position(inside)).isZero();
-            assertThat(before(inside)).isZero();
+            assertThat(line(one)).as("the premise: the page's line").isCloseTo(SPECTRAL_LINE * 30, within(0.05));
+            assertThat(raise).as("the premise: Word's baseline is the lower, by less than the gap").isBetween(1.0, 10.0);
+            assertThat(before(two)).isCloseTo(Math.round((10 - raise) * 20), within(1L));
+            assertThat(after(two)).as("what it owes, under the cell's last item").isCloseTo(Math.round(raise * 20), within(1L));
+            assertThat(position(two)).isZero();
+            assertThat(position(one)).isEqualTo(Math.round(raise * 2));
         }
     }
 

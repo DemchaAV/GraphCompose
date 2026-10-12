@@ -40,6 +40,12 @@ class DocxBaselineSeatTest {
     private static final double POPPINS_ASCENT = 1.05;
     /** Gothic A1's ascent, in ems: 798 of 1000 units, its own line one em. */
     private static final double GOTHIC_A1_ASCENT = 0.798;
+    /**
+     * The line above the one a test seats: Gothic A1, which Word seats where the page does to a few
+     * hundredths of a point, so it takes nothing of the space under it to be lowered by
+     * ({@link DocxParagraphLowerTest}).
+     */
+    private static final DocumentTextStyle LEAD = DocumentTextStyle.builder().fontName(FontName.GOTHIC_A1).size(10).build();
 
     private static DocumentTextStyle spectral(double size) {
         return DocumentTextStyle.builder().fontName(FontName.SPECTRAL).size(size).build();
@@ -147,7 +153,7 @@ class DocxBaselineSeatTest {
         // it in half points, and LibreOffice that half again; Lato under it, which Word sets high
         // and so is never moved down, stands where the page does all the same.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addParagraph(p -> p.text("Title").textStyle(spectral(30)).margin(DocumentInsets.top(20)))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10))))) {
             XWPFParagraph title = paragraph(document, "Title");
@@ -166,7 +172,7 @@ class DocxBaselineSeatTest {
     @Test
     void whatTheSpaceAboveCannotGiveIsLeftToThePosition() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addParagraph(p -> p.text("Title").textStyle(spectral(30)).margin(DocumentInsets.top(2)))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10))))) {
             XWPFParagraph title = paragraph(document, "Title");
@@ -183,7 +189,7 @@ class DocxBaselineSeatTest {
         // Poppins at 10pt stands 0.7pt low in Word: under 0.4pt of space the line takes the 0.4pt,
         // and the 0.3pt left is still moved by its position, a half point, not left 0.3pt low.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addParagraph(p -> p.text("Low").textStyle(DocumentTextStyle.builder().fontName(FontName.POPPINS)
                         .size(10).build()).margin(DocumentInsets.top(0.4))))) {
             XWPFParagraph low = paragraph(document, "Low");
@@ -221,7 +227,7 @@ class DocxBaselineSeatTest {
         // Gothic A1's page seat is within a few hundredths of Word's four fifths: Word sets lines
         // on a grid 0.12pt apart, and a twip less of space would move the line a step or nothing.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addParagraph(p -> p.text("Even").textStyle(DocumentTextStyle.builder().fontName(FontName.GOTHIC_A1)
                         .size(14).build()).margin(DocumentInsets.top(10))))) {
             XWPFParagraph even = paragraph(document, "Even");
@@ -236,10 +242,11 @@ class DocxBaselineSeatTest {
     @Test
     void aLineWordSetsHighKeepsTheSpaceAboveIt() throws Exception {
         // Lato's ascent is 0.82 of its line: at 24pt Word's baseline stands 0.65pt above the
-        // page's. Moved down into the space above, the line would take that from the space
-        // below it, not known yet; it is lowered by its position, the space as written.
+        // page's. Half a point and more is its position's, as for a line set that much low: it
+        // is lowered by its position, the space as written. Under half a point the space below
+        // it gives it ({@link DocxParagraphLowerTest}).
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addParagraph(p -> p.text("Heading").textStyle(lato(24)).margin(DocumentInsets.top(10))))) {
             XWPFParagraph heading = paragraph(document, "Heading");
             double raise = 0.8 * line(heading) - LATO_ASCENT * 24;
@@ -301,7 +308,7 @@ class DocxBaselineSeatTest {
         // A column's last paragraph raised into the space above it owes that space below it, in
         // its cell: the cell is as tall as before, and nothing below the row moves.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addRow(row -> row
                         .addParagraph(p -> p.text("Left").textStyle(spectral(30)).margin(DocumentInsets.top(20)))
                         .addParagraph(p -> p.text("Right").textStyle(lato(10))))

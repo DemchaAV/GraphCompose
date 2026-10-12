@@ -495,13 +495,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private XWPFParagraph pullLeftOn;
 
     /**
-     * The line of the paragraph written last, set high and to be lowered by as much as the space
-     * between it and what follows gives back ({@link #offerToLower}); {@code null} when there is none.
+     * A paragraph's line set high, to be lowered by as much as the space between it and what
+     * follows gives back once what follows has taken its own of it ({@link #offerToLower}); {@code
+     * null} when there is none.
      */
     private LineToLower lineToLower;
 
-    /** The paragraph whose own top edge gives what the space owed above it did not of {@link #lineToLower}. */
-    private XWPFParagraph lowerLeftOn;
+    /**
+     * The paragraph written under {@link #lineToLower} whose space above gives its lowering, what
+     * that paragraph takes of it first; {@code null} until one is written.
+     */
+    private XWPFParagraph lowerFrom;
+
+    /**
+     * Whether the space written below {@link #lineToLower}'s own paragraph gives its lowering —
+     * a table or a cell's end follows it — once what follows has taken its own of it.
+     */
+    private boolean lowerFromBelow;
 
     /**
      * A paragraph's line Word sets high, waiting for the block under it.
@@ -5164,24 +5174,29 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * whose ascent is less than that the line stands high: 772 of the corpus's lines stood 0.15 to
      * 0.6pt above the page's in both editors.</p>
      *
-     * <p>Moved down, the line takes its room out of the space below it, which is written with the
-     * block under it: the space owed above that block, then that block's own top edge
-     * ({@link #newBodyParagraph}, {@link #applyVerticalSpacing}), or the space written below the
-     * paragraph itself where a table or a cell's end follows ({@link #flushSpacingAfter}). What
-     * none of them gives, the line is not lowered by: a block on a later page, whose space above
-     * Word drops at the page's top, a block in another cell or overlay, a page or a section ending,
-     * a hang let go ({@link #forgetTheHang}). So nothing under it ever stands lower for it.</p>
+     * <p>Moved down, the line takes its room out of the space below it, once the block under it
+     * has taken its own of that space — the gap between its lines ({@link #applyLineGap}), its
+     * own raise ({@link #raiseIntoTheSpaceAbove}), the room its pictures reach into
+     * ({@link #holdPicturesInTheLine}), a row's lift out of the space above its table
+     * ({@link #raiseRows}): what is left of the space above that block ({@link #lowerFrom}), or of
+     * the space written below the paragraph itself where a table or a cell's end follows
+     * ({@link #lowerFromBelow}), is given when that block is written, at the next block, or at the
+     * line's next seat ({@link #settleTheLineAbove}). What none of them gives, the line is not
+     * lowered by: a block on a later page, whose space above Word drops at the page's top, a block
+     * in another overlay, a page break or a page the next block opens, a hang let go before a
+     * block is written ({@link #forgetTheHang}). So nothing under it ever stands lower for it.</p>
      *
      * <p>Only where a raise could move a line: a paragraph's line of its own, not one cut to fit, on
      * one page, not opening a panel, in the flow, a cell or a stack of one layer — as an item of a
      * Word list is lowered ({@link #lowerIntoTheSpaceAbove}). A list's items are lowered by their
-     * own list.</p>
+     * own list; their seat settles a line above them all the same.</p>
      *
      * @param lower how much higher than the page Word sets the line, in points
      */
     private void offerToLower(XWPFParagraph para, boolean staysOnItsPage, double lower) {
-        lineToLower = null;
-        lowerLeftOn = null;
+        // The line above, if this paragraph is what gives its lowering, takes what of its space
+        // above this one's own raise has left.
+        settleTheLineAbove();
         // A panel's top border is taken inside its first line's space above (takeTheTopBorderInside).
         if (!(lower >= LEAST_RAISE_INTO_THE_SPACE_ABOVE) || !(writing instanceof ParagraphNode)
             || overlayDepth > oneLayerDepth || !staysOnItsPage || opensThePanel(para)) {
@@ -5191,27 +5206,47 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Lowers the line waiting for the block under it ({@link #lineToLower}) by up to {@code room}
-     * points of the space between them, growing the space above it by as much.
-     *
-     * @return what of {@code room} is left
+     * Lowers the line waiting for the space below it ({@link #lineToLower}) by what of that space
+     * is left — above the paragraph written under it ({@link #lowerFrom}), or below its own
+     * ({@link #lowerFromBelow}) — growing the space above the line by as much; with neither, it
+     * is not lowered. The wait ends either way. Given from below a cell's last paragraph, it is
+     * recorded, to be taken back where the section's end leaves that space out
+     * ({@link #dropTheSpaceBelow}).
      */
-    private double lowerTheLineAboveInto(double room) {
+    private void settleTheLineAbove() {
         LineToLower line = lineToLower;
-        if (line == null || !(room > 0)) {
-            return room;
+        XWPFParagraph from = lowerFromBelow && line != null ? line.paragraph() : lowerFrom;
+        boolean below = lowerFromBelow;
+        lineToLower = null;
+        lowerFrom = null;
+        lowerFromBelow = false;
+        if (line == null || from == null) {
+            return;
         }
-        long given = Math.min(line.twips(), Math.round(room * POINT_TO_TWIP));
+        CTSpacing source = spacingOf(from);
+        long room = twipsOf(below ? (source.isSetAfter() ? source.getAfter() : null)
+                : (source.isSetBefore() ? source.getBefore() : null));
+        long given = Math.min(line.twips(), Math.max(0, room));
         if (given <= 0) {
-            return room;
+            return;
         }
-        CTPPr properties = line.paragraph().getCTP().getPPr();
-        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        if (below) {
+            source.setAfter(BigInteger.valueOf(room - given));
+        } else {
+            source.setBefore(BigInteger.valueOf(room - given));
+        }
+        CTSpacing spacing = spacingOf(line.paragraph());
         spacing.setBefore(BigInteger.valueOf(twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null) + given));
-        lineToLower = given < line.twips()
-                ? new LineToLower(line.paragraph(), line.twips() - given, line.depth(), line.page())
-                : null;
-        return Math.max(0, room - given / POINT_TO_TWIP);
+        if (below && currentCell != null) {
+            givenByTheSpaceBelow.computeIfAbsent(line.paragraph().getCTP(), key -> new ArrayList<>())
+                    .add(new GivenBack(new java.util.ArrayDeque<>(List.of(new GrownSpace(spacing, given))), given));
+        }
+    }
+
+    /** A paragraph's spacing, added where it has none. */
+    private static CTSpacing spacingOf(XWPFParagraph paragraph) {
+        CTPPr properties = paragraph.getCTP().isSetPPr() ? paragraph.getCTP().getPPr() : paragraph.getCTP().addNewPPr();
+        return properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
     }
 
     /**
@@ -7160,6 +7195,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             para = currentCell != null ? currentCell.addParagraph() : document.createParagraph();
         }
         blocksWritten++;
+        // A line set high waits for what is written under it (offerToLower): the block written
+        // before this one is done, and gives it what of its space above is left; this one gives a
+        // line set high just above it, in its overlay and on its page, whose top Word sets a later
+        // page's first block at.
+        if (lowerFrom != null || lowerFromBelow) {
+            settleTheLineAbove();
+        }
+        if (lineToLower != null) {
+            int page = startPageOf(writing);
+            if (lineToLower.depth() == overlayDepth
+                && !(page >= 0 && lineToLower.page() >= 0 && page > lineToLower.page())) {
+                lowerFrom = para;
+            } else {
+                lineToLower = null;
+            }
+        }
         applyInset(para);
         // Everything owed above this paragraph — the space the one before it holds below
         // itself, and any container edge — is written here, on one side of the gap.
@@ -7186,20 +7237,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         hangingBelow = 0;
         double taken = Math.min(Math.max(0, above), overhang);
         above -= taken;
-        // The paragraph above, set high, is lowered by what of the space left above this one it
-        // takes, and of this one's own top edge after that (offerToLower): in its overlay, and on
-        // its page, whose top Word sets a later page's first block at. A cell starts clear of the
-        // line above its table (writeInCell). A block between the two that took nothing of its own
-        // top edge — a spacer — ends the wait.
-        LineToLower line = lowerLeftOn == null ? lineToLower : null;
-        lineToLower = null;
-        lowerLeftOn = null;
-        int page = startPageOf(writing);
-        if (line != null && line.depth() == overlayDepth && !(page >= 0 && line.page() >= 0 && page > line.page())) {
-            lineToLower = line;
-            above = lowerTheLineAboveInto(above);
-            lowerLeftOn = lineToLower != null ? para : null;
-        }
         // So does what of a card's border below the owed space could not take: Word draws it past
         // the card's box, where the page strokes it on the box's edge (outsideTheRow). What its
         // own top edge cannot give back of either stands it lower, and is named (nameTheTailNotTaken).
@@ -7269,10 +7306,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         carriedSpacingBefore = 0;
         pullBelow = 0;
         // Nothing under the section's last list gives back what its items were lowered by, and
-        // its last page would run that much longer; nor is its last line set high lowered.
+        // its last page would run that much longer; nor is its last line set high lowered, unless
+        // a block written under it gives it (settleTheLineAbove).
         letTheLoweringGo(loweringHung, 0);
-        lineToLower = null;
-        lowerLeftOn = null;
+        settleTheLineAbove();
         List<IBodyElement> body = document.getBodyElements();
         if (!body.isEmpty() && body.get(body.size() - 1) instanceof XWPFTable table) {
             dropTheSpaceBelow(table);
@@ -7870,25 +7907,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // A pull out of the paragraph above comes out of what it owes below, as the page sums them.
         double owed = pendingSpacingAfter - pullBelow;
         if (owed > 0 && lastBodyParagraph != null) {
-            // Written below the paragraph whose line is set high, the space under it lowers that
-            // line by what it gives (offerToLower). Where it is a cell's last, and the section's end
-            // leaves that space out, the line is taken back with it (dropTheSpaceBelow).
-            LineToLower line = lineToLower;
-            if (line != null && line.paragraph() == lastBodyParagraph) {
-                double left = lowerTheLineAboveInto(owed);
-                long given = Math.round((owed - left) * POINT_TO_TWIP);
-                if (given > 0 && currentCell != null) {
-                    CTSpacing spacing = lastBodyParagraph.getCTP().getPPr().getSpacing();
-                    givenByTheSpaceBelow.computeIfAbsent(lastBodyParagraph.getCTP(), key -> new ArrayList<>())
-                            .add(new GivenBack(new java.util.ArrayDeque<>(List.of(new GrownSpace(spacing, given))), given));
-                }
-                owed = left;
-            }
             addSpacing(lastBodyParagraph, 0, owed);
         }
-        // Nothing past the space just written gives a line set high anything back.
-        lineToLower = null;
-        lowerLeftOn = null;
+        // Written below the paragraph whose line is set high, with nothing under it yet, that
+        // space gives its lowering, once what follows — a table's row lifted out of it — has
+        // taken its own (offerToLower).
+        if (lineToLower != null && lowerFrom == null && lineToLower.paragraph() == lastBodyParagraph) {
+            lowerFromBelow = true;
+        }
         pendingSpacingAfter = 0;
         pullBelow = 0;
     }
@@ -9799,13 +9825,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         pullLeftOn = null;
         pullLeft = 0;
-        // What the space owed above it did not give the line above it set high, its own top edge
-        // gives, and the line is not lowered by the rest (offerToLower).
-        if (target == lowerLeftOn) {
-            before = before > 0 ? lowerTheLineAboveInto(before) : before;
-            lineToLower = null;
-            lowerLeftOn = null;
-        }
         addSpacing(target, before, 0);
         double below = source.margin().bottom() + source.padding().bottom();
         // OrangeOps' role bar is pulled 3.8pt up into its name's line; dropped, the pull set
@@ -12013,6 +12032,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // What a block on that page never took is named there.
         nameAHangLeftOver();
         resumeHere();
+        // A line set high at the page's foot is lowered by what a block written under it there
+        // gives, and with none, not into the space left at that foot (offerToLower).
+        settleTheLineAbove();
         flushSpacingAfter();
         borderBelow = 0;
         forgetTheHang();
@@ -15977,8 +15999,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double previousBorderNotTakenOver = borderNotTakenOver;
         DocumentNode previousTailOverNode = tailOverNode;
         XWPFParagraph previousPullLeftOn = pullLeftOn;
+        // A line set high above the table waits outside it for the space the table's first row
+        // leaves above it (offerToLower); the cell's own lines wait inside.
         LineToLower previousLineToLower = lineToLower;
-        XWPFParagraph previousLowerLeftOn = lowerLeftOn;
+        XWPFParagraph previousLowerFrom = lowerFrom;
+        boolean previousLowerFromBelow = lowerFromBelow;
+        lineToLower = null;
+        lowerFrom = null;
+        lowerFromBelow = false;
         double previousPullLeft = pullLeft;
         double previousInsetLeft = insetLeft;
         double previousInsetRight = insetRight;
@@ -16038,8 +16066,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             giveToTheLowering(loweringHung, given);
             lowered = loweringHung;
             // A cell ends where it ends: its last gap cannot land on whatever the body
-            // writes next, and the body's cannot land inside it.
+            // writes next, and the body's cannot land inside it. Nor does a line set high in it
+            // wait past it: what the cell owes under it gives its lowering (offerToLower).
             flushSpacingAfter();
+            settleTheLineAbove();
         } finally {
             currentCell = previousCell;
             lastBodyParagraph = previousParagraph;
@@ -16061,9 +16091,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             tailOverNode = previousTailOverNode;
             pullLeftOn = previousPullLeftOn;
             pullLeft = previousPullLeft;
-            // A line set high outside the cell waits for what follows there.
             lineToLower = previousLineToLower;
-            lowerLeftOn = previousLowerLeftOn;
+            lowerFrom = previousLowerFrom;
+            lowerFromBelow = previousLowerFromBelow;
             insetLeft = previousInsetLeft;
             insetRight = previousInsetRight;
             cellTextShift = previousTextShift;
@@ -16227,9 +16257,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         hangingOverBy = 0;
         borderNotTakenOver = 0;
         tailOverNode = null;
-        // Nor does it lower a line set high above it (offerToLower).
-        lineToLower = null;
-        lowerLeftOn = null;
+        // Nor does what follows lower a line set high above it: the block written under it, if
+        // any, gives what it can, and the wait ends (offerToLower).
+        settleTheLineAbove();
     }
 
     /**
@@ -16322,6 +16352,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writePageBreak(XWPFDocument document) {
+        // Nor here (leaveThePageAbove).
+        settleTheLineAbove();
         flushSpacingAfter();
         XWPFParagraph para = document.createParagraph();
         blocksWritten++;

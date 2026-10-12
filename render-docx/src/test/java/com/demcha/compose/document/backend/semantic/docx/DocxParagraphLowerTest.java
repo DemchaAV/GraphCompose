@@ -37,6 +37,9 @@ class DocxParagraphLowerTest {
     private static final double LATO_ASCENT = 0.987;
     /** A line Word sets high, by under half a point. */
     private static final DocumentTextStyle HIGH = DocumentTextStyle.builder().fontName(FontName.LATO).size(10).build();
+    /** A paragraph that wraps onto two lines of the 360pt the page gives it. */
+    private static final String WRAPPED = "A line long enough to wrap onto a second one in a column three hundred and "
+                                          + "sixty points wide, set in Gothic A1 at ten points";
     /** A line Word seats where the page does, to a few hundredths: neither lowered nor raised. */
     private static final DocumentTextStyle EVEN = DocumentTextStyle.builder().fontName(FontName.GOTHIC_A1).size(10).build();
 
@@ -129,9 +132,82 @@ class DocxParagraphLowerTest {
                                 .addParagraph(p -> p.text("High").textStyle(HIGH)))
                         .addSection("Right", right -> right.addParagraph(p -> p.text("Beside").textStyle(EVEN)))));
         XWPFParagraph high = inACell(document, "High");
+        XWPFDocument followed = export(page -> page
+                .addRow(row -> row
+                        .addSection("Left", left -> left.padding(DocumentInsets.bottom(10))
+                                .addParagraph(p -> p.text("High").textStyle(HIGH)))
+                        .addSection("Right", right -> right.addParagraph(p -> p.text("Beside").textStyle(EVEN))))
+                .addParagraph(p -> p.text("Next").textStyle(EVEN)));
 
+        assertThat(before(inACell(followed, "High"))).as("the premise: lowered where the row does not end the section")
+                .isEqualTo(lowering(inACell(followed, "High")));
         assertThat(after(high)).as("the premise: the cell's space below left out").isZero();
         assertThat(before(high)).as("taken back").isZero();
+    }
+
+    @Test
+    void theParagraphUnderTheLineTakesTheGapBetweenItsOwnLinesFirst() throws Exception {
+        // The gap between the lines of the paragraph under it comes out of the space above that
+        // paragraph: all of it here, and the line takes what is left, nothing.
+        XWPFDocument lowered = export(page -> page.spacing(2)
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH))
+                .addParagraph(p -> p.text(WRAPPED).textStyle(EVEN).lineSpacing(2)));
+        XWPFDocument control = export(page -> page.spacing(2)
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(EVEN))
+                .addParagraph(p -> p.text(WRAPPED).textStyle(EVEN).lineSpacing(2)));
+        XWPFParagraph lines = starting(lowered, "A line long");
+        XWPFParagraph controlLines = starting(control, "A line long");
+
+        assertThat(before(controlLines)).as("the premise: the gap takes all of its space above").isZero();
+        assertThat(before(paragraph(lowered, "High"))).as("the page's 2pt above it, not lowered")
+                .isEqualTo(before(paragraph(control, "High")));
+        assertThat(spacing(lines).getLine()).as("its lines as far apart as with nothing set high above")
+                .isEqualTo(spacing(controlLines).getLine());
+    }
+
+    @Test
+    void theParagraphUnderTheLineTakesItsOwnRaiseFirst() throws Exception {
+        // The paragraph under it, which Word sets low, rises into half a point above it first.
+        Consumer<PageFlowBuilder> content = page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH))
+                .addParagraph(p -> p.text("Low").margin(DocumentInsets.top(0.5)));
+        XWPFDocument document = export(content);
+        long lower = lowering(paragraph(document, "High"));
+        long raise = 10 - before(paragraph(export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(EVEN))
+                .addParagraph(p -> p.text("Low").margin(DocumentInsets.top(0.5)))), "Low"));
+
+        assertThat(raise).as("the premise: the paragraph under it rises, leaving less than the lowering")
+                .isPositive().isGreaterThan(10 - lower);
+        assertThat(before(paragraph(document, "Low"))).as("its raise, whole, and the rest to the line").isZero();
+        assertThat(before(paragraph(document, "High"))).as("what the raise leaves").isEqualTo(10 - raise);
+    }
+
+    @Test
+    void aRowsLiftOutOfTheSpaceAboveItsTableComesBeforeTheLine() throws Exception {
+        // The row's first lines, which Word sets low, lift it out of the half point above its
+        // table first; the line above takes what is left.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH).margin(DocumentInsets.bottom(0.5)))
+                .addRow(row -> row.addSection("Left", left -> left.addParagraph("Left"))
+                        .addSection("Right", right -> right.addParagraph("Right"))));
+        XWPFDocument control = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(EVEN).margin(DocumentInsets.bottom(0.5)))
+                .addRow(row -> row.addSection("Left", left -> left.addParagraph("Left"))
+                        .addSection("Right", right -> right.addParagraph("Right"))));
+        XWPFParagraph high = paragraph(document, "High");
+        long lift = 10 - after(paragraph(control, "High"));
+        long given = Math.min(lowering(high), 10 - lift);
+
+        assertThat(lift).as("the premise: the row is lifted out of the space above its table").isPositive();
+        assertThat(before(high)).as("what the lift leaves").isEqualTo(given);
+        assertThat(after(high)).isEqualTo(10 - lift - given);
     }
 
     @Test
@@ -160,6 +236,30 @@ class DocxParagraphLowerTest {
 
         assertThat(before(paragraph(document, "High"))).as("the spacer above it past its hairline, and nothing more")
                 .isEqualTo(Math.round((500 - 0.1) * 20));
+    }
+
+    @Test
+    void aLineSetHighAtThePagesFootIsNotLoweredIntoTheSpaceLeftThere() throws Exception {
+        // A page break under it: nothing under it on its page, and the space below it stays at
+        // the page's foot.
+        XWPFDocument broken = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH).margin(DocumentInsets.bottom(10)))
+                .addPageBreak(b -> { })
+                .addParagraph(p -> p.text("Next").textStyle(EVEN)));
+
+        assertThat(lowering(paragraph(broken, "High"))).as("the premise: set high").isGreaterThan(1);
+        assertThat(before(paragraph(broken, "High"))).isZero();
+        // A table the layout moves to the next page leaves the page above the same way.
+        Consumer<PageFlowBuilder> moved = page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN)).spacer(1, 520)
+                .addParagraph(p -> p.name("High").text("High").textStyle(HIGH).margin(DocumentInsets.bottom(10)))
+                .addTable(table -> table.name("Moved").autoColumns(1).row("One").row("Two"));
+        try (DocumentSession session = session(moved)) {
+            assertThat(startPage(session, "Moved")).as("the premise: the table opens the next page").isEqualTo(1);
+        }
+        assertThat(before(paragraph(export(moved), "High"))).as("the spacer above it past its hairline, and nothing more")
+                .isEqualTo(Math.round((520 - 0.1) * 20));
     }
 
     @Test
@@ -366,6 +466,11 @@ class DocxParagraphLowerTest {
     private static XWPFParagraph paragraph(XWPFDocument document, String text) {
         return document.getParagraphs().stream()
                 .filter(paragraph -> paragraph.getText().equals(text)).findFirst().orElseThrow();
+    }
+
+    private static XWPFParagraph starting(XWPFDocument document, String text) {
+        return document.getParagraphs().stream()
+                .filter(paragraph -> paragraph.getText().startsWith(text)).findFirst().orElseThrow();
     }
 
     /** The paragraph holding exactly {@code text}, in the body or a table's cell. */

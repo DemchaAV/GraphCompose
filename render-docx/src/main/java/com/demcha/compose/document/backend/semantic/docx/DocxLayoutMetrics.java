@@ -1166,8 +1166,10 @@ final class DocxLayoutMetrics {
      * is its own as authored; those left then take the first whose lines set their markdown as the
      * page reads it, marks dropped, in its faces and sizes. A paragraph whose text no fragment
      * carries so is left without one, as before. A list takes the run of lines that holds its items
-     * as the page lays them out, opening at a line no node before it took ({@link #itemFragments}): a
-     * line of a paragraph left for the markdown pass holds other text, and stays that paragraph's.</p>
+     * as the page lays them out, opening at a line no node before it took ({@link #itemFragments}).
+     * The paragraphs left before a list are matched by their markdown before it is: one the page
+     * reads as {@code **0.00**} sets its line as {@code 0.00}, which a list's item of that text
+     * would take first.</p>
      */
     private Map<DocumentNode, List<PlacedFragment>> matchComposedText() {
         Map<DocumentNode, List<PlacedFragment>> matched = new IdentityHashMap<>();
@@ -1189,10 +1191,10 @@ final class DocxLayoutMetrics {
                     lines.add(fragment);
                 }
             }
-            Map<String, java.util.ArrayDeque<PlacedFragment>> byText = lines.byText;
             List<ParagraphNode> unmatched = new ArrayList<>();
             for (DocumentNode node : composed) {
                 if (node instanceof ListNode list) {
+                    matchByMarkdown(unmatched, lines, matched);
                     List<PlacedFragment> items = itemFragments(list, lines);
                     if (!items.isEmpty()) {
                         items.forEach(lines::take);
@@ -1201,7 +1203,7 @@ final class DocxLayoutMetrics {
                     continue;
                 }
                 ParagraphNode paragraph = (ParagraphNode) node;
-                java.util.ArrayDeque<PlacedFragment> waiting = waitingFor(byText, authoredText(paragraph));
+                java.util.ArrayDeque<PlacedFragment> waiting = waitingFor(lines.byText, authoredText(paragraph));
                 if (waiting != null) {
                     PlacedFragment fragment = waiting.peek();
                     lines.take(fragment);
@@ -1210,24 +1212,34 @@ final class DocxLayoutMetrics {
                     unmatched.add(paragraph);
                 }
             }
-            // Then by its text as the page reads its markdown, where its session does: marks
-            // dropped, and only a fragment whose lines set the pieces as they are read. A paragraph
-            // of the same text as authored may have taken this one's own fragment: the one left
-            // is in another face or size, and taken, its lines would cut this one's letters.
-            for (ParagraphNode paragraph : unmatched) {
-                if (DocxMarkdown.mayRead(paragraph) && paragraph.textStyle() != null) {
-                    List<DocxMarkdown.Piece> pieces = DocxMarkdown.read(paragraph.text(), paragraph.textStyle());
-                    java.util.ArrayDeque<PlacedFragment> waiting = waitingFor(byText, DocxMarkdown.text(pieces));
-                    PlacedFragment fragment = waiting == null ? null : waiting.stream()
-                            .filter(candidate -> setsThePieces(paragraph, pieces, candidate)).findFirst().orElse(null);
-                    if (fragment != null) {
-                        lines.take(fragment);
-                        matched.put(paragraph, List.of(fragment));
-                    }
+            matchByMarkdown(unmatched, lines, matched);
+        }
+        return matched;
+    }
+
+    /**
+     * Matches the paragraphs left by their text as the page reads its markdown, where its session
+     * does: marks dropped, and only a fragment whose lines set the pieces as they are read. A
+     * paragraph of the same text as authored may have taken this one's own fragment: the one left
+     * is in another face or size, and taken, its lines would cut this one's letters.
+     *
+     * @param unmatched the paragraphs left, in layout order; emptied
+     */
+    private static void matchByMarkdown(List<ParagraphNode> unmatched, TableLines lines,
+                                        Map<DocumentNode, List<PlacedFragment>> matched) {
+        for (ParagraphNode paragraph : unmatched) {
+            if (DocxMarkdown.mayRead(paragraph) && paragraph.textStyle() != null) {
+                List<DocxMarkdown.Piece> pieces = DocxMarkdown.read(paragraph.text(), paragraph.textStyle());
+                java.util.ArrayDeque<PlacedFragment> waiting = waitingFor(lines.byText, DocxMarkdown.text(pieces));
+                PlacedFragment fragment = waiting == null ? null : waiting.stream()
+                        .filter(candidate -> setsThePieces(paragraph, pieces, candidate)).findFirst().orElse(null);
+                if (fragment != null) {
+                    lines.take(fragment);
+                    matched.put(paragraph, List.of(fragment));
                 }
             }
         }
-        return matched;
+        unmatched.clear();
     }
 
     /**
@@ -1273,7 +1285,13 @@ final class DocxLayoutMetrics {
         }
 
         void take(PlacedFragment fragment) {
-            byText.get(keys.get(index.get(fragment))).removeIf(waiting -> waiting == fragment);
+            java.util.ArrayDeque<PlacedFragment> waiting = byText.get(keys.get(index.get(fragment)));
+            // A paragraph takes the first of its text, and a list's lines are mostly the first of theirs.
+            if (waiting.peekFirst() == fragment) {
+                waiting.pollFirst();
+            } else {
+                waiting.removeIf(line -> line == fragment);
+            }
         }
     }
 
@@ -1334,18 +1352,17 @@ final class DocxLayoutMetrics {
     }
 
     /**
-     * Whether the line at {@code at} is an item's marker set in a column of its own: the marker's
-     * letters, or only a drawing for a drawn one, level with the item's line after it. A marker that
-     * draws nothing lays out no line, and a paragraph's line level before the item's, in the cell
-     * before, is not one.
+     * Whether the line at {@code at} is an item's marker set in a column of its own: the line the page
+     * lays out for a visible marker just before its item's text, level with it — only a drawing, for a
+     * drawn one. A marker that draws nothing lays out no line, so the line level before the item's is
+     * another node's: a paragraph's in the cell before.
      */
     private static boolean isTheMarker(TableLines lines, int at, ItemLine item) {
-        if (item.column() == null || at + 1 >= lines.fragments.size()
+        if (item.column() == null || !item.column().isVisible() || at + 1 >= lines.fragments.size()
             || !lines.keys.get(at + 1).equals(item.text()) || !level(lines.fragments.get(at), lines.fragments.get(at + 1))) {
             return false;
         }
-        ParagraphFragmentPayload marker = (ParagraphFragmentPayload) lines.fragments.get(at).payload();
-        return item.column().isRich() ? drawsOnly(marker) : lines.keys.get(at).equals(comparable(item.column().value()));
+        return !item.column().isRich() || drawsOnly((ParagraphFragmentPayload) lines.fragments.get(at).payload());
     }
 
     /**

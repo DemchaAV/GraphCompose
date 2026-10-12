@@ -16,18 +16,19 @@ follow semantic versioning; release dates are ISO 8601.
   1.18pt low in Word and 0.15 to 1.05pt in LibreOffice. A list composed in a cell now takes the run
   of its table's lines that holds its items in turn, opening at a line no paragraph or list before it
   took: each a line of the item's text as the page lays it out, the marker and indent the page sets
-  in that text before it, and, in a `hangingIndent` list, the item's marker — its letters, or a
-  drawing — set level before it in a column of its own. Its items then take from those lines what a list's in the flow take: the
-  height the page sets them at, the list's lineSpacing between a wrapped item's lines, a
+  in that text before it, and, in a `hangingIndent` list, the line of the item's visible marker set
+  level before it in a column of its own; a paragraph before it that the page reads as markdown is
+  matched first. Its items then take from those lines what a list's in the flow take:
+  the height the page sets them at, the list's lineSpacing between a wrapped item's lines, a
   `hangingIndent` list's marker column, and each item's seat on the page's baseline, an item in a
   row Word keeps whole on its page rising into the gap above it, as a paragraph composed there does.
   Having no place of its own, a Word list whose marker the page sets in its text keeps its stated
   column. A list holding an item of runs, whose text is not read here, one with an item the page
-  reads as markdown, its marks dropped, or a `hangingIndent` list with a blank item the page draws
-  as a marker alone, is written as before, and the report names its lineSpacing as not written,
-  whether an item wraps not measured. The certifications now stand 0.26, 0.00, 0.12 and 0.10pt low
-  in Word, and 0.10pt low to 0.10pt high in LibreOffice on Windows and 24.2; no other document of
-  the corpus changed.
+  reads as markdown, its marks dropped, or one it runs onto the next page, or a `hangingIndent` list
+  with a blank item the page draws as a marker alone, is written as before, and the report names its
+  lineSpacing as not written, whether an item wraps not measured. The certifications now stand
+  0.26, 0.00, 0.12 and 0.10pt low in Word, and 0.10pt low to 0.10pt high in LibreOffice on Windows
+  and 24.2; no other document of the corpus changed.
 
 - **A DOCX export stands a list's items where the page sets them in their exact lines, as it does a
   paragraph's.** Word and LibreOffice stand an exact line's baseline four fifths of the way down it,

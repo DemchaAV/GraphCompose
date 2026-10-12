@@ -148,18 +148,78 @@ class DocxComposedListTest {
 
     @Test
     void aListWhoseItemsNoRunOfItsTablesLinesHoldsTakesNoneOfThem() throws Exception {
-        // The page reads the second item as markdown, its marks dropped: the list's own lines do not
-        // hold its items as written. A later cell's paragraph of its first item's text keeps its line.
+        // The page reads the second item as markdown, its marks dropped: the list's own lines hold its
+        // first item as written and not its second, and no part of the run is taken.
         try (XWPFDocument document = inACellBeside(
-                new ListBuilder().name("Items").bullet().textStyle(size(16)).items("Setup", "**Support**").build(),
-                new ParagraphBuilder().text("Setup").textStyle(size(8)).build())) {
-            List<XWPFParagraph> setups = cellParagraphs(document, "Setup");
-            CTSpacing item = spacing(setups.get(0));
+                new ListBuilder().name("Items").bullet().textStyle(size(16)).items("Setup", "**Support**").build())) {
+            CTSpacing item = spacing(inACell(document, "Setup"));
 
-            assertThat(setups).hasSize(2);
+            assertThat(spacing(inACell(document, "Mon")).getLineRule()).as("the premise: a layout behind the export")
+                    .hasToString("exact");
             assertThat(item == null || !item.isSetLineRule()).as("the list's, matched to none").isTrue();
-            assertThat(line(setups.get(1))).as("the paragraph's own, at 8pt").isLessThan(10);
         }
+    }
+
+    @Test
+    void aMarkdownParagraphBeforeAListOfItsTextKeepsItsLine() throws Exception {
+        // The page sets the paragraph's line as 0.00, its marks dropped: matched by its markdown before
+        // the list is matched, it keeps its line, and the list's item takes its own.
+        try (XWPFDocument document = inACellBeside(
+                new ParagraphBuilder().text("**0.00**").textStyle(size(8)).build(),
+                new ListBuilder().name("Amounts").noMarker().textStyle(size(16)).items("0.00").build())) {
+            List<XWPFParagraph> amounts = cellParagraphs(document, "0.00");
+
+            assertThat(amounts).hasSize(2);
+            assertThat(spacing(amounts.get(0)).getLineRule()).as("the paragraph's").hasToString("exact");
+            assertThat(line(amounts.get(1))).as("the list's, at 16pt").isEqualTo(2 * line(amounts.get(0)));
+        }
+    }
+
+    @Test
+    void aListWhoseMarkerIsDrawnInItsOwnColumnInACellIsWrittenOnItsLines() throws Exception {
+        // A drawn marker's line holds only its drawing, level with its item's text.
+        try (XWPFDocument flow = DocxExports.withLayout(400, 600, 20, page -> page.add(dotted()));
+             XWPFDocument cell = inACellBeside(dotted())) {
+            XWPFParagraph composed = cell.getTables().get(0).getRow(0).getCell(1).getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().contains("Setup")).findFirst().orElseThrow();
+            XWPFParagraph inTheFlow = flow.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getText().contains("Setup")).findFirst().orElseThrow();
+
+            assertThat(spacing(composed).getLineRule()).hasToString("exact");
+            assertThat(line(composed)).as("as in the flow").isEqualTo(line(inTheFlow));
+        }
+    }
+
+    @Test
+    void aTreeOfItemsInACellIsWrittenOnItsLines() throws Exception {
+        // The page lays a tree of items out flattened, each item after its depth's indent and marker.
+        try (XWPFDocument document = inACellBeside(new ListBuilder().name("Plan").textStyle(size(9))
+                .addItem("Design", child -> child.addItem("Draft")).build())) {
+            List<XWPFParagraph> items = document.getTables().get(0).getRow(0).getCell(1).getParagraphs().stream()
+                    .filter(paragraph -> !paragraph.getText().isBlank()).toList();
+
+            assertThat(items).as("the premise: both items written").hasSize(2);
+            for (XWPFParagraph item : items) {
+                assertThat(spacing(item).getLineRule()).as(item.getText()).hasToString("exact");
+            }
+        }
+        // With hangingIndent, each item's marker in a column of its own, its depth's.
+        try (XWPFDocument document = inACellBeside(new ListBuilder().name("Plan").hangingIndent(true).textStyle(size(9))
+                .addItem("Design", child -> child.addItem("Draft")).build())) {
+            List<XWPFParagraph> items = document.getTables().get(0).getRow(0).getCell(1).getParagraphs().stream()
+                    .filter(paragraph -> !paragraph.getText().isBlank()).toList();
+
+            assertThat(items).as("the premise: both items written").hasSize(2);
+            for (XWPFParagraph item : items) {
+                assertThat(spacing(item).getLineRule()).as(item.getText()).hasToString("exact");
+            }
+        }
+    }
+
+    private static DocumentNode dotted() {
+        return new ListBuilder().name("Steps").hangingIndent(true).markerGap(6).textStyle(size(9))
+                .marker(m -> m.dot(4, com.demcha.compose.document.style.DocumentColor.rgb(0, 128, 128)))
+                .items("Setup", "Support").build();
     }
 
     @Test

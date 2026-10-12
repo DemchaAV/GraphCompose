@@ -150,21 +150,24 @@ class DocxListItemSeatTest {
     }
 
     @Test
-    void anItemTheLayoutsLinesAreNotMatchedToIsLeftAsWordSetsIt() throws Exception {
-        // A list in a table's composed cell lays out no lines of its own to seat it by.
+    void anItemOfAListInATablesComposedCellIsLeftAsWordSetsIt() throws Exception {
+        // A list in a table's composed cell lays out no lines of its own: its items are matched to
+        // none, and are written at no exact height of the page's to seat them in.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(200))
                 .rowCells(DocumentTableCell.node(new ListBuilder().noMarker().textStyle(spectral(30))
                         .items("Inside").build()))))) {
             XWPFParagraph inside = inACell(document, "Inside");
+            CTSpacing spacing = spacing(inside);
 
+            assertThat(spacing == null || !spacing.isSetLineRule()).as("the premise: no line the page measured").isTrue();
             assertThat(position(inside)).isZero();
             assertThat(before(inside)).isZero();
         }
     }
 
     @Test
-    void anItemsWrappedLinesAreSeatedAtTheirMiddleOne() throws Exception {
+    void anItemsLinesAreSeatedAtTheirMiddleOne() throws Exception {
         // Two lines 10pt apart and no space above to give: Word's lines are each 5pt taller than
         // the face, stepping 5pt closer than the page's, and the error is shared by the two.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
@@ -275,7 +278,7 @@ class DocxListItemSeatTest {
     }
 
     @Test
-    void anItemOfAListInACellTheLayoutBreaksOverAPageKeepsTheSpaceAboveIt() throws Exception {
+    void theItemsOfAListTheLayoutSetsOverTwoPagesInACellKeepTheSpaceAboveThem() throws Exception {
         // A panel the page breaks is one cell going on over the next page: what the first item
         // owed would be the space above the one opening that page, inside the cell.
         try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
@@ -315,6 +318,8 @@ class DocxListItemSeatTest {
             double raise = 0.8 * line(item) - SPECTRAL_ASCENT * 30;
 
             assertThat(item.getCTP().getPPr().isSetNumPr()).as("the premise: its marker written as text").isFalse();
+            assertThat(item.getCTP().getRList()).as("the premise: tabbed to its text's column")
+                    .anySatisfy(run -> assertThat(run.sizeOfTabArray()).isPositive());
             assertThat(before(item)).isCloseTo(Math.round((20 - raise) * 20), within(1L));
             assertThat(position(item)).isZero();
         }

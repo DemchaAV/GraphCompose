@@ -19,17 +19,17 @@ follow semantic versioning; release dates are ISO 8601.
   gap goes and owes as much below, which the item under it rises into in turn; under half a point, one
   opening a cell takes what the gap cannot give from the cell's padding, or from the space above its
   row of columns; and what is left where the whole difference is half a point or more, and a line set
-  that much high, is its text's position. Not raised into the gap, its position still moved: an item
-  the layout opens a page with — the first of a list it starts on a new page in the flow, or one it
-  sets on a later page than the item before it — whose space above Word drops there, nor one of a
-  list in a cell the layout breaks over a page, in a row not kept whole, where what an item owed
-  would be the space above the next page's first, inside the cell. An item whose marker
-  Word draws, a Word list's, is not moved by its position: Word sets that marker from the
-  paragraph's mark, which LibreOffice does not move by the mark's position — lowered a point by
-  both, `MidnightNavy`'s duties stood 1.15pt under their bullets there — so its line keeps what the
-  space above does not take of it, and `MidnightNavy`'s and `NavySidebar`'s duties stand as high as
-  before. An item the layout's lines are not matched to, as `SlateOrange`'s certifications in a
-  table's composed cell, is not seated.
+  that much high, is its text's position. Not raised into the gap, though still moved by its position
+  where it takes one: an item the layout opens a page with — the first of a list it starts on a new
+  page in the flow, or one it sets on a later page than the item before it — whose space above Word
+  drops there, nor one of a list the layout sets over two pages in a cell, where what an item owed
+  would be the space above the next page's first, inside the cell. An item whose marker Word draws,
+  a Word list's, is not moved by its position: Word sets that marker from the paragraph's mark,
+  which LibreOffice does not move by the mark's position — lowered a point by both, `MidnightNavy`'s
+  duties stood 1.15pt under their bullets there — so its line keeps what the space above does not
+  take of it, and `MidnightNavy`'s and `NavySidebar`'s duties stand as high as before. An item the
+  layout's lines are not matched to, as `SlateOrange`'s certifications in a table's composed cell, is
+  not seated.
 
   `ClassicInvoice`'s notes moved up 0.24 to 0.36pt in Word and 0.3pt in LibreOffice, to within
   0.05pt of the page, `BoxedSections`' and `ModernProfessional`'s skills and projects 0.12 to 0.24pt

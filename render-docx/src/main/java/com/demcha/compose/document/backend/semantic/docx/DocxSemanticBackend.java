@@ -4849,13 +4849,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * point by their text's and their mark's, stood 1.15pt under their bullets there (measured). Its
      * line keeps what the space above does not take of it.</p>
      *
-     * <p>Not raised into the space above — its position still moved — an item the layout opens a
-     * page with: the first of a list it starts on a new page in the flow, or one on a later page
-     * than the item before it. Word drops its space above at the top of a page, and what its line
-     * owed would stand the rest lower. Nor an item of a list in a cell the layout breaks over a page,
-     * in a row not kept whole: what an item owed there would be the space above the one opening the
-     * next page, inside the cell, which Word is not known to drop. An item the layout's lines are not
-     * matched to is not seated at all.</p>
+     * <p>Not raised into the space above, though still moved by its position where it takes one: an
+     * item the layout opens a page with — the first of a list it starts on a new page in the flow, or
+     * one on a later page than the item before it. Word drops its space above at the top of a page,
+     * and what its line owed would stand the rest lower. Nor an item of a list the layout sets over
+     * two pages in a cell, the cell going on on the next: what an item owed there would be the space
+     * above the one opening that page, inside the cell, which Word is not known to drop. An item the
+     * layout's lines are not matched to is not seated at all.</p>
      *
      * @param laidOut            how the layout set the item, or {@code null} where its items are
      *                           not matched
@@ -4867,7 +4867,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         boolean opensItsPage = itemPage < 0 ? listOpensItsPage : laidOut.page() > itemPage;
         itemPage = laidOut.page();
-        boolean staysOnItsPage = !opensItsPage && (currentCell == null || listOnOnePage || inARowKeptWhole());
+        boolean staysOnItsPage = !opensItsPage && (currentCell == null || listOnOnePage);
         double shift = shiftToThePagesBaseline(para, laidOut.lines(), listLineGap, 0, false, true, staysOnItsPage);
         if (!wordDrawsTheMarker) {
             raiseRunsFrom(para, 0, Math.round(shift * HALF_POINTS_PER_POINT));
@@ -9995,7 +9995,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * wherever the row lands, though a table's composed cell has no placement of its own to say
      * so ({@link #inARowKeptWhole}). A list's item is raised as a paragraph is, but for the first
      * of a list the layout starts on a new page, one it sets on a later page than the item before
-     * it, and one of a list in a cell it breaks over a page ({@link #seatTheItem}). Not the space
+     * it, and one of a list it sets over two pages in a cell ({@link #seatTheItem}). Not the space
      * above a panel's first paragraph that the panel's top border takes
      * ({@link #takeTheTopBorderInside}): raised into it, the line would give it back and the panel
      * grow by what it owed. Less than {@link #LEAST_RAISE_INTO_THE_SPACE_ABOVE} is not moved.</p>
@@ -10011,8 +10011,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * (measured).</p>
      *
      * @param para           the Word paragraph
-     * @param staysOnItsPage whether the layout sets the line on the page the space above it is
-     *                       on: neither opening a page nor broken over one
+     * @param staysOnItsPage whether what the line takes from the space above stays above it on its
+     *                       page: not where the layout opens a page with the line or breaks it over
+     *                       one, nor sets the list it is an item of over two pages in a cell
      * @param spacing        the paragraph's spacing, its space above already written
      * @param raise          how far Word sets the line below the page's, in points
      * @param intoThePadding whether the cell's padding may give what the space above cannot

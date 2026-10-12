@@ -8,6 +8,27 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes a list composed in a table cell on the lines its table laid out for it, as
+  it does a paragraph there.** A composed cell's content is laid out under its table's path, so a
+  list there has no lines at a path of its own, and its items were matched to none: written at no
+  height at all, each stood at its face's own line in Word and LibreOffice, taller than the page's —
+  `SlateOrange`'s certifications, a list beside the education column, stood 0.26, 0.48, 0.84 and
+  1.18pt low in Word and 0.15 to 1.05pt in LibreOffice. A list composed in a cell now takes the run
+  of its table's lines that holds its items in turn, opening at a line no paragraph or list before it
+  took: each a line of the item's text as the page lays it out, the marker and indent the page sets
+  in that text before it, and, in a `hangingIndent` list, the item's marker — its letters, or a
+  drawing — set level before it in a column of its own. Its items then take from those lines what a list's in the flow take: the
+  height the page sets them at, the list's lineSpacing between a wrapped item's lines, a
+  `hangingIndent` list's marker column, and each item's seat on the page's baseline, an item in a
+  row Word keeps whole on its page rising into the gap above it, as a paragraph composed there does.
+  Having no place of its own, a Word list whose marker the page sets in its text keeps its stated
+  column. A list holding an item of runs, whose text is not read here, one with an item the page
+  reads as markdown, its marks dropped, or a `hangingIndent` list with a blank item the page draws
+  as a marker alone, is written as before, and the report names its lineSpacing as not written,
+  whether an item wraps not measured. The certifications now stand 0.26, 0.00, 0.12 and 0.10pt low
+  in Word, and 0.10pt low to 0.10pt high in LibreOffice on Windows and 24.2; no other document of
+  the corpus changed.
+
 - **A DOCX export stands a list's items where the page sets them in their exact lines, as it does a
   paragraph's.** Word and LibreOffice stand an exact line's baseline four fifths of the way down it,
   the page its face's ascent below the line's top, and a paragraph's line is moved there; a list
@@ -28,8 +49,7 @@ follow semantic versioning; release dates are ISO 8601.
   which LibreOffice does not move by the mark's position — lowered a point by both, `MidnightNavy`'s
   duties stood 1.15pt under their bullets there — so its line keeps what the space above does not
   take of it, and `MidnightNavy`'s and `NavySidebar`'s duties stand as high as before. An item the
-  layout's lines are not matched to, as `SlateOrange`'s certifications in a table's composed cell, is
-  not seated.
+  layout's lines are not matched to is not seated.
 
   `ClassicInvoice`'s notes moved up 0.24 to 0.36pt in Word and 0.3pt in LibreOffice, to within
   0.05pt of the page, `BoxedSections`' and `ModernProfessional`'s skills and projects 0.12 to 0.24pt

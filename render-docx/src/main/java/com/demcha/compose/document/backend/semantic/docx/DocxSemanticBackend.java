@@ -4341,7 +4341,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Its alignment: every item is written flush left. Its lineSpacing, where the layout's
      * items are not matched to the list's and one of them wraps — an item run onto the next page
      * is laid out as a piece on each, and wraps whatever its pieces hold — or where the list has
-     * no lines of its own to read, composed in a table cell: the gap is put between an item's lines
+     * no lines to read, composed in a table cell whose lines it is not matched to, as one holding an
+     * item of runs ({@code DocxLayoutMetrics.itemFragments}): the gap is put between an item's lines
      * only by its laid-out lines (see {@link #applyItemLineGap}). With no layout at all, the
      * section's own note says the space between lines is the editor's. Its continuationIndent,
      * which the page sets before every wrapped line of a list whose markers are not drawn before
@@ -4451,7 +4452,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * What a list's items lose where the page reads them as markdown, its items not matched to the
-     * layout's — with no layout, composed in a table cell, one run onto the next page, or a blank
+     * layout's — with no layout, composed in a table cell whose lines they are not matched to, one
+     * run onto the next page, or a blank
      * item of a {@code hangingIndent} list the page draws as a marker alone — and so each written
      * as authored, as a paragraph's text is ({@link #markdownLost}): an item of plain text holding a
      * mark of emphasis or code is set as markdown, its marks dropped. Its text is read as the page
@@ -4852,10 +4854,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Not raised into the space above, though still moved by its position where it takes one: an
      * item the layout opens a page with — the first of a list it starts on a new page in the flow, or
      * one on a later page than the item before it. Word drops its space above at the top of a page,
-     * and what its line owed would stand the rest lower. Nor an item of a list the layout sets over
-     * two pages in a cell, the cell going on on the next: what an item owed there would be the space
-     * above the one opening that page, inside the cell, which Word is not known to drop. An item the
-     * layout's lines are not matched to is not seated at all.</p>
+     * and what its line owed would stand the rest lower. Nor an item in a cell whose list the layout
+     * does not set on one page — over two, the cell going on on the next, or composed in a table's
+     * cell, which gives it no place of its own — unless Word keeps the cell's row whole on its page
+     * ({@link #inARowKeptWhole}), as it does a paragraph composed there: what an item owed would be
+     * the space above the one opening the next page, inside the cell, which Word is not known to
+     * drop. An item the layout's lines are not matched to is not seated at all.</p>
      *
      * @param laidOut            how the layout set the item, or {@code null} where its items are
      *                           not matched
@@ -4867,7 +4871,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         boolean opensItsPage = itemPage < 0 ? listOpensItsPage : laidOut.page() > itemPage;
         itemPage = laidOut.page();
-        boolean staysOnItsPage = !opensItsPage && (currentCell == null || listOnOnePage);
+        boolean staysOnItsPage = !opensItsPage && (currentCell == null || listOnOnePage || inARowKeptWhole());
         double shift = shiftToThePagesBaseline(para, laidOut.lines(), listLineGap, 0, false, true, staysOnItsPage);
         if (!wordDrawsTheMarker) {
             raiseRunsFrom(para, 0, Math.round(shift * HALF_POINTS_PER_POINT));
@@ -8614,8 +8618,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Whether the page dropped markdown marks from text it laid out, and the phrase that names it:
      * where its lines, less a prefix's marks, hold fewer than the text did; {@code null} where they
      * hold as many, or hold no text at all, as the lines of text given no width do. Where they are
-     * not read — with no layout, a list composed in a table cell, or a paragraph there whose text
-     * no line its table laid out carries — a session reads markdown unless told not to, and the
+     * not read — with no layout, or a list or a paragraph composed in a table cell that no lines its
+     * table laid out are matched to — a session reads markdown unless told not to, and the
      * phrase says whether the page read them is not measured, where the page's parser drops a
      * mark from the text.
      *
@@ -9995,7 +9999,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * wherever the row lands, though a table's composed cell has no placement of its own to say
      * so ({@link #inARowKeptWhole}). A list's item is raised as a paragraph is, but for the first
      * of a list the layout starts on a new page, one it sets on a later page than the item before
-     * it, and one of a list it sets over two pages in a cell ({@link #seatTheItem}). Not the space
+     * it, and one in a cell whose list it does not set on one page, in a row Word may break
+     * ({@link #seatTheItem}). Not the space
      * above a panel's first paragraph that the panel's top border takes
      * ({@link #takeTheTopBorderInside}): raised into it, the line would give it back and the panel
      * grow by what it owed. Less than {@link #LEAST_RAISE_INTO_THE_SPACE_ABOVE} is not moved.</p>
@@ -10013,7 +10018,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param para           the Word paragraph
      * @param staysOnItsPage whether what the line takes from the space above stays above it on its
      *                       page: not where the layout opens a page with the line or breaks it over
-     *                       one, nor sets the list it is an item of over two pages in a cell
+     *                       one, nor, in a row Word may break, sets the list it is an item of in a
+     *                       cell other than on one page
      * @param spacing        the paragraph's spacing, its space above already written
      * @param raise          how far Word sets the line below the page's, in points
      * @param intoThePadding whether the cell's padding may give what the space above cannot

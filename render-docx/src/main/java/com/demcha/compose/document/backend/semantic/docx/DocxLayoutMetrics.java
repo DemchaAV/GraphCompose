@@ -14,6 +14,8 @@ import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
+import com.demcha.compose.document.node.ListItem;
+import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.table.DocumentTableCell;
@@ -69,8 +71,8 @@ final class DocxLayoutMetrics {
     private final Map<DocumentNode, Map<String, Integer>> placedRows = new IdentityHashMap<>();
     // The heights of a table's placed rows, by index, filled on first use — see rowHeightsOf.
     private final Map<DocumentNode, Map<String, Double>> rowHeights = new IdentityHashMap<>();
-    // Paragraphs composed in table cells, paired with their fragments on first use.
-    private Map<DocumentNode, PlacedFragment> composedText;
+    // Paragraphs and lists composed in table cells, paired with their fragments on first use.
+    private Map<DocumentNode, List<PlacedFragment>> composedText;
     // The text and pictures of each page, indexed on first use — see textOnPage.
     private Map<Integer, List<PlacedFragment>> textByPage;
     // Each page's fragments in paint order, indexed on first use — see clipsOf.
@@ -441,7 +443,9 @@ final class DocxLayoutMetrics {
      * column of their own lays the marker out as one more fragment, level with its item's
      * text and as tall: the two are one item, its text's lines the item's, and the marker's
      * single line does not make the item a wrapped one. The text is the fragment to the right,
-     * or the later where the two start together — a marker that draws nothing, with no gap.</p>
+     * or the later where the two start together — a marker that draws nothing, with no gap. A list
+     * composed in a table cell has its items among its table's fragments, the ones it is matched to
+     * ({@link #matchComposedText}).</p>
      *
      * @param list a list node
      * @return every item's text, empty when the list laid out nothing
@@ -449,14 +453,11 @@ final class DocxLayoutMetrics {
     List<ItemText> itemLines(DocumentNode list) {
         List<ItemText> items = new ArrayList<>();
         PlacedFragment previous = null;
-        for (PlacedFragment fragment : fragmentsOf(list)) {
+        for (PlacedFragment fragment : textFragmentsOf(list)) {
             if (!(fragment.payload() instanceof ParagraphFragmentPayload paragraph)) {
                 continue;
             }
-            boolean sameItem = previous != null
-                               && previous.pageIndex() == fragment.pageIndex()
-                               && Math.abs(previous.y() - fragment.y()) < 0.01
-                               && Math.abs(previous.height() - fragment.height()) < 0.01;
+            boolean sameItem = previous != null && level(previous, fragment);
             ItemText text = new ItemText(paragraph.lines(), fragment.x() + paragraph.padding().left(),
                     fragment.pageIndex());
             if (!sameItem) {
@@ -857,7 +858,7 @@ final class DocxLayoutMetrics {
      * @return the distance in points, or empty when the list laid out no such marker beside its text
      */
     OptionalDouble markerToText(DocumentNode list, String markerText) {
-        List<PlacedFragment> own = fragmentsOf(list);
+        List<PlacedFragment> own = textFragmentsOf(list);
         int index = markerFragment(own, markerText);
         return index < 0 ? OptionalDouble.empty() : OptionalDouble.of(own.get(index + 1).x() - own.get(index).x());
     }
@@ -867,7 +868,7 @@ final class DocxLayoutMetrics {
      * text given (see {@link #markerToText(DocumentNode, String)}).
      */
     OptionalDouble markerWidth(DocumentNode list, String markerText) {
-        List<PlacedFragment> own = fragmentsOf(list);
+        List<PlacedFragment> own = textFragmentsOf(list);
         int index = markerFragment(own, markerText);
         if (index < 0 || !(own.get(index).payload() instanceof ParagraphFragmentPayload marker)) {
             return OptionalDouble.empty();
@@ -1138,61 +1139,73 @@ final class DocxLayoutMetrics {
     }
 
     /**
-     * The fragments that hold a node's lines of text: its own, or — for a paragraph composed
-     * in a table cell, which has no path of its own — the one its table laid out for it.
+     * The fragments that hold a node's lines of text: its own, or — for a paragraph or a list
+     * composed in a table cell, which has no path of its own — the ones its table laid out for it.
      */
     private List<PlacedFragment> textFragmentsOf(DocumentNode node) {
         List<PlacedFragment> own = fragmentsOf(node);
-        if (!own.isEmpty() || !(node instanceof ParagraphNode) || fragments.isEmpty()) {
+        if (!own.isEmpty() || !(node instanceof ParagraphNode || node instanceof ListNode) || fragments.isEmpty()) {
             return own;
         }
         if (composedText == null) {
             composedText = matchComposedText();
         }
-        PlacedFragment matched = composedText.get(node);
-        return matched == null ? List.of() : List.of(matched);
+        return composedText.getOrDefault(node, List.of());
     }
 
     /**
-     * Pairs every paragraph composed in a table cell with the fragment its table laid out for it.
+     * Pairs every paragraph and every list composed in a table cell with the fragments its table
+     * laid out for it.
      *
      * <p>A composed cell's content is laid out under the table's path, so its paragraphs' lines
      * sit among the table's own fragments and not at a path of their own. Without them a
      * paragraph in a cell was written at the height Word gives the face — 13.4pt for a 9pt
      * Gothic A1 line the page sets at 9.1 — and every row of such a table ran taller than the
-     * page's. Cells are laid out in order, and so is what each holds, so the paragraphs are
-     * walked in that order and each takes the first fragment not yet taken whose text is
-     * its own as authored; those left then take the first whose lines set their markdown as the
+     * page's. Cells are laid out in order, and so is what each holds, so the paragraphs and lists
+     * are walked in that order. Each paragraph takes the first fragment not yet taken whose text
+     * is its own as authored; those left then take the first whose lines set their markdown as the
      * page reads it, marks dropped, in its faces and sizes. A paragraph whose text no fragment
-     * carries so is left without one, as before.</p>
+     * carries so is left without one, as before. A list takes the run of lines that holds its items
+     * as the page lays them out, opening at a line no node before it took ({@link #itemFragments}): a
+     * line of a paragraph left for the markdown pass holds other text, and stays that paragraph's.</p>
      */
-    private Map<DocumentNode, PlacedFragment> matchComposedText() {
-        Map<DocumentNode, PlacedFragment> matched = new IdentityHashMap<>();
+    private Map<DocumentNode, List<PlacedFragment>> matchComposedText() {
+        Map<DocumentNode, List<PlacedFragment>> matched = new IdentityHashMap<>();
         for (DocumentNode table : paths.keySet()) {
             if (!(table instanceof TableNode tableNode)) {
                 continue;
             }
-            List<ParagraphNode> paragraphs = new ArrayList<>();
-            collectComposedParagraphs(tableNode, paragraphs);
-            if (paragraphs.isEmpty()) {
+            List<DocumentNode> composed = new ArrayList<>();
+            collectComposedText(tableNode, composed);
+            if (composed.isEmpty()) {
                 continue;
             }
             // One queue per text, in layout order: each paragraph takes the first of its own text
-            // still waiting, so pairing a table is linear in its cells.
-            Map<String, java.util.ArrayDeque<PlacedFragment>> byText = new HashMap<>();
+            // still waiting, and each list the first run its first item's opens, so pairing a table
+            // is linear in its cells.
+            TableLines lines = new TableLines();
             for (PlacedFragment fragment : fragmentsOf(table)) {
-                if (fragment.payload() instanceof ParagraphFragmentPayload paragraph) {
-                    StringBuilder text = new StringBuilder();
-                    paragraph.lines().forEach(line -> text.append(line.text()));
-                    byText.computeIfAbsent(comparable(text.toString()), key -> new java.util.ArrayDeque<>())
-                            .add(fragment);
+                if (fragment.payload() instanceof ParagraphFragmentPayload) {
+                    lines.add(fragment);
                 }
             }
+            Map<String, java.util.ArrayDeque<PlacedFragment>> byText = lines.byText;
             List<ParagraphNode> unmatched = new ArrayList<>();
-            for (ParagraphNode paragraph : paragraphs) {
+            for (DocumentNode node : composed) {
+                if (node instanceof ListNode list) {
+                    List<PlacedFragment> items = itemFragments(list, lines);
+                    if (!items.isEmpty()) {
+                        items.forEach(lines::take);
+                        matched.put(list, items);
+                    }
+                    continue;
+                }
+                ParagraphNode paragraph = (ParagraphNode) node;
                 java.util.ArrayDeque<PlacedFragment> waiting = waitingFor(byText, authoredText(paragraph));
                 if (waiting != null) {
-                    matched.put(paragraph, waiting.poll());
+                    PlacedFragment fragment = waiting.peek();
+                    lines.take(fragment);
+                    matched.put(paragraph, List.of(fragment));
                 } else {
                     unmatched.add(paragraph);
                 }
@@ -1208,8 +1221,8 @@ final class DocxLayoutMetrics {
                     PlacedFragment fragment = waiting == null ? null : waiting.stream()
                             .filter(candidate -> setsThePieces(paragraph, pieces, candidate)).findFirst().orElse(null);
                     if (fragment != null) {
-                        waiting.remove(fragment);
-                        matched.put(paragraph, fragment);
+                        lines.take(fragment);
+                        matched.put(paragraph, List.of(fragment));
                     }
                 }
             }
@@ -1239,27 +1252,181 @@ final class DocxLayoutMetrics {
         return waiting == null || waiting.isEmpty() ? null : waiting;
     }
 
-    /** The paragraphs a table's composed cells hold, nested tables' included, in layout order. */
-    private static void collectComposedParagraphs(TableNode table, List<ParagraphNode> into) {
+    /**
+     * A table's lines of text in layout order, each with its text as {@link #comparable} has it, and
+     * the ones no paragraph or list composed in its cells has taken yet, a queue per text.
+     */
+    private static final class TableLines {
+        private final List<PlacedFragment> fragments = new ArrayList<>();
+        private final Map<PlacedFragment, Integer> index = new IdentityHashMap<>();
+        private final List<String> keys = new ArrayList<>();
+        private final Map<String, java.util.ArrayDeque<PlacedFragment>> byText = new HashMap<>();
+
+        void add(PlacedFragment fragment) {
+            StringBuilder text = new StringBuilder();
+            ((ParagraphFragmentPayload) fragment.payload()).lines().forEach(line -> text.append(line.text()));
+            String key = comparable(text.toString());
+            index.put(fragment, fragments.size());
+            fragments.add(fragment);
+            keys.add(key);
+            byText.computeIfAbsent(key, ignored -> new java.util.ArrayDeque<>()).add(fragment);
+        }
+
+        void take(PlacedFragment fragment) {
+            byText.get(keys.get(index.get(fragment))).removeIf(waiting -> waiting == fragment);
+        }
+    }
+
+    /**
+     * An item of a list as its table's lines hold it: the text of the line the page sets it in, its
+     * marker and indent before it where the page sets them in its text, and the marker the page sets
+     * in a column of its own before it, or {@code null} for none.
+     */
+    private record ItemLine(String text, com.demcha.compose.document.node.ListMarker column) {
+    }
+
+    /**
+     * The fragments a list composed in a table cell was laid out in, among its table's lines in
+     * layout order: the run that holds each of its items in turn, opening at a line of its first
+     * item's no paragraph or list before it took — a line whose text is the item's as the page lays
+     * it out, its marker and indent before it where the page sets them in its text
+     * ({@link DocxMarkdown#items}), and, for a {@code hangingIndent} list, the item's marker before it
+     * where the page sets one in a column of its own, level with it ({@link #itemLines}). Its lines
+     * after the opening are the list's own: the table lays a cell's content out whole, in order.
+     *
+     * <p>Empty, the list left without lines as before, where no run of its table's lines holds its
+     * items so: an item of runs, whose text is not read here; a blank item the page sets a marker
+     * alone for, as in the flow; an item the page runs onto the next page, laid out as a piece on
+     * each; one whose text the page reads as markdown, its marks dropped.</p>
+     */
+    private static List<PlacedFragment> itemFragments(ListNode list, TableLines lines) {
+        List<ItemLine> items = itemLinesOf(list);
+        if (items.isEmpty()) {
+            return List.of();
+        }
+        // A run opens at its first item's line, or at the marker set level before it.
+        java.util.ArrayDeque<PlacedFragment> openings = lines.byText.get(items.get(0).text());
+        for (PlacedFragment opening : openings == null ? List.<PlacedFragment>of() : openings) {
+            int at = lines.index.get(opening);
+            boolean marked = at > 0 && isTheMarker(lines, at - 1, items.get(0));
+            List<PlacedFragment> run = itemsFrom(lines, marked ? at - 1 : at, items);
+            if (run != null) {
+                return run;
+            }
+        }
+        return List.of();
+    }
+
+    /** The lines from {@code start} on that hold the items in turn, or {@code null} where they do not. */
+    private static List<PlacedFragment> itemsFrom(TableLines lines, int start, List<ItemLine> items) {
+        List<PlacedFragment> run = new ArrayList<>();
+        int at = start;
+        for (ItemLine item : items) {
+            if (at < lines.fragments.size() && isTheMarker(lines, at, item)) {
+                run.add(lines.fragments.get(at++));
+            }
+            if (at >= lines.fragments.size() || !lines.keys.get(at).equals(item.text())) {
+                return null;
+            }
+            run.add(lines.fragments.get(at++));
+        }
+        return run;
+    }
+
+    /**
+     * Whether the line at {@code at} is an item's marker set in a column of its own: the marker's
+     * letters, or only a drawing for a drawn one, level with the item's line after it. A marker that
+     * draws nothing lays out no line, and a paragraph's line level before the item's, in the cell
+     * before, is not one.
+     */
+    private static boolean isTheMarker(TableLines lines, int at, ItemLine item) {
+        if (item.column() == null || at + 1 >= lines.fragments.size()
+            || !lines.keys.get(at + 1).equals(item.text()) || !level(lines.fragments.get(at), lines.fragments.get(at + 1))) {
+            return false;
+        }
+        ParagraphFragmentPayload marker = (ParagraphFragmentPayload) lines.fragments.get(at).payload();
+        return item.column().isRich() ? drawsOnly(marker) : lines.keys.get(at).equals(comparable(item.column().value()));
+    }
+
+    /**
+     * Every item a list writes, as its table's lines would hold it ({@link ItemLine}), in the order
+     * {@link DocxMarkdown#items} reads them; empty for a list that cannot be matched: one holding an
+     * item of runs, a blank item of a {@code hangingIndent} list, or an item of no text.
+     */
+    private static List<ItemLine> itemLinesOf(ListNode list) {
+        if (holdsAnItemOfRuns(list.nestedItems())) {
+            return List.of();
+        }
+        List<com.demcha.compose.document.node.ListMarker> markers = new ArrayList<>();
+        for (String item : list.items()) {
+            if (!com.demcha.compose.document.node.ListMarker.normalizeItemText(item, list.normalizeMarkers()).isBlank()) {
+                markers.add(list.marker());
+            } else if (list.hangingIndent() && list.nestedItems().isEmpty() && list.marker().isVisible()) {
+                // The page draws its marker as a row of its own, which the export does not write.
+                return List.of();
+            }
+        }
+        addMarkers(list.nestedItems(), 0, markers);
+        // One reading an item, in the same order: no item of runs, which the readings leave out.
+        List<DocxMarkdown.ItemReading> readings = DocxMarkdown.items(list);
+        List<ItemLine> items = new ArrayList<>();
+        for (int index = 0; index < readings.size(); index++) {
+            DocxMarkdown.ItemReading reading = readings.get(index);
+            String text = comparable(reading.prefix() + reading.text());
+            if (text.isEmpty()) {
+                return List.of();
+            }
+            items.add(new ItemLine(text, list.hangingIndent() ? markers.get(index) : null));
+        }
+        return items;
+    }
+
+    /** The marker each item of a tree takes, its own or its depth's, depth first. */
+    private static void addMarkers(List<ListItem> items, int depth,
+                                   List<com.demcha.compose.document.node.ListMarker> into) {
+        for (ListItem item : items) {
+            into.add(item.marker() != null ? item.marker() : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth));
+            addMarkers(item.children(), depth + 1, into);
+        }
+    }
+
+    /** Whether two fragments stand level, one line of a list's item: its marker and its text. */
+    private static boolean level(PlacedFragment one, PlacedFragment other) {
+        return one.pageIndex() == other.pageIndex()
+               && Math.abs(one.y() - other.y()) < 0.01
+               && Math.abs(one.height() - other.height()) < 0.01;
+    }
+
+    private static boolean holdsAnItemOfRuns(List<ListItem> items) {
+        for (ListItem item : items) {
+            if (item.isRich() || holdsAnItemOfRuns(item.children())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** The paragraphs and lists a table's composed cells hold, nested tables' included, in layout order. */
+    private static void collectComposedText(TableNode table, List<DocumentNode> into) {
         for (List<DocumentTableCell> row : table.rows()) {
             for (DocumentTableCell cell : row) {
                 if (cell != null && cell.content() != null) {
-                    collectParagraphs(cell.content(), into);
+                    collectText(cell.content(), into);
                 }
             }
         }
     }
 
-    private static void collectParagraphs(DocumentNode node, List<ParagraphNode> into) {
-        if (node instanceof ParagraphNode paragraph) {
-            into.add(paragraph);
+    private static void collectText(DocumentNode node, List<DocumentNode> into) {
+        if (node instanceof ParagraphNode || node instanceof ListNode) {
+            into.add(node);
             return;
         }
         if (node instanceof TableNode nested) {
-            collectComposedParagraphs(nested, into);
+            collectComposedText(nested, into);
         }
         for (DocumentNode child : node.children()) {
-            collectParagraphs(child, into);
+            collectText(child, into);
         }
     }
 

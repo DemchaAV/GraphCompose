@@ -37,7 +37,8 @@ final class DocxExports {
      * text, and a row of such cells is moved up as much through its margins
      * ({@code DocxCellSeatTest}); a panel's or a composed cell's first line rises as much into its
      * top padding, and a row of columns' out of the space above its table
-     * ({@code DocxFirstLineSeatTest}).
+     * ({@code DocxFirstLineSeatTest}); a list's item rises as much into the gap above it, the item
+     * under it into what it owes ({@code DocxListItemSeatTest}).
      */
     static final long DEFAULT_LINE_RAISE = 6;
     /** {@link #DEFAULT_LINE_RAISE} for the default face at 7pt, the size tests set small text in. */

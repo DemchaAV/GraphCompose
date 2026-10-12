@@ -8,6 +8,35 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export stands a list's items where the page sets them in their exact lines, as it does a
+  paragraph's.** Word and LibreOffice stand an exact line's baseline four fifths of the way down it,
+  the page its face's ascent below the line's top, and a paragraph's line is moved there; a list
+  item's was not moved at all. By the export's own measure of Word's seat, 68 items of the corpus
+  stood low by under half a point, a median 0.22pt, and 16 high by half a point and more; measured,
+  they stood about where it put them: `BoxedSections`' skills, 0.18pt low by it, 0.23 to 0.28pt low
+  in Word and LibreOffice, `MidnightNavy`'s two-line duties, 0.9pt high by it, 0.76 to 1.06pt high.
+  An item is now seated as a paragraph is: a line set low rises into the gap above it as far as the
+  gap goes and owes as much below, which the item under it rises into in turn; under half a point, one
+  opening a cell takes what the gap cannot give from the cell's padding, or from the space above its
+  row of columns; and what is left where the whole difference is half a point or more, and a line set
+  that much high, is its text's position. Not raised into the gap, though still moved by its position
+  where it takes one: an item the layout opens a page with — the first of a list it starts on a new
+  page in the flow, or one it sets on a later page than the item before it — whose space above Word
+  drops there, nor one of a list the layout sets over two pages in a cell, where what an item owed
+  would be the space above the next page's first, inside the cell. An item whose marker Word draws,
+  a Word list's, is not moved by its position: Word sets that marker from the paragraph's mark,
+  which LibreOffice does not move by the mark's position — lowered a point by both, `MidnightNavy`'s
+  duties stood 1.15pt under their bullets there — so its line keeps what the space above does not
+  take of it, and `MidnightNavy`'s and `NavySidebar`'s duties stand as high as before. An item the
+  layout's lines are not matched to, as `SlateOrange`'s certifications in a table's composed cell, is
+  not seated.
+
+  `ClassicInvoice`'s notes moved up 0.24 to 0.36pt in Word and 0.3pt in LibreOffice, to within
+  0.05pt of the page, `BoxedSections`' and `ModernProfessional`'s skills and projects 0.12 to 0.24pt
+  and 0.2pt, and `Executive`'s project descriptions, items of a list Word does not number, down
+  0.48pt and 0.55pt, to within 0.06pt. By median, 5 documents moved nearer the page in Word, 3 in
+  LibreOffice on Windows and 3 in LibreOffice 24.2, none further.
+
 - **A DOCX export stands the first line of a panel, a table's composed cell and a row's column where
   the page sets it, where nothing was written above the line to raise it into.** Word and LibreOffice
   stand an exact line's baseline four fifths of the way down it, and a line the page sets higher is

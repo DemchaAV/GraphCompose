@@ -532,6 +532,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** The gap between the wrapped lines of an item of the list being written. */
     private double listLineGap;
 
+    /**
+     * Whether the layout starts the list being written in the flow on a page after the block before
+     * it; never in a cell or an overlay.
+     */
+    private boolean listOpensItsPage;
+
+    /** Whether the layout placed the list being written all on one page. */
+    private boolean listOnOnePage;
+
+    /** The page the layout set the last item of the list being written on; -1 before its first. */
+    private int itemPage = -1;
+
     /** Where the list being written starts its items on the page, in points; NaN unknown. */
     private double listTextLeft = Double.NaN;
     /** Whether the layout's items are matched to the list's, one by one: each then has its place. */
@@ -4262,6 +4274,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean previousItemWritten = anItemWasWritten;
         anItemWasWritten = false;
         double previousLineGap = listLineGap;
+        boolean previousOpensItsPage = listOpensItsPage;
+        boolean previousOnOnePage = listOnOnePage;
+        int previousItemPage = itemPage;
+        // Where the layout set the list's items, for seating them (seatTheItem).
+        listOpensItsPage = currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(list);
+        listOnOnePage = layout.onOnePage(list);
+        itemPage = -1;
         java.util.ArrayDeque<DocxLayoutMetrics.ItemText> previousItemLines =
                 listItemLines;
         // The list's lineSpacing stands between the lines of an item that wraps, and only
@@ -4302,6 +4321,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             pendingItemSpacing = previousItemSpacing;
             anItemWasWritten = previousItemWritten;
             listLineGap = previousLineGap;
+            listOpensItsPage = previousOpensItsPage;
+            listOnOnePage = previousOnOnePage;
+            itemPage = previousItemPage;
             listItemLines = previousItemLines;
             listTextLeft = previousTextLeft;
             listItemsMatched = previousMatched;
@@ -4809,6 +4831,47 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         writeItemText(para, style, numId != null ? "" : "  ".repeat(depth) + marker, label, reading, laidOut);
         styleTheMark(para, style);
+        seatTheItem(para, laidOut, numId != null);
+    }
+
+    /**
+     * Stands an item's text where the page sets it in its exact lines, as a paragraph's is
+     * ({@link #shiftToThePagesBaseline}): Word stands an exact line's baseline four fifths of the
+     * way down it whatever the face, where the page sets it its ascent below the line's top.
+     *
+     * <p>An item's line Word sets low rises into the space above it, the gap between the items, as
+     * far as that space goes, and owes as much below, which the item under it rises into in turn.
+     * Under half a point, one opening a cell takes what that space cannot give from the cell's
+     * padding, or from the space above its row of columns. What is left, where the whole difference
+     * is half a point or more, and a line set that much high, is the text's position — but not for
+     * an item whose marker Word draws: Word sets that marker from the paragraph's mark, and
+     * LibreOffice does not move it by the mark's position — {@code MidnightNavy}'s duties, lowered a
+     * point by their text's and their mark's, stood 1.15pt under their bullets there (measured). Its
+     * line keeps what the space above does not take of it.</p>
+     *
+     * <p>Not raised into the space above, though still moved by its position where it takes one: an
+     * item the layout opens a page with — the first of a list it starts on a new page in the flow, or
+     * one on a later page than the item before it. Word drops its space above at the top of a page,
+     * and what its line owed would stand the rest lower. Nor an item of a list the layout sets over
+     * two pages in a cell, the cell going on on the next: what an item owed there would be the space
+     * above the one opening that page, inside the cell, which Word is not known to drop. An item the
+     * layout's lines are not matched to is not seated at all.</p>
+     *
+     * @param laidOut            how the layout set the item, or {@code null} where its items are
+     *                           not matched
+     * @param wordDrawsTheMarker whether the item is a Word list's, its marker drawn by Word
+     */
+    private void seatTheItem(XWPFParagraph para, DocxLayoutMetrics.ItemText laidOut, boolean wordDrawsTheMarker) {
+        if (laidOut == null) {
+            return;
+        }
+        boolean opensItsPage = itemPage < 0 ? listOpensItsPage : laidOut.page() > itemPage;
+        itemPage = laidOut.page();
+        boolean staysOnItsPage = !opensItsPage && (currentCell == null || listOnOnePage);
+        double shift = shiftToThePagesBaseline(para, laidOut.lines(), listLineGap, 0, false, true, staysOnItsPage);
+        if (!wordDrawsTheMarker) {
+            raiseRunsFrom(para, 0, Math.round(shift * HALF_POINTS_PER_POINT));
+        }
     }
 
     /**
@@ -4998,6 +5061,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         makeRoomForPictures(para, pictures);
         styleTheMark(para, markStyle);
+        seatTheItem(para, laidOut, false);
         return atItsText || textTab || pictureTab || depth == 0 && drawsNoMarker(marker);
     }
 
@@ -9829,6 +9893,38 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private double shiftToThePagesBaseline(XWPFParagraph para, ParagraphNode node, double lineTopAbove,
                                            boolean heldExact, boolean ownsItsLine) {
+        // A line starting elsewhere than the page's — a stack's, a line pair's — was cut to fit
+        // its letters where the page sets them, and is seated however little; so is one cut to
+        // its pictures' reach, whose ink stands at its edges.
+        boolean cutToFit = lineTopAbove != 0 || stackedLineHeights.containsKey(node) || heldExact;
+        // Not a paragraph the layout opens a page with, nor one it breaks over a page, but one in
+        // a cell of a row Word keeps whole (raiseIntoTheSpaceAbove).
+        boolean staysOnItsPage = node != paragraphOpeningItsPage && (layout.onOnePage(node) || inARowKeptWhole());
+        return shiftToThePagesBaseline(para, layout.lines(node), layout.lineGap(node), lineTopAbove, cutToFit,
+                ownsItsLine, staysOnItsPage);
+    }
+
+    /**
+     * How far Word's baseline in exact lines of text the layout set stands below the page's, in
+     * points, positive when Word's is lower, after what the space above took of it: the position
+     * left to move, 0 where the whole difference is under half a point, which the space above, a
+     * cell's padding or the space above a row of columns takes instead (see
+     * {@link #shiftToThePagesBaseline(XWPFParagraph, ParagraphNode, double, boolean, boolean)}).
+     *
+     * @param lines          the lines the layout set the text on
+     * @param lineGap        the gap the layout puts between them, beyond their own height
+     * @param lineTopAbove   how far above the page's first line the Word line starts, in points
+     * @param cutToFit       whether the line was cut to fit its letters or its pictures, and so
+     *                       is seated however little
+     * @param ownsItsLine    whether the Word paragraph holds this text alone, and so its line can
+     *                       move for it
+     * @param staysOnItsPage whether the space above the line stays above it on its page, which a
+     *                       raise into it needs
+     */
+    private double shiftToThePagesBaseline(XWPFParagraph para,
+                                           List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
+                                           double lineGap, double lineTopAbove, boolean cutToFit,
+                                           boolean ownsItsLine, boolean staysOnItsPage) {
         CTPPr properties = para.getCTP().getPPr();
         if (properties == null || !properties.isSetSpacing()) {
             return 0;
@@ -9839,28 +9935,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (written == null) {
             return 0;
         }
-        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : layout.lines(node)) {
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
             if (line.spans().stream().anyMatch(
                     span -> span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan)) {
                 // Lines whose gaps Word shares out step closer than the page's; the middle one is
                 // matched, so the first and last are off by as little as the steps allow.
                 double wordLine = written / POINT_TO_TWIP;
-                double middle = Math.max(0, layout.lineCount(node) - 1) / 2.0;
-                double pageStep = line.lineHeight() + layout.lineGap(node);
+                double middle = Math.max(0, lines.size() - 1) / 2.0;
+                double pageStep = line.lineHeight() + lineGap;
                 double pages = lineTopAbove + lineTopsTakenIn.getOrDefault(para.getCTP(), 0.0)
                                + middle * pageStep + line.lineHeight() - line.baselineOffsetFromBottom();
                 double shift = middle * wordLine + wordLine * DocxTextBands.BASELINE_SHARE - pages;
-                // A line starting elsewhere than the page's — a stack's, a line pair's — was cut
-                // to fit its letters where the page sets them, and is seated however little; so
-                // is one cut to its pictures' reach, whose ink stands at its edges.
-                boolean cutToFit = lineTopAbove != 0 || stackedLineHeights.containsKey(node) || heldExact;
                 // The position is moved as before where the whole shift called for it, whatever
                 // the space above took off it: a line 0.6pt low with 0.2pt above it is left a tenth
                 // off by its position, not four tenths.
                 boolean moved = Math.abs(shift) >= LEAST_BASELINE_SHIFT_POINTS || cutToFit;
                 if (ownsItsLine && !cutToFit) {
                     // Under half a point the position moves nothing, so the cell's padding may.
-                    shift -= raiseIntoTheSpaceAbove(para, node, spacing, shift, !moved);
+                    shift -= raiseIntoTheSpaceAbove(para, staysOnItsPage, spacing, shift, !moved);
                     if (!moved) {
                         noteAFirstLineLow(para, shift);
                     }
@@ -9901,10 +9993,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * that page's top, where the space above moves none of them, and what it owed would stand
      * what follows them lower. A paragraph in a cell of a row Word keeps whole is on one page
      * wherever the row lands, though a table's composed cell has no placement of its own to say
-     * so ({@link #inARowKeptWhole}). Not the space above a panel's first paragraph that the
-     * panel's top border takes ({@link #takeTheTopBorderInside}): raised into it, the line would
-     * give it back and the panel grow by what it owed. Less than
-     * {@link #LEAST_RAISE_INTO_THE_SPACE_ABOVE} is not moved.</p>
+     * so ({@link #inARowKeptWhole}). A list's item is raised as a paragraph is, but for the first
+     * of a list the layout starts on a new page, one it sets on a later page than the item before
+     * it, and one of a list it sets over two pages in a cell ({@link #seatTheItem}). Not the space
+     * above a panel's first paragraph that the panel's top border takes
+     * ({@link #takeTheTopBorderInside}): raised into it, the line would give it back and the panel
+     * grow by what it owed. Less than {@link #LEAST_RAISE_INTO_THE_SPACE_ABOVE} is not moved.</p>
      *
      * <p>A paragraph opening a cell has no space above it where the cell's padding is its own
      * margin, and its line was left as low as Word set it under half a point. What its space above
@@ -9917,17 +10011,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * (measured).</p>
      *
      * @param para           the Word paragraph
-     * @param node           the paragraph it is written for
+     * @param staysOnItsPage whether what the line takes from the space above stays above it on its
+     *                       page: not where the layout opens a page with the line or breaks it over
+     *                       one, nor sets the list it is an item of over two pages in a cell
      * @param spacing        the paragraph's spacing, its space above already written
      * @param raise          how far Word sets the line below the page's, in points
      * @param intoThePadding whether the cell's padding may give what the space above cannot
      * @return how far the line was raised, in points
      */
-    private double raiseIntoTheSpaceAbove(XWPFParagraph para, ParagraphNode node, CTSpacing spacing,
+    private double raiseIntoTheSpaceAbove(XWPFParagraph para, boolean staysOnItsPage, CTSpacing spacing,
                                           double raise, boolean intoThePadding) {
         // A band and the text laid over the flow are overlays too (writeOverlayBand, writeOverTheFlow).
-        if (!(raise >= LEAST_RAISE_INTO_THE_SPACE_ABOVE) || overlayDepth > 0
-            || node == paragraphOpeningItsPage || !layout.onOnePage(node) && !inARowKeptWhole()) {
+        if (!(raise >= LEAST_RAISE_INTO_THE_SPACE_ABOVE) || overlayDepth > 0 || !staysOnItsPage) {
             return 0;
         }
         long room = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null)

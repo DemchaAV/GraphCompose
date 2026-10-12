@@ -132,7 +132,8 @@ class DocxContainerPaintTest {
             XWPFTable table = document.getTables().get(0);
             var margins = onlyCell(document).getCTTc().getTcPr().getTcMar();
 
-            assertThat(DocxTwips.of(margins.getTop().getW())).isEqualTo(10 * 20L);
+            // Less what its first line rises into it, as Word sets that line low.
+            assertThat(DocxTwips.of(margins.getTop().getW())).isEqualTo(10 * 20L - DocxExports.DEFAULT_LINE_RAISE);
             assertThat(DocxTwips.of(margins.getRight().getW())).isEqualTo(14 * 20L);
             assertThat(DocxTwips.of(margins.getBottom().getW())).isEqualTo(12 * 20L);
             assertThat(DocxTwips.of(margins.getLeft().getW())).isEqualTo(16 * 20L);
@@ -182,7 +183,8 @@ class DocxContainerPaintTest {
             var margins = onlyCell(document).getCTTc().getTcPr().getTcMar();
 
             assertThat(DocxTwips.of(margins.getLeft().getW())).as("the padding, all of it").isEqualTo(280L);
-            assertThat(DocxTwips.of(margins.getTop().getW())).as("no border on top").isEqualTo(280L);
+            assertThat(DocxTwips.of(margins.getTop().getW())).as("no border on top, less what its first line rises into")
+                    .isEqualTo(280L - DocxExports.DEFAULT_LINE_RAISE);
             assertThat(DocxTwips.of(table.getCTTbl().getTblPr().getTblW().getW()))
                     .as("no wider on its left, where its border is centred on its edge")
                     .isEqualTo(Math.round((placed + DocxSemanticBackend.EDITOR_COLUMN_SLACK_POINTS) * 20));

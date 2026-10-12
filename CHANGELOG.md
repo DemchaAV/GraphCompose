@@ -8,6 +8,42 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export stands the first line of a panel, a table's composed cell and a row's column where
+  the page sets it, where nothing was written above the line to raise it into.** Word and LibreOffice
+  stand an exact line's baseline four fifths of the way down it, and a line the page sets higher is
+  moved up into the space written above it; under half a point, a line with no such space was left
+  as low as Word set it. A line opening a cell has none of its own: a panel's padding and a table
+  cell's are the cell's margin, and a row's columns have their space above written above the row's
+  table. By the export's own measure of Word's seat, 250 lines of the corpus stood so, a median
+  0.22pt low; measured, `ClassicInvoice`'s "TOTAL DUE" stood 0.18pt low in its panel in Word and
+  0.2pt in LibreOffice. Under half a point, a line opening a cell now takes what its space above
+  cannot give from the top padding of the cell it opens — a panel's, less what its top border takes,
+  the panel's row held as much taller, as Word adds the margin left to the height a row is held at;
+  a table's composed cell's, in a row whose margins even, the cells beside it taking the margin back
+  above their first lines — and a row of columns' first row is lifted out of the space above its
+  table by the most its cells' first lines call for, each line rising by its own and the space under
+  it taking that back, so what follows stays. Not a row the layout moves to a new page, whose space
+  above stays on the page above, a row held to a height, or one whose column opens with a panel or a
+  table, which would rise whole. A paragraph in a table's composed cell, in a row the layout placed,
+  is raised into the space above it as anywhere else: the cell has no placement of its own, but its
+  row is kept on one page; one in a table nested in that cell is not yet.
+  Half a point and more is the position's, as before: taken from the padding, `CobaltRota`'s
+  masthead, whose position LibreOffice moves further than it says, came out 0.5 to 0.7pt lower there.
+  LibreOffice 24.2 counts a row's margins inside the height it is held at, so a panel or a table
+  row held taller than its text — a drawing set where the page puts it — comes out taller there by
+  the raise.
+
+  `ClassicInvoice`'s header, "BILL TO", "FROM" and "TOTAL DUE" moved up 0.24 to 0.36pt in Word and
+  0.2 to 0.4pt in LibreOffice, `ConsultingInvoice`'s line items 0.24 to 0.36pt and 0.35pt,
+  `ModernProfessional`'s entries 0.24pt and 0.2pt, everything under them where it was. By median,
+  12 documents moved nearer the page in Word and none further, 10 in LibreOffice on Windows and 9 in
+  LibreOffice 24.2, one further in each: `LumaStudioInvoice`, from 0.12pt to 0.14pt, whose line-items
+  table stands 0.13 to 0.16pt high in LibreOffice at its header's fill and its rules, which its
+  first lines, set low, made up for. In Word, a text cell beside a composed one that rose can stand a
+  step of Word's 0.12pt grid off, either way, its share of the row's margin written as space above
+  it. `ClassicInvoice`'s notes and payment terms still stand 0.2 to 0.26pt low in their rows: their
+  columns are ruled down their left side, panels in their cells, with no padding above their lines.
+
 - **A DOCX export stands a table text cell's text where the page sets it by the height of its
   lines, where its row's margins leave less than half a point of what it calls for.** Word and
   LibreOffice stand an exact line's baseline four fifths of the way down it, and the page sets a

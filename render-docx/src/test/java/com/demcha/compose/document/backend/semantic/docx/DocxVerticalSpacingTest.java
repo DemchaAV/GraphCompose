@@ -454,7 +454,8 @@ class DocxVerticalSpacingTest {
                         .addParagraph(p -> p.text("Right")))
                 .addParagraph(p -> p.text("After")));
 
-        assertThat(after(paragraphs.get(0))).isEqualTo(Math.round(14 * TWIPS_PER_POINT));
+        // Less what the row's first lines, set low in Word, rise out of the space above it.
+        assertThat(after(paragraphs.get(0))).isEqualTo(Math.round(14 * TWIPS_PER_POINT) - RAISE);
         assertThat(before(paragraphs.get(1))).isEqualTo(Math.round(14 * TWIPS_PER_POINT) - RAISE);
     }
 

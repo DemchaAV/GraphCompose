@@ -81,7 +81,9 @@ class DocxContainerSpacingTest {
             List<XWPFParagraph> paragraphs = written(cell.getParagraphs());
 
             assertThat(paragraphs).extracting(XWPFParagraph::getText).containsExactly("First", "Second");
-            assertThat(before(paragraphs.get(1))).isEqualTo(NINE_POINTS - RAISE);
+            // The first line rises into the panel's padding and owes the second as much, which
+            // the second rises into.
+            assertThat(before(paragraphs.get(1))).isEqualTo(NINE_POINTS);
         }
     }
 
@@ -249,7 +251,8 @@ class DocxContainerSpacingTest {
 
             assertThat(body.get(0)).as("a paragraph before the table carries the space")
                     .isInstanceOf(XWPFParagraph.class);
-            assertThat(before((XWPFParagraph) body.get(0))).isEqualTo(18 * 20L);
+            // Less what the row's first lines, set low in Word, rise out of it.
+            assertThat(before((XWPFParagraph) body.get(0))).isEqualTo(18 * 20L - RAISE);
             assertThat(body.get(1)).isInstanceOf(XWPFTable.class);
         }
     }
@@ -323,7 +326,8 @@ class DocxContainerSpacingTest {
 
             assertThat(body.get(table - 1)).as("a paragraph after the break carries the space")
                     .isInstanceOf(XWPFParagraph.class);
-            assertThat(before((XWPFParagraph) body.get(table - 1))).isGreaterThanOrEqualTo(18 * 20L);
+            // Less what the row's first lines, set low in Word, rise out of it.
+            assertThat(before((XWPFParagraph) body.get(table - 1))).isGreaterThanOrEqualTo(18 * 20L - RAISE);
         }
     }
 

@@ -170,7 +170,8 @@ class DocxPanelTailTest {
                         })
                         .addParagraph("Beside"))
                 .addParagraph(p -> p.name("After").text("After")));
-        long down = reachBelow(exported, "Iconed");
+        // The card's first line rises out of its padding, and owes the space above the icon's.
+        long down = reachBelow(exported, "Iconed", DocxExports.SMALL_LINE_RAISE);
 
         assertThat(down).as("the line reaches below the page's").isPositive();
         assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
@@ -279,7 +280,8 @@ class DocxPanelTailTest {
                 .fillColor(SURFACE).borders(DocumentBorders.top(RULE)).padding(DocumentInsets.of(4)).addParagraph("Inside")));
 
         assertThat(exported.report().bySubject()).doesNotContainKey("SectionNode");
-        assertThat(topMargin(panel(exported))).as("its padding, less the whole border").isEqualTo(2 * 20);
+        assertThat(topMargin(panel(exported))).as("its padding, less the whole border and what its first line rose into")
+                .isEqualTo(2 * 20 - DocxExports.DEFAULT_LINE_RAISE);
     }
 
     @Test
@@ -289,8 +291,9 @@ class DocxPanelTailTest {
         Exported exported = export(page -> page.addSection("Card", card -> card.fillColor(SURFACE).stroke(RULE)
                 .padding(DocumentInsets.of(4)).addParagraph("Inside")).addParagraph("After"));
 
+        // Its first line rises into its padding, and the panel is held as much taller.
         assertThat(panel(exported).getTableRow().getHeight()).as("the page's height, less its padding")
-                .isEqualTo(Math.round((exported.heights().get("Card") - 8) * 20));
+                .isEqualTo(Math.round((exported.heights().get("Card") - 8) * 20) + DocxExports.DEFAULT_LINE_RAISE);
         assertThat(exported.report().bySubject()).doesNotContainKey("space above").doesNotContainKey("SectionNode");
     }
 
@@ -532,7 +535,8 @@ class DocxPanelTailTest {
                 .addSection("Card", card -> card.fillColor(SURFACE).borders(DocumentBorders.top(RULE))
                         .margin(new DocumentInsets(6, 0, 0, 0)).padding(DocumentInsets.of(4)).addParagraph("Inside")));
 
-        assertThat(topMargin(panel(exported))).as("its padding, less the whole border").isEqualTo(2 * 20);
+        assertThat(topMargin(panel(exported))).as("its padding, less the whole border and what its first line rose into")
+                .isEqualTo(2 * 20 - DocxExports.DEFAULT_LINE_RAISE);
         assertThat(exported.report().bySubject()).doesNotContainKey("space above").doesNotContainKey("SectionNode");
     }
 
@@ -610,8 +614,9 @@ class DocxPanelTailTest {
         Exported exported = hungOverACard(gap);
 
         assertThat(reachBelow(exported, "Iconed")).as("the same line").isEqualTo(down);
-        assertThat(topMargin(panel(exported))).as("its padding less half the border, less the half point the space left")
-                .isEqualTo((4 - 1) * 20 - 10);
+        assertThat(topMargin(panel(exported)))
+                .as("its padding less half the border, less the half point the space left and what its first line rose into")
+                .isEqualTo((4 - 1) * 20 - 10 - DocxExports.DEFAULT_LINE_RAISE);
         assertThat(exported.report().bySubject()).doesNotContainKey("space above").doesNotContainKey("SectionNode");
     }
 
@@ -707,6 +712,14 @@ class DocxPanelTailTest {
      * the paragraph's top (the space above it written that much shorter).
      */
     private static long reachBelow(Exported exported, String name) {
+        return reachBelow(exported, name, 0);
+    }
+
+    /**
+     * {@link #reachBelow(Exported, String)}, where the line above it rose by {@code rose} twips
+     * out of its card's padding and owes that much above this one.
+     */
+    private static long reachBelow(Exported exported, String name, long rose) {
         // The icon's line — "GitHub" and its icon, in contact() — wherever the tables put it.
         List<XWPFParagraph> paragraphs = new java.util.ArrayList<>(exported.document().getParagraphs());
         exported.document().getTables().forEach(table -> collect(table, paragraphs));
@@ -714,7 +727,7 @@ class DocxPanelTailTest {
         CTSpacing spacing = iconed.getCTP().getPPr().getSpacing();
         assertThat(spacing.getLineRule()).as("held to its icon")
                 .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
-        long up = 3 * 20 - (spacing.isSetBefore() ? DocxTwips.of(spacing.getBefore()) : 0);
+        long up = 3 * 20 + rose - (spacing.isSetBefore() ? DocxTwips.of(spacing.getBefore()) : 0);
         return DocxTwips.of(spacing.getLine()) - up - Math.round(exported.heights().get(name) * 20);
     }
 

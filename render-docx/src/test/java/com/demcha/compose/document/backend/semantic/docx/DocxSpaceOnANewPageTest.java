@@ -96,8 +96,10 @@ class DocxSpaceOnANewPageTest {
             XWPFParagraph above = paragraphBefore(document, onlyTable(document));
 
             assertThat(above.getText()).as("no line between them").isNotEmpty();
-            assertThat(spacingAfter(above)).as("and what that line owes below it for its raise")
-                    .isEqualTo(Math.round((GAP + EDGE) * 20) + DocxExports.DEFAULT_LINE_RAISE);
+            // What that line owes below it for its raise, the row's first lines, set as low,
+            // rise out of again.
+            assertThat(spacingAfter(above)).as("and what that line owes below it for its raise, taken back")
+                    .isEqualTo(Math.round((GAP + EDGE) * 20));
         }
     }
 

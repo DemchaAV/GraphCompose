@@ -813,8 +813,10 @@ class DocxComposedCellTest {
                 int asTheCell = heightOf(document.getTables().get(1));
 
                 // 12pt above and below, less the default 1pt rule on each side that Word gives
-                // room of its own.
-                assertThat(inside - asTheCell).as("the second cell's 22pt of margins").isEqualTo(22 * 20);
+                // room of its own, and less what the second cell's first line rose into its
+                // padding: the margin left is that much less, and the row's height that much more.
+                assertThat(inside - asTheCell).as("the second cell's 22pt of margins")
+                        .isEqualTo(22 * 20 - DocxExports.DEFAULT_LINE_RAISE);
             }
         }
     }

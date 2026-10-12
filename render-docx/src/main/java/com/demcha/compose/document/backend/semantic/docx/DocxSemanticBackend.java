@@ -289,6 +289,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private final java.util.Map<XWPFTable, java.util.Map<XWPFTableCell, Double>> raisedRows =
             new java.util.LinkedHashMap<>();
+    /**
+     * The tables whose first row's cells open with a line Word sets low, by cell — see
+     * {@link #noteAFirstLineLow}. In the order they were written, as {@link #raisedRows}.
+     */
+    private final java.util.Map<XWPFTable, java.util.Map<XWPFTableCell, FirstLine>> firstLinesUnderTheRow =
+            new java.util.LinkedHashMap<>();
     // The spacers that keep the place of another column layer's content, left out while the
     // layer stack they sit in is written as columns (DocxLayerColumns).
     private final java.util.Set<DocumentNode> standIns =
@@ -420,6 +426,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // How much of the space above the first paragraph of panelCell its top border takes, in twips
     // (writePanelPiece): no room to raise that paragraph's line into (raiseIntoTheSpaceAbove).
     private long panelsFirstLineKeeps;
+    // How much of the top margin of panelCell its top border takes, in twips (writePanelPiece):
+    // no room to raise its first line into (paddingAbove).
+    private long panelsMarginKeeps;
+    // Whether panelCell's first line may be raised into its top margin: the panel is written whole,
+    // and its row holds its height (writePanelPiece).
+    private boolean panelsPaddingGives;
+    // How much of panelCell's top margin its first line was raised into, in twips: the panel's row
+    // is held as much taller (writePanelPiece).
+    private long panelRaisedFromItsPadding;
+    // The rows of a table the layout placed, and Word keeps whole, before breakRowsWhereTheLayoutDoes
+    // marks them so: their paragraphs are on one page (inARowKeptWhole).
+    private final java.util.Set<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRow> rowsPlacedWhole =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // The tables written for a row of columns whose first row raiseRows may lift for its cells'
+    // first lines (noteAFirstLineLow): not opening a page.
+    private final java.util.Set<XWPFTable> rowsLiftedForTheirLines =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // Whether the row of columns being written is a block the layout moves to a new page
+    // (writeTableWithItsOwnSpacing): the space above its table stays on the page above.
+    private boolean rowOpeningItsPage;
     // The text style the document is mostly written in, promoted to Word's Normal style.
     // Null until an export computes it, and when the graph carries no text at all.
     private DocumentTextStyle documentDefaultStyle;
@@ -819,6 +845,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         cellTextShift = 0;
         paragraphOpeningItsPage = null;
         panelsFirstLineKeeps = 0;
+        panelsMarginKeeps = 0;
+        panelsPaddingGives = false;
+        panelRaisedFromItsPadding = 0;
+        rowsPlacedWhole.clear();
+        firstLinesUnderTheRow.clear();
+        rowsLiftedForTheirLines.clear();
+        rowOpeningItsPage = false;
         lastRaise = 0;
         blocksAtTheLastRaise = -1;
         nextDrawingId = 100_000;
@@ -5420,14 +5453,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // first paragraph (takeTheTopBorderInside, below): that much of it is no room to raise a
         // line into.
         long outerKeptAbove = panelsFirstLineKeeps;
+        long outerMarginKept = panelsMarginKeeps;
+        boolean outerGives = panelsPaddingGives;
+        long outerRaised = panelRaisedFromItsPadding;
         panelsFirstLineKeeps = Math.max(0, toTwips(topNotTaken) - cellMargin(cell, true));
+        // What the padding takes of it is no room either (paddingAbove). A shape's layers are
+        // centred in the outline it holds whole, and its first line rises into nothing of it.
+        panelsMarginKeeps = Math.min(cellMargin(cell, true), toTwips(topNotTaken));
+        panelsPaddingGives = first && last && !(node instanceof ShapeContainerNode);
+        panelRaisedFromItsPadding = 0;
+        long raisedFromThePadding;
         try {
             writeInCell(cell, content);
         } finally {
+            raisedFromThePadding = panelRaisedFromItsPadding;
             surfaceBehind = outerSurface;
             currentCellWidth = outerCellWidth;
             panelCell = outerPanelCell;
             panelsFirstLineKeeps = outerKeptAbove;
+            panelsMarginKeeps = outerMarginKept;
+            panelsPaddingGives = outerGives;
+            panelRaisedFromItsPadding = outerRaised;
         }
         if (cell.getParagraphs().isEmpty()) {
             // A panel with nothing Word can hold inside is its padding tall on the page, not a
@@ -5454,7 +5500,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // Its height is the page's: what makes a panel taller than its text — an icon drawn
             // where the page puts it, a fixed outline — is not in the cell. MerchantInvoice's
             // due-date card closed from 59.4pt to its text's 26, and its calendar hung below it.
-            holdThePanelsHeight(table.getRow(0), placed.placementHeight() - fromTheContent, padding, heldWhole, false);
+            // A first line raised out of its padding is held that much taller: Word adds the
+            // margin left to the height a row is held at, and the panel held at its content's
+            // would come out that much shorter, all under it higher.
+            holdThePanelsHeight(table.getRow(0), placed.placementHeight() - fromTheContent
+                    + raisedFromThePadding / POINT_TO_TWIP, padding, heldWhole, false);
         } else if (first && last && layout.placement(node) == null && node instanceof ShapeContainerNode shape
                    && shape.outline().height() > 0) {
             // Composed in a table cell, it has no placement; its outline states its height, as it
@@ -7090,10 +7140,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * two tables apart and holds none of it, by the foot of the table above
      * ({@link #takeFromTheFoot}). Every other cell of the row then starts that much lower inside,
      * and the cell whose text stood out by less than the lift starts lower by the difference.
+     *
+     * <p>A row of columns whose cells open with a line Word sets low, by what neither the space
+     * above it nor a padding could take ({@link #noteAFirstLineLow}), is lifted by the most any
+     * calls for too, and only that line rises: the space under it takes back what it rose
+     * ({@link #liftEachCell}). {@code ModernProfessional}'s entries, a title beside its dates in a
+     * row of their own, rose 0.24pt in Word and 0.2pt in LibreOffice, nearer the page by as much,
+     * all under them where it was (measured).</p>
      */
     private void raiseRows() {
-        for (java.util.Map.Entry<XWPFTable, java.util.Map<XWPFTableCell, Double>> noted : raisedRows.entrySet()) {
-            XWPFTable table = noted.getKey();
+        java.util.Set<XWPFTable> tables = new java.util.LinkedHashSet<>(raisedRows.keySet());
+        tables.addAll(firstLinesUnderTheRow.keySet());
+        for (XWPFTable table : tables) {
+            java.util.Map<XWPFTableCell, Double> standing = raisedRows.getOrDefault(table, java.util.Map.of());
+            java.util.Map<XWPFTableCell, FirstLine> firsts = firstLinesUnderTheRow.getOrDefault(table, java.util.Map.of());
+            if (!firsts.isEmpty() && !liftsForItsFirstLines(table)) {
+                firsts = java.util.Map.of();
+            }
+            if (standing.isEmpty() && firsts.isEmpty()) {
+                continue;
+            }
+            double most = 0;
+            for (double points : standing.values()) {
+                most = Math.max(most, points);
+            }
+            for (FirstLine first : firsts.values()) {
+                most = Math.max(most, first.low());
+            }
             List<IBodyElement> around = table.getBody().getBodyElements();
             int index = around.indexOf(table);
             if (index <= 0 || !(around.get(index - 1) instanceof XWPFParagraph above)) {
@@ -7105,21 +7178,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             CTSpacing gap = properties.getSpacing();
             long after = gap.isSetAfter() ? twipsOf(gap.getAfter()) : 0;
-            // An empty paragraph between two blocks is a separator, except a rule: its space
-            // above is where the page draws the line.
-            boolean separator = above.getText().isEmpty() && !properties.isSetPBdr();
+            // An empty paragraph between two blocks is a separator, except a rule, whose space
+            // above is where the page draws the line, and a picture set in its line, which the
+            // space above places — a drawing anchored to the page may hang on it all the same.
+            boolean separator = above.getText().isEmpty() && !properties.isSetPBdr() && !takesRoom(above);
             long before = separator && gap.isSetBefore() ? twipsOf(gap.getBefore()) : 0;
-            long wanted = toTwips(java.util.Collections.max(noted.getValue().values()));
+            long wanted = toTwips(most);
             long lift = Math.min(after + before, wanted);
-            // The paragraph keeping two tables apart takes no room — a drawing anchored to the page
-            // may hang on it — and keeps with the table after.
-            boolean betweenTables = separator && !takesRoom(above) && properties.isSetKeepNext()
+            // The paragraph keeping two tables apart keeps with the table after.
+            boolean betweenTables = separator && properties.isSetKeepNext()
                     && index >= 2 && around.get(index - 2) instanceof XWPFTable;
             if (lift <= 0 && betweenTables && around.get(index - 2) instanceof XWPFTable previous) {
                 // Between two tables the gap is the one above's: its cells end with it.
                 lift = takeFromTheFoot(previous, wanted);
                 if (lift > 0) {
-                    liftEachCell(table, noted.getValue(), lift);
+                    liftEachCell(table, standing, firsts, lift);
                 }
                 continue;
             }
@@ -7133,22 +7206,64 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (lift > fromAfter) {
                 gap.setBefore(BigInteger.valueOf(before - (lift - fromAfter)));
             }
-            liftEachCell(table, noted.getValue(), lift);
+            liftEachCell(table, standing, firsts, lift);
         }
         raisedRows.clear();
+        firstLinesUnderTheRow.clear();
     }
 
     /**
      * Starts each cell of a lifted table's first row that much lower inside, less what its own
      * text stood above the row: the cell whose text stood out by the whole lift keeps its place.
+     * A cell whose first line Word set low rises by as much of the lift as it called for, and what
+     * follows that line keeps its place.
      */
-    private void liftEachCell(XWPFTable table, java.util.Map<XWPFTableCell, Double> standing, long lift) {
+    private void liftEachCell(XWPFTable table, java.util.Map<XWPFTableCell, Double> standing,
+                              java.util.Map<XWPFTableCell, FirstLine> firsts, long lift) {
         for (XWPFTableCell cell : table.getRow(0).getTableCells()) {
             long own = Math.min(lift, toTwips(standing.getOrDefault(cell, 0.0)));
-            if (lift - own > 0 && !cell.getBodyElements().isEmpty()
+            FirstLine low = firsts.get(cell);
+            long under = low == null ? 0 : Math.min(lift - own, toTwips(low.low()));
+            if (lift - own - under > 0 && !cell.getBodyElements().isEmpty()
                 && cell.getBodyElements().get(0) instanceof XWPFParagraph first) {
-                addSpacing(first, (lift - own) / POINT_TO_TWIP, 0);
+                addSpacing(first, (lift - own - under) / POINT_TO_TWIP, 0);
             }
+            if (under > 0) {
+                giveBackBelow(low.paragraph(), under);
+            }
+        }
+    }
+
+    /**
+     * Whether the first row of a row of columns' table may be lifted for its cells' first lines
+     * ({@link #noteAFirstLineLow}): not held to a height, which the space its cells take would not
+     * make taller in Word, so that what follows would stand higher by the lift; and every cell
+     * opening with a paragraph to take the lift back above: a column opening with a panel or a
+     * table would rise whole. Nothing of such a row is drawn — a row painted or framed is written
+     * as a panel round its table ({@link #writePaintedRow}), a column painted as a panel in its
+     * cell — so no box the reader sees moves.
+     */
+    private static boolean liftsForItsFirstLines(XWPFTable table) {
+        XWPFTableRow row = table.getRow(0);
+        if (row.getCtRow().isSetTrPr() && row.getCtRow().getTrPr().sizeOfTrHeightArray() > 0) {
+            return false;
+        }
+        for (XWPFTableCell cell : row.getTableCells()) {
+            if (cell.getBodyElements().isEmpty() || !(cell.getBodyElements().get(0) instanceof XWPFParagraph)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Puts {@code twips} of space below a paragraph: above the paragraph after it, or after it where none follows. */
+    private static void giveBackBelow(XWPFParagraph paragraph, long twips) {
+        List<IBodyElement> around = paragraph.getBody().getBodyElements();
+        int at = around.indexOf(paragraph);
+        if (at + 1 < around.size() && around.get(at + 1) instanceof XWPFParagraph next) {
+            addSpacingTwips(next, twips, 0);
+        } else {
+            addSpacingTwips(paragraph, 0, twips);
         }
     }
 
@@ -9092,32 +9207,46 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether every cell of a table row can have its top margin evened down to the row's
-     * smallest ({@link #evenTheRowsMargins}): none is merged down over rows, and none opens with
-     * a table, which has no paragraph above it to hold the padding.
+     * smallest ({@link #evenTheRowsMargins}): none is merged down over rows, and every one opens
+     * with a paragraph ({@link #opensWithAParagraph}): one that may open with a table has no
+     * paragraph above it to hold the padding.
      *
      * <p>Word gives every cell of a row the row's largest top margin. Where one stays as it is,
      * a cell whose paragraph took the gap from its padding would be set at that margin
      * whatever its own says: the padding would come back, and the line grown for it stand that
      * much low. Such a row is written as before.</p>
      */
-    private static boolean everyMarginEvens(List<TableGrid.Placement> row) {
+    private boolean everyMarginEvens(List<TableGrid.Placement> row) {
         for (TableGrid.Placement placement : row) {
-            if (placement.rowSpan() > 1 || opensWithATable(placement.cell().content())) {
+            if (placement.rowSpan() > 1 || !opensWithAParagraph(placement.cell().content())) {
                 return false;
             }
         }
         return true;
     }
 
-    /** Whether writing a node writes a table first: the node is one, or its first child does. */
-    private static boolean opensWithATable(DocumentNode node) {
-        for (DocumentNode current = node; current != null;
-             current = current.children().isEmpty() ? null : current.children().get(0)) {
-            if (current instanceof TableNode) {
+    /**
+     * Whether a cell's content is known to write a paragraph first: a text cell's, a paragraph, a
+     * list, a picture, a spacer that keeps no other layer's place, or a section or container
+     * painting nothing whose first child does — a picture drawn where the page puts it, or not at
+     * all, leaves its cell a paragraph to hold it. A cell opening with anything else may open with a
+     * table — a table, a row of columns, a painted container or a shape, each written as one, or
+     * the content moved into a spacer's place — and keeps its margin, which then evens the row's
+     * ({@link #canMoveItsPadding}): a paragraph beside it given its padding would rise into a margin
+     * Word does not set. Read off the content as authored, before any of the row is written.
+     */
+    private boolean opensWithAParagraph(DocumentNode node) {
+        for (DocumentNode current = node; ; current = current.children().get(0)) {
+            if (current == null || current instanceof ParagraphNode || current instanceof ImageNode
+                || current instanceof com.demcha.compose.document.node.ListNode
+                || current instanceof SpacerNode && !standIns.contains(current)) {
                 return true;
             }
+            if (!(current instanceof SectionNode || current instanceof ContainerNode)
+                || !paintOf(current).isEmpty() || current.children().isEmpty()) {
+                return false;
+            }
         }
-        return false;
     }
 
     /**
@@ -9131,9 +9260,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Word set them 12.35pt apart, the first 1.85pt low and the second 0.36pt.</p>
      *
      * <p>Only a table's cell gives its padding, in a row whose margins all even
-     * ({@link #everyMarginEvens}). A panel's cell keeps its: its margin is the padding less half
-     * its border, and Word sets the content its whole border and then that margin inside the row
-     * ({@link #outsideTheRow}).</p>
+     * ({@link #everyMarginEvens}). A panel's cell keeps its for the gap: its margin is the padding
+     * less half its border, and Word sets the content its whole border and then that margin inside
+     * the row ({@link #outsideTheRow}). A first line under half a point low takes it all the same
+     * ({@link #paddingAbove}).</p>
      *
      * @return the twips taken, 0 when the paragraph does not open a padded cell
      */
@@ -9682,8 +9812,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * then seats it by its own measure of the face.</p>
      *
      * <p>A line of its own Word sets low is raised first by moving it up into the space written
-     * above it, where that space can take it ({@link #raiseIntoTheSpaceAbove}). What that space
-     * cannot give, and a line set
+     * above it, where that space can take it ({@link #raiseIntoTheSpaceAbove}); under half a point,
+     * what that space cannot give the top padding of the cell it opens takes ({@link #paddingAbove}),
+     * or the space above a row of columns' table ({@link #noteAFirstLineLow}). What none of them
+     * gives, and a line set
      * high, is left to the text's position, which counts in half points: a line whose difference
      * is under {@link #LEAST_BASELINE_SHIFT_POINTS} — a quarter point for a line of Lato body text
      * — keeps no position, as every line of body text moved by one would win a quarter point at
@@ -9727,7 +9859,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // off by its position, not four tenths.
                 boolean moved = Math.abs(shift) >= LEAST_BASELINE_SHIFT_POINTS || cutToFit;
                 if (ownsItsLine && !cutToFit) {
-                    shift -= raiseIntoTheSpaceAbove(para, node, spacing, shift);
+                    // Under half a point the position moves nothing, so the cell's padding may.
+                    shift -= raiseIntoTheSpaceAbove(para, node, spacing, shift, !moved);
+                    if (!moved) {
+                        noteAFirstLineLow(para, shift);
+                    }
                 }
                 return moved ? shift : 0;
             }
@@ -9763,35 +9899,135 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * ({@link #holdAParagraphsTopEdgeOnItsPage}), and what the line owed would stand all below it
      * lower. Not a paragraph the layout breaks over a page: its lines on the next page start at
      * that page's top, where the space above moves none of them, and what it owed would stand
-     * what follows them lower. Not the space above a panel's first paragraph that the panel's top
-     * border takes ({@link #takeTheTopBorderInside}): raised into it, the line would give it back
-     * and the panel grow by what it owed. Less than {@link #LEAST_RAISE_INTO_THE_SPACE_ABOVE} is
-     * not moved.</p>
+     * what follows them lower. A paragraph in a cell of a row Word keeps whole is on one page
+     * wherever the row lands, though a table's composed cell has no placement of its own to say
+     * so ({@link #inARowKeptWhole}). Not the space above a panel's first paragraph that the
+     * panel's top border takes ({@link #takeTheTopBorderInside}): raised into it, the line would
+     * give it back and the panel grow by what it owed. Less than
+     * {@link #LEAST_RAISE_INTO_THE_SPACE_ABOVE} is not moved.</p>
      *
-     * @param para    the Word paragraph
-     * @param node    the paragraph it is written for
-     * @param spacing the paragraph's spacing, its space above already written
-     * @param raise   how far Word sets the line below the page's, in points
+     * <p>A paragraph opening a cell has no space above it where the cell's padding is its own
+     * margin, and its line was left as low as Word set it under half a point. What its space above
+     * cannot give, it takes from that padding, where the position would move nothing
+     * ({@link #paddingAbove}): {@code ConsultingInvoice}'s line items, composed cells whose first
+     * lines Word set 0.33pt low, moved up 0.35pt in both LibreOffice builds and 0.24 to 0.36pt on
+     * Word's grid (measured). Half a point and more is the position's, as
+     * before: taken from the padding, the 3.4pt raise of {@code CobaltRota}'s masthead, whose
+     * position LibreOffice moves further than it is raised, came out 0.5 to 0.7pt lower there
+     * (measured).</p>
+     *
+     * @param para           the Word paragraph
+     * @param node           the paragraph it is written for
+     * @param spacing        the paragraph's spacing, its space above already written
+     * @param raise          how far Word sets the line below the page's, in points
+     * @param intoThePadding whether the cell's padding may give what the space above cannot
      * @return how far the line was raised, in points
      */
     private double raiseIntoTheSpaceAbove(XWPFParagraph para, ParagraphNode node, CTSpacing spacing,
-                                          double raise) {
+                                          double raise, boolean intoThePadding) {
         // A band and the text laid over the flow are overlays too (writeOverlayBand, writeOverTheFlow).
         if (!(raise >= LEAST_RAISE_INTO_THE_SPACE_ABOVE) || overlayDepth > 0
-            || node == paragraphOpeningItsPage || !layout.onOnePage(node)) {
+            || node == paragraphOpeningItsPage || !layout.onOnePage(node) && !inARowKeptWhole()) {
             return 0;
         }
         long room = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null)
                     - (opensThePanel(para) ? panelsFirstLineKeeps : 0);
-        long raised = Math.min(room, Math.round(raise * POINT_TO_TWIP));
+        long wanted = Math.round(raise * POINT_TO_TWIP);
+        long fromAbove = Math.max(0, Math.min(room, wanted));
+        long fromTheCell = intoThePadding ? Math.min(wanted - fromAbove, paddingAbove(para)) : 0;
+        long raised = fromAbove + fromTheCell;
         if (raised < Math.round(LEAST_RAISE_INTO_THE_SPACE_ABOVE * POINT_TO_TWIP)) {
             return 0;
         }
-        spacing.setBefore(BigInteger.valueOf(twipsOf(spacing.getBefore()) - raised));
+        if (fromAbove > 0) {
+            spacing.setBefore(BigInteger.valueOf(twipsOf(spacing.getBefore()) - fromAbove));
+        }
+        if (fromTheCell > 0) {
+            setCellMarginTwips(currentCell, true, cellMargin(currentCell, true) - fromTheCell);
+            if (currentCell == panelCell) {
+                panelRaisedFromItsPadding += fromTheCell;
+            }
+        }
         owePendingSpacingAfter(raised / POINT_TO_TWIP);
         lastRaise = raised / POINT_TO_TWIP;
         blocksAtTheLastRaise = blocksWritten;
         return raised / POINT_TO_TWIP;
+    }
+
+    /**
+     * Whether the cell being written is in a row Word keeps whole on one page: a row the layout
+     * placed, kept so ({@link #breakRowsWhereTheLayoutDoes}, {@link #rowsPlacedWhole}), or one
+     * already marked so.
+     */
+    private boolean inARowKeptWhole() {
+        return currentCell != null && (currentCell.getTableRow().isCantSplitRow()
+                                       || rowsPlacedWhole.contains(currentCell.getTableRow().getCtRow()));
+    }
+
+    /**
+     * How much of the top padding of the cell a paragraph opens a raise may take, in twips
+     * ({@link #raiseIntoTheSpaceAbove}).
+     *
+     * <p>A table's cell gives its padding where every margin of its row evens
+     * ({@link #takeFromTheTopOfItsCell}): the row then gives each cell the least top margin and
+     * the rest as space above its first paragraph ({@link #evenTheRowsMargins}), so the cells
+     * beside one raised keep their places — in Word to a step of its 0.12pt grid, set from the
+     * top, the middle or the bottom alike (measured). A panel written whole gives what of its padding its
+     * top border does not take ({@link #panelsMarginKeeps}), and its row is held as much taller
+     * ({@link #writePanelPiece}), as Word adds the margin left to the height a row is held at.
+     * A table's row is held at its height less the margins left too ({@link #holdRowHeight}), as
+     * much taller. LibreOffice 24.2 counts the margins inside that height
+     * ({@link #seatTheLabelByItsLine}): a panel or a table row held taller than its text — a
+     * drawing set where the page puts it — comes out taller there by the raise, under half a
+     * point. A shape's layers are centred in it, and none rises.</p>
+     */
+    private long paddingAbove(XWPFParagraph para) {
+        if (panelsPaddingGives && opensThePanel(para)) {
+            return Math.max(0, cellMargin(panelCell, true) - panelsMarginKeeps);
+        }
+        if (opensTheCell(para) && cellsGivingTheirPadding.contains(currentCell.getCTTc())) {
+            return cellMargin(currentCell, true);
+        }
+        return 0;
+    }
+
+    /** Whether a paragraph is the first thing written in the cell being written. */
+    private boolean opensTheCell(XWPFParagraph para) {
+        return currentCell != null && !currentCell.getBodyElements().isEmpty()
+               && currentCell.getBodyElements().get(0) instanceof XWPFParagraph first
+               && first.getCTP() == para.getCTP();
+    }
+
+    /**
+     * Notes a cell's first line that Word still sets low after its raise, for {@link #raiseRows} to
+     * lift its row out of the space above its table.
+     *
+     * <p>A cell of a row of columns has no padding of its own above its first paragraph: the
+     * columns' space above is the row's, written above its table. Only a first row the export
+     * wrote for a row of columns ({@link #rowsLiftedForTheirLines}), and only where its line is not
+     * in an overlay — a band, a layer stack, a shape container, a canvas, the text laid over the
+     * flow — whose writers measure what follows from the page.</p>
+     *
+     * @param low how far Word still sets the line below the page's, in points
+     */
+    private void noteAFirstLineLow(XWPFParagraph para, double low) {
+        if (!(low >= LEAST_RAISE_INTO_THE_SPACE_ABOVE) || overlayDepth > 0 || !opensTheCell(para)) {
+            return;
+        }
+        XWPFTable table = currentCell.getTableRow().getTable();
+        if (table.getRow(0) == currentCell.getTableRow() && rowsLiftedForTheirLines.contains(table)) {
+            firstLinesUnderTheRow.computeIfAbsent(table, key -> new java.util.LinkedHashMap<>())
+                    .put(currentCell, new FirstLine(para, low));
+        }
+    }
+
+    /**
+     * A cell's first paragraph, and how far Word sets its line below the page's, in points.
+     *
+     * @param paragraph the cell's first paragraph
+     * @param low       how far below, in points
+     */
+    private record FirstLine(XWPFParagraph paragraph, double low) {
     }
 
     /** Whether a paragraph is the first thing written in the panel's cell being written. */
@@ -11309,6 +11545,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean table = node instanceof TableNode;
         insetLeft += (node == leftMarginInCell ? 0 : node.margin().left()) + (table ? node.padding().left() : 0);
         insetRight += node.margin().right() + (table ? node.padding().right() : 0);
+        boolean outerOpening = rowOpeningItsPage;
+        rowOpeningItsPage = onANewPage;
         try {
             if (node instanceof RowNode row) {
                 writeRow(document, row, false);
@@ -11318,6 +11556,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } finally {
             insetLeft = outerLeft;
             insetRight = outerRight;
+            rowOpeningItsPage = outerOpening;
         }
         owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
     }
@@ -12047,6 +12286,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 cell.removeParagraph(0);
                 if (marginsEven) {
                     cellsGivingTheirPadding.add(cell.getCTTc());
+                }
+                if (layout.placedRow(node, rowIdx)) {
+                    rowsPlacedWhole.add(row.getCtRow());
                 }
                 // What the cell holds sits on the cell's fill — a stripe, not the card around
                 // the table — wherever it has no shading of its own.
@@ -13065,6 +13307,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         XWPFTable table = newTable(document, 1, node.children().size());
+        if (!rowOpeningItsPage) {
+            rowsLiftedForTheirLines.add(table);
+        }
         // A row is a layout device, not a table anybody asked to see. POI's createTable
         // ships Word's default single-line grid, so without this every two-column block —
         // a header pair, a label beside a value — exported with visible rules the PDF

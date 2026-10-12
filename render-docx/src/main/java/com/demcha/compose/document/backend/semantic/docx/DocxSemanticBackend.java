@@ -11803,7 +11803,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * template draws under a heading or between entries was missing from the Word file.
      * The paragraph is placed where the rule's box is: the space above the stroke is the
      * paragraph's height, held to a tenth of a point when there is none, the space below is
-     * owed to what follows, and the rule's two ends are the paragraph's indents. Word draws
+     * owed to what follows, what Word's paragraph stands taller than the box hangs below it,
+     * and the rule's two ends are the paragraph's indents. Word draws
      * a border in its own dash lengths, so a dashed rule keeps its dash and not the pattern's
      * lengths, and the report says so.</p>
      */
@@ -11832,26 +11833,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             indent.setRight(BigInteger.valueOf(toTwips(insetRight + Math.max(0, rightGap))));
         }
 
-        // Word stacks the paragraph's line, then the border, then the space after; the page
-        // draws the stroke across its box. A stroke thicker than its box — horizontal() sizes
-        // the box from the stroke set before it, so a 2pt stroke set after sits in a 1pt box —
-        // spills out of it on the page and takes no room, so the room it takes in Word comes
-        // off the space owed below, where there is any.
-        double above = Math.max(0, rule.centreFromTop() - rule.thickness() / 2);
-        double below = Math.max(0, rule.boxHeight() - rule.centreFromTop() - rule.thickness() / 2);
-        double line = Math.max(SEPARATOR_POINTS, above);
-        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
-        spacing.setLineRule(STLineSpacingRule.EXACT);
-        spacing.setLine(BigInteger.valueOf(Math.round(line * POINT_TO_TWIP)));
-        owePendingSpacingAfter(below);
-        double excess = line + rule.thickness() + below - rule.boxHeight();
-        if (excess > 0) {
-            pendingSpacingAfter = Math.max(0, pendingSpacingAfter - excess);
-        }
-
         // A border is opaque, so a translucent rule is flattened against what the page paints under
         // it, as a chip is; one that is not drawn at all keeps its place and draws nothing.
         java.awt.Color colour = rule.colour().color();
+
+        // Word stacks the paragraph's line, then the border, then the space after; the page
+        // draws the stroke across its box. A stroke thicker than its box — horizontal() sizes
+        // the box from the stroke set before it, so a 2pt stroke set after sits in a 1pt box —
+        // spills out of it on the page and takes no room. So does the tenth of a point of line
+        // a rule with no room above its stroke is held to, and the border Word draws in eighths
+        // of a point, counted in whole twips as a row counts a cell's rule (eighthsInTwips): a
+        // 1.2pt rule is drawn 1.25pt wide. What Word's paragraph stands taller than the box comes
+        // off the space owed below, and what that does not take hangs below the rule, for what
+        // follows to take out of the space between them, as a spacer's hairline does: under
+        // MeteredInvoice's title rule, a tenth past its box, the row below stood 0.13pt low in
+        // Word and 0.11pt in LibreOffice, and 0.01pt once the rule's hang was taken (measured).
+        double above = Math.max(0, rule.centreFromTop() - rule.thickness() / 2);
+        double below = Math.max(0, rule.boxHeight() - rule.centreFromTop() - rule.thickness() / 2);
+        long line = Math.round(Math.max(SEPARATOR_POINTS, above) * POINT_TO_TWIP);
+        CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
+        spacing.setLineRule(STLineSpacingRule.EXACT);
+        spacing.setLine(BigInteger.valueOf(line));
+        owePendingSpacingAfter(below);
+        double drawn = colour.getAlpha() > 0 ? eighthsInTwips(ruleEighths(rule.thickness())) / POINT_TO_TWIP : 0;
+        double excess = line / POINT_TO_TWIP + drawn + below - rule.boxHeight();
+        if (excess > 0) {
+            double owed = Math.max(0, pendingSpacingAfter);
+            pendingSpacingAfter = Math.max(0, pendingSpacingAfter - excess);
+            hangingBelow = Math.max(hangingBelow, excess - Math.min(owed, excess));
+        }
         if (colour.getAlpha() > 0) {
             CTPBdr borders = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
             CTBorder bottom = borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom();

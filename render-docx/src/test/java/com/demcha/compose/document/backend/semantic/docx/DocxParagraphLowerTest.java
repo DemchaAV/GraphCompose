@@ -173,7 +173,8 @@ class DocxParagraphLowerTest {
                 .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10))));
 
         assertThat(before(paragraph(document, "High"))).isZero();
-        assertThat(before(paragraph(document, "Next"))).as("its 10pt, whole").isEqualTo(200);
+        assertThat(before(paragraph(document, "Next"))).as("its 10pt, less the rule's tenth past its box")
+                .isEqualTo(200 - 2);
     }
 
     @Test

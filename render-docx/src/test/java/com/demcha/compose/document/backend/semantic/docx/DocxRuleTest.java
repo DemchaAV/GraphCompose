@@ -269,6 +269,65 @@ class DocxRuleTest {
     }
 
     @Test
+    void whatARulesParagraphStandsPastItsBoxComesOutOfTheSpaceUnderIt() throws Exception {
+        // A stroke as tall as its box, nothing owed below it: Word's paragraph is a tenth of a
+        // point of line and the border in eighths of a point, counted in whole twips.
+        try (XWPFDocument document = export(page -> page
+                .addLine(l -> l.stroke(DocumentStroke.of(ACCENT, 1)).horizontal(100))
+                .addParagraph(p -> p.text("Below").margin(DocumentInsets.top(5.5)))
+                .addLine(l -> l.stroke(DocumentStroke.of(ACCENT, 1.2)).horizontal(100))
+                .addParagraph(p -> p.text("Below").margin(DocumentInsets.top(5.5))))) {
+            CTPPr afterTheWholeEighths = document.getParagraphs().get(1).getCTP().getPPr();
+            CTPPr afterTheRoundedEighths = document.getParagraphs().get(3).getCTP().getPPr();
+
+            assertThat(bottomOf(document, 2).getSz().intValue()).as("1.2pt drawn 1.25pt wide").isEqualTo(10);
+            // 1pt: the line's tenth. 1.2pt: the tenth and the 0.05pt Word draws it wider.
+            assertThat(DocxTwips.of(afterTheWholeEighths.getSpacing().getBefore())).isEqualTo(110L - 2 - RAISE);
+            assertThat(DocxTwips.of(afterTheRoundedEighths.getSpacing().getBefore())).isEqualTo(110L - 3 - RAISE);
+        }
+    }
+
+    @Test
+    void whatARulesParagraphStandsPastItsBoxComesOutOfTheSpaceOwedBelowItFirst() throws Exception {
+        // The rule's own margin below takes it, and the paragraph under it keeps its space whole.
+        try (XWPFDocument document = export(page -> page
+                .addLine(l -> l.stroke(DocumentStroke.of(ACCENT, 1.2)).horizontal(100).margin(DocumentInsets.bottom(4)))
+                .addParagraph(p -> p.text("Below").margin(DocumentInsets.top(5.5))))) {
+            CTPPr below = document.getParagraphs().get(1).getCTP().getPPr();
+
+            assertThat(DocxTwips.of(below.getSpacing().getBefore())).isEqualTo(80L - 3 + 110 - RAISE);
+        }
+    }
+
+    @Test
+    void whatARulesParagraphStandsPastItsBoxIsNamedWhereNoSpaceUnderItTakesIt() throws Exception {
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = withReport(report, page -> page
+                .addLine(l -> l.stroke(DocumentStroke.of(ACCENT, 1.2)).horizontal(100))
+                .addParagraph(p -> p.name("Below").text("Below")))) {
+            assertThat(report.get().bySubject().get("space above")).singleElement().satisfies(note -> {
+                assertThat(note.path()).contains("Below");
+                assertThat(note.detail()).isEqualTo("it stands 0.15pt lower than the page sets it, and what follows "
+                                                    + "with it: the space the page leaves above it does not hold the "
+                                                    + "line hanging below the block above it (0.15pt)");
+            });
+        }
+    }
+
+    @Test
+    void anInvisibleRulesParagraphHangsNothingItDoesNotDraw() throws Exception {
+        // No border is written: Word's paragraph is its tenth of a point of line alone, inside the
+        // 1pt box, and the paragraph under it keeps its space whole.
+        try (XWPFDocument document = export(page -> page
+                .addLine(l -> l.stroke(DocumentStroke.of(DocumentColor.rgba(0, 0, 0, 0), 1)).horizontal(100))
+                .addParagraph(p -> p.text("Below").margin(DocumentInsets.top(5.5))))) {
+            CTPPr below = document.getParagraphs().get(1).getCTP().getPPr();
+
+            assertThat(DocxTwips.of(below.getSpacing().getBefore())).isEqualTo(110L - RAISE);
+        }
+    }
+
+    @Test
     void aRuleInAPaddedSectionStartsAndEndsInsideIt() throws Exception {
         try (XWPFDocument document = export(page -> page.addSection("Plain", s -> s
                 .padding(DocumentInsets.of(20))

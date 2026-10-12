@@ -8,6 +8,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export lowers a Word list's item that Word sets high by the space above it, its marker
+  with its text.** Word draws a Word list's marker from the paragraph's mark, and LibreOffice does
+  not move it by the mark's position, so an item the export's measure of Word's seat found high by
+  half a point or more was left there rather than given a position: `MidnightNavy`'s two-line
+  duties, 0.9pt high by that measure, stood 0.70 to 1.06pt high in Word and 0.82 to 1.04pt in
+  LibreOffice, `NavySidebar`'s, 0.51pt by it, 0.30 to 0.47pt. Such an item is now lowered by growing
+  the space written above it, which moves its marker and its text together in both editors. The
+  items under it take as much back out of the space above them, one standing as high taking it back
+  by its own lowering. What the list's last items still owe hangs below the list as a line hanging
+  below a block does: the space above what follows takes it, the report naming what that space and
+  that block's own top edge cannot give, and at the end of a cell the space the cell owes under the
+  list, the room under it in its row or a card's padding, each list's on its own. Wherever the hang
+  is let go instead — among them below a table's composed cell or a layer stack's column, under a
+  column's later layer, which takes its place from the page, at a block the layout sets on a later
+  page, which takes nothing of the hang left on the page above, at a section's end — the lowering
+  is taken back, those items standing as high as before and what follows where it stood. Not
+  lowered: an item the layout opens a page with, one of a list it sets over two pages in a cell, an
+  item opening a card, whose top border the space above it takes, and one in an overlay whose writer
+  measures what follows from the page — a stack laying one layer over another, a band, a shape
+  container; a stack of one layer, in which a template wraps an entry, is written in the flow, and
+  its items are lowered as there. The duties now stand 0.10pt high to 0.20pt low in Word and 0.14pt
+  high to 0.08pt low in LibreOffice on Windows and 24.2, `NavySidebar`'s 0.03 to 0.19pt and 0.03 to
+  0.05pt low, everything after them where it stood; no other document of the corpus changed.
+
 - **A DOCX export writes a list composed in a table cell on the lines its table laid out for it, as
   it does a paragraph there.** A composed cell's content is laid out under its table's path, so a
   list there has no lines at a path of its own, and its items were matched to none: written at no
@@ -48,9 +72,8 @@ follow semantic versioning; release dates are ISO 8601.
   would be the space above the next page's first, inside the cell. An item whose marker Word draws,
   a Word list's, is not moved by its position: Word sets that marker from the paragraph's mark,
   which LibreOffice does not move by the mark's position — lowered a point by both, `MidnightNavy`'s
-  duties stood 1.15pt under their bullets there — so its line keeps what the space above does not
-  take of it, and `MidnightNavy`'s and `NavySidebar`'s duties stand as high as before. An item the
-  layout's lines are not matched to is not seated.
+  duties stood 1.15pt under their bullets there — so a line of it Word sets low keeps what the space
+  above does not take of it. An item the layout's lines are not matched to is not seated.
 
   `ClassicInvoice`'s notes moved up 0.24 to 0.36pt in Word and 0.3pt in LibreOffice, to within
   0.05pt of the page, `BoxedSections`' and `ModernProfessional`'s skills and projects 0.12 to 0.24pt

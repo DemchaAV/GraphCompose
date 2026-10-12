@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * A list composed in a table's cell is written on the lines its table laid out for it, as a
@@ -47,18 +48,25 @@ class DocxComposedListTest {
 
     @Test
     void aWrappedItemInACellTakesTheListsLineSpacingBetweenItsLines() throws Exception {
-        // As in the flow: the gap goes into the item's line and comes off the space above it.
+        // As in the flow: the gap goes into the item's line and comes off the space above it. Its
+        // lines then stand high in Word, and the space above lowers them, which the item under it
+        // gives back.
         String wrapped = "Training that runs long enough to wrap onto a second line of the cell";
         try (XWPFDocument document = inACellBeside(new ListBuilder().name("Items").bullet().itemSpacing(3).lineSpacing(2)
                 .textStyle(size(9)).items("Setup", wrapped, "Support").build())) {
             XWPFParagraph one = inACell(document, "Setup");
             XWPFParagraph two = inACell(document, wrapped);
             XWPFParagraph three = inACell(document, "Support");
+            long lowered = before(two) - (60 - 40);
+            // Word's lines are the gap taller than the page's, and it seats their middle four
+            // fifths of the way down; the page sets the first line Lato's ascent below its top.
+            double line = DocxTwips.of(spacing(two).getLine()) / 20.0;
 
             assertThat(DocxTwips.of(spacing(two).getLine()) - DocxTwips.of(spacing(one).getLine()))
                     .as("2pt between its lines").isEqualTo(40);
-            assertThat(before(two)).as("3pt above it, less the gap").isEqualTo(60 - 40);
-            assertThat(before(three)).isEqualTo(60);
+            assertThat(lowered).as("3pt above it, less the gap, and its lowering")
+                    .isCloseTo(Math.round((2 + 0.987 * 9 - 0.8 * line) * 20), within(1L)).isPositive();
+            assertThat(before(three)).as("3pt above it, less what the item above took").isEqualTo(60 - lowered);
         }
     }
 

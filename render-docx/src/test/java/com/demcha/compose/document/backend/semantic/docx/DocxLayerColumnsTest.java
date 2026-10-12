@@ -101,6 +101,79 @@ class DocxLayerColumnsTest {
     }
 
     @Test
+    void aLaterLayerTakesBackTheLoweringOfTheListEndingTheLayerAboveIt() throws Exception {
+        // The first layer ends with a Word list's item that Word sets high, lowered by the space
+        // above it. The later layer measures the gap to itself from the page, which gives none of
+        // it back: the item stands as Word sets it, and the later layer where it stood.
+        com.demcha.compose.document.style.DocumentTextStyle lato24 = com.demcha.compose.document.style
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.LATO).size(24).build();
+        com.demcha.compose.document.style.DocumentTextStyle lato = com.demcha.compose.document.style
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.LATO).size(10).build();
+        try (Export export = export(stack -> stack
+                .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addList(list -> list.name("Duties")
+                        .textStyle(lato24).margin(DocumentInsets.top(20)).items("Heading"))), LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", SIDEBAR, 0, main -> main
+                        .addSpacer(spacer -> spacer.name("TitlePlace").width(100).height(80))
+                        .addParagraph(p -> p.name("Role").text("Engineer").textStyle(lato))), LayerAlign.TOP_LEFT))) {
+            XWPFTableCell main = export.document().getTables().get(0).getRow(0).getCell(1);
+            XWPFParagraph heading = main.getParagraphs().get(0);
+            PlacedNode duties = export.placed("Duties");
+            PlacedNode role = export.placed("Role");
+            double gap = duties.placementY() - (role.placementY() + role.placementHeight());
+
+            assertThat(main.getParagraphs()).extracting(XWPFParagraph::getText).containsExactly("Heading", "Engineer");
+            assertThat(heading.getCTP().getPPr().isSetNumPr()).as("the premise: a Word list's item").isTrue();
+            assertThat(spacingBefore(heading)).as("its space above, as written").isEqualTo(20 * 20);
+            assertThat(spacingBefore(main.getParagraphs().get(1)))
+                    .isCloseTo(Math.round(gap * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+        // A paragraph under the list in its own layer gives the lowering back.
+        try (Export export = export(stack -> stack
+                .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addList(list -> list.name("Duties")
+                        .textStyle(lato24).margin(DocumentInsets.top(20)).items("Heading"))
+                        .addParagraph(p -> p.text("Under").textStyle(lato).margin(DocumentInsets.top(10)))),
+                        LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", SIDEBAR, 0, main -> main
+                        .addSpacer(spacer -> spacer.name("TitlePlace").width(100).height(120))
+                        .addParagraph(p -> p.name("Role").text("Engineer").textStyle(lato))), LayerAlign.TOP_LEFT))) {
+            XWPFParagraph heading = export.document().getTables().get(0).getRow(0).getCell(1).getParagraphs().get(0);
+
+            assertThat(heading.getText()).as("the premise: the column opens with the item").isEqualTo("Heading");
+            assertThat(spacingBefore(heading)).as("lowered").isGreaterThan(20 * 20 + 10);
+        }
+    }
+
+    @Test
+    void aColumnEndingWithAListTakesItsLoweringBack() throws Exception {
+        // Nothing in the sidebar's cell stands under its list, and the columns' row reads nothing of
+        // what hangs below a column: the item stands as Word sets it, the row as tall as before.
+        com.demcha.compose.document.style.DocumentTextStyle lato24 = com.demcha.compose.document.style
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.LATO).size(24).build();
+        try (Export export = export(stack -> stack
+                .layer(column("Sidebar", 0, MAIN, side -> side.addList(list -> list.textStyle(lato24)
+                        .margin(DocumentInsets.top(10)).items("Heading"))), LayerAlign.TOP_LEFT)
+                .layer(column("Main", SIDEBAR, 0, main -> main.addParagraph(LONG)), LayerAlign.TOP_LEFT))) {
+            XWPFParagraph heading = export.document().getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
+
+            assertThat(heading.getText()).as("the premise: the sidebar holds the item").isEqualTo("Heading");
+            assertThat(heading.getCTP().getPPr().isSetNumPr()).as("the premise: a Word list's item").isTrue();
+            assertThat(spacingBefore(heading)).as("its space above, as written").isEqualTo(10 * 20);
+        }
+        // A paragraph under the list in the same column gives the lowering back.
+        try (Export export = export(stack -> stack
+                .layer(column("Sidebar", 0, MAIN, side -> side.addList(list -> list.textStyle(lato24)
+                        .margin(DocumentInsets.top(10)).items("Heading")).addParagraph(p -> p.text("Under")
+                        .margin(DocumentInsets.top(10)))), LayerAlign.TOP_LEFT)
+                .layer(column("Main", SIDEBAR, 0, main -> main.addParagraph(LONG)), LayerAlign.TOP_LEFT))) {
+            XWPFParagraph heading = export.document().getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
+
+            assertThat(spacingBefore(heading)).as("lowered").isGreaterThan(10 * 20 + 10);
+        }
+    }
+
+    @Test
     void aLaterLayerThatWritesNothingLeavesTheRaiseOwedInTheCell() throws Exception {
         // The later layer only holds the title's place: written of it is nothing, and the raised
         // title still owes below it what it was raised by, at the cell's end.

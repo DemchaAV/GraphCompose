@@ -75,7 +75,8 @@ class DocxListItemSeatTest {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
                 .addList(list -> list.textStyle(lato(24)).marker("•").hangingIndent(true).markerGap(6)
-                        .margin(DocumentInsets.top(10)).addItem(text -> text.style("Heading", lato(24)))))) {
+                        .margin(DocumentInsets.top(10)).addItem(text -> text.style("Heading", lato(24))))
+                .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))))) {
             XWPFParagraph item = document.getParagraphs().stream()
                     .filter(paragraph -> paragraph.getText().contains("Heading")).findFirst().orElseThrow();
             double raise = 0.8 * line(item) - LATO_ASCENT * 24;

@@ -9207,15 +9207,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether every cell of a table row can have its top margin evened down to the row's
-     * smallest ({@link #evenTheRowsMargins}): none is merged down over rows, and none opens with
-     * a table, which has no paragraph above it to hold the padding.
+     * smallest ({@link #evenTheRowsMargins}): none is merged down over rows, and every one opens
+     * with a paragraph ({@link #opensWithAParagraph}): one that may open with a table has no
+     * paragraph above it to hold the padding.
      *
      * <p>Word gives every cell of a row the row's largest top margin. Where one stays as it is,
      * a cell whose paragraph took the gap from its padding would be set at that margin
      * whatever its own says: the padding would come back, and the line grown for it stand that
      * much low. Such a row is written as before.</p>
      */
-    private static boolean everyMarginEvens(List<TableGrid.Placement> row) {
+    private boolean everyMarginEvens(List<TableGrid.Placement> row) {
         for (TableGrid.Placement placement : row) {
             if (placement.rowSpan() > 1 || !opensWithAParagraph(placement.cell().content())) {
                 return false;
@@ -9225,17 +9226,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Whether writing a cell's content writes a paragraph first: a text cell's, a paragraph, a
-     * list, or a section or container painting nothing whose first child does. A cell opening with
-     * anything else may open with a table — a table, a row of columns, a painted container or a
-     * shape, each written as one — and keeps its margin, which then evens the row's
+     * Whether a cell's content is known to write a paragraph first: a text cell's, a paragraph, a
+     * list, a picture, a spacer that keeps no other layer's place, or a section or container
+     * painting nothing whose first child does — a picture drawn where the page puts it, or not at
+     * all, leaves its cell a paragraph to hold it. A cell opening with anything else may open with a
+     * table — a table, a row of columns, a painted container or a shape, each written as one, or
+     * the content moved into a spacer's place — and keeps its margin, which then evens the row's
      * ({@link #canMoveItsPadding}): a paragraph beside it given its padding would rise into a margin
      * Word does not set. Read off the content as authored, before any of the row is written.
      */
-    private static boolean opensWithAParagraph(DocumentNode node) {
+    private boolean opensWithAParagraph(DocumentNode node) {
         for (DocumentNode current = node; ; current = current.children().get(0)) {
-            if (current == null || current instanceof ParagraphNode
-                || current instanceof com.demcha.compose.document.node.ListNode) {
+            if (current == null || current instanceof ParagraphNode || current instanceof ImageNode
+                || current instanceof com.demcha.compose.document.node.ListNode
+                || current instanceof SpacerNode && !standIns.contains(current)) {
                 return true;
             }
             if (!(current instanceof SectionNode || current instanceof ContainerNode)
@@ -9256,9 +9260,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Word set them 12.35pt apart, the first 1.85pt low and the second 0.36pt.</p>
      *
      * <p>Only a table's cell gives its padding, in a row whose margins all even
-     * ({@link #everyMarginEvens}). A panel's cell keeps its: its margin is the padding less half
-     * its border, and Word sets the content its whole border and then that margin inside the row
-     * ({@link #outsideTheRow}).</p>
+     * ({@link #everyMarginEvens}). A panel's cell keeps its for the gap: its margin is the padding
+     * less half its border, and Word sets the content its whole border and then that margin inside
+     * the row ({@link #outsideTheRow}). A first line under half a point low takes it all the same
+     * ({@link #paddingAbove}).</p>
      *
      * @return the twips taken, 0 when the paragraph does not open a padded cell
      */
@@ -9807,8 +9812,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * then seats it by its own measure of the face.</p>
      *
      * <p>A line of its own Word sets low is raised first by moving it up into the space written
-     * above it, where that space can take it ({@link #raiseIntoTheSpaceAbove}). What that space
-     * cannot give, and a line set
+     * above it, where that space can take it ({@link #raiseIntoTheSpaceAbove}); under half a point,
+     * what that space cannot give the top padding of the cell it opens takes ({@link #paddingAbove}),
+     * or the space above a row of columns' table ({@link #noteAFirstLineLow}). What none of them
+     * gives, and a line set
      * high, is left to the text's position, which counts in half points: a line whose difference
      * is under {@link #LEAST_BASELINE_SHIFT_POINTS} — a quarter point for a line of Lato body text
      * — keeps no position, as every line of body text moved by one would win a quarter point at
@@ -9968,10 +9975,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * top, the middle or the bottom alike (measured). A panel written whole gives what of its padding its
      * top border does not take ({@link #panelsMarginKeeps}), and its row is held as much taller
      * ({@link #writePanelPiece}), as Word adds the margin left to the height a row is held at.
-     * LibreOffice 24.2 counts the margins inside that height ({@link #seatTheLabelByItsLine}): a
-     * panel held taller than its text — a drawing set where the page puts it — comes out taller
-     * there by the raise, under half a point. A shape's layers are centred in it, and none
-     * rises.</p>
+     * A table's row is held at its height less the margins left too ({@link #holdRowHeight}), as
+     * much taller. LibreOffice 24.2 counts the margins inside that height
+     * ({@link #seatTheLabelByItsLine}): a panel or a table row held taller than its text — a
+     * drawing set where the page puts it — comes out taller there by the raise, under half a
+     * point. A shape's layers are centred in it, and none rises.</p>
      */
     private long paddingAbove(XWPFParagraph para) {
         if (panelsPaddingGives && opensThePanel(para)) {
@@ -9997,7 +10005,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A cell of a row of columns has no padding of its own above its first paragraph: the
      * columns' space above is the row's, written above its table. Only a first row the export
      * wrote for a row of columns ({@link #rowsLiftedForTheirLines}), and only where its line is not
-     * laid over the flow, whose space owed below it would be lost.</p>
+     * in an overlay — a band, a layer stack, a shape container, a canvas, the text laid over the
+     * flow — whose writers measure what follows from the page.</p>
      *
      * @param low how far Word still sets the line below the page's, in points
      */

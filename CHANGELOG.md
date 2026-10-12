@@ -29,8 +29,9 @@ follow semantic versioning; release dates are ISO 8601.
   row is kept on one page; one in a table nested in that cell is not yet.
   Half a point and more is the position's, as before: taken from the padding, `CobaltRota`'s
   masthead, whose position LibreOffice moves further than it says, came out 0.5 to 0.7pt lower there.
-  LibreOffice 24.2 counts a row's margins inside the height it is held at, so a panel held taller
-  than its text — a drawing set where the page puts it — comes out taller there by the raise.
+  LibreOffice 24.2 counts a row's margins inside the height it is held at, so a panel or a table
+  row held taller than its text — a drawing set where the page puts it — comes out taller there by
+  the raise.
 
   `ClassicInvoice`'s header, "BILL TO", "FROM" and "TOTAL DUE" moved up 0.24 to 0.36pt in Word and
   0.2 to 0.4pt in LibreOffice, `ConsultingInvoice`'s line items 0.24 to 0.36pt and 0.35pt,

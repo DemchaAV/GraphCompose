@@ -123,6 +123,25 @@ class DocxFirstLineSeatTest {
     }
 
     @Test
+    void aCellBesideAPictureRisesIntoItsPadding() throws Exception {
+        // A picture leaves its cell a paragraph to hold it: the row's margins even.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                        .columns(DocumentTableColumn.fixed(160), DocumentTableColumn.fixed(160))
+                        .rowCells(composed(new ParagraphBuilder().text("Inside").build()),
+                                composed(new com.demcha.compose.document.dsl.ImageBuilder()
+                                        .source(com.demcha.compose.document.image.DocumentImageData.fromBytes(png()))
+                                        .size(12, 12).build())))
+                .addParagraph("After"))) {
+            XWPFTableCell inside = onlyTable(document).getRow(0).getCell(0);
+
+            assertThat(onlyTable(document).getRow(0).getCell(1).getBodyElements().get(0))
+                    .as("the premise: the picture's cell opens with a paragraph").isInstanceOf(XWPFParagraph.class);
+            assertThat(topMargin(inside)).as("its padding, less what its line rose into").isEqualTo(4 * 20 - RAISE);
+            assertThat(after(inside.getParagraphs().get(0))).isEqualTo(RAISE);
+        }
+    }
+
+    @Test
     void aPanelSplitOverAPageKeepsItsPadding() throws Exception {
         // Only a panel written whole is held to a height its raise can be added to.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addSection("Card", card -> card

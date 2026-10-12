@@ -508,11 +508,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * @param paragraph the paragraph
      * @param twips     how much lower the page sets it, still to be given
-     * @param cell      the cell it is written in, {@code null} in the body
      * @param depth     the overlays it is written in ({@link #overlayDepth})
      * @param page      the page the layout sets it on, -1 where it does not say
      */
-    private record LineToLower(XWPFParagraph paragraph, long twips, XWPFTableCell cell, int depth, int page) {
+    private record LineToLower(XWPFParagraph paragraph, long twips, int depth, int page) {
     }
 
     /**
@@ -5188,8 +5187,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             || overlayDepth > oneLayerDepth || !staysOnItsPage || opensThePanel(para)) {
             return;
         }
-        lineToLower = new LineToLower(para, Math.round(lower * POINT_TO_TWIP), currentCell, overlayDepth,
-                startPageOf(writing));
+        lineToLower = new LineToLower(para, Math.round(lower * POINT_TO_TWIP), overlayDepth, startPageOf(writing));
     }
 
     /**
@@ -5211,7 +5209,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
         spacing.setBefore(BigInteger.valueOf(twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null) + given));
         lineToLower = given < line.twips()
-                ? new LineToLower(line.paragraph(), line.twips() - given, line.cell(), line.depth(), line.page())
+                ? new LineToLower(line.paragraph(), line.twips() - given, line.depth(), line.page())
                 : null;
         return Math.max(0, room - given / POINT_TO_TWIP);
     }
@@ -7189,14 +7187,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double taken = Math.min(Math.max(0, above), overhang);
         above -= taken;
         // The paragraph above, set high, is lowered by what of the space left above this one it
-        // takes, and of this one's own top edge after that (offerToLower): in its cell or overlay,
-        // and on its page, whose top Word sets a later page's first block at.
+        // takes, and of this one's own top edge after that (offerToLower): in its overlay, and on
+        // its page, whose top Word sets a later page's first block at. A cell starts clear of the
+        // line above its table (writeInCell). A block between the two that took nothing of its own
+        // top edge — a spacer — ends the wait.
         LineToLower line = lowerLeftOn == null ? lineToLower : null;
         lineToLower = null;
         lowerLeftOn = null;
         int page = startPageOf(writing);
-        if (line != null && line.cell() == currentCell && line.depth() == overlayDepth
-            && !(page >= 0 && line.page() >= 0 && page > line.page())) {
+        if (line != null && line.depth() == overlayDepth && !(page >= 0 && line.page() >= 0 && page > line.page())) {
             lineToLower = line;
             above = lowerTheLineAboveInto(above);
             lowerLeftOn = lineToLower != null ? para : null;

@@ -163,6 +163,136 @@ class DocxParagraphLowerTest {
     }
 
     @Test
+    void aLineSetHighOpeningItsPageIsNotLowered() throws Exception {
+        // Word sets a page's first line at its top, whatever the space above it: grown, that space
+        // would lower nothing, and what the paragraph under it gave would stand it higher.
+        Consumer<PageFlowBuilder> content = page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN)).spacer(1, 545)
+                .addParagraph(p -> p.name("High").text("High").textStyle(HIGH))
+                .addParagraph(p -> p.name("Next").text("Next").textStyle(EVEN).margin(DocumentInsets.top(10)));
+        try (DocumentSession session = session(content)) {
+            assertThat(startPage(session, "High")).as("the premise: opening the second page").isEqualTo(1);
+            assertThat(startPage(session, "Next")).as("the premise: under it there").isEqualTo(1);
+        }
+        XWPFDocument document = export(content);
+
+        assertThat(lowering(paragraph(document, "High"))).as("the premise: set high").isGreaterThan(1);
+        assertThat(before(paragraph(document, "Next"))).as("its 10pt, whole").isEqualTo(200);
+    }
+
+    @Test
+    void aLineSetHighOpeningACardIsNotLowered() throws Exception {
+        // A card's top border is taken inside the space above its first line (takeTheTopBorderInside):
+        // grown, that space would give it back and the card grow.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addSection("Card", card -> card.fillColor(DocumentColor.rgb(238, 243, 249))
+                        .borders(com.demcha.compose.document.style.DocumentBorders.top(
+                                com.demcha.compose.document.style.DocumentStroke.of(DocumentColor.BLACK, 2)))
+                        .addParagraph(p -> p.text("High").textStyle(HIGH))
+                        .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10)))));
+        XWPFParagraph high = inACell(document, "High");
+
+        assertThat(lowering(high)).as("the premise: set high").isGreaterThan(1);
+        assertThat(before(inACell(document, "Next"))).as("its 10pt, whole").isEqualTo(200);
+    }
+
+    @Test
+    void aLineSetHighByUnderATenthOfAPointIsNotLowered() throws Exception {
+        // Word sets lines on a grid 0.12pt apart: a twip of space moves a line a step or nothing.
+        DocumentTextStyle small = DocumentTextStyle.builder().fontName(FontName.LATO).size(3).build();
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("Small").textStyle(small))
+                .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10))));
+        XWPFParagraph line = paragraph(document, "Small");
+        double high = LATO_ASCENT * 3 - 0.8 * DocxTwips.of(line.getCTP().getPPr().getSpacing().getLine()) / 20.0;
+
+        assertThat(high).as("the premise: set high, by under a tenth of a point").isBetween(0.05, 0.1);
+        assertThat(before(line)).isZero();
+        assertThat(before(paragraph(document, "Next"))).isEqualTo(200);
+    }
+
+    @Test
+    void aLineSetHighAboveAListOpeningTheNextPageIsNotLowered() throws Exception {
+        Consumer<PageFlowBuilder> content = page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN)).spacer(1, 520)
+                .addParagraph(p -> p.name("High").text("High").textStyle(HIGH))
+                .addList(list -> list.name("Next").textStyle(EVEN).margin(DocumentInsets.top(30)).items("Item"));
+        try (DocumentSession session = session(content)) {
+            assertThat(startPage(session, "High")).as("the premise: on the first page").isZero();
+            assertThat(startPage(session, "Next")).as("the premise: opening the second").isEqualTo(1);
+        }
+        XWPFDocument document = export(content);
+
+        assertThat(before(paragraph(document, "High"))).as("the spacer above it past its hairline, and nothing more")
+                .isEqualTo(Math.round((520 - 0.1) * 20));
+    }
+
+    @Test
+    void aLineSetHighAboveATableTakesNothingOfTheSpaceUnderTheTable() throws Exception {
+        // A tenth of a point above the table, less than the line is set high: the paragraph under
+        // the table is not the line's to take the rest from.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH).margin(DocumentInsets.bottom(0.1)))
+                .addTable(table -> table.autoColumns(1).row("Cell"))
+                .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10))));
+        XWPFParagraph high = paragraph(document, "High");
+
+        assertThat(lowering(high)).as("the premise: lower than the space above the table").isGreaterThan(2);
+        assertThat(before(high)).as("the tenth of a point above the table").isEqualTo(2);
+        assertThat(before(paragraph(document, "Next"))).as("its 10pt, whole").isEqualTo(200);
+    }
+
+    @Test
+    void aSpacerUnderALineSetHighEndsItsWait() throws Exception {
+        // The spacer takes nothing of its own top edge: the paragraph under it is not the line's to
+        // take from.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH))
+                .addSpacer(spacer -> spacer.width(100).height(10))
+                .addParagraph(p -> p.text("Next").textStyle(EVEN)));
+
+        assertThat(lowering(paragraph(document, "High"))).as("the premise: set high").isGreaterThan(1);
+        assertThat(before(paragraph(document, "High"))).isZero();
+    }
+
+    @Test
+    void aLineSetHighAboveABandIsNotLoweredByTheBandsContent() throws Exception {
+        // A band lays its text over a backdrop and measures it from the page: its content is not
+        // the line's to take from.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH))
+                .addLayerStack(stack -> stack.margin(DocumentInsets.top(10))
+                        .back(new com.demcha.compose.document.dsl.ShapeBuilder().name("Backdrop").size(200, 40).build())
+                        .layer(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Next").textStyle(EVEN)
+                                .margin(DocumentInsets.top(10)).build(), LayerAlign.TOP_LEFT)));
+
+        assertThat(lowering(paragraph(document, "High"))).as("the premise: set high").isGreaterThan(1);
+        assertThat(before(paragraph(document, "High"))).isZero();
+    }
+
+    @Test
+    void aLineSetHighAboveAShapeHoldingTextIsNotLoweredByThatText() throws Exception {
+        // The shape is drawn where the page puts it and its text is set in the room held for it:
+        // the space above that text is not the line's to take, or the text would leave its shape.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH))
+                .add(new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Badge").rectangle(200, 30)
+                        .fillColor(DocumentColor.rgb(238, 243, 249)).margin(DocumentInsets.top(10))
+                        .position(new com.demcha.compose.document.dsl.ParagraphBuilder().name("Inside").text("Inside")
+                                .textStyle(EVEN).build(), 0, 0, LayerAlign.TOP_LEFT)
+                        .build()));
+
+        assertThat(lowering(paragraph(document, "High"))).as("the premise: set high").isGreaterThan(1);
+        assertThat(before(paragraph(document, "High"))).isZero();
+    }
+
+    @Test
     void aBlockWithNoSpaceAboveItBetweenTheLineAndWhatFollowsLowersNothing() throws Exception {
         // A rule right under the line gives nothing, and the paragraph under the rule is not
         // the line's to take from.

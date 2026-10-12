@@ -103,6 +103,76 @@ class DocxListItemLowerTest {
     }
 
     @Test
+    void anItemSetHigherThanTheOneAboveItIsLoweredByTheDifference() throws Exception {
+        // Lato's 24pt line stands 0.65pt high; the item of two lines 3pt apart under it, its gap
+        // taken from the space above it, higher still. What the first owes stands the second that
+        // much lower already, so it is lowered by the rest.
+        Exported exported = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addList(list -> list.textStyle(lato(24)).lineSpacing(3).itemSpacing(3).margin(DocumentInsets.top(10))
+                        .items("One", "Two\nmore"))
+                .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))));
+        XWPFParagraph two = starting(exported, "Two");
+        long first = latoLowering();
+        long second = highTakingTheGap(two, 3, LATO_ASCENT * 24);
+
+        assertThat(second).as("the premise: the second stands the higher").isGreaterThan(first + 5);
+        assertThat(before(paragraph(exported, "One"))).isEqualTo(200 + first);
+        assertThat(before(two)).as("its gap taken by its lines, and the rest of its lowering")
+                .isCloseTo(second - first, within(1L));
+        assertThat(before(paragraph(exported, "Body"))).isCloseTo(200 - second, within(1L));
+    }
+
+    @Test
+    void anItemThatCannotGiveTheLoweringBackHasTheItemAboveTakeItBack() throws Exception {
+        // The first item, of two lines, stands high; the two under it, a quarter point high, are
+        // not lowered. With no space between the items, lowered, the first would stand them lower
+        // than Word sets them: it is taken back. With 3pt between them, it is given back.
+        Consumer<ListBuilder> items = list -> list.textStyle(lato(10)).lineSpacing(3).margin(DocumentInsets.top(10))
+                .items("One\nmore", "Two", "Three");
+        Exported flush = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addList(list -> items.accept(list.itemSpacing(0)))
+                .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))));
+        Exported apart = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addList(list -> items.accept(list.itemSpacing(3)))
+                .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))));
+        long lower = highTakingTheGap(starting(apart, "One"), 3, LATO_ASCENT * 10);
+
+        assertThat(lower).as("the premise: the first item stands high").isGreaterThan(10);
+        assertThat(before(starting(apart, "One"))).as("lowered, given back below").isEqualTo((10 - 3) * 20 + lower);
+        assertThat(before(paragraph(apart, "Two"))).isEqualTo(3 * 20 - lower);
+        assertThat(before(starting(flush, "One"))).as("taken back").isEqualTo((10 - 3) * 20);
+        assertThat(before(paragraph(flush, "Two"))).isZero();
+        assertThat(before(paragraph(flush, "Body"))).as("the space above it, whole").isEqualTo(200);
+    }
+
+    @Test
+    void anItemLoweredIntoTheSpaceBelowARowEndingTheDocumentIsTakenBack() throws Exception {
+        // The list owes 4pt below it in its column, which gives the lowering back; at the end of
+        // the document that space is left out of the row, and the lowering with it.
+        Consumer<PageFlowBuilder> row = page -> page.addRow(r -> r
+                .addSection(column -> column.add(new ListBuilder().textStyle(lato(24))
+                        .margin(new DocumentInsets(10, 0, 4, 0)).items("Heading").build()))
+                .addSection(column -> column.addParagraph(p -> p.text("Side").textStyle(lato(10)))));
+        Exported ending = export(page -> {
+            page.addParagraph(p -> p.text("Lead").textStyle(lato(10)));
+            row.accept(page);
+        });
+        Exported followed = export(page -> {
+            page.addParagraph(p -> p.text("Lead").textStyle(lato(10)));
+            row.accept(page);
+            page.addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10)));
+        });
+
+        assertThat(before(inACell(followed.document(), "Heading"))).as("lowered, followed")
+                .isEqualTo(200 + latoLowering());
+        assertThat(after(inACell(followed.document(), "Heading"))).isEqualTo(4 * 20 - latoLowering());
+        assertThat(before(inACell(ending.document(), "Heading"))).as("taken back at the end").isEqualTo(200);
+    }
+
+    @Test
     void anItemUnderOneLoweredGivesItBackBeforeItRises() throws Exception {
         // Spectral's 10pt line stands 1.6pt low in Word, and an item of two lines 15pt apart stands
         // high: the lines take 12pt of their gap from the space above them. The one-line item under

@@ -589,6 +589,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
+    /**
+     * What a cell's last paragraph's space below gave back of the lowering of a list's items above
+     * it, by that paragraph ({@link #writeInCell}): taken back where that space is left out
+     * ({@link #dropTheSpaceBelow}).
+     */
+    private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP, List<GivenBack>>
+            givenByTheSpaceBelow = new java.util.IdentityHashMap<>();
+
+    /**
+     * Twips a space below gave back of the lowering grown into {@code spaces}.
+     *
+     * @param spaces the grown spaces of the list's items
+     * @param twips  how much that space gave back
+     */
+    private record GivenBack(java.util.ArrayDeque<GrownSpace> spaces, long twips) {
+    }
+
     /** Counts {@code twips} of the space under each list in {@code hung} as giving its hang back. */
     private static void giveToTheLowering(List<HungLowering> hung, long twips) {
         for (HungLowering lowering : hung) {
@@ -946,6 +963,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // An earlier export's lowerings are its own document's.
         loweringHung = new ArrayList<>();
         cellLoweringHung = new ArrayList<>();
+        givenByTheSpaceBelow.clear();
         forgetTheHang();
         raisedRows.clear();
         insetLeft = 0;
@@ -4989,12 +5007,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         giveBack(itemsLowered, giveBackFromTheSpaceAbove(para, grownBy(itemsLowered)));
         double shift = shiftToThePagesBaseline(para, laidOut.lines(), listLineGap, 0, false, true, staysOnItsPage);
-        if (wordDrawsTheMarker) {
-            lowerIntoTheSpaceAbove(para, staysOnItsPage, -shift);
-        } else {
+        if (!wordDrawsTheMarker) {
             // Its marker is its text, and its position moves the two together.
             raiseRunsFrom(para, 0, Math.round(shift * HALF_POINTS_PER_POINT));
         }
+        lowerIntoTheSpaceAbove(para, staysOnItsPage, wordDrawsTheMarker ? -shift : 0);
     }
 
     /** How far the spaces in {@code grown} were grown, together, in twips. */
@@ -5065,7 +5082,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>A line moved down takes its room out of the space below it ({@link #itemsLowered}). The
      * items under it give it back from the space above them, one standing as high taking it back
-     * by its own lowering; what is left at the list's end hangs below the list, and the space
+     * by its own lowering; one that cannot give back all it is owed, and stands less high itself,
+     * has the items above take the rest back, the last lowered first, and stands where it would
+     * have without them. What is left at the list's end hangs below the list, and the space
      * above what follows takes it as it takes a line hanging below the block above it
      * ({@link #hangingBelow}), what that space and that block's own top edge cannot give named as
      * standing it lower ({@link #nameTheTailNotTaken}). At the end of a cell the space the cell
@@ -5090,21 +5109,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * {@code NavySidebar} wrap each job in one. A raise is not made there either way.</p>
      *
      * @param lower how far the line's position would lower it, in points: 0 or less where the
-     *              whole difference is under half a point ({@link #shiftToThePagesBaseline}), or
-     *              the line is set low
+     *              whole difference is under half a point ({@link #shiftToThePagesBaseline}), the
+     *              line is set low, or its marker is its text, which its position moves with it
      */
     private void lowerIntoTheSpaceAbove(XWPFParagraph para, boolean staysOnItsPage, double lower) {
         // A panel's top border is taken inside its first line's space above (takeTheTopBorderInside).
-        if (!(lower > 0) || overlayDepth > oneLayerDepth || !staysOnItsPage || opensThePanel(para)) {
-            return;
-        }
-        // What the items above owe stands it that much lower already. A line set at an exact
-        // height, as one with a position to take is, has its spacing written.
-        long more = Math.max(0, Math.round(lower * POINT_TO_TWIP) - grownBy(itemsLowered));
-        if (more > 0) {
+        boolean lowered = lower > 0 && overlayDepth <= oneLayerDepth && staysOnItsPage && !opensThePanel(para);
+        long wanted = lowered ? Math.round(lower * POINT_TO_TWIP) : 0;
+        // What the items above still owe stands it that much lower already. Past what it is to
+        // be lowered by itself, it would stand everything under it lower: the items above give
+        // it back, standing as high as that leaves them.
+        long owed = grownBy(itemsLowered);
+        if (owed > wanted) {
+            takeBack(itemsLowered, owed - wanted);
+        } else if (wanted > owed) {
+            // A line set at an exact height, as one with a position to take is, has its spacing
+            // written.
             CTSpacing spacing = para.getCTP().getPPr().getSpacing();
-            spacing.setBefore(BigInteger.valueOf(twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null) + more));
-            itemsLowered.addLast(new GrownSpace(spacing, more));
+            spacing.setBefore(BigInteger.valueOf(
+                    twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null) + wanted - owed));
+            itemsLowered.addLast(new GrownSpace(spacing, wanted - owed));
         }
     }
 
@@ -7216,8 +7240,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return Double.isNaN(lowest) ? 0 : lowest - graph.canvas().margin().bottom();
     }
 
-    /** Leaves out the space below the last line of each cell of a table's last row that shows none of it. */
-    private static void dropTheSpaceBelow(XWPFTable table) {
+    /**
+     * Leaves out the space below the last line of each cell of a table's last row that shows none
+     * of it, and takes back what that space gave back of a list's items lowered above it
+     * ({@link #givenByTheSpaceBelow}): the row would stand that much taller.
+     */
+    private void dropTheSpaceBelow(XWPFTable table) {
         if (table.getRows().isEmpty() || drawn(tableBottom(table))) {
             return;
         }
@@ -7236,6 +7264,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 CTPPr lastProperties = paragraph.getCTP().getPPr();
                 if (lastProperties != null && lastProperties.isSetSpacing() && lastProperties.getSpacing().isSetAfter()) {
                     lastProperties.getSpacing().unsetAfter();
+                    for (GivenBack given : givenByTheSpaceBelow.getOrDefault(paragraph.getCTP(), List.of())) {
+                        takeBack(given.spaces(), given.twips());
+                    }
                 }
                 // A cell cannot end with a table in Word, so one it ends with is followed by
                 // the paragraph that closes it.
@@ -15855,8 +15886,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             pendingSpacingAfter -= taken;
             overhang = hang - taken;
             // A list's items lowered into that hang, past what the cell owes under them, hang
-            // below the cell with it, for the row or the panel holding the cell to take.
-            giveToTheLowering(loweringHung, Math.round(taken * POINT_TO_TWIP));
+            // below the cell with it, for the row or the panel holding the cell to take. What the
+            // cell owes is written below its last paragraph, which may yet be left out.
+            long given = Math.round(taken * POINT_TO_TWIP);
+            if (given > 0 && lastBodyParagraph != null) {
+                for (HungLowering lowering : loweringHung) {
+                    givenByTheSpaceBelow.computeIfAbsent(lastBodyParagraph.getCTP(), key -> new ArrayList<>())
+                            .add(new GivenBack(lowering.spaces, Math.min(lowering.hang, given)));
+                }
+            }
+            giveToTheLowering(loweringHung, given);
             lowered = loweringHung;
             // A cell ends where it ends: its last gap cannot land on whatever the body
             // writes next, and the body's cannot land inside it.

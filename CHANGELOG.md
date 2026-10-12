@@ -16,14 +16,17 @@ follow semantic versioning; release dates are ISO 8601.
   LibreOffice, `NavySidebar`'s, 0.51pt by it, 0.30 to 0.47pt. Such an item is now lowered by growing
   the space written above it, which moves its marker and its text together in both editors. The
   items under it take as much back out of the space above them, one standing as high taking it back
-  by its own lowering. What the list's last items still owe hangs below the list as a line hanging
-  below a block does: the space above what follows takes it, the report naming what that space and
-  that block's own top edge cannot give, and at the end of a cell the space the cell owes under the
-  list, the room under it in its row or a card's padding, each list's on its own. Wherever the hang
-  is let go instead — among them below a table's composed cell or a layer stack's column, under a
-  column's later layer, which takes its place from the page, at a block the layout sets on a later
-  page, which takes nothing of the hang left on the page above, at a section's end — the lowering
-  is taken back, those items standing as high as before and what follows where it stood. Not
+  by its own lowering; one that cannot, and stands less high itself, has the lowering above it taken
+  back as far, and stands where it would have. What the list's last items still owe hangs below the
+  list as a line hanging below a block does: the space above what follows takes it, the report
+  naming what that space and that block's own top edge cannot give, and at the end of a cell the
+  space the cell owes under the list, the room under it in its row or a card's padding, each list's
+  on its own. Wherever the hang is let go instead — among them below a table's composed cell or a
+  layer stack's column, under a column's later layer, which takes its place from the page, at a
+  block the layout sets on a later page, which takes nothing of the hang left on the page above, at
+  a section's end, where the space below its last row's cells that gave it back is left out too —
+  the lowering is taken back, those items standing as high as before and what follows where it
+  stood. Not
   lowered: an item the layout opens a page with, one of a list it sets over two pages in a cell, an
   item opening a card, whose top border the space above it takes, and one in an overlay whose writer
   measures what follows from the page — a stack laying one layer over another, a band, a shape

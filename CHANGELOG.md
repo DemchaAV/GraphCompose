@@ -24,9 +24,10 @@ follow semantic versioning; release dates are ISO 8601.
   on its own. Wherever the hang is let go instead — among them below a table's composed cell or a
   layer stack's column, under a column's later layer, which takes its place from the page, at a
   block the layout sets on a later page, which takes nothing of the hang left on the page above, at
-  a section's end, where the space below its last row's cells that gave it back is left out too —
-  the lowering is taken back, those items standing as high as before and what follows where it
-  stood. Not
+  a section's end, where the space a cell of its last row owes under its own last paragraph is left
+  out, and with it what that space gave back — the lowering is taken back, those items standing as
+  high as before and what follows where it stood; not yet where the room under a cell in that row
+  is the space below a cell beside it, left out there as well. Not
   lowered: an item the layout opens a page with, one of a list it sets over two pages in a cell, an
   item opening a card, whose top border the space above it takes, and one in an overlay whose writer
   measures what follows from the page — a stack laying one layer over another, a band, a shape

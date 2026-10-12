@@ -170,6 +170,16 @@ class DocxListItemLowerTest {
                 .isEqualTo(200 + latoLowering());
         assertThat(after(inACell(followed.document(), "Heading"))).isEqualTo(4 * 20 - latoLowering());
         assertThat(before(inACell(ending.document(), "Heading"))).as("taken back at the end").isEqualTo(200);
+        // Half a point below the list is all taken, and nothing is written below it to leave out.
+        Exported halfAPoint = export(page -> {
+            page.addParagraph(p -> p.text("Lead").textStyle(lato(10)));
+            page.addRow(r -> r
+                    .addSection(column -> column.add(new ListBuilder().textStyle(lato(24))
+                            .margin(new DocumentInsets(10, 0, 0.5, 0)).items("Heading").build()))
+                    .addSection(column -> column.addParagraph(p -> p.text("Side").textStyle(lato(10)))));
+        });
+        assertThat(before(inACell(halfAPoint.document(), "Heading"))).as("taken back at the end, all of it")
+                .isEqualTo(200);
     }
 
     @Test

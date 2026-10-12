@@ -7264,8 +7264,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 CTPPr lastProperties = paragraph.getCTP().getPPr();
                 if (lastProperties != null && lastProperties.isSetSpacing() && lastProperties.getSpacing().isSetAfter()) {
                     lastProperties.getSpacing().unsetAfter();
-                    for (GivenBack given : givenByTheSpaceBelow.getOrDefault(paragraph.getCTP(), List.of())) {
-                        takeBack(given.spaces(), given.twips());
+                }
+                // What gave it back was that space, written below the paragraph or, all taken,
+                // not written at all.
+                List<GivenBack> given = givenByTheSpaceBelow.remove(paragraph.getCTP());
+                if (given != null) {
+                    for (GivenBack back : given) {
+                        takeBack(back.spaces(), back.twips());
                     }
                 }
                 // A cell cannot end with a table in Word, so one it ends with is followed by

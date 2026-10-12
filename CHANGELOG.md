@@ -8,6 +8,41 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export lowers a paragraph's line Word sets high by under half a point, by the space
+  between it and what follows.** Word and LibreOffice stand an exact line's baseline four fifths of
+  the way down it, the page its face's ascent below the line's top, and a line the export's measure
+  of that seat found high was moved only by its position, which counts in half points: under half a
+  point it was left where Word set it, and 772 of the corpus's 4170 lines stood 0.15 to 0.6pt above
+  the page's in both editors. Such a line is now lowered by growing the space written above it, by
+  as much as the space between it and the block under it gives back: the space owed above that
+  block, that block's own top edge, or the space written below the line where a table or a cell's
+  end follows. The block under it stands where it did. What none of them gives — a block on a
+  later page, whose space above Word drops at the page's top, a block in another cell or an
+  overlay, a page or a section ending — the line is not lowered by, and where the section's end
+  leaves the space below a cell's last line out, the lowering it gave is taken back with it. Not
+  lowered: a list's item, which its own list lowers, a line opening a panel, cut to fit, not on one
+  page, or in an overlay other than a stack of one layer.
+
+- **A DOCX export hangs what a rule's paragraph stands past the rule's box below it, for the space
+  under it to take.** A rule is an empty paragraph whose bottom border is the stroke: Word makes it
+  a tenth of a point of line where the stroke has no room above it, and the border as wide as it
+  draws it, in eighths of a point — a 1.2pt rule 1.25pt. What that stands past the box came off the
+  space owed below the rule where there was any, and was lost where there was none, standing the
+  block under it, and all that follows, that much lower: under `MeteredInvoice`'s title rule the row
+  below stood 0.13pt low in Word and 0.11pt in LibreOffice (measured). It now hangs below the rule
+  as a line hanging below a block does, the space above what follows taking it and the report
+  naming what it cannot (`space above`); that row stands within 0.01pt. A rule not drawn hangs
+  nothing past its line.
+
+  The two are measured together, as each unmasks the other's error: 45 of the corpus's 62 DOCX
+  change, and by median 33 documents stand nearer the page in Word and 7 further, 36 and 7 in
+  LibreOffice on Windows and 24.2 — `TimelineMinimal` 0.36 to 0.05pt in Word and 0.45 to 0.05pt in
+  LibreOffice, `ProposalEditorial` 0.50 to 0.14pt in Word, `ProfessionalSidebar` 0.30 to 0.13pt;
+  by line, 1031 nearer and 446 further in Word, 884 and 430 in LibreOffice. Three stand further by
+  a tenth or more, a drift of their own the lines' seat or the rules' hang had covered:
+  `Panel`, whose cards' lines stand lower with each entry, 0.31 to 0.46pt in Word, `MeteredInvoice`
+  0.09 to 0.21pt, `CenteredHeadline` 0.11 to 0.19pt. The report's notes are unchanged.
+
 - **A DOCX export lowers a Word list's item that Word sets high by the space above it, its marker
   with its text.** Word draws a Word list's marker from the paragraph's mark, and LibreOffice does
   not move it by the mark's position, so an item the export's measure of Word's seat found high by

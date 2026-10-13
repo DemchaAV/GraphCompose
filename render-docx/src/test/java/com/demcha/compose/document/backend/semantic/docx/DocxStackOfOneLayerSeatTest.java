@@ -201,8 +201,9 @@ class DocxStackOfOneLayerSeatTest {
     }
 
     @Test
-    void aLineInAStackOfOneLayerInsideAStackLayingItOverAShapeKeepsTheSpaceAboveIt() throws Exception {
-        // Inside the outer stack, which measures what follows it from the page, the inner one is no flow.
+    void aLineInAStackOfOneLayerInsideABandIsRaisedIntoTheSpaceAboveIt() throws Exception {
+        // The outer stack, laying its layer over a shape, is a band: it pays what its last line owes
+        // below for its raise (DocxBaselineSeatTest), so the line moves, as in the flow.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(EVEN))
                 .addLayerStack(outer -> outer.name("Card")
@@ -214,8 +215,8 @@ class DocxStackOfOneLayerSeatTest {
             double raise = 0.8 * line(title) - SPECTRAL_ASCENT * 30;
 
             assertThat(raise).as("the premise: Word's baseline is the lower").isGreaterThan(1);
-            assertThat(before(title)).as("its 20pt, whole").isEqualTo(400);
-            assertThat(position(title)).as("raised by its position").isCloseTo((int) Math.round(raise * 2), within(1));
+            assertThat(before(title)).as("its 20pt less the raise").isCloseTo(Math.round((20 - raise) * 20), within(1L));
+            assertThat(position(title)).as("no position: the line moves").isZero();
         }
     }
 

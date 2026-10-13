@@ -176,14 +176,15 @@ class DocxDrawingsTest {
             var title = placedNamed(placed.get(), "Title");
             var below = placedNamed(placed.get(), "Below");
 
-            assertThat(twipsBefore(document, "EXPERIENCE")).as("from the line above to the title, as on the page")
-                    .isCloseTo(Math.round((above.placementY() - title.placementY() - title.placementHeight()) * 20),
-                            org.assertj.core.data.Offset.offset(2L));
+            assertThat(twipsBefore(document, "EXPERIENCE")).as("from the line above to the title, as on the page,"
+                                                               + " less the title's raise into it")
+                    .isCloseTo(Math.round((above.placementY() - title.placementY() - title.placementHeight()) * 20)
+                               - DocxExports.DEFAULT_LINE_RAISE, org.assertj.core.data.Offset.offset(2L));
             assertThat(twipsAfter(document, "EXPERIENCE") + twipsBefore(document, "Below"))
-                    .as("from the title past the header's foot to the line below, as on the page, less that"
-                        + " line's raise into it")
-                    .isCloseTo(Math.round((title.placementY() - below.placementY() - below.placementHeight()) * 20)
-                               - DocxExports.DEFAULT_LINE_RAISE, org.assertj.core.data.Offset.offset(3L));
+                    .as("from the title past the header's foot to the line below, as on the page, with what the"
+                        + " title owes for its raise and less that line's raise into it")
+                    .isCloseTo(Math.round((title.placementY() - below.placementY() - below.placementHeight()) * 20),
+                            org.assertj.core.data.Offset.offset(3L));
             assertThat(header.placementHeight()).isEqualTo(40);
         }
     }

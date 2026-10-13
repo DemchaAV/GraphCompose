@@ -36,6 +36,8 @@ class DocxOverlayBandTest {
     private static final double BADGE = 80;
     /** What a line of the default text in the flow is raised into the space above it. */
     private static final long RAISE = DocxExports.DEFAULT_LINE_RAISE;
+    /** What the badge's initials, the default face at 28pt, are raised: twice its 14pt line's. */
+    private static final long INITIALS_RAISE = 2 * DocxExports.DEFAULT_LINE_RAISE;
 
     @Test
     void aBadgeOverItsPlaceHolderIsWrittenWhereThePageDrawsIt() throws Exception {
@@ -50,10 +52,12 @@ class DocxOverlayBandTest {
             double above = (stack.placementY() + stack.placementHeight())
                            - (initials.placementY() + initials.placementHeight());
             double below = initials.placementY() - stack.placementY();
-            assertThat(before(paragraphs.get(1))).as("the initials sit where the ring centres them")
-                    .isCloseTo(Math.round((6 + above) * 20), org.assertj.core.data.Offset.offset(2L));
-            assertThat(before(paragraphs.get(2))).as("and the badge keeps its height below them")
-                    .isCloseTo(Math.round((below + 12) * 20) - RAISE, org.assertj.core.data.Offset.offset(2L));
+            assertThat(before(paragraphs.get(1))).as("the initials sit where the ring centres them, their line"
+                                                    + " raised into the space above it")
+                    .isCloseTo(Math.round((6 + above) * 20) - INITIALS_RAISE, org.assertj.core.data.Offset.offset(2L));
+            assertThat(before(paragraphs.get(2))).as("and the badge keeps its height below them, with what the"
+                                                    + " initials owe for their raise")
+                    .isCloseTo(Math.round((below + 12) * 20) - RAISE + INITIALS_RAISE, org.assertj.core.data.Offset.offset(2L));
         }
     }
 
@@ -81,10 +85,10 @@ class DocxOverlayBandTest {
             double below = initials.placementY() - stack.placementY();
 
             assertThat(paragraphs).extracting(XWPFParagraph::getText).containsExactly("Above", "JR", "Below");
-            assertThat(before(paragraphs.get(1))).as("the initials where the ring centres them")
-                    .isCloseTo(Math.round((6 + above) * 20), org.assertj.core.data.Offset.offset(2L));
-            assertThat(before(paragraphs.get(2))).as("and the badge's height below them")
-                    .isCloseTo(Math.round(below * 20) - RAISE, org.assertj.core.data.Offset.offset(2L));
+            assertThat(before(paragraphs.get(1))).as("the initials where the ring centres them, raised")
+                    .isCloseTo(Math.round((6 + above) * 20) - INITIALS_RAISE, org.assertj.core.data.Offset.offset(2L));
+            assertThat(before(paragraphs.get(2))).as("and the badge's height below them, with what they owe")
+                    .isCloseTo(Math.round(below * 20) - RAISE + INITIALS_RAISE, org.assertj.core.data.Offset.offset(2L));
         }
     }
 
@@ -280,7 +284,8 @@ class DocxOverlayBandTest {
     @Test
     void theLastLayersNegativeBottomEdgeIsTakenOnceBelowTheBand() throws Exception {
         // The band measures the space below it from that layer's box: the text running 4pt past
-        // the stack's foot takes 4pt off the 10pt above the next paragraph, and no more.
+        // the stack's foot takes 4pt off the 10pt above the next paragraph, and no more. Its line,
+        // raised into the space above it, owes as much more below it.
         DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20)).create();
         session.pageFlow(page -> page
                 .addLayerStack(stack -> stack.name("Stack")
@@ -293,7 +298,9 @@ class DocxOverlayBandTest {
             XWPFParagraph below = document.getParagraphs().stream()
                     .filter(paragraph -> "Below".equals(paragraph.getText())).findFirst().orElseThrow();
 
-            assertThat(before(below)).isEqualTo((10 - 4) * 20L - RAISE);
+            assertThat(before(below)).as("6pt, less its own line's raise into it, with what the raised line"
+                                         + " above it owes below")
+                    .isEqualTo((10 - 4) * 20L - RAISE + RAISE);
         }
     }
 

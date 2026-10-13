@@ -137,9 +137,10 @@ class DocxListItemSeatTest {
     }
 
     @Test
-    void anItemInALayerStackKeepsTheSpaceAboveIt() throws Exception {
-        // A stack measures what follows it from the page: a raise owed below an item inside it
-        // would not reach what follows.
+    void anItemOpeningABandWithNoSpaceWrittenAboveItIsRaisedByItsPosition() throws Exception {
+        // A band pays a raise owed below an item in it (DocxBandRaiseTest), but this item, the
+        // band's first block, has no space written above it to move into: the list's margin is not
+        // written in a band.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Above").textStyle(LEAD))
                 .addLayerStack(stack -> stack.name("Stack")
@@ -150,6 +151,7 @@ class DocxListItemSeatTest {
             double raise = 0.8 * line(item) - SPECTRAL_ASCENT * 30;
 
             assertThat(raise).as("the premise: Word's baseline is the lower").isGreaterThan(1);
+            assertThat(item.getCTP().getPPr().getSpacing().isSetBefore()).as("the premise: no space above it").isFalse();
             assertThat(after(item)).as("nothing owed below it").isZero();
             assertThat(position(item)).as("raised by its position").isCloseTo(Math.round(raise * 2), within(1L));
         }

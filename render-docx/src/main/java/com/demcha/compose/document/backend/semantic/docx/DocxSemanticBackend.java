@@ -235,10 +235,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // the space above it there (holdAParagraphsTopEdgeOnItsPage), so its line is not moved up into
     // that space, nor down by growing it (offerToLower).
     private ParagraphNode paragraphOpeningItsPage;
+    // Whether a band the layout starts on a new page has written no paragraph yet, and the paragraph
+    // its first written in the body: it opens that page in Word, though a layer of room went before
+    // it, and Word drops the space above it there (raiseIntoTheSpaceAbove).
+    private boolean bandOpensItsPage;
+    private org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP paragraphOpeningABandsPage;
+    // How many paragraphs have been written: what a raised line owes below it is paid by the next
+    // one, as its space above, or by flushSpacingAfter.
+    private long paragraphsWritten;
     // How far the line raised last was moved up into the space above it, in points, and how many
-    // blocks had been written when it was (raiseOwedByTheLastLine).
+    // paragraphs had been written when it was (raiseOwedByTheLastLine).
     private double lastRaise;
-    private long blocksAtTheLastRaise = -1;
+    private long paragraphsAtTheLastRaise = -1;
     // The text bands whose translucent separator is already reported this export: a band is
     // written into each kind of header or footer Word is given.
     private final java.util.Set<DocumentHeaderFooter> separatorsReported =
@@ -1028,6 +1036,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         cellHang = 0;
         cellTextShift = 0;
         paragraphOpeningItsPage = null;
+        bandOpensItsPage = false;
+        paragraphOpeningABandsPage = null;
+        paragraphsWritten = 0;
         panelsFirstLineKeeps = 0;
         panelsMarginKeeps = 0;
         panelsPaddingGives = false;
@@ -1037,7 +1048,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         rowsLiftedForTheirLines.clear();
         rowOpeningItsPage = false;
         lastRaise = 0;
-        blocksAtTheLastRaise = -1;
+        paragraphsAtTheLastRaise = -1;
         nextDrawingId = 100_000;
         anchors.reset();
         writing = null;
@@ -7308,6 +7319,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             para = currentCell != null ? currentCell.addParagraph() : document.createParagraph();
         }
         blocksWritten++;
+        paragraphsWritten++;
+        // The first paragraph a band opening its page writes in the body opens the page; one in a
+        // cell is the table's, and the table opened the page.
+        if (bandOpensItsPage && currentCell == null) {
+            paragraphOpeningABandsPage = para.getCTP();
+        }
+        bandOpensItsPage = false;
         // A line set high waits for what is written under it (offerToLower): the block written
         // before this one is done, and gives it what of its space above is left; this one gives a
         // line set high just above it, in its overlay and on its page, whose top Word sets a later
@@ -8014,7 +8032,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** Writes the owed space onto the paragraph that owes it, for want of a later one. */
     private void flushSpacingAfter() {
         // What a raised line owed below it is paid with it (raiseOwedByTheLastLine).
-        blocksAtTheLastRaise = -1;
+        paragraphsAtTheLastRaise = -1;
         // A pull out of the paragraph above comes out of what it owes below, as the page sums them.
         double owed = pendingSpacingAfter - pullBelow;
         if (owed > 0 && lastBodyParagraph != null) {
@@ -8839,7 +8857,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (currentCell == null && startsAPageOfItsOwn(node)) {
             // The layout moves a stack of one layer, written in the flow, to a new page whole: its
             // first paragraph opens that page as one in the flow does, and its line is not moved
-            // into the space above it there either. In any other overlay it is not moved anyway.
+            // into the space above it there either. A band's first, where the band opens its page,
+            // is not either (paragraphOpeningABandsPage); in any other overlay it is not moved anyway.
             // Its top edge is held in the flow only, as before: in a stack it is not measured.
             if (overlayDepth == 0) {
                 holdAParagraphsTopEdgeOnItsPage(document, node);
@@ -10537,17 +10556,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * what follows is written and has taken its own of that space ({@link #offerToLower}). Only a
      * line of its own, as its caller raises: not a line
      * pair's, a container's stacked lines, a text box's, nor one cut to its pictures. Only a
-     * paragraph in the flow or in a cell, where the space owed below it is the space above what
-     * follows: a band, a stack laying one layer over another, a shape container, a canvas and the
-     * text laid over the flow — the overlays — measure what follows them from the page
-     * ({@link #writeOverlayBand}), and the space a line owed inside them would be lost. A stack of
+     * paragraph in the flow, in a cell, or among a band's layers, where the space owed below it is
+     * the space above what follows: a band measures what follows each of its layers, and itself,
+     * from the page, and pays what its last line written owes ({@link #writeOverlayBand}).
+     * {@code ConsultingInvoice}'s contact lines, in a band, stood half a point low in Word and both
+     * LibreOffice builds, and its address 0.3pt; raised, within 0.03pt (measured). The text laid
+     * over the flow and an overlay not written as a band measure what follows them from the page
+     * too, and pay nothing: the space a line owed inside them would be lost. A stack of
      * one layer lays nothing over anything and is written in the flow, and its lines are raised as
      * there: {@code SlateOrange} sets its experience timeline, a row, in one for a row's cell to
      * hold it, and its employers' lines and their items, 0.23 to 0.54pt low in Word and 0.14 to
      * 0.42pt in LibreOffice, rose 0.12 to 0.36pt and 0.2pt (measured). A column's later layer
      * measures the space to itself from the page too, and takes back the raise of the line above it
      * ({@link #raiseOwedByTheLastLine}). Not a paragraph the layout moves to a new page, the first
-     * of a stack of one layer it moves there whole among them: Word drops its space above there
+     * of a stack of one layer it moves there whole among them, nor a band's first where the band
+     * opens its page, though a layer of room went before it: Word drops its space above there
      * ({@link #holdAParagraphsTopEdgeOnItsPage}), and what the line owed would stand all below it
      * lower. Not a paragraph the layout breaks over a page: its lines on the next page start at
      * that page's top, where the space above moves none of them, and what it owed would stand
@@ -10583,8 +10606,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private double raiseIntoTheSpaceAbove(XWPFParagraph para, boolean staysOnItsPage, CTSpacing spacing,
                                           double raise, boolean intoThePadding) {
-        // A band and the text laid over the flow are overlays too (writeOverlayBand, writeOverTheFlow).
-        if (!(raise >= LEAST_RAISE_INTO_THE_SPACE_ABOVE) || overlayDepth > oneLayerDepth || !staysOnItsPage) {
+        // The text laid over the flow is an overlay too (writeOverTheFlow); a band is one that pays
+        // what its lines owe below them (writeOverlayBand), but for the space above its first
+        // paragraph where it opens its page, which Word drops.
+        if (!(raise >= LEAST_RAISE_INTO_THE_SPACE_ABOVE) || overlayDepth > oneLayerDepth + bandDepth || !staysOnItsPage
+            || para.getCTP() == paragraphOpeningABandsPage) {
             return 0;
         }
         long room = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null)
@@ -10607,7 +10633,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         owePendingSpacingAfter(raised / POINT_TO_TWIP);
         lastRaise = raised / POINT_TO_TWIP;
-        blocksAtTheLastRaise = blocksWritten;
+        paragraphsAtTheLastRaise = paragraphsWritten;
         return raised / POINT_TO_TWIP;
     }
 
@@ -10698,13 +10724,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * What the line written last owes below it for its raise into the space above it
-     * ({@link #raiseIntoTheSpaceAbove}), in points, while no block has been written after it: a
-     * column's later layer measures the space to itself from the page and drops what the layers
-     * above owe, and the line above it was set that much higher than the page sets it.
+     * What the line raised last owes below it for its raise into the space above it
+     * ({@link #raiseIntoTheSpaceAbove}), in points, while it is still owed: no paragraph has been
+     * written after it, which would hold it as its space above, nor the owed space written below
+     * it ({@link #flushSpacingAfter}), as it is where a table follows or a cell ends. A column's
+     * later layer, and a band's, measures the space to itself from the page and drops what the
+     * layers above owe, and the line above it was set that much higher than the page sets it. Room
+     * held for a drawing pays nothing of it ({@link #holdTheSpaceOf}).
      */
     private double raiseOwedByTheLastLine() {
-        return blocksWritten == blocksAtTheLastRaise ? lastRaise : 0;
+        return paragraphsWritten == paragraphsAtTheLastRaise ? lastRaise : 0;
     }
 
     /**
@@ -14475,7 +14504,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // address runs 2.3pt past its band, and the contact bands under it stood 2.9pt low.
             // A band the layout starts on a new page leaves the hang on the page above, as a
             // paragraph or a table there does.
-            double hang = currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(stack) ? 0 : hangingBelow;
+            boolean opensItsPage = currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(stack);
+            double hang = opensItsPage ? 0 : hangingBelow;
+            // Its first paragraph opens the page, and Word drops the space above it there: its line
+            // is not raised into it (writeParagraph).
+            bandOpensItsPage = opensItsPage;
             resumeSpacing = above - Math.min(Math.max(0, above), hang);
             // A list's items lowered into it are lowered as far as that space takes it, and the
             // rest taken back, as all of it is where the band opens a page (lowerIntoTheSpaceAbove).
@@ -14484,6 +14517,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
+        long paragraphsBefore = paragraphsWritten;
         standIns.addAll(band.standIns());
         closingBlocks.addAll(band.closing());
         double outerLeft = insetLeft;
@@ -14497,10 +14531,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             for (int index = 0; index < layers.size(); index++) {
                 double resume = band.resume(layers.get(index));
                 if (index > 0 && !Double.isNaN(resume) && Double.isNaN(resumeSpacing)) {
+                    // The gap to this layer is the page's, from a last line set as high as it was
+                    // raised into the space above it: what it owes below is that much more.
+                    double raised = raiseOwedByTheLastLine();
                     pendingSpacingAfter = 0;
                     carriedSpacingBefore = 0;
                     pullBelow = 0;
-                    resumeSpacing = resume;
+                    resumeSpacing = resume + raised;
                 }
                 double bandLeft = insetLeft;
                 double bandRight = insetRight;
@@ -14530,7 +14567,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // everything after them, stood that much lower in Word.
         // The band measures its space below from its lowest text, a nested band's included: what
         // a band inside it left hanging is already in that number, and is not taken twice.
-        double below = unwritten + band.below() + stack.margin().bottom();
+        // A last line raised into the space above it owes as much more below it, as before a layer.
+        // A band that wrote no paragraph hands on the space it opened with, a raise owed above it
+        // in it already.
+        double raised = paragraphsWritten > paragraphsBefore ? raiseOwedByTheLastLine() : 0;
+        double below = unwritten + band.below() + stack.margin().bottom() + raised;
         // The band measures that from its boxes on the page, a layer's pull already in it.
         pullBelow = 0;
         pendingSpacingAfter = Math.max(0, below);

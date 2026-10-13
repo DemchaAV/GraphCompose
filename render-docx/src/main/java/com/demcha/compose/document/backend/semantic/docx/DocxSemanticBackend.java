@@ -1146,6 +1146,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             hideTheClosingMark(document);
             hideTheCellClosingMarks(document.getTables());
+            letTheOneRowTablesKeptWithTheNextBreak(document.getTables());
             if (textFillsWritten) {
                 DocxTranslucency.settle(document);
             }
@@ -1371,6 +1372,56 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     if (hairline(last, SEPARATOR_POINTS)) {
                         hide(last);
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * Lets the row of a one-row table kept with what follows break across pages, so that
+     * LibreOffice keeps the table with what follows.
+     *
+     * <p>LibreOffice reads a table of one row that may not break across pages as a table that may
+     * not split, and it reads a table's keep-with-next off its last row only in a table that may
+     * split: such a table was kept with nothing there. {@code EditorialProposal}'s page-two
+     * masthead, a row kept with the heading under it, stood at the foot of page one in
+     * LibreOffice, and every line of page two 45 to 47pt higher than the page sets it. Freed, it
+     * moved to page two with its heading in LibreOffice, and Word set it there either way;
+     * moved down to straddle the foot of page one, it went to page two whole in both.</p>
+     *
+     * <p>Only a table in the body: one in a cell goes where its cell's row goes. Only one whose
+     * cells hold paragraphs alone, every one kept with the next, as {@link #keepOnOnePage} keeps
+     * a block with what follows. LibreOffice reads the keep off the paragraph the first cell opens
+     * with: opening with a table, the masthead freed stayed at the foot of page one. And
+     * {@link #keepOnOnePage} chains a cell's own paragraphs, not the rows of a table in it, which
+     * only {@code w:cantSplit} holds together. A table of more rows may split in LibreOffice
+     * however its rows are kept.</p>
+     */
+    private static void letTheOneRowTablesKeptWithTheNextBreak(List<XWPFTable> tables) {
+        for (XWPFTable table : tables) {
+            if (table.getRows().size() != 1 || !table.getRow(0).isCantSplitRow()) {
+                continue;
+            }
+            XWPFTableRow row = table.getRow(0);
+            List<XWPFTableCell> cells = row.getTableCells();
+            boolean keptWithTheNext = !cells.isEmpty();
+            for (XWPFTableCell cell : cells) {
+                keptWithTheNext &= !cell.getParagraphs().isEmpty() && cell.getTables().isEmpty();
+                for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                    // Read off the element: POI's isKeepNext() reads a w:keepNext with no value,
+                    // which is on, as off.
+                    CTPPr properties = paragraph.getCTP().getPPr();
+                    keptWithTheNext &= properties != null && properties.isSetKeepNext()
+                                       && org.apache.poi.ooxml.util.POIXMLUnits.parseOnOff(properties.getKeepNext());
+                }
+            }
+            if (keptWithTheNext) {
+                org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTrPr rowProperties = row.getCtRow().getTrPr();
+                while (rowProperties.sizeOfCantSplitArray() > 0) {
+                    rowProperties.removeCantSplit(0);
+                }
+                if (!rowProperties.getDomNode().hasChildNodes()) {
+                    row.getCtRow().unsetTrPr();
                 }
             }
         }

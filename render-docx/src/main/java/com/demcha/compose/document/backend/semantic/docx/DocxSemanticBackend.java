@@ -8465,6 +8465,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeLinePair(XWPFDocument document, DocumentNode overlay, DocxLinePair.Pair pair)
             throws Exception {
+        boolean opensItsPage = currentCell == null && startsAPageOfItsOwn(overlay);
         double text = pair.line();
         double above = overlay.margin().top() + pair.above();
         if (above >= 0) {
@@ -8504,6 +8505,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         int rightAnchor = openAnchor(para, pair.right().anchor());
         writeParagraphRuns(para, pair.right(), false, lineTopAbove(lineTop, pair.right()), false);
         closeAnchor(para, rightAnchor);
+        raiseTheSharedLine(para, pair, lineTop, opensItsPage);
         // A Word paragraph has one outline level, and its outline lists the whole line by it: the
         // left side's level where it has one, the right side's where not; the other's is lost.
         boolean leftHeads = headingLevelOf(pair.left()) != null;
@@ -8537,6 +8539,64 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } finally {
             overlayDepth--;
         }
+    }
+
+    /**
+     * Raises a line pair's shared line into the space above it by the least its two halves call
+     * for, as a line of its own is raised ({@link #raiseIntoTheSpaceAbove}).
+     *
+     * <p>Each half is seated in the line by its own position, half a point and more, and a line
+     * cut to fit its halves' letters however little ({@link #shiftToThePagesBaseline}). Under half
+     * a point the position moves nothing, and the shared line was left where Word set it:
+     * {@code ConsultingInvoice}'s bank details, a label and its value to a line, half a point below
+     * the page's line, stood 0.7 to 0.8pt low in Word and both LibreOffice builds with the drift all
+     * under its line-item table shares, and raised stand 0.2 to 0.33pt low (measured). Where
+     * neither half is moved by its position, the line moves up for both, by the lesser of what they
+     * call for: moved for one alone it would move the other too. A half cut to its own measure or
+     * laying out no text keeps the line where it is, and so does a pair the layout opens a page
+     * with, whose space above Word drops there, and one a line of its own would not be raised in
+     * ({@link #raiseIntoTheSpaceAbove}). Only into the space written above the line: a pair opening
+     * a cell is not raised into the cell's padding.</p>
+     *
+     * <p>The raise is what the export reckons Word sets the line below the page's, and for Carlito
+     * both editors set the line higher than it reckons: in the short {@code LumaStudioInvoice}, the
+     * bank details, a pair in Carlito, rose past the page's line, from 0.03pt high to 0.27pt in Word
+     * and from 0.14 to 0.34pt in LibreOffice, as its other lines already stood high (measured).</p>
+     *
+     * @param lineTop       the line's top, measured up from the foot of the page
+     * @param opensItsPage  whether the layout starts the pair on a page after the one the block
+     *                      before it ended on
+     */
+    private void raiseTheSharedLine(XWPFParagraph para, DocxLinePair.Pair pair, double lineTop,
+                                    boolean opensItsPage) {
+        double left = belowThePagesBaselineInAPair(para, pair.left(), lineTopAbove(lineTop, pair.left()));
+        double right = belowThePagesBaselineInAPair(para, pair.right(), lineTopAbove(lineTop, pair.right()));
+        if (!(left > 0 && right > 0)) {
+            return;
+        }
+        raiseIntoTheSpaceAbove(para, !opensItsPage && staysOnItsPage(pair.left()) && staysOnItsPage(pair.right()),
+                para.getCTP().getPPr().getSpacing(), Math.min(left, right), false);
+    }
+
+    /**
+     * How far Word sets one half of a line pair below the page's baseline, in points, where its
+     * position does not move it; NaN where it does, or where the half is cut to fit or is no text.
+     */
+    private double belowThePagesBaselineInAPair(XWPFParagraph para, ParagraphNode half, double lineTopAbove) {
+        if (lineTopAbove != 0 || stackedLineHeights.containsKey(half)) {
+            return Double.NaN;
+        }
+        double shift = belowThePagesBaseline(para, layout.lines(half), layout.lineGap(half), lineTopAbove);
+        return Math.abs(shift) < LEAST_BASELINE_SHIFT_POINTS ? shift : Double.NaN;
+    }
+
+    /**
+     * Whether what a paragraph's line takes from the space above it stays above it on its page:
+     * not the paragraph the layout opens a page with, nor one it breaks over a page, but one in a
+     * cell of a row Word keeps whole ({@link #raiseIntoTheSpaceAbove}).
+     */
+    private boolean staysOnItsPage(ParagraphNode node) {
+        return node != paragraphOpeningItsPage && (layout.onOnePage(node) || inARowKeptWhole());
     }
 
     /**
@@ -10466,9 +10526,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // its letters where the page sets them, and is seated however little; so is one cut to
         // its pictures' reach, whose ink stands at its edges.
         boolean cutToFit = lineTopAbove != 0 || stackedLineHeights.containsKey(node) || heldExact;
-        // Not a paragraph the layout opens a page with, nor one it breaks over a page, but one in
-        // a cell of a row Word keeps whole (raiseIntoTheSpaceAbove).
-        boolean staysOnItsPage = node != paragraphOpeningItsPage && (layout.onOnePage(node) || inARowKeptWhole());
+        boolean staysOnItsPage = staysOnItsPage(node);
         return shiftToThePagesBaseline(para, layout.lines(node), layout.lineGap(node), lineTopAbove, cutToFit,
                 ownsItsLine, staysOnItsPage);
     }
@@ -10495,15 +10553,47 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                            List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
                                            double lineGap, double lineTopAbove, boolean cutToFit,
                                            boolean ownsItsLine, boolean staysOnItsPage) {
+        double shift = belowThePagesBaseline(para, lines, lineGap, lineTopAbove);
+        if (Double.isNaN(shift)) {
+            return 0;
+        }
+        // The position is moved as before where the whole shift called for it, whatever the space
+        // above took off it: a line 0.6pt low with 0.2pt above it is left a tenth off by its
+        // position, not four tenths.
+        boolean moved = Math.abs(shift) >= LEAST_BASELINE_SHIFT_POINTS || cutToFit;
+        if (ownsItsLine && !cutToFit) {
+            // Under half a point the position moves nothing, so the cell's padding may.
+            shift -= raiseIntoTheSpaceAbove(para, staysOnItsPage, para.getCTP().getPPr().getSpacing(), shift, !moved);
+            if (!moved) {
+                noteAFirstLineLow(para, shift);
+                offerToLower(para, staysOnItsPage, -shift);
+            }
+        }
+        return moved ? shift : 0;
+    }
+
+    /**
+     * How far Word's baseline in exact lines of text the layout set stands below the page's, in
+     * points, positive when Word's is lower; NaN where the paragraph is not written at an exact
+     * height or laid out no line of text (see
+     * {@link #shiftToThePagesBaseline(XWPFParagraph, ParagraphNode, double, boolean, boolean)}).
+     *
+     * @param lines        the lines the layout set the text on
+     * @param lineGap      the gap the layout puts between them, beyond their own height
+     * @param lineTopAbove how far above the page's first line the Word line starts, in points
+     */
+    private double belowThePagesBaseline(XWPFParagraph para,
+                                         List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
+                                         double lineGap, double lineTopAbove) {
         CTPPr properties = para.getCTP().getPPr();
         if (properties == null || !properties.isSetSpacing()) {
-            return 0;
+            return Double.NaN;
         }
         CTSpacing spacing = properties.getSpacing();
         Long written = spacing.isSetLineRule() && spacing.getLineRule() == STLineSpacingRule.EXACT
                 ? writtenTwips(spacing.getLine()) : null;
         if (written == null) {
-            return 0;
+            return Double.NaN;
         }
         for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
             if (line.spans().stream().anyMatch(
@@ -10515,23 +10605,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 double pageStep = line.lineHeight() + lineGap;
                 double pages = lineTopAbove + lineTopsTakenIn.getOrDefault(para.getCTP(), 0.0)
                                + middle * pageStep + line.lineHeight() - line.baselineOffsetFromBottom();
-                double shift = middle * wordLine + wordLine * DocxTextBands.BASELINE_SHARE - pages;
-                // The position is moved as before where the whole shift called for it, whatever
-                // the space above took off it: a line 0.6pt low with 0.2pt above it is left a tenth
-                // off by its position, not four tenths.
-                boolean moved = Math.abs(shift) >= LEAST_BASELINE_SHIFT_POINTS || cutToFit;
-                if (ownsItsLine && !cutToFit) {
-                    // Under half a point the position moves nothing, so the cell's padding may.
-                    shift -= raiseIntoTheSpaceAbove(para, staysOnItsPage, spacing, shift, !moved);
-                    if (!moved) {
-                        noteAFirstLineLow(para, shift);
-                        offerToLower(para, staysOnItsPage, -shift);
-                    }
-                }
-                return moved ? shift : 0;
+                return middle * wordLine + wordLine * DocxTextBands.BASELINE_SHARE - pages;
             }
         }
-        return 0;
+        return Double.NaN;
     }
 
     /**
@@ -10554,8 +10631,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * it lower — but for a Word list's item, which no position lowers in both editors
      * ({@link #lowerIntoTheSpaceAbove}), and a line set high by under half a point, lowered once
      * what follows is written and has taken its own of that space ({@link #offerToLower}). Only a
-     * line of its own, as its caller raises: not a line
-     * pair's, a container's stacked lines, a text box's, nor one cut to its pictures. Only a
+     * line of its own, as its caller raises, and a line pair's shared line, by the lesser of what
+     * its halves call for, where neither is moved by its position ({@link #raiseTheSharedLine}):
+     * not a container's stacked lines, a text box's, nor one cut to its pictures. Only a
      * paragraph in the flow, in a cell, or among a band's layers, where the space owed below it is
      * the space above what follows: a band measures what follows each of its layers, and itself,
      * from the page, and pays what its last line written owes ({@link #writeOverlayBand}).

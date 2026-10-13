@@ -8,6 +8,23 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export raises a line Word sets low in a layer stack of one layer, and lifts a row there,
+  as in the flow.** A stack of one layer lays nothing over anything, and its contents are written in
+  the flow — a template wraps a row in one to set it in a row's cell — but a line Word set low there
+  was left to its position, which moves nothing under half a point, and a row's first lines were not
+  lifted out of the space above its table: `SlateOrange`'s employers' lines and their items, its
+  experience timeline set in one, stood 0.23 to 0.54pt low in Word and 0.14 to 0.42pt in
+  LibreOffice, and `SubscriptionInvoice`'s contact rows 0.32 to 0.43pt and 0.24 to 0.29pt. Both are
+  now made there as in the flow, the space a line takes owed below it as there; a stack laying one
+  layer over another, whose writer measures what follows from the page, still keeps them. The
+  layout moves such a stack to a new page whole, and a line opening that page in it is neither
+  moved up into the space above it nor lowered by growing it, as one opening its page in the flow
+  is not. Two of the corpus's 62 DOCX
+  change: `SlateOrange` stands 0.40 to 0.29pt from the page by median in Word and 0.30 to 0.22pt in
+  LibreOffice on Windows and 24.2, 20 of its lines nearer in Word and 19 in LibreOffice, and
+  `SubscriptionInvoice` 0.16 to 0.14pt in Word, three lines nearer in each; no line stands further.
+  The report's notes are unchanged.
+
 - **A DOCX export lowers a paragraph's line Word sets high by a tenth to half a point, by the space
   between it and what follows.** Word and LibreOffice stand an exact line's baseline four fifths of
   the way down it, the page its face's ascent below the line's top, and a line the export's measure
@@ -359,8 +376,9 @@ follow semantic versioning; release dates are ISO 8601.
   - A column's later layer, which measures the space to itself from the page, takes back the raise
     of the line above it.
   - Not a line pair's shared line, which moved would move its other half; not a line in an
-    overlay — a band, a layer stack, a shape container, a canvas, a text box — whose writers
-    measure what follows them from the page; not a line cut to fit, a container's stacked lines or
+    overlay — a band, a stack laying one layer over another, a shape container, a canvas, a text
+    box — whose writers measure what follows them from the page, a stack of one layer being the
+    flow; not a line cut to fit, a container's stacked lines or
     one held to its pictures; not a paragraph the layout moves to a new page, whose space above
     Word drops there, or breaks over one, whose lines on the next page the space above does not
     move; and not into the space above a panel's first line that its top border takes.

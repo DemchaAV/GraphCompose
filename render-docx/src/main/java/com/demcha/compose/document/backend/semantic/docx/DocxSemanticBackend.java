@@ -8549,18 +8549,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * cut to fit its halves' letters however little ({@link #shiftToThePagesBaseline}). Under half
      * a point the position moves nothing, and the shared line was left where Word set it:
      * {@code ConsultingInvoice}'s bank details, a label and its value to a line, half a point below
-     * the page's line, stood 0.8pt low in Word and both LibreOffice builds with the drift all under
-     * its line-item table shares, and raised stand 0.3pt low (measured). Where neither half is
-     * moved by its position, the line moves up for both, by the lesser of what they call for: moved
-     * for one alone it would move the other too. A half cut to its own measure or laying out no
-     * text keeps the line where it is, and so does a pair the layout opens a page with, whose space
-     * above Word drops there. Only into the space written above the line: a pair opening a cell is
-     * not raised into the cell's padding.</p>
+     * the page's line, stood 0.7 to 0.8pt low in Word and both LibreOffice builds with the drift all
+     * under its line-item table shares, and raised stand 0.2 to 0.33pt low (measured). Where
+     * neither half is moved by its position, the line moves up for both, by the lesser of what they
+     * call for: moved for one alone it would move the other too. A half cut to its own measure or
+     * laying out no text keeps the line where it is, and so does a pair the layout opens a page
+     * with, whose space above Word drops there, and one a line of its own would not be raised in
+     * ({@link #raiseIntoTheSpaceAbove}). Only into the space written above the line: a pair opening
+     * a cell is not raised into the cell's padding.</p>
      *
      * <p>The raise is what the export reckons Word sets the line below the page's, and for Carlito
-     * it reckons up to 0.2pt more than both editors set: {@code LumaStudioInvoice}'s pairs, in
-     * Carlito, rose past the page's line, its bank details from 0.03pt high to 0.27pt in Word and
-     * from 0.14 to 0.34pt in LibreOffice, as its other lines already stood high (measured).</p>
+     * both editors set the line higher than it reckons: in the short {@code LumaStudioInvoice}, the
+     * bank details, a pair in Carlito, rose past the page's line, from 0.03pt high to 0.27pt in Word
+     * and from 0.14 to 0.34pt in LibreOffice, as its other lines already stood high (measured).</p>
      *
      * @param lineTop       the line's top, measured up from the foot of the page
      * @param opensItsPage  whether the layout starts the pair on a page after the one the block

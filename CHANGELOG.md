@@ -17,12 +17,13 @@ follow semantic versioning; release dates are ISO 8601.
   lesser of what they call for, and owes as much below it, as a line of its own does; not where a
   half is cut to its own measure, nor where the layout opens a page with the pair. Four of the
   corpus's 62 DOCX change. `ConsultingInvoice`'s ten bank lines stand 0.2 to 0.33pt low, ten lines
-  nearer in each of its documents and editors and none further, its 90th percentile 0.78 to 0.39pt
-  in Word and 0.81 to 0.34pt in LibreOffice. `LumaStudioInvoice`'s pairs, in Carlito, rise 0.12 to
-  0.25pt, as its other lines already do where both editors set Carlito up to 0.2pt higher than the
-  export reckons: its totals 0.07 to 0.28pt low where they stood 0.32 to 0.52pt low in the long
-  invoice, its bank details in the short one 0.27pt high in Word and 0.34pt in LibreOffice, where
-  they stood 0.03 and 0.14pt high. The report's notes are unchanged.
+  nearer in each of its documents and editors and none further; the short invoice's 90th percentile
+  goes 0.78 to 0.39pt in Word and 0.81 to 0.34pt in LibreOffice, the long one's 0.53 to 0.51pt and
+  0.43 to 0.34pt. `LumaStudioInvoice`'s pairs, in Carlito, rise 0.12 to 0.25pt, as its other lines
+  already do where both editors set Carlito higher than the export reckons: its totals 0.07 to
+  0.28pt low where they stood 0.32 to 0.52pt low in the long invoice, its bank details in the short
+  one 0.27pt high in Word and 0.34pt in LibreOffice, where they stood 0.03 and 0.14pt high. The
+  report's notes are unchanged.
 
 - **A DOCX export raises a line Word sets low in a band into the space above it, as in the flow, and
   the band pays what it owes below.** A line Word sets lower than the page in the flow is moved up
@@ -38,10 +39,10 @@ follow semantic versioning; release dates are ISO 8601.
   within 0.03pt of the page in Word and both LibreOffice builds, its payment terms 0.25 to 0.4pt low
   where they stood 0.65 to 0.88pt, six lines nearer in each and none further. `LumaStudioInvoice`'s
   band lines, in Carlito, rise 0.12 to 0.24pt, as its flow's lines already do: both editors set
-  Carlito's lines up to 0.2pt higher than the export reckons, and its contact lines now stand 0.08
-  to 0.17pt high, its notes and payment headings 0.27pt high in LibreOffice, where they stood 0.07pt
-  high. `MonogramSidebar`'s initials are raised by the space above them rather than their position,
-  and stand where they did. The report's notes are unchanged.
+  Carlito's lines higher than the export reckons, and its contact lines now stand 0.08 to 0.17pt
+  high, its notes and payment headings 0.27pt high in LibreOffice, where they stood 0.07pt high.
+  `MonogramSidebar`'s initials are raised by the space above them rather than their position, and
+  stand where they did. The report's notes are unchanged.
 
 - **A DOCX export keeps a one-row body table kept with what follows with it in LibreOffice too.** A
   block kept with what follows is told so on every paragraph it writes (`w:keepNext`), and a row the

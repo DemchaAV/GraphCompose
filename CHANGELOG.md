@@ -8,6 +8,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps a one-row body table kept with what follows with it in LibreOffice too.** A
+  block kept with what follows is told so on every paragraph it writes (`w:keepNext`), and a row the
+  layout placed may not break across pages (`w:cantSplit`). LibreOffice reads a table of one row
+  that may not break as a table that may not split, and keeps such a table with nothing:
+  `EditorialProposal`'s page-two masthead, a row of columns kept with the heading under it, stood at
+  the foot of page one in LibreOffice, and every line of page two 45 to 47pt higher than the page
+  sets it. A table of one row in the body kept with what follows, its cells holding paragraphs
+  alone, is now written with a row that may break: the masthead opens page two in LibreOffice, and
+  Word, which set it there either way, sets it as before. Four of the corpus's 62 DOCX change, 12
+  tables, and only `EditorialProposal` moves: in LibreOffice 24.2 and on Windows 72 of its lines
+  stand nearer the page and none further, 45.15 to 0.20pt from the page by median and 45.70 to
+  0.65pt at its 90th percentile, and all 132 of its lines are found, where 129 were. Word measures
+  the same on all 62 documents. The report's notes are unchanged.
+
 - **A DOCX export takes what a column of a layer stack hangs past the stack's foot out of the gap
   under the stack, as it takes a row's cell's.** A stack whose layers stand side by side is written
   as the cells of one row, and the row read nothing of what a column's last line hangs below it — a

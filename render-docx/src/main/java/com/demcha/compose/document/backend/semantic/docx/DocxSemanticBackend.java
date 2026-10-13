@@ -273,12 +273,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private double hangingOverBy;
     // How far the last line of the cell written last hangs below everything the cell writes
     // under it, in points: Word's cell is that much taller than its content on the page (see
-    // writeInCell). A row reads it for each of its cells (writeRow), and a panel for its own
-    // (writePanelPiece); a stack written as columns does not, and that much still makes its
-    // table taller.
+    // writeInCell). A row reads it for each of its cells (writeRow), a stack written as columns
+    // for each column (writeLayerColumns), and a panel for its own (writePanelPiece); a table's
+    // composed cell does not, the layout not saying how tall its content is, and that much still
+    // makes its row taller where nothing under the content takes it.
     private double cellOverhang;
     // The spaces grown to lower a list's items that hang below the cell written last with that
-    // (lowerIntoTheSpaceAbove): a row or a panel hands them on with what of it hangs below itself,
+    // (lowerIntoTheSpaceAbove): a row, a stack written as columns or a panel hands them on with
+    // what of it hangs below itself,
     // a writer that lets the rest go takes them back (letTheLoweringGo).
     private List<HungLowering> cellLoweringHung = new ArrayList<>();
     // The border below a panel that the space above the paragraph hangingOver opens did not take,
@@ -5151,11 +5153,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * above what follows takes it as it takes a line hanging below the block above it
      * ({@link #hangingBelow}), what that space and that block's own top edge cannot give named as
      * standing it lower ({@link #nameTheTailNotTaken}). At the end of a cell the space the cell
-     * owes under the list takes it, and what hangs past that a row's room or a panel's padding,
-     * as they take any line hanging there ({@link #cellOverhang}), each list's on its own
-     * ({@link HungLowering}). Where nothing takes it — what hangs below a table's composed cell
-     * or a layer stack's column, whose writers let it go, or a row's cell whose room the layout
-     * does not say ({@link #takeBackWhatTheCellHangs}), a column's later layer, whose place is the
+     * owes under the list takes it, and what hangs past that a row's room or a layer stack's room
+     * under its column, or a panel's padding, as they take any line hanging there
+     * ({@link #cellOverhang}), each list's on its own ({@link HungLowering}). Where nothing takes
+     * it — what hangs below a table's composed cell, whose writer lets it go, or a row's cell or a
+     * stack's column whose room the layout does not say ({@link #takeBackWhatTheCellHangs}), a
+     * column's later layer, whose place is the
      * page's ({@link #resumeHere}), a block on a later page than the list ({@link #takeTheLowering}),
      * an item set on a later page than the one before, the section's end — the lowering is taken
      * back as far as it is not given, those lines standing as high as Word sets them and what
@@ -14056,6 +14059,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * How far above the foot of a stack's content box on the page one of its columns ends, in
+     * points: room a line hanging below the column has before it makes Word's row of columns
+     * taller. {@code +∞} when the layout does not say, so nothing is taken for it.
+     *
+     * @param stack  the stack written as columns
+     * @param layers the column's layers
+     */
+    private double roomBelowItsColumn(com.demcha.compose.document.node.LayerStackNode stack,
+                                      List<DocumentNode> layers) {
+        com.demcha.compose.document.layout.PlacedNode box = layout.placement(stack);
+        if (box == null || box.startPage() != box.endPage() || layers.isEmpty()) {
+            return Double.POSITIVE_INFINITY;
+        }
+        double foot = Double.POSITIVE_INFINITY;
+        for (DocumentNode layer : layers) {
+            com.demcha.compose.document.layout.PlacedNode placed = layout.placement(layer);
+            if (placed == null || placed.startPage() != box.startPage() || placed.endPage() != box.startPage()) {
+                return Double.POSITIVE_INFINITY;
+            }
+            // A layer's margin below is its own edge, written with it.
+            foot = Math.min(foot, placed.placementY() - layer.margin().bottom());
+        }
+        // Measured up from the foot of the page: the stack's content runs from its padding up.
+        return Math.max(0, foot - box.placementY() - stack.padding().bottom());
+    }
+
+    /**
      * Widens a row's last cell by as far as the shape ending its line is drawn past it.
      *
      * <p>The page draws a shape's ink past its box — half a ring's stroke — and past the cell
@@ -14245,6 +14275,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         standIns.addAll(plan.standIns());
         closingBlocks.addAll(plan.closing());
         moves.add(plan.moves());
+        // How far the column reaching furthest past the stack's foot does, and the lists lowered
+        // into what hangs there.
+        double columnsOverhang = 0;
+        List<HungLowering> columnsLowered = new ArrayList<>();
         try {
             XWPFTableRow row = table.getRow(0);
             for (int index = 0; index < columns.size(); index++) {
@@ -14314,8 +14348,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     currentCellWidth = previous;
                     resumeSpacing = Double.NaN;
                 }
-                // The columns' row reads nothing of what hangs below a column (cellOverhang).
-                takeBackWhatTheCellHangs();
+                // A column's last line hanging past the stack's content box makes Word's row of
+                // columns that much taller, as a row's cell's does (writeRow): the room under the
+                // column takes it first. OrangeOps' achievement cards each ran 0.1 to 0.15pt past
+                // theirs, and every card under the first stood that much lower than the one above.
+                // Where the layout does not say, the line is taken to fit.
+                double roomBelow = roomBelowItsColumn(stack, layers);
+                if (Double.isInfinite(roomBelow)) {
+                    takeBackWhatTheCellHangs();
+                } else {
+                    columnsOverhang = Math.max(columnsOverhang, cellOverhang - roomBelow);
+                    giveToTheLowering(cellLoweringHung, Math.round(roomBelow * POINT_TO_TWIP));
+                    columnsLowered.addAll(cellLoweringHung);
+                    cellLoweringHung = new ArrayList<>();
+                }
+                cellOverhang = 0;
                 if (!layers.isEmpty()) {
                     nameTheBorderEndingACell(layers.get(layers.size() - 1), columns.size() == 1);
                 }
@@ -14328,6 +14375,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             closingBlocks.removeAll(plan.closing());
             moves.remove(plan.moves());
         }
+        // What a column hangs past the stack's foot takes as much of the gap under the stack, as
+        // below a row; each column's list keeps its own hang.
+        hangingBelow = Math.max(hangingBelow, columnsOverhang);
+        loweringHung.addAll(columnsLowered);
         // After the columns, as the stack lays them over the columns: a card's mark stands over
         // whatever its card draws.
         drawLayersOverTheColumns(document, plan.drawn());
@@ -16183,8 +16234,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Takes back what a list's items were lowered into the hang below the cell written last, where
-     * the writer of that cell lets it go ({@link #cellOverhang}): a table's composed cell, a column
-     * of a layer stack.
+     * the writer of that cell lets it go ({@link #cellOverhang}): a table's composed cell; a row's
+     * cell or a stack's column where the layout does not say how far below its content the row
+     * ends; a panel's piece it goes on from on the next page.
      */
     private void takeBackWhatTheCellHangs() {
         letTheLoweringGo(cellLoweringHung, 0);

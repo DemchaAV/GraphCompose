@@ -188,9 +188,10 @@ class DocxLayerColumnsTest {
     }
 
     @Test
-    void aColumnEndingWithAListTakesItsLoweringBack() throws Exception {
-        // Nothing in the sidebar's cell stands under its list, and the columns' row reads nothing of
-        // what hangs below a column: the item stands as Word sets it, the row as tall as before.
+    void aColumnEndingWithAListKeepsItsLoweringWhereTheRowOrTheGapUnderTheStackTakesIt() throws Exception {
+        // Nothing in the sidebar's cell stands under its list, so the item lowered hangs below the
+        // column, as one ending a row's cell does: the main column, taller, leaves room under it in
+        // the row, which takes the hang.
         com.demcha.compose.document.style.DocumentTextStyle lato24 = com.demcha.compose.document.style
                 .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.LATO).size(24).build();
         try (Export export = export(stack -> stack
@@ -201,7 +202,23 @@ class DocxLayerColumnsTest {
 
             assertThat(heading.getText()).as("the premise: the sidebar holds the item").isEqualTo("Heading");
             assertThat(heading.getCTP().getPPr().isSetNumPr()).as("the premise: a Word list's item").isTrue();
-            assertThat(spacingBefore(heading)).as("its space above, as written").isEqualTo(10 * 20);
+            assertThat(spacingBefore(heading)).as("lowered into the room under its column").isGreaterThan(10 * 20 + 10);
+        }
+        // The sidebar the taller column, the hang is below the stack: a paragraph under it gives it
+        // back, and at the end of the document it is taken back.
+        Consumer<LayerStackBuilder> tallest = stack -> stack
+                .layer(column("Sidebar", 0, MAIN, side -> side.addList(list -> list.textStyle(lato24)
+                        .margin(DocumentInsets.top(10)).items("Heading"))), LayerAlign.TOP_LEFT)
+                .layer(column("Main", SIDEBAR, 0, main -> main.addParagraph("Side")), LayerAlign.TOP_LEFT);
+        try (Export export = export(tallest, true)) {
+            XWPFParagraph heading = export.document().getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
+
+            assertThat(spacingBefore(heading)).as("lowered, followed").isGreaterThan(10 * 20 + 10);
+        }
+        try (Export export = export(tallest)) {
+            XWPFParagraph heading = export.document().getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
+
+            assertThat(spacingBefore(heading)).as("taken back at the end").isEqualTo(10 * 20);
         }
         // A paragraph under the list in the same column gives the lowering back.
         try (Export export = export(stack -> stack

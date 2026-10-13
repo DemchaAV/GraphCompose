@@ -10495,15 +10495,47 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                            List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
                                            double lineGap, double lineTopAbove, boolean cutToFit,
                                            boolean ownsItsLine, boolean staysOnItsPage) {
+        double shift = belowThePagesBaseline(para, lines, lineGap, lineTopAbove);
+        if (Double.isNaN(shift)) {
+            return 0;
+        }
+        // The position is moved as before where the whole shift called for it, whatever the space
+        // above took off it: a line 0.6pt low with 0.2pt above it is left a tenth off by its
+        // position, not four tenths.
+        boolean moved = Math.abs(shift) >= LEAST_BASELINE_SHIFT_POINTS || cutToFit;
+        if (ownsItsLine && !cutToFit) {
+            // Under half a point the position moves nothing, so the cell's padding may.
+            shift -= raiseIntoTheSpaceAbove(para, staysOnItsPage, para.getCTP().getPPr().getSpacing(), shift, !moved);
+            if (!moved) {
+                noteAFirstLineLow(para, shift);
+                offerToLower(para, staysOnItsPage, -shift);
+            }
+        }
+        return moved ? shift : 0;
+    }
+
+    /**
+     * How far Word's baseline in exact lines of text the layout set stands below the page's, in
+     * points, positive when Word's is lower; NaN where the paragraph is not written at an exact
+     * height or laid out no line of text (see
+     * {@link #shiftToThePagesBaseline(XWPFParagraph, ParagraphNode, double, boolean, boolean)}).
+     *
+     * @param lines        the lines the layout set the text on
+     * @param lineGap      the gap the layout puts between them, beyond their own height
+     * @param lineTopAbove how far above the page's first line the Word line starts, in points
+     */
+    private double belowThePagesBaseline(XWPFParagraph para,
+                                         List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
+                                         double lineGap, double lineTopAbove) {
         CTPPr properties = para.getCTP().getPPr();
         if (properties == null || !properties.isSetSpacing()) {
-            return 0;
+            return Double.NaN;
         }
         CTSpacing spacing = properties.getSpacing();
         Long written = spacing.isSetLineRule() && spacing.getLineRule() == STLineSpacingRule.EXACT
                 ? writtenTwips(spacing.getLine()) : null;
         if (written == null) {
-            return 0;
+            return Double.NaN;
         }
         for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
             if (line.spans().stream().anyMatch(
@@ -10515,23 +10547,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 double pageStep = line.lineHeight() + lineGap;
                 double pages = lineTopAbove + lineTopsTakenIn.getOrDefault(para.getCTP(), 0.0)
                                + middle * pageStep + line.lineHeight() - line.baselineOffsetFromBottom();
-                double shift = middle * wordLine + wordLine * DocxTextBands.BASELINE_SHARE - pages;
-                // The position is moved as before where the whole shift called for it, whatever
-                // the space above took off it: a line 0.6pt low with 0.2pt above it is left a tenth
-                // off by its position, not four tenths.
-                boolean moved = Math.abs(shift) >= LEAST_BASELINE_SHIFT_POINTS || cutToFit;
-                if (ownsItsLine && !cutToFit) {
-                    // Under half a point the position moves nothing, so the cell's padding may.
-                    shift -= raiseIntoTheSpaceAbove(para, staysOnItsPage, spacing, shift, !moved);
-                    if (!moved) {
-                        noteAFirstLineLow(para, shift);
-                        offerToLower(para, staysOnItsPage, -shift);
-                    }
-                }
-                return moved ? shift : 0;
+                return middle * wordLine + wordLine * DocxTextBands.BASELINE_SHARE - pages;
             }
         }
-        return 0;
+        return Double.NaN;
     }
 
     /**

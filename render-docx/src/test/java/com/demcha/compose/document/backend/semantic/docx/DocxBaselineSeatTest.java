@@ -286,20 +286,34 @@ class DocxBaselineSeatTest {
     }
 
     @Test
-    void aLineInALayerStackKeepsTheSpaceAboveIt() throws Exception {
-        // A stack measures what follows it from the page: a raise owed below a line inside it
-        // would not reach what follows.
-        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+    void aLineInABandIsRaisedIntoTheSpaceAboveItAndTheBandOwesItBelow() throws Exception {
+        // A band measures what follows it from the page: it pays what its last line owes below for
+        // its raise, as a column's later layer does, and what follows stays where the page sets it.
+        DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create();
+        session.pageFlow(page -> page
                 .addParagraph(p -> p.text("Above").textStyle(lato(10)))
                 .addLayerStack(stack -> stack.name("Stack")
                         .back(new com.demcha.compose.document.dsl.ShapeBuilder().name("Backdrop").size(200, 80).build())
                         .layer(new ParagraphBuilder().name("Title").text("Title").textStyle(spectral(30))
-                                .margin(DocumentInsets.top(20)).build(), LayerAlign.TOP_LEFT)))) {
+                                .margin(DocumentInsets.top(20)).build(), LayerAlign.TOP_LEFT))
+                .addParagraph(p -> p.name("Below").text("Below").textStyle(spectral(30))));
+        try (session; XWPFDocument document = new XWPFDocument(new java.io.ByteArrayInputStream(
+                session.export(new DocxSemanticBackend())))) {
             XWPFParagraph title = paragraph(document, "Title");
+            XWPFParagraph below = paragraph(document, "Below");
             double raise = 0.8 * line(title) - SPECTRAL_ASCENT * 30;
+            var placedTitle = session.layoutGraph().nodes().stream()
+                    .filter(node -> "Title".equals(node.semanticName())).findFirst().orElseThrow();
+            var placedBelow = session.layoutGraph().nodes().stream()
+                    .filter(node -> "Below".equals(node.semanticName())).findFirst().orElseThrow();
+            double gap = placedTitle.placementY() - (placedBelow.placementY() + placedBelow.placementHeight());
 
             assertThat(raise).as("the premise: Word's baseline is the lower").isGreaterThan(1);
-            assertThat(position(title)).as("raised by its position").isCloseTo((int) Math.round(raise * 2), within(1));
+            assertThat(position(title)).as("no position: the line moves").isZero();
+            assertThat(before(title)).as("its 20pt less the raise").isCloseTo(Math.round((20 - raise) * 20), within(1L));
+            assertThat(after(title) + before(below))
+                    .as("the page's gap down to the next line, raised as far: the title's raise owed back")
+                    .isCloseTo(Math.round(gap * 20), within(2L));
         }
     }
 

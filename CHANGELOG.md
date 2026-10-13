@@ -8,6 +8,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export raises a line Word sets low in a band into the space above it, as in the flow, and
+  the band pays what it owes below.** A line Word sets lower than the page in the flow is moved up
+  into the space written above it, and owes as much below it, so what follows stays put. A band — a
+  stack laying one layer over another, a shape container — measures the space down to each later
+  layer, and below itself, from the page, and dropped what its lines owed: so no line in a band was
+  raised that way, and Word and LibreOffice set `ConsultingInvoice`'s contact lines half a point low
+  and its address 0.3pt low. A band now takes back what the line it raised last still owes before
+  its next layer and below itself, as a column's later layer does, room held for a drawing after
+  that line paying none of it, and its lines are raised as the flow's are; its first paragraph or
+  list item, where a band in the flow opens its page, is not, as Word drops the space above it
+  there. Six of the corpus's 62 DOCX change. `ConsultingInvoice`'s contact and address lines stand
+  within 0.03pt of the page in Word and both LibreOffice builds, its payment terms 0.25 to 0.4pt low
+  where they stood 0.65 to 0.88pt, six lines nearer in each and none further. `LumaStudioInvoice`'s
+  band lines, in Carlito, rise 0.12 to 0.24pt, as its flow's lines already do: both editors set
+  Carlito's lines up to 0.2pt higher than the export reckons, and its contact lines now stand 0.08
+  to 0.17pt high, its notes and payment headings 0.27pt high in LibreOffice, where they stood 0.07pt
+  high. `MonogramSidebar`'s initials are raised by the space above them rather than their position,
+  and stand where they did. The report's notes are unchanged.
+
 - **A DOCX export keeps a one-row body table kept with what follows with it in LibreOffice too.** A
   block kept with what follows is told so on every paragraph it writes (`w:keepNext`), and a row the
   layout placed may not break across pages (`w:cantSplit`). LibreOffice reads a table of one row

@@ -227,10 +227,11 @@ class DocxCanvasRoomTest {
         PlacedNode band = placed(exported.layout(), "Band");
         PlacedNode title = placed(exported.layout(), "Title");
 
-        assertThat(before(paragraphOf(exported.document(), "Title"))).as("the page's distance down to it, once")
-                .isCloseTo(band.placementY() + band.placementHeight() - (title.placementY() + title.placementHeight()),
-                        within(0.1))
-                .isCloseTo(placed(exported.layout(), "Logo").placementHeight(), within(0.1));
+        assertThat(before(paragraphOf(exported.document(), "Title"))).as("the page's distance down to it, once,"
+                                                                        + " less its line's raise into it")
+                .isCloseTo(band.placementY() + band.placementHeight() - (title.placementY() + title.placementHeight())
+                           - RAISE, within(0.1))
+                .isCloseTo(placed(exported.layout(), "Logo").placementHeight() - RAISE, within(0.1));
     }
 
     @Test
@@ -249,7 +250,7 @@ class DocxCanvasRoomTest {
                 .add(paragraph("Next")));
 
         assertThat(gapInWord(exported.document(), "Title", "Subtitle"))
-                .isCloseTo(gapOnThePage(exported.layout(), "Title", "Subtitle"), within(0.1))
+                .isCloseTo(gapOnThePage(exported.layout(), "Title", "Subtitle") - RAISE, within(0.1))
                 .isGreaterThan(20);
     }
 
@@ -266,7 +267,7 @@ class DocxCanvasRoomTest {
                 .add(paragraph("Next")));
 
         assertThat(gapInWord(exported.document(), "Caption", "Subtitle"))
-                .isCloseTo(gapOnThePage(exported.layout(), "Caption", "Subtitle"), within(0.1))
+                .isCloseTo(gapOnThePage(exported.layout(), "Caption", "Subtitle") - RAISE, within(0.1))
                 .isGreaterThan(40);
     }
 

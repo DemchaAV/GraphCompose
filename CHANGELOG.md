@@ -8,6 +8,23 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export takes what a column of a layer stack hangs past the stack's foot out of the gap
+  under the stack, as it takes a row's cell's.** A stack whose layers stand side by side is written
+  as the cells of one row, and the row read nothing of what a column's last line hangs below it — a
+  line held to its icon, an item lowered into the space under it: Word and LibreOffice made the row
+  that much taller than the page's. `OrangeOps`' achievement cards, each a badge column beside a
+  text column, ran 0.1 to 0.15pt past theirs, every card stood that much lower than the one above
+  it, and the education block under them 0.42pt low in Word and 0.32pt in LibreOffice 24.2. The room
+  the row leaves under a column on the page takes its hang first, as under a row's cell, and the gap
+  under the stack the rest; a list's item lowered into a column's hang stays lowered where either
+  takes it, and is taken back at the end of the document, as one ending a row's cell is. One of the
+  corpus's 62 DOCX changes: each of `OrangeOps`' cards under the first stands higher by the hangs
+  above it, and its aside under them about half a point higher in both, 0.49 to 0.27pt from the page
+  at its 90th percentile in Word and 0.41 to 0.28pt in LibreOffice 24.2, 0.15 to 0.11pt by median in
+  Word; the lines of its later cards' bodies now stand about as high as the first card's did, up to
+  0.3pt, which the drift had hidden. LibreOffice on Windows sets it on two pages, as before. The
+  report's notes are unchanged.
+
 - **A DOCX export raises a line Word sets low in a layer stack of one layer, and lifts a row there,
   as in the flow.** A stack of one layer lays nothing over anything, and its contents are written in
   the flow — a template wraps a row in one to set it in a row's cell — but a line Word set low there
@@ -52,7 +69,7 @@ follow semantic versioning; release dates are ISO 8601.
   below stood 0.13pt low in Word and 0.11pt in LibreOffice (measured by its cells' shading). It now
   hangs below the rule as a line hanging below a block does, the space above what follows taking
   it and the report naming what it cannot (`space above`), as for any such line — except where
-  that hang is let go, below a table's composed cell, a layer stack's column or a row cell whose
+  that hang is let go, below a table's composed cell, or a row cell or a layer stack's column whose
   room the layout does not report. `MeteredInvoice`'s row then stands within 0.01pt. A rule not
   drawn hangs nothing past its line.
 
@@ -79,21 +96,21 @@ follow semantic versioning; release dates are ISO 8601.
   back as far, and stands where it would have. What the list's last items still owe hangs below the
   list as a line hanging below a block does: the space above what follows takes it, the report
   naming what that space and that block's own top edge cannot give, and at the end of a cell the
-  space the cell owes under the list, the room under it in its row or a card's padding, each list's
-  on its own. Wherever the hang is let go instead — among them below a table's composed cell or a
-  layer stack's column, under a column's later layer, which takes its place from the page, at a
-  block the layout sets on a later page, which takes nothing of the hang left on the page above, at
-  a section's end, where the space a cell of its last row owes under its own last paragraph is left
-  out, and with it what that space gave back — the lowering is taken back, those items standing as
-  high as before and what follows where it stood; not yet where the room under a cell in that row
-  is the space below a cell beside it, left out there as well. Not
-  lowered: an item the layout opens a page with, one of a list it sets over two pages in a cell, an
-  item opening a card, whose top border the space above it takes, and one in an overlay whose writer
-  measures what follows from the page — a stack laying one layer over another, a band, a shape
-  container; a stack of one layer, in which a template wraps an entry, is written in the flow, and
-  its items are lowered as there. The duties now stand 0.10pt high to 0.20pt low in Word and 0.14pt
-  high to 0.08pt low in LibreOffice on Windows and 24.2, `NavySidebar`'s 0.03 to 0.19pt and 0.03 to
-  0.05pt low, everything after them where it stood; no other document of the corpus changed.
+  space the cell owes under the list, the room under it in its row or under its layer stack's
+  column, or a card's padding, each list's on its own. Wherever the hang is let go instead — among
+  them below a table's composed cell, under a column's later layer, which takes its place from the
+  page, at a block the layout sets on a later page, which takes nothing of the hang left on the page
+  above, at a section's end, where the space a cell of its last row owes under its own last
+  paragraph is left out, and with it what that space gave back — the lowering is taken back, those
+  items standing as high as before and what follows where it stood; not yet where the room under a
+  cell in that row is the space below a cell beside it, left out there as well. Not lowered: an item
+  the layout opens a page with, one of a list it sets over two pages in a cell, an item opening a
+  card, whose top border the space above it takes, and one in an overlay whose writer measures what
+  follows from the page — a stack laying one layer over another, a band, a shape container; a stack
+  of one layer, in which a template wraps an entry, is written in the flow, and its items are
+  lowered as there. The duties now stand 0.10pt high to 0.20pt low in Word and 0.14pt high to 0.08pt
+  low in LibreOffice on Windows and 24.2, `NavySidebar`'s 0.03 to 0.19pt and 0.03 to 0.05pt low,
+  everything after them where it stood; no other document of the corpus changed.
 
 - **A DOCX export writes a list composed in a table cell on the lines its table laid out for it, as
   it does a paragraph there.** A composed cell's content is laid out under its table's path, so a

@@ -211,6 +211,62 @@ class DocxParagraphLowerTest {
     }
 
     @Test
+    void aRowsLiftComesBeforeTheLineWithABlockUnderTheRowToo() throws Exception {
+        // The rows are lifted at the section's end, after the block under the row is written.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH).margin(DocumentInsets.bottom(0.5)))
+                .addRow(row -> row.addSection("Left", left -> left.addParagraph("Left"))
+                        .addSection("Right", right -> right.addParagraph("Right")))
+                .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10))));
+        XWPFDocument control = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(EVEN).margin(DocumentInsets.bottom(0.5)))
+                .addRow(row -> row.addSection("Left", left -> left.addParagraph("Left"))
+                        .addSection("Right", right -> right.addParagraph("Right")))
+                .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10))));
+        XWPFParagraph high = paragraph(document, "High");
+        long lift = 10 - after(paragraph(control, "High"));
+        long given = Math.min(lowering(high), 10 - lift);
+
+        assertThat(lift).as("the premise: the row is lifted out of the space above its table").isPositive();
+        assertThat(before(high)).as("what the lift leaves").isEqualTo(given);
+        assertThat(after(high)).isEqualTo(10 - lift - given);
+        assertThat(before(paragraph(document, "Next"))).isEqualTo(before(paragraph(control, "Next")));
+    }
+
+    @Test
+    void anItemUnderTheLineTakesNothingOfItsOwnLoweringToGiveIt() throws Exception {
+        // The Word list's item under it, set high by half a point and more, is lowered by its own
+        // space above, and taken back at the document's end, which gives none of it back: the line
+        // above takes only what the tenth of a point above the item held before that.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH))
+                .addList(list -> list.textStyle(DocumentTextStyle.builder().fontName(FontName.LATO).size(24).build())
+                        .margin(DocumentInsets.top(0.1)).items("One")));
+
+        assertThat(lowering(paragraph(document, "High"))).as("the premise: lower than the space under it").isGreaterThan(2);
+        assertThat(before(paragraph(document, "High"))).as("the tenth of a point above the list").isEqualTo(2);
+        assertThat(before(paragraph(document, "One"))).as("its own lowering taken back, nothing more").isZero();
+    }
+
+    @Test
+    void aLineSetHighAboveAnOverlaysTableIsNotLowered() throws Exception {
+        // A stack laying a table over a backdrop measures it from the page.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH))
+                .addLayerStack(stack -> stack.margin(DocumentInsets.top(10))
+                        .back(new com.demcha.compose.document.dsl.ShapeBuilder().name("Backdrop").size(200, 40).build())
+                        .layer(new com.demcha.compose.document.dsl.TableBuilder().autoColumns(1).row("Cell").build(),
+                                LayerAlign.TOP_LEFT)));
+
+        assertThat(lowering(paragraph(document, "High"))).as("the premise: set high").isGreaterThan(1);
+        assertThat(before(paragraph(document, "High"))).isZero();
+    }
+
+    @Test
     void aLineSetHighWithNothingUnderItIsNotLowered() throws Exception {
         XWPFDocument document = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(EVEN))
@@ -330,6 +386,39 @@ class DocxParagraphLowerTest {
     }
 
     @Test
+    void aListsItemsSetHighAreLeftToTheirList() throws Exception {
+        // Set high by under half a point, a list's items wait for nothing under them.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addList(list -> list.textStyle(HIGH).items("One", "Two"))
+                .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10))));
+        XWPFDocument control = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addList(list -> list.textStyle(EVEN).items("One", "Two"))
+                .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10))));
+
+        assertThat(lowering(paragraph(document, "One"))).as("the premise: set high").isGreaterThan(1);
+        assertThat(before(paragraph(document, "Two"))).isEqualTo(before(paragraph(control, "Two")));
+        assertThat(before(paragraph(document, "Next"))).isEqualTo(before(paragraph(control, "Next")));
+    }
+
+    @Test
+    void aLineSetHighAboveARuleOverARowIsLoweredOnce() throws Exception {
+        // The rule under it gives its lowering from the space above the rule; the row's cells,
+        // written while it waits, do not give it again.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH))
+                .addLine(line -> line.horizontal(100).thickness(1).color(DocumentColor.BLACK)
+                        .margin(DocumentInsets.top(10)))
+                .addRow(row -> row.addSection("Left", left -> left.addParagraph("Left"))
+                        .addSection("Right", right -> right.addParagraph("Right"))));
+        XWPFParagraph high = paragraph(document, "High");
+
+        assertThat(before(high)).as("lowered, once").isEqualTo(lowering(high));
+    }
+
+    @Test
     void aLineSetHighAboveATableTakesNothingOfTheSpaceUnderTheTable() throws Exception {
         // A tenth of a point above the table, less than the line is set high: the paragraph under
         // the table is not the line's to take the rest from.
@@ -393,6 +482,51 @@ class DocxParagraphLowerTest {
     }
 
     @Test
+    void aLineSetHighAboveAShapeHoldingATableIsNotLoweredByWhatFollows() throws Exception {
+        // The space the line owes below it is written once the table in the shape starts: the
+        // shape is drawn where the page puts it, and that space is not the line's to take, nor,
+        // past the shape, the space above the paragraph under it, or the table would stand lower.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH).margin(DocumentInsets.bottom(10)))
+                .add(badgeHoldingATable())
+                .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10))));
+        XWPFDocument control = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(EVEN).margin(DocumentInsets.bottom(10)))
+                .add(badgeHoldingATable())
+                .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10))));
+        XWPFParagraph high = paragraph(document, "High");
+
+        assertThat(lowering(high)).as("the premise: set high").isGreaterThan(1);
+        assertThat(before(high)).isZero();
+        assertThat(after(high)).as("the space under it, whole").isEqualTo(after(paragraph(control, "High")));
+        assertThat(before(paragraph(document, "Next"))).isEqualTo(before(paragraph(control, "Next")));
+    }
+
+    @Test
+    void aLineSetHighAboveAStackOfOneLayerHoldingARowIsNotLoweredByWhatFollows() throws Exception {
+        // The row is written in the stack's overlay: neither the space above it nor the space
+        // above the paragraph under the stack is the line's to take.
+        XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(HIGH).margin(DocumentInsets.bottom(10)))
+                .addLayerStack(stack -> stack.layer(stackedRow(), LayerAlign.TOP_LEFT))
+                .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10))));
+        XWPFDocument control = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(EVEN))
+                .addParagraph(p -> p.text("High").textStyle(EVEN).margin(DocumentInsets.bottom(10)))
+                .addLayerStack(stack -> stack.layer(stackedRow(), LayerAlign.TOP_LEFT))
+                .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10))));
+        XWPFParagraph high = paragraph(document, "High");
+
+        assertThat(lowering(high)).as("the premise: set high").isGreaterThan(1);
+        assertThat(before(high)).isZero();
+        assertThat(after(high)).isEqualTo(after(paragraph(control, "High")));
+        assertThat(before(paragraph(document, "Next"))).isEqualTo(before(paragraph(control, "Next")));
+    }
+
+    @Test
     void aBlockWithNoSpaceAboveItBetweenTheLineAndWhatFollowsLowersNothing() throws Exception {
         // A rule right under the line gives nothing, and the paragraph under the rule is not
         // the line's to take from.
@@ -436,6 +570,23 @@ class DocxParagraphLowerTest {
 
         assertThat(lowering(high)).as("the premise: set high").isGreaterThan(1);
         assertThat(before(high)).isZero();
+    }
+
+    /** A shape holding a table, set where the page puts it. */
+    private static com.demcha.compose.document.node.DocumentNode badgeHoldingATable() {
+        return new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Badge").rectangle(200, 30)
+                .fillColor(DocumentColor.rgb(238, 243, 249))
+                .position(new com.demcha.compose.document.dsl.TableBuilder().autoColumns(1).row("Cell").build(),
+                        0, 0, LayerAlign.TOP_LEFT)
+                .build();
+    }
+
+    /** A section holding a row of two cells, for a stack's one layer. */
+    private static com.demcha.compose.document.node.DocumentNode stackedRow() {
+        return new com.demcha.compose.document.dsl.SectionBuilder()
+                .addRow(row -> row.addSection("Left", left -> left.addParagraph("Left"))
+                        .addSection("Right", right -> right.addParagraph("Right")))
+                .build();
     }
 
     /** How far Word sets a 10pt Lato line above the page's baseline, in twips, from the line written. */

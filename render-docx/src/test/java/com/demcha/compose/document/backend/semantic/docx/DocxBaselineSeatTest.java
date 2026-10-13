@@ -151,7 +151,7 @@ class DocxBaselineSeatTest {
         // 20pt above a 30pt Spectral title: Word's baseline stands nearly 5pt below the page's.
         // The line moves up that much of the space, to the twip, where its position would move
         // it in half points, and LibreOffice that half again; Lato under it, which Word sets high
-        // and so is never moved down, stands where the page does all the same.
+        // and nothing under it lowers, stands where the page does all the same.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addParagraph(p -> p.text("Title").textStyle(spectral(30)).margin(DocumentInsets.top(20)))

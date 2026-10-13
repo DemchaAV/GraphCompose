@@ -8,7 +8,7 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
-- **A DOCX export lowers a paragraph's line Word sets high by under half a point, by the space
+- **A DOCX export lowers a paragraph's line Word sets high by a tenth to half a point, by the space
   between it and what follows.** Word and LibreOffice stand an exact line's baseline four fifths of
   the way down it, the page its face's ascent below the line's top, and a line the export's measure
   of that seat found high was moved only by its position, which counts in half points: under half a
@@ -23,8 +23,8 @@ follow semantic versioning; release dates are ISO 8601.
   the next page, a column's later layer, which takes its place from the page — the line is not
   lowered by, and where the section's end leaves the space below a cell's last line out, the
   lowering it gave is taken back with it. Not lowered: a list's item, which its own list lowers, a
-  line opening a panel, cut to fit, not on one page, or in an overlay other than a stack of one
-  layer.
+  line opening its page or a panel, cut to fit, not on one page, or in an overlay other than a
+  stack of one layer.
 
 - **A DOCX export hangs what a rule's paragraph stands past the rule's box below it, for the space
   under it to take.** A rule is an empty paragraph whose bottom border is the stroke: Word makes it
@@ -35,8 +35,9 @@ follow semantic versioning; release dates are ISO 8601.
   below stood 0.13pt low in Word and 0.11pt in LibreOffice (measured by its cells' shading). It now
   hangs below the rule as a line hanging below a block does, the space above what follows taking
   it and the report naming what it cannot (`space above`), as for any such line — except where
-  that hang is let go, below a layer stack's column or a row cell whose room the layout does not
-  report; that row's box stands within 0.01pt. A rule not drawn hangs nothing past its line.
+  that hang is let go, below a table's composed cell, a layer stack's column or a row cell whose
+  room the layout does not report. `MeteredInvoice`'s row then stands within 0.01pt. A rule not
+  drawn hangs nothing past its line.
 
   The two are measured together, as each unmasks the other's error: 44 of the corpus's 62 DOCX
   change, and by median 33 documents stand nearer the page in Word and 6 further, 36 and 6 in
@@ -353,8 +354,8 @@ follow semantic versioning; release dates are ISO 8601.
   - A line Word sets low by a tenth of a point or more is moved up into the space written above
     it, written to the twip, and that space is owed below it, so what follows stays where it was.
     Both editors keep a paragraph's space above as written. What the space cannot give is left to
-    the position where the whole difference calls for one, as is a line Word sets high: moved
-    down, it would take its room out of the space below it, which is not known when it is written.
+    the position where the whole difference calls for one, as is a line Word sets high by half a
+    point or more.
   - A column's later layer, which measures the space to itself from the page, takes back the raise
     of the line above it.
   - Not a line pair's shared line, which moved would move its other half; not a line in an

@@ -530,7 +530,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param below   whether the space is below the line's own paragraph, rather than above the
      *                one written under it
      * @param held    how much that space held when the wait ended, in twips
-     * @param inACell whether the line ends a cell, whose space below the section's end may leave out
+     * @param inACell whether its wait ended in a cell, whose space below the section's end may leave
+     *                out
      */
     private record LineSetHigh(LineToLower line, CTSpacing source, boolean below, long held, boolean inACell) {
     }
@@ -5198,9 +5199,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * what follows, once that is known ({@link #lineToLower}): its space above grows by as much as
      * that space gives, and the block under it stands where it did.
      *
-     * <p>A line set high by under half a point was left there: its position moves nothing under a
-     * half point ({@link #LEAST_BASELINE_SHIFT_POINTS}), and a raise only moves a line up
-     * ({@link #raiseIntoTheSpaceAbove}). Word and LibreOffice set an exact line's baseline four
+     * <p>A line set high by under half a point is not moved by its position, which moves nothing
+     * under a half point ({@link #LEAST_BASELINE_SHIFT_POINTS}), nor by a raise, which only moves a
+     * line up ({@link #raiseIntoTheSpaceAbove}). Word and LibreOffice set an exact line's baseline four
      * fifths of the way down it, the page its face's ascent below the line's top, and for a face
      * whose ascent is less than that the line stands high: 772 of the corpus's lines stood 0.15 to
      * 0.6pt above the page's in both editors.</p>
@@ -5211,8 +5212,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * ({@link #holdPicturesInTheLine}), a row's lift out of the space above its table
      * ({@link #raiseRows}): what is left of the space above that block ({@link #lowerFrom}), or of
      * the space written below the paragraph itself where a table or a cell's end follows
-     * ({@link #lowerFromBelow}). It is noted once that block is written — at that block's seat,
-     * at the next block, at a cell's end ({@link #settleTheLineAbove}) — and given at the section's
+     * ({@link #lowerFromBelow}). It is noted once that block is written — at that block's seat or
+     * an item's, the next block, a cell's end, a hang let go, a page break or a page the next
+     * block opens, the section's end ({@link #settleTheLineAbove}) — and given at the section's
      * end, once the rows are lifted, by no more than that space held when noted, nor than is left
      * of it ({@link #lowerTheLinesSetHigh}). What none of them gives, the line is not
      * lowered by: a block on a later page, whose space above Word drops at the page's top, a block
@@ -10364,12 +10366,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A line of its own Word sets low is raised first by moving it up into the space written
      * above it, where that space can take it ({@link #raiseIntoTheSpaceAbove}); under half a point,
      * what that space cannot give the top padding of the cell it opens takes ({@link #paddingAbove}),
-     * or the space above a row of columns' table ({@link #noteAFirstLineLow}). What none of them
-     * gives, and a line set
-     * high, is left to the text's position, which counts in half points: a line whose difference
-     * is under {@link #LEAST_BASELINE_SHIFT_POINTS} — a quarter point for a line of Lato body text
-     * — keeps no position, as every line of body text moved by one would win a quarter point at
-     * most.</p>
+     * or the space above a row of columns' table ({@link #noteAFirstLineLow}). One Word sets high
+     * by a tenth to half a point is lowered by the space under it once what follows is written
+     * ({@link #offerToLower}). What none of them gives, and a line set high by more, is left to
+     * the text's position, which counts in half points: a line whose difference is under
+     * {@link #LEAST_BASELINE_SHIFT_POINTS} — a quarter point for a line of Lato body text — keeps
+     * no position, as every line of body text moved by one would win a quarter point at most.</p>
      *
      * @param lineTopAbove how far above the page's first line the Word line starts, in points
      * @param heldExact    whether the line was cut to its pictures' reach, and so is seated
@@ -10394,7 +10396,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * How far Word's baseline in exact lines of text the layout set stands below the page's, in
      * points, positive when Word's is lower, after what the space above took of it: the position
      * left to move, 0 where the whole difference is under half a point, which the space above, a
-     * cell's padding or the space above a row of columns takes instead (see
+     * cell's padding or the space above a row of columns takes instead for a line set low, and the
+     * space under it for one set high ({@link #offerToLower}) (see
      * {@link #shiftToThePagesBaseline(XWPFParagraph, ParagraphNode, double, boolean, boolean)}).
      *
      * @param lines          the lines the layout set the text on
@@ -10468,7 +10471,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Only a raise: a line moved down takes its room out of the space below it, which is not
      * known until what follows is written, and what that space could not take would stand all of
      * it lower — but for a Word list's item, which no position lowers in both editors
-     * ({@link #lowerIntoTheSpaceAbove}). Only a line of its own, as its caller raises: not a line
+     * ({@link #lowerIntoTheSpaceAbove}), and a line set high by under half a point, lowered once
+     * what follows is written and has taken its own of that space ({@link #offerToLower}). Only a
+     * line of its own, as its caller raises: not a line
      * pair's, a container's stacked lines, a text box's, nor one cut to its pictures. Only a
      * paragraph in the flow or in
      * a cell, where the space owed below it is the space above what follows: a band, a layer
@@ -11910,7 +11915,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
 
         // A border is opaque, so a translucent rule is flattened against what the page paints under
-        // it, as a chip is; one that is not drawn at all keeps its place and draws nothing.
+        // it, as a chip is; one that is not drawn at all is written as its line alone, with no border.
         java.awt.Color colour = rule.colour().color();
 
         // Word stacks the paragraph's line, then the border, then the space after; the page

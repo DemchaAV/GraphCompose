@@ -44,8 +44,8 @@ class DocxNestedRowDrawingTest {
                 .addSection("Other", tile -> tile.spacing(0).addParagraph("27 May 2026"))))) {
             XWPFParagraph label = paragraphHolding(document, "DATE");
 
-            assertThat(before(label)).as("the disc and the label's own gap above it")
-                    .isEqualTo(Math.round((DISC + LABEL_GAP) * 20));
+            assertThat(before(label)).as("the disc and the label's own gap above it, less the label's raise into them")
+                    .isEqualTo(Math.round((DISC + LABEL_GAP) * 20) - DocxExports.DEFAULT_LINE_RAISE);
         }
     }
 

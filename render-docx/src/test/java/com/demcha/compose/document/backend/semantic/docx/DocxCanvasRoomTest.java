@@ -138,8 +138,9 @@ class DocxCanvasRoomTest {
         assertThat(gapInWord(writing.document(), "Caption", "Below"))
                 .isCloseTo(gapOnThePage(writing.layout(), "Caption", "Below") - RAISE, within(0.1))
                 .isGreaterThan(40);
-        assertThat(gapInWord(drawing.document(), "Above", "Caption")).as("the canvas only draws, the caption under it")
-                .isCloseTo(gapOnThePage(drawing.layout(), "Above", "Caption"), within(0.1))
+        assertThat(gapInWord(drawing.document(), "Above", "Caption"))
+                .as("the canvas only draws, the caption under it raised into the space above it, as in the flow")
+                .isCloseTo(gapOnThePage(drawing.layout(), "Above", "Caption") - RAISE, within(0.1))
                 .isGreaterThan(40);
     }
 

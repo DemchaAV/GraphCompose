@@ -231,8 +231,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // places them (zonePlacement), not by the lines the body lays a node out in, which the same
     // node also placed in the body would otherwise lend them.
     private boolean writingAZoneLine;
-    // The paragraph written last that the layout moves to a new page: Word drops the space above
-    // it there (holdAParagraphsTopEdgeOnItsPage), so its line is not moved up into that space.
+    // The paragraph written last that the layout moves to a new page, outside a cell: Word drops
+    // the space above it there (holdAParagraphsTopEdgeOnItsPage), so its line is not moved up into
+    // that space, nor down by growing it (offerToLower).
     private ParagraphNode paragraphOpeningItsPage;
     // How far the line raised last was moved up into the space above it, in points, and how many
     // blocks had been written when it was (raiseOwedByTheLastLine).
@@ -5168,7 +5169,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * layer over another, a band, a shape container, a canvas, text over the flow — whose writer
      * measures what follows from the page; a stack of one layer is written in the flow, laying
      * nothing over anything, and its items are lowered as there: {@code MidnightNavy} and
-     * {@code NavySidebar} wrap each job in one. A raise is not made there either way.</p>
+     * {@code NavySidebar} wrap each job in one. Nor is an item in an overlay raised; one in a stack
+     * of one layer is, as in the flow.</p>
      *
      * @param lower how far the line's position would lower it, in points: 0 or less where the
      *              whole difference is under half a point ({@link #shiftToThePagesBaseline}), the
@@ -8780,8 +8782,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeTextOverTheFlow(document, node);
             return;
         }
-        if (currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(node)) {
-            holdAParagraphsTopEdgeOnItsPage(document, node);
+        if (currentCell == null && startsAPageOfItsOwn(node)) {
+            // The layout moves a stack of one layer, written in the flow, to a new page whole: its
+            // first paragraph opens that page as one in the flow does, and its line is not moved
+            // into the space above it there either. In any other overlay it is not moved anyway.
+            if (overlayDepth == 0) {
+                holdAParagraphsTopEdgeOnItsPage(document, node);
+            }
             paragraphOpeningItsPage = node;
         }
         // Its own sides hold its text in, as a container's do: SerifHeadline's summary stops at
@@ -10475,13 +10482,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * what follows is written and has taken its own of that space ({@link #offerToLower}). Only a
      * line of its own, as its caller raises: not a line
      * pair's, a container's stacked lines, a text box's, nor one cut to its pictures. Only a
-     * paragraph in the flow or in
-     * a cell, where the space owed below it is the space above what follows: a band, a layer
-     * stack, a shape container, a canvas and the text laid over the flow — the overlays — measure
-     * what follows them from the page ({@link #writeOverlayBand}), and the space a line owed
-     * inside them would be lost. A column's later layer measures the space to itself from the
-     * page too, and takes back the raise of the line above it ({@link #raiseOwedByTheLastLine}).
-     * Not a paragraph the layout moves to a new page: Word drops its space above there
+     * paragraph in the flow or in a cell, where the space owed below it is the space above what
+     * follows: a band, a stack laying one layer over another, a shape container, a canvas and the
+     * text laid over the flow — the overlays — measure what follows them from the page
+     * ({@link #writeOverlayBand}), and the space a line owed inside them would be lost. A stack of
+     * one layer lays nothing over anything and is written in the flow, and its lines are raised as
+     * there: {@code SlateOrange} sets its experience timeline, a row, in one for a row's cell to
+     * hold it, and its employers' lines and their items, 0.23 to 0.54pt low in Word and 0.14 to
+     * 0.42pt in LibreOffice, rose 0.12 to 0.36pt and 0.2pt (measured). A column's later layer
+     * measures the space to itself from the page too, and takes back the raise of the line above it
+     * ({@link #raiseOwedByTheLastLine}). Not a paragraph the layout moves to a new page, the first
+     * of a stack of one layer it moves there whole among them: Word drops its space above there
      * ({@link #holdAParagraphsTopEdgeOnItsPage}), and what the line owed would stand all below it
      * lower. Not a paragraph the layout breaks over a page: its lines on the next page start at
      * that page's top, where the space above moves none of them, and what it owed would stand
@@ -10518,7 +10529,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private double raiseIntoTheSpaceAbove(XWPFParagraph para, boolean staysOnItsPage, CTSpacing spacing,
                                           double raise, boolean intoThePadding) {
         // A band and the text laid over the flow are overlays too (writeOverlayBand, writeOverTheFlow).
-        if (!(raise >= LEAST_RAISE_INTO_THE_SPACE_ABOVE) || overlayDepth > 0 || !staysOnItsPage) {
+        if (!(raise >= LEAST_RAISE_INTO_THE_SPACE_ABOVE) || overlayDepth > oneLayerDepth || !staysOnItsPage) {
             return 0;
         }
         long room = twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null)
@@ -10596,13 +10607,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A cell of a row of columns has no padding of its own above its first paragraph: the
      * columns' space above is the row's, written above its table. Only a first row the export
      * wrote for a row of columns ({@link #rowsLiftedForTheirLines}), and only where its line is not
-     * in an overlay — a band, a layer stack, a shape container, a canvas, the text laid over the
-     * flow — whose writers measure what follows from the page.</p>
+     * in an overlay — a band, a stack laying one layer over another, a shape container, a canvas,
+     * the text laid over the flow — whose writers measure what follows from the page. A stack of
+     * one layer is written in the flow, and its rows are lifted as there: {@code SubscriptionInvoice}
+     * wraps its contact rows in one to set them in a row's cell, and their lines rose 0.12 to
+     * 0.24pt in Word and 0.25pt in LibreOffice, nearer the page by as much (measured).</p>
      *
      * @param low how far Word still sets the line below the page's, in points
      */
     private void noteAFirstLineLow(XWPFParagraph para, double low) {
-        if (!(low >= LEAST_RAISE_INTO_THE_SPACE_ABOVE) || overlayDepth > 0 || !opensTheCell(para)) {
+        if (!(low >= LEAST_RAISE_INTO_THE_SPACE_ABOVE) || overlayDepth > oneLayerDepth || !opensTheCell(para)) {
             return;
         }
         XWPFTable table = currentCell.getTableRow().getTable();

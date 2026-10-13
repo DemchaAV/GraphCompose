@@ -189,14 +189,16 @@ class DocxRowHeightTest {
     @Test
     void aSectionAfterABlockInItsCellWritesTheSpaceOwedBeforeItRises() throws Exception {
         // 6pt owed below the label, the section pulls up 4pt: the title stands 2pt below the
-        // label's line, written as 2pt of space, its line whole.
+        // label's line, written as 2pt of space, its line whole. The label is set in a face Word
+        // seats where the page does, which takes nothing of that space to be lowered by.
         DocumentTextStyle title = DocumentTextStyle.builder().fontName(FontName.LATO).size(36).build();
+        DocumentTextStyle label = DocumentTextStyle.builder().fontName(FontName.GOTHIC_A1).size(8).build();
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addRow("Masthead", row -> row
                         .columns(DocumentRowColumn.weight(1), DocumentRowColumn.weight(1))
                         .addParagraph(p -> p.text("Logo").textStyle(LABEL))
                         .addSection("Title", cell -> cell
-                                .addParagraph(p -> p.text("ISSUED").textStyle(LABEL)
+                                .addParagraph(p -> p.text("ISSUED").textStyle(label)
                                         .margin(new DocumentInsets(0, 0, 6, 0)))
                                 .addSection("Pulled", pulled -> pulled
                                         .padding(new DocumentInsets(-4, 0, 0, 0))

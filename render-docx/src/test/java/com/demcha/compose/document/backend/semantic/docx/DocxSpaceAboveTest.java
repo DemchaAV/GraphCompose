@@ -30,11 +30,16 @@ import static org.assertj.core.api.Assertions.within;
 class DocxSpaceAboveTest {
 
     private static final DocumentTextStyle BODY = DocumentTextStyle.builder().fontName(FontName.LATO).size(10).build();
+    /**
+     * The header above a pulled block: Gothic A1, which Word seats where the page does, so it takes
+     * nothing of the space under it to be lowered by ({@link DocxParagraphLowerTest}).
+     */
+    private static final DocumentTextStyle HEADER = DocumentTextStyle.builder().fontName(FontName.GOTHIC_A1).size(10).build();
 
     @Test
     void aRulePulledUpTakesItsPullOutOfTheSpaceOwedAboveIt() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Header").textStyle(BODY).margin(new DocumentInsets(0, 0, 20, 0)))
+                .addParagraph(p -> p.text("Header").textStyle(HEADER).margin(new DocumentInsets(0, 0, 20, 0)))
                 .addLine(line -> line.horizontal(200).thickness(1).color(DocumentColor.BLACK)
                         .margin(new DocumentInsets(-8, 0, 0, 0))))) {
             XWPFParagraph rule = document.getParagraphs().stream()
@@ -49,7 +54,7 @@ class DocxSpaceAboveTest {
     @Test
     void aParagraphPulledUpFurtherThanTheSpaceAboveItHasNoSpaceAbove() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Header").textStyle(BODY).margin(new DocumentInsets(0, 0, 4, 0)))
+                .addParagraph(p -> p.text("Header").textStyle(HEADER).margin(new DocumentInsets(0, 0, 4, 0)))
                 .addParagraph(p -> p.text("Pulled").textStyle(BODY).margin(new DocumentInsets(-10, 0, 0, 0))))) {
             XWPFParagraph pulled = document.getParagraphs().stream()
                     .filter(paragraph -> paragraph.getText().contains("Pulled")).findFirst().orElseThrow();
@@ -62,7 +67,7 @@ class DocxSpaceAboveTest {
     @Test
     void aPageReferencePulledUpTakesItsPullOutOfTheSpaceOwedAboveIt() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Header").textStyle(BODY).margin(new DocumentInsets(0, 0, 20, 0)))
+                .addParagraph(p -> p.text("Header").textStyle(HEADER).margin(new DocumentInsets(0, 0, 20, 0)))
                 .add(new com.demcha.compose.document.node.PageReferenceNode("Ref", "terms", BODY,
                         com.demcha.compose.document.node.TextAlign.LEFT, "", DocumentInsets.zero(),
                         new DocumentInsets(-8, 0, 0, 0)))
@@ -80,7 +85,7 @@ class DocxSpaceAboveTest {
         // 10pt owed below the header, the section pulls up 4pt and its paragraph 3pt more: the
         // page sets the paragraph 3pt below the header's box.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Header").textStyle(BODY).margin(new DocumentInsets(0, 0, 10, 0)))
+                .addParagraph(p -> p.text("Header").textStyle(HEADER).margin(new DocumentInsets(0, 0, 10, 0)))
                 .addSection("Pulled", section -> section
                         .margin(new DocumentInsets(-4, 0, 0, 0))
                         .addParagraph(p -> p.text("Pulled").textStyle(BODY).margin(new DocumentInsets(-3, 0, 0, 0)))))) {

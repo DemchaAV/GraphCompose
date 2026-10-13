@@ -36,6 +36,11 @@ import static org.assertj.core.api.Assertions.offset;
 class DocxLinePitchTest {
 
     private static final DocumentTextStyle BODY = DocumentTextStyle.builder().fontName(FontName.LATO).size(10).build();
+    /**
+     * The line above the paragraph measured: Gothic A1, which Word seats where the page does, so
+     * it takes nothing of the space above that paragraph to be lowered by ({@link DocxParagraphLowerTest}).
+     */
+    private static final DocumentTextStyle LEAD = DocumentTextStyle.builder().fontName(FontName.GOTHIC_A1).size(10).build();
     private static final String TEXT = "   50% deposit is required to secure the project and schedule the kick-off.";
 
     @Test
@@ -137,7 +142,7 @@ class DocxLinePitchTest {
                 .margin(DocumentInsets.of(20))
                 .create()) {
             session.pageFlow(page -> page
-                    .addParagraph(p -> p.text("Above").textStyle(BODY))
+                    .addParagraph(p -> p.text("Above").textStyle(LEAD))
                     .addParagraph(p -> content.accept(p.margin(DocumentInsets.top(12))))
                     .addParagraph(p -> p.text("Below").textStyle(BODY)));
             ParagraphFragmentPayload payload = session.layoutGraph().fragments().stream()

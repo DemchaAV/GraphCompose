@@ -42,6 +42,11 @@ class DocxListItemSeatTest {
     private static final double SPECTRAL_LINE = 1.522;
     /** Lato's ascent, in ems: 1974 of 2000 units. */
     private static final double LATO_ASCENT = 0.987;
+    /**
+     * The paragraph above a list: Gothic A1, which Word seats where the page does, so it takes
+     * nothing of the space above the list to be lowered by ({@link DocxParagraphLowerTest}).
+     */
+    private static final DocumentTextStyle LEAD = DocumentTextStyle.builder().fontName(FontName.GOTHIC_A1).size(10).build();
     private static final long RAISE = DocxExports.DEFAULT_LINE_RAISE;
 
     @Test
@@ -50,7 +55,7 @@ class DocxListItemSeatTest {
         // list's 20pt above it; the second into the gap and what the first owes, the gap left as
         // it was; the paragraph under the list stands where it did, the last item's raise above it.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addList(list -> list.textStyle(spectral(30)).itemSpacing(10).margin(DocumentInsets.top(20))
                         .items("One", "Two"))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10))))) {
@@ -73,7 +78,7 @@ class DocxListItemSeatTest {
         // Lato's 24pt line stands 0.65pt high in Word: moved down, the space above as written, and
         // the marker, a run of the item's own, with it.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addList(list -> list.textStyle(lato(24)).marker("•").hangingIndent(true).markerGap(6)
                         .margin(DocumentInsets.top(10)).addItem(text -> text.style("Heading", lato(24))))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))))) {
@@ -98,7 +103,7 @@ class DocxListItemSeatTest {
         // Word sets a Word list's marker from the paragraph's mark, and LibreOffice does not move
         // it by the mark's position: lowered by its position, the text would stand off its bullet.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addList(list -> list.textStyle(lato(24)).items("Heading")))) {
             XWPFParagraph item = paragraph(document, "Heading");
             double raise = 0.8 * line(item) - LATO_ASCENT * 24;
@@ -116,7 +121,7 @@ class DocxListItemSeatTest {
         // Spectral's 30pt line stands nearly 5pt low in Word, under 2pt of space: the line and its
         // marker rise those 2pt, and what is left stays, rather than the text alone moving on.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addList(list -> list.textStyle(spectral(30)).margin(DocumentInsets.top(2)).items("Title"))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10))))) {
             XWPFParagraph item = paragraph(document, "Title");
@@ -136,7 +141,7 @@ class DocxListItemSeatTest {
         // A stack measures what follows it from the page: a raise owed below an item inside it
         // would not reach what follows.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Above").textStyle(lato(10)))
+                .addParagraph(p -> p.text("Above").textStyle(LEAD))
                 .addLayerStack(stack -> stack.name("Stack")
                         .back(new ShapeBuilder().name("Backdrop").size(200, 80).build())
                         .layer(new ListBuilder().noMarker().textStyle(spectral(30)).margin(DocumentInsets.top(20))
@@ -315,7 +320,7 @@ class DocxListItemSeatTest {
     @Test
     void anItemOfRunsIsSeatedAsAPlainOneIs() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Lead").textStyle(lato(10)))
+                .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addList(list -> list.textStyle(spectral(30)).marker("•").hangingIndent(true).markerGap(6)
                         .margin(DocumentInsets.top(20))
                         .addItem(text -> text.style("Rich ", spectral(30)).style("item", spectral(30)))))) {

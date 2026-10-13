@@ -8,6 +8,48 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export lowers a paragraph's line Word sets high by a tenth to half a point, by the space
+  between it and what follows.** Word and LibreOffice stand an exact line's baseline four fifths of
+  the way down it, the page its face's ascent below the line's top, and a line the export's measure
+  of that seat found high was moved only by its position, which counts in half points: under half a
+  point it was left where Word set it, and of the 4170 lines of the corpus measured in both editors,
+  772 stood 0.15 to 0.6pt above the page's in both. Such a line is now lowered by
+  growing the space written above it, by what is left of the space between it and the block under
+  it once that block has taken its own of it — the gap between its lines, its own raise, the room
+  its pictures reach into, a row lifted out of the space above its table: what is left above that
+  block, or of the space written below the line where a table or a cell's end follows. The block
+  under it stands where it did. What nothing gives — a block on a later page, whose space above
+  Word drops at the page's top, a block in an overlay, a page break, a block the layout moves to
+  the next page, a column's later layer, which takes its place from the page — the line is not
+  lowered by, and where the section's end leaves the space below a cell's last line out, the
+  lowering it gave is taken back with it. Not lowered: a list's item, which its own list lowers, a
+  line opening its page or a panel, cut to fit, not on one page, or in an overlay other than a
+  stack of one layer.
+
+- **A DOCX export hangs what a rule's paragraph stands past the rule's box below it, for the space
+  under it to take.** A rule is an empty paragraph whose bottom border is the stroke: Word makes it
+  a tenth of a point of line where the stroke has no room above it, and the border as wide as it
+  draws it, in eighths of a point — a 1.2pt rule 1.25pt. What that stands past the box came off the
+  space owed below the rule where there was any, and was lost where there was none, standing the
+  block under it, and all that follows, that much lower: under `MeteredInvoice`'s title rule the row
+  below stood 0.13pt low in Word and 0.11pt in LibreOffice (measured by its cells' shading). It now
+  hangs below the rule as a line hanging below a block does, the space above what follows taking
+  it and the report naming what it cannot (`space above`), as for any such line — except where
+  that hang is let go, below a table's composed cell, a layer stack's column or a row cell whose
+  room the layout does not report. `MeteredInvoice`'s row then stands within 0.01pt. A rule not
+  drawn hangs nothing past its line.
+
+  The two are measured together, as each unmasks the other's error: 44 of the corpus's 62 DOCX
+  change, and by median 33 documents stand nearer the page in Word and 6 further, 36 and 6 in
+  LibreOffice on Windows, 35 and 7 in LibreOffice 24.2 — `TimelineMinimal` 0.36 to 0.05pt in Word
+  and 0.45 to 0.05pt in LibreOffice, `ProposalEditorial` 0.50 to 0.14pt in Word,
+  `ProfessionalSidebar` 0.30 to 0.13pt; by line, counting a line whose distance from the page
+  changed by more than 0.05pt, 1030 nearer and 441 further in Word, 879 and 428 in LibreOffice on
+  Windows. Three stand further by more than a few hundredths, each by a drift of its own the lines'
+  seat or the rules' hang had covered: `Panel`, whose cards' lines stand lower with each entry, 0.31
+  to 0.46pt in Word, `MeteredInvoice` 0.09 to 0.22pt, and `CenteredHeadline`, a tilt down its page,
+  0.11 to 0.18pt. The report's notes are unchanged.
+
 - **A DOCX export lowers a Word list's item that Word sets high by the space above it, its marker
   with its text.** Word draws a Word list's marker from the paragraph's mark, and LibreOffice does
   not move it by the mark's position, so an item the export's measure of Word's seat found high by
@@ -312,8 +354,8 @@ follow semantic versioning; release dates are ISO 8601.
   - A line Word sets low by a tenth of a point or more is moved up into the space written above
     it, written to the twip, and that space is owed below it, so what follows stays where it was.
     Both editors keep a paragraph's space above as written. What the space cannot give is left to
-    the position where the whole difference calls for one, as is a line Word sets high: moved
-    down, it would take its room out of the space below it, which is not known when it is written.
+    the position where the whole difference calls for one, as is a line Word sets high by half a
+    point or more.
   - A column's later layer, which measures the space to itself from the page, takes back the raise
     of the line above it.
   - Not a line pair's shared line, which moved would move its other half; not a line in an

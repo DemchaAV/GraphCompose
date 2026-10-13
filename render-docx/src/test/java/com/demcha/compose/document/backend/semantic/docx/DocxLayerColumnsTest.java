@@ -146,6 +146,48 @@ class DocxLayerColumnsTest {
     }
 
     @Test
+    void aLaterLayerGivesNothingToTheLineEndingTheLayerAboveIt() throws Exception {
+        // The first layer ends with a paragraph's line Word sets high. The later layer measures the
+        // gap to itself from the page: the line is not lowered by it, and the later layer stands
+        // where it did.
+        com.demcha.compose.document.style.DocumentTextStyle lato = com.demcha.compose.document.style
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.LATO).size(10).build();
+        try (Export export = export(stack -> stack
+                .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addParagraph(p -> p.name("Title").text("Heading")
+                        .textStyle(lato).margin(DocumentInsets.top(20)))), LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", SIDEBAR, 0, main -> main
+                        .addSpacer(spacer -> spacer.name("TitlePlace").width(100).height(80))
+                        .addParagraph(p -> p.name("Role").text("Engineer").textStyle(lato))), LayerAlign.TOP_LEFT))) {
+            XWPFTableCell main = export.document().getTables().get(0).getRow(0).getCell(1);
+            XWPFParagraph heading = main.getParagraphs().get(0);
+            PlacedNode title = export.placed("Title");
+            PlacedNode role = export.placed("Role");
+            double gap = title.placementY() - (role.placementY() + role.placementHeight());
+
+            assertThat(main.getParagraphs()).extracting(XWPFParagraph::getText).containsExactly("Heading", "Engineer");
+            assertThat(spacingBefore(heading)).as("its space above, as written").isEqualTo(20 * 20);
+            assertThat(spacingBefore(main.getParagraphs().get(1)))
+                    .isCloseTo(Math.round(gap * 20), org.assertj.core.data.Offset.offset(2L));
+        }
+        // A paragraph under it in its own layer gives it.
+        try (Export export = export(stack -> stack
+                .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addParagraph(p -> p.name("Title").text("Heading")
+                                .textStyle(lato).margin(DocumentInsets.top(20)))
+                        .addParagraph(p -> p.text("Under").textStyle(lato).margin(DocumentInsets.top(10)))),
+                        LayerAlign.TOP_LEFT)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
+                .layer(column("MainLayer", SIDEBAR, 0, main -> main
+                        .addSpacer(spacer -> spacer.name("TitlePlace").width(100).height(120))
+                        .addParagraph(p -> p.name("Role").text("Engineer").textStyle(lato))), LayerAlign.TOP_LEFT))) {
+            XWPFParagraph heading = export.document().getTables().get(0).getRow(0).getCell(1).getParagraphs().get(0);
+
+            assertThat(heading.getText()).as("the premise: the column opens with the line").isEqualTo("Heading");
+            assertThat(spacingBefore(heading)).as("lowered").isGreaterThan(20 * 20);
+        }
+    }
+
+    @Test
     void aColumnEndingWithAListTakesItsLoweringBack() throws Exception {
         // Nothing in the sidebar's cell stands under its list, and the columns' row reads nothing of
         // what hangs below a column: the item stands as Word sets it, the row as tall as before.

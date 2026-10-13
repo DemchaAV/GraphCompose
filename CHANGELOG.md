@@ -15,12 +15,12 @@ follow semantic versioning; release dates are ISO 8601.
   lifted out of the space above its table: `SlateOrange`'s employers' lines and their items, its
   experience timeline set in one, stood 0.23 to 0.54pt low in Word and 0.14 to 0.42pt in
   LibreOffice, and `SubscriptionInvoice`'s contact rows 0.32 to 0.43pt and 0.24 to 0.29pt. Both are
-  now made there as in the flow, the space a line takes owed below it as there; a stack laying one
-  layer over another, whose writer measures what follows from the page, still keeps them. The
-  layout moves such a stack to a new page whole, and a line opening that page in it is neither
-  moved up into the space above it nor lowered by growing it, as one opening its page in the flow
-  is not. Two of the corpus's 62 DOCX
-  change: `SlateOrange` stands 0.40 to 0.29pt from the page by median in Word and 0.30 to 0.22pt in
+  now made there as in the flow, the space a line takes owed below it as there; in a stack laying
+  one layer over another, whose writer measures what follows from the page, a line keeps the space
+  above it and a row is not lifted, as before. The layout moves a stack of one layer to a new page
+  whole, and a line opening that page in it is neither moved up into the space above it nor lowered
+  by growing it, as one opening its page in the flow is not. Two of the corpus's 62 DOCX change:
+  `SlateOrange` stands 0.40 to 0.29pt from the page by median in Word and 0.30 to 0.22pt in
   LibreOffice on Windows and 24.2, 20 of its lines nearer in Word and 19 in LibreOffice, and
   `SubscriptionInvoice` 0.16 to 0.14pt in Word, three lines nearer in each; no line stands further.
   The report's notes are unchanged.

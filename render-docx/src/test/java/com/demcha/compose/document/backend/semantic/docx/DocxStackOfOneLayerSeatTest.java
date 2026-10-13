@@ -214,6 +214,7 @@ class DocxStackOfOneLayerSeatTest {
             double raise = 0.8 * line(title) - SPECTRAL_ASCENT * 30;
 
             assertThat(raise).as("the premise: Word's baseline is the lower").isGreaterThan(1);
+            assertThat(before(title)).as("its 20pt, whole").isEqualTo(400);
             assertThat(position(title)).as("raised by its position").isCloseTo((int) Math.round(raise * 2), within(1));
         }
     }

@@ -8786,6 +8786,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // The layout moves a stack of one layer, written in the flow, to a new page whole: its
             // first paragraph opens that page as one in the flow does, and its line is not moved
             // into the space above it there either. In any other overlay it is not moved anyway.
+            // Its top edge is held in the flow only, as before: in a stack it is not measured.
             if (overlayDepth == 0) {
                 holdAParagraphsTopEdgeOnItsPage(document, node);
             }

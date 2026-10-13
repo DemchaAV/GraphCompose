@@ -21,9 +21,11 @@ follow semantic versioning; release dates are ISO 8601.
   corpus's 62 DOCX changes: each of `OrangeOps`' cards under the first stands higher by the hangs
   above it, and its aside under them about half a point higher in both, 0.49 to 0.27pt from the page
   at its 90th percentile in Word and 0.41 to 0.28pt in LibreOffice 24.2, 0.15 to 0.11pt by median in
-  Word; the lines of its later cards' bodies now stand about as high as the first card's did, up to
-  0.3pt, which the drift had hidden. LibreOffice on Windows sets it on two pages, as before. The
-  report's notes are unchanged.
+  Word; the drift had hidden how high the lines of its later cards' bodies are set, now about as
+  high as the first card's, up to 0.32pt, and how near each other both editors set its education
+  degree's two lines, 0.8 to 0.9pt nearer than the page, its second line now 0.33pt high in Word and
+  0.45pt in LibreOffice 24.2. LibreOffice on Windows sets it on two pages, as before. The report's
+  notes are unchanged.
 
 - **A DOCX export raises a line Word sets low in a layer stack of one layer, and lifts a row there,
   as in the flow.** A stack of one layer lays nothing over anything, and its contents are written in

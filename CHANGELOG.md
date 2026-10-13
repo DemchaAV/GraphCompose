@@ -38,15 +38,16 @@ follow semantic versioning; release dates are ISO 8601.
   that hang is let go, below a layer stack's column or a row cell whose room the layout does not
   report; that row's box stands within 0.01pt. A rule not drawn hangs nothing past its line.
 
-  The two are measured together, as each unmasks the other's error: 45 of the corpus's 62 DOCX
-  change, and by median 33 documents stand nearer the page in Word and 7 further, 36 and 7 in
-  LibreOffice on Windows and 24.2 — `TimelineMinimal` 0.36 to 0.05pt in Word and 0.45 to 0.05pt in
-  LibreOffice, `ProposalEditorial` 0.50 to 0.14pt in Word, `ProfessionalSidebar` 0.30 to 0.13pt;
-  by line, counting a line whose distance from the page changed by more than 0.05pt, 1031 nearer
-  and 445 further in Word, 883 and 429 in LibreOffice on Windows. Three stand further, each by a
-  drift of its own the lines' seat or the rules' hang had covered: `Panel`, whose cards' lines
-  stand lower with each entry, 0.31 to 0.46pt in Word, `MeteredInvoice` 0.09 to 0.21pt, and
-  `CenteredHeadline`, a tilt down its page, 0.11 to 0.18pt. The report's notes are unchanged.
+  The two are measured together, as each unmasks the other's error: 44 of the corpus's 62 DOCX
+  change, and by median 33 documents stand nearer the page in Word and 6 further, 36 and 6 in
+  LibreOffice on Windows, 35 and 7 in LibreOffice 24.2 — `TimelineMinimal` 0.36 to 0.05pt in Word
+  and 0.45 to 0.05pt in LibreOffice, `ProposalEditorial` 0.50 to 0.14pt in Word,
+  `ProfessionalSidebar` 0.30 to 0.13pt; by line, counting a line whose distance from the page
+  changed by more than 0.05pt, 1030 nearer and 441 further in Word, 879 and 428 in LibreOffice on
+  Windows. Three stand further by more than a few hundredths, each by a drift of its own the lines'
+  seat or the rules' hang had covered: `Panel`, whose cards' lines stand lower with each entry, 0.31
+  to 0.46pt in Word, `MeteredInvoice` 0.09 to 0.22pt, and `CenteredHeadline`, a tilt down its page,
+  0.11 to 0.18pt. The report's notes are unchanged.
 
 - **A DOCX export lowers a Word list's item that Word sets high by the space above it, its marker
   with its text.** Word draws a Word list's marker from the paragraph's mark, and LibreOffice does

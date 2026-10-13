@@ -1291,7 +1291,7 @@ cv-serif_headline	0:d244381bfb58	0.22	0.10	newyorkuniversity
 cv-serif_headline	0:d52c9df2c684	0.20	0.10	2018–2020|newyork,ny
 cv-serif_headline	0:8913dcd543d0	0.32	0.10	b.s.incomputerscience
 cv-serif_headline	0:ee7a3f01df1e	0.33	0.10	universityofcalifornia,losangele
-cv-serif_headline	0:5f29961bb46f	0.42	0.10	2014–2018|losangeles,ca
+cv-serif_headline	0:5f29961bb46f	0.30	0.10	2014–2018|losangeles,ca
 cv-serif_headline	0:32c1cf49a2fe	0.13	0.17	skills
 cv-serif_headline	0:6cb574fa10b6	0.23	0.10	languages
 cv-serif_headline	0:38a0963a6364	0.30	0.10	java
@@ -1563,7 +1563,7 @@ cv-terracotta_rail	0:3abe8752b2c0	0.17	0.42	microsoftoffice
 cv-terracotta_rail	0:e831beb04c00	0.17	0.04	certifications
 cv-terracotta_rail	0:3ad949ee8543	0.17	0.42	arbregisteredarchitect
 cv-terracotta_rail	0:fa807066704f	0.18	0.42	ribacharteredmember
-cv-terracotta_rail	0:676dfdd56ad2	0.21	0.04	additionalinformation
+cv-terracotta_rail	0:676dfdd56ad2	-0.03	0.04	additionalinformation
 cv-terracotta_rail	0:705ab1a9cb61	0.23	0.06	languages:
 cv-terracotta_rail	0:9ee0e2dddc94	0.17	0.06	english(native),
 cv-terracotta_rail	0:de6d9b2b98d4	0.24	0.06	spanish(conversational)
@@ -1581,7 +1581,7 @@ cv-terracotta_rail	0:bbb25a1ee248	0.09	0.03	provenexpertiseindesigndevelopme
 cv-terracotta_rail	0:bf4ab196cbb6	0.11	0.03	strongfocusonsustainability,qual
 cv-terracotta_rail	0:0dfcf4444281	0.13	0.03	collaborativecommunicatorskilled
 cv-terracotta_rail	0:22fdcc5cfe61	0.03	0.03	leadingmultidisciplinaryteamstoa
-cv-terracotta_rail	0:c2f296ef30a3	0.06	0.03	professionalexperience
+cv-terracotta_rail	0:c2f296ef30a3	-0.18	0.03	professionalexperience
 cv-terracotta_rail	0:086c0e036e67	-0.33	-0.05	2021–present
 cv-terracotta_rail	0:b3af3b56129a	0.01	0.11	northlinestudio,bristol,uk
 cv-terracotta_rail	0:27819bba9c0f	-0.45	0.11	•leaddesignpackagesfromconceptth
@@ -2741,8 +2741,8 @@ invoice-metered	0:41305d2c2d3b	-0.30	0.01	northwindcloudservicesltd.
 invoice-metered	0:41305d2c2d3b#1	-0.92	0.09	northwindcloudservicesltd.
 invoice-metered	0:c3f5f4cc9def	0.08	0.01	120riversideway
 invoice-metered	0:5be08c6bee4c	0.06	0.01	bristol,bs16qt
-invoice-metered	0:2474519f77a9	0.04	0.01	unitedkingdom
-invoice-metered	0:2474519f77a9#1	-0.05	0.05	unitedkingdom
+invoice-metered	0:2474519f77a9	-0.20	0.01	unitedkingdom
+invoice-metered	0:2474519f77a9#1	-0.29	0.05	unitedkingdom
 invoice-metered	0:2474519f77a9#2	-0.35	0.03	unitedkingdom
 invoice-metered	0:ec6d474a1bfc	-0.30	0.01	vatid:
 invoice-metered	0:b03c22d79b17	-0.30	0.07	gb412883027
@@ -3120,8 +3120,8 @@ invoice-obsidian	0:02e483554647	0.86	0.01	toyourbusinessasofthedateofissue
 invoice-obsidian	0:b439106fc5a1	0.88	0.01	ifyouhaveanyquestionsaboutthisin
 invoice-obsidian	0:877ac656a147	0.90	0.01	pleasecontactusatar@kestrel.exam
 invoice-obsidian	0:3c7ade679fdf	0.84	0.09	paymentdetails
-invoice-obsidian	0:473fbeedb47c	0.65	0.09	pleasepaybybanktransfer
-invoice-obsidian	0:59f2b74175d7	0.74	0.09	totheaccountbelow.
+invoice-obsidian	0:473fbeedb47c	0.17	0.09	pleasepaybybanktransfer
+invoice-obsidian	0:59f2b74175d7	0.26	0.09	totheaccountbelow.
 invoice-obsidian	0:811f691f5582	0.81	0.09	payee
 invoice-obsidian	0:10aeacde20ff	0.73	0.09	sortcode
 invoice-obsidian	0:a748c443f622	0.66	0.06	04-00-75
@@ -3435,7 +3435,7 @@ invoice-workspace	0:091019880d88#1	-0.06	0.00	kestrelcollaboration,inc.
 invoice-workspace	0:091019880d88#2	0.06	0.06	kestrelcollaboration,inc.
 invoice-workspace	0:9167e0470dae	0.02	0.12	500howardstreet,6thfloor
 invoice-workspace	0:efa5e1529794	-0.02	0.12	sanfrancisco,ca94105
-invoice-workspace	0:fd7321c405f8	0.07	0.12	unitedstates
+invoice-workspace	0:fd7321c405f8	-0.17	0.12	unitedstates
 invoice-workspace	0:d3c6f273c22d	-0.14	0.00	vatid:us77-0560185
 invoice-workspace	0:6282391a4cc1	-0.30	0.10	invoicenumber:
 invoice-workspace	0:b13757c9a6fc	-0.21	0.08	inv-2024-0003521
@@ -3456,7 +3456,7 @@ invoice-workspace	0:45fe04dbae24	0.25	0.06	brightfutureltd.
 invoice-workspace	0:45fe04dbae24#1	0.25	0.02	brightfutureltd.
 invoice-workspace	0:65405af34bf9	0.10	0.06	45kingstreet
 invoice-workspace	0:494f1a937311	0.14	0.06	manchesterm27az
-invoice-workspace	0:2474519f77a9	0.19	0.06	unitedkingdom
+invoice-workspace	0:2474519f77a9	-0.05	0.06	unitedkingdom
 invoice-workspace	0:2474519f77a9#1	-0.05	0.02	unitedkingdom
 invoice-workspace	0:c7a9cfdd1c55	-0.05	0.06	vatid:gb987654321
 invoice-workspace	0:725a8f5062e7	-0.12	0.14	shipto

@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export gives a paragraph opening a row's column the gap above its first line out of the
+  space above the row.** Word sets a paragraph's lines one height apart, the gap between them inside
+  the line, so a paragraph of more than one line holds a gap too many, which comes off the space
+  above it, or off its cell's padding. Opening a column of a row of columns or of a stack's columns
+  with neither, its gaps were shared out over its lines, which stood closer than on the page:
+  `EditorialProposal`'s goal cells, three lines each, stood 1.46 and 0.45pt low and 0.56pt high in
+  Word; `OrangeOps`' degree, two lines beside its badge, 0.45pt low and 0.45pt high. The row is now
+  lifted out of the space above it by what the paragraph needs, its other cells start as much lower
+  inside — one opening with a table, as a column painted as a panel does, below a hairline paragraph
+  holding the lift — and a row held to a height is held as much taller. Only where the lift raises
+  the first line half a point or more above where sharing the gaps out sets it: a smaller rise left
+  `EditorialProposal`'s phases 0.3pt high, a cell's last paragraph having nothing under it to lower
+  it into, and their gaps stay shared out. Not on a page's first row, nor in an overlay. Five of the
+  corpus's 62 DOCX change. Lines moved by more than 0.05pt: Word 40 nearer the page and 5 further,
+  LibreOffice on Windows 44 and none further. `EditorialProposal`'s goal cells stand within 0.16pt
+  in Word and 0.25pt in LibreOffice, `OrangeOps`' degree within 0.27pt; `EditorialProposal`'s 90th
+  percentile goes from 0.41 to 0.22pt in Word and from 0.65 to 0.35pt in LibreOffice on Windows. The
+  report's notes are unchanged.
 - **A DOCX export settles a list item's exact lines with the page, and what a cell's lines carry at
   its end.** Word sets a list's item at its written line height, to the twip, and the export compared
   only a paragraph's lines with the page's: `Panel`'s skills and projects, items of two lines and

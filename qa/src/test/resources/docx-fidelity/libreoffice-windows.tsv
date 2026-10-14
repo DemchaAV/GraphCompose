@@ -19,7 +19,7 @@ cv-nordic_clean	1	1	63	58	0.06	0.19	0
 cv-orange_ops	1	2	108	5	77.92	77.92	5
 cv-panel	1	1	79	74	0.21	0.33	0
 cv-professional_sidebar	1	1	68	64	0.20	0.28	0
-cv-serif_headline	1	1	103	103	0.19	0.65	0
+cv-serif_headline	1	1	103	103	0.19	0.59	0
 cv-sidebar_portrait	1	1	49	49	0.07	0.18	0
 cv-slate_orange	1	1	87	86	0.23	0.99	0
 cv-teal_pulse	1	1	57	57	0.20	0.64	0
@@ -56,9 +56,9 @@ letter-nordic_clean	1	1	15	15	0.06	0.15	0
 letter-panel	1	1	13	13	0.04	0.14	0
 letter-sidebar_portrait	1	1	12	12	0.03	0.05	0
 letter-timeline_minimal	1	1	15	15	0.15	0.33	0
-proposal-editorial	2	2	132	132	0.21	0.65	0
+proposal-editorial	2	2	132	132	0.20	0.35	0
 proposal-indigo	1	1	72	70	0.12	0.50	0
 proposal-modern	1	1	44	44	0.03	0.12	0
-proposal-northline	2	2	132	132	0.17	0.48	0
+proposal-northline	2	2	132	132	0.13	0.42	0
 receipt-modern	1	1	57	57	0.04	0.09	0
 rota-cobalt	1	1	154	151	0.03	0.19	0

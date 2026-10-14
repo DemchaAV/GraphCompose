@@ -8,6 +8,8 @@ import com.demcha.compose.document.layout.payloads.PolygonFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.layout.payloads.SideBorders;
 import com.demcha.compose.document.style.DocumentCornerRadius;
+import com.demcha.compose.document.style.DocumentLineCap;
+import com.demcha.compose.document.style.DocumentLineJoin;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import org.apache.poi.util.Units;
@@ -27,7 +29,8 @@ import java.util.Locale;
  * wrote none of them, since none is text, and a CV came out as its words on a bare page. Each is
  * a floating DrawingML shape at the layout's position, behind the text, in the order
  * the page paints them — a rectangle, a rectangle with rounded corners, an ellipse or a line,
- * filled and outlined as on the page.</p>
+ * filled and outlined as on the page, the outline ending and turning its corners as the page's
+ * does.</p>
  *
  * <p>A shape standing beside a paragraph's text is anchored in that paragraph and placed down from
  * its top ({@link #drawingInParagraph}, or {@link #drawingInCell} for one in a table cell): a
@@ -41,6 +44,12 @@ import java.util.Locale;
  * the middle of the circle.</p>
  */
 final class DocxDrawings {
+
+    /**
+     * The page's miter limit, PDF's default of ten times the stroke's width, in the thousandths of
+     * a percent DrawingML counts it in.
+     */
+    private static final int MITER_LIMIT = 1_000_000;
 
     private DocxDrawings() {
     }
@@ -84,19 +93,25 @@ final class DocxDrawings {
      *                    or a line of text laid over the flow — or {@code null}
      * @param textAtTop   whether the paragraph is set from the box's top-left corner, as the page
      *                    sets a line in its box, rather than centred in the shape
+     * @param lineCap     how its outline ends, as the page strokes it; butt where the page has none
+     * @param lineJoin    how its outline turns a corner, as the page strokes it; mitred where the
+     *                    page has none
      */
     record Shape(Kind kind, double x, double top, double width, double height, Color fill,
                  Color stroke, double strokeWidth, double radius, boolean flipH, int page,
-                 List<DocumentPathSegment> path, boolean front, String picture, String text, boolean textAtTop) {
+                 List<DocumentPathSegment> path, boolean front, String picture, String text, boolean textAtTop,
+                 DocumentLineCap lineCap, DocumentLineJoin lineJoin) {
         Shape {
             path = path == null ? List.of() : List.copyOf(path);
+            lineCap = lineCap == null ? DocumentLineCap.BUTT : lineCap;
+            lineJoin = lineJoin == null ? DocumentLineJoin.MITER : lineJoin;
         }
 
         Shape(Kind kind, double x, double top, double width, double height, Color fill,
               Color stroke, double strokeWidth, double radius, boolean flipH, int page,
               List<DocumentPathSegment> path, boolean front, String picture) {
             this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front, picture,
-                    null, false);
+                    null, false, null, null);
         }
 
         Shape(Kind kind, double x, double top, double width, double height, Color fill,
@@ -119,7 +134,7 @@ final class DocxDrawings {
         /** The same shape in front of the text rather than behind it. */
         Shape inFront() {
             return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, true,
-                    picture, text, textAtTop);
+                    picture, text, textAtTop, lineCap, lineJoin);
         }
 
         /**
@@ -129,7 +144,18 @@ final class DocxDrawings {
          */
         Shape holding(String paragraph) {
             return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
-                    picture, paragraph, false);
+                    picture, paragraph, false, lineCap, lineJoin);
+        }
+
+        /**
+         * The same shape with its outline ending and turning its corners as the page strokes it.
+         *
+         * @param cap  how the outline ends; {@code null} for butt
+         * @param join how it turns a corner; {@code null} for mitred
+         */
+        Shape strokedWith(DocumentLineCap cap, DocumentLineJoin join) {
+            return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
+                    picture, text, textAtTop, cap, join);
         }
 
         /**
@@ -147,7 +173,7 @@ final class DocxDrawings {
          */
         static Shape textBox(double x, double top, double width, double height, int page, String paragraph) {
             return new Shape(Kind.RECT, x, top, width, height, null, null, 0, 0, false, page, List.of(), true,
-                    null, paragraph, true);
+                    null, paragraph, true, null, null);
         }
 
         /**
@@ -202,11 +228,12 @@ final class DocxDrawings {
             // other diagonal flips it.
             boolean flipH = (x2 - x1) * (y2 - y1) < 0;
             add(shapes, visible(new Shape(Kind.LINE, Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1),
-                    Math.abs(y2 - y1), null, colourOf(line.stroke()), widthOf(line.stroke()), 0, flipH, page)));
+                    Math.abs(y2 - y1), null, colourOf(line.stroke()), widthOf(line.stroke()), 0, flipH, page)
+                    .strokedWith(line.lineCap(), null)));
         } else if (fragment.payload() instanceof PathFragmentPayload path) {
             add(shapes, visible(new Shape(Kind.CUSTOM, fragment.x(), top, fragment.width(), fragment.height(),
                     path.fillColor(), colourOf(path.stroke()), widthOf(path.stroke()), 0, false, page,
-                    path.segments())));
+                    path.segments()).strokedWith(path.lineCap(), path.lineJoin())));
         } else if (fragment.payload() instanceof PolygonFragmentPayload polygon) {
             add(shapes, visible(new Shape(Kind.CUSTOM, fragment.x(), top, fragment.width(), fragment.height(),
                     polygon.fillColor(), colourOf(polygon.stroke()), widthOf(polygon.stroke()), 0, false, page,
@@ -404,17 +431,41 @@ final class DocxDrawings {
         String fill = filled
                 ? "<a:solidFill>" + colour(shape.fill()) + "</a:solidFill>"
                 : "<a:noFill/>";
-        String outline = shape.stroke() == null || shape.stroke().getAlpha() == 0 || !(shape.strokeWidth() > 0)
-                ? "<a:ln><a:noFill/></a:ln>"
-                : "<a:ln w=\"" + Units.toEMU(shape.strokeWidth()) + "\"><a:solidFill>"
-                  + colour(shape.stroke()) + "</a:solidFill></a:ln>";
         return "<a:graphic><a:graphicData uri=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\">"
                 + "<wps:wsp><wps:cNvSpPr/><wps:spPr>"
                 + "<a:xfrm" + (shape.flipH() ? " flipH=\"1\"" : "") + "><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + cx
                 + "\" cy=\"" + cy + "\"/></a:xfrm>"
-                + geometry + fill + outline
+                + geometry + fill + outline(shape)
                 + "</wps:spPr>" + textOf(shape) + "</wps:wsp>"
                 + "</a:graphicData></a:graphic>";
+    }
+
+    /**
+     * A shape's outline, ending and turning its corners as the page strokes it.
+     *
+     * <p>Written with neither, Word and LibreOffice end an outline flat and round its corners: a
+     * rectangle's 10pt frame came out with rounded corners, and a star's points 4pt short. The
+     * page mitres a corner up to ten times the stroke's width and bevels a sharper one, as the
+     * limit written here says. Neither editor reads the limit: Word's own is the page's, so it
+     * mitres and bevels where the page does, and LibreOffice bevels a corner sharper than 30
+     * degrees.</p>
+     */
+    private static String outline(Shape shape) {
+        if (shape.stroke() == null || shape.stroke().getAlpha() == 0 || !(shape.strokeWidth() > 0)) {
+            return "<a:ln><a:noFill/></a:ln>";
+        }
+        String cap = switch (shape.lineCap()) {
+            case BUTT -> "flat";
+            case ROUND -> "rnd";
+            case SQUARE -> "sq";
+        };
+        String join = switch (shape.lineJoin()) {
+            case MITER -> "<a:miter lim=\"" + MITER_LIMIT + "\"/>";
+            case ROUND -> "<a:round/>";
+            case BEVEL -> "<a:bevel/>";
+        };
+        return "<a:ln w=\"" + Units.toEMU(shape.strokeWidth()) + "\" cap=\"" + cap + "\"><a:solidFill>"
+               + colour(shape.stroke()) + "</a:solidFill>" + join + "</a:ln>";
     }
 
     /**

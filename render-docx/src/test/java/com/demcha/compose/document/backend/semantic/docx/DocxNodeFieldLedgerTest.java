@@ -183,7 +183,7 @@ class DocxNodeFieldLedgerTest {
                 "linkTarget:REPORTED",
                 "bookmarkOptions:REPORTED", "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
                 "dashPattern:REPORTED",
-                "anchor:REPORTED:drawn; a rule in the flow is bookmarked", "lineCap:REPORTED:a cap other than butt; a drawn butt line Word and LibreOffice end flat",
+                "anchor:REPORTED:drawn; a rule in the flow is bookmarked", "lineCap:REPORTED:a rule's other than butt, a border ending flat; drawn, it is written",
                 "fillWidth:WRITTEN", "keepWithNext:REPORTED:of a line drawn in the flow the page keeps blocks together in");
         node(ListNode.class, "name:INERT",
                 "items:REPORTED:a blank one a hangingIndent list draws as its marker alone, the marks of one "
@@ -241,7 +241,7 @@ class DocxNodeFieldLedgerTest {
                 "verticalAlign:WRITTEN", "anchor:WRITTEN", "direction:WRITTEN");
         node(PathNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "segments:WRITTEN",
                 "fillColor:WRITTEN", "fillPaint:REPORTED", "stroke:WRITTEN", "strokePaint:REPORTED",
-                "padding:WRITTEN", "margin:WRITTEN", "dashPattern:REPORTED", "lineCap:REPORTED", "lineJoin:REPORTED");
+                "padding:WRITTEN", "margin:WRITTEN", "dashPattern:REPORTED", "lineCap:WRITTEN", "lineJoin:WRITTEN");
         node(PolygonNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "points:WRITTEN",
                 "fillColor:WRITTEN", "stroke:WRITTEN", "padding:WRITTEN", "margin:WRITTEN");
         node(RowNode.class, "name:INERT", "children:WRITTEN", "weights:WRITTEN", "gap:WRITTEN", "padding:WRITTEN",

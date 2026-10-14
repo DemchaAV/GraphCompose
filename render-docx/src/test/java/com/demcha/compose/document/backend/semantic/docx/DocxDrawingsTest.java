@@ -10,6 +10,8 @@ import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentLineCap;
+import com.demcha.compose.document.style.DocumentLineJoin;
 import com.demcha.compose.document.style.DocumentStroke;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -936,6 +938,66 @@ class DocxDrawingsTest {
     }
 
     @Test
+    void anOutlineEndsAndTurnsItsCornersAsThePageStrokesIt() throws Exception {
+        // Written with neither, Word and LibreOffice end an outline flat and round its corners;
+        // the page ends a stroke butt and mitres it where it says nothing else.
+        String colour = "<a:solidFill><a:srgbClr val=\"1A5694\"/></a:solidFill>";
+        String butt = "<a:ln w=\"50800\" cap=\"flat\">" + colour + "<a:miter lim=\"1000000\"/></a:ln>";
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addPath(path -> path.size(40, 20).moveTo(0, 0).lineTo(0.5, 1).lineTo(1, 0)
+                        .stroke(DocumentStroke.of(ACCENT, 4)).lineCap(DocumentLineCap.ROUND)
+                        .lineJoin(DocumentLineJoin.BEVEL))
+                .addPath(path -> path.size(40, 20).moveTo(0, 0.5).lineTo(0.4, 0).lineTo(1, 1)
+                        .stroke(DocumentStroke.of(ACCENT, 4)).lineCap(DocumentLineCap.SQUARE)
+                        .lineJoin(DocumentLineJoin.ROUND))
+                .addLine(line -> line.vertical(30).thickness(4).color(ACCENT).lineCap(DocumentLineCap.ROUND))
+                .addShape(shape -> shape.size(60, 30).stroke(DocumentStroke.of(ACCENT, 4)))
+                .addContainer(container -> container.triangle(30, 40).stroke(DocumentStroke.of(ACCENT, 4))
+                        .layer(new com.demcha.compose.document.dsl.ShapeBuilder().size(1, 1).build()))
+                .addEllipse(ellipse -> ellipse.circle(20).fillColor(ACCENT))))) {
+
+            assertThat(outlines(document.getDocument().xmlText())).containsExactlyInAnyOrder(
+                    "<a:ln w=\"50800\" cap=\"rnd\">" + colour + "<a:bevel/></a:ln>",
+                    "<a:ln w=\"50800\" cap=\"sq\">" + colour + "<a:round/></a:ln>",
+                    "<a:ln w=\"50800\" cap=\"rnd\">" + colour + "<a:miter lim=\"1000000\"/></a:ln>",
+                    butt, butt,
+                    "<a:ln><a:noFill/></a:ln>");
+        }
+    }
+
+    @Test
+    void aBadgeHoldingItsTextIsOutlinedAsThePageStrokesIt() throws Exception {
+        // Its frame's corners are mitred, as the page strokes them.
+        try (XWPFDocument document = export(null, session -> session.add(new ShapeContainerBuilder()
+                .rectangle(40, 24).fillColor(ACCENT).stroke(DocumentStroke.of(ACCENT, 3))
+                .center(new ParagraphBuilder().text("AB").build())
+                .build()))) {
+            String body = document.getDocument().xmlText();
+
+            assertThat(body).as("written as its badge's text").contains("<w:txbxContent>");
+            assertThat(outlines(body)).singleElement().asString()
+                    .contains("cap=\"flat\"").contains("<a:miter lim=\"1000000\"/>");
+        }
+    }
+
+    @Test
+    void aPathComposedInATableCellIsOutlinedAsThePageStrokesIt() throws Exception {
+        try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
+                .addTable(table -> table.columns(com.demcha.compose.document.table.DocumentTableColumn.fixed(100),
+                                com.demcha.compose.document.table.DocumentTableColumn.fixed(100))
+                        .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(
+                                        new com.demcha.compose.document.dsl.PathBuilder().size(20, 20)
+                                                .moveTo(0, 0).lineTo(0.5, 1).lineTo(1, 0)
+                                                .stroke(DocumentStroke.of(ACCENT, 2)).lineCap(DocumentLineCap.ROUND)
+                                                .lineJoin(DocumentLineJoin.BEVEL).build()),
+                                com.demcha.compose.document.table.DocumentTableCell.text("Beside")))))) {
+
+            assertThat(outlines(document.getDocument().xmlText())).singleElement().asString()
+                    .contains("cap=\"rnd\"").contains("<a:bevel/>");
+        }
+    }
+
+    @Test
     void aPathIsDrawnThroughItsPointsWithTheBoxTurnedTheWayDrawingMlCounts() throws Exception {
         // The engine counts y up from the bottom of the box, DrawingML down from the top.
         try (XWPFDocument document = export(null, session -> session.pageFlow(page -> page
@@ -1000,6 +1062,16 @@ class DocxDrawingsTest {
             anchors.add(matcher.group());
         }
         return anchors;
+    }
+
+    /** Every shape's outline in a part's XML, in document order. */
+    private static List<String> outlines(String xml) {
+        List<String> outlines = new ArrayList<>();
+        Matcher matcher = Pattern.compile("<a:ln[ >].*?</a:ln>").matcher(xml);
+        while (matcher.find()) {
+            outlines.add(matcher.group());
+        }
+        return outlines;
     }
 
     /** The preset geometry of every picture in a part's XML. */

@@ -8839,22 +8839,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writePanel(document, node, new ContainerPaint(node.fillColor(), bordersOf(null, node.stroke())));
             return;
         }
-        // The container's layers are written inline, in source order; a clip that cuts them is
-        // named where every container is written (reportClipCut), and a picture clipped to an
-        // ellipse takes the ellipse's shape.
-        report.add(DocxExportReport.Severity.APPROXIMATED, "shape container", layout.pathOf(node),
-                "its layers are written inline, one after another in source order");
         // The outline itself is drawing — a badge's circle, a ring round a portrait — and is
         // drawn where the page draws it, behind the layers now held in to where it sets them.
         drawOutlineOf(node);
-        if (shapeContainerWarned.compareAndSet(false, true)) {
-            LOG.warn("docx.export.shape-container-fallback "
-                    + "outline='{}' clipPolicy={} — DOCX has no graphics-state clip; "
-                    + "rendering layers inline; the report names a clip that cuts them. "
-                    + "(One warning per export; use the PDF backend for full fidelity.)",
-                    node.outline().getClass().getSimpleName(),
-                    node.clipPolicy());
-        }
         double outerLeft = insetLeft;
         double outerRight = insetRight;
         // Its layers are measured from inside its own edges, as a band's are.
@@ -8866,6 +8853,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         try {
             if (band != null) {
+                reportLayersWrittenInline(node);
                 writeOverlayBand(document, node, band);
                 return;
             }
@@ -8891,15 +8879,40 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             if (blocksWritten == blocksBefore) {
                 carriedSpacingBefore = carriedFromOutside;
+                if (holdsMovedContent(node)) {
+                    // Its text, moved into an earlier layer's stand-in, is in the flow all the same.
+                    reportLayersWrittenInline(node);
+                }
             } else {
                 carriedSpacingBefore = 0;
                 owePendingSpacingAfter(setIn[1] + node.padding().bottom() + node.margin().bottom());
                 hangBelowItsBox(node);
+                reportLayersWrittenInline(node);
             }
         } finally {
             insetLeft = outerLeft;
             insetRight = outerRight;
             clipContainer = outerClip;
+        }
+    }
+
+    /**
+     * Names a shape container whose layers are written in the flow: one after another in source
+     * order, held in to where it sets them, rather than laid over its outline. A clip that cuts
+     * them is named where every container is written (reportClipCut), and a picture clipped to an
+     * ellipse takes the ellipse's shape. One that writes nothing — its layers all drawn where the
+     * page puts them, a tile or an icon — loses no layering, and is not named.
+     */
+    private void reportLayersWrittenInline(ShapeContainerNode node) {
+        report.add(DocxExportReport.Severity.APPROXIMATED, "shape container", layout.pathOf(node),
+                "its layers are written inline, one after another in source order");
+        if (shapeContainerWarned.compareAndSet(false, true)) {
+            LOG.warn("docx.export.shape-container-fallback "
+                    + "outline='{}' clipPolicy={} — DOCX has no graphics-state clip; "
+                    + "rendering layers inline; the report names a clip that cuts them. "
+                    + "(One warning per export; use the PDF backend for full fidelity.)",
+                    node.outline().getClass().getSimpleName(),
+                    node.clipPolicy());
         }
     }
 

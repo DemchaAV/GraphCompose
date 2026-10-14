@@ -8,6 +8,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's report says a shape container's layers are written inline only where they
+  are.** Every shape container not written as a panel was noted "its layers are written inline,
+  one after another in source order", whatever it held. One whose layers are all drawing — a
+  tile, an icon, a badge holding its glyph — writes nothing in the flow: each layer is drawn
+  where the page draws it, in the page's order, and nothing of its layering is lost. The note is
+  now written only where a layer is written in the flow, as text, a picture or a band beside the
+  drawing. None of the corpus's 62 DOCX changes; their reports go from 1332 notes to 1246, the 86
+  gone being 49 drawing-only containers, 22 badges and plates whose icon is drawn over them, and
+  15 containers composed in table cells their tables draw.
 - **A DOCX export's report no longer names a cell's tile dropped while its table draws it, nor
   corners drawn alike as unequal.** A table whose composed cells hold a box framing text — a
   panel — leaves that box to the panel and draws its other cells' boxes; asked of the whole

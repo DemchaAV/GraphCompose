@@ -129,7 +129,9 @@ session.layoutGraph();              // → AtomicNodeTooLargeException
 Apache POI cannot express a graphics-state path clip, so the
 `DocxSemanticBackend` renders the container's *layers* inline without
 clipping, and logs a one-time `docx.export.shape-container-fallback`
-capability warning per export pass. The outline is drawn as a floating shape
+capability warning per export pass — once a container writes a layer in the
+flow; one whose layers are all drawn, each where the page draws it, does not
+warn. The outline is drawn as a floating shape
 where the page draws it — a star, a diamond or a path
 as custom geometry — and a picture that fills a container clipped to an
 ellipse takes the ellipse's shape. A badge's glyph — a smaller picture in a

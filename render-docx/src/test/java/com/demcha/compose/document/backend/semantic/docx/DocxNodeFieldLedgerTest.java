@@ -270,8 +270,9 @@ class DocxNodeFieldLedgerTest {
                 + "at the largest of them; a box "
                 + "written as a panel in a table cell, its corners square; one no shape draws, or composed in a "
                 + "table cell with nowhere to draw it, dropped",
-                "layers:REPORTED:written inline one after another in source order where it is written as its "
-                + "layers; a panel's in its cell",
+                "layers:REPORTED:written inline one after another in source order where it writes them in the "
+                + "flow; drawn where the page puts them, unreported, where they are all drawing and hold no space "
+                + "in it; a panel's in its cell",
                 "clipPolicy:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table",
                 "fillColor:REPORTED:its translucency, as a panel's, flattened against the colour under it; "
                 + "drawn, its alpha is written; any other is written",

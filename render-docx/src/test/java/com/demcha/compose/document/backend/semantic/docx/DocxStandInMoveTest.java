@@ -128,6 +128,57 @@ class DocxStandInMoveTest {
         }
     }
 
+    @Test
+    void aShapeContainerWhoseTextMovesIntoAStandInIsStillSaidToWriteItsLayersInline() throws Exception {
+        // The chip is taller than the stand-in and stays in its layer, writing nothing there; its
+        // subtitle lies inside the stand-in and is written in the strip: in the flow all the same.
+        double[] name = new double[2];
+        double[] subtitle = new double[2];
+        try (DocumentSession probe = session()) {
+            probe.pageFlow(page -> page.addSection("Probe", strip -> strip.padding(DocumentInsets.of(10))
+                    .addParagraph(p -> p.name("Name").text(NAME).textStyle(TEXT))
+                    .addParagraph(p -> p.name("Subtitle").text("Subtitle").textStyle(TEXT))));
+            for (PlacedNode node : probe.layoutGraph().nodes()) {
+                double[] box = "Name".equals(node.semanticName()) ? name
+                        : "Subtitle".equals(node.semanticName()) ? subtitle : null;
+                if (box != null) {
+                    box[0] = node.placementWidth();
+                    box[1] = node.placementHeight();
+                }
+            }
+        }
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        try (DocumentSession session = session()) {
+            session.pageFlow(page -> page.addLayerStack(stack -> stack
+                    .layer(column("Sidebar", 0, 260, sidebar -> sidebar
+                            .addParagraph(p -> p.text("Contact").textStyle(TEXT))), LayerAlign.TOP_LEFT)
+                    .layer(column("StripLayer", 100, 0, main -> main.addSection("Strip", strip -> strip
+                            .fillColor(DocumentColor.rgb(240, 240, 236))
+                            .padding(DocumentInsets.of(10))
+                            .addParagraph(p -> p.name("Name").text(NAME).textStyle(TEXT))
+                            .addSpacer(spacer -> spacer.name("SubtitlePlace")
+                                    .width(subtitle[0]).height(subtitle[1] + 20)))), LayerAlign.TOP_LEFT)
+                    .layer(column("MainLayer", 100, 0, main -> {
+                        main.addSection("Hero", hero -> hero.padding(new DocumentInsets(10, 10, 30, 10))
+                                .addSpacer(spacer -> spacer.name("NamePlace").width(name[0]).height(name[1]))
+                                .addContainer(chip -> chip.name("Chip").rectangle(subtitle[0] + 40, subtitle[1] + 30)
+                                        .fillColor(DocumentColor.rgb(26, 86, 148))
+                                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().name("Subtitle")
+                                                .text("Subtitle").textStyle(TEXT).build())));
+                        main.addParagraph(p -> p.name("Body").text("Body").textStyle(TEXT));
+                    }), LayerAlign.TOP_LEFT)));
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                    session.export(new DocxSemanticBackend(report::set))))) {
+                // The premise: written in the strip's panel, a table cell, not in the chip's layer.
+                assertThat(cellHolding(document, "Subtitle").getText()).contains("Subtitle");
+                assertThat(allText(document).split("Subtitle", -1)).as("written once").hasSize(2);
+            }
+        }
+
+        assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("shape container"))
+                .extracting(DocxExportReport.Note::path).anyMatch(path -> path.contains("/Chip["));
+    }
+
     private record Export(XWPFDocument document, List<PlacedNode> nodes) {
         PlacedNode node(String name) {
             return nodes.stream().filter(node -> name.equals(node.semanticName())).findFirst().orElseThrow();

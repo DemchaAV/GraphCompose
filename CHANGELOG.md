@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export settles a list item's exact lines with the page, and what a cell's lines carry at
+  its end.** Word sets a list's item at its written line height, to the twip, and the export compared
+  only a paragraph's lines with the page's: `Panel`'s skills and projects, items of two lines and
+  more, each line written a fiftieth of a point taller than the page's, ran 0.21 and 0.35pt taller in
+  Word, and every card under them stood that much lower. An item's lines are now owed below it, hung
+  below it or carried on with the paragraphs' around it, and what it owed is taken back where its
+  pictures grow its lines, as a paragraph's is. A list's items are written at its tallest line, so an
+  item the page sets shorter now hangs what it passes the page by out of the space below it, named
+  where that space cannot hold it. What a cell's lines still carried at its end,
+  a tenth of a point or less, went with the cell; the cell's end now settles it: owed below its last
+  block where the lines fall short of the page, hung below the cell where they pass it, as a line
+  hanging there is. 48 of the corpus's 62 DOCX change. Lines moved by more than 0.05pt:
+  Word 602 nearer the page and 282 further, LibreOffice on Windows 576 and 253. Medians, Word and
+  LibreOffice on Windows: `Panel` 0.37 → 0.21pt and 0.34 → 0.21pt, `TerracottaRail` 0.30 → 0.17pt and
+  0.25 → 0.17pt, `ConsultingInvoice` 0.25 → 0.17pt and 0.14 → 0.08pt; `ClassicSerif` 0.16 → 0.07pt in
+  Word. A tenth of a point settled moves a line a step of Word's 0.12pt grid or none: where other
+  errors already stood lines high, they now stand a step higher — `ObsidianInvoice`'s parties and items
+  0.12pt (median 0.21 → 0.33pt in Word), `VioletGrid` 0.21 → 0.27pt, `MidnightNavy` 0.16 → 0.22pt.
 - **A DOCX export carries what a paragraph's exact lines are off the page by, too little to settle
   below it, on to the next paragraph's.** Word sets an exact line at its written height, to the
   twip, where the page sets each line at its own: what a paragraph's lines fall short of the page by
@@ -17,7 +35,7 @@ follow semantic versioning; release dates are ISO 8601.
   up to 0.13pt a card and were never taken out. What a paragraph leaves is now carried to the next
   and settled with it once the two come to more. What is carried stays on its page, and starts again
   where the space owed is set anew — a band's or a column's layer, below a band — and in each cell,
-  whose own goes no further than the cell; a paragraph that owed for its lines and whose pictures
+  whose end settles its own (see above); a paragraph that owed for its lines and whose pictures
   then grow them takes that back and carries on what the lines above it carried. 27 of the corpus's
   62 DOCX change. In Word
   323 lines stand nearer the page by more than 0.05pt and 106 further, in LibreOffice on Windows 283

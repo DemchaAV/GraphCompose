@@ -3724,7 +3724,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (drawnByItsTable(node)) {
             // Composed in a cell, what it paints is its table's to draw, and the table's note
             // names the gradient and the dash it leaves out; this one names the rest.
-            List<String> lost = carriedWithout(node, true, false);
+            List<String> lost = new ArrayList<>(carriedWithout(node, true, false));
+            if (cornersDiffer(node)) {
+                lost.add(0, CORNERS_AT_THE_LARGEST);
+            }
             if (!lost.isEmpty()) {
                 report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
                         "composed in a table cell, whose drawing is its table's; " + String.join("; ", lost));
@@ -3746,9 +3749,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * What a node the export writes or draws goes without, as the phrases a report note lists
      * after what the node became: its link, its outline entry, and — drawn as a shape — the
      * anchor, paint and stroke a drawing does not carry, or an image's transform. Empty when it
-     * loses none of them. A drawn shape's transform, and the corners of a box drawn for anything
-     * but a shape, are said where the drawing is ({@link #drawOwnFragments}), and a rule's link
-     * and dash where the rule is.
+     * loses none of them. A drawn shape's transform and a drawn box's corners are said where the
+     * drawing is ({@link #drawOwnFragments}) — a box composed in a table cell's where its table
+     * draws it ({@link #cornersDiffer}) — and a rule's link and dash where the rule is.
      *
      * @param node  the node written or drawn
      * @param drawn whether the node is drawn as a floating shape rather than written in the flow
@@ -3760,30 +3763,39 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * What a note says of a drawing whose corners are rounded by radii that differ: Word's rounded
-     * rectangle has one radius, and the drawing takes the largest ({@code DocxDrawings}).
+     * rectangle has one radius, and the drawing takes the largest ({@code DocxDrawings}). Radii
+     * that differ only past half the box's shorter side, where the page holds each of them, are
+     * drawn alike, and named by none ({@code DocxDrawings.roundsUnequally}).
      */
     private static final String CORNERS_AT_THE_LARGEST = "its corners are drawn at the largest of their radii";
 
     /**
-     * Whether a box fragment's drawn box rounds its corners by radii that differ: a section's, a
-     * container's or a shape container's paint drawn as a shape, which takes the largest of them.
-     * A box drawn as its side borders alone has no corners.
+     * Whether a box fragment's drawn box rounds its corners by radii that differ once each is held
+     * to half its shorter side: a shape's, a section's, a container's or a shape container's paint
+     * drawn as a shape, which takes the largest of them. A box drawn as its side borders alone has
+     * no corners.
      */
     private static boolean roundsCornersUnequally(com.demcha.compose.document.layout.PlacedFragment fragment) {
         return fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload box
-               && box.cornerRadius() != null && !box.cornerRadius().isUniform()
+               && DocxDrawings.roundsUnequally(box.cornerRadius(), fragment.width(), fragment.height())
                && DocxDrawings.drawsItsBox(fragment);
     }
 
     /**
-     * Whether a shape container paints an outline that rounds its corners by radii that differ,
-     * for one composed in a table cell, which has no fragment of its own to read them off. An
-     * outline with neither a fill nor a stroke that shows draws nothing.
+     * Whether a shape or a shape container composed in a table cell, which has no fragment of its
+     * own to read them off, rounds its corners by radii that differ. A shape there is drawn as wide
+     * as its cell lays it out and as tall as it is, so its radii are held to half its height, past
+     * which none is drawn: a radius that differs on the page is named, and one that differs only
+     * past half a cell narrower than the shape is tall is named too. An outline with neither a
+     * fill nor a stroke that shows draws nothing.
      */
     private static boolean cornersDiffer(DocumentNode node) {
+        if (node instanceof com.demcha.compose.document.node.ShapeNode shape) {
+            return DocxDrawings.roundsUnequally(shape.cornerRadius(), Double.POSITIVE_INFINITY, shape.height());
+        }
         return node instanceof ShapeContainerNode container
                && container.outline() instanceof com.demcha.compose.document.style.ShapeOutline.RoundedRectanglePerCorner corners
-               && !corners.corners().isUniform()
+               && DocxDrawings.roundsUnequally(corners.corners(), corners.width(), corners.height())
                && (shows(container.fillColor())
                    || container.stroke() != null && container.stroke().width() > 0 && shows(container.stroke().color()));
     }
@@ -3814,9 +3826,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (drawn && paint && shape.fillPaint() != null
                 && !(shape.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)) {
                 lost.add("its gradient fill is not carried");
-            }
-            if (drawn && shape.cornerRadius() != null && !shape.cornerRadius().isUniform()) {
-                lost.add(CORNERS_AT_THE_LARGEST);
             }
         } else if (node instanceof com.demcha.compose.document.node.EllipseNode ellipse) {
             link = ellipse.linkTarget();
@@ -4067,8 +4076,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (transform != null && !transform.isIdentity()) {
                 message.append("; its transform is not carried, so it is drawn upright at its size");
             }
-            if (unequalCorners && !(node instanceof com.demcha.compose.document.node.ShapeNode)) {
-                // A shape's corners are named with the rest of what it is drawn without.
+            if (unequalCorners) {
                 message.append("; ").append(CORNERS_AT_THE_LARGEST);
             }
             if (isDrawing(node)) {
@@ -12709,8 +12717,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CellDrawing outerCellDrawing = cellDrawing;
         List<CellFragment> outerDrawings = tableDrawings;
         CellDrawing drawn = drawCellDrawing(node);
-        cellDrawing = new CellDrawing(outerCellDrawing.drew() || drawn.drew(),
-                outerCellDrawing.skippedBoxes() || drawn.skippedBoxes(), List.of());
+        List<com.demcha.compose.document.layout.PlacedFragment> skipped = new ArrayList<>(outerCellDrawing.skipped());
+        skipped.addAll(drawn.skipped());
+        cellDrawing = new CellDrawing(outerCellDrawing.drew() || drawn.drew(), skipped,
+                outerCellDrawing.strayed() || drawn.strayed(), List.of());
         if (!drawn.pending().isEmpty()) {
             tableDrawings = new ArrayList<>(drawn.pending());
         }
@@ -12731,20 +12741,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * What the tables being written drew of their composed cells.
      *
-     * @param drew         whether they drew anything
-     * @param skippedBoxes whether they left a box framing text to the panel it is written as
-     * @param pending      the drawings one table's cells paint, waiting to be anchored
+     * @param drew    whether they drew anything
+     * @param skipped the boxes framing text they left to the panels they are written as
+     * @param strayed whether one of those stands in no row of its table, and so in no cell a box
+     *                node can be asked about
+     * @param pending the drawings one table's cells paint, waiting to be anchored
      */
-    private record CellDrawing(boolean drew, boolean skippedBoxes, List<CellFragment> pending) {
-        static final CellDrawing NONE = new CellDrawing(false, false, List.of());
+    private record CellDrawing(boolean drew, List<com.demcha.compose.document.layout.PlacedFragment> skipped,
+                               boolean strayed, List<CellFragment> pending) {
+        static final CellDrawing NONE = new CellDrawing(false, List.of(), false, List.of());
+
+        CellDrawing {
+            skipped = List.copyOf(skipped);
+        }
+
+        /** Whether they left any box framing text to its panel. */
+        boolean skippedBoxes() {
+            return !skipped.isEmpty();
+        }
     }
 
     /**
      * Whether a node composed in a cell was drawn by its table, so that it is not lost.
      *
      * <p>A path, an ellipse, a polygon or a line composed in a cell is always among what its table
-     * draws once it draws anything. A box may be a box framing text left to its panel; while a
-     * table skipped any, a box node is still reported, rather than one lost in silence.</p>
+     * draws once it draws anything. A box may be a box framing text left to its panel. The layout
+     * does not say which of a cell's boxes is which node, a cell's content having no place of its
+     * own, but it does say which cell a skipped box stands in: in that cell a box node is still
+     * reported, rather than one lost in silence, and in any other the table drew it. Asked of the
+     * whole table instead, a tile beside a panel was reported dropped while the table drew it.</p>
      */
     private boolean drawnByItsTable(DocumentNode node) {
         if (anchoredInCells.contains(node)) {
@@ -12763,7 +12788,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean box = node instanceof com.demcha.compose.document.node.ShapeNode
                       || node instanceof ShapeContainerNode container
                          && !(container.outline() instanceof com.demcha.compose.document.style.ShapeOutline.Ellipse);
-        return !box || !cellDrawing.skippedBoxes();
+        return !box || !skippedABoxInThisCell();
+    }
+
+    /**
+     * Whether the tables being written left a box framing text, reaching into the cell being
+     * written, to the panel it is written as. A box reaching past its cell still counts there, and
+     * one reaching into the cell beside it counts there too: a box node is reported rather than
+     * lost in silence. Where a box stands in no row of its table at all — pushed out of its cell by
+     * a layer's offset or a negative margin — or the layout placed the cell under no name it is
+     * found by, whether they left one anywhere.
+     */
+    private boolean skippedABoxInThisCell() {
+        if (composedCellBoxes.isEmpty() || cellDrawing.strayed()) {
+            return cellDrawing.skippedBoxes();
+        }
+        return cellDrawing.skipped().stream()
+                .anyMatch(box -> composedCellBoxes.stream().anyMatch(cell -> cell.overlaps(box)));
     }
 
     /**
@@ -12804,12 +12845,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         instanceof com.demcha.compose.document.layout.payloads.ImageFragmentPayload)
                 .toList();
         boolean drew = false;
-        boolean skipped = false;
+        List<com.demcha.compose.document.layout.PlacedFragment> skipped = new ArrayList<>();
         List<CellFragment> pending = new ArrayList<>();
         for (com.demcha.compose.document.layout.PlacedFragment fragment : fragments) {
             boolean frames = framesText(fragment, content);
             if (frames && fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload) {
-                skipped = true;
+                skipped.add(fragment);
                 continue;
             }
             if (Double.isNaN(canvasHeight)) {
@@ -12830,7 +12871,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     + "; a transform, a gradient or a dash on it is not carried");
             // A clip its cells set is named where it cuts something (reportClipCut).
         }
-        return new CellDrawing(drew, skipped, pending);
+        // A box framing text that reaches into none of the table's rows stands in no cell: which
+        // cell's node it is the report cannot tell, and every cell then counts it.
+        boolean strayed = skipped.stream().anyMatch(box -> fragments.stream().noneMatch(row ->
+                row.payload() instanceof com.demcha.compose.document.layout.payloads.TableRowFragmentPayload
+                && new DocxLayoutMetrics.CellBox(row.pageIndex(), row.x(), row.y(), row.x() + row.width(),
+                        row.y() + row.height()).overlaps(box)));
+        return new CellDrawing(drew, skipped, strayed, pending);
     }
 
     /**

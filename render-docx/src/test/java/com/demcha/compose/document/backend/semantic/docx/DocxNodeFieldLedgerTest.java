@@ -266,7 +266,8 @@ class DocxNodeFieldLedgerTest {
                 "bookmarkOptions:REPORTED", "keepWithNext:WRITTEN",
                 "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
         node(ShapeContainerNode.class, "name:INERT",
-                "outline:REPORTED:drawn as a shape, corners of different radii at the largest of them; a box "
+                "outline:REPORTED:drawn as a shape, corners whose radii differ once held to half its shorter side "
+                + "at the largest of them; a box "
                 + "written as a panel in a table cell, its corners square; one no shape draws, or composed in a "
                 + "table cell with nowhere to draw it, dropped",
                 "layers:REPORTED:written inline one after another in source order where it is written as its "
@@ -279,7 +280,7 @@ class DocxNodeFieldLedgerTest {
                 "padding:WRITTEN", "margin:WRITTEN",
                 "transform:REPORTED");
         node(ShapeNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:REPORTED:" + RULE_TRANSLUCENCY,
-                "stroke:WRITTEN", "cornerRadius:REPORTED:unequal corners, drawn at the largest radius",
+                "stroke:WRITTEN", "cornerRadius:REPORTED:corners unequal once held to half its shorter side, drawn at the largest radius",
                 "linkTarget:REPORTED", "bookmarkOptions:REPORTED", "padding:WRITTEN",
                 "margin:WRITTEN", "transform:REPORTED", "fillPaint:REPORTED",
                 "anchor:REPORTED:drawn; a rule in the flow is bookmarked");

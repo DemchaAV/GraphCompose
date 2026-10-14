@@ -183,7 +183,7 @@ class DocxNodeFieldLedgerTest {
                 "linkTarget:REPORTED",
                 "bookmarkOptions:REPORTED", "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
                 "dashPattern:REPORTED",
-                "anchor:REPORTED:drawn; a rule in the flow is bookmarked", "lineCap:REPORTED:a cap other than butt; whether an editor ends a drawn butt line flat is not measured",
+                "anchor:REPORTED:drawn; a rule in the flow is bookmarked", "lineCap:REPORTED:a cap other than butt; a drawn butt line Word and LibreOffice end flat",
                 "fillWidth:WRITTEN", "keepWithNext:REPORTED:of a line drawn in the flow the page keeps blocks together in");
         node(ListNode.class, "name:INERT",
                 "items:REPORTED:a blank one a hangingIndent list draws as its marker alone, the marks of one "
@@ -265,7 +265,12 @@ class DocxNodeFieldLedgerTest {
                 "bleed:REPORTED:of a panel the page bleeds, in the flow it pages",
                 "bookmarkOptions:REPORTED", "keepWithNext:WRITTEN",
                 "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
-        node(ShapeContainerNode.class, "name:INERT", "outline:WRITTEN", "layers:WRITTEN",
+        node(ShapeContainerNode.class, "name:INERT",
+                "outline:REPORTED:drawn as a shape, corners of different radii at the largest of them; a box "
+                + "written as a panel in a table cell, its corners square; one no shape draws, or composed in a "
+                + "table cell with nowhere to draw it, dropped",
+                "layers:REPORTED:written inline one after another in source order where it is written as its "
+                + "layers; a panel's in its cell",
                 "clipPolicy:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table",
                 "fillColor:REPORTED:its translucency, as a panel's, flattened against the colour under it; "
                 + "drawn, its alpha is written; any other is written",

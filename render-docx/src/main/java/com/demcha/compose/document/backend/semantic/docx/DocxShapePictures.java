@@ -20,11 +20,12 @@ import java.util.List;
 /**
  * An inline shape — a dot, an arrow, a chevron, a checkbox — as a transparent picture.
  *
- * <p>Word has no drawing in a line of text, so a shape among the words is written the way an
- * SVG icon is: drawn into a picture by the raster the icons use ({@link InlineSvgRasters}),
- * from the same outline, fill and stroke the page draws. Each outline becomes normalised
- * path segments, and each layer is centred in the run's box, as the page centres a checkmark
- * inside its checkbox.</p>
+ * <p>A shape among the words is written the way an SVG icon is: drawn into a picture by the
+ * raster the icons use ({@link InlineSvgRasters}), from the same outline, fill and stroke the
+ * page draws, and the report names it a picture. Word could hold it as a shape in the line
+ * ({@code wp:inline} round a {@code wps:wsp}), which this export does not write. Each outline
+ * becomes normalised path segments, and each layer is centred in the run's box, as the page
+ * centres a checkmark inside its checkbox.</p>
  *
  * <p>The page draws a stroke centred on the outline, so part of it lies outside the run's
  * box — half its width past an edge, more at a sharp corner — and the pixels that smooth an

@@ -177,16 +177,21 @@ class DocxTextBandTest {
     }
 
     @Test
-    void numberingWordCannotCountIsReported() throws Exception {
+    void numberingTheExportWritesWithoutItsOffsetIsReported() throws Exception {
+        // A section's w:pgNumType could start the count elsewhere; the export writes none, and
+        // says what its fields number instead.
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
-        try (XWPFDocument ignored = export(report, session -> session.footer(DocumentHeaderFooter.builder()
+        try (XWPFDocument document = export(report, session -> session.footer(DocumentHeaderFooter.builder()
                 .zone(DocumentHeaderFooterZone.FOOTER).rightText("{page}")
                 .numbering(DocumentPageNumbering.builder().startAt(5).countFrom(3).build())
                 .build()))) {
             assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("page footer"))
                     .extracting(DocxExportReport.Note::detail)
                     .anyMatch(detail -> detail.contains("starts on page 3"))
-                    .anyMatch(detail -> detail.contains("count from 5"));
+                    .contains("its page numbers count from 5 on page 3; the export writes Word's page fields "
+                              + "without that offset, so they number the pages from 1, and the page total is "
+                              + "off by as much");
+            assertThat(document.getDocument().getBody().getSectPr().isSetPgNumType()).isFalse();
         }
     }
 

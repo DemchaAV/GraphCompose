@@ -94,6 +94,34 @@ class DocxReportedLossesTest {
     }
 
     @Test
+    void aShapeAndAnIconAmongAPageZonesWordsAreReportedOnceThoughWrittenIntoTwoFooters() throws Exception {
+        // Each is drawn into a picture in every footer the zone is written into, and is one loss.
+        com.demcha.compose.document.svg.SvgIcon icon = com.demcha.compose.document.svg.SvgIcon.parse(
+                "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10'/></svg>");
+        AtomicReference<DocxExportReport> captured = new AtomicReference<>();
+        byte[] docx;
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20))
+                .create()) {
+            session.chrome().zone(DocumentPageZone.footer(20, page -> new ParagraphBuilder()
+                    .inlineText("Open").dot(6, SURFACE).inlineSvgIcon(icon, 8).inlineText("Paid").build()));
+            session.chrome().zone(onTheFirstPage(DocumentPageZone.header(20,
+                    page -> new ParagraphBuilder().text("Cover").build())));
+            longBody(session);
+            docx = session.export(new DocxSemanticBackend(captured::set));
+        }
+        try (org.apache.poi.xwpf.usermodel.XWPFDocument document =
+                     new org.apache.poi.xwpf.usermodel.XWPFDocument(new java.io.ByteArrayInputStream(docx))) {
+            assertThat(document.getFooterList())
+                    .filteredOn(footer -> footer._getHdrFtr().xmlText().contains(">Open<"))
+                    .as("the first page's footer and the rest's").hasSize(2);
+        }
+
+        DocxExportReport report = captured.get();
+        assertThat(report.bySubject().get("inline shape")).as("the dot, once").hasSize(1);
+        assertThat(report.bySubject().get("inline icon")).as("the icon, once").hasSize(1);
+    }
+
+    @Test
     void twoShapesOfNoNameInAPageZoneAreTwoNotes() throws Exception {
         DocxExportReport report = reportOf(session -> {
             session.chrome().zone(DocumentPageZone.header(30, page -> new RowBuilder()
@@ -271,8 +299,9 @@ class DocxReportedLossesTest {
     }
 
     @Test
-    void aBuiltInDrawingNothingShowsIsStillDroppedForItsGeometry() throws Exception {
-        // A path painted only with a gradient is a kind the export knows and cannot draw.
+    void aBuiltInPathNothingShowsIsDroppedForItsGradient() throws Exception {
+        // A path painted only with a gradient is a kind the export knows, and draws as custom
+        // geometry: what it cannot draw is the gradient.
         DocxExportReport report = reportOf(session -> session.pageFlow(page -> page
                 .addPath(path -> path.name("Rail").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
                         .closePath().fill(com.demcha.compose.document.style.DocumentPaint.linear(SURFACE,
@@ -280,7 +309,8 @@ class DocxReportedLossesTest {
 
         assertThat(report.notes()).filteredOn(note -> note.severity() == DocxExportReport.Severity.DROPPED)
                 .singleElement().extracting(DocxExportReport.Note::detail).asString()
-                .contains("geometry has no semantic Word analogue").doesNotContain("does not know");
+                .isEqualTo("it is painted only with a gradient, which the export does not draw, so it is not in "
+                           + "the document");
     }
 
     /** A node kind of the caller's own that paints a circle the export can draw. */

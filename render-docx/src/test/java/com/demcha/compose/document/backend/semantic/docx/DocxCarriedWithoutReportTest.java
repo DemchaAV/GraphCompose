@@ -31,8 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * What a node the export writes or draws goes without is in its report note: a link, an
- * outline entry, an anchor a drawing cannot hold, a gradient, unequal corners, a dash, caps, an
- * image's transform.
+ * outline entry, an anchor a drawing cannot hold, a gradient, unequal corners, a dash, a rule's
+ * caps, an image's transform.
  *
  * <p>The export wrote each of these nodes and said nothing of what it left behind: a linked
  * logo became an unlinked picture, a rotated photo stood upright, a dashed rail was drawn
@@ -77,7 +77,7 @@ class DocxCarriedWithoutReportTest {
     }
 
     @Test
-    void aDrawnLineNamesItsDashCapsAndLink() throws Exception {
+    void aDrawnLineNamesItsDashAndLinkAndNotTheCapsItsOutlineEndsWith() throws Exception {
         DocxExportReport report = reportOf(page -> page
                 .addParagraph(p -> p.text("Target").anchor("target"))
                 .addLine(line -> line.vertical(60).thickness(2).color(INK)
@@ -86,9 +86,9 @@ class DocxCarriedWithoutReportTest {
 
         assertThat(detailOf(report, "LineNode")).startsWith("drawn as a shape")
                 .contains("its dash pattern is not carried, so it is drawn solid")
-                .contains("its caps are not written, so it ends flat")
                 .contains("its link is not carried").contains("its outline entry is not written")
-                .contains("its anchor has no bookmark in the Word file");
+                .contains("its anchor has no bookmark in the Word file")
+                .doesNotContain("caps");
     }
 
     @Test
@@ -162,8 +162,7 @@ class DocxCarriedWithoutReportTest {
                 .contains("its corners are drawn at the largest of their radii")
                 .contains("its link is not carried")
                 .as("its gradient is the table's note's to name").doesNotContain("gradient");
-        assertThat(detailOf(report, "LineNode")).startsWith("composed in a table cell, whose drawing is its table's")
-                .contains("its caps are not written, so it ends flat");
+        assertThat(notesOn(report, "LineNode")).as("its caps are its outline's").isEmpty();
     }
 
     @Test
@@ -252,44 +251,30 @@ class DocxCarriedWithoutReportTest {
                         .fill(DocumentPaint.linear(SURFACE, INK)).stroke(DocumentStroke.of(INK, 1))
                         .dashed(3, 2).lineCap(DocumentLineCap.ROUND)
                         .lineJoin(com.demcha.compose.document.style.DocumentLineJoin.BEVEL))
-                // Word and LibreOffice join an outline written with no join round: the page's
-                // default mitre is lost where two segments meet, and a round join is not.
+                // How a stroke ends and turns the outline says.
                 .addPath(path -> path.name("Mitred").size(40, 20).moveTo(0, 0).lineTo(0.5, 1).lineTo(1, 0)
                         .stroke(DocumentStroke.of(INK, 1)))
-                .addPath(path -> path.name("RoundJoined").size(40, 20).moveTo(0, 0).lineTo(0.5, 1).lineTo(1, 0)
-                        .stroke(DocumentStroke.of(INK, 1)).lineJoin(com.demcha.compose.document.style.DocumentLineJoin.ROUND))
-                .addPath(path -> path.name("Plain").size(40, 10).moveTo(0, 0.5).lineTo(1, 0.5)
-                        .stroke(DocumentStroke.of(INK, 1)))
-                // Two strokes of one segment each: four ends, and nothing joined.
                 .addPath(path -> path.name("Cross").size(20, 20).moveTo(0, 0).lineTo(1, 1).moveTo(0, 1).lineTo(1, 0)
                         .stroke(DocumentStroke.of(INK, 1)).lineCap(DocumentLineCap.SQUARE))
-                // A closed outline has no end to cap, and a round join is carried.
-                .addPath(path -> path.name("Closed").size(40, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
-                        .closePath().stroke(DocumentStroke.of(INK, 1)).lineCap(DocumentLineCap.ROUND)
-                        .lineJoin(com.demcha.compose.document.style.DocumentLineJoin.ROUND))
                 .addPath(path -> path.name("Graded").size(40, 10).moveTo(0, 0.5).lineTo(1, 0.5)
                         .stroke(DocumentStroke.of(INK, 1)).strokePaint(DocumentPaint.linear(SURFACE, INK)))
-                // A dash and caps are a stroke's: a path the page only fills shows neither.
+                // A dash is a stroke's: a path the page only fills shows none.
                 .addPath(path -> path.name("Filled").size(40, 20).moveTo(0, 0).lineTo(0.5, 1).lineTo(1, 0)
                         .fillColor(INK).dashed(3, 2).lineCap(DocumentLineCap.ROUND)));
 
         assertThat(noteNaming(report, "Dashed")).endsWith("; its dash pattern is not carried");
-        assertThat(noteNaming(report, "Rounded")).endsWith("; its caps are not carried");
-        assertThat(noteNaming(report, "Everything"))
-                .endsWith("; its gradient paint, dash pattern, caps and joins are not carried");
-        assertThat(noteNaming(report, "Mitred")).endsWith("; its joins are not carried");
-        assertThat(noteNaming(report, "Cross")).endsWith("; its caps are not carried");
-        assertThat(noteNaming(report, "Closed")).doesNotContain("not carried");
+        assertThat(noteNaming(report, "Rounded")).doesNotContain("not carried");
+        assertThat(noteNaming(report, "Everything")).endsWith("; its gradient paint and dash pattern are not carried");
+        assertThat(noteNaming(report, "Mitred")).doesNotContain("not carried");
+        assertThat(noteNaming(report, "Cross")).doesNotContain("not carried");
         assertThat(noteNaming(report, "Graded")).endsWith("; its gradient paint is not carried");
-        assertThat(noteNaming(report, "RoundJoined")).doesNotContain("not carried");
-        assertThat(noteNaming(report, "Plain")).as("one segment, which joins nothing").doesNotContain("not carried");
         assertThat(noteNaming(report, "Filled")).doesNotContain("not carried");
     }
 
     @Test
-    void aPathComposedInATableCellNamesTheCapsAndJoinsItsTableDoesNot() throws Exception {
-        // The table's note names the dash its drawings go without; a path's caps and joins are
-        // its own.
+    void aPathComposedInATableCellLeavesItsDashToItsTablesNote() throws Exception {
+        // The table's note names the dash its drawings go without; the path's caps and joins its
+        // outline carries.
         DocxExportReport report = reportOf(page -> page
                 .addTable(table -> table.columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
                         .rowCells(DocumentTableCell.node(new com.demcha.compose.document.dsl.PathBuilder()
@@ -299,8 +284,8 @@ class DocxCarriedWithoutReportTest {
                                         .lineJoin(com.demcha.compose.document.style.DocumentLineJoin.BEVEL).build()),
                                 DocumentTableCell.text("Beside"))));
 
-        assertThat(detailOf(report, "Path"))
-                .isEqualTo("composed in a table cell, whose drawing is its table's; its caps and joins are not carried");
+        assertThat(notesOn(report, "Path")).isEmpty();
+        assertThat(notesOn(report, "cell drawing")).singleElement().asString().contains("a dash");
     }
 
     @Test

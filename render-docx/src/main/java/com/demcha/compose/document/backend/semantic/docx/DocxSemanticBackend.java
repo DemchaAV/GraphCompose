@@ -3823,9 +3823,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             outline = ellipse.bookmarkOptions();
             anchor = ellipse.anchor();
         } else if (node instanceof com.demcha.compose.document.node.PathNode path) {
-            // Drawn as custom geometry, which says the outline and a solid paint and nothing more:
-            // composed in a table cell, the table's note names the gradient and the dash.
-            String style = drawn ? pathStyleLost(path, paint) : null;
+            // Drawn as custom geometry, which says the outline, a solid paint and how the stroke ends
+            // and turns, and no gradient or dash: composed in a table cell, the table's note names
+            // those.
+            String style = drawn && paint ? pathStyleLost(path) : null;
             if (style != null) {
                 lost.add(style);
             }
@@ -3836,11 +3837,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (drawn && paint && line.dashPattern() != null && !line.dashPattern().isSolid()) {
                 lost.add("its dash pattern is not carried, so it is drawn solid");
             }
-            // A drawn line's outline is written with no cap, which Word and LibreOffice end flat, as
-            // the page ends a butt line (pathStyleLost); a border has no caps, and ends flat too.
-            if (line.lineCap() != null && line.lineCap() != com.demcha.compose.document.style.DocumentLineCap.BUTT) {
-                lost.add(drawn ? "its caps are not written, so it ends flat"
-                        : "its caps are not carried: a border ends flat");
+            // A drawn line's outline ends as the page's does (DocxDrawings); a border has no caps,
+            // and ends flat.
+            if (!drawn && line.lineCap() != null
+                && line.lineCap() != com.demcha.compose.document.style.DocumentLineCap.BUTT) {
+                lost.add("its caps are not carried: a border ends flat");
             }
         } else if (node instanceof ImageNode image) {
             link = image.linkTarget();
@@ -4131,83 +4132,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * What of a path's paint and stroke custom geometry does not say, as one phrase naming only
      * what the path has, or {@code null} where it says all of it: a gradient paint and a dash
-     * pattern, where {@code paint} asks for them, and caps and joins. A dash, caps and joins are
-     * a stroke's, and lost only where the page strokes the path. The outline is written with no
-     * cap and no join, which Word and LibreOffice draw with flat ends and round joins (measured:
-     * a 10pt stroke's ends stood where the page ends them, and its mitred point 2.76pt short), so
-     * a cap is lost where it is not flat and the path has an open end, and a join where it is not
-     * round and the path has one. A dash the page draws is named itself, and drawn solid.
+     * pattern. A dash is a stroke's, lost only where the page strokes the path, which is then
+     * drawn solid. Its caps and joins the outline says ({@code DocxDrawings}).
      */
-    private static String pathStyleLost(com.demcha.compose.document.node.PathNode path, boolean paint) {
+    private static String pathStyleLost(com.demcha.compose.document.node.PathNode path) {
         List<String> parts = new ArrayList<>();
         boolean stroked = path.stroke() != null && path.stroke().width() > 0;
-        if (paint && (path.fillPaint() != null
-                      && !(path.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)
-                      || stroked && path.strokePaint() != null
-                         && !(path.strokePaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid))) {
+        if (path.fillPaint() != null
+            && !(path.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)
+            || stroked && path.strokePaint() != null
+               && !(path.strokePaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)) {
             parts.add("gradient paint");
         }
-        if (paint && stroked && path.dashPattern() != null && !path.dashPattern().isSolid()) {
+        if (stroked && path.dashPattern() != null && !path.dashPattern().isSolid()) {
             parts.add("dash pattern");
-        }
-        boolean caps = stroked && path.lineCap() != com.demcha.compose.document.style.DocumentLineCap.BUTT
-                       && hasOpenEnds(path);
-        boolean joins = stroked && path.lineJoin() != com.demcha.compose.document.style.DocumentLineJoin.ROUND
-                        && joinsSegments(path);
-        if (caps) {
-            parts.add("caps");
-        }
-        if (joins) {
-            parts.add("joins");
         }
         if (parts.isEmpty()) {
             return null;
         }
-        String named = parts.size() == 1 ? parts.get(0)
-                : String.join(", ", parts.subList(0, parts.size() - 1)) + " and " + parts.get(parts.size() - 1);
-        boolean plural = parts.size() > 1 || caps || joins;
-        return "its " + named + (plural ? " are" : " is") + " not carried";
-    }
-
-    /**
-     * Whether a path joins two of its segments anywhere: a subpath of two drawn segments or more,
-     * or a closed one, whose end meets its start. A single segment has ends and no join.
-     */
-    private static boolean joinsSegments(com.demcha.compose.document.node.PathNode path) {
-        int drawn = 0;
-        for (com.demcha.compose.document.style.DocumentPathSegment segment : path.segments()) {
-            if (segment instanceof com.demcha.compose.document.style.DocumentPathSegment.MoveTo) {
-                drawn = 0;
-            } else if (segment instanceof com.demcha.compose.document.style.DocumentPathSegment.Close) {
-                if (drawn > 0) {
-                    return true;
-                }
-            } else if (++drawn > 1) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Whether a path has an end a cap is drawn on: a subpath of drawn segments that does not
-     * close. A closed outline has none.
-     */
-    private static boolean hasOpenEnds(com.demcha.compose.document.node.PathNode path) {
-        // The segments drawn since the subpath started or last closed.
-        int drawn = 0;
-        for (com.demcha.compose.document.style.DocumentPathSegment segment : path.segments()) {
-            if (segment instanceof com.demcha.compose.document.style.DocumentPathSegment.MoveTo) {
-                if (drawn > 0) {
-                    return true;
-                }
-            } else if (segment instanceof com.demcha.compose.document.style.DocumentPathSegment.Close) {
-                drawn = 0;
-            } else {
-                drawn++;
-            }
-        }
-        return drawn > 0;
+        return "its " + String.join(" and ", parts) + (parts.size() > 1 ? " are" : " is") + " not carried";
     }
 
     private static com.demcha.compose.document.style.DocumentTransform transformOf(DocumentNode node) {

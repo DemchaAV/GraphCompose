@@ -8,6 +8,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export ends and turns a drawing's outline as the page strokes it.** An outline was
+  written with no cap and no join, which Word 16 and LibreOffice draw with flat ends and round
+  corners where the page ends a stroke butt and mitres it: a rectangle's 10pt frame came out with
+  rounded corners, a star's points 4pt short, a triangle's apex 13pt short, and a path's or a
+  line's round or square caps ended flat, 5pt short at each end of a 10pt stroke. Each outline now
+  states the page's cap — flat, round or square — and join — mitred up to ten times the stroke's
+  width, as the page mitres, round or bevelled — on shapes, lines, polygons, paths, shape-container
+  outlines and the drawings a table's cells hold. Measured on one-drawing pages against the page's
+  ink, Word draws every cap and join where the page does, and LibreOffice too but for a mitred
+  corner sharper than 30 degrees, which it bevels; neither reads the miter limit, Word's own being
+  the page's. A drawn path's and a drawn line's report notes no longer name caps and joins; a line
+  written as a paragraph border still names the caps it cannot end in. 29 of the corpus's 62 DOCX change, each in its outlines alone
+  (146 flat, 60 round and 2 square caps; 148 mitred and 60 round joins); their reports go from 1340
+  notes to 1332, the 8 on paths in table cells that named only their caps gone, and 39 other path
+  notes no longer naming them.
 - **A DOCX export's report names what it draws as a picture, or draws without, where it said nothing
   or more than was lost.** An inline shape — a dot, an arrow, a checkbox — and an SVG icon that
   states no text were drawn into pictures with no note, though Word could hold a shape in the line;

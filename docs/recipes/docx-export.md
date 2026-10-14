@@ -1070,7 +1070,14 @@ the outer cell's top. Word sets a panel's content below its whole top border and
 its whole bottom border, where the page strokes both on the panel's edge; what
 of them reaches past the panel's box is taken, or named, as "What a panel
 keeps and loses" says. The body's
-shapes stand above the page backgrounds, which LibreOffice stacks together with them. Each of these limits is named in the report:
+shapes stand above the page backgrounds, which LibreOffice stacks together with them. An
+outline ends and turns its corners as the page strokes it — a butt, round or square cap; a
+mitred, round or bevelled join, mitred up to ten times the stroke's width as the page mitres.
+Written with neither, Word and LibreOffice end an outline flat and round its corners: a
+rectangle's 10pt frame came out with rounded corners, and a star's points 4pt short. Neither
+editor reads the miter limit: Word's own is the page's, so it mitres and bevels where the page
+does, and LibreOffice bevels a corner sharper than 30 degrees. What a drawing does not carry is
+named in the report:
 
 - A transform is not carried: a rotated or scaled shape is drawn upright at its size, and so
   is what a turned shape container holds — named with its outline, or on its own where the
@@ -1078,7 +1085,7 @@ shapes stand above the page backgrounds, which LibreOffice stacks together with 
 - A drawing carries no link, no outline entry and no bookmark: a link to a drawn shape's
   anchor points at none, and a page reference to it is a fixed number. A gradient fill,
   unequal corners (drawn at the largest radius) and a line's dash pattern (drawn solid) are
-  not carried either, and a line's caps are not written: Word and LibreOffice end it flat.
+  not carried either.
   A rule — a line or a thin bar written as a paragraph border — keeps its anchor; its note
   names a lost outline entry, caps (a border ends flat) or a bar's link, a line's link being
   reported as `rule link`.
@@ -1090,12 +1097,9 @@ shapes stand above the page backgrounds, which LibreOffice stacks together with 
 
 Polygons and paths — a star, a chevron, an SVG icon's layers, a portrait drawn as paths —
 are drawn the same way, as custom geometry through the same points and curves, their fill
-and stroke colours carried; the dash pattern and the clip round an SVG icon are not, and
-the outline is written with no cap and no join, which Word and LibreOffice draw with flat
-ends and round joins. A path's note names a dash, a cap that is not flat where the path has
-an open end and a join that is not round where two of its segments meet, and a clip that
-cuts the icon's art, parked
-outside its box, is named in the report. A shape filled only with a gradient paint shows nothing the export
+and stroke colours carried, and the outline's caps and joins as above; the dash pattern and
+the clip round an SVG icon are not. A path's note names a gradient or a dash it loses, and a
+clip that cuts the icon's art, parked outside its box, is named in the report. A shape filled only with a gradient paint shows nothing the export
 carries and is **skipped**, and the report names each one. In the flow a drawn or skipped
 shape still takes its room:
 its placed height and margins are owed as space above what follows, and so are

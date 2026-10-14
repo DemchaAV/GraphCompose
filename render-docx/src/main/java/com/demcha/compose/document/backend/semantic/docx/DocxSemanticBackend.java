@@ -358,10 +358,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // their height (seatByTheLines). Taken out with them: see moveTheRowsText.
     private final java.util.Map<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTc, TableResolvedCell> textCellsMeasured =
             new java.util.IdentityHashMap<>();
-    // The paragraph whose lines last fell short of the page and what was owed below it for that:
-    // see settleTheLinesWithThePage, takeBackTheRoundingOwedBy.
+    // The paragraph whose lines last fell short of the page, what was owed below it for that, and
+    // what the lines above it carried into that: see settleTheLinesWithThePage,
+    // takeBackTheRoundingOwedBy.
     private org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP roundingOwedBy;
     private double roundingOwed;
+    private double roundingCarriedIn;
+    // What the lines written since the space owed was last set anew fall short of the page by, in
+    // points, below zero where they pass it, too little yet to owe or to hang, and the page they
+    // end on: see settleTheLinesWithThePage. A cell keeps its own.
+    private double linesRoundingCarry;
+    private int linesRoundingPage = -1;
     // Icons drawn beside the text they label rather than written: see drawnBesideItsText.
     private final java.util.Set<ImageNode> picturesDrawnBeside =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -1073,6 +1080,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         textCellsMeasured.clear();
         roundingOwedBy = null;
         roundingOwed = 0;
+        roundingCarriedIn = 0;
         risenLines.clear();
         tablesCells.clear();
         picturesDrawnBeside.clear();
@@ -9714,6 +9722,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * low. So do lines rounded up to the twip, over enough of them: Word sets them as written —
      * {@code OrangeOps}' achievement lines, a 0.08pt gap between them written as a tenth, stood
      * nearer the page in Word with what they pass it by hung (measured).</p>
+     *
+     * <p>What each paragraph's lines are off by, too little to owe or hang, is carried to the next
+     * ({@link #linesRoundingCarry}) and settled with it once the two come to more: {@code Panel}'s
+     * card lines, each written a fiftieth of a point taller than the page's, came to up to 0.13pt a
+     * card and were never hung, and its lines stood a median 0.46pt low in Word; carried, 0.35pt
+     * (measured). What is carried stays on its page, as Word sets a page's first line at its top, and
+     * starts again where the space owed is set anew — a band's or a column's layer, below a band
+     * ({@link #forgetTheHang}) — and in each cell, whose own goes no further than the cell.</p>
      */
     private void settleTheLinesWithThePage(XWPFParagraph target, ParagraphNode source) {
         java.util.OptionalDouble page = layout.linesHeight(source);
@@ -9727,13 +9743,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         double written = layout.lineCount(source) * (line / POINT_TO_TWIP)
                          - lineTopsTakenIn.getOrDefault(target.getCTP(), 0.0);
-        double shortBy = page.getAsDouble() - written;
+        // What is carried stays on its page: Word sets the next page's first line at its top,
+        // whatever block opens it. A paragraph the layout did not place keeps what it is handed.
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(source);
+        double carriedIn = placed == null || placed.startPage() == linesRoundingPage ? linesRoundingCarry : 0;
+        if (placed != null) {
+            linesRoundingPage = placed.endPage();
+        }
+        double shortBy = page.getAsDouble() - written + carriedIn;
+        linesRoundingCarry = 0;
         if (shortBy > LINES_ROUNDING_TOLERANCE) {
             owePendingSpacingAfter(shortBy);
             roundingOwedBy = target.getCTP();
             roundingOwed = shortBy;
+            roundingCarriedIn = carriedIn;
         } else if (-shortBy > LINES_ROUNDING_TOLERANCE) {
             hangingBelow = Math.max(hangingBelow, -shortBy);
+        } else {
+            linesRoundingCarry = shortBy;
         }
     }
 
@@ -9741,10 +9768,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Takes back what a paragraph's lines were owed below it for falling short of the page
      * ({@link #settleTheLinesWithThePage}) once its pictures have made its line taller than written
      * ({@code makeRoomForPictures}): Word grows those lines to the pictures, past what they fell short.
+     * What the lines above it carried into what it owed is carried on.
      */
     private void takeBackTheRoundingOwedBy(XWPFParagraph para) {
         if (roundingOwedBy == para.getCTP()) {
             pendingSpacingAfter -= roundingOwed;
+            linesRoundingCarry = roundingCarriedIn;
             roundingOwedBy = null;
         }
     }
@@ -14654,6 +14683,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pullBelow = 0;
         pendingSpacingAfter = Math.max(0, below);
         hangingBelow = below < 0 ? -below : 0;
+        linesRoundingCarry = 0;
     }
 
     /**
@@ -16292,6 +16322,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double previousBorderBelow = borderBelow;
         XWPFTableCell previousBorderBelowCell = borderBelowCell;
         double previousHangingBelow = hangingBelow;
+        double previousRoundingCarry = linesRoundingCarry;
         List<HungLowering> previousLoweringHung = loweringHung;
         XWPFParagraph previousHangingOver = hangingOver;
         double previousHangingOverBy = hangingOverBy;
@@ -16384,6 +16415,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             borderBelowCell = previousBorderBelowCell;
             borderBelow = previousBorderBelow;
             hangingBelow = previousHangingBelow;
+            linesRoundingCarry = previousRoundingCarry;
             hangingOver = previousHangingOver;
             hangingOverBy = previousHangingOverBy;
             borderNotTakenOver = previousBorderNotTakenOver;
@@ -16557,6 +16589,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         hangingOverBy = 0;
         borderNotTakenOver = 0;
         tailOverNode = null;
+        // The lines' rounding carried goes with it: what follows opens a page, a layer or a cell,
+        // its space owed set anew, or the hang it was to take is named.
+        linesRoundingCarry = 0;
         // Nor does what follows lower a line set high above it: the block written under it, if
         // any, gives what it can, and the wait ends (offerToLower).
         settleTheLineAbove();

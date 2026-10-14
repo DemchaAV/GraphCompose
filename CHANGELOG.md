@@ -8,6 +8,26 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export carries what a paragraph's exact lines are off the page by, too little to settle
+  below it, on to the next paragraph's.** Word sets an exact line at its written height, to the
+  twip, where the page sets each line at its own: what a paragraph's lines fall short of the page by
+  is owed below it, and what they pass it by is taken out of the space below, but a tenth of a point
+  or less was left, as Word sets lines on a grid 0.12pt apart, and paragraph after paragraph it
+  added up: `Panel`'s card lines, each written a fiftieth of a point taller than the page's, came to
+  up to 0.13pt a card and were never taken out. What a paragraph leaves is now carried to the next
+  and settled with it once the two come to more. What is carried stays on its page, and starts again
+  where the space owed is set anew — a band's or a column's layer, below a band — and in each cell,
+  whose own goes no further than the cell; a paragraph that owed for its lines and whose pictures
+  then grow them takes that back and carries on what the lines above it carried. 27 of the corpus's
+  62 DOCX change. In Word
+  323 lines stand nearer the page by more than 0.05pt and 106 further, in LibreOffice on Windows 283
+  and 101: `Panel`'s lines a median 0.35pt low in Word where they stood 0.46pt, and 0.34pt in
+  LibreOffice where 0.39pt; `SerifHeadline`'s 0.33pt where 0.38pt, its 90th percentile 0.93pt in
+  Word where 1.05pt. A line that already stood off the page the way the carry moves it, by an error
+  of another kind the drift had partly offset, stands further: `BlueBanner`'s last project line and
+  `SidebarPortrait`'s last two, 0.8 and 0.5pt higher than the lines above them, stand 0.23 to 0.36pt
+  high in Word where they stood within 0.12pt. The report's notes are unchanged.
+
 - **A DOCX export raises a line pair's shared line into the space above it where neither half is
   moved by its position.** A label and its value set to one line are one Word paragraph, each half
   seated by its own position; under half a point the position moves nothing, and the line stood

@@ -7940,12 +7940,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (twips < line) {
             return;
         }
-        org.apache.xmlbeans.XmlCursor cursor = opening.getCTTbl().newCursor();
         XWPFParagraph hairline;
-        try {
+        try (org.apache.xmlbeans.XmlCursor cursor = opening.getCTTbl().newCursor()) {
             hairline = cell.insertNewParagraph(cursor);
-        } finally {
-            cursor.dispose();
         }
         if (hairline == null) {
             return;

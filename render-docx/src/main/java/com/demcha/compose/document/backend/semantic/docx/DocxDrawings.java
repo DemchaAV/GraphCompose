@@ -227,6 +227,17 @@ final class DocxDrawings {
         }
     }
 
+    /**
+     * Whether a box fragment's box is drawn as a shape — filled or outlined — rather than only
+     * its side borders, or nothing.
+     */
+    static boolean drawsItsBox(PlacedFragment fragment) {
+        return fragment.payload() instanceof ShapeFragmentPayload shape
+               && visible(new Shape(Kind.RECT, fragment.x(), 0, fragment.width(), fragment.height(),
+                       shape.fillColor(), colourOf(shape.stroke()), widthOf(shape.stroke()), 0, false,
+                       fragment.pageIndex())) != null;
+    }
+
     private static Shape visible(Shape shape) {
         boolean filled = shape.fill() != null && shape.fill().getAlpha() > 0;
         boolean outlined = shape.stroke() != null && shape.stroke().getAlpha() > 0 && shape.strokeWidth() > 0;

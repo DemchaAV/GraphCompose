@@ -24,9 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * An inline shape — a dot, an arrow, a checkbox — reaches Word as a picture among the words.
  *
  * <p>It was dropped with a report entry, so the status dots, contact-line separators, arrows
- * and checkboxes the templates put among their words were not in the document. Word has
- * no drawing in a line of text, so each is drawn into a transparent picture from the outline,
- * fill and stroke the page draws, and placed where the page's alignment puts it.</p>
+ * and checkboxes the templates put among their words were not in the document. Each is drawn
+ * into a transparent picture from the outline, fill and stroke the page draws, and placed where
+ * the page's alignment puts it; the report names it a picture.</p>
  */
 class DocxInlineShapeTest {
 

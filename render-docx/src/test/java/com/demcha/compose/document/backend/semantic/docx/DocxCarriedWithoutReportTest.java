@@ -56,7 +56,8 @@ class DocxCarriedWithoutReportTest {
 
         assertThat(detailOf(report, "ShapeNode")).startsWith("drawn as a shape")
                 .contains("its gradient fill is not carried")
-                .contains("its corners are drawn at the largest of their radii")
+                .satisfies(detail -> assertThat(detail.split("its corners are drawn at the largest of their radii", -1))
+                        .as("its corners, named once").hasSize(2))
                 .contains("its link is not carried")
                 .contains("its outline entry is not written")
                 .contains("its anchor has no bookmark in the Word file: a link to it points at none, "
@@ -85,7 +86,7 @@ class DocxCarriedWithoutReportTest {
 
         assertThat(detailOf(report, "LineNode")).startsWith("drawn as a shape")
                 .contains("its dash pattern is not carried, so it is drawn solid")
-                .contains("its caps are not written, so the editor ends it its own way")
+                .contains("its caps are not written, so it ends flat")
                 .contains("its link is not carried").contains("its outline entry is not written")
                 .contains("its anchor has no bookmark in the Word file");
     }
@@ -162,7 +163,144 @@ class DocxCarriedWithoutReportTest {
                 .contains("its link is not carried")
                 .as("its gradient is the table's note's to name").doesNotContain("gradient");
         assertThat(detailOf(report, "LineNode")).startsWith("composed in a table cell, whose drawing is its table's")
-                .contains("its caps are not written, so the editor ends it its own way");
+                .contains("its caps are not written, so it ends flat");
+    }
+
+    @Test
+    void aDrawnContainerWithCornersOfDifferentRadiiSaysTheyAreDrawnAtTheLargest() throws Exception {
+        DocxExportReport report = reportOf(page -> page.add(cornered(SURFACE, null)));
+
+        assertThat(notesOn(report, "ShapeContainerNode"))
+                .filteredOn(detail -> detail.startsWith("drawn as a shape"))
+                .singleElement().asString().endsWith("; its corners are drawn at the largest of their radii");
+    }
+
+    @Test
+    void aContainerWithEqualCornersSaysNothingOfThem() throws Exception {
+        DocxExportReport report = reportOf(page -> page
+                .add(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                        .roundedRect(120, 40, DocumentCornerRadius.of(6)).fillColor(SURFACE)
+                        .layer(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Even").build()).build()));
+
+        assertThat(notesOn(report, "ShapeContainerNode")).anyMatch(detail -> detail.startsWith("drawn as a shape"))
+                .noneMatch(detail -> detail.contains("corners"));
+    }
+
+    @Test
+    void aSectionDrawnOverTheFlowWithCornersOfDifferentRadiiSaysTheyAreDrawnAtTheLargest() throws Exception {
+        // Its paint is drawn as a shape, which takes the largest of its radii.
+        DocxExportReport report = reportOf(page -> page
+                .add(laidOverTheFlow(new com.demcha.compose.document.dsl.SectionBuilder().fillColor(SURFACE)
+                        .cornerRadius(DocumentCornerRadius.of(2, 8, 2, 8)).addParagraph("Studio").build()))
+                .addParagraph("Masthead"));
+
+        assertThat(notesOn(report, "SectionNode")).filteredOn(detail -> detail.startsWith("drawn as a shape"))
+                .singleElement().asString().endsWith("; its corners are drawn at the largest of their radii");
+    }
+
+    @Test
+    void aSectionDrawnOverTheFlowAsItsBorderAloneHasNoCornersToName() throws Exception {
+        // Unfilled, its box is not drawn: its left border is a straight line.
+        DocxExportReport report = reportOf(page -> page
+                .add(laidOverTheFlow(new com.demcha.compose.document.dsl.SectionBuilder()
+                        .borders(com.demcha.compose.document.style.DocumentBorders.left(DocumentStroke.of(INK, 2)))
+                        .cornerRadius(DocumentCornerRadius.of(0, 8, 8, 0)).addParagraph("Studio").build()))
+                .addParagraph("Masthead"));
+
+        assertThat(notesOn(report, "SectionNode")).anyMatch(detail -> detail.startsWith("drawn as a shape"))
+                .noneMatch(detail -> detail.contains("corners"));
+    }
+
+    @Test
+    void aTileComposedInATableCellSaysItsCornersAreDrawnAtTheLargest() throws Exception {
+        // A tile holding only drawing is its table's to draw; one holding text is a panel, whose
+        // square corners its own note names.
+        DocxExportReport report = reportOf(page -> page
+                .addTable(table -> table.columns(DocumentTableColumn.fixed(160), DocumentTableColumn.fixed(100))
+                        .rowCells(DocumentTableCell.node(cornered(SURFACE, DocumentStroke.of(INK, 1),
+                                        new com.demcha.compose.document.dsl.EllipseBuilder().size(12, 12)
+                                                .fillColor(INK).build())),
+                                DocumentTableCell.text("Beside"))));
+
+        assertThat(notesOn(report, "ShapeContainerNode")).contains(
+                "composed in a table cell, whose drawing is its table's; its corners are drawn at the largest "
+                + "of their radii");
+    }
+
+    @Test
+    void anUnpaintedTileComposedInATableCellSaysNothingOfItsCorners() throws Exception {
+        // Its table draws the dot it holds, and no outline round it.
+        DocxExportReport report = reportOf(page -> page
+                .addTable(table -> table.columns(DocumentTableColumn.fixed(160), DocumentTableColumn.fixed(100))
+                        .rowCells(DocumentTableCell.node(cornered(null, null,
+                                        new com.demcha.compose.document.dsl.EllipseBuilder().size(12, 12)
+                                                .fillColor(INK).build())),
+                                DocumentTableCell.text("Beside"))));
+
+        assertThat(report.bySubject()).containsKey("cell drawing");
+        assertThat(notesOn(report, "ShapeContainerNode")).noneMatch(detail -> detail.contains("corners"));
+    }
+
+    @Test
+    void aDrawnPathNamesOnlyWhatItLoses() throws Exception {
+        DocxExportReport report = reportOf(page -> page
+                .addPath(path -> path.name("Dashed").size(40, 10).moveTo(0, 0.5).lineTo(1, 0.5)
+                        .stroke(DocumentStroke.of(INK, 1)).dashed(3, 2))
+                .addPath(path -> path.name("Rounded").size(40, 10).moveTo(0, 0.5).lineTo(1, 0.5)
+                        .stroke(DocumentStroke.of(INK, 1)).lineCap(DocumentLineCap.ROUND))
+                .addPath(path -> path.name("Everything").size(40, 20).moveTo(0, 0).lineTo(0.5, 1).lineTo(1, 0)
+                        .fill(DocumentPaint.linear(SURFACE, INK)).stroke(DocumentStroke.of(INK, 1))
+                        .dashed(3, 2).lineCap(DocumentLineCap.ROUND)
+                        .lineJoin(com.demcha.compose.document.style.DocumentLineJoin.BEVEL))
+                // Word and LibreOffice join an outline written with no join round: the page's
+                // default mitre is lost where two segments meet, and a round join is not.
+                .addPath(path -> path.name("Mitred").size(40, 20).moveTo(0, 0).lineTo(0.5, 1).lineTo(1, 0)
+                        .stroke(DocumentStroke.of(INK, 1)))
+                .addPath(path -> path.name("RoundJoined").size(40, 20).moveTo(0, 0).lineTo(0.5, 1).lineTo(1, 0)
+                        .stroke(DocumentStroke.of(INK, 1)).lineJoin(com.demcha.compose.document.style.DocumentLineJoin.ROUND))
+                .addPath(path -> path.name("Plain").size(40, 10).moveTo(0, 0.5).lineTo(1, 0.5)
+                        .stroke(DocumentStroke.of(INK, 1)))
+                // Two strokes of one segment each: four ends, and nothing joined.
+                .addPath(path -> path.name("Cross").size(20, 20).moveTo(0, 0).lineTo(1, 1).moveTo(0, 1).lineTo(1, 0)
+                        .stroke(DocumentStroke.of(INK, 1)).lineCap(DocumentLineCap.SQUARE))
+                // A closed outline has no end to cap, and a round join is carried.
+                .addPath(path -> path.name("Closed").size(40, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
+                        .closePath().stroke(DocumentStroke.of(INK, 1)).lineCap(DocumentLineCap.ROUND)
+                        .lineJoin(com.demcha.compose.document.style.DocumentLineJoin.ROUND))
+                .addPath(path -> path.name("Graded").size(40, 10).moveTo(0, 0.5).lineTo(1, 0.5)
+                        .stroke(DocumentStroke.of(INK, 1)).strokePaint(DocumentPaint.linear(SURFACE, INK)))
+                // A dash and caps are a stroke's: a path the page only fills shows neither.
+                .addPath(path -> path.name("Filled").size(40, 20).moveTo(0, 0).lineTo(0.5, 1).lineTo(1, 0)
+                        .fillColor(INK).dashed(3, 2).lineCap(DocumentLineCap.ROUND)));
+
+        assertThat(noteNaming(report, "Dashed")).endsWith("; its dash pattern is not carried");
+        assertThat(noteNaming(report, "Rounded")).endsWith("; its caps are not carried");
+        assertThat(noteNaming(report, "Everything"))
+                .endsWith("; its gradient paint, dash pattern, caps and joins are not carried");
+        assertThat(noteNaming(report, "Mitred")).endsWith("; its joins are not carried");
+        assertThat(noteNaming(report, "Cross")).endsWith("; its caps are not carried");
+        assertThat(noteNaming(report, "Closed")).doesNotContain("not carried");
+        assertThat(noteNaming(report, "Graded")).endsWith("; its gradient paint is not carried");
+        assertThat(noteNaming(report, "RoundJoined")).doesNotContain("not carried");
+        assertThat(noteNaming(report, "Plain")).as("one segment, which joins nothing").doesNotContain("not carried");
+        assertThat(noteNaming(report, "Filled")).doesNotContain("not carried");
+    }
+
+    @Test
+    void aPathComposedInATableCellNamesTheCapsAndJoinsItsTableDoesNot() throws Exception {
+        // The table's note names the dash its drawings go without; a path's caps and joins are
+        // its own.
+        DocxExportReport report = reportOf(page -> page
+                .addTable(table -> table.columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                        .rowCells(DocumentTableCell.node(new com.demcha.compose.document.dsl.PathBuilder()
+                                        .size(20, 20).moveTo(0, 0).lineTo(0.5, 1).lineTo(1, 0)
+                                        .stroke(DocumentStroke.of(INK, 1)).dashed(3, 2)
+                                        .lineCap(DocumentLineCap.ROUND)
+                                        .lineJoin(com.demcha.compose.document.style.DocumentLineJoin.BEVEL).build()),
+                                DocumentTableCell.text("Beside"))));
+
+        assertThat(detailOf(report, "Path"))
+                .isEqualTo("composed in a table cell, whose drawing is its table's; its caps and joins are not carried");
     }
 
     @Test
@@ -296,6 +434,37 @@ class DocxCarriedWithoutReportTest {
                 .margin(new DocumentInsets(-20, 0, 20 - height, -20))
                 .position(layer, 10, 10, com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
                 .build();
+    }
+
+    /** A shape container rounding its corners by two radii, painted as given, holding a line of text. */
+    private static com.demcha.compose.document.node.DocumentNode cornered(DocumentColor fill, DocumentStroke stroke) {
+        return cornered(fill, stroke, new com.demcha.compose.document.dsl.ParagraphBuilder().text("Cornered").build());
+    }
+
+    /** A shape container rounding its corners by two radii, painted as given, holding one layer. */
+    private static com.demcha.compose.document.node.DocumentNode cornered(DocumentColor fill, DocumentStroke stroke,
+                                                                         com.demcha.compose.document.node.DocumentNode layer) {
+        com.demcha.compose.document.dsl.ShapeContainerBuilder container = new com.demcha.compose.document.dsl.ShapeContainerBuilder()
+                .roundedRect(120, 40, DocumentCornerRadius.of(2, 8, 2, 8)).layer(layer);
+        if (fill != null) {
+            container.fillColor(fill);
+        }
+        if (stroke != null) {
+            container.stroke(stroke);
+        }
+        return container.build();
+    }
+
+    private static List<String> notesOn(DocxExportReport report, String subject) {
+        return report.bySubject().getOrDefault(subject, List.of()).stream().map(DocxExportReport.Note::detail).toList();
+    }
+
+    /** The one note on a node whose path names it. */
+    private static String noteNaming(DocxExportReport report, String name) {
+        List<DocxExportReport.Note> notes = report.notes().stream()
+                .filter(note -> note.path() != null && note.path().contains(name)).toList();
+        assertThat(notes).as("the note on %s", name).hasSize(1);
+        return notes.get(0).detail();
     }
 
     private static String detailOf(DocxExportReport report, String subject) {

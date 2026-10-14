@@ -26,8 +26,8 @@ import java.util.List;
  *
  * <p>For the backends that place a picture where an icon sits in a line: the PPTX backend,
  * for the details DrawingML cannot express — arbitrary clips, exact dashes, joins, art that
- * relies on the view box clipping it — and the Word export, which has no drawing in a line of
- * text at all. Both draw the same resolved layers the same way, so an icon cannot look one
+ * relies on the view box clipping it — and the Word export, which writes no drawing in a line
+ * of text at all. Both draw the same resolved layers the same way, so an icon cannot look one
  * way on a slide and another in a document.</p>
  *
  * <p>The picture is four pixels a point, no larger than 2048 on a side, and encoded in

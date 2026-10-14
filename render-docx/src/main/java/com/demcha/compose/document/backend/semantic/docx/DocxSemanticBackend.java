@@ -227,6 +227,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // kind and no name are two losses.
     private final java.util.Set<DocumentNode> zonePartsReported =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // The page zone lines whose runs were already reported this export, by identity as their
+    // content is: a zone's line is written into each kind of header Word is given, and what its
+    // runs lose is told where it is first written.
+    private final java.util.Set<DocumentNode> zoneLinesReported =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // Whether the page zone line being written is written for the first time, so its runs report.
+    private boolean reportingAZoneLine;
     // Whether a page zone's line is being written: its parts stand on its baseline as the line
     // places them (zonePlacement), not by the lines the body lays a node out in, which the same
     // node also placed in the body would otherwise lend them.
@@ -1028,6 +1035,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         containerRadiusWarned.set(false);
         warnedNodeKinds.clear();
         zonePartsReported.clear();
+        zoneLinesReported.clear();
         separatorsReported.clear();
         textFillsWritten = false;
         closingBlocks.clear();
@@ -1768,8 +1776,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * The kinds of page a text band is drawn on: every one, or all but the first when its
      * numbering keeps it off the first page or counts from page 2 or later. A band held off
      * more pages than the first has no Word part to say so, and is written on every page but the
-     * first, reported; so are page numbers that do not count from 1 on page 1, which Word's
-     * fields do.
+     * first, reported; so are page numbers that do not count from 1 on page 1: the page fields
+     * are written without the offset, which a section's {@code w:pgNumType} could carry.
      */
     private java.util.Set<DocxPageClasses.PageClass> bandPageClasses(DocumentHeaderFooter band) {
         com.demcha.compose.document.output.DocumentPageNumbering numbering = band.getNumbering();
@@ -1790,8 +1798,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (numbering.getStartAt() != numbering.getCountFrom()) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "page " + zoneName(band), section,
                     "its page numbers count from " + numbering.getStartAt() + " on page "
-                    + numbering.getCountFrom() + "; Word's fields number the pages from 1, and "
-                    + "its page total is off by as much");
+                    + numbering.getCountFrom() + "; the export writes Word's page fields without that "
+                    + "offset, so they number the pages from 1, and the page total is off by as much");
         }
         return classes;
     }
@@ -2260,6 +2268,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex);
         java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> pictures = layout.zonePictures(zoneIndex);
         writingAZoneLine = true;
+        reportingAZoneLine = zoneLinesReported.add(content);
         try {
             for (DocumentNode part : parts) {
                 int runsBefore = runsIn(para).size();
@@ -3737,8 +3746,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * What a node the export writes or draws goes without, as the phrases a report note lists
      * after what the node became: its link, its outline entry, and — drawn as a shape — the
      * anchor, paint and stroke a drawing does not carry, or an image's transform. Empty when it
-     * loses none of them. A drawn shape's transform and a path's paint are said where the
-     * drawing is ({@link #drawOwnFragments}), and a rule's link and dash where the rule is.
+     * loses none of them. A drawn shape's transform, and the corners of a box drawn for anything
+     * but a shape, are said where the drawing is ({@link #drawOwnFragments}), and a rule's link
+     * and dash where the rule is.
      *
      * @param node  the node written or drawn
      * @param drawn whether the node is drawn as a floating shape rather than written in the flow
@@ -3746,6 +3756,40 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static List<String> carriedWithout(DocumentNode node, boolean drawn) {
         return carriedWithout(node, drawn, true);
+    }
+
+    /**
+     * What a note says of a drawing whose corners are rounded by radii that differ: Word's rounded
+     * rectangle has one radius, and the drawing takes the largest ({@code DocxDrawings}).
+     */
+    private static final String CORNERS_AT_THE_LARGEST = "its corners are drawn at the largest of their radii";
+
+    /**
+     * Whether a box fragment's drawn box rounds its corners by radii that differ: a section's, a
+     * container's or a shape container's paint drawn as a shape, which takes the largest of them.
+     * A box drawn as its side borders alone has no corners.
+     */
+    private static boolean roundsCornersUnequally(com.demcha.compose.document.layout.PlacedFragment fragment) {
+        return fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload box
+               && box.cornerRadius() != null && !box.cornerRadius().isUniform()
+               && DocxDrawings.drawsItsBox(fragment);
+    }
+
+    /**
+     * Whether a shape container paints an outline that rounds its corners by radii that differ,
+     * for one composed in a table cell, which has no fragment of its own to read them off. An
+     * outline with neither a fill nor a stroke that shows draws nothing.
+     */
+    private static boolean cornersDiffer(DocumentNode node) {
+        return node instanceof ShapeContainerNode container
+               && container.outline() instanceof com.demcha.compose.document.style.ShapeOutline.RoundedRectanglePerCorner corners
+               && !corners.corners().isUniform()
+               && (shows(container.fillColor())
+                   || container.stroke() != null && container.stroke().width() > 0 && shows(container.stroke().color()));
+    }
+
+    private static boolean shows(com.demcha.compose.document.style.DocumentColor colour) {
+        return colour != null && colour.color().getAlpha() > 0;
     }
 
     /**
@@ -3772,12 +3816,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 lost.add("its gradient fill is not carried");
             }
             if (drawn && shape.cornerRadius() != null && !shape.cornerRadius().isUniform()) {
-                lost.add("its corners are drawn at the largest of their radii");
+                lost.add(CORNERS_AT_THE_LARGEST);
             }
         } else if (node instanceof com.demcha.compose.document.node.EllipseNode ellipse) {
             link = ellipse.linkTarget();
             outline = ellipse.bookmarkOptions();
             anchor = ellipse.anchor();
+        } else if (node instanceof com.demcha.compose.document.node.PathNode path) {
+            // Drawn as custom geometry, which says the outline and a solid paint and nothing more:
+            // composed in a table cell, the table's note names the gradient and the dash.
+            String style = drawn ? pathStyleLost(path, paint) : null;
+            if (style != null) {
+                lost.add(style);
+            }
         } else if (node instanceof com.demcha.compose.document.node.LineNode line) {
             link = drawn ? line.linkTarget() : null;
             outline = line.bookmarkOptions();
@@ -3785,10 +3836,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (drawn && paint && line.dashPattern() != null && !line.dashPattern().isSolid()) {
                 lost.add("its dash pattern is not carried, so it is drawn solid");
             }
-            // A drawn line's outline is written with no cap, which leaves its ends to the editor;
-            // a border has no caps, and ends flat.
+            // A drawn line's outline is written with no cap, which Word and LibreOffice end flat, as
+            // the page ends a butt line (pathStyleLost); a border has no caps, and ends flat too.
             if (line.lineCap() != null && line.lineCap() != com.demcha.compose.document.style.DocumentLineCap.BUTT) {
-                lost.add(drawn ? "its caps are not written, so the editor ends it its own way"
+                lost.add(drawn ? "its caps are not written, so it ends flat"
                         : "its caps are not carried: a border ends flat");
             }
         } else if (node instanceof ImageNode image) {
@@ -3909,7 +3960,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!isBuiltIn(node)) {
             return "a node kind the DOCX export does not know: not its text, its pictures" + heldNodes(node);
         }
-        if (node instanceof com.demcha.compose.document.node.ShapeNode shape && paintedOnlyWithAGradient(shape)) {
+        if (node instanceof com.demcha.compose.document.node.ShapeNode shape && paintedOnlyWithAGradient(shape)
+            || node instanceof com.demcha.compose.document.node.PathNode path && paintedOnlyWithAGradient(path)) {
             return "it is painted only with a gradient, which the export does not draw";
         }
         return "its geometry has no semantic Word analogue";
@@ -3923,6 +3975,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return shape.fillPaint() != null
                && !(shape.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)
                && (shape.stroke() == null || shape.stroke().width() <= 0);
+    }
+
+    /**
+     * Whether a path's one paint is a gradient fill: with no stroke round it, drawn as custom
+     * geometry or in a table cell, there is nothing a drawing shows.
+     */
+    private static boolean paintedOnlyWithAGradient(com.demcha.compose.document.node.PathNode path) {
+        return path.fillPaint() != null
+               && !(path.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)
+               && (path.stroke() == null || path.stroke().width() <= 0);
     }
 
     /**
@@ -3957,6 +4019,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean overlayFront = drawsInFront();
         boolean front = false;
         boolean drew = false;
+        // Whether a box it drew rounds its corners by radii that differ.
+        boolean unequalCorners = false;
         drewInCell = false;
         for (com.demcha.compose.document.layout.PlacedFragment fragment : layout.ownFragments(node)) {
             if (badgeText != null && !Double.isNaN(canvasHeight)) {
@@ -3966,6 +4030,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 queueDrawings(shapes, false);
                 drew |= !shapes.isEmpty();
                 front |= !shapes.isEmpty();
+                unequalCorners |= !shapes.isEmpty() && roundsCornersUnequally(fragment);
                 continue;
             }
             // On a painted surface — a panel, or a filled cell — whose shading both editors paint
@@ -3981,6 +4046,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (queueDrawing(fragment, inFront)) {
                 drew = true;
                 front |= inFront;
+                unequalCorners |= roundsCornersUnequally(fragment);
             }
         }
         if (drew) {
@@ -4000,8 +4066,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (transform != null && !transform.isIdentity()) {
                 message.append("; its transform is not carried, so it is drawn upright at its size");
             }
-            if (node instanceof com.demcha.compose.document.node.PathNode path && losesStyle(path)) {
-                message.append("; its gradient paint, dash pattern, caps and joins are not carried");
+            if (unequalCorners && !(node instanceof com.demcha.compose.document.node.ShapeNode)) {
+                // A shape's corners are named with the rest of what it is drawn without.
+                message.append("; ").append(CORNERS_AT_THE_LARGEST);
             }
             if (isDrawing(node)) {
                 // A section's or a container's own losses are named where it is written.
@@ -4026,11 +4093,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Draws the outline a shape container paints round its layers, or reports it lost when no
      * shape shows it. Where no outline is drawn, it names the transform that turns the
-     * container's layers, which only a drawn outline's note otherwise names.
+     * container's layers, which only a drawn outline's note otherwise names; where its table
+     * draws it, the corners it draws at the largest of their radii.
      */
     private void drawOutlineOf(DocumentNode node) {
-        if (drawOwnFragments(node) || drawnByItsTable(node) || !(node instanceof ShapeContainerNode container)) {
-            // A drawn outline's note names its transform; a table's note, its cells'.
+        if (drawOwnFragments(node)) {
+            // A drawn outline's note names its transform and its corners.
+            return;
+        }
+        if (drawnByItsTable(node)) {
+            // The table's note names its cells' transforms; the corners are this outline's.
+            if (cornersDiffer(node)) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
+                        "composed in a table cell, whose drawing is its table's; " + CORNERS_AT_THE_LARGEST);
+            }
+            return;
+        }
+        if (!(node instanceof ShapeContainerNode container)) {
             return;
         }
         if (container.fillColor() != null || container.stroke() != null && container.stroke().width() > 0) {
@@ -4049,15 +4128,86 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
-    /** Whether a path is painted or stroked in a way custom geometry does not say. */
-    private static boolean losesStyle(com.demcha.compose.document.node.PathNode path) {
-        return path.fillPaint() != null && !(path.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)
-               || path.strokePaint() != null
-                  && !(path.strokePaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)
-               || path.dashPattern() != null && !path.dashPattern().isSolid()
-               || path.stroke() != null
-                  && (path.lineCap() != com.demcha.compose.document.style.DocumentLineCap.BUTT
-                      || path.lineJoin() != com.demcha.compose.document.style.DocumentLineJoin.MITER);
+    /**
+     * What of a path's paint and stroke custom geometry does not say, as one phrase naming only
+     * what the path has, or {@code null} where it says all of it: a gradient paint and a dash
+     * pattern, where {@code paint} asks for them, and caps and joins. A dash, caps and joins are
+     * a stroke's, and lost only where the page strokes the path. The outline is written with no
+     * cap and no join, which Word and LibreOffice draw with flat ends and round joins (measured:
+     * a 10pt stroke's ends stood where the page ends them, and its mitred point 2.76pt short), so
+     * a cap is lost where it is not flat and the path has an open end, and a join where it is not
+     * round and the path has one. A dash the page draws is named itself, and drawn solid.
+     */
+    private static String pathStyleLost(com.demcha.compose.document.node.PathNode path, boolean paint) {
+        List<String> parts = new ArrayList<>();
+        boolean stroked = path.stroke() != null && path.stroke().width() > 0;
+        if (paint && (path.fillPaint() != null
+                      && !(path.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)
+                      || stroked && path.strokePaint() != null
+                         && !(path.strokePaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid))) {
+            parts.add("gradient paint");
+        }
+        if (paint && stroked && path.dashPattern() != null && !path.dashPattern().isSolid()) {
+            parts.add("dash pattern");
+        }
+        boolean caps = stroked && path.lineCap() != com.demcha.compose.document.style.DocumentLineCap.BUTT
+                       && hasOpenEnds(path);
+        boolean joins = stroked && path.lineJoin() != com.demcha.compose.document.style.DocumentLineJoin.ROUND
+                        && joinsSegments(path);
+        if (caps) {
+            parts.add("caps");
+        }
+        if (joins) {
+            parts.add("joins");
+        }
+        if (parts.isEmpty()) {
+            return null;
+        }
+        String named = parts.size() == 1 ? parts.get(0)
+                : String.join(", ", parts.subList(0, parts.size() - 1)) + " and " + parts.get(parts.size() - 1);
+        boolean plural = parts.size() > 1 || caps || joins;
+        return "its " + named + (plural ? " are" : " is") + " not carried";
+    }
+
+    /**
+     * Whether a path joins two of its segments anywhere: a subpath of two drawn segments or more,
+     * or a closed one, whose end meets its start. A single segment has ends and no join.
+     */
+    private static boolean joinsSegments(com.demcha.compose.document.node.PathNode path) {
+        int drawn = 0;
+        for (com.demcha.compose.document.style.DocumentPathSegment segment : path.segments()) {
+            if (segment instanceof com.demcha.compose.document.style.DocumentPathSegment.MoveTo) {
+                drawn = 0;
+            } else if (segment instanceof com.demcha.compose.document.style.DocumentPathSegment.Close) {
+                if (drawn > 0) {
+                    return true;
+                }
+            } else if (++drawn > 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether a path has an end a cap is drawn on: a subpath of drawn segments that does not
+     * close. A closed outline has none.
+     */
+    private static boolean hasOpenEnds(com.demcha.compose.document.node.PathNode path) {
+        // The segments drawn since the subpath started or last closed.
+        int drawn = 0;
+        for (com.demcha.compose.document.style.DocumentPathSegment segment : path.segments()) {
+            if (segment instanceof com.demcha.compose.document.style.DocumentPathSegment.MoveTo) {
+                if (drawn > 0) {
+                    return true;
+                }
+            } else if (segment instanceof com.demcha.compose.document.style.DocumentPathSegment.Close) {
+                drawn = 0;
+            } else {
+                drawn++;
+            }
+        }
+        return drawn > 0;
     }
 
     private static com.demcha.compose.document.style.DocumentTransform transformOf(DocumentNode node) {
@@ -4265,6 +4415,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void warnDroppedInlineRuns(List<InlineRun> runs, String path) {
+        if (writingAZoneLine && !reportingAZoneLine) {
+            // Told where the page zone's line was first written.
+            return;
+        }
         for (InlineRun run : runs) {
             if (run instanceof InlineTextRun || run instanceof InlineHighlightRun
                 || run instanceof InlineImageRun || run instanceof InlineSvgRun
@@ -11343,6 +11497,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final double INK_ROOM_POINTS = 0.5;
 
     /**
+     * Names an icon or a shape among the words a picture: the text an icon stands for is its
+     * description, and the rest is pixels. An author's own picture is what it was given.
+     */
+    private void reportInlinePicture(InlineRun run, String description, String path) {
+        if (description != null && !description.isBlank()) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "inline icon", path,
+                    "drawn as a picture, as on the page; the text it stands for (" + description
+                    + ") is the picture's description rather than a character in the line");
+        } else if (run instanceof InlineSvgRun) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "inline icon", path,
+                    "drawn as a picture, as on the page: Word holds its pixels, not the vector drawing");
+        } else if (run instanceof InlineShapeRun) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "inline shape", path,
+                    "drawn as a picture, as on the page: Word holds its pixels, not a shape it can edit");
+        }
+    }
+
+    /**
      * Writes an inline picture or icon where it sits in the line, as a picture in its own run.
      *
      * <p>Both were dropped, so a contact line lost its phone and mail icons and a sentence its
@@ -11354,7 +11526,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * description, and the report says it is a picture rather than a character. An inline
      * shape — a dot, an arrow, a checkbox — is drawn by the same raster ({@link
      * DocxShapePictures}), and is larger than its box by as far as its ink reaches past it
-     * and a pixel, so it stands that much lower. A picture stands on the line's
+     * and a pixel, so it stands that much lower. The report names every icon and shape a
+     * picture, once for a page zone's though its line is written into each kind of header Word
+     * is given. A picture stands on the line's
      * baseline in Word, so it is raised or lowered by {@code w:position} to where the page's
      * alignment puts it, from the layout's measure of the line — except a picture this export
      * drew itself and the page raises, which carries the rise as transparent rows ({@link
@@ -11411,9 +11585,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else {
             return null;
         }
+        // A page zone's line is written into each kind of header Word is given: told once.
+        boolean reported = !writingAZoneLine || reportingAZoneLine;
         if (bytes.length == 0) {
-            report.add(DocxExportReport.Severity.DROPPED, "inline image", path,
-                    "the picture's data is empty, so there is nothing to write");
+            if (reported) {
+                report.add(DocxExportReport.Severity.DROPPED, "inline image", path,
+                        "the picture's data is empty, so there is nothing to write");
+            }
             return null;
         }
         // Where the picture's bottom stands, from the baseline: the page's placement of its box,
@@ -11439,10 +11617,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         // The description is the text the icon stands for, or nothing.
         describe(picture, description == null ? "" : description);
-        if (description != null && !description.isBlank()) {
-            report.add(DocxExportReport.Severity.APPROXIMATED, "inline icon", path,
-                    "drawn as a picture, as on the page; the text it stands for (" + description
-                    + ") is the picture's description rather than a character in the line");
+        if (reported) {
+            reportInlinePicture(run, description, path);
         }
         if (line.isEmpty()) {
             return PictureReach.unplaced(height);

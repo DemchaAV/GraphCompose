@@ -651,7 +651,7 @@ page.addParagraph(p -> p
   picture from the same layers the page draws, by the raster the PPTX export falls back
   to, so it looks as it does on the page. The text it stands for is the picture's
   description, which a screen reader reads; it is not a character a reader copies or
-  searches, and the report says so.
+  searches. The report names every icon a picture, and an icon's text its description.
 - **Links.** A picture carrying a link, or in a linked paragraph, is inside the link.
 
 - **What a shape is.** An inline shape — a `dot(...)`, an arrow, a chevron, a checkbox,
@@ -664,7 +664,8 @@ page.addParagraph(p -> p
   pixels a point), and is lowered by what it takes below, so the
   outline stands where the page has it, no edge is cut, and a shape takes that much more
   room in the line than on the page. A list marker that draws a disc is written the same
-  way, followed by the space a text marker gets.
+  way, followed by the space a text marker gets. Word could hold a shape in the line, which
+  this export does not write: the report names each shape among the words a picture.
 
 ## What a chip keeps and loses
 
@@ -1077,7 +1078,7 @@ shapes stand above the page backgrounds, which LibreOffice stacks together with 
 - A drawing carries no link, no outline entry and no bookmark: a link to a drawn shape's
   anchor points at none, and a page reference to it is a fixed number. A gradient fill,
   unequal corners (drawn at the largest radius) and a line's dash pattern (drawn solid) are
-  not carried either, and a line's caps are not written, which leaves its ends to the editor.
+  not carried either, and a line's caps are not written: Word and LibreOffice end it flat.
   A rule — a line or a thin bar written as a paragraph border — keeps its anchor; its note
   names a lost outline entry, caps (a border ends flat) or a bar's link, a line's link being
   reported as `rule link`.
@@ -1089,9 +1090,12 @@ shapes stand above the page backgrounds, which LibreOffice stacks together with 
 
 Polygons and paths — a star, a chevron, an SVG icon's layers, a portrait drawn as paths —
 are drawn the same way, as custom geometry through the same points and curves, their fill
-and stroke colours carried; the dash pattern, the caps and joins and the clip round an
-SVG icon are not — a clip that cuts the icon's art, parked outside its box, is named in the
-report. A shape filled only with a gradient paint shows nothing the export
+and stroke colours carried; the dash pattern and the clip round an SVG icon are not, and
+the outline is written with no cap and no join, which Word and LibreOffice draw with flat
+ends and round joins. A path's note names a dash, a cap that is not flat where the path has
+an open end and a join that is not round where two of its segments meet, and a clip that
+cuts the icon's art, parked
+outside its box, is named in the report. A shape filled only with a gradient paint shows nothing the export
 carries and is **skipped**, and the report names each one. In the flow a drawn or skipped
 shape still takes its room:
 its placed height and margins are owed as space above what follows, and so are
@@ -1126,9 +1130,11 @@ height on the page, since one after another in the footer they would keep
 the order they were added in rather than the page's order by height. A
 band kept off the first page (`showOnFirstPage(false)`, or counted from page
 2) leaves the first page's header or footer empty. Two numbering settings
-have no Word equivalent and are reported: a band that starts after the
-second page is written on every page but the first, and page numbers that do
-not count from 1 on the first page are numbered from 1 by Word. A band alone of
+are not carried and are reported: a band that starts after the second page,
+which has no Word part to hold it off, is written on every page but the first,
+and page numbers that do not count from 1 on the first page are written
+without their offset, so Word numbers the pages from 1 — a section's
+`w:pgNumType` could start them elsewhere. A band alone of
 its kind that reaches past the page margin, by more than a twentieth of a point, writes that
 margin negative: the page lets the
 band overlap the body, and Word holds the body at a negative margin whatever the band

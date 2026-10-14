@@ -8,6 +8,27 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's report names what it draws as a picture, or draws without, where it said nothing
+  or more than was lost.** An inline shape — a dot, an arrow, a checkbox — and an SVG icon that
+  states no text were drawn into pictures with no note, though Word could hold a shape in the line;
+  each is now reported `APPROXIMATED` as a picture. A box drawn as a shape whose corners round by
+  radii that differ — a shape container's outline, or a section's or a container's paint laid over
+  the flow — was drawn at the largest of them unnamed; its note now says so, and so does a shape
+  container composed in a table cell that its table draws. A path composed in a table cell lost its
+  caps and joins in silence, and a drawn path's note named a gradient paint, a dash pattern, caps
+  and joins whatever it lost. A path's outline is written with no cap and no join, which Word and
+  LibreOffice draw with flat ends and round joins (measured: a 10pt stroke's ends stood where the
+  page ends them, and its mitred point 2.76pt short), so the note now names a gradient, a dash, a
+  cap that is not flat where the path has an open end, and a join that is not round where two of
+  its segments meet — the page's default mitre among them. A path painted only with a gradient
+  was dropped as geometry Word has no analogue for; it is dropped for its gradient. Page numbers
+  that do not count from 1 on page 1 were reported as numbered from 1 by Word's fields, which a
+  section's `w:pgNumType` could offset; the note now says the export writes them without that
+  offset. A page zone's icons and shapes are named once, though its line is written into each kind
+  of header Word is given. None of the corpus's 62 DOCX changes. Their reports go from 969 notes to
+  1340: 278 inline shapes and 85 icons named pictures, 8 paths in table cells naming their caps, and
+  the 50 path notes that named all four now naming caps (37), joins (1), caps and joins (1) or none
+  (11) — none of those paths has a gradient or a dash.
 - **A DOCX export gives a paragraph opening a row's column the gap above its first line out of the
   space above the row.** Word sets a paragraph's lines one height apart, the gap between them inside
   the line, so a paragraph of more than one line holds a gap too many, which comes off the space

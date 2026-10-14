@@ -186,6 +186,41 @@ class DocxInlinePictureTest {
     }
 
     @Test
+    void anSvgIconAndAShapeInTheLineAreNamedPicturesInTheReport() throws Exception {
+        // Both are drawn into a picture, which Word shows as the page does and cannot edit as a
+        // drawing.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = withReport(report, page -> page.addParagraph(p -> p
+                .inlineSvgIcon(ICON, 12).inlineText(" Open")
+                .dot(6, com.demcha.compose.document.style.DocumentColor.rgb(0x1A, 0x56, 0x94))))) {
+            assertThat(document.getParagraphs().get(0).getRuns())
+                    .filteredOn(run -> !run.getEmbeddedPictures().isEmpty()).hasSize(2);
+        }
+
+        assertThat(report.get().bySubject().get("inline icon")).singleElement().satisfies(note -> {
+            assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
+            assertThat(note.detail())
+                    .isEqualTo("drawn as a picture, as on the page: Word holds its pixels, not the vector drawing");
+        });
+        assertThat(report.get().bySubject().get("inline shape")).singleElement().satisfies(note -> {
+            assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
+            assertThat(note.detail())
+                    .isEqualTo("drawn as a picture, as on the page: Word holds its pixels, not a shape it can edit");
+        });
+    }
+
+    @Test
+    void anAuthorsPictureInTheLineIsNotNamedAnIcon() throws Exception {
+        // A picture is written from its own bytes, which is all it ever was.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        withReport(report, page -> page.addParagraph(p -> p.inlineText("On ")
+                .inlineImage(DocumentImageData.fromBytes(png(10, 10)), 10, 10, InlineImageAlignment.BASELINE, 0, null)))
+                .close();
+
+        assertThat(report.get().bySubject()).doesNotContainKeys("inline icon", "inline shape");
+    }
+
+    @Test
     void aParagraphOfOnlyAnIconDoesNotAlsoWriteItsText() throws Exception {
         try (XWPFDocument document = export(page -> page.addParagraph(p -> p.inlineEmoji(":rocket:", 14)))) {
             List<XWPFRun> runs = document.getParagraphs().get(0).getRuns();

@@ -716,20 +716,26 @@ class DocxPanelTailTest {
 
     /**
      * Asserts a note reads as the template, each {@code {}} in it a number of points the note states
-     * to the hundredth, within half a hundredth of the one expected there.
+     * to the hundredth, within half a hundredth of the one expected there: as the expected number
+     * is written to the hundredth, or the hundredth either side where it lies on the edge of one.
      */
     private static void assertReads(String detail, String template, double... expected) {
         java.util.regex.Matcher numbers = java.util.regex.Pattern.compile("\\d+(?:\\.\\d+)?(?=pt)").matcher(detail);
-        List<Double> stated = new java.util.ArrayList<>();
+        List<String> stated = new java.util.ArrayList<>();
         while (numbers.find()) {
-            stated.add(Double.parseDouble(numbers.group()));
+            stated.add(numbers.group());
         }
         assertThat(numbers.replaceAll("{}")).isEqualTo(template);
         assertThat(stated).hasSize(expected.length);
         for (int i = 0; i < expected.length; i++) {
             assertThat(stated.get(i)).as("the %s number stated", i + 1)
-                    .isCloseTo(expected[i], org.assertj.core.api.Assertions.within(0.0051));
+                    .isIn(hundredths(expected[i] - 0.0051), hundredths(expected[i]), hundredths(expected[i] + 0.0051));
         }
+    }
+
+    /** Points as the report states them: to a hundredth, no trailing zeros. */
+    private static String hundredths(double points) {
+        return java.math.BigDecimal.valueOf(Math.round(points * 100) / 100.0).stripTrailingZeros().toPlainString();
     }
 
     /**

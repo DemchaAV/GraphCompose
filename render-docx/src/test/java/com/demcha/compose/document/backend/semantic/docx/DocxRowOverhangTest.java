@@ -34,6 +34,11 @@ class DocxRowOverhangTest {
     private static final SvgIcon ICON = SvgIcon.parse("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>"
             + "<circle cx='12' cy='12' r='10' fill='#1A5694'/></svg>");
     private static final DocumentTextStyle SMALL = DocumentTextStyle.DEFAULT.withSize(7);
+    /**
+     * Lines the page sets a whole number of twips tall, 7.4pt, and Word as tall: nothing of their
+     * rounding is left at their cell's end to hang below it.
+     */
+    private static final DocumentTextStyle EVEN = DocumentTextStyle.DEFAULT.withSize(8);
     private static final double GAP = 10;
     /** What the small line after the row is raised into the space above it, and owes below. */
     private static final long RAISE = DocxExports.SMALL_LINE_RAISE;
@@ -61,7 +66,7 @@ class DocxRowOverhangTest {
         try (XWPFDocument document = export(DocxRowOverhangTest::contact,
                 right -> {
                     for (int i = 0; i < 4; i++) {
-                        right.addParagraph(p -> p.textStyle(SMALL).text("Line"));
+                        right.addParagraph(p -> p.textStyle(EVEN).text("Line"));
                     }
                 }).document()) {
             assertThat(before(after(document))).isEqualTo(Math.round(GAP * 20) - RAISE);
@@ -75,7 +80,7 @@ class DocxRowOverhangTest {
         try (XWPFDocument document = export(DocxRowOverhangTest::contact,
                 right -> {
                     for (int i = 0; i < 4; i++) {
-                        right.addParagraph(p -> p.textStyle(SMALL).text("Line"));
+                        right.addParagraph(p -> p.textStyle(EVEN).text("Line"));
                     }
                 }, com.demcha.compose.document.node.RowVerticalAlign.BOTTOM).document()) {
             assertThat(before(after(document))).isEqualTo(Math.round(GAP * 20) - RAISE);

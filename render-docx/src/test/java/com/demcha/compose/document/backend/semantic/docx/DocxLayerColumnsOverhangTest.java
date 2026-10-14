@@ -39,6 +39,11 @@ class DocxLayerColumnsOverhangTest {
     private static final SvgIcon ICON = SvgIcon.parse("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>"
             + "<circle cx='12' cy='12' r='10' fill='#1A5694'/></svg>");
     private static final DocumentTextStyle SMALL = DocumentTextStyle.DEFAULT.withSize(7);
+    /**
+     * Lines the page sets a whole number of twips tall, 7.4pt, and Word as tall: nothing of their
+     * rounding is left at their column's end to hang below it.
+     */
+    private static final DocumentTextStyle EVEN = DocumentTextStyle.DEFAULT.withSize(8);
     private static final double PAGE = 400;
     private static final double MARGIN = 20;
     private static final double SIDEBAR = 120;
@@ -109,7 +114,7 @@ class DocxLayerColumnsOverhangTest {
                 .layer(column("Sidebar", 0, MAIN, DocxLayerColumnsOverhangTest::contact), LayerAlign.TOP_LEFT)
                 .layer(column("Main", SIDEBAR, 0, main -> {
                     for (int i = 0; i < 4; i++) {
-                        main.addParagraph(p -> p.textStyle(SMALL).text("Line"));
+                        main.addParagraph(p -> p.textStyle(EVEN).text("Line"));
                     }
                 }), LayerAlign.TOP_LEFT))) {
             assertThat(reachBelow(lastParagraph(export.document().getTables().get(0).getRow(0).getCell(0)),

@@ -172,14 +172,15 @@ class DocxPanelTailTest {
                 .addParagraph(p -> p.name("After").text("After")));
         // The card's first line rises out of its padding, and owes the space above the icon's.
         long down = reachBelow(exported, "Iconed", DocxExports.SMALL_LINE_RAISE);
+        double hang = down / 20.0 + carriedToTheEnd(exported);
 
         assertThat(down).as("the line reaches below the page's").isPositive();
         assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
             assertThat(note.path()).contains("After");
-            assertThat(note.detail()).isEqualTo("it stands " + points(down + 20) + "pt lower than the page sets it, and "
-                                                + "what follows with it: the space the page leaves above it does not hold "
-                                                + "the border Word draws past the box of the panel above it (1pt) and the "
-                                                + "line hanging below the block above it (" + points(down) + "pt)");
+            assertReads(note.detail(), "it stands {}pt lower than the page sets it, and what follows with it: the "
+                                       + "space the page leaves above it does not hold the border Word draws past the "
+                                       + "box of the panel above it ({}pt) and the line hanging below the block above "
+                                       + "it ({}pt)", hang + 1, 1, hang);
         });
     }
 
@@ -366,13 +367,13 @@ class DocxPanelTailTest {
             card.fillColor(SURFACE);
             contact(card);
         }).addParagraph(p -> p.name("After").text("After")));
-        String reach = points(reachBelow(exported, "Iconed"));
+        double hang = reachBelow(exported, "Iconed") / 20.0 + carriedToTheEnd(exported);
 
         assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
             assertThat(note.path()).contains("After");
-            assertThat(note.detail()).isEqualTo("it stands " + reach + "pt lower than the page sets it, and what follows "
-                                                + "with it: the space the page leaves above it does not hold the line "
-                                                + "hanging below the block above it (" + reach + "pt)");
+            assertReads(note.detail(), "it stands {}pt lower than the page sets it, and what follows with it: the "
+                                       + "space the page leaves above it does not hold the line hanging below the "
+                                       + "block above it ({}pt)", hang, hang);
         });
     }
 
@@ -634,14 +635,14 @@ class DocxPanelTailTest {
             contact(card);
         }).addTable(this::first));
 
-        long down = reachBelow(exported, "Iconed");
+        double hang = reachBelow(exported, "Iconed") / 20.0 + carriedToTheEnd(exported);
 
         assertThat(exported.report().bySubject().get("space above")).singleElement().satisfies(note -> {
             assertThat(note.path()).contains("First");
-            assertThat(note.detail()).isEqualTo("it stands " + points(down + 2) + "pt lower than the page sets it, and "
-                                                + "what follows with it: the space the page leaves above it does not hold "
-                                                + "the line hanging below the block above it (" + points(down) + "pt) and "
-                                                + "the paragraph Word keeps between two tables (0.1pt)");
+            assertReads(note.detail(), "it stands {}pt lower than the page sets it, and what follows with it: the "
+                                       + "space the page leaves above it does not hold the line hanging below the "
+                                       + "block above it ({}pt) and the paragraph Word keeps between two tables ({}pt)",
+                    hang + 0.1, hang, 0.1);
         });
     }
 
@@ -696,14 +697,39 @@ class DocxPanelTailTest {
     /** A contact stack whose last line holds an icon lowered below the page's line. */
     private static void contact(SectionBuilder section) {
         section.spacing(3);
-        section.addParagraph(p -> p.textStyle(SMALL).text("London"));
+        section.addParagraph(p -> p.name("London").textStyle(SMALL).text("London"));
         section.addParagraph(p -> p.name("Iconed").textStyle(SMALL).inlineText("GitHub  ", SMALL)
                 .inlineSvgIcon(ICON, 10.5, InlineImageAlignment.CENTER, -1.35, null));
     }
 
-    /** Twips as the report states points: to a hundredth, no trailing zeros. */
-    private static String points(long twips) {
-        return java.math.BigDecimal.valueOf(Math.round(twips / 20.0 * 100) / 100.0).stripTrailingZeros().toPlainString();
+    /**
+     * What the contact's first line is written taller than the page sets it, in points: too little
+     * to settle under it, carried to the end of the block holding it, where it hangs with the icon's
+     * line.
+     */
+    private static double carriedToTheEnd(Exported exported) {
+        List<XWPFParagraph> paragraphs = new java.util.ArrayList<>(exported.document().getParagraphs());
+        exported.document().getTables().forEach(table -> collect(table, paragraphs));
+        XWPFParagraph london = paragraphs.stream().filter(p -> p.getText().equals("London")).findFirst().orElseThrow();
+        return DocxTwips.of(london.getCTP().getPPr().getSpacing().getLine()) / 20.0 - exported.heights().get("London");
+    }
+
+    /**
+     * Asserts a note reads as the template, each {@code {}} in it a number of points the note states
+     * to the hundredth, within half a hundredth of the one expected there.
+     */
+    private static void assertReads(String detail, String template, double... expected) {
+        java.util.regex.Matcher numbers = java.util.regex.Pattern.compile("\\d+(?:\\.\\d+)?(?=pt)").matcher(detail);
+        List<Double> stated = new java.util.ArrayList<>();
+        while (numbers.find()) {
+            stated.add(Double.parseDouble(numbers.group()));
+        }
+        assertThat(numbers.replaceAll("{}")).isEqualTo(template);
+        assertThat(stated).hasSize(expected.length);
+        for (int i = 0; i < expected.length; i++) {
+            assertThat(stated.get(i)).as("the %s number stated", i + 1)
+                    .isCloseTo(expected[i], org.assertj.core.api.Assertions.within(0.0051));
+        }
     }
 
     /**

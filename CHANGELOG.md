@@ -14,11 +14,12 @@ follow semantic versioning; release dates are ISO 8601.
   table, a tile, a shape or a rounded box in another cell was reported `DROPPED`, "not in the
   document", while it stood drawn. The table now asks the cell: a box node is reported only in a
   cell a box left to its panel reaches into, past its edges included, since the layout does not
-  tell that box apart from the node. A box
-  whose corners round by radii that differ only past half its shorter side — 10 and 12 on a box
-  20 tall — is drawn at 10 on the page and in Word alike, and its note no longer says its corners
-  are drawn at the largest. None of the corpus's 62 DOCX changes, and none of its 1332 notes: no
-  corpus document holds either case.
+  tell that box apart from the node. A box whose corners round by radii that differ only past
+  half its shorter side — 10 and 12 on a box 20 tall — is drawn at 10 on the page and in Word
+  alike, and its note no longer says its corners are drawn at the largest. A shape composed in a
+  table cell is laid out at the cell's width, which the report does not know, so its radii are
+  held to half its height: one in a cell narrower than it is tall can still be named. None of the
+  corpus's 62 DOCX changes, and none of its 1332 notes: no corpus document holds either case.
 - **A DOCX export ends and turns a drawing's outline as the page strokes it.** An outline was
   written with no cap and no join, which Word 16 and LibreOffice draw with flat ends and round
   corners where the page ends a stroke butt and mitres it: a rectangle's 10pt frame came out with

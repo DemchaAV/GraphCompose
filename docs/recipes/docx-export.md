@@ -1088,8 +1088,10 @@ named in the report:
 - A drawing carries no link, no outline entry and no bookmark: a link to a drawn shape's
   anchor points at none, and a page reference to it is a fixed number. A gradient fill,
   unequal corners (drawn at the largest radius; corners whose radii differ only past half the
-  box's shorter side, where the page holds them, are drawn alike and not named) and a line's
-  dash pattern (drawn solid) are not carried either.
+  box's shorter side, where the page holds them, are drawn alike and not named — a shape
+  composed in a table cell, laid out at the cell's width, is held to half its height, so one in
+  a cell narrower than it is tall can still be named) and a line's dash pattern (drawn solid)
+  are not carried either.
   A rule — a line or a thin bar written as a paragraph border — keeps its anchor; its note
   names a lost outline entry, caps (a border ends flat) or a bar's link, a line's link being
   reported as `rule link`.

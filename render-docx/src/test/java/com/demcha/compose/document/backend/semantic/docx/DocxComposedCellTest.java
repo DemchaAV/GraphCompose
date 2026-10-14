@@ -795,8 +795,35 @@ class DocxComposedCellTest {
             session.export(new DocxSemanticBackend(report::set));
         }
 
-        assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).as("the box, not lost in silence")
-                .isPositive();
+        assertThat(report.get().bySubject().get("ShapeNode")).as("the box, not lost in silence")
+                .singleElement().extracting(DocxExportReport.Note::severity)
+                .isEqualTo(DocxExportReport.Severity.DROPPED);
+    }
+
+    @Test
+    void aBoxPushedOutOfEveryCellIsStillReported() throws Exception {
+        // Pulled above its table by a negative margin, it stands in no cell the report can ask.
+        com.demcha.compose.document.style.DocumentColor ink = com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148);
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.addParagraph("Above").addSpacer(s -> s.height(80)).addTable(t -> t
+                    .columns(DocumentTableColumn.fixed(60), DocumentTableColumn.fixed(160))
+                    .rowCells(
+                            DocumentTableCell.node(new com.demcha.compose.document.dsl.EllipseBuilder().name("Icon")
+                                    .circle(8).fillColor(ink).build()),
+                            DocumentTableCell.node(new com.demcha.compose.document.dsl.LayerStackBuilder().name("Pill")
+                                    .margin(new DocumentInsets(-60, 0, 60, 0))
+                                    .layer(new com.demcha.compose.document.dsl.ShapeBuilder().name("PillBox")
+                                            .size(60, 14).fillColor(ink).build())
+                                    .layer(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Open").build())
+                                    .build()))));
+            session.export(new DocxSemanticBackend(report::set));
+        }
+
+        assertThat(report.get().bySubject().get("ShapeNode")).as("the box, not lost in silence")
+                .singleElement().extracting(DocxExportReport.Note::severity)
+                .isEqualTo(DocxExportReport.Severity.DROPPED);
     }
 
     @Test

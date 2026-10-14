@@ -466,6 +466,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // first lines (noteAFirstLineLow): not opening a page.
     private final java.util.Set<XWPFTable> rowsLiftedForTheirLines =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // The tables written for a row of columns or a stack's columns whose first row raiseRows may
+    // lift for the gap above a cell's first paragraph's first line (takeFromAboveItsRow): not
+    // opening a page.
+    private final java.util.Set<XWPFTable> rowsLiftedForTheirGaps =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // The tables whose first row a cell's first line took a gap out of the space above
+    // (takeFromAboveItsRow): held to a height, the row is held as much taller as it is lifted.
+    private final java.util.Set<XWPFTable> rowsLiftedForAGap =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // Whether the row of columns being written is a block the layout moves to a new page
     // (writeTableWithItsOwnSpacing): the space above its table stays on the page above.
     private boolean rowOpeningItsPage;
@@ -1054,6 +1063,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         rowsPlacedWhole.clear();
         firstLinesUnderTheRow.clear();
         rowsLiftedForTheirLines.clear();
+        rowsLiftedForTheirGaps.clear();
+        rowsLiftedForAGap.clear();
         rowOpeningItsPage = false;
         lastRaise = 0;
         paragraphsAtTheLastRaise = -1;
@@ -7765,7 +7776,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * below it, or above it when it is an empty separator — or, when that paragraph only keeps
      * two tables apart and holds none of it, by the foot of the table above
      * ({@link #takeFromTheFoot}). Every other cell of the row then starts that much lower inside,
-     * and the cell whose text stood out by less than the lift starts lower by the difference.
+     * and the cell whose text stood out by less than the lift starts lower by the difference. The
+     * gap a cell's first line is given above it out of that space ({@link #takeFromAboveItsRow})
+     * stands it out by as much.
      *
      * <p>A row of columns whose cells open with a line Word sets low, by what neither the space
      * above it nor a padding could take ({@link #noteAFirstLineLow}), is lifted by the most any
@@ -7793,31 +7806,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             for (FirstLine first : firsts.values()) {
                 most = Math.max(most, first.low());
             }
-            List<IBodyElement> around = table.getBody().getBodyElements();
-            int index = around.indexOf(table);
-            if (index <= 0 || !(around.get(index - 1) instanceof XWPFParagraph above)) {
+            SpaceAbove space = spaceAbove(table);
+            if (space == null) {
                 continue;
             }
-            CTPPr properties = above.getCTP().getPPr();
-            if (properties == null || !properties.isSetSpacing()) {
-                continue;
-            }
-            CTSpacing gap = properties.getSpacing();
-            long after = gap.isSetAfter() ? twipsOf(gap.getAfter()) : 0;
-            // An empty paragraph between two blocks is a separator, except a rule, whose space
-            // above is where the page draws the line, and a picture set in its line, which the
-            // space above places — a drawing anchored to the page may hang on it all the same.
-            boolean separator = above.getText().isEmpty() && !properties.isSetPBdr() && !takesRoom(above);
-            long before = separator && gap.isSetBefore() ? twipsOf(gap.getBefore()) : 0;
+            CTSpacing gap = space.gap();
+            long after = space.after();
+            long before = space.before();
             long wanted = toTwips(most);
             long lift = Math.min(after + before, wanted);
+            List<IBodyElement> around = table.getBody().getBodyElements();
+            int index = around.indexOf(table);
             // The paragraph keeping two tables apart keeps with the table after.
-            boolean betweenTables = separator && properties.isSetKeepNext()
+            boolean betweenTables = space.separator() && space.above().getCTP().getPPr().isSetKeepNext()
                     && index >= 2 && around.get(index - 2) instanceof XWPFTable;
             if (lift <= 0 && betweenTables && around.get(index - 2) instanceof XWPFTable previous) {
                 // Between two tables the gap is the one above's: its cells end with it.
                 lift = takeFromTheFoot(previous, wanted);
                 if (lift > 0) {
+                    holdTheLiftedRowTaller(table, lift);
                     liftEachCell(table, standing, firsts, lift);
                 }
                 continue;
@@ -7832,15 +7839,73 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (lift > fromAfter) {
                 gap.setBefore(BigInteger.valueOf(before - (lift - fromAfter)));
             }
+            holdTheLiftedRowTaller(table, lift);
             liftEachCell(table, standing, firsts, lift);
         }
         raisedRows.clear();
         firstLinesUnderTheRow.clear();
+        rowsLiftedForAGap.clear();
+    }
+
+    /**
+     * Holds a first row lifted for the gap above a cell's first line ({@link #takeFromAboveItsRow})
+     * that much taller where it is held to a height: it starts higher by the lift and ends where it
+     * did, its cells as much taller inside. Held as it was, a row its content does not fill ended
+     * higher by the lift, and all under it: {@code SerifHeadline}'s certifications, five columns of
+     * one row held at the page's height, stood the achievements under them 1.3pt high in Word. A row
+     * lifted only for text standing above its cell is held as it was.
+     */
+    private void holdTheLiftedRowTaller(XWPFTable table, long lift) {
+        XWPFTableRow row = table.getRow(0);
+        if (rowsLiftedForAGap.contains(table) && row.getCtRow().isSetTrPr()
+            && row.getCtRow().getTrPr().sizeOfTrHeightArray() > 0) {
+            row.setHeight(row.getHeight() + (int) lift);
+        }
+    }
+
+    /**
+     * The space above a table its first row may be lifted out of ({@link #raiseRows}): held by the
+     * paragraph just before the table, below it, and above it too where that paragraph is an empty
+     * separator.
+     *
+     * @return the space, or {@code null} where no paragraph with spacing stands just before it
+     */
+    private SpaceAbove spaceAbove(XWPFTable table) {
+        List<IBodyElement> around = table.getBody().getBodyElements();
+        int index = around.indexOf(table);
+        if (index <= 0 || !(around.get(index - 1) instanceof XWPFParagraph above)) {
+            return null;
+        }
+        CTPPr properties = above.getCTP().getPPr();
+        if (properties == null || !properties.isSetSpacing()) {
+            return null;
+        }
+        CTSpacing gap = properties.getSpacing();
+        long after = gap.isSetAfter() ? twipsOf(gap.getAfter()) : 0;
+        // An empty paragraph between two blocks is a separator, except a rule, whose space
+        // above is where the page draws the line, and a picture set in its line, which the
+        // space above places — a drawing anchored to the page may hang on it all the same.
+        boolean separator = above.getText().isEmpty() && !properties.isSetPBdr() && !takesRoom(above);
+        long before = separator && gap.isSetBefore() ? twipsOf(gap.getBefore()) : 0;
+        return new SpaceAbove(above, gap, after, before, separator);
+    }
+
+    /**
+     * The space above a table, as {@link #spaceAbove} reads it.
+     *
+     * @param above     the paragraph just before the table
+     * @param gap       its spacing
+     * @param after     the space below it, in twips
+     * @param before    the space above it where it is an empty separator, in twips, otherwise 0
+     * @param separator whether it is an empty separator
+     */
+    private record SpaceAbove(XWPFParagraph above, CTSpacing gap, long after, long before, boolean separator) {
     }
 
     /**
      * Starts each cell of a lifted table's first row that much lower inside, less what its own
-     * text stood above the row: the cell whose text stood out by the whole lift keeps its place.
+     * text stood above the row: the cell whose text stood out by the whole lift keeps its place. A
+     * cell opening with a table starts lower above it ({@link #startLowerAbove}).
      * A cell whose first line Word set low rises by as much of the lift as it called for, and what
      * follows that line keeps its place.
      */
@@ -7850,14 +7915,40 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             long own = Math.min(lift, toTwips(standing.getOrDefault(cell, 0.0)));
             FirstLine low = firsts.get(cell);
             long under = low == null ? 0 : Math.min(lift - own, toTwips(low.low()));
-            if (lift - own - under > 0 && !cell.getBodyElements().isEmpty()
-                && cell.getBodyElements().get(0) instanceof XWPFParagraph first) {
-                addSpacing(first, (lift - own - under) / POINT_TO_TWIP, 0);
+            long lower = lift - own - under;
+            if (lower > 0 && !cell.getBodyElements().isEmpty()) {
+                if (cell.getBodyElements().get(0) instanceof XWPFParagraph first) {
+                    addSpacing(first, lower / POINT_TO_TWIP, 0);
+                } else if (cell.getBodyElements().get(0) instanceof XWPFTable opening) {
+                    startLowerAbove(cell, opening, lower);
+                }
             }
             if (under > 0) {
                 giveBackBelow(low.paragraph(), under);
             }
         }
+    }
+
+    /**
+     * Starts a lifted row's cell that opens with a table — a column painted as a panel, a table of
+     * its own — that much lower inside: a hairline paragraph above the table holds the twips, the
+     * table having no space above it in Word. Without it the column rose whole with its row, its
+     * panel drawn the lift above the page's.
+     */
+    private static void startLowerAbove(XWPFTableCell cell, XWPFTable opening, long twips) {
+        long line = Math.round(SEPARATOR_POINTS * POINT_TO_TWIP);
+        if (twips < line) {
+            return;
+        }
+        XWPFParagraph hairline;
+        try (org.apache.xmlbeans.XmlCursor cursor = opening.getCTTbl().newCursor()) {
+            hairline = cell.insertNewParagraph(cursor);
+        }
+        if (hairline == null) {
+            return;
+        }
+        holdToHairline(hairline);
+        hairline.getCTP().getPPr().getSpacing().setBefore(BigInteger.valueOf(twips - line));
     }
 
     /**
@@ -9936,10 +10027,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * where the page sets it; the line then starts that much above the page's, and the text
      * is seated from there (see {@link #shiftToThePagesBaseline}). A paragraph opening a cell
      * takes what the space above cannot give from the cell's top padding
-     * ({@link #takeFromTheTopOfItsCell}). Where the two are less than a gap — right under the
-     * block before it, or in a cell padded less — what they cannot give is not put into the
-     * lines at all: the {@code n - 1} gaps are shared out over {@code n} lines, so the
-     * paragraph is as tall as on the page, its lines a little closer than there.</p>
+     * ({@link #takeFromTheTopOfItsCell}), and what that cannot give from the space above the
+     * cell's row, which the row is lifted out of ({@link #takeFromAboveItsRow}). Where these are
+     * less than a gap — right under the block before it, or in a cell padded less whose row cannot
+     * be lifted — what they cannot give is not put into the lines at all: the {@code n - 1} gaps
+     * are shared out over {@code n} lines, so the paragraph is as tall as on the page, its lines a
+     * little closer than there.</p>
      *
      * @param target the Word paragraph, its line height and space above already written
      * @param gap    the gap between two of its lines on the page, in points
@@ -9986,7 +10079,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (pitch.isPresent()) {
             long stepped = Math.round(lines * (pitch.getAsDouble() * POINT_TO_TWIP - line)
                                       - (lines - 1) * (double) twips) - taken;
-            taken += takeFromTheTopOfItsCell(target, Math.min(twips - taken, stepped));
+            long fromTheCell = takeFromTheTopOfItsCell(target, Math.min(twips - taken, stepped));
+            taken += fromTheCell;
+            taken += takeFromAboveItsRow(target, Math.min(twips - taken, stepped - fromTheCell), lines);
         }
         if (taken > 0) {
             lineTopsTakenIn.put(target.getCTP(), taken / POINT_TO_TWIP);
@@ -10076,6 +10171,65 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             top.setW(BigInteger.valueOf(padding - taken));
         }
         return Math.max(0, taken);
+    }
+
+    /**
+     * Takes up to {@code twips} of the gap a paragraph opening a cell is given above its first
+     * line from the space above the cell's row, where neither the space above the paragraph nor
+     * the cell's padding holds it: the row is lifted out of that space once its table is written
+     * ({@link #raiseRows}), the paragraph's first line standing that much above the cell, and the
+     * row's other cells start as much lower inside, as for text standing above its cell
+     * ({@link #standsAboveItsCell}).
+     *
+     * <p>A paragraph of {@code n} lines given its gaps only between them would have its lines
+     * the gap less one {@code n}th closer than the page: {@code OrangeOps}' degree, two lines
+     * opening the text column beside its badge, stood 0.45pt low and 0.45pt high in Word and in
+     * LibreOffice, and {@code EditorialProposal}'s goal cells, three lines each, 1pt closer each
+     * (measured).</p>
+     *
+     * <p>Only a first row the export wrote for a row of columns or for a stack's columns
+     * ({@link #rowsLiftedForTheirGaps}), not opening its page — Word drops the space above a page's
+     * first block — and not in an overlay, whose writers measure what follows from the page; and
+     * only as much as that space holds now, less what the cell's text already stands above it.
+     * Nothing of such a row is drawn — a column painted is written as a panel in its cell, which
+     * starts that much lower inside as any other column does ({@link #startLowerAbove}) — so no box
+     * the reader sees moves.</p>
+     *
+     * <p>Nor where the lift raises the first line less than half a point
+     * ({@link #LEAST_BASELINE_SHIFT_POINTS}) above where sharing the gaps out sets it. Lifted by the
+     * gap, the line starts that far higher and grows by its share of it, Word setting its baseline
+     * four fifths of the way down ({@link DocxTextBands#BASELINE_SHARE}), so it rises by the gap less
+     * that much of its share. A rise that small left the lines higher than shared out where their
+     * position did not lower them and nothing under the paragraph did — a cell's last paragraph has
+     * nothing under it: {@code EditorialProposal}'s phases, 0.6pt short of the gap between two
+     * lines, stood 0.3pt high in Word and LibreOffice lifted, where shared out they stood within
+     * 0.15pt (measured).</p>
+     *
+     * @param lines how many lines the page set the paragraph on
+     * @return the twips taken
+     */
+    private long takeFromAboveItsRow(XWPFParagraph target, long twips, int lines) {
+        if (twips <= 0 || currentCell == null || overlayDepth > oneLayerDepth || !opensTheCell(target)) {
+            return 0;
+        }
+        XWPFTableRow row = currentCell.getTableRow();
+        XWPFTable table = row.getTable();
+        if (table.getRow(0) != row || !rowsLiftedForTheirGaps.contains(table)) {
+            return 0;
+        }
+        SpaceAbove space = spaceAbove(table);
+        if (space == null) {
+            return 0;
+        }
+        double standing = raisedRows.getOrDefault(table, java.util.Map.of()).getOrDefault(currentCell, 0.0);
+        long taken = Math.min(twips, space.after() + space.before() - toTwips(standing));
+        if (taken <= 0 || taken / POINT_TO_TWIP * (1 - DocxTextBands.BASELINE_SHARE / lines) < LEAST_BASELINE_SHIFT_POINTS) {
+            return 0;
+        }
+        raisedRows.computeIfAbsent(table, key -> new java.util.LinkedHashMap<>())
+                .merge(currentCell, taken / POINT_TO_TWIP, Double::sum);
+        rowsLiftedForAGap.add(table);
+        return taken;
     }
 
     /**
@@ -14180,6 +14334,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFTable table = newTable(document, 1, node.children().size());
         if (!rowOpeningItsPage) {
             rowsLiftedForTheirLines.add(table);
+            rowsLiftedForTheirGaps.add(table);
         }
         // A row is a layout device, not a table anybody asked to see. POI's createTable
         // ships Word's default single-line grid, so without this every two-column block —
@@ -14508,6 +14663,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         owePendingSpacingAfter(stack.margin().top() + stack.padding().top());
         List<DocxLayerColumns.Column> columns = plan.columns();
         XWPFTable table = newTable(document, 1, columns.size());
+        if (!(currentCell == null && startsAPageOfItsOwn(stack))) {
+            rowsLiftedForTheirGaps.add(table);
+        }
         hideTableGrid(table);
         setTableWidth(table, plan.width());
         List<CellColumn> cells = new ArrayList<>(columns.size());

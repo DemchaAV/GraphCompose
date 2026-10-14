@@ -366,7 +366,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private double roundingCarriedIn;
     // What the lines written since the space owed was last set anew fall short of the page by, in
     // points, below zero where they pass it, too little yet to owe or to hang, and the page they
-    // end on: see settleTheLinesWithThePage. A cell keeps its own.
+    // end on: see settleTheLinesWithThePage. A cell keeps its own and settles it at its end
+    // (settleWhatTheCellsLinesCarry).
     private double linesRoundingCarry;
     private int linesRoundingPage = -1;
     // Icons drawn beside the text they label rather than written: see drawnBesideItsText.
@@ -4921,7 +4922,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Puts the list's gap between the lines of the item just started, if it wraps.
+     * Puts the list's gap between the lines of the item just started, if it wraps, and settles its
+     * lines with the page ({@link #settleTheItemsLines}).
      *
      * @return how the layout set the item, or {@code null} where its items are not matched
      */
@@ -4929,6 +4931,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         DocxLayoutMetrics.ItemText laidOut = listItemLines.poll();
         if (laidOut != null) {
             applyLineGap(item, listLineGap, laidOut.lines().size());
+            settleTheItemsLines(item, laidOut);
         }
         return laidOut;
     }
@@ -5566,7 +5569,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else {
             writeItemText(para, style, "", item.label(), reading, laidOut);
         }
-        makeRoomForPictures(para, pictures);
+        makeRoomForPicturesInItsLines(para, pictures);
         styleTheMark(para, markStyle);
         seatTheItem(para, laidOut, false);
         return atItsText || textTab || pictureTab || depth == 0 && drawsNoMarker(marker);
@@ -9729,10 +9732,43 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * card and were never hung, and its lines stood a median 0.46pt low in Word; carried, 0.35pt
      * (measured). What is carried stays on its page, as Word sets a page's first line at its top, and
      * starts again where the space owed is set anew — a band's or a column's layer, below a band
-     * ({@link #forgetTheHang}) — and in each cell, whose own goes no further than the cell.</p>
+     * ({@link #forgetTheHang}) — and in each cell, whose end settles what its own lines carry
+     * there ({@link #settleWhatTheCellsLinesCarry}).</p>
+     *
+     * <p>A list's item is settled the same way, its lines with the paragraphs' around it
+     * ({@link #settleTheItemsLines}).</p>
      */
     private void settleTheLinesWithThePage(XWPFParagraph target, ParagraphNode source) {
-        java.util.OptionalDouble page = layout.linesHeight(source);
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(source);
+        settleTheLines(target, layout.linesHeight(source), layout.lineCount(source),
+                placed == null ? -1 : placed.startPage(), placed == null ? -1 : placed.endPage());
+    }
+
+    /**
+     * Settles an item's lines with the page, as a paragraph's are ({@link #settleTheLinesWithThePage}):
+     * each item is a paragraph of its own in Word, its lines written at the list's height. {@code Panel}'s
+     * skills, a list of an item each, two lines to an item and each line a fiftieth of a point taller
+     * than the page's, ran 0.21pt taller in Word, and its projects, their names and descriptions a
+     * list's items, 0.35pt: each card's row grew by as much, and the cards under it stood that low
+     * (measured).
+     *
+     * @param laidOut how the layout set the item
+     */
+    private void settleTheItemsLines(XWPFParagraph item, DocxLayoutMetrics.ItemText laidOut) {
+        settleTheLines(item, laidOut.linesHeight(), laidOut.lines().size(), laidOut.page(), laidOut.page());
+    }
+
+    /**
+     * Owes below a paragraph what its exact lines fall short of the page by, or hangs below it what
+     * they pass it by, or carries it on (see {@link #settleTheLinesWithThePage}).
+     *
+     * @param page      how tall the page sets its lines together, empty where it cannot be read
+     * @param lineCount how many lines the page set it on
+     * @param startPage the page they start on, below zero where the layout did not place them
+     * @param endPage   the page they end on
+     */
+    private void settleTheLines(XWPFParagraph target, java.util.OptionalDouble page, int lineCount,
+                                int startPage, int endPage) {
         CTPPr properties = target.getCTP().getPPr();
         if (page.isEmpty() || properties == null || !hasAnExactLine(target)) {
             return;
@@ -9741,14 +9777,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (line == null) {
             return;
         }
-        double written = layout.lineCount(source) * (line / POINT_TO_TWIP)
-                         - lineTopsTakenIn.getOrDefault(target.getCTP(), 0.0);
+        double written = lineCount * (line / POINT_TO_TWIP) - lineTopsTakenIn.getOrDefault(target.getCTP(), 0.0);
         // What is carried stays on its page: Word sets the next page's first line at its top,
         // whatever block opens it. A paragraph the layout did not place keeps what it is handed.
-        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(source);
-        double carriedIn = placed == null || placed.startPage() == linesRoundingPage ? linesRoundingCarry : 0;
-        if (placed != null) {
-            linesRoundingPage = placed.endPage();
+        double carriedIn = startPage < 0 || startPage == linesRoundingPage ? linesRoundingCarry : 0;
+        if (startPage >= 0) {
+            linesRoundingPage = endPage;
         }
         double shortBy = page.getAsDouble() - written + carriedIn;
         linesRoundingCarry = 0;
@@ -9775,6 +9809,41 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             pendingSpacingAfter -= roundingOwed;
             linesRoundingCarry = roundingCarriedIn;
             roundingOwedBy = null;
+        }
+    }
+
+    /**
+     * Makes room in a paragraph's or an item's lines for its pictures ({@code makeRoomForPictures}),
+     * and where that makes its lines other than as written, takes back what they were owed below it
+     * for falling short of the page ({@link #takeBackTheRoundingOwedBy}): they are as tall as their
+     * pictures now, not short any more.
+     */
+    private void makeRoomForPicturesInItsLines(XWPFParagraph para, PictureReach pictures) {
+        CTSpacing lineSpacing = para.getCTP().isSetPPr() && para.getCTP().getPPr().isSetSpacing()
+                ? para.getCTP().getPPr().getSpacing() : null;
+        Long exactBefore = lineSpacing != null && lineSpacing.isSetLineRule()
+                           && lineSpacing.getLineRule() == STLineSpacingRule.EXACT ? writtenTwips(lineSpacing.getLine()) : null;
+        makeRoomForPictures(para, pictures);
+        if (exactBefore != null && (lineSpacing.getLineRule() != STLineSpacingRule.EXACT
+                                    || !exactBefore.equals(writtenTwips(lineSpacing.getLine())))) {
+            takeBackTheRoundingOwedBy(para);
+        }
+    }
+
+    /**
+     * Settles at a cell's end what its lines still carry ({@link #linesRoundingCarry}), however
+     * little: the cell ends where its last line does, and nothing under them in it settles that.
+     * What they fall short of the page by is owed below the cell's last block; what they pass it by
+     * hangs below the cell as a line hanging there does ({@link #cellOverhang}), for the writer of
+     * the cell to take or let go. {@code Panel}'s experience card, its lines 0.08pt taller than the
+     * page's at its end, grew its row by as much in Word (measured). The cell then puts back what was
+     * carried outside it ({@link #writeInCell}).
+     */
+    private void settleWhatTheCellsLinesCarry() {
+        if (linesRoundingCarry > 0) {
+            owePendingSpacingAfter(linesRoundingCarry);
+        } else {
+            hangingBelow -= linesRoundingCarry;
         }
     }
 
@@ -10272,17 +10341,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // A line held to its pictures has their ink within half a point of its edges.
         boolean cutToTheInk = !Double.isNaN(heldAbove);
         if (Double.isNaN(heldAbove)) {
-            CTSpacing lineSpacing = para.getCTP().isSetPPr() && para.getCTP().getPPr().isSetSpacing()
-                    ? para.getCTP().getPPr().getSpacing() : null;
-            Long exactBefore = lineSpacing != null && lineSpacing.isSetLineRule()
-                               && lineSpacing.getLineRule() == STLineSpacingRule.EXACT ? writtenTwips(lineSpacing.getLine()) : null;
-            makeRoomForPictures(para, pictures);
-            if (exactBefore != null && (lineSpacing.getLineRule() != STLineSpacingRule.EXACT
-                                        || !exactBefore.equals(writtenTwips(lineSpacing.getLine())))) {
-                // Its lines are now as tall as its pictures, not as written: what they fell short
-                // of the page by rounding is not short any more (settleTheLinesWithThePage).
-                takeBackTheRoundingOwedBy(para);
-            }
+            makeRoomForPicturesInItsLines(para, pictures);
             heldAbove = 0;
         }
         styleTheMark(para, markStyle);
@@ -16373,8 +16432,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 && carriedSpacingBefore + pendingSpacingAfter > 0 && cell.getBodyElements().isEmpty()) {
                 holdToHairline(newBodyParagraph(cell.getXWPFDocument()));
             }
-            // A hang its last paragraph was to take out of its own top edge and never did.
+            // A hang its last paragraph was to take out of its own top edge and never did. Named, it
+            // takes what the lines carried with it, as it does in the flow (forgetTheHang).
             nameAHangLeftOver();
+            settleWhatTheCellsLinesCarry();
             // A line hanging below the cell's last block takes the space the cell owes under it
             // first, as it takes the gap above the next block in the flow; what it reaches past
             // that makes Word's cell taller than its content on the page.

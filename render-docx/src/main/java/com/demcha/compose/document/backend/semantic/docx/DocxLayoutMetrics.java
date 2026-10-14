@@ -459,7 +459,7 @@ final class DocxLayoutMetrics {
             }
             boolean sameItem = previous != null && level(previous, fragment);
             ItemText text = new ItemText(paragraph.lines(), fragment.x() + paragraph.padding().left(),
-                    fragment.pageIndex());
+                    fragment.pageIndex(), Math.max(0, paragraph.lineGap()));
             if (!sameItem) {
                 items.add(text);
             } else if (text.x() >= items.get(items.size() - 1).x()) {
@@ -473,11 +473,20 @@ final class DocxLayoutMetrics {
     /**
      * An item's text as a list laid it out.
      *
-     * @param lines its lines
-     * @param x     where its text starts across the page, in points
-     * @param page  the page it was set on
+     * @param lines   its lines
+     * @param x       where its text starts across the page, in points
+     * @param page    the page it was set on
+     * @param lineGap the gap the page sets between its lines, in points
      */
-    record ItemText(List<ParagraphLine> lines, double x, int page) {
+    record ItemText(List<ParagraphLine> lines, double x, int page, double lineGap) {
+
+        /**
+         * How tall the page sets the item's lines together, as {@link #linesHeight(DocumentNode)}
+         * reads a paragraph's. Empty where a picture makes one of them taller than its text.
+         */
+        OptionalDouble linesHeight() {
+            return DocxLayoutMetrics.linesHeight(lines, lineGap);
+        }
     }
 
     /**
@@ -753,12 +762,19 @@ final class DocxLayoutMetrics {
      */
     OptionalDouble linesHeight(DocumentNode node) {
         List<PlacedFragment> fragments = textFragmentsOf(node);
-        if (fragments.size() != 1 || !(fragments.get(0).payload() instanceof ParagraphFragmentPayload paragraph)
-            || paragraph.lines().isEmpty()) {
+        if (fragments.size() != 1 || !(fragments.get(0).payload() instanceof ParagraphFragmentPayload paragraph)) {
             return OptionalDouble.empty();
         }
-        double height = Math.max(0, paragraph.lineGap()) * (paragraph.lines().size() - 1);
-        for (ParagraphLine line : paragraph.lines()) {
+        return linesHeight(paragraph.lines(), Math.max(0, paragraph.lineGap()));
+    }
+
+    /** Lines' heights and the gap between each two, or empty where there are none or one is not set by its text. */
+    private static OptionalDouble linesHeight(List<ParagraphLine> lines, double gap) {
+        if (lines.isEmpty()) {
+            return OptionalDouble.empty();
+        }
+        double height = gap * (lines.size() - 1);
+        for (ParagraphLine line : lines) {
             if (!setByText(line)) {
                 return OptionalDouble.empty();
             }

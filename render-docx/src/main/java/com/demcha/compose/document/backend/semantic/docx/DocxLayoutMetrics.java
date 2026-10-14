@@ -279,6 +279,16 @@ final class DocxLayoutMetrics {
                    && fragment.x() >= left - slack && fragment.x() + fragment.width() <= right + slack
                    && fragment.y() >= bottom - slack && fragment.y() + fragment.height() <= top + slack;
         }
+
+        /**
+         * Whether a fragment reaches into the box on its page at all: a fixed box wider than its
+         * column stands in its cell, though the cell does not hold it.
+         */
+        boolean overlaps(PlacedFragment fragment) {
+            return fragment.pageIndex() == page
+                   && fragment.x() < right && fragment.x() + fragment.width() > left
+                   && fragment.y() < top && fragment.y() + fragment.height() > bottom;
+        }
     }
 
     /**

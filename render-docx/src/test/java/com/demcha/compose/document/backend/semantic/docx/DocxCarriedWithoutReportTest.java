@@ -187,9 +187,11 @@ class DocxCarriedWithoutReportTest {
 
     @Test
     void aSectionDrawnOverTheFlowWithCornersOfDifferentRadiiSaysTheyAreDrawnAtTheLargest() throws Exception {
-        // Its paint is drawn as a shape, which takes the largest of its radii.
+        // Its paint is drawn as a shape, which takes the largest of its radii; padded, its box is
+        // tall enough for them to differ as the page draws them.
         DocxExportReport report = reportOf(page -> page
                 .add(laidOverTheFlow(new com.demcha.compose.document.dsl.SectionBuilder().fillColor(SURFACE)
+                        .padding(DocumentInsets.of(10))
                         .cornerRadius(DocumentCornerRadius.of(2, 8, 2, 8)).addParagraph("Studio").build()))
                 .addParagraph("Masthead"));
 
@@ -238,6 +240,47 @@ class DocxCarriedWithoutReportTest {
 
         assertThat(report.bySubject()).containsKey("cell drawing");
         assertThat(notesOn(report, "ShapeContainerNode")).noneMatch(detail -> detail.contains("corners"));
+    }
+
+    @Test
+    void cornersWhoseRadiiDifferOnlyPastHalfTheShorterSideAreNotNamed() throws Exception {
+        // Radii of 10 and 12 on a box 20 tall are both drawn at 10, on the page and in Word; 8 and
+        // 12 stay 8 and 10, and the box is drawn at 10.
+        DocumentCornerRadius pill = DocumentCornerRadius.of(10, 12, 10, 12);
+        DocumentCornerRadius uneven = DocumentCornerRadius.of(8, 12, 8, 12);
+        DocxExportReport report = reportOf(page -> page
+                .addShape(shape -> shape.name("PillShape").size(120, 20).fillColor(INK).cornerRadius(pill))
+                .addShape(shape -> shape.name("UnevenShape").size(120, 20).fillColor(INK).cornerRadius(uneven))
+                .add(capsule("PillContainer", pill))
+                .add(capsule("UnevenContainer", uneven))
+                .addTable(table -> table.columns(DocumentTableColumn.fixed(180), DocumentTableColumn.fixed(180))
+                        .rowCells(DocumentTableCell.node(capsule("PillCell", pill)),
+                                DocumentTableCell.node(capsule("UnevenCell", uneven)))));
+
+        for (String name : List.of("PillShape", "PillContainer")) {
+            assertThat(notesNaming(report, name)).as(name).isNotEmpty().noneMatch(detail -> detail.contains("corners"));
+        }
+        for (String name : List.of("UnevenShape", "UnevenContainer")) {
+            assertThat(notesNaming(report, name)).as(name).anyMatch(detail -> detail.endsWith(CORNERS));
+        }
+        // Composed in a cell, a node's note carries no path: the uneven one's, and not the pill's.
+        assertThat(notesOn(report, "ShapeContainerNode"))
+                .filteredOn(detail -> detail.startsWith("composed in a table cell"))
+                .singleElement().asString().endsWith(CORNERS);
+    }
+
+    @Test
+    void aShapeComposedInACellNamesTheCornersItIsDrawnWithAtTheCellsWidth() throws Exception {
+        // Laid out 20 wide, it is drawn as wide as its cell: 10 and 12 then stay 10 and 12, and
+        // Word draws all four at 12.
+        DocxExportReport report = reportOf(page -> page
+                .addTable(table -> table.columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                        .rowCells(DocumentTableCell.node(new ShapeBuilder().size(20, 40).fillColor(INK)
+                                        .cornerRadius(DocumentCornerRadius.of(10, 12, 10, 12)).build()),
+                                DocumentTableCell.text("Beside"))));
+
+        assertThat(detailOf(report, "ShapeNode")).startsWith("composed in a table cell, whose drawing is its table's")
+                .endsWith(CORNERS);
     }
 
     @Test
@@ -438,6 +481,22 @@ class DocxCarriedWithoutReportTest {
             container.stroke(stroke);
         }
         return container.build();
+    }
+
+    private static final String CORNERS = "its corners are drawn at the largest of their radii";
+
+    /** A shape container 120 by 20 rounding its corners as given, holding a dot. */
+    private static com.demcha.compose.document.node.DocumentNode capsule(String name, DocumentCornerRadius corners) {
+        return new com.demcha.compose.document.dsl.ShapeContainerBuilder().name(name).roundedRect(120, 20, corners)
+                .fillColor(SURFACE)
+                .center(new com.demcha.compose.document.dsl.EllipseBuilder().circle(8).fillColor(INK).build())
+                .build();
+    }
+
+    /** The notes on the nodes whose path names them. */
+    private static List<String> notesNaming(DocxExportReport report, String name) {
+        return report.notes().stream().filter(note -> note.path() != null && note.path().contains(name))
+                .map(DocxExportReport.Note::detail).toList();
     }
 
     private static List<String> notesOn(DocxExportReport report, String subject) {

@@ -755,6 +755,51 @@ class DocxComposedCellTest {
     }
 
     @Test
+    void aBoxInACellBesideOneItsTableLeavesToAPanelIsDrawnAndNotReportedDropped() throws Exception {
+        // The table leaves the panel's box to the panel and draws the tile and the box beside it;
+        // asked of the whole table, both were reported dropped while it drew them.
+        com.demcha.compose.document.style.DocumentColor ink = com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148);
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        String body = export(report, List.of(
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Panel")
+                        .roundedRect(80, 30, 6).fillColor(com.demcha.compose.document.style.DocumentColor.rgb(238, 243, 249))
+                        .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Open").build()).build()),
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Tile")
+                        .rectangle(30, 30).fillColor(ink)
+                        .center(new com.demcha.compose.document.dsl.EllipseBuilder().circle(10)
+                                .fillColor(com.demcha.compose.document.style.DocumentColor.WHITE).build()).build()),
+                DocumentTableCell.node(new com.demcha.compose.document.dsl.ShapeBuilder().name("Box").size(20, 20)
+                        .fillColor(ink).build())));
+
+        assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).isZero();
+        assertThat(anchors(body)).as("the tile's box and its dot, and the box").hasSize(3);
+    }
+
+    @Test
+    void aBoxReachingPastItsCellIsStillReportedWhereItsTableLeftIt() throws Exception {
+        // A fixed box wider than its column stands in its cell though the cell does not hold it.
+        com.demcha.compose.document.style.DocumentColor ink = com.demcha.compose.document.style.DocumentColor.rgb(26, 86, 148);
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.addTable(t -> t
+                    .columns(DocumentTableColumn.fixed(60), DocumentTableColumn.fixed(60))
+                    .rowCells(
+                            DocumentTableCell.node(new com.demcha.compose.document.dsl.EllipseBuilder().name("Icon")
+                                    .circle(8).fillColor(ink).build()),
+                            DocumentTableCell.node(new com.demcha.compose.document.dsl.LayerStackBuilder().name("Pill")
+                                    .layer(new com.demcha.compose.document.dsl.ShapeBuilder().name("PillBox")
+                                            .size(140, 14).fillColor(ink).build())
+                                    .layer(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Open").build())
+                                    .build()))));
+            session.export(new DocxSemanticBackend(report::set));
+        }
+
+        assertThat(report.get().count(DocxExportReport.Severity.DROPPED)).as("the box, not lost in silence")
+                .isPositive();
+    }
+
+    @Test
     void aFlatPathInACellIsDrawnAndAGradientOneIsStillReported() throws Exception {
         // An SVG icon carries its colour as fillColor, not as a paint; only a gradient goes undrawn.
         java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();

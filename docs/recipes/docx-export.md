@@ -896,7 +896,10 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   cell holds is anchored the same way, when it has no margins, stands on one
   page and paints nothing outside its box. A drawing holding a line, a lone
   shape, a composed tile and a drawing sharing its table cell with another
-  stay on the page.
+  stay on the page. A box framing text is left to the panel it is written as;
+  the layout does not say which of a cell's boxes is which node, so in a cell
+  such a box reaches into a box node is reported dropped, and in any other
+  the table draws it and does not report it dropped.
   A filled or outlined rectangle or rounded rectangle holding text there
   is written as a panel is, a table of one cell in its fill and outline, its
   outline's width within the cell and a point for the editor's face, its row
@@ -1084,8 +1087,9 @@ named in the report:
   outline draws nothing.
 - A drawing carries no link, no outline entry and no bookmark: a link to a drawn shape's
   anchor points at none, and a page reference to it is a fixed number. A gradient fill,
-  unequal corners (drawn at the largest radius) and a line's dash pattern (drawn solid) are
-  not carried either.
+  unequal corners (drawn at the largest radius; corners whose radii differ only past half the
+  box's shorter side, where the page holds them, are drawn alike and not named) and a line's
+  dash pattern (drawn solid) are not carried either.
   A rule — a line or a thin bar written as a paragraph border — keeps its anchor; its note
   names a lost outline entry, caps (a border ends flat) or a bar's link, a line's link being
   reported as `rule link`.

@@ -297,6 +297,30 @@ final class DocxDrawings {
     }
 
     /**
+     * Whether a box's corners round by radii that still differ once each is held to half the
+     * box's shorter side, as the page holds each of them and Word's rounded rectangle its one:
+     * radii of 10 and 12 on a box 20 tall are both drawn at 10, on the page and in Word alike.
+     *
+     * @param radius the corners' radii, or {@code null} for square corners
+     * @param width  the box's width, in points
+     * @param height the box's height, in points
+     */
+    static boolean roundsUnequally(DocumentCornerRadius radius, double width, double height) {
+        if (radius == null) {
+            return false;
+        }
+        double most = Math.min(width, height) / 2;
+        double topLeft = held(radius.topLeft(), most);
+        return held(radius.topRight(), most) != topLeft || held(radius.bottomRight(), most) != topLeft
+               || held(radius.bottomLeft(), most) != topLeft;
+    }
+
+    /** A corner's radius as the page draws it: none where it is not positive, at most {@code most}. */
+    private static double held(double radius, double most) {
+        return radius > 0 ? Math.min(radius, most) : 0;
+    }
+
+    /**
      * Where a drawing stands among the ones behind the text: its place counted up from the
      * height Word gives the first drawing of a document, 1024 apart, as Word numbers them.
      * LibreOffice stacks a header's shapes and the body's together by these heights, so they

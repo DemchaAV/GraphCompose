@@ -830,8 +830,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The outline levels the document declares from Word's ninth on, which Word holds as one: two
     // of them are levels the page nests apart and the file does not.
     private java.util.Set<Integer> outlineLevelsFromWordsNinth = java.util.Set.of();
-    // Anchors this export writes a bookmark for, so a page reference knows it has a target.
-    private java.util.Set<String> bookmarkedAnchors = java.util.Set.of();
+    // The bookmarks the file holds, each with the anchor it was written for: two anchors can be
+    // minted one name, and only the anchor's own bookmark holds a field on it.
+    private final java.util.Set<WrittenBookmark> bookmarksWritten = new java.util.HashSet<>();
+    // The page references written as fields, to be checked against those bookmarks.
+    private final List<FieldReference> fieldReferences = new ArrayList<>();
     // Where the finished report goes, when the caller configured somewhere for it to go.
     private final java.util.function.Consumer<DocxExportReport> reportSink;
     // The instant every clock in the package is pinned to, or null for live timestamps.
@@ -1130,11 +1133,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         prefixColumns.clear();
         report = new DocxExportReport.Builder();
         bookmarkNames = new DocxBookmarkNames();
+        bookmarksWritten.clear();
+        fieldReferences.clear();
         java.util.NavigableSet<Integer> outlineLevels = outlineLevelsIn(whole);
         headingLevels = outlineLevels.stream().map(level -> Math.min(level, MAX_HEADING_LEVEL))
                 .collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new));
         outlineLevelsFromWordsNinth = outlineLevels.tailSet(MAX_HEADING_LEVEL, true);
-        bookmarkedAnchors = bookmarkedAnchorsIn(whole);
         wordFamilies = DocxFontTable.familiesByName(fonts);
         measuredFamilies = List.copyOf(fonts);
         seatFonts = null;
@@ -1165,7 +1169,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 applyPageGeometry(document, context.canvas());
                 if (index == 0) {
                     writeStylesPart(document);
-                    DocxFontTable.write(document, whole, fonts, report);
+                    DocxFontTable.write(document, whole, zoneContentsIn(sections), bandStylesIn(sections),
+                            fonts, report);
                     applyMetadata(document, metadataOf(sections));
                     reportUnwrittenOutputOptions(sections);
                 }
@@ -1204,6 +1209,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         dropTheSpaceAtTheEnd(document, roomBelowTheFlow(context.layoutGraph()),
                                 index == sections.size() - 1));
             }
+            // Every bookmark is written now, those a reference on an earlier page reads included.
+            unfieldTheReferencesWithoutABookmark();
             hideTheClosingMark(document);
             hideTheCellClosingMarks(document.getTables());
             letTheOneRowTablesKeptWithTheNextBreak(document.getTables());
@@ -1343,6 +1350,59 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static boolean reachedPast(Object pageMargin) {
         return pageMargin instanceof Number twips && twips.longValue() >= 0
                && twips.longValue() < Math.round(POINT_TO_TWIP);
+    }
+
+    /**
+     * What a page zone writes in its header or footer part: its content built for no page in
+     * particular, Word numbering the pages itself, or {@code null} where it builds none.
+     */
+    private static DocumentNode zoneContentOf(DocumentPageZone zone) {
+        return zone.getContent() == null ? null : zone.getContent().apply(PageContext.unpaginated());
+    }
+
+    /**
+     * The content of every section's page zones, read for the faces it is set in before any
+     * section is written: the font table is written with the first section, and a face set only
+     * in a footer reached Word unshipped.
+     */
+    private static List<DocumentNode> zoneContentsIn(List<SemanticSection> sections) {
+        List<DocumentNode> contents = new ArrayList<>();
+        for (SemanticSection section : sections) {
+            List<DocumentPageZone> zones = section.context().outputOptions().zones();
+            for (DocumentPageZone zone : zones == null ? List.<DocumentPageZone>of() : zones) {
+                DocumentNode content = zoneContentOf(zone);
+                if (content != null) {
+                    contents.add(content);
+                }
+            }
+        }
+        return contents;
+    }
+
+    /** The style of every section's header and footer band that sets any text, read as {@link #zoneContentsIn}. */
+    private static List<DocumentTextStyle> bandStylesIn(List<SemanticSection> sections) {
+        List<DocumentTextStyle> styles = new ArrayList<>();
+        for (SemanticSection section : sections) {
+            List<DocumentHeaderFooter> bands = section.context().outputOptions().headersAndFooters();
+            for (DocumentHeaderFooter band : bands == null ? List.<DocumentHeaderFooter>of() : bands) {
+                if (setsText(band.getLeftText()) || setsText(band.getCenterText()) || setsText(band.getRightText())) {
+                    styles.add(bandStyleOf(band));
+                }
+            }
+        }
+        return styles;
+    }
+
+    private static boolean setsText(String text) {
+        return text != null && !text.isBlank();
+    }
+
+    /** The one style a header or footer band sets all its text in: its face, size and colour. */
+    private static DocumentTextStyle bandStyleOf(DocumentHeaderFooter band) {
+        return new DocumentTextStyle(
+                band.getFontName() == null ? FontName.HELVETICA : band.getFontName(),
+                band.getFontSize(), DocumentTextDecoration.DEFAULT,
+                band.getTextColor() == null ? DocumentColor.GRAY : band.getTextColor());
     }
 
     /**
@@ -1681,9 +1741,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         for (int index = 0; index < sectionZones.size(); index++) {
             DocumentPageZone zone = sectionZones.get(index);
-            DocumentNode content = zone.getContent() == null
-                    ? null
-                    : zone.getContent().apply(PageContext.unpaginated());
+            DocumentNode content = zoneContentOf(zone);
             if (content == null) {
                 // Built for no page in particular, it builds nothing to write: lost, unless the
                 // layout shows it drawn on no page either.
@@ -1892,10 +1950,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 stop.setPos(BigInteger.valueOf(Math.round(contentWidth * TWIPS_PER_POINT)));
             }
         }
-        DocumentTextStyle style = new DocumentTextStyle(
-                band.getFontName() == null ? FontName.HELVETICA : band.getFontName(),
-                band.getFontSize(), DocumentTextDecoration.DEFAULT,
-                band.getTextColor() == null ? DocumentColor.GRAY : band.getTextColor());
+        DocumentTextStyle style = bandStyleOf(band);
         com.demcha.compose.document.output.DocumentPageNumberStyle numbers =
                 band.getNumbering() == null ? null : band.getNumbering().getStyle();
         appendBandSlot(para, band.getLeftText(), style, numbers);
@@ -3110,6 +3165,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTBookmark start = first.getCTP().addNewBookmarkStart();
         start.setId(BigInteger.valueOf(id));
         start.setName(name);
+        bookmarksWritten.add(new WrittenBookmark(anchor, name));
         moveToParagraphStart(first.getCTP(), start);
         last.getCTP().addNewBookmarkEnd().setId(BigInteger.valueOf(id));
     }
@@ -7162,7 +7218,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * The outline levels this document actually asks for.
+     * The outline levels this document actually asks for, as its paragraphs declare them: past
+     * Word's nine too.
      *
      * <p>Collected before the styles part is written, because that part comes first in the
      * package and a style a paragraph refers to has to exist. Only the levels in use are
@@ -7174,48 +7231,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * A large paragraph is a large paragraph; a document that never asked for an outline
      * does not get one invented from its typography.</p>
      */
-    /**
-     * Every anchor this export writes a bookmark for: a paragraph's, and a block's the export
-     * writes (see {@link #blockAnchorOf}). A page reference is a live field only when its
-     * anchor is one of these.
-     */
-    private static java.util.Set<String> bookmarkedAnchorsIn(DocumentGraph graph) {
-        java.util.Set<String> anchors = new java.util.HashSet<>();
-        // Each node with how many overlays it lies in, and how many of those are stacks of one
-        // layer, which decide whether a rule is written.
-        java.util.ArrayDeque<java.util.Map.Entry<DocumentNode, int[]>> pending = new java.util.ArrayDeque<>();
-        for (DocumentNode root : graph.roots()) {
-            pending.push(java.util.Map.entry(root, new int[]{0, 0}));
-        }
-        while (!pending.isEmpty()) {
-            java.util.Map.Entry<DocumentNode, int[]> next = pending.pop();
-            DocumentNode node = next.getKey();
-            int overlays = next.getValue()[0];
-            int oneLayers = next.getValue()[1];
-            String anchor = node instanceof ParagraphNode paragraph
-                    ? paragraph.anchor()
-                    : blockAnchorOf(node, inTheFlow(node, overlays, oneLayers));
-            if (anchor != null && !anchor.isBlank()) {
-                anchors.add(anchor.trim());
-            }
-            // As writeNodeContent counts them: a stack or a shape holding only drawing is an
-            // overlay of its own before it is a stack of one layer.
-            int[] below;
-            if (overlays == 0 && onlyDrawing(node) && !node.children().isEmpty()
-                && (node instanceof com.demcha.compose.document.node.LayerStackNode
-                    || node instanceof ShapeContainerNode)) {
-                below = new int[]{1, oneLayers};
-            } else {
-                below = new int[]{overlays + (isOverlay(node) ? 1 : 0), oneLayers + (isOneLayer(node) ? 1 : 0)};
-            }
-            for (DocumentNode child : node.children()) {
-                pending.push(java.util.Map.entry(child, below));
-            }
-        }
-        return anchors;
-    }
-
-    /** Every outline level the document's paragraphs declare, as declared: past Word's nine too. */
     private static java.util.NavigableSet<Integer> outlineLevelsIn(DocumentGraph graph) {
         java.util.NavigableSet<Integer> levels = new java.util.TreeSet<>();
         for (DocumentNode root : graph.roots()) {
@@ -7228,7 +7243,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (node instanceof ParagraphNode paragraph && paragraph.bookmarkOptions() != null) {
             levels.add(paragraph.bookmarkOptions().level());
         }
-        for (DocumentNode child : node.children()) {
+        for (DocumentNode child : DocxWrittenTree.under(node)) {
             collectOutlineLevels(child, levels);
         }
     }
@@ -9183,7 +9198,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A reference whose anchor this export writes no bookmark for is written as its text
      * alone: Word turns a {@code PAGEREF} to a missing bookmark into "Error! Bookmark not
      * defined." the first time the field updates, which is worse than a number that does not
-     * move.</p>
+     * move. Which anchors get one is known once the body is written — a reference may come
+     * before its anchor, as a table of contents does — so a reference is written as a field and
+     * taken back to its text there ({@link #unfieldTheReferencesWithoutABookmark}).</p>
      */
     private void writePageReference(XWPFDocument document,
                                     com.demcha.compose.document.node.PageReferenceNode node) {
@@ -9195,24 +9212,103 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph para = newBodyParagraph(document);
         applyParagraphProperties(para, asLaidOut);
         applyLineHeight(para, layout.lineHeight(node));
-        String bookmark = bookmarkedAnchors.contains(node.anchor())
-                ? bookmarkNames.nameFor(node.anchor())
-                : null;
-        List<String> lost = new ArrayList<>();
+        String bookmark = bookmarkNames.nameFor(node.anchor());
+        List<String> carried = carriedWithout(node, false);
+        // Unlike a paragraph's (writeParagraph), its own sides do not hold its line in.
+        List<String> sides = sidesLost(node, node.align() != TextAlign.RIGHT, node.align() != TextAlign.LEFT);
+        List<String> asText = new ArrayList<>(carried);
+        asText.add(NO_BOOKMARK_FOR_THE_REFERENCE);
+        asText.addAll(sides);
+        String path = layout.pathOf(node);
         if (bookmark == null) {
             XWPFRun run = para.createRun();
             applyStyle(run, node.textStyle());
             run.setText(shown);
-            lost.add("its anchor has no bookmark in the Word file, so its page number is written as "
-                     + "text that an edit does not update");
-        } else {
-            // A complex field, as a page field is (see appendField): a simple one's number is
-            // repainted without its style when the field updates.
-            appendField(para, " PAGEREF " + bookmark + " \\h ", shown, node.textStyle());
+            report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), path,
+                    WRITTEN_AS_A_PARAGRAPH + "; " + String.join("; ", asText));
+            return;
         }
-        // Unlike a paragraph's (writeParagraph), its own sides do not hold its line in.
-        lost.addAll(sidesLost(node, node.align() != TextAlign.RIGHT, node.align() != TextAlign.LEFT));
-        reportWrittenWithout(node, "written as a paragraph", lost);
+        // A complex field, as a page field is (see appendField): a simple one's number is
+        // repainted without its style when the field updates.
+        appendField(para, " PAGEREF " + bookmark + " \\h ", shown, node.textStyle());
+        List<String> lost = new ArrayList<>(carried);
+        lost.addAll(sides);
+        int noteAt = report.size();
+        if (!lost.isEmpty()) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), path,
+                    WRITTEN_AS_A_PARAGRAPH + "; " + String.join("; ", lost));
+        }
+        fieldReferences.add(new FieldReference(para, new WrittenBookmark(node.anchor(), bookmark), node.nodeKind(),
+                path, WRITTEN_AS_A_PARAGRAPH + "; " + String.join("; ", asText), noteAt, !lost.isEmpty()));
+    }
+
+    private static final String WRITTEN_AS_A_PARAGRAPH = "written as a paragraph";
+
+    private static final String NO_BOOKMARK_FOR_THE_REFERENCE = "its anchor has no bookmark in the Word file, so its "
+                                                               + "page number is written as text that an edit does not update";
+
+    /**
+     * A bookmark the body wrote, and the anchor it wrote it for.
+     *
+     * @param anchor the anchor, as the node declares it
+     * @param name   the bookmark's name in the file
+     */
+    private record WrittenBookmark(String anchor, String name) {
+    }
+
+    /**
+     * A page reference written as a {@code PAGEREF} field, kept until the body is written to be
+     * taken back to its text where the file holds no bookmark of its name written for its anchor.
+     *
+     * @param paragraph the reference's paragraph, which holds the field
+     * @param bookmark  the bookmark the field reads, and the anchor it reads it for
+     * @param subject   the reference's note subject
+     * @param path      the reference's path, its section's
+     * @param asText    what its note says written as text
+     * @param noteAt    where its note stands in the report, or would
+     * @param noted     whether written as a field it has a note there
+     */
+    private record FieldReference(XWPFParagraph paragraph, WrittenBookmark bookmark, String subject, String path,
+                                  String asText, int noteAt, boolean noted) {
+    }
+
+    /**
+     * Takes every page reference whose bookmark the file does not hold back to the number it reads,
+     * and says so in its note.
+     *
+     * <p>Whether an anchor gets a bookmark is known only from what the body wrote: an anchor that
+     * names nothing, a drawn shape's, a block that writes no paragraph — a section holding only
+     * shapes the export draws — or a column of a layer stack has none to put round it, and which
+     * do is the writer's to say, not the tree's: read off the tree, a table's composed cells were
+     * missed and the stacks in them read as overlays they are not written as. A field on a
+     * bookmark the file lacks reads "Error! Bookmark not defined." once Word updates it. The
+     * bookmark must be one written for the reference's own anchor: two anchors can be minted one
+     * name. The field's marks and code go; its text stays, in its style.</p>
+     */
+    private void unfieldTheReferencesWithoutABookmark() {
+        // From the last: a note put in for one leaves the places of those before it where they are.
+        for (int index = fieldReferences.size() - 1; index >= 0; index--) {
+            FieldReference reference = fieldReferences.get(index);
+            if (bookmarksWritten.contains(reference.bookmark())) {
+                continue;
+            }
+            List<XWPFRun> runs = reference.paragraph().getRuns();
+            for (int run = runs.size() - 1; run >= 0; run--) {
+                org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR ctr = runs.get(run).getCTR();
+                if (ctr.sizeOfFldCharArray() > 0 || ctr.sizeOfInstrTextArray() > 0) {
+                    reference.paragraph().removeRun(run);
+                }
+            }
+            if (reference.noted()) {
+                report.set(reference.noteAt(), DocxExportReport.Severity.APPROXIMATED, reference.subject(),
+                        reference.path(), reference.asText());
+            } else {
+                report.insert(reference.noteAt(), DocxExportReport.Severity.APPROXIMATED, reference.subject(),
+                        reference.path(), reference.asText());
+            }
+        }
+        // The paragraphs are the document's, which is closed once written.
+        fieldReferences.clear();
     }
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
@@ -12054,6 +12150,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTBookmark start = para.getCTP().addNewBookmarkStart();
         start.setId(BigInteger.valueOf(id));
         start.setName(name);
+        bookmarksWritten.add(new WrittenBookmark(anchor, name));
         return id;
     }
 
@@ -15185,12 +15282,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                 resumeSpacing = plan.resume(node) + raised;
                             }
                             // A column layer is written as what it holds, never dispatched itself:
-                            // no bookmark goes round it, though bookmarkedAnchorsIn counts one.
+                            // no bookmark goes round it, and a page reference to it is taken back to
+                            // its text (unfieldTheReferencesWithoutABookmark).
                             List<String> columnLost = new ArrayList<>(2);
                             String anchor = blockAnchorOf(node, true);
                             if (anchor != null && !anchor.isBlank()) {
-                                columnLost.add("its anchor has no bookmark in the Word file: a link or a "
-                                               + "page reference to it names a bookmark the file does not hold");
+                                columnLost.add("its anchor has no bookmark in the Word file: a link to it names a "
+                                               + "bookmark the file does not hold, and a page reference to it is "
+                                               + "written as the number it reads");
                             }
                             // Its column runs between its neighbours' bands, not to the width it is fixed at.
                             com.demcha.compose.document.layout.PlacedNode placedLayer = layout.placement(node);

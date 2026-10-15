@@ -123,10 +123,13 @@ number of pages it laid out. A file therefore opens reading the same numbers as 
 The export does not set `w:updateFields`. It would make Word ask, on every open, whether to
 update fields — to recompute numbers that already read correctly.
 
-A page reference to an anchor the export writes no bookmark for — a drawn shape's — is
-written as the text the page prints, a number no edit updates, and its report note says so:
-Word turns a `PAGEREF` to a missing bookmark into "Error! Bookmark not defined." the first
-time it updates.
+A page reference to an anchor the export writes no bookmark for — a drawn shape's, or a
+section's that holds only shapes the export draws and so writes no paragraph to put one
+round — is written
+as the text the page prints, a number no edit updates, and its report note says so: Word turns
+a `PAGEREF` to a missing bookmark into "Error! Bookmark not defined." the first time it
+updates. Each field is checked against the bookmarks the file holds once the body is written,
+so a reference before its anchor is checked too.
 
 ## Several sections in one document
 
@@ -299,7 +302,9 @@ work a PDF render does, and it reads each image a second time.
 
 ## Fonts travel with the document
 
-The package carries the faces the document is set in, so a reader without them installed
+The package carries the faces the document is set in — in the body, in a table's cell built
+from a node, in a page zone or a header or footer band of text, in a page reference or a page
+number, and in a list's items and markers made of runs — so a reader without them installed
 sees the document rather than a substitution. What is shipped is narrow on purpose:
 
 - **Only families with a file behind them** — the bundled ones and whatever the session

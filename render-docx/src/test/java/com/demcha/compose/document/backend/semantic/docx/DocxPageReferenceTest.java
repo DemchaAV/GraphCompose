@@ -2,7 +2,15 @@ package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.LayerStackBuilder;
+import com.demcha.compose.document.dsl.LineBuilder;
+import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.node.PageReferenceNode;
+import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableCell;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.openxml4j.opc.PackagingURIHelper;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -20,6 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -75,6 +84,101 @@ class DocxPageReferenceTest {
     }
 
     @Test
+    void aReferenceToAnAnchorATablesCellIsBuiltFromIsAFieldToo() throws Exception {
+        // A paragraph or a section a cell is built from writes its bookmark in the cell. Read by
+        // the table's children alone, the anchors were taken to have none: the reference was
+        // written as a number an edit does not update, and its note said the bookmark was missing.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = export(page -> page
+                .addPageReference("fees")
+                .addPageReference("terms")
+                .addTable(t -> t.autoColumns(2).rowCells(
+                        DocumentTableCell.node(new ParagraphBuilder().text("Fees").anchor("fees").build()),
+                        DocumentTableCell.node(new SectionBuilder().anchor("terms").addParagraph("Terms").build()))),
+                report)) {
+
+            assertThat(pageReferences(document)).containsExactly(
+                    Map.entry("PAGEREF fees \\h", "1"),
+                    Map.entry("PAGEREF terms \\h", "1"));
+            assertThat(bookmarkNames(document))
+                    .as("each names a bookmark its cell holds")
+                    .contains("fees", "terms");
+            assertThat(report.get().notes())
+                    .noneMatch(note -> note.detail().contains("has no bookmark"));
+        }
+    }
+
+    @Test
+    void aReferenceToARuleInAStackOfOneLayerInATablesCellIsAFieldToo() throws Exception {
+        // A stack holding only drawing is an overlay of its own where the layout places it; in a
+        // composed cell it is a stack of one layer, and the rule in it is written with its
+        // bookmark. Read off the tree as an overlay, its anchor was taken to have none.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = export(page -> page
+                .addPageReference("rule")
+                .addTable(t -> t.autoColumns(1).rowCells(DocumentTableCell.node(new LayerStackBuilder()
+                        .layer(new LineBuilder().horizontal(100).thickness(1).anchor("rule").build())
+                        .build()))),
+                report)) {
+
+            assertThat(pageReferences(document)).containsExactly(Map.entry("PAGEREF rule \\h", "1"));
+            assertThat(bookmarkNames(document)).contains("rule");
+            assertThat(report.get().notes())
+                    .noneMatch(note -> note.detail().contains("has no bookmark"));
+        }
+    }
+
+    @Test
+    void aReferenceWhoseBookmarkTheBodyDoesNotWriteIsTakenBackToItsText() throws Exception {
+        // A section in a table's cell holding only a shape the export draws writes no paragraph to
+        // put its bookmark round. A field on the bookmark the file lacks would read "Error!
+        // Bookmark not defined." once Word updates it.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = export(page -> page
+                .addPageReference("logo")
+                // One its margin already has a note for: the note gains what the field lost.
+                .add(new PageReferenceNode("", "logo", null, TextAlign.LEFT, "", DocumentInsets.zero(),
+                        new DocumentInsets(0, 0, 0, 12)))
+                .addTable(t -> t.autoColumns(1).rowCells(DocumentTableCell.node(new SectionBuilder()
+                        .anchor("logo").addShape(shape -> shape.size(40, 20).fillColor(DocumentColor.BLACK))
+                        .build()))),
+                report)) {
+
+            assertThat(bookmarkNames(document)).doesNotContain("logo");
+            assertThat(pageReferences(document)).as("no field on the missing bookmark").isEmpty();
+            for (XWPFParagraph reference : document.getParagraphs().subList(0, 2)) {
+                assertThat(reference.getText()).as("the page the layout resolved, as text").isEqualTo("1");
+                assertThat(reference.getCTP().xmlText()).doesNotContain("fldChar").doesNotContain("instrText");
+            }
+            String noBookmark = "its anchor has no bookmark in the Word file, so its page number is written as "
+                                + "text that an edit does not update";
+            assertThat(report.get().notes())
+                    .filteredOn(note -> note.subject().equals("PageReferenceNode"))
+                    .extracting(DocxExportReport.Note::detail)
+                    .satisfiesExactly(
+                            plain -> assertThat(plain).isEqualTo("written as a paragraph; " + noBookmark),
+                            held -> assertThat(held).startsWith("written as a paragraph; " + noBookmark + "; ")
+                                    .contains("left"));
+        }
+    }
+
+    @Test
+    void aFieldIsKeptOnlyOnTheBookmarkWrittenForItsOwnAnchor() throws Exception {
+        // "a." cleans to the name "a" has, so it is minted "a_2" — the name the anchor "a_2" is
+        // given too. A field on "a_2" for "a." would land on the other anchor's page.
+        try (XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("One").anchor("a"))
+                .addPageReference("a.")
+                .addParagraph(p -> p.text("Two").anchor("a_2")))) {
+
+            assertThat(bookmarkNames(document)).contains("a", "a_2");
+            assertThat(pageReferences(document))
+                    .as("no anchor \"a.\" in the file: no field, whatever bookmark shares its name")
+                    .isEmpty();
+        }
+    }
+
+    @Test
     void theDocumentDoesNotAskToUpdateItsFieldsOnOpen() throws Exception {
         try (XWPFDocument document = export(threeChapters())) {
             PackagePart settings = document.getPackage()
@@ -106,13 +210,19 @@ class DocxPageReferenceTest {
 
     private static XWPFDocument export(
             java.util.function.Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content) throws Exception {
+        return export(content, new AtomicReference<>());
+    }
+
+    private static XWPFDocument export(
+            java.util.function.Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content,
+            AtomicReference<DocxExportReport> report) throws Exception {
         byte[] docx;
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(300, 300)
                 .margin(DocumentInsets.of(30))
                 .create()) {
             session.pageFlow(content::accept);
-            docx = session.toDocxBytes();
+            docx = session.export(new DocxSemanticBackend(report::set));
         }
         return new XWPFDocument(new ByteArrayInputStream(docx));
     }

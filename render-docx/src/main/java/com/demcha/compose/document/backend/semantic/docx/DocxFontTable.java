@@ -5,7 +5,10 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.InlineHighlightRun;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
+import com.demcha.compose.document.node.ListItem;
 import com.demcha.compose.document.node.ListNode;
+import com.demcha.compose.document.node.PageFieldNode;
+import com.demcha.compose.document.node.PageReferenceNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -82,15 +85,20 @@ final class DocxFontTable {
      *
      * @param document  the document being written
      * @param graph     the document's own tree, read for the faces it names
+     * @param zones     the content of every section's page zones, which the header and footer parts
+     *                  are written from, read for the faces it names
+     * @param bands     the style each header and footer band of text sets its text in
      * @param custom    families the session registered, which win over the bundled ones
      * @param report    where a face that may not travel is recorded
      * @throws IOException if a part cannot be written
      */
     static void write(XWPFDocument document,
                       DocumentGraph graph,
+                      List<DocumentNode> zones,
+                      List<DocumentTextStyle> bands,
                       Collection<FontFamilyDefinition> custom,
                       DocxExportReport.Builder report) throws IOException {
-        List<Embedded> embedded = resolve(graph, custom, report);
+        List<Embedded> embedded = resolve(graph, zones, bands, custom, report);
         if (embedded.isEmpty()) {
             return;
         }
@@ -178,12 +186,18 @@ final class DocxFontTable {
      * nothing.</p>
      */
     private static List<Embedded> resolve(DocumentGraph graph,
+                                          List<DocumentNode> zones,
+                                          List<DocumentTextStyle> bands,
                                           Collection<FontFamilyDefinition> custom,
                                           DocxExportReport.Builder report) {
         Map<FontName, Set<Slot>> used = new LinkedHashMap<>();
         for (DocumentNode root : graph.roots()) {
             collectFonts(root, used);
         }
+        for (DocumentNode zone : zones) {
+            collectFonts(zone, used);
+        }
+        bands.forEach(style -> add(style, used));
         if (used.isEmpty()) {
             return List.of();
         }
@@ -315,10 +329,12 @@ final class DocxFontTable {
     }
 
     /**
-     * Collects every face the tree names, wherever a style can sit, and the faces the markdown of
-     * a paragraph or a list's item sets pieces of it in ({@link DocxMarkdown}): the table is
-     * written before any paragraph is, so a face the pieces ask for is shipped whether or not the
-     * page sets them — a session that reads no markdown ships one it does not use.
+     * Collects every face the tree names, wherever a style can sit — a table's cell built from a
+     * node, a page reference and a page number, a list's items and markers made of runs among them
+     * — and the faces the markdown of a paragraph or a list's item sets pieces of it in
+     * ({@link DocxMarkdown}): the table is written before any paragraph is, so a face the pieces
+     * ask for is shipped whether or not the page sets them — a session that reads no markdown
+     * ships one it does not use.
      */
     private static void collectFonts(DocumentNode node, Map<FontName, Set<Slot>> into) {
         if (node instanceof ParagraphNode paragraph) {
@@ -326,13 +342,11 @@ final class DocxFontTable {
             if (paragraph.textStyle() != null && DocxMarkdown.mayRead(paragraph)) {
                 DocxMarkdown.read(paragraph.text(), paragraph.textStyle()).forEach(piece -> add(piece.style(), into));
             }
-            for (InlineRun run : paragraph.inlineRuns()) {
-                if (run instanceof InlineTextRun text) {
-                    add(text.textStyle(), into);
-                } else if (run instanceof InlineHighlightRun highlight) {
-                    add(highlight.textStyle(), into);
-                }
-            }
+            addRuns(paragraph.inlineRuns(), into);
+        } else if (node instanceof PageReferenceNode reference) {
+            add(reference.textStyle(), into);
+        } else if (node instanceof PageFieldNode field) {
+            add(field.textStyle(), into);
         } else if (node instanceof ListNode list) {
             add(list.textStyle(), into);
             if (list.textStyle() != null) {
@@ -344,14 +358,38 @@ final class DocxFontTable {
                     }
                 }
             }
+            addRuns(list.marker().runs(), into);
+            addItems(list.nestedItems(), into);
         } else if (node instanceof TableNode table) {
             add(styleOf(table.defaultCellStyle()), into);
             table.rowStyles().values().forEach(style -> add(styleOf(style), into));
             table.columnStyles().values().forEach(style -> add(styleOf(style), into));
             table.rows().forEach(row -> row.forEach(cell -> add(styleOf(cell), into)));
         }
-        for (DocumentNode child : node.children()) {
+        for (DocumentNode child : DocxWrittenTree.under(node)) {
             collectFonts(child, into);
+        }
+    }
+
+    /** The faces a sequence of runs is set in: a run's text and a chip's, in their own styles. */
+    private static void addRuns(List<InlineRun> runs, Map<FontName, Set<Slot>> into) {
+        for (InlineRun run : runs) {
+            if (run instanceof InlineTextRun text) {
+                add(text.textStyle(), into);
+            } else if (run instanceof InlineHighlightRun highlight) {
+                add(highlight.textStyle(), into);
+            }
+        }
+    }
+
+    /** The faces a tree of list items made of runs is set in, their own markers' included. */
+    private static void addItems(List<ListItem> items, Map<FontName, Set<Slot>> into) {
+        for (ListItem item : items) {
+            addRuns(item.runs(), into);
+            if (item.marker() != null) {
+                addRuns(item.marker().runs(), into);
+            }
+            addItems(item.children(), into);
         }
     }
 

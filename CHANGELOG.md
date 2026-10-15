@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export reads a table's cells, its headers and footers, its page references and its
+  lists' runs for the faces and headings it writes, and checks each page reference against the
+  bookmarks the file holds.** The faces a document ships, the heading styles it defines and the
+  anchors a page reference was written as a field for were read from the document's tree before
+  any of it was written, and a table's cell built from a node (`DocumentTableCell.node(...)`) was
+  not read: its content is the cell's, not the table's children. A face set only in such a cell —
+  or in a page zone, a header or footer band of text, a page reference, a page number, a list's
+  item or marker made of runs — was named on its runs and not shipped, so a reader without it
+  installed saw a substitute; a heading in such a cell named a `HeadingN` style the document did
+  not define, and Word set it as body text out of the Navigation Pane; and a page reference to an
+  anchor in such a cell was written as a number an edit does not update, its note saying the
+  bookmark was missing while the cell wrote it. The faces now travel and the style is defined. A
+  page reference is a `PAGEREF` field wherever the body writes its anchor's bookmark, and the
+  number it reads, with a note, wherever it does not — a section holding only shapes the export
+  draws writes no paragraph to put one round, and a field on a bookmark the file lacks reads
+  "Error! Bookmark not defined." once Word updates it.
 - **A DOCX export writes a rule in a table's cell once, draws a line thicker than a border,
   and anchors a shape alone before a page break.** A rule composed in a table cell
   (`DocumentTableCell.node(...)`) was written as its paragraph's border and drawn again by its

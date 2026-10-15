@@ -118,6 +118,16 @@ public record DocxExportReport(List<Note> notes) {
             return notes.size();
         }
 
+        /** Puts a note in the place of the one at an index: what the export said before it knew better. */
+        void set(int index, Severity severity, String subject, String path, String detail) {
+            notes.set(index, new Note(severity, subject, path, detail));
+        }
+
+        /** Puts a note in at an index, where the node it is about was written among the others. */
+        void insert(int index, Severity severity, String subject, String path, String detail) {
+            notes.add(index, new Note(severity, subject, path, detail));
+        }
+
         /**
          * Puts a note in the place of each one on the same subject and path from the given one on —
          * what the export said of it before it knew better — or adds it where there is none.

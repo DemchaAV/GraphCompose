@@ -113,6 +113,31 @@ public record DocxExportReport(List<Note> notes) {
             notes.add(new Note(severity, subject, path, detail));
         }
 
+        /** How many notes the report holds so far. */
+        int size() {
+            return notes.size();
+        }
+
+        /**
+         * Puts a note in the place of each one on the same subject and path from the given one on —
+         * what the export said of it before it knew better — or adds it where there is none.
+         *
+         * @param from the first note it may replace: a section's first, as paths are a section's own
+         */
+        void replace(int from, Severity severity, String subject, String path, String detail) {
+            boolean replaced = false;
+            for (int index = from; index < notes.size(); index++) {
+                Note note = notes.get(index);
+                if (note.subject().equals(subject) && java.util.Objects.equals(note.path(), path)) {
+                    notes.set(index, new Note(severity, subject, path, detail));
+                    replaced = true;
+                }
+            }
+            if (!replaced) {
+                add(severity, subject, path, detail);
+            }
+        }
+
         DocxExportReport build() {
             return notes.isEmpty() ? EMPTY : new DocxExportReport(notes);
         }

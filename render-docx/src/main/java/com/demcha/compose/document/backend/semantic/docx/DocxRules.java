@@ -19,7 +19,9 @@ import java.util.List;
  * Two drawn nodes are that rule on the page:</p>
  *
  * <ul>
- *   <li>a {@link LineNode} whose two ends sit at one height, with no transform; and</li>
+ *   <li>a {@link LineNode} whose two ends sit at one height, with no transform, stroked no
+ *       thicker than Word's thickest border — a 20pt bar written as a border came out 12pt, and
+ *       what followed stood 8pt high, over it; and</li>
  *   <li>a {@link ShapeNode} that is only a fill — a colour or a solid paint; no stroke, no
  *       rounded corners, no gradient, no transform — and no taller than Word's thickest
  *       border, which is how {@code addDivider} draws one.</li>
@@ -69,7 +71,8 @@ final class DocxRules {
 
     private static Rule ofLine(LineNode line) {
         if (Math.abs(line.startY() - line.endY()) > EPS || transformed(line.transform())
-            || line.stroke() == null || !(line.stroke().width() > 0) || line.stroke().color() == null) {
+            || line.stroke() == null || !(line.stroke().width() > 0) || line.stroke().width() > MAX_RULE_POINTS
+            || line.stroke().color() == null) {
             return null;
         }
         double from = Math.min(line.startX(), line.endX());
@@ -80,6 +83,17 @@ final class DocxRules {
                 line.height() - line.startY(),
                 line.stroke().width(), line.stroke().color(),
                 pattern == null || pattern.segments().isEmpty() ? null : pattern.segments());
+    }
+
+    /**
+     * Whether a node is a line that would be a rule but for its stroke, thicker than Word's
+     * thickest border: it is drawn instead, and where a rule would take its room only the flow
+     * holds it.
+     */
+    static boolean thickerThanABorder(DocumentNode node) {
+        return node instanceof LineNode line && Math.abs(line.startY() - line.endY()) <= EPS
+               && !transformed(line.transform()) && line.stroke() != null && line.stroke().color() != null
+               && line.stroke().width() > MAX_RULE_POINTS;
     }
 
     private static Rule ofShape(ShapeNode shape) {

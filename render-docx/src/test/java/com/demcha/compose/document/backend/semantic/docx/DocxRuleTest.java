@@ -109,10 +109,40 @@ class DocxRuleTest {
     }
 
     @Test
-    void aThickStrokeStopsAtWordsThickestBorder() throws Exception {
+    void aStrokeThickerThanWordsThickestBorderIsDrawnAtItsThickness() throws Exception {
+        // Word's thickest border is 12pt: written as one, a 20pt bar came out 12pt, and what
+        // followed stood 8pt high, over it.
         try (XWPFDocument document = export(page -> page
+                .addLine(l -> l.horizontal(200).stroke(DocumentStroke.of(ACCENT, 12)))
                 .addLine(l -> l.horizontal(200).stroke(DocumentStroke.of(ACCENT, 20))))) {
-            assertThat(bottomOf(document, 0).getSz().intValue()).isEqualTo(96);
+            assertThat(bottomOf(document, 0).getSz().intValue()).as("the thickest border").isEqualTo(96);
+            assertThat(document.getParagraphs()).filteredOn(p -> p.getCTP().getPPr() != null
+                    && p.getCTP().getPPr().isSetPBdr()).as("the 20pt stroke, no border").hasSize(1);
+            assertThat(document.getDocument().xmlText()).contains("<a:ln w=\""
+                    + org.apache.poi.util.Units.toEMU(20) + "\"");
+        }
+    }
+
+    @Test
+    void aStrokeThickerThanABorderHoldsItsRoomInAStackOfOneLayerAsInTheFlow() throws Exception {
+        // A line among the text of a stack of one layer is in the flow, as a rule there would be.
+        long inTheFlow = spaceAboveBelow(page -> page.addParagraph("Above")
+                .addLine(l -> l.horizontal(200).thickness(20).color(ACCENT)).addParagraph("Below"));
+        long inAStack = spaceAboveBelow(page -> page.addLayerStack(stack -> stack.layer(
+                new com.demcha.compose.document.dsl.SectionBuilder().addParagraph("Above")
+                        .addLine(l -> l.horizontal(200).thickness(20).color(ACCENT)).addParagraph("Below").build())));
+
+        assertThat(inTheFlow).as("premise: the room is held above the paragraph after it").isGreaterThan(19 * 20);
+        assertThat(inAStack).isEqualTo(inTheFlow);
+    }
+
+    private static long spaceAboveBelow(Consumer<PageFlowBuilder> content) throws Exception {
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph below = document.getParagraphs().stream().filter(p -> p.getText().equals("Below"))
+                    .findFirst().orElseThrow();
+            CTPPr properties = below.getCTP().getPPr();
+            return properties == null || !properties.isSetSpacing() || !properties.getSpacing().isSetBefore() ? 0
+                    : DocxTwips.of(properties.getSpacing().getBefore());
         }
     }
 

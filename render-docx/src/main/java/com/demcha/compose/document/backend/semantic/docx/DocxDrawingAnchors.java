@@ -64,10 +64,14 @@ final class DocxDrawingAnchors {
 
     // Shapes waiting for a paragraph on their page, by page, each with its place in the paint order.
     private final Map<Integer, List<Ordered>> pending = new TreeMap<>();
+    // What each waiting shape is drawn for, where something is.
+    private final Map<Ordered, Owner> owners = new java.util.IdentityHashMap<>();
     // The first body paragraph written on each page of the section, by page.
     private final Map<Integer, XWPFParagraph> bodyParagraph = new HashMap<>();
     // The first table-cell paragraph written on each page of the section, by page.
     private final Map<Integer, XWPFParagraph> cellParagraph = new HashMap<>();
+    // The paragraph of a page break written at the end of each page of the section, by page.
+    private final Map<Integer, XWPFParagraph> breakParagraph = new HashMap<>();
     // The paragraphs written on each page of the section a shape can be anchored beside, by page.
     private final Map<Integer, List<Seat>> seats = new HashMap<>();
     // The paragraphs offered as seats in the section, in the order they were written.
@@ -84,8 +88,10 @@ final class DocxDrawingAnchors {
     /** Forgets everything, for a new export. */
     void reset() {
         pending.clear();
+        owners.clear();
         bodyParagraph.clear();
         cellParagraph.clear();
+        breakParagraph.clear();
         seats.clear();
         offers.clear();
         order = 0;
@@ -116,18 +122,33 @@ final class DocxDrawingAnchors {
     }
 
     /**
+     * What a drawing is drawn for: the report's note on it, which a drawing the section's end
+     * finds nothing to carry is named on instead (see {@link Leftovers}).
+     *
+     * @param subject the note's subject
+     * @param path    the note's path
+     */
+    record Owner(String subject, String path) {
+    }
+
+    /**
      * Gives shapes their places in the paint order and keeps them for the section's end, which
      * anchors them (see {@link #endSection}).
+     *
+     * @param owner what they are drawn for, or {@code null} where no note names them
      */
-    void queue(List<DocxDrawings.Shape> shapes) {
-        queueOrdered(ordered(shapes));
+    void queue(List<DocxDrawings.Shape> shapes, Owner owner) {
+        queueOrdered(ordered(shapes), owner);
     }
 
     /** Keeps shapes given their places in the paint order for the section's end, as {@link #queue} does. */
-    void queueOrdered(List<Ordered> shapes) {
+    void queueOrdered(List<Ordered> shapes, Owner owner) {
         // Held until the section ends: the paragraph a shape stands beside may be written after it.
         for (Ordered shape : shapes) {
             pending.computeIfAbsent(shape.shape().page(), page -> new ArrayList<>()).add(shape);
+            if (owner != null) {
+                owners.put(shape, owner);
+            }
         }
     }
 
@@ -189,6 +210,20 @@ final class DocxDrawingAnchors {
     }
 
     /**
+     * Records the paragraph of a page break that ends a page: it stands on that page, and
+     * carries its shapes where nothing else written there does. Behind a table that fills its
+     * page Word would set it on the next, so a page's cell paragraph comes first.
+     *
+     * @param page      the page the break ends, counted within the section
+     * @param paragraph the break's paragraph
+     */
+    void breakOn(int page, XWPFParagraph paragraph) {
+        if (page >= 0) {
+            breakParagraph.putIfAbsent(page, paragraph);
+        }
+    }
+
+    /**
      * The first body paragraph written on a page of the section, or {@code null}.
      *
      * @param page the page, counted within the section
@@ -209,8 +244,8 @@ final class DocxDrawingAnchors {
     /**
      * Ends a section, anchoring the shapes no body paragraph on their page carried: on the
      * section's first page in {@code opening}, on its last in {@code closing}, on any other in
-     * the first cell paragraph written on the page. Those on a page with none of these are
-     * returned, and forgotten.
+     * the first cell paragraph written on the page, or else in the paragraph of the page break
+     * ending it ({@link #breakOn}). Those on a page with none of these are returned, and forgotten.
      *
      * @param lastPage the section's last page
      * @param opening  a hairline paragraph before the section's first table, asked for only when
@@ -221,6 +256,14 @@ final class DocxDrawingAnchors {
     Leftovers endSection(int lastPage, Supplier<XWPFParagraph> opening, Supplier<XWPFParagraph> closing) {
         Map<Integer, Integer> inCells = new TreeMap<>();
         Map<Integer, Integer> dropped = new TreeMap<>();
+        Map<Owner, Integer> queuedFor = new java.util.LinkedHashMap<>();
+        Map<Owner, Integer> droppedFor = new java.util.LinkedHashMap<>();
+        pending.values().forEach(all -> all.forEach(shape -> {
+            Owner owner = owners.get(shape);
+            if (owner != null) {
+                queuedFor.merge(owner, 1, Integer::sum);
+            }
+        }));
         takeTheSeats();
         // By the paragraph each is anchored in, which keeps no equality but its own.
         Map<XWPFParagraph, List<Placed>> beside = new java.util.LinkedHashMap<>();
@@ -244,33 +287,50 @@ final class DocxDrawingAnchors {
                 carrier = opening.get();
             } else if (page == lastPage) {
                 carrier = closing.get();
-            } else {
+            } else if (cellParagraph.containsKey(page)) {
                 carrier = cellParagraph.get(page);
-                if (carrier != null) {
-                    inCells.put(page, shapes.size());
-                }
+                inCells.put(page, shapes.size());
+            } else {
+                carrier = breakParagraph.get(page);
             }
             if (carrier != null) {
                 anchor(carrier, shapes);
             } else {
-                dropped.put(page, shapes.size());
+                int unowned = 0;
+                for (Ordered shape : shapes) {
+                    Owner owner = owners.get(shape);
+                    if (owner == null) {
+                        unowned++;
+                    } else {
+                        droppedFor.merge(owner, 1, Integer::sum);
+                    }
+                }
+                if (unowned > 0) {
+                    dropped.put(page, unowned);
+                }
             }
         });
         beside.forEach(this::anchorBeside);
         pending.clear();
+        owners.clear();
         bodyParagraph.clear();
         cellParagraph.clear();
+        breakParagraph.clear();
         seats.clear();
-        return new Leftovers(inCells, dropped);
+        Map<Owner, Boolean> droppedWhole = new java.util.LinkedHashMap<>();
+        droppedFor.forEach((owner, count) -> droppedWhole.put(owner, count.equals(queuedFor.get(owner))));
+        return new Leftovers(inCells, dropped, droppedWhole);
     }
 
     /**
      * The shapes a section's end could not anchor in a body paragraph, by page.
      *
      * @param inCells anchored in a table cell's paragraph, which Word may print them clipped to
-     * @param dropped anchored nowhere
+     * @param dropped anchored nowhere, drawn for nothing a note names
+     * @param owners  what the shapes anchored nowhere were drawn for, each with whether all of its
+     *                shapes were
      */
-    record Leftovers(Map<Integer, Integer> inCells, Map<Integer, Integer> dropped) {
+    record Leftovers(Map<Integer, Integer> inCells, Map<Integer, Integer> dropped, Map<Owner, Boolean> owners) {
     }
 
     /**

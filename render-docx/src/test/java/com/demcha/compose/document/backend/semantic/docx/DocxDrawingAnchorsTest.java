@@ -44,7 +44,7 @@ class DocxDrawingAnchorsTest {
         anchors.seat(0, first, first, 40, 300, 70, 80);
         anchors.seat(0, second, second, 40, 300, 100, 110);
 
-        anchors.queue(List.of(dot(30, 102)));
+        queue(anchors, List.of(dot(30, 102)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(first)).isEmpty();
@@ -73,7 +73,7 @@ class DocxDrawingAnchorsTest {
         DocxDrawingAnchors anchors = anchors();
         anchors.paragraphOn(0, paragraph, true);
         anchors.seat(0, paragraph, paragraph, 40, right, 100, 110);
-        anchors.queue(List.of(dot));
+        queue(anchors, List.of(dot));
         anchors.endSection(0, null, document::createParagraph);
         return drawingsIn(paragraph).get(0).contains("<wp:positionV relativeFrom=\"paragraph\">");
     }
@@ -96,7 +96,7 @@ class DocxDrawingAnchorsTest {
             DocxDrawingAnchors anchors = anchors();
             anchors.paragraphOn(0, paragraph, true);
             anchors.seat(0, paragraph, paragraph, 40, 300, 100, 110);
-            anchors.queue(List.of(dot(30, 102)));
+            queue(anchors, List.of(dot(30, 102)));
             anchors.endSection(0, null, document::createParagraph);
 
             assertThat(drawingsIn(paragraph).get(0)).as(paragraph.getCTP().getPPr().xmlText())
@@ -112,7 +112,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, first, true);
         anchors.seat(0, first, first, 40, 300, 40, 50);
 
-        anchors.queue(List.of(dot(30, 200)));
+        queue(anchors, List.of(dot(30, 200)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(first)).singleElement().asString()
@@ -129,7 +129,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, first, true);
         anchors.seat(0, first, first, 40, 300, 120, 130);
 
-        anchors.queue(List.of(dot(30, 100)));
+        queue(anchors, List.of(dot(30, 100)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(first)).singleElement().asString()
@@ -146,7 +146,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, first, true);
         anchors.seat(0, first, first, 40, 300, 100, 110);
 
-        anchors.queue(List.of(dot(30, 96)));
+        queue(anchors, List.of(dot(30, 96)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(offsetDown(drawingsIn(first).get(0))).isCloseTo(-4, within(0.01));
@@ -160,7 +160,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, first, true);
         anchors.seat(0, first, first, 40, 300, 100, 110);
 
-        anchors.queue(List.of(dot(30, 99.5)));
+        queue(anchors, List.of(dot(30, 99.5)));
         anchors.endSection(0, null, document::createParagraph);
 
         String drawing = drawingsIn(first).get(0);
@@ -181,7 +181,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, paragraph, true);
         anchors.seat(0, paragraph, paragraph, 40, 300, 163.5, 172);
 
-        anchors.queue(List.of(dot(30, 150)));
+        queue(anchors, List.of(dot(30, 150)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(offsetDown(drawingsIn(paragraph).get(0))).isCloseTo(150 - 147, within(0.01));
@@ -202,7 +202,7 @@ class DocxDrawingAnchorsTest {
         // The text starts 10pt into a cell whose left edge the page puts at 100.
         anchors.seat(0, paragraph, paragraph, 110, 290, 60, 70);
 
-        anchors.queue(List.of(dot(103, 62)));
+        queue(anchors, List.of(dot(103, 62)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(paragraph).get(0)).contains("layoutInCell=\"1\"")
@@ -225,7 +225,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, body, true);
         anchors.seat(0, paragraph, paragraph, 100, 290, 60, 70);
 
-        anchors.queue(List.of(dot(80, 62)));
+        queue(anchors, List.of(dot(80, 62)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(paragraph)).isEmpty();
@@ -249,7 +249,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, paragraph, false);
         anchors.seat(0, paragraph, paragraph, 105.4, 290, 60, 70);
 
-        anchors.queue(List.of(dot(100, 62)));
+        queue(anchors, List.of(dot(100, 62)));
         anchors.endSection(0, null, document::createParagraph);
 
         String drawing = drawingsIn(paragraph).get(0);
@@ -275,7 +275,7 @@ class DocxDrawingAnchorsTest {
         anchors.seat(0, total, total, 110, 290, 60, 70);
         anchors.seat(0, note, note, 110, 290, 106, 116);
 
-        anchors.queue(List.of(dot(120, 98)));
+        queue(anchors, List.of(dot(120, 98)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(total)).isEmpty();
@@ -302,7 +302,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, entry, false);
         anchors.seat(0, entry, entry, 100, 300, 60, 70);
 
-        anchors.queue(List.of(dot(92, 62)));
+        queue(anchors, List.of(dot(92, 62)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(entry)).isEmpty();
@@ -332,7 +332,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, entry, false);
         anchors.seat(0, entry, entry, 100, 300, 60, 70);
 
-        anchors.queue(List.of(dot(92, 66)));
+        queue(anchors, List.of(dot(92, 66)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(offsetDown(drawingsIn(dotParagraph).get(0))).isCloseTo(66 - 60, within(0.01));
@@ -363,7 +363,7 @@ class DocxDrawingAnchorsTest {
             anchors.paragraphOn(0, body, true);
             anchors.seat(0, entry, entry, 100, 300, 60, 70);
 
-            anchors.queue(List.of(dot(92, 62)));
+            queue(anchors, List.of(dot(92, 62)));
             anchors.endSection(0, null, document::createParagraph);
 
             assertThat(drawingsIn(dotCell.getParagraphs().get(0))).as("centred=" + centred).isEmpty();
@@ -393,7 +393,7 @@ class DocxDrawingAnchorsTest {
             anchors.paragraphOn(0, body, true);
             anchors.seat(0, entry, entry, 100, 290, 60, 70);
 
-            anchors.queue(List.of(dot(302, 62)));
+            queue(anchors, List.of(dot(302, 62)));
             anchors.endSection(0, null, document::createParagraph);
 
             List<String> drawings = drawingsIn(markCell.getParagraphs().get(0));
@@ -424,7 +424,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, text(document, "Body"), true);
         anchors.seat(0, entry, entry, 110, 290, 100, 110);
 
-        anchors.queue(List.of(dot(120, 96)));
+        queue(anchors, List.of(dot(120, 96)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(entry)).isEmpty();
@@ -440,7 +440,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, first, true);
         anchors.seat(0, first, first, 40, 300, 100, 110);
 
-        anchors.queue(List.of(new DocxDrawings.Shape(DocxDrawings.Kind.RECT, 30, 70, 2, 40, Color.BLUE, null,
+        queue(anchors, List.of(new DocxDrawings.Shape(DocxDrawings.Kind.RECT, 30, 70, 2, 40, Color.BLUE, null,
                 0, 0, false, 0)));
         anchors.endSection(0, null, document::createParagraph);
 
@@ -479,7 +479,7 @@ class DocxDrawingAnchorsTest {
             anchors.paragraphOn(0, body, true);
             anchors.seat(0, entry, entry, 100, 300, 60, 70);
 
-            anchors.queue(List.of(dot(82, 62)));
+            queue(anchors, List.of(dot(82, 62)));
             anchors.endSection(0, null, document::createParagraph);
 
             assertThat(drawingsIn(body)).as(why).singleElement().asString()
@@ -507,7 +507,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, body, true);
         anchors.seat(0, paragraph, paragraph, 110, 290, 60, 70);
 
-        anchors.queue(List.of(dot(120, 62)));
+        queue(anchors, List.of(dot(120, 62)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(paragraph)).isEmpty();
@@ -526,7 +526,7 @@ class DocxDrawingAnchorsTest {
         anchors.seat(0, owner, spacer, 40, 300, 100, 110);
         anchors.seat(0, owner, entry, 40, 300, 100, 110);
 
-        anchors.queue(List.of(dot(30, 102)));
+        queue(anchors, List.of(dot(30, 102)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(spacer)).isEmpty();
@@ -551,7 +551,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, body, true);
         anchors.seat(0, paragraph, paragraph, 110, 290, 60, 70);
 
-        anchors.queue(List.of(dot(120, 62)));
+        queue(anchors, List.of(dot(120, 62)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(paragraph)).isEmpty();
@@ -572,7 +572,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, paragraph, true);
         anchors.seat(0, paragraph, paragraph, 40, 300, 163.5, 172);
 
-        anchors.queue(List.of(dot(30, 150)));
+        queue(anchors, List.of(dot(30, 150)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(offsetDown(drawingsIn(paragraph).get(0))).isCloseTo(150 - 147, within(0.01));
@@ -587,7 +587,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, paragraph, true);
         anchors.seat(0, paragraph, paragraph, 40, 300, 100, 110);
 
-        anchors.queue(List.of(dot(30, 102)));
+        queue(anchors, List.of(dot(30, 102)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(paragraph)).singleElement().asString()
@@ -602,7 +602,7 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, paragraph, true);
         anchors.seat(0, paragraph, paragraph, 40, 300, 40, 50);
 
-        anchors.queue(List.of(dot(10, 42), dot(20, 42)));
+        queue(anchors, List.of(dot(10, 42), dot(20, 42)));
         anchors.endSection(0, null, document::createParagraph);
 
         assertThat(drawingsIn(paragraph)).extracting(DocxDrawingAnchorsTest::offsetAcross)
@@ -612,6 +612,55 @@ class DocxDrawingAnchorsTest {
     private static DocxDrawingAnchors anchors() {
         AtomicLong ids = new AtomicLong(1);
         return new DocxDrawingAnchors(ids::getAndIncrement);
+    }
+
+    /** Queues shapes no note names, as drawing here is drawn for nothing. */
+    private static void queue(DocxDrawingAnchors anchors, List<DocxDrawings.Shape> shapes) {
+        anchors.queue(shapes, null);
+    }
+
+    @Test
+    void whatADrawingIsDrawnForIsToldWhetherNothingOrOnlyPartOfItWasCarried() {
+        // Page 0 has its paragraph; page 1, between the first page and the last, has none.
+        XWPFDocument document = new XWPFDocument();
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, text(document, "First"), true);
+        DocxDrawingAnchors.Owner split = new DocxDrawingAnchors.Owner("timeline rail", "Root[0]");
+        DocxDrawingAnchors.Owner lost = new DocxDrawingAnchors.Owner("ShapeNode", "Root[0]/Cover[1]");
+        anchors.queue(List.of(dot(30, 300), onPage(1, dot(30, 300))), split);
+        anchors.queue(List.of(onPage(1, dot(60, 300))), lost);
+
+        DocxDrawingAnchors.Leftovers leftovers = anchors.endSection(2, null, document::createParagraph);
+
+        assertThat(leftovers.owners()).containsExactly(java.util.Map.entry(split, false), java.util.Map.entry(lost, true));
+        assertThat(leftovers.dropped()).as("nothing named only by its page").isEmpty();
+    }
+
+    @Test
+    void aPageBreaksParagraphCarriesItsPageOnlyWhereNothingElseWrittenThereDoes() {
+        // Behind a table filling its page, Word would set the break's paragraph on the next one.
+        XWPFDocument document = new XWPFDocument();
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, text(document, "First"), true);
+        XWPFParagraph cell = text(document, "In a cell");
+        XWPFParagraph tableBreak = text(document, "");
+        XWPFParagraph aloneBreak = text(document, "");
+        anchors.paragraphOn(1, cell, false);
+        anchors.breakOn(1, tableBreak);
+        anchors.breakOn(2, aloneBreak);
+        queue(anchors, List.of(onPage(1, dot(30, 300)), onPage(2, dot(30, 300))));
+
+        anchors.endSection(3, null, document::createParagraph);
+
+        assertThat(drawingsIn(cell)).as("the table's page, in its cell").hasSize(1);
+        assertThat(drawingsIn(tableBreak)).isEmpty();
+        assertThat(drawingsIn(aloneBreak)).as("a page of nothing else, in its break").hasSize(1);
+    }
+
+    /** A shape moved to another page. */
+    private static DocxDrawings.Shape onPage(int page, DocxDrawings.Shape shape) {
+        return new DocxDrawings.Shape(shape.kind(), shape.x(), shape.top(), shape.width(), shape.height(), shape.fill(),
+                shape.stroke(), shape.strokeWidth(), shape.radius(), shape.flipH(), page);
     }
 
     private static DocxDrawings.Shape dot(double x, double top) {

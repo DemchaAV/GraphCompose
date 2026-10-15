@@ -362,6 +362,30 @@ class DocxOverlayBandTest {
         assertThat(beforesWithLayerBottoms(-4).get("After")).isEqualTo(beforesWithLayerBottoms(0).get("After"));
     }
 
+    @Test
+    void aLaterLayersMarginAboveIsWrittenOnceInTheGapThePageLeavesAboveIt() throws Exception {
+        // Its resume is the page's gap less that margin, which its first block writes itself.
+        assertThat(beforeOfALowLayerWithAMarginAbove(6)).isEqualTo(beforeOfALowLayerWithAMarginAbove(0));
+    }
+
+    private static long beforeOfALowLayerWithAMarginAbove(double margin) throws Exception {
+        try (DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20))
+                .create()) {
+            session.pageFlow(page -> page
+                    .addParagraph(p -> p.text("Above"))
+                    .addLayerStack(stack -> stack.name("Stack")
+                            .back(new SpacerNode("Space", 200, BADGE, DocumentInsets.zero(), DocumentInsets.zero()))
+                            .layer(new ParagraphBuilder().name("Top").text("Top").build(), LayerAlign.TOP_LEFT)
+                            .layer(new ParagraphBuilder().name("Low").text("Low").margin(DocumentInsets.top(margin))
+                                    .build(), LayerAlign.BOTTOM_LEFT)));
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
+                    session.export(new DocxSemanticBackend())))) {
+                return document.getParagraphs().stream().filter(paragraph -> paragraph.getText().equals("Low"))
+                        .findFirst().map(DocxOverlayBandTest::before).orElseThrow();
+            }
+        }
+    }
+
     private static java.util.Map<String, Long> beforesWithLayerBottoms(double bottom) throws Exception {
         DocumentInsets edge = new DocumentInsets(0, 0, bottom, 0);
         DocumentSession session = GraphCompose.document().pageSize(300, 500).margin(DocumentInsets.of(20)).create();

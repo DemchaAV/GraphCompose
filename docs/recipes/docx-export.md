@@ -823,7 +823,18 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   shape container, is held in across to its box in the stack, with a few points to
   spare on the side its text does not lean on. A block in `addAligned(...)` is held in
   the same way, to where the alignment puts it. Drawing is drawn as a shape where the
-  page draws it (see "What is skipped") and does not count as content.
+  page draws it (see "What is skipped") and does not count as content. A later layer
+  the page starts above where the layers before it end — a caption over the foot of
+  its photo, a label in a card's corner, text over text — is written under them, as
+  Word writes one block under another; the report names it (`overlapping layer`) with
+  how far above their end the page starts its highest block, a panel among them ending
+  at its box's foot. A badge drawn over them is named for the line its initials hold
+  there. So is a layer over the one before it in a column's cell. A layer stack
+  composed in a table cell, or exported with no layout, has no place of its own, so it
+  is no band: its layers are written one after another, and where more than one of
+  them writes in the flow, its note says whether the page lays one over another is not
+  measured. A layer the page starts under the layers before it, but nearer them than
+  its own margin above it, is written that margin below them, unnamed.
 - **Text at the left and the right of one band → one line split by a tab.** A
   container or a layer stack holding exactly two single-line paragraphs, level with
   one another and apart across the page — a CV entry's title and its dates — is one

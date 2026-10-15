@@ -1,10 +1,16 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.table.DocumentTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTStyle;
 
@@ -105,6 +111,25 @@ class DocxHeadingRoleTest {
     }
 
     @Test
+    void aHeadingATablesCellIsBuiltFromHasItsStyleDefined() throws Exception {
+        // A cell built from a node keeps it in the cell, not among its table's children: read by
+        // the children alone, the heading named a style the styles part did not hold, and Word set
+        // it as body text with no place in the Navigation Pane.
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p.text("Body"))
+                .addTable(t -> t.autoColumns(1).rowCells(DocumentTableCell.node(new TableBuilder().autoColumns(1)
+                        .rowCells(DocumentTableCell.node(new ParagraphBuilder().text("Fees")
+                                .bookmark(new DocumentBookmarkOptions("Fees", 1)).build()))
+                        .build()))))) {
+
+            assertThat(styleInAnyCell(document, "Fees")).isEqualTo("Heading2");
+            assertThat(headingIds(document))
+                    .as("the style it names is one the document defines")
+                    .containsExactly("Heading2");
+        }
+    }
+
+    @Test
     void sizeAloneNeverMakesAHeading() throws Exception {
         // The rule the plan states, pinned: a big paragraph beside a small one claims
         // nothing about structure, and the export must not decide otherwise.
@@ -127,6 +152,26 @@ class DocxHeadingRoleTest {
         return para.getCTP().getPPr() == null || !para.getCTP().getPPr().isSetPStyle()
                 ? null
                 : para.getCTP().getPPr().getPStyle().getVal();
+    }
+
+    /** The style of the paragraph reading {@code text} in a table's cell, its nested tables' included. */
+    private static String styleInAnyCell(XWPFDocument document, String text) {
+        java.util.ArrayDeque<XWPFTable> tables = new java.util.ArrayDeque<>(document.getTables());
+        while (!tables.isEmpty()) {
+            for (XWPFTableRow row : tables.pop().getRows()) {
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    for (XWPFParagraph para : cell.getParagraphs()) {
+                        if (text.equals(para.getText())) {
+                            return para.getCTP().getPPr() == null || !para.getCTP().getPPr().isSetPStyle()
+                                    ? null
+                                    : para.getCTP().getPPr().getPStyle().getVal();
+                        }
+                    }
+                    tables.addAll(cell.getTables());
+                }
+            }
+        }
+        throw new AssertionError("no paragraph in a cell reading " + text);
     }
 
     private static CTStyle styleById(XWPFDocument document, String id) {

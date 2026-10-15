@@ -364,10 +364,11 @@ class DocxCarriedWithoutReportTest {
 
     @Test
     void aLayerColumnNamesItsAnchorThatNoBookmarkMarks() throws Exception {
-        // A column is written as what it holds, with no bookmark round it, while a link or a page
-        // reference to its anchor still names one.
+        // A column is written as what it holds, with no bookmark round it, while a link to its
+        // anchor still names one; a page reference to it is taken back to its text.
         String lost = "written as a column of its layer stack; its anchor has no bookmark in the Word file: "
-                      + "a link or a page reference to it names a bookmark the file does not hold";
+                      + "a link to it names a bookmark the file does not hold, and a page reference to it is "
+                      + "written as the number it reads";
         DocxExportReport report = reportOf(page -> page.addLayerStack(stack -> stack
                 .layer(new com.demcha.compose.document.dsl.SectionBuilder().anchor("left")
                         .margin(new DocumentInsets(0, 220, 0, 0)).addParagraph("Left column").build(),

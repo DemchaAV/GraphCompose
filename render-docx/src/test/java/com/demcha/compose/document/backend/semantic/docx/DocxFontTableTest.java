@@ -1,13 +1,26 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.dsl.TableBuilder;
+import com.demcha.compose.document.node.InlineTextRun;
+import com.demcha.compose.document.node.ListMarker;
+import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.output.DocumentHeaderFooter;
+import com.demcha.compose.document.output.DocumentHeaderFooterZone;
+import com.demcha.compose.document.output.DocumentPageZone;
+import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.font.FontName;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -79,6 +92,64 @@ class DocxFontTableTest {
     }
 
     @Test
+    void aFaceSetOnlyInATablesCellBuiltFromANodeTravelsToo() throws Exception {
+        // A cell built from a node keeps it in the cell, not among its table's children: read by
+        // the children alone, the faces of the cells — a nested table's among them — were named on
+        // their runs and never shipped.
+        try (XWPFDocument document = export(page -> page
+                .addParagraph("Invoice", face(FontName.LATO))
+                .addTable(t -> t.autoColumns(1).rowCells(DocumentTableCell.node(new ParagraphBuilder()
+                        .text("Consulting").textStyle(face(FontName.POPPINS)).build())))
+                .addTable(t -> t.autoColumns(1).rowCells(DocumentTableCell.node(new TableBuilder().autoColumns(1)
+                        .rowCells(DocumentTableCell.node(new ParagraphBuilder()
+                                .text("Nested").textStyle(face(FontName.PT_SERIF)).build()))
+                        .build()))))) {
+
+            assertThat(families(document)).containsExactlyInAnyOrder("Lato", "Poppins", "PT Serif");
+        }
+    }
+
+    @Test
+    void theFacesThePageZonesAndBandsAreSetInTravelToo() throws Exception {
+        // The header and footer parts are written from the zones and the bands of text, not from
+        // the document's tree.
+        byte[] docx;
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 600)
+                .margin(DocumentInsets.of(20)).create()) {
+            session.chrome().zone(DocumentPageZone.footer(24, page -> new ParagraphBuilder().text("Acme")
+                    .textStyle(face(FontName.BARLOW)).build()));
+            session.chrome().zone(DocumentPageZone.header(24, page -> page.pageNumber(face(FontName.UBUNTU))));
+            session.chrome().footer(DocumentHeaderFooter.builder().zone(DocumentHeaderFooterZone.FOOTER)
+                    .fontName(FontName.ARSENAL).centerText("Page {page}").build());
+            session.pageFlow(page -> page.addParagraph("Invoice", face(FontName.LATO)));
+            docx = session.export(new DocxSemanticBackend());
+        }
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            assertThat(families(document)).containsExactlyInAnyOrder("Lato", "Barlow", "Ubuntu", "Arsenal");
+        }
+    }
+
+    @Test
+    void aPageReferenceAndTheRunsOfAListsItemsAndMarkersShipTheirFaces() throws Exception {
+        try (XWPFDocument document = export(page -> page
+                .addParagraph(p -> p.text("Terms").anchor("terms").textStyle(face(FontName.LATO)))
+                .addPageReference("terms", face(FontName.CARLITO), TextAlign.LEFT)
+                // A list of plain items keeps its marker of runs as its own; one of items made of
+                // runs gives each item its marker.
+                .addList(list -> list.textStyle(face(FontName.LATO)).hangingIndent(true)
+                        .marker(marker -> marker.style("*", face(FontName.FIRA_SANS)))
+                        .items("plain"))
+                .addList(list -> list.textStyle(face(FontName.LATO)).hangingIndent(true)
+                        .markerFor(1, ListMarker.ofRuns(List.of(new InlineTextRun("-", face(FontName.UBUNTU)))))
+                        .addItem(item -> item.plain("plain ").style("rich", face(FontName.ARSENAL)),
+                                body -> body.addItem(item -> item.style("deeper", face(FontName.CRIMSON_TEXT))))))) {
+
+            assertThat(families(document)).containsExactlyInAnyOrder(
+                    "Lato", "Carlito", "Fira Sans", "Arsenal", "Ubuntu", "Crimson Text");
+        }
+    }
+
+    @Test
     void theShippedFaceIsTheRealFontBehindItsScrambledHeader() throws Exception {
         try (XWPFDocument document = export(page -> page.addParagraph(p -> p
                 .text("Set in Lato")
@@ -119,6 +190,21 @@ class DocxFontTableTest {
         try (InputStream in = part.getInputStream()) {
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
+    }
+
+    /** The families the font table ships faces for. */
+    private static List<String> families(XWPFDocument document) throws Exception {
+        java.util.regex.Matcher name = java.util.regex.Pattern.compile("<w:font w:name=\"([^\"]+)\"")
+                .matcher(fontTable(document));
+        List<String> families = new java.util.ArrayList<>();
+        while (name.find()) {
+            families.add(name.group(1));
+        }
+        return families;
+    }
+
+    private static DocumentTextStyle face(FontName name) {
+        return DocumentTextStyle.builder().fontName(name).size(10).build();
     }
 
     private static List<byte[]> fontParts(XWPFDocument document) throws Exception {

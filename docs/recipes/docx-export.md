@@ -1005,8 +1005,9 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
 
 ## What is skipped
 
-A horizontal rule is not skipped. A horizontal line, or a filled bar no taller
-than 12pt — what `addDivider` draws — is Word's own rule: an empty paragraph
+A horizontal rule is not skipped. A horizontal line stroked no thicker than 12pt,
+Word's thickest border, or a filled bar no taller than that — what `addDivider`
+draws — is Word's own rule: an empty paragraph
 whose bottom border is the stroke, in its colour and thickness, from where the
 line starts to where it ends, with the space above and below the stroke kept.
 Word makes the paragraph a tenth of a point of line where the stroke has no room
@@ -1021,7 +1022,16 @@ stood 0.13pt low in Word and 0.11pt in LibreOffice, and 0.01pt once that was tak
 It flows with the text, and a reader moves or deletes it as a line of the
 document. A dashed line keeps a dash, in Word's own lengths; a translucent one is
 flattened against the colour the page paints under it, since a border is opaque, and the
-report names it (see "Translucent colours"). Three limits:
+report names it (see "Translucent colours"). A thicker line is drawn as a shape at
+its thickness, as a vertical one is, and holds its room where a rule would — in the
+flow, and among the text of a stack of one layer; composed in a table's cell it holds
+none, and the report says so. A rule composed in a table's cell
+(`DocumentTableCell.node(...)`) is written once, as its border, where the page draws
+it — centred where an `addAligned(...)` centres it in its cell — and its table, which
+draws what its composed cells paint as shapes, does not draw it again; where it is
+written in a panel or a row inside the cell, or another drawing of its kind and size
+there keeps the two from being told apart, both stay, and the report says it stands
+twice. Three limits:
 
 - A line laid over something else — a layer in a layer stack of two or more layers
   or a canvas, such as a skill meter's track and the fill over it — is not a rule in
@@ -1069,8 +1079,10 @@ measures it from. A page with no body paragraph — one laid out entirely in a
 table, as a two-column CV is — gets one: on the section's first page a paragraph a
 hairline tall opens before the table; on its last, the paragraph closing the section
 carries it; on any other page, the first paragraph of a cell on it does, where Word may
-print it clipped and the report says so, and a page with no paragraph at all drops it,
-reported too. A shape inside a filled panel is drawn in front of the text rather than
+print it clipped and the report says so, or, with none, the paragraph of a page break
+ending the page, which stands on it; and a page with no paragraph at all — a shape
+filling a page the next block leaves for the one after — drops it, the note on the shape
+saying it is not in the document. A shape inside a filled panel is drawn in front of the text rather than
 behind it, since a panel is a table cell and both editors paint a cell's shading over what
 lies behind the text — unless it frames a line of text or a picture on the page, as a ring
 round a photo does, which stays behind what it frames and hidden; a filled table cell counts

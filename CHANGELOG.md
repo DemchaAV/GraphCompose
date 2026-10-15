@@ -8,6 +8,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes a rule in a table's cell once, draws a line thicker than a border,
+  and anchors a shape alone before a page break.** A rule composed in a table cell
+  (`DocumentTableCell.node(...)`) was written as its paragraph's border and drawn again by its
+  table, which draws what its composed cells paint: every line in such a cell came out twice,
+  and one centred in its cell — in `addAligned(...)` — was drawn centred and written again at
+  the cell's left. The rule now takes its drawing, written where the page draws it. Where it is
+  written in a panel or a row inside its cell, or another drawing of its kind and size in the
+  cell keeps the two from being told apart, both stay, and the report says it stands twice. A
+  horizontal line stroked thicker than 12pt, Word's thickest border, was written as a 12pt
+  border, and what followed stood over it; it is drawn as a shape at its thickness, holding its
+  room in the flow and among the text of a stack of one layer — composed in a table cell it
+  holds none, and the report says so. A shape alone on a page before a page break was dropped,
+  its note saying it was drawn: the break's paragraph, on that page, now carries it. A drawing
+  on a page no paragraph is written on at all is still dropped, and its note now says so, on the
+  node, where it had said the drawing was there.
 - **A DOCX export's report names a layer written under the layers the page lays it over.** Word
   writes one block under another, so a layer stack's layers are written one after the other —
   as one band, or one after another in a column's cell — each resuming the page's distance below

@@ -130,6 +130,21 @@ class DocxExportReportTest {
         assertThat(note.toString()).isEqualTo("DROPPED chart at Body[0]/Revenue[2]: no analogue");
     }
 
+    @Test
+    void aNoteIsReplacedOnlyFromWhereItsSectionStartsAndEveryTimeItIsSaid() {
+        // Paths are a section's own: the same path in an earlier section is another node.
+        DocxExportReport.Builder builder = new DocxExportReport.Builder();
+        builder.add(DocxExportReport.Severity.APPROXIMATED, "ShapeNode", "Root[0]/Bar[0]", "drawn");
+        int section = builder.size();
+        builder.add(DocxExportReport.Severity.APPROXIMATED, "ShapeNode", "Root[0]/Bar[0]", "drawn");
+        builder.add(DocxExportReport.Severity.APPROXIMATED, "ShapeNode", "Root[0]/Bar[0]", "drawn again");
+        builder.replace(section, DocxExportReport.Severity.DROPPED, "ShapeNode", "Root[0]/Bar[0]", "gone");
+        builder.replace(section, DocxExportReport.Severity.DROPPED, "ShapeNode", "Root[0]/Rule[1]", "never named");
+
+        assertThat(builder.build().notes()).extracting(DocxExportReport.Note::detail)
+                .containsExactly("drawn", "gone", "gone", "never named");
+    }
+
     private static DocxExportReport reportOf(Consumer<PageFlowBuilder> content) throws Exception {
         AtomicReference<DocxExportReport> captured = new AtomicReference<>();
         try (DocumentSession session = session(content)) {

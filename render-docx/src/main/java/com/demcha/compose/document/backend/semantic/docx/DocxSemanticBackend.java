@@ -442,9 +442,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The drawings the composed cells of the table being written paint, not yet anchored, in the
     // order the layout emitted them; null outside such a table (see anchorComposedDrawing).
     private List<CellFragment> tableDrawings;
+    // The note what is drawn now is drawn for: one the section's end finds nothing to carry is
+    // named there instead (endSection). Null where no note names it.
+    private DocxDrawingAnchors.Owner drawingFor;
+    // Where the section being written starts in the report: its notes' paths are its own.
+    private int sectionNotesFrom;
+    // Those of them a rule composed in a cell took, written as its border instead (takeTheDrawingOf).
+    private java.util.Set<CellFragment> takenByRules = java.util.Set.of();
     // Where the layout placed the cell of that table being written, first placement first; empty
     // outside one.
     private List<DocxLayoutMetrics.CellBox> composedCellBoxes = List.of();
+    // The Word cell that composed cell is written in, null outside one; and whether its row is a
+    // header repeated on every page the table runs onto, its later boxes copies of its first.
+    private XWPFTableCell composedCell;
+    private boolean composedCellRepeats;
+    // The rules that composed cell writes, in the order it writes them, and how many it has.
+    private List<DocumentNode> composedCellRules = List.of();
+    private int composedRulesWritten;
     // The shapes composed in a cell that anchorComposedDrawing anchored there, so not lost.
     private final java.util.Set<DocumentNode> anchoredInCells =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -1088,7 +1102,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         clipContainer = null;
         cellDrawing = CellDrawing.NONE;
         tableDrawings = null;
+        takenByRules = java.util.Set.of();
         composedCellBoxes = List.of();
+        composedCell = null;
+        composedCellRepeats = false;
+        composedCellRules = List.of();
+        composedRulesWritten = 0;
         anchoredInCells.clear();
         panelCell = null;
         moves.clear();
@@ -1158,10 +1177,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // Drawing the layout paints in a pass of its own — a timeline's rail — belongs to
                 // no node, so it waits for the first paragraph on its page.
                 for (com.demcha.compose.document.layout.PlacedFragment pass : layout.passFragments()) {
+                    drawingFor = new DocxDrawingAnchors.Owner("timeline rail", pass.path());
                     if (queueDrawing(pass, drawsInFront())) {
                         report.add(DocxExportReport.Severity.APPROXIMATED, "timeline rail", pass.path(),
                                 "drawn as a line where the layout puts it, " + ANCHORED_BESIDE_ITS_TEXT);
                     }
+                    drawingFor = null;
                 }
                 List<DocumentNode> roots = section.graph().roots();
                 for (int root = 0; root < roots.size(); root++) {
@@ -1216,6 +1237,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void beginSection(SemanticSection section, int index) {
         sectionIndex = index;
+        sectionNotesFrom = report.size();
         SemanticExportContext context = section.context();
         layout = DocxLayoutMetrics.of(section.graph(), context.layoutGraph());
         if (layout.isEmpty()) {
@@ -3499,7 +3521,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             x -= spare;
         }
         anchors.queue(List.of(DocxDrawings.Shape.textBox(x, top, width + spare, height, placed.startPage(),
-                paragraphXml(para))));
+                paragraphXml(para))), new DocxDrawingAnchors.Owner(node.nodeKind(), layout.pathOf(node)));
         List<String> lost = new ArrayList<>();
         lost.add("laid over the flow, which gives it no room: set in a text box where the page sets it");
         lost.addAll(paragraphLost(node, roomLostInItsBox(node), null));
@@ -3702,8 +3724,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // it, and the rest is warned about once per kind, so a dropped path or icon is
             // visible in the log instead of silently missing.
             warnUnsupported(node);
-            // In the flow it still takes its room; over something else it takes none.
-            if (overlayDepth == 0 && isDrawing(node)) {
+            // In the flow it still takes its room; over something else it takes none. A line too
+            // thick to be a rule takes it where a rule would, among the text of a stack of one
+            // layer too (inTheFlow).
+            if (isDrawing(node) && (overlayDepth == 0
+                    || DocxRules.thickerThanABorder(node) && inTheFlow(node, overlayDepth, oneLayerDepth))) {
                 holdTheSpaceOf(node);
             }
         }
@@ -3727,6 +3752,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             List<String> lost = new ArrayList<>(carriedWithout(node, true, false));
             if (cornersDiffer(node)) {
                 lost.add(0, CORNERS_AT_THE_LARGEST);
+            }
+            if (DocxRules.thickerThanABorder(node) && inTheFlow(node, overlayDepth, oneLayerDepth)) {
+                // A rule would hold its room in the cell; a drawing there holds none.
+                lost.add(0, "stroked thicker than Word's thickest border, it is drawn rather than written as "
+                            + "a rule, and takes no room in its cell");
             }
             if (!lost.isEmpty()) {
                 report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
@@ -4026,6 +4056,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @return whether the node painted anything a shape shows
      */
     private boolean drawOwnFragments(DocumentNode node) {
+        // What it draws is drawn for its note, which says otherwise where nothing carries it.
+        DocxDrawingAnchors.Owner outerOwner = drawingFor;
+        drawingFor = new DocxDrawingAnchors.Owner(node.nodeKind(), layout.pathOf(node));
+        try {
+            return drawAndNameOwnFragments(node);
+        } finally {
+            drawingFor = outerOwner;
+        }
+    }
+
+    private boolean drawAndNameOwnFragments(DocumentNode node) {
         boolean overlayFront = drawsInFront();
         boolean front = false;
         boolean drew = false;
@@ -4193,7 +4234,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             drewInCell = true;
             return true;
         }
-        anchors.queue(shapes);
+        anchors.queue(shapes, drawingFor);
         return !shapes.isEmpty();
     }
 
@@ -4351,6 +4392,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         leftovers.dropped().forEach((page, count) -> report.add(DocxExportReport.Severity.DROPPED, "drawing",
                 where + "page " + (page + 1),
                 count + " shape(s) on a page no paragraph was written on, so nothing carries them"));
+        // What a note said was drawn, and nothing carries, the note now says is not in the file.
+        leftovers.owners().forEach((owner, whole) -> {
+            if (whole) {
+                report.replace(sectionNotesFrom, DocxExportReport.Severity.DROPPED, owner.subject(), owner.path(),
+                        "it stands on a page no paragraph is written on, and Word anchors a drawing in a "
+                        + "paragraph on its page: nothing carries it, so it is not in the document");
+            } else {
+                report.add(DocxExportReport.Severity.DROPPED, owner.subject(), owner.path(),
+                        "part of what it is drawn as stands on a page no paragraph is written on, and Word "
+                        + "anchors a drawing in a paragraph on its page: nothing carries that part, so it is not "
+                        + "in the document");
+            }
+        });
     }
 
     /**
@@ -12405,7 +12459,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         DocxDrawings.Shape picture = DocxDrawings.Shape.picture(x, top, width, height, placed.startPage(),
                 relationship);
         drewInCell = false;
-        queueDrawings(List.of(picture), inFront);
+        DocxDrawingAnchors.Owner outerOwner = drawingFor;
+        drawingFor = new DocxDrawingAnchors.Owner(image.nodeKind(), layout.pathOf(image));
+        try {
+            queueDrawings(List.of(picture), inFront);
+        } finally {
+            drawingFor = outerOwner;
+        }
         StringBuilder message = new StringBuilder(drewInCell
                 ? how + ", anchored in the table cell it fills, where the layout puts it in the cell: "
                   + "it moves with the row"
@@ -12488,20 +12548,34 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 : rule.fillsWidth() ? availableWidth() - sideLeft - sideRight : rule.boxWidth();
         double to = rule.fillsWidth() ? boxWidth : Math.min(rule.endX(), boxWidth);
         double from = Math.min(Math.max(0, rule.startX()), Math.max(0, to));
+        // Composed in a table's cell, the rule is drawn by its table as well (drawCellDrawing):
+        // the rule takes that drawing, which is not drawn again.
+        CellRule drawnAs = takeTheDrawingOf(node, rule);
 
         XWPFParagraph para = newBodyParagraph(document);
         applyVerticalSpacing(para, node);
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
-        // A rule in a container hanging left starts out past the margin with its text.
-        indent.setLeft(BigInteger.valueOf(leftIndentTwips(insetLeft + sideLeft + from)));
         // The right end is placed against the width the rule is written in, when that width is
         // known: a cell whose grid this export did not write has none, and measuring against the
         // page there put the rule's end past the cell's.
         boolean widthKnown = currentCell != null ? Double.isFinite(currentCellWidth) : contentWidth < Double.MAX_VALUE;
-        if (widthKnown) {
-            double rightGap = availableWidth() - sideLeft - to;
-            indent.setRight(BigInteger.valueOf(toTwips(insetRight + Math.max(0, rightGap))));
+        if (drawnAs != null) {
+            // Written in the cell itself, it runs where that drawing does, between the cell's
+            // margins: a composed cell's content has no place of its own, and the alignment or the
+            // width the layout gave a line there was lost — a line centred in its cell came out at
+            // the cell's left.
+            double textLeft = drawnAs.box().left() + cellMarginOf(currentCell, true);
+            double textRight = drawnAs.box().right() - cellMarginOf(currentCell, false);
+            indent.setLeft(BigInteger.valueOf(leftIndentTwips(drawnAs.start() - textLeft)));
+            indent.setRight(BigInteger.valueOf(toTwips(Math.max(0, textRight - drawnAs.end()))));
+        } else {
+            // A rule in a container hanging left starts out past the margin with its text.
+            indent.setLeft(BigInteger.valueOf(leftIndentTwips(insetLeft + sideLeft + from)));
+            if (widthKnown) {
+                double rightGap = availableWidth() - sideLeft - to;
+                indent.setRight(BigInteger.valueOf(toTwips(insetRight + Math.max(0, rightGap))));
+            }
         }
 
         // A border is opaque, so a translucent rule is flattened against what the page paints under
@@ -12761,6 +12835,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         CellDrawing outerCellDrawing = cellDrawing;
         List<CellFragment> outerDrawings = tableDrawings;
+        java.util.Set<CellFragment> outerRuleDrawings = takenByRules;
         CellDrawing drawn = drawCellDrawing(node);
         List<com.demcha.compose.document.layout.PlacedFragment> skipped = new ArrayList<>(outerCellDrawing.skipped());
         skipped.addAll(drawn.skipped());
@@ -12768,17 +12843,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 outerCellDrawing.strayed() || drawn.strayed(), List.of());
         if (!drawn.pending().isEmpty()) {
             tableDrawings = new ArrayList<>(drawn.pending());
+            takenByRules = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         }
         try {
             writeTableRows(document, node);
         } finally {
             // What no cell took is drawn where the page puts it, in the order the table paints it.
             if (tableDrawings != outerDrawings) {
+                DocxDrawingAnchors.Owner table = new DocxDrawingAnchors.Owner("cell drawing", layout.pathOf(node));
                 for (CellFragment waiting : tableDrawings) {
-                    anchors.queueOrdered(waiting.shapes());
+                    anchors.queueOrdered(waiting.shapes(), table);
                 }
             }
+            // Drawn as shapes is what its rules did not take: those are written as rules.
+            java.util.Set<CellFragment> rules = takenByRules;
+            if (drawn.pending().stream().anyMatch(waiting -> !waiting.shapes().isEmpty() && !rules.contains(waiting))) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, "cell drawing", layout.pathOf(node),
+                        "what its cells draw is drawn as shapes where the layout puts it — anchored in the "
+                        + "cell a drawing is all of, and otherwise " + ANCHORED_BESIDE_ITS_TEXT
+                        + "; a transform, a gradient or a dash on it is not carried");
+            }
             tableDrawings = outerDrawings;
+            takenByRules = outerRuleDrawings;
             cellDrawing = outerCellDrawing;
         }
     }
@@ -12909,13 +12995,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 drew |= !shapes.isEmpty();
             }
         }
-        if (drew) {
-            report.add(DocxExportReport.Severity.APPROXIMATED, "cell drawing", layout.pathOf(table),
-                    "what its cells draw is drawn as shapes where the layout puts it — anchored in the "
-                    + "cell a drawing is all of, and otherwise " + ANCHORED_BESIDE_ITS_TEXT
-                    + "; a transform, a gradient or a dash on it is not carried");
-            // A clip its cells set is named where it cuts something (reportClipCut).
-        }
+        // What it draws is named once its rules have taken theirs (writeTable), and a clip its
+        // cells set where it cuts something (reportClipCut).
         // A box framing text that reaches into none of the table's rows stands in no cell: which
         // cell's node it is the report cannot tell, and every cell then counts it.
         boolean strayed = skipped.stream().anyMatch(box -> fragments.stream().noneMatch(row ->
@@ -13024,6 +13105,163 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         tableDrawings.removeIf(taken::contains);
+    }
+
+    /**
+     * The drawing a rule composed in a table's cell is drawn as by its table, taken from the
+     * drawings waiting to be anchored so that it is not drawn a second time, or {@code null}
+     * where the rule is not composed in a cell, or its table drew nothing for it.
+     *
+     * <p>A composed cell's content has no place of its own: its table draws what it paints as
+     * shapes where the page does (see {@link #drawCellDrawing}), its rules among them. Written
+     * as a paragraph's border too, every line in such a cell came out twice in Word — one under
+     * the other where both ran the cell's width, and a line centred in its cell drawn centred
+     * and written again at the cell's left. The rule's drawing is the first still waiting in its
+     * cell that a rule this thick would draw — a level line, or a bar — in the order the layout
+     * emitted them, which is the order the cell's content is written in (see
+     * {@link DocxCellDrawings}); a header repeated on every page repeats its rule with it, so
+     * the copy in each later box is taken too.</p>
+     *
+     * <p>It is taken only where nothing else can be it: as many drawings like it wait in the cell
+     * as rules like it are left to write there, this one first, and the rule is written in the
+     * cell itself, where that drawing places it. Otherwise both stay, and the report says the
+     * rule stands twice: a drawing of the same kind and size laid over something earlier in the
+     * cell would be taken for it and lost, and a rule in a panel or a row inside the cell is not
+     * placed from its drawing.</p>
+     */
+    private CellRule takeTheDrawingOf(DocumentNode node, DocxRules.Rule rule) {
+        if (tableDrawings == null || composedCellBoxes.isEmpty() || !composedInACell(node)) {
+            return null;
+        }
+        // The cell's rules are written in the order they were found in it, this one next.
+        boolean next = composedRulesWritten < composedCellRules.size()
+                       && composedCellRules.get(composedRulesWritten) == node;
+        List<DocumentNode> rulesLeft = next
+                ? composedCellRules.subList(composedRulesWritten, composedCellRules.size()) : List.of();
+        if (next) {
+            composedRulesWritten++;
+        }
+        // A rule reaching past its cell is drawn there all the same, and counts: one held by the
+        // cell alone would leave another drawing alike to be taken for it.
+        List<CellFragment> alike = new ArrayList<>();
+        for (DocxLayoutMetrics.CellBox box : composedCellBoxes) {
+            alike.addAll(drawingsOf(waitingOver(box), node, rule));
+            if (composedCellRepeats) {
+                // Its later boxes are copies of the first.
+                break;
+            }
+        }
+        if (alike.isEmpty()) {
+            return null;
+        }
+        long rulesAlike = rulesLeft.stream().filter(other -> drawnAlike(node, rule, other)).count();
+        if (currentCell != composedCell || alike.size() != rulesAlike) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
+                    "composed in a table cell, it is written as a paragraph's border and drawn by its table, "
+                    + "which draws what its composed cells paint, as well: "
+                    + (currentCell != composedCell
+                       ? "written in a panel or a row inside its cell, it is not placed from that drawing"
+                       : "this export does not tell that drawing apart from another in the cell")
+                    + ", so it stands twice in Word");
+            return null;
+        }
+        CellFragment own = alike.get(0);
+        DocxLayoutMetrics.CellBox ownBox = composedCellBoxes.stream()
+                .filter(box -> box.overlaps(own.fragment())).findFirst().orElse(composedCellBoxes.get(0));
+        java.util.Set<CellFragment> taken = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        taken.add(own);
+        if (composedCellRepeats) {
+            for (DocxLayoutMetrics.CellBox repeat : composedCellBoxes) {
+                if (repeat.page() > ownBox.page()) {
+                    drawingsOf(waitingOver(repeat), node, rule).stream().findFirst().ifPresent(taken::add);
+                }
+            }
+        }
+        tableDrawings.removeIf(taken::contains);
+        takenByRules.addAll(taken);
+        com.demcha.compose.document.layout.PlacedFragment fragment = own.fragment();
+        if (fragment.payload() instanceof com.demcha.compose.document.layout.payloads.LineFragmentPayload line) {
+            double start = fragment.x() + Math.min(line.startX(), line.endX());
+            return new CellRule(ownBox, start, start + Math.abs(line.endX() - line.startX()));
+        }
+        return new CellRule(ownBox, fragment.x(), fragment.x() + fragment.width());
+    }
+
+    /**
+     * Where a rule composed in a table's cell is drawn, measured across the page.
+     *
+     * @param box   the box the layout placed the rule's cell in, where its drawing stands
+     * @param start where the rule starts, from the page's left edge, in points
+     * @param end   where it ends
+     */
+    private record CellRule(DocxLayoutMetrics.CellBox box, double start, double end) {
+    }
+
+    /**
+     * A cell's waiting drawings that draw a rule of a node's kind and thickness, in their order:
+     * a level line as long as the node's, or a bar. A bar is as wide as the layout makes it — a
+     * lone one fills its cell — and so is a line running to the end of whatever width it is given.
+     */
+    private static List<CellFragment> drawingsOf(List<CellFragment> waiting, DocumentNode node, DocxRules.Rule rule) {
+        List<CellFragment> drawings = new ArrayList<>();
+        for (CellFragment candidate : waiting) {
+            com.demcha.compose.document.layout.PlacedFragment fragment = candidate.fragment();
+            if (DocxCellDrawings.drawnKind(fragment) != node.getClass()) {
+                continue;
+            }
+            boolean drawsIt = fragment.payload() instanceof com.demcha.compose.document.layout.payloads.LineFragmentPayload line
+                    ? Math.abs(line.startY() - line.endY()) <= 1e-6 && line.stroke() != null
+                      && Math.abs(line.stroke().width() - rule.thickness()) < RULE_MATCH_POINTS
+                      && (rule.fillsWidth()
+                          || Math.abs(Math.abs(line.endX() - line.startX()) - (rule.endX() - rule.startX())) < RULE_MATCH_POINTS)
+                    : Math.abs(fragment.height() - rule.thickness()) < RULE_MATCH_POINTS;
+            if (drawsIt) {
+                drawings.add(candidate);
+            }
+        }
+        return drawings;
+    }
+
+    /**
+     * Whether another rule's drawing would be among a rule's in {@link #drawingsOf}: of one kind
+     * and thickness, and a line of its length unless the rule runs to the end of its width — one
+     * that does is drawn as wide as the layout makes it.
+     */
+    private static boolean drawnAlike(DocumentNode node, DocxRules.Rule rule, DocumentNode other) {
+        DocxRules.Rule theirs = DocxRules.of(other);
+        if (theirs == null || other.getClass() != node.getClass()
+            || Math.abs(theirs.thickness() - rule.thickness()) >= RULE_MATCH_POINTS) {
+            return false;
+        }
+        return !(node instanceof com.demcha.compose.document.node.LineNode) || rule.fillsWidth()
+               || !theirs.fillsWidth()
+                  && Math.abs((theirs.endX() - theirs.startX()) - (rule.endX() - rule.startX())) < RULE_MATCH_POINTS;
+    }
+
+    /**
+     * Collects, in the order they are written, the leaves under a node that are written as rules:
+     * as {@link #holdsARule} reads them, starting inside the overlays the node is written in.
+     */
+    private static void collectRules(DocumentNode node, int overlays, int oneLayerOverlays, List<DocumentNode> rules) {
+        if (node.children().isEmpty()) {
+            if (inTheFlow(node, overlays, oneLayerOverlays) && DocxRules.of(node) != null) {
+                rules.add(node);
+            }
+            return;
+        }
+        int inside = overlays + (isOverlay(node) ? 1 : 0);
+        int insideOneLayer = oneLayerOverlays + (isOneLayer(node) ? 1 : 0);
+        for (DocumentNode child : node.children()) {
+            collectRules(child, inside, insideOneLayer, rules);
+        }
+    }
+
+    /** How far a drawing's thickness may part from a rule's and still be its, in points. */
+    private static final double RULE_MATCH_POINTS = 0.01;
+
+    /** The table's drawings still waiting that reach into one of its cells' boxes at all, in their order. */
+    private List<CellFragment> waitingOver(DocxLayoutMetrics.CellBox box) {
+        return tableDrawings.stream().filter(waiting -> box.overlaps(waiting.fragment())).toList();
     }
 
     /** The table's drawings still waiting that lie in one of its cells' boxes, in their order. */
@@ -13843,6 +14081,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                + marginPoints(margins.isSetRight() ? margins.getRight() : null);
     }
 
+    /** The margin Word keeps inside a cell's left or right edge, where its text starts or ends, in points. */
+    private static double cellMarginOf(XWPFTableCell cell, boolean left) {
+        CTTcPr properties = cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : null;
+        CTTcMar margins = properties != null && properties.isSetTcMar() ? properties.getTcMar() : null;
+        if (margins == null) {
+            return WORD_DEFAULT_CELL_MARGIN_POINTS;
+        }
+        return left ? marginPoints(margins.isSetLeft() ? margins.getLeft() : null)
+                : marginPoints(margins.isSetRight() ? margins.getRight() : null);
+    }
+
     private static double marginPoints(CTTblWidth margin) {
         Long twips = margin == null ? null : writtenTwips(margin.getW());
         return twips == null ? WORD_DEFAULT_CELL_MARGIN_POINTS : twips / POINT_TO_TWIP;
@@ -13890,6 +14139,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // exported it as an empty cell.
             double previous = currentCellWidth;
             List<DocxLayoutMetrics.CellBox> outerBoxes = composedCellBoxes;
+            XWPFTableCell outerCell = composedCell;
+            boolean outerRepeats = composedCellRepeats;
+            List<DocumentNode> outerRules = composedCellRules;
+            int outerRulesWritten = composedRulesWritten;
             currentCellWidth = usableWidthOf(cell, placement);
             tablesCells.add(cell.getCTTc());
             // A table nested in a composed cell has no rows of its own in the layout: its cells
@@ -13897,6 +14150,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             List<DocxLayoutMetrics.CellBox> boxes = layout.cellBoxes(node, placement.row(), placement.column());
             if (!boxes.isEmpty()) {
                 composedCellBoxes = boxes;
+                composedCell = cell;
+                composedCellRepeats = placement.row() < node.repeatedHeaderRowCount();
+                List<DocumentNode> rules = new ArrayList<>();
+                collectRules(source.content(), overlayDepth, oneLayerDepth, rules);
+                composedCellRules = rules;
+                composedRulesWritten = 0;
             }
             try {
                 writeCellBody(cell, source.content());
@@ -13906,6 +14165,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             } finally {
                 currentCellWidth = previous;
                 composedCellBoxes = outerBoxes;
+                composedCell = outerCell;
+                composedCellRepeats = outerRepeats;
+                composedCellRules = outerRules;
+                composedRulesWritten = outerRulesWritten;
             }
             nameTheBorderEndingACell(source.content(), TableGrid.columnCount(node) == 1);
             return;
@@ -17151,6 +17414,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         flushSpacingAfter();
         XWPFParagraph para = document.createParagraph();
         blocksWritten++;
+        // It stands on the page the break ends, and carries what is drawn there when nothing else
+        // written on that page does (DocxDrawingAnchors.breakOn): a shape alone before a break
+        // was dropped, its note saying it was drawn.
+        if (currentCell == null) {
+            anchors.breakOn(lastEndPage, para);
+        }
         XWPFRun run = para.createRun();
         run.addBreak(BreakType.PAGE);
         // Space owed from here on is above what the next page opens with. The paragraph before

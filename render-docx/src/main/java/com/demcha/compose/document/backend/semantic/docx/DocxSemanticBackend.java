@@ -8839,11 +8839,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writePanel(document, node, new ContainerPaint(node.fillColor(), bordersOf(null, node.stroke())));
             return;
         }
-        // The container's layers are written inline, in source order; a clip that cuts them is
-        // named where every container is written (reportClipCut), and a picture clipped to an
-        // ellipse takes the ellipse's shape.
-        report.add(DocxExportReport.Severity.APPROXIMATED, "shape container", layout.pathOf(node),
-                "its layers are written inline, one after another in source order");
         // The outline itself is drawing — a badge's circle, a ring round a portrait — and is
         // drawn where the page draws it, behind the layers now held in to where it sets them.
         drawOutlineOf(node);
@@ -8866,6 +8861,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         try {
             if (band != null) {
+                reportLayersWrittenInline(node);
                 writeOverlayBand(document, node, band);
                 return;
             }
@@ -8891,16 +8887,51 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             if (blocksWritten == blocksBefore) {
                 carriedSpacingBefore = carriedFromOutside;
+                if (holdsMovedContent(node) || paintsOutOfSourceOrder(node)) {
+                    // Its text, moved into an earlier layer's stand-in, is in the flow all the
+                    // same; and drawings are drawn in source order, where the page stacks them
+                    // by their z-index.
+                    reportLayersWrittenInline(node);
+                }
             } else {
                 carriedSpacingBefore = 0;
                 owePendingSpacingAfter(setIn[1] + node.padding().bottom() + node.margin().bottom());
                 hangBelowItsBox(node);
+                reportLayersWrittenInline(node);
             }
         } finally {
             insetLeft = outerLeft;
             insetRight = outerRight;
             clipContainer = outerClip;
         }
+    }
+
+    /**
+     * Names a shape container whose layers are written in the flow: one after another in source
+     * order, held in to where it sets them, rather than laid over its outline. A clip that cuts
+     * them is named where every container is written (reportClipCut), and a picture clipped to an
+     * ellipse takes the ellipse's shape. One that writes nothing — its layers all drawn where the
+     * page puts them, a tile or an icon — is not named, unless the page stacks its layers in
+     * another order than they are given ({@link #paintsOutOfSourceOrder}).
+     */
+    private void reportLayersWrittenInline(ShapeContainerNode node) {
+        report.add(DocxExportReport.Severity.APPROXIMATED, "shape container", layout.pathOf(node),
+                "its layers are written inline, one after another in source order");
+    }
+
+    /**
+     * Whether the page paints a node's layers in another order than they are given, as their
+     * z-index sets them: the export writes and draws them in the order given.
+     */
+    private static boolean paintsOutOfSourceOrder(DocumentNode node) {
+        List<DocumentNode> painted = inPaintOrder(node);
+        List<DocumentNode> given = node.children();
+        for (int index = 0; index < painted.size() && index < given.size(); index++) {
+            if (painted.get(index) != given.get(index)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

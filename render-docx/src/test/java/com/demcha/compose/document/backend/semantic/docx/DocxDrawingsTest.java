@@ -432,6 +432,14 @@ class DocxDrawingsTest {
         }
     }
 
+    /** A filled square holding a white dot: a tile that only draws. */
+    private static com.demcha.compose.document.node.DocumentNode tile(String name) {
+        return new ShapeContainerBuilder().name(name).rectangle(40, 40).fillColor(ACCENT)
+                .center(new com.demcha.compose.document.dsl.EllipseBuilder().circle(12)
+                        .fillColor(DocumentColor.WHITE).build())
+                .build();
+    }
+
     /** A navy disc holding an 11pt glyph, as a section title's badge. */
     private static com.demcha.compose.document.node.DocumentNode badge() {
         return new ShapeContainerBuilder().name("Badge").circle(22).fillColor(ACCENT)
@@ -890,6 +898,58 @@ class DocxDrawingsTest {
                     .toList();
             assertThat(messages).anyMatch(message -> message.contains("shading"))
                     .anyMatch(message -> message.contains("transform is not carried"));
+        }
+    }
+
+    @Test
+    void aContainerWhoseLayersAreAllDrawnIsNotSaidToWriteThemInline() throws Exception {
+        // A tile and a badge holding its icon write nothing in the flow: each layer stands drawn
+        // where the page draws it. Text is written in the flow, one layer after another, or as a
+        // band beside the drawing it is laid by.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument document = export(report, session -> session.pageFlow(page -> page
+                .addLayerStack(stack -> stack.name("Stack")
+                        .layer(tile("Tile"), LayerAlign.TOP_LEFT)
+                        .layer(new ParagraphBuilder().text("Beside the tile").build(), LayerAlign.TOP_RIGHT))
+                .add(new ShapeContainerBuilder().name("Note").rectangle(160, 40).fillColor(ACCENT)
+                        .center(new ParagraphBuilder().text("A line too long for a badge").build()).build())
+                .addContainer(band -> band.name("Header").rectangle(300, 30)
+                        .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                        .centerLeft(badge())
+                        .position(new ParagraphBuilder().name("Title").text("EXPERIENCE").build(),
+                                34, 0, LayerAlign.CENTER_LEFT))
+                .addTable(table -> table.columns(com.demcha.compose.document.table.DocumentTableColumn.fixed(100),
+                                com.demcha.compose.document.table.DocumentTableColumn.fixed(100))
+                        .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(tile("CellTile")),
+                                com.demcha.compose.document.table.DocumentTableCell.text("Beside")))))) {
+
+            assertThat(anchors(document.getDocument().xmlText()))
+                    .as("each tile's box and dot, the note's fill, the badge and its glyph").hasSize(7);
+            assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("shape container"))
+                    .extracting(DocxExportReport.Note::path)
+                    .satisfiesExactlyInAnyOrder(path -> assertThat(path).matches(".*/Note\\[\\d+]"),
+                            path -> assertThat(path).matches(".*/Header\\[\\d+]"));
+        }
+    }
+
+    @Test
+    void aContainerWhoseLayersThePageStacksInAnotherOrderIsStillNamed() throws Exception {
+        // The page lays the disc over the dot by their z-index; the export draws them in the
+        // order given, the dot over the disc.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument ignored = export(report, session -> session.pageFlow(page -> page
+                .addLayerStack(stack -> stack.name("Stack")
+                        .layer(new ShapeContainerBuilder().name("Stacked").rectangle(40, 40)
+                                .layer(new com.demcha.compose.document.dsl.EllipseBuilder().circle(36)
+                                        .fillColor(ACCENT).build(), LayerAlign.CENTER, 1)
+                                .layer(new com.demcha.compose.document.dsl.EllipseBuilder().circle(8)
+                                        .fillColor(DocumentColor.WHITE).build(), LayerAlign.CENTER, 0)
+                                .build(), LayerAlign.TOP_LEFT)
+                        .layer(new ParagraphBuilder().text("Beside the stack").build(), LayerAlign.TOP_RIGHT))))) {
+
+            assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("shape container"))
+                    .extracting(DocxExportReport.Note::path)
+                    .singleElement().asString().matches(".*/Stacked\\[\\d+]");
         }
     }
 

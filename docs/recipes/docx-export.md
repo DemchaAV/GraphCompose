@@ -125,11 +125,11 @@ update fields — to recompute numbers that already read correctly.
 
 A page reference to an anchor the export writes no bookmark for — a drawn shape's, or a
 section's that holds only shapes the export draws and so writes no paragraph to put one
-round — is written
-as the text the page prints, a number no edit updates, and its report note says so: Word turns
-a `PAGEREF` to a missing bookmark into "Error! Bookmark not defined." the first time it
-updates. Each field is checked against the bookmarks the file holds once the body is written,
-so a reference before its anchor is checked too.
+round — is written as the text the page prints, a number no edit updates, and its report note
+says so: Word turns a `PAGEREF` to a missing bookmark into "Error! Bookmark not defined." the
+first time it updates. Each field is named after the bookmark its anchor was written under,
+or taken back to its text, once the body is written, so a reference before its anchor is
+settled too.
 
 ## Several sections in one document
 

@@ -10,6 +10,7 @@ import com.demcha.compose.document.node.PageReferenceNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.openxml4j.opc.PackagingURIHelper;
@@ -135,7 +136,7 @@ class DocxPageReferenceTest {
         // Bookmark not defined." once Word updates it.
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
         try (XWPFDocument document = export(page -> page
-                .addPageReference("logo")
+                .addPageReference("logo", DocumentTextStyle.DEFAULT.withSize(9), TextAlign.LEFT)
                 // One its margin already has a note for: the note gains what the field lost.
                 .add(new PageReferenceNode("", "logo", null, TextAlign.LEFT, "", DocumentInsets.zero(),
                         new DocumentInsets(0, 0, 0, 12)))
@@ -150,6 +151,12 @@ class DocxPageReferenceTest {
                 assertThat(reference.getText()).as("the page the layout resolved, as text").isEqualTo("1");
                 assertThat(reference.getCTP().xmlText()).doesNotContain("fldChar").doesNotContain("instrText");
             }
+            // The paragraph also carries the cell's drawing, anchored on its page.
+            assertThat(document.getParagraphs().get(0).getRuns())
+                    .as("the number keeps its run and the run its style")
+                    .filteredOn(run -> run.text() != null && !run.text().isEmpty())
+                    .singleElement()
+                    .satisfies(run -> assertThat(run.getFontSizeAsDouble()).isEqualTo(9.0));
             String noBookmark = "its anchor has no bookmark in the Word file, so its page number is written as "
                                 + "text that an edit does not update";
             assertThat(report.get().notes())
@@ -163,18 +170,39 @@ class DocxPageReferenceTest {
     }
 
     @Test
-    void aFieldIsKeptOnlyOnTheBookmarkWrittenForItsOwnAnchor() throws Exception {
-        // "a." cleans to the name "a" has, so it is minted "a_2" — the name the anchor "a_2" is
-        // given too. A field on "a_2" for "a." would land on the other anchor's page.
+    void aReferenceNamesNoBookmarkOfItsOwnAndTakesNoNameFromAnother() throws Exception {
+        // "a." cleans to the name "a" has. Had the reference been given a name, "a." would have
+        // taken "a" and pushed the anchor "a" to "a_2" — the name the anchor "a_2" is given too.
         try (XWPFDocument document = export(page -> page
-                .addParagraph(p -> p.text("One").anchor("a"))
                 .addPageReference("a.")
+                .addParagraph(p -> p.text("One").anchor("a"))
                 .addParagraph(p -> p.text("Two").anchor("a_2")))) {
 
-            assertThat(bookmarkNames(document)).contains("a", "a_2");
+            assertThat(bookmarkNames(document))
+                    .as("each anchor its own name, none taken twice")
+                    .containsExactly("a", "a_2");
             assertThat(pageReferences(document))
                     .as("no anchor \"a.\" in the file: no field, whatever bookmark shares its name")
                     .isEmpty();
+        }
+    }
+
+    @Test
+    void aReferenceToALayerStacksColumnIsWrittenAsTheNumberItReads() throws Exception {
+        // A column of a layer stack is written as what it holds, with no bookmark round it.
+        try (XWPFDocument document = export(page -> page
+                .addPageReference("left")
+                .addLayerStack(stack -> stack
+                        .layer(new SectionBuilder().anchor("left")
+                                .margin(new DocumentInsets(0, 140, 0, 0)).addParagraph("Left").build(),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                        .layer(new SectionBuilder()
+                                .margin(new DocumentInsets(0, 0, 0, 130)).addParagraph("Right").build(),
+                                com.demcha.compose.document.node.LayerAlign.TOP_LEFT)))) {
+
+            assertThat(bookmarkNames(document)).doesNotContain("left");
+            assertThat(pageReferences(document)).isEmpty();
+            assertThat(document.getParagraphs().get(0).getText()).isEqualTo("1");
         }
     }
 

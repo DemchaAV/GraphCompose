@@ -231,6 +231,35 @@ class DocxMultiSectionTest {
     }
 
     @Test
+    void aPageReferenceToAnAnchorInALaterSectionIsAField() throws Exception {
+        // The reference is written with the cover, its anchor's bookmark with the body after it.
+        DocumentSession cover = session(300, 400, 24);
+        cover.pageFlow(page -> page.addPageReference("intro"));
+        try (XWPFDocument document = export(cover, landscapeBody())) {
+            assertThat(document.getDocument().xmlText()).contains("PAGEREF intro \\h");
+        }
+    }
+
+    @Test
+    void aFaceSetOnlyInALaterSectionsZoneTravels() throws Exception {
+        // The font table is written with the first section, before the second's zones are.
+        DocumentSession body = landscapeBody();
+        body.chrome().zone(DocumentPageZone.header(30, page -> new com.demcha.compose.document.dsl.ParagraphBuilder()
+                .text("Acme").textStyle(com.demcha.compose.document.style.DocumentTextStyle.builder()
+                        .fontName(com.demcha.compose.font.FontName.BARLOW).size(10).build())
+                .build()));
+        try (XWPFDocument document = export(cover(), body)) {
+            org.apache.poi.openxml4j.opc.PackagePart table = document.getPackage().getPart(
+                    org.apache.poi.openxml4j.opc.PackagingURIHelper.createPartName("/word/fontTable.xml"));
+            assertThat(table).as("the document carries a font table").isNotNull();
+            try (java.io.InputStream in = table.getInputStream()) {
+                assertThat(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8))
+                        .contains("w:name=\"Barlow\"");
+            }
+        }
+    }
+
+    @Test
     void theMetadataIsTheFirstSectionsThatStatesAny() throws Exception {
         DocumentSession body = landscapeBody();
         body.metadata(DocumentMetadata.builder().title("Annual report").build());

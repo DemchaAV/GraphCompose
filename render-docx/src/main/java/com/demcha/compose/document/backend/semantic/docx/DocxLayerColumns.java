@@ -94,7 +94,8 @@ final class DocxLayerColumns {
          *
          * @param layer a layer of the stack
          * @return the points, or 0 where the page starts it under them — or above them by no
-         *         more than {@link #EDGE}, a layer touching the one above it
+         *         more than {@link #EDGE}, a layer touching the one above it — and where it opens
+         *         its cell, or it or the layers before it write nothing
          */
         double over(DocumentNode layer) {
             return over.getOrDefault(layer, 0.0);

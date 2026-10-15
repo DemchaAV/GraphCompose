@@ -830,9 +830,11 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   how far above their end the page starts its highest block, a panel among them ending
   at its box's foot. A badge drawn over them is named for the line its initials hold
   there. So is a layer over the one before it in a column's cell. A layer stack
-  composed in a table cell has no place of its own, so it is no band: its layers are
-  written one after another, and its note says whether the page lays one over another
-  is not measured.
+  composed in a table cell, or exported with no layout, has no place of its own, so it
+  is no band: its layers are written one after another, and where more than one of
+  them writes in the flow, its note says whether the page lays one over another is not
+  measured. A layer the page starts under the layers before it, but nearer them than
+  its own margin above it, is written that margin below them, unnamed.
 - **Text at the left and the right of one band → one line split by a tab.** A
   container or a layer stack holding exactly two single-line paragraphs, level with
   one another and apart across the page — a CV entry's title and its dates — is one

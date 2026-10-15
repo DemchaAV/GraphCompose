@@ -15075,7 +15075,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     pullBelow = 0;
                     resumeSpacing = resume + raised;
                 }
-                reportWrittenUnderTheLayersBefore(layers.get(index), band.over(layers.get(index)), "stack");
+                reportWrittenUnderTheLayersBefore(layers.get(index), band.over(layers.get(index)),
+                        stack instanceof ShapeContainerNode ? "shape container" : "stack");
                 double bandLeft = insetLeft;
                 double bandRight = insetRight;
                 placeAcross(stack, layers.get(index));
@@ -15128,15 +15129,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * not the page's height where their width is not written; the note says how far the page
      * starts it above their end.</p>
      *
-     * @param above how far above their end the page starts it, in points; 0 where it does not
-     * @param among what the layers before it are measured in: its stack, or its column of one
+     * @param above how far above their end the page starts its highest block, in points; 0 where
+     *              it does not
+     * @param among what the layers before it are measured in: its stack, its shape container, or
+     *              its column of one
      */
     private void reportWrittenUnderTheLayersBefore(DocumentNode layer, double above, String among) {
         if (above > 0) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "overlapping layer", layout.pathOf(layer),
-                    "the page starts it " + pointsOf(above) + "pt above where the layers before it in its " + among
-                    + " end, and Word writes one block under another: what it writes in the flow is written under "
-                    + "them");
+                    "the page starts its highest block " + pointsOf(above) + "pt above where the layers before it "
+                    + "in its " + among + " end, and Word writes one block under another: what it writes in the "
+                    + "flow is written under them");
         }
     }
 

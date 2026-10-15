@@ -45,9 +45,9 @@ import static org.assertj.core.api.Assertions.within;
 class DocxOverlappingLayerTest {
 
     private static final String SUBJECT = "overlapping layer";
-    private static final Pattern DETAIL = Pattern.compile("the page starts it ([0-9.]+)pt above where the layers "
-            + "before it in its (stack|column) end, and Word writes one block under another: what it writes in the "
-            + "flow is written under them");
+    private static final Pattern DETAIL = Pattern.compile("the page starts its highest block ([0-9]+(?:\\.[0-9]+)?)pt "
+            + "above where the layers before it in its (stack|shape container|column) end, and Word writes one block "
+            + "under another: what it writes in the flow is written under them");
     private static final DocumentColor SURFACE = DocumentColor.rgb(238, 243, 249);
     private static final DocumentColor INK = DocumentColor.rgb(26, 86, 148);
 
@@ -205,6 +205,13 @@ class DocxOverlappingLayerTest {
                         .layer(new ShapeBuilder().size(10, 10).fillColor(SURFACE).build(), LayerAlign.CENTER)
                         .build()))
                 .build()));
+        Export labelled = export(page -> page.add(new TableBuilder().name("Labels")
+                .columns(DocumentTableColumn.fixed(240))
+                .rowCells(DocumentTableCell.node(new LayerStackBuilder().name("Labelled")
+                        .back(new ShapeBuilder().size(200, 40).fillColor(SURFACE).build())
+                        .center(new ParagraphBuilder().name("Label").text("Label").build())
+                        .build()))
+                .build()));
 
         assertThat(captioned.report().bySubject().get(SUBJECT)).extracting(DocxExportReport.Note::detail)
                 .containsExactly("its layers are written one after another, and with no place of its own in the "
@@ -212,6 +219,50 @@ class DocxOverlappingLayerTest {
                                  + "the page lays one over another is not measured");
         assertThat(drawn.report().bySubject()).as("drawing alone writes nothing in the flow")
                 .doesNotContainKey(SUBJECT);
+        assertThat(labelled.report().bySubject()).as("one layer written over a drawing lies over nothing written")
+                .doesNotContainKey(SUBJECT);
+    }
+
+    @Test
+    void aTitleOverTheBadgeBeforeItInAShapeContainerIsNamed() throws Exception {
+        // The container writes its title alone, its badge drawn: as a band, the line the badge's
+        // initials hold is written first and the title under it.
+        Export export = export(page -> page.add(new ShapeContainerBuilder().name("Header").rectangle(300, 40)
+                .clipPolicy(com.demcha.compose.document.style.ClipPolicy.OVERFLOW_VISIBLE)
+                .position(new ShapeContainerBuilder().name("Badge").circle(30).fillColor(INK)
+                        .center(new ParagraphBuilder().name("Initials").text("JR").build()).build(),
+                        0, 0, LayerAlign.TOP_LEFT)
+                .position(new ParagraphBuilder().name("Title").text("A title beside its badge").build(),
+                        40, 0, LayerAlign.TOP_LEFT)
+                .build()));
+
+        assertThat(export.notedAbove("Title", "shape container"))
+                .isCloseTo(top(export.placed("Title")) - export.placed("Initials").placementY(), within(0.01));
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(export.bytes()))) {
+            // The badge, its initials in it, is drawn anchored in the title's paragraph.
+            List<String> texts = document.getParagraphs().stream().map(XWPFParagraph::getText).toList();
+            assertThat(texts).hasSize(2);
+            assertThat(texts.get(0)).as("the line the initials hold, written before the title").isEmpty();
+            assertThat(texts.get(1)).endsWith("A title beside its badge");
+        }
+    }
+
+    @Test
+    void withNoLayoutAStackOfWrittenLayersIsNamedAsNotMeasured() throws Exception {
+        // A bare export has nothing to measure by: a stack writing two layers is named whether
+        // they overlap or not; one writing a single layer lays nothing written over another.
+        DocxExportReport report = DocxExports.reportWithoutLayout(400, 600, 20, page -> page
+                .addLayerStack(stack -> stack.name("Captioned")
+                        .layer(new ImageBuilder().name("Photo").source(png()).size(200, 100).build(), LayerAlign.TOP_LEFT)
+                        .layer(new ParagraphBuilder().name("Caption").text("Caption").build(), LayerAlign.BOTTOM_LEFT))
+                .addLayerStack(stack -> stack.name("Labelled")
+                        .back(new ShapeBuilder().size(200, 40).fillColor(SURFACE).build())
+                        .center(new ParagraphBuilder().name("Label").text("Label").build())));
+
+        assertThat(report.bySubject().get(SUBJECT)).extracting(DocxExportReport.Note::detail)
+                .containsExactly("its layers are written one after another, and with no place of its own in the "
+                                 + "layout — composed in a table cell, or with no layout behind the export — whether "
+                                 + "the page lays one over another is not measured");
     }
 
     @Test
@@ -295,7 +346,11 @@ class DocxOverlappingLayerTest {
             Matcher matcher = DETAIL.matcher(note.detail());
             assertThat(matcher.matches()).as(note.detail()).isTrue();
             assertThat(matcher.group(2)).isEqualTo(among);
-            return Double.parseDouble(matcher.group(1));
+            try {
+                return Double.parseDouble(matcher.group(1));
+            } catch (NumberFormatException notANumber) {
+                throw new AssertionError("no number of points in " + note.detail(), notANumber);
+            }
         }
     }
 

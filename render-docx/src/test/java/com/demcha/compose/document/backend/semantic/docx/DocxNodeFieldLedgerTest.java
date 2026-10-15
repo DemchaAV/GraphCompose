@@ -178,7 +178,7 @@ class DocxNodeFieldLedgerTest {
                 "anchor:WRITTEN");
         node(LayerStackNode.class, "name:INERT",
                 "layers:REPORTED:one the page starts above where the layers before it end, which is written under "
-                + "them; composed in a table cell or with no layout, all of them, not measured",
+                + "them; composed in a table cell or with no layout, more than one of them written, not measured",
                 "padding:WRITTEN", "margin:WRITTEN",
                 "clipToBounds:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table");
         node(LineNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "startX:WRITTEN", "startY:WRITTEN",

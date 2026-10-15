@@ -8,6 +8,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's report names a layer written under the layers the page lays it over.** Word
+  writes one block under another, so a layer stack's layers are written one after the other —
+  as one band, or one after another in a column's cell — each resuming the page's distance below
+  the layers before it. A layer the page starts above where those end — a caption over the foot
+  of its photo, a label in a card's corner, text over text, a title whose place an earlier layer
+  holds — has no distance below them to resume: what it writes in the flow was written under
+  them, and the report said nothing. It is now noted `overlapping layer`, with how far above their
+  end the page starts its highest block; a panel among them ends at its box's foot, past the
+  padding below its text. A layer within half a point of their end is taken for touching them. A
+  stack composed in a table cell has no place of its own and is no band: its layers are written
+  one after another, and it is noted with whether one lies over another not measured. None of
+  the corpus's 62 DOCX changes, nor its 1246 report notes: no layer of its stacks is set over the
+  ones before it, and none is composed in a cell.
 - **A DOCX export's report says a shape container's layers are written inline only where they
   are.** Every shape container not written as a panel was noted "its layers are written inline,
   one after another in source order", whatever it held. One whose layers are all drawing — a

@@ -3214,8 +3214,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             DocxLayerColumns.Plan columns = DocxLayerColumns.of(stack, layout,
                     candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
                                  && paintOf(candidate).isEmpty(),
-                    candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
-                                 && !paintOf(candidate).isEmpty(),
+                    DocxSemanticBackend::paintsAPanel,
                     this::drawnOverTheColumns);
             if (columns != null) {
                 // Side by side, nothing in the stack overlaps: it is not an overlay.
@@ -3548,7 +3547,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         if (node instanceof com.demcha.compose.document.node.LayerStackNode
             || node instanceof ShapeContainerNode && writesOneLayer(node)) {
-            DocxLayerColumns.Band band = DocxLayerColumns.band(node, layout, drawnIn(node));
+            DocxLayerColumns.Band band = DocxLayerColumns.band(node, layout, drawnIn(node),
+                    DocxSemanticBackend::paintsAPanel);
             if (band != null) {
                 if (node instanceof ShapeContainerNode container) {
                     writeShapeContainer(document, container, band);
@@ -5912,6 +5912,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Nothing takes a wrapper's last line's overhang from the gap under it, as
         // hangBelowItsBox does a shape container's, so that line keeps its own height.
         holdStackedLines(node.children(), Double.NaN);
+        if (node instanceof com.demcha.compose.document.node.LayerStackNode stack && stack.layers().size() > 1
+            && layout.placement(node) == null && !writesOneLayer(node)) {
+            // A stack with no place of its own is no band and no columns (writeNodeContentOf): its
+            // layers are written one after another, and where the page lays them is not measured.
+            report.add(DocxExportReport.Severity.APPROXIMATED, "overlapping layer", layout.pathOf(node),
+                    "its layers are written one after another, and with no place of its own in the layout — "
+                    + "composed in a table cell, or with no layout behind the export — whether the page lays one "
+                    + "over another is not measured");
+        }
         ContainerPaint paint = paintOf(node);
         // A panel the layout placed is a table that wide; an unpainted box is only its contents,
         // and its paragraphs and lists run the width its margins leave them, as does a panel
@@ -7368,6 +7377,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private boolean composedInACell(DocumentNode node) {
         return !layout.isEmpty() && layout.placement(node) == null && layout.ownFragments(node).isEmpty();
+    }
+
+    /** Whether a node is a section or a container that paints, which is written as a panel. */
+    private static boolean paintsAPanel(DocumentNode node) {
+        return (node instanceof SectionNode || node instanceof ContainerNode) && !paintOf(node).isEmpty();
     }
 
     /** Reads the fill and borders off whichever wrapper kind this is, or an empty paint. */
@@ -14925,6 +14939,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                                + "lists run the width of its column");
                             }
                             reportWrittenWithout(node, "written as a column of its layer stack", columnLost);
+                            reportWrittenUnderTheLayersBefore(node, plan.over(node), "column");
                             writeChildren(document, node.children(), spacingOf(node));
                             if (layer > 0 && blocksWritten == blocksBefore && !holdsMovedContent(node)) {
                                 // A later layer that wrote nothing leaves the line above it raised:
@@ -15060,6 +15075,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     pullBelow = 0;
                     resumeSpacing = resume + raised;
                 }
+                reportWrittenUnderTheLayersBefore(layers.get(index), band.over(layers.get(index)), "stack");
                 double bandLeft = insetLeft;
                 double bandRight = insetRight;
                 placeAcross(stack, layers.get(index));
@@ -15098,6 +15114,30 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pendingSpacingAfter = Math.max(0, below);
         hangingBelow = below < 0 ? -below : 0;
         linesRoundingCarry = 0;
+    }
+
+    /**
+     * Names a layer of a stack the page starts above where the content of the layers before it
+     * ends — over that content, beside it or above it — whose writing in the flow Word sets under
+     * them, as it writes one block under another ({@link DocxLayerColumns.Plan#over}). A caption
+     * the page sets over the foot of its photo is written under the photo, a label in a card's
+     * corner under the card, and the line a badge's initials hold in a band under the layers
+     * before the badge, the badge drawn where the page draws it.
+     *
+     * <p>How much lower it stands depends on how tall Word sets the layers before it, which is
+     * not the page's height where their width is not written; the note says how far the page
+     * starts it above their end.</p>
+     *
+     * @param above how far above their end the page starts it, in points; 0 where it does not
+     * @param among what the layers before it are measured in: its stack, or its column of one
+     */
+    private void reportWrittenUnderTheLayersBefore(DocumentNode layer, double above, String among) {
+        if (above > 0) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "overlapping layer", layout.pathOf(layer),
+                    "the page starts it " + pointsOf(above) + "pt above where the layers before it in its " + among
+                    + " end, and Word writes one block under another: what it writes in the flow is written under "
+                    + "them");
+        }
     }
 
     /**

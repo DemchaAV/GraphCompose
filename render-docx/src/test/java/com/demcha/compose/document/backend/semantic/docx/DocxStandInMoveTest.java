@@ -169,8 +169,8 @@ class DocxStandInMoveTest {
                     }), LayerAlign.TOP_LEFT)));
             try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(
                     session.export(new DocxSemanticBackend(report::set))))) {
-                // The premise: written in the strip's panel, a table cell, not in the chip's layer.
-                assertThat(cellHolding(document, "Subtitle").getText()).contains("Subtitle");
+                // The premise: written in the strip's panel, under the name, not in the chip's layer.
+                assertThat(cellHolding(document, NAME).getText()).contains("Subtitle");
                 assertThat(allText(document).split("Subtitle", -1)).as("written once").hasSize(2);
             }
         }

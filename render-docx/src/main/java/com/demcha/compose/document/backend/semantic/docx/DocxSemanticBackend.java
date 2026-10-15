@@ -8842,6 +8842,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // The outline itself is drawing — a badge's circle, a ring round a portrait — and is
         // drawn where the page draws it, behind the layers now held in to where it sets them.
         drawOutlineOf(node);
+        if (shapeContainerWarned.compareAndSet(false, true)) {
+            LOG.warn("docx.export.shape-container-fallback "
+                    + "outline='{}' clipPolicy={} — DOCX has no graphics-state clip; "
+                    + "rendering layers inline; the report names a clip that cuts them. "
+                    + "(One warning per export; use the PDF backend for full fidelity.)",
+                    node.outline().getClass().getSimpleName(),
+                    node.clipPolicy());
+        }
         double outerLeft = insetLeft;
         double outerRight = insetRight;
         // Its layers are measured from inside its own edges, as a band's are.
@@ -8879,8 +8887,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             if (blocksWritten == blocksBefore) {
                 carriedSpacingBefore = carriedFromOutside;
-                if (holdsMovedContent(node)) {
-                    // Its text, moved into an earlier layer's stand-in, is in the flow all the same.
+                if (holdsMovedContent(node) || paintsOutOfSourceOrder(node)) {
+                    // Its text, moved into an earlier layer's stand-in, is in the flow all the
+                    // same; and drawings are drawn in source order, where the page stacks them
+                    // by their z-index.
                     reportLayersWrittenInline(node);
                 }
             } else {
@@ -8901,19 +8911,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * order, held in to where it sets them, rather than laid over its outline. A clip that cuts
      * them is named where every container is written (reportClipCut), and a picture clipped to an
      * ellipse takes the ellipse's shape. One that writes nothing — its layers all drawn where the
-     * page puts them, a tile or an icon — loses no layering, and is not named.
+     * page puts them, a tile or an icon — is not named, unless the page stacks its layers in
+     * another order than they are given ({@link #paintsOutOfSourceOrder}).
      */
     private void reportLayersWrittenInline(ShapeContainerNode node) {
         report.add(DocxExportReport.Severity.APPROXIMATED, "shape container", layout.pathOf(node),
                 "its layers are written inline, one after another in source order");
-        if (shapeContainerWarned.compareAndSet(false, true)) {
-            LOG.warn("docx.export.shape-container-fallback "
-                    + "outline='{}' clipPolicy={} — DOCX has no graphics-state clip; "
-                    + "rendering layers inline; the report names a clip that cuts them. "
-                    + "(One warning per export; use the PDF backend for full fidelity.)",
-                    node.outline().getClass().getSimpleName(),
-                    node.clipPolicy());
+    }
+
+    /**
+     * Whether the page paints a node's layers in another order than they are given, as their
+     * z-index sets them: the export writes and draws them in the order given.
+     */
+    private static boolean paintsOutOfSourceOrder(DocumentNode node) {
+        List<DocumentNode> painted = inPaintOrder(node);
+        List<DocumentNode> given = node.children();
+        for (int index = 0; index < painted.size() && index < given.size(); index++) {
+            if (painted.get(index) != given.get(index)) {
+                return true;
+            }
         }
+        return false;
     }
 
     /**

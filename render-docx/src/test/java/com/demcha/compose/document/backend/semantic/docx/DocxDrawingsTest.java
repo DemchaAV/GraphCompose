@@ -924,11 +924,32 @@ class DocxDrawingsTest {
                                 com.demcha.compose.document.table.DocumentTableCell.text("Beside")))))) {
 
             assertThat(anchors(document.getDocument().xmlText()))
-                    .as("each tile's box and dot, the badge and its glyph").hasSizeGreaterThanOrEqualTo(6);
+                    .as("each tile's box and dot, the note's fill, the badge and its glyph").hasSize(7);
             assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("shape container"))
                     .extracting(DocxExportReport.Note::path)
                     .satisfiesExactlyInAnyOrder(path -> assertThat(path).matches(".*/Note\\[\\d+]"),
                             path -> assertThat(path).matches(".*/Header\\[\\d+]"));
+        }
+    }
+
+    @Test
+    void aContainerWhoseLayersThePageStacksInAnotherOrderIsStillNamed() throws Exception {
+        // The page lays the disc over the dot by their z-index; the export draws them in the
+        // order given, the dot over the disc.
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (XWPFDocument ignored = export(report, session -> session.pageFlow(page -> page
+                .addLayerStack(stack -> stack.name("Stack")
+                        .layer(new ShapeContainerBuilder().name("Stacked").rectangle(40, 40)
+                                .layer(new com.demcha.compose.document.dsl.EllipseBuilder().circle(36)
+                                        .fillColor(ACCENT).build(), LayerAlign.CENTER, 1)
+                                .layer(new com.demcha.compose.document.dsl.EllipseBuilder().circle(8)
+                                        .fillColor(DocumentColor.WHITE).build(), LayerAlign.CENTER, 0)
+                                .build(), LayerAlign.TOP_LEFT)
+                        .layer(new ParagraphBuilder().text("Beside the stack").build(), LayerAlign.TOP_RIGHT))))) {
+
+            assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("shape container"))
+                    .extracting(DocxExportReport.Note::path)
+                    .singleElement().asString().matches(".*/Stacked\\[\\d+]");
         }
     }
 

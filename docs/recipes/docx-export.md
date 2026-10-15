@@ -848,9 +848,9 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   inline, in source order, without clipping — again with one warning per
   export, and a note on each container that writes a layer in the flow. A
   container whose layers are all drawn — a tile, an icon, a badge holding
-  its glyph — writes none: each layer is drawn where the page draws it, and
-  it is not noted, unless it still holds a line of space in the flow, as a
-  badge's initials in a band do. The report names the clip — a shape container's, and a layer
+  its glyph — writes none: each layer is drawn where the page draws it, in
+  source order, and it is not noted unless the page stacks its layers in
+  another order, by their z-index. The report names the clip — a shape container's, and a layer
   stack's that clips to its bounds — wherever it cuts what the layers paint:
   a square tile's corners in a disc, a label run past its chip, an ornament
   set past a sidebar's side. One composed in a table's cell, which has no

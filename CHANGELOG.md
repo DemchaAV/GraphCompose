@@ -17,9 +17,10 @@ follow semantic versioning; release dates are ISO 8601.
   right and a picture centred both stood at the left. The row's columns now start where its
   paragraphs' lines start, which the table lays out, and an aligned paragraph or picture is held
   in to where the page puts it. A row holding a child those lines do not place — a picture, a
-  shape — and an aligned block of any other kind are written as before and named in the report,
-  as is a row or an alignment inside a panel or another table in its cell; an aligned drawing is drawn by
-  its table where the page draws it, as before.
+  shape, or a spacer in a row of stated columns — and an aligned block of any other kind are
+  written as before and named in the report, as is a row or an alignment inside a panel or
+  another table in its cell; an aligned drawing is drawn by its table where the page draws it,
+  as before.
 - **A DOCX export reads a table's cells, its headers and footers, its page references and its
   lists' runs for the faces and headings it writes, and checks each page reference against the
   bookmarks the file holds.** The faces a document ships, the heading styles it defines and the

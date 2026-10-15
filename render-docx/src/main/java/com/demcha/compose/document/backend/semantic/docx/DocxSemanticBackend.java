@@ -15535,10 +15535,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void placeComposedAcross(com.demcha.compose.document.node.AlignNode align, DocumentNode child) {
         // Without a layout nothing is placed, which the report says once for the document. A
         // drawing composed in a cell is drawn by its table where the page draws it, and a rule takes
-        // its place from that drawing ({@link #takeTheDrawingOf}): the alignment holds there. A
-        // spacer shows nothing to hold in.
+        // its place from that drawing (takeTheDrawingOf): the alignment holds there. A spacer or an
+        // empty paragraph shows nothing to hold in, and a row is as wide as the width it is set in.
         if (layout.isEmpty() || align.align() == com.demcha.compose.document.node.HorizontalAlign.LEFT
-            || onlyDrawn(child) || child instanceof SpacerNode) {
+            || onlyDrawn(child) || holdsNothingToSee(child) || child instanceof RowNode) {
             return;
         }
         double[] text = composedCellText();
@@ -15617,11 +15617,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return null;
     }
 
-    /** Whether lines of text stand in the box of the table cell being written, on one of its pages. */
+    /**
+     * Whether lines of text stand in the box of the table cell being written, on one of its pages:
+     * across it, and with their first baseline inside it. A line a container pulls up past the
+     * cell's top, or out at a side, still stands in its cell.
+     */
     private boolean standsInTheComposedCell(DocxLayoutMetrics.TextBox lines) {
         for (DocxLayoutMetrics.CellBox cell : composedCellBoxes) {
-            if (cell.page() == lines.page() && lines.left() >= cell.left() - 1 && lines.right() <= cell.right() + 1
-                && lines.top() <= cell.top() + 1 && lines.top() >= cell.bottom() - 1) {
+            if (cell.page() == lines.page() && lines.left() < cell.right() - 0.5 && lines.right() > cell.left() + 0.5
+                && lines.baseline() <= cell.top() + 1 && lines.baseline() >= cell.bottom() - 1) {
                 return true;
             }
         }
@@ -16161,9 +16165,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * layout does not place it, and Word sizes them to their text: a "Total" and an amount the
      * page sets at either end of a cell stood with the amount at its middle. A paragraph's lines
      * are laid out under its table's path, and say where its box starts ({@link #composedBoxOf}); a
-     * spacer stands where the page spreads the room between them ({@link #placeComposedSpacers}).
-     * A child of any other kind — a picture, a shape — tells nothing, nor do lines found in another
-     * cell, nor does a row written inside a panel or another table in its cell: {@code null}.</p>
+     * spacer or an empty paragraph stands where the page spreads the room between them
+     * ({@link #placeComposedSpacers}). A child of any other kind — a picture, a shape — tells
+     * nothing, nor do lines found in another cell, nor does a row written inside a panel or another
+     * table in its cell, nor an empty child of a row with stated columns, which gives it a slot of
+     * its own: {@code null}.</p>
      *
      * <p>The row is as wide as the cell's text box leaves it, its containers' sides and its own
      * margins taken off.</p>
@@ -16183,7 +16189,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         starts[0] = rowWidth;
         for (int index = 0; index < count; index++) {
             DocumentNode child = children.get(index);
-            if (child instanceof SpacerNode) {
+            if (holdsNothingToSee(child)) {
+                // Stated columns give an empty column its own slot, which no line reports.
+                if (!row.columns().isEmpty()) {
+                    return null;
+                }
                 continue;
             }
             double[] box = composedBoxOf(null, child, 0, 0);
@@ -16194,11 +16204,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             ends[index] = starts[1 + index] + box[1] + child.margin().right();
         }
         for (int first = 0; first < count; first++) {
-            if (!(children.get(first) instanceof SpacerNode)) {
+            if (!holdsNothingToSee(children.get(first))) {
                 continue;
             }
             int last = first;
-            while (last + 1 < count && children.get(last + 1) instanceof SpacerNode) {
+            while (last + 1 < count && holdsNothingToSee(children.get(last + 1))) {
                 last++;
             }
             placeComposedSpacers(row, children, starts, ends, first, last);
@@ -16215,14 +16225,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Places a run of spacers between children of a composed row whose places are known, as the
-     * page places them.
+     * Whether a child of a row shows nothing — a spacer, or a paragraph with no text — and so
+     * stands in a column of its own that no line reports.
+     */
+    private static boolean holdsNothingToSee(DocumentNode node) {
+        return node instanceof SpacerNode
+               || node instanceof ParagraphNode paragraph && (paragraph.text() == null || paragraph.text().isBlank())
+                  && (paragraph.inlineRuns() == null || paragraph.inlineRuns().isEmpty());
+    }
+
+    /** How wide the page lays out a child that shows nothing: a spacer as it states, empty text as nothing. */
+    private static double widthOfNothing(DocumentNode node) {
+        return (node instanceof SpacerNode spacer ? spacer.width() : 0) + node.padding().horizontal();
+    }
+
+    /**
+     * Places a run of children that show nothing — spacers, empty paragraphs — in a composed row
+     * with no stated columns, between children whose places are known.
      *
-     * <p>An arrangement spreads the room the children leave evenly between each two of them, so
-     * between two children it knows, the run takes the room they leave less the spacers' widths and
-     * the gaps, in as many equal shares as there are gaps. A spacer that grows takes all the room
-     * instead, past the gap after the child before it; so does a run against the row's edge, from
-     * the child before it or the row's padding.</p>
+     * <p>Between two children it knows, the run stands where the page puts it: an arrangement
+     * spreads the room the children leave evenly between each two of them, so the run takes the
+     * room left between those two less its own widths and the gaps, in as many equal shares as
+     * there are gaps; with a spacer that grows, that spacer takes the room instead, past the gap
+     * after the child before it. A run against the row's edge, or after a spacer that grows, is set
+     * from the child before it or the row's padding, where the page may set it further on: its
+     * columns hold nothing, and the children either side of it start where their lines do.</p>
      *
      * @param starts the starts found so far, {@code {rowWidth, x0, ...}}; the run's are written
      * @param ends   where each child ends past its right margin; the run's are written
@@ -16235,9 +16262,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean grows = false;
         double widths = 0;
         for (int index = first; index <= last; index++) {
-            SpacerNode spacer = (SpacerNode) children.get(index);
-            grows |= spacer.grow() > 0;
-            widths += spacer.margin().left() + spacer.width() + spacer.padding().horizontal() + spacer.margin().right();
+            DocumentNode empty = children.get(index);
+            grows |= empty instanceof SpacerNode spacer && spacer.grow() > 0;
+            widths += empty.margin().left() + widthOfNothing(empty) + empty.margin().right();
         }
         double before = first == 0 ? row.padding().left() : ends[first - 1];
         // The share of room each gap of the run takes, where a child stands on either side of it.
@@ -16249,10 +16276,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         double x = before;
         for (int index = first; index <= last; index++) {
-            SpacerNode spacer = (SpacerNode) children.get(index);
-            x += (index == 0 ? 0 : gap + share) + spacer.margin().left();
+            DocumentNode empty = children.get(index);
+            x += (index == 0 ? 0 : gap + share) + empty.margin().left();
             starts[1 + index] = x;
-            x += spacer.width() + spacer.padding().horizontal() + spacer.margin().right();
+            x += widthOfNothing(empty) + empty.margin().right();
             ends[index] = x;
         }
     }

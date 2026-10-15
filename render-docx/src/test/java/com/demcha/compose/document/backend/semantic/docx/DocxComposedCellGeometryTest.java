@@ -79,7 +79,7 @@ class DocxComposedCellGeometryTest {
 
     @Test
     void aSpacerThatGrowsInACellTakesTheRoomBetweenItsNeighbours() throws Exception {
-        Export export = inACell(new RowBuilder().gap(8)
+        Export export = inACell(new RowBuilder().spacing(8)
                 .addParagraph("Left").flexSpacer().addParagraph("Right").build());
         PlacedFragment left = export.lineAt("Left");
         double right = export.lineAt("Right").x();
@@ -134,6 +134,90 @@ class DocxComposedCellGeometryTest {
                 .singleElement()
                 .satisfies(note -> assertThat(note.detail()).endsWith(
                         "by its arrangement, and written inside a panel or another table in its table cell"));
+    }
+
+    @Test
+    void aRowCentredInItsCellKeepsWhereThePageCentresItsChildren() throws Exception {
+        Export export = inACell(new RowBuilder().arrangement(RowArrangement.CENTER)
+                .addParagraph("One").addParagraph("Two").build());
+        double one = export.lineAt("One").x();
+        double two = export.lineAt("Two").x();
+
+        // The first column holds the room before the first child, as a placed row's does.
+        assertThat(export.rowGrid()).containsExactly(twips(two - CELL_TEXT_LEFT), twips(CELL_TEXT_RIGHT - two));
+        assertThat(one).as("the page centres the pair").isGreaterThan(CELL_TEXT_LEFT + 50);
+    }
+
+    @Test
+    void aSpacerSpreadAroundStandsWhereThePageSetsIt() throws Exception {
+        Export export = inACell(new RowBuilder().arrangement(RowArrangement.SPACE_AROUND)
+                .addParagraph("Left").addSpacer(10).addParagraph("Right").build());
+        PlacedFragment left = export.lineAt("Left");
+        double right = export.lineAt("Right").x();
+        double spacer = left.x() + left.width() + (right - left.x() - left.width() - 10) / 2;
+
+        assertThat(export.rowGrid()).containsExactly(
+                twips(spacer - CELL_TEXT_LEFT), twips(right - spacer), twips(CELL_TEXT_RIGHT - right));
+    }
+
+    @Test
+    void aPaddedRowInACellTakesItsColumnsFromItsLinesInsideThePadding() throws Exception {
+        Export export = inACell(new RowBuilder().arrangement(RowArrangement.SPACE_BETWEEN)
+                .padding(new DocumentInsets(0, 12, 0, 8)).margin(new DocumentInsets(0, 6, 0, 10))
+                .addParagraph("Total").addParagraph("$120").build());
+        double amount = export.lineAt("$120").x();
+        // The row stands inside its margins, and its padding stays in its outer columns.
+        double rowLeft = CELL_TEXT_LEFT + 10;
+
+        assertThat(export.lineAt("Total").x()).isEqualTo(rowLeft + 8, org.assertj.core.data.Offset.offset(0.01));
+        assertThat(export.rowGrid()).containsExactly(
+                twips(amount - rowLeft), twips(CELL_TEXT_RIGHT - 6 - amount));
+    }
+
+    @Test
+    void anEmptyParagraphInARowOfACellStandsInAColumnOfItsOwn() throws Exception {
+        Export export = inACell(new RowBuilder().arrangement(RowArrangement.SPACE_BETWEEN)
+                .addParagraph("Discount").addParagraph("").build());
+
+        assertThat(export.rowGrid()).hasSize(2);
+        assertThat(export.report().notes()).isEmpty();
+    }
+
+    @Test
+    void aSpacerInARowOfStatedColumnsInACellIsNamed() throws Exception {
+        // Stated columns give the spacer a slot of its own, which no line reports.
+        Export export = inACell(new RowBuilder()
+                .columns(DocumentRowColumn.weight(2), DocumentRowColumn.weight(1), DocumentRowColumn.auto())
+                .addParagraph("A description").addSpacer(0).addParagraph("$1,200").build());
+
+        assertThat(export.rowGrid()).isEmpty();
+        assertThat(export.report().notes())
+                .filteredOn(note -> note.subject().equals("RowNode"))
+                .singleElement()
+                .satisfies(note -> assertThat(note.detail()).endsWith(
+                        "by an auto column, and composed in a table cell, it holds a child the layout does not "
+                        + "place in the cell"));
+    }
+
+    @Test
+    void anAlignedRowInACellSaysNothing() throws Exception {
+        // A row is as wide as the width it is set in: the page aligns nothing.
+        Export export = inACell(new AlignNode(new RowBuilder().weights(1, 1)
+                .addParagraph("One").addParagraph("Two").build(), HorizontalAlign.CENTER));
+
+        assertThat(export.report().notes()).noneMatch(note -> note.subject().equals("Align"));
+    }
+
+    @Test
+    void aLinePulledUpPastItsCellsTopStillStandsInItsCell() throws Exception {
+        // A section pulls its first line up past the cell's padding: the line is still the cell's.
+        Export export = inACell(new SectionBuilder().margin(new DocumentInsets(-8, 0, 0, 0))
+                .add(new AlignNode(new ParagraphBuilder().text("Total due").build(), HorizontalAlign.RIGHT))
+                .build());
+
+        assertThat(export.report().notes()).noneMatch(note -> note.subject().equals("Align"));
+        assertThat(DocxTwips.of(export.paragraph("Total due").getCTP().getPPr().getInd().getLeft()))
+                .isEqualTo(twips(export.lineAt("Total due").x() - CELL_TEXT_LEFT));
     }
 
     @Test

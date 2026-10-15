@@ -1075,12 +1075,12 @@ text and a list's items do not yet.
 A shape beside no paragraph stays where the page puts it whatever the text does. It is
 anchored at the start of the first body paragraph written on its page,
 whether that was written before the shape or after — not in a table cell's, which Word
-measures it from; a page break's paragraph, which stands on the page the break ends, is
-one. A page with no body paragraph — one laid out entirely in a
+measures it from. A page with no body paragraph — one laid out entirely in a
 table, as a two-column CV is — gets one: on the section's first page a paragraph a
 hairline tall opens before the table; on its last, the paragraph closing the section
 carries it; on any other page, the first paragraph of a cell on it does, where Word may
-print it clipped and the report says so, and a page with no paragraph at all — a shape
+print it clipped and the report says so, or, with none, the paragraph of a page break
+ending the page, which stands on it; and a page with no paragraph at all — a shape
 filling a page the next block leaves for the one after — drops it, the note on the shape
 saying it is not in the document. A shape inside a filled panel is drawn in front of the text rather than
 behind it, since a panel is a table cell and both editors paint a cell's shading over what

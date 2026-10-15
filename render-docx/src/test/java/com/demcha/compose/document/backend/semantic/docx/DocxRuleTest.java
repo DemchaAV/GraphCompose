@@ -134,6 +134,13 @@ class DocxRuleTest {
 
         assertThat(inTheFlow).as("premise: the room is held above the paragraph after it").isGreaterThan(19 * 20);
         assertThat(inAStack).isEqualTo(inTheFlow);
+
+        // Last in its layer, it holds its room above what follows the stack, as a rule there does.
+        long lastInAStack = spaceAboveBelow(page -> page.addLayerStack(stack -> stack.layer(
+                new com.demcha.compose.document.dsl.SectionBuilder().addParagraph("Above")
+                        .addLine(l -> l.horizontal(200).thickness(20).color(ACCENT)).build()))
+                .addParagraph("Below"));
+        assertThat(lastInAStack).isEqualTo(inTheFlow);
     }
 
     private static long spaceAboveBelow(Consumer<PageFlowBuilder> content) throws Exception {

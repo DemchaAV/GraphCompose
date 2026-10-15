@@ -114,6 +114,45 @@ class DocxCellRuleTest {
     }
 
     @Test
+    void twoRulesInACellEachTakeTheirOwnDrawing() throws Exception {
+        Export alike = inACell(new SectionBuilder()
+                .addLine(l -> l.horizontal(100).thickness(1).color(INK))
+                .addParagraph("Between")
+                .addLine(l -> l.horizontal(100).thickness(1).color(INK)).build());
+        Export shortThenFilling = inACell(new SectionBuilder()
+                .addLine(l -> l.horizontal(100).thickness(1).color(INK))
+                .addParagraph("Between")
+                .addLine(l -> l.thickness(1).color(INK).fill()).build());
+
+        for (Export export : List.of(alike, shortThenFilling)) {
+            assertThat(export.rules()).isEqualTo(2);
+            assertThat(export.body()).doesNotContain(LINE);
+            assertThat(export.report().bySubject()).doesNotContainKey("LineNode");
+        }
+    }
+
+    @Test
+    void aRuleReachingPastItsCellIsNotTakenForAnotherDrawingAlike() throws Exception {
+        // Pulled 6pt left past the cell's 4pt margin, the rule's drawing reaches past the cell,
+        // and still counts: the underline as thick, laid over a mark, is not taken for it.
+        Export export = inACell(new SectionBuilder()
+                .add(new LayerStackBuilder().name("Mark")
+                        .layer(new ShapeBuilder().size(100, 12).fillColor(INK).build())
+                        .layer(new LineBuilder().horizontal(100).thickness(1).color(INK).build(), LayerAlign.BOTTOM_LEFT)
+                        .build())
+                .addLine(l -> l.thickness(1).color(INK).fill().margin(new DocumentInsets(0, 0, 0, -6))).build());
+        PlacedFragment rule = export.fragments().stream()
+                .filter(fragment -> fragment.payload() instanceof LineFragmentPayload && fragment.width() > 150)
+                .findFirst().orElseThrow();
+
+        assertThat(rule.x()).as("premise: the rule's drawing starts past the cell's edge at 20").isLessThan(19);
+        assertThat(export.body()).as("the underline, still drawn")
+                .contains("<wp:extent cx=\"" + Units.toEMU(100) + "\" cy=\"0\"");
+        assertThat(export.report().bySubject().get("LineNode")).extracting(DocxExportReport.Note::detail)
+                .anyMatch(detail -> detail.endsWith("so it stands twice in Word"));
+    }
+
+    @Test
     void aRuleThatCannotBeToldFromAnotherDrawingInItsCellIsNamedAsStandingTwice() throws Exception {
         // The underline is drawn alike: taken for the rule's, it would be lost. Both stay.
         Export export = underlinedThenRuled(100, 1, 100, 1);
@@ -122,8 +161,8 @@ class DocxCellRuleTest {
         assertThat(export.body().split(LINE, -1)).as("the underline and the rule, both drawn").hasSize(3);
         assertThat(export.report().bySubject().get("LineNode")).extracting(DocxExportReport.Note::detail)
                 .contains("composed in a table cell, it is written as a paragraph's border and drawn by its table, "
-                          + "which draws what its composed cells paint, as well: another drawing of its kind and size "
-                          + "in the cell keeps the two from being told apart, so it stands twice in Word");
+                          + "which draws what its composed cells paint, as well: this export does not tell that "
+                          + "drawing apart from another in the cell, so it stands twice in Word");
     }
 
     @Test
@@ -144,6 +183,8 @@ class DocxCellRuleTest {
         Export export = inACell(new SectionBuilder().addParagraph("Above")
                 .addLine(l -> l.horizontal(100).thickness(20).color(INK)).build());
 
+        assertThat(export.body()).as("drawn at its thickness").contains("<a:ln w=\"" + Units.toEMU(20) + "\"");
+        assertThat(export.rules()).isZero();
         assertThat(export.report().bySubject().get("LineNode")).extracting(DocxExportReport.Note::detail)
                 .anyMatch(detail -> detail.contains("stroked thicker than Word's thickest border, it is drawn rather "
                                                     + "than written as a rule, and takes no room in its cell"));
@@ -173,6 +214,7 @@ class DocxCellRuleTest {
 
         assertThat(export.fragments().stream().filter(f -> f.payload() instanceof LineFragmentPayload).count())
                 .as("premise: the page draws the header's rule on more than one page").isGreaterThan(1);
+        assertThat(export.rules()).as("written in its header cell").isEqualTo(1);
         assertThat(export.body()).doesNotContain(LINE);
     }
 

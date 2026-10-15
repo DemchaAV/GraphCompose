@@ -3725,10 +3725,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // visible in the log instead of silently missing.
             warnUnsupported(node);
             // In the flow it still takes its room; over something else it takes none. A line too
-            // thick to be a rule takes it where a rule would, in a stack of one layer too, with a
-            // sibling after it (see writeNodeContentOf).
-            if (isDrawing(node) && (overlayDepth == 0 || overlayDepth == oneLayerDepth
-                    && DocxRules.thickerThanABorder(node) && layout.followedInItsParent(node))) {
+            // thick to be a rule takes it where a rule would, among the text of a stack of one
+            // layer too (inTheFlow).
+            if (isDrawing(node) && (overlayDepth == 0
+                    || DocxRules.thickerThanABorder(node) && inTheFlow(node, overlayDepth, oneLayerDepth))) {
                 holdTheSpaceOf(node);
             }
         }
@@ -3753,7 +3753,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (cornersDiffer(node)) {
                 lost.add(0, CORNERS_AT_THE_LARGEST);
             }
-            if (DocxRules.thickerThanABorder(node)) {
+            if (DocxRules.thickerThanABorder(node) && inTheFlow(node, overlayDepth, oneLayerDepth)) {
                 // A rule would hold its room in the cell; a drawing there holds none.
                 lost.add(0, "stroked thicker than Word's thickest border, it is drawn rather than written as "
                             + "a rule, and takes no room in its cell");
@@ -13141,9 +13141,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (next) {
             composedRulesWritten++;
         }
+        // A rule reaching past its cell is drawn there all the same, and counts: one held by the
+        // cell alone would leave another drawing alike to be taken for it.
         List<CellFragment> alike = new ArrayList<>();
         for (DocxLayoutMetrics.CellBox box : composedCellBoxes) {
-            alike.addAll(drawingsOf(waitingIn(box), node, rule));
+            alike.addAll(drawingsOf(waitingOver(box), node, rule));
             if (composedCellRepeats) {
                 // Its later boxes are copies of the first.
                 break;
@@ -13159,19 +13161,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     + "which draws what its composed cells paint, as well: "
                     + (currentCell != composedCell
                        ? "written in a panel or a row inside its cell, it is not placed from that drawing"
-                       : "another drawing of its kind and size in the cell keeps the two from being told apart")
+                       : "this export does not tell that drawing apart from another in the cell")
                     + ", so it stands twice in Word");
             return null;
         }
         CellFragment own = alike.get(0);
         DocxLayoutMetrics.CellBox ownBox = composedCellBoxes.stream()
-                .filter(box -> box.holds(own.fragment())).findFirst().orElse(composedCellBoxes.get(0));
+                .filter(box -> box.overlaps(own.fragment())).findFirst().orElse(composedCellBoxes.get(0));
         java.util.Set<CellFragment> taken = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         taken.add(own);
         if (composedCellRepeats) {
             for (DocxLayoutMetrics.CellBox repeat : composedCellBoxes) {
                 if (repeat.page() > ownBox.page()) {
-                    drawingsOf(waitingIn(repeat), node, rule).stream().findFirst().ifPresent(taken::add);
+                    drawingsOf(waitingOver(repeat), node, rule).stream().findFirst().ifPresent(taken::add);
                 }
             }
         }
@@ -13220,15 +13222,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return drawings;
     }
 
-    /** Whether another rule would be drawn alike: of one kind and thickness, lines of one length. */
+    /**
+     * Whether another rule's drawing would be among a rule's in {@link #drawingsOf}: of one kind
+     * and thickness, and a line of its length unless the rule runs to the end of its width — one
+     * that does is drawn as wide as the layout makes it.
+     */
     private static boolean drawnAlike(DocumentNode node, DocxRules.Rule rule, DocumentNode other) {
         DocxRules.Rule theirs = DocxRules.of(other);
         if (theirs == null || other.getClass() != node.getClass()
             || Math.abs(theirs.thickness() - rule.thickness()) >= RULE_MATCH_POINTS) {
             return false;
         }
-        return !(node instanceof com.demcha.compose.document.node.LineNode) || rule.fillsWidth() || theirs.fillsWidth()
-               || Math.abs((theirs.endX() - theirs.startX()) - (rule.endX() - rule.startX())) < RULE_MATCH_POINTS;
+        return !(node instanceof com.demcha.compose.document.node.LineNode) || rule.fillsWidth()
+               || !theirs.fillsWidth()
+                  && Math.abs((theirs.endX() - theirs.startX()) - (rule.endX() - rule.startX())) < RULE_MATCH_POINTS;
     }
 
     /**
@@ -13251,6 +13258,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /** How far a drawing's thickness may part from a rule's and still be its, in points. */
     private static final double RULE_MATCH_POINTS = 0.01;
+
+    /** The table's drawings still waiting that reach into one of its cells' boxes at all, in their order. */
+    private List<CellFragment> waitingOver(DocxLayoutMetrics.CellBox box) {
+        return tableDrawings.stream().filter(waiting -> box.overlaps(waiting.fragment())).toList();
+    }
 
     /** The table's drawings still waiting that lie in one of its cells' boxes, in their order. */
     private List<CellFragment> waitingIn(DocxLayoutMetrics.CellBox box) {

@@ -830,9 +830,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The outline levels the document declares from Word's ninth on, which Word holds as one: two
     // of them are levels the page nests apart and the file does not.
     private java.util.Set<Integer> outlineLevelsFromWordsNinth = java.util.Set.of();
-    // The bookmarks the file holds, each with the anchor it was written for: two anchors can be
-    // minted one name, and only the anchor's own bookmark holds a field on it.
-    private final java.util.Set<WrittenBookmark> bookmarksWritten = new java.util.HashSet<>();
+    // The bookmarks the file holds: each anchor the body wrote one for, and its name.
+    private final java.util.Map<String, String> bookmarksWritten = new java.util.HashMap<>();
     // The page references written as fields, to be checked against those bookmarks.
     private final List<FieldReference> fieldReferences = new ArrayList<>();
     // Where the finished report goes, when the caller configured somewhere for it to go.
@@ -1210,7 +1209,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                 index == sections.size() - 1));
             }
             // Every bookmark is written now, those a reference on an earlier page reads included.
-            unfieldTheReferencesWithoutABookmark();
+            settleThePageReferences();
             hideTheClosingMark(document);
             hideTheCellClosingMarks(document.getTables());
             letTheOneRowTablesKeptWithTheNextBreak(document.getTables());
@@ -2993,7 +2992,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * document's ink in both editors, so the band read "Page of". A complex field's result is
      * set as its instruction is, and the instruction is styled.</p>
      */
-    private void appendField(XWPFParagraph para, String instruction, String placeholder, DocumentTextStyle style) {
+    private org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText appendField(
+            XWPFParagraph para, String instruction, String placeholder, DocumentTextStyle style) {
         fieldRun(para, style).getCTR().addNewFldChar().setFldCharType(STFldCharType.BEGIN);
         org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText code = fieldRun(para, style).getCTR().addNewInstrText();
         code.setStringValue(instruction);
@@ -3001,6 +3001,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         fieldRun(para, style).getCTR().addNewFldChar().setFldCharType(STFldCharType.SEPARATE);
         fieldRun(para, style).setText(placeholder);
         fieldRun(para, style).getCTR().addNewFldChar().setFldCharType(STFldCharType.END);
+        return code;
     }
 
     private XWPFRun fieldRun(XWPFParagraph para, DocumentTextStyle style) {
@@ -3165,7 +3166,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTBookmark start = first.getCTP().addNewBookmarkStart();
         start.setId(BigInteger.valueOf(id));
         start.setName(name);
-        bookmarksWritten.add(new WrittenBookmark(anchor, name));
+        bookmarksWritten.putIfAbsent(anchor, name);
         moveToParagraphStart(first.getCTP(), start);
         last.getCTP().addNewBookmarkEnd().setId(BigInteger.valueOf(id));
     }
@@ -9198,9 +9199,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A reference whose anchor this export writes no bookmark for is written as its text
      * alone: Word turns a {@code PAGEREF} to a missing bookmark into "Error! Bookmark not
      * defined." the first time the field updates, which is worse than a number that does not
-     * move. Which anchors get one is known once the body is written — a reference may come
-     * before its anchor, as a table of contents does — so a reference is written as a field and
-     * taken back to its text there ({@link #unfieldTheReferencesWithoutABookmark}).</p>
+     * move. Which anchors get one, and under what name, is known once the body is written — a
+     * reference may come before its anchor, as a table of contents does — so the field is
+     * written without its bookmark's name and settled there ({@link #settleThePageReferences}).
+     * Named here, the reference would give its anchor a name before the anchor's own bookmark
+     * did, and an anchor that cleans to the same name as another would take that name.</p>
      */
     private void writePageReference(XWPFDocument document,
                                     com.demcha.compose.document.node.PageReferenceNode node) {
@@ -9212,7 +9215,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph para = newBodyParagraph(document);
         applyParagraphProperties(para, asLaidOut);
         applyLineHeight(para, layout.lineHeight(node));
-        String bookmark = bookmarkNames.nameFor(node.anchor());
         List<String> carried = carriedWithout(node, false);
         // Unlike a paragraph's (writeParagraph), its own sides do not hold its line in.
         List<String> sides = sidesLost(node, node.align() != TextAlign.RIGHT, node.align() != TextAlign.LEFT);
@@ -9220,17 +9222,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         asText.add(NO_BOOKMARK_FOR_THE_REFERENCE);
         asText.addAll(sides);
         String path = layout.pathOf(node);
-        if (bookmark == null) {
-            XWPFRun run = para.createRun();
-            applyStyle(run, node.textStyle());
-            run.setText(shown);
-            report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), path,
-                    WRITTEN_AS_A_PARAGRAPH + "; " + String.join("; ", asText));
-            return;
-        }
         // A complex field, as a page field is (see appendField): a simple one's number is
         // repainted without its style when the field updates.
-        appendField(para, " PAGEREF " + bookmark + " \\h ", shown, node.textStyle());
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText code =
+                appendField(para, " PAGEREF ", shown, node.textStyle());
         List<String> lost = new ArrayList<>(carried);
         lost.addAll(sides);
         int noteAt = report.size();
@@ -9238,8 +9233,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), path,
                     WRITTEN_AS_A_PARAGRAPH + "; " + String.join("; ", lost));
         }
-        fieldReferences.add(new FieldReference(para, new WrittenBookmark(node.anchor(), bookmark), node.nodeKind(),
-                path, WRITTEN_AS_A_PARAGRAPH + "; " + String.join("; ", asText), noteAt, !lost.isEmpty()));
+        fieldReferences.add(new FieldReference(para, code, node.anchor(), node.nodeKind(), path,
+                WRITTEN_AS_A_PARAGRAPH + "; " + String.join("; ", asText), noteAt, !lost.isEmpty()));
     }
 
     private static final String WRITTEN_AS_A_PARAGRAPH = "written as a paragraph";
@@ -9248,48 +9243,42 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                                                + "page number is written as text that an edit does not update";
 
     /**
-     * A bookmark the body wrote, and the anchor it wrote it for.
-     *
-     * @param anchor the anchor, as the node declares it
-     * @param name   the bookmark's name in the file
-     */
-    private record WrittenBookmark(String anchor, String name) {
-    }
-
-    /**
-     * A page reference written as a {@code PAGEREF} field, kept until the body is written to be
-     * taken back to its text where the file holds no bookmark of its name written for its anchor.
+     * A page reference written as a {@code PAGEREF} field without its bookmark's name, kept until
+     * the body is written to be named or taken back to its text.
      *
      * @param paragraph the reference's paragraph, which holds the field
-     * @param bookmark  the bookmark the field reads, and the anchor it reads it for
+     * @param code      the field's instruction
+     * @param anchor    the anchor it reads the page of
      * @param subject   the reference's note subject
      * @param path      the reference's path, its section's
      * @param asText    what its note says written as text
      * @param noteAt    where its note stands in the report, or would
      * @param noted     whether written as a field it has a note there
      */
-    private record FieldReference(XWPFParagraph paragraph, WrittenBookmark bookmark, String subject, String path,
-                                  String asText, int noteAt, boolean noted) {
+    private record FieldReference(XWPFParagraph paragraph,
+                                  org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText code, String anchor,
+                                  String subject, String path, String asText, int noteAt, boolean noted) {
     }
 
     /**
-     * Takes every page reference whose bookmark the file does not hold back to the number it reads,
-     * and says so in its note.
+     * Names every page reference's field after the bookmark its anchor was written under, and
+     * takes the one whose anchor has none back to the number it reads, saying so in its note.
      *
      * <p>Whether an anchor gets a bookmark is known only from what the body wrote: an anchor that
      * names nothing, a drawn shape's, a block that writes no paragraph — a section holding only
-     * shapes the export draws — or a column of a layer stack has none to put round it, and which
-     * do is the writer's to say, not the tree's: read off the tree, a table's composed cells were
-     * missed and the stacks in them read as overlays they are not written as. A field on a
-     * bookmark the file lacks reads "Error! Bookmark not defined." once Word updates it. The
-     * bookmark must be one written for the reference's own anchor: two anchors can be minted one
-     * name. The field's marks and code go; its text stays, in its style.</p>
+     * shapes the export draws — or a column of a layer stack has none to put round it. Read off
+     * the tree instead, a table's composed cells were missed, and a stack holding only drawing in
+     * one would read as an overlay the writer does not write it as. A field on a bookmark the
+     * file lacks reads "Error! Bookmark not defined." once Word updates it. The field's marks and
+     * code go; its text stays, in its style.</p>
      */
-    private void unfieldTheReferencesWithoutABookmark() {
+    private void settleThePageReferences() {
         // From the last: a note put in for one leaves the places of those before it where they are.
         for (int index = fieldReferences.size() - 1; index >= 0; index--) {
             FieldReference reference = fieldReferences.get(index);
-            if (bookmarksWritten.contains(reference.bookmark())) {
+            String bookmark = bookmarksWritten.get(reference.anchor());
+            if (bookmark != null) {
+                reference.code().setStringValue(" PAGEREF " + bookmark + " \\h ");
                 continue;
             }
             List<XWPFRun> runs = reference.paragraph().getRuns();
@@ -12150,7 +12139,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTBookmark start = para.getCTP().addNewBookmarkStart();
         start.setId(BigInteger.valueOf(id));
         start.setName(name);
-        bookmarksWritten.add(new WrittenBookmark(anchor, name));
+        bookmarksWritten.putIfAbsent(anchor, name);
         return id;
     }
 
@@ -15283,7 +15272,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                             }
                             // A column layer is written as what it holds, never dispatched itself:
                             // no bookmark goes round it, and a page reference to it is taken back to
-                            // its text (unfieldTheReferencesWithoutABookmark).
+                            // its text (settleThePageReferences).
                             List<String> columnLost = new ArrayList<>(2);
                             String anchor = blockAnchorOf(node, true);
                             if (anchor != null && !anchor.isBlank()) {

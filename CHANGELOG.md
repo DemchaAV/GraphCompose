@@ -8,6 +8,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export sets a row and an alignment composed in a table cell where the page sets
+  them.** Content composed in a cell (`DocumentTableCell.node(...)`) has no place of its own in
+  the layout. A row the page divides by what its children measure — `SPACE_BETWEEN` and the
+  other arrangements, a growing spacer, an auto column — had its columns left to Word, which
+  sized them to their text: an amount the page sets at its cell's right edge stood at the cell's
+  middle in Word. A block in `addAligned(...)` was written from the cell's left: a total aligned
+  right and a picture centred both stood at the left. The row's columns now start where its
+  paragraphs' lines start, which the table lays out, and an aligned paragraph or picture is held
+  in to where the page puts it. A row holding a child those lines do not place — a picture, a
+  shape — and an aligned block of any other kind are written as before and named in the report,
+  as is a row or an alignment inside a panel or another table in its cell; an aligned drawing is drawn by
+  its table where the page draws it, as before.
 - **A DOCX export reads a table's cells, its headers and footers, its page references and its
   lists' runs for the faces and headings it writes, and checks each page reference against the
   bookmarks the file holds.** The faces a document ships, the heading styles it defines and the

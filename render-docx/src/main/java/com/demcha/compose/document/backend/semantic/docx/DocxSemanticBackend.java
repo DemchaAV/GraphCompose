@@ -15510,11 +15510,122 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         com.demcha.compose.document.layout.PlacedNode box = layout.placement(stack);
         com.demcha.compose.document.layout.PlacedNode placed = layout.placement(layer);
         if (box == null || placed == null) {
+            if (box == null && stack instanceof com.demcha.compose.document.node.AlignNode align) {
+                placeComposedAcross(align, layer);
+            }
             return;
         }
         double contentLeft = box.placementX() + stack.padding().left();
         double contentRight = box.placementX() + box.placementWidth() - stack.padding().right();
-        holdIn(layer, placed, contentLeft, contentRight);
+        holdIn(layer, placed.placementX(), placed.placementWidth(), contentLeft, contentRight);
+    }
+
+    /**
+     * Holds an alignment's child in across where the page puts it in a table's cell built from a
+     * node, where neither has a place of its own in the layout.
+     *
+     * <p>Written at the cell's left, a line the page right-aligns in its cell — a total, a date —
+     * and a picture it centres stood at the left in Word. A paragraph's box is read off the lines
+     * its table laid out for it ({@link DocxLayoutMetrics#firstTextBox}); a picture's is as wide as
+     * it is written, from the width the alignment leaves it, as the page sizes it, and stands
+     * where the alignment sets a box of that width. Any other child, and an alignment in a panel
+     * or a row the cell holds — cells of their own — is written from the left, and the report
+     * says so.</p>
+     */
+    private void placeComposedAcross(com.demcha.compose.document.node.AlignNode align, DocumentNode child) {
+        // Without a layout nothing is placed, which the report says once for the document. A
+        // drawing composed in a cell is drawn by its table where the page draws it, and a rule takes
+        // its place from that drawing ({@link #takeTheDrawingOf}): the alignment holds there. A
+        // spacer shows nothing to hold in.
+        if (layout.isEmpty() || align.align() == com.demcha.compose.document.node.HorizontalAlign.LEFT
+            || onlyDrawn(child) || child instanceof SpacerNode) {
+            return;
+        }
+        double[] text = composedCellText();
+        double contentLeft = text == null ? Double.NaN : text[0] + insetLeft;
+        double contentRight = text == null ? Double.NaN : text[1] - insetRight;
+        double[] box = text == null ? null : composedBoxOf(align, child, contentLeft, contentRight);
+        // Read off lines its table laid out elsewhere, it would be held in to another cell's place.
+        boolean inside = box != null && box[0] >= contentLeft - 0.5 && box[0] + box[1] <= contentRight + 0.5;
+        if (!inside) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, align.nodeKind(), layout.pathOf(align),
+                    "composed in a table cell, its child is written from the cell's left, where the page "
+                    + (align.align() == com.demcha.compose.document.node.HorizontalAlign.CENTER ? "centres" : "right-aligns")
+                    + " it: " + (text != null && box != null
+                            ? "the lines found for it stand outside its cell"
+                            : text != null
+                                    ? "the layout does not say how wide a " + child.nodeKind() + " composed in a cell is"
+                                    : composedCellBoxes.isEmpty()
+                                            ? "the layout does not say where its cell stands"
+                                            : "written inside a panel or another table in its cell, it has no box of "
+                                              + "its own to be held in to"));
+            return;
+        }
+        holdIn(child, box[0], box[1], contentLeft, contentRight);
+    }
+
+    /**
+     * Where the text of the table cell being written runs on the page, left and right, when the
+     * cell is built from a node: its box less the margins written for it. {@code null} anywhere
+     * else, and inside a panel or a row the cell holds, which are cells of their own.
+     */
+    private double[] composedCellText() {
+        if (composedCellBoxes.isEmpty() || currentCell == null || currentCell != composedCell) {
+            return null;
+        }
+        DocxLayoutMetrics.CellBox box = composedCellBoxes.get(0);
+        return new double[]{box.left() + cellMarginOf(currentCell, true), box.right() - cellMarginOf(currentCell, false)};
+    }
+
+    /**
+     * Where the page puts the box of a node composed in a table cell, from the left edge of the
+     * page, and how wide it is: a paragraph's from the lines its table laid out for it, a picture
+     * in an alignment from its written width. {@code null} for any other node; both {@code NaN}
+     * for a paragraph whose lines stand outside the cell being written — lines of the same text
+     * its table set in another cell, matched to it in their place.
+     *
+     * @param align        the alignment holding it, or {@code null}
+     * @param contentLeft  the page position of the left edge it is written from
+     * @param contentRight the page position of the right edge it is written to
+     */
+    private double[] composedBoxOf(com.demcha.compose.document.node.AlignNode align, DocumentNode node,
+                                   double contentLeft, double contentRight) {
+        if (node instanceof ParagraphNode paragraph) {
+            return layout.firstTextBox(paragraph)
+                    .map(lines -> {
+                        if (!standsInTheComposedCell(lines)) {
+                            return new double[]{Double.NaN, Double.NaN};
+                        }
+                        double left = lines.left() - paragraph.padding().left();
+                        return new double[]{left, lines.right() + paragraph.padding().right() - left};
+                    })
+                    .orElse(null);
+        }
+        if (align != null && node instanceof ImageNode image) {
+            // Sized as the page sizes it in the width the alignment leaves it — its padding comes off
+            // that width inside the sizing — as writeImage sizes it.
+            double room = contentRight - contentLeft - image.margin().horizontal();
+            double width = Math.min(room, NodeDefinitionSupport.resolveImageDimensions(image, Math.max(0, room),
+                    NodeDefinitionSupport.toImageData(image.imageData())).width() + image.padding().horizontal());
+            if (!(width > 0)) {
+                return null;
+            }
+            double free = Math.max(0, room - width);
+            double share = align.align() == com.demcha.compose.document.node.HorizontalAlign.CENTER ? 0.5 : 1;
+            return new double[]{contentLeft + image.margin().left() + free * share, width};
+        }
+        return null;
+    }
+
+    /** Whether lines of text stand in the box of the table cell being written, on one of its pages. */
+    private boolean standsInTheComposedCell(DocxLayoutMetrics.TextBox lines) {
+        for (DocxLayoutMetrics.CellBox cell : composedCellBoxes) {
+            if (cell.page() == lines.page() && lines.left() >= cell.left() - 1 && lines.right() <= cell.right() + 1
+                && lines.top() <= cell.top() + 1 && lines.top() >= cell.bottom() - 1) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -15522,20 +15633,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * it, with room to spare for a paragraph on the side its text does not lean on.
      *
      * @param layer        the block
-     * @param placed       where the layout placed it
+     * @param placedX      the page position of the left edge of its box, where the layout put it
+     * @param placedWidth  how wide its box is
      * @param contentLeft  the page position of the left edge it is written from
      * @param contentRight the page position of the right edge it is written to
      */
-    private void holdIn(DocumentNode layer, com.demcha.compose.document.layout.PlacedNode placed,
+    private void holdIn(DocumentNode layer, double placedX, double placedWidth,
                         double contentLeft, double contentRight) {
-        double left = placed.placementX() - layer.margin().left() - contentLeft;
-        double right = contentRight - (placed.placementX() + placed.placementWidth() + layer.margin().right());
+        double left = placedX - layer.margin().left() - contentLeft;
+        double right = contentRight - (placedX + placedWidth + layer.margin().right());
         if (!(left > 0.5) && !(right > 0.5)) {
             return;
         }
         // Only a paragraph's own box needs room to spare: a container's paragraphs take theirs
         // inside it, and spare room taken at every level would add up across nested stacks.
-        double slack = layer instanceof ParagraphNode ? Math.max(2, placed.placementWidth() * 0.05) : 0;
+        double slack = layer instanceof ParagraphNode ? Math.max(2, placedWidth * 0.05) : 0;
         TextAlign align = layer instanceof ParagraphNode paragraph ? paragraph.align() : TextAlign.LEFT;
         if (align == TextAlign.CENTER) {
             left -= slack / 2;
@@ -16017,6 +16129,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         double[] slots = resolveRowSlots(node, available);
         if (slots == null) {
+            // Composed in a table's cell, the row and its children have no place of their own in
+            // the layout; its paragraphs' lines are the table's, and say where each starts.
+            double[] composed = inItsPanel ? null : composedRowStarts(node);
+            if (composed != null) {
+                List<CellColumn> columns = new ArrayList<>(withRowEditorSlack(node, placedColumns(node, composed)));
+                holdTheLastFixedColumn(node, columns);
+                double taken = takeHang(node, columns, hang);
+                setTableWidth(table, Math.min(composed[0], widthOf(columns) + taken) - taken);
+                writeRowColumns(table, columns);
+                return new RowGeometry(true, taken);
+            }
+            nameTheColumnsLeftToWord(node);
             setTableWidth(table, available - padded);
             return new RowGeometry(false, 0);
         }
@@ -16026,6 +16150,133 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         setTableWidth(table, Math.min(width, widthOf(columns) + taken) - taken);
         writeRowColumns(table, columns);
         return new RowGeometry(false, taken);
+    }
+
+    /**
+     * Where each child of a row composed in a table cell starts, as {@link DocxLayoutMetrics#rowChildStarts}
+     * gives a placed row's: {@code {rowWidth, x0, x1, ...}} from the row's left edge.
+     *
+     * <p>A row the page divides by what its children measure — an arrangement other than
+     * {@code START}, a spacer that grows, an auto column — has its columns left to Word when the
+     * layout does not place it, and Word sizes them to their text: a "Total" and an amount the
+     * page sets at either end of a cell stood with the amount at its middle. A paragraph's lines
+     * are laid out under its table's path, and say where its box starts ({@link #composedBoxOf}); a
+     * spacer stands where the page spreads the room between them ({@link #placeComposedSpacers}).
+     * A child of any other kind — a picture, a shape — tells nothing, nor do lines found in another
+     * cell, nor does a row written inside a panel or another table in its cell: {@code null}.</p>
+     *
+     * <p>The row is as wide as the cell's text box leaves it, its containers' sides and its own
+     * margins taken off.</p>
+     */
+    private double[] composedRowStarts(RowNode row) {
+        double[] text = composedCellText();
+        List<DocumentNode> children = row.children();
+        double rowWidth = text == null ? Double.NaN : text[1] - text[0] - insetLeft - insetRight;
+        if (text == null || children.isEmpty() || !(rowWidth > 0)) {
+            return null;
+        }
+        double rowLeft = text[0] + insetLeft;
+        int count = children.size();
+        double[] starts = new double[1 + count];
+        // Where each child ends, past its right margin, from the row's left edge.
+        double[] ends = new double[count];
+        starts[0] = rowWidth;
+        for (int index = 0; index < count; index++) {
+            DocumentNode child = children.get(index);
+            if (child instanceof SpacerNode) {
+                continue;
+            }
+            double[] box = composedBoxOf(null, child, 0, 0);
+            if (box == null || Double.isNaN(box[0])) {
+                return null;
+            }
+            starts[1 + index] = box[0] - rowLeft;
+            ends[index] = starts[1 + index] + box[1] + child.margin().right();
+        }
+        for (int first = 0; first < count; first++) {
+            if (!(children.get(first) instanceof SpacerNode)) {
+                continue;
+            }
+            int last = first;
+            while (last + 1 < count && children.get(last + 1) instanceof SpacerNode) {
+                last++;
+            }
+            placeComposedSpacers(row, children, starts, ends, first, last);
+            first = last;
+        }
+        for (int index = 0; index < count; index++) {
+            double x = starts[1 + index];
+            // In order and inside the row, or the lines are not this row's as the page set it.
+            if (x < (index == 0 ? 0 : starts[index]) - 0.5 || x > rowWidth + 0.5) {
+                return null;
+            }
+        }
+        return starts;
+    }
+
+    /**
+     * Places a run of spacers between children of a composed row whose places are known, as the
+     * page places them.
+     *
+     * <p>An arrangement spreads the room the children leave evenly between each two of them, so
+     * between two children it knows, the run takes the room they leave less the spacers' widths and
+     * the gaps, in as many equal shares as there are gaps. A spacer that grows takes all the room
+     * instead, past the gap after the child before it; so does a run against the row's edge, from
+     * the child before it or the row's padding.</p>
+     *
+     * @param starts the starts found so far, {@code {rowWidth, x0, ...}}; the run's are written
+     * @param ends   where each child ends past its right margin; the run's are written
+     * @param first  the run's first child
+     * @param last   the run's last child
+     */
+    private static void placeComposedSpacers(RowNode row, List<DocumentNode> children, double[] starts, double[] ends,
+                                             int first, int last) {
+        double gap = row.gap();
+        boolean grows = false;
+        double widths = 0;
+        for (int index = first; index <= last; index++) {
+            SpacerNode spacer = (SpacerNode) children.get(index);
+            grows |= spacer.grow() > 0;
+            widths += spacer.margin().left() + spacer.width() + spacer.padding().horizontal() + spacer.margin().right();
+        }
+        double before = first == 0 ? row.padding().left() : ends[first - 1];
+        // The share of room each gap of the run takes, where a child stands on either side of it.
+        double share = 0;
+        if (!grows && first > 0 && last + 1 < children.size()) {
+            double after = starts[2 + last] - children.get(last + 1).margin().left();
+            int gaps = last - first + 2;
+            share = Math.max(0, (after - before - widths - gaps * gap) / gaps);
+        }
+        double x = before;
+        for (int index = first; index <= last; index++) {
+            SpacerNode spacer = (SpacerNode) children.get(index);
+            x += (index == 0 ? 0 : gap + share) + spacer.margin().left();
+            starts[1 + index] = x;
+            x += spacer.width() + spacer.padding().horizontal() + spacer.margin().right();
+            ends[index] = x;
+        }
+    }
+
+    /**
+     * Names a row whose columns are Word's: one the page divides by what its children measure,
+     * which the layout placed nowhere this export can read, so its columns are sized by the
+     * editor to their text. Without a layout nothing is placed, which the export says once for
+     * the whole document.
+     */
+    private void nameTheColumnsLeftToWord(RowNode node) {
+        if (layout.isEmpty()) {
+            return;
+        }
+        String by = node.arrangement() != RowArrangement.START ? "its arrangement"
+                : hasGrowChild(node) ? "a spacer that grows" : "an auto column";
+        String why = composedCellText() == null && !composedCellBoxes.isEmpty()
+                ? "written inside a panel or another table in its table cell"
+                : composedCellText() != null
+                        ? "composed in a table cell, it holds a child the layout does not place in the cell"
+                        : "the layout does not place it";
+        report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
+                "its columns are Word's, sized to their text: the page divides it by " + by
+                + ", and " + why);
     }
 
     /**
@@ -17317,7 +17568,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 insetLeft = outerLeft;
                 insetRight = outerRight;
                 if (placed != null && across != null) {
-                    holdIn(content, placed, across[0], across[1]);
+                    holdIn(content, placed.placementX(), placed.placementWidth(), across[0], across[1]);
                 }
                 writeNode(document, content);
             }

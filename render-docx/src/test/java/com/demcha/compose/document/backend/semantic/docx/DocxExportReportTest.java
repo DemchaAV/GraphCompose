@@ -92,6 +92,36 @@ class DocxExportReportTest {
     }
 
     @Test
+    void aRoundedPanelIsSaidToKeepWhatItPaints() throws Exception {
+        // A border alone is no fill: the note says what the square cell keeps.
+        DocxExportReport bordered = reportOf(page -> page.addSection("Card", card -> card
+                .stroke(com.demcha.compose.document.style.DocumentStroke.of(SURFACE, 1))
+                .cornerRadius(DocumentCornerRadius.of(6))
+                .addParagraph(p -> p.text("Inside the card"))));
+        DocxExportReport both = reportOf(page -> page.addSection("Card", card -> card
+                .fillColor(SURFACE).stroke(com.demcha.compose.document.style.DocumentStroke.of(SURFACE, 1))
+                .cornerRadius(DocumentCornerRadius.of(6))
+                .addParagraph(p -> p.text("Inside the card"))));
+
+        assertThat(bordered.bySubject().get("corner radius")).extracting(DocxExportReport.Note::detail)
+                .containsExactly("a Word table cell is rectangular, so the panel keeps its border and loses its "
+                                 + "rounded corners");
+        assertThat(both.bySubject().get("corner radius")).extracting(DocxExportReport.Note::detail)
+                .containsExactly("a Word table cell is rectangular, so the panel keeps its fill and border and "
+                                 + "loses its rounded corners");
+        // Sides of no width paint nothing: there is no border to keep.
+        DocxExportReport unpainted = reportOf(page -> page.addSection("Card", card -> card
+                .fillColor(SURFACE)
+                .borders(com.demcha.compose.document.style.DocumentBorders.all(
+                        com.demcha.compose.document.style.DocumentStroke.of(SURFACE, 0)))
+                .cornerRadius(DocumentCornerRadius.of(6))
+                .addParagraph(p -> p.text("Inside the card"))));
+        assertThat(unpainted.bySubject().get("corner radius")).extracting(DocxExportReport.Note::detail)
+                .containsExactly("a Word table cell is rectangular, so the panel keeps its fill and loses its "
+                                 + "rounded corners");
+    }
+
+    @Test
     void aChartSaysWhatItBecame() throws Exception {
         ChartData data = ChartData.builder()
                 .categories("Q1", "Q2")

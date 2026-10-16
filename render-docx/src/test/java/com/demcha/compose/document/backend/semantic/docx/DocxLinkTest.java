@@ -123,6 +123,108 @@ class DocxLinkTest {
     }
 
     @Test
+    void aNameASuffixMakesIsNoOtherAnchorsName() throws Exception {
+        // "Section-1" takes "Section_1_2" after "Section 1"; "Section 1 2" cleans to that name too.
+        // Named in the order written: the anchors first, the links to them after.
+        try (XWPFDocument document = exported(page -> page
+                .addParagraph(p -> p.text("One").anchor("Section 1"))
+                .addParagraph(p -> p.text("Two").anchor("Section-1"))
+                .addParagraph(p -> p.text("Three").anchor("Section 1 2"))
+                .addParagraph(p -> p.text("To two").linkTo("Section-1"))
+                .addParagraph(p -> p.text("To three").linkTo("Section 1 2")))) {
+
+            assertThat(bookmarkNames(document)).doesNotHaveDuplicates().hasSize(3);
+            assertThat(bookmarkIn(document, "Two")).isEqualTo("Section_1_2");
+            assertThat(bookmarkIn(document, "Three")).isEqualTo("Section_1_2_2");
+            assertThat(linkAnchor(document.getParagraphs().get(3))).isEqualTo(bookmarkIn(document, "Two"));
+            assertThat(linkAnchor(document.getParagraphs().get(4))).isEqualTo(bookmarkIn(document, "Three"));
+        }
+    }
+
+    @Test
+    void anAnchorTwoNodesDeclareIsMarkedOnTheLastAlone() throws Exception {
+        // The page sends a link to the last node declaring it; Word goes to a name's first bookmark.
+        List<DocxExportReport.Note> notes = new java.util.ArrayList<>();
+        byte[] docx;
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(com.demcha.compose.document.style.DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page
+                    .addParagraph(p -> p.text("To it").linkTo("dup"))
+                    .addParagraph(p -> p.text("First").anchor("dup"))
+                    .addParagraph(p -> p.text("Second").anchor("dup")));
+            docx = session.export(DocxSemanticBackend.builder().reportSink(report -> notes.addAll(report.notes())).build());
+        }
+        try (XWPFDocument document = new XWPFDocument(new java.io.ByteArrayInputStream(docx))) {
+            assertThat(bookmarkNames(document)).containsExactly("dup");
+            assertThat(bookmarkIn(document, "Second")).isEqualTo("dup");
+            assertThat(document.getParagraphs()).allSatisfy(paragraph -> assertThat(
+                    paragraph.getCTP().getBookmarkEndList().size()).isEqualTo(paragraph.getCTP().getBookmarkStartList().size()));
+        }
+        assertThat(notes).filteredOn(note -> note.subject().equals("anchor")).singleElement()
+                .satisfies(note -> assertThat(note.detail()).startsWith("\"dup\" is the anchor of 2 nodes"));
+    }
+
+    @Test
+    void aBlocksBookmarkBeforeTheLastDeclarationIsTakenOutWhole() throws Exception {
+        try (XWPFDocument document = exported(page -> page
+                .addSection(block -> block.anchor("dup").addParagraph("In the block").addParagraph("Still in it"))
+                .addParagraph(p -> p.text("Later").anchor("dup")))) {
+            String xml = document.getDocument().xmlText();
+
+            assertThat(bookmarkNames(document)).containsExactly("dup");
+            assertThat(bookmarkIn(document, "Later")).isEqualTo("dup");
+            assertThat(count(xml, "<w:bookmarkEnd ")).as("its end with it").isEqualTo(count(xml, "<w:bookmarkStart "));
+        }
+    }
+
+    @Test
+    void aBlockAndANodeInsideItSharingAnAnchorKeepTheInnersBookmark() throws Exception {
+        // The page registers the block before what it holds, and goes to the last: the paragraph
+        // inside. The block's bookmark opens before it in the file, though it is written after.
+        try (XWPFDocument document = exported(page -> page
+                .addSection(block -> block.anchor("x").addParagraph("Opening").addParagraph(p -> p.text("Inner").anchor("x"))))) {
+            assertThat(bookmarkNames(document)).containsExactly("x");
+            assertThat(bookmarkIn(document, "Inner")).isEqualTo("x");
+        }
+    }
+
+    @Test
+    void anAnchoredPanelRunOntoTheNextPageIsMarkedWhereItStarts() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(300, 200, 20, page -> page.addSection(card -> {
+            card.anchor("card").fillColor(com.demcha.compose.document.style.DocumentColor.LIGHT_GRAY);
+            for (int line = 0; line < 30; line++) {
+                card.addParagraph("Line " + line);
+            }
+        }))) {
+            List<String> names = document.getTables().stream()
+                    .flatMap(table -> table.getRows().stream()).flatMap(row -> row.getTableCells().stream())
+                    .flatMap(cell -> cell.getParagraphs().stream())
+                    .flatMap(p -> p.getCTP().getBookmarkStartList().stream()).map(bookmark -> bookmark.getName())
+                    .toList();
+            String first = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0).getCTP()
+                    .getBookmarkStartList().stream().map(bookmark -> bookmark.getName()).findFirst().orElse(null);
+
+            assertThat(names).containsExactly("card");
+            assertThat(first).as("on the panel's first line").isEqualTo("card");
+        }
+    }
+
+    @Test
+    void anAnchorWhoseLastDeclarationHasNoBookmarkIsNamed() throws Exception {
+        // A drawn shape is no paragraph a bookmark could mark: the page goes to it, Word to the text.
+        List<DocxExportReport.Note> notes = new java.util.ArrayList<>();
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(com.demcha.compose.document.style.DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page
+                    .addParagraph(p -> p.text("First").anchor("dup"))
+                    .addShape(shape -> shape.size(20, 20).anchor("dup")));
+            session.export(DocxSemanticBackend.builder().reportSink(report -> notes.addAll(report.notes())).build());
+        }
+        assertThat(notes).filteredOn(note -> note.subject().equals("anchor")).singleElement()
+                .satisfies(note -> assertThat(note.detail()).startsWith("\"dup\" is the anchor of 2 nodes"));
+    }
+
+    @Test
     void anAnchorStartingWithADigitIsStillAName() throws Exception {
         // Word will not take a bookmark whose name starts with anything but a letter, and
         // refuses the file rather than the bookmark.
@@ -205,6 +307,22 @@ class DocxLinkTest {
                 .flatMap(p -> p.getCTP().getBookmarkStartList().stream())
                 .map(bookmark -> bookmark.getName())
                 .toList();
+    }
+
+    /** The name of the bookmark in the paragraph reading a text, or null where it holds none. */
+    private static String bookmarkIn(XWPFDocument document, String text) {
+        return document.getParagraphs().stream().filter(p -> p.getText().equals(text))
+                .flatMap(p -> p.getCTP().getBookmarkStartList().stream()).map(bookmark -> bookmark.getName())
+                .findFirst().orElse(null);
+    }
+
+    private static int count(String xml, String element) {
+        return xml.split(java.util.regex.Pattern.quote(element), -1).length - 1;
+    }
+
+    /** The bookmark an internal link in a paragraph points at. */
+    private static String linkAnchor(XWPFParagraph paragraph) {
+        return paragraph.getCTP().getHyperlinkList().get(0).getAnchor();
     }
 
     private static XWPFDocument exported(Consumer<PageFlowBuilder> content) throws Exception {

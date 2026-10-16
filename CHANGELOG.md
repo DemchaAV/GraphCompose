@@ -8,6 +8,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps each anchor's bookmark its own, writes no control character the page
+  draws nothing for, sets a margin below zero out past its side, and says what a rounded panel
+  keeps.** A bookmark name a suffix made for one anchor — "Section-1" after "Section 1" took
+  `Section_1_2` — was given again to the anchor that cleans to it, "Section 1 2", so two links
+  went to one place; a name is now taken only once it is free. An anchor two nodes declare was a
+  bookmark on each, one name twice, where Word goes to the first and the page to the last: the
+  file now keeps the last it writes, and the report names the anchor — where the page's last is
+  a node the file writes no bookmark for too. A control character in text — a bell, a null, a
+  tab — which the page leaves out, was written, most of them as a question mark ("Total? due"),
+  in runs, headers and footers, a badge's initials, a list's marker and a picture's
+  description; it is now left out too, the line breaks kept. A margin below zero on a paragraph,
+  a list or a block round them was written as none, its text at the margin where the page set it
+  out past it; it is now an indent below zero in the flow, and in a table cell, a panel's
+  included, it is held where the cell's text stands and named. The corner-radius note on a
+  rounded panel said it kept its fill where it had only a border; it now says which it keeps.
 - **A DOCX export writes a page zone the page builds otherwise for the first page into the
   first page's header or footer.** Word paginates, so a zone's content was built once, for a
   page that was both the first and the last, and written on every page: a footer reading

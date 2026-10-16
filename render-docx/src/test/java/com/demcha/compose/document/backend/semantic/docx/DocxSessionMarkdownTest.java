@@ -143,10 +143,11 @@ class DocxSessionMarkdownTest {
         assertThat(paragraph.getText()).isEqualTo("Some **bold** text");
         assertThat(paragraph.getRuns()).singleElement().satisfies(run -> assertThat(run.isBold()).isFalse());
         assertThat(export.notes("ParagraphNode")).isEmpty();
-        // Text the parser keeps whole, its white space and a tab among it, as it stands in either session.
+        // Text the parser keeps whole, as it stands in either session: its white space with it,
+        // and the tab among it out, as the page draws none.
         for (boolean markdown : List.of(false, true)) {
-            assertThat(export(markdown, page -> page.addParagraph("a_b\tc")).paragraphWith("a_b").getText())
-                    .as("markdown " + markdown).isEqualTo("a_b\tc");
+            assertThat(export(markdown, page -> page.addParagraph("a_b  c\td")).paragraphWith("a_b").getText())
+                    .as("markdown " + markdown).isEqualTo("a_b  cd");
         }
     }
 

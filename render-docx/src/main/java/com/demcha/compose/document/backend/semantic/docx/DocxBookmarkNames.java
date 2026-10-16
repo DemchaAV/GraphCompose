@@ -1,8 +1,10 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The name Word will accept for one of the document's own anchors.
@@ -29,6 +31,8 @@ final class DocxBookmarkNames {
 
     private final Map<String, String> byAnchor = new HashMap<>();
     private final Map<String, Integer> collisions = new HashMap<>();
+    /** Every name given, without case. */
+    private final Set<String> taken = new HashSet<>();
     private int nextId;
 
     /**
@@ -72,16 +76,24 @@ final class DocxBookmarkNames {
 
         // Two anchors that clean to the same text are still two anchors. Without this the
         // second one's bookmark would sit on the first one's name and every link to either
-        // would land in the same place.
+        // would land in the same place. A name a suffix makes is another anchor's own too:
+        // "Section-1" became "Section_1_2", which "Section 1 2" cleans to, so a name is taken
+        // only once it is free. Word reads bookmark names without case.
         String key = base.toLowerCase(Locale.ROOT);
         int seen = collisions.merge(key, 1, Integer::sum);
-        if (seen == 1) {
-            return base;
+        // The n-th anchor of a name is tried as name_n first, the first as the name itself.
+        int number = Math.max(seen, 2) - 1;
+        String name = seen == 1 ? base : suffixed(base, ++number);
+        while (!taken.add(name.toLowerCase(Locale.ROOT))) {
+            name = suffixed(base, ++number);
         }
-        String suffix = "_" + seen;
-        String trimmed = base.length() + suffix.length() > MAX_LENGTH
-                ? base.substring(0, MAX_LENGTH - suffix.length())
-                : base;
-        return trimmed + suffix;
+        return name;
+    }
+
+    /** A name with a number after it, cut to fit Word's length. */
+    private static String suffixed(String base, int number) {
+        String suffix = "_" + number;
+        return (base.length() + suffix.length() > MAX_LENGTH ? base.substring(0, MAX_LENGTH - suffix.length()) : base)
+               + suffix;
     }
 }

@@ -637,6 +637,31 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * How many nodes declare each anchor the layout registers: the page sends a link to the last.
+     * A node a repeated table header draws again is one node; a page zone's, for which the file
+     * holds no bookmark, is left out.
+     *
+     * @return each anchor's count of declaring nodes, empty without a layout
+     */
+    Map<String, Integer> anchorsDeclared() {
+        Map<String, java.util.Set<String>> nodes = new HashMap<>();
+        for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
+            if (entry.getKey().startsWith("@page-zone")) {
+                continue;
+            }
+            for (PlacedFragment fragment : entry.getValue()) {
+                if (fragment.payload() instanceof com.demcha.compose.document.layout.payloads.AnchorMarkerPayload marker
+                    && !marker.anchor().isEmpty()) {
+                    nodes.computeIfAbsent(marker.anchor(), key -> new java.util.HashSet<>()).add(entry.getKey());
+                }
+            }
+        }
+        Map<String, Integer> counts = new HashMap<>();
+        nodes.forEach((anchor, declaring) -> counts.put(anchor, declaring.size()));
+        return counts;
+    }
+
+    /**
      * The first page a page zone is drawn on.
      *
      * @param zoneIndex the zone's position in the section's zone list

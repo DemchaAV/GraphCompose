@@ -637,14 +637,15 @@ final class DocxLayoutMetrics {
     }
 
     /**
-     * How many nodes declare each anchor the layout registers: the page sends a link to the last.
-     * A node a repeated table header draws again is one node; a page zone's, for which the file
-     * holds no bookmark, is left out.
+     * Under how many paths the layout registers each anchor: a node of a kind the export does not
+     * know registers its own, which only the layout tells, though a table's composed cells all
+     * register under the table's one. A page zone's, for which the file holds no bookmark, is left
+     * out.
      *
-     * @return each anchor's count of declaring nodes, empty without a layout
+     * @return each anchor's count of paths, empty without a layout
      */
-    Map<String, Integer> anchorsDeclared() {
-        Map<String, java.util.Set<String>> nodes = new HashMap<>();
+    Map<String, Integer> anchorPaths() {
+        Map<String, java.util.Set<String>> paths = new HashMap<>();
         for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
             if (entry.getKey().startsWith("@page-zone")) {
                 continue;
@@ -652,13 +653,43 @@ final class DocxLayoutMetrics {
             for (PlacedFragment fragment : entry.getValue()) {
                 if (fragment.payload() instanceof com.demcha.compose.document.layout.payloads.AnchorMarkerPayload marker
                     && !marker.anchor().isEmpty()) {
-                    nodes.computeIfAbsent(marker.anchor(), key -> new java.util.HashSet<>()).add(entry.getKey());
+                    paths.computeIfAbsent(marker.anchor(), key -> new java.util.HashSet<>()).add(entry.getKey());
                 }
             }
         }
         Map<String, Integer> counts = new HashMap<>();
-        nodes.forEach((anchor, declaring) -> counts.put(anchor, declaring.size()));
+        paths.forEach((anchor, registering) -> counts.put(anchor, registering.size()));
         return counts;
+    }
+
+    /**
+     * The anchors the layout registers under one path on more than one page, and on how many:
+     * a node in a table's header row is drawn again on every page the header repeats on, and the
+     * page sends a link to it to the last ({@link com.demcha.compose.document.snapshot.PageIndex}).
+     * A page zone's, for which the file holds no bookmark, is left out.
+     *
+     * @return each such anchor's count of pages, empty without a layout
+     */
+    Map<String, Integer> anchorsDrawnAgain() {
+        Map<String, Integer> pages = new HashMap<>();
+        for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
+            if (entry.getKey().startsWith("@page-zone")) {
+                continue;
+            }
+            Map<String, java.util.Set<Integer>> onPages = new HashMap<>();
+            for (PlacedFragment fragment : entry.getValue()) {
+                if (fragment.payload() instanceof com.demcha.compose.document.layout.payloads.AnchorMarkerPayload marker
+                    && !marker.anchor().isEmpty()) {
+                    onPages.computeIfAbsent(marker.anchor(), key -> new java.util.HashSet<>()).add(fragment.pageIndex());
+                }
+            }
+            onPages.forEach((anchor, drawn) -> {
+                if (drawn.size() > 1) {
+                    pages.merge(anchor, drawn.size(), Math::max);
+                }
+            });
+        }
+        return pages;
     }
 
     /**

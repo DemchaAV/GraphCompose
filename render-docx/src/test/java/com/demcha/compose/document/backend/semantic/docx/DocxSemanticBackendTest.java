@@ -377,6 +377,52 @@ class DocxSemanticBackendTest {
             assertThat(props.getTitle()).isEqualTo("Q1 Report");
             assertThat(props.getCreator()).isEqualTo("Engineering");
             assertThat(props.getKeywords()).isEqualTo("docx, metadata, report");
+            assertThat(document.getProperties().getExtendedProperties().getApplication())
+                    .as("the application that created it, GraphCompose by default, as a PDF's creator")
+                    .isEqualTo("GraphCompose");
+        }
+    }
+
+    @Test
+    void theCreatingApplicationIsWrittenAndAProducerApartFromItIsNamed() throws Exception {
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+        byte[] docxBytes;
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
+            session.metadata(DocumentMetadata.builder().creator("Billing").producer("Billing PDF").build());
+            session.pageFlow(page -> page.addParagraph("Body"));
+            docxBytes = session.export(new DocxSemanticBackend(report::set));
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            assertThat(document.getProperties().getExtendedProperties().getApplication()).isEqualTo("Billing");
+        }
+        assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("producer"))
+                .extracting(DocxExportReport.Note::severity, DocxExportReport.Note::detail)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple(DocxExportReport.Severity.DROPPED,
+                        "a Word file names the application that created it, \"Billing\", and has no field for "
+                        + "a producer, so \"Billing PDF\" is not in it"));
+    }
+
+    @Test
+    void aProducerThatIsTheApplicationWrittenOrNoOneSetIsNotNamed() throws Exception {
+        // Setting only a creator leaves the producer every metadata starts with, which states nothing.
+        for (DocumentMetadata metadata : List.of(DocumentMetadata.builder().title("Defaults").build(),
+                DocumentMetadata.builder().creator(null).producer("Billing").build(),
+                DocumentMetadata.builder().creator("Billing").build())) {
+            java.util.concurrent.atomic.AtomicReference<DocxExportReport> report = new java.util.concurrent.atomic.AtomicReference<>();
+            byte[] docxBytes;
+            try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
+                session.metadata(metadata);
+                session.pageFlow(page -> page.addParagraph("Body"));
+                docxBytes = session.export(new DocxSemanticBackend(report::set));
+            }
+
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+                assertThat(document.getProperties().getExtendedProperties().getApplication())
+                        .as("with no creator, the producer is the application named")
+                        .isEqualTo(metadata.getCreator() != null ? metadata.getCreator() : metadata.getProducer());
+            }
+            assertThat(report.get().notes()).noneMatch(note -> note.subject().equals("producer"));
         }
     }
 

@@ -313,6 +313,46 @@ class DocxReportedLossesTest {
                            + "the document");
     }
 
+    @Test
+    void anAnchorAKindOfTheCallersOwnDeclaresTooIsCountedAsItsNode() throws Exception {
+        // Only the layout tells of the anchor such a node declares: the page goes to the last of the
+        // two, and the file marks the paragraph.
+        DocxExportReport report = reportOf(session -> {
+            session.registerNodeDefinition(new MarkDefinition());
+            session.pageFlow(page -> page.addParagraph(p -> p.text("Terms").anchor("terms")).add(new Mark("Mark")));
+        });
+
+        assertThat(report.bySubject().get("anchor")).singleElement().extracting(DocxExportReport.Note::detail)
+                .asString().startsWith("\"terms\" is the anchor of 2 nodes");
+    }
+
+    /** A node kind of the caller's own that declares the anchor "terms" where the layout puts it. */
+    private record Mark(String name) implements DocumentNode {
+    }
+
+    private static final class MarkDefinition implements NodeDefinition<Mark> {
+        @Override
+        public Class<Mark> nodeType() {
+            return Mark.class;
+        }
+
+        @Override
+        public PreparedNode<Mark> prepare(Mark node, PrepareContext ctx, BoxConstraints constraints) {
+            return PreparedNode.leaf(node, new MeasureResult(30, 10));
+        }
+
+        @Override
+        public PaginationPolicy paginationPolicy(Mark node) {
+            return PaginationPolicy.ATOMIC;
+        }
+
+        @Override
+        public List<LayoutFragment> emitFragments(PreparedNode<Mark> prepared, FragmentContext ctx,
+                                                  FragmentPlacement placement) {
+            return List.of(com.demcha.compose.document.layout.NodeDefinitionSupport.anchorMarkerFragment("terms", placement));
+        }
+    }
+
     /** A node kind of the caller's own that paints a circle the export can draw. */
     private record Seal(String name) implements DocumentNode {
     }

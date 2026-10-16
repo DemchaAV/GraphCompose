@@ -835,8 +835,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The id of each bookmark written for an anchor, in the order written: an anchor two nodes
     // declare keeps the last one's (keepTheLastBookmarkOfEachAnchor).
     private final java.util.Map<String, List<Integer>> bookmarksOfAnchors = new java.util.LinkedHashMap<>();
-    // How many nodes the layouts register each anchor on, a bookmark written or not.
+    // How many nodes declare each anchor, a bookmark written or not (DocxAnchorDeclarations), and
+    // under how many paths the layouts register it, which counts a kind the export does not know.
     private final java.util.Map<String, Integer> anchorsDeclared = new java.util.LinkedHashMap<>();
+    private final java.util.Map<String, Integer> anchorPaths = new java.util.HashMap<>();
+    // The anchors a node in a table's repeated header row declares, and of those the layouts
+    // register under one path on more than one page, the most pages.
+    private final java.util.Set<String> anchorsInARepeatedHeader = new java.util.HashSet<>();
+    private final java.util.Map<String, Integer> anchorsDrawnAgain = new java.util.HashMap<>();
     // The page references written as fields, to be checked against those bookmarks.
     private final List<FieldReference> fieldReferences = new ArrayList<>();
     // Where the finished report goes, when the caller configured somewhere for it to go.
@@ -1140,6 +1146,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         bookmarksWritten.clear();
         bookmarksOfAnchors.clear();
         anchorsDeclared.clear();
+        anchorPaths.clear();
+        anchorsInARepeatedHeader.clear();
+        anchorsDrawnAgain.clear();
         fieldReferences.clear();
         java.util.NavigableSet<Integer> outlineLevels = outlineLevelsIn(whole);
         headingLevels = outlineLevels.stream().map(level -> Math.min(level, MAX_HEADING_LEVEL))
@@ -1255,17 +1264,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         sectionNotesFrom = report.size();
         SemanticExportContext context = section.context();
         layout = DocxLayoutMetrics.of(section.graph(), context.layoutGraph());
-        layout.anchorsDeclared().forEach((anchor, nodes) -> anchorsDeclared.merge(anchor, nodes, Integer::sum));
+        DocxAnchorDeclarations.count(section.graph(), anchorsDeclared, anchorsInARepeatedHeader);
+        layout.anchorPaths().forEach((anchor, paths) -> anchorPaths.merge(anchor, paths, Integer::sum));
+        layout.anchorsDrawnAgain().forEach((anchor, pages) -> anchorsDrawnAgain.merge(anchor, pages, Math::max));
         if (layout.isEmpty()) {
             // Said once per section, naming it when there are several: without measurements
             // the line height is Word's, a lineSpacing is put between no lines, and every auto
             // column is Word's, and a caller comparing this file against the rendered page
-            // deserves to know that before they look.
+            // deserves to know that before they look — and what else the section holds that
+            // only a layout places or keeps (DocxWithoutLayout).
             report.add(DocxExportReport.Severity.APPROXIMATED, "measured geometry",
                     sectioned ? "section " + (index + 1) : null,
-                    (sectioned ? "this section" : "this document")
-                    + " could not be laid out, so line heights, the space between lines and auto column "
-                    + "widths are the editor's rather than the engine's");
+                    DocxWithoutLayout.note(section.graph(), sectioned ? "this section" : "this document"));
         }
         carriedSpacingBefore = 0;
         pendingSpacingAfter = 0;
@@ -1665,6 +1675,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return null;
     }
 
+    /** The producer every metadata starts with, which states nothing of the caller's. */
+    private static final String DEFAULT_PRODUCER = DocumentMetadata.builder().build().getProducer();
+
+    /**
+     * Writes the document's metadata into the package's properties: title, author, subject and
+     * keywords as its core properties, the author as their creator, and the application that
+     * created it as the extended {@code Application}, which read "Apache POI" without it.
+     *
+     * <p>A Word file names one application and has no field for a producer, the program a PDF
+     * says turned the document into that PDF. Where the metadata states a producer of its own —
+     * not the one every metadata starts with, which a session setting only its creator still
+     * carries — other than the application written, the report names it.</p>
+     */
     private void applyMetadata(XWPFDocument document, DocumentMetadata metadata) {
         if (metadata != null) {
             org.apache.poi.ooxml.POIXMLProperties props = document.getProperties();
@@ -1679,6 +1702,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             if (metadata.getKeywords() != null) {
                 props.getCoreProperties().setKeywords(metadata.getKeywords());
+            }
+            String application = metadata.getCreator() != null ? metadata.getCreator() : metadata.getProducer();
+            if (application != null) {
+                props.getExtendedProperties().setApplication(application);
+            }
+            if (metadata.getProducer() != null && !metadata.getProducer().equals(application)
+                && !metadata.getProducer().equals(DEFAULT_PRODUCER)) {
+                report.add(DocxExportReport.Severity.DROPPED, "producer", null,
+                        "a Word file names the application that created it, \"" + application
+                        + "\", and has no field for a producer, so \"" + metadata.getProducer()
+                        + "\" is not in it");
             }
         }
         // The text header and footer are written with the page zones — see applyPageZones; the
@@ -4268,8 +4302,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return sides;
     }
 
-    /** Why a node the export neither writes nor draws is dropped, as the report says it. */
-    private static String droppedBecause(DocumentNode node) {
+    /**
+     * Why a node the export neither writes nor draws is dropped, as the report says it. A drawing
+     * is drawn where the layout puts it, so with no layout behind the export there is no place to
+     * draw one at; the reason is that, and not the drawing's.
+     */
+    private String droppedBecause(DocumentNode node) {
         if (node instanceof PageFieldNode) {
             return "a page field is written in a page zone, as a Word header's or footer's field, "
                    + "and not in the body";
@@ -4281,7 +4319,40 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             || node instanceof com.demcha.compose.document.node.PathNode path && paintedOnlyWithAGradient(path)) {
             return "it is painted only with a gradient, which the export does not draw";
         }
+        if (paintsNothing(node)) {
+            return "it paints nothing a shape could show";
+        }
+        if (isDrawing(node) && layout.isEmpty()) {
+            return "with no layout behind the export, nothing says where the page draws it";
+        }
         return "its geometry has no semantic Word analogue";
+    }
+
+    /**
+     * Whether a drawing paints nothing: no fill, no fill paint and no stroke wide enough to draw,
+     * so the page shows nothing of it either.
+     */
+    private static boolean paintsNothing(DocumentNode node) {
+        if (node instanceof com.demcha.compose.document.node.ShapeNode shape) {
+            return shape.fillColor() == null && shape.fillPaint() == null && !drawsALine(shape.stroke());
+        }
+        if (node instanceof com.demcha.compose.document.node.EllipseNode ellipse) {
+            return ellipse.fillColor() == null && !drawsALine(ellipse.stroke());
+        }
+        if (node instanceof com.demcha.compose.document.node.PathNode path) {
+            return path.fillColor() == null && path.fillPaint() == null && !drawsALine(path.stroke());
+        }
+        if (node instanceof com.demcha.compose.document.node.PolygonNode polygon) {
+            return polygon.fillColor() == null && !drawsALine(polygon.stroke());
+        }
+        if (node instanceof com.demcha.compose.document.node.LineNode line) {
+            return !drawsALine(line.stroke());
+        }
+        return false;
+    }
+
+    private static boolean drawsALine(DocumentStroke stroke) {
+        return stroke != null && stroke.width() > 0;
     }
 
     /**
@@ -9533,9 +9604,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * declaration, and a page reference reads that one's page
      * ({@link com.demcha.compose.document.snapshot.PageIndex}). Word goes to the first bookmark of
      * a name, and a file holding two of one name has them cut down to one by the editor. So the
-     * ones before the last are taken out, and the report names the anchor — as it does where the
-     * layout registers it on more nodes than the file writes a bookmark for, a drawn shape's say:
-     * the last bookmark is then another node's than the one the page goes to.</p>
+     * ones before the last are taken out, and the report names the anchor — as it does where more
+     * nodes declare it than the file writes a bookmark for, a drawn shape's say: the last bookmark
+     * is then another node's than the one the page goes to. The nodes are counted off the document
+     * ({@link DocxAnchorDeclarations}): the layout registers a table's composed cells under the
+     * table, and two of them declaring one anchor read as one node. A node of a kind the export
+     * does not know declares an anchor only the layout tells of, under a path of its own: the
+     * count is the larger of the two.</p>
+     *
+     * <p>A node in a table's header row the page repeats is drawn again on each page it repeats on,
+     * and the page goes to the last of them; the file holds the row once, at the table's start, and
+     * the report names an anchor declared there too.</p>
      *
      * <p>The last is the last in the file, whose order is the page's: a block's bookmark opens at
      * its first paragraph, before those of the nodes inside it, though it is written after them.</p>
@@ -9545,12 +9624,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             bookmarksOfAnchors.putIfAbsent(anchor, List.of());
         }
         for (java.util.Map.Entry<String, List<Integer>> anchor : bookmarksOfAnchors.entrySet()) {
-            int nodes = anchorsDeclared.getOrDefault(anchor.getKey(), anchor.getValue().size());
+            int nodes = Math.max(anchorsDeclared.getOrDefault(anchor.getKey(), anchor.getValue().size()),
+                    anchorPaths.getOrDefault(anchor.getKey(), 0));
             if (nodes >= 2) {
                 report.add(DocxExportReport.Severity.APPROXIMATED, "anchor", null,
                         "\"" + anchor.getKey() + "\" is the anchor of " + nodes + " nodes: a link to it goes to the "
                         + "last on the page, and the Word file, one place a bookmark name can mark, marks the last "
                         + "it writes a bookmark for");
+            } else if (nodes == 1 && !anchor.getValue().isEmpty() && anchorsInARepeatedHeader.contains(anchor.getKey())
+                       && anchorsDrawnAgain.containsKey(anchor.getKey())) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, "anchor", null,
+                        "\"" + anchor.getKey() + "\" is in a table's header row, which the page repeats on "
+                        + anchorsDrawnAgain.get(anchor.getKey()) + " pages: a link to it goes to the last of them, "
+                        + "and a page reference reads that one's page; the Word file holds the row once, where the "
+                        + "table starts, which its link goes to and a page reference reads once Word updates it");
             }
         }
         String w = "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' ";
@@ -17012,7 +17099,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return slots;
     }
 
-    private static boolean hasGrowChild(RowNode node) {
+    /** Whether a row holds a spacer that grows into the room its columns leave. */
+    static boolean hasGrowChild(RowNode node) {
         for (DocumentNode child : node.children()) {
             if (child instanceof SpacerNode spacer && spacer.grow() > 0.0) {
                 return true;
@@ -17412,9 +17500,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         lastBodyParagraph = null;
         blocksWritten++;
         if (currentCell == null) {
-            return document.createTable(rows, columns);
+            return withAGrid(document.createTable(rows, columns));
         }
-        XWPFTable nested = new XWPFTable(currentCell.getCTTc().addNewTbl(), currentCell, rows, columns);
+        XWPFTable nested = withAGrid(new XWPFTable(currentCell.getCTTc().addNewTbl(), currentCell, rows, columns));
         // The XML already carries the table; this is what tells the cell's own lists about
         // it, so reading the cell back finds it. getTables() is unmodifiable on purpose —
         // adding to it throws rather than quietly leaving the model and the XML disagreeing.
@@ -17430,6 +17518,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         tableCloser = closer;
         lastBodyParagraph = closer;
         return nested;
+    }
+
+    /**
+     * Gives a table the grid a Word table cannot be without, empty: POI makes a table with none,
+     * the columns written later fill it, and a table whose columns are left to Word — a chart's
+     * data table, a table or a row with no layout, a row the layout does not place in a cell —
+     * keeps it empty. Word and LibreOffice lay out a table with an empty grid as one without
+     * (measured: every word where it stood, in both, in a row of columns in the flow and in a cell,
+     * a table of auto columns with and without a width, and {@code WordExportCompanion}'s chart).
+     */
+    private static XWPFTable withAGrid(XWPFTable table) {
+        if (table.getCTTbl().getTblGrid() == null) {
+            table.getCTTbl().addNewTblGrid();
+        }
+        return table;
     }
 
     /**

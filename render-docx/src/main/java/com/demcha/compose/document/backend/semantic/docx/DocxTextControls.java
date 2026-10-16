@@ -1,18 +1,22 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.engine.text.TextControlSanitizer;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFHeaderFooter;
 import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlObject;
 
 /**
- * Takes out of a Word file's text the control characters the page draws nothing for.
+ * Takes out of a Word file's text the characters the page draws nothing for.
  *
- * <p>The layout removes a control character — a bell, a null, a tab — from the text it sets
- * (it is in Unicode's category C), and keeps the line breaks, which it breaks lines at. Written
- * to Word, a character XML cannot hold came out as a question mark, "Total? due" where the page
- * reads "Total due", and a tab stood as a gap the page does not leave. A line break left in a
- * run's text is Word's space, and stays.</p>
+ * <p>The layout removes from the text it sets every character of Unicode's category C — a
+ * control (a bell, a null, a tab), a format character (a soft hyphen, a zero-width space), one
+ * of private use or none assigned — but the formatting controls it reads, the direction marks
+ * and the joiners ({@link TextControlSanitizer#removeExceptFormattingControls}), and it keeps the
+ * line breaks, which it breaks lines at. Written to Word, one XML cannot hold came out as a
+ * question mark, "Total? due" where the page reads "Total due"; a tab stood as a gap the page
+ * does not leave, and a soft hyphen or a zero-width space let Word break a word the page sets
+ * whole. A line break left in a run's text is Word's space, and stays.</p>
  *
  * <p>Text written into the file as XML rather than as a run's — a badge's initials in its
  * shape, a list level's marker, a picture's description — is cleaned where it is written,
@@ -27,7 +31,8 @@ final class DocxTextControls {
     }
 
     /**
-     * Takes the control characters out of the text of a document's body, headers and footers.
+     * Takes the characters the page draws nothing for out of the text of a document's body,
+     * headers and footers.
      *
      * @param document the document as written
      */
@@ -65,8 +70,8 @@ final class DocxTextControls {
             new javax.xml.namespace.QName("http://www.w3.org/XML/1998/namespace", "space");
 
     /**
-     * A text without the control characters the page draws nothing for: every one but the line
-     * breaks.
+     * A text without the characters the page draws nothing for: those of category C but the
+     * formatting controls and the line breaks.
      *
      * @param text the text as written, or {@code null}
      * @return the text kept, the same string where there is nothing to take out
@@ -76,16 +81,24 @@ final class DocxTextControls {
             return null;
         }
         StringBuilder kept = null;
-        for (int index = 0; index < text.length(); index++) {
-            char character = text.charAt(index);
-            boolean drawsNothing = Character.getType(character) == Character.CONTROL
-                                   && character != '\n' && character != '\r';
+        for (int index = 0; index < text.length(); ) {
+            int codePoint = text.codePointAt(index);
+            boolean drawsNothing = codePoint != '\n' && codePoint != '\r' && isCategoryC(codePoint)
+                                   && !TextControlSanitizer.isFormattingControl(codePoint);
             if (drawsNothing && kept == null) {
                 kept = new StringBuilder(text.length()).append(text, 0, index);
             } else if (!drawsNothing && kept != null) {
-                kept.append(character);
+                kept.appendCodePoint(codePoint);
             }
+            index += Character.charCount(codePoint);
         }
         return kept == null ? text : kept.toString();
+    }
+
+    /** Whether a code point is of Unicode's category C, as the layout reads it. */
+    private static boolean isCategoryC(int codePoint) {
+        int type = Character.getType(codePoint);
+        return type == Character.CONTROL || type == Character.FORMAT || type == Character.PRIVATE_USE
+               || type == Character.SURROGATE || type == Character.UNASSIGNED;
     }
 }

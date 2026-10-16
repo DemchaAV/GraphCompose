@@ -125,17 +125,19 @@ class DocxLinkTest {
     @Test
     void aNameASuffixMakesIsNoOtherAnchorsName() throws Exception {
         // "Section-1" takes "Section_1_2" after "Section 1"; "Section 1 2" cleans to that name too.
+        // Named in the order written: the anchors first, the links to them after.
         try (XWPFDocument document = exported(page -> page
-                .addParagraph(p -> p.text("To two").linkTo("Section-1"))
-                .addParagraph(p -> p.text("To three").linkTo("Section 1 2"))
                 .addParagraph(p -> p.text("One").anchor("Section 1"))
                 .addParagraph(p -> p.text("Two").anchor("Section-1"))
-                .addParagraph(p -> p.text("Three").anchor("Section 1 2")))) {
+                .addParagraph(p -> p.text("Three").anchor("Section 1 2"))
+                .addParagraph(p -> p.text("To two").linkTo("Section-1"))
+                .addParagraph(p -> p.text("To three").linkTo("Section 1 2")))) {
 
             assertThat(bookmarkNames(document)).doesNotHaveDuplicates().hasSize(3);
-            assertThat(bookmarkIn(document, "Two")).isNotEqualTo(bookmarkIn(document, "Three"));
-            assertThat(linkAnchor(document.getParagraphs().get(0))).isEqualTo(bookmarkIn(document, "Two"));
-            assertThat(linkAnchor(document.getParagraphs().get(1))).isEqualTo(bookmarkIn(document, "Three"));
+            assertThat(bookmarkIn(document, "Two")).isEqualTo("Section_1_2");
+            assertThat(bookmarkIn(document, "Three")).isEqualTo("Section_1_2_2");
+            assertThat(linkAnchor(document.getParagraphs().get(3))).isEqualTo(bookmarkIn(document, "Two"));
+            assertThat(linkAnchor(document.getParagraphs().get(4))).isEqualTo(bookmarkIn(document, "Three"));
         }
     }
 
@@ -172,6 +174,17 @@ class DocxLinkTest {
             assertThat(bookmarkNames(document)).containsExactly("dup");
             assertThat(bookmarkIn(document, "Later")).isEqualTo("dup");
             assertThat(count(xml, "<w:bookmarkEnd ")).as("its end with it").isEqualTo(count(xml, "<w:bookmarkStart "));
+        }
+    }
+
+    @Test
+    void aBlockAndANodeInsideItSharingAnAnchorKeepTheInnersBookmark() throws Exception {
+        // The page registers the block before what it holds, and goes to the last: the paragraph
+        // inside. The block's bookmark opens before it in the file, though it is written after.
+        try (XWPFDocument document = exported(page -> page
+                .addSection(block -> block.anchor("x").addParagraph("Opening").addParagraph(p -> p.text("Inner").anchor("x"))))) {
+            assertThat(bookmarkNames(document)).containsExactly("x");
+            assertThat(bookmarkIn(document, "Inner")).isEqualTo("x");
         }
     }
 

@@ -25,6 +25,24 @@ class DocxTextControlsTest {
     }
 
     @Test
+    void theRestOfCategoryCGoesTooButTheFormattingControlsThePageReads() {
+        // A soft hyphen and a zero-width space would let Word break a word the page sets whole; a
+        // noncharacter is a question mark in XML. The direction marks and the joiners steer the
+        // page's text, and stay.
+        assertThat(DocxTextControls.kept("co­op​er￿ate")).isEqualTo("cooperate");
+        assertThat(DocxTextControls.kept("‏a‍b‌c")).isEqualTo("‏a‍b‌c");
+        assertThat(DocxTextControls.kept("😀 smile")).as("an emoji is no surrogate").isEqualTo("😀 smile");
+    }
+
+    @Test
+    void aBarcodesDescriptionReadsItsDataAsThePageDoes() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addBarcode(barcode -> barcode.code128().data("A\u001DB").size(120, 40)))) {
+            assertThat(document.getDocument().xmlText()).contains("descr=\"AB\"").doesNotContain("descr=\"A?B\"");
+        }
+    }
+
+    @Test
     void aBodyParagraphAndATableCellReadAsThePageSetsThem() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph("Total\u0007 due")

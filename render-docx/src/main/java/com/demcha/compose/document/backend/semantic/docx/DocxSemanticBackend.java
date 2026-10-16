@@ -5008,13 +5008,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // alone: an item's marker is set from its left edge.
         double spare = currentCell != null ? EDITOR_SLACK_POINTS : 0;
         // Pulled out past a side by a margin below zero, its items stand out as far, but in a table
-        // cell, where the side is held at the cell's text and named (PULLED_OUT_OF_ITS_CELL).
-        double ownLeft = (list == leftMarginInCell ? 0 : list.margin().left()) + list.padding().left();
-        double ownRight = list.margin().right() + list.padding().right();
-        boolean inACell = currentCell != null;
-        insetLeft += ownLeft < 0 && !inACell ? ownLeft : Math.max(0, ownLeft);
-        insetRight += ownRight < 0 && !inACell ? ownRight : Math.max(0, ownRight - spare);
-        String pulledOut = inACell && (ownLeft < 0 || ownRight < 0) ? PULLED_OUT_OF_ITS_CELL : null;
+        // cell, a panel's, no further out than the cell's text: what a margin below zero, its own or
+        // a block's round it, takes past that is not written, and is named (PULLED_OUT_OF_ITS_CELL).
+        double sideLeft = (list == leftMarginInCell ? 0 : list.margin().left()) + list.padding().left();
+        double sideRight = list.margin().right() + list.padding().right();
+        double ownLeft = sideLeft < 0 ? sideLeft : Math.max(0, sideLeft);
+        double ownRight = sideRight < 0 ? sideRight : Math.max(0, sideRight - spare);
+        double shortLeft = currentCell == null ? 0 : Math.max(0, -(insetLeft + ownLeft));
+        double shortRight = currentCell == null ? 0 : Math.max(0, -(insetRight + ownRight));
+        insetLeft += ownLeft + shortLeft;
+        insetRight += ownRight + shortRight;
+        String pulledOut = shortLeft > 0.01 || shortRight > 0.01 ? PULLED_OUT_OF_ITS_CELL : null;
         int atTheirColumn;
         try {
             atTheirColumn = writeListItems(document, list, numId);
@@ -5051,12 +5055,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * What a paragraph or a list a margin below zero pulls out past a side loses in a table cell,
-     * a panel's included: the side is written where the cell's text stands, the margin not at all.
+     * a panel's included: as far as the margin takes it past the cell's text, it is not written.
      * Outside one it stands out as far as on the page.
      */
     private static final String PULLED_OUT_OF_ITS_CELL =
-            "its margin below zero is not written: in a table cell its side is held where the cell's text "
-            + "stands";
+            "a margin below zero, its own or a block's round it, is not written past its table cell's text: "
+            + "its side is held where the cell's text stands";
 
     /**
      * What a list's items lose, as the phrases its note lists.
@@ -9531,32 +9535,41 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * a name, and a file holding two of one name has them cut down to one by the editor. So the
      * ones before the last are taken out, and the report names the anchor — as it does where the
      * layout registers it on more nodes than the file writes a bookmark for, a drawn shape's say:
-     * the last bookmark written is then another node's than the one the page goes to.</p>
+     * the last bookmark is then another node's than the one the page goes to.</p>
+     *
+     * <p>The last is the last in the file, whose order is the page's: a block's bookmark opens at
+     * its first paragraph, before those of the nodes inside it, though it is written after them.</p>
      */
     private void keepTheLastBookmarkOfEachAnchor(XWPFDocument document) {
+        for (String anchor : new java.util.LinkedHashSet<>(anchorsDeclared.keySet())) {
+            bookmarksOfAnchors.putIfAbsent(anchor, List.of());
+        }
+        for (java.util.Map.Entry<String, List<Integer>> anchor : bookmarksOfAnchors.entrySet()) {
+            int nodes = anchorsDeclared.getOrDefault(anchor.getKey(), anchor.getValue().size());
+            if (nodes >= 2) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, "anchor", null,
+                        "\"" + anchor.getKey() + "\" is the anchor of " + nodes + " nodes: a link to it goes to the "
+                        + "last on the page, and the Word file, one place a bookmark name can mark, marks the last "
+                        + "it writes a bookmark for");
+            }
+        }
+        String w = "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' ";
+        // Each name's bookmarks in the file's order: all but the last go.
+        java.util.Map<String, List<CTBookmark>> byName = new java.util.LinkedHashMap<>();
+        for (org.apache.xmlbeans.XmlObject found : document.getDocument().getBody().selectPath(w + ".//w:bookmarkStart")) {
+            if (found instanceof CTBookmark start && start.getName() != null) {
+                byName.computeIfAbsent(start.getName(), name -> new ArrayList<>()).add(start);
+            }
+        }
         java.util.Set<BigInteger> earlier = new java.util.HashSet<>();
-        java.util.Set<String> anchors = new java.util.LinkedHashSet<>(bookmarksOfAnchors.keySet());
-        anchors.addAll(anchorsDeclared.keySet());
-        for (String anchor : anchors) {
-            List<Integer> ids = bookmarksOfAnchors.getOrDefault(anchor, List.of());
-            int nodes = anchorsDeclared.getOrDefault(anchor, ids.size());
-            if (ids.size() > 1) {
-                for (int id : ids.subList(0, ids.size() - 1)) {
-                    earlier.add(BigInteger.valueOf(id));
-                }
+        for (List<CTBookmark> starts : byName.values()) {
+            for (CTBookmark start : starts.subList(0, starts.size() - 1)) {
+                earlier.add(start.getId());
             }
-            if (nodes < 2) {
-                continue;
-            }
-            report.add(DocxExportReport.Severity.APPROXIMATED, "anchor", null,
-                    "\"" + anchor + "\" is the anchor of " + nodes + " nodes: a link to it goes to the last on the "
-                    + "page, and the Word file, one place a bookmark name can mark, marks the last it writes "
-                    + "a bookmark for");
         }
         if (earlier.isEmpty()) {
             return;
         }
-        String w = "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' ";
         for (String element : List.of("bookmarkStart", "bookmarkEnd")) {
             for (org.apache.xmlbeans.XmlObject found : document.getDocument().getBody().selectPath(w + ".//w:" + element)) {
                 if (found instanceof org.openxmlformats.schemas.wordprocessingml.x2006.main.CTMarkupRange range
@@ -9647,12 +9660,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double left = (node == leftMarginInCell ? 0 : node.margin().left()) + node.padding().left();
         double right = node.margin().right() + node.padding().right();
         // A side the paragraph is pulled out past, by a margin below zero, stands out as far, with
-        // no slack to spare on it — but in a table cell, where the side is held at the cell's text
-        // and named (PULLED_OUT_OF_ITS_CELL), and a line of a word set past its box stands out
-        // alone (letTheLineStandOut).
-        boolean pulledOutOfItsCell = currentCell != null && (left < 0 || right < 0);
-        insetLeft += left < 0 && currentCell == null ? left : Math.max(0, left - (fromTheLeft ? 0 : spare));
-        insetRight += right < 0 && currentCell == null ? right : Math.max(0, right - (fromTheRight ? 0 : spare));
+        // no slack to spare on it — but in a table cell, a panel's, its text stands no further out
+        // than the cell's: what a margin below zero, its own or a block's round it, takes past that
+        // is not written, and is named (PULLED_OUT_OF_ITS_CELL), unless a line of a word set past
+        // its box stands out alone (letTheLineStandOut).
+        double ownLeft = left < 0 ? left : Math.max(0, left - (fromTheLeft ? 0 : spare));
+        double ownRight = right < 0 ? right : Math.max(0, right - (fromTheRight ? 0 : spare));
+        double shortLeft = currentCell == null ? 0 : Math.max(0, -(insetLeft + ownLeft));
+        double shortRight = currentCell == null ? 0 : Math.max(0, -(insetRight + ownRight));
+        insetLeft += ownLeft + shortLeft;
+        insetRight += ownRight + shortRight;
         XWPFParagraph para;
         double room;
         try {
@@ -9683,7 +9700,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         lastWrittenParagraph = para;
         List<String> lost = new ArrayList<>(
                 paragraphLost(node, false, node.bookmarkOptions() == null ? null : outlineTextOf(node)));
-        if (pulledOutOfItsCell && (left < 0 || !standsOut)) {
+        if (shortLeft > 0.01 || shortRight > 0.01 && !standsOut) {
             lost.add(PULLED_OUT_OF_ITS_CELL);
         }
         reportWrittenWithout(node, "written as a paragraph", lost);
@@ -12918,7 +12935,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     Units.toEMU(node.width()), Units.toEMU(node.height()));
         }
         // A reader's screen reader has only the picture's description to go on: the data is it.
-        run.getCTR().getDrawingArray(0).getInlineArray(0).getDocPr().setDescr(data.getContent());
+        run.getCTR().getDrawingArray(0).getInlineArray(0).getDocPr().setDescr(DocxTextControls.kept(data.getContent()));
         StringBuilder message = new StringBuilder(
                 "written as a picture of the symbol at its size, which scans as the page's does; "
                 + "its data is part of the picture and is not editable in Word");
@@ -16444,6 +16461,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // The layout placed each child, so every way a row can divide — the two that
             // measure their children included — is already answered.
             List<CellColumn> columns = new ArrayList<>(withRowEditorSlack(node, placedColumns(node, starts)));
+            reportTheFirstChildPulledOut(node, columns);
             holdTheLastFixedColumn(node, columns);
             double width = starts[0] - (inItsPanel ? withoutTheRowsPadding(node, columns) : 0);
             double taken = takeHang(node, columns, hang);
@@ -16463,6 +16481,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             double[] composed = inItsPanel ? null : composedRowStarts(node);
             if (composed != null) {
                 List<CellColumn> columns = new ArrayList<>(withRowEditorSlack(node, placedColumns(node, composed)));
+                reportTheFirstChildPulledOut(node, columns);
                 holdTheLastFixedColumn(node, columns);
                 double taken = takeHang(node, columns, hang);
                 setTableWidth(table, Math.min(composed[0], widthOf(columns) + taken) - taken);
@@ -16749,6 +16768,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * shape {@link #statedColumns} builds — the difference is only where the starts come
      * from, and these were measured rather than worked out.</p>
      */
+    /**
+     * Names a row's first child the page sets out past the row's left edge — a margin below zero
+     * on it: the first Word cell starts at the row's edge, and its text there. A later child's is
+     * held, its column starting where the child does, and one only drawn — an icon — is drawn
+     * where the page draws it, whatever its cell.
+     */
+    private void reportTheFirstChildPulledOut(RowNode node, List<CellColumn> columns) {
+        if (columns.isEmpty() || node.children().isEmpty() || !(columns.get(0).leading() < -0.01)) {
+            return;
+        }
+        DocumentNode first = node.children().get(0);
+        if (onlyDrawn(first)) {
+            return;
+        }
+        report.add(DocxExportReport.Severity.APPROXIMATED, first.nodeKind(), layout.pathOf(first),
+                "the page sets it " + Math.round(-columns.get(0).leading() * 10) / 10.0
+                + "pt out past its row's left edge, where its Word cell starts: it is written from the edge");
+    }
+
     private static List<CellColumn> placedColumns(RowNode node, double[] starts) {
         int count = starts.length - 1;
         double rowWidth = starts[0];

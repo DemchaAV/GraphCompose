@@ -15,14 +15,17 @@ follow semantic versioning; release dates are ISO 8601.
   went to one place; a name is now taken only once it is free. An anchor two nodes declare was a
   bookmark on each, one name twice, where Word goes to the first and the page to the last: the
   file now keeps the last it writes, and the report names the anchor — where the page's last is
-  a node the file writes no bookmark for too. A control character in text — a bell, a null, a
-  tab — which the page leaves out, was written, most of them as a question mark ("Total? due"),
-  in runs, headers and footers, a badge's initials, a list's marker and a picture's
-  description; it is now left out too, the line breaks kept. A margin below zero on a paragraph,
-  a list or a block round them was written as none, its text at the margin where the page set it
-  out past it; it is now an indent below zero in the flow, and in a table cell, a panel's
-  included, it is held where the cell's text stands and named. The corner-radius note on a
-  rounded panel said it kept its fill where it had only a border; it now says which it keeps.
+  a node the file writes no bookmark for too. A character the page leaves out — a control (a
+  bell, a null, a tab), a soft hyphen, a zero-width space, one of private use — was written, the
+  controls mostly as a question mark ("Total? due"), in runs, headers and footers, a badge's
+  initials, a list's marker and a picture's or a barcode's description; it is now left out too,
+  the line breaks and the direction marks and joiners kept. A margin below zero on a paragraph or
+  a list, and on the right of a block round them, was written as none, the text at the margin
+  where the page set it out past it; it is now an indent below zero in the flow. In a table
+  cell, a panel's included, the text stands as far out as the cell's text and no further, what
+  is held back named; a row's first child the page sets out past the row's left edge starts at
+  it, named. The corner-radius note on a rounded panel said it kept its fill where it had only a
+  border; it now says which it keeps.
 - **A DOCX export writes a page zone the page builds otherwise for the first page into the
   first page's header or footer.** Word paginates, so a zone's content was built once, for a
   page that was both the first and the last, and written on every page: a footer reading

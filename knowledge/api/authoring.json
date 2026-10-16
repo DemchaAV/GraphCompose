@@ -23,7 +23,7 @@
   ],
   "counts": {
     "types": 237,
-    "methods": 2132,
+    "methods": 2133,
     "constants": 236,
     "generated": 1129
   },
@@ -27224,6 +27224,25 @@
               "typeParameters": null,
               "returns": "PageContext",
               "params": []
+            },
+            {
+              "kind": "method",
+              "name": "unpaginated",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PageContext",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": "first"
+                },
+                {
+                  "type": "boolean",
+                  "name": "last"
+                }
+              ],
+              "stability": "beta"
             },
             {
               "kind": "method",

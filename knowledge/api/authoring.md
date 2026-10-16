@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.5.0-SNAPSHOT
 
-Types: 237 · methods: 2132 · constants: 236 · compiler-generated members: 1129
+Types: 237 · methods: 2133 · constants: 236 · compiler-generated members: 1129
 
 ## com.demcha.compose
 
@@ -1995,6 +1995,7 @@ Types: 237 · methods: 2132 · constants: 236 · compiler-generated members: 112
 ### PageContext (class)
 - `PageContext paginated(int number, int total)`
 - `PageContext unpaginated()`
+- `PageContext unpaginated(boolean first, boolean last)   [beta]`
 - `boolean isPaginated()`
 - `int number()`
 - `int total()`

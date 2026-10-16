@@ -105,6 +105,13 @@ matrix.
 > shape of the opt-in that may still move rather than the behaviour. Both constructors
 > are unaffected.
 >
+> **A page zone's context for a kind of page** is Experimental in 2.5.0:
+> `PageContext.unpaginated(boolean, boolean)`, which a semantic backend builds a page zone
+> with for a kind of page rather than a page — the first, the last or one between, as Word
+> gives the first page a header and footer of its own — so `isFirst()` and `isLast()` answer
+> for that kind while the numbers stay unknown. It is marked Experimental because the kinds it names are
+> Word's: a second semantic format may need others. `unpaginated()` is unaffected.
+>
 > Seven members of the otherwise-Stable **PDF backend** also carry `@Beta`. The
 > package is not Experimental — these are:
 > `PdfFixedLayoutBackend.renderSections` / `writeSections`, the low-level seam

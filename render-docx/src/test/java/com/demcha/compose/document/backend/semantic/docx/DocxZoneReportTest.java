@@ -245,13 +245,13 @@ class DocxZoneReportTest {
 
     @Test
     void aZoneWhoseNodesThePageNestsOtherwiseIsNotMeasured() throws Exception {
-        // Written once for every page, the zone is built as for no page in particular: the last,
-        // as far as it can tell, where the page's first is not, and its nodes are another tree.
+        // Written for no page in particular, the zone is a paragraph where the page draws a row:
+        // its nodes are another tree.
         AtomicReference<DocxExportReport> captured = new AtomicReference<>();
         try (DocumentSession session = GraphCompose.document().pageSize(300, 400).margin(DocumentInsets.of(36)).create()) {
-            session.chrome().zone(DocumentPageZone.footer(30, page -> page.isLast()
-                    ? text("End").build()
-                    : new RowBuilder().name("Line").addParagraph(p -> p.text("A").textStyle(CHROME)).build()));
+            session.chrome().zone(DocumentPageZone.footer(30, page -> page.isPaginated()
+                    ? new RowBuilder().name("Line").addParagraph(p -> p.text("A").textStyle(CHROME)).build()
+                    : text("End").build()));
             session.pageFlow(page -> page.addParagraph("Body").addPageBreak(pageBreak -> { })
                     .addParagraph("More"));
             session.export(new DocxSemanticBackend(captured::set));

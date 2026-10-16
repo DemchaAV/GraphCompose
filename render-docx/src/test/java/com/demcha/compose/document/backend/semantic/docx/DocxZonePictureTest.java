@@ -360,7 +360,7 @@ class DocxZonePictureTest {
         // Written 48 wide for no page in particular, it is drawn 24 wide on page 1: a line measured
         // by that is not the one written.
         Exported exported = export(session -> session.chrome().zone(zone(DocumentHeaderFooterZone.HEADER,
-                page -> logo().size(page.isLast() ? 48 : 24, 24).build())), true);
+                page -> logo().size(page.isPaginated() ? 24 : 48, 24).build())), true);
 
         assertThat(sizeOf(exported.headerLine().getRuns().get(0))).containsExactly(48.0, 24.0);
         assertThat(exported.headerLine().getCTP().getPPr().getSpacing().isSetLineRule())
@@ -375,7 +375,7 @@ class DocxZonePictureTest {
         // 48 wide, as tall as its picture makes it: a square on page 1, two to one as written.
         Exported exported = export(session -> session.chrome().zone(zone(DocumentHeaderFooterZone.HEADER, 60,
                 page -> new ImageBuilder().name("Logo")
-                        .source(DocumentImageData.fromBytes(page.isLast() ? LOGO : png(48, 48))).width(48).build())),
+                        .source(DocumentImageData.fromBytes(page.isPaginated() ? png(48, 48) : LOGO)).width(48).build())),
                 true);
 
         assertThat(sizeOf(exported.headerLine().getRuns().get(0))).containsExactly(48.0, 24.0);
@@ -390,7 +390,7 @@ class DocxZonePictureTest {
         // square 40 by 40 on page 1, two to one as written, 48 by 24.
         Exported exported = export(session -> session.chrome().zone(zone(DocumentHeaderFooterZone.HEADER, 60,
                 page -> new ImageBuilder().name("Logo").size(48, 40).fitMode(DocumentImageFitMode.CONTAIN)
-                        .source(DocumentImageData.fromBytes(page.isLast() ? LOGO : png(40, 40))).build())),
+                        .source(DocumentImageData.fromBytes(page.isPaginated() ? png(40, 40) : LOGO)).build())),
                 true);
 
         assertThat(sizeOf(exported.headerLine().getRuns().get(0))).containsExactly(48.0, 24.0);

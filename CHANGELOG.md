@@ -20,12 +20,12 @@ follow semantic versioning; release dates are ISO 8601.
   the page makes and Word is not told — a block kept together or with the next, a table's row in
   one piece, a row of columns. Where the session states metadata, its creator is the file's
   `Application`, which read "Apache POI"; a Word file has no producer, and a producer of the
-  caller's own other than it is named. An anchor a node of the caller's own kind declares, which
-  only the layout tells of, still counts. A table whose columns are left to Word was
+  caller's own other than it is named. A table whose columns are left to Word was
   written with no `w:tblGrid`, which a Word table may not be without; it has an empty one, laid
   out as before in Word and LibreOffice. An anchor declared in two cells of one table was
   counted as one node, and the bookmark the file took out of the first unsaid; nodes are now
-  counted off the document. An anchor in a table's header row the page repeats goes, on the
+  counted off the document, and one of the caller's own kind, which only the layout tells of,
+  still counts. An anchor in a table's header row the page repeats goes, on the
   page, to the last repeat, and in Word to the one row the file holds; the report names it.
 - **A DOCX export keeps each anchor's bookmark its own, writes no control character the page
   draws nothing for, sets a margin below zero out past its side, and says what a rounded panel

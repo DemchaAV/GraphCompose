@@ -384,7 +384,7 @@ class DocxNodeFieldLedgerTest {
      * The concrete node classes the core module ships in {@link #PACKAGES} — nested ones, and
      * ones not public, included.
      */
-    private static List<Class<?>> nodeClasses() throws IOException, URISyntaxException, ClassNotFoundException {
+    static List<Class<?>> nodeClasses() throws IOException, URISyntaxException, ClassNotFoundException {
         Path source = Path.of(DocumentNode.class.getProtectionDomain().getCodeSource().getLocation().toURI());
         List<String> classFiles = new ArrayList<>();
         for (String pkg : PACKAGES) {

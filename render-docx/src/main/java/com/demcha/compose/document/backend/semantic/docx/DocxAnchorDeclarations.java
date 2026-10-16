@@ -18,6 +18,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * The anchors a document's nodes declare, counted node by node.
@@ -83,33 +84,34 @@ final class DocxAnchorDeclarations {
     }
 
     /**
-     * The anchor a node declares — the place a link and a page reference go to — or null. A page
-     * reference names an anchor and declares none.
+     * The anchor each node kind that declares one holds, by its exact class: node records are
+     * final. A page reference names an anchor and declares none, so it is not here.
+     */
+    static final Map<Class<? extends DocumentNode>, Function<DocumentNode, String>> DECLARING = Map.ofEntries(
+            declaring(ParagraphNode.class, ParagraphNode::anchor),
+            declaring(SectionNode.class, SectionNode::anchor),
+            declaring(ContainerNode.class, ContainerNode::anchor),
+            declaring(TableNode.class, TableNode::anchor),
+            declaring(ImageNode.class, ImageNode::anchor),
+            declaring(BarcodeNode.class, BarcodeNode::anchor),
+            declaring(LineNode.class, LineNode::anchor),
+            declaring(ShapeNode.class, ShapeNode::anchor),
+            declaring(EllipseNode.class, EllipseNode::anchor));
+
+    private static <T extends DocumentNode> Map.Entry<Class<? extends DocumentNode>, Function<DocumentNode, String>>
+    declaring(Class<T> kind, Function<T, String> anchor) {
+        return Map.entry(kind, node -> anchor.apply(kind.cast(node)));
+    }
+
+    /**
+     * The anchor a node declares — the place a link and a page reference go to — or null.
      *
      * @param node a node of the document
      * @return its anchor, or null when it declares none
      */
     static String declaredBy(DocumentNode node) {
-        String anchor = null;
-        if (node instanceof ParagraphNode paragraph) {
-            anchor = paragraph.anchor();
-        } else if (node instanceof SectionNode section) {
-            anchor = section.anchor();
-        } else if (node instanceof ContainerNode container) {
-            anchor = container.anchor();
-        } else if (node instanceof TableNode table) {
-            anchor = table.anchor();
-        } else if (node instanceof ImageNode image) {
-            anchor = image.anchor();
-        } else if (node instanceof BarcodeNode barcode) {
-            anchor = barcode.anchor();
-        } else if (node instanceof LineNode line) {
-            anchor = line.anchor();
-        } else if (node instanceof ShapeNode shape) {
-            anchor = shape.anchor();
-        } else if (node instanceof EllipseNode ellipse) {
-            anchor = ellipse.anchor();
-        }
+        Function<DocumentNode, String> declared = DECLARING.get(node.getClass());
+        String anchor = declared == null ? null : declared.apply(node);
         return anchor == null || anchor.isBlank() ? null : anchor;
     }
 }

@@ -225,6 +225,88 @@ class DocxLinkTest {
     }
 
     @Test
+    void twoCellsOfOneTableDeclaringAnAnchorAreTwoNodes() throws Exception {
+        // The layout registers both under the table's path: counted off it, they were one node.
+        List<DocxExportReport.Note> notes = new java.util.ArrayList<>();
+        byte[] docx;
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(com.demcha.compose.document.style.DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.addTable(t -> t
+                    .columns(com.demcha.compose.document.table.DocumentTableColumn.fixed(200))
+                    .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(
+                            new com.demcha.compose.document.dsl.ParagraphBuilder().text("One").anchor("dup").build()))
+                    .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(
+                            new com.demcha.compose.document.dsl.ParagraphBuilder().text("Two").anchor("dup").build()))));
+            docx = session.export(DocxSemanticBackend.builder().reportSink(report -> notes.addAll(report.notes())).build());
+        }
+        try (XWPFDocument document = new XWPFDocument(new java.io.ByteArrayInputStream(docx))) {
+            String xml = document.getDocument().xmlText();
+            assertThat(count(xml, "w:bookmarkStart")).isEqualTo(1);
+            assertThat(xml.substring(xml.indexOf("w:bookmarkStart"), xml.indexOf("w:bookmarkEnd")))
+                    .as("the last cell's").contains(">Two<").doesNotContain(">One<");
+        }
+        assertThat(notes).filteredOn(note -> note.subject().equals("anchor")).singleElement()
+                .satisfies(note -> assertThat(note.detail()).startsWith("\"dup\" is the anchor of 2 nodes"));
+
+        // The second a drawn circle, the file writes one bookmark: only the nodes say there are two.
+        List<DocxExportReport.Note> drawn = new java.util.ArrayList<>();
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(400, 600).margin(com.demcha.compose.document.style.DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.addTable(t -> t
+                    .columns(com.demcha.compose.document.table.DocumentTableColumn.fixed(200))
+                    .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(
+                            new com.demcha.compose.document.dsl.ParagraphBuilder().text("One").anchor("dup").build()))
+                    .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(
+                            new com.demcha.compose.document.dsl.EllipseBuilder().circle(10)
+                                    .fillColor(com.demcha.compose.document.style.DocumentColor.BLACK)
+                                    .anchor("dup").build()))));
+            session.export(DocxSemanticBackend.builder().reportSink(report -> drawn.addAll(report.notes())).build());
+        }
+        assertThat(drawn).filteredOn(note -> note.subject().equals("anchor")).singleElement()
+                .satisfies(note -> assertThat(note.detail()).startsWith("\"dup\" is the anchor of 2 nodes"));
+    }
+
+    @Test
+    void anAnchorInATableHeaderThePageRepeatsIsNamed() throws Exception {
+        // Drawn again on every page the header repeats on, the page goes to the last; the file holds
+        // the row once, where the table starts (measured: Word puts the bookmark on page 1, and a page
+        // reference reading 5 reads 1 once updated).
+        String named = "\"hdr\" is in a table's header row, which the page repeats on 5 pages: a link to it goes "
+                       + "to the last of them, and a page reference reads that one's page; the Word file holds the "
+                       + "row once, where the table starts, which its link goes to and a page reference reads once "
+                       + "Word updates it";
+        com.demcha.compose.document.node.DocumentNode item =
+                new com.demcha.compose.document.dsl.ParagraphBuilder().text("Item").anchor("hdr").build();
+        assertThat(headerAnchorNotes(item, 30)).singleElement().isEqualTo(named);
+        assertThat(headerAnchorNotes(new com.demcha.compose.document.dsl.SectionBuilder().addParagraph(
+                p -> p.text("Item").anchor("hdr")).build(), 30))
+                .as("declared inside a block the header cell is built from").singleElement().isEqualTo(named);
+        assertThat(headerAnchorNotes(item, 3)).as("a header drawn on one page is drawn once").isEmpty();
+        assertThat(headerAnchorNotes(new com.demcha.compose.document.dsl.EllipseBuilder().circle(10)
+                .fillColor(com.demcha.compose.document.style.DocumentColor.BLACK).anchor("hdr").build(), 30))
+                .as("a drawn circle has no bookmark for a link to go to, which the page reference's note says")
+                .isEmpty();
+    }
+
+    private static List<String> headerAnchorNotes(com.demcha.compose.document.node.DocumentNode item, int rows)
+            throws Exception {
+        List<DocxExportReport.Note> notes = new java.util.ArrayList<>();
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(300, 200).margin(com.demcha.compose.document.style.DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page.addTable(table -> {
+                table.autoColumns(2).repeatHeader().headerCells(
+                        com.demcha.compose.document.table.DocumentTableCell.node(item),
+                        com.demcha.compose.document.table.DocumentTableCell.text("Amount"));
+                for (int row = 0; row < rows; row++) {
+                    table.row("Row " + row, "1");
+                }
+            }).addPageReference("hdr"));
+            session.export(DocxSemanticBackend.builder().reportSink(report -> notes.addAll(report.notes())).build());
+        }
+        return notes.stream().filter(note -> note.subject().equals("anchor")).map(DocxExportReport.Note::detail).toList();
+    }
+
+    @Test
     void anAnchorStartingWithADigitIsStillAName() throws Exception {
         // Word will not take a bookmark whose name starts with anything but a letter, and
         // refuses the file rather than the bookmark.

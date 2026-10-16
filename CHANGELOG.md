@@ -8,6 +8,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export says why a drawing is not in it and what a section with no layout leaves to
+  the editor, names the application that made it, gives every table a grid, and names an anchor
+  in a repeated table header.** Without the layout — a document the engine refused, or a bare
+  `export(graph, context)` — a drawing was dropped as having "no semantic Word analogue"; it is
+  now said to have no place, the layout being what places it, and a drawing that paints nothing
+  is said to paint nothing, with a layout too. The section's note named line heights, the space
+  between lines and auto columns, and not the rest only a layout places or keeps: it now names,
+  where the section holds them, a row its arrangement or a growing spacer divides, what an
+  alignment or a stack's layer is set at across the width, written from the left, and the keeps
+  the page makes and Word is not told — a block kept together or with the next, a table's row in
+  one piece, a row of columns. Where the session states metadata, its creator is the file's
+  `Application`, which read "Apache POI"; a Word file has no producer, and a producer of the
+  caller's own other than it is named. An anchor a node of the caller's own kind declares, which
+  only the layout tells of, still counts. A table whose columns are left to Word was
+  written with no `w:tblGrid`, which a Word table may not be without; it has an empty one, laid
+  out as before in Word and LibreOffice. An anchor declared in two cells of one table was
+  counted as one node, and the bookmark the file took out of the first unsaid; nodes are now
+  counted off the document. An anchor in a table's header row the page repeats goes, on the
+  page, to the last repeat, and in Word to the one row the file holds; the report names it.
 - **A DOCX export keeps each anchor's bookmark its own, writes no control character the page
   draws nothing for, sets a margin below zero out past its side, and says what a rounded panel
   keeps.** A bookmark name a suffix made for one anchor — "Section-1" after "Section 1" took

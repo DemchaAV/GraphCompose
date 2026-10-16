@@ -70,6 +70,17 @@ final class DocxExports {
         return new XWPFDocument(new ByteArrayInputStream(docx));
     }
 
+    /** The report of an export through a session, with the compiled layout behind it. */
+    static DocxExportReport report(double pageWidth, double pageHeight, double margin,
+                                   Consumer<PageFlowBuilder> content) throws Exception {
+        java.util.concurrent.atomic.AtomicReference<DocxExportReport> report =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        try (DocumentSession session = session(pageWidth, pageHeight, margin, content)) {
+            session.export(new DocxSemanticBackend(report::set));
+        }
+        return report.get();
+    }
+
     /** The report of an export with no layout behind it, the way a bare caller makes one. */
     static DocxExportReport reportWithoutLayout(double pageWidth, double pageHeight, double margin,
                                                 Consumer<PageFlowBuilder> content) throws Exception {

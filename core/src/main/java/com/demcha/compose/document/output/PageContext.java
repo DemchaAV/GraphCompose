@@ -33,8 +33,8 @@ import com.demcha.compose.document.style.DocumentTextStyle;
  * survives export. One node type serves both lanes: a paginated render resolves
  * it to the number, a semantic export maps it onto a live {@code PAGE} field.</p>
  *
- * <p>What a semantic export can tell apart is the kind of page: it builds the
- * zone for each kind the format has a header or footer for, so
+ * <p>What a semantic export can tell apart is the kind of page — the first, the
+ * last, one between — so it builds the zone for a kind rather than a page, and
  * {@link #isFirst()} still chooses a cover's line over the running one there.</p>
  *
  * @author Artem Demchyshyn
@@ -83,9 +83,9 @@ public final class PageContext {
     }
 
     /**
-     * A context for a semantic export that writes a zone once for each kind of page
-     * the consuming format tells apart: Word, for one, has a header and footer for
-     * a section's first page and another for the pages after it.
+     * A context for a semantic export that builds a zone for a kind of page rather
+     * than a page — the first, the last or one between: Word, for one, has a header
+     * and footer for a section's first page and another for the pages after it.
      *
      * <p>The numbers stay unknown, as with {@link #unpaginated()};
      * {@link #isFirst()} and {@link #isLast()} answer for the kind of page the

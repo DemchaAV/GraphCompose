@@ -17,11 +17,11 @@ follow semantic versioning; release dates are ISO 8601.
   context for a kind of page that still refuses the numbers — and content built otherwise for
   the first page becomes the section's title-page part and the ordinary one, each measured on a
   page the layout draws it on where there is one. Word has no header or footer for the last
-  page: content built otherwise for it is written there as on the pages before it, and named in
-  the report. Content that reads `page.number()` only for the pages after the first, which the
+  page: content built otherwise for it is written there as it is built for the pages between the
+  first and the last, and named in the report. Content that reads `page.number()` only for the pages after the first, which the
   export did not build before, is now refused there as it is on the first; content that reads it
-  only on the last page, refused before, is written as the pages before it and named, unless the
-  first page is the last.
+  only on the last page, refused before, is written as it is built for the pages between and
+  named, unless the first page is the last.
 - **A DOCX export sets a row and an alignment composed in a table cell where the page sets
   them.** Content composed in a cell (`DocumentTableCell.node(...)`) has no place of its own in
   the layout. A row the page divides by what its children measure — `SPACE_BETWEEN` and the

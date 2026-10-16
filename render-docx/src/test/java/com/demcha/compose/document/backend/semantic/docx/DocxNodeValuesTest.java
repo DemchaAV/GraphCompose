@@ -17,7 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Two builds of a node tree read as the same by their values, down to every run, style and
- * picture: a colour, a picture's data and an SVG drawing built afresh among them.
+ * picture: a colour, a picture's data, an SVG drawing and a barcode's options built afresh
+ * among them.
  *
  * @author Artem Demchyshyn
  */
@@ -55,6 +56,21 @@ class DocxNodeValuesTest {
     }
 
     @Test
+    void aBarcodeBuiltAfreshReadsAsTheSameByItsOptions() {
+        // Its options are no record: read field by field, not by an equals they do not have.
+        assertThat(DocxNodeValues.alike(barcode("INV-1"), barcode("INV-1"))).isTrue();
+        assertThat(DocxNodeValues.alike(barcode("INV-1"), barcode("INV-2"))).isFalse();
+    }
+
+    @Test
+    void mapsReadByTheirValues() {
+        assertThat(DocxNodeValues.alike(java.util.Map.of(1, DocumentColor.rgb(1, 2, 3)),
+                java.util.Map.of(1, DocumentColor.rgb(1, 2, 3)))).isTrue();
+        assertThat(DocxNodeValues.alike(java.util.Map.of(1, DocumentColor.rgb(1, 2, 3)),
+                java.util.Map.of(2, DocumentColor.rgb(1, 2, 3)))).isFalse();
+    }
+
+    @Test
     void contentBuiltAgainstNoneReadsAsOtherwise() {
         assertThat(DocxNodeValues.alike(text(DocumentColor.BLACK), null)).isFalse();
         assertThat(DocxNodeValues.alike(null, null)).isTrue();
@@ -62,6 +78,11 @@ class DocxNodeValuesTest {
 
     private static DocumentNode text(DocumentColor colour) {
         return new ParagraphBuilder().text("Acme").textStyle(DocumentTextStyle.DEFAULT.withColor(colour)).build();
+    }
+
+    private static DocumentNode barcode(String data) {
+        return new com.demcha.compose.document.dsl.BarcodeBuilder().qrCode().data(data)
+                .foreground(DocumentColor.rgb(10, 10, 10)).size(40, 40).build();
     }
 
     private static DocumentNode picture(byte[] data) {

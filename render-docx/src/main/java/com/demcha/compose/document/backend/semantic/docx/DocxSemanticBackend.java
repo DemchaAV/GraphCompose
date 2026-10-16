@@ -1799,6 +1799,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (DocxPageClasses.of(zone, layout.pageCount()) == null) {
                 reportPagesUnfollowed(zone);
             }
+            reportAKindBuiltNone(index, header, drawnOn, builds);
             reportTheLastPage(zone, drawnOn, builds, header);
             List<ZonePlacement> placements = new ArrayList<>(variants.size());
             List<Integer> measuredOn = new ArrayList<>(variants.size());
@@ -1845,12 +1846,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(document, sectPr);
         java.util.Map<String, XWPFHeaderFooter> parts = new java.util.HashMap<>();
+        // The notes the line before gave, which a zone's second line repeats where they are alike.
+        int lineFrom = report.size();
+        int lineTo = lineFrom;
         for (ZoneWriter writer : writers) {
             if (writer.drawnOn().isEmpty()) {
                 continue;
             }
             boolean header = writer.kind() == DocumentHeaderFooterZone.HEADER;
-            report.skipRepeats(writer.repeats());
+            if (writer.repeats()) {
+                report.skipRepeatsOf(lineFrom, lineTo);
+            }
+            lineFrom = report.size();
             try {
                 for (org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type
                         : partTypes(titlePage, evenAndOdd)) {
@@ -1863,8 +1870,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
                 writer.place().run();
             } finally {
-                report.skipRepeats(false);
+                report.stopSkipping();
             }
+            lineTo = report.size();
             written.add(writer.kind());
         }
         // A part that ends in a framed band ends with a paragraph of its own flow, a point tall:
@@ -1954,10 +1962,34 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Names a kind of page a zone is drawn on that its content builds none for, where the layout
+     * draws it there all the same: the part Word gives those pages is empty.
+     */
+    private void reportAKindBuiltNone(int index, boolean header, java.util.Set<DocxPageClasses.PageClass> drawnOn,
+                                      ZoneBuilds builds) {
+        String kind = header ? "header" : "footer";
+        String section = sectioned ? "section " + (sectionIndex + 1) : null;
+        if (drawnOn.contains(DocxPageClasses.PageClass.FIRST) && builds.first() == null
+            && layout.zoneFirstPage(index, page -> page == 0) >= 0) {
+            report.add(DocxExportReport.Severity.DROPPED, "page zone", section,
+                    "a " + kind + " on the first page is not written: built for it, its content is none; a zone "
+                    + "absent from some pages says so through appliesTo");
+        }
+        // The last page is named apart (reportTheLastPage): the pages between are the ones built so.
+        int last = layout.pageCount() - 1;
+        if ((drawnOn.contains(DocxPageClasses.PageClass.EVEN) || drawnOn.contains(DocxPageClasses.PageClass.LATER_ODD))
+            && builds.rest() == null && layout.zoneFirstPage(index, page -> page > 0 && page < last) >= 0) {
+            report.add(DocxExportReport.Severity.DROPPED, "page zone", section,
+                    "a " + kind + " on the pages after the first is not written: built for them, its content is "
+                    + "none; a zone absent from some pages says so through appliesTo");
+        }
+    }
+
+    /**
      * Names a zone the page builds otherwise for the last page than Word writes it there. Word has
      * a header and footer for the first page and for the pages after it, none for the last, so
-     * the last page — unless it is the first, where the layout runs to one — carries the pages'
-     * before it.
+     * the last page — unless it is the first, where the layout runs to one — carries the build for
+     * the pages between the first and the last.
      */
     private void reportTheLastPage(DocumentPageZone zone, java.util.Set<DocxPageClasses.PageClass> drawnOn,
                                    ZoneBuilds builds, boolean header) {
@@ -1982,8 +2014,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             String kind = header ? "header" : "footer";
             report.add(DocxExportReport.Severity.APPROXIMATED, "page zone",
                     sectioned ? "section " + (sectionIndex + 1) : null,
-                    "a " + kind + " the page builds otherwise for the last page is written there as on the pages "
-                    + "before it: Word has a " + kind + " for the first page and one for the rest, none for the last");
+                    "a " + kind + " the page builds otherwise for the last page is written there as it is built for "
+                    + "the pages between the first and the last: Word has a " + kind + " for the first page and one "
+                    + "for the rest, none for the last");
         }
     }
 
@@ -1991,8 +2024,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * What a header or footer writes into a part, the kinds of page it is drawn on, and how the
      * section places it from the page edge.
      *
-     * @param repeats whether it is a page zone's second line, for the pages after the first, whose
-     *                losses its first line has said already where they are the same
+     * @param repeats whether it is a page zone's second line, for the pages after the first: a
+     *                note it gives alike one its first line gave is given once
+     *                ({@link DocxExportReport.Builder#skipRepeatsOf})
      */
     private record ZoneWriter(DocumentHeaderFooterZone kind,
                               java.util.Set<DocxPageClasses.PageClass> drawnOn,

@@ -109,22 +109,33 @@ public record DocxExportReport(List<Note> notes) {
 
         private final List<Note> notes = new ArrayList<>();
 
-        private boolean skippingRepeats;
+        /** Notes said already, which an equal one added now repeats: each stands for one. */
+        private final List<Note> saidAlready = new ArrayList<>();
 
         void add(Severity severity, String subject, String path, String detail) {
             Note note = new Note(severity, subject, path, detail);
-            if (!skippingRepeats || !notes.contains(note)) {
+            if (!saidAlready.remove(note)) {
                 notes.add(note);
             }
         }
 
         /**
-         * While on, a note the report already holds is not added again: a page zone built
-         * otherwise for the first page is written twice, and what both its lines lose is said
-         * once.
+         * Takes the notes added from one count to another as said already: until
+         * {@link #stopSkipping}, a note equal to one of them is not added again, once for each.
+         * A page zone built otherwise for the first page is written twice, and a note both its
+         * lines give alike is given once, while two losses of the second line alike stay two.
+         *
+         * @param from the count before the first line was written
+         * @param to   the count after it
          */
-        void skipRepeats(boolean on) {
-            skippingRepeats = on;
+        void skipRepeatsOf(int from, int to) {
+            saidAlready.clear();
+            saidAlready.addAll(notes.subList(from, to));
+        }
+
+        /** Ends {@link #skipRepeatsOf}: every note is added again. */
+        void stopSkipping() {
+            saidAlready.clear();
         }
 
         /** How many notes the report holds so far. */

@@ -31,8 +31,9 @@ import java.util.function.Predicate;
  *
  * <p>The content function is called once per page with that page's
  * {@link PageContext}, after pagination has settled — on a semantic export,
- * where the format paginates, for each kind of page it has a header or footer
- * for instead ({@link PageContext#unpaginated(boolean, boolean)}). It must return
+ * where the format paginates, for the kinds of page it tells apart instead:
+ * the first, the last and the pages between
+ * ({@link PageContext#unpaginated(boolean, boolean)}). It must return
  * a node; a zone that should be absent on some pages says so through
  * {@code appliesTo} instead of returning {@code null}.</p>
  *

@@ -79,8 +79,8 @@ class DocxZoneByPageTest {
         assertThat(exported.section().isSetTitlePg()).isFalse();
         assertThat(exported.footerText(STHdrFtr.DEFAULT)).isEqualTo("Continued overleaf");
         assertThat(exported.zoneNotes()).containsExactly("a footer the page builds otherwise for the last page is "
-                + "written there as on the pages before it: Word has a footer for the first page and one for the "
-                + "rest, none for the last");
+                + "written there as it is built for the pages between the first and the last: Word has a footer for "
+                + "the first page and one for the rest, none for the last");
     }
 
     @Test
@@ -120,6 +120,8 @@ class DocxZoneByPageTest {
         assertThat(exported.footerText(STHdrFtr.DEFAULT)).isBlank();
         assertThat(exported.zoneNotes()).anySatisfy(note -> assertThat(note)
                 .startsWith("a footer the page builds otherwise for the last page"));
+        assertThat(exported.zoneNotes()).as("the page between draws none either: nothing is lost there")
+                .noneMatch(note -> note.startsWith("a footer on the pages after the first is not written"));
     }
 
     @Test
@@ -224,6 +226,41 @@ class DocxZoneByPageTest {
 
         assertThat(exported.notes()).filteredOn(note -> note.subject().equals("row paint")).hasSize(1);
         assertThat(exported.notes()).doesNotHaveDuplicates();
+    }
+
+    @Test
+    void twoLossesOfTheSecondLineAloneStayTwo() throws Exception {
+        // The first page's line loses nothing; the rest's loses two shapes of no name.
+        Exported exported = export(3, footer(page -> page.isFirst() ? text("Cover") : new RowBuilder()
+                .addShape(shape -> shape.size(8, 8).fillColor(DocumentColor.LIGHT_GRAY))
+                .addParagraph(p -> p.text("Running").textStyle(SMALL))
+                .addShape(shape -> shape.size(8, 8).fillColor(DocumentColor.LIGHT_GRAY))
+                .build()));
+
+        assertThat(exported.notes()).filteredOn(note -> note.subject().equals("page zone content")).hasSize(2);
+    }
+
+    @Test
+    void theLinesOfAZoneOfValuesBuiltAfreshAreWrittenOnce() throws Exception {
+        // A barcode's options are no record; built alike for every page, the zone is one footer.
+        Exported exported = export(3, footer(page -> new RowBuilder()
+                .addParagraph(p -> p.text("Scan to pay").textStyle(SMALL))
+                .add(new com.demcha.compose.document.dsl.BarcodeBuilder().qrCode().data("INV-1")
+                        .foreground(DocumentColor.rgb(10, 10, 10)).size(16, 16).build())
+                .build()));
+
+        assertThat(exported.section().isSetTitlePg()).isFalse();
+        assertThat(exported.section().getFooterReferenceList()).hasSize(1);
+    }
+
+    @Test
+    void aZoneBuildingNothingForThePagesBetweenThatThePageDrawsIsNamed() throws Exception {
+        Exported exported = export(3, footer(page -> page.isFirst() ? text("Cover")
+                : page.isPaginated() ? text("Running") : null));
+
+        assertThat(exported.footerText(STHdrFtr.DEFAULT)).isBlank();
+        assertThat(exported.zoneNotes()).contains("a footer on the pages after the first is not written: built for "
+                + "them, its content is none; a zone absent from some pages says so through appliesTo");
     }
 
     private static DocumentPageZone footer(Function<PageContext, DocumentNode> content) {

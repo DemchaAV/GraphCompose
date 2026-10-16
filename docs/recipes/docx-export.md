@@ -1225,7 +1225,9 @@ or size, another picture or picture box: content that asks `isPaginated()`, say 
 Word's, the distance is read from where its
 content landed, and the report says where its text or picture stands is not measured. Such a zone is not framed: two of one kind
 share Word's one distance, the last one's, and stand one under the other. A zone whose content
-is none for no page in particular is not written, and the report names it. A zone is written
+is none for every page Word writes it on is not written, and the report names it; so is one
+that builds none for the first page, or for the pages between it and the last, where the page
+draws it there. A zone is written
 from its paragraphs, page fields, spacers and pictures. A picture — a logo — is an inline
 picture in the line, at the size the page draws it: fitted inside its box where it is
 contained, the box's size and cropped where it covers it, its link its run's. Word stands it on
@@ -1273,16 +1275,18 @@ so the predicate is asked over sample pages and sorted into those kinds:
 A predicate that picks pages within a kind — the last page, the third — has no Word part.
 Such a zone is written on every page and the export report says so.
 
-The same kinds hold for what a zone builds. Its content function is called once for the
-first page and once for the pages after it, in a context that still refuses the numbers
-(`PageContext.unpaginated(first, last)`), so content built otherwise for the first page —
+The same kinds hold for what a zone builds. Its content is built for the first page and for
+the pages after it — and for the last, to name what it builds otherwise there — in a context
+that still refuses the numbers (`PageContext.unpaginated(first, last)`), so content built
+otherwise for the first page —
 `page.isFirst() ? "Original keep" : "Continuation sheet"` — becomes the title page's footer
 and the ordinary one, each measured on a page the layout draws it on, where there is one. Where
 the two lines cannot share Word's one distance from the edge — they stand at different ones, or
 one is not measured — each measured one stands in a frame at its own height, as two zones of a
 kind do. Built alike, value for value, it is written once. A document the layout runs to one
 page builds its first page as the last. Word has no footer for the last page: content built
-otherwise for it is written there as on the pages before it, and the report says so — content
+otherwise for it is written there as it is built for the pages between the first and the last,
+and the report says so — content
 reading `page.number()` there included, unless the first page is the last. Content that reads
 `page.number()` for the pages after the first is refused there, as it is on the first.
 

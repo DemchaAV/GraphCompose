@@ -281,8 +281,8 @@ class DocxZoneLineTest {
         // fitted smaller. Its lines there are other text's, and tell nothing of the size "End" is
         // fitted to: it is written at its style's size, and named.
         Exported exported = export(session -> session.chrome().zone(DocumentPageZone.footer(40,
-                page -> new ParagraphBuilder().text(page.isLast() ? "End"
-                                : "Continued on the next page of this report, where its totals are")
+                page -> new ParagraphBuilder().text(page.isPaginated()
+                                ? "Continued on the next page of this report, where its totals are" : "End")
                         .textStyle(DocumentTextStyle.DEFAULT.withSize(10)).autoSize(14, 6).build())), true);
         assertThat(exported.size("Continued")).as("page 1's line, fitted smaller").isLessThan(10);
 
@@ -301,7 +301,7 @@ class DocxZoneLineTest {
         Exported exported = export(session -> session.chrome().zone(DocumentPageZone.footer(40,
                 page -> new RowBuilder().name("Line")
                         .addParagraph(p -> p.text("**Acme**").textStyle(CHROME))
-                        .addParagraph(p -> p.text(page.isLast() ? "End" : "Continued on the next page of this report")
+                        .addParagraph(p -> p.text(page.isPaginated() ? "Continued on the next page of this report" : "End")
                                 .textStyle(DocumentTextStyle.DEFAULT.withSize(10)).autoSize(14, 6))
                         .build())), true);
 
@@ -344,7 +344,7 @@ class DocxZoneLineTest {
         // that would cut the written letters' tops.
         Exported exported = export(session -> session.chrome().zone(DocumentPageZone.footer(40,
                 page -> new ParagraphBuilder().text("Acme")
-                        .textStyle(page.isLast() ? DocumentTextStyle.DEFAULT.withSize(18) : CHROME).build())),
+                        .textStyle(page.isPaginated() ? CHROME : DocumentTextStyle.DEFAULT.withSize(18)).build())),
                 true);
         CTSpacing spacing = exported.footerLine().getCTP().getPPr().getSpacing();
 
@@ -362,15 +362,15 @@ class DocxZoneLineTest {
 
         assertThat(exported.document().getFooterList()).as("nothing to write").isEmpty();
         assertThat(exported.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
-                .containsExactly("a footer is not written: built for no page in particular, its content is none; "
-                                 + "a zone absent from some pages says so through appliesTo");
+                .containsExactly("a footer is not written: built for the pages Word writes it on, its content is "
+                                 + "none; a zone absent from some pages says so through appliesTo");
     }
 
     @Test
     void aZoneThatReadsOtherwiseOnItsFirstPageIsNotMeasured() throws Exception {
         // Written for no page in particular, it reads "End"; the page set "Continued" on page 1.
         Exported exported = export(session -> session.chrome().zone(DocumentPageZone.footer(40,
-                page -> new ParagraphBuilder().text(page.isLast() ? "End" : "Continued").textStyle(CHROME).build())),
+                page -> new ParagraphBuilder().text(page.isPaginated() ? "Continued" : "End").textStyle(CHROME).build())),
                 true);
         CTSpacing spacing = exported.footerLine().getCTP().getPPr().getSpacing();
 
@@ -406,7 +406,7 @@ class DocxZoneLineTest {
         // content gives; a framed zone of its kind, placed after it, leaves that distance alone.
         DocumentPageZone unmeasured = DocumentPageZone.builder().zone(DocumentHeaderFooterZone.HEADER).height(40)
                 .padding(new DocumentInsets(20, 0, 0, 0))
-                .content(page -> new ParagraphBuilder().text(page.isLast() ? "End" : "Continued").textStyle(CHROME)
+                .content(page -> new ParagraphBuilder().text(page.isPaginated() ? "Continued" : "End").textStyle(CHROME)
                         .build())
                 .build();
         Exported alone = export(session -> session.chrome().zone(unmeasured), true);

@@ -1352,11 +1352,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * What a page zone writes in its header or footer part: its content built for no page in
-     * particular, Word numbering the pages itself, or {@code null} where it builds none.
+     * What a page zone writes in its header or footer parts: its content built for each kind of
+     * page Word gives a part of its own and the zone is drawn on — the first page, the last too
+     * where the layout runs to one, and the pages after it — Word numbering the pages itself.
+     *
+     * @param first the content built for the first page, {@code null} where it builds none or the
+     *              zone is not drawn there
+     * @param rest  the content built for the pages after the first, {@code null} likewise
      */
-    private static DocumentNode zoneContentOf(DocumentPageZone zone) {
-        return zone.getContent() == null ? null : zone.getContent().apply(PageContext.unpaginated());
+    private record ZoneBuilds(DocumentNode first, DocumentNode rest) {
+
+        static ZoneBuilds of(DocumentPageZone zone, java.util.Set<DocxPageClasses.PageClass> drawnOn, int pages) {
+            DocumentNode first = drawnOn.contains(DocxPageClasses.PageClass.FIRST)
+                    ? zone.getContent().apply(PageContext.unpaginated(true, pages == 1))
+                    : null;
+            DocumentNode rest = drawnOn.contains(DocxPageClasses.PageClass.EVEN)
+                                || drawnOn.contains(DocxPageClasses.PageClass.LATER_ODD)
+                    ? zone.getContent().apply(PageContext.unpaginated(false, false))
+                    : null;
+            return new ZoneBuilds(first, rest);
+        }
+    }
+
+    /**
+     * The kinds of page a zone is written on: those its predicate draws it on, or every kind
+     * where the predicate does not follow them ({@link #reportPagesUnfollowed}).
+     */
+    private static java.util.Set<DocxPageClasses.PageClass> writtenOn(DocumentPageZone zone, int pages) {
+        java.util.Set<DocxPageClasses.PageClass> classes = DocxPageClasses.of(zone, pages);
+        return classes == null ? java.util.EnumSet.allOf(DocxPageClasses.PageClass.class) : classes;
     }
 
     /**
@@ -1368,10 +1392,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         List<DocumentNode> contents = new ArrayList<>();
         for (SemanticSection section : sections) {
             List<DocumentPageZone> zones = section.context().outputOptions().zones();
+            int pages = section.context().layoutGraph() == null ? 0 : section.context().layoutGraph().totalPages();
             for (DocumentPageZone zone : zones == null ? List.<DocumentPageZone>of() : zones) {
-                DocumentNode content = zoneContentOf(zone);
-                if (content != null) {
-                    contents.add(content);
+                if (zone.getContent() == null) {
+                    continue;
+                }
+                ZoneBuilds builds = ZoneBuilds.of(zone, writtenOn(zone, pages), pages);
+                for (DocumentNode content : java.util.Arrays.asList(builds.first(), builds.rest())) {
+                    if (content != null) {
+                        contents.add(content);
+                    }
                 }
             }
         }
@@ -1680,11 +1710,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Writes each page zone into a real Word header or footer part.
      *
      * <p>A fixed-layout backend receives a paginated document and draws the zone
-     * per page; Word paginates for itself, so the zone is written once as a
-     * definition and Word repeats it. That is why the content function is called
-     * with an unpaginated {@link PageContext}: a page number baked into text here
-     * would be right on one page and wrong on the others, so a zone that needs one
-     * places {@code pageNumber()} and gets a live {@code PAGE} field instead.</p>
+     * per page; Word paginates for itself, so the zone is written as a definition
+     * and Word repeats it. That is why the content function is called with an
+     * unpaginated {@link PageContext}: a page number baked into text here would be
+     * right on one page and wrong on the others, so a zone that needs one places
+     * {@code pageNumber()} and gets a live {@code PAGE} field instead. It is built
+     * for the first page and for the pages after it, the two Word gives a header and
+     * footer of their own: content built otherwise for the first page —
+     * a cover's line, the running one — is written into both, with the section
+     * stating a title page ({@link #zoneVariantsOf}). Word has none for the last
+     * page, and content built otherwise for it is named
+     * ({@link #reportTheLastPage}).</p>
      *
      * <p>A page predicate is the other fixed-layout piece: {@code appliesTo} tests a page,
      * and Word owns pagination, so there is no page here to test. What Word does have is a
@@ -1736,37 +1772,64 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                              || sectionZones.stream().anyMatch(zone -> zone.getZone() == band.getZone()
                                                                        && zone.getContent() != null);
             writers.add(new ZoneWriter(band.getZone(), bandPageClasses(band),
-                    part -> writeBand(part, band, framed), () -> placeBand(document, band, framed)));
+                    part -> writeBand(part, band, framed), () -> placeBand(document, band, framed), false));
         }
         for (int index = 0; index < sectionZones.size(); index++) {
             DocumentPageZone zone = sectionZones.get(index);
-            DocumentNode content = zoneContentOf(zone);
-            if (content == null) {
-                // Built for no page in particular, it builds nothing to write: lost, unless the
-                // layout shows it drawn on no page either.
-                if (zone.getContent() != null && (layout.isEmpty() || layout.zoneFirstPage(index) >= 0)) {
-                    String kind = zone.getZone() == DocumentHeaderFooterZone.HEADER ? "header" : "footer";
-                    report.add(DocxExportReport.Severity.DROPPED, "page zone",
-                            sectioned ? "section " + (sectionIndex + 1) : null,
-                            "a " + kind + " is not written: built for no page in particular, its content is "
-                            + "none; a zone absent from some pages says so through appliesTo");
-                }
+            java.util.Set<DocxPageClasses.PageClass> drawnOn = writtenOn(zone, layout.pageCount());
+            if (zone.getContent() == null || drawnOn.isEmpty()) {
                 continue;
             }
             int at = index;
             boolean header = zone.getZone() == DocumentHeaderFooterZone.HEADER;
-            ZonePlacement placement = zonePlacement(at, header, zone, content);
+            ZoneBuilds builds = ZoneBuilds.of(zone, drawnOn, layout.pageCount());
+            List<ZoneVariant> variants = zoneVariantsOf(builds, drawnOn, layout.pageCount());
+            if (variants.isEmpty()) {
+                // Built for the pages it is written on, it builds nothing to write: lost, unless the
+                // layout shows it drawn on no page either.
+                if (layout.isEmpty() || layout.zoneFirstPage(index) >= 0) {
+                    String kind = header ? "header" : "footer";
+                    report.add(DocxExportReport.Severity.DROPPED, "page zone",
+                            sectioned ? "section " + (sectionIndex + 1) : null,
+                            "a " + kind + " is not written: built for the pages Word writes it on, its content "
+                            + "is none; a zone absent from some pages says so through appliesTo");
+                }
+                continue;
+            }
+            if (DocxPageClasses.of(zone, layout.pageCount()) == null) {
+                reportPagesUnfollowed(zone);
+            }
+            reportTheLastPage(zone, drawnOn, builds, header);
+            List<ZonePlacement> placements = new ArrayList<>(variants.size());
+            List<Integer> measuredOn = new ArrayList<>(variants.size());
+            for (ZoneVariant variant : variants) {
+                int page = layout.zoneFirstPage(at, variant.pages());
+                measuredOn.add(page);
+                placements.add(zonePlacement(at, page, header, zone, variant.content()));
+            }
             // A zone that shares its kind with another page zone stands at its own height on the
             // page, as a band does (writeBand): Word holds one distance from the edge for a kind,
             // and lines stacked in one part would keep the order the zones were added in. Beside a
-            // band of its kind it stays in the flow, the band framed.
-            boolean framed = placement.measured() && sectionZones.stream()
+            // band of its kind it stays in the flow, the band framed. Built otherwise for the first
+            // page, its lines share that one distance too: where they stand at another, or one is
+            // not measured, each measured one stands at its own height.
+            boolean besideAnother = sectionZones.stream()
                     .anyMatch(other -> other != zone && other.getZone() == zone.getZone() && other.getContent() != null);
-            writers.add(new ZoneWriter(zone.getZone(), pageClassesOf(zone),
-                    part -> writeZoneLine(part, at, content, placement, framed, header), () -> {
-                        placeZone(document, zone, at, header, placement, framed);
-                        reportZoneLine(at, header, content, placement);
-                    }));
+            boolean apart = variants.size() > 1
+                            && !(placements.stream().allMatch(ZonePlacement::measured)
+                                 && placements.stream().mapToLong(placement -> toTwips(placement.distance()))
+                                            .distinct().count() == 1);
+            for (int each = 0; each < variants.size(); each++) {
+                ZoneVariant variant = variants.get(each);
+                ZonePlacement placement = placements.get(each);
+                int page = measuredOn.get(each);
+                boolean framed = placement.measured() && (besideAnother || apart);
+                writers.add(new ZoneWriter(zone.getZone(), variant.drawnOn(),
+                        part -> writeZoneLine(part, at, page, variant.content(), placement, framed, header), () -> {
+                            placeZone(document, zone, at, variant.pages(), header, placement, framed, variant.which());
+                            reportZoneLine(at, page, header, variant.content(), placement, variant.which());
+                        }, each > 0));
+            }
         }
         boolean titlePage = false;
         for (ZoneWriter writer : writers) {
@@ -1787,16 +1850,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 continue;
             }
             boolean header = writer.kind() == DocumentHeaderFooterZone.HEADER;
-            for (org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type
-                    : partTypes(titlePage, evenAndOdd)) {
-                if (writer.drawnOn().contains(pageClassOf(type))) {
-                    // A band and a zone of one kind share the part: Word has one header per page.
-                    XWPFHeaderFooter part = parts.computeIfAbsent(writer.kind() + "/" + type,
-                            key -> header ? policy.createHeader(type) : policy.createFooter(type));
-                    writer.write().accept(part);
+            report.skipRepeats(writer.repeats());
+            try {
+                for (org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr.Enum type
+                        : partTypes(titlePage, evenAndOdd)) {
+                    if (writer.drawnOn().contains(pageClassOf(type))) {
+                        // A band and a zone of one kind share the part: Word has one header per page.
+                        XWPFHeaderFooter part = parts.computeIfAbsent(writer.kind() + "/" + type,
+                                key -> header ? policy.createHeader(type) : policy.createFooter(type));
+                        writer.write().accept(part);
+                    }
                 }
+                writer.place().run();
+            } finally {
+                report.skipRepeats(false);
             }
-            writer.place().run();
             written.add(writer.kind());
         }
         // A part that ends in a framed band ends with a paragraph of its own flow, a point tall:
@@ -1824,31 +1892,113 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * The kinds of page a zone is drawn on — every kind when its predicate does not follow
-     * them, which is written down as what the export could not honour.
+     * Writes down that a zone's predicate does not follow the kinds of page Word has a header and
+     * footer for, so it is written on every page ({@link #writtenOn}).
      */
-    private java.util.Set<DocxPageClasses.PageClass> pageClassesOf(DocumentPageZone zone) {
-        java.util.Set<DocxPageClasses.PageClass> classes = DocxPageClasses.of(zone, layout.pageCount());
-        if (classes != null) {
-            return classes;
-        }
+    private void reportPagesUnfollowed(DocumentPageZone zone) {
         LOG.warn("docx.zone.pagePredicate zone={} — its appliesTo predicate does not follow Word's"
                 + " first, even and odd pages, so the zone is written on every page; per-page"
                 + " chrome of that kind needs a fixed-layout backend.", zone.getZone());
         report.add(DocxExportReport.Severity.APPROXIMATED, "page zone", null,
                 "its page predicate picks pages Word has no header or footer for — only the first,"
                 + " even and odd pages can differ — so it is written on every page");
-        return java.util.EnumSet.allOf(DocxPageClasses.PageClass.class);
+    }
+
+    /**
+     * A page zone as one header or footer of Word's writes it.
+     *
+     * @param content the content built for the pages it is written on
+     * @param drawnOn the kinds of page it is written on
+     * @param pages   the layout's pages of those kinds, by index counted from 0, which it is
+     *                measured on
+     * @param which   what its notes call those pages, empty where it is the zone's only one
+     */
+    private record ZoneVariant(DocumentNode content,
+                               java.util.Set<DocxPageClasses.PageClass> drawnOn,
+                               java.util.function.IntPredicate pages,
+                               String which) {
+    }
+
+    /**
+     * The headers or footers a page zone is written as: one for every page it is drawn on, or,
+     * where its content is built otherwise for the first page than for the pages after it — a
+     * cover's line, the running one — one for the first page, Word's title page, and one for the
+     * rest. Built alike — the same values throughout ({@link DocxNodeValues}) — it is written once,
+     * as built for the pages after the first, or for the first where the layout runs to one page. Built for none of a kind of page, it is written on
+     * none of them, as the page draws none there.
+     *
+     * @param pages how many pages the layout ran to, or 0 when it is unknown
+     */
+    private static List<ZoneVariant> zoneVariantsOf(ZoneBuilds builds, java.util.Set<DocxPageClasses.PageClass> drawnOn,
+                                                    int pages) {
+        java.util.Set<DocxPageClasses.PageClass> firstKinds = java.util.EnumSet.noneOf(DocxPageClasses.PageClass.class);
+        java.util.Set<DocxPageClasses.PageClass> laterKinds = java.util.EnumSet.noneOf(DocxPageClasses.PageClass.class);
+        for (DocxPageClasses.PageClass kind : drawnOn) {
+            (kind == DocxPageClasses.PageClass.FIRST ? firstKinds : laterKinds).add(kind);
+        }
+        if (firstKinds.isEmpty() || laterKinds.isEmpty()) {
+            DocumentNode content = firstKinds.isEmpty() ? builds.rest() : builds.first();
+            return content == null ? List.of() : List.of(new ZoneVariant(content, drawnOn, page -> true, ""));
+        }
+        if (builds.first() != null && builds.rest() != null && DocxNodeValues.alike(builds.first(), builds.rest())) {
+            return List.of(new ZoneVariant(pages == 1 ? builds.first() : builds.rest(), drawnOn, page -> true, ""));
+        }
+        List<ZoneVariant> variants = new ArrayList<>(2);
+        if (builds.first() != null) {
+            variants.add(new ZoneVariant(builds.first(), firstKinds, page -> page == 0, " on the first page"));
+        }
+        if (builds.rest() != null) {
+            variants.add(new ZoneVariant(builds.rest(), laterKinds, page -> page > 0, " on the pages after the first"));
+        }
+        return variants;
+    }
+
+    /**
+     * Names a zone the page builds otherwise for the last page than Word writes it there. Word has
+     * a header and footer for the first page and for the pages after it, none for the last, so
+     * the last page — unless it is the first, where the layout runs to one — carries the pages'
+     * before it.
+     */
+    private void reportTheLastPage(DocumentPageZone zone, java.util.Set<DocxPageClasses.PageClass> drawnOn,
+                                   ZoneBuilds builds, boolean header) {
+        int pages = layout.pageCount();
+        if (pages == 1 || !(drawnOn.contains(DocxPageClasses.PageClass.EVEN)
+                            || drawnOn.contains(DocxPageClasses.PageClass.LATER_ODD))
+            || pages > 1 && !zone.appliesTo(PageContext.paginated(pages, pages))) {
+            return;
+        }
+        DocumentNode last = null;
+        boolean refused = false;
+        try {
+            last = zone.getContent().apply(PageContext.unpaginated(false, true));
+        } catch (UnsupportedOperationException readsTheNumber) {
+            // Built for the last page, it reads the page's number, which Word sets: never written,
+            // it is not as written either.
+            refused = true;
+        }
+        boolean alike = !refused
+                        && DocxNodeValues.alike(builds.rest(), last);
+        if (!alike) {
+            String kind = header ? "header" : "footer";
+            report.add(DocxExportReport.Severity.APPROXIMATED, "page zone",
+                    sectioned ? "section " + (sectionIndex + 1) : null,
+                    "a " + kind + " the page builds otherwise for the last page is written there as on the pages "
+                    + "before it: Word has a " + kind + " for the first page and one for the rest, none for the last");
+        }
     }
 
     /**
      * What a header or footer writes into a part, the kinds of page it is drawn on, and how the
      * section places it from the page edge.
+     *
+     * @param repeats whether it is a page zone's second line, for the pages after the first, whose
+     *                losses its first line has said already where they are the same
      */
     private record ZoneWriter(DocumentHeaderFooterZone kind,
                               java.util.Set<DocxPageClasses.PageClass> drawnOn,
                               java.util.function.Consumer<XWPFHeaderFooter> write,
-                              Runnable place) {
+                              Runnable place,
+                              boolean repeats) {
     }
 
     /**
@@ -2199,7 +2349,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>The distance is the one that stands the zone's line on its tallest part's baseline
      * ({@link #zonePlacement}). Where the layout shows none of the zone's text, it is where the
      * zone's content landed in the resolved layout, the highest edge of a header's and the
-     * lowest of a footer's. Without a layout it falls back to the zone's own padding on that
+     * lowest of a footer's, on the pages the line is written for — on any, where it is drawn on
+     * none of them. Without a layout it falls back to the zone's own padding on that
      * edge — a band's content is laid from its top, so for a footer that is the nearer estimate
      * rather than the exact one, and it is only reached when the document could not be laid
      * out at all.</p>
@@ -2214,11 +2365,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * a text band ({@link #placeBand}); a paragraph of more lines than one reaches as far as all
      * of them.</p>
      *
+     * @param pages     the layout's pages the line is written for, by index counted from 0
      * @param placement where the zone's line stands in Word
      * @param framed    whether the zone stands in a frame (see {@link #writeZoneLine})
+     * @param which     what the notes call the pages the line is written for, empty where the zone
+     *                  is written once
      */
-    private void placeZone(XWPFDocument document, DocumentPageZone zone, int index, boolean header,
-                           ZonePlacement placement, boolean framed) {
+    private void placeZone(XWPFDocument document, DocumentPageZone zone, int index,
+                           java.util.function.IntPredicate pages, boolean header,
+                           ZonePlacement placement, boolean framed, String which) {
         CTSectPr sectPr = document.getDocument().getBody().isSetSectPr()
                 ? document.getDocument().getBody().getSectPr()
                 : document.getDocument().getBody().addNewSectPr();
@@ -2231,7 +2386,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 ? OptionalDouble.of(placement.distance())
                 : Double.isNaN(pageHeight)
                 ? OptionalDouble.empty()
-                : layout.zoneDistanceFromEdge(index, header, pageHeight);
+                : layout.zoneDistanceFromEdge(index, pages, header, pageHeight);
+        if (measured.isEmpty() && !Double.isNaN(pageHeight)) {
+            // Drawn on none of the pages it is written for — the pages after the first, in a layout
+            // of one — it stands where its content landed on the others.
+            measured = layout.zoneDistanceFromEdge(index, page -> true, header, pageHeight);
+        }
         DocumentInsets padding = zone.getPadding() == null ? DocumentInsets.zero() : zone.getPadding();
         double distance = measured.orElse(header ? padding.top() : padding.bottom());
         if (header) {
@@ -2251,7 +2411,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             holdTheBodyAtTheMargin(margin, header);
             String kind = header ? "header" : "footer";
             report.add(DocxExportReport.Severity.APPROXIMATED, "page zone", sectioned ? "section " + (sectionIndex + 1) : null,
-                    "a " + kind + " whose line reaches " + Math.round(reach * 10) / 10.0 + "pt from the page edge, past "
+                    "a " + kind + which + " whose line reaches " + Math.round(reach * 10) / 10.0 + "pt from the page edge, past "
                     + "the page margin, which is written negative so that Word holds the body at the margin, as the "
                     + "page does; LibreOffice moves the body clear of it");
         }
@@ -2298,9 +2458,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the line tall.</p>
      *
      * @param zoneIndex the zone's position in the section's zone list
+     * @param page      the page the line is measured on, by index counted from 0, or -1 where the
+     *                  layout draws it on none of the pages it is written for
      */
-    private void writeZoneLine(XWPFHeaderFooter target, int zoneIndex, DocumentNode content, ZonePlacement placement,
-                               boolean framed, boolean header) {
+    private void writeZoneLine(XWPFHeaderFooter target, int zoneIndex, int page, DocumentNode content,
+                               ZonePlacement placement, boolean framed, boolean header) {
         long frameTop = framed
                 ? toTwips(header ? placement.distance() : canvasHeight - placement.distance() - placement.height())
                 : 0;
@@ -2341,8 +2503,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             reportUnwrittenRowPaint(row, true, null);
         }
         java.util.Map<DocumentNode, String> paths = DocxLayoutMetrics.pathsWithin(content);
-        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex);
-        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> pictures = layout.zonePictures(zoneIndex);
+        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex, page);
+        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> pictures =
+                layout.zonePictures(zoneIndex, page);
         writingAZoneLine = true;
         reportingAZoneLine = zoneLinesReported.add(content);
         try {
@@ -2359,8 +2522,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * The lines the page laid a part of a zone out in on the first page it draws the zone on,
-     * found by the part's path within the zone's content.
+     * The lines the page laid a part of a zone out in on the page its line is measured on, found
+     * by the part's path within the zone's content.
      *
      * @return the lines, empty where the layout shows none of the part, or set it there otherwise
      *         than it is written ({@link ZonePlacement#laidOtherwise}): another's lines tell nothing
@@ -2405,8 +2568,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * stands the lines below its first further from its edge, so that the first is the one on
      * the page's baseline.</p>
      *
-     * <p>Where the page set the zone on the first page it draws it otherwise than the zone is
-     * written — other text, another face or size, other pictures ({@link DocxZoneParts#readAlike})
+     * <p>It is measured on the first page the layout draws it on among those it is written for.
+     * Where the page set the zone there otherwise than it is written — other text, another face
+     * or size, other pictures ({@link DocxZoneParts#readAlike})
      * — the line is not measured, and Word's own. A part the page set there otherwise has lines
      * of another's, which tell nothing of it: not the size an auto-sized one is fitted to, nor the
      * pieces of its markdown. A part it set there as written keeps them.</p>
@@ -2417,7 +2581,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param distance      from the page's top edge to the paragraph's top in a header, from its
      *                      foot to the paragraph's foot in a footer, in points
      * @param baseline      the baseline Word sets the first line on, measured up from the page's foot
-     * @param laidOtherwise the parts the page set on the first page it draws the zone otherwise
+     * @param laidOtherwise the parts the page set on the page the zone is measured on otherwise
      *                      than they are written ({@link DocxZoneParts#partsReadOtherwise}), whose
      *                      lines there are not their own
      * @param raised        how far each part the page sets on a baseline of its own is raised
@@ -2447,22 +2611,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
-    /** Where a zone's line stands in Word (see {@link ZonePlacement}). */
-    private ZonePlacement zonePlacement(int zoneIndex, boolean header, DocumentPageZone zone, DocumentNode content) {
-        int firstPage = layout.zoneFirstPage(zoneIndex);
-        if (Double.isNaN(canvasHeight) || firstPage < 0) {
+    /**
+     * Where a zone's line stands in Word (see {@link ZonePlacement}).
+     *
+     * @param page the page it is measured on: the first the layout draws it on among those it is
+     *             written for, by index counted from 0, or -1 where it draws it on none of them
+     */
+    private ZonePlacement zonePlacement(int zoneIndex, int page, boolean header, DocumentPageZone zone,
+                                        DocumentNode content) {
+        if (Double.isNaN(canvasHeight) || page < 0) {
             return ZonePlacement.UNMEASURED;
         }
         // The page set the zone otherwise there than it is written: its line is not measured by it,
         // and a part set otherwise takes nothing from its lines there.
         DocumentNode drawn = zone.getContent().apply(
-                PageContext.paginated(firstPage + 1, Math.max(firstPage + 1, layout.pageCount())));
+                PageContext.paginated(page + 1, Math.max(page + 1, layout.pageCount())));
         if (!DocxZoneParts.readAlike(content, drawn)) {
             return ZonePlacement.laidOtherwise(DocxZoneParts.partsReadOtherwise(content, drawn));
         }
         java.util.Map<DocumentNode, String> paths = DocxLayoutMetrics.pathsWithin(content);
-        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex);
-        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> pictures = layout.zonePictures(zoneIndex);
+        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex, page);
+        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> pictures =
+                layout.zonePictures(zoneIndex, page);
         ZoneLine tallest = null;
         int mostLines = 1;
         double picture = 0;
@@ -2639,15 +2809,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * on it. So are a picture part's ({@link #zonePictureLost}).</p>
      *
      * @param zoneIndex the zone's position in the section's zone list
+     * @param page      the page the line is measured on ({@link #zonePlacement})
      * @param header    whether the zone is a header
      * @param content   the zone's content, as written
      * @param placement where the line stands in Word
+     * @param which     what the notes call the pages it is written for, empty where the zone is
+     *                  written once
      */
-    private void reportZoneLine(int zoneIndex, boolean header, DocumentNode content, ZonePlacement placement) {
+    private void reportZoneLine(int zoneIndex, int page, boolean header, DocumentNode content, ZonePlacement placement,
+                                String which) {
         List<DocumentNode> parts = DocxZoneParts.of(content);
         java.util.Map<DocumentNode, String> paths = DocxLayoutMetrics.pathsWithin(content);
-        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex);
-        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> pictures = layout.zonePictures(zoneIndex);
+        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> laid = layout.zoneText(zoneIndex, page);
+        java.util.Map<String, com.demcha.compose.document.layout.PlacedFragment> pictures =
+                layout.zonePictures(zoneIndex, page);
         // Read where the line is placed by what the page set: not where the page set other text.
         boolean measured = placement.measured() && !(laid.isEmpty() && pictures.isEmpty())
                            && !Double.isNaN(canvasLeftMargin);
@@ -2766,7 +2941,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             String kind = header ? "header" : "footer";
             report.add(DocxExportReport.Severity.APPROXIMATED, "page zone",
                     sectioned ? "section " + (sectionIndex + 1) : null,
-                    "a " + kind + " written as one line of Word's " + kind + "; " + String.join("; ", lost));
+                    "a " + kind + which + " written as one line of Word's " + kind + "; " + String.join("; ", lost));
         }
     }
 

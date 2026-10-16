@@ -1,5 +1,6 @@
 package com.demcha.compose.document.output;
 
+import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.PageFieldKind;
 import com.demcha.compose.document.node.PageFieldNode;
@@ -31,6 +32,10 @@ import com.demcha.compose.document.style.DocumentTextStyle;
  * back a node rather than an {@code int} — are the way to place a number that
  * survives export. One node type serves both lanes: a paginated render resolves
  * it to the number, a semantic export maps it onto a live {@code PAGE} field.</p>
+ *
+ * <p>What a semantic export can tell apart is the kind of page: it builds the
+ * zone for each kind the format has a header or footer for, so
+ * {@link #isFirst()} still chooses a cover's line over the running one there.</p>
  *
  * @author Artem Demchyshyn
  * @since 2.3.0
@@ -70,10 +75,34 @@ public final class PageContext {
      * A context for a semantic export, where the consuming format paginates and
      * the numbers are therefore unknown here.
      *
-     * @return a context that hands out page fields rather than page numbers
+     * @return a context that hands out page fields rather than page numbers, the
+     *         first page and the last
      */
     public static PageContext unpaginated() {
-        return new PageContext(1, 1, false);
+        return unpaginated(true, true);
+    }
+
+    /**
+     * A context for a semantic export that writes a zone once for each kind of page
+     * the consuming format tells apart: Word, for one, has a header and footer for
+     * a section's first page and another for the pages after it.
+     *
+     * <p>The numbers stay unknown, as with {@link #unpaginated()};
+     * {@link #isFirst()} and {@link #isLast()} answer for the kind of page the
+     * zone is built for.</p>
+     *
+     * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
+     *
+     * @param first whether the zone is built for the first page
+     * @param last  whether it is built for the last page
+     * @return a context that hands out page fields rather than page numbers
+     * @since 2.5.0
+     */
+    @Beta
+    public static PageContext unpaginated(boolean first, boolean last) {
+        // Never read on a semantic export, the numbers only answer isFirst and isLast.
+        int number = first ? 1 : 2;
+        return new PageContext(number, last ? number : number + 1, false);
     }
 
     /**
@@ -112,8 +141,8 @@ public final class PageContext {
     /**
      * Whether this is the first page.
      *
-     * @return {@code true} on page 1; always {@code true} on a semantic export,
-     * where one zone definition serves every page
+     * @return {@code true} on page 1; on a semantic export, whether the zone is
+     * built for the kind of page the first one is ({@link #unpaginated(boolean, boolean)})
      */
     public boolean isFirst() {
         return number == 1;
@@ -122,8 +151,8 @@ public final class PageContext {
     /**
      * Whether this is the last page.
      *
-     * @return {@code true} on the final page; always {@code true} on a semantic
-     * export, where one zone definition serves every page
+     * @return {@code true} on the final page; on a semantic export, whether the
+     * zone is built for the last page ({@link #unpaginated(boolean, boolean)})
      */
     public boolean isLast() {
         return number == total;

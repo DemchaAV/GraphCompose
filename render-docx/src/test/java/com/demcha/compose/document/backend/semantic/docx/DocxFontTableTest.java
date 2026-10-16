@@ -130,6 +130,28 @@ class DocxFontTableTest {
     }
 
     @Test
+    void theFacesAZoneIsSetInOnItsFirstPageAndOnTheRestBothTravel() throws Exception {
+        // Built otherwise for the first page, the zone is written into the first page's footer and
+        // the others': each is set in a face of its own.
+        byte[] docx;
+        try (DocumentSession session = GraphCompose.document().pageSize(300, 200)
+                .margin(DocumentInsets.of(30)).create()) {
+            session.chrome().zone(DocumentPageZone.footer(20, page -> new ParagraphBuilder()
+                    .text(page.isFirst() ? "Cover" : "Running")
+                    .textStyle(face(page.isFirst() ? FontName.BARLOW : FontName.UBUNTU)).build()));
+            session.pageFlow(page -> {
+                for (int line = 0; line < 12; line++) {
+                    page.addParagraph("Line " + line, face(FontName.LATO));
+                }
+            });
+            docx = session.export(new DocxSemanticBackend());
+        }
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            assertThat(families(document)).containsExactlyInAnyOrder("Lato", "Barlow", "Ubuntu");
+        }
+    }
+
+    @Test
     void aPageReferenceAndTheRunsOfAListsItemsAndMarkersShipTheirFaces() throws Exception {
         try (XWPFDocument document = export(page -> page
                 .addParagraph(p -> p.text("Terms").anchor("terms").textStyle(face(FontName.LATO)))

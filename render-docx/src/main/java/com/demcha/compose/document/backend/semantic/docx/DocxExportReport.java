@@ -109,8 +109,22 @@ public record DocxExportReport(List<Note> notes) {
 
         private final List<Note> notes = new ArrayList<>();
 
+        private boolean skippingRepeats;
+
         void add(Severity severity, String subject, String path, String detail) {
-            notes.add(new Note(severity, subject, path, detail));
+            Note note = new Note(severity, subject, path, detail);
+            if (!skippingRepeats || !notes.contains(note)) {
+                notes.add(note);
+            }
+        }
+
+        /**
+         * While on, a note the report already holds is not added again: a page zone built
+         * otherwise for the first page is written twice, and what both its lines lose is said
+         * once.
+         */
+        void skipRepeats(boolean on) {
+            skippingRepeats = on;
         }
 
         /** How many notes the report holds so far. */

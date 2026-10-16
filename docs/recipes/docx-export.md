@@ -1219,9 +1219,10 @@ A zone the layout measures that shares its kind with another page zone — a cov
 the first page, the running header on the rest — stands in a frame (`w:framePr`) at its own
 height, at least its lines tall, since Word holds one distance from the edge for a kind; written
 in the flow, the cover's header stood 16pt high. Beside a text band of its kind, the band is
-framed. Where the layout shows none of the zone's text or pictures, or the zone's content is
-built otherwise for the first page it is drawn on than it is written — other text, another face
-or size, another picture or picture box — the line is Word's, the distance is read from where its
+framed. Where the layout shows none of the zone's text or pictures, or the page draws the zone
+otherwise on the first page it is measured on than it is written — other text, another face
+or size, another picture or picture box: content that asks `isPaginated()`, say — the line is
+Word's, the distance is read from where its
 content landed, and the report says where its text or picture stands is not measured. Such a zone is not framed: two of one kind
 share Word's one distance, the last one's, and stand one under the other. A zone whose content
 is none for no page in particular is not written, and the report names it. A zone is written
@@ -1271,6 +1272,19 @@ so the predicate is asked over sample pages and sorted into those kinds:
 
 A predicate that picks pages within a kind — the last page, the third — has no Word part.
 Such a zone is written on every page and the export report says so.
+
+The same kinds hold for what a zone builds. Its content function is called once for the
+first page and once for the pages after it, in a context that still refuses the numbers
+(`PageContext.unpaginated(first, last)`), so content built otherwise for the first page —
+`page.isFirst() ? "Original keep" : "Continuation sheet"` — becomes the title page's footer
+and the ordinary one, each measured on a page the layout draws it on, where there is one. Where
+the two lines cannot share Word's one distance from the edge — they stand at different ones, or
+one is not measured — each measured one stands in a frame at its own height, as two zones of a
+kind do. Built alike, value for value, it is written once. A document the layout runs to one
+page builds its first page as the last. Word has no footer for the last page: content built
+otherwise for it is written there as on the pages before it, and the report says so — content
+reading `page.number()` there included, unless the first page is the last. Content that reads
+`page.number()` for the pages after the first is refused there, as it is on the first.
 
 The rule of thumb: if the document leans on geometry — shapes, layered
 designs, precise placement — export PDF for the reader and DOCX only as

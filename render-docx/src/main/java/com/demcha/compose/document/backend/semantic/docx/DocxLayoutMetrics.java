@@ -549,15 +549,18 @@ final class DocxLayoutMetrics {
      *
      * <p>Zone fragments are spliced into the graph under {@code @page-zone[page][index]},
      * outside the node paths this index is built from, so they are found by that prefix — on
-     * any page, because a zone that skips the first page has nothing on it. A band sits at the
-     * same place on every page it is drawn on, so every page gives the same distance.</p>
+     * any page of those asked about, because a zone that skips the first page has nothing on it.
+     * A band sits at the same place on every page it is drawn on, so every page gives the same
+     * distance; content built otherwise for the first page is asked about apart.</p>
      *
      * @param zoneIndex  the zone's position in the session's zone list
+     * @param pages      the pages read, by index counted from 0
      * @param header     whether it is a header, measured from the top edge
      * @param pageHeight the page's height in points
-     * @return the distance in points, or empty when the layout carries no such zone
+     * @return the distance in points, or empty when the layout carries no such zone there
      */
-    OptionalDouble zoneDistanceFromEdge(int zoneIndex, boolean header, double pageHeight) {
+    OptionalDouble zoneDistanceFromEdge(int zoneIndex, java.util.function.IntPredicate pages, boolean header,
+                                        double pageHeight) {
         java.util.regex.Pattern zone =
                 java.util.regex.Pattern.compile("^@page-zone\\[\\d+]\\[" + zoneIndex + "]");
         double lowest = Double.POSITIVE_INFINITY;
@@ -567,8 +570,10 @@ final class DocxLayoutMetrics {
                 continue;
             }
             for (PlacedFragment fragment : entry.getValue()) {
-                lowest = Math.min(lowest, fragment.y());
-                highest = Math.max(highest, fragment.y() + fragment.height());
+                if (pages.test(fragment.pageIndex())) {
+                    lowest = Math.min(lowest, fragment.y());
+                    highest = Math.max(highest, fragment.y() + fragment.height());
+                }
             }
         }
         if (lowest == Double.POSITIVE_INFINITY) {
@@ -578,8 +583,8 @@ final class DocxLayoutMetrics {
     }
 
     /**
-     * The text a page zone's content laid out, on the first page the zone is drawn on: each
-     * node's first fragment of paragraph lines, by its path within the content.
+     * The text a page zone's content laid out on a page: each node's first fragment of
+     * paragraph lines, by its path within the content.
      *
      * <p>A zone's content is compiled on its own, its paths as a document's of that one root,
      * and spliced in under {@code @page-zone[page][index]} (see {@link #zoneDistanceFromEdge}).
@@ -587,32 +592,35 @@ final class DocxLayoutMetrics {
      * ({@link #pathsWithin}).</p>
      *
      * @param zoneIndex the zone's position in the section's zone list
-     * @return the fragments by path, empty when the layout carries no such zone
+     * @param page      the page's index, counted from 0 — the first the zone is drawn on among
+     *                  those it is written for ({@link #zoneFirstPage(int, java.util.function.IntPredicate)})
+     * @return the fragments by path, empty when the layout carries no such zone on that page
      */
-    Map<String, PlacedFragment> zoneText(int zoneIndex) {
-        return zoneFragments(zoneIndex, fragment -> fragment.payload() instanceof ParagraphFragmentPayload paragraph
-                                                    && !paragraph.lines().isEmpty());
+    Map<String, PlacedFragment> zoneText(int zoneIndex, int page) {
+        return zoneFragments(zoneIndex, page, fragment -> fragment.payload() instanceof ParagraphFragmentPayload paragraph
+                                                          && !paragraph.lines().isEmpty());
     }
 
     /**
-     * The pictures a page zone's content laid out, on the first page the zone is drawn on: each
-     * node's first picture fragment, the box the page draws it in, by its path within the content
-     * (see {@link #zoneText}).
+     * The pictures a page zone's content laid out on a page: each node's first picture
+     * fragment, the box the page draws it in, by its path within the content (see
+     * {@link #zoneText}).
      *
      * @param zoneIndex the zone's position in the section's zone list
-     * @return the fragments by path, empty when the layout carries no such zone
+     * @param page      the page's index, counted from 0
+     * @return the fragments by path, empty when the layout carries no such zone on that page
      */
-    Map<String, PlacedFragment> zonePictures(int zoneIndex) {
-        return zoneFragments(zoneIndex, fragment -> fragment.payload() instanceof ImageFragmentPayload);
+    Map<String, PlacedFragment> zonePictures(int zoneIndex, int page) {
+        return zoneFragments(zoneIndex, page, fragment -> fragment.payload() instanceof ImageFragmentPayload);
     }
 
-    /** Each node's first fragment a page zone laid out that is of a kind, by its path within the content. */
-    private Map<String, PlacedFragment> zoneFragments(int zoneIndex, java.util.function.Predicate<PlacedFragment> kind) {
-        int first = zoneFirstPage(zoneIndex);
-        if (first < 0) {
+    /** Each node's first fragment a page zone laid out on a page that is of a kind, by its path within the content. */
+    private Map<String, PlacedFragment> zoneFragments(int zoneIndex, int page,
+                                                      java.util.function.Predicate<PlacedFragment> kind) {
+        if (page < 0) {
             return Map.of();
         }
-        String prefix = "@page-zone[" + first + "][" + zoneIndex + "]";
+        String prefix = "@page-zone[" + page + "][" + zoneIndex + "]";
         Map<String, PlacedFragment> found = new HashMap<>();
         for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
             if (!entry.getKey().startsWith(prefix)) {
@@ -629,12 +637,25 @@ final class DocxLayoutMetrics {
     }
 
     /**
-     * The first page a page zone is drawn on, which {@link #zoneText} reads it from.
+     * The first page a page zone is drawn on.
      *
      * @param zoneIndex the zone's position in the section's zone list
      * @return the page's index, counted from 0, or -1 when the layout carries no such zone
      */
     int zoneFirstPage(int zoneIndex) {
+        return zoneFirstPage(zoneIndex, page -> true);
+    }
+
+    /**
+     * The first page a page zone is drawn on among some, which {@link #zoneText} reads it from:
+     * a zone built otherwise for the first page is read for the others on the second page that
+     * draws it.
+     *
+     * @param zoneIndex the zone's position in the section's zone list
+     * @param pages     the pages asked about, by index counted from 0
+     * @return the page's index, counted from 0, or -1 when the layout draws no such zone on any of them
+     */
+    int zoneFirstPage(int zoneIndex, java.util.function.IntPredicate pages) {
         java.util.regex.Pattern zone =
                 java.util.regex.Pattern.compile("^@page-zone\\[\\d+]\\[" + zoneIndex + "]");
         // The page a zone's fragment is drawn on is the one its path names.
@@ -642,7 +663,9 @@ final class DocxLayoutMetrics {
         for (Map.Entry<String, List<PlacedFragment>> entry : fragments.entrySet()) {
             if (zone.matcher(entry.getKey()).find()) {
                 for (PlacedFragment fragment : entry.getValue()) {
-                    first = Math.min(first, fragment.pageIndex());
+                    if (pages.test(fragment.pageIndex())) {
+                        first = Math.min(first, fragment.pageIndex());
+                    }
                 }
             }
         }

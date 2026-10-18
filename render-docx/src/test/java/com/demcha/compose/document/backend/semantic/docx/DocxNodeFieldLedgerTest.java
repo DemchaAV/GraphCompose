@@ -115,7 +115,10 @@ class DocxNodeFieldLedgerTest {
     private static final String RULE_WIDTH = "as a rule, " + BORDER_WIDTH + "; any other is written";
     private static final String CELL_TRANSLUCENCY = "the translucency of a cell's fill, flattened against the colour "
                                                     + "under the cell, and of its rules, against its fill where it has "
-                                                    + "one; of its rules, " + BORDER_WIDTH + "; any other is written";
+                                                    + "one; of its rules, " + BORDER_WIDTH + ", and the room Word "
+                                                    + "makes for them in a row where a text cell its padding leaves "
+                                                    + "short of it then needs more than the page's height, the row "
+                                                    + "taller; any other is written";
 
     // A row in the flow is written as a panel holding its columns, its paint the panel's.
     private static final String ROW_PAINT = "composed in a table cell, drawn as a shape where it frames no text "

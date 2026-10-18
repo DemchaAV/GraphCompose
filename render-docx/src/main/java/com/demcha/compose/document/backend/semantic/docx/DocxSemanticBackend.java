@@ -14400,6 +14400,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean translucentFills = false;
         boolean translucentRules = false;
         java.util.Set<Double> ruleWidths = new java.util.TreeSet<>();
+        // What Word sets the table taller by, for the room it makes in its rows for the rules.
+        DocxRuleRoom ruleRoom = new DocxRuleRoom(rowCount);
         for (int rowIdx = 0; rowIdx < rowCount; rowIdx++) {
             XWPFTableRow row = table.getRow(rowIdx);
             List<TableGrid.Placement> physical = new ArrayList<>();
@@ -14437,8 +14439,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 applyCellPaint(cell, fill, DocxTranslucency.flattenedStroke(stroke, fill != null ? fill.color() : under));
                 int next = placement.row() + placement.rowSpan();
                 DocumentStroke underneath = next < rowCount ? resolveCellStroke(node, cover[next][placement.column()]) : null;
-                applyCellPadding(cell, clearOfTheRules(resolveCellPadding(node, placement), stroke,
+                DocumentInsets cellPadding = resolveCellPadding(node, placement);
+                applyCellPadding(cell, clearOfTheRules(cellPadding, stroke,
                         placement.row() == 0, next >= rowCount, underneath));
+                if (placement.rowSpan() == 1 && placement.cell() != null && placement.cell().content() == null) {
+                    ruleRoom.count(rowIdx, placement, cellPadding, roundTheContent(cellPadding, stroke,
+                            placement.row() == 0, next >= rowCount, underneath), textHeight(node, placement));
+                }
                 applyVerticalAnchor(cell, resolveCellAnchor(node, placement));
                 if (placement.row() != rowIdx) {
                     // A covered position carries the merge marker and no content of its own.
@@ -14475,6 +14482,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         carryDrawingsInRows(table, node);
         reportFlattenedPaint(node, translucentFills, translucentRules, "its cells' fills", "its cells' rules");
         reportBorderWidths(node, "its cells' rules", true, ruleWidths);
+        nameTheRoomForTheRules(node, ruleRoom);
     }
 
     /**
@@ -14698,7 +14706,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * its margin, a rule of 15 twips came off as 7 and 7, and every row of
      * {@code NorthlineProposal}'s investment table stood a twip taller. The sides
      * keep their padding, as the columns' widths are fixed. Padding thinner than its share gives
-     * what it has, and the row stands that much taller.</p>
+     * what it has, and the row stands taller where that cell then needs more than the page's
+     * height (named by {@link #nameTheRoomForTheRules}).</p>
      *
      * @param padding    the cell's padding on the page
      * @param stroke     the cell's own rule
@@ -14709,11 +14718,79 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static DocumentInsets clearOfTheRules(DocumentInsets padding, DocumentStroke stroke,
                                                   boolean firstRow, boolean lastRow, DocumentStroke underneath) {
-        long rule = ruleTwips(stroke);
-        long above = firstRow ? rule : rule - rule / 2;
-        long below = lastRow ? rule : ruleTwips(underneath) / 2;
+        long above = ruleShareAbove(stroke, firstRow);
+        long below = ruleShareBelow(lastRow, underneath, stroke);
         return new DocumentInsets(Math.max(0, padding.top() - above / POINT_TO_TWIP), padding.right(),
                 Math.max(0, padding.bottom() - below / POINT_TO_TWIP), padding.left());
+    }
+
+    /** The twips of rules Word makes room for above a cell's text: its own rule, whole on the first row. */
+    private static long ruleShareAbove(DocumentStroke stroke, boolean firstRow) {
+        long rule = ruleTwips(stroke);
+        return firstRow ? rule : rule - rule / 2;
+    }
+
+    /** The twips below it: its own rule on the last row, else half of the rule of the cell under it. */
+    private static long ruleShareBelow(boolean lastRow, DocumentStroke underneath, DocumentStroke stroke) {
+        return lastRow ? ruleTwips(stroke) : ruleTwips(underneath) / 2;
+    }
+
+    /**
+     * What Word holds of a cell's row above and below its content, in points: on each side its
+     * padding, or its share of the rules there where that is more — the margin written is what
+     * the padding has past the share, and Word makes room for the share as well
+     * ({@link #clearOfTheRules}).
+     */
+    private static double roundTheContent(DocumentInsets padding, DocumentStroke stroke,
+                                          boolean firstRow, boolean lastRow, DocumentStroke underneath) {
+        double above = ruleShareAbove(stroke, firstRow) / POINT_TO_TWIP;
+        double below = ruleShareBelow(lastRow, underneath, stroke) / POINT_TO_TWIP;
+        return Math.max(Math.max(0, padding.top()), above) + Math.max(Math.max(0, padding.bottom()), below);
+    }
+
+    /**
+     * How tall a text cell's lines stand on the page, in points, as the layout measured them —
+     * {@code NaN} where it does not tell.
+     */
+    private double textHeight(TableNode node, TableGrid.Placement placement) {
+        TableResolvedCell measured = layout.measuredCell(node, placement.row(), placement.column());
+        if (measured == null) {
+            return Double.NaN;
+        }
+        int lines = Math.max(1, measured.lines().size());
+        Double spacing = measured.style() == null ? null : measured.style().lineSpacing();
+        return lines * measured.lineHeight() + (lines - 1) * (spacing == null ? 0 : spacing);
+    }
+
+    /**
+     * Names a table Word sets taller than the page for the room it makes in its rows for the
+     * table's rules, which the page draws over the cells' edges ({@link DocxRuleRoom}): about how
+     * much, or the most it can be where the layout does not tell a row's height or measure its
+     * text. A header row Word repeats counts once for each page the layout places it on.
+     *
+     * <p>Measured in Word and LibreOffice on Windows, the paragraph under the table that much lower
+     * than under the same table unruled, to a tenth of a point: four rows of text with no padding,
+     * 3pt rules 15pt and 1pt rules 5pt; with a point of padding, 3pt rules 7pt; with 3pt of padding,
+     * none. Three rows of 2pt rules, a two-line cell with no padding beside a one-line cell padded
+     * 2pt, 8pt — each cell counted on its own, where the most any cell holds round its content
+     * beside the tallest content would come to 12 — and with the two-line cell the padded one,
+     * none. Two rows of 2pt rules padded 5pt above and none below, 3pt: padding past a share holds
+     * its side alone. In the invoices and the rota whose rows are built from nodes or hold empty
+     * cells, ruled past their padding, the rows stood within half a point of the page's in Word,
+     * where counting those cells said 2 to 4pt: they are not counted. A row whose margins are evened
+     * to one a cell keeps ({@link #evenTheRowsMargins}) is counted as though each kept its own,
+     * which is not measured.</p>
+     */
+    private void nameTheRoomForTheRules(TableNode node, DocxRuleRoom room) {
+        DocxRuleRoom.Taller taller = room.taller(row -> layout.rowHeight(node, row),
+                row -> row < node.repeatedHeaderRowCount() ? layout.cellBoxes(node, row, 0).size() : 1);
+        if (taller.points() >= 0.1) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "cell rule", layout.pathOf(node),
+                    "its cells' rules are wider than the padding that takes them: Word makes room for each in "
+                    + "its row, where the page draws it over the cell's edge, and sets the table "
+                    + (taller.atMost() ? "up to " : "about ") + pointsOf(taller.points())
+                    + "pt taller than the page");
+        }
     }
 
     /**

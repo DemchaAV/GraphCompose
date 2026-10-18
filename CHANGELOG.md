@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes a page zone whose predicate reads the page total on the pages the page
+  draws it on.** Word paginates for itself, so a zone's `appliesTo` predicate is asked over
+  sample pages, the document's own and more up to the sixth, and sorted into Word's first, even
+  and other pages. Every sample page was asked as one of at least six, the document's own
+  included. So on a one-page document a footer for one-page documents only
+  (`page -> page.total() == 1`) was not written, with nothing said, and one for longer documents
+  only (`page.total() > 1`) was written on the one page, which the page draws none of. Measured
+  in Word and LibreOffice on Windows, both showed the second footer and not the first. A
+  layout of fewer than six pages is now asked as well, each of its pages as the page asks it,
+  one of as many as the layout ran to. Those answers decide the kinds of page it has, and the
+  six-page sample's the rest; a predicate that answers otherwise for two pages of a kind in
+  either is written on every page and reported, as before. Both
+  editors show the first footer on the one page, 19.92 and 19.96pt from its foot where the page
+  sets it 19.95, and the second on none. On a two-page document a footer for two-page documents
+  only is on both pages with no note, and one for documents of more than two pages on neither.
+  A document of six pages or more is asked as before.
 - **A DOCX export names a table its rules stand taller in Word.** Word makes room for a table's
   horizontal rules in their rows, and the page draws them over the cells' edges; the export takes
   that room off a cell's padding, and where the padding is thinner than its share of the rules,

@@ -1297,6 +1297,16 @@ so the predicate is asked over sample pages and sorted into those kinds:
 A predicate that picks pages within a kind — the last page, the third — has no Word part.
 Such a zone is written on every page and the export report says so.
 
+The sample is a document of six pages, or of as many as the layout ran to where that is more.
+A shorter layout is asked as well, each of its pages as the page asks it: one page of as many
+as the layout ran to. Those answers decide the kinds of page the layout has, and the sample's
+the rest; a predicate that answers otherwise for two pages of a kind in either has no Word part.
+So a predicate that reads the total is answered for the layout's pages as the page answers it.
+A footer on one-page documents only, `page -> page.total() == 1`, is the title page's footer of
+a one-page document. One on documents of more than two pages, `page.total() > 2`, is on neither
+page of a two-page document: it is the footer of the odd pages after the first, which that
+document has none of, and the document states different even and odd pages for it.
+
 The same kinds hold for what a zone builds. Its content is built for the first page and for
 the pages after it — and for the last, to name what it builds otherwise there — in a context
 that still refuses the numbers (`PageContext.unpaginated(first, last)`), so content built

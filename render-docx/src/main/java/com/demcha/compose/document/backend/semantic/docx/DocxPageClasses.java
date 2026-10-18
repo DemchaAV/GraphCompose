@@ -20,9 +20,14 @@ import java.util.Set;
  * ones. One that does not — the last page, the third — has no Word equivalent, and is
  * reported as such rather than guessed.</p>
  *
- * <p>The sample runs to the document's own page count and to at least {@value #SAMPLE}
+ * <p>The sample is a document of the layout's own page count and of at least {@value #SAMPLE}
  * pages, so every kind is asked more than once where it can be: a predicate that tells the
- * third page from the fifth shows up as one that does not follow the kinds.</p>
+ * third page from the fifth shows up as one that does not follow the kinds. A layout of fewer
+ * pages is asked as well, each of its pages as the page asks it — one of as many as the layout
+ * ran to — and its answers decide the kinds of page it has; the sample's, the rest. A predicate
+ * that reads the total — a footer on one-page documents only — then answers for the layout's
+ * pages as the page does, where the sample alone would ask them as pages of another
+ * document.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -51,19 +56,46 @@ final class DocxPageClasses {
      * @param pageCount how many pages the layout ran to, or 0 when it is unknown
      * @return the kinds it is drawn on — every kind for a zone with no predicate, none for a
      *         zone drawn on no page — or {@code null} when its predicate does not answer
-     *         alike for every page of a kind, or refuses one of the sample pages
+     *         alike for every page of a kind, of the sample or of the layout, or refuses one of
+     *         the pages it is asked about
      */
     static Set<PageClass> of(DocumentPageZone zone, int pageCount) {
         if (zone.getAppliesTo() == null) {
             return EnumSet.allOf(PageClass.class);
         }
-        int total = Math.max(pageCount, SAMPLE);
+        Map<PageClass, Boolean> answers = answers(zone, Math.max(pageCount, SAMPLE));
+        if (answers == null) {
+            return null;
+        }
+        if (pageCount > 0 && pageCount < SAMPLE) {
+            // The layout's own pages, asked as the page asks them, decide the kinds they are of.
+            Map<PageClass, Boolean> laidOut = answers(zone, pageCount);
+            if (laidOut == null) {
+                return null;
+            }
+            answers.putAll(laidOut);
+        }
+        Set<PageClass> drawnOn = EnumSet.noneOf(PageClass.class);
+        answers.forEach((kind, applies) -> {
+            if (applies) {
+                drawnOn.add(kind);
+            }
+        });
+        return drawnOn;
+    }
+
+    /**
+     * What a zone's predicate answers for each kind of page of a document so many pages long,
+     * each page asked as one of them; {@code null} where it answers otherwise for two pages of a
+     * kind, or refuses a page.
+     */
+    private static Map<PageClass, Boolean> answers(DocumentPageZone zone, int pages) {
         Map<PageClass, Boolean> answers = new EnumMap<>(PageClass.class);
-        for (int number = 1; number <= total; number++) {
+        for (int number = 1; number <= pages; number++) {
             PageClass kind = classOf(number);
             boolean applies;
             try {
-                applies = zone.appliesTo(PageContext.paginated(number, total));
+                applies = zone.appliesTo(PageContext.paginated(number, pages));
             } catch (RuntimeException pageItWasNeverAskedAbout) {
                 // The sample can run past the document's own pages, and a predicate written
                 // for those pages — one looking something up by page number — may refuse a
@@ -75,13 +107,7 @@ final class DocxPageClasses {
                 return null;
             }
         }
-        Set<PageClass> drawnOn = EnumSet.noneOf(PageClass.class);
-        answers.forEach((kind, applies) -> {
-            if (applies) {
-                drawnOn.add(kind);
-            }
-        });
-        return drawnOn;
+        return answers;
     }
 
     /** The kind Word files a 1-based page number under. */

@@ -210,6 +210,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * border — flattened against the colour under it (see {@link DocxTranslucency}).
      */
     private static final String TRANSLUCENCY = "translucency";
+    /**
+     * The report's subject for a border the page strokes thinner or wider than any Word draws
+     * (see {@link DocxBorderWidths}).
+     */
+    private static final String BORDER_WIDTH = "border width";
     private static final Logger LOG = LoggerFactory.getLogger(DocxSemanticBackend.class);
     // The page's content width, so an image is held to the same bound layout holds it to.
     // Set per export; Double.MAX_VALUE means "no canvas, so nothing to clamp against".
@@ -254,8 +259,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // paragraphs had been written when it was (raiseOwedByTheLastLine).
     private double lastRaise;
     private long paragraphsAtTheLastRaise = -1;
-    // The text bands whose translucent separator is already reported this export: a band is
-    // written into each kind of header or footer Word is given.
+    // The text bands whose separator is already reported this export, its colour or its width: a
+    // band is written into each kind of header or footer Word is given.
     private final java.util.Set<DocumentHeaderFooter> separatorsReported =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // Whether any text fill was written this export, so the finished parts are settled only then.
@@ -2138,12 +2143,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeBand(XWPFHeaderFooter part, DocumentHeaderFooter band, boolean framed) {
         boolean inFrame = framed && !Double.isNaN(canvasHeight);
         double line = DocxTextBands.lineHeight(band);
-        boolean separated = band.isShowSeparator() && band.getSeparatorColor() != null
-                            && band.getSeparatorColor().color().getAlpha() > 0 && band.getSeparatorThickness() > 0;
+        boolean separated = separatorWritten(band);
+        if (separatorShown(band) && !separated && separatorsReported.add(band)) {
+            report.add(DocxExportReport.Severity.DROPPED, BORDER_WIDTH,
+                    sectioned ? "section " + (sectionIndex + 1) : null,
+                    "a page " + zoneName(band) + "'s separator is set at no width a border has, below zero or "
+                    + "not a number, so it is not written");
+        }
         // The frame holds the separator too, below a header's line and above a footer's, as the
         // border is written: its space in whole points, its width in eighths of a point.
         double border = separated
-                ? Math.round(DocxTextBands.separatorSpace(band)) + ruleEighths(band.getSeparatorThickness()) / 8.0
+                ? Math.round(DocxTextBands.separatorSpace(band))
+                  + DocxBorderWidths.eighths(band.getSeparatorThickness()) / 8.0
                 : 0;
         long frameTop = toTwips(band.getZone() == DocumentHeaderFooterZone.HEADER
                 ? DocxTextBands.distanceFromEdge(band)
@@ -2201,14 +2212,26 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // so there is no one colour under it to flatten a translucent one against but the page's
             // white.
             java.awt.Color colour = band.getSeparatorColor().color();
-            paintEdge(edge, STBorder.SINGLE, BigInteger.valueOf(ruleEighths(band.getSeparatorThickness())),
+            paintEdge(edge, STBorder.SINGLE,
+                    BigInteger.valueOf(DocxBorderWidths.eighths(band.getSeparatorThickness())),
                     toHexColor(DocxTranslucency.flatten(colour, java.awt.Color.WHITE)));
             edge.setSpace(BigInteger.valueOf(Math.round(DocxTextBands.separatorSpace(band))));
-            if (DocxTranslucency.translucent(colour) && separatorsReported.add(band)) {
-                report.add(DocxExportReport.Severity.APPROXIMATED, TRANSLUCENCY,
-                        sectioned ? "section " + (sectionIndex + 1) : null,
-                        "a page " + zoneName(band) + "'s separator is flattened against white, because a "
-                        + "paragraph border is opaque");
+            // A band is written into each kind of header it is given: told once.
+            if (separatorsReported.add(band)) {
+                String section = sectioned ? "section " + (sectionIndex + 1) : null;
+                if (DocxTranslucency.translucent(colour)) {
+                    report.add(DocxExportReport.Severity.APPROXIMATED, TRANSLUCENCY, section,
+                            "a page " + zoneName(band) + "'s separator is flattened against white, because a "
+                            + "paragraph border is opaque");
+                }
+                String separator = "a page " + zoneName(band) + "'s separator";
+                String drawn = band.getSeparatorThickness() > 0
+                        ? DocxBorderWidths.notHeld(separator, false,
+                                List.of((double) band.getSeparatorThickness()))
+                        : DocxBorderWidths.ofNoWidth(separator);
+                if (drawn != null) {
+                    report.add(DocxExportReport.Severity.APPROXIMATED, BORDER_WIDTH, section, drawn);
+                }
             }
         }
     }
@@ -2295,10 +2318,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
-    /** How far a text band reaches from its page edge, its separator included, in points. */
+    /**
+     * How far a text band reaches from its page edge, its separator included as Word draws it, in
+     * points.
+     */
     private static double reachOf(DocumentHeaderFooter band) {
         return DocxTextBands.distanceFromEdge(band) + DocxTextBands.lineHeight(band)
-               + (band.isShowSeparator() ? DocxTextBands.separatorSpace(band) + band.getSeparatorThickness() : 0);
+               + (separatorWritten(band)
+                  ? DocxTextBands.separatorSpace(band)
+                    + DocxBorderWidths.eighths(band.getSeparatorThickness()) / 8.0
+                  : 0);
+    }
+
+    /** Whether a text band's separator shows: asked for, in a colour not wholly transparent. */
+    private static boolean separatorShown(DocumentHeaderFooter band) {
+        return band.isShowSeparator() && band.getSeparatorColor() != null
+               && band.getSeparatorColor().color().getAlpha() > 0;
+    }
+
+    /**
+     * Whether a text band's separator is written, as its paragraph's border. The page strokes one
+     * of no width as the thinnest line a screen or a printer shows, and it is drawn at Word's
+     * thinnest border; one below zero, or not a number, no border has.
+     */
+    private static boolean separatorWritten(DocumentHeaderFooter band) {
+        return separatorShown(band) && band.getSeparatorThickness() >= 0;
     }
 
     /**
@@ -6549,6 +6593,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         paintCellSides(cell, DocxTranslucency.flattenedBorders(paint.borders(), fill != null ? fill.color() : under));
         if (first) {
             reportFlattenedPaint(node, translucentFill, translucentSides, "its fill", "its borders");
+            reportBorderWidths(node, "its borders", true, widthsOf(borders));
         }
         DocumentInsets margins = insideTheBorders(padding, borders);
         applyCellPadding(cell, new DocumentInsets(margins.top(), Math.max(0, margins.right() - shortOfTheEdge),
@@ -6873,6 +6918,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Names in the report borders Word draws at another width than the page strokes them
+     * ({@link DocxBorderWidths#notHeld}).
+     *
+     * @param what   what the report calls them, as "its borders"
+     * @param plural whether {@code what} names more than one
+     * @param widths the widths the page strokes them at, each above zero
+     */
+    private void reportBorderWidths(DocumentNode node, String what, boolean plural,
+                                    java.util.Collection<Double> widths) {
+        String drawn = DocxBorderWidths.notHeld(what, plural, widths);
+        if (drawn != null) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, BORDER_WIDTH, layout.pathOf(node), drawn);
+        }
+    }
+
+    /** The widths of the sides a panel strokes. */
+    private static List<Double> widthsOf(DocumentBorders borders) {
+        List<Double> widths = new ArrayList<>(4);
+        // A side the panel does not stroke is null.
+        for (DocumentStroke side : java.util.Arrays.asList(borders.top(), borders.right(), borders.bottom(),
+                borders.left())) {
+            if (side != null && side.width() > 0) {
+                widths.add(side.width());
+            }
+        }
+        return widths;
+    }
+
+    /**
      * Names in the report a node's translucent fill or strokes, which a cell's shading and its
      * borders hold only opaque, so they are flattened against the colour under them.
      *
@@ -6921,7 +6995,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // w:sz counts eighths of a point, from Word's thinnest to its thickest, as a table cell's
         // rule does: a hairline the author asked for stays a line, and a row counts the border at
         // the width written (eighthsInTwips).
-        paintEdge(edge, STBorder.SINGLE, BigInteger.valueOf(ruleEighths(stroke.width())),
+        paintEdge(edge, STBorder.SINGLE, BigInteger.valueOf(DocxBorderWidths.eighths(stroke.width())),
                 toHexColor(stroke.color().color()));
     }
 
@@ -13115,7 +13189,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         spacing.setLineRule(STLineSpacingRule.EXACT);
         spacing.setLine(BigInteger.valueOf(line));
         owePendingSpacingAfter(below);
-        double drawn = colour.getAlpha() > 0 ? eighthsInTwips(ruleEighths(rule.thickness())) / POINT_TO_TWIP : 0;
+        double drawn = colour.getAlpha() > 0
+                ? eighthsInTwips(DocxBorderWidths.eighths(rule.thickness())) / POINT_TO_TWIP
+                : 0;
         double excess = line / POINT_TO_TWIP + drawn + below - rule.boxHeight();
         if (excess > 0) {
             double owed = Math.max(0, pendingSpacingAfter);
@@ -13125,9 +13201,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (colour.getAlpha() > 0) {
             CTPBdr borders = properties.isSetPBdr() ? properties.getPBdr() : properties.addNewPBdr();
             CTBorder bottom = borders.isSetBottom() ? borders.getBottom() : borders.addNewBottom();
-            paintEdge(bottom, dashOf(rule), BigInteger.valueOf(ruleEighths(rule.thickness())),
+            paintEdge(bottom, dashOf(rule), BigInteger.valueOf(DocxBorderWidths.eighths(rule.thickness())),
                     toHexColor(colour.getAlpha() < 255 ? DocxTranslucency.flatten(colour, colourUnder(node)) : colour));
             bottom.setSpace(BigInteger.ZERO);
+            // A rule wider than Word's widest is drawn rather than written (DocxRules); a hairline
+            // thinner than its thinnest is written at that.
+            reportBorderWidths(node, "the rule", false, List.of(rule.thickness()));
         }
         if (DocxTranslucency.translucent(colour)) {
             report.add(DocxExportReport.Severity.APPROXIMATED, TRANSLUCENCY, layout.pathOf(node),
@@ -13153,11 +13232,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         double on = rule.dashed().get(0);
         return on <= rule.thickness() * 1.5 ? STBorder.DOTTED : STBorder.DASHED;
-    }
-
-    /** A rule's thickness as {@code w:sz}: eighths of a point, from Word's thinnest to its thickest. */
-    private static long ruleEighths(double thickness) {
-        return Math.max(2, Math.min(Math.round(DocxRules.MAX_RULE_POINTS * 8), Math.round(thickness * 8)));
     }
 
     /**
@@ -14228,6 +14302,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         applyTableWidth(table, node, columnCount);
         boolean translucentFills = false;
         boolean translucentRules = false;
+        java.util.Set<Double> ruleWidths = new java.util.TreeSet<>();
         for (int rowIdx = 0; rowIdx < rowCount; rowIdx++) {
             XWPFTableRow row = table.getRow(rowIdx);
             List<TableGrid.Placement> physical = new ArrayList<>();
@@ -14254,6 +14329,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 boolean translucentRule = DocxTranslucency.flattensStroke(stroke);
                 translucentFills |= translucentFill;
                 translucentRules |= translucentRule;
+                if (stroke != null && stroke.width() > 0) {
+                    ruleWidths.add(stroke.width());
+                }
                 java.awt.Color under = !(translucentFill || translucentRule) ? java.awt.Color.WHITE
                         : surfaceBehind != null ? surfaceBehind.color()
                         : layout.colourUnderCell(node, placement.row(), placement.column()).orElse(java.awt.Color.WHITE);
@@ -14299,6 +14377,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         indentTable(table);
         carryDrawingsInRows(table, node);
         reportFlattenedPaint(node, translucentFills, translucentRules, "its cells' fills", "its cells' rules");
+        reportBorderWidths(node, "its cells' rules", true, ruleWidths);
     }
 
     /**
@@ -14412,7 +14491,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     : properties.addNewTcBorders();
             if (stroke.width() > 0) {
                 // A hairline the author asked for stays a line, at Word's thinnest.
-                BigInteger eighths = BigInteger.valueOf(ruleEighths(stroke.width()));
+                BigInteger eighths = BigInteger.valueOf(DocxBorderWidths.eighths(stroke.width()));
                 String colour = toHexColor(stroke.color().color());
                 paintEdge(borders.addNewTop(), STBorder.SINGLE, eighths, colour);
                 paintEdge(borders.addNewBottom(), STBorder.SINGLE, eighths, colour);
@@ -14434,11 +14513,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * How wide Word draws a cell's rule, in twips: the width written in eighths of a point, from
      * Word's thinnest to its thickest — the two to ninety-six eighths a line border's {@code w:sz}
-     * runs over (ECMA-376) — ({@link #ruleEighths(double)}), counted to the twip as a row's height
+     * runs over (ECMA-376) — ({@link DocxBorderWidths#eighths(double)}), counted to the twip as a
+     * row's height
      * counts it ({@link #eighthsInTwips}); 0 for none.
      */
     private static long ruleTwips(DocumentStroke stroke) {
-        return stroke == null || !(stroke.width() > 0) ? 0 : eighthsInTwips(ruleEighths(stroke.width()));
+        return stroke == null || !(stroke.width() > 0)
+                ? 0
+                : eighthsInTwips(DocxBorderWidths.eighths(stroke.width()));
     }
 
     /**

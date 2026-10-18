@@ -544,7 +544,9 @@ How it lands:
   sets it; above, then, the room over its first line. What none of them takes stands the
   content, or the block below, that much lower, and the report names it: on the panel for its
   top border, on the block below for its bottom one (`space above`). A panel's border is
-  written from two to ninety-six eighths of a point, as a table cell's rule is. A shape container's
+  written from two to ninety-six eighths of a point, as a table cell's rule and a rule are: a
+  width that, rounded to the eighth Word counts in, is thinner than a quarter of a point or
+  wider than twelve is drawn at Word's thinnest or widest, and named (`border width`). A shape container's
   borders, its layers centred in it, stay inside its outline, which its row holds less them as
   wide as Word draws them, two and a half twips an eighth of a point rounded down (measured:
   taken off at the 0.7pt the page strokes, a 20.3pt chip whose border Word draws 0.75pt wide
@@ -1179,7 +1181,11 @@ fields, and `{date}` is the date of the export, as the page prints the date
 it was rendered. Its separator is the paragraph's border, and the line
 stands as far from the page edge as the page sets the text — its baseline
 within 0.1pt, its separator within 0.6pt (measured in LibreOffice at 7, 9
-and 12pt). A band that shares its kind with another band or a page zone — an
+and 12pt). The separator's width is held to Word's range, as a panel's border
+is, and named where it falls outside it (`border width`); one
+of no width, which the page strokes as the thinnest
+line a screen or a printer shows, is drawn at Word's thinnest, a quarter of
+a point, and named, and one set below zero is named and not written. A band that shares its kind with another band or a page zone — an
 invoice's legal lines and its page number — stands in a frame at its own
 height on the page, since one after another in the footer they would keep
 the order they were added in rather than the page's order by height. A

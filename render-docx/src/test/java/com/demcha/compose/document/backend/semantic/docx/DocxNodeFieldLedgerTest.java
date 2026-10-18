@@ -93,6 +93,9 @@ class DocxNodeFieldLedgerTest {
     private static final String PANEL_TRANSLUCENCY = "its translucency, as a panel's, flattened against the colour "
                                                      + "under it, a border's against the panel's fill where it has "
                                                      + "one; any other is written";
+    // Word draws a border from a quarter of a point to 12pt wide, in eighths of a point.
+    private static final String BORDER_WIDTH = "a width that, rounded to the eighth of a point, is below a quarter "
+                                               + "of a point or past 12pt, drawn at Word's thinnest or widest";
     // Word draws a panel's borders above and below past its box; what the space round it and its
     // padding do not take stands the content, or the block below, lower, and is reported.
     private static final String PANEL_BORDERS = "its translucency, as a panel's, flattened against the colour "
@@ -101,16 +104,18 @@ class DocxNodeFieldLedgerTest {
                                                 + "neither the space above it, its padding nor the room over its "
                                                 + "first line takes, on the panel; below, what neither the space "
                                                 + "below it nor its padding takes, on the block below "
-                                                + "(space above); any other is written";
+                                                + "(space above); " + BORDER_WIDTH + "; any other is written";
     // An edge below zero pulls the next block up; Word sets no block over another.
     private static final String PULL = "below zero below it, the pull the space under it and the next block's own "
                                        + "top edge do not give back, on the next block (space above); any other is "
                                        + "written";
     private static final String RULE_TRANSLUCENCY = "its translucency, as a rule's, flattened against the colour "
                                                     + "under it; drawn, its alpha is written; any other is written";
+    // A rule is a paragraph's border, no wider than 12pt (DocxRules): only a hairline is held.
+    private static final String RULE_WIDTH = "as a rule, " + BORDER_WIDTH + "; any other is written";
     private static final String CELL_TRANSLUCENCY = "the translucency of a cell's fill, flattened against the colour "
                                                     + "under the cell, and of its rules, against its fill where it has "
-                                                    + "one; any other is written";
+                                                    + "one; of its rules, " + BORDER_WIDTH + "; any other is written";
 
     // A row in the flow is written as a panel holding its columns, its paint the panel's.
     private static final String ROW_PAINT = "composed in a table cell, drawn as a shape where it frames no text "
@@ -119,8 +124,9 @@ class DocxNodeFieldLedgerTest {
                                             + "text, with a padding below zero or a column hanging into it, and "
                                             + "with a margin below zero above or below it or at a side in a cell; "
                                             + "its translucency, as a panel's, and what of a border above or below "
-                                            + "Word draws past the panel's box nothing round it takes, as a "
-                                            + "panel's; any other is written, as a panel";
+                                            + "Word draws past the panel's box nothing round it takes, and of "
+                                            + "a border, " + BORDER_WIDTH + ", as a panel's; any other is "
+                                            + "written, as a panel";
 
     private static final Map<Class<?>, Map<String, Entry>> NODES = new LinkedHashMap<>();
     private static final Map<String, Entry> OUTPUT_OPTIONS = fields(
@@ -128,8 +134,9 @@ class DocxNodeFieldLedgerTest {
             "watermark:REPORTED",
             "protection:REPORTED",
             "viewerPreferences:REPORTED",
-            "headersAndFooters:REPORTED:a band's translucent separator, flattened against white; any other is "
-            + "written, or reported where Word's parts cannot hold it",
+            "headersAndFooters:REPORTED:a band's translucent separator, flattened against white; of a separator, "
+            + BORDER_WIDTH + ", one of no width at Word's thinnest, and one below zero or not a number, not "
+            + "written; any other is written, or reported where Word's parts cannot hold it",
             // The node entries below are the body's. A zone is written as one line of its
             // paragraphs' runs, page fields, pictures and tabs, and has its own entry here.
             "zones:REPORTED:where its parts stand across the line, a part the page sets lower than the line "
@@ -182,7 +189,9 @@ class DocxNodeFieldLedgerTest {
                 "padding:WRITTEN", "margin:WRITTEN",
                 "clipToBounds:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table");
         node(LineNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "startX:WRITTEN", "startY:WRITTEN",
-                "endX:WRITTEN", "endY:WRITTEN", "stroke:REPORTED:" + RULE_TRANSLUCENCY,
+                "endX:WRITTEN", "endY:WRITTEN",
+                "stroke:REPORTED:its translucency, as a rule's, flattened against the colour under it, and as a "
+                + "rule, " + BORDER_WIDTH + "; drawn, its alpha is written; any other is written",
                 "linkTarget:REPORTED",
                 "bookmarkOptions:REPORTED", "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
                 "dashPattern:REPORTED",
@@ -280,10 +289,12 @@ class DocxNodeFieldLedgerTest {
                 "fillColor:REPORTED:its translucency, as a panel's, flattened against the colour under it; "
                 + "drawn, its alpha is written; any other is written",
                 "stroke:REPORTED:its translucency, as a panel's border, flattened against the panel's fill or "
-                + "the colour under it; drawn, its alpha is written; any other is written",
+                + "the colour under it, and as a panel's, " + BORDER_WIDTH + "; drawn, its alpha and its width "
+                + "are written; any other is written",
                 "padding:WRITTEN", "margin:WRITTEN",
                 "transform:REPORTED");
-        node(ShapeNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:REPORTED:" + RULE_TRANSLUCENCY,
+        node(ShapeNode.class, "name:INERT", "width:WRITTEN", "height:REPORTED:" + RULE_WIDTH,
+                "fillColor:REPORTED:" + RULE_TRANSLUCENCY,
                 "stroke:WRITTEN", "cornerRadius:REPORTED:corners unequal once held to half its shorter side, drawn at the largest radius",
                 "linkTarget:REPORTED", "bookmarkOptions:REPORTED", "padding:WRITTEN",
                 "margin:WRITTEN", "transform:REPORTED", "fillPaint:REPORTED",

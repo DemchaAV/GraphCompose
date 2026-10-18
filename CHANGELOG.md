@@ -8,6 +8,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export names a table whose columns it leaves to the editor.** A table with an auto
+  column whose widths the layout does not show — one composed in another table's cell, which the
+  layout lays out among that table's own rows, or one with a column edge no row of it shows —
+  was written with its columns left to Word, and nothing said. Measured in Word and LibreOffice on
+  Windows,
+  a two-column table in a cell came out half the cell a column in both, its first column 121pt
+  where the page sets it 45, and a fixed column of 120pt beside an auto one 146pt, its width not
+  written either. The report now names such a table (`TableNode`), and with no layout behind the
+  export the section's note says that a fixed column beside an auto one is written with no width.
+  A chart's data table, which the page does not draw, is not named.
 - **A DOCX export names a border Word draws at another width than the page, and writes a text
   header's or footer's separator of no width.** A Word border is no thinner than a quarter of a
   point and no wider than twelve, and the export held a border to that without a word: a panel's

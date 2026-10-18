@@ -303,7 +303,11 @@ class DocxNodeFieldLedgerTest {
                 "padding:REPORTED:above and below; below a block a band or a column measures from, written",
                 "margin:REPORTED:above and below; below a block a band or a column measures from, written",
                 "grow:WRITTEN");
-        node(TableNode.class, "name:INERT", "columns:WRITTEN", "rows:REPORTED:" + CELL_TRANSLUCENCY,
+        node(TableNode.class, "name:INERT",
+                "columns:REPORTED:where one is auto and the layout does not show their widths — composed in a "
+                + "table cell, or with a column edge no row shows — the editor's, a fixed one beside it with "
+                + "them; with no layout, in the section's note; any other is written",
+                "rows:REPORTED:" + CELL_TRANSLUCENCY,
                 "defaultCellStyle:REPORTED:" + CELL_TRANSLUCENCY, "rowStyles:REPORTED:" + CELL_TRANSLUCENCY,
                 "columnStyles:REPORTED:" + CELL_TRANSLUCENCY, "width:WRITTEN", "linkTarget:REPORTED",
                 "bookmarkOptions:REPORTED",

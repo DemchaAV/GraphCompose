@@ -70,6 +70,27 @@ class DocxWithoutLayoutTest {
     }
 
     @Test
+    void aTablesFixedColumnBesideAnAutoOneIsNamedAndAllFixedOrAllAutoAreNot() throws Exception {
+        String fixed = BASE + "; a table's fixed column beside an auto one is written with no width either";
+        assertThat(sectionNote(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(120), DocumentTableColumn.auto()).row("Hours", "12"))))
+                .startsWith(fixed);
+        assertThat(sectionNote(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(120), DocumentTableColumn.fixed(60)).row("Hours", "12"))))
+                .as("a grid of fixed widths is written").doesNotContain("fixed column");
+        assertThat(sectionNote(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto()).row("Hours", "12"))))
+                .as("auto columns are the base note's").doesNotContain("fixed column");
+        assertThat(sectionNote(page -> page.addTable(t -> t.columns(DocumentTableColumn.auto())
+                .rowCells(DocumentTableCell.node(new com.demcha.compose.document.dsl.TableBuilder()
+                        .columns(DocumentTableColumn.fixed(80), DocumentTableColumn.auto()).row("A", "B").build())))))
+                .as("composed in a cell").startsWith(fixed);
+        assertThat(sectionNote(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(120)).row("Hours", "12"))))
+                .as("beside a position past the columns it declares, sized as an auto one").startsWith(fixed);
+    }
+
+    @Test
     void whatThePageKeepsFromAPageBreakIsNamedKindByKind() throws Exception {
         String keep = "; Word is not told to keep what the page keeps from a page break: ";
         assertThat(sectionNote(page -> page.addSection(s -> s.keepTogether().addParagraph("A").addParagraph("B"))))

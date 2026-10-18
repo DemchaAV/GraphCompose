@@ -17219,9 +17219,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * half the cell's 242pt; with a fixed column of 120pt beside an auto one, the fixed column came
      * out 146pt wide in both, half the cell's 292pt. A table of three auto columns whose two rows
      * both span the first two, Word set as the page did, and LibreOffice set its last column 83pt
-     * further right. A chart's data table, which the page
-     * does not draw, is not named: the chart's own note says what is written for it. Without a
-     * layout nothing is measured, which the section's note says once.</p>
+     * further right. A chart's data table, which the page does not draw, is not named: the chart's
+     * own note says what is written for it. Without a layout nothing is measured, which the
+     * section's note says once.</p>
      */
     private void nameTheColumnsLeftToTheEditor(TableNode node) {
         if (layout.isEmpty() || writingAChartsTable) {
@@ -17660,7 +17660,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Gives a table the grid a Word table cannot be without, empty: POI makes a table with none,
      * the columns written later fill it, and a table whose columns are left to Word — a chart's
      * data table, a table or a row with no layout, a row the layout does not place in a cell, a
-     * table with an auto column the layout does not show the widths of — keeps it empty. Word and LibreOffice lay out a table with an empty grid as one without
+     * table with an auto column the layout does not show the widths of — keeps it empty. Word and
+     * LibreOffice lay out a table with an empty grid as one without
      * (measured: every word where it stood, in both, in a row of columns in the flow and in a cell,
      * a table of auto columns with and without a width, and {@code WordExportCompanion}'s chart).
      */

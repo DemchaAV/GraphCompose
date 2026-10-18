@@ -29,8 +29,8 @@ import java.util.Set;
  * table's columns all left to Word; what an alignment or a stack's layer is set at across the
  * width stands at the left; and the keeps the page makes — a block kept together or with the
  * next, a table's row in one piece, a row of columns — are written only where the layout shows the
- * page held them on one page, which is nowhere. (A table's repeated header row is still kept with the row under it:
- * that needs no layout.) Each of those is named where the section holds one.</p>
+ * page held them on one page, which is nowhere. (A table's repeated header row is still kept with
+ * the row under it: that needs no layout.) Each of those is named where the section holds one.</p>
  *
  * @author Artem Demchyshyn
  */

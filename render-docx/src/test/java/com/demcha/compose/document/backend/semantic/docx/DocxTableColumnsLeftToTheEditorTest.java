@@ -66,7 +66,6 @@ class DocxTableColumnsLeftToTheEditorTest {
 
     @Test
     void aTableOfFixedColumnsComposedInACellIsWrittenAtThemAndNotNamed() throws Exception {
-        List<DocxExportReport.Note> notes;
         try (org.apache.poi.xwpf.usermodel.XWPFDocument document = DocxExports.withLayout(500, 400, 30, page -> page
                 .addTable(t -> t.columns(DocumentTableColumn.auto(), DocumentTableColumn.fixed(300))
                         .rowCells(DocumentTableCell.text("Breakdown"), DocumentTableCell.node(

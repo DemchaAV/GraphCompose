@@ -226,8 +226,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private final AtomicBoolean chartWarned = new AtomicBoolean(false);
     // Whether the table being written is a chart's data table, which the page does not draw.
     private boolean writingAChartsTable;
-    // The charts a table's cell is built from, whose drawings in that cell are not drawn: the
-    // chart is its data table there, as anywhere else (drawCellDrawing).
+    // The charts that are all their table cell draws, whose drawings in that cell are not drawn:
+    // the chart is its data table there, as anywhere else (drawCellDrawing). By identity: one chart
+    // node placed twice, alone in one cell and beside other drawings in another, has the note of
+    // one not drawn in both.
     private final java.util.Set<ChartNode> chartsNotDrawn =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // Geometry-only node kinds already warned about this export pass.
@@ -13652,7 +13654,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return boxes;
     }
 
-    /** The kinds that draw nothing in a cell beside a chart: text, and space between it. */
+    /**
+     * The kinds that draw nothing in a cell beside a chart: a paragraph and a list, whose pictures
+     * stand in their lines, a spacer, a page break, and an alignment, which draws what it holds.
+     */
     private static final java.util.Set<Class<? extends DocumentNode>> DRAWING_NOTHING = java.util.Set.of(
             ParagraphNode.class, com.demcha.compose.document.node.ListNode.class, SpacerNode.class,
             PageBreakNode.class, com.demcha.compose.document.node.AlignNode.class);

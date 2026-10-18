@@ -226,6 +226,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private final AtomicBoolean chartWarned = new AtomicBoolean(false);
     // Whether the table being written is a chart's data table, which the page does not draw.
     private boolean writingAChartsTable;
+    // The charts that are all their table cell draws, whose drawings in that cell are not drawn:
+    // the chart is its data table there, as anywhere else (drawCellDrawing). By identity: one chart
+    // node placed twice, alone in one cell and beside other drawings in another, has the note of
+    // one not drawn in both.
+    private final java.util.Set<ChartNode> chartsNotDrawn =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // Geometry-only node kinds already warned about this export pass.
     private final java.util.Set<String> warnedNodeKinds =
             java.util.concurrent.ConcurrentHashMap.newKeySet();
@@ -1071,6 +1077,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         zonePartsReported.clear();
         zoneLinesReported.clear();
         separatorsReported.clear();
+        chartsNotDrawn.clear();
         textFillsWritten = false;
         closingBlocks.clear();
         keepsUnheld.clear();
@@ -6312,25 +6319,34 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Semantic chart fallback: the semantic export has no layout pass, so the
-     * chart's compiled vector geometry is unavailable here. The chart's
-     * <em>semantic</em> content is its data, so the fallback writes a
-     * categories-by-series table (values formatted with the chart's own axis
-     * format). Authors who need the rendered chart must use the PDF
-     * fixed-layout backend, where charts compile into ordinary primitives.
+     * Semantic chart fallback: the chart compiles into the layout's geometry — bars, lines and
+     * labels placed on the page — and this export writes no Word chart (DrawingML's
+     * {@code c:chart}) of it. The chart's <em>semantic</em> content is its data, so the fallback
+     * writes a categories-by-series table (values formatted with the chart's own axis format).
+     * Authors who need the rendered chart must use the PDF fixed-layout backend, where charts
+     * compile into ordinary primitives.
      */
     private void writeChartFallback(XWPFDocument document, ChartNode node) throws Exception {
         // The table is written as it is, set from the left with nothing owed round it for the
         // chart's own insets, but where the page measures the space below it (insetSidesLost).
         List<String> sides = insetSidesLost(node, true);
+        // A chart a cell's drawing is all of is not drawn there (drawCellDrawing); one the export
+        // does not find so — beside other drawings in its cell, which it cannot tell its own
+        // from, or in a table composed in a cell — is drawn among the table's drawings.
+        boolean drawnToo = composedInACell(node) && !chartsNotDrawn.contains(node);
         report.add(DocxExportReport.Severity.APPROXIMATED, "chart", layout.pathOf(node),
                 "exported as its data table — a categories-by-series table in the chart's own "
                 + "value format — because the drawn chart is layout geometry"
+                + (drawnToo ? "; composed in a table cell where the export does not find it drawing alone — "
+                              + "beside other drawings, or in a table composed in a cell — its bars, lines and "
+                              + "slices are drawn as well, where the page draws them, over the table and "
+                              + "without its text"
+                            : "")
                 + (sides.isEmpty() ? "" : "; its margin and padding " + listed(sides)
                                           + " are not written round the table"));
         if (chartWarned.compareAndSet(false, true)) {
-            LOG.warn("docx.export.chart-fallback kind={} — the semantic DOCX export has no "
-                    + "layout pass, so charts are exported as their data table. "
+            LOG.warn("docx.export.chart-fallback kind={} — a chart is exported as its data table: the "
+                    + "export writes no Word chart. "
                     + "(One warning per export; use the PDF backend for the rendered chart.)",
                     node.spec().getClass().getSimpleName());
         }
@@ -13575,7 +13591,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean drew = false;
         List<com.demcha.compose.document.layout.PlacedFragment> skipped = new ArrayList<>();
         List<CellFragment> pending = new ArrayList<>();
+        List<DocxLayoutMetrics.CellBox> charts = cellsBuiltFromAChart(table);
         for (com.demcha.compose.document.layout.PlacedFragment fragment : fragments) {
+            if (charts.stream().anyMatch(cell -> cell.holds(fragment))) {
+                continue;
+            }
             boolean frames = framesText(fragment, content);
             if (frames && fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeFragmentPayload) {
                 skipped.add(fragment);
@@ -13601,6 +13621,75 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 && new DocxLayoutMetrics.CellBox(row.pageIndex(), row.x(), row.y(), row.x() + row.width(),
                         row.y() + row.height()).overlaps(box)));
         return new CellDrawing(drew, skipped, strayed, pending);
+    }
+
+    /**
+     * The boxes of a table's cells whose drawing is a chart's alone, which are not drawn: the chart
+     * is written there as its data table, as it is anywhere else.
+     *
+     * <p>Drawn too, its bars and grid lines stood over the table in both editors and hid its
+     * numbers — "Sales" read "Sa", 2.5 read "2." — and its axis labels, the page's text, were not
+     * drawn at all (measured in Word and LibreOffice on Windows). A cell's drawing is a chart's
+     * alone where the chart is the only thing in the cell that draws ({@link #chartDrawnAlone}):
+     * then every drawing the layout places in the cell's box is the chart's. One beside other
+     * drawings, which the export cannot tell its own from, or in a table composed in a cell, whose
+     * cells the layout gives no box, is drawn, and its note says so ({@link #writeChartFallback}).
+     * A drawing another cell pushes wholly into a chart's box, by a layer's offset or a margin
+     * below zero, is taken for the chart's.</p>
+     */
+    private List<DocxLayoutMetrics.CellBox> cellsBuiltFromAChart(TableNode table) {
+        List<DocxLayoutMetrics.CellBox> boxes = new ArrayList<>();
+        for (List<TableGrid.Placement> row : TableGrid.resolve(table)) {
+            for (TableGrid.Placement placement : row) {
+                ChartNode chart = placement.cell() == null ? null : chartDrawnAlone(placement.cell().content());
+                if (chart != null) {
+                    List<DocxLayoutMetrics.CellBox> cell = layout.cellBoxes(table, placement.row(), placement.column());
+                    if (!cell.isEmpty()) {
+                        boxes.addAll(cell);
+                        chartsNotDrawn.add(chart);
+                    }
+                }
+            }
+        }
+        return boxes;
+    }
+
+    /**
+     * The kinds that draw nothing in a cell beside a chart: a paragraph and a list, whose pictures
+     * stand in their lines, a spacer, a page break, and an alignment, which draws what it holds.
+     */
+    private static final java.util.Set<Class<? extends DocumentNode>> DRAWING_NOTHING = java.util.Set.of(
+            ParagraphNode.class, com.demcha.compose.document.node.ListNode.class, SpacerNode.class,
+            PageBreakNode.class, com.demcha.compose.document.node.AlignNode.class);
+
+    /**
+     * The chart a cell's content draws alone, or {@code null}: one chart, and beside it nothing
+     * that draws — text, a list, a spacer, a wrapper that paints nothing — so every drawing the
+     * layout places in the cell is the chart's.
+     *
+     * @param content what the cell is built from, or {@code null}
+     */
+    private static ChartNode chartDrawnAlone(DocumentNode content) {
+        ChartNode[] chart = new ChartNode[1];
+        return content != null && drawsAChartAlone(content, chart) ? chart[0] : null;
+    }
+
+    private static boolean drawsAChartAlone(DocumentNode node, ChartNode[] chart) {
+        if (node instanceof ChartNode found) {
+            boolean first = chart[0] == null;
+            chart[0] = found;
+            return first;
+        }
+        boolean wrapper = (node instanceof SectionNode || node instanceof ContainerNode) && paintOf(node).isEmpty();
+        if (!wrapper && !DRAWING_NOTHING.contains(node.getClass())) {
+            return false;
+        }
+        for (DocumentNode child : DocxWrittenTree.under(node)) {
+            if (!drawsAChartAlone(child, chart)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

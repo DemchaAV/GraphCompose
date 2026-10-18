@@ -167,8 +167,9 @@ public final class WordExportExample {
                     .addPageBreak(pb -> pb.name("ToPage2"))
 
                     .addParagraph("Charts fall back to their data", heading)
-                    .addParagraph("The PDF renders the vector chart; Word has no layout pass, "
-                            + "so the same node exports as a categories-by-series table.", caption)
+                    .addParagraph("The PDF renders the vector chart; the Word export writes no "
+                            + "chart, so the same node exports as a categories-by-series "
+                            + "table.", caption)
                     .addSection("Chart", s -> s.chart(ChartSpec.bar().data(quarters).build()))
 
                     .addParagraph("Geometry stays PDF-only by design", heading)

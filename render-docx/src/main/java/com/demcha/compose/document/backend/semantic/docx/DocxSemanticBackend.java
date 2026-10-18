@@ -14743,8 +14743,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static double roundTheContent(DocumentInsets padding, DocumentStroke stroke,
                                           boolean firstRow, boolean lastRow, DocumentStroke underneath) {
-        return Math.max(Math.max(0, padding.top()), ruleShareAbove(stroke, firstRow) / POINT_TO_TWIP)
-               + Math.max(Math.max(0, padding.bottom()), ruleShareBelow(lastRow, underneath, stroke) / POINT_TO_TWIP);
+        double above = ruleShareAbove(stroke, firstRow) / POINT_TO_TWIP;
+        double below = ruleShareBelow(lastRow, underneath, stroke) / POINT_TO_TWIP;
+        return Math.max(Math.max(0, padding.top()), above) + Math.max(Math.max(0, padding.bottom()), below);
     }
 
     /**
@@ -14774,7 +14775,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * 2pt, 8pt — each cell counted on its own, where the most any cell holds round its content
      * beside the tallest content would come to 12 — and with the two-line cell the padded one,
      * none. Two rows of 2pt rules padded 5pt above and none below, 3pt: padding past a share holds
-     * its side alone. In the invoices and the rota whose rows are built from nodes or hold blank
+     * its side alone. In the invoices and the rota whose rows are built from nodes or hold empty
      * cells, ruled past their padding, the rows stood within half a point of the page's in Word,
      * where counting those cells said 2 to 4pt: they are not counted. A row whose margins are evened
      * to one a cell keeps ({@link #evenTheRowsMargins}) is counted as though each kept its own,
@@ -14787,7 +14788,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             report.add(DocxExportReport.Severity.APPROXIMATED, "cell rule", layout.pathOf(node),
                     "its cells' rules are wider than the padding that takes them: Word makes room for each in "
                     + "its row, where the page draws it over the cell's edge, and sets the table "
-                    + (taller.atMost() ? "up to " : "about ") + pointsOf(taller.points()) + "pt taller than the page");
+                    + (taller.atMost() ? "up to " : "about ") + pointsOf(taller.points())
+                    + "pt taller than the page");
         }
     }
 

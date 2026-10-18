@@ -151,7 +151,8 @@ class DocxCellRuleRoomTest {
 
     @Test
     void aTableComposedInACellOrWithNoLayoutIsNamedAtTheMostItCanBe() throws Exception {
-        List<DocxExportReport.Note> composed = DocxExports.report(500, 400, 30, page -> page.addTable(t -> t
+        // The outer table laid out: what is not told is the composed table's rows alone.
+        List<DocxExportReport.Note> composed = laidOut(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(320))
                 .rowCells(DocumentTableCell.node(new TableBuilder().defaultCellStyle(style(3, 0))
                         .columns(DocumentTableColumn.fixed(150)).row("Alpha").row("").build()))))
@@ -164,7 +165,7 @@ class DocxCellRuleRoomTest {
         assertThat(DocxExports.reportWithoutLayout(500, 400, 30, rows(3, 0)).bySubject().get(SUBJECT))
                 .as("what the padding does not take needs no layout to tell").extracting(DocxExportReport.Note::detail)
                 .containsExactly(note("up to 15"));
-        assertThat(DocxExports.report(500, 400, 30, page -> page.addTable(t -> t
+        assertThat(laidOut(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(320))
                 .rowCells(DocumentTableCell.node(new TableBuilder().defaultCellStyle(style(3, 0))
                         .columns(DocumentTableColumn.fixed(150))
@@ -174,16 +175,28 @@ class DocxCellRuleRoomTest {
                 .doesNotContainKey(SUBJECT);
     }
 
+    /** The report of an export the layout stands behind: a document it refuses is another case. */
+    private static DocxExportReport laidOut(Consumer<PageFlowBuilder> content) throws Exception {
+        DocxExportReport report = DocxExports.report(500, 400, 30, content);
+        assertThat(report.bySubject()).as("laid out").doesNotContainKey("measured geometry");
+        return report;
+    }
+
     private static String note(String howMuch) {
         return "its cells' rules are wider than the padding that takes them: Word makes room for each in its row, "
                + "where the page draws it over the cell's edge, and sets the table " + howMuch
                + "pt taller than the page";
     }
 
+    private static final java.util.regex.Pattern ABOUT =
+            java.util.regex.Pattern.compile("sets the table about (\\d+(?:\\.\\d+)?)pt taller");
+
+    /** The figure a single note names, the note failing the test where it names none. */
     private static double points(List<String> notes) {
         assertThat(notes).hasSize(1);
-        String about = notes.get(0).replaceAll(".*sets the table about ([0-9.]+)pt.*", "$1");
-        return Double.parseDouble(about);
+        java.util.regex.Matcher about = ABOUT.matcher(notes.get(0));
+        assertThat(about.find()).as("a note naming about how much: %s", notes.get(0)).isTrue();
+        return Double.parseDouble(about.group(1));
     }
 
     private static org.assertj.core.data.Offset<Double> within() {
@@ -219,8 +232,7 @@ class DocxCellRuleRoomTest {
     }
 
     private static List<String> details(Consumer<PageFlowBuilder> content) throws Exception {
-        DocxExportReport report = DocxExports.report(500, 400, 30, content);
-        assertThat(report.bySubject()).as("laid out").doesNotContainKey("measured geometry");
-        return report.bySubject().getOrDefault(SUBJECT, List.of()).stream().map(DocxExportReport.Note::detail).toList();
+        return laidOut(content).bySubject().getOrDefault(SUBJECT, List.of()).stream()
+                .map(DocxExportReport.Note::detail).toList();
     }
 }

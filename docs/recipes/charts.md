@@ -376,8 +376,10 @@ The run's minimum maps to the bottom of the box and its maximum to the top;
 
 Any fixed-layout backend (PDF today) renders charts for free — they are
 ordinary primitives by the time rendering starts. The semantic DOCX export
-does not draw vector geometry, so it writes the chart's **data table**
-(categories × series) with a one-time capability warning.
+writes no Word chart, so it writes the chart's **data table**
+(categories × series) with a one-time capability warning — in a table cell
+too, where a chart drawing alone in its cell is not drawn over that table
+(see the [DOCX export recipe](docx-export.md)).
 
 Unsupported combinations fail fast with `UnsupportedOperationException`
 rather than rendering silently wrong; in the current release that is only

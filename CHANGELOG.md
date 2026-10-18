@@ -8,6 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes a chart in a table cell as its data table, and draws nothing of it over
+  that table.** Composed in a cell, a chart was written as its data table and drawn as well: its
+  bars and grid lines stood over the table in Word and LibreOffice on Windows and hid its numbers
+  — "Sales" read "Sa" — without its axis labels, while the report said only that it was exported
+  as its data table. Where the chart is all its cell draws — alone, or with text, lists and
+  wrappers that paint nothing beside it — nothing of its drawing is drawn now. One beside other
+  drawings in its cell, which the export cannot tell its own from, or in a table composed in a
+  cell, is still drawn, and its note now says so. The export's log line, the chart's Javadoc, the
+  charts recipe and the Word export example no longer say the export has no layout pass or draws
+  no vector geometry: it writes no Word chart. The example's committed DOCX and PDF are
+  re-rendered for its caption.
 - **A DOCX export names a table whose columns it leaves to the editor.** A table with an auto
   column whose widths the layout does not show — one composed in another table's cell, which the
   layout lays out among that table's own rows, or one with a column edge no row of it shows —

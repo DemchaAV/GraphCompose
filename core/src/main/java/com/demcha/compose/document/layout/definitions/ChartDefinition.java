@@ -36,7 +36,7 @@ import java.util.List;
  * <p>Because the output is ordinary geometry + text, every existing snapshot and
  * visual-parity mechanism covers charts unchanged, any fixed-layout backend
  * renders them with no chart-specific code, and determinism is structural, not
- * promised. (Semantic exports bypass layout entirely — the DOCX backend falls
+ * promised. (The DOCX export writes no Word chart of this geometry and falls
  * back to the chart's data table.)</p>
  *
  * @author Artem Demchyshyn

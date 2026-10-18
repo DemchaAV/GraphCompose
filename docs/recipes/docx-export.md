@@ -788,12 +788,18 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   where the layout puts it, has no place and is dropped, each with a note of its own saying so;
   a rule is written as one still.
 
-- **Charts → data table.** A chart compiles to vector geometry, which this
-  export does not draw. Its *semantic*
+- **Charts → data table.** A chart compiles to vector geometry, of which this
+  export writes no Word chart. Its *semantic*
   content is its data, so the backend writes a categories-by-series table
   (values formatted with the chart's own axis format) and logs **one
   capability warning per export**. The chart's margin and padding above, below
-  and on its left are not written round the table; its report note says so. See [charts.md](charts.md).
+  and on its left are not written round the table; its report note says so. A chart that is
+  all a table cell draws — alone, or with text, lists and wrappers that paint nothing beside
+  it — is its data table there too, and nothing of its drawing is drawn: drawn, its bars stood
+  over the table and hid its numbers, without its labels (measured in Word and LibreOffice on
+  Windows). One beside other drawings in its cell, whose drawings the export cannot tell its
+  own from, or in a table composed in a cell, is drawn as well, over its table, and its note
+  says so. See [charts.md](charts.md).
 - **A canvas → its contents.** A canvas's drawings stand where it places them; what it
   writes — text, pictures, tables — is written one block after another inside its margin and
   padding. The places it gives them and the width its text wraps at are not carried, and the

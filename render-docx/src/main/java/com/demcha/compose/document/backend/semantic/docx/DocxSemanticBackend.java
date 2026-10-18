@@ -224,6 +224,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // each session sees the warning at least once.
     private final AtomicBoolean shapeContainerWarned = new AtomicBoolean(false);
     private final AtomicBoolean chartWarned = new AtomicBoolean(false);
+    // Whether the table being written is a chart's data table, which the page does not draw.
+    private boolean writingAChartsTable;
     // Geometry-only node kinds already warned about this export pass.
     private final java.util.Set<String> warnedNodeKinds =
             java.util.concurrent.ConcurrentHashMap.newKeySet();
@@ -6353,7 +6355,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             table.row(row);
         }
-        writeTable(document, table.build());
+        boolean outer = writingAChartsTable;
+        writingAChartsTable = true;
+        try {
+            writeTable(document, table.build());
+        } finally {
+            writingAChartsTable = outer;
+        }
     }
 
     /**
@@ -17198,6 +17206,51 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Names a table whose columns are left to the editor where the page sizes them: one with an
+     * auto column whose widths the layout does not show. Composed in a table cell, a table is laid
+     * out among its table's own rows, under that table's path, which do not tell its columns apart;
+     * a table in the flow shows its widths only where its rows show every column's edge between
+     * them. Its fixed columns are written with no width either, the grid being all of them or none:
+     * beside an auto column, or beside a position past the columns it declares, which is sized as
+     * one.
+     *
+     * <p>Measured in Word and LibreOffice on Windows: in a table of two auto columns composed in a
+     * cell, the first, which the page sets 45pt wide to its content, came out 121pt wide in both,
+     * half the cell's 242pt; with a fixed column of 120pt beside an auto one, the fixed column came
+     * out 146pt wide in both, half the cell's 292pt. A table of three auto columns whose two rows
+     * both span the first two, Word set as the page did, and LibreOffice set its last column 83pt
+     * further right. A chart's data table, which the page does not draw, is not named: the chart's
+     * own note says what is written for it. Without a layout nothing is measured, which the
+     * section's note says once.</p>
+     */
+    private void nameTheColumnsLeftToTheEditor(TableNode node) {
+        if (layout.isEmpty() || writingAChartsTable) {
+            return;
+        }
+        String why = composedInACell(node)
+                ? "composed in a table cell, it is laid out among its table's own rows, which do not tell "
+                  + "its columns apart"
+                : "the layout's rows of it do not show every one of its column edges";
+        report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
+                "its columns are the editor's to size, where the page sizes an auto column to its content: "
+                + why + (fixedBesideAuto(node) ? "; its fixed columns' widths are not written either" : ""));
+    }
+
+    /** Whether a table sets a fixed column beside one sized otherwise, which a grid of fixed widths cannot hold. */
+    static boolean fixedBesideAuto(TableNode node) {
+        boolean fixed = false;
+        // A position past the columns the table declares is sized as an auto one.
+        boolean other = TableGrid.columnCount(node) > node.columns().size();
+        // A fixed column always states its width (DocumentTableColumn).
+        for (com.demcha.compose.document.table.DocumentTableColumn column : node.columns()) {
+            boolean stated = column.type() == com.demcha.compose.document.table.DocumentTableColumn.Type.FIXED;
+            fixed |= stated;
+            other |= !stated;
+        }
+        return fixed && other;
+    }
+
+    /**
      * Gives a table the width the fixed-layout render gives it, in the cases where that
      * width can be known without measuring anything.
      *
@@ -17244,6 +17297,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             } else if (Double.isFinite(nestedTableWidth())) {
                 setTableWidth(table, nestedTableWidth());
             }
+            nameTheColumnsLeftToTheEditor(node);
             return;
         }
 
@@ -17605,8 +17659,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Gives a table the grid a Word table cannot be without, empty: POI makes a table with none,
      * the columns written later fill it, and a table whose columns are left to Word — a chart's
-     * data table, a table or a row with no layout, a row the layout does not place in a cell —
-     * keeps it empty. Word and LibreOffice lay out a table with an empty grid as one without
+     * data table, a table or a row with no layout, a row the layout does not place in a cell, a
+     * table with an auto column the layout does not show the widths of — keeps it empty. Word and
+     * LibreOffice lay out a table with an empty grid as one without
      * (measured: every word where it stood, in both, in a row of columns in the flow and in a cell,
      * a table of auto columns with and without a width, and {@code WordExportCompanion}'s chart).
      */

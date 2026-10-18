@@ -25,11 +25,12 @@ import java.util.Set;
  * <p>Without the layout nothing is measured or placed, and the export writes what the document
  * states. Line heights, the space between lines and auto columns are the editor's then, and so is
  * more, which the note named none of: a row its arrangement or a growing spacer divides is written
- * as columns Word sizes; what an alignment or a stack's layer is set at across the width stands at
- * the left; and the keeps the page makes — a block kept together or with the next, a table's row
- * in one piece, a row of columns — are written only where the layout shows the page held them on
- * one page, which is nowhere. (A table's repeated header row is still kept with the row under it:
- * that needs no layout.) Each of those is named where the section holds one.</p>
+ * as columns Word sizes; a table's fixed column beside an auto one is written with no width, the
+ * table's columns all left to Word; what an alignment or a stack's layer is set at across the
+ * width stands at the left; and the keeps the page makes — a block kept together or with the
+ * next, a table's row in one piece, a row of columns — are written only where the layout shows the
+ * page held them on one page, which is nowhere. (A table's repeated header row is still kept with
+ * the row under it: that needs no layout.) Each of those is named where the section holds one.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -57,6 +58,9 @@ final class DocxWithoutLayout {
         }
         StringBuilder note = new StringBuilder(what).append(" could not be laid out, so ")
                 .append(listed(editors)).append(" are the editor's rather than the engine's");
+        if (found.fixedBesideAuto) {
+            note.append("; a table's fixed column beside an auto one is written with no width either");
+        }
         if (found.placedAcross) {
             note.append("; what an alignment or a stack's layer is set at across the width is written from the left");
         }
@@ -85,6 +89,7 @@ final class DocxWithoutLayout {
     private static final class Found {
 
         private boolean dividedRows;
+        private boolean fixedBesideAuto;
         private boolean placedAcross;
         private boolean keptBlocks;
         private boolean tableRows;
@@ -114,6 +119,7 @@ final class DocxWithoutLayout {
             }
             if (node instanceof TableNode table && !table.rows().isEmpty()) {
                 tableRows = true;
+                fixedBesideAuto |= DocxSemanticBackend.fixedBesideAuto(table);
             }
             keptBlocks |= !inACell && (node.keepTogether() || node.keepWithNext());
             Set<DocumentNode> cells = cellContentOf(node);

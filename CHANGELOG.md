@@ -8,6 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export names a border Word draws at another width than the page, and writes a text
+  header's or footer's separator of no width.** A Word border is no thinner than a quarter of a
+  point and no wider than twelve, and the export held a border to that without a word: a panel's
+  20pt border, a table cell's or a row's, was written 12pt wide, a 0.1pt hairline a quarter of a
+  point, a rule as thin and a separator as thin or as wide. Each is now named (`border width`),
+  once for a panel, a table and a rule, and once for a separator however many headers it is
+  written into. A separator of no width, which the page strokes as the thinnest line a screen or
+  a printer shows, was not written; it is drawn at Word's thinnest and named, and counts as Word
+  draws it where the export decides whether a band reaches past the page margin. One set below
+  zero, or not a number, is named as not written. A width that rounds to an eighth Word draws —
+  0.2pt to a quarter of a point — is drawn at it, unnamed.
 - **A DOCX export says why a drawing is not in it and what a section with no layout leaves to
   the editor, names the application that made it, gives every table a grid, and names an anchor
   in a repeated table header.** Without the layout — a document the engine refused, or a bare

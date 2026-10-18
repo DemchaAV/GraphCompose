@@ -8,6 +8,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export names a table its rules stand taller in Word.** Word makes room for a table's
+  horizontal rules in their rows, and the page draws them over the cells' edges; the export takes
+  that room off a cell's padding, and where the padding is thinner than its share of the rules,
+  the row stood taller in Word with nothing said: measured in Word and LibreOffice on Windows,
+  four rows of text with no padding and 3pt rules set the paragraph under the table 15pt lower
+  than under the same table unruled. The report now names such a table (`cell rule`) with about
+  how much taller — counting each text cell on its own and a row at its tallest cell, as both
+  editors do, so a short cell beside a taller one that sets its row adds nothing, and a header
+  row repeated on every page once a page — or with the most it can be where the layout does not
+  tell a row's height or measure its text. Cells built from a node, cells spanning rows, and
+  empty cells where the row is held at the page's height are not counted: in the corpus's
+  invoices and rota whose rows are built from nodes or hold empty cells, the rows stood within
+  half a point of the page's in Word.
 - **A DOCX export writes a chart in a table cell as its data table, and draws nothing of it over
   that table.** Composed in a cell, a chart was written as its data table and drawn as well: its
   bars and grid lines stood over the table in Word and LibreOffice on Windows and hid its numbers

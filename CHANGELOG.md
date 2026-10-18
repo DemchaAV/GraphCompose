@@ -3503,6 +3503,16 @@ follow semantic versioning; release dates are ISO 8601.
   zone, the text header and footer slots, watermarks and `markerGap`. The DOCX recipe, the
   charts recipe and the examples README no longer say the export has no layout pass.
 
+- **The capability matrix's DOCX column says what the export carries.** It said the export
+  ignores the layout's geometry, carries no font, writes no external link and no reproducible
+  bytes, and that an anchor on a shape or a barcode marks nothing. The export reads the layout
+  for how tall a line is, how wide a column came out and where a drawing stands. It ships the
+  faces its styles name (`DocxFontTable`), naming one whose licence keeps it out. It writes the
+  link of a paragraph, a run and a picture in a line as a `w:hyperlink`, and names one on a
+  block it holds as a picture, a drawing, a rule or a table. It pins its clocks under
+  `deterministic(true)`, and bookmarks a barcode's anchor, naming a drawing's. The two link rows
+  are ⚠️ for the blocks that carry none.
+
 ## v2.4.1 — 2026-09-21
 
 ### Performance

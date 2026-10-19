@@ -8,6 +8,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export sets a layer across where its offset moves it.** Measured in Word and
+  LibreOffice on Windows, a stack's one layer moved 40pt in stood at the stack's left edge in
+  both. A band's layer the page sets 20pt left of the stack stood at the stack's edge, the page
+  margin, in both. Neither was named.
+  - A layer is now held to its box on both sides, past the stack's edge where the page sets it
+    there, by an indent below zero. Both editors set the two layers where the page does, and a
+    stack's one layer of three lines moved 40pt in breaks at the page's words in both.
+  - A table cell's text starts no further left than the cell's own. There a layer stands left only
+    as far as the indents round it give, and the rest is named (`layer offset`). A stack's one
+    layer moved across in a table cell is written where the stack starts, and named. So is one
+    composed in a table's cell, where the stack has no place of its own in the layout.
+  - An offset down or up moves a stack's one layer without making room for it, which Word's flow
+    cannot do. It is written where the stack starts, as before, and now named (`layer offset`),
+    except where a band sets it at the page's distance below what is above it.
 - **A DOCX export stacks its drawings as the page paints them.** Word stacks drawings by the
   place each is given (`wp:anchor/@relativeHeight`), a later one over an earlier one. The export
   gave them their places in the order it drew them. In the flow it draws a stack's or a shape

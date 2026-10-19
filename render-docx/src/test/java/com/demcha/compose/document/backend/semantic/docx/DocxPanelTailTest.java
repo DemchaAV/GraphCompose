@@ -315,9 +315,10 @@ class DocxPanelTailTest {
     }
 
     @Test
-    void aPaddedShapeHoldsItsOutlineLessBothBordersAndItsMargins() throws Exception {
-        // The page draws the borders and the padding inside the outline: the content held is
-        // what is left of it, both borders off, as the editors add both round the row's height.
+    void aPaddedShapeHoldsItsOutlineLessBothBorders() throws Exception {
+        // The page draws the borders inside the outline and sets the padding round it: the content
+        // held is the outline, both borders off, as the editors add both round the row's height,
+        // and the padding is written round the shape's table.
         var chip = new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Chip").roundedRect(90, 17.5, 4)
                 .padding(DocumentInsets.of(2)).stroke(DocumentStroke.of(DocumentColor.rgb(26, 86, 148), 1.1))
                 .center(new com.demcha.compose.document.dsl.ParagraphBuilder().text("09:00").build()).build();
@@ -327,12 +328,12 @@ class DocxPanelTailTest {
         XWPFTableCell cell = exported.document().getTables().get(0).getRow(0).getCell(1).getTables().get(0)
                 .getRow(0).getCell(0);
 
-        assertThat(topMargin(cell)).as("its padding, less half its border").isEqualTo(29);
-        assertThat(bottomMargin(cell)).isEqualTo(29);
+        assertThat(topMargin(cell)).as("no padding inside the outline").isZero();
+        assertThat(bottomMargin(cell)).isZero();
         // The heavier border at the width Word is given, nine eighths of a point, counted as a row
         // counts it, 22.5 twips rounded down; the lighter one at its own.
-        assertThat(cell.getTableRow().getHeight()).as("17.5pt, less both margins and both borders")
-                .isEqualTo(Math.round((17.5 - 1.1) * 20) - 2 * 29 - 22);
+        assertThat(cell.getTableRow().getHeight()).as("17.5pt, less both borders")
+                .isEqualTo(Math.round((17.5 - 1.1) * 20) - 22);
     }
 
     @Test
@@ -379,8 +380,9 @@ class DocxPanelTailTest {
 
     @Test
     void aShapesHangingLineIsHeldInItsOutline() throws Exception {
-        // Its layers are centred in the outline's height, which holds the line: its padding is
-        // left as it is, and nothing is named.
+        // Its layers are centred in the outline's height, which holds the line: nothing of it is
+        // taken from the space round it. Its padding stands below the outline, round the shape's
+        // table, not inside it.
         var chip = new com.demcha.compose.document.dsl.ShapeContainerBuilder().name("Chip").roundedRect(90, 30, 4)
                 .padding(new DocumentInsets(0, 0, 6, 0)).fillColor(SURFACE)
                 .center(new com.demcha.compose.document.dsl.ParagraphBuilder().textStyle(SMALL).inlineText("GitHub  ", SMALL)
@@ -392,7 +394,7 @@ class DocxPanelTailTest {
         XWPFTableCell cell = exported.document().getTables().get(0).getRow(0).getCell(1).getTables().get(0)
                 .getRow(0).getCell(0);
 
-        assertThat(bottomMargin(cell)).isEqualTo(6 * 20);
+        assertThat(bottomMargin(cell)).isZero();
         assertThat(exported.report().bySubject()).doesNotContainKey("space above");
     }
 

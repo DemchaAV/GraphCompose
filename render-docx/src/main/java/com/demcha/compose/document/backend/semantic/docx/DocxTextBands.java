@@ -106,11 +106,8 @@ final class DocxTextBands {
      * page, and a footer's {@code height - fontSize} above its foot.</p>
      */
     static double distanceFromEdge(DocumentHeaderFooter band) {
-        double line = lineHeight(band);
-        if (band.getZone() == DocumentHeaderFooterZone.HEADER) {
-            return distanceFromEdge(true, band.getHeight() - band.getFontSize() / 2.0, line);
-        }
-        return distanceFromEdge(false, band.getHeight() - band.getFontSize(), line);
+        return distanceFromEdge(band.getZone() == DocumentHeaderFooterZone.HEADER, baselineFromEdge(band),
+                lineHeight(band));
     }
 
     /**
@@ -126,6 +123,64 @@ final class DocxTextBands {
      */
     static double distanceFromEdge(boolean header, double baselineFromEdge, double line) {
         return Math.max(0, baselineFromEdge - line * (header ? BASELINE_SHARE : 1 - BASELINE_SHARE));
+    }
+
+    /**
+     * How much further in from its page edge Word stands the band's baseline than the page does,
+     * in points: none where its line fits between the edge and the page's baseline, else as much
+     * as the line stopped at the edge ({@link #distanceFromEdge(boolean, double, double)}) holds
+     * its baseline further in — lower for a header, higher for a footer. Measured in Word on
+     * Windows, 9pt text in a header 11pt tall stood 2.14pt lower than on the page.
+     */
+    static double baselineMovedIn(DocumentHeaderFooter band) {
+        double line = lineHeight(band);
+        if (band.getZone() == DocumentHeaderFooterZone.HEADER) {
+            return Math.max(0, line * BASELINE_SHARE - baselineFromEdge(band));
+        }
+        return Math.max(0, line * (1 - BASELINE_SHARE) - baselineFromEdge(band));
+    }
+
+    /**
+     * How much further in from its page edge Word rules the band's separator than the page strokes
+     * it, in points, where the band is shallower than its line: the separator is the line's border,
+     * ruled past the line, which starts at the edge, where the page strokes it the band's height
+     * from the edge. Measured on Windows, a 0.5pt separator of a footer 10pt tall over 9pt text
+     * stood 0.92pt higher in Word than on the page, 1.06pt in LibreOffice.
+     *
+     * @param width the separator's width as written
+     */
+    static double separatorMovedIn(DocumentHeaderFooter band, double width) {
+        double line = lineHeight(band);
+        return band.getHeight() < line ? line + width / 2 - band.getHeight() : 0;
+    }
+
+    /**
+     * How far from its page edge the page sets the band's baseline, in points: down from the
+     * page's top for a header, up from its foot for a footer.
+     */
+    static double baselineFromEdge(DocumentHeaderFooter band) {
+        return band.getZone() == DocumentHeaderFooterZone.HEADER
+                ? band.getHeight() - band.getFontSize() / 2.0
+                : band.getHeight() - band.getFontSize();
+    }
+
+    /**
+     * Whether a band's slots overlap where the page sets them: the left one at the left margin,
+     * the centre one in the middle, the right one against the right margin, each as wide as its
+     * text. The page draws them over one another there; measured on Windows, Word and LibreOffice
+     * set a slot that would overlap the text before it after that text instead.
+     *
+     * @param width  the width between the margins
+     * @param left   the left slot's width, 0 where it is empty
+     * @param centre the centre slot's width, 0 where it is empty
+     * @param right  the right slot's width, 0 where it is empty
+     */
+    static boolean slotsOverlap(double width, double left, double centre, double right) {
+        if (centre > 0) {
+            return left > 0 && left > (width - centre) / 2
+                   || right > 0 && (width + centre) / 2 > width - right;
+        }
+        return left > 0 && right > 0 && left > width - right;
     }
 
     /**

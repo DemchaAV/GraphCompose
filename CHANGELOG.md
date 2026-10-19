@@ -8,6 +8,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export names what a text header or footer shows otherwise in Word.** Measured in
+  Word and LibreOffice on Windows, four things went unsaid:
+  - **A band too shallow for its line.** Its line is written from the page's edge.
+    - 9pt text in a header 11pt tall stood 2.14pt lower in Word than on the page (2.10 in
+      LibreOffice), and in a footer 10pt tall 1.04pt higher (1.21).
+    - That footer's separator, ruled over the line, stood 0.92pt higher (1.06).
+  - **Page numbers in letters past 26.** Word letters them by repeating one letter: page 28
+    read `bb` and the total of 56 pages `ddd`, where the page and LibreOffice read `ab` and `bd`.
+  - **Slots that overlap where the page sets them.** The page draws them over one another, and
+    both editors set a slot that would overlap the text before it after that text instead:
+    - a left slot reaching past the middle had the centre and right slots set after it in both,
+      the right one past the right margin;
+    - a centre slot reaching the right one had it set after it, past the margin, in Word, and
+      on a line below in LibreOffice.
+  - **A slot wider than the line.** The page runs it past the margins; both editors wrap it
+    onto a line below.
+
+  The report now names each one:
+  - a shallow band with about how far its text, and its separator, move;
+  - a lettered band where the layout runs to 28 pages or more, or where it would with no layout
+    behind the export;
+  - overlapping or overwide slots with on how many of the band's pages.
+
+  The DOCX is written as before.
 - **A DOCX export names the blank page Word adds before a section.** Every section of a
   multi-section document numbers its pages from 1. Once the document states different even and
   odd pages, as it does for a page zone on some of them, Word starts every section on an odd

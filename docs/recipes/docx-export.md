@@ -1219,6 +1219,27 @@ kind share Word's one header or footer. A `{date}` token keeps a
 deterministic export byte-identical only within one day unless
 `-Dgraphcompose.renderDate` pins it, as for the PDF.
 
+The report names four things a band shows otherwise in Word, each measured in Word and
+LibreOffice on Windows:
+
+- **A band too shallow for its line.** Its line is written from the page's edge, the top for a
+  header and the foot for a footer. So in a band shallower than its line needs — a header under
+  about one and a half times its type size, a footer under about one and a quarter — the text
+  stands further in. With 9pt text in a header 11pt tall, it stood 2.14pt lower in Word than on
+  the page, 2.10pt in LibreOffice. A separator ruled past a line taller than its band moves too:
+  in a footer 10pt tall it stood 0.92pt higher in Word, 1.06pt in LibreOffice. The report names
+  the band with about how far each moves.
+- **Page numbers in letters past 26.** Word letters them by repeating one letter: page 28 reads
+  `bb`, where the page and LibreOffice read `ab`. The report names such a band where the layout
+  runs to 28 pages or more, and with no layout behind the export, says where it would.
+- **Slots that overlap where the page sets them.** A left slot that reaches past where the
+  centre one starts is one example. The page draws such slots over one another. Both editors set
+  a slot that would overlap the text before it after that text instead: Word on the same line, as
+  far as past the right margin, LibreOffice on it or on a line below. The report names the band
+  with on how many of its pages.
+- **A slot wider than the line.** The page runs it past the margins, and both editors wrap it
+  onto a line below. The report names the band.
+
 A page zone (`session.chrome().zone(...)`) exports as a real
 Word header or footer part, with the page number as a live field, and its text stands on the
 baseline the page sets it on. The zone's line is an exact line as tall as its tallest part's

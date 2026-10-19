@@ -1860,7 +1860,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                              || sectionZones.stream().anyMatch(zone -> zone.getZone() == band.getZone()
                                                                        && zone.getContent() != null);
             writers.add(new ZoneWriter(band.getZone(), bandPageClasses(band),
-                    part -> writeBand(part, band, framed), () -> placeBand(document, band, framed), false));
+                    part -> writeBand(part, band, framed), () -> {
+                        placeBand(document, band, framed);
+                        reportBandText(band);
+                    }, false));
         }
         for (int index = 0; index < sectionZones.size(); index++) {
             DocumentPageZone zone = sectionZones.get(index);
@@ -2355,6 +2358,169 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     + "page margin, which is written negative so that Word holds the body at the margin, as "
                     + "the page does; LibreOffice moves the body clear of it");
         }
+    }
+
+    /**
+     * Names what a text band's text reads or where it stands otherwise in Word than on the page,
+     * each measured in Word and LibreOffice on Windows: a line its band is too shallow for, written
+     * from the page's edge, so its baseline stands further in ({@link DocxTextBands#baselineMovedIn})
+     * and its separator, ruled past the line, too ({@link DocxTextBands#separatorMovedIn}); page
+     * numbers in letters past 26, which Word letters by repeating one letter — page 28 reads
+     * {@code bb} in Word and {@code ab} on the page and in LibreOffice; slots that overlap where the
+     * page sets them ({@link DocxTextBands#slotsOverlap}), which the page draws over one another and
+     * both editors set apart; and a slot wider than the line, which the page runs past the margins and
+     * both editors wrap. Said once for a band, which is written into every kind of header it is given.
+     */
+    private void reportBandText(DocumentHeaderFooter band) {
+        String section = sectioned ? "section " + (sectionIndex + 1) : null;
+        String subject = "page " + zoneName(band);
+        boolean header = band.getZone() == DocumentHeaderFooterZone.HEADER;
+        double moved = DocxTextBands.baselineMovedIn(band);
+        if (moved >= 0.1) {
+            double separator = separatorWritten(band)
+                    ? DocxTextBands.separatorMovedIn(band, DocxBorderWidths.eighths(band.getSeparatorThickness()) / 8.0)
+                    : 0;
+            report.add(DocxExportReport.Severity.APPROXIMATED, subject, section,
+                    "its text stands about " + tenths(moved) + "pt " + (header ? "lower" : "higher")
+                    + " than the page sets it: the page sets its baseline " + tenths(DocxTextBands.baselineFromEdge(band))
+                    + "pt from the " + (header ? "top" : "foot") + ", too near for its "
+                    + tenths(DocxTextBands.lineHeight(band)) + "pt line, which is written "
+                    + (header ? "from the page's top edge" : "up from the page's foot")
+                    + (separator >= 0.1
+                       ? "; its separator, ruled " + (header ? "under" : "over") + " that line, stands about "
+                         + tenths(separator) + "pt " + (header ? "lower" : "higher")
+                       : ""));
+        }
+        com.demcha.compose.document.output.DocumentPageNumberStyle numbers =
+                band.getNumbering() == null ? null : band.getNumbering().getStyle();
+        boolean lettered = numbers == com.demcha.compose.document.output.DocumentPageNumberStyle.LOWER_ALPHA
+                           || numbers == com.demcha.compose.document.output.DocumentPageNumberStyle.UPPER_ALPHA;
+        if (lettered && numbersPages(band) && (layout.isEmpty() || layout.pageCount() >= 28)) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, subject, section,
+                    "its page numbers are letters, and Word letters a number past 26 by repeating one letter "
+                    + "— 28 reads bb where the page reads ab — so a page number or a page total of 28 or more "
+                    + "reads otherwise than on the page" + (layout.isEmpty() ? ", where the document runs that far" : "")
+                    + "; LibreOffice letters them as the page does");
+        }
+        SlotsSet slots = slotsSetOn(band);
+        if (slots != null && slots.overlapping() > 0) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, subject, section,
+                    "its slots' text overlaps where the page sets it, drawn over one another, "
+                    + slots.onPages(slots.overlapping()) + "; Word and LibreOffice set a slot that would overlap "
+                    + "the text before it after that text instead — Word on the same line, as far as past the "
+                    + "right margin, LibreOffice on it or on a line below");
+        }
+        if (slots != null && slots.pastTheMargins() > 0) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, subject, section,
+                    "its text runs past the margins where the page sets it, " + slots.onPages(slots.pastTheMargins())
+                    + "; Word and LibreOffice wrap it onto a line below");
+        }
+    }
+
+    /** A length in points to a tenth, as a note gives it. */
+    private static double tenths(double points) {
+        return Math.round(points * 10) / 10.0;
+    }
+
+    /** Whether any of a text band's slots sets a page number or the page total. */
+    private static boolean numbersPages(DocumentHeaderFooter band) {
+        for (String slot : java.util.Arrays.asList(band.getLeftText(), band.getCenterText(), band.getRightText())) {
+            for (DocxTextBands.Segment segment : DocxTextBands.segments(slot)) {
+                if (segment.kind() == DocxTextBands.Kind.PAGE || segment.kind() == DocxTextBands.Kind.PAGES) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * On how many of the pages a text band is drawn on its slots overlap, and a slot runs past the
+     * margins, where the page sets them.
+     *
+     * @param laidOut whether the layout counts the pages, else the band is read on the first page it
+     *                is drawn on
+     */
+    private record SlotsSet(int drawn, int overlapping, int pastTheMargins, boolean laidOut) {
+
+        /** On how many of its pages, as a note's clause. */
+        String onPages(int pages) {
+            if (!laidOut) {
+                return "with the page numbers of the first page it is drawn on";
+            }
+            return pages == drawn ? "on every page it is drawn on" : "on " + pages + " of the " + drawn + " pages it is drawn on";
+        }
+    }
+
+    /**
+     * Where a text band's slots stand on the pages it is drawn on, or {@code null} where the export
+     * has no page width to set them across or the band is drawn on no page. Each page's slots are
+     * read as the page reads them — its tokens resolved for that page, the pages it is drawn on as
+     * its numbering keeps it off some — and measured in the band's face, or in Helvetica, which the
+     * page draws a face its fonts do not hold in; with no layout behind the export, on the first
+     * page it is drawn on, as many pages long. A slot with no page token reads alike on every page.
+     */
+    private SlotsSet slotsSetOn(DocumentHeaderFooter band) {
+        if (contentWidth == Double.MAX_VALUE) {
+            // No page to set them across: an export with no canvas behind it.
+            return null;
+        }
+        com.demcha.compose.document.output.DocumentPageNumbering numbering = band.getNumbering() == null
+                ? com.demcha.compose.document.output.DocumentPageNumbering.DEFAULT : band.getNumbering();
+        int first = Math.max(1, Math.max(numbering.getCountFrom(), numbering.isShowOnFirstPage() ? 1 : 2));
+        boolean laidOut = !layout.isEmpty();
+        int pages = laidOut ? layout.pageCount() : first;
+        if (pages < first) {
+            return null;
+        }
+        for (DocumentTextStyle face : List.of(bandStyleOf(band), new DocumentTextStyle(FontName.HELVETICA,
+                band.getFontSize(), DocumentTextDecoration.DEFAULT, DocumentColor.GRAY))) {
+            try {
+                return slotsSetOn(band, numbering, face, first, pages, laidOut);
+            } catch (RuntimeException faceNotHeld) {
+                // The page draws a face its fonts do not hold in Helvetica, read next.
+            }
+        }
+        return null;
+    }
+
+    private SlotsSet slotsSetOn(DocumentHeaderFooter band, com.demcha.compose.document.output.DocumentPageNumbering numbering,
+                                DocumentTextStyle face, int first, int pages, boolean laidOut) {
+        com.demcha.compose.engine.components.content.header_footer.PageNumberStyle numerals =
+                com.demcha.compose.engine.components.content.header_footer.PageNumberStyle.valueOf(
+                        (numbering.getStyle() == null
+                                ? com.demcha.compose.document.output.DocumentPageNumberStyle.DECIMAL
+                                : numbering.getStyle()).name());
+        String date = com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig
+                .resolvePlaceholders("{date}", 1, 1);
+        String total = numerals.format(numbering.getStartAt() + (pages - numbering.getCountFrom()));
+        int drawn = pages - first + 1;
+        // Read alike on every page, a band with no page token is read once.
+        int last = numbersPages(band) ? pages : first;
+        int overlapping = 0;
+        int pastTheMargins = 0;
+        for (int page = first; page <= last; page++) {
+            String number = numerals.format(numbering.getStartAt() + (page - numbering.getCountFrom()));
+            double left = slotWidth(band.getLeftText(), number, total, date, face);
+            double centre = slotWidth(band.getCenterText(), number, total, date, face);
+            double right = slotWidth(band.getRightText(), number, total, date, face);
+            int times = last == pages ? 1 : drawn;
+            if (DocxTextBands.slotsOverlap(contentWidth, left, centre, right)) {
+                overlapping += times;
+            }
+            if (Math.max(left, Math.max(centre, right)) > contentWidth) {
+                pastTheMargins += times;
+            }
+        }
+        return new SlotsSet(drawn, overlapping, pastTheMargins, laidOut);
+    }
+
+    /** How wide the page sets a slot's text, its tokens resolved, in a face; 0 for none. */
+    private double slotWidth(String text, String number, String total, String date, DocumentTextStyle face) {
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+        return styleMetrics().width(face, text.replace("{page}", number).replace("{pages}", total).replace("{date}", date));
     }
 
     /**

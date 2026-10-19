@@ -11526,7 +11526,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * {@link #owePendingSpacingAfter} says why that matters.</p>
      */
     private void applyVerticalSpacing(XWPFParagraph target, DocumentNode source) {
-        double before = source.margin().top() + source.padding().top();
+        applyVerticalSpacing(target, source, 0, 0);
+    }
+
+    /**
+     * Writes the space a block holds above and below itself, with room of its own beyond its margin
+     * and padding: a contained picture's room in its box ({@link #holdTheBoxRound}).
+     */
+    private void applyVerticalSpacing(XWPFParagraph target, DocumentNode source, double roomAbove, double roomBelow) {
+        double before = source.margin().top() + source.padding().top() + roomAbove;
         if (source == topEdgeHeldAbove) {
             // Held by the line above it, on the page the layout starts it on.
             before -= topEdgeHeld;
@@ -11549,7 +11557,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pullLeftOn = null;
         pullLeft = 0;
         addSpacing(target, before, 0);
-        double below = source.margin().bottom() + source.padding().bottom();
+        double below = source.margin().bottom() + source.padding().bottom() + roomBelow;
         // OrangeOps' role bar is pulled 3.8pt up into its name's line; dropped, the pull set
         // the bar and the whole page under it that much low in Word, and onto a second page.
         if (below < 0) {
@@ -13151,7 +13159,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>{@code fitMode} then decides how the image sits in that box, matching the PDF
      * handler: {@code CONTAIN} scales by the smaller ratio and is embedded at that size,
-     * which needs no clipping because it is inside the box already; {@code COVER} scales by
+     * which needs no clipping because it is inside the box already, the room it leaves in the
+     * box held round it as the page centres it ({@link #roomRound}); {@code COVER} scales by
      * the larger and crops the overflow away in source space through {@code a:srcRect},
      * centred, the way the PPTX backend expresses the same geometry; {@code STRETCH} fills
      * the box.</p>
@@ -13213,10 +13222,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
 
         XWPFParagraph para = newBodyParagraph(document);
+        double[] room = fitMode == DocumentImageFitMode.CONTAIN ? roomRound(resolved, box) : new double[2];
         // A picture is a block: the space the node holds above and below itself is written
         // on the paragraph carrying it, the same as any other block's. Without it the
         // probe's image ran straight into the heading under it, 24pt short of the page.
-        applyVerticalSpacing(para, node);
+        // In a band the space owed below is the band's, measured from the picture's box, so
+        // the room below it is the picture's own.
+        applyVerticalSpacing(para, node, room[0], bandDepth > 0 ? 0 : room[0]);
+        if (bandDepth > 0) {
+            addSpacing(para, 0, room[0]);
+        }
+        holdInAcross(para, room[1]);
         XWPFRun run = para.createRun();
         XWPFPicture picture = addFittedPicture(run, bytes, resolved, fitMode, box);
         // A portrait clipped to a circle: the picture takes the circle's shape, which both
@@ -13245,9 +13261,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double drawWidth = box.width();
         double drawHeight = box.height();
         if (fitMode == DocumentImageFitMode.CONTAIN) {
-            double scale = Math.min(box.width() / sourceWidth, box.height() / sourceHeight);
-            drawWidth = sourceWidth * scale;
-            drawHeight = sourceHeight * scale;
+            double[] contained = containedIn(resolved, box);
+            drawWidth = contained[0];
+            drawHeight = contained[1];
         }
         XWPFPicture picture;
         try (InputStream stream = new java.io.ByteArrayInputStream(bytes)) {
@@ -13258,6 +13274,36 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             applyCoverCrop(picture, sourceWidth, sourceHeight, box);
         }
         return picture;
+    }
+
+    /** The size a picture contained in its box is drawn at, {@code {width, height}}: by the smaller ratio. */
+    private static double[] containedIn(ImageData resolved, NodeDefinitionSupport.ImageDimensions box) {
+        double sourceWidth = Math.max(1, resolved.getMetadata().width());
+        double sourceHeight = Math.max(1, resolved.getMetadata().height());
+        double scale = Math.min(box.width() / sourceWidth, box.height() / sourceHeight);
+        return new double[]{sourceWidth * scale, sourceHeight * scale};
+    }
+
+    /**
+     * The room a contained picture leaves round it in its box, {@code {above and below, at each
+     * side}}: the page draws it in the box's middle, half the room on either side. Written at the
+     * picture's size alone, a 200×100 photo fitted to a 100pt square stood at the square's top, and
+     * everything under it 51pt high, in Word and LibreOffice. The room above and below is its
+     * paragraph's space, and the room at its side its indent ({@link #holdInAcross}).
+     */
+    private static double[] roomRound(ImageData resolved, NodeDefinitionSupport.ImageDimensions box) {
+        double[] contained = containedIn(resolved, box);
+        return new double[]{Math.max(0, box.height() - contained[1]) / 2, Math.max(0, box.width() - contained[0]) / 2};
+    }
+
+    /** Holds a paragraph in from its left by so many points more, past a twip. */
+    private static void holdInAcross(XWPFParagraph para, double points) {
+        if (toTwips(points) < 1) {
+            return;
+        }
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
+        indent.setLeft(BigInteger.valueOf(twipsOf(indent.isSetLeft() ? indent.getLeft() : null) + toTwips(points)));
     }
 
     /**

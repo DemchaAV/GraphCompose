@@ -8,6 +8,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps the room a contained picture leaves in its box.** The page draws a picture
+  contained in its box (`fitToBounds`, `CONTAIN`) in the box's middle. The export embedded it at
+  its fitted size and nothing else. Measured in Word and LibreOffice on Windows, a 200×100 picture
+  fitted to a 100pt square stood at the square's top, and the paragraph under it 51pt high, in
+  both. Nothing was named.
+  - Half the room it leaves above and below is now the space round its paragraph, and half at its
+    side its indent. In a band, which owes the space below it from the box, the room below is the
+    paragraph's own. The wide picture, a 100×200 one held in at its side, one centred by an
+    alignment and one in a row's cell all stand where the page draws them, in both editors.
 - **A DOCX export keeps a panel's padding round its outline.** The page sets a shape container's
   padding round its outline, and its layers in the outline itself. Written as a panel in a table
   cell, the padding was the cell's margins, inside the outline. Measured in Word and LibreOffice

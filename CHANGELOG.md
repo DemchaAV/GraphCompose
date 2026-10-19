@@ -16,6 +16,8 @@ follow semantic versioning; release dates are ISO 8601.
   - In the flow, the space is now held in an empty line that tall before it, kept with it, as a
     body paragraph's is. Each stands where the page draws it, in both editors, and the page breaks
     where it did.
+  - A pull out of the block on the page above stays on that page, as it does for a paragraph. The
+    report no longer says it stands such a picture lower, which on the new page it does not.
 - **A DOCX export keeps the room a contained picture leaves in its box.** The page draws a picture
   contained in its box (`fitToBounds`, `CONTAIN`) in the box's middle. The export embedded it at
   its fitted size and nothing else. Measured in Word and LibreOffice on Windows, a 200×100 picture

@@ -121,6 +121,22 @@ class DocxPictureOnANewPageTest {
     }
 
     @Test
+    void aPullOutOfTheBlockOnThePageAboveStaysThere() throws Exception {
+        // The paragraph above pulls what follows it 5pt up. On its page, Word sets no block over
+        // another, and the report says so; the picture the layout moves to the next page starts
+        // that page at its top, and nothing stands it lower.
+        java.util.function.Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content = page -> page
+                .spacer(0, CONTENT - 20)
+                .addParagraph(p -> p.text("Above").margin(new DocumentInsets(0, 0, -5, 0)))
+                .addImage(image -> image.source(picture(60, 60)).size(60, 60));
+
+        assertThat(DocxExports.report(300, 600, 20, content).bySubject().get("space above"))
+                .as("on the page of the block above, the pull is named").isNotNull();
+        assertThat(DocxExports.report(300, 200, 20, content).bySubject().get("space above"))
+                .as("on the next page, nothing is").isNull();
+    }
+
+    @Test
     void aPictureOnThePageOfTheBlockBeforeItIsWrittenAsBefore() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(300, 600, 20, page -> page
                 .spacer(0, CONTENT - 10)

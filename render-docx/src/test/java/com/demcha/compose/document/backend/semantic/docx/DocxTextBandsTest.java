@@ -84,6 +84,57 @@ class DocxTextBandsTest {
     }
 
     @Test
+    void aBandTooShallowForItsLineHasItsBaselineMovedIn() {
+        // 9pt text, a 10.8pt line: Word stands its baseline 8.64pt below the top and 2.16pt above
+        // the foot where the line stops at the edge. Measured in Word on Windows: 8.64 and 2.04.
+        DocumentHeaderFooter header = DocumentHeaderFooter.builder()
+                .zone(DocumentHeaderFooterZone.HEADER).height(11).fontSize(9).build();
+        DocumentHeaderFooter footer = DocumentHeaderFooter.builder()
+                .zone(DocumentHeaderFooterZone.FOOTER).height(10).fontSize(9).build();
+
+        assertThat(DocxTextBands.baselineFromEdge(header)).isCloseTo(6.5, within(1e-9));
+        assertThat(DocxTextBands.baselineMovedIn(header)).isCloseTo(2.14, within(1e-6));
+        assertThat(DocxTextBands.baselineFromEdge(footer)).isCloseTo(1.0, within(1e-9));
+        assertThat(DocxTextBands.baselineMovedIn(footer)).isCloseTo(1.16, within(1e-6));
+    }
+
+    @Test
+    void aSeparatorIsRuledPastALineTallerThanItsBand() {
+        // A 10.8pt line: a separator half a point wide ruled past it stands 11.05pt from the edge.
+        DocumentHeaderFooter shallow = DocumentHeaderFooter.builder()
+                .zone(DocumentHeaderFooterZone.FOOTER).height(10).fontSize(9).build();
+        DocumentHeaderFooter fits = DocumentHeaderFooter.builder()
+                .zone(DocumentHeaderFooterZone.HEADER).height(11).fontSize(9).build();
+
+        assertThat(DocxTextBands.separatorMovedIn(shallow, 0.5)).isCloseTo(1.05, within(1e-6));
+        assertThat(DocxTextBands.separatorMovedIn(fits, 0.5)).isZero();
+    }
+
+    @Test
+    void aBandDeepEnoughForItsLineHasItsBaselineWhereThePageSetsIt() {
+        DocumentHeaderFooter header = DocumentHeaderFooter.builder()
+                .zone(DocumentHeaderFooterZone.HEADER).height(14).fontSize(9).build();
+        DocumentHeaderFooter footer = DocumentHeaderFooter.builder()
+                .zone(DocumentHeaderFooterZone.FOOTER).height(12).fontSize(9).build();
+
+        assertThat(DocxTextBands.baselineMovedIn(header)).isZero();
+        assertThat(DocxTextBands.baselineMovedIn(footer)).isZero();
+    }
+
+    @Test
+    void slotsOverlapWhereOneReachesPastWhereTheNextStarts() {
+        // Across 256pt: the centre slot starts at (256 - its width) / 2, the right one at 256 less its width.
+        assertThat(DocxTextBands.slotsOverlap(256, 40, 40, 40)).isFalse();
+        assertThat(DocxTextBands.slotsOverlap(256, 109, 40, 40)).as("past the centre's start").isTrue();
+        assertThat(DocxTextBands.slotsOverlap(256, 107, 40, 40)).isFalse();
+        assertThat(DocxTextBands.slotsOverlap(256, 20, 200, 40)).as("the centre past the right's start").isTrue();
+        assertThat(DocxTextBands.slotsOverlap(256, 150, 0, 110)).as("no centre, the left past the right").isTrue();
+        assertThat(DocxTextBands.slotsOverlap(256, 150, 0, 100)).isFalse();
+        assertThat(DocxTextBands.slotsOverlap(256, 0, 250, 0)).as("one slot overlaps nothing").isFalse();
+        assertThat(DocxTextBands.slotsOverlap(256, 300, 0, 0)).isFalse();
+    }
+
+    @Test
     void eachNumberStyleHasWordsSwitchAndDecimalNone() {
         assertThat(DocxTextBands.numberFormat(DocumentPageNumberStyle.DECIMAL)).isEmpty();
         assertThat(DocxTextBands.numberFormat(null)).isEmpty();

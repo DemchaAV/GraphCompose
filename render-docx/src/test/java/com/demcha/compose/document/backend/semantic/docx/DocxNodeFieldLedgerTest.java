@@ -139,7 +139,10 @@ class DocxNodeFieldLedgerTest {
             "viewerPreferences:REPORTED",
             "headersAndFooters:REPORTED:a band's translucent separator, flattened against white; of a separator, "
             + BORDER_WIDTH + ", one of no width at Word's thinnest, and one below zero or not a number, not "
-            + "written; any other is written, or reported where Word's parts cannot hold it",
+            + "written; a band too shallow for its line, whose text and separator Word stands further in from "
+            + "the edge; page numbers in letters from 28 on, which Word letters otherwise; slots that overlap "
+            + "where the page sets them, and a slot wider than the line; any other is written, or reported "
+            + "where Word's parts cannot hold it",
             // The node entries below are the body's. A zone is written as one line of its
             // paragraphs' runs, page fields, pictures and tabs, and has its own entry here.
             "zones:REPORTED:where its parts stand across the line, a part the page sets lower than the line "

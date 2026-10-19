@@ -10279,7 +10279,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // is not either (paragraphOpeningABandsPage); in any other overlay it is not moved anyway.
             // Its top edge is held in the flow only, as before: in a stack it is not measured.
             if (overlayDepth == 0) {
-                holdAParagraphsTopEdgeOnItsPage(document, node);
+                holdAParagraphsTopEdgeOnItsPage(document, node, 0);
             }
             paragraphOpeningItsPage = node;
         }
@@ -11531,7 +11531,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Writes the space a block holds above and below itself, with room of its own beyond its margin
-     * and padding: a contained picture's room in its box ({@link #holdTheBoxRound}).
+     * and padding: a contained picture's room in its box ({@link #roomRound}).
      */
     private void applyVerticalSpacing(XWPFParagraph target, DocumentNode source, double roomAbove, double roomBelow) {
         double before = source.margin().top() + source.padding().top() + roomAbove;
@@ -13221,8 +13221,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
 
-        XWPFParagraph para = newBodyParagraph(document);
         double[] room = fitMode == DocumentImageFitMode.CONTAIN ? roomRound(resolved, box) : new double[2];
+        if (currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(node)) {
+            // Its top edge is held on the page the layout moves it to, as a text paragraph's is.
+            holdAParagraphsTopEdgeOnItsPage(document, node, room[0]);
+        }
+        XWPFParagraph para = newBodyParagraph(document);
         // A picture is a block: the space the node holds above and below itself is written
         // on the paragraph carrying it, the same as any other block's. Without it the
         // probe's image ran straight into the heading under it, 24pt short of the page.
@@ -18565,7 +18569,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Holds the top edge of a paragraph the layout moves to a new page, on that page.
+     * Holds the top edge of a paragraph the layout moves to a new page, on that page: a text
+     * paragraph's, or the one carrying a picture.
      *
      * <p>The page starts a block a page break moves down at its own top edge — the containers
      * opening there with it. Word drops a paragraph's space above at the top of a page, the
@@ -18583,12 +18588,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * unchanged: at the foot of the page above, the line and that space together take what the
      * paragraph's space above did. Written on the page above instead, the gap let
      * {@code ClassicSerif}'s second page's first line fit on its first in Word.</p>
+     *
+     * <p>A picture's paragraph loses its space above there as a text one does: a 100pt photo
+     * opening its page with a 20pt margin stood at the page's top in Word and LibreOffice, 20pt
+     * high, and one contained in its box with 25pt of room above it, 25pt high. That room is
+     * inside the box, as padding is, and held with it.</p>
+     *
+     * @param room the space above the block's content inside its box, past its padding: a
+     *             contained picture's room ({@link #roomRound}), none for text
      */
-    private void holdAParagraphsTopEdgeOnItsPage(XWPFDocument document, ParagraphNode node) {
-        double own = Math.max(0, node.margin().top() + node.padding().top());
+    private void holdAParagraphsTopEdgeOnItsPage(XWPFDocument document, DocumentNode node, double room) {
+        double inside = Math.max(0, node.padding().top() + room);
+        double own = Math.max(0, node.margin().top() + node.padding().top() + room);
         double edges = Math.max(0, carriedSpacingBefore);
         double above = spaceAboveOnItsPage(node);
-        double kept = Double.isNaN(above) ? own + edges : Math.max(0, above) + Math.max(0, node.padding().top());
+        double kept = Double.isNaN(above) ? own + edges : Math.max(0, above) + inside;
         // Text hanging below a band, a pull out of the block before and a card's border below
         // it stay on the page above with them, as at a table moved to a new page: the layout
         // starts the new page from its top, with or without an edge to hold there. What a block

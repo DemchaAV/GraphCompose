@@ -8,6 +8,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps the space above a picture the layout moves to a new page.** Word drops a
+  paragraph's space above at the top of a page, a picture's paragraph's too. Measured in Word and
+  LibreOffice on Windows, a 100pt picture opening its page stood at the page's top in both: 20pt
+  high with a 20pt margin, 15pt with a 15pt padding, 25pt when contained in a box with 25pt of
+  room above it, and 10pt in a section padded 10pt. Nothing was named.
+  - In the flow, the space is now held in an empty line that tall before it, kept with it, as a
+    body paragraph's is. Each stands where the page draws it, in both editors, and the page breaks
+    where it did.
 - **A DOCX export keeps the room a contained picture leaves in its box.** The page draws a picture
   contained in its box (`fitToBounds`, `CONTAIN`) in the box's middle. The export embedded it at
   its fitted size and nothing else. Measured in Word and LibreOffice on Windows, a 200×100 picture

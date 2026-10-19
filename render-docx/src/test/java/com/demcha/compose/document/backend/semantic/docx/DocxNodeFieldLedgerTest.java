@@ -191,7 +191,9 @@ class DocxNodeFieldLedgerTest {
                 "anchor:WRITTEN");
         node(LayerStackNode.class, "name:INERT",
                 "layers:REPORTED:one the page starts above where the layers before it end, which is written under "
-                + "them; composed in a table cell or with no layout, more than one of them written, not measured",
+                + "them; composed in a table cell or with no layout, more than one of them written, not measured; "
+                + "their drawings stack as the page paints them, by their z-index, among those behind the text "
+                + "and among those in front of it",
                 "padding:WRITTEN", "margin:WRITTEN",
                 "clipToBounds:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table");
         node(LineNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "startX:WRITTEN", "startY:WRITTEN",
@@ -289,8 +291,9 @@ class DocxNodeFieldLedgerTest {
                 + "written as a panel in a table cell, its corners square; one no shape draws, or composed in a "
                 + "table cell with nowhere to draw it, dropped",
                 "layers:REPORTED:written inline one after another in source order where it writes them in the "
-                + "flow, or stacked in another order than given; drawn where the page puts them, unreported, where "
-                + "they are all drawing in source order; a panel's in its cell",
+                + "flow; drawn where the page puts them, unreported, where they are all drawing, stacked as the "
+                + "page paints them among those behind the text and among those in front of it; a panel's in its "
+                + "cell",
                 "clipPolicy:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table",
                 "fillColor:REPORTED:its translucency, as a panel's, flattened against the colour under it; "
                 + "drawn, its alpha is written; any other is written",

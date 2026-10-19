@@ -894,8 +894,16 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   export, and a note on each container that writes a layer in the flow. A
   container whose layers are all drawn — a tile, an icon, a badge holding
   its glyph — writes none: each layer is drawn where the page draws it, in
-  source order, and it is not noted unless the page stacks its layers in
-  another order, by their z-index. The report names the clip — a shape container's, and a layer
+  the order the page stacks them, by their z-index. Word stacks drawings by
+  the place each is given, a later one over an earlier one, and every drawing
+  takes its place from where the page paints it, wherever and whenever the
+  export draws it: a stack's layers, a band's and columns' marks, a table's
+  cell drawings. Text is written in the order given. The places order the
+  drawings behind the text among themselves, and those in front of it: Word
+  draws every one behind under every one in front, and on a painted panel a
+  layer framing text stays behind while one that does not stands in front,
+  whatever their z-index.
+  The report names the clip — a shape container's, and a layer
   stack's that clips to its bounds — wherever it cuts what the layers paint:
   a square tile's corners in a disc, a label run past its chip, an ornament
   set past a sidebar's side. One composed in a table's cell, which has no

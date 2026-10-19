@@ -614,9 +614,54 @@ class DocxDrawingAnchorsTest {
         return new DocxDrawingAnchors(ids::getAndIncrement);
     }
 
-    /** Queues shapes no note names, as drawing here is drawn for nothing. */
+    /** Queues shapes no note names, from no fragment of a layout, as drawing here is drawn for nothing. */
     private static void queue(DocxDrawingAnchors anchors, List<DocxDrawings.Shape> shapes) {
-        anchors.queue(shapes, null);
+        anchors.queue(shapes, -1, null);
+    }
+
+    @Test
+    void shapesTakeTheirPlacesWhereThePagePaintsTheirFragments() {
+        DocxDrawingAnchors anchors = anchors();
+
+        // Drawn first, a fragment the page paints third stacks over one it paints first.
+        List<DocxDrawingAnchors.Ordered> third = anchors.ordered(List.of(dot(30, 300), dot(40, 300)), 2);
+        List<DocxDrawingAnchors.Ordered> first = anchors.ordered(List.of(dot(50, 300)), 0);
+        List<DocxDrawingAnchors.Ordered> fromNone = anchors.ordered(List.of(dot(60, 300)), -1);
+
+        assertThat(first.get(0).order()).isLessThan(third.get(0).order());
+        assertThat(third.get(0).order()).as("a fragment's shapes in the order they come")
+                .isLessThan(third.get(1).order());
+        assertThat(fromNone.get(0).order()).as("from no fragment, after the latest place given")
+                .isGreaterThan(third.get(1).order());
+        assertThat(anchors.ordered(List.of(dot(30, 300)), 2).get(0).order())
+                .as("the same fragment drawn again, after its shapes so far, that one among them")
+                .isGreaterThan(fromNone.get(0).order())
+                .isLessThan(3 * DocxDrawingAnchors.PLACES_PER_FRAGMENT);
+    }
+
+    @Test
+    void aFragmentDrawnAsMoreShapesThanItHasPlacesForStacksTheRestAtItsLast() {
+        DocxDrawingAnchors anchors = anchors();
+        List<DocxDrawings.Shape> many = java.util.Collections.nCopies(DocxDrawingAnchors.PLACES_PER_FRAGMENT + 2,
+                dot(30, 300));
+
+        List<DocxDrawingAnchors.Ordered> ordered = anchors.ordered(many, 1);
+        List<DocxDrawingAnchors.Ordered> next = anchors.ordered(List.of(dot(30, 300)), 2);
+
+        assertThat(ordered.get(ordered.size() - 1).order()).isEqualTo(2 * DocxDrawingAnchors.PLACES_PER_FRAGMENT - 1);
+        assertThat(next.get(0).order()).as("the next fragment's still above").isGreaterThan(ordered.get(ordered.size() - 1).order());
+    }
+
+    @Test
+    void aSectionCountsItsFragmentsAfresh() {
+        XWPFDocument document = new XWPFDocument();
+        DocxDrawingAnchors anchors = anchors();
+        anchors.ordered(List.of(dot(30, 300), dot(30, 300)), 0);
+        anchors.endSection(1, null, document::createParagraph);
+
+        assertThat(anchors.ordered(List.of(dot(30, 300)), 0).get(0).order())
+                .as("the next section's first fragment, its first place")
+                .isZero();
     }
 
     @Test
@@ -627,8 +672,8 @@ class DocxDrawingAnchorsTest {
         anchors.paragraphOn(0, text(document, "First"), true);
         DocxDrawingAnchors.Owner split = new DocxDrawingAnchors.Owner("timeline rail", "Root[0]");
         DocxDrawingAnchors.Owner lost = new DocxDrawingAnchors.Owner("ShapeNode", "Root[0]/Cover[1]");
-        anchors.queue(List.of(dot(30, 300), onPage(1, dot(30, 300))), split);
-        anchors.queue(List.of(onPage(1, dot(60, 300))), lost);
+        anchors.queue(List.of(dot(30, 300), onPage(1, dot(30, 300))), -1, split);
+        anchors.queue(List.of(onPage(1, dot(60, 300))), -1, lost);
 
         DocxDrawingAnchors.Leftovers leftovers = anchors.endSection(2, null, document::createParagraph);
 

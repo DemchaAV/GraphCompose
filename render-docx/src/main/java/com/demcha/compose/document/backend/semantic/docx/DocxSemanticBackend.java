@@ -4023,8 +4023,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * A node's children in the order the page paints them: a stack's or a container's layers
-     * by their z-index, the ones sharing one in the order they were given. Drawings are stacked
-     * in the order they are queued, so a fill a later layer lies over is drawn under it.
+     * by their z-index, the ones sharing one in the order they were given. Drawings stack where
+     * the page paints them whatever order they are drawn in ({@link DocxDrawingAnchors#ordered});
+     * a node laid over the flow writes its text boxes in this order too.
      */
     private static List<DocumentNode> inPaintOrder(DocumentNode node) {
         List<com.demcha.compose.document.node.LayerStackNode.Layer> layers =
@@ -4081,7 +4082,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             x -= spare;
         }
         anchors.queue(List.of(DocxDrawings.Shape.textBox(x, top, width + spare, height, placed.startPage(),
-                paragraphXml(para))), new DocxDrawingAnchors.Owner(node.nodeKind(), layout.pathOf(node)));
+                paragraphXml(para))), layout.paintIndexOf(node),
+                new DocxDrawingAnchors.Owner(node.nodeKind(), layout.pathOf(node)));
         List<String> lost = new ArrayList<>();
         lost.add("laid over the flow, which gives it no room: set in a text box where the page sets it");
         lost.addAll(paragraphLost(node, roomLostInItsBox(node), null));
@@ -4675,7 +4677,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 // A badge holding its initials: in front, the text being its own.
                 List<DocxDrawings.Shape> shapes = DocxDrawings.of(fragment, canvasHeight).stream()
                         .map(shape -> shape.holding(badgeText).inFront()).toList();
-                queueDrawings(shapes, false);
+                queueDrawings(shapes, false, layout.paintIndexOf(fragment));
                 drew |= !shapes.isEmpty();
                 front |= !shapes.isEmpty();
                 unequalCorners |= !shapes.isEmpty() && roundsCornersUnequally(fragment);
@@ -4816,10 +4818,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (Double.isNaN(canvasHeight)) {
             return false;
         }
-        return queueDrawings(DocxDrawings.of(fragment, canvasHeight), front);
+        return queueDrawings(DocxDrawings.of(fragment, canvasHeight), front, layout.paintIndexOf(fragment));
     }
 
-    private boolean queueDrawings(List<DocxDrawings.Shape> shapes, boolean front) {
+    /**
+     * Draws shapes where the page puts them, stacked where the page paints them among the rest.
+     *
+     * @param painted where the page paints the fragment they are drawn from
+     *                ({@link DocxLayoutMetrics#paintIndexOf}), -1 where it is unknown
+     */
+    private boolean queueDrawings(List<DocxDrawings.Shape> shapes, boolean front, int painted) {
         if (front) {
             // A painted panel is a shaded cell, and both editors paint a cell's shading over
             // what lies behind the text: in front of it, the shape shows.
@@ -4827,11 +4835,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         DrawingCell cell = drawingCell;
         if (cell != null && !shapes.isEmpty() && shapes.stream().allMatch(cell::holds)) {
-            anchors.anchorInCell(cell.carrier(), anchors.ordered(shapes), cell.origin());
+            anchors.anchorInCell(cell.carrier(), anchors.ordered(shapes, painted), cell.origin());
             drewInCell = true;
             return true;
         }
-        anchors.queue(shapes, drawingFor);
+        anchors.queue(shapes, painted, drawingFor);
         return !shapes.isEmpty();
     }
 
@@ -9602,10 +9610,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             if (blocksWritten == blocksBefore) {
                 carriedSpacingBefore = carriedFromOutside;
-                if (holdsMovedContent(node) || paintsOutOfSourceOrder(node)) {
+                if (holdsMovedContent(node)) {
                     // Its text, moved into an earlier layer's stand-in, is in the flow all the
-                    // same; and drawings are drawn in source order, where the page stacks them
-                    // by their z-index.
+                    // same. Its drawings stack where the page paints them (DocxDrawingAnchors).
                     reportLayersWrittenInline(node);
                 }
             } else {
@@ -9626,27 +9633,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * order, held in to where it sets them, rather than laid over its outline. A clip that cuts
      * them is named where every container is written (reportClipCut), and a picture clipped to an
      * ellipse takes the ellipse's shape. One that writes nothing — its layers all drawn where the
-     * page puts them, a tile or an icon — is not named, unless the page stacks its layers in
-     * another order than they are given ({@link #paintsOutOfSourceOrder}).
+     * page puts them, a tile or an icon — is not named: its drawings stack as the page paints
+     * them, by their z-index, whatever order they are given in.
      */
     private void reportLayersWrittenInline(ShapeContainerNode node) {
         report.add(DocxExportReport.Severity.APPROXIMATED, "shape container", layout.pathOf(node),
                 "its layers are written inline, one after another in source order");
-    }
-
-    /**
-     * Whether the page paints a node's layers in another order than they are given, as their
-     * z-index sets them: the export writes and draws them in the order given.
-     */
-    private static boolean paintsOutOfSourceOrder(DocumentNode node) {
-        List<DocumentNode> painted = inPaintOrder(node);
-        List<DocumentNode> given = node.children();
-        for (int index = 0; index < painted.size() && index < given.size(); index++) {
-            if (painted.get(index) != given.get(index)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -13271,7 +13263,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         DocxDrawingAnchors.Owner outerOwner = drawingFor;
         drawingFor = new DocxDrawingAnchors.Owner(image.nodeKind(), layout.pathOf(image));
         try {
-            queueDrawings(List.of(picture), inFront);
+            queueDrawings(List.of(picture), inFront, layout.paintIndexOf(image));
         } finally {
             drawingFor = outerOwner;
         }
@@ -13804,7 +13796,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (!shapes.isEmpty() || DocxCellDrawings.drawnKind(fragment) != null) {
                 // Its place in the paint order is the table's, wherever it is anchored.
                 pending.add(new CellFragment(fragment, anchors.ordered(
-                        frames ? shapes : shapes.stream().map(DocxDrawings.Shape::inFront).toList())));
+                        frames ? shapes : shapes.stream().map(DocxDrawings.Shape::inFront).toList(),
+                        layout.paintIndexOf(fragment))));
                 drew |= !shapes.isEmpty();
             }
         }

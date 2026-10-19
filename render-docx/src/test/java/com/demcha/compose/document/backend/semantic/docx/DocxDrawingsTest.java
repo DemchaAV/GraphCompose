@@ -933,11 +933,11 @@ class DocxDrawingsTest {
     }
 
     @Test
-    void aContainerWhoseLayersThePageStacksInAnotherOrderIsStillNamed() throws Exception {
-        // The page lays the disc over the dot by their z-index; the export draws them in the
-        // order given, the dot over the disc.
+    void aContainerWhoseLayersThePageStacksInAnotherOrderIsStackedSoAndNotNamed() throws Exception {
+        // The page lays the disc over the dot by their z-index, the dot given last; the export
+        // stacks them as the page paints them.
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
-        try (XWPFDocument ignored = export(report, session -> session.pageFlow(page -> page
+        try (XWPFDocument document = export(report, session -> session.pageFlow(page -> page
                 .addLayerStack(stack -> stack.name("Stack")
                         .layer(new ShapeContainerBuilder().name("Stacked").rectangle(40, 40)
                                 .layer(new com.demcha.compose.document.dsl.EllipseBuilder().circle(36)
@@ -946,10 +946,17 @@ class DocxDrawingsTest {
                                         .fillColor(DocumentColor.WHITE).build(), LayerAlign.CENTER, 0)
                                 .build(), LayerAlign.TOP_LEFT)
                         .layer(new ParagraphBuilder().text("Beside the stack").build(), LayerAlign.TOP_RIGHT))))) {
+            String xml = document.getDocument().xmlText();
+            java.util.regex.Matcher anchor = java.util.regex.Pattern.compile(
+                    "relativeHeight=\"(\\d+)\".*?<wp:extent cx=\"(\\d+)\"", java.util.regex.Pattern.DOTALL).matcher(xml);
+            java.util.Map<Long, Long> heights = new java.util.HashMap<>();
+            while (anchor.find()) {
+                heights.put(Long.parseLong(anchor.group(2)), Long.parseLong(anchor.group(1)));
+            }
 
-            assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("shape container"))
-                    .extracting(DocxExportReport.Note::path)
-                    .singleElement().asString().matches(".*/Stacked\\[\\d+]");
+            assertThat(heights.get(org.apache.poi.util.Units.toEMU(8) * 1L)).as("the dot under the disc")
+                    .isLessThan(heights.get(org.apache.poi.util.Units.toEMU(36) * 1L));
+            assertThat(report.get().notes()).noneMatch(note -> note.subject().equals("shape container"));
         }
     }
 

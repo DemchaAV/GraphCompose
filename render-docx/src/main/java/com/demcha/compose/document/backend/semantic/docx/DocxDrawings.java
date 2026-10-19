@@ -331,7 +331,9 @@ final class DocxDrawings {
      * @return the value for {@code wp:anchor/@relativeHeight}
      */
     static long stackHeight(int order) {
-        return 251_658_240L + (order + 1L) * 1024L;
+        // Held to the range LibreOffice reads, a signed 32-bit count, within the attribute's: past
+        // it, drawings share its top.
+        return Math.min(251_658_240L + (order + 1L) * 1024L, Integer.MAX_VALUE);
     }
 
     /**
@@ -340,10 +342,11 @@ final class DocxDrawings {
      * @param shape the shape
      * @param id    an identifier for the drawing, unique in the document
      * @param order its place among the drawings: a later one is drawn over an earlier one
+     * @param drawn how many drawings were drawn before it, which numbers its name
      * @return the drawing, to be added to a run
      */
-    static CTDrawing drawing(Shape shape, long id, int order) {
-        return drawing(shape, id, order, null);
+    static CTDrawing drawing(Shape shape, long id, int order, int drawn) {
+        return drawing(shape, id, order, drawn, null);
     }
 
     /**
@@ -354,12 +357,13 @@ final class DocxDrawings {
      * @param shape  the shape
      * @param id     an identifier for the drawing, unique in the document
      * @param order  its place among the drawings: a later one is drawn over an earlier one
+     * @param drawn  how many drawings were drawn before it, which numbers its name
      * @param origin where the page puts the cell's text column and the paragraph's top, in
      *               points from the page's left and top edges
      * @return the drawing, to be added to a run of that paragraph
      */
-    static CTDrawing drawingInCell(Shape shape, long id, int order, CellOrigin origin) {
-        return drawing(shape, id, order, origin);
+    static CTDrawing drawingInCell(Shape shape, long id, int order, int drawn, CellOrigin origin) {
+        return drawing(shape, id, order, drawn, origin);
     }
 
     /**
@@ -370,12 +374,13 @@ final class DocxDrawings {
      * @param shape        the shape
      * @param id           an identifier for the drawing, unique in the document
      * @param order        its place among the drawings: a later one is drawn over an earlier one
+     * @param drawn        how many drawings were drawn before it, which numbers its name
      * @param paragraphTop where the page puts the paragraph's top, the space above its first line
      *                     included, in points from the page's top edge
      * @return the drawing, to be added to a run of that paragraph
      */
-    static CTDrawing drawingInParagraph(Shape shape, long id, int order, double paragraphTop) {
-        return drawing(shape, id, order, new CellOrigin(Double.NaN, paragraphTop));
+    static CTDrawing drawingInParagraph(Shape shape, long id, int order, int drawn, double paragraphTop) {
+        return drawing(shape, id, order, drawn, new CellOrigin(Double.NaN, paragraphTop));
     }
 
     /**
@@ -388,7 +393,7 @@ final class DocxDrawings {
     record CellOrigin(double x, double top) {
     }
 
-    private static CTDrawing drawing(Shape shape, long id, int order, CellOrigin origin) {
+    private static CTDrawing drawing(Shape shape, long id, int order, int drawn, CellOrigin origin) {
         long cx = Units.toEMU(shape.width());
         long cy = Units.toEMU(shape.height());
         boolean picture = shape.kind() == Kind.PICTURE;
@@ -416,7 +421,7 @@ final class DocxDrawings {
                 + "<wp:extent cx=\"" + cx + "\" cy=\"" + cy + "\"/>"
                 + "<wp:effectExtent l=\"0\" t=\"0\" r=\"0\" b=\"0\"/>"
                 + "<wp:wrapNone/>"
-                + "<wp:docPr id=\"" + id + "\" name=\"Drawing " + (order + 1) + "\"/>"
+                + "<wp:docPr id=\"" + id + "\" name=\"Drawing " + (drawn + 1) + "\"/>"
                 + "<wp:cNvGraphicFramePr/>"
                 + graphic
                 + "</wp:anchor></w:drawing>";

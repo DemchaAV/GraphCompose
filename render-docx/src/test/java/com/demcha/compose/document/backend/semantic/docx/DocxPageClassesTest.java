@@ -61,6 +61,32 @@ class DocxPageClassesTest {
     }
 
     @Test
+    void theDocumentsOwnPagesAreAskedOfItsOwnPageCount() {
+        // The page asks each of its pages as one of as many as the layout ran to, and those
+        // answers decide the kinds of page the layout has; the sample, a document of six, the rest.
+        assertThat(DocxPageClasses.of(zone(page -> page.total() == 1), 1))
+                .as("a footer on a one-page document only, which the page draws on its page")
+                .containsExactly(PageClass.FIRST);
+        assertThat(DocxPageClasses.of(zone(page -> page.total() > 1), 1))
+                .as("one on longer documents only, which the page draws on none of its one page")
+                .containsExactly(PageClass.EVEN, PageClass.LATER_ODD);
+        assertThat(DocxPageClasses.of(zone(page -> page.isFirst() && !page.isLast()), 1)).isEmpty();
+        assertThat(DocxPageClasses.of(zone(page -> page.total() == 1), 2)).isEmpty();
+        assertThat(DocxPageClasses.of(zone(page -> page.total() == 2), 2))
+                .as("drawn on both pages of a two-page document; a later odd page it has none of")
+                .containsExactly(PageClass.FIRST, PageClass.EVEN);
+        assertThat(DocxPageClasses.of(zone(page -> page.total() > 2), 2))
+                .as("drawn on neither page, only on the later odd pages, which it has none of")
+                .containsExactly(PageClass.LATER_ODD);
+        assertThat(DocxPageClasses.of(zone(page -> page.total() == 3), 3)).isEqualTo(EnumSet.allOf(PageClass.class));
+        assertThat(DocxPageClasses.of(zone(page -> page.total() > 3), 3)).isEmpty();
+        assertThat(DocxPageClasses.of(zone(page -> page.total() == 4 && page.number() == 2), 4))
+                .as("the second of its two even pages only")
+                .isNull();
+        assertThat(DocxPageClasses.of(zone(page -> page.total() == 8), 8)).isEqualTo(EnumSet.allOf(PageClass.class));
+    }
+
+    @Test
     void pageNumbersAreFiledAsWordFilesThem() {
         assertThat(DocxPageClasses.classOf(1)).isEqualTo(PageClass.FIRST);
         assertThat(DocxPageClasses.classOf(2)).isEqualTo(PageClass.EVEN);

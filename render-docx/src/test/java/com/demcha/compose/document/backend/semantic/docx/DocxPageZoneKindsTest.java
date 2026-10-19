@@ -114,6 +114,72 @@ class DocxPageZoneKindsTest {
     }
 
     @Test
+    void aZoneOnOnePageDocumentsOnlyIsOnTheOnePage() throws Exception {
+        List<DocxExportReport.Note> notes = new ArrayList<>();
+        byte[] docx;
+        try (DocumentSession session = onePage(footer("Single", page -> page.total() == 1))) {
+            docx = session.export(DocxSemanticBackend.builder().reportSink(report -> notes.addAll(report.notes())).build());
+        }
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            CTSectPr section = bodySection(document);
+
+            assertThat(section.isSetTitlePg()).isTrue();
+            assertThat(footerText(document, section, STHdrFtr.FIRST))
+                    .as("the page draws it on its one page, asked as one page of one")
+                    .isEqualTo("Single");
+            assertThat(footerText(document, section, STHdrFtr.DEFAULT)).isBlank();
+        }
+        assertThat(notes).noneSatisfy(note -> assertThat(note.subject()).isEqualTo("page zone"));
+    }
+
+    @Test
+    void aZoneOnLongerDocumentsOnlyIsNotOnTheOnePage() throws Exception {
+        try (XWPFDocument document = export(onePage(footer("Longer", page -> page.total() > 1)))) {
+            CTSectPr section = bodySection(document);
+
+            assertThat(section.isSetTitlePg()).isTrue();
+            assertThat(footerText(document, section, STHdrFtr.FIRST))
+                    .as("the page draws it on none of its one page")
+                    .isBlank();
+        }
+    }
+
+    @Test
+    void aZoneOnTwoPageDocumentsOnlyIsOnBothPagesOfOne() throws Exception {
+        List<DocxExportReport.Note> notes = new ArrayList<>();
+        byte[] docx;
+        try (DocumentSession session = twoPages(footer("Pair", page -> page.total() == 2))) {
+            docx = session.export(DocxSemanticBackend.builder().reportSink(report -> notes.addAll(report.notes())).build());
+        }
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            CTSectPr section = bodySection(document);
+
+            assertThat(footerText(document, section, STHdrFtr.FIRST)).isEqualTo("Pair");
+            assertThat(footerText(document, section, STHdrFtr.EVEN)).isEqualTo("Pair");
+            assertThat(footerText(document, section, STHdrFtr.DEFAULT))
+                    .as("a later odd page, which a document of two pages has none of")
+                    .isBlank();
+        }
+        assertThat(notes)
+                .as("drawn on both pages, as the page draws it, its predicate follows the pages Word has")
+                .noneSatisfy(note -> assertThat(note.subject()).isEqualTo("page zone"));
+    }
+
+    @Test
+    void aZoneOnLongerDocumentsOnlyIsOnNeitherPageOfTwo() throws Exception {
+        try (XWPFDocument document = export(twoPages(footer("Longer", page -> page.total() > 2)))) {
+            CTSectPr section = bodySection(document);
+
+            assertThat(footerText(document, section, STHdrFtr.FIRST)).isBlank();
+            assertThat(footerText(document, section, STHdrFtr.EVEN)).isBlank();
+            assertThat(footerText(document, section, STHdrFtr.DEFAULT))
+                    .as("the footer of the later odd pages, which a document of two pages has none of")
+                    .isEqualTo("Longer");
+            assertThat(evenAndOddPages(document)).isTrue();
+        }
+    }
+
+    @Test
     void aZoneThatSkipsTheFirstPageIsPlacedWhereTheOtherPagesDrawIt() throws Exception {
         long everyPage;
         try (XWPFDocument document = export(twoPages(footer("Body", null)))) {
@@ -157,6 +223,16 @@ class DocxPageZoneKindsTest {
                 page.addParagraph(p -> p.text("Line " + number));
             }
         });
+        return session;
+    }
+
+    private static DocumentSession onePage(DocumentPageZone zone) {
+        DocumentSession session = GraphCompose.document()
+                .pageSize(300, 200)
+                .margin(DocumentInsets.of(30))
+                .create();
+        session.chrome().zone(zone);
+        session.pageFlow(page -> page.addParagraph(p -> p.text("Line")));
         return session;
     }
 

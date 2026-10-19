@@ -980,8 +980,16 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   held at least its outline's height less the borders both editors draw
   outside it where its padding does not hold its top border, with its layers inside,
   its corners squared and reported — a rota's shift chips keep their colour and their
-  size. A one-line label the shape centres top to bottom, on a line taller
-  than the outline leaves it, is written that much shorter, down to the
+  size. Its cell sets what it writes at the top, the middle or the foot, where the
+  first written layer's alignment sets that layer. A paragraph whose own alignment does
+  not lean the way its layer's does, or that an offset moves across, is held in to its
+  box: the cell's room less the width its table laid its lines out at, set at the
+  alignment's share and moved by its offset. What the cell cannot set where the page does
+  is named (`layer offset`): a written layer after the first, which the cell writes under
+  the layers before it; an offset down or up; a box set past the shape's right edge or
+  left of it; and a layer set across by a box the layout does not give — not a paragraph,
+  or one whose lines are not found. A one-line label the shape centres top to bottom, on
+  a line taller than the outline leaves it, is written that much shorter, down to the
   room Word leaves the cell's content — the outline less the margins written
   and the borders, which Word keeps outside its content, as wide as it draws
   them — its text seated

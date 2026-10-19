@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export sets a panel's layer where its alignment sets it.** A filled or outlined
+  rectangle or rounded rectangle with text, composed in a table cell, is written as a panel, a
+  table of one cell, and its cell was always written centred. Measured in Word and LibreOffice on
+  Windows, in a 100×60 panel, a label set at the top-left corner stood at the middle, 22.5pt low.
+  One set at the bottom-right corner stood at the middle and at the left, 46pt left of the
+  page's. Neither was named.
+  - The cell now sets what it writes at the top, the middle or the foot, as its first written
+    layer is set. A paragraph is held in across to its box where its own alignment does not lean
+    the way its layer's does, or where an offset moves it across. Its width is read off the lines
+    its table laid out for it. Both labels stand where the page sets them, in both editors.
+  - What the cell cannot set is named (`layer offset`):
+    - a written layer after the first, which the cell writes under the layers before it;
+    - an offset down or up;
+    - a box set past the shape's right edge, or left of it;
+    - a layer set across by a box the layout does not give: a layer other than a paragraph, or a
+      paragraph whose lines are not found.
 - **A DOCX export sets a layer across where its offset moves it.** Measured in Word and
   LibreOffice on Windows, a stack's one layer moved 40pt in stood at the stack's left edge in
   both. A band's layer the page sets 20pt left of the stack stood at the stack's edge, the page

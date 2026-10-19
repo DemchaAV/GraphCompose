@@ -7333,6 +7333,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // alignment puts it: a portrait centred in a sidebar stood at the sidebar's left edge.
         if (node instanceof com.demcha.compose.document.node.AlignNode align) {
             placeAcross(align, align.child());
+        } else if (isOneLayer(node)) {
+            // So does a stack's one layer, where the page sets it in the stack: a line moved 40pt in
+            // stood at the stack's left edge. Moved whole, it runs as far past the stack's other
+            // side, which a table cell's text does not: there it is written where the stack starts.
+            if (currentCell == null) {
+                placeAcross(node, node.children().get(0));
+            }
+            reportTheLayerMoved(node);
         }
         try {
             writeChildren(document, node.children(), spacingOf(node), followedInFlow.remove(node));
@@ -16395,6 +16403,57 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Names the one layer of a stack whose offset Word does not write, which it writes where the
+     * stack starts.
+     *
+     * <ul>
+     *   <li>Lower or higher than the stack starts: an offset moves a layer without making room for
+     *       it, so the page sets it over what follows the stack or over what comes before it, which
+     *       the flow cannot. Not where a band or a column sets the page's distance down to the next
+     *       block written (resumeSpacing): measured to the layer's first block where the page sets
+     *       it, the offset is written in that distance.</li>
+     *   <li>Left or right of the stack's edge, in a table cell (writeContainerBody).</li>
+     *   <li>Where it has no place of its own in the layout — composed in a table cell — by its
+     *       offset as given. With no layout behind the export, the document's note says so.</li>
+     * </ul>
+     */
+    private void reportTheLayerMoved(DocumentNode stack) {
+        DocumentNode layer = stack.children().get(0);
+        if (onlyDrawn(layer)) {
+            return;
+        }
+        com.demcha.compose.document.layout.PlacedNode box = layout.placement(stack);
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(layer);
+        if (box == null || placed == null) {
+            com.demcha.compose.document.node.LayerStackNode.Layer given =
+                    ((com.demcha.compose.document.node.LayerStackNode) stack).layers().get(0);
+            if (!layout.isEmpty() && (Math.abs(given.offsetX()) > 0.5 || Math.abs(given.offsetY()) > 0.5)) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, "layer offset", layout.pathOf(layer),
+                        "with no place of its own in the layout, it is written where the stack starts, its offset of "
+                        + pointsOf(given.offsetX()) + "pt across and " + pointsOf(given.offsetY()) + "pt down not "
+                        + "written");
+            }
+            return;
+        }
+        List<String> moved = new ArrayList<>();
+        double across = placed.placementX() - layer.margin().left() - (box.placementX() + stack.padding().left());
+        if (currentCell != null && Math.abs(across) > 0.5) {
+            moved.add(pointsOf(Math.abs(across)) + "pt " + (across > 0 ? "right" : "left")
+                      + " of the stack's edge, in a table cell, whose text Word holds inside it");
+        }
+        double lower = box.placementY() + box.placementHeight() - stack.padding().top() - layer.margin().top()
+                       - (placed.placementY() + placed.placementHeight());
+        if (Double.isNaN(resumeSpacing) && Math.abs(lower) > 0.5) {
+            moved.add(pointsOf(Math.abs(lower)) + "pt " + (lower > 0 ? "lower" : "higher")
+                      + " than its stack starts, without making room for it");
+        }
+        if (!moved.isEmpty()) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "layer offset", layout.pathOf(layer),
+                    "the page sets it " + String.join(", and ", moved) + "; Word writes it where the stack starts");
+        }
+    }
+
+    /**
      * Holds an alignment's child in across where the page puts it in a table's cell built from a
      * node, where neither has a place of its own in the layout.
      *
@@ -16508,7 +16567,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Holds a block in across, from the edges it is written between to where the layout placed
-     * it, with room to spare for a paragraph on the side its text does not lean on.
+     * it, with room to spare for a paragraph on the side its text does not lean on; out past an
+     * edge where the layout placed it past it.
      *
      * @param layer        the block
      * @param placedX      the page position of the left edge of its box, where the layout put it
@@ -16520,7 +16580,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         double contentLeft, double contentRight) {
         double left = placedX - layer.margin().left() - contentLeft;
         double right = contentRight - (placedX + placedWidth + layer.margin().right());
-        if (!(left > 0.5) && !(right > 0.5)) {
+        // A block the page sets past an edge stands out past it as far, where a paragraph's indent
+        // and a table's take a side below zero: a band's layer set left of the stack stands in the
+        // margin, and a layer moved whole keeps the page's measure, its lines breaking where the
+        // page breaks them. A cell's text starts no further left than the cell's own (applyInset):
+        // there a block stands left only as far as the indents round it give, and what it cannot is
+        // named. Its right side is held at the edge, as a line the page sets past it is given its
+        // room by the paragraph itself (letTheLineStandOut).
+        double pastLeft = left < -0.5 ? left : 0;
+        double pastRight = right < -0.5 && currentCell == null ? right : 0;
+        double floor = currentCell != null ? -Math.max(0, insetLeft + cellTextShift) : Double.NEGATIVE_INFINITY;
+        if (pastLeft - floor < -0.5) {
+            // A drawing is drawn where the page draws it, whatever the indents.
+            if (!onlyDrawn(layer)) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, "layer offset", layout.pathOf(layer),
+                        "the page sets it " + pointsOf(-pastLeft) + "pt left of the edge it is written from; "
+                        + "in its table cell " + (floor < -0.5 ? "it stands only " + pointsOf(-floor)
+                                + "pt left of that edge" : "it is written at that edge"));
+            }
+            pastLeft = floor;
+        }
+        if (!(left > 0.5) && !(right > 0.5) && pastLeft == 0 && pastRight == 0) {
             return;
         }
         // Only a paragraph's own box needs room to spare: a container's paragraphs take theirs
@@ -16535,8 +16615,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else {
             right -= slack;
         }
-        insetLeft += Math.max(0, left);
-        insetRight += Math.max(0, right);
+        // Past an edge it keeps its box's own: room to spare there widened a layer moved 40pt in by
+        // 12.8pt, and its three lines took two in Word and in LibreOffice.
+        insetLeft += pastLeft < 0 ? pastLeft : Math.max(0, left);
+        insetRight += pastRight < 0 ? pastRight : Math.max(0, right);
     }
 
     /**

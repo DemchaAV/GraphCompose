@@ -856,7 +856,12 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   where the lines its table laid out for it stand and a picture where the alignment sets
   one of its written width; any other block there, or one inside a panel or another table
   in its cell, is written from the cell's left and named, a drawing aside, which its table
-  draws where the page draws it. Drawing is drawn as a shape where the
+  draws where the page draws it. A layer the page sets past the stack's edge stands out
+  past it as far, by an indent below zero, its box's own width and no more: a stack at the
+  page margin with a layer offset 20pt left of it has that layer in the margin. In a table
+  cell, whose text starts no further left than the cell's own, it stands left only as far
+  as the indents round it give, and the report names the rest (`layer offset`); its right
+  side stays at the edge. Drawing is drawn as a shape where the
   page draws it (see "What is skipped") and does not count as content. A later layer
   the page starts above where the layers before it end — a caption over the foot of
   its photo, a label in a card's corner, text over text — is written under them, as
@@ -869,6 +874,18 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   them writes in the flow, its note says whether the page lays one over another is not
   measured. A layer the page starts under the layers before it, but nearer them than
   its own margin above it, is written that margin below them, unnamed.
+- **A layer stack of one layer → its layer, where the page sets it across.** It lays
+  nothing over anything and is written as its contents, in the flow. Its layer is held
+  to its box in the stack, as a band's layer is: an offset across moves it whole, past
+  the stack's other edge as far, and it keeps the page's measure, its lines breaking at
+  the page's words. In a table cell, whose text Word holds inside the cell, it is written
+  where the stack starts; so it is composed in a table's cell, where the stack has no place
+  of its own in the layout and its offset is named as given. An offset down or up moves
+  the layer without making room for it, over what follows the stack or what comes before
+  it, which Word's flow cannot do: it is written where the stack starts. The report names
+  each (`layer offset`), but not a layer that only draws, which is drawn where the page
+  draws it, nor one written where a band or a layer of a column sets the next block at the
+  page's distance below what is above it: that distance holds the offset.
 - **Text at the left and the right of one band → one line split by a tab.** A
   container or a layer stack holding exactly two single-line paragraphs, level with
   one another and apart across the page — a CV entry's title and its dates — is one

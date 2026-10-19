@@ -8,6 +8,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export names the blank page Word adds before a section.** Every section of a
+  multi-section document numbers its pages from 1. Once the document states different even and
+  odd pages, as it does for a page zone on some of them, Word starts every section on an odd
+  page. It adds a blank page before a section whose section before it runs to an odd number of
+  pages, with nothing said. Measured in Word and LibreOffice on Windows, sections of one, one and
+  one page came out five pages in Word and three in LibreOffice. Sections of two, one and one
+  page came out five in Word, and of one, three and two pages eight; LibreOffice adds none. In
+  both editors a footer on even pages stood on each section's second page, where the page draws
+  it: they file a section's even and odd pages by its own numbers. The report now names each
+  section Word adds a page before (`page zone`), and with no layout behind the section before it,
+  says where it would.
 - **A DOCX export writes a page zone whose predicate reads the page total on the pages the page
   draws it on.** Word paginates for itself, so a zone's `appliesTo` predicate is asked over
   sample pages, the document's own and more up to the sixth, and sorted into Word's first, even

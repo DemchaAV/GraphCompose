@@ -158,6 +158,13 @@ would behave differently left to itself, the export tells it what the PDF does:
   otherwise repeat the previous section's;
 - the metadata is the first section's that states any.
 
+Word starts every section on an odd page once the document states different even and odd
+pages, as it does for a page zone on some of them. So it adds a blank page before a section
+whose section before it runs to an odd number of pages. Measured in Word on Windows, three
+sections of one page each came out five pages; LibreOffice adds none. The report names each
+section Word adds a page before (`page zone`), from the page count the layout gives the section
+before it.
+
 Styles, fonts and bookmark names are shared across the document, so a link in the cover
 reaches an anchor in the body. `export(backend)` takes any semantic backend; one that
 cannot combine sections refuses more than one.

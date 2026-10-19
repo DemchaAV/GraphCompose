@@ -1193,6 +1193,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     endSection(document);
                 }
                 beginSection(section, index);
+                if (evenAndOdd && index > 0) {
+                    reportTheBlankPageBefore(sections.get(index - 1));
+                }
                 sectionFirstElement = document.getBodyElements().size();
                 backgroundsInBody = List.of();
                 applyPageGeometry(document, context.canvas());
@@ -1267,6 +1270,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 return bytes;
             }
         }
+    }
+
+    /**
+     * Names the blank page Word adds before the section being written, where the document states
+     * different even and odd pages. Every section numbers its pages from 1, and Word then starts
+     * every section on an odd page, adding a blank one where the section before it runs to an odd
+     * number of pages. Measured in Word on Windows, three sections of a page each ran to five
+     * pages; LibreOffice adds none. Where the layout does not count the section before, the note
+     * says where Word would.
+     *
+     * @param before the section before the one being written
+     */
+    private void reportTheBlankPageBefore(SemanticSection before) {
+        com.demcha.compose.document.layout.LayoutGraph graph = before.context().layoutGraph();
+        int pages = graph == null ? 0 : graph.totalPages();
+        if (pages > 0 && pages % 2 == 0) {
+            return;
+        }
+        report.add(DocxExportReport.Severity.APPROXIMATED, "page zone", "section " + (sectionIndex + 1),
+                (pages > 0
+                        ? "Word adds a blank page before this section: the section before it runs to "
+                          + (pages == 1 ? "one page" : pages + " pages") + ", and"
+                        : "Word adds a blank page before this section where the section before it runs to an "
+                          + "odd number of pages:")
+                + " Word starts every section on an odd page where the document states different even and odd "
+                + "pages, as it does for a page zone on some of them, each section numbering its pages from 1; "
+                + "LibreOffice adds none");
     }
 
     /**

@@ -468,14 +468,16 @@ class DocxComposedCellTest {
     }
 
     @Test
-    void aPaddedChipsLabelIsSeatedInsideItsPadding() throws Exception {
-        // Its 2pt padding is written 40 twips above and below, as before; the line is seated.
+    void aPaddedChipsLabelIsSeatedInItsOutline() throws Exception {
+        // The page sets the padding round the outline: written round the chip's table, the outline
+        // holds its height whole, with no margin inside it, and the line is seated. Measured, the
+        // label stood on the page's baseline in Word and LibreOffice.
         XWPFTableCell chip = beside(labelledChip("09:00-16:00", com.demcha.compose.font.FontName.CARLITO, 10.4, 17.5,
                 DocumentInsets.of(2), null, null));
 
         assertThat(lineOf(chip)).isEqualTo(237 / 20.0);
-        assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(350 - 80);
-        assertThat(verticalMarginsOf(chip)).containsExactly(40L, 40L);
+        assertThat(heightOf(chip.getTableRow().getTable())).isEqualTo(350);
+        assertThat(verticalMarginsOf(chip)).containsExactly(0L, 0L);
     }
 
     @Test
@@ -493,14 +495,14 @@ class DocxComposedCellTest {
     @Test
     void aPaddedChipsLabelItsOutlineHoldsIsSeatedOnTheOutlinesMiddle() throws Exception {
         // The page lays a shape's layers out in its outline, its padding round it: Lato's 14.4pt
-        // line fits the 17.5pt outline and stands on its middle. Cut to the 12.4pt its borders and
-        // margins leave, a point at each side, its text is lowered a point. Read as starting at
-        // the top of the outline less its padding, it stood half a point lower.
+        // line fits the 17.5pt outline and stands on its middle. Its padding written round the
+        // chip's table, the line holds the 15.3pt its borders leave and is seated there. Measured,
+        // the label stood on the page's baseline in Word and LibreOffice, to a tenth of a point.
         XWPFTableCell chip = beside(labelledChip("09:00-16:00", com.demcha.compose.font.FontName.LATO, 12, 17.5,
                 DocumentInsets.of(2), OUTLINE, null));
 
-        assertThat(lineOf(chip)).isEqualTo(12.4);
-        assertThat(positionOf(chip)).isEqualTo(-2);
+        assertThat(lineOf(chip)).isEqualTo(15.3);
+        assertThat(positionOf(chip)).isZero();
     }
 
     @Test

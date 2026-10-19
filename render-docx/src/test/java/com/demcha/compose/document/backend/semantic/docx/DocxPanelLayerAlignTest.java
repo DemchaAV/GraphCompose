@@ -156,13 +156,14 @@ class DocxPanelLayerAlignTest {
     }
 
     @Test
-    void aPaddedShapesLayerIsHeldInTheRoomItsPaddingLeaves() throws Exception {
+    void aPaddedShapesLayerIsHeldInItsOutline() throws Exception {
+        // The page sets the padding round the outline and the layers in the outline itself.
         DocumentNode panel = new ShapeContainerBuilder().rectangle(ROOM, 60).fillColor(LIGHT).padding(5)
                 .position(text("BotRight"), 0, 0, LayerAlign.BOTTOM_RIGHT).build();
         Exported exported = export(panel);
 
-        assertThat(exported.left("BotRight")).as("at the right of the cell's text, its margins the padding")
-                .isCloseTo(Math.round((ROOM - 10 - exported.widthOf("BotRight")) * 20), within(2L));
+        assertThat(exported.left("BotRight")).as("at the outline's right")
+                .isCloseTo(Math.round((ROOM - exported.widthOf("BotRight")) * 20), within(2L));
     }
 
     @Test

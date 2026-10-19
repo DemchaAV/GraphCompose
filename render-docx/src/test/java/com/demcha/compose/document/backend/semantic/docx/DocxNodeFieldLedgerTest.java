@@ -305,7 +305,12 @@ class DocxNodeFieldLedgerTest {
                 "stroke:REPORTED:its translucency, as a panel's border, flattened against the panel's fill or "
                 + "the colour under it, and as a panel's, " + BORDER_WIDTH + "; drawn, its alpha and its width "
                 + "are written; any other is written",
-                "padding:WRITTEN", "margin:WRITTEN",
+                "padding:REPORTED:written as a panel's in a table cell, round its outline as a margin is, and "
+                + "below it, where its table ends its cell and the cell sets what it holds at its middle or "
+                + "foot, as far as Word does not count it there; any other is written",
+                "margin:REPORTED:written as a panel's in a table cell, below it, where its table ends its cell "
+                + "and the cell sets what it holds at its middle or foot, as far as Word does not count it "
+                + "there; any other is written",
                 "transform:REPORTED");
         node(ShapeNode.class, "name:INERT", "width:WRITTEN", "height:REPORTED:" + RULE_WIDTH,
                 "fillColor:REPORTED:" + RULE_TRANSLUCENCY,

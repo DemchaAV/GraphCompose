@@ -978,10 +978,16 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   is written as a panel is, a table of one cell in its fill and outline, its
   outline's width within the cell and a point for the editor's face, its row
   held at least its outline's height less the borders both editors draw
-  outside it where its padding does not hold its top border, with its layers inside,
+  outside it, with its layers inside,
   its corners squared and reported — a rota's shift chips keep their colour and their
-  size. Its cell sets what it writes at the top, the middle or the foot, where the
-  first written layer's alignment sets that layer. A paragraph whose own alignment does
+  size. Its padding stands round the outline, as the page sets it, written as a margin
+  is: the table's indent and the space above and below it. Word and LibreOffice set a
+  cell's content at its middle or its foot without the space below a table that ends
+  it: where the shape's table ends its cell, in a row held at the page's height, a
+  centred cell's space above gives that up, and the shape stands where the page centres
+  it; what it cannot give, and the space below in a cell set at its foot, is named on
+  the shape. Its cell sets what it writes at the top, the middle or the
+  foot, where the first written layer's alignment sets that layer. A paragraph whose own alignment does
   not lean the way its layer's does, or that an offset moves across, is held in to its
   box: the cell's room less the width its table laid its lines out at, set at the
   alignment's share and moved by its offset. What the cell cannot set where the page does

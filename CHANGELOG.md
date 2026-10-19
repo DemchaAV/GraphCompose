@@ -8,6 +8,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps a panel's padding round its outline.** The page sets a shape container's
+  padding round its outline, and its layers in the outline itself. Written as a panel in a table
+  cell, the padding was the cell's margins, inside the outline. Measured in Word and LibreOffice
+  on Windows, a 10pt padding stood the fill 10pt left of the page's and a label at its top-left
+  9pt low. A 20pt left padding stood a label at its bottom-right 20pt left. Neither was named.
+  - The padding is now written round the panel's table, as a margin is: its indent and the space
+    above and below it. Fill and text stand where the page sets them, in both editors, where the
+    cell sets what it holds at its top or its middle.
+  - Both editors set a cell's content at its middle or its foot without the space below a table
+    that ends it. Where the shape's table ends its cell, in a row held at the page's height, a
+    centred cell takes that space off the space above, which sets the shape where the page centres
+    it. What it cannot take (more space below than above), and the space below in a cell set at
+    its foot, is named on the shape: it stands that much lower.
 - **A DOCX export sets a panel's layer where its alignment sets it.** A filled or outlined
   rectangle or rounded rectangle with text, composed in a table cell, is written as a panel, a
   table of one cell, and its cell was always written centred. Measured in Word and LibreOffice on

@@ -805,6 +805,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The node that is all a composed cell holds, where the cell is all its row holds; null
     // otherwise (see giveBackWhatTheLabelNeeds).
     private DocumentNode aloneInItsRow;
+    // The node a composed cell is built from, and where the cell sets it down a row held at the
+    // page's height: 0 at the top, or where the row is not held, 0.5 the middle, 1 the foot (see
+    // setDownItsCell).
+    private DocumentNode composedCellContent;
+    private double composedCellDown;
     // How wide content may be inside that cell, so a table nested in it gets a width
     // instead of being squeezed by Word to a character a line.
     private double currentCellWidth = Double.NaN;
@@ -1135,6 +1140,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         composedCellRepeats = false;
         composedCellRules = List.of();
         composedRulesWritten = 0;
+        composedCellContent = null;
+        composedCellDown = 0;
         anchoredInCells.clear();
         panelCell = null;
         moves.clear();
@@ -6718,6 +6725,53 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final double CLEAR_OF_THE_GRIDLINE_POINTS = 0.5;
 
     /**
+     * The space round a shape that is all its composed cell holds, where the cell sets it down its
+     * height as the page does.
+     *
+     * <p>Word and LibreOffice set a cell's content at its middle or its foot by what comes before
+     * the paragraph closing the cell after a table: the space below the shape's table is not
+     * counted there. Measured with a 10pt padding round a 60pt shape in an 80pt row: centred, the
+     * shape stood 5pt low in both; set at the foot, 10pt low; at the top, where the page sets it. In
+     * a centred cell the space above gives up the space below, and the shape stands where the page
+     * centres it. What it cannot give, and the space below in a cell set at the foot, is named.</p>
+     */
+    private DocumentInsets setDownItsCell(DocumentNode node, DocumentInsets margin) {
+        if (composedCellDown == 0 || !(margin.bottom() > 0.5) || !endsItsComposedCell(node)) {
+            return margin;
+        }
+        boolean atTheFoot = composedCellDown == 1;
+        double above = atTheFoot ? margin.top() : margin.top() - margin.bottom();
+        double low = atTheFoot ? margin.bottom() : Math.max(0, -above) / 2;
+        if (low > 0.5) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node),
+                    "its table cell sets what it holds at its " + (atTheFoot ? "foot" : "middle") + ", and Word "
+                    + "does not count the space below its table there: it stands " + pointsOf(low)
+                    + "pt lower than the page sets it");
+        }
+        return new DocumentInsets(Math.max(0, above), margin.right(), margin.bottom(), margin.left());
+    }
+
+    /**
+     * Whether a node is the last block its composed cell writes, its table the last thing in the
+     * cell: the node the cell is built from, or the last child down a run of blocks that write
+     * their children one after another and paint nothing — what comes above it, a heading or
+     * nothing, is counted as Word counts it.
+     */
+    private boolean endsItsComposedCell(DocumentNode node) {
+        DocumentNode last = composedCellContent;
+        while (last != null && last != node) {
+            boolean flow = (last instanceof SectionNode || last instanceof ContainerNode) && paintOf(last).isEmpty()
+                           || last instanceof com.demcha.compose.document.node.AlignNode
+                           || last instanceof com.demcha.compose.document.layout.LayoutAnchorNode || isOneLayer(last);
+            if (!flow || last.children().isEmpty()) {
+                return false;
+            }
+            last = last.children().get(last.children().size() - 1);
+        }
+        return last == node;
+    }
+
+    /**
      * Writes one table of a panel: the whole panel, or the part of it between page breaks.
      *
      * @param content    what the panel's cell holds: a container's children, or a row's columns
@@ -6730,6 +6784,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                  CellContent content, boolean first, boolean last, boolean onANewPage) throws Exception {
         DocumentInsets margin = node.margin();
         DocumentInsets padding = node.padding();
+        if (node instanceof ShapeContainerNode) {
+            // The page sets a shape's padding round its outline, as a margin, and its layers in the
+            // outline itself (ShapeContainerDefinition). Written as the cell's margins, a 10pt padding
+            // stood the fill 10pt left of the page's and a label at its top-left 9pt low, in Word and
+            // LibreOffice.
+            margin = new DocumentInsets(margin.top() + padding.top(), margin.right() + padding.right(),
+                    margin.bottom() + padding.bottom(), margin.left() + padding.left());
+            padding = DocumentInsets.zero();
+            margin = setDownItsCell(node, margin);
+        }
         DocumentBorders borders = paint.borders() == null ? DocumentBorders.NONE : paint.borders();
         double halfLeft = strokeWidth(borders.left()) / 2;
         double halfRight = strokeWidth(borders.right()) / 2;
@@ -7099,9 +7163,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private double panelWidth(DocumentNode node) {
         boolean known = currentCell != null ? Double.isFinite(currentCellWidth) : contentWidth < Double.MAX_VALUE;
-        double available = known
-                ? availableWidth() - node.margin().left() - node.margin().right()
-                : Double.NaN;
+        // A shape's padding stands round its outline, as its margin does (writePanelPiece).
+        double sides = node.margin().left() + node.margin().right()
+                       + (node instanceof ShapeContainerNode ? node.padding().horizontal() : 0);
+        double available = known ? availableWidth() - sides : Double.NaN;
         java.util.OptionalDouble placed = layout.placedWidth(node);
         if (placed.isEmpty() && node instanceof ShapeContainerNode shape) {
             // Composed in a table cell, it has no placement; its outline states its size, within
@@ -7666,11 +7731,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * The width a shape written as a panel leaves what it writes: its cell's, its outline less the
-     * padding written as the cell's margins.
+     * The width a shape written as a panel leaves what it writes: its outline's, as the page sets
+     * its layers in it, its padding written round it (writePanelPiece).
      */
     private static double roomInItsPanel(ShapeContainerNode shape) {
-        return shape.outline().width() - shape.padding().horizontal();
+        return shape.outline().width();
     }
 
     /**
@@ -15310,6 +15375,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             boolean outerRepeats = composedCellRepeats;
             List<DocumentNode> outerRules = composedCellRules;
             int outerRulesWritten = composedRulesWritten;
+            DocumentNode outerContent = composedCellContent;
+            double outerDown = composedCellDown;
+            composedCellContent = source.content();
+            // A row the layout does not hold — a table's own composed in a cell — Word sets as tall as
+            // what it holds, and it sets that from the top.
+            composedCellDown = layout.rowHeight(node, placement.row()).isEmpty() ? 0
+                    : switch (resolveCellAnchor(node, placement)) {
+                        case TOP_LEFT, TOP_RIGHT -> 0;
+                        case CENTER_LEFT, CENTER, CENTER_RIGHT -> 0.5;
+                        case BOTTOM_LEFT, BOTTOM_RIGHT, DEFAULT -> 1;
+                    };
             currentCellWidth = usableWidthOf(cell, placement);
             tablesCells.add(cell.getCTTc());
             // A table nested in a composed cell has no rows of its own in the layout: its cells
@@ -15336,6 +15412,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 composedCellRepeats = outerRepeats;
                 composedCellRules = outerRules;
                 composedRulesWritten = outerRulesWritten;
+                composedCellContent = outerContent;
+                composedCellDown = outerDown;
             }
             nameTheBorderEndingACell(source.content(), TableGrid.columnCount(node) == 1);
             return;

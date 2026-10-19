@@ -57,8 +57,10 @@ import java.util.function.Supplier;
  * in that cell's paragraph, placed from the paragraph and the cell's text column, so it moves
  * with its row; the cell holds it whole, so Word's clipping cuts nothing.</p>
  *
- * <p>Every shape takes its place in the paint order when it is drawn ({@link #ordered}), not
- * when it finds its paragraph.</p>
+ * <p>Every shape takes its place in the paint order from where the page paints the fragment it
+ * is drawn from ({@link #ordered}), not when it is drawn or when it finds its paragraph: Word
+ * stacks drawings by those places, a later one over an earlier one, and the export draws a
+ * stack's layers, a band's and a table's cells in the order it writes them.</p>
  */
 final class DocxDrawingAnchors {
 
@@ -78,8 +80,21 @@ final class DocxDrawingAnchors {
     private final List<Offer> offers = new ArrayList<>();
     // Identifiers unique in the document, shared with the other drawings the export writes.
     private final LongSupplier ids;
-    // The order the shapes are painted in, across the document.
-    private int order;
+    // The places given each fragment's shapes in the section so far, by the fragment's place in
+    // the page's paint order.
+    private final Map<Integer, Integer> placesTaken = new HashMap<>();
+    // The latest place given: a shape drawn from no fragment the page paints is drawn as the
+    // fragment that place is of.
+    private int latest = -1;
+    // How many shapes have been drawn in the document, which numbers their names.
+    private int drawn;
+
+    /**
+     * How many places in the paint order a fragment's shapes take, at most: one drawn as more
+     * shapes than that stacks the rest at its last place. A fragment is drawn as five shapes at
+     * most ({@link DocxDrawings#of}).
+     */
+    static final int PLACES_PER_FRAGMENT = 8;
 
     DocxDrawingAnchors(LongSupplier ids) {
         this.ids = ids;
@@ -94,29 +109,43 @@ final class DocxDrawingAnchors {
         breakParagraph.clear();
         seats.clear();
         offers.clear();
-        order = 0;
+        placesTaken.clear();
+        latest = -1;
+        drawn = 0;
     }
 
     /**
      * A shape and its place in the paint order: a later one is drawn over an earlier one.
      *
      * @param shape the shape
-     * @param order its place, given when it was drawn, whenever it is anchored
+     * @param order its place, from where the page paints the fragment it is drawn from, whenever
+     *              it is anchored
+     * @param drawn how many shapes were drawn in the document before it, which numbers its name
      */
-    record Ordered(DocxDrawings.Shape shape, int order) {
+    record Ordered(DocxDrawings.Shape shape, int order, int drawn) {
     }
 
     /**
-     * Gives shapes their places in the paint order, in the order they come, as drawn now.
+     * Gives shapes drawn from one fragment their places in the paint order: after every shape of
+     * a fragment the page paints before it, and in the order they come among that fragment's.
      *
-     * <p>A shape is painted in the order it is drawn, not the order it finds a paragraph: one
-     * waiting for its page's first paragraph would otherwise be painted over a shape anchored
-     * in a cell meanwhile, though drawn before it.</p>
+     * <p>A shape is painted where the page paints it, not in the order it is drawn or finds a
+     * paragraph: a disc a dot is laid under, its layers given dot last, hides the dot as on the
+     * page; one waiting for its page's first paragraph is not painted over a shape anchored in a
+     * cell meanwhile, though painted before it.</p>
+     *
+     * @param painted where the page paints the fragment they are drawn from, from 0, as the layout
+     *                lists its fragments; -1 where it is none the layout holds, and they are drawn
+     *                as the fragment the latest place given is of, after its shapes so far
      */
-    List<Ordered> ordered(List<DocxDrawings.Shape> shapes) {
+    List<Ordered> ordered(List<DocxDrawings.Shape> shapes, int painted) {
         List<Ordered> ordered = new ArrayList<>(shapes.size());
+        int fragment = painted >= 0 ? painted : Math.max(0, latest) / PLACES_PER_FRAGMENT;
         for (DocxDrawings.Shape shape : shapes) {
-            ordered.add(new Ordered(shape, order++));
+            int taken = placesTaken.merge(fragment, 1, Integer::sum) - 1;
+            int place = fragment * PLACES_PER_FRAGMENT + Math.min(taken, PLACES_PER_FRAGMENT - 1);
+            latest = Math.max(latest, place);
+            ordered.add(new Ordered(shape, place, drawn++));
         }
         return ordered;
     }
@@ -135,10 +164,11 @@ final class DocxDrawingAnchors {
      * Gives shapes their places in the paint order and keeps them for the section's end, which
      * anchors them (see {@link #endSection}).
      *
-     * @param owner what they are drawn for, or {@code null} where no note names them
+     * @param painted where the page paints the fragment they are drawn from ({@link #ordered})
+     * @param owner   what they are drawn for, or {@code null} where no note names them
      */
-    void queue(List<DocxDrawings.Shape> shapes, Owner owner) {
-        queueOrdered(ordered(shapes), owner);
+    void queue(List<DocxDrawings.Shape> shapes, int painted, Owner owner) {
+        queueOrdered(ordered(shapes, painted), owner);
     }
 
     /** Keeps shapes given their places in the paint order for the section's end, as {@link #queue} does. */
@@ -317,6 +347,9 @@ final class DocxDrawingAnchors {
         cellParagraph.clear();
         breakParagraph.clear();
         seats.clear();
+        // The next section's layout counts its fragments from its own first one.
+        placesTaken.clear();
+        latest = -1;
         Map<Owner, Boolean> droppedWhole = new java.util.LinkedHashMap<>();
         droppedFor.forEach((owner, count) -> droppedWhole.put(owner, count.equals(queuedFor.get(owner))));
         return new Leftovers(inCells, dropped, droppedWhole);
@@ -347,7 +380,7 @@ final class DocxDrawingAnchors {
         XWPFRun run = carrier.insertNewRun(0);
         for (Ordered shape : shapes) {
             run.getCTR().addNewDrawing().set(
-                    DocxDrawings.drawingInCell(shape.shape(), ids.getAsLong(), shape.order(), origin));
+                    DocxDrawings.drawingInCell(shape.shape(), ids.getAsLong(), shape.order(), shape.drawn(), origin));
         }
     }
 
@@ -395,8 +428,8 @@ final class DocxDrawingAnchors {
             double rise = placed.place().top() - ordered.shape().top();
             double top = rise > 0 && rise <= SLACK ? ordered.shape().top() : placed.place().top();
             run.getCTR().addNewDrawing().set(Double.isInfinite(column)
-                    ? DocxDrawings.drawingInParagraph(ordered.shape(), ids.getAsLong(), ordered.order(), top)
-                    : DocxDrawings.drawingInCell(ordered.shape(), ids.getAsLong(), ordered.order(),
+                    ? DocxDrawings.drawingInParagraph(ordered.shape(), ids.getAsLong(), ordered.order(), ordered.drawn(), top)
+                    : DocxDrawings.drawingInCell(ordered.shape(), ids.getAsLong(), ordered.order(), ordered.drawn(),
                             new DocxDrawings.CellOrigin(column, top)));
         }
     }
@@ -699,7 +732,7 @@ final class DocxDrawingAnchors {
     private void anchor(XWPFParagraph carrier, List<Ordered> shapes) {
         XWPFRun run = carrier.insertNewRun(0);
         for (Ordered shape : shapes) {
-            run.getCTR().addNewDrawing().set(DocxDrawings.drawing(shape.shape(), ids.getAsLong(), shape.order()));
+            run.getCTR().addNewDrawing().set(DocxDrawings.drawing(shape.shape(), ids.getAsLong(), shape.order(), shape.drawn()));
         }
     }
 }

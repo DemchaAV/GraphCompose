@@ -77,6 +77,8 @@ final class DocxLayoutMetrics {
     private Map<Integer, List<PlacedFragment>> textByPage;
     // Each page's fragments in paint order, indexed on first use — see clipsOf.
     private Map<Integer, List<PlacedFragment>> paintedByPage;
+    // Each fragment's place in the paint order, indexed on first use — see paintIndexOf.
+    private Map<PlacedFragment, Integer> paintIndex;
     // A table's first own row on each page, filled on first use — see colourUnderCell.
     private final Map<DocumentNode, Map<Integer, PlacedFragment>> firstRows = new IdentityHashMap<>();
     // The node at each path, indexed on first use — see aRowsOwnFill.
@@ -130,6 +132,32 @@ final class DocxLayoutMetrics {
             placed.putIfAbsent(node.path(), node);
         }
         return new DocxLayoutMetrics(paths, repeated, fragments, placed, layout.fragments(), layout.totalPages());
+    }
+
+    /**
+     * Where the page paints a fragment among all of the layout's: a later one is painted over an
+     * earlier one, as the layout lists them — a stack's layers by their z-index.
+     *
+     * @return the fragment's place, from 0, or -1 for one the layout does not hold
+     */
+    int paintIndexOf(PlacedFragment fragment) {
+        if (paintIndex == null) {
+            Map<PlacedFragment, Integer> index = new IdentityHashMap<>();
+            for (int place = 0; place < painted.size(); place++) {
+                index.putIfAbsent(painted.get(place), place);
+            }
+            paintIndex = index;
+        }
+        return paintIndex.getOrDefault(fragment, -1);
+    }
+
+    /**
+     * Where the page paints a node's own content: its first own fragment's place
+     * ({@link #paintIndexOf}), or -1 where the layout holds none.
+     */
+    int paintIndexOf(DocumentNode node) {
+        List<PlacedFragment> own = ownFragments(node);
+        return own.isEmpty() ? -1 : paintIndexOf(own.get(0));
     }
 
     /** Walks every place a node stands — in the flow, and in a table's composed cells — adding those seen twice. */

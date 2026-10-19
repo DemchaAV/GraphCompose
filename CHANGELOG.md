@@ -8,6 +8,27 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export stacks its drawings as the page paints them.** Word stacks drawings by the
+  place each is given (`wp:anchor/@relativeHeight`), a later one over an earlier one. The export
+  gave them their places in the order it drew them. In the flow it draws a stack's or a shape
+  container's layers in the order given, and columns' marks after the columns' own content. So
+  a layer the page stacks under another by its `zIndex` but given after it stood over it.
+  - Measured in Word and LibreOffice on Windows, a white dot (`zIndex` 0) given after a disc
+    (`zIndex` 1) stood over the disc in both. The page hides the dot. This held in a stack that
+    only draws, in a shape container, in a band of layers with text, and in a stack nested in
+    such a band.
+  - A shape container whose layers the page stacks in another order was named for it. Every
+    other case went unsaid.
+  - Each drawing now takes its place from where the page paints the fragment it is drawn from.
+    Both editors draw the dot under the disc in all four cases. The text keeps the order it is
+    written in.
+  - The places order the drawings behind the text among themselves, and those in front of it.
+    Word draws every one behind under every one in front: on a painted panel a layer framing
+    text stays behind while one that does not stands in front, whatever their `zIndex`.
+  - The shape container is no longer named for its order.
+  - In the fidelity corpus, 34 of the 62 files change only in those places. 26 of them stack as
+    before. The other 8 change the order of some drawings, and their pages render pixel for
+    pixel as before at 96 dpi in Word and in LibreOffice.
 - **A DOCX export names what a text header or footer shows otherwise in Word.** Measured in
   Word and LibreOffice on Windows, four things went unsaid:
   - **A band too shallow for its line.** Its line is written from the page's edge.

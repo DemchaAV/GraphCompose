@@ -6705,7 +6705,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 onANewPage = true;
             }
             List<DocumentNode> piece = pieces.get(index);
-            writePanelPiece(document, node, paint, () -> writeChildren(document, piece, spacingOf(node)),
+            ShapeContainerNode shape = node instanceof ShapeContainerNode container ? container : null;
+            writePanelPiece(document, node, paint, () -> writeChildren(document, piece, spacingOf(node), false, shape),
                     index == 0, index == pieces.size() - 1, onANewPage);
         }
     }
@@ -6737,7 +6738,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         owePendingSpacingAfter(carriedSpacingBefore + (first ? margin.top() : 0));
         carriedSpacingBefore = 0;
         double topNotTaken = 0;
-        // A shape's layers are centred in it, and its outline holds its height whole, its borders
+        // A shape's layers are set inside it, and its outline holds its height whole, its borders
         // drawn inside it (holdThePanelsHeight): nothing of it reaches past its box.
         boolean heldWhole = node instanceof ShapeContainerNode;
         if (first) {
@@ -6830,9 +6831,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if ((node.keepTogether() || node instanceof RowNode) && layout.onOnePage(node)) {
             table.getRow(0).setCantSplitRow(true);
         }
-        if (node instanceof ShapeContainerNode) {
-            // The page centres a shape's layers in it, in the outline's height the row is held to.
-            cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
+        if (node instanceof ShapeContainerNode shape) {
+            // The page sets a shape's layers at its top, middle or foot, in the outline's height the
+            // row is held to, and Word sets the cell's content there: a label set at the top-left
+            // corner stood at the middle, 22.5pt low.
+            XWPFTableCell.XWPFVertAlign vertical = verticalOfItsLayers(shape);
+            if (vertical != null) {
+                cell.setVerticalAlignment(vertical);
+            }
         }
 
         cell.removeParagraph(0);
@@ -6854,7 +6860,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         long outerRaised = panelRaisedFromItsPadding;
         panelsFirstLineKeeps = Math.max(0, toTwips(topNotTaken) - cellMargin(cell, true));
         // What the padding takes of it is no room either (paddingAbove). A shape's layers are
-        // centred in the outline it holds whole, and its first line rises into nothing of it.
+        // set inside the outline it holds whole, and its first line rises into nothing of it.
         panelsMarginKeeps = Math.min(cellMargin(cell, true), toTwips(topNotTaken));
         panelsPaddingGives = first && last && !(node instanceof ShapeContainerNode);
         panelRaisedFromItsPadding = 0;
@@ -6933,7 +6939,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // leaves no room under the content to take it. Its padding below takes it, the line
             // hanging into it as on the page; what follows takes the rest out of the space between
             // them, as below a row (writeRow). A card's border is the card's padding's to take
-            // first. A shape's layers are centred in the outline's height it holds, which takes it.
+            // first. A shape's layers are set inside the outline's height it holds, which takes it.
             double hang = heldWhole ? 0 : cellOverhang;
             double carried = takeTheCarriedBorder(heldWhole ? 0 : carriedBorder);
             double fromThePaddingBelow = takeOffTheCellMargin(cell, false, hang + carried);
@@ -7000,7 +7006,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * 12pt line, held a point above its content's height, stood a point taller in both than the
      * page's. So a panel set from the top holds the page's height less its padding, its margins
      * and borders coming round its content where the space round it and its padding take them
-     * ({@link #outsideTheRow}). A shape container, its layers centred in it, holds its outline's
+     * ({@link #outsideTheRow}). A shape container, its layers set inside it, holds its outline's
      * height whole, its margins and borders off its content, as the page draws them
      * inside its outline: CobaltRota's outlined chips, 9.2pt outlines with a 1.125pt border, stood
      * 10.3pt tall in Word and 10.2pt in LibreOffice with neither border taken off. The borders come
@@ -7271,6 +7277,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeChildren(XWPFDocument document, List<DocumentNode> children, double spacing,
                                boolean lastFollowed) throws Exception {
+        writeChildren(document, children, spacing, lastFollowed, null);
+    }
+
+    /**
+     * Writes a flow's children one after another, each held in across where its shape sets it
+     * when they are the layers of a shape written as a panel ({@link #holdInItsPanel}).
+     *
+     * @param panel the shape whose layers they are, or {@code null}
+     */
+    private void writeChildren(XWPFDocument document, List<DocumentNode> children, double spacing,
+                               boolean lastFollowed, ShapeContainerNode panel) throws Exception {
         for (int index = 0; index < children.size(); index++) {
             DocumentNode child = children.get(index);
             if (index > 0 && spacing > 0 && !(child instanceof PageBreakNode)) {
@@ -7282,7 +7299,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (index + 1 < children.size() && keepGoesUnheld(child, children.get(index + 1))) {
                 keepsUnheld.add(child);
             }
-            writeNode(document, child);
+            if (panel == null) {
+                writeNode(document, child);
+                continue;
+            }
+            double outerLeft = insetLeft;
+            double outerRight = insetRight;
+            holdInItsPanel(panel, child);
+            try {
+                writeNode(document, child);
+            } finally {
+                insetLeft = outerLeft;
+                insetRight = outerRight;
+            }
         }
     }
 
@@ -7561,6 +7590,175 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return null;
         }
         return label;
+    }
+
+    /** The shape's layer that holds a node, or {@code null}. */
+    private static com.demcha.compose.document.node.LayerStackNode.Layer layerOf(ShapeContainerNode shape,
+                                                                                 DocumentNode node) {
+        for (com.demcha.compose.document.node.LayerStackNode.Layer layer : shape.layers()) {
+            if (layer.node() == node) {
+                return layer;
+            }
+        }
+        return null;
+    }
+
+    /** The share of the room across a layer's alignment sets it at: 0 left, 0.5 centred, 1 right. */
+    private static double shareAcross(com.demcha.compose.document.node.LayerAlign align) {
+        return switch (align) {
+            case TOP_LEFT, CENTER_LEFT, BOTTOM_LEFT -> 0;
+            case TOP_CENTER, CENTER, BOTTOM_CENTER -> 0.5;
+            case TOP_RIGHT, CENTER_RIGHT, BOTTOM_RIGHT -> 1;
+        };
+    }
+
+    /** The share of the room down a layer's alignment sets it at: 0 top, 0.5 middle, 1 foot. */
+    private static double shareDown(com.demcha.compose.document.node.LayerAlign align) {
+        return switch (align) {
+            case TOP_LEFT, TOP_CENTER, TOP_RIGHT -> 0;
+            case CENTER_LEFT, CENTER, CENTER_RIGHT -> 0.5;
+            case BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT -> 1;
+        };
+    }
+
+    /** Whether a shape's layer is written: anything but drawing, which its table draws. */
+    private boolean writtenInItsPanel(com.demcha.compose.document.node.LayerStackNode.Layer layer) {
+        return !onlyDrawn(layer.node());
+    }
+
+    /**
+     * Where a shape written as a panel sets what it writes in its cell, top to bottom: where its
+     * first written layer stands; {@code null} for the top, Word's own default. A panel writes one
+     * at least ({@link #writtenAsAPanel}); with none, the middle.
+     */
+    private XWPFTableCell.XWPFVertAlign verticalOfItsLayers(ShapeContainerNode shape) {
+        for (com.demcha.compose.document.node.LayerStackNode.Layer layer : shape.layers()) {
+            if (writtenInItsPanel(layer)) {
+                double share = shareDown(layer.align());
+                return share == 0 ? null : share == 1 ? XWPFTableCell.XWPFVertAlign.BOTTOM
+                        : XWPFTableCell.XWPFVertAlign.CENTER;
+            }
+        }
+        return XWPFTableCell.XWPFVertAlign.CENTER;
+    }
+
+    /**
+     * Holds a layer of a shape written as a panel in across where the shape sets it, from the
+     * width the lines its table laid out for it take.
+     *
+     * <p>The page sets a layer narrower than the shape at its alignment's side or middle: a label
+     * set at the bottom-right corner stood at the left in Word and LibreOffice. A paragraph whose
+     * own alignment leans the same way, unmoved, already stands there. Any other is held to its
+     * box, the shape's room less its width set at its alignment's share and moved by its offset.
+     * What is not measured is named ({@link #reportTheLayersOfItsPanel}).</p>
+     */
+    private void holdInItsPanel(ShapeContainerNode shape, DocumentNode node) {
+        com.demcha.compose.document.node.LayerStackNode.Layer layer = layerOf(shape, node);
+        if (layer == null || !(node instanceof ParagraphNode paragraph) || !writtenInItsPanel(layer)
+            || standsAsItsLayer(paragraph, layer)) {
+            return;
+        }
+        double[] slot = slotInItsPanel(shape, layer, paragraph);
+        if (slot != null) {
+            holdIn(paragraph, slot[0] + paragraph.margin().left(), slot[1] - paragraph.margin().horizontal(), 0,
+                    roomInItsPanel(shape));
+        }
+    }
+
+    /**
+     * The width a shape written as a panel leaves what it writes: its cell's, its outline less the
+     * padding written as the cell's margins.
+     */
+    private static double roomInItsPanel(ShapeContainerNode shape) {
+        return shape.outline().width() - shape.padding().horizontal();
+    }
+
+    /**
+     * Whether a paragraph stands where its layer sets it without being held in: unmoved across,
+     * and its own alignment leaning the way its layer's does.
+     */
+    private static boolean standsAsItsLayer(ParagraphNode paragraph,
+                                            com.demcha.compose.document.node.LayerStackNode.Layer layer) {
+        if (Math.abs(layer.offsetX()) > 0.5) {
+            return false;
+        }
+        double share = shareAcross(layer.align());
+        return share == 0 ? paragraph.align() != TextAlign.CENTER && paragraph.align() != TextAlign.RIGHT
+                : share == 1 ? paragraph.align() == TextAlign.RIGHT
+                : paragraph.align() == TextAlign.CENTER;
+    }
+
+    /**
+     * Where a paragraph layer's box stands across in the room its panel leaves it, as the page sets
+     * it: {@code {left, width}}, its margins in, the width read off the lines its table laid out for
+     * it; {@code null} where none stand in the cell.
+     */
+    private double[] slotInItsPanel(ShapeContainerNode shape, com.demcha.compose.document.node.LayerStackNode.Layer layer,
+                                    ParagraphNode paragraph) {
+        java.util.Optional<DocxLayoutMetrics.TextBox> lines = layout.firstTextBox(paragraph);
+        if (lines.isEmpty() || !standsInTheComposedCell(lines.get())) {
+            return null;
+        }
+        double outer = lines.get().right() - lines.get().left() + paragraph.padding().horizontal()
+                       + paragraph.margin().horizontal();
+        double left = shareAcross(layer.align()) * Math.max(0, roomInItsPanel(shape) - outer) + layer.offsetX();
+        return new double[]{left, outer};
+    }
+
+    /**
+     * Names what of a panel's layers Word does not set where the shape sets them:
+     *
+     * <ul>
+     *   <li>a written layer after the first, which its cell writes under the layers before it,
+     *       where the page sets it at their height or another;</li>
+     *   <li>an offset down or up;</li>
+     *   <li>a box the page sets past the shape's right edge, where the cell's text ends — a centred
+     *       or right-aligned paragraph is as wide as the shape, and an offset across moves it out;
+     *       one left of the shape is named where it is held ({@link #holdIn});</li>
+     *   <li>one set across by a box the layout does not give.</li>
+     * </ul>
+     */
+    private void reportTheLayersOfItsPanel(ShapeContainerNode shape) {
+        double down = Double.NaN;
+        for (com.demcha.compose.document.node.LayerStackNode.Layer layer : shape.layers()) {
+            if (!writtenInItsPanel(layer)) {
+                continue;
+            }
+            List<String> lost = new ArrayList<>();
+            double share = shareDown(layer.align());
+            if (Double.isNaN(down)) {
+                down = share;
+            } else {
+                lost.add(share == down
+                        ? "the page sets it at the height of the layers before it, and its cell writes it under them"
+                        : "the page sets it at the " + heightCalled(share) + " of the shape, and its cell sets all "
+                          + "it holds at the " + heightCalled(down) + ", it under the layers before it");
+            }
+            if (Math.abs(layer.offsetY()) > 0.5) {
+                lost.add("its offset moves it " + pointsOf(Math.abs(layer.offsetY())) + "pt "
+                         + (layer.offsetY() > 0 ? "down" : "up") + ", which its cell does not write");
+            }
+            boolean across = shareAcross(layer.align()) > 0 || Math.abs(layer.offsetX()) > 0.5;
+            double[] slot = layer.node() instanceof ParagraphNode paragraph && across
+                            && !standsAsItsLayer(paragraph, layer) ? slotInItsPanel(shape, layer, paragraph) : null;
+            if (slot != null && slot[0] + slot[1] - roomInItsPanel(shape) > 0.5) {
+                lost.add("the page sets it " + pointsOf(slot[0] + slot[1] - roomInItsPanel(shape))
+                         + "pt past the shape's right edge, where its cell's text ends");
+            } else if (across && slot == null
+                       && !(layer.node() instanceof ParagraphNode paragraph && standsAsItsLayer(paragraph, layer))) {
+                lost.add("the page sets it across by a box the layout does not give where it is composed in a "
+                         + "table cell (" + layer.node().nodeKind() + "), and it is written from the shape's left");
+            }
+            if (!lost.isEmpty()) {
+                // Composed in a table cell, it has no path of its own in the layout.
+                report.add(DocxExportReport.Severity.APPROXIMATED, "layer offset", layout.pathOf(layer.node()),
+                        "written as a panel's content: " + String.join("; ", lost));
+            }
+        }
+    }
+
+    private static String heightCalled(double share) {
+        return share == 0 ? "top" : share == 1 ? "foot" : "middle";
     }
 
     /**
@@ -9567,6 +9765,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                         "written as a panel in its table cell, which carries no transform, so it stands "
                         + "upright at its size");
             }
+            reportTheLayersOfItsPanel(node);
             writePanel(document, node, new ContainerPaint(node.fillColor(), bordersOf(null, node.stroke())));
             return;
         }
@@ -11988,7 +12187,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * much taller. LibreOffice 24.2 counts the margins inside that height
      * ({@link #seatTheLabelByItsLine}): a panel or a table row held taller than its text — a
      * drawing set where the page puts it — comes out taller there by the raise, under half a
-     * point. A shape's layers are centred in it, and none rises.</p>
+     * point. A shape's layers are set inside it, and none rises.</p>
      */
     private long paddingAbove(XWPFParagraph para) {
         if (panelsPaddingGives && opensThePanel(para)) {

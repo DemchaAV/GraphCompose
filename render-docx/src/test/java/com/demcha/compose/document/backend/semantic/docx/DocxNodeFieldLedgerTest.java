@@ -295,7 +295,10 @@ class DocxNodeFieldLedgerTest {
                 "layers:REPORTED:written inline one after another in source order where it writes them in the "
                 + "flow; drawn where the page puts them, unreported, where they are all drawing, stacked as the "
                 + "page paints them among those behind the text and among those in front of it; a panel's in its "
-                + "cell; one set left of its content in a table cell further than the indents round it give",
+                + "cell, at its first written layer's height, a paragraph held across to its box, and named where "
+                + "one follows the first, is moved down or up, is set past the shape's side, or is set across by "
+                + "a box the layout does not give; one set left of its content in a table cell further than the "
+                + "indents round it give",
                 "clipPolicy:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table",
                 "fillColor:REPORTED:its translucency, as a panel's, flattened against the colour under it; "
                 + "drawn, its alpha is written; any other is written",

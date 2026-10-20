@@ -162,6 +162,24 @@ class DocxStackOfOneLayerOnANewPageTest {
     }
 
     @Test
+    void aPullOutOfTheBlockOnThePageAboveStaysThere() throws Exception {
+        // The paragraph above pulls what follows it 5pt up. On its page, Word sets no block over
+        // another, and the report says so; the stack the layout moves to the next page starts
+        // that page at its top, and nothing stands it lower.
+        Consumer<PageFlowBuilder> content = page -> page
+                .spacer(0, CONTENT - 20)
+                .addParagraph(p -> p.text("Above").margin(new DocumentInsets(0, 0, -5, 0)))
+                .addLayerStack(stack -> stack.topLeft(new ParagraphBuilder().name("Opening").text("Opening")
+                        .build()));
+        assertThat(startPage(content, "Opening")).as("the premise: the stack opens the second page").isEqualTo(1);
+
+        assertThat(DocxExports.report(300, 600, 20, content).bySubject().get("space above"))
+                .as("on the page of the block above, the pull is named").isNotNull();
+        assertThat(DocxExports.report(300, 200, 20, content).bySubject().get("space above"))
+                .as("on the next page, nothing is").isNull();
+    }
+
+    @Test
     void aParagraphOpeningABandIsLeftToTheBand() throws Exception {
         // A stack of two layers is a band, which sets its layers from its own top.
         Consumer<PageFlowBuilder> moved = movedToANewPage(stack -> stack

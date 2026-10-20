@@ -3590,11 +3590,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writePlacedNode(XWPFDocument document, DocumentNode node) throws Exception {
-        // A stack of one layer is written in the flow, and the layout moves it to a new page whole,
-        // as it does a block kept together: told nothing, Word set a stack of three lines the page
-        // moves down with two of them at the foot of the page above, in Word and LibreOffice alike.
-        // In a cell its paragraphs are its table's, which a row keeps or breaks on its own terms.
-        boolean keepTogether = (node.keepTogether() || currentCell == null && isOneLayer(node))
+        // The layout moves a layer stack or a shape container to a new page whole, as it does a
+        // block kept together. Told nothing, Word and LibreOffice split them in the flow: a stack
+        // of one layer or a shape container, three lines the page moves down, with two at the foot
+        // of the page above, and a band of two layers with its first layer there.
+        // In a cell their paragraphs are the table's, which a row keeps or breaks on its own terms.
+        boolean keepTogether = (node.keepTogether() || currentCell == null && movedWhole(node))
                                && layout.onOnePage(node);
         PanelBreak panelBreak = keepThePanelMayBreak(node);
         boolean keepWithNext = node.keepWithNext() && layout.onOnePage(node);
@@ -3659,9 +3660,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (panelCell == null || currentCell != panelCell || panelLastEndPage < 0 || !layout.onOnePage(node)) {
             return null;
         }
-        boolean whole = node.keepTogether()
-                || node instanceof com.demcha.compose.document.node.LayerStackNode
-                || node instanceof ShapeContainerNode;
+        boolean whole = node.keepTogether() || movedWhole(node);
         if (!whole && !node.keepWithNext()) {
             return null;
         }
@@ -4340,6 +4339,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return node instanceof com.demcha.compose.document.node.LayerStackNode
                || node instanceof com.demcha.compose.document.node.CanvasLayerNode
                || node instanceof ShapeContainerNode;
+    }
+
+    /**
+     * Whether a node is a layer stack or a shape container, which the layout moves to a new page
+     * whole, never breaking it over one. A canvas and an alignment wrapper are atomic there too and
+     * are not counted here: Word was not measured splitting them.
+     */
+    private static boolean movedWhole(DocumentNode node) {
+        return node instanceof com.demcha.compose.document.node.LayerStackNode || node instanceof ShapeContainerNode;
     }
 
     /** Whether a node is a layer stack of one layer, which lays nothing over anything. */
@@ -10416,15 +10424,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeTextOverTheFlow(document, node);
             return;
         }
-        if (currentCell == null && startsAPageOfItsOwn(node)) {
+        boolean holdsItsEdge = opensItsPageInTheFlow(node);
+        if (holdsItsEdge || currentCell == null && startsAPageOfItsOwn(node)) {
             // The layout moves a stack of one layer, written in the flow, to a new page whole: its
             // first paragraph opens that page as one in the flow does, and its line is not moved
             // into the space above it there either. A band's first, where the band opens its page,
             // is not either (paragraphOpeningABandsPage); in any other overlay it is not moved anyway.
-            // Its top edge is held in the flow, a stack of one layer's included: there Word dropped
-            // it as at the top of any page, and a paragraph with a 20pt margin, or the first in a
-            // stack with a 14pt margin, stood that much high in Word and LibreOffice.
-            if (overlayDepth == oneLayerDepth) {
+            // Its top edge is held in the flow, a stack of one layer's included, and as a band's
+            // first where the band opens its page: there Word dropped it as at the top of any page,
+            // and a paragraph with a 20pt margin, the first in a stack with a 14pt margin, or in a
+            // band with one, stood that much high in Word and LibreOffice.
+            if (holdsItsEdge) {
                 holdAParagraphsTopEdgeOnItsPage(document, node, 0);
             }
             paragraphOpeningItsPage = node;
@@ -13368,9 +13378,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
 
         double[] room = fitMode == DocumentImageFitMode.CONTAIN ? roomRound(resolved, box) : new double[2];
-        if (currentCell == null && overlayDepth == oneLayerDepth && startsAPageOfItsOwn(node)) {
+        if (opensItsPageInTheFlow(node)) {
             // Its top edge is held on the page the layout moves it to, as a text paragraph's is, in
-            // the flow and in a stack of one layer.
+            // the flow, in a stack of one layer and first in a band opening its page.
             holdAParagraphsTopEdgeOnItsPage(document, node, room[0]);
         }
         XWPFParagraph para = newBodyParagraph(document);
@@ -16740,18 +16750,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             throws Exception {
         // A band inside a band that has written nothing yet: the outer band measured its space
         // to the first block written, which is this one's first too, so that space stands.
-        if (Double.isNaN(resumeSpacing)) {
+        boolean opensItsSpace = Double.isNaN(resumeSpacing);
+        if (opensItsSpace) {
             double above = carriedSpacingBefore + pendingSpacingAfter + stack.margin().top() + band.above();
             // Text hanging below the block before — a band's last line past its foot, a row's
             // icon line — takes its place out of that space, as out of the gap above a paragraph
             // (newBodyParagraph); the band's first block forgets it (resumeHere). ConsultingInvoice's
             // address runs 2.3pt past its band, and the contact bands under it stood 2.9pt low.
             // A band the layout starts on a new page leaves the hang on the page above, as a
-            // paragraph or a table there does.
-            boolean opensItsPage = currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(stack);
+            // paragraph or a table there does: in the flow, a stack of one layer's included.
+            boolean opensItsPage = currentCell == null && overlayDepth == oneLayerDepth && startsAPageOfItsOwn(stack);
             double hang = opensItsPage ? 0 : hangingBelow;
-            // Its first paragraph opens the page, and Word drops the space above it there: its line
-            // is not raised into it (writeParagraph).
+            // Its first paragraph opens the page, and Word drops the space above it there: a line
+            // holds the band's top edge above its first block (holdAParagraphsTopEdgeOnItsPage), and
+            // the block's line is not raised into it (writeParagraph).
             bandOpensItsPage = opensItsPage;
             resumeSpacing = above - Math.min(Math.max(0, above), hang);
             // A list's items lowered into it are lowered as far as that space takes it, and the
@@ -16802,6 +16814,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             insetRight = outerRight;
             standIns.removeAll(band.standIns());
             closingBlocks.removeAll(band.closing());
+            // A band that wrote no body paragraph — drawings alone, or text in a table's cells —
+            // opens nothing after it: what follows starts a page, or does not, of its own.
+            if (opensItsSpace) {
+                bandOpensItsPage = false;
+            }
         }
         // Nothing was written after all: the space the stack opened with is still owed.
         double unwritten = Double.isNaN(resumeSpacing) ? 0 : resumeSpacing;
@@ -18695,6 +18712,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Whether a block opens a page the layout moves it to in the flow, where Word drops the space
+     * above it: in the flow or a stack of one layer, a block the layout starts on a new page, and
+     * a band's first block where the band opens its page. The band decides that one, not the
+     * block: a backdrop drawn first in the band is on that page already, and the block after it
+     * starts no page of its own, though nothing above it is written there.
+     */
+    private boolean opensItsPageInTheFlow(DocumentNode node) {
+        return currentCell == null
+               && (bandOpensItsPage || overlayDepth == oneLayerDepth && startsAPageOfItsOwn(node));
+    }
+
+    /**
      * Holds the space owed above a table the layout starts on a new page, on that page.
      *
      * <p>The page keeps a block's space above it where a page break moves the block down: the
@@ -18764,7 +18793,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void holdAParagraphsTopEdgeOnItsPage(XWPFDocument document, DocumentNode node, double room) {
         double inside = Math.max(0, node.padding().top() + room);
         double own = Math.max(0, node.margin().top() + node.padding().top() + room);
-        double edges = Math.max(0, carriedSpacingBefore);
+        // A band's first block: everything owed above it — the gap before the band, the band's
+        // margin and its room above the block — is the space the band resumes there
+        // (writeOverlayBand). It is owed above the line, which takes from it what the page leaves
+        // above the block, as from the edges of containers in the flow; without a canvas to say how
+        // much, it stands for those edges.
+        double edges = Math.max(0, Double.isNaN(resumeSpacing) ? carriedSpacingBefore : resumeSpacing);
+        resumeHere();
         // A layer's offset down its stack of one layer is named, not written (reportTheLayerMoved),
         // and the line holds none of it either.
         double above = spaceAboveOnItsPage(node) - layerOffsetNotWritten;
@@ -19158,9 +19193,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeInPlaceOf(document, node);
             return;
         }
-        // In the flow, a stack of one layer's included: opening one on a new page, a stack with a
-        // 14pt margin and an 8pt spacer before its text stood 22pt high in Word and LibreOffice.
-        boolean opensAPage = currentCell == null && overlayDepth == oneLayerDepth && startsAPageOfItsOwn(node);
+        // In the flow, a stack of one layer's included, and first in a band opening its page:
+        // opening a stack of one layer on a new page, a stack with a 14pt margin and an 8pt spacer
+        // before its text stood 22pt high in Word and LibreOffice.
+        boolean opensAPage = opensItsPageInTheFlow(node);
         if (opensAPage) {
             // Text hanging below the block before — a row's last line held to its icon — a pull
             // out of it and a card's border below it stay on the page above with it, as at a

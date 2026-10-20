@@ -162,25 +162,6 @@ class DocxPictureOnANewPageTest {
         }
     }
 
-    @Test
-    void aPictureOpeningABandIsLeftToTheBand() throws Exception {
-        // The band, moved to the second page, sets its layers from its own top, and holds what
-        // opens its page itself (raiseIntoTheSpaceAbove).
-        java.util.function.Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content = page -> page
-                .spacer(0, CONTENT - 10)
-                .addLayerStack(stack -> stack
-                        .topLeft(new ImageBuilder().source(picture(60, 60)).size(60, 60)
-                                .margin(DocumentInsets.top(EDGE)).build())
-                        .bottomRight(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Caption").build()));
-        try (XWPFDocument moved = DocxExports.withLayout(300, 200, 20, content);
-             XWPFDocument onOnePage = DocxExports.withLayout(300, 600, 20, content)) {
-            List<XWPFParagraph> paragraphs = moved.getParagraphs();
-
-            assertThat(paragraphs.indexOf(pictureIn(moved))).as("no line of the flow's held before it")
-                    .isEqualTo(onOnePage.getParagraphs().indexOf(pictureIn(onOnePage)));
-        }
-    }
-
     /** A 60pt picture under a 150pt filler, which the layout moves to the second page, and a line after it. */
     private static XWPFDocument movedToANewPage(UnaryOperator<ImageBuilder> image) throws Exception {
         return DocxExports.withLayout(300, 200, 20, page -> page

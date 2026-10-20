@@ -239,20 +239,6 @@ class DocxStackOfOneLayerOnANewPageTest {
     }
 
     @Test
-    void aSpacerOpeningABandIsLeftToTheBand() throws Exception {
-        Consumer<PageFlowBuilder> content = movedToANewPage(stack -> stack.margin(DocumentInsets.top(EDGE))
-                .topLeft(new SectionBuilder().spacer(0, 8).addParagraph(p -> p.name("Opening").text("Opening")).build())
-                .bottomRight(new ParagraphBuilder().text("Caption").build()));
-        assertThat(startPage(content, "Opening")).as("the premise: the band opens the second page").isEqualTo(1);
-        try (XWPFDocument document = export(content)) {
-            XWPFParagraph spacer = paragraphBefore(document, paragraphWith(document, "Opening"));
-
-            assertThat(DocxTwips.of(spacing(spacer).getLine())).as("its hairline alone").isEqualTo(HAIRLINE);
-            assertThat(spacer.getCTP().getPPr().isSetKeepNext()).isFalse();
-        }
-    }
-
-    @Test
     void aPullOutOfTheBlockOnThePageAboveStaysThere() throws Exception {
         // The paragraph above pulls what follows it 5pt up. On its page, Word sets no block over
         // another, and the report says so; the stack the layout moves to the next page starts
@@ -268,21 +254,6 @@ class DocxStackOfOneLayerOnANewPageTest {
                 .as("on the page of the block above, the pull is named").isNotNull();
         assertThat(DocxExports.report(300, 200, 20, content).bySubject().get("space above"))
                 .as("on the next page, nothing is").isNull();
-    }
-
-    @Test
-    void aParagraphOpeningABandIsLeftToTheBand() throws Exception {
-        // A stack of two layers is a band, which sets its layers from its own top.
-        Consumer<PageFlowBuilder> moved = movedToANewPage(stack -> stack
-                .topLeft(new ParagraphBuilder().name("Opening").text("Opening").margin(DocumentInsets.top(EDGE)).build())
-                .bottomRight(new ParagraphBuilder().text("Caption").build()));
-        assertThat(startPage(moved, "Opening")).as("the premise: the band opens the second page").isEqualTo(1);
-        try (XWPFDocument document = export(moved);
-             XWPFDocument onOnePage = DocxExports.withLayout(300, 600, 20, moved)) {
-            assertThat(document.getParagraphs().indexOf(paragraphWith(document, "Opening")))
-                    .as("no line of the flow's held before it")
-                    .isEqualTo(onOnePage.getParagraphs().indexOf(paragraphWith(onOnePage, "Opening")));
-        }
     }
 
     /** A stack under a 150pt filler, which the layout moves to the second page. */

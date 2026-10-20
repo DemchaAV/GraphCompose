@@ -23,14 +23,16 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The first paragraph or picture of a stack of one layer the layout moves to a new page keeps the
- * space the layout leaves above it there, in Word.
+ * The first paragraph, picture or spacer of a stack of one layer the layout moves to a new page
+ * keeps the space the layout leaves above it there, in Word.
  *
  * <p>A stack of one layer is written in the flow, and Word drops its first paragraph's space
  * above at the top of a page as any other's. Measured in Word 16 and LibreOffice on Windows, the
  * first line of a paragraph with a 20pt margin opening such a stack on a new page stood 20pt
  * high in both, a picture with one 20pt high, and one in a stack with a 14pt margin 14pt high.
- * Held in a line kept with it, as in the flow, each stood where the page sets it. A layer's
+ * Held in a line kept with it, as in the flow, each stood where the page sets it. A stack with a
+ * 14pt margin and an 8pt spacer before its text stood 22.9pt high, the spacer left at the foot of
+ * the page above; its line holding the margin, kept with the text, it stood 1.2pt high. A layer's
  * offset in its stack is named and not written, and the line holds none of it.</p>
  *
  * @author Artem Demchyshyn
@@ -158,6 +160,95 @@ class DocxStackOfOneLayerOnANewPageTest {
                 .addParagraph(p -> p.text("Opening").margin(DocumentInsets.top(EDGE))))) {
             assertThat(lineBefore(document, paragraphWith(document, "Opening")))
                     .as("its margin, none of the stack's offset taken off it").isEqualTo(Math.round(EDGE * 20));
+        }
+    }
+
+    @Test
+    void aSpacerOpeningTheStackHoldsItsEdgeAndGoesWithWhatFollows() throws Exception {
+        // Measured: a stack with a 14pt margin and an 8pt spacer before its text stood 22pt high
+        // in Word and LibreOffice, the spacer left at the foot of the page above.
+        Consumer<PageFlowBuilder> content = movedToANewPage(stack -> stack.margin(DocumentInsets.top(EDGE))
+                .topLeft(new SectionBuilder().spacer(0, 8)
+                        .addParagraph(p -> p.name("Opening").text("Opening")).build()));
+        assertThat(startPage(content, "Opening")).as("the premise: the stack opens the second page").isEqualTo(1);
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph spacer = paragraphBefore(document, paragraphWith(document, "Opening"));
+            CTSpacing spacing = spacing(spacer);
+
+            assertThat(DocxTwips.of(spacing.getLine())).as("the stack's margin, and the spacer's hairline")
+                    .isEqualTo(Math.round(EDGE * 20) + HAIRLINE);
+            assertThat(spacer.getCTP().getPPr().isSetKeepNext()).as("kept with the text under it").isTrue();
+        }
+    }
+
+    @Test
+    void aSpacerEndingASectionTheLayersTextFollowsGoesWithIt() throws Exception {
+        try (XWPFDocument document = export(movedToANewPage(stack -> stack.margin(DocumentInsets.top(EDGE))
+                .topLeft(new SectionBuilder().addSection(inner -> inner.spacer(0, 8))
+                        .addParagraph("Opening").build())))) {
+            XWPFParagraph spacer = paragraphBefore(document, paragraphWith(document, "Opening"));
+
+            assertThat(spacer.getText()).isEmpty();
+            assertThat(spacer.getCTP().getPPr().isSetKeepNext()).as("kept with the text after its section").isTrue();
+        }
+    }
+
+    @Test
+    void aSpacerClosingAStackInsideAStackGoesWithWhatTheOuterOneHolds() throws Exception {
+        // The layout moves the outer stack whole: the text after the inner one is on its page too.
+        try (XWPFDocument document = export(movedToANewPage(stack -> stack.margin(DocumentInsets.top(EDGE))
+                .topLeft(new SectionBuilder()
+                        .addLayerStack(inner -> inner.topLeft(new SectionBuilder().spacer(0, 8).build()))
+                        .addParagraph("Opening").build())))) {
+            XWPFParagraph spacer = paragraphBefore(document, paragraphWith(document, "Opening"));
+
+            assertThat(spacer.getText()).isEmpty();
+            assertThat(spacer.getCTP().getPPr().isSetKeepNext()).as("kept with the outer stack's text").isTrue();
+        }
+    }
+
+    @Test
+    void aSpacerAloneInItsStackIsKeptWithNothing() throws Exception {
+        // What follows the stack is not the stack's: the spacer is not kept with it.
+        try (XWPFDocument document = export(page -> page
+                .spacer(0, CONTENT - 10)
+                .addLayerStack(stack -> stack.margin(DocumentInsets.top(EDGE))
+                        .topLeft(new SectionBuilder().spacer(0, 8).build()))
+                .addParagraph("After"))) {
+            XWPFParagraph spacer = paragraphBefore(document, paragraphWith(document, "After"));
+
+            assertThat(DocxTwips.of(spacing(spacer).getLine())).as("its edge held all the same")
+                    .isEqualTo(Math.round(EDGE * 20) + HAIRLINE);
+            assertThat(spacer.getCTP().getPPr().isSetKeepNext()).as("nothing in its stack follows it").isFalse();
+        }
+    }
+
+    @Test
+    void aSpacerUnderAnOffsetHoldsNoneOfIt() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(stack -> stack.margin(DocumentInsets.top(EDGE))
+                .position(new SectionBuilder().spacer(0, 8).addParagraph("Opening").build(), 0, EDGE,
+                        LayerAlign.TOP_LEFT));
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph spacer = paragraphBefore(document, paragraphWith(document, "Opening"));
+
+            assertThat(DocxTwips.of(spacing(spacer).getLine())).as("the stack's margin, not its layer's offset")
+                    .isEqualTo(Math.round(EDGE * 20) + HAIRLINE);
+        }
+        assertThat(DocxExports.report(300, 200, 20, content).bySubject().get("layer offset"))
+                .as("the offset named").isNotNull();
+    }
+
+    @Test
+    void aSpacerOpeningABandIsLeftToTheBand() throws Exception {
+        Consumer<PageFlowBuilder> content = movedToANewPage(stack -> stack.margin(DocumentInsets.top(EDGE))
+                .topLeft(new SectionBuilder().spacer(0, 8).addParagraph(p -> p.name("Opening").text("Opening")).build())
+                .bottomRight(new ParagraphBuilder().text("Caption").build()));
+        assertThat(startPage(content, "Opening")).as("the premise: the band opens the second page").isEqualTo(1);
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph spacer = paragraphBefore(document, paragraphWith(document, "Opening"));
+
+            assertThat(DocxTwips.of(spacing(spacer).getLine())).as("its hairline alone").isEqualTo(HAIRLINE);
+            assertThat(spacer.getCTP().getPPr().isSetKeepNext()).isFalse();
         }
     }
 

@@ -52,6 +52,8 @@ class DocxSpaceAboveOnANewPageTest {
                     .isEqualTo(owed(CONTENT - 3));
             assertThat(DocxTwips.of(spacing.getLine())).as("the gap, and the hairline's height")
                     .isEqualTo(Math.round(GAP * 20) + HAIRLINE);
+            assertThat(spacerOnThePageAfter(document).getCTP().getPPr().isSetKeepNext())
+                    .as("in the flow it is not kept with what follows, as a stack of one layer's is").isFalse();
         }
     }
 

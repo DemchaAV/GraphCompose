@@ -8,6 +8,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps the space above a spacer opening a stack of one layer on a new page.** A
+  stack of one layer that opens with a spacer, moved to a new page, lost the space above its text:
+  its own edges and the spacer's height. The spacer was written at the foot of the page above,
+  and the text under it at the new page's top.
+  Measured in Word and LibreOffice on Windows: a stack with a 14pt margin and an 8pt spacer before
+  its text stood 22.9pt high in both. Nothing was named.
+  - The spacer's line now holds the stack's edges, as a spacer in the flow holds a carried gap,
+    and the spacer is kept with what follows it in the stack. The text now stands 1.2pt higher
+    than the page sets it, in both, and stays on the page it was on.
+  - A layer's offset in its stack is named as before, and not held.
 - **A DOCX export keeps the space above the first paragraph or picture of a stack of one layer the
   layout moves to a new page.** A stack of one layer is written in the flow, and Word drops its
   first paragraph's space above at the top of a page as any other's. That space was held only for

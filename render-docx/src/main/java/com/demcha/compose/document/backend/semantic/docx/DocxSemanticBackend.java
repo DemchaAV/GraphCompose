@@ -18714,7 +18714,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * space above it together are as tall as before, so Word breaks the page where it did.</p>
      */
     private void holdTheGapAboveInTheLine(XWPFParagraph para, DocumentNode node) {
-        double onItsPage = spaceAboveOnItsPage(node);
+        // A layer's offset in its stack of one layer is named, not written, and not held either.
+        double onItsPage = spaceAboveOnItsPage(node) - layerOffsetNotWritten;
         CTSpacing spacing = para.getCTP().isSetPPr() && para.getCTP().getPPr().isSetSpacing()
                 ? para.getCTP().getPPr().getSpacing() : null;
         if (!(onItsPage > 0.01) || spacing == null || !spacing.isSetBefore()
@@ -18728,6 +18729,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         spacing.setBefore(BigInteger.valueOf(before - held));
         spacing.setLine(BigInteger.valueOf(twipsOf(spacing.getLine()) + held));
+    }
+
+    /**
+     * Whether the layout placed anything after a node in the stacks of one layer it is written in:
+     * after it, or after a container it closes on the way up to the outermost stack, which the
+     * layout moves to its page whole with everything in it, as a spacer ending a section the
+     * layer's text follows.
+     */
+    private boolean followedInItsStack(DocumentNode node) {
+        DocumentNode stack = openOverlays.peekLast();
+        for (DocumentNode at = node; at != null && at != stack; at = layout.parentOf(at)) {
+            if (layout.followedInItsParent(at)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Makes a paragraph that holds no text as short as a separator between tables. */
@@ -19022,7 +19039,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeInPlaceOf(document, node);
             return;
         }
-        boolean opensAPage = currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(node);
+        // In the flow, a stack of one layer's included: opening one on a new page, a stack with a
+        // 14pt margin and an 8pt spacer before its text stood 22pt high in Word and LibreOffice.
+        boolean opensAPage = currentCell == null && overlayDepth == oneLayerDepth && startsAPageOfItsOwn(node);
         if (opensAPage) {
             // Text hanging below the block before — a row's last line held to its icon — a pull
             // out of it and a card's border below it stay on the page above with it, as at a
@@ -19041,6 +19060,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         holdToHairline(para);
         if (opensAPage) {
             holdTheGapAboveInTheLine(para, node);
+            // A stack of one layer moves to its new page whole, the spacer with what follows it
+            // there: left alone, Word set the spacer at the foot of the page above and the text
+            // under it at the new page's top, 22pt high.
+            if (oneLayerDepth > 0 && followedInItsStack(node)) {
+                CTPPr properties = para.getCTP().getPPr();
+                if (!properties.isSetKeepNext()) {
+                    properties.addNewKeepNext();
+                }
+            }
         }
         // The hairline is part of the height, as a separator's is of the gap it stands in: owed
         // whole below it, every spacer stood a tenth of a point taller than the page's, and

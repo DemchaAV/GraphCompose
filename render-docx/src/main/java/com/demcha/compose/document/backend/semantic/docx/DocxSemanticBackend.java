@@ -3582,7 +3582,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writePlacedNode(XWPFDocument document, DocumentNode node) throws Exception {
-        boolean keepTogether = node.keepTogether() && layout.onOnePage(node);
+        // A stack of one layer is written in the flow, and the layout moves it to a new page whole,
+        // as it does a block kept together: told nothing, Word set a stack of three lines the page
+        // moves down with two of them at the foot of the page above, in Word and LibreOffice alike.
+        // In a cell its paragraphs are its table's, which a row keeps or breaks on its own terms.
+        boolean keepTogether = (node.keepTogether() || currentCell == null && isOneLayer(node))
+                               && layout.onOnePage(node);
         boolean keepWithNext = node.keepWithNext() && layout.onOnePage(node);
         String anchor = blockAnchorOf(node, inTheFlow(node, overlayDepth, oneLayerDepth));
         if (!keepTogether && !keepWithNext && anchor == null) {
@@ -18731,22 +18736,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         spacing.setLine(BigInteger.valueOf(twipsOf(spacing.getLine()) + held));
     }
 
-    /**
-     * Whether the layout placed anything after a node in the stacks of one layer it is written in:
-     * after it, or after a container it closes on the way up to the outermost stack, which the
-     * layout moves to its page whole with everything in it, as a spacer ending a section the
-     * layer's text follows.
-     */
-    private boolean followedInItsStack(DocumentNode node) {
-        DocumentNode stack = openOverlays.peekLast();
-        for (DocumentNode at = node; at != null && at != stack; at = layout.parentOf(at)) {
-            if (layout.followedInItsParent(at)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     /** Makes a paragraph that holds no text as short as a separator between tables. */
     private static void holdToHairline(XWPFParagraph para) {
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
@@ -19058,17 +19047,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // height is a line of text tall, and it stood on top of that height: between two CV
         // entries held apart by a 4.5pt spacer, the page shows 16pt and LibreOffice drew 23.
         holdToHairline(para);
+        // In a stack of one layer it goes with what follows it in the stack, which is kept on its
+        // page whole (writePlacedNode).
         if (opensAPage) {
             holdTheGapAboveInTheLine(para, node);
-            // A stack of one layer moves to its new page whole, the spacer with what follows it
-            // there: left alone, Word set the spacer at the foot of the page above and the text
-            // under it at the new page's top, 22pt high.
-            if (oneLayerDepth > 0 && followedInItsStack(node)) {
-                CTPPr properties = para.getCTP().getPPr();
-                if (!properties.isSetKeepNext()) {
-                    properties.addNewKeepNext();
-                }
-            }
         }
         // The hairline is part of the height, as a separator's is of the gap it stands in: owed
         // whole below it, every spacer stood a tenth of a point taller than the page's, and

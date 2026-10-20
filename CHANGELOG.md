@@ -8,6 +8,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps a stack of one layer on the page the layout puts it on.** The layout moves
+  a layer stack to a new page whole, but Word was told nothing and broke between its paragraphs.
+  Measured in Word and LibreOffice on Windows, a stack of three lines that the page moved to the
+  next page stood with two of them at the foot of the page above, in both. So did one opening
+  with a spacer or with a margin. Nothing was named.
+  - A stack of one layer in the flow is now kept on its page as a block kept together is: each
+    paragraph keeps its lines, and all but the last keep with the next. Each measured stack now
+    stands whole on the page the layout sets it on, in both editors.
+  - A stack in a table's or a panel's cell is not kept here, nor a stack of more than one layer.
+  - No document of the 62 in the corpus has a stack of one layer in the flow, and none changes.
 - **A DOCX export keeps the space above a spacer opening a stack of one layer on a new page.** A
   stack of one layer that opens with a spacer, moved to a new page, lost the space above its text:
   its own edges and the spacer's height. The spacer was written at the foot of the page above,

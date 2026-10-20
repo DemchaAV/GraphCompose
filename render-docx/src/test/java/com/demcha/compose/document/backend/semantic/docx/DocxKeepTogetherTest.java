@@ -99,6 +99,87 @@ class DocxKeepTogetherTest {
     }
 
     @Test
+    void aStackOfOneLayerIsChainedIntoOneUnit() throws Exception {
+        // The layout moves a stack whole. Measured: a stack of three lines the page moved to a
+        // new page stood with two of them at the foot of the page above in Word and LibreOffice.
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addLayerStack(stack -> stack.topLeft(new com.demcha.compose.document.dsl.SectionBuilder()
+                        .addParagraph("Opening").addParagraph("Body").addParagraph("Tail").build()))
+                .addParagraph(p -> p.text("After")))) {
+            assertThat(keepsNext(paragraph(document, "Opening")) && keepsNext(paragraph(document, "Body"))).isTrue();
+            assertThat(keepsNext(paragraph(document, "Tail")))
+                    .as("the stack ends here, and is not tied to what follows it").isFalse();
+            assertThat(keepsLines(paragraph(document, "Opening")) && keepsLines(paragraph(document, "Tail"))).isTrue();
+            assertThat(keepsNext(paragraph(document, "After")) || keepsLines(paragraph(document, "After"))).isFalse();
+        }
+    }
+
+    @Test
+    void aRowInAStackOfOneLayerIsKeptAsInABlockKeptTogether() throws Exception {
+        // The same keeps, row by row, and the same one-row table as a section kept together holds.
+        java.util.function.Function<Boolean, java.util.function.Consumer<com.demcha.compose.document.dsl.PageFlowBuilder>>
+                content = inAStack -> page -> {
+                    com.demcha.compose.document.node.DocumentNode body = new com.demcha.compose.document.dsl.SectionBuilder()
+                            .addRow(row -> row.addParagraph("Left").addParagraph("Right"))
+                            .addParagraph("Under").build();
+                    if (inAStack) {
+                        page.addLayerStack(stack -> stack.topLeft(body));
+                    } else {
+                        page.addSection(section -> section.keepTogether().add(body));
+                    }
+                    page.addParagraph("After");
+                };
+        try (XWPFDocument stacked = DocxExports.withLayout(595, 842, 36, content.apply(true));
+             XWPFDocument kept = DocxExports.withLayout(595, 842, 36, content.apply(false))) {
+            XWPFTableRow stackedRow = stacked.getTables().get(0).getRow(0);
+            XWPFTableRow keptRow = kept.getTables().get(0).getRow(0);
+
+            assertThat(rowKeepsNext(stackedRow)).as("the row kept with what follows it in the stack").isTrue();
+            assertThat(stackedRow.isCantSplitRow()).isEqualTo(keptRow.isCantSplitRow());
+            assertThat(keepsNext(paragraph(stacked, "Under"))).isFalse();
+        }
+    }
+
+    @Test
+    void aStackOfOneLayerInARowsCellIsLeftToItsRow() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addRow(row -> row
+                        .add(new com.demcha.compose.document.dsl.LayerStackBuilder()
+                                .topLeft(new com.demcha.compose.document.dsl.SectionBuilder()
+                                        .addParagraph("Opening").addParagraph("Body").build()).build())
+                        .addParagraph("Beside")))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+
+            for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                assertThat(keepsNext(paragraph)).as("a cell of a row Word keeps on its own terms").isFalse();
+            }
+        }
+    }
+
+    @Test
+    void aBandIsNotChainedHere() throws Exception {
+        // A stack of more than one layer is written as a band, whose own keeps are another step.
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addLayerStack(stack -> stack
+                        .topLeft(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Opening").build())
+                        .bottomRight(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Caption").build())))) {
+            assertThat(keepsNext(paragraph(document, "Opening")) || keepsLines(paragraph(document, "Opening")))
+                    .isFalse();
+        }
+    }
+
+    @Test
+    void withoutALayoutAStackIsNotKnownToBeOnOnePage() throws Exception {
+        try (XWPFDocument document = DocxExports.withoutLayout(595, 842, 36, page -> page
+                .addLayerStack(stack -> stack.topLeft(new com.demcha.compose.document.dsl.SectionBuilder()
+                        .addParagraph("Opening").addParagraph("Body").build())))) {
+            for (XWPFParagraph paragraph : document.getParagraphs()) {
+                assertThat(keepsNext(paragraph) || keepsLines(paragraph)).isFalse();
+            }
+        }
+    }
+
+    @Test
     void withoutALayoutNothingIsKnownToBeOnOnePage() throws Exception {
         try (XWPFDocument document = DocxExports.withoutLayout(595, 842, 36, page -> page
                 .addSection(s -> s.keepTogether()

@@ -287,6 +287,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private int overTheFlowDepth;
     // How many of those overlays are layer stacks of one layer, which lay nothing over anything.
     private int oneLayerDepth;
+    // How far down the stacks of one layer being written the page sets their layers, which Word
+    // does not write (layerOffsetDown): a block opening a page in one holds none of it.
+    private double layerOffsetNotWritten;
     // How many of the nodes the writer is inside are stacks or shape containers of drawings held
     // whole (holdTheSpaceOf), whose room holds all they hold. A canvas inside one that only draws
     // holds no room of its own (writeCanvas).
@@ -1093,6 +1096,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         bandDepth = 0;
         overTheFlowDepth = 0;
         oneLayerDepth = 0;
+        layerOffsetNotWritten = 0;
         roomHeldAround = 0;
         openOverlays.clear();
         // An earlier export's lowerings are its own document's.
@@ -7436,11 +7440,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             reportTheLayerMoved(node);
         }
+        double outerOffset = layerOffsetNotWritten;
+        if (isOneLayer(node)) {
+            layerOffsetNotWritten += layerOffsetDown(node);
+        }
         try {
             writeChildren(document, node.children(), spacingOf(node), followedInFlow.remove(node));
         } finally {
             insetLeft = outerLeft;
             insetRight = outerRight;
+            layerOffsetNotWritten = outerOffset;
         }
         owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
         // A container that wrote something has had its top edge taken — by its first
@@ -10277,8 +10286,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // first paragraph opens that page as one in the flow does, and its line is not moved
             // into the space above it there either. A band's first, where the band opens its page,
             // is not either (paragraphOpeningABandsPage); in any other overlay it is not moved anyway.
-            // Its top edge is held in the flow only, as before: in a stack it is not measured.
-            if (overlayDepth == 0) {
+            // Its top edge is held in the flow, a stack of one layer's included: there Word dropped
+            // it as at the top of any page, and a paragraph with a 20pt margin, or the first in a
+            // stack with a 14pt margin, stood that much high in Word and LibreOffice.
+            if (overlayDepth == oneLayerDepth) {
                 holdAParagraphsTopEdgeOnItsPage(document, node, 0);
             }
             paragraphOpeningItsPage = node;
@@ -13222,8 +13233,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
 
         double[] room = fitMode == DocumentImageFitMode.CONTAIN ? roomRound(resolved, box) : new double[2];
-        if (currentCell == null && overlayDepth == 0 && startsAPageOfItsOwn(node)) {
-            // Its top edge is held on the page the layout moves it to, as a text paragraph's is.
+        if (currentCell == null && overlayDepth == oneLayerDepth && startsAPageOfItsOwn(node)) {
+            // Its top edge is held on the page the layout moves it to, as a text paragraph's is, in
+            // the flow and in a stack of one layer.
             holdAParagraphsTopEdgeOnItsPage(document, node, room[0]);
         }
         XWPFParagraph para = newBodyParagraph(document);
@@ -16769,9 +16781,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             moved.add(pointsOf(Math.abs(across)) + "pt " + (across > 0 ? "right" : "left")
                       + " of the stack's edge, in a table cell, whose text Word holds inside it");
         }
-        double lower = box.placementY() + box.placementHeight() - stack.padding().top() - layer.margin().top()
-                       - (placed.placementY() + placed.placementHeight());
-        if (Double.isNaN(resumeSpacing) && Math.abs(lower) > 0.5) {
+        double lower = layerOffsetDown(stack);
+        if (Math.abs(lower) > 0.5) {
             moved.add(pointsOf(Math.abs(lower)) + "pt " + (lower > 0 ? "lower" : "higher")
                       + " than its stack starts, without making room for it");
         }
@@ -16779,6 +16790,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             report.add(DocxExportReport.Severity.APPROXIMATED, "layer offset", layout.pathOf(layer),
                     "the page sets it " + String.join(", and ", moved) + "; Word writes it where the stack starts");
         }
+    }
+
+    /**
+     * How far lower than its stack of one layer starts the page sets the layer, in points, higher
+     * below zero: what Word does not write, which writes the layer where the stack starts. None
+     * where a band or a column sets the page's distance to the next block written (resumeSpacing),
+     * which holds the offset, or where either has no place of its own in the layout.
+     */
+    private double layerOffsetDown(DocumentNode stack) {
+        DocumentNode layer = stack.children().get(0);
+        com.demcha.compose.document.layout.PlacedNode box = layout.placement(stack);
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(layer);
+        if (box == null || placed == null || !Double.isNaN(resumeSpacing)) {
+            return 0;
+        }
+        return box.placementY() + box.placementHeight() - stack.padding().top() - layer.margin().top()
+               - (placed.placementY() + placed.placementHeight());
     }
 
     /**
@@ -18602,7 +18630,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double inside = Math.max(0, node.padding().top() + room);
         double own = Math.max(0, node.margin().top() + node.padding().top() + room);
         double edges = Math.max(0, carriedSpacingBefore);
-        double above = spaceAboveOnItsPage(node);
+        // A layer's offset down its stack of one layer is named, not written (reportTheLayerMoved),
+        // and the line holds none of it either.
+        double above = spaceAboveOnItsPage(node) - layerOffsetNotWritten;
         double kept = Double.isNaN(above) ? own + edges : Math.max(0, above) + inside;
         // Text hanging below a band, a pull out of the block before and a card's border below
         // it stay on the page above with them, as at a table moved to a new page: the layout

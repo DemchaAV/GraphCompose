@@ -8,6 +8,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps the space above the first paragraph or picture of a stack of one layer the
+  layout moves to a new page.** A stack of one layer is written in the flow, and Word drops its
+  first paragraph's space above at the top of a page as any other's. That space was held only for
+  a paragraph or a picture in the flow outside any stack. Measured in Word and LibreOffice on
+  Windows, opening such a stack on a new page, in both:
+  - a paragraph with a 20pt margin stood 20pt high;
+  - a picture with a 20pt margin stood 20pt high;
+  - a paragraph in a stack with a 14pt margin stood 14pt high.
+
+  Nothing was named.
+  - The space is now held in a line kept with the first block, as in the flow, the stack's own
+    edges with it. Each stands where the page sets it, and the page breaks where it did.
+  - A layer's offset in its stack, up or down, is named as before, and not held.
+  - A pull out of the block on the page above stays on that page, as it does in the flow. The
+    report no longer says it stands the stack's first paragraph lower, which on the new page it
+    does not.
 - **A picture, a shape or a barcode composed in a table cell keeps its own size.** The layout gave
   a node composed in a table cell (`DocumentTableCell.node`) the cell's inner width, and the
   height it measured. In a 120pt column padded 4pt, the page drew:

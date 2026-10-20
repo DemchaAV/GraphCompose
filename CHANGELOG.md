@@ -8,6 +8,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export names a block Word may break inside a panel the layout moves it down in.** The
+  layout moves a block kept together, a layer stack or a shape container whole, or a block kept
+  with the next with it, to the next page as the page requires. Inside a panel the layout runs on
+  there, Word and LibreOffice break the panel's row where its lines run out and hold no keeps
+  across that break.
+  - Measured in both on Windows, inside a filled section, with nothing named:
+    - a stack of three lines, or a section kept together, moved whole to the next page, stood
+      with two of its lines at the foot of the page above;
+    - a heading kept with the line under it stood there too, the line on the next page.
+  - The report now names such a block (`APPROXIMATED`), including one opening a panel inside the
+    panel, as the outer row breaks before it. It is named once, not again for what it holds.
+  - A block moved whole that Word cannot split is not named: one line, one picture, a drawing, or
+    a row that may not split. A painted section kept together and a row holding a card were
+    measured moving whole, as the page sets them. One kept with the next is named all the same.
+  - None of the corpus's 62 DOCX changes, and none of its 1246 notes.
 - **A DOCX export keeps a stack of one layer on the page the layout puts it on.** The layout moves
   a layer stack to a new page whole, but Word was told nothing and broke between its paragraphs.
   Measured in Word and LibreOffice on Windows, a stack of three lines that the page moved to the

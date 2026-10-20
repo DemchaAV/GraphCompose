@@ -594,9 +594,10 @@ How it lands:
   kept together, that the layout moved whole to the next page inside a panel stood with two of
   its lines at the foot of the page above, in both, and a heading kept with the line under it
   stood there with that line on the next page). The report names a block kept together, a layer
-  stack or a block kept with the next that the layout moves to a new page inside a panel that
-  runs on there. A filled section kept together, whose own row may not split, and a row in the
-  panel move whole, as the page sets them, and are not named.
+  stack, a shape container or a block kept with the next that the layout moves to a new page
+  inside a panel that runs on there. One moved whole that Word cannot split — one line, one
+  picture, a drawing, a row that may not split — is not named: a painted section kept together,
+  whose own row may not split, and a row in the panel move whole, as the page sets them.
 - **Page breaks.** Word breaks no page inside a table cell, so a page break among a
   panel's children closes the panel there and opens it again after the break.
 - **Measured.** Cards stacked in a row's columns, panels nested in its table, stand where the

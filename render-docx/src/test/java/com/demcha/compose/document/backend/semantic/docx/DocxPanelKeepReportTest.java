@@ -1,9 +1,13 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.LayerStackBuilder;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.junit.jupiter.api.Test;
@@ -60,12 +64,30 @@ class DocxPanelKeepReportTest {
     }
 
     @Test
+    void aShapeContainerMovedThereIsNamedToo() throws Exception {
+        assertThat(notes(inAPanel(10, panel -> panel.add(new ShapeContainerBuilder().name("Shape")
+                .rectangle(200, 45).fillColor(DocumentColor.rgb(250, 240, 230)).topLeft(threeLines()).build()))))
+                .singleElement().satisfies(note -> assertThat(note.path()).contains("Shape"));
+    }
+
+    @Test
     void aBlockKeptWithTheNextMovedThereIsNamed() throws Exception {
         // Ten lines leave 24pt: the heading and the line under it, 26pt, move down together.
         assertThat(notes(inAPanel(10, panel -> panel.addSection("Heading", heading -> heading.keepWithNext()
                 .addParagraph("Opening")).addParagraph("Body"))))
                 .singleElement().satisfies(note -> {
                     assertThat(note.path()).contains("Heading");
+                    assertThat(note.detail()).startsWith(WITH_NEXT);
+                });
+    }
+
+    @Test
+    void aPaintedPanelKeptTogetherAndWithTheNextIsNamedAsKeptWithTheNext() throws Exception {
+        // Its own row may not split, but Word may leave it at the foot of the page above all the same.
+        assertThat(notes(inAPanel(10, panel -> panel.addSection("Title", title -> title.keepTogether().keepWithNext()
+                .fillColor(DocumentColor.rgb(250, 240, 230)).addParagraph("Opening")).addParagraph("Body"))))
+                .singleElement().satisfies(note -> {
+                    assertThat(note.path()).contains("Title");
                     assertThat(note.detail()).startsWith(WITH_NEXT);
                 });
     }
@@ -84,37 +106,68 @@ class DocxPanelKeepReportTest {
     @Test
     void aPanelKeptTogetherInsideThePanelIsNot() throws Exception {
         // Its own row may not split: Word moves it whole, a stack in it with it.
-        assertThat(notes(inAPanel(10, panel -> panel.addSection(kept -> kept.keepTogether()
+        Consumer<PageFlowBuilder> content = inAPanel(10, panel -> panel.addSection("Kept", kept -> kept.keepTogether()
                 .fillColor(DocumentColor.rgb(250, 240, 230))
-                .addLayerStack(stack -> stack.topLeft(threeLines())))))).isEmpty();
+                .addLayerStack(stack -> stack.topLeft(threeLines()))));
+        assertThat(startPage(content, "Kept")).as("the premise: it moves to the second page").isEqualTo(1);
+        assertThat(notes(content)).isEmpty();
     }
 
     @Test
     void aCardInARowInsideThePanelIsNot() throws Exception {
         // The row may not split, and moves with the card in it.
-        assertThat(notes(inAPanel(10, panel -> panel.addRow(row -> row
+        Consumer<PageFlowBuilder> content = inAPanel(10, panel -> panel.addRow("Cards", row -> row
                 .add(new SectionBuilder().fillColor(DocumentColor.rgb(250, 240, 230))
                         .addLayerStack(stack -> stack.topLeft(threeLines())).build())
-                .addParagraph("Beside"))))).isEmpty();
+                .addParagraph("Beside")));
+        assertThat(startPage(content, "Cards")).as("the premise: it moves to the second page").isEqualTo(1);
+        assertThat(notes(content)).isEmpty();
     }
 
     @Test
     void aStackInARowsCellInsideThePanelIsNot() throws Exception {
-        assertThat(notes(inAPanel(10, panel -> panel.addRow(row -> row
+        Consumer<PageFlowBuilder> content = inAPanel(10, panel -> panel.addRow("Cards", row -> row
                 .add(new LayerStackBuilder().topLeft(threeLines()).build())
-                .addParagraph("Beside"))))).isEmpty();
+                .addParagraph("Beside")));
+        assertThat(startPage(content, "Cards")).as("the premise: it moves to the second page").isEqualTo(1);
+        assertThat(notes(content)).isEmpty();
+    }
+
+    @Test
+    void aStackHoldingARowIsNot() throws Exception {
+        // One row that may not split is one piece, which Word moves whole.
+        Consumer<PageFlowBuilder> content = inAPanel(10, panel -> panel.addLayerStack(stack -> stack.name("Entry")
+                .topLeft(new RowBuilder().addParagraph("Icon")
+                        .addSection(lines -> lines.addParagraph("Label").addParagraph("More").addParagraph("Most"))
+                        .build())));
+        assertThat(startPage(content, "Entry")).as("the premise: it moves to the second page").isEqualTo(1);
+        assertThat(notes(content)).isEmpty();
+    }
+
+    @Test
+    void aSingleLineKeptTogetherIsNot() throws Exception {
+        // Ten lines and a bit leave less than a line: the one line moves, and Word cannot split it.
+        Consumer<PageFlowBuilder> content = inAPanel(11, panel -> panel.addSection("Kept", kept -> kept.keepTogether()
+                .addParagraph("Opening")));
+        assertThat(startPage(content, "Kept")).as("the premise: it moves to the second page").isEqualTo(1);
+        assertThat(notes(content)).isEmpty();
     }
 
     @Test
     void oneOnThePanelsFirstPageIsNot() throws Exception {
-        assertThat(notes(inAPanel(2, panel -> panel.addLayerStack(stack -> stack.topLeft(threeLines()))))).isEmpty();
+        Consumer<PageFlowBuilder> content = inAPanel(2, panel -> panel.addLayerStack(stack -> stack.name("Entry")
+                .topLeft(threeLines())));
+        assertThat(startPage(content, "Entry")).as("the premise: it stays on the first page").isEqualTo(0);
+        assertThat(notes(content)).isEmpty();
     }
 
     @Test
     void oneOpeningThePanelsPieceAfterABreakIsNot() throws Exception {
         // The break closes the panel there and opens it again on the next page.
-        assertThat(notes(inAPanel(2, panel -> panel.addPageBreak(pageBreak -> { })
-                .addLayerStack(stack -> stack.topLeft(threeLines()))))).isEmpty();
+        Consumer<PageFlowBuilder> content = inAPanel(2, panel -> panel.addPageBreak(pageBreak -> { })
+                .addLayerStack(stack -> stack.name("Entry").topLeft(threeLines())));
+        assertThat(startPage(content, "Entry")).as("the premise: it opens the second page").isEqualTo(1);
+        assertThat(notes(content)).isEmpty();
     }
 
     @Test
@@ -123,8 +176,9 @@ class DocxPanelKeepReportTest {
         Consumer<PageFlowBuilder> content = page -> {
             inAPanel(9, panel -> { }).accept(page);
             page.addSection(next -> next.fillColor(DocumentColor.rgb(230, 236, 245)).padding(DocumentInsets.of(6))
-                    .addLayerStack(stack -> stack.topLeft(threeLines())));
+                    .addLayerStack(stack -> stack.name("Entry").topLeft(threeLines())));
         };
+        assertThat(startPage(content, "Entry")).as("the premise: it opens the second page").isEqualTo(1);
         assertThat(notes(content)).isEmpty();
     }
 
@@ -135,8 +189,9 @@ class DocxPanelKeepReportTest {
             for (int i = 0; i < 10; i++) {
                 page.addParagraph("Filler line " + i);
             }
-            page.addLayerStack(stack -> stack.topLeft(threeLines()));
+            page.addLayerStack(stack -> stack.name("Entry").topLeft(threeLines()));
         };
+        assertThat(startPage(content, "Entry")).as("the premise: it moves to the second page").isEqualTo(1);
         assertThat(notes(content)).isEmpty();
     }
 
@@ -157,6 +212,14 @@ class DocxPanelKeepReportTest {
 
     private static com.demcha.compose.document.node.DocumentNode threeLines() {
         return new SectionBuilder().addParagraph("Opening").addParagraph("Body").addParagraph("Tail").build();
+    }
+
+    private static int startPage(Consumer<PageFlowBuilder> content, String name) {
+        try (DocumentSession session = GraphCompose.document().pageSize(300, 200).margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(content::accept);
+            return session.layoutGraph().nodes().stream()
+                    .filter(node -> name.equals(node.semanticName())).findFirst().orElseThrow().startPage();
+        }
     }
 
     private static List<DocxExportReport.Note> notes(Consumer<PageFlowBuilder> content) throws Exception {

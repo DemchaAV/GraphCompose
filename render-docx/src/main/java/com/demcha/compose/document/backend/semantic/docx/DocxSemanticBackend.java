@@ -18732,12 +18732,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Whether the layout placed anything after a node in the stack it is written in: after it, or
-     * after a container it closes on the way up to the stack, as a spacer ending a section the
+     * Whether the layout placed anything after a node in the stacks of one layer it is written in:
+     * after it, or after a container it closes on the way up to the outermost stack, which the
+     * layout moves to its page whole with everything in it, as a spacer ending a section the
      * layer's text follows.
      */
     private boolean followedInItsStack(DocumentNode node) {
-        DocumentNode stack = openOverlays.peek();
+        DocumentNode stack = openOverlays.peekLast();
         for (DocumentNode at = node; at != null && at != stack; at = layout.parentOf(at)) {
             if (layout.followedInItsParent(at)) {
                 return true;

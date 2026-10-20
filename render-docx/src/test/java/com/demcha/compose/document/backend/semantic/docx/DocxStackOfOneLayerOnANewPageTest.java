@@ -194,6 +194,20 @@ class DocxStackOfOneLayerOnANewPageTest {
     }
 
     @Test
+    void aSpacerClosingAStackInsideAStackGoesWithWhatTheOuterOneHolds() throws Exception {
+        // The layout moves the outer stack whole: the text after the inner one is on its page too.
+        try (XWPFDocument document = export(movedToANewPage(stack -> stack.margin(DocumentInsets.top(EDGE))
+                .topLeft(new SectionBuilder()
+                        .addLayerStack(inner -> inner.topLeft(new SectionBuilder().spacer(0, 8).build()))
+                        .addParagraph("Opening").build())))) {
+            XWPFParagraph spacer = paragraphBefore(document, paragraphWith(document, "Opening"));
+
+            assertThat(spacer.getText()).isEmpty();
+            assertThat(spacer.getCTP().getPPr().isSetKeepNext()).as("kept with the outer stack's text").isTrue();
+        }
+    }
+
+    @Test
     void aSpacerAloneInItsStackIsKeptWithNothing() throws Exception {
         // What follows the stack is not the stack's: the spacer is not kept with it.
         try (XWPFDocument document = export(page -> page

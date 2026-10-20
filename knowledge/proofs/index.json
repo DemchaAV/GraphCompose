@@ -121,14 +121,14 @@
           "kind": "behavior",
           "value": "table.header-repeats-on-every-continuation-page",
           "page": "docs/recipes/tables.md",
-          "line": 208,
+          "line": 215,
           "heading": "Repeated header on page break"
         },
         {
           "kind": "behavior",
           "value": "table.repeat-header-defaults-to-zero",
           "page": "docs/recipes/tables.md",
-          "line": 209,
+          "line": 216,
           "heading": "Repeated header on page break"
         }
       ]
@@ -141,7 +141,7 @@
           "kind": "behavior",
           "value": "table.spanning-cell-height-is-sum-of-covered-rows",
           "page": "docs/recipes/tables.md",
-          "line": 88,
+          "line": 95,
           "heading": "Row span — merge a cell vertically"
         }
       ]
@@ -154,7 +154,7 @@
           "kind": "behavior",
           "value": "table.explicit-row-style-beats-zebra",
           "page": "docs/recipes/tables.md",
-          "line": 129,
+          "line": 136,
           "heading": "Zebra — alternating row fills"
         }
       ]

@@ -270,18 +270,18 @@ class DocxCarriedWithoutReportTest {
     }
 
     @Test
-    void aShapeComposedInACellNamesTheCornersItIsDrawnWithAtTheCellsWidth() throws Exception {
-        // Laid out 20 wide, it is drawn as wide as its cell: 10 and 12 then stay 10 and 12, and
-        // Word draws all four at 12. The one 20 tall holds both at 10, however wide its cell.
+    void aShapeComposedInACellNamesTheCornersItIsDrawnWithAtItsOwnWidth() throws Exception {
+        // Laid out 40 wide, it holds 10 and 12 at 20, so they stay 10 and 12, and Word draws all
+        // four at 12. The one 20 wide holds both at 10, however wide its cell, as the page draws it.
         DocumentCornerRadius corners = DocumentCornerRadius.of(10, 12, 10, 12);
         DocxExportReport report = reportOf(page -> page
                 .addTable(table -> table.columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
-                        .rowCells(DocumentTableCell.node(new ShapeBuilder().size(20, 40).fillColor(INK)
+                        .rowCells(DocumentTableCell.node(new ShapeBuilder().size(40, 40).fillColor(INK)
                                         .cornerRadius(corners).build()),
-                                DocumentTableCell.node(new ShapeBuilder().size(20, 20).fillColor(INK)
+                                DocumentTableCell.node(new ShapeBuilder().size(20, 40).fillColor(INK)
                                         .cornerRadius(corners).build()))));
 
-        assertThat(detailOf(report, "ShapeNode")).as("the tall one's, and the short one names nothing")
+        assertThat(detailOf(report, "ShapeNode")).as("the wide one's, and the narrow one names nothing")
                 .startsWith("composed in a table cell, whose drawing is its table's").endsWith(CORNERS);
     }
 

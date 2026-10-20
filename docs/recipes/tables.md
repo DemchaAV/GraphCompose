@@ -82,6 +82,13 @@ paragraphs in the cell, not just the section's background. The row stays
 atomic: a composed cell does not split across a page break, so keep the
 child shorter than one page's content area.
 
+Text in a composed cell aligns in the cell's inner width, and a section,
+a row or any other composite lays itself out in the cell's inner box. A
+picture, a shape, a barcode or any
+other node of a size of its own keeps that size, held to the cell's
+inner width where it is wider, and starts at the cell's left content
+edge: the cell's horizontal anchor is not read for composed content.
+
 ## Row span — merge a cell vertically
 
 <!-- claim: capability=table.row-span -->

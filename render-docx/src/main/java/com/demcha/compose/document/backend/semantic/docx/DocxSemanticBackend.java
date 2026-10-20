@@ -4382,15 +4382,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether a shape or a shape container composed in a table cell, which has no fragment of its
-     * own to read them off, rounds its corners by radii that differ. A shape there is drawn as wide
-     * as its cell lays it out and as tall as it is, so its radii are held to half its height, past
-     * which none is drawn: a radius that differs on the page is named, and one that differs only
-     * past half a cell narrower than the shape is tall is named too. An outline with neither a
-     * fill nor a stroke that shows draws nothing.
+     * own to read them off, rounds its corners by radii that differ. A shape there is drawn at its
+     * own size, held to its cell's inner width where that is narrower, so its radii are held to half
+     * its shorter side, past which none is drawn: a radius that differs on the page is named, and
+     * one that differs only past half a cell narrower than the shape is named too. An outline with
+     * neither a fill nor a stroke that shows draws nothing.
      */
     private static boolean cornersDiffer(DocumentNode node) {
         if (node instanceof com.demcha.compose.document.node.ShapeNode shape) {
-            return DocxDrawings.roundsUnequally(shape.cornerRadius(), Double.POSITIVE_INFINITY, shape.height());
+            return DocxDrawings.roundsUnequally(shape.cornerRadius(), shape.width(), shape.height());
         }
         return node instanceof ShapeContainerNode container
                && container.outline() instanceof com.demcha.compose.document.style.ShapeOutline.RoundedRectanglePerCorner corners
@@ -14396,8 +14396,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * A cell's waiting drawings that draw a rule of a node's kind and thickness, in their order:
-     * a level line as long as the node's, or a bar. A bar is as wide as the layout makes it — a
-     * lone one fills its cell — and so is a line running to the end of whatever width it is given.
+     * a level line as long as the node's, or a bar. A bar is as wide as the layout makes it — its
+     * own width, held to its cell's — and so is a line running to the end of whatever width it is
+     * given.
      */
     private static List<CellFragment> drawingsOf(List<CellFragment> waiting, DocumentNode node, DocxRules.Rule rule) {
         List<CellFragment> drawings = new ArrayList<>();

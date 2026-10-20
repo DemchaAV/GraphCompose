@@ -8,6 +8,23 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A picture, a shape or a barcode composed in a table cell keeps its own size.** The layout gave
+  a node composed in a table cell (`DocumentTableCell.node`) the cell's inner width, and the
+  height it measured. In a 120pt column padded 4pt, the page drew:
+  - a picture fitted to 100pt in a box 112pt wide, so 112×56 for 100×50;
+  - a 60pt picture stretched to 112×60;
+  - a 20pt circle as an ellipse 112pt wide.
+
+  The DOCX export wrote the pictures at their own size, and drew the circle as the page did.
+  - A node of a size of its own is now laid out at the width it measured, as the flow and a row
+    slot lay one out: a picture, a shape, a circle, a barcode, a line, a path or a polygon. It is
+    held to the cell's inner width where it measures wider, and starts at the cell's content edge
+    as before. A link on it covers it rather than the cell's width.
+  - Each of the three now stands where Word and LibreOffice draw it.
+  - Text aligns in the cell's inner width as before: a paragraph, a list, a page number or a page
+    reference. A composite is laid out in the cell's inner box as before.
+  - The DOCX export draws a circle or a shape there at its own size, as the page now does, and
+    measures a shape's corners against its own width.
 - **A DOCX export keeps the space above a picture the layout moves to a new page.** Word drops a
   paragraph's space above at the top of a page, a picture's paragraph's too. Measured in Word and
   LibreOffice on Windows, a 100pt picture opening its page stood at the page's top in both: 20pt
@@ -315,8 +332,8 @@ follow semantic versioning; release dates are ISO 8601.
   tell that box apart from the node. A box whose corners round by radii that differ only past
   half its shorter side — 10 and 12 on a box 20 tall — is drawn at 10 on the page and in Word
   alike, and its note no longer says its corners are drawn at the largest. A shape composed in a
-  table cell is laid out at the cell's width, which the report does not know, so its radii are
-  held to half its height: one in a cell narrower than it is tall can still be named. None of the
+  table cell is held to half its own shorter side, though its cell, which the report does not
+  know, may lay it out narrower: one in a cell narrower than it can still be named. None of the
   corpus's 62 DOCX changes, and none of its 1332 notes: no corpus document holds either case.
 - **A DOCX export ends and turns a drawing's outline as the page strokes it.** An outline was
   written with no cap and no join, which Word 16 and LibreOffice draw with flat ends and round

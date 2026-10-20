@@ -588,8 +588,15 @@ How it lands:
   whole right border plus half a point short of that edge, the points taken from its right
   margin and no more than it holds, so its text keeps its place and width.
 - **Keeping together.** A `keepTogether()` panel the layout placed on one page is a row
-  Word may not split. Anchors and keeps on the blocks inside a panel carry as they do
-  anywhere else.
+  Word may not split. Anchors on the blocks inside a panel carry as they do anywhere else, and
+  so do their keeps, but Word and LibreOffice do not hold them where the panel's row breaks over
+  a page: they break it where its lines run out (measured: a stack of three lines, or a section
+  kept together, that the layout moved whole to the next page inside a panel stood with two of
+  its lines at the foot of the page above, in both, and a heading kept with the line under it
+  stood there with that line on the next page). The report names a block kept together, a layer
+  stack or a block kept with the next that the layout moves to a new page inside a panel that
+  runs on there. A filled section kept together, whose own row may not split, and a row in the
+  panel move whole, as the page sets them, and are not named.
 - **Page breaks.** Word breaks no page inside a table cell, so a page break among a
   panel's children closes the panel there and opens it again after the break.
 - **Measured.** Cards stacked in a row's columns, panels nested in its table, stand where the

@@ -483,6 +483,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private String badgeText;
     // The cell of the panel being written, painted or framed; null outside a panel.
     private XWPFTableCell panelCell;
+    // The page the last block written straight into panelCell ended on, or into the panel holding
+    // it, -1 before the first: a block the layout keeps whole and moves to a new page inside the
+    // panel, Word may break (reportAKeepThePanelBreaks).
+    private int panelLastEndPage = -1;
     // How much of the space above the first paragraph of panelCell its top border takes, in twips
     // (writePanelPiece): no room to raise that paragraph's line into (raiseIntoTheSpaceAbove).
     private long panelsFirstLineKeeps;
@@ -3578,6 +3582,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (placed != null && inTheBody) {
                 lastEndPage = Math.max(lastEndPage, placed.endPage());
             }
+            if (placed != null && panelCell != null && currentCell == panelCell) {
+                panelLastEndPage = Math.max(panelLastEndPage, placed.endPage());
+            }
         }
     }
 
@@ -3588,6 +3595,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // In a cell its paragraphs are its table's, which a row keeps or breaks on its own terms.
         boolean keepTogether = (node.keepTogether() || currentCell == null && isOneLayer(node))
                                && layout.onOnePage(node);
+        reportAKeepThePanelBreaks(node);
         boolean keepWithNext = node.keepWithNext() && layout.onOnePage(node);
         String anchor = blockAnchorOf(node, inTheFlow(node, overlayDepth, oneLayerDepth));
         if (!keepTogether && !keepWithNext && anchor == null) {
@@ -3614,6 +3622,39 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         if (anchor != null) {
             bookmarkAround(written, anchor);
+        }
+    }
+
+    /**
+     * Names a block the layout moves to a new page inside a panel that runs on there, its row
+     * breaking with it: a block kept together, a layer stack, or a block kept with the next.
+     *
+     * <p>Word breaks a table's row where its lines run out and holds no keeps across that break:
+     * told to, it still set the first two lines of a stack of three, moved whole to the next page
+     * inside a panel, at the foot of the page above, and a heading kept with the line under it
+     * there with that line on the next page, in Word and LibreOffice alike (measured). What Word
+     * keeps whole moves whole: a panel kept together — its own row may not split — and a row in
+     * the panel's cell. A panel whose row Word keeps whole is on one page, and nothing in it opens
+     * another. A panel inside a panel is in the outer one's row, which breaks as well: a block
+     * opening it on a new page is named too, once, not again for what it holds.</p>
+     */
+    private void reportAKeepThePanelBreaks(DocumentNode node) {
+        boolean whole = node.keepTogether() || node instanceof com.demcha.compose.document.node.LayerStackNode;
+        if (panelCell == null || currentCell != panelCell || panelLastEndPage < 0
+            || !(whole || node.keepWithNext()) || !layout.onOnePage(node)
+            || node.keepTogether() && !paintOf(node).isEmpty()) {
+            return;
+        }
+        com.demcha.compose.document.layout.PlacedNode placed = layout.placement(node);
+        if (placed != null && placed.startPage() > panelLastEndPage) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, node.nodeKind(), layout.pathOf(node), whole
+                    ? "the layout moves it to the next page whole, inside a panel that runs on there; Word breaks "
+                      + "the panel's row where its lines run out and holds no keeps across that break, so it may set "
+                      + "its first lines at the foot of the page above"
+                    : "the layout moves it to the next page with the block after it, inside a panel that runs on "
+                      + "there; Word breaks the panel's row where its lines run out and holds no keeps across that "
+                      + "break, so it may leave it at the foot of the page above");
+            panelLastEndPage = Math.max(panelLastEndPage, placed.startPage());
         }
     }
 
@@ -6931,6 +6972,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         long outerMarginKept = panelsMarginKeeps;
         boolean outerGives = panelsPaddingGives;
         long outerRaised = panelRaisedFromItsPadding;
+        int outerLastEndPage = panelLastEndPage;
+        if (currentCell != outerPanelCell || table.getRow(0).isCantSplitRow()) {
+            // In a row's cell, or a column's, the panel moves with its row, and a panel kept
+            // together moves whole: what opens its page is theirs, not the outer panel's.
+            panelLastEndPage = -1;
+        }
         panelsFirstLineKeeps = Math.max(0, toTwips(topNotTaken) - cellMargin(cell, true));
         // What the padding takes of it is no room either (paddingAbove). A shape's layers are
         // set inside the outline it holds whole, and its first line rises into nothing of it.
@@ -6949,6 +6996,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             panelsMarginKeeps = outerMarginKept;
             panelsPaddingGives = outerGives;
             panelRaisedFromItsPadding = outerRaised;
+            panelLastEndPage = outerLastEndPage;
         }
         if (cell.getParagraphs().isEmpty()) {
             // A panel with nothing Word can hold inside is its padding tall on the page, not a

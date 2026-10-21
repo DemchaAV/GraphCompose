@@ -8,6 +8,31 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps a band of layers and a shape container on the page the layout puts them
+  on.** The layout moves a layer stack or a shape container to a new page whole. A stack of more
+  than one layer is written as a band, its layers one after the other, and Word was told nothing
+  for it or for a shape container.
+  - Measured in Word and LibreOffice on Windows, with nothing named:
+    - a band of two layers the page moved to the next page stood with its first layer at the foot
+      of the page above, a band with a picture as its second layer too;
+    - a shape container of three lines stood with two of them there.
+  - Each is now kept on its page as a stack of one layer is: each paragraph keeps its lines, and
+    all but the last keep with the next. Each measured one the layout moves to a new page now
+    stands whole there, in both editors.
+  - The first paragraph, picture or spacer of a band the layout moves to a new page now holds the
+    space above it there, as one in the flow does: in a line kept with it, or in a spacer's own
+    line. That holds where a backdrop is drawn before it too. Set on that page whole, a band with a
+    14pt margin stood 14pt high, as did one with a backdrop laid first and one nested in a stack of
+    one layer with that margin; one in a section with a 10pt margin stood 10pt high. Held, each
+    stands where the page sets it, within 1.2pt, and the backdrop where the page draws it.
+  - A band whose first block is a list or a row still loses that space, measured; nor is it held
+    for a table, a panel or a line pair written first.
+  - A later layer whose own margin, or a picture's room in its box, reaches above where the layers
+    before it end stands lower than the page sets it by as much as it reaches above them, 13pt in
+    the measured case. Such a band near the foot of a page, which the page keeps there, now moves
+    to the next page whole in Word rather than split.
+  - 10 of the corpus's 62 DOCX change, in these keeps alone (`w:keepLines`, `w:keepNext`). Each
+    renders word for word as before in Word and LibreOffice. Its 1246 notes are unchanged.
 - **A DOCX export names a block Word may break inside a panel the layout moves it down in.** The
   layout moves a block kept together, a layer stack or a shape container whole, or a block kept
   with the next with it, to the next page as the page requires. Inside a panel the layout runs on
@@ -31,7 +56,7 @@ follow semantic versioning; release dates are ISO 8601.
   - A stack of one layer in the flow is now kept on its page as a block kept together is: each
     paragraph keeps its lines, and all but the last keep with the next. Each measured stack now
     stands whole on the page the layout sets it on, in both editors.
-  - A stack in a table's or a panel's cell is not kept here, nor a stack of more than one layer.
+  - A stack in a table's or a panel's cell is not kept here.
   - No document of the 62 in the corpus has a stack of one layer in the flow, and none changes.
 - **A DOCX export keeps the space above a spacer opening a stack of one layer on a new page.** A
   stack of one layer that opens with a spacer, moved to a new page, lost the space above its text:

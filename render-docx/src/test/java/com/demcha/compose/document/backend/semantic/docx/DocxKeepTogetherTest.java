@@ -157,14 +157,59 @@ class DocxKeepTogetherTest {
     }
 
     @Test
-    void aBandIsNotChainedHere() throws Exception {
-        // A stack of more than one layer is written as a band, whose own keeps are another step.
+    void aBandIsChainedIntoOneUnit() throws Exception {
+        // A stack of two layers is written as a band, one layer after the other. Measured: one the
+        // page moved to a new page stood with its first layer at the foot of the page above in
+        // Word and LibreOffice.
         try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
                 .addLayerStack(stack -> stack
-                        .topLeft(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Opening").build())
-                        .bottomRight(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Caption").build())))) {
-            assertThat(keepsNext(paragraph(document, "Opening")) || keepsLines(paragraph(document, "Opening")))
-                    .isFalse();
+                        .topLeft(new com.demcha.compose.document.dsl.SectionBuilder()
+                                .addParagraph("Opening").addParagraph("Body").build())
+                        .bottomRight(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Caption").build()))
+                .addParagraph(p -> p.text("After")))) {
+            assertThat(keepsNext(paragraph(document, "Opening")) && keepsNext(paragraph(document, "Body")))
+                    .as("the first layer kept with the second").isTrue();
+            assertThat(keepsNext(paragraph(document, "Caption")))
+                    .as("the band ends here, and is not tied to what follows it").isFalse();
+            assertThat(keepsLines(paragraph(document, "Opening")) && keepsLines(paragraph(document, "Caption")))
+                    .isTrue();
+            assertThat(keepsNext(paragraph(document, "After")) || keepsLines(paragraph(document, "After"))).isFalse();
+        }
+    }
+
+    @Test
+    void aShapeContainerIsChainedIntoOneUnit() throws Exception {
+        // The layout moves a shape container whole too. Measured: one of three lines the page moved
+        // to a new page stood with two of them at the foot of the page above in Word and LibreOffice.
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .add(new com.demcha.compose.document.dsl.ShapeContainerBuilder().rectangle(200, 45)
+                        .topLeft(new com.demcha.compose.document.dsl.SectionBuilder()
+                                .addParagraph("Opening").addParagraph("Body").addParagraph("Tail").build())
+                        .build())
+                .addParagraph(p -> p.text("After")))) {
+            assertThat(keepsNext(paragraph(document, "Opening")) && keepsNext(paragraph(document, "Body"))).isTrue();
+            assertThat(keepsNext(paragraph(document, "Tail"))).isFalse();
+            assertThat(keepsLines(paragraph(document, "Tail"))).isTrue();
+        }
+    }
+
+    @Test
+    void aBandInARowsCellIsLeftToItsRow() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addRow(row -> row
+                        .add(new com.demcha.compose.document.dsl.LayerStackBuilder()
+                                .topLeft(new com.demcha.compose.document.dsl.SectionBuilder()
+                                        .addParagraph("Opening").addParagraph("Body").build())
+                                .bottomRight(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Caption").build())
+                                .build())
+                        .addParagraph("Beside")))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(cell.getParagraphs()).extracting(XWPFParagraph::getText).contains("Opening", "Caption");
+            for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                assertThat(keepsNext(paragraph) || keepsLines(paragraph))
+                        .as("a cell of a row Word keeps on its own terms").isFalse();
+            }
         }
     }
 

@@ -858,13 +858,16 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   distance below the blocks above it, to its first block's content. What that block
   holds above its content past that distance — a margin, a padding, a contained
   picture's room reaching above where the layers before it end — comes out of its own
-  edge, in a band as in a column's cell, where the block is a paragraph, a picture, a list
-  or a table in its layer's own flow, not in a row, a panel or a nested stack: kept whole, a caption with a 20pt margin 7pt
-  under the line above stood 12.7pt low in Word and LibreOffice, a picture contained in
-  a box level with that line 12.9pt, and a table with a 20pt margin 12.6pt. A list a
-  layer opens keeps its own margin and padding after the layer's resume, as a table
-  does: lost there, a list with a 20pt margin opening a band stood 20pt high, and one in a
-  later layer 7pt. A badge — a ring, drawn, with initials centred
+  edge, in a band as in a column's cell, where the block is a paragraph, a picture, a
+  list or a table in its layer's own flow — under plain sections and containers, and
+  alignment and anchor wrappers — its edge above at zero or more; not in a row,
+  a panel or a nested stack, which keep the gap to the block's box and name the overlap
+  from it. Kept whole, a caption with a 20pt margin 7pt under the line above stood 12.7pt
+  low in Word and LibreOffice, a picture contained in a box level with that line 12.9pt,
+  and a table with a 20pt margin 12.6pt. A list a layer opens keeps its own margin and
+  padding after the layer's resume, as a table does: lost there, a list with a 20pt
+  margin opening a band stood 20pt high, and one in a later layer 7pt. A badge — a ring,
+  drawn, with initials centred
   in it, over a spacer that keeps its place in the flow — writes its initials where
   the ring centres them and keeps its height below them. Each layer, here and in a
   shape container, is held in across to its box in the stack, with a few points to

@@ -1,6 +1,8 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.layout.LayoutAnchorNode;
 import com.demcha.compose.document.layout.PlacedNode;
+import com.demcha.compose.document.node.AlignNode;
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ImageNode;
@@ -423,8 +425,13 @@ final class DocxLayerColumns {
             DocumentNode[] first = new DocumentNode[1];
             double space = spaceAbove(layers.subList(0, index), layers.get(index), layout, standIns, drawing,
                     painted, moves, from, first);
+            DocumentNode layer = layers.get(index);
+            // What a block gives back is where its content starts, and so is where the overlap the
+            // report names starts; any other block stands where its box does, as it is written.
+            ToDoubleFunction<DocumentNode> givenBack = leaf -> givesItsEdgeBack(layer, leaf, panels)
+                    ? Math.max(0, inset.applyAsDouble(leaf)) : 0;
             if (!Double.isNaN(space)) {
-                resumes.put(layers.get(index), resume(space, layers.get(index), first[0], inset, panels));
+                resumes.put(layer, resume(space, layer, first[0], givenBack, panels));
                 if (from[0] != null) {
                     closing.add(from[0]);
                 }
@@ -432,7 +439,7 @@ final class DocxLayerColumns {
             // A panel among them ends where its box does, below its text; the layer starts at its
             // highest content, not its first where its blocks stand side by side, as a row's do.
             double end = endOf(layers.subList(0, index), layout, standIns, drawing, panels, moves, new PlacedNode[1]);
-            double highest = highestContent(layers.get(index), layout, written(standIns, moves, true), drawing, inset,
+            double highest = highestContent(layer, layout, written(standIns, moves, true), drawing, givenBack,
                     Double.NaN);
             if (!Double.isNaN(highest) && highest - end > EDGE) {
                 over.put(layers.get(index), highest - end);
@@ -452,37 +459,52 @@ final class DocxLayerColumns {
      * whole after the layers before it, and the caption stood 12.7pt low in Word and LibreOffice,
      * the picture 12.9pt (measured). Where the page starts the content itself above where they
      * end, it is written under them, no further up than its own edge gives, and named
-     * ({@link Band#over}). An edge below zero is not written in a resumed layer, and gives
-     * nothing.</p>
+     * ({@link Band#over}).</p>
      *
-     * <p>Only a paragraph, a picture, a list or a table written in its layer's own flow — under
-     * plain containers alone — writes its edge where the space is given back. Any other first
-     * block keeps the gap less its margin, never below zero: one in a row, a panel, a nested stack
-     * or a shape writes its edge inside them, and a spacer writes neither its margin nor its
-     * padding, though its margin comes off the gap, and the report names it.</p>
+     * <p>Only a block that {@link #givesItsEdgeBack} does so. Any other keeps the gap to its box
+     * less its margin, never below zero, as it always has: one in a row, a panel, a nested stack or
+     * a shape writes its edge inside them; a spacer writes neither its margin nor its padding,
+     * though its margin comes off the gap, and the report names it; and a block with an edge below
+     * zero takes it out where it is written, by its own writer's rules.</p>
      *
      * @param space from the end of the layers above to the top of the block's box, below zero
      *              where the box starts above that end ({@link #spaceAbove})
+     * @param inset what the block writes above its content inside its box, where it gives its edge
+     *              back, and none elsewhere
      */
     private static double resume(double space, DocumentNode layer, DocumentNode block,
                                  ToDoubleFunction<DocumentNode> inset, Predicate<DocumentNode> painted) {
-        boolean givesItsEdgeBack = (block instanceof ParagraphNode || block instanceof ImageNode
-                                    || block instanceof ListNode || block instanceof TableNode)
-                                   && inThePlainFlowOf(layer, block, painted);
-        if (!givesItsEdgeBack) {
+        if (!givesItsEdgeBack(layer, block, painted)) {
             return Math.max(0, space - block.margin().top());
         }
-        double inside = Math.max(0, inset.applyAsDouble(block));
-        double written = Math.max(0, block.margin().top() + Math.min(0, block.padding().top()) + inside);
-        return Math.max(0, space + inside) - written;
+        double inside = inset.applyAsDouble(block);
+        return Math.max(0, space + inside) - block.margin().top() - inside;
     }
 
-    /** Whether {@code block} is {@code node} or under it through plain, unpainted containers alone. */
+    /**
+     * Whether a later layer's first block writes its own edge above its content where the layer
+     * resumes, so that edge can give back what reaches above the layers before it: a paragraph, a
+     * picture, a list or a table in the layer's own flow, under plain containers alone, its margin
+     * and padding above at zero or more.
+     */
+    private static boolean givesItsEdgeBack(DocumentNode layer, DocumentNode block, Predicate<DocumentNode> painted) {
+        return (block instanceof ParagraphNode || block instanceof ImageNode
+                || block instanceof ListNode || block instanceof TableNode)
+               && block.margin().top() >= 0 && block.padding().top() >= 0
+               && inThePlainFlowOf(layer, block, painted);
+    }
+
+    /**
+     * Whether {@code block} is {@code node} or under it through plain containers alone: unpainted
+     * sections and containers, and the alignment and anchor wrappers written as their content.
+     */
     private static boolean inThePlainFlowOf(DocumentNode node, DocumentNode block, Predicate<DocumentNode> painted) {
         if (node == block) {
             return true;
         }
-        if (!(node instanceof SectionNode || node instanceof ContainerNode) || painted.test(node)) {
+        boolean plain = node instanceof SectionNode || node instanceof ContainerNode || node instanceof AlignNode
+                        || node instanceof LayoutAnchorNode;
+        if (!plain || painted.test(node)) {
             return false;
         }
         for (DocumentNode child : node.children()) {

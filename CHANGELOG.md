@@ -13,15 +13,19 @@ follow semantic versioning; release dates are ISO 8601.
   them, less what its first block writes above its content itself. Where the block held more
   than that gap, the rest was dropped and the block wrote all of it.
   - Measured in Word and LibreOffice on Windows:
-    - a caption with a 20pt margin, or a 20pt padding, starting 7pt under the line above stood
-      12.7pt low, with nothing named;
+    - a caption with a 20pt margin starting 7pt under the line above stood 12.7pt low, with
+      nothing named, and so did one centred by an alignment wrapper;
     - a table with a 20pt margin stood 12.6pt low, with nothing named;
-    - a picture contained in a box level with that line stood 12.9pt low, and the report said it
-      was written under the line, though the page draws it below.
+    - a caption with a 20pt padding stood 12.7pt low, and a picture contained in a box level with
+      that line 12.9pt. The report said each was written under the line, though the page sets it
+      below.
   - The block's own edge now gives that back, in a band and in a column's cell, where the block is
-    a paragraph, a picture, a list or a table in its layer's own flow. Each measured one stands
-    within 0.4pt of the page's distance from the line above, and the picture is no longer named. A
-    block in a row, a panel or a nested stack writes its edge inside them, and keeps the old gap.
+    a paragraph, a picture, a list or a table in its layer's own flow (under plain sections and
+    containers, alignment and anchor wrappers alone), its edge above at zero or more. Each measured
+    one stands within 0.4pt of the page's distance from the line above, and the
+    padded caption and the picture are no longer named. A block in a row, a panel or a nested stack
+    writes its edge inside them, and keeps the old gap and the overlap measured from its box, as
+    does a block with an edge below zero.
   - A list a layer opens now keeps its own margin and padding after the layer's gap, as a table
     does. The gap took their place: a list with a 20pt margin opening a band stood 20pt high, one
     with 10pt 10pt high, and one in a later layer 7pt high. Each now stands within 0.4pt.

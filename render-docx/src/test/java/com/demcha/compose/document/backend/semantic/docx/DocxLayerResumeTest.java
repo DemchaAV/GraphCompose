@@ -87,6 +87,17 @@ class DocxLayerResumeTest {
     }
 
     @Test
+    void anAlignedCaptionGivesItsMarginBackToo() throws Exception {
+        // An alignment wrapper is written as its content: measured, a centred caption with a 20pt
+        // margin stood 12.7pt low in Word and LibreOffice, with nothing named.
+        try (XWPFDocument document = export(band(new SectionBuilder().addAligned(
+                com.demcha.compose.document.node.HorizontalAlign.CENTER,
+                new ParagraphBuilder().text("Caption").margin(DocumentInsets.top(20)).build()).build()))) {
+            assertThat(before(anywhere(document, "Caption"))).isBetween(GAP - RAISE, GAP);
+        }
+    }
+
+    @Test
     void aColumnsLaterLayerGivesItsMarginBackInItsCell() throws Exception {
         try (XWPFDocument document = export(page -> page.addParagraph("Above").addLayerStack(stack -> stack
                 .topLeft(new SectionBuilder().padding(new DocumentInsets(0, 150, 0, 0)).addParagraph("Opening").build())
@@ -153,9 +164,10 @@ class DocxLayerResumeTest {
     }
 
     @Test
-    void aCaptionWithAnEdgeBelowZeroOverAPictureGivesNothing() throws Exception {
-        // An edge below zero is not written in a resumed layer: the caption stands right under the
-        // picture, as one with no margin does, and not its 4pt lower.
+    void aCaptionWithAnEdgeBelowZeroKeepsTheOldGap() throws Exception {
+        // A block takes an edge below zero out where it is written, by its own rules: the layer keeps
+        // the gap less that edge, at zero, and the caption stands right under the picture, as one
+        // with no margin does, not 4pt lower.
         try (XWPFDocument document = export(page -> page.addParagraph("Above").addLayerStack(stack -> stack
                 .topLeft(new ImageBuilder().source(picture(200, 100)).size(120, 60).build())
                 .bottomRight(new ParagraphBuilder().text("Caption").margin(new DocumentInsets(-4, 0, 0, 0)).build())))) {
@@ -169,7 +181,25 @@ class DocxLayerResumeTest {
         // keeps the gap less the margin, at zero, and nothing is named as pulled over the line above.
         Consumer<PageFlowBuilder> content = band(new com.demcha.compose.document.dsl.RowBuilder()
                 .addParagraph(p -> p.text("Caption").margin(DocumentInsets.top(20))).addParagraph("Beside").build());
-        assertThat(DocxExports.report(400, 600, 20, content).bySubject().get("space above")).isNull();
+        DocxExportReport report = DocxExports.report(400, 600, 20, content);
+
+        assertThat(report.bySubject().get("overlapping layer")).as("the premise: the row overlaps the line above")
+                .isNotNull();
+        assertThat(report.bySubject().get("space above")).isNull();
+    }
+
+    @Test
+    void aBlockInAPaintedPanelKeepsTheGapAndIsNamedWhereItsBoxReachesAbove() throws Exception {
+        // The panel writes the caption's 20pt padding in its cell, below where the layer resumes: the
+        // caption is written that much lower than the page sets it, and its box, which starts above
+        // the line before it, is what the report measures the overlap from.
+        Consumer<PageFlowBuilder> content = band(new SectionBuilder()
+                .fillColor(com.demcha.compose.document.style.DocumentColor.LIGHT_GRAY)
+                .addParagraph(p -> p.text("Caption").padding(DocumentInsets.top(20))).build());
+        DocxExportReport report = DocxExports.report(400, 600, 20, content);
+
+        assertThat(report.bySubject().get("overlapping layer")).isNotNull();
+        assertThat(report.bySubject().get("space above")).isNull();
     }
 
     @Test

@@ -6942,6 +6942,34 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static final double CLEAR_OF_THE_GRIDLINE_POINTS = 0.5;
 
+    /** What the report calls a panel's right border held inside its table cell. */
+    private static final String RIGHT_BORDER = "right border";
+
+    /**
+     * The report's note on a panel's right border that its table cell's edge reaches, or
+     * {@code null} where the border stands clear of it.
+     *
+     * <p>Word draws the border partly outside the table's edge, so it stands less far nearer its
+     * text than the table is narrowed — measured 0.6 to 1.4pt for 1.4 to 2.4pt taken — and the
+     * figures are the most it can be.
+     *
+     * @param nearer what the table gives up of its right margin, in points
+     * @param past   what of the border its right margin cannot take in that passes the cell's
+     *               edge, in points
+     */
+    private static String rightBorderHeldIn(double nearer, double past) {
+        String drawnNearer = "written up to " + pointsOf(nearer) + "pt nearer its text than the page draws it";
+        if (past > 0.01) {
+            return "its right border " + (nearer > 0.01 ? drawnNearer + ", all its right margin gives, and still " : "")
+                   + "reaching up to " + pointsOf(past) + "pt past its table cell's edge, where Word cuts it off "
+                   + "on screen";
+        }
+        return nearer > 0.01
+                ? "its right border " + drawnNearer + ", to end short of its table cell's edge, past which Word "
+                  + "cuts it off on screen"
+                : null;
+    }
+
     /**
      * The space round a shape that is all its composed cell holds, where the cell sets it down its
      * height as the page does.
@@ -7054,6 +7082,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // it, the points taken from its right margin and no more than it holds, so its text keeps
         // its place and its width.
         double shortOfTheEdge = 0;
+        // What of the border its right margin cannot take in, and the cell cannot hold, passes
+        // the cell's edge.
+        double pastTheEdge = 0;
         double room = currentCell != null && Double.isFinite(currentCellWidth) && strokeWidth(borders.right()) > 0
                 ? currentCellWidth - insetRight - Math.max(0, indent) - strokeWidth(borders.right())
                   - CLEAR_OF_THE_GRIDLINE_POINTS
@@ -7084,6 +7115,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 double given = halfLeft + Math.min(halfLeft, Math.max(0, padding.left()));
                 outer -= Math.max(0, Math.min(given, halfLeft + outer - (currentCellWidth - insetRight)));
             }
+            if (room > 0) {
+                // The room ends at the cell's text and half a point clear of the gridline; what
+                // the cell's right margin, what holds the panel in there and that half point do
+                // not take passes the cell's edge.
+                pastTheEdge = Math.max(0, outer - room - insetRight - cellMarginOf(currentCell, false)
+                                          - CLEAR_OF_THE_GRIDLINE_POINTS);
+            }
             setTableWidth(table, outer);
             writeGrid(table, new double[]{outer});
             CTTcPr properties = cellProperties(cell);
@@ -7105,6 +7143,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (first) {
             reportFlattenedPaint(node, translucentFill, translucentSides, "its fill", "its borders");
             reportBorderWidths(node, "its borders", true, widthsOf(borders));
+            String rightBorder = rightBorderHeldIn(shortOfTheEdge, pastTheEdge);
+            if (rightBorder != null) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, RIGHT_BORDER, layout.pathOf(node), rightBorder);
+            }
         }
         DocumentInsets margins = insideTheBorders(padding, borders);
         applyCellPadding(cell, new DocumentInsets(margins.top(), Math.max(0, margins.right() - shortOfTheEdge),

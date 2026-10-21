@@ -178,7 +178,8 @@ class DocxNodeFieldLedgerTest {
         node(ContainerNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
                 "margin:REPORTED:" + PULL, "fillColor:REPORTED:" + PANEL_TRANSLUCENCY, "stroke:REPORTED:" + PANEL_BORDERS,
                 "cornerRadius:REPORTED", "borders:REPORTED:" + PANEL_BORDERS,
-                "anchor:REPORTED:as a layer stack's column, which has no bookmark; in the flow it is bookmarked",
+                "anchor:REPORTED:as a layer stack's column, or where it writes no paragraph, as of drawings alone, "
+                + "which has no bookmark; otherwise, in the flow, it is bookmarked",
                 "bookmarkOptions:REPORTED", "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
         node(EllipseNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "fillColor:WRITTEN",
                 "stroke:WRITTEN", "linkTarget:REPORTED", "bookmarkOptions:REPORTED",
@@ -283,7 +284,8 @@ class DocxNodeFieldLedgerTest {
                 "margin:REPORTED:" + PULL, "fillColor:REPORTED:" + PANEL_TRANSLUCENCY, "stroke:REPORTED:" + PANEL_BORDERS,
                 "cornerRadius:REPORTED", "borders:REPORTED:" + PANEL_BORDERS,
                 "keepTogether:WRITTEN",
-                "anchor:REPORTED:as a layer stack's column, which has no bookmark; in the flow it is bookmarked",
+                "anchor:REPORTED:as a layer stack's column, or where it writes no paragraph, as of drawings alone, "
+                + "which has no bookmark; otherwise, in the flow, it is bookmarked",
                 "bleed:REPORTED:of a panel the page bleeds, in the flow it pages",
                 "bookmarkOptions:REPORTED", "keepWithNext:WRITTEN",
                 "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");

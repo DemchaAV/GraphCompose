@@ -8,6 +8,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export names a block that writes no paragraph for its anchor's bookmark.** A bookmark
+  goes round the paragraphs a block writes, and a section or a container of drawings alone writes
+  none: its drawings stand in the paragraph beside them. A link to its anchor is written all the
+  same, to a bookmark the file lacks.
+  - Measured in Word and LibreOffice on Windows: the page's link went to the section's place on
+    page 1, and in both editors' PDFs the text carried no link at all, with nothing in the report.
+  - The report now names such a block and its anchor: a link to it points at none, and a page
+    reference to it is a fixed number. A block with a note of its own has it added there. Where
+    another node's bookmark carries the same anchor, a link goes there, and the block is not named.
+  - The file is unchanged: none of the corpus's 62 DOCX changes, and none of its 1246 notes.
 - **A DOCX export keeps the space above a list, a line pair, and a table, a row or a panel
   opening a band, on the page the layout moves them to.** Word drops the space above a paragraph
   at the top of a page. A paragraph, a picture and a spacer there already hold theirs in a line

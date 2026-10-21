@@ -8,6 +8,31 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export sets a later layer where the page does when its first block's edge reaches
+  above the layers before it.** A layer written after another starts at the page's gap below
+  them, less what its first block writes above its content itself. Where the block held more
+  than that gap, the rest was dropped and the block wrote all of it.
+  - Measured in Word and LibreOffice on Windows:
+    - a caption with a 20pt margin starting 7pt under the line above stood 12.7pt low, with
+      nothing named, and so did one centred by an alignment wrapper;
+    - a table with a 20pt margin stood 12.6pt low, with nothing named;
+    - a caption with a 20pt padding stood 12.7pt low, and a picture contained in a box level with
+      that line 12.9pt. The report said each was written under the line, though the page sets it
+      below.
+  - The block's own edge now gives that back, in a band and in a column's cell, where the block is
+    a paragraph, a picture, a list or a table in its layer's own flow (under plain sections and
+    containers, alignment and anchor wrappers alone), its edge above at zero or more. Each measured
+    one stands within 0.4pt of the page's distance from the line above, and the
+    padded caption and the picture are no longer named. A block in a row, a panel or a nested stack
+    writes its edge inside them, and keeps the old gap and the overlap measured from its box, as
+    does a block with an edge below zero.
+  - A list a layer opens now keeps its own margin and padding after the layer's gap, as a table
+    does. The gap took their place: a list with a 20pt margin opening a band stood 20pt high, one
+    with 10pt 10pt high, and one in a later layer 7pt high. Each now stands within 0.4pt.
+  - A layer whose content the page starts above the layers before it is still written under them
+    and named. A caption over a photo's foot with a 6pt margin stood that much lower again; it now
+    gives the margin back.
+  - None of the corpus's 62 DOCX changes, and none of its 1246 notes.
 - **A DOCX export keeps a band of layers and a shape container on the page the layout puts them
   on.** The layout moves a layer stack or a shape container to a new page whole. A stack of more
   than one layer is written as a band, its layers one after the other, and Word was told nothing

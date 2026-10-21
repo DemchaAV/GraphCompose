@@ -139,13 +139,13 @@ class DocxListItemSeatTest {
     @Test
     void anItemOpeningABandWithNoSpaceWrittenAboveItIsRaisedByItsPosition() throws Exception {
         // A band pays a raise owed below an item in it (DocxBandRaiseTest), but this item, the
-        // band's first block, has no space written above it to move into: the list's margin is not
-        // written in a band.
+        // band's first block, has no space written above it to move into: the band opens with it,
+        // and its list has no margin.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Above").textStyle(LEAD))
                 .addLayerStack(stack -> stack.name("Stack")
                         .back(new ShapeBuilder().name("Backdrop").size(200, 80).build())
-                        .layer(new ListBuilder().noMarker().textStyle(spectral(30)).margin(DocumentInsets.top(20))
+                        .layer(new ListBuilder().noMarker().textStyle(spectral(30))
                                 .items("Title").build(), LayerAlign.TOP_LEFT)))) {
             XWPFParagraph item = anywhere(document, "Title");
             double raise = 0.8 * line(item) - SPECTRAL_ASCENT * 30;

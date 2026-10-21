@@ -70,10 +70,12 @@ class DocxBandOnANewPageTest {
     void theBandsPaddingIsHeldWithItsFirstParagraphsMargin() throws Exception {
         // 9pt of the band's padding and 6pt of the paragraph's margin: the band owes the first above
         // the paragraph, which owes the second itself.
-        try (XWPFDocument document = export(movedToANewPage(new LayerStackBuilder()
+        Consumer<PageFlowBuilder> content = movedToANewPage(new LayerStackBuilder()
                 .padding(DocumentInsets.top(9))
-                .topLeft(new ParagraphBuilder().text("Opening").margin(DocumentInsets.top(6)).build())
-                .bottomRight(new ParagraphBuilder().text("Caption").build()).build()))) {
+                .topLeft(new ParagraphBuilder().name("Opening").text("Opening").margin(DocumentInsets.top(6)).build())
+                .bottomRight(new ParagraphBuilder().text("Caption").build()).build());
+        assertOpensTheSecondPage(content, "Opening");
+        try (XWPFDocument document = export(content)) {
             XWPFParagraph opening = paragraphWith(document, "Opening");
             CTSpacing line = spacing(paragraphBefore(document, opening));
 
@@ -105,10 +107,12 @@ class DocxBandOnANewPageTest {
 
     @Test
     void aPictureOpeningTheBandIsHeld() throws Exception {
-        try (XWPFDocument document = export(movedToANewPage(new LayerStackBuilder()
+        Consumer<PageFlowBuilder> content = movedToANewPage(new LayerStackBuilder()
                 .margin(DocumentInsets.top(EDGE))
-                .topLeft(new ImageBuilder().source(picture()).size(60, 30).build())
-                .bottomRight(new ParagraphBuilder().text("Caption").build()).build()))) {
+                .topLeft(new ImageBuilder().name("Picture").source(picture()).size(60, 30).build())
+                .bottomRight(new ParagraphBuilder().text("Caption").build()).build());
+        assertOpensTheSecondPage(content, "Picture");
+        try (XWPFDocument document = export(content)) {
             XWPFParagraph picture = pictureIn(document);
 
             assertThat(lineBefore(document, picture)).isEqualTo(Math.round(EDGE * 20));
@@ -118,10 +122,13 @@ class DocxBandOnANewPageTest {
 
     @Test
     void aPicturesOwnMarginIsHeldWithTheBands() throws Exception {
-        try (XWPFDocument document = export(movedToANewPage(new LayerStackBuilder()
+        Consumer<PageFlowBuilder> content = movedToANewPage(new LayerStackBuilder()
                 .margin(DocumentInsets.top(EDGE))
-                .topLeft(new ImageBuilder().source(picture()).size(60, 30).margin(DocumentInsets.top(5)).build())
-                .bottomRight(new ParagraphBuilder().text("Caption").build()).build()))) {
+                .topLeft(new ImageBuilder().name("Picture").source(picture()).size(60, 30)
+                        .margin(DocumentInsets.top(5)).build())
+                .bottomRight(new ParagraphBuilder().text("Caption").build()).build());
+        assertOpensTheSecondPage(content, "Picture");
+        try (XWPFDocument document = export(content)) {
             XWPFParagraph picture = pictureIn(document);
 
             assertThat(lineBefore(document, picture)).as("12pt and 5pt").isEqualTo(340);
@@ -149,27 +156,51 @@ class DocxBandOnANewPageTest {
 
     @Test
     void aBandInAStackOfOneLayerHoldsTheStacksMargin() throws Exception {
-        try (XWPFDocument document = export(movedToANewPage(new LayerStackBuilder()
-                .margin(DocumentInsets.top(EDGE)).topLeft(band(stack -> stack)).build()))) {
+        Consumer<PageFlowBuilder> content = movedToANewPage(new LayerStackBuilder()
+                .margin(DocumentInsets.top(EDGE)).topLeft(band(stack -> stack)).build());
+        assertOpensTheSecondPage(content, "Opening");
+        try (XWPFDocument document = export(content)) {
             assertThat(lineBefore(document, paragraphWith(document, "Opening"))).isEqualTo(Math.round(EDGE * 20));
         }
     }
 
     @Test
     void aBandInASectionHoldsTheSectionsMargin() throws Exception {
-        try (XWPFDocument document = export(page -> page.spacer(0, CONTENT - 10)
-                .addSection(section -> section.margin(DocumentInsets.top(10)).add(band(stack -> stack))))) {
+        Consumer<PageFlowBuilder> content = page -> page.spacer(0, CONTENT - 10)
+                .addSection(section -> section.margin(DocumentInsets.top(10)).add(band(stack -> stack)));
+        assertOpensTheSecondPage(content, "Opening");
+        try (XWPFDocument document = export(content)) {
             assertThat(lineBefore(document, paragraphWith(document, "Opening"))).isEqualTo(200);
         }
     }
 
     @Test
     void onlyTheBandsFirstBlockOpensThePage() throws Exception {
-        try (XWPFDocument document = export(movedToANewPage(band(stack -> stack.margin(DocumentInsets.top(EDGE)))))) {
+        Consumer<PageFlowBuilder> content = movedToANewPage(band(stack -> stack.margin(DocumentInsets.top(EDGE))));
+        assertOpensTheSecondPage(content, "Opening");
+        try (XWPFDocument document = export(content)) {
             XWPFParagraph caption = paragraphWith(document, "Caption");
 
             assertThat(paragraphBefore(document, caption).getText()).as("no line before the second layer")
                     .isEqualTo("Opening");
+        }
+    }
+
+    @Test
+    void aTableOpeningTheBandLeavesTheLayerAfterItUnheld() throws Exception {
+        // The table is the band's first block, and opens the page; the caption under it does not.
+        Consumer<PageFlowBuilder> content = movedToANewPage(new LayerStackBuilder()
+                .topLeft(new com.demcha.compose.document.dsl.TableBuilder().name("Table").columns(
+                                com.demcha.compose.document.table.DocumentTableColumn.auto())
+                        .row("Cell").build())
+                .bottomRight(new ParagraphBuilder().text("Caption").margin(DocumentInsets.top(EDGE)).build()).build());
+        assertOpensTheSecondPage(content, "Table");
+        try (XWPFDocument document = export(content)) {
+            List<org.apache.poi.xwpf.usermodel.IBodyElement> body = document.getBodyElements();
+            int caption = body.indexOf(paragraphWith(document, "Caption"));
+
+            assertThat(body.get(caption - 1)).as("the table, and no line held between them")
+                    .isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
         }
     }
 
@@ -214,6 +245,11 @@ class DocxBandOnANewPageTest {
 
     private static XWPFDocument export(Consumer<PageFlowBuilder> content) throws Exception {
         return DocxExports.withLayout(300, 200, 20, content);
+    }
+
+    /** The premise of a test of a block opening a page: the layout starts it on the second. */
+    private static void assertOpensTheSecondPage(Consumer<PageFlowBuilder> content, String name) {
+        assertThat(startPage(content, name)).as("the premise: %s opens the second page", name).isEqualTo(1);
     }
 
     private static int startPage(Consumer<PageFlowBuilder> content, String name) {

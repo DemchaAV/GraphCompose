@@ -16750,8 +16750,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             throws Exception {
         // A band inside a band that has written nothing yet: the outer band measured its space
         // to the first block written, which is this one's first too, so that space stands.
-        boolean opensItsSpace = Double.isNaN(resumeSpacing);
-        if (opensItsSpace) {
+        if (Double.isNaN(resumeSpacing)) {
             double above = carriedSpacingBefore + pendingSpacingAfter + stack.margin().top() + band.above();
             // Text hanging below the block before — a band's last line past its foot, a row's
             // icon line — takes its place out of that space, as out of the gap above a paragraph
@@ -16814,11 +16813,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             insetRight = outerRight;
             standIns.removeAll(band.standIns());
             closingBlocks.removeAll(band.closing());
-            // A band that wrote no body paragraph — drawings alone, or text in a table's cells —
-            // opens nothing after it: what follows starts a page, or does not, of its own.
-            if (opensItsSpace) {
-                bandOpensItsPage = false;
-            }
         }
         // Nothing was written after all: the space the stack opened with is still owed.
         double unwritten = Double.isNaN(resumeSpacing) ? 0 : resumeSpacing;
@@ -18534,6 +18528,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private XWPFTable newTable(XWPFDocument document, int rows, int columns) {
         resumeHere();
         nameAHangLeftOver();
+        // A table in the body is a block, as a paragraph is: one a band opens its page with is
+        // that band's first, and the block after it no longer opens the page (opensItsPageInTheFlow).
+        if (currentCell == null) {
+            bandOpensItsPage = false;
+        }
         // A container edge still waiting for a paragraph stood above this table, and a table
         // carries no space above itself: it is owed with the rest of the space above, which
         // the paragraph before the table holds below itself. Left waiting, it landed on the

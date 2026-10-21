@@ -649,7 +649,7 @@ class DocxListItemLowerTest {
         assertThat(item.getCTP().getPPr().isSetNumPr()).as("the premise: a Word list's item").isTrue();
         assertThat(0.8 * line(item) - LATO_ASCENT * 24).as("the premise: Word's baseline is the higher")
                 .isLessThan(-0.5);
-        assertThat(before(item)).as("nothing grown above it").isZero();
+        assertThat(before(item)).as("its own 10pt margin, nothing grown above it").isEqualTo(200);
         assertThat(position(item)).isZero();
     }
 

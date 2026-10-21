@@ -1,10 +1,16 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.document.layout.PlacedNode;
+import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.LayerStackNode;
+import com.demcha.compose.document.node.ListNode;
+import com.demcha.compose.document.node.ParagraphNode;
+import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.SpacerNode;
+import com.demcha.compose.document.node.TableNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.ToDoubleFunction;
 
 /**
  * A layer stack whose layers are side-by-side columns, as the columns of one table row.
@@ -61,7 +68,8 @@ final class DocxLayerColumns {
      * @param columns  the columns, left to right
      * @param standIns the spacers that hold another layer's place, to be left out
      * @param resumes  for each layer written after another in its cell, the space above its
-     *                 first block, in points
+     *                 first block, in points; below zero where the block's own edge gives some
+     *                 back ({@link #resume})
      * @param over     for each layer the page starts above where the content of the layers before
      *                 it in its cell ends, by how much, in points (see {@link #over(DocumentNode)})
      * @param moves    what is written in place of a stand-in instead (see {@link Moves})
@@ -78,8 +86,9 @@ final class DocxLayerColumns {
          * The space above a layer's first block when it follows another layer in its cell.
          *
          * @param layer a layer of the stack
-         * @return the space in points, or {@code NaN} when the layer opens its cell or the
-         *         layout placed too little of it to tell
+         * @return the space in points, below zero where the block's own edge gives some back
+         *         ({@link DocxLayerColumns#resume}), or {@code NaN} when the layer opens its cell
+         *         or the layout placed too little of it to tell
          */
         double resume(DocumentNode layer) {
             Double points = resumes.get(layer);
@@ -114,23 +123,27 @@ final class DocxLayerColumns {
      *                no column, and may stand over one — a card grid lays each card's mark
      *                over the edge of its text and a rule between two cards, and was written
      *                one card under the other, each a column lower and further right
+     * @param inset   how far below the top of its box the page starts a leaf's content, which the
+     *                leaf writes above that content itself: its padding, a contained picture's
+     *                room in its box
      * @return the plan, or {@code null} when the stack is not a set of side-by-side columns
      */
     static Plan of(LayerStackNode stack, DocxLayoutMetrics layout, Predicate<DocumentNode> plain,
-                   Predicate<DocumentNode> painted, Predicate<DocumentNode> drawn) {
+                   Predicate<DocumentNode> painted, Predicate<DocumentNode> drawn, ToDoubleFunction<DocumentNode> inset) {
         // Every layer a column first: a stack that already forms columns — a portrait's band
         // beside a text band — is written as it always was. Only one whose drawn layers stand
         // across the columns is tried again without them.
-        Plan whole = columnsOf(stack, layout, plain, painted, node -> false);
+        Plan whole = columnsOf(stack, layout, plain, painted, node -> false, inset);
         if (whole != null) {
             return whole;
         }
-        Plan withoutDrawing = columnsOf(stack, layout, plain, painted, drawn);
+        Plan withoutDrawing = columnsOf(stack, layout, plain, painted, drawn, inset);
         return withoutDrawing == null || withoutDrawing.drawn().isEmpty() ? null : withoutDrawing;
     }
 
     private static Plan columnsOf(LayerStackNode stack, DocxLayoutMetrics layout, Predicate<DocumentNode> plain,
-                                  Predicate<DocumentNode> painted, Predicate<DocumentNode> drawn) {
+                                  Predicate<DocumentNode> painted, Predicate<DocumentNode> drawn,
+                                  ToDoubleFunction<DocumentNode> inset) {
         PlacedNode box = layout.placement(stack);
         if (box == null || stack.layers().size() < 2) {
             return null;
@@ -184,7 +197,8 @@ final class DocxLayerColumns {
         Set<PlacedNode> closing = Collections.newSetFromMap(new IdentityHashMap<>());
         Moves moves = new Moves();
         for (Column column : columns) {
-            flow(column.layers(), layout, node -> false, painted, painted, standIns, resumes, over, closing, moves);
+            flow(column.layers(), layout, node -> false, painted, painted, inset, standIns, resumes, over, closing,
+                    moves);
         }
         return new Plan(width, List.copyOf(columns), standIns, resumes, over, moves, List.copyOf(drawnLayers),
                 closing);
@@ -233,7 +247,8 @@ final class DocxLayerColumns {
      *
      * @param layers   the stack's layers, in its order
      * @param standIns the spacers that hold another layer's place, to be left out
-     * @param resumes  for each layer after the first, the space above its first block
+     * @param resumes  for each layer after the first, the space above its first block, below zero
+     *                 where the block's own edge gives some back ({@link #resume})
      * @param over     for each layer the page starts above where the content of the layers before
      *                 it ends, by how much, in points (see {@link Plan#over(DocumentNode)})
      * @param above    from the stack's top to its first written block, that block's own margin
@@ -276,10 +291,11 @@ final class DocxLayerColumns {
      * @param drawing whether a leaf is drawing this export does not write
      * @param painted whether a node is a container that paints a panel, where the layers before a
      *                layer end when it is the lowest among them (see {@link Band#over})
+     * @param inset   how far below its box's top a leaf's content starts (see {@link #of})
      * @return the band, or {@code null}
      */
     static Band band(DocumentNode stack, DocxLayoutMetrics layout, Predicate<DocumentNode> drawing,
-                     Predicate<DocumentNode> painted) {
+                     Predicate<DocumentNode> painted, ToDoubleFunction<DocumentNode> inset) {
         PlacedNode box = layout.placement(stack);
         if (box == null || stack.children().size() < 2) {
             return null;
@@ -293,7 +309,7 @@ final class DocxLayerColumns {
         // is where the later layer writes its content anyway: nothing moves. Its resumes are
         // measured from text, a panel's too.
         Moves none = new Moves();
-        flow(layers, layout, drawing, node -> false, painted, standIns, resumes, over, closing, none);
+        flow(layers, layout, drawing, node -> false, painted, inset, standIns, resumes, over, closing, none);
         // A stack nested in a layer is a band of its own, and its stand-ins are not written
         // either: the band's first and lowest blocks are measured past them too, or a badge's
         // place-holding spacer would set where the initials over it start.
@@ -335,9 +351,9 @@ final class DocxLayerColumns {
     private static void nestedStandIns(DocumentNode node, DocxLayoutMetrics layout,
                                        Predicate<DocumentNode> drawing, Set<DocumentNode> standIns) {
         if (node instanceof LayerStackNode nested) {
-            flow(nested.children(), layout, drawing, candidate -> false, candidate -> false, standIns,
-                    new IdentityHashMap<>(), new IdentityHashMap<>(), Collections.newSetFromMap(new IdentityHashMap<>()),
-                    new Moves());
+            flow(nested.children(), layout, drawing, candidate -> false, candidate -> false, candidate -> 0,
+                    standIns, new IdentityHashMap<>(), new IdentityHashMap<>(),
+                    Collections.newSetFromMap(new IdentityHashMap<>()), new Moves());
         }
         for (DocumentNode child : node.children()) {
             nestedStandIns(child, layout, drawing, standIns);
@@ -351,12 +367,13 @@ final class DocxLayerColumns {
      *
      * @param painted the panels content moves into and resumes are measured from
      * @param panels  the panels where the layers before a layer end, when one is the lowest
+     * @param inset   how far below its box's top a leaf's content starts (see {@link #of})
      */
     private static void flow(List<DocumentNode> layers, DocxLayoutMetrics layout,
                              Predicate<DocumentNode> drawing, Predicate<DocumentNode> painted,
-                             Predicate<DocumentNode> panels, Set<DocumentNode> standIns,
-                             Map<DocumentNode, Double> resumes, Map<DocumentNode, Double> over,
-                             Set<PlacedNode> closing, Moves moves) {
+                             Predicate<DocumentNode> panels, ToDoubleFunction<DocumentNode> inset,
+                             Set<DocumentNode> standIns, Map<DocumentNode, Double> resumes,
+                             Map<DocumentNode, Double> over, Set<PlacedNode> closing, Moves moves) {
         if (layers.size() < 2) {
             return;
         }
@@ -407,21 +424,73 @@ final class DocxLayerColumns {
             double space = spaceAbove(layers.subList(0, index), layers.get(index), layout, standIns, drawing,
                     painted, moves, from, first);
             if (!Double.isNaN(space)) {
-                // Its first block writes its own margin above it. Written after them, the layer
-                // starts under them however far above their end the page starts it.
-                resumes.put(layers.get(index), Math.max(0, space - first[0].margin().top()));
+                resumes.put(layers.get(index), resume(space, layers.get(index), first[0], inset, panels));
                 if (from[0] != null) {
                     closing.add(from[0]);
                 }
             }
             // A panel among them ends where its box does, below its text; the layer starts at its
-            // highest block, not its first where its blocks stand side by side, as a row's do.
+            // highest content, not its first where its blocks stand side by side, as a row's do.
             double end = endOf(layers.subList(0, index), layout, standIns, drawing, panels, moves, new PlacedNode[1]);
-            PlacedNode highest = highestLeaf(layers.get(index), layout, written(standIns, moves, true), drawing, null);
-            if (highest != null && top(highest) - end > EDGE) {
-                over.put(layers.get(index), top(highest) - end);
+            double highest = highestContent(layers.get(index), layout, written(standIns, moves, true), drawing, inset,
+                    Double.NaN);
+            if (!Double.isNaN(highest) && highest - end > EDGE) {
+                over.put(layers.get(index), highest - end);
             }
         }
+    }
+
+    /**
+     * A later layer's resume: the space Word writes above its first block, from the last block of
+     * the layers above, before the block writes what it holds above its own content — its margin,
+     * and inside its box its padding and a contained picture's room.
+     *
+     * <p>That is the page's gap to the block's content less what the block writes, and below zero
+     * where the block holds more above its content than the gap: a caption whose 20pt margin
+     * starts it 7pt under the line above, or a picture contained in a box that starts level with
+     * that line. The block's own edge then gives that much back. Kept at zero, it was written
+     * whole after the layers before it, and the caption stood 12.7pt low in Word and LibreOffice,
+     * the picture 12.9pt (measured). Where the page starts the content itself above where they
+     * end, it is written under them, no further up than its own edge gives, and named
+     * ({@link Band#over}). An edge below zero is not written in a resumed layer, and gives
+     * nothing.</p>
+     *
+     * <p>Only a paragraph, a picture, a list or a table written in its layer's own flow — under
+     * plain containers alone — writes its edge where the space is given back. Any other first
+     * block keeps the gap less its margin, never below zero: one in a row, a panel, a nested stack
+     * or a shape writes its edge inside them, and a spacer writes neither its margin nor its
+     * padding, though its margin comes off the gap, and the report names it.</p>
+     *
+     * @param space from the end of the layers above to the top of the block's box, below zero
+     *              where the box starts above that end ({@link #spaceAbove})
+     */
+    private static double resume(double space, DocumentNode layer, DocumentNode block,
+                                 ToDoubleFunction<DocumentNode> inset, Predicate<DocumentNode> painted) {
+        boolean givesItsEdgeBack = (block instanceof ParagraphNode || block instanceof ImageNode
+                                    || block instanceof ListNode || block instanceof TableNode)
+                                   && inThePlainFlowOf(layer, block, painted);
+        if (!givesItsEdgeBack) {
+            return Math.max(0, space - block.margin().top());
+        }
+        double inside = Math.max(0, inset.applyAsDouble(block));
+        double written = Math.max(0, block.margin().top() + Math.min(0, block.padding().top()) + inside);
+        return Math.max(0, space + inside) - written;
+    }
+
+    /** Whether {@code block} is {@code node} or under it through plain, unpainted containers alone. */
+    private static boolean inThePlainFlowOf(DocumentNode node, DocumentNode block, Predicate<DocumentNode> painted) {
+        if (node == block) {
+            return true;
+        }
+        if (!(node instanceof SectionNode || node instanceof ContainerNode) || painted.test(node)) {
+            return false;
+        }
+        for (DocumentNode child : node.children()) {
+            if (inThePlainFlowOf(child, block, painted)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -488,8 +557,8 @@ final class DocxLayerColumns {
      * layers' content already takes. Written after them, it is space above that content a
      * second time. What the cell needs instead is the gap the page shows between the two:
      * from the bottom of the lowest block above, its own padding included, to the top of the
-     * layer's first block — less that block's margin, which the block writes itself, it is the
-     * layer's resume. A block inside a painted panel ends where the panel does: the panel is a
+     * layer's first block — less what that block writes above its content itself, it is the
+     * layer's resume ({@link #resume}). A block inside a painted panel ends where the panel does: the panel is a
      * table that writes its own padding below the block, so that padding is not part of the gap.</p>
      *
      * @param first set to the layer's first block
@@ -581,19 +650,28 @@ final class DocxLayerColumns {
         return lowest;
     }
 
-    /** The placed leaf under {@code node} whose top is highest on the page, as {@link #lowestLeaf} reads them. */
-    private static PlacedNode highestLeaf(DocumentNode node, DocxLayoutMetrics layout,
-                                          Predicate<DocumentNode> written, Predicate<DocumentNode> drawing,
-                                          PlacedNode highest) {
+    /**
+     * Where on the page the highest written content under {@code node} starts, as
+     * {@link #lowestLeaf} reads its leaves: a leaf's box's top less what the leaf writes above its
+     * content inside it ({@code inset}). Measured up from the page's foot, so higher is larger;
+     * {@code NaN} while none is found.
+     */
+    private static double highestContent(DocumentNode node, DocxLayoutMetrics layout,
+                                         Predicate<DocumentNode> written, Predicate<DocumentNode> drawing,
+                                         ToDoubleFunction<DocumentNode> inset, double highest) {
         if (!written.test(node)) {
             return highest;
         }
         if (node.children().isEmpty()) {
             PlacedNode placed = drawing.test(node) ? null : layout.placement(node);
-            return placed != null && (highest == null || top(placed) > top(highest)) ? placed : highest;
+            if (placed == null) {
+                return highest;
+            }
+            double content = top(placed) - inset.applyAsDouble(node);
+            return Double.isNaN(highest) || content > highest ? content : highest;
         }
         for (DocumentNode child : node.children()) {
-            highest = highestLeaf(child, layout, written, drawing, highest);
+            highest = highestContent(child, layout, written, drawing, inset, highest);
         }
         return highest;
     }

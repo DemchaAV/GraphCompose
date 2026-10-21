@@ -3933,7 +3933,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     candidate -> (candidate instanceof SectionNode || candidate instanceof ContainerNode)
                                  && paintOf(candidate).isEmpty(),
                     DocxSemanticBackend::paintsAPanel,
-                    this::drawnOverTheColumns);
+                    this::drawnOverTheColumns, this::contentInset);
             if (columns != null) {
                 // Side by side, nothing in the stack overlaps: it is not an overlay.
                 writeLayerColumns(document, stack, columns);
@@ -4268,7 +4268,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (node instanceof com.demcha.compose.document.node.LayerStackNode
             || node instanceof ShapeContainerNode && writesOneLayer(node)) {
             DocxLayerColumns.Band band = DocxLayerColumns.band(node, layout, drawnIn(node),
-                    DocxSemanticBackend::paintsAPanel);
+                    DocxSemanticBackend::paintsAPanel, this::contentInset);
             if (band != null) {
                 if (node instanceof ShapeContainerNode container) {
                     writeShapeContainer(document, container, band);
@@ -5435,6 +5435,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // object either — its items are paragraphs written where it stood — so its edges go
         // where every other block's go, and itemSpacing becomes the gap above each item
         // after the first.
+        // A list a band's or a column's layer opens is that layer's first block: it starts where
+        // the layer resumes, and its own edges come after, as a table's do. Left to its first
+        // item's paragraph, the resume took their place, and a list with a 20pt margin in a later
+        // layer stood 7pt high in Word and LibreOffice (measured).
+        resumeHere();
         carriedSpacingBefore += list.margin().top() + list.padding().top();
         double previousItemSpacing = pendingItemSpacing;
         pendingItemSpacing = list.itemSpacing();
@@ -9340,6 +9345,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         var borders = properties.getTcBorders();
         return drawn(borders.getTop()) || drawn(borders.getBottom()) || drawn(borders.getLeft())
                || drawn(borders.getRight()) || drawn(borders.getStart()) || drawn(borders.getEnd());
+    }
+
+    /**
+     * Resumes a later layer of a band or a column at the page's distance below the layers before
+     * it ({@link DocxLayerColumns#resume}). Below zero, its first block holds more above its
+     * content than the page's gap, and its own edge gives the rest back, as it gives back a pull
+     * out of the block above: a caption with a 20pt margin 7pt under the line above, written
+     * 20pt under it, stood 12.7pt low in Word and LibreOffice (measured).
+     *
+     * @param resume the space in points, or {@code NaN} where the layout tells none
+     */
+    private void resumeLayer(double resume) {
+        pullBelow = resume < 0 ? -resume : 0;
+        resumeSpacing = resume < 0 ? 0 : resume;
     }
 
     /**
@@ -13437,6 +13456,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return picture;
     }
 
+    /**
+     * How far below the top of its box the page starts a leaf's content, which the leaf writes
+     * above that content itself: its padding, and the room above a picture contained in its box
+     * ({@link #roomRound}), as {@link #writeImage} writes it.
+     */
+    private double contentInset(DocumentNode leaf) {
+        double inset = Math.max(0, leaf.padding().top());
+        if (leaf instanceof ImageNode image && image.fitMode() == DocumentImageFitMode.CONTAIN) {
+            com.demcha.compose.document.layout.PlacedNode placed = layout.placement(image);
+            if (placed != null) {
+                DocumentInsets padding = image.padding();
+                double width = placed.placementWidth() - padding.left() - padding.right();
+                double height = placed.placementHeight() - padding.top() - padding.bottom();
+                if (width > 0 && height > 0) {
+                    ImageData resolved = NodeDefinitionSupport.toImageData(image.imageData());
+                    inset += roomRound(resolved, new NodeDefinitionSupport.ImageDimensions(width, height))[0];
+                }
+            }
+        }
+        return inset;
+    }
+
     /** The size a picture contained in its box is drawn at, {@code {width, height}}: by the smaller ratio. */
     private static double[] containedIn(ImageData resolved, NodeDefinitionSupport.ImageDimensions box) {
         double sourceWidth = Math.max(1, resolved.getMetadata().width());
@@ -16634,8 +16675,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                 // from a last line set as high as it was raised.
                                 double raised = raiseOwedByTheLastLine();
                                 pendingSpacingAfter = 0;
-                                pullBelow = 0;
-                                resumeSpacing = plan.resume(node) + raised;
+                                resumeLayer(plan.resume(node) + raised);
                             }
                             // A column layer is written as what it holds, never dispatched itself:
                             // no bookmark goes round it, and a page reference to it is taken back to
@@ -16791,8 +16831,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     double raised = raiseOwedByTheLastLine();
                     pendingSpacingAfter = 0;
                     carriedSpacingBefore = 0;
-                    pullBelow = 0;
-                    resumeSpacing = resume + raised;
+                    resumeLayer(resume + raised);
                 }
                 reportWrittenUnderTheLayersBefore(layers.get(index), band.over(layers.get(index)),
                         stack instanceof ShapeContainerNode ? "shape container" : "stack");

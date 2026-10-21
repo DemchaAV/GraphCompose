@@ -5377,7 +5377,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * same depth carry different markers has no definition to be given and keeps writing
      * its markers as text. So does a list with a drawn marker, which has no Word analogue
      * at all, one with no marker, where numbering would add an indent the author did not
-     * ask for, and one with rich items, whose runs the numbered path does not write.</p>
+     * ask for, and one with rich items, whose runs the numbered path does not write. And one
+     * whose marker holds a percent sign before a digit, which Word reads in a level's text as
+     * a level's number: written as a level, "%1 " and "Step %2: " showed nothing in Word, and
+     * "%" and "S" in LibreOffice (measured).</p>
      */
     private static List<String> markerPerDepth(com.demcha.compose.document.node.ListNode list) {
         java.util.Map<Integer, String> perDepth = new java.util.TreeMap<>();
@@ -5406,8 +5409,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 return null;
             }
         }
+        if (perDepth.values().stream().anyMatch(text -> LEVEL_NUMBER.matcher(text).find())) {
+            return null;
+        }
         return List.copyOf(perDepth.values());
     }
+
+    /** What Word reads in a level's text as a level's number: a percent sign before a digit. */
+    private static final java.util.regex.Pattern LEVEL_NUMBER = java.util.regex.Pattern.compile("%[1-9]");
 
     private static boolean collectMarkers(com.demcha.compose.document.node.ListItem item,
                                           int depth,
@@ -6712,7 +6721,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             InlineRun run = runs.get(index);
             InlineTextRun text = textOf(run);
             if (text == null) {
-                pictures = pictures.max(writeInlinePicture(para, run, null, path, line));
+                // An item's text gives back none of a shape's width (giveBackWidth is a paragraph's),
+                // and its line is written from the left.
+                pictures = pictures.max(writeInlinePicture(para, run, null, path, line,
+                        run instanceof InlineShapeRun shape
+                                ? widthNotGivenBack(shape, false, false, index > 0, index + 1 < runs.size(), false,
+                                        TextAlign.LEFT)
+                                : 0));
                 continue;
             }
             // A list item's run can carry a link, and it used to be written as plain text:
@@ -10634,8 +10649,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * What a paragraph's own fields lose on the way to Word, on any path that writes it in the
      * body: the size an auto-sized paragraph's text is fitted to where its lines do not tell it,
      * the marks of a paragraph the page
-     * reads as markdown, its {@code bulletOffset} and its outline entry. A page zone's paragraphs
-     * are written apart, and named on the zone's note ({@link #zoneParagraphLost}).
+     * reads as markdown, its {@code bulletOffset}, its outline entry, its pictures' place in their
+     * lines ({@link #picturesLost}) and its lines' seat ({@link #seatLost}). A page zone's
+     * paragraphs are written apart, and named on the zone's note ({@link #zoneParagraphLost}).
      *
      * <p>Its text is written at the size the page fits it to where the layout tells it
      * ({@link #writtenStyle}), at its style's where not ({@link #autoSizeLost}), and in the pieces
@@ -10675,6 +10691,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (roomLost) {
             lost.add("the room its bulletOffset sets its lines in by is not written");
         }
+        String pictures = picturesLost(node);
+        if (pictures != null) {
+            lost.add(pictures);
+        }
+        String seat = seatLost(node);
+        if (seat != null) {
+            lost.add(seat);
+        }
         DocumentBookmarkOptions outline = node.bookmarkOptions();
         if (outline != null) {
             if (listedAs == null) {
@@ -10691,6 +10715,133 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         return lost;
+    }
+
+    /**
+     * What a paragraph's pictures lose of their place in their lines, or {@code null}.
+     *
+     * <p>A picture stands on the baseline in Word, and is moved by {@code w:position} to where the
+     * page's alignment puts it, from the line the layout measured ({@link #writeInlinePicture}):
+     * where the paragraph's lines are not read, none is moved. One the page sets by its alignment
+     * is then named, the line that would measure how far being unread; one it sets on the baseline,
+     * from half a point off it ({@link #offTheBaseline}). All of them are moved by the first line's
+     * measure, so a picture on a later line of another height is set apart from where the page
+     * sets it; the distance is the two measures' at Word's half point, and named from half a
+     * point.</p>
+     */
+    private String picturesLost(ParagraphNode node) {
+        List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines = layout.lines(node);
+        if (lines.isEmpty()) {
+            // A line of pictures alone is set at their size, in Word as on the page: there is no
+            // text for them to stand off.
+            boolean besideText = node.inlineRuns().stream()
+                    .anyMatch(run -> textOf(run) != null && !textOf(run).text().isBlank());
+            if (!besideText) {
+                return null;
+            }
+            double apart = 0;
+            for (InlineRun run : node.inlineRuns()) {
+                double off = offTheBaseline(run);
+                if (Double.isNaN(off)) {
+                    return "its pictures stand on the line's baseline, where the page sets them by their alignment: "
+                           + "its lines are not read here";
+                }
+                apart = Math.max(apart, Math.abs(off));
+            }
+            return apart >= HALF_A_POINT
+                    ? "its pictures stand on the line's baseline, up to " + pointsOf(apart)
+                      + "pt from where the page sets them: its lines are not read here"
+                    : null;
+        }
+        com.demcha.compose.document.layout.payloads.ParagraphLine first = lines.get(0);
+        long apart = 0;
+        for (int index = 1; index < lines.size(); index++) {
+            com.demcha.compose.document.layout.payloads.ParagraphLine line = lines.get(index);
+            for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
+                InlineImageAlignment alignment;
+                double offset;
+                double height;
+                if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphImageSpan image) {
+                    alignment = image.alignment();
+                    offset = image.baselineOffset();
+                    height = image.height();
+                } else if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphShapeSpan shape) {
+                    alignment = shape.alignment();
+                    offset = shape.baselineOffset();
+                    height = shape.height();
+                } else if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphSvgSpan svg) {
+                    alignment = svg.alignment();
+                    offset = svg.baselineOffset();
+                    height = svg.height();
+                } else {
+                    continue;
+                }
+                long own = Math.round(inlineBottomFromBaseline(alignment, offset, height, line) * 2);
+                long asWritten = Math.round(inlineBottomFromBaseline(alignment, offset, height, first) * 2);
+                apart = Math.max(apart, Math.abs(own - asWritten));
+            }
+        }
+        return apart > 0
+                ? "a picture on a line after its first is set by the first line's measure, up to "
+                  + pointsOf(apart / 2.0) + "pt from where the page sets it"
+                : null;
+    }
+
+    /**
+     * How far the page sets an inline picture's bottom from where Word stands it, on its line's
+     * baseline, in points, positive up, where no line is read: by its offset, less what a shape's
+     * picture reaches below its box, for one set on the baseline; {@code NaN} for one set by
+     * another alignment, which the line would measure; 0 for a run that is no picture.
+     */
+    private static double offTheBaseline(InlineRun run) {
+        InlineImageAlignment alignment;
+        double offset;
+        double below = 0;
+        if (run instanceof InlineImageRun image) {
+            alignment = image.alignment();
+            offset = image.baselineOffset();
+        } else if (run instanceof InlineShapeRun shape) {
+            alignment = shape.alignment();
+            offset = shape.baselineOffset();
+            below = DocxShapePictures.reachBelowItsBox(shape);
+        } else if (run instanceof InlineSvgRun svg) {
+            alignment = svg.alignment();
+            offset = svg.baselineOffset();
+        } else {
+            return 0;
+        }
+        return alignment == InlineImageAlignment.BASELINE ? offset - below : Double.NaN;
+    }
+
+    /**
+     * What a paragraph seated by its cap band ({@code verticalAlign}) loses where its lines differ,
+     * or {@code null}: one Word paragraph takes one seat, its first text line's
+     * ({@link #seatShift}), and the page seats each line by its own, from the size and face of its
+     * text. The distance is the seats' at Word's half point, named from half a point.
+     */
+    private String seatLost(ParagraphNode node) {
+        if (node.verticalAlign() == null || node.verticalAlign() == TextVerticalAlign.DEFAULT) {
+            return null;
+        }
+        Long first = null;
+        long apart = 0;
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : layout.lines(node)) {
+            if (line.spans().stream().noneMatch(
+                    span -> span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan)) {
+                continue;
+            }
+            long seat = Math.round(com.demcha.compose.document.backend.fixed.pdf.handlers.ParagraphSeating
+                    .shift(line, measuredFonts(), node.verticalAlign()) * 2);
+            if (first == null) {
+                first = seat;
+            } else {
+                apart = Math.max(apart, Math.abs(seat - first));
+            }
+        }
+        return apart > 0
+                ? "its lines are seated as its first is, a line in another size or face up to "
+                  + pointsOf(apart / 2.0) + "pt from where the page seats it"
+                : null;
     }
 
     /**
@@ -11986,7 +12137,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             InlineRun run = inlineRuns.get(index);
             InlineTextRun text = textOf(run);
             if (text == null) {
-                PictureReach reach = writeInlinePicture(para, run, node.linkTarget(), path, line);
+                // The text just before a shape gives back its width on the left, and the next text
+                // after it, however many pictures on, its width on the right, where their letters
+                // can be set closer.
+                double notGivenBack = 0;
+                if (run instanceof InlineShapeRun shape) {
+                    InlineTextRun next = inlineRuns.subList(index + 1, inlineRuns.size()).stream()
+                            .map(after -> textOf(after)).filter(java.util.Objects::nonNull).findFirst().orElse(null);
+                    notGivenBack = widthNotGivenBack(shape, textBefore != null && givesBack(lettersOf.get(textBefore)),
+                            next != null && givesBack(next.text()), index > 0, index + 1 < inlineRuns.size(),
+                            rightToLeft, node.align());
+                }
+                PictureReach reach = writeInlinePicture(para, run, node.linkTarget(), path, line, notGivenBack);
                 if (reach != null) {
                     wroteARun = true;
                     pictures = pictures.max(reach);
@@ -12633,13 +12795,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param points the room the shapes beside the run take past their boxes, in points
      */
     private static void giveBackWidth(XWPFRun run, String text, double points) {
-        if (text == null || text.isEmpty() || LINE_BREAK.matcher(text).find()) {
+        if (!givesBack(text)) {
             return;
         }
         long tenths = Math.round(points * 10 / text.codePointCount(0, text.length()));
         if (tenths != 0) {
             run.setCharacterSpacing((int) (run.getCharacterSpacing() - tenths * 2));
         }
+    }
+
+    /**
+     * Whether a run's letters can be set closer by the room a shape beside them takes
+     * ({@link #giveBackWidth}): there are some, on one line.
+     */
+    private static boolean givesBack(String letters) {
+        return letters != null && !letters.isEmpty() && !LINE_BREAK.matcher(letters).find();
     }
 
     /**
@@ -12902,19 +13072,83 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Names an icon or a shape among the words a picture: the text an icon stands for is its
      * description, and the rest is pixels. An author's own picture is what it was given.
+     *
+     * <p>An icon's gradient is drawn flat, in its first colour, by the raster that draws it
+     * ({@link com.demcha.compose.document.backend.fixed.pdf.handlers.InlineSvgRasters}); the page
+     * draws the gradient. A shape's picture is wider than its box by as far as its ink and a
+     * pixel reach past it, which the text beside it gives back ({@link #giveBackWidth}); what
+     * no text gives back moves what stands in its line ({@link #widthNotGivenBack}), and is named
+     * from half a point.</p>
+     *
+     * @param widthNotGivenBack how far a shape's picture, wider than its box, moves what stands in
+     *                          its line with no text beside it to give that back, in points
      */
-    private void reportInlinePicture(InlineRun run, String description, String path) {
+    private void reportInlinePicture(InlineRun run, String description, String path, double widthNotGivenBack) {
+        String gradient = run instanceof InlineSvgRun svg && paintsAGradient(svg.icon())
+                ? "; its gradients are drawn flat, in their first colour" : "";
         if (description != null && !description.isBlank()) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "inline icon", path,
                     "drawn as a picture, as on the page; the text it stands for (" + description
-                    + ") is the picture's description rather than a character in the line");
+                    + ") is the picture's description rather than a character in the line" + gradient);
         } else if (run instanceof InlineSvgRun) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "inline icon", path,
-                    "drawn as a picture, as on the page: Word holds its pixels, not the vector drawing");
+                    "drawn as a picture, as on the page: Word holds its pixels, not the vector drawing" + gradient);
         } else if (run instanceof InlineShapeRun) {
             report.add(DocxExportReport.Severity.APPROXIMATED, "inline shape", path,
-                    "drawn as a picture, as on the page: Word holds its pixels, not a shape it can edit");
+                    "drawn as a picture, as on the page: Word holds its pixels, not a shape it can edit"
+                    + (widthNotGivenBack >= HALF_A_POINT
+                    ? "; its picture is wider than its box where no text beside it gives that back, and moves "
+                      + "it and what stands beside it in its line up to " + pointsOf(widthNotGivenBack)
+                      + "pt from where the page sets them"
+                    : ""));
         }
+    }
+
+    /**
+     * The least a picture's place may be off before the report names it, in points: Word moves a
+     * run by half points, and less than one is not seen.
+     */
+    private static final double HALF_A_POINT = 0.5;
+
+    /**
+     * Whether an icon fills or strokes a layer with a gradient rather than one colour. An icon's
+     * reader gives a layer a stroke paint only with the stroke it draws.
+     */
+    private static boolean paintsAGradient(com.demcha.compose.document.svg.SvgIcon icon) {
+        for (com.demcha.compose.document.svg.SvgIcon.Layer layer : icon.layers()) {
+            if (layer.fillPaint() != null
+                && !(layer.fillPaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)
+                || layer.strokePaint() != null
+                   && !(layer.strokePaint() instanceof com.demcha.compose.document.style.DocumentPaint.Solid)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * How far a shape's picture, wider than its box, moves what stands in its line where no text
+     * beside it gives that back, in points. In a line set left to right, the text just before the
+     * shape gives back the room on its left and the next text after it the room on its right,
+     * where their letters can be set closer ({@link #givesBack}); text set right to left gives back
+     * nothing. Word sets the line from the side its alignment names: from the left, the room on
+     * the left moves the shape and what stands right of it, and the room on the right what stands
+     * right of it, where anything does; from the right, the other way about; centred, each by half,
+     * what stands on either side by both. The paragraph is taken as one line.
+     */
+    private static double widthNotGivenBack(InlineShapeRun shape, boolean textJustBefore, boolean textAfter,
+                                            boolean anythingBefore, boolean anythingAfter, boolean rightToLeft,
+                                            TextAlign align) {
+        double left = rightToLeft || !textJustBefore ? DocxShapePictures.widthBeforeItsBox(shape) : 0;
+        double right = rightToLeft || !textAfter ? DocxShapePictures.widthAfterItsBox(shape) : 0;
+        // A line set right to left has what comes before the shape on its right.
+        boolean somethingLeft = rightToLeft ? anythingAfter : anythingBefore;
+        boolean somethingRight = rightToLeft ? anythingBefore : anythingAfter;
+        return switch (align == null ? TextAlign.LEFT : align) {
+            case LEFT -> left + (somethingRight ? right : 0);
+            case RIGHT -> right + (somethingLeft ? left : 0);
+            case CENTER -> somethingLeft || somethingRight ? (left + right) / 2 : Math.abs(left - right) / 2;
+        };
     }
 
     /**
@@ -12937,12 +13171,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * drew itself and the page raises, which carries the rise as transparent rows ({@link
      * DocxPictureLift}) because LibreOffice ignores {@code w:position} on a picture.</p>
      *
+     * @param widthNotGivenBack how much wider than its box a shape's picture is with no text beside
+     *                          it to give that back, in points, for the report
      * @return how far above the line's bottom the picture reaches — its height where the line
      *         is unmeasured — or {@code null} for a run this does not draw
      */
     private PictureReach writeInlinePicture(XWPFParagraph para, InlineRun run, DocumentLinkTarget fallbackLink,
                                       String path,
-                                      java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line) {
+                                      java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> line,
+                                      double widthNotGivenBack) {
         byte[] bytes;
         double width;
         double height;
@@ -13021,7 +13258,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // The description is the text the icon stands for, or nothing.
         describe(picture, description == null ? "" : description);
         if (reported) {
-            reportInlinePicture(run, description, path);
+            reportInlinePicture(run, description, path, widthNotGivenBack);
         }
         if (line.isEmpty()) {
             return PictureReach.unplaced(height);
@@ -13261,15 +13498,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (background.cornerRadius() > 0) {
             lost.add("its rounded corners are square");
         }
+        // A padding below zero draws the fill inside the letters' box on the page, and the shading
+        // covers that box whatever the padding is: one above and below that sum to nothing still
+        // moves the fill up or down.
         if (background.padding().left() > 0) {
             lost.add(leftAs == null
                     ? "its left padding is not in the file"
                     : "its left padding is " + leftAs);
+        } else if (background.padding().left() < 0) {
+            lost.add("its left padding, below zero, is not in the file");
         }
         if (background.padding().right() > 0 && !rightWritten) {
             lost.add("its right padding is not in the file");
+        } else if (background.padding().right() < 0) {
+            lost.add("its right padding, below zero, is not in the file");
         }
-        if (background.padding().vertical() > 0) {
+        if (background.padding().top() != 0 || background.padding().bottom() != 0) {
             lost.add("its padding above and below its letters is not in the file");
         }
         if (background.fill().color().getAlpha() < 255) {

@@ -8,6 +8,29 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export names what a picture among a paragraph's words loses of its place, its width
+  or its paint.** Word stands an inline picture on the baseline, and the export moves it by
+  `w:position` to where the page sets it, from the layout's measure of the paragraph's first
+  line.
+  - The paragraph's note names a picture beside text where the paragraph's lines are not read,
+    which nothing moves off the baseline; a picture on a later line of another height, set by
+    the first line's measure; and the lines of a paragraph seated by its cap band
+    (`verticalAlign`) in another size or face than its first, since one Word paragraph takes
+    one seat.
+  - A shape's note names how far its picture, wider than its box, moves what stands in its line
+    where no text beside it gives that back — a shape opening its paragraph or following a
+    picture or a line break, one before pictures alone, one in a list item or a right-to-left
+    line — reckoned from the side the line's alignment sets it from.
+  - A chip's note names a padding below zero on any side, which Word's shading does not follow;
+    an icon's names a gradient, which the raster draws flat, in its first colour.
+  - Each is named from half a point, but a picture the page sets by its alignment in lines that
+    are not read, where no line says how far.
+  - None of the corpus's 62 DOCX changes, and none of its 1246 notes.
+- **A DOCX export writes a list marker Word would read as a level's number as text.** A marker
+  holding a percent sign before a digit — `%1 `, `Step %2: ` — was written as a Word list level,
+  and Word reads `%1` to `%9` in a level's text as that level's number: measured, neither marker
+  showed in Word. Such a list is now written as paragraphs with its markers as text, as a list
+  whose siblings carry different markers is. None of the corpus's 62 DOCX changes.
 - **A DOCX export names a block that writes no paragraph for its anchor's bookmark.** A bookmark
   goes round the paragraphs a block writes, and a section or a container of drawings alone writes
   none: its drawings stand in the paragraph beside them. A link to its anchor is written all the

@@ -415,7 +415,7 @@ Nesting is a level rather than padding, so no indent characters reach the text, 
 `ListMarker.defaultForDepth` cascade the PDF path uses becomes the levels' markers —
 `markerFor(depth, ...)` still chooses a level's own.
 
-Four kinds of list stay plain paragraphs, because Word could not express them without
+Five kinds of list stay plain paragraphs, because Word could not express them without
 changing what was asked for:
 
 - **A markerless list.** Numbering always draws something and indents; a list that asked
@@ -430,6 +430,9 @@ changing what was asked for:
   names one marker per level, and silently replacing one of them with the other would be
   worse than writing both as text.
 - **Rich items**, whose runs the numbered path does not write.
+- **A marker holding a percent sign before a digit** — `%1 `, `Step %2: `. Word reads `%1`
+  to `%9` in a level's text as that level's number: written as a level, neither marker showed
+  in Word (measured).
 
 The marker column of a list's top level is the page's when the layout set the marker in a
 column of its own — a `hangingIndent(true)` list — and the gap after it covers what Word may
@@ -635,6 +638,12 @@ page.addParagraph(p -> p
   on a line of 14pt text — keeps `w:position`, and in LibreOffice stands on the baseline,
   higher than on the page by as much as the page lowers it: 1.5 to 3pt for those. An
   author's own picture is written as given and always moved by `w:position`.
+  Every picture of a paragraph is moved by its first line's measure, so one on a later line
+  of another height stands apart from where the page sets it on its own; and where the
+  paragraph's lines are not read — with no layout, for one — nothing moves a picture beside
+  text, and it stands on the baseline. The paragraph's report note names either: one the page
+  sets by its alignment where no line says how far, and otherwise from half a point. A list
+  item's pictures are not named so.
 - **Line height.** Lines are written at an exact height, and the editor clips a picture
   to it — where in that height it puts the baseline is its own, so no fixed room is
   enough: measured in LibreOffice, a 14pt icon centred over 9pt text lost its top up to
@@ -673,9 +682,11 @@ page.addParagraph(p -> p
   icon stands up to its drop too high there, its top cut, where its text is in place.
 - **What an icon is.** An SVG icon — an emoji among them — is drawn into a transparent
   picture from the same layers the page draws, by the raster the PPTX export falls back
-  to, so it looks as it does on the page. The text it stands for is the picture's
+  to, so it looks as it does on the page, but for a gradient, which that raster draws flat,
+  in its first colour. The text it stands for is the picture's
   description, which a screen reader reads; it is not a character a reader copies or
-  searches. The report names every icon a picture, and an icon's text its description.
+  searches. The report names every icon a picture, an icon's text its description, and a
+  gradient drawn flat.
 - **Links.** A picture carrying a link, or in a linked paragraph, is inside the link.
 
 - **What a shape is.** An inline shape — a `dot(...)`, an arrow, a chevron, a checkbox,
@@ -687,7 +698,19 @@ page.addParagraph(p -> p
   far as that ink reaches there, and a pixel of the raster (a quarter point, at its four
   pixels a point), and is lowered by what it takes below, so the
   outline stands where the page has it, no edge is cut, and a shape takes that much more
-  room in the line than on the page. A list marker that draws a disc is written the same
+  room in the line than on the page. The text beside it gives that room back, its letters
+  set closer in whole tenths of a point, where it has letters on one line. Where none does — a
+  shape opening its paragraph or following a picture or a line break, the right of one before
+  pictures alone, a shape in a list item or a right-to-left line — the shape's report note
+  says, from half a point, up to how far that moves it and what stands beside it in its line.
+  Word sets the line from the side its alignment names: from the left, the room on a shape's
+  left moves it, and the room on either side what stands right of it; from the right, the
+  other way about; centred, each by half. The paragraph is taken as one line, so a shape the
+  page sets at the start or the end of a later line is reckoned as one among its words. Nor is
+  what the tenths miss named: rounded a letter at a time, they come to as much as a twentieth
+  of a point a letter more or less than the room, and to none of it in a run too long for a
+  tenth a letter — a quarter point at most on the corpus's 62 documents. A list
+  marker that draws a disc is written the same
   way, followed by the space a text marker gets. Word could hold a shape in the line, which
   this export does not write: the report names each shape among the words a picture.
 
@@ -726,6 +749,9 @@ What Word has no way to say is the chip's *shape*. Shading covers the glyph box,
     One ending a centred line should be off by half that, though only the right-aligned case
     is measured.
 - **The padding above and below** the letters is not in the file.
+- **A padding below zero**, on any side, is not in the file either. The page draws the fill
+  inside the letters' box there, and moves it up or down by padding above and below that sum
+  to nothing; Word shades the letters' box whatever the padding is.
 
 What is lost is recorded as `APPROXIMATED` in the export report, per chip, so a caller can
 see which phrase lost what — down to whether its left padding is unshaded space, in another

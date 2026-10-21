@@ -105,6 +105,17 @@ final class DocxShapePictures {
         return inkOf(run).right() + EDGE;
     }
 
+    /**
+     * How far an inline shape's picture reaches below its box, in points: its ink's overhang
+     * there and {@link #EDGE}, as {@link #of} draws it.
+     *
+     * @param run the shape
+     * @return the height the picture takes below the run's box
+     */
+    static double reachBelowItsBox(InlineShapeRun run) {
+        return inkOf(run).bottom() + EDGE;
+    }
+
     private static Overhang inkOf(InlineShapeRun run) {
         Overhang ink = Overhang.NONE;
         for (ShapeLayer layer : run.layers()) {

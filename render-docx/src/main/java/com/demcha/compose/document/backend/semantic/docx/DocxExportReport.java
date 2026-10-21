@@ -173,6 +173,27 @@ public record DocxExportReport(List<Note> notes) {
             }
         }
 
+        /**
+         * Adds a phrase to the note on a node from the given one on, after what that note says
+         * already, or adds a note of its own where the node has none: one node, one note. A node
+         * with no path is not told from the others, and has a note of its own. No note moves: the
+         * places of those a later step puts in or replaces stay where they were counted.
+         *
+         * @param from   the first note that may be the node's
+         * @param phrase what the node also loses, added to its note
+         * @param alone  the whole note, where the node has none
+         */
+        void addTo(int from, Severity severity, String subject, String path, String phrase, String alone) {
+            for (int index = from; path != null && index < notes.size(); index++) {
+                Note note = notes.get(index);
+                if (note.subject().equals(subject) && path.equals(note.path())) {
+                    notes.set(index, new Note(note.severity(), subject, path, note.detail() + "; " + phrase));
+                    return;
+                }
+            }
+            add(severity, subject, path, alone);
+        }
+
         DocxExportReport build() {
             return notes.isEmpty() ? EMPTY : new DocxExportReport(notes);
         }

@@ -24,6 +24,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.BOTTOM_PULL;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.CELL_PADDING;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.COMPOSED_STACK_LAYER;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.DRAWING_OVER_TEXT;
@@ -257,7 +258,7 @@ class DocxValueFieldLedgerTest {
                 + "(opening its line, after a picture, by an emoji, right to left), below zero, and above and below "
                 + "its letters, named");
         value(com.demcha.compose.document.style.DocumentInsets.class,
-                "bottom:GAP:" + SPACE_BELOW_AT_THE_FOOT + "; " + PADDING_BELOW_ZERO
+                "bottom:GAP:" + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; " + PADDING_BELOW_ZERO
                 + "; below zero, the pull nothing under it gives back, on the next block (space above); "
                 + "a chart's or a spacer's no band or column measures from; a page field's beside other parts; a "
                 + "picture's padding drawn beside its text or over its badge; a chip's; a shape container's at its "
@@ -776,7 +777,8 @@ class DocxValueFieldLedgerTest {
                 "centerText:REPORTED:where it and another slot overlap where the page sets them, or it is wider "
                 + "than the line, which Word sets apart or wraps; any other is written, its page tokens as "
                 + "Word's page fields",
-                "fontName:WRITTEN",
+                "fontName:REPORTED:a face that may not travel or cannot be read, named as an embedded font; any "
+                + "other is written",
                 "fontSize:WRITTEN",
                 "height:REPORTED:a band too shallow for its line, whose text and separator Word stands further in "
                 + "from the edge than the page; any other is written, as where its line and separator stand "
@@ -887,6 +889,7 @@ class DocxValueFieldLedgerTest {
         Set<String> listed = names(DocxNodeFieldLedgerTest.nodeClasses());
         listed.add(DocumentNode.class.getName());
         assertThat(names(reach().nodes())).as("node types a field holds that the node ledger does not list")
+                .contains(DocumentNode.class.getName())
                 .isSubsetOf(listed);
     }
 

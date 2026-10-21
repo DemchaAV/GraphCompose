@@ -141,11 +141,14 @@ class DocxNodeFieldLedgerTest {
                                             + "written, as a panel";
 
     // The gaps: losses the export knows of and its report does not name yet.
-    static final String TOP_PULL = "a top below zero: on a picture, a barcode, a table or a row, not written; on "
-                                   + "another block, what the space above it and the lines round it cannot give, "
-                                   + "not written; neither named";
-    static final String PADDING_BELOW_ZERO = "a table cell's or a panel's padding below zero, written as none, not "
-                                             + "named";
+    static final String TOP_PULL = "a top below zero: on a picture, a barcode or a block written as a table, a "
+                                   + "table, a row or a panel, not written; on another block, what the space above "
+                                   + "it and the lines round it cannot give, not written; neither named";
+    static final String BOTTOM_PULL = "a bottom below zero on a list, a table, a row, a stack, a canvas, a shape "
+                                      + "container in the flow or a block with no paint of its own: the next block "
+                                      + "not pulled up by it, set that much lower, not named";
+    static final String PADDING_BELOW_ZERO = "a table cell's or a panel's padding below zero, and a row's at its "
+                                             + "sides, written as none, not named";
     static final String SPACE_BELOW_AT_THE_FOOT = "below a block written as a table that ends a table cell or a "
                                                   + "row's column set at its middle or foot, which Word does not "
                                                   + "count there, the block set that much lower, not named but for "
@@ -178,7 +181,7 @@ class DocxNodeFieldLedgerTest {
                                               + "cell; with no layout, in the section's note; any other is written";
 
     /** The known cases: a gap's note opens with one of them, or the ledger fails. */
-    private static final List<String> GAPS = List.of(TOP_PULL, PADDING_BELOW_ZERO, SPACE_BELOW_AT_THE_FOOT,
+    private static final List<String> GAPS = List.of(TOP_PULL, BOTTOM_PULL, PADDING_BELOW_ZERO, SPACE_BELOW_AT_THE_FOOT,
             RIGHT_BORDER, CELL_PADDING, LIST_PICTURE, SEAT_UNREAD, ROW_COLUMNS_UNLAID, DRAWING_OVER_TEXT,
             COMPOSED_STACK_LAYER, LAYER_PAST_THE_EDGE, LAYER_UNLAID, PANEL_WIDER_THAN_ITS_CELL);
 
@@ -210,7 +213,7 @@ class DocxNodeFieldLedgerTest {
         node(AlignNode.class, "name:INERT", "child:WRITTEN",
                 "align:REPORTED:composed in a table cell where the layout does not say where its child stands, "
                 + "written from the cell's left; with no layout, in the section's note; any other is written",
-                "margin:GAP:" + TOP_PULL + "; any other is written");
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written");
         node(BarcodeNode.class, "name:INERT", "barcodeOptions:WRITTEN", "width:WRITTEN", "height:WRITTEN",
                 "linkTarget:REPORTED", "bookmarkOptions:REPORTED",
                 "padding:GAP:" + TOP_PULL + "; its left side; its right moves nothing in a paragraph set from the "
@@ -227,14 +230,15 @@ class DocxNodeFieldLedgerTest {
                 + "as taking no room, the room is theirs; any other is written, as the room under what it "
                 + "writes, or as its whole box where it only draws",
                 "placements:REPORTED:where what it writes stands; its drawings stand where it places them",
-                "clipPolicy:INERT:the page clips no canvas", "padding:GAP:" + TOP_PULL + "; any other is written",
-                "margin:GAP:" + TOP_PULL + "; any other is written");
+                "clipPolicy:INERT:the page clips no canvas",
+                "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written");
         node(ChartNode.class, "name:INERT", "spec:REPORTED", "style:REPORTED:in the chart's note",
                 "margin:REPORTED:in the chart's note; above and below; below a block a band or a column measures from, written",
                 "padding:REPORTED:in the chart's note; above and below; below a block a band or a column measures from, written");
         node(ContainerNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN",
-                "padding:GAP:" + PADDING_BELOW_ZERO + "; any other is written",
-                "margin:GAP:" + TOP_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; " + PULL,
+                "padding:GAP:" + PADDING_BELOW_ZERO + "; " + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; " + PULL,
                 "fillColor:REPORTED:" + PANEL_TRANSLUCENCY,
                 "stroke:GAP:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
                 "cornerRadius:REPORTED", "borders:GAP:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
@@ -262,7 +266,10 @@ class DocxNodeFieldLedgerTest {
                 + "and among those in front of it; the one of a stack of one layer its offset moves down or up, "
                 + "or across in a table cell, or at all with no place of its own in the layout, and one set left "
                 + "of the stack in a table cell further than the indents round it give",
-                "padding:GAP:" + TOP_PULL + "; any other is written", "margin:GAP:" + TOP_PULL + "; any other is written",
+                "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT
+                + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT
+                + "; any other is written",
                 "clipToBounds:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table");
         node(LineNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "startX:WRITTEN", "startY:WRITTEN",
                 "endX:WRITTEN", "endY:WRITTEN",
@@ -290,8 +297,8 @@ class DocxNodeFieldLedgerTest {
                 "itemSpacing:WRITTEN",
                 "continuationIndent:REPORTED:where an item wraps, or its lines are not read, in a markerless "
                 + "list or a tree of items without hangingIndent, the only lists the page sets it in",
-                "normalizeMarkers:WRITTEN", "padding:GAP:" + TOP_PULL + "; any other is written",
-                "margin:GAP:" + TOP_PULL + "; any other is written",
+                "normalizeMarkers:WRITTEN", "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
                 "hangingIndent:REPORTED:where an item stands at a stated column, a space past its marker or "
                 + "two spaces a level in",
                 "markerGap:REPORTED:where an item stands at a stated column, a space past its marker or "
@@ -341,8 +348,10 @@ class DocxNodeFieldLedgerTest {
         node(PolygonNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "points:WRITTEN",
                 "fillColor:WRITTEN", "stroke:WRITTEN", "padding:WRITTEN", "margin:WRITTEN");
         node(RowNode.class, "name:INERT", "children:WRITTEN", "weights:WRITTEN", "gap:WRITTEN",
-                "padding:GAP:" + TOP_PULL + "; any other is written",
-                "margin:GAP:" + TOP_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; any other is written",
+                "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; "
+                + PADDING_BELOW_ZERO + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT
+                + "; any other is written",
                 "fillColor:REPORTED:" + ROW_PAINT, "stroke:GAP:" + RIGHT_BORDER + "; " + ROW_PAINT,
                 "cornerRadius:REPORTED:a panel's corners, which a Word table cell does not round; with no paint "
                 + "it paints nothing",
@@ -357,8 +366,8 @@ class DocxNodeFieldLedgerTest {
         node(com.demcha.compose.document.layout.HorizontalBandContentNode.class, "name:INERT", "key:INERT",
                 "slot:WRITTEN", "child:WRITTEN");
         node(SectionNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN",
-                "padding:GAP:" + PADDING_BELOW_ZERO + "; any other is written",
-                "margin:GAP:" + TOP_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; " + PULL,
+                "padding:GAP:" + PADDING_BELOW_ZERO + "; " + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; " + PULL,
                 "fillColor:REPORTED:" + PANEL_TRANSLUCENCY,
                 "stroke:GAP:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
                 "cornerRadius:REPORTED", "borders:GAP:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
@@ -389,10 +398,12 @@ class DocxNodeFieldLedgerTest {
                 + "panel's fill or "
                 + "the colour under it, and as a panel's, " + BORDER_WIDTH + "; drawn, its alpha and its width "
                 + "are written; any other is written",
-                "padding:GAP:" + TOP_PULL + "; written as a panel's in a table cell, round its outline as a margin "
+                "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; written as a panel's in a table cell, round its "
+                + "outline as a margin "
                 + "is, and below it, where its table ends its cell and the cell sets what it holds at its middle or "
                 + "foot, as far as Word does not count it there; any other is written",
-                "margin:GAP:" + TOP_PULL + "; written as a panel's in a table cell, below it, where its table ends "
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; written as a panel's in a table cell, below it, "
+                + "where its table ends "
                 + "its cell "
                 + "and the cell sets what it holds at its middle or foot, as far as Word does not count it "
                 + "there; any other is written",
@@ -418,8 +429,10 @@ class DocxNodeFieldLedgerTest {
                 "columnStyles:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,
                 "width:WRITTEN", "linkTarget:REPORTED",
                 "bookmarkOptions:REPORTED",
-                "padding:GAP:" + TOP_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; any other is written",
-                "margin:GAP:" + TOP_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; any other is written",
+                "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT
+                + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT
+                + "; any other is written",
                 "repeatedHeaderRowCount:WRITTEN",
                 "anchor:WRITTEN");
     }

@@ -3648,6 +3648,36 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX field ledger reaches the values a node holds, and names the losses it knows of
+  and its report does not.** `DocxNodeFieldLedgerTest` gives every field of every node a fate,
+  and stopped at the field: a part added to a value one holds — a style's colour, a run's
+  alignment, a border's width, an enum's constant — passed it with no decision.
+  - `DocxValueFieldLedgerTest` reads the value types from the node classes and the output
+    options, down to the last one they hold, and gives each of their 421 parts a fate: 149
+    written, 221 reported, 12 with nothing for Word to carry and 39 gaps. It fails on a value
+    type or a part with no entry, on an entry for a part that is gone, on a type any class may
+    implement or extend, and on a node type held from outside the node ledger's packages.
+  - Read against the export, some parts are lost in a case the report does not name. Each is a
+    gap, a fourth fate whose entry opens with the case, in 39 parts of values and 48 node fields:
+    - a top below zero, not written on a picture, a barcode or a block written as a table, and
+      partly on another block;
+    - a bottom below zero on a list, a table, a row, a stack, a canvas, a shape container in the
+      flow or a block with no paint of its own, which does not pull the next block up;
+    - a table cell's or a panel's padding below zero, and a row's at its sides, written as none;
+    - the space below a table that ends a cell set at its middle or foot;
+    - a panel's right border drawn short of its table cell's edge;
+    - a cell's top or bottom margin that Word gives the whole row;
+    - pictures in a list's items, placed by the list's first line;
+    - a text badge's vertical seat, and a paragraph's where its lines are not read;
+    - a drawing the page paints over a layer of text, drawn behind it in Word;
+    - a stack's one layer composed in a table cell, written at the cell's top left; a layer set
+      past its stack's right edge in a table cell; with no layout, a stack's one layer moved down;
+    - with no layout, a row's fixed or weighted column beside an auto one;
+    - a box shape written as a panel in a table cell narrower than it.
+  - A gap whose note does not open with one of these cases fails the ledger.
+  - A node's alignment, a row's arrangement and a paragraph's indent strategy move from written
+    to reported: the report already names where Word sets them otherwise. A row's columns move
+    to a gap.
 - **Word's editing protocol fails a restyle that leaves text without room for it.**
   `restyle-body-through-normal` checked only that the body's letters grew with Normal by 2pt,
   and passed every corpus document. Most paragraphs of an exported DOCX stand on exact lines,

@@ -47,8 +47,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * What the DOCX export does with every field of every node, and with every output option:
- * writes it, reports it when the author set it, or has nothing for Word to carry. There is no
- * fourth answer: a field the export neither writes nor names is not one this ledger can hold.
+ * writes it, reports it when the author set it, or has nothing for Word to carry. A field the
+ * export loses in a case its report does not name yet is a gap, and its entry says which case: a
+ * known defect, held here so the ledger stays true while it is open. A field the export neither
+ * writes nor names, with no gap to say where, is not one this ledger can hold.
  *
  * <p>The export's report promises a caller that what the file does not carry is said, not
  * approximated in silence. That promise is only as good as the fields someone thought about:
@@ -64,11 +66,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>The entries are claims about the export, not proofs of it: a {@code WRITTEN} field is
  * proved by the export's own tests, a {@code REPORTED} one by a report test. A field added later
- * takes one of the three fates in the change that adds it.</p>
+ * takes a fate in the change that adds it. The values a field holds have their own entries, in
+ * {@link DocxValueFieldLedgerTest}, which shares the gaps' notes below.</p>
  */
 class DocxNodeFieldLedgerTest {
 
-    private enum Fate {
+    enum Fate {
         /** Reaches the Word file, directly or through the geometry the layout resolved. */
         WRITTEN,
         /**
@@ -81,11 +84,17 @@ class DocxNodeFieldLedgerTest {
          * identity the layout resolves a wrapper's place by, or a field the page itself does
          * not apply.
          */
-        INERT
+        INERT,
+        /**
+         * Lost in a case the export knows of and its report does not name yet: the note opens with
+         * that case, one of the known ones below, then says the field's fate in every other.
+         * Closing the gap moves the field to one of the fates above.
+         */
+        GAP
     }
 
     /** A field's fate, and a note on it: for a report the cases it names, for another fate why. */
-    private record Entry(Fate fate, String note) {
+    record Entry(Fate fate, String note) {
     }
 
     // A text colour's alpha is written, as Word's text fill, and a drawing's in DrawingML; what a
@@ -131,6 +140,51 @@ class DocxNodeFieldLedgerTest {
                                             + "a border, " + BORDER_WIDTH + ", as a panel's; any other is "
                                             + "written, as a panel";
 
+    // The gaps: losses the export knows of and its report does not name yet.
+    static final String TOP_PULL = "a top below zero: on a picture, a barcode or a block written as a table, a "
+                                   + "table, a row or a panel, not written; on another block, what the space above "
+                                   + "it and the lines round it cannot give, not written; neither named";
+    static final String BOTTOM_PULL = "a bottom below zero on a list, a table, a row, a stack, a canvas, a shape "
+                                      + "container in the flow or a block with no paint of its own: the next block "
+                                      + "not pulled up by it, set that much lower, not named";
+    static final String PADDING_BELOW_ZERO = "a table cell's or a panel's padding below zero, and a row's at its "
+                                             + "sides, written as none, not named";
+    static final String SPACE_BELOW_AT_THE_FOOT = "below a block written as a table that ends a table cell or a "
+                                                  + "row's column set at its middle or foot, which Word does not "
+                                                  + "count there, the block set that much lower, not named but for "
+                                                  + "a shape container";
+    static final String RIGHT_BORDER = "a panel's right border reaching its table cell's edge, drawn up to its width "
+                                       + "and half a point short of it so the cell's gridline does not cover it, not "
+                                       + "named";
+    static final String CELL_PADDING = "a top or bottom a cell keeps where Word sets it, one opening with a table or "
+                                       + "spanning rows, which Word gives the row's other cells too, not named";
+    static final String LIST_PICTURE = "in a list's item or marker, placed by the list's first line and the item's "
+                                       + "tallest picture rather than its own line, and with no line read not moved "
+                                       + "off the baseline, not named";
+    static final String SEAT_UNREAD = "in a text badge, not applied, and where a paragraph's lines are not read, no "
+                                      + "seat written, neither named";
+    static final String ROW_COLUMNS_UNLAID = "with no layout, a row's fixed or weighted column beside an auto one, "
+                                             + "written with no width, not named";
+    static final String DRAWING_OVER_TEXT = "a drawing the page paints over a text or picture layer, drawn behind it, "
+                                            + "not named";
+    static final String COMPOSED_STACK_LAYER = "of the one layer a stack composed in a table cell writes beside drawn "
+                                               + "ones, written at the cell's top left, not named";
+    static final String LAYER_PAST_THE_EDGE = "set past its stack's right edge in a table cell the layout places, its "
+                                              + "lines held to the edge and broken narrower, not named";
+    static final String LAYER_UNLAID = "with no layout, a stack's one layer written where the stack starts, not named";
+    static final String PANEL_WIDER_THAN_ITS_CELL = "as a panel in a table cell narrower than it, held to the cell "
+                                                    + "where the page draws it past, not named";
+    // A row whose children the layout does not place has columns Word sizes to their text.
+    private static final String ROW_COLUMNS = "its columns Word's, sized to their text, where the layout does not "
+                                              + "show where its children start: composed in a table cell with a "
+                                              + "child it does not place, or in a panel or another table in its "
+                                              + "cell; with no layout, in the section's note; any other is written";
+
+    /** The known cases: a gap's note opens with one of them, or the ledger fails. */
+    private static final List<String> GAPS = List.of(TOP_PULL, BOTTOM_PULL, PADDING_BELOW_ZERO, SPACE_BELOW_AT_THE_FOOT,
+            RIGHT_BORDER, CELL_PADDING, LIST_PICTURE, SEAT_UNREAD, ROW_COLUMNS_UNLAID, DRAWING_OVER_TEXT,
+            COMPOSED_STACK_LAYER, LAYER_PAST_THE_EDGE, LAYER_UNLAID, PANEL_WIDER_THAN_ITS_CELL);
+
     private static final Map<Class<?>, Map<String, Entry>> NODES = new LinkedHashMap<>();
     private static final Map<String, Entry> OUTPUT_OPTIONS = fields(
             "metadata:WRITTEN",
@@ -156,11 +210,16 @@ class DocxNodeFieldLedgerTest {
             + "with another page zone; its pictures are written in the line at the size the page draws them");
 
     static {
-        node(AlignNode.class, "name:INERT", "child:WRITTEN", "align:WRITTEN", "margin:WRITTEN");
+        node(AlignNode.class, "name:INERT", "child:WRITTEN",
+                "align:REPORTED:composed in a table cell where the layout does not say where its child stands, "
+                + "written from the cell's left; with no layout, in the section's note; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written");
         node(BarcodeNode.class, "name:INERT", "barcodeOptions:WRITTEN", "width:WRITTEN", "height:WRITTEN",
                 "linkTarget:REPORTED", "bookmarkOptions:REPORTED",
-                "padding:REPORTED:its left side; its right moves nothing in a paragraph set from the left",
-                "margin:REPORTED:its left side; its right moves nothing in a paragraph set from the left",
+                "padding:GAP:" + TOP_PULL + "; its left side; its right moves nothing in a paragraph set from the "
+                + "left",
+                "margin:GAP:" + TOP_PULL + "; its left side; its right moves nothing in a paragraph set from the "
+                + "left",
                 "transform:REPORTED", "anchor:WRITTEN");
         node(CanvasLayerNode.class, "name:INERT",
                 "width:REPORTED:the width its text wraps at",
@@ -171,13 +230,18 @@ class DocxNodeFieldLedgerTest {
                 + "as taking no room, the room is theirs; any other is written, as the room under what it "
                 + "writes, or as its whole box where it only draws",
                 "placements:REPORTED:where what it writes stands; its drawings stand where it places them",
-                "clipPolicy:INERT:the page clips no canvas", "padding:WRITTEN", "margin:WRITTEN");
+                "clipPolicy:INERT:the page clips no canvas",
+                "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written");
         node(ChartNode.class, "name:INERT", "spec:REPORTED", "style:REPORTED:in the chart's note",
                 "margin:REPORTED:in the chart's note; above and below; below a block a band or a column measures from, written",
                 "padding:REPORTED:in the chart's note; above and below; below a block a band or a column measures from, written");
-        node(ContainerNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
-                "margin:REPORTED:" + PULL, "fillColor:REPORTED:" + PANEL_TRANSLUCENCY, "stroke:REPORTED:" + PANEL_BORDERS,
-                "cornerRadius:REPORTED", "borders:REPORTED:" + PANEL_BORDERS,
+        node(ContainerNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN",
+                "padding:GAP:" + PADDING_BELOW_ZERO + "; " + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; " + PULL,
+                "fillColor:REPORTED:" + PANEL_TRANSLUCENCY,
+                "stroke:GAP:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
+                "cornerRadius:REPORTED", "borders:GAP:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
                 "anchor:REPORTED:as a layer stack's column, or where it writes no paragraph, as of drawings alone, "
                 + "which has no bookmark; otherwise, in the flow, it is bookmarked",
                 "bookmarkOptions:REPORTED", "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
@@ -187,34 +251,45 @@ class DocxNodeFieldLedgerTest {
                 "anchor:REPORTED");
         node(ImageNode.class, "name:INERT", "imageData:WRITTEN", "width:WRITTEN", "height:WRITTEN",
                 "scale:WRITTEN", "fitMode:WRITTEN", "linkTarget:REPORTED",
-                "bookmarkOptions:REPORTED", "padding:REPORTED:its left side; its right moves nothing in a paragraph set from the left; drawn beside its text or over its badge, all of it",
-                "margin:REPORTED:its left side; its right moves nothing in a paragraph set from the left", "transform:REPORTED",
+                "bookmarkOptions:REPORTED",
+                "padding:GAP:" + TOP_PULL + "; its left side; its right moves nothing in a paragraph set from the "
+                + "left; drawn beside its text or over its badge, all of it",
+                "margin:GAP:" + TOP_PULL + "; its left side; its right moves nothing in a paragraph set from the "
+                + "left",
+                "transform:REPORTED",
                 "anchor:WRITTEN");
         node(LayerStackNode.class, "name:INERT",
-                "layers:REPORTED:one the page starts above where the layers before it end, which is written under "
+                "layers:GAP:" + DRAWING_OVER_TEXT + "; " + COMPOSED_STACK_LAYER + "; " + LAYER_PAST_THE_EDGE + "; "
+                + LAYER_UNLAID + "; one the page starts above where the layers before it end, which is written under "
                 + "them; composed in a table cell or with no layout, more than one of them written, not measured; "
                 + "their drawings stack as the page paints them, by their z-index, among those behind the text "
                 + "and among those in front of it; the one of a stack of one layer its offset moves down or up, "
                 + "or across in a table cell, or at all with no place of its own in the layout, and one set left "
                 + "of the stack in a table cell further than the indents round it give",
-                "padding:WRITTEN", "margin:WRITTEN",
+                "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT
+                + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT
+                + "; any other is written",
                 "clipToBounds:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table");
         node(LineNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "startX:WRITTEN", "startY:WRITTEN",
                 "endX:WRITTEN", "endY:WRITTEN",
                 "stroke:REPORTED:its translucency, as a rule's, flattened against the colour under it, and as a "
                 + "rule, " + BORDER_WIDTH + "; drawn, its alpha is written; any other is written",
                 "linkTarget:REPORTED",
-                "bookmarkOptions:REPORTED", "padding:WRITTEN", "margin:WRITTEN", "transform:REPORTED",
+                "bookmarkOptions:REPORTED", "padding:GAP:" + TOP_PULL + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; any other is written", "transform:REPORTED",
                 "dashPattern:REPORTED",
                 "anchor:REPORTED:drawn; a rule in the flow is bookmarked", "lineCap:REPORTED:a rule's other than butt, a border ending flat; drawn, it is written",
                 "fillWidth:WRITTEN", "keepWithNext:REPORTED:of a line drawn in the flow the page keeps blocks together in");
         node(ListNode.class, "name:INERT",
-                "items:REPORTED:a blank one a hangingIndent list draws as its marker alone, the marks of one "
+                "items:GAP:" + LIST_PICTURE + "; a blank one a hangingIndent list draws as its marker alone, the "
+                + "marks of one "
                 + "the page reads as markdown, and a chip's translucent fill, flattened against the colour under "
                 + "it; any other is written",
-                "nestedItems:REPORTED:the marks of one the page reads as markdown, and a chip's translucent fill, "
+                "nestedItems:GAP:" + LIST_PICTURE + "; the marks of one the page reads as markdown, and a chip's "
+                + "translucent fill, "
                 + "flattened against the colour under it; any other is written",
-                "marker:WRITTEN",
+                "marker:GAP:" + LIST_PICTURE + "; any other is written",
                 "textStyle:WRITTEN", "align:REPORTED",
                 "lineSpacing:REPORTED:where the layout's items are not its own and one wraps, an item run "
                 + "onto the next page among them; composed in a table cell, its wrapping not measured; "
@@ -222,7 +297,8 @@ class DocxNodeFieldLedgerTest {
                 "itemSpacing:WRITTEN",
                 "continuationIndent:REPORTED:where an item wraps, or its lines are not read, in a markerless "
                 + "list or a tree of items without hangingIndent, the only lists the page sets it in",
-                "normalizeMarkers:WRITTEN", "padding:WRITTEN", "margin:WRITTEN",
+                "normalizeMarkers:WRITTEN", "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
                 "hangingIndent:REPORTED:where an item stands at a stated column, a space past its marker or "
                 + "two spaces a level in",
                 "markerGap:REPORTED:where an item stands at a stated column, a space past its marker or "
@@ -240,8 +316,8 @@ class DocxNodeFieldLedgerTest {
         node(PageReferenceNode.class, "name:INERT",
                 "anchor:REPORTED:where the anchor has no bookmark, its number is written as text",
                 "textStyle:WRITTEN", "align:WRITTEN", "placeholderText:WRITTEN",
-                "padding:REPORTED:the sides its alignment sets it from",
-                "margin:REPORTED:the sides its alignment sets it from");
+                "padding:GAP:" + TOP_PULL + "; the sides its alignment sets it from",
+                "margin:GAP:" + TOP_PULL + "; the sides its alignment sets it from");
         node(ParagraphNode.class, "name:INERT",
                 "text:REPORTED:where the page reads it as markdown, written as the page sets it where its lines "
                 + "hold the pieces read so, a heading written taller than its line named; its marks written as letters "
@@ -252,27 +328,36 @@ class DocxNodeFieldLedgerTest {
                 "textStyle:WRITTEN", "align:WRITTEN", "lineSpacing:WRITTEN",
                 "bulletOffset:REPORTED:its letters before the first line; over the flow, as a side of an "
                 + "overlay's pair or as a badge's text, the room it sets lines in by where that moves one",
-                "indentStrategy:WRITTEN", "linkTarget:WRITTEN",
+                "indentStrategy:REPORTED:as its bulletOffset's: a prefix's letters before the first line, and over "
+                + "the flow the room it sets lines in by where that moves one; any other is written",
+                "linkTarget:WRITTEN",
                 "bookmarkOptions:REPORTED:a title that is not the text Word lists it by, a pair's whole line for "
                 + "a side of one; a level past Word's ninth that shares it with another; the right side's of a "
                 + "pair whose left holds the level",
-                "padding:REPORTED:" + PULL, "margin:REPORTED:" + PULL,
+                "padding:GAP:" + TOP_PULL + "; " + PULL, "margin:GAP:" + TOP_PULL + "; " + PULL,
                 "autoSize:REPORTED:where the layout does not tell the size the page fits the text in the "
                 + "paragraph's style to — no lines read, lines in sizes that do not say which is the "
                 + "paragraph's, or one paragraph added at more than one place — the text written at its "
                 + "style's, not measured; any other is written, at the size the page fits it to",
-                "verticalAlign:WRITTEN", "anchor:WRITTEN", "direction:WRITTEN");
+                "verticalAlign:GAP:" + SEAT_UNREAD + "; its first text line's seat for all its lines, a line in "
+                + "another size or face named from half a point; any other is written",
+                "anchor:WRITTEN", "direction:WRITTEN");
         node(PathNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "segments:WRITTEN",
                 "fillColor:WRITTEN", "fillPaint:REPORTED", "stroke:WRITTEN", "strokePaint:REPORTED",
                 "padding:WRITTEN", "margin:WRITTEN", "dashPattern:REPORTED", "lineCap:WRITTEN", "lineJoin:WRITTEN");
         node(PolygonNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "points:WRITTEN",
                 "fillColor:WRITTEN", "stroke:WRITTEN", "padding:WRITTEN", "margin:WRITTEN");
-        node(RowNode.class, "name:INERT", "children:WRITTEN", "weights:WRITTEN", "gap:WRITTEN", "padding:WRITTEN",
-                "margin:WRITTEN",
-                "fillColor:REPORTED:" + ROW_PAINT, "stroke:REPORTED:" + ROW_PAINT,
+        node(RowNode.class, "name:INERT", "children:WRITTEN", "weights:WRITTEN", "gap:WRITTEN",
+                "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; "
+                + PADDING_BELOW_ZERO + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT
+                + "; any other is written",
+                "fillColor:REPORTED:" + ROW_PAINT, "stroke:GAP:" + RIGHT_BORDER + "; " + ROW_PAINT,
                 "cornerRadius:REPORTED:a panel's corners, which a Word table cell does not round; with no paint "
                 + "it paints nothing",
-                "borders:REPORTED:" + ROW_PAINT, "columns:WRITTEN", "verticalAlign:WRITTEN", "arrangement:WRITTEN");
+                "borders:GAP:" + RIGHT_BORDER + "; " + ROW_PAINT,
+                "columns:GAP:" + ROW_COLUMNS_UNLAID + "; " + ROW_COLUMNS, "verticalAlign:WRITTEN",
+                "arrangement:REPORTED:" + ROW_COLUMNS);
         // The wrappers the layout adds round a timeline's parts, public records the export writes
         // through to their child.
         node(com.demcha.compose.document.layout.LayoutAnchorNode.class, "name:INERT", "id:INERT", "child:WRITTEN");
@@ -280,9 +365,12 @@ class DocxNodeFieldLedgerTest {
                 "child:WRITTEN");
         node(com.demcha.compose.document.layout.HorizontalBandContentNode.class, "name:INERT", "key:INERT",
                 "slot:WRITTEN", "child:WRITTEN");
-        node(SectionNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN", "padding:WRITTEN",
-                "margin:REPORTED:" + PULL, "fillColor:REPORTED:" + PANEL_TRANSLUCENCY, "stroke:REPORTED:" + PANEL_BORDERS,
-                "cornerRadius:REPORTED", "borders:REPORTED:" + PANEL_BORDERS,
+        node(SectionNode.class, "name:INERT", "children:WRITTEN", "spacing:WRITTEN",
+                "padding:GAP:" + PADDING_BELOW_ZERO + "; " + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; " + PULL,
+                "fillColor:REPORTED:" + PANEL_TRANSLUCENCY,
+                "stroke:GAP:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
+                "cornerRadius:REPORTED", "borders:GAP:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
                 "keepTogether:WRITTEN",
                 "anchor:REPORTED:as a layer stack's column, or where it writes no paragraph, as of drawings alone, "
                 + "which has no bookmark; otherwise, in the flow, it is bookmarked",
@@ -290,11 +378,13 @@ class DocxNodeFieldLedgerTest {
                 "bookmarkOptions:REPORTED", "keepWithNext:WRITTEN",
                 "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
         node(ShapeContainerNode.class, "name:INERT",
-                "outline:REPORTED:drawn as a shape, corners whose radii differ once held to half its shorter side "
+                "outline:GAP:" + PANEL_WIDER_THAN_ITS_CELL + "; drawn as a shape, corners whose radii differ once "
+                + "held to half its shorter side "
                 + "at the largest of them; a box "
                 + "written as a panel in a table cell, its corners square; one no shape draws, or composed in a "
                 + "table cell with nowhere to draw it, dropped",
-                "layers:REPORTED:written inline one after another in source order where it writes them in the "
+                "layers:GAP:" + DRAWING_OVER_TEXT + "; written inline one after another in source order where it "
+                + "writes them in the "
                 + "flow; drawn where the page puts them, unreported, where they are all drawing, stacked as the "
                 + "page paints them among those behind the text and among those in front of it; a panel's in its "
                 + "cell, at its first written layer's height, a paragraph held across to its box, and named where "
@@ -304,21 +394,26 @@ class DocxNodeFieldLedgerTest {
                 "clipPolicy:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table",
                 "fillColor:REPORTED:its translucency, as a panel's, flattened against the colour under it; "
                 + "drawn, its alpha is written; any other is written",
-                "stroke:REPORTED:its translucency, as a panel's border, flattened against the panel's fill or "
+                "stroke:GAP:" + RIGHT_BORDER + "; its translucency, as a panel's border, flattened against the "
+                + "panel's fill or "
                 + "the colour under it, and as a panel's, " + BORDER_WIDTH + "; drawn, its alpha and its width "
                 + "are written; any other is written",
-                "padding:REPORTED:written as a panel's in a table cell, round its outline as a margin is, and "
-                + "below it, where its table ends its cell and the cell sets what it holds at its middle or "
+                "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; written as a panel's in a table cell, round its "
+                + "outline as a margin "
+                + "is, and below it, where its table ends its cell and the cell sets what it holds at its middle or "
                 + "foot, as far as Word does not count it there; any other is written",
-                "margin:REPORTED:written as a panel's in a table cell, below it, where its table ends its cell "
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; written as a panel's in a table cell, below it, "
+                + "where its table ends "
+                + "its cell "
                 + "and the cell sets what it holds at its middle or foot, as far as Word does not count it "
                 + "there; any other is written",
                 "transform:REPORTED");
         node(ShapeNode.class, "name:INERT", "width:WRITTEN", "height:REPORTED:" + RULE_WIDTH,
                 "fillColor:REPORTED:" + RULE_TRANSLUCENCY,
                 "stroke:WRITTEN", "cornerRadius:REPORTED:corners unequal once held to half its shorter side, drawn at the largest radius",
-                "linkTarget:REPORTED", "bookmarkOptions:REPORTED", "padding:WRITTEN",
-                "margin:WRITTEN", "transform:REPORTED", "fillPaint:REPORTED",
+                "linkTarget:REPORTED", "bookmarkOptions:REPORTED",
+                "padding:GAP:" + TOP_PULL + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; any other is written", "transform:REPORTED", "fillPaint:REPORTED",
                 "anchor:REPORTED:drawn; a rule in the flow is bookmarked");
         node(SpacerNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN",
                 "padding:REPORTED:above and below; below a block a band or a column measures from, written",
@@ -328,12 +423,18 @@ class DocxNodeFieldLedgerTest {
                 "columns:REPORTED:where one is auto and the layout does not show their widths — composed in a "
                 + "table cell, or with a column edge no row shows — the editor's, a fixed one beside it with "
                 + "them; with no layout, in the section's note; any other is written",
-                "rows:REPORTED:" + CELL_TRANSLUCENCY,
-                "defaultCellStyle:REPORTED:" + CELL_TRANSLUCENCY, "rowStyles:REPORTED:" + CELL_TRANSLUCENCY,
-                "columnStyles:REPORTED:" + CELL_TRANSLUCENCY, "width:WRITTEN", "linkTarget:REPORTED",
+                "rows:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,
+                "defaultCellStyle:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,
+                "rowStyles:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,
+                "columnStyles:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,
+                "width:WRITTEN", "linkTarget:REPORTED",
                 "bookmarkOptions:REPORTED",
-                "padding:WRITTEN",
-                "margin:WRITTEN", "repeatedHeaderRowCount:WRITTEN", "anchor:WRITTEN");
+                "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT
+                + "; any other is written",
+                "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT
+                + "; any other is written",
+                "repeatedHeaderRowCount:WRITTEN",
+                "anchor:WRITTEN");
     }
 
     @Test
@@ -388,11 +489,14 @@ class DocxNodeFieldLedgerTest {
     }
 
     /** {@code field:FATE}, or {@code field:FATE:a note}, as {@code field:REPORTED:the cases the report names}. */
-    private static Map<String, Entry> fields(String... specs) {
+    static Map<String, Entry> fields(String... specs) {
         Map<String, Entry> entries = new LinkedHashMap<>();
         for (String spec : specs) {
             String[] parts = spec.split(":", 3);
             Entry entry = new Entry(Fate.valueOf(parts[1]), parts.length > 2 ? parts[2] : "");
+            if (entry.fate() == Fate.GAP && GAPS.stream().noneMatch(entry.note()::startsWith)) {
+                throw new IllegalStateException("a gap whose note opens with no known case, for " + parts[0]);
+            }
             if (entries.put(parts[0], entry) != null) {
                 throw new IllegalStateException("two entries for " + parts[0]);
             }

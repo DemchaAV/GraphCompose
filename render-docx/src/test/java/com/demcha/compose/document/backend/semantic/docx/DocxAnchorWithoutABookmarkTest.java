@@ -144,6 +144,64 @@ class DocxAnchorWithoutABookmarkTest {
                 .isEqualTo("writes no paragraph, so " + LOST);
     }
 
+    @Test
+    void aLaterSectionsNodeAtTheSamePathKeepsItsOwnNote() throws Exception {
+        // A path is its section's own: the second section's first block, with its outline entry, has
+        // the path the first section's anchored block has.
+        List<DocxExportReport.Note> notes = exportSections(
+                page -> page.addSection(section -> section.anchor("cover").add(drawing())),
+                page -> page.addSection(section -> section.bookmark(new DocumentBookmarkOptions("Entry")).add(drawing())));
+
+        assertThat(notes).filteredOn(note -> note.subject().equals("SectionNode")).extracting(DocxExportReport.Note::detail)
+                .containsExactlyInAnyOrder("written as its contents; its outline entry is not written",
+                        "writes no paragraph, so " + LOST.replace("\"target\"", "\"cover\""));
+    }
+
+    @Test
+    void blocksAtOnePathInTwoSectionsHaveANoteEach() throws Exception {
+        List<DocxExportReport.Note> notes = exportSections(
+                page -> page.addSection(section -> section.anchor("one").add(drawing())),
+                page -> page.addSection(section -> section.anchor("two").add(drawing())));
+
+        assertThat(notes).filteredOn(note -> note.subject().equals("SectionNode")).extracting(DocxExportReport.Note::detail)
+                .containsExactlyInAnyOrder("writes no paragraph, so " + LOST.replace("\"target\"", "\"one\""),
+                        "writes no paragraph, so " + LOST.replace("\"target\"", "\"two\""));
+    }
+
+    @Test
+    void aPageReferenceAfterTheBlockKeepsItsNoteInItsPlace() throws Exception {
+        // The reference's note is put in where it was counted while writing, after the block's is
+        // named: a note put in among the others before it would move that place onto another note.
+        Exported exported = export(page -> page.addSection(section -> section.anchor("target").add(drawing()))
+                .addParagraph("Page:").addPageReference("target")
+                .addParagraph("After"));
+
+        assertThat(notesOn(exported.report(), "ShapeNode")).singleElement().asString().startsWith("drawn as a shape");
+        assertThat(notesOn(exported.report(), "PageReferenceNode")).singleElement().asString()
+                .contains("its anchor has no bookmark in the Word file");
+        assertThat(notesOn(exported.report(), "SectionNode")).singleElement()
+                .isEqualTo("writes no paragraph, so " + LOST);
+        assertThat(exported.report().notes()).extracting(DocxExportReport.Note::subject)
+                .as("each where its node was written, the block's own after them")
+                .containsExactly("ShapeNode", "PageReferenceNode", "SectionNode");
+    }
+
+    /** The notes of a document of two sections, each a page of its own content. */
+    @SafeVarargs
+    private static List<DocxExportReport.Note> exportSections(Consumer<PageFlowBuilder>... contents) throws Exception {
+        List<DocxExportReport.Note> notes = new java.util.ArrayList<>();
+        var documents = GraphCompose.documents();
+        for (Consumer<PageFlowBuilder> content : contents) {
+            DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create();
+            session.pageFlow(content::accept);
+            documents = documents.section(session);
+        }
+        try (com.demcha.compose.document.api.MultiSectionDocument document = documents.create()) {
+            document.export(DocxSemanticBackend.builder().reportSink(report -> notes.addAll(report.notes())).build());
+        }
+        return notes;
+    }
+
     private static DocumentNode drawing() {
         return new ShapeBuilder().size(120, 30).fillColor(DocumentColor.LIGHT_GRAY).build();
     }

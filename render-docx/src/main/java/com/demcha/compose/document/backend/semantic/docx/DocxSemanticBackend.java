@@ -3639,16 +3639,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (keepTogether || keepWithNext) {
             keepOnOnePage(written, keepWithNext);
         }
-        if (anchor != null && !bookmarkAround(written, anchor)) {
-            // A section or a container that writes no paragraph — drawings alone, standing in the
-            // paragraph beside them — has nothing for a bookmark to go round, and a link to its anchor
-            // is written to a bookmark the file lacks: Word's and LibreOffice's PDFs carry no link
-            // there. Whether another node marks the anchor is known once all are written
-            // (nameTheBlocksNoBookmarkMarks).
-            blocksUnmarked.add(new UnmarkedBlock(notesBefore, node.nodeKind(), layout.pathOf(node), anchor));
-        }
+        // A section or a container that writes no paragraph — drawings alone, standing in the
+        // paragraph beside them — has nothing for a bookmark to go round, and a link to its anchor is
+        // written to a bookmark the file lacks: Word's and LibreOffice's PDFs carry no link there.
+        // Whether another node marks the anchor is known once all are written
+        // (nameTheBlocksNoBookmarkMarks).
+        boolean unmarked = anchor != null && !bookmarkAround(written, anchor);
         if (panelBreak != null) {
             reportAKeepThePanelBreaks(node, panelBreak, written);
+        }
+        if (unmarked) {
+            blocksUnmarked.add(new UnmarkedBlock(notesBefore, report.size(), node.nodeKind(), layout.pathOf(node),
+                    anchor));
         }
     }
 
@@ -10395,10 +10397,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * A block that wrote no paragraph for its anchor's bookmark to go round.
      *
-     * @param notesFrom how many notes the report held before the block was written: its own note,
-     *                  where it has one, comes after them
+     * @param notesFrom how many notes the report held before the block was written
+     * @param notesTo   how many it held once the block was written: its own note, where it has one,
+     *                  is between the two. A path is its section's own, and a later section's node, or
+     *                  a later place the same node is written, may have the same
      */
-    private record UnmarkedBlock(int notesFrom, String subject, String path, String anchor) {
+    private record UnmarkedBlock(int notesFrom, int notesTo, String subject, String path, String anchor) {
     }
 
     /**
@@ -10420,8 +10424,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             String lost = "its anchor \"" + block.anchor() + "\" has no bookmark in the Word file: a link to it "
                           + "points at none, and a page reference to it is a fixed number rather than a field";
-            report.addTo(block.notesFrom(), DocxExportReport.Severity.APPROXIMATED, block.subject(), block.path(),
-                    "it writes no paragraph, so " + lost, "writes no paragraph, so " + lost);
+            report.addTo(block.notesFrom(), block.notesTo(), DocxExportReport.Severity.APPROXIMATED, block.subject(),
+                    block.path(), "it writes no paragraph, so " + lost, "writes no paragraph, so " + lost);
         }
         blocksUnmarked.clear();
     }

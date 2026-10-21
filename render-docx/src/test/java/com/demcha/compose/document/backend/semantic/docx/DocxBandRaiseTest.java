@@ -177,6 +177,29 @@ class DocxBandRaiseTest {
             XWPFParagraph two = export.paragraph("Two");
 
             assertThat(export.placed("Band").startPage()).as("the premise: the band opens the second page").isOne();
+            assertThat(before(one)).as("the band's padding is held in a line above it, which Word keeps").isZero();
+            assertThat(position(one)).as("raised by its position, not into the space Word drops")
+                    .isCloseTo((int) Math.round(raiseOf(one) * 2), within(1));
+            assertThat(position(two)).as("the next item moves").isZero();
+        }
+    }
+
+    @Test
+    void aListOpeningABandsPageWithNoEdgeToHoldIsNotRaisedIntoTheGapAboveIt() throws Exception {
+        // A band with no edge of its own: the gap before it, left at the foot of the page above by
+        // the layout, is written above its first item, and Word drops it at the top of the page.
+        try (Export export = export(page -> page
+                .spacer(0, 480)
+                .addParagraph(p -> p.name("Above").text("Above").margin(DocumentInsets.bottom(10)))
+                .addLayerStack(stack -> stack.name("Band")
+                        .back(new ShapeBuilder().name("Backdrop").size(200, 140).build())
+                        .layer(new com.demcha.compose.document.dsl.ListBuilder().noMarker().textStyle(TITLE)
+                                .itemSpacing(10).items("One", "Two").build(), LayerAlign.TOP_LEFT)))) {
+            XWPFParagraph one = export.paragraph("One");
+            XWPFParagraph two = export.paragraph("Two");
+
+            assertThat(export.placed("Band").startPage()).as("the premise: the band opens the second page").isOne();
+            assertThat(export.placed("Above").startPage()).as("the premise: the paragraph above stays on the first").isZero();
             assertThat(before(one)).as("the premise: space above it to raise it into").isPositive();
             assertThat(position(one)).as("raised by its position, not into the space Word drops")
                     .isCloseTo((int) Math.round(raiseOf(one) * 2), within(1));

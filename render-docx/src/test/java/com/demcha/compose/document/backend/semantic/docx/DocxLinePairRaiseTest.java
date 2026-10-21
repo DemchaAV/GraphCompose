@@ -140,8 +140,9 @@ class DocxLinePairRaiseTest {
 
     @Test
     void aPairOpeningAPageKeepsTheSpaceAboveIt() throws Exception {
-        // Word drops the space above the first paragraph on a page: raised into it, the line would
-        // stand where Word sets it, and what it owed would stand all below it lower.
+        // Word drops the space above the first paragraph on a page: the pair's is held in a line above
+        // it, and raised into that line, the pair would stand where Word sets it and what it owed
+        // would stand all below it lower.
         try (Export export = export(page -> page
                 .spacer(0, 540)
                 .add(pair(new ParagraphBuilder().name("Label").text("Bank name:").margin(DocumentInsets.top(10)).build(),
@@ -153,7 +154,35 @@ class DocxLinePairRaiseTest {
                               - (export.placed("Below").placementY() + export.placed("Below").placementHeight());
 
             assertThat(export.placed("Pair").startPage()).as("the premise: the pair opens the second page").isOne();
-            assertThat(before(pair)).as("the premise: space above it, which Word drops").isPositive();
+            assertThat(before(pair)).as("its space above is held in a line above it, which Word keeps").isZero();
+            assertThat(after(pair) + before(below)).as("the page's gap, less the next line's own raise: nothing owed")
+                    .isCloseTo(Math.round(gapBelow * 20) - RAISE, within(2L));
+        }
+    }
+
+    @Test
+    void aPairOpeningAPageWithNoEdgeToHoldIsNotRaisedIntoTheGapAboveIt() throws Exception {
+        // Set at its overlay's top with no margin, the pair has no edge of its own for a line to
+        // hold: the gap before it, left at the foot of the page above by the layout, is written
+        // above it, and Word drops it at the top of the page.
+        try (Export export = export(page -> page
+                .spacer(0, 520)
+                .addParagraph(p -> p.name("Above").text("Above").margin(DocumentInsets.bottom(20)))
+                .add(new ShapeContainerBuilder().name("Pair").rectangle(360, 40)
+                        .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                        .position(new ParagraphBuilder().name("Label").text("Bank name:").build(), 0, 0, LayerAlign.TOP_LEFT)
+                        .position(new ParagraphBuilder().name("Value").text("Example Bank").build(), 0, 0,
+                                LayerAlign.TOP_RIGHT)
+                        .build())
+                .addParagraph(p -> p.name("Below").text("Below")))) {
+            XWPFParagraph pair = export.paragraph("Example Bank");
+            XWPFParagraph below = export.paragraph("Below");
+            double gapBelow = export.placed("Label").placementY()
+                              - (export.placed("Below").placementY() + export.placed("Below").placementHeight());
+
+            assertThat(export.placed("Pair").startPage()).as("the premise: the pair opens the second page").isOne();
+            assertThat(export.placed("Above").startPage()).as("the premise: the paragraph above stays on the first").isZero();
+            assertThat(before(pair)).as("the premise: the gap above it, which Word drops").isPositive();
             assertThat(after(pair) + before(below)).as("the page's gap, less the next line's own raise: nothing owed")
                     .isCloseTo(Math.round(gapBelow * 20) - RAISE, within(2L));
         }

@@ -414,14 +414,17 @@ class DocxListItemLowerTest {
 
     @Test
     void aBlockOnALaterPageTakesNothingOfTheHangTheListAboveLeft() throws Exception {
-        // The list under it opens the next page: its space above is written whole, and nothing of
-        // a hang taken back is named.
+        // The list under it opens the next page: the space the layout leaves above it there is held
+        // whole, in the line holding its top edge, and nothing of a hang taken back is named.
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD)).spacer(1, 460)
                 .addList(list -> list.textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
                 .addList(list -> list.textStyle(lato(10)).margin(DocumentInsets.top(50)).items("Next item")));
+        XWPFParagraph next = paragraph(exported, "Next item");
 
-        assertThat(before(paragraph(exported, "Next item"))).as("its 50pt, whole").isEqualTo(50 * 20);
+        assertThat(Math.round(line(paragraphBefore(exported.document(), next)) * 20)).as("its 50pt, whole")
+                .isEqualTo(50 * 20);
+        assertThat(before(next)).as("its edge is the line's").isZero();
         assertThat(exported.report().bySubject()).doesNotContainKey("space above");
     }
 
@@ -624,10 +627,14 @@ class DocxListItemLowerTest {
                 XWPFParagraph two = paragraph(document, "Two");
                 long lower = Math.round(-(0.8 * line(two) - LATO_ASCENT * 24) * 20);
 
+                XWPFParagraph one = paragraph(document, "One");
+                XWPFParagraph held = paragraphBefore(document, one);
+
                 assertThat(pages).as("the premise: the stack's list opens the next page").containsExactly(1, 1);
-                assertThat(before(paragraph(document, "One")))
-                        .as("the spacer's height past its hairline and the list's 10pt, as written")
-                        .isCloseTo(Math.round((500 - 0.1 + 10) * 20), within(1L));
+                assertThat(before(one)).as("not lowered: its edge is the line's").isZero();
+                assertThat(Math.round(line(held) * 20)).as("the list's 10pt, held in a line on its page").isEqualTo(200);
+                assertThat(before(held)).as("the spacer's height past its hairline, above that line")
+                        .isCloseTo(Math.round((500 - 0.1) * 20), within(1L));
                 assertThat(before(two)).as("the gap and its own lowering, nothing owed above it").isEqualTo(200 + lower);
             }
         }
@@ -726,6 +733,12 @@ class DocxListItemLowerTest {
             }
         }
         throw new AssertionError("no cell holds " + text);
+    }
+
+    /** The body paragraph just before {@code paragraph}. */
+    private static XWPFParagraph paragraphBefore(XWPFDocument document, XWPFParagraph paragraph) {
+        List<XWPFParagraph> paragraphs = document.getParagraphs();
+        return paragraphs.get(paragraphs.indexOf(paragraph) - 1);
     }
 
     private static double line(XWPFParagraph paragraph) {

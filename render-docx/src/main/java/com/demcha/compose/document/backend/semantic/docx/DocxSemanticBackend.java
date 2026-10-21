@@ -259,6 +259,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // its first written in the body: it opens that page in Word, though a layer of room went before
     // it, and Word drops the space above it there (raiseIntoTheSpaceAbove).
     private boolean bandOpensItsPage;
+    // What the block before that band owes below itself, which the layout leaves at the foot of the
+    // page above (leaveThePageAboveTheBand).
+    private double bandGapBefore;
     private org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP paragraphOpeningABandsPage;
     // How many paragraphs have been written: what a raised line owes below it is paid by the next
     // one, as its space above, or by flushSpacingAfter.
@@ -663,6 +666,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * it; never in a cell or an overlay.
      */
     private boolean listOpensItsPage;
+
+    /**
+     * The line holding the top edge of the list being written on the page the layout opens with it,
+     * until its first item takes the gap between its lines from it ({@link #applyItemLineGap}).
+     */
+    private XWPFParagraph listEdgeLine;
 
     /** Whether the layout placed the list being written all on one page. */
     private boolean listOnOnePage;
@@ -1117,6 +1126,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         cellTextShift = 0;
         paragraphOpeningItsPage = null;
         bandOpensItsPage = false;
+        bandGapBefore = 0;
         paragraphOpeningABandsPage = null;
         paragraphsWritten = 0;
         panelsFirstLineKeeps = 0;
@@ -1140,6 +1150,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         topEdgeHeld = 0;
         topEdgeLine = null;
         topEdgeLineOver = null;
+        listEdgeLine = null;
         clipContainer = null;
         cellDrawing = CellDrawing.NONE;
         tableDrawings = null;
@@ -5439,8 +5450,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // the layer resumes, and its own edges come after, as a table's do. Left to its first
         // item's paragraph, the resume took their place, and a list with a 20pt margin in a later
         // layer stood 7pt high in Word and LibreOffice (measured).
-        resumeHere();
-        carriedSpacingBefore += list.margin().top() + list.padding().top();
+        // One the layout opens its page with has its top edge held there, as a paragraph has: in the
+        // flow, a stack of one layer's included, and first in a band opening its page. Word drops the
+        // space above its first item at the top of a page, and a list with a 14pt margin stood 14pt
+        // high in Word and LibreOffice, one opening a section padded 10pt, 10pt high.
+        double edge = list.margin().top() + list.padding().top();
+        listEdgeLine = null;
+        if (opensItsPageInTheFlow(list)) {
+            edge -= holdTheTopEdgeAboveItsLine(document, list, 0);
+            listEdgeLine = topEdgeLine;
+        } else {
+            resumeHere();
+        }
+        carriedSpacingBefore += edge;
         double previousItemSpacing = pendingItemSpacing;
         pendingItemSpacing = list.itemSpacing();
         boolean previousItemWritten = anItemWasWritten;
@@ -5875,10 +5897,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @return how the layout set the item, or {@code null} where its items are not matched
      */
     private DocxLayoutMetrics.ItemText applyItemLineGap(XWPFParagraph item) {
+        // The first item's top edge is its list's, which a line holds where the layout opens a page
+        // with the list (writeList): the gap between the item's lines comes out of that line, as a
+        // paragraph's does there. Left in the item's lines, a wrapped first item with a 4pt gap
+        // stood 2.2pt low in Word and LibreOffice.
+        boolean underTheEdgeLine = listEdgeLine != null;
+        if (underTheEdgeLine) {
+            topEdgeLine = listEdgeLine;
+            topEdgeLineOver = item;
+            listEdgeLine = null;
+        }
         DocxLayoutMetrics.ItemText laidOut = listItemLines.poll();
         if (laidOut != null) {
             applyLineGap(item, listLineGap, laidOut.lines().size());
             settleTheItemsLines(item, laidOut);
+        }
+        if (underTheEdgeLine) {
+            topEdgeLine = null;
+            topEdgeLineOver = null;
         }
         return laidOut;
     }
@@ -6847,11 +6883,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             boolean onANewPage = false;
             if (index > 0) {
                 writePageBreak(document);
-            } else if (currentCell == null && startsAPageOfItsOwn(node)) {
+            } else if (currentCell == null && (bandOpensItsPage || startsAPageOfItsOwn(node))) {
                 // What the block above leaves below itself stays on its page, and the space above
                 // the panel is held on its own, as at a table the layout moves to a new page
-                // (writeTableWithItsOwnSpacing).
-                leaveThePageAbove();
+                // (writeTableWithItsOwnSpacing): a band's first, where the band opens its page, the
+                // band's top edge with it (leaveThePageAboveTheBand).
+                if (bandOpensItsPage) {
+                    leaveThePageAboveTheBand(node);
+                } else {
+                    leaveThePageAbove();
+                }
                 onANewPage = true;
             }
             List<DocumentNode> piece = pieces.get(index);
@@ -9837,10 +9878,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeLinePair(XWPFDocument document, DocumentNode overlay, DocxLinePair.Pair pair)
             throws Exception {
+        // Its top edge is held on the page the layout opens with it, as a paragraph's is: in the flow,
+        // a stack of one layer's included, and first in a band opening its page. Word drops the space
+        // above the line there, and a pair in a stack with a 14pt margin stood 14pt high in Word and
+        // LibreOffice. A pair whose text the page sets above its overlay's top is left as it was.
         boolean opensItsPage = currentCell == null && startsAPageOfItsOwn(overlay);
-        double text = pair.line();
         double above = overlay.margin().top() + pair.above();
-        if (above >= 0) {
+        boolean holdsItsEdge = above >= 0 && pair.above() >= 0 && opensItsPageInTheFlow(overlay);
+        double text = pair.line();
+        if (holdsItsEdge) {
+            carriedSpacingBefore += above
+                    - holdTheTopEdgeAboveItsLine(document, overlay, pair.above() - overlay.padding().top());
+        } else if (above >= 0) {
             carriedSpacingBefore += above;
         } else {
             standsAboveItsCell(takeBackSpaceAbove(-above));
@@ -14088,6 +14137,32 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         forgetTheHang();
     }
 
+    /**
+     * Leaves on the page above what a band the layout moves to a new page leaves there, where the
+     * band opens with a block Word puts no space of its own above — a table, a row or a panel: the
+     * space the block before the band owes below itself ({@link #bandGapBefore}), as above such a
+     * block moved in the flow ({@link #leaveThePageAbove}). The band's own top edge there, its
+     * margin and the room it leaves above the block, is carried down as the edge of a container
+     * opening with the block, which the block holds above itself on its page with its own edge, as
+     * in the flow ({@link #holdTheSpaceAboveOnItsPage}). Left on the page above with the gap, a row,
+     * a table or a panel opening a band with a 14pt margin stood 14pt high in Word and LibreOffice.
+     *
+     * <p>The edge is the space the page leaves above the block's own margin on that page. The band
+     * measures its resume to the first leaf it writes, past a row's or a panel's own edges, which
+     * the block writes itself: what the resume holds besides the gap and the edge is not owed
+     * again. Without a canvas to say how much, the edge is all the band resumes past the gap.</p>
+     */
+    private void leaveThePageAboveTheBand(DocumentNode block) {
+        double onItsPage = spaceAboveOnItsPage(block) - block.margin().top() - layerOffsetNotWritten;
+        resumeHere();
+        double owed = pendingSpacingAfter;
+        double gap = Math.max(0, Math.min(owed, bandGapBefore));
+        double edge = Double.isNaN(onItsPage) ? owed - gap : Math.max(0, onItsPage);
+        pendingSpacingAfter = gap;
+        leaveThePageAbove();
+        carriedSpacingBefore += edge;
+    }
+
     private void writeTableWithItsOwnSpacing(XWPFDocument document, DocumentNode node)
             throws Exception {
         if (node instanceof TableNode table && !table.rows().isEmpty()) {
@@ -14095,8 +14170,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         // The layout starts a block it moves to a new page at the block's own top edge: what
         // the page above holds below its last block, and the gap between the two, stay there.
-        boolean onANewPage = currentCell == null && startsAPageOfItsOwn(node);
-        if (onANewPage) {
+        // A band's first block, where the band opens its page, opens that page too, the band's top
+        // edge above it (leaveThePageAboveTheBand).
+        boolean opensItsBand = currentCell == null && bandOpensItsPage;
+        boolean onANewPage = currentCell == null && (opensItsBand || startsAPageOfItsOwn(node));
+        if (opensItsBand) {
+            leaveThePageAboveTheBand(node);
+        } else if (onANewPage) {
             leaveThePageAbove();
         }
         // A table a band's or a column's layer opens is that layer's first block, so it starts
@@ -16804,6 +16884,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // holds the band's top edge above its first block (holdAParagraphsTopEdgeOnItsPage), and
             // the block's line is not raised into it (writeParagraph).
             bandOpensItsPage = opensItsPage;
+            bandGapBefore = opensItsPage ? pendingSpacingAfter : 0;
             resumeSpacing = above - Math.min(Math.max(0, above), hang);
             // A list's items lowered into it are lowered as far as that space takes it, and the
             // rest taken back, as all of it is where the band opens a page (lowerIntoTheSpaceAbove).
@@ -18827,8 +18908,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * @param room the space above the block's content inside its box, past its padding: a
      *             contained picture's room ({@link #roomRound}), none for text
+     * @return whether a line holds the edge: none where the layout leaves no space above the
+     *         block's content on that page
      */
-    private void holdAParagraphsTopEdgeOnItsPage(XWPFDocument document, DocumentNode node, double room) {
+    private boolean holdAParagraphsTopEdgeOnItsPage(XWPFDocument document, DocumentNode node, double room) {
         double inside = Math.max(0, node.padding().top() + room);
         double own = Math.max(0, node.margin().top() + node.padding().top() + room);
         // A band's first block: everything owed above it — the gap before the band, the band's
@@ -18851,7 +18934,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         pullBelow = 0;
         borderBelow = 0;
         if (!(kept > 0.01)) {
-            return;
+            return false;
         }
         carriedSpacingBefore += own;
         XWPFParagraph line = newBodyParagraph(document);
@@ -18866,6 +18949,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         topEdgeHeldAbove = node;
         topEdgeHeld = own;
         topEdgeLine = line;
+        return true;
+    }
+
+    /**
+     * Holds the top edge of a list or a line pair the layout opens its page with in the flow, as a
+     * paragraph's is ({@link #holdAParagraphsTopEdgeOnItsPage}): each is written as paragraphs, the
+     * first a line whose space above Word drops there. Each writes its own edge above that line,
+     * with none of a paragraph's spacing for the hold to take it back from. The hold stays
+     * {@link #topEdgeLine}, for a list's first item to take the gap between its lines from
+     * ({@link #applyItemLineGap}); none where no line is written.
+     *
+     * @param room the space above the first line inside the block's box, past its padding: a
+     *             pair's line stands that far below its overlay's padding, a list's at it
+     * @return how much of the block's own top edge the hold takes, which the block no longer owes
+     *         above its line: its margin, padding and room above, where they are not below zero
+     */
+    private double holdTheTopEdgeAboveItsLine(XWPFDocument document, DocumentNode node, double room) {
+        topEdgeLine = null;
+        if (!holdAParagraphsTopEdgeOnItsPage(document, node, room)) {
+            return 0;
+        }
+        double held = topEdgeHeld;
+        topEdgeHeldAbove = null;
+        topEdgeHeld = 0;
+        return held;
     }
 
     /**

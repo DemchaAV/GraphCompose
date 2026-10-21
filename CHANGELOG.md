@@ -8,6 +8,26 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps the space above a list, a line pair, and a table, a row or a panel
+  opening a band, on the page the layout moves them to.** Word drops the space above a paragraph
+  at the top of a page. A paragraph, a picture and a spacer there already hold theirs in a line
+  kept with them; these did not.
+  - Measured in Word and LibreOffice on Windows, each moved to a new page:
+    - a list with a 14pt margin stood 14pt high, and so did one opening a stack of one layer or a
+      band with a 14pt margin; a list padded 10pt, or opening a section padded 10pt, stood 10pt
+      high;
+    - a title and its dates set as one line in a stack with a 14pt margin stood 14pt high, in the
+      flow and opening a band;
+    - a row, a table or a panel opening a band with a 14pt margin stood 14pt high: the band's
+      margin was left at the foot of the page above.
+  - Each now holds that space in a line kept with it, as a paragraph does. A list and a line pair
+    stand within 0.1pt of a paragraph moved so; a row, a table and a panel within 0.1pt of the same
+    block moved to a new page in the flow. A list's wrapped first item takes the gap between its
+    lines out of that line, as a paragraph does there, and stands where such a paragraph does. A
+    row, a table or a panel opening a band holds the band's margin above it with its own, and the
+    gap before the band stays at the foot of the page above, as one in the flow leaves it. A line
+    pair whose text the page sets above its overlay's top is left as it was.
+  - None of the corpus's 62 DOCX changes, and none of its 1246 notes.
 - **A DOCX export sets a later layer where the page does when its first block's edge reaches
   above the layers before it.** A layer written after another starts at the page's gap below
   them, less what its first block writes above its content itself. Where the block held more

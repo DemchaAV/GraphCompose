@@ -11,6 +11,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -44,7 +45,7 @@ class DocxPanelLeftEdgeTest {
 
     @Test
     void anAccentHangingOutOfACellInAFilledPanelIsNamedTheSameWay() throws Exception {
-        // Word sets it where it is written there, measured 0.06 to 0.17pt off the page's;
+        // Word sets it where it is written there, measured 0.04 to 0.17pt off the page's;
         // LibreOffice still starts it at the cell's text.
         List<DocxExportReport.Note> notes = notes(page -> page.addSection("Outer", outer -> outer.fillColor(OUTER)
                 .addRow(row -> row.spacing(12).weights(1, 1)
@@ -67,24 +68,42 @@ class DocxPanelLeftEdgeTest {
     @Test
     void aRowsColumnHoldsItsCardsLeftMarginOnce() throws Exception {
         // The row's cell starts past the card's 6pt margin: its accent still hangs half out.
-        List<DocxExportReport.Note> notes = notes(beside(card -> card().accept(
-                card.margin(new DocumentInsets(0, 0, 0, 6)))));
+        Consumer<PageFlowBuilder> content = beside(card -> card().accept(card.margin(new DocumentInsets(0, 0, 0, 6))));
+        List<DocxExportReport.Note> notes = notes(content);
 
         assertThat(notes).hasSize(1);
+        assertThat(notes.get(0).detail()).isEqualTo(HUNG);
+        try (XWPFDocument document = DocxExports.withLayout(400, 400, 30, content)) {
+            assertThat(document.getDocument().xmlText()).as("half the accent left of the cell's text, not 4.5pt right")
+                    .containsPattern("<w:tblInd[^>]*w:w=\"-30\"");
+        }
+    }
+
+    @Test
+    void aPaintedRowInAFilledPanelIsNamed() throws Exception {
+        List<DocxExportReport.Note> notes = notes(page -> page.addSection("Outer", outer -> outer.fillColor(OUTER)
+                .addRow(row -> row.name("Band").fillColor(SURFACE).padding(DocumentInsets.of(8))
+                        .borders(DocumentBorders.left(DocumentStroke.of(ACCENT, 3)))
+                        .addParagraph(p -> p.text("Engineer")).addParagraph(p -> p.text("2019")))));
+
+        assertThat(notes).hasSize(1);
+        assertThat(notes.get(0).path()).contains("Band");
         assertThat(notes.get(0).detail()).isEqualTo(HUNG);
     }
 
     @Test
-    void aMarginBelowZeroInAPanelsCellIsNamedForWhatItSetsLeft() throws Exception {
-        // Its whole table moves, its text and right border with it.
+    void aMarginBelowZeroInAPanelsCellIsNamedForThePanel() throws Exception {
+        // Its whole table moves, its text with it.
         List<DocxExportReport.Note> notes = notes(inABorderedPanel(card -> card
                 .borders(DocumentBorders.right(DocumentStroke.of(ACCENT, 1))).padding(DocumentInsets.of(8))
                 .margin(new DocumentInsets(0, 0, 0, -4)).addParagraph(p -> p.text("Bled card"))));
 
         assertThat(notes).hasSize(1);
         assertThat(notes.get(0).path()).contains("Card");
-        assertThat(notes.get(0).detail()).startsWith("its left edge, which the page sets 4pt left of its table "
-                                                     + "cell's text");
+        assertThat(notes.get(0).detail()).isEqualTo("the panel, which the page sets 4pt left of its table cell's "
+                                                     + "text, comes out up to about that much right of the page's, "
+                                                     + "its text with it: LibreOffice starts a nested table at its "
+                                                     + "cell's text, and Word may");
     }
 
     @Test

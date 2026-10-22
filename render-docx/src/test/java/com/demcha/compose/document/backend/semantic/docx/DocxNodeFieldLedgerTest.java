@@ -149,7 +149,7 @@ class DocxNodeFieldLedgerTest {
 
     // LibreOffice starts a nested table at its cell's text, and Word may.
     static final String LEFT_EDGE = "a panel's left edge in a table cell, its left border hanging out of the cell or "
-                                    + "its margin below zero, which LibreOffice, and Word in some cells, set at the "
+                                    + "its margin below zero, which LibreOffice, and Word in most cells, set at the "
                                     + "cell's text: up to about how far right, named (left edge)";
 
     // A badge's initials, written as its shape's text, stand off its middle by the page's seat.

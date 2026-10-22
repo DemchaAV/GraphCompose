@@ -297,7 +297,7 @@ class DocxValueFieldLedgerTest {
                 "color:REPORTED:its translucency as a Word border — a panel's, a table cell's, a rule's — flattened "
                 + "against the panel's fill or the colour under it; a chart's, with its drawing; drawn, its alpha is "
                 + "written; any other is written",
-                "width:REPORTED:" + RIGHT_BORDER
+                "width:REPORTED:" + RIGHT_BORDER + "; " + LEFT_EDGE
                 + "; as a Word border, a width that, rounded to the eighth of a point, is below a quarter "
                 + "of a point or past 12pt, drawn at Word's thinnest or widest, and the room Word makes for a panel's "
                 + "or a cell's border past the page's; a chart's, with its drawing; any other is written");
@@ -323,7 +323,7 @@ class DocxValueFieldLedgerTest {
                 "left:REPORTED:" + LEFT_EDGE + "; as a panel's: its translucency, flattened against the panel's fill or the colour "
                 + "under it, and a width outside Word's quarter of a point to 12pt; a row's where its paint is not "
                 + "written; any other is written",
-                "right:REPORTED:" + RIGHT_BORDER + "; " + RIGHT_END
+                "right:REPORTED:" + RIGHT_BORDER + "; " + RIGHT_END + "; " + LEFT_EDGE
                 + "; as a panel's: its translucency, flattened against the panel's fill or the colour "
                 + "under it, and a width outside Word's quarter of a point to 12pt; a row's where its paint is not "
                 + "written; any other is written",

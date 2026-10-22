@@ -626,7 +626,7 @@ How it lands:
   the panel stands up to that much right of the page's, its left border and fill, and with a
   margin below zero its text too, and the report names how far (`left edge`). Measured, 3pt
   accents stood 1.5pt right of the page's in LibreOffice; in Word, 1.55 to 1.73pt in a row's
-  cell and in a table cell, filled or not, and 0.06 to 0.17pt in a filled panel's cell or a row
+  cell and in a table cell, filled or not, and 0.04 to 0.17pt in a filled panel's cell or a row
   inside one.
 - **Keeping together.** A `keepTogether()` panel the layout placed on one page is a row
   Word may not split. Anchors on the blocks inside a panel carry as they do anywhere else, and

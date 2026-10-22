@@ -848,7 +848,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private DocumentNode leftMarginInCell;
     // What a row nested in a cell still hangs left once its first column has given what it can
     // (takeHang), handed to each of its cells: Word keeps a nested table inside its cell
-    // whatever the table's indent.
+    // whatever the table's indent, except in a filled panel's cell (leftEdgeHungOut).
     private double cellHang;
     // The cell being filled takes its row's hang as cellTextShift (a negative number): its
     // paragraphs' text moves left by it as far as each one's own indent goes, and never past
@@ -6980,15 +6980,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Its table is written that far left of the cell's text. LibreOffice starts a nested table
      * at its cell's text, and Word may. Measured on 3pt accents: LibreOffice set them 1.5pt right
      * of the page's, a box's in a ruled table cell 1pt; Word 1.55 to 1.73pt right in a row's cell
-     * and in a table cell, filled or not, and 0.06 to 0.17pt in a filled panel's cell or a row
+     * and in a table cell, filled or not, and 0.04 to 0.17pt in a filled panel's cell or a row
      * inside one. A margin below zero moves the whole table, its text with it.</p>
      *
      * @param hung how far left of the cell's text the page sets it, in points
+     * @param bled whether a margin below zero sets the panel there, not its left border alone
      */
-    private static String leftEdgeHungOut(double hung) {
-        return "its left edge, which the page sets " + pointsOf(hung) + "pt left of its table cell's text, comes "
-               + "out up to about that much right of the page's: LibreOffice starts a nested table at its cell's "
-               + "text, and Word may";
+    private static String leftEdgeHungOut(double hung, boolean bled) {
+        return (bled ? "the panel" : "its left edge") + ", which the page sets " + pointsOf(hung)
+               + "pt left of its table cell's text, comes out up to about that much right of the page's"
+               + (bled ? ", its text with it" : "") + ": LibreOffice starts a nested table at its cell's text, "
+               + "and Word may";
     }
 
     /**
@@ -7007,12 +7009,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Word, in a row's or a table's cell, starts such a panel half that border in from the
      * cell's text (inside a filled panel it sets it where it is written: see
      * {@link #leftEdgeHungOut}), and a table that then runs past the cell widens the cell, fixed
-     * layout or not: CompactMono's rail, a 3pt accent at
-     * its column's edge, pushed the main column 2.3pt right in Word. It gives up what runs past,
-     * no more than its left side had given its text — the half border the table is wider by, and
-     * what of the other half its margin could give back — so its text keeps the page's width and
-     * the slack. A panel bled left by a negative margin keeps the rest, as its text would
-     * otherwise narrow and wrap.</p>
+     * layout or not: CompactMono's rail, a 3pt accent at its column's edge, pushed the main
+     * column 2.3pt right in Word. It gives up what runs past, no more than its left side had given
+     * its text — the half border the table is wider by, and what of the other half its margin
+     * could give back — so its text keeps the page's width and the slack. A panel bled left by a
+     * negative margin keeps the rest, as its text would otherwise narrow and wrap.</p>
      *
      * @param outer    the table's width, in points
      * @param indent   where the table starts from the cell's text, in points
@@ -7250,20 +7251,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // padding (see writePanel).
         boolean inTheBody = currentCell == null;
         double indent = inTheBody ? edge + padding.left() : edge - halfLeft;
-        // In a row's or a table's cell, Word starts a nested table no further left than the cell's
-        // text (leftEdgeHungOut), draws its right border outside the table's right edge —
-        // measured in its PDF, a table ending at
-        // 566.0pt had its right border from 566.2 to 566.9 — and on screen cuts off whatever
-        // passes the cell's edge and draws the cell's gridline over it: a panel as wide as its
-        // cell lost its right border, EditorialProposal's glance card. A panel with a right
-        // border that reaches its cell's edge ends that border and a little more short of it, the
-        // points taken from its right margin and no more than it holds, so its text keeps its
-        // place and its width. The cell's own right margin, where the cell draws no rule of its
-        // own at that edge, holds what passes the cell's text — a row's gap beside the cell: held
-        // in at the text, the right borders of Panel's left-column cards and of Obsidian's,
-        // Metered's and Workspace's cards beside a gap stood 0.6 to 0.9pt left of the page's in
-        // Word, and 0.3 to 0.6pt right of it held at the edge. A ruled cell's margin, which its
-        // rule may cover, is left to the text.
+        // In a row's or a table's cell outside a filled panel, Word starts a nested table no
+        // further left than the cell's text (leftEdgeHungOut). It draws the table's right border
+        // outside its right edge — measured in its PDF, a table ending at 566.0pt had its right
+        // border from 566.2 to 566.9 — and on screen cuts off whatever passes the cell's edge and
+        // draws the cell's gridline over it: a panel as wide as its cell lost its right border,
+        // EditorialProposal's glance card. A panel with a right border that reaches its cell's
+        // edge ends that border and a little more short of it, the points taken from its right
+        // margin and no more than it holds, so its text keeps its place and its width. The cell's
+        // own right margin, where the cell draws no rule of its own at that edge, holds what
+        // passes the cell's text — a row's gap beside the cell: held in at the text, the right
+        // borders of Panel's left-column cards and of Obsidian's, Metered's and Workspace's cards
+        // beside a gap stood 0.6 to 0.9pt left of the page's in Word, and 0.3 to 0.6pt right of
+        // it held at the edge. A ruled cell's margin, which its rule may cover, is left to the
+        // text.
         double shortOfTheEdge = 0;
         // What of the border its right margin cannot take in, and the cell cannot hold, passes
         // the cell's edge.
@@ -7350,7 +7351,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // Less than a tenth of a point is not seen (RIGHT_END).
             if (currentCell != null && -indent >= 0.1) {
                 report.add(DocxExportReport.Severity.APPROXIMATED, LEFT_EDGE, layout.pathOf(node),
-                        leftEdgeHungOut(-indent));
+                        leftEdgeHungOut(-indent, edge < 0));
             }
         }
         applyCellPadding(cell, new DocumentInsets(margins.top(), Math.max(0, marginHeld - slackTaken),
@@ -16935,7 +16936,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *       panel's cell holds the padding as margins, which go no further than its edge.</li>
      *   <li>Its margin below zero above or below, or at a side in a cell: a panel owes the space
      *       round it on its own, where its columns' table nets the margin against the padding, and
-     *       Word starts a table no further left than its cell's text.</li>
+     *       Word, except in a filled panel's cell, starts a table no further left than its cell's
+     *       text.</li>
      *   <li>In a band of overlapping layers, or where a stack's column measures the space above it
      *       or below it to the text inside it — the first block of a later layer, or the last a
      *       layer below resumes after: the space would hold the row's padding, and so would its
@@ -17077,10 +17079,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // never draws.
         hideTableGrid(table);
         // Nested in a cell, a row hanging left cannot move out of it: Word keeps a nested table
-        // in its cell whatever its indent. Its first column gives the hang what it can, and its
-        // cells' text takes the rest (see cellHang). SerifHeadline hangs each column's section
-        // heading left by its dash, and in Word the titles stood that far right of the page's,
-        // 17pt in the main column.
+        // in its cell whatever its indent, except in a filled panel's cell (leftEdgeHungOut). Its
+        // first column gives the hang what it can, and its cells' text takes the rest (see
+        // cellHang). SerifHeadline hangs each column's section heading left by its dash, and in
+        // Word the titles stood that far right of the page's, 17pt in the main column.
         double hang = currentCell != null ? Math.max(0, -insetLeft) : 0;
         RowGeometry geometry = applyRowGeometry(table, node, hang, inItsPanel);
         boolean placedColumns = geometry.placed();
@@ -19441,7 +19443,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * page's, 17pt in the main column.</p>
      */
     private void indentTable(XWPFTable table) {
-        // Nested in a cell, a hang is its cells' (writeRow): Word keeps the table in the cell.
+        // Nested in a cell, a hang is its cells' (writeRow): Word keeps the table in the cell,
+        // except in a filled panel's (leftEdgeHungOut).
         if (!(Math.abs(insetLeft) > 0.01) || currentCell != null && insetLeft < 0
             || table.getRows().isEmpty() || table.getRow(0).getTableCells().isEmpty()) {
             return;

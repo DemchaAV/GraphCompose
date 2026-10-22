@@ -19,7 +19,7 @@ follow semantic versioning; release dates are ISO 8601.
   - Measured on Windows, 3pt accents:
     - LibreOffice set them 1.5pt right of the page's, and a box's in a ruled table cell 1pt.
     - Word set them 1.55 to 1.73pt right in a row's cell and in a table cell, filled or not, and
-      0.06 to 0.17pt in a filled panel's cell or a row inside one.
+      0.04 to 0.17pt in a filled panel's cell or a row inside one.
     - Engineering Resume's 2pt and 3pt card accents stood 1.05 and 1.71pt right in Word.
   - A panel a placed row holds as a column had its left margin, which the row's cell already
     starts past, counted again in its table's indent. It is counted once.

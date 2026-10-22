@@ -1032,7 +1032,13 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   drawn again. In a row of the flow, a layer stack or shape container that
   only draws — shapes, a drawn picture, a badge's initials — and is all its
   cell holds is anchored the same way, when it has no margins, stands on one
-  page and paints nothing outside its box. A drawing holding a line, a lone
+  page and paints nothing outside its box. Word and LibreOffice place it from
+  the paragraph's top, the space above the paragraph's line included, so space
+  added there once the drawing is placed — a lifted row's cell starting lower,
+  or a cell's padding past the row's written above its paragraph — moves the
+  drawing down with the line. Left where it was, Northline's step badges stood
+  1.35pt above their row in both editors, and Editorial's goal ticks up to
+  3.1pt. A drawing holding a line, a lone
   shape, a composed tile and a drawing sharing its table cell with another
   stay on the page. A box framing text is left to the panel it is written as;
   the layout does not say which of a cell's boxes is which node, so in a cell
@@ -1228,8 +1234,16 @@ layer, centred, is a line of at most four characters in one style — initials, 
 step number — is one shape holding that text centred in it, drawn in front. The shape wraps
 its text in its own box, reaching out to its edges past the preset's inner text rectangle:
 Word shrinks a text box that does not wrap to the width of its letters, and wraps an
-ellipse's text in the square inscribed in it. Initials in a corner, in two styles, right to
-left or linked are written in the flow as before. A shape beside text in a panel is anchored in
+ellipse's text in the square inscribed in it. Text seated by its cap band (`verticalAlign`)
+stands off the shape's middle by as much as the page seats it, its insets set apart by twice
+that: centred, Northline's monogram stood 0.9pt low and its step numbers 0.3pt high in their
+badges. Where the line and twice the seat fit the preset's text rectangle, the seat is one
+inset, at the bottom to raise the text or at the top to lower it, and Word and LibreOffice
+both set it so. Where they do not, Word set the text low by half the excess, so the insets
+reach out at both sides instead: Word sets it where the page does, and LibreOffice, which
+takes an inset below zero for none, on the shape's middle, as before. Initials in a corner,
+in two styles, right to left or linked are written in the flow as before. A shape beside text
+in a panel is anchored in
 that text's paragraph in the cell and laid out in the cell, placed from the cell's text
 column and the paragraph's top, which Word and LibreOffice both measure from the paragraph,
 nested or not; placed from the page's edges instead, Word measured a nested cell's shape from

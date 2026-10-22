@@ -8,6 +8,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export stands a table's rules where the page draws them beside a column sized to its
+  content.**
+  - An auto column's text is given a point of slack past the page's width, so an editor setting it
+    in its own face keeps the page's line breaks. The slack widened the column, so every rule and
+    fill right of it, and the table's right end, stood a point right of the page's.
+  - It now comes out of the column's text cells' margins, on the side their text does not lean on:
+    the right where it is set left, the left where it is set right, half from each where it is
+    centred. The column keeps the page's width, its text the same room. A cell spanning more than
+    one such column shares its margin among them.
+  - A composed cell keeps its margins: a paragraph in it may run past its text into them, which
+    Word cuts off at the cell's edge. What a column's cells do not hold widens it, and the report
+    names it (`right end`): beside a composed cell, or where a cell's padding on the side it gives
+    from is thinner than the point (each side thinner than half of it, centred). A side gives only
+    what it has past the inner half of the cell's rule, so a line an editor's face sets wider does
+    not run onto it.
+  - Measured on Windows:
+    - Word stood Classic and Modern Invoice's and Modern Proposal's rules right of the auto column
+      0.94 to 1.06pt right of the page's, and now within 0.12pt. LibreOffice stood them 0.66 to
+      1.06pt right, and now with the tables' other rules.
+    - Every line breaks where it did in both editors. The text right of the column moves the
+      point back to where the page sets it.
+    - Orange Ops's aside headings, composed in a table with no padding, keep their accent rules
+      1pt longer in Word, named.
+  - 5 of the corpus's 62 documents change. 4 tables gain the `right end` note.
 - **A DOCX export names a panel's left edge its table cell holds in.**
   - The page sets a panel in a table cell with its left border centred on the cell's text edge,
     half of it outside, or further out by a margin below zero. LibreOffice starts a nested table

@@ -20,7 +20,9 @@ follow semantic versioning; release dates are ISO 8601.
   - A composed cell keeps its margins: a paragraph in it may run past its text into them, which
     Word cuts off at the cell's edge. What a column's cells do not hold widens it, and the report
     names it (`right end`): beside a composed cell, or where a cell's padding on the side it gives
-    from is thinner than the point (each side thinner than half of it, centred).
+    from is thinner than the point (each side thinner than half of it, centred). A side gives only
+    what it has past the inner half of the cell's rule, so a line an editor's face sets wider does
+    not run onto it.
   - Measured on Windows:
     - Word stood Classic and Modern Invoice's and Modern Proposal's rules right of the auto column
       0.94 to 1.06pt right of the page's, and now within 0.12pt. LibreOffice stood them 0.66 to

@@ -232,9 +232,9 @@ class DocxCellPaddingTest {
                 .row("Thin")));
 
         assertThat(margins(unruled)).containsExactly(140L - SEAT, 140L - SLACK, 140L + SEAT, 140L);
-        assertThat(margins(thin)).as("none left above and below, the sides kept but for the right's slack; none "
-                                     + "to raise the text into")
-                .containsExactly(0L, 20L - SLACK, 0L, 20L);
+        assertThat(margins(thin)).as("none left above and below, the sides kept, the right one's point the "
+                                     + "rule's half and none for the slack; none to raise the text into")
+                .containsExactly(0L, 20L, 0L, 20L);
     }
 
     @Test

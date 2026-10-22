@@ -8,7 +8,9 @@ import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import com.demcha.compose.document.node.TextDirection;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
@@ -52,6 +54,8 @@ class DocxEditorSlackTest {
     /** The engine's cell padding a side, in twips, where nothing states one. */
     private static final long PADDING_TWIPS = Math.round(DocxSemanticBackend.ENGINE_DEFAULT_CELL_PADDING_POINTS * 20);
     private static final String RIGHT_END = "right end";
+    /** No rule, so a thin padding gives all it has. */
+    private static final DocumentStroke UNRULED = DocumentStroke.of(DocumentColor.BLACK, 0);
 
     @Test
     void anAutoColumnsTextCellsGiveThePointOutOfTheirRightMargins() throws Exception {
@@ -98,7 +102,7 @@ class DocxEditorSlackTest {
                 .name("Amounts")
                 .autoColumns(1)
                 .defaultCellStyle(DocumentTableStyle.builder()
-                        .padding(new DocumentInsets(4, 4, 4, 0.25))
+                        .padding(new DocumentInsets(4, 4, 4, 0.25)).stroke(UNRULED)
                         .textAnchor(DocumentTableTextAnchor.CENTER_RIGHT).build())
                 .row("1 440.00")));
 
@@ -113,7 +117,7 @@ class DocxEditorSlackTest {
                 .name("Centred")
                 .autoColumns(1)
                 .defaultCellStyle(DocumentTableStyle.builder()
-                        .padding(new DocumentInsets(4, 0.5, 4, 0.5))
+                        .padding(new DocumentInsets(4, 0.5, 4, 0.5)).stroke(UNRULED)
                         .textAnchor(DocumentTableTextAnchor.CENTER).build())
                 .row("Paid")));
 
@@ -165,7 +169,8 @@ class DocxEditorSlackTest {
         Exported exported = export(page -> page.addTable(t -> t
                 .name("Tight")
                 .autoColumns(1)
-                .defaultCellStyle(DocumentTableStyle.builder().padding(new DocumentInsets(4, 0.25, 4, 4)).build())
+                .defaultCellStyle(DocumentTableStyle.builder().padding(new DocumentInsets(4, 0.25, 4, 4))
+                        .stroke(UNRULED).build())
                 .row("Platform subscription")
                 .row("Support")));
 
@@ -184,13 +189,45 @@ class DocxEditorSlackTest {
     }
 
     @Test
+    void aSideGivesOnlyWhatItHasPastTheInnerHalfOfItsRule() throws Exception {
+        // A point on the right beside a 1pt rule, drawn eight eighths wide: half a point is the rule's,
+        // half the slack's. Taken further, a line set wider would run onto the rule.
+        Exported exported = export(page -> page.addTable(t -> t
+                .name("Ruled")
+                .autoColumns(1)
+                .defaultCellStyle(DocumentTableStyle.builder().padding(new DocumentInsets(4, 1, 4, 4))
+                        .stroke(DocumentStroke.of(DocumentColor.BLACK, 1)).build())
+                .row("Platform subscription")));
+
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.layoutTwips(0) + SLACK_TWIPS / 2);
+        assertThat(exported.sideMargins(0, 0)).containsExactly(80L, 10L);
+        assertThat(exported.notes(RIGHT_END)).singleElement()
+                .satisfies(note -> assertThat(note.detail()).contains("written 0.5pt wider"));
+    }
+
+    @Test
+    void aCellSpanningRowsGivesThePointInEveryRowItCovers() throws Exception {
+        Exported exported = export(page -> page.addTable(t -> t
+                .name("Merged")
+                .autoColumns(2)
+                .rowCells(DocumentTableCell.text("Tall").rowSpan(2), DocumentTableCell.text("Top"))
+                .rowCells(DocumentTableCell.text("Low"))));
+
+        assertThat(exported.sideMargins(0, 0)).containsExactly(PADDING_TWIPS, PADDING_TWIPS - SLACK_TWIPS);
+        assertThat(exported.sideMargins(1, 0)).as("the merge's covered position, as its cell")
+                .containsExactly(PADDING_TWIPS, PADDING_TWIPS - SLACK_TWIPS);
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.layoutTwips(0));
+    }
+
+    @Test
     void aHeaderPaddedThinnerThanTheBodyHoldsTheColumnToWhatItGives() throws Exception {
         // Half a point on the header's right: the body's cells give no more, their column the other half wider.
         Exported exported = export(page -> page.addTable(t -> t
                 .name("Headed")
                 .autoColumns(1)
                 .headerRow("Description")
-                .headerStyle(DocumentTableStyle.builder().padding(new DocumentInsets(4, 0.5, 4, 4)).build())
+                .headerStyle(DocumentTableStyle.builder().padding(new DocumentInsets(4, 0.5, 4, 4))
+                        .stroke(UNRULED).build())
                 .row("Platform subscription")));
 
         assertThat(exported.gridTwips(0)).isEqualTo(exported.layoutTwips(0) + SLACK_TWIPS / 2);
@@ -254,7 +291,7 @@ class DocxEditorSlackTest {
                 .autoColumns(2)
                 .row("Platform", "1 440.00")
                 .rowCells(DocumentTableCell.text("Total").colSpan(2).withStyle(DocumentTableStyle.builder()
-                        .padding(new DocumentInsets(4, 1, 4, 4)).build()))));
+                        .padding(new DocumentInsets(4, 1, 4, 4)).stroke(UNRULED).build()))));
 
         for (int column = 0; column < 2; column++) {
             assertThat(exported.gridTwips(column)).as("column %d", column)

@@ -19144,15 +19144,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * How much of its columns' slack a cell's padding can give, in points
      * ({@link #slackTheMarginsHold}): a text cell's on the side its text does not lean on, a
-     * centred one's twice the thinner side; none of a composed cell's.
+     * centred one's twice the thinner side; none of a composed cell's. A side gives only what it
+     * has past the inner half of the cell's rule, as wide as Word draws it ({@link #ruleTwips}):
+     * the slack taken further, a line an editor's face sets wider would run onto the rule.
      */
     private double marginGivingTheSlack(TableNode node, TableGrid.Placement placement) {
         if (placement.cell() == null || placement.cell().content() != null) {
             return 0;
         }
         DocumentInsets padding = resolveCellPadding(node, placement);
-        double left = Math.max(0, padding.left());
-        double right = Math.max(0, padding.right());
+        double halfRule = ruleTwips(resolveCellStroke(node, placement)) / 2.0 / POINT_TO_TWIP;
+        double left = Math.max(0, padding.left() - halfRule);
+        double right = Math.max(0, padding.right() - halfRule);
         TextAlign leans = leanOf(node, placement);
         return leans == TextAlign.RIGHT ? left : leans == TextAlign.CENTER ? 2 * Math.min(left, right) : right;
     }

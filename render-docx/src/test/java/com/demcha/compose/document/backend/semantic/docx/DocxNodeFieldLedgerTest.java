@@ -459,7 +459,7 @@ class DocxNodeFieldLedgerTest {
                 "columns:REPORTED:where one is auto and the layout does not show their widths — composed in a "
                 + "table cell, or with a column edge no row shows — the editor's, a fixed one beside it with "
                 + "them; with no layout, in the section's note; an auto one's room for an editor's face, where "
-                + "its text cells' margins cannot hold it, written past the page's width, named (right end); any "
+                + "its cells' margins do not hold it, written past the page's width, named (right end); any "
                 + "other is written",
                 "rows:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,
                 "defaultCellStyle:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,

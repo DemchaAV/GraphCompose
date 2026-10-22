@@ -75,9 +75,9 @@ class DocxValueFieldLedgerTest {
     // An auto column's text is given a point past the page's width, out of its cells' margins.
     private static final String AUTO_COLUMN_ROOM = "the room an editor's face is given in it, held in its text "
                                                    + "cells' margins; what they do not hold — beside a composed "
-                                                   + "cell, or where a cell's padding on the side it gives from "
-                                                   + "is thinner — written past the page's width, named (right "
-                                                   + "end)";
+                                                   + "cell, or where a cell's padding on the side it gives from, "
+                                                   + "less the inner half of its rule, is thinner — written past "
+                                                   + "the page's width, named (right end)";
 
     private static final Map<Class<?>, Map<String, DocxNodeFieldLedgerTest.Entry>> VALUES = new LinkedHashMap<>();
 

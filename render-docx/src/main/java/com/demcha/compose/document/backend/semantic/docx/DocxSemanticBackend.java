@@ -15874,7 +15874,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // cell is one cell carrying a span, not several, so a row's physical count is not
         // the column count.
         XWPFTable table = newTable(document, rowCount, 1);
-        applyTableWidth(table, node, columnCount);
+        double[] slackHeld = applyTableWidth(table, node, columnCount, cover);
         boolean translucentFills = false;
         boolean translucentRules = false;
         java.util.Set<Double> ruleWidths = new java.util.TreeSet<>();
@@ -15918,8 +15918,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 int next = placement.row() + placement.rowSpan();
                 DocumentStroke underneath = next < rowCount ? resolveCellStroke(node, cover[next][placement.column()]) : null;
                 DocumentInsets cellPadding = resolveCellPadding(node, placement);
-                applyCellPadding(cell, clearOfTheRules(cellPadding, stroke,
-                        placement.row() == 0, next >= rowCount, underneath));
+                applyCellPadding(cell, clearOfTheRules(givingTheSlack(node, placement, cellPadding, slackHeld),
+                        stroke, placement.row() == 0, next >= rowCount, underneath));
                 if (placement.rowSpan() == 1 && placement.cell() != null && placement.cell().content() == null) {
                     ruleRoom.count(rowIdx, placement, cellPadding, roundTheContent(cellPadding, stroke,
                             placement.row() == 0, next >= rowCount, underneath), textHeight(node, placement));
@@ -19018,18 +19018,41 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * numbers the document already carries. A table with an {@code auto} column and no
      * stated width keeps Word's own sizing until resolved layout can supply the measured
      * widths.</p>
+     *
+     * @param cover the table's cells by row and column
+     * @return the editor's slack each column's cells' margins hold, in points
+     *         ({@link #slackTheMarginsHold}), or {@code null} where the layout measured no columns
      */
-    private void applyTableWidth(XWPFTable table, TableNode node, int columnCount) {
+    private double[] applyTableWidth(XWPFTable table, TableNode node, int columnCount,
+                                     TableGrid.Placement[][] cover) {
         double[] measured = layout.tableColumns(node, columnCount);
         if (measured != null && measured.length > 0) {
             // The layout resolved every column, an auto one included, so there is nothing
             // left to decide: write the widths it arrived at and stop Word re-fitting them —
-            // with the editor's margin on the columns sized to their content.
-            double[] columns = withEditorSlack(node, measured);
+            // with the editor's margin on the columns sized to their content, in their cells'
+            // margins where those hold it.
+            double[] slackened = withEditorSlack(node, measured);
+            double[] held = slackTheMarginsHold(node, cover, measured, slackened);
+            double[] columns = new double[measured.length];
+            double wider = 0;
+            for (int index = 0; index < columns.length; index++) {
+                columns[index] = slackened[index] - held[index];
+                wider += columns[index] - measured[index];
+            }
             writeGrid(table, columns);
             setTableWidth(table, sum(columns));
             setFixedLayout(table);
-            return;
+            // Less than a tenth of a point further right is not seen. Named painted or not: the text
+            // of the columns right of a widened one moves with it, and an editor shows the table's
+            // right edge as a gridline.
+            if (wider >= 0.1) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, RIGHT_END, layout.pathOf(node),
+                        "its columns sized to their content written " + pointsOf(wider) + "pt wider than the "
+                        + "page sets them, the room an editor setting their text in its own face may need, which "
+                        + "their cells' margins do not hold: its right end, and what stands right of them, up to "
+                        + "that much further right");
+            }
+            return held;
         }
 
         Double authored = node.width() != null && node.width() > 0 ? node.width() : null;
@@ -19046,7 +19069,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 setTableWidth(table, nestedTableWidth());
             }
             nameTheColumnsLeftToTheEditor(node);
-            return;
+            return null;
         }
 
         double natural = fixedColumns.stream().mapToDouble(Double::doubleValue).sum();
@@ -19062,10 +19085,111 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // first in a different place than the PDF draws it.
         columns[columns.length - 1] += width - natural;
         writeGrid(table, columns);
+        return null;
     }
 
     /**
-     * Widens the columns sized to their content by a point, where there is room for it.
+     * How much of each column's editor slack its cells' margins hold, in points
+     * ({@link #withEditorSlack}): the column is written that much narrower, as wide as the page
+     * sets it where they hold all of it, and its cells' text keeps the room the slack gives it.
+     *
+     * <p>A column widened by its slack moves every rule and fill right of it, and the table's right
+     * end, that much right of the page's: measured in Word, {@code ClassicInvoice}'s line items
+     * stood their column rules 0.98 to 1.05pt right of the page's from the description column on.
+     * Taken off a cell's margin, the slack gives its text the same room, and so the same line
+     * breaks, with the rules where the page draws them. A text cell gives it from the side its text
+     * does not lean on, so its text stays where the page sets it: the right where it is set left,
+     * the left where it is set right, half from each where it is centred. A cell spanning more than
+     * one of the columns given slack shares its margin among them. A composed cell gives none: a
+     * paragraph in it may run past its text into the margin ({@link #measureAtWordsSize}), and with
+     * the margin taken, past the cell's edge, where Word cuts it off. A column holds the least any
+     * of its cells gives; the rest widens it, and {@link #applyTableWidth} names it.</p>
+     *
+     * @param measured  the columns as the layout measured them, in points
+     * @param slackened the same with the editor's slack
+     * @return the slack each column's cells' margins hold, in points
+     */
+    private double[] slackTheMarginsHold(TableNode node, TableGrid.Placement[][] cover,
+                                         double[] measured, double[] slackened) {
+        double[] held = new double[measured.length];
+        for (int index = 0; index < held.length; index++) {
+            held[index] = Math.max(0, slackened[index] - measured[index]);
+        }
+        java.util.Set<TableGrid.Placement> seen =
+                java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        for (TableGrid.Placement[] row : cover) {
+            for (TableGrid.Placement placement : row) {
+                if (placement == null || !seen.add(placement)) {
+                    continue;
+                }
+                int end = Math.min(placement.column() + placement.colSpan(), held.length);
+                int sharing = 0;
+                for (int column = placement.column(); column < end; column++) {
+                    if (slackened[column] > measured[column]) {
+                        sharing++;
+                    }
+                }
+                if (sharing == 0) {
+                    continue;
+                }
+                double share = marginGivingTheSlack(node, placement) / sharing;
+                for (int column = placement.column(); column < end; column++) {
+                    held[column] = Math.min(held[column], share);
+                }
+            }
+        }
+        return held;
+    }
+
+    /**
+     * How much of its columns' slack a cell's padding can give, in points
+     * ({@link #slackTheMarginsHold}): a text cell's on the side its text does not lean on, a
+     * centred one's twice the thinner side; none of a composed cell's.
+     */
+    private double marginGivingTheSlack(TableNode node, TableGrid.Placement placement) {
+        if (placement.cell() == null || placement.cell().content() != null) {
+            return 0;
+        }
+        DocumentInsets padding = resolveCellPadding(node, placement);
+        double left = Math.max(0, padding.left());
+        double right = Math.max(0, padding.right());
+        TextAlign leans = leanOf(node, placement);
+        return leans == TextAlign.RIGHT ? left : leans == TextAlign.CENTER ? 2 * Math.min(left, right) : right;
+    }
+
+    /**
+     * A text cell's padding less the slack its columns' margins hold ({@link #slackTheMarginsHold}),
+     * off the side its text does not lean on; as it is where they hold none.
+     *
+     * @param held the slack each column's cells' margins hold, or {@code null} where none is given
+     */
+    private DocumentInsets givingTheSlack(TableNode node, TableGrid.Placement placement, DocumentInsets padding,
+                                          double[] held) {
+        if (held == null) {
+            return padding;
+        }
+        double given = 0;
+        for (int column = placement.column(); column < Math.min(placement.column() + placement.colSpan(),
+                held.length); column++) {
+            given += held[column];
+        }
+        if (!(given > 0)) {
+            return padding;
+        }
+        TextAlign leans = leanOf(node, placement);
+        double left = leans == TextAlign.RIGHT ? given : leans == TextAlign.CENTER ? given / 2 : 0;
+        return new DocumentInsets(padding.top(), padding.right() - (given - left), padding.bottom(),
+                padding.left() - left);
+    }
+
+    /** The side the page sets a text cell's lines against: left, right or the middle. */
+    private TextAlign leanOf(TableNode node, TableGrid.Placement placement) {
+        boolean rightToLeft = resolveCellDirection(node, placement, placement.cell().lines());
+        return horizontalOf(resolveCellAnchor(node, placement, rightToLeft));
+    }
+
+    /**
+     * The columns, those sized to their content a point wider, where there is room for it.
      *
      * <p>An auto column is exactly as wide as its widest unwrapped cell: the engine gives it
      * no slack, because on the page it needs none. An editor does. It sets the text in its
@@ -19074,11 +19198,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * measured on the probe corpus through LibreOffice, a billing table's widest item
      * wrapped and its row doubled the moment its cells were written at their true 14pt.</p>
      *
-     * <p>So each auto column gets {@value #EDITOR_COLUMN_SLACK_POINTS}pt more than the page
-     * gave it — below anything a reader compares by eye, and what keeps the page's line
-     * breaks. Only where it costs nothing the document stated: a table with an authored
-     * width keeps that width exactly, a fixed column keeps its size, and the slack never
-     * takes the table past the width it sits in.</p>
+     * <p>So each auto column's text gets {@value #EDITOR_COLUMN_SLACK_POINTS}pt more than the
+     * page gave it — below anything a reader compares by eye, and what keeps the page's line
+     * breaks — out of its cells' margins where they hold it ({@link #slackTheMarginsHold}), the
+     * column as wide as the page sets it. Only where it costs nothing the document stated: a
+     * table with an authored width keeps that width exactly, a fixed column keeps its size, and
+     * the slack never takes the table past the width it sits in.</p>
+     *
+     * @return the columns with the slack, in points
      */
     private double[] withEditorSlack(TableNode node, double[] measured) {
         if (node.width() != null) {

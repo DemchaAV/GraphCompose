@@ -42,6 +42,12 @@ class DocxCellPaddingTest {
      * much smaller and their bottom one that much larger than their padding gives.
      */
     private static final long SEAT = DocxExports.DEFAULT_LINE_RAISE;
+    /**
+     * What a text cell of a column sized to its content gives of its right margin for the room an
+     * editor's face is given ({@code DocxEditorSlackTest}): the column stays as wide as the page sets
+     * it, and its text has that much more room.
+     */
+    private static final long SLACK = Math.round(DocxSemanticBackend.EDITOR_COLUMN_SLACK_POINTS * TWIPS_PER_POINT);
 
     @Test
     void aStatedPaddingReachesAllFourSides() throws Exception {
@@ -53,14 +59,14 @@ class DocxCellPaddingTest {
                 .row("Padded")));
 
         // Above and below, less the engine's default 1pt rule, which Word gives room of its own.
-        assertThat(margins(cell)).containsExactly(160L - SEAT, 140L, 80L + SEAT, 60L);
+        assertThat(margins(cell)).containsExactly(160L - SEAT, 140L - SLACK, 80L + SEAT, 60L);
     }
 
     @Test
     void aRuledCellGivesItsRulesOutOfItsPaddingWhereWordPutsThem() throws Exception {
         // Word gives a rule between two rows half to each, and the rules above and below the
         // table whole to their row: measured, a 1.5pt rule made each row 1.5pt taller and a
-        // one-row table 3pt taller. The sides keep their padding.
+        // one-row table 3pt taller. The sides keep their padding, the right one less its slack.
         XWPFTable table = firstTable(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.auto())
                 .defaultCellStyle(DocumentTableStyle.builder()
@@ -72,9 +78,9 @@ class DocxCellPaddingTest {
                 .row("Second")));
 
         assertThat(margins(table.getRow(0).getCell(0))).as("the rule above the table, half the one between")
-                .containsExactly(110L - SEAT, 140L, 125L + SEAT, 140L);
+                .containsExactly(110L - SEAT, 140L - SLACK, 125L + SEAT, 140L);
         assertThat(margins(table.getRow(1).getCell(0))).as("half the rule between, the rule below the table")
-                .containsExactly(125L - SEAT, 140L, 110L + SEAT, 140L);
+                .containsExactly(125L - SEAT, 140L - SLACK, 110L + SEAT, 140L);
     }
 
     @Test
@@ -92,7 +98,7 @@ class DocxCellPaddingTest {
 
         assertThat(((Number) cell.getCTTc().getTcPr().getTcBorders().getTop().getSz()).intValue())
                 .as("the premise: written in eighths").isEqualTo(6);
-        assertThat(margins(cell)).containsExactly(140L - 15 - SEAT, 140L, 140L - 15 + SEAT, 140L);
+        assertThat(margins(cell)).containsExactly(140L - 15 - SEAT, 140L - SLACK, 140L - 15 + SEAT, 140L);
     }
 
     @Test
@@ -108,7 +114,7 @@ class DocxCellPaddingTest {
 
         assertThat(((Number) cell.getCTTc().getTcPr().getTcBorders().getTop().getSz()).intValue()).isEqualTo(96);
         assertThat(margins(cell)).as("12pt off each side, less the row's seat above, more below")
-                .containsExactly(400L - 240 - SEAT, 400L, 400L - 240 + SEAT, 400L);
+                .containsExactly(400L - 240 - SEAT, 400L - SLACK, 400L - 240 + SEAT, 400L);
     }
 
     @Test
@@ -123,7 +129,7 @@ class DocxCellPaddingTest {
                 .row("Hairline")));
 
         assertThat(((Number) cell.getCTTc().getTcPr().getTcBorders().getTop().getSz()).intValue()).isEqualTo(2);
-        assertThat(margins(cell)).containsExactly(140L - 5 - SEAT, 140L, 140L - 5 + SEAT, 140L);
+        assertThat(margins(cell)).containsExactly(140L - 5 - SEAT, 140L - SLACK, 140L - 5 + SEAT, 140L);
     }
 
     @Test
@@ -141,7 +147,7 @@ class DocxCellPaddingTest {
             long twips = (long) rule[1];
 
             assertThat(margins(cell)).as("a %spt rule", rule[0])
-                    .containsExactly(140L - twips - SEAT, 140L, 140L - twips + SEAT, 140L);
+                    .containsExactly(140L - twips - SEAT, 140L - SLACK, 140L - twips + SEAT, 140L);
         }
     }
 
@@ -159,9 +165,9 @@ class DocxCellPaddingTest {
                 .row("Second")));
 
         assertThat(margins(table.getRow(0).getCell(0))).as("the rule above the table whole, 7 of the one under it")
-                .containsExactly(140L - 15 - SEAT, 140L, 140L - 7 + SEAT, 140L);
+                .containsExactly(140L - 15 - SEAT, 140L - SLACK, 140L - 7 + SEAT, 140L);
         assertThat(margins(table.getRow(1).getCell(0))).as("the other 8 above, the rule below the table whole")
-                .containsExactly(140L - 8 - SEAT, 140L, 140L - 15 + SEAT, 140L);
+                .containsExactly(140L - 8 - SEAT, 140L - SLACK, 140L - 15 + SEAT, 140L);
     }
 
     @Test
@@ -194,9 +200,9 @@ class DocxCellPaddingTest {
                 .row("Body")));
 
         assertThat(margins(table.getRow(0).getCell(0))).as("its own 1.5pt above, half the body's 0.5pt below")
-                .containsExactly(110L - SEAT, 140L, 135L + SEAT, 140L);
+                .containsExactly(110L - SEAT, 140L - SLACK, 135L + SEAT, 140L);
         assertThat(margins(table.getRow(1).getCell(0))).as("half its own 0.5pt above, its own below")
-                .containsExactly(135L - SEAT, 140L, 130L + SEAT, 140L);
+                .containsExactly(135L - SEAT, 140L - SLACK, 130L + SEAT, 140L);
     }
 
     @Test
@@ -209,7 +215,7 @@ class DocxCellPaddingTest {
                 .rowCells(DocumentTableCell.text("Low"))));
 
         assertThat(margins(table.getRow(0).getCell(0))).as("above the table and below it, both whole")
-                .containsExactly(110L, 140L, 110L, 140L);
+                .containsExactly(110L, 140L - SLACK, 110L, 140L);
     }
 
     @Test
@@ -225,9 +231,10 @@ class DocxCellPaddingTest {
                         .padding(DocumentInsets.of(1)).stroke(DocumentStroke.of(DocumentColor.BLACK, 2)).build())
                 .row("Thin")));
 
-        assertThat(margins(unruled)).containsExactly(140L - SEAT, 140L, 140L + SEAT, 140L);
-        assertThat(margins(thin)).as("none left above and below, the sides kept; none to raise the text into")
-                .containsExactly(0L, 20L, 0L, 20L);
+        assertThat(margins(unruled)).containsExactly(140L - SEAT, 140L - SLACK, 140L + SEAT, 140L);
+        assertThat(margins(thin)).as("none left above and below, the sides kept but for the right's slack; none "
+                                     + "to raise the text into")
+                .containsExactly(0L, 20L - SLACK, 0L, 20L);
     }
 
     @Test
@@ -257,7 +264,7 @@ class DocxCellPaddingTest {
 
         long four = Math.round(4 * TWIPS_PER_POINT);
         long three = Math.round(3 * TWIPS_PER_POINT);
-        assertThat(margins(cell)).containsExactly(three - SEAT, four, three + SEAT, four);
+        assertThat(margins(cell)).containsExactly(three - SEAT, four - SLACK, three + SEAT, four);
     }
 
     @Test

@@ -142,7 +142,8 @@ class DocxNodeFieldLedgerTest {
                                        + "and about how far what the margin cannot take in still passes the edge, "
                                        + "named (right border)";
 
-    // A panel's text is given a point of slack past the page's width, out of its right margin.
+    // A panel's text is given a point of slack past the page's width, out of its right margin; a
+    // table's auto column's, out of its cells' margins (DocxValueFieldLedgerTest).
     static final String RIGHT_END = "a panel's right end, written past the page's by the slack an editor's face is "
                                     + "given where its right margin cannot hold it, alone or beside a line Word sets "
                                     + "wider than the page, named (right end)";
@@ -457,7 +458,9 @@ class DocxNodeFieldLedgerTest {
         node(TableNode.class, "name:INERT",
                 "columns:REPORTED:where one is auto and the layout does not show their widths — composed in a "
                 + "table cell, or with a column edge no row shows — the editor's, a fixed one beside it with "
-                + "them; with no layout, in the section's note; any other is written",
+                + "them; with no layout, in the section's note; an auto one's room for an editor's face, where "
+                + "its text cells' margins cannot hold it, written past the page's width, named (right end); any "
+                + "other is written",
                 "rows:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,
                 "defaultCellStyle:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,
                 "rowStyles:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO + "; " + CELL_TRANSLUCENCY,

@@ -72,6 +72,13 @@ class DocxValueFieldLedgerTest {
                                            + "it paints, or is dropped; an inline icon's is drawn flat, in its first "
                                            + "colour; a chart's, with its drawing";
 
+    // An auto column's text is given a point past the page's width, out of its cells' margins.
+    private static final String AUTO_COLUMN_ROOM = "the room an editor's face is given in it, held in its text "
+                                                   + "cells' margins; what they do not hold — beside a composed "
+                                                   + "cell, or where a cell's padding on the side it gives from "
+                                                   + "is thinner — written past the page's width, named (right "
+                                                   + "end)";
+
     private static final Map<Class<?>, Map<String, DocxNodeFieldLedgerTest.Entry>> VALUES = new LinkedHashMap<>();
 
     static {
@@ -658,7 +665,9 @@ class DocxValueFieldLedgerTest {
                 "padding:GAP:" + CELL_PADDING + "; " + PADDING_BELOW_ZERO
                 + "; a text cell's thinner than its rules' share, which Word makes room for, where its "
                 + "row then stands taller than the page's, named with the rules; any other is written, less "
-                + "that share",
+                + "that share, and a text cell's in a column sized to its content less what of the room an "
+                + "editor's face is given there the column's cells all hold, off the side its text does not "
+                + "lean on",
                 "fillColor:REPORTED:its translucency, flattened against the colour under the cell; any other is "
                 + "written",
                 "stroke:REPORTED:its translucency, flattened against the cell's fill or the colour under it; a width "
@@ -674,13 +683,13 @@ class DocxValueFieldLedgerTest {
         value(com.demcha.compose.document.table.DocumentTableColumn.class,
                 "type:REPORTED:where a table has an auto one whose width the layout does not show — composed in a "
                 + "table cell, or with a column edge no row shows — named, its columns the editor's; with no "
-                + "layout, in the section's note; any other is written",
+                + "layout, in the section's note; " + AUTO_COLUMN_ROOM + "; any other is written",
                 "fixedWidth:REPORTED:beside an auto column, where the layout does not show the widths, not "
                 + "written, named with the table; with no layout, in the section's note; any other is written");
         value(com.demcha.compose.document.table.DocumentTableColumn.Type.class,
                 "AUTO:REPORTED:where the layout does not show its width — composed in a table cell, or with a "
-                + "column edge no row shows — the editor's, named; with no layout, in the section's note; any "
-                + "other is written, as the layout measured it",
+                + "column edge no row shows — the editor's, named; with no layout, in the section's note; "
+                + AUTO_COLUMN_ROOM + "; any other is written, as the layout measured it",
                 "FIXED:REPORTED:beside an auto column, where the layout does not show the widths, its width not "
                 + "written, named with the table; with no layout, in the section's note; any other is written");
         value(com.demcha.compose.document.table.DocumentTableTextAnchor.class,

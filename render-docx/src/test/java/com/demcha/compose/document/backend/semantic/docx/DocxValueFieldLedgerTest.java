@@ -31,6 +31,7 @@ import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLed
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.DRAWING_OVER_TEXT;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.LAYER_PAST_THE_EDGE;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.LAYER_UNLAID;
+import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.LEFT_EDGE;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.LIST_PICTURE;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.PADDING_BELOW_ZERO;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.PANEL_WIDER_THAN_ITS_CELL;
@@ -266,7 +267,7 @@ class DocxValueFieldLedgerTest {
                 + "a chart's or a spacer's no band or column measures from; a page field's beside other parts; a "
                 + "picture's padding drawn beside its text or over its badge; a chip's; a shape container's at its "
                 + "table cell's middle or foot; any other is written",
-                "left:GAP:" + PADDING_BELOW_ZERO
+                "left:GAP:" + PADDING_BELOW_ZERO + "; " + LEFT_EDGE
                 + "; a picture's, a barcode's and a chart's, and a page reference's on the side its "
                 + "alignment sets it from; a page field's at its sides; a picture's padding drawn beside its text or "
                 + "over its badge; a chip's its shading does not hold; any other is written",
@@ -314,19 +315,19 @@ class DocxValueFieldLedgerTest {
                 + "is held to half the shorter side, at the largest of them; a chart's, with its drawing; any other "
                 + "is written");
         value(com.demcha.compose.document.style.DocumentBorders.class,
-                "bottom:REPORTED:" + RIGHT_END
+                "bottom:REPORTED:" + RIGHT_END + "; " + LEFT_EDGE
                 + "; as a panel's: its translucency, flattened against the panel's fill or the colour "
                 + "under it; a width outside Word's quarter of a point to 12pt; its reach past the panel's box the "
                 + "space below it and its padding do not take, on the block below; a row's where its paint is not "
                 + "written; any other is written",
-                "left:REPORTED:as a panel's: its translucency, flattened against the panel's fill or the colour "
+                "left:REPORTED:" + LEFT_EDGE + "; as a panel's: its translucency, flattened against the panel's fill or the colour "
                 + "under it, and a width outside Word's quarter of a point to 12pt; a row's where its paint is not "
                 + "written; any other is written",
                 "right:REPORTED:" + RIGHT_BORDER + "; " + RIGHT_END
                 + "; as a panel's: its translucency, flattened against the panel's fill or the colour "
                 + "under it, and a width outside Word's quarter of a point to 12pt; a row's where its paint is not "
                 + "written; any other is written",
-                "top:REPORTED:" + RIGHT_END
+                "top:REPORTED:" + RIGHT_END + "; " + LEFT_EDGE
                 + "; as a panel's: its translucency, flattened against the panel's fill or the colour "
                 + "under it; a width outside Word's quarter of a point to 12pt; its reach past the panel's box the "
                 + "space above it, its padding and the room over its first line do not take, on the panel; a row's "

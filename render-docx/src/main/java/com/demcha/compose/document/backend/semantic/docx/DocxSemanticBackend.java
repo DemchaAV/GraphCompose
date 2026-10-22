@@ -6970,6 +6970,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** What the report calls a panel's right end, where its table is written past the page's. */
     private static final String RIGHT_END = "right end";
 
+    /** What the report calls a panel's left edge, where the page sets it left of its cell's text. */
+    private static final String LEFT_EDGE = "left edge";
+
+    /**
+     * The report's note on a panel in a table cell that the page sets left of the cell's text —
+     * its left border centred on the text's edge, or a margin below zero.
+     *
+     * <p>Its table is written that far left of the cell's text. LibreOffice starts a nested table
+     * at its cell's text, and Word may. Measured on 3pt accents: LibreOffice set them 1.5pt right
+     * of the page's, a box's in a ruled table cell 1pt; Word 1.55 to 1.73pt right in a row's cell
+     * and in a table cell, filled or not, and 0.06 to 0.17pt in a filled panel's cell or a row
+     * inside one. A margin below zero moves the whole table, its text with it.</p>
+     *
+     * @param hung how far left of the cell's text the page sets it, in points
+     */
+    private static String leftEdgeHungOut(double hung) {
+        return "its left edge, which the page sets " + pointsOf(hung) + "pt left of its table cell's text, comes "
+               + "out up to about that much right of the page's: LibreOffice starts a nested table at its cell's "
+               + "text, and Word may";
+    }
+
     /**
      * Whether a panel paints up to its right end: a fill, or a border along its top, its foot or
      * its right side. A left border alone stands where the page draws it, however wide the table.
@@ -6983,8 +7004,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * What a panel in a cell whose left border hangs left of the cell's text gives up of its
      * table's width, in points.
      *
-     * <p>Word starts such a panel half that border in from the cell's text, and a table that then
-     * runs past the cell widens the cell, fixed layout or not: CompactMono's rail, a 3pt accent at
+     * <p>Word, in a row's or a table's cell, starts such a panel half that border in from the
+     * cell's text (inside a filled panel it sets it where it is written: see
+     * {@link #leftEdgeHungOut}), and a table that then runs past the cell widens the cell, fixed
+     * layout or not: CompactMono's rail, a 3pt accent at
      * its column's edge, pushed the main column 2.3pt right in Word. It gives up what runs past,
      * no more than its left side had given its text — the half border the table is wider by, and
      * what of the other half its margin could give back — so its text keeps the page's width and
@@ -7221,13 +7244,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         double width = sized.width();
         DocumentInsets margins = insideTheBorders(padding, borders);
 
-        double edge = insetLeft + margin.left();
+        // A cell of a row the layout placed already starts past the child's left margin.
+        double edge = insetLeft + (node == leftMarginInCell ? margin.left() - node.margin().left() : margin.left());
         // In the body the indent places the text, the padding in, and the margin is the whole
         // padding (see writePanel).
         boolean inTheBody = currentCell == null;
         double indent = inTheBody ? edge + padding.left() : edge - halfLeft;
-        // In a cell, Word starts a nested table no further left than the cell's text, draws its
-        // right border outside the table's right edge — measured in its PDF, a table ending at
+        // In a row's or a table's cell, Word starts a nested table no further left than the cell's
+        // text (leftEdgeHungOut), draws its right border outside the table's right edge —
+        // measured in its PDF, a table ending at
         // 566.0pt had its right border from 566.2 to 566.9 — and on screen cuts off whatever
         // passes the cell's edge and draws the cell's gridline over it: a panel as wide as its
         // cell lost its right border, EditorialProposal's glance card. A panel with a right
@@ -7321,6 +7346,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             String rightBorder = rightBorderHeldIn(Math.max(0, shortOfTheEdge - sized.slack()), pastTheEdge);
             if (rightBorder != null) {
                 report.add(DocxExportReport.Severity.APPROXIMATED, RIGHT_BORDER, layout.pathOf(node), rightBorder);
+            }
+            // Less than a tenth of a point is not seen (RIGHT_END).
+            if (currentCell != null && -indent >= 0.1) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, LEFT_EDGE, layout.pathOf(node),
+                        leftEdgeHungOut(-indent));
             }
         }
         applyCellPadding(cell, new DocumentInsets(margins.top(), Math.max(0, marginHeld - slackTaken),
@@ -7471,7 +7501,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     : tableProperties.addNewTblInd();
             tableIndent.setType(STTblWidth.DXA);
             // Signed: a nested panel with no margin starts half its border left of the cell, and
-            // Word starts it at the cell's text.
+            // LibreOffice, and Word in most cells, start it at the cell's text (leftEdgeHungOut).
             tableIndent.setW(BigInteger.valueOf(Math.round(indent * POINT_TO_TWIP)));
         }
         if (last) {

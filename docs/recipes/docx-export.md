@@ -543,8 +543,18 @@ table: its children are written where it stood, indented by its margin and paddi
 How it lands:
 
 - **Width.** The table is as wide as the layout placed the container, which is as wide as
-  its content when the content is short, plus a point of slack so an editor setting the
-  text in its own face keeps the page's line breaks.
+  its content when the content is short. Its text is given a point of slack past that, so an
+  editor setting the text in its own face keeps the page's line breaks, and the slack comes out
+  of the panel's right margin, so its fill and borders end where the page ends them. Widened by
+  it instead, `CompactMono`'s and `EngineeringResume`'s cards stood their right border 1.6pt
+  right of the page's in Word, and 0.6pt with the slack in the margin. Where the margin cannot
+  hold it, a heading underlined by its bottom border with no padding, or where a line Word sets
+  wider than the page, at its size to the half point, runs further into the margin than the rest
+  of it holds, the table keeps that much of the slack, and the report names it (`right end`):
+  Word cuts off what passes a panel's edge, the stop ending a line of a role card set at 7.5pt
+  where the page sets 7.25. A panel its cell already holds in, its right border held clear of
+  the cell's edge or its left border hanging out of the cell, keeps nothing of the slack in its
+  table, and gives no more of its margin than holding it in takes.
 - **Borders.** The page centres a border on the panel's edge; in a cell, Word keeps a cell's
   border inside the cell. Half of each border comes off that side's margin and the table
   widens by the other half, so the text and the border land where the page draws them. A
@@ -598,12 +608,15 @@ How it lands:
   outside a table cell, holding its columns as a nested table without its padding. A table keeps its own cell fills, and a cell
   no style fills is written white, as the page draws it on the card. Word draws a table's
   right border outside its right edge and, on screen, cuts off what passes its cell's edge
-  and draws the cell's gridline there; a bordered panel reaching its cell's text edge ends its
+  and draws the cell's gridline there; a bordered panel reaching its cell's edge ends its
   whole right border plus half a point short of that edge, the points taken from its right
-  margin and no more than it holds, so its text keeps its place and width. The report names
-  how much narrower than the page draws the panel its table is written (`right border`), the
-  editor's slack a panel sized round its content is given not counted; where its border then
-  stands is Word's (measured: 0.8pt left of the page's for a table 1.7pt narrower). What the
+  margin and no more than it holds, so its text keeps its place and width. The cell's own
+  right margin, a row's gap beside the cell, holds what of the border passes the cell's text,
+  where the cell draws no right rule of its own that may cover it:
+  held in at the text, the borders of cards beside a gap stood 0.6 to 0.9pt left of the page's
+  in Word, and stand 0.3 to 0.6pt right of it. The report names how much narrower than the page
+  draws the panel its table is written (`right border`); where its border then stands is
+  Word's (measured: 0.8pt left of the page's for a table 1.7pt narrower). What the
   right margin cannot take in, a shape container's included, since its padding is set round its
   outline, still passes the cell's edge where the cell's own margin does not hold it, and is
   named with it, about how far: reckoned, as Word drew them, with the table starting at the
@@ -1046,7 +1059,8 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   the table draws it and does not report it dropped.
   A filled or outlined rectangle or rounded rectangle holding text there
   is written as a panel is, a table of one cell in its fill and outline, its
-  outline's width within the cell and a point for the editor's face, its row
+  outline's width within the cell and a point for the editor's face, which its
+  margin, round the outline, does not hold, named where it paints (`right end`), its row
   held at least its outline's height less the borders both editors draw
   outside it, with its layers inside,
   its corners squared and reported — a rota's shift chips keep their colour and their

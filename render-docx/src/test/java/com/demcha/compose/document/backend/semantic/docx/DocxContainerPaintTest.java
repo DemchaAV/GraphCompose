@@ -134,7 +134,9 @@ class DocxContainerPaintTest {
 
             // Less what its first line rises into it, as Word sets that line low.
             assertThat(DocxTwips.of(margins.getTop().getW())).isEqualTo(10 * 20L - DocxExports.DEFAULT_LINE_RAISE);
-            assertThat(DocxTwips.of(margins.getRight().getW())).isEqualTo(14 * 20L);
+            assertThat(DocxTwips.of(margins.getRight().getW()))
+                    .as("the padding, less the point of slack an editor's face needs, which it holds")
+                    .isEqualTo(14 * 20L - Math.round(DocxSemanticBackend.EDITOR_COLUMN_SLACK_POINTS * 20));
             assertThat(DocxTwips.of(margins.getBottom().getW())).isEqualTo(12 * 20L);
             assertThat(DocxTwips.of(margins.getLeft().getW())).isEqualTo(16 * 20L);
             // The editor measures w:tblInd to the cell's text, so the cell's left margin is in it.
@@ -156,11 +158,13 @@ class DocxContainerPaintTest {
                     .addParagraph(p -> p.text(text)));
             double placed = placedCardWidth(content);
             try (XWPFDocument document = export(content)) {
-                long width = DocxTwips.of(document.getTables().get(0).getCTTbl().getTblPr().getTblW().getW());
+                XWPFTable table = document.getTables().get(0);
+                long width = DocxTwips.of(table.getCTTbl().getTblPr().getTblW().getW());
 
-                assertThat(width)
-                        .as(text + ": as placed, and the point of slack an editor's face needs")
-                        .isEqualTo(Math.round((placed + DocxSemanticBackend.EDITOR_COLUMN_SLACK_POINTS) * 20));
+                assertThat(width).as(text + ": as placed, its fill ending where the page ends it")
+                        .isEqualTo(Math.round(placed * 20));
+                assertThat(textWidth(table)).as(text + ": its text no narrower than the page's")
+                        .isGreaterThanOrEqualTo(placed - 20);
             }
         }
     }
@@ -186,8 +190,8 @@ class DocxContainerPaintTest {
             assertThat(DocxTwips.of(margins.getTop().getW())).as("no border on top, less what its first line rises into")
                     .isEqualTo(280L - DocxExports.DEFAULT_LINE_RAISE);
             assertThat(DocxTwips.of(table.getCTTbl().getTblPr().getTblW().getW()))
-                    .as("no wider on its left, where its border is centred on its edge")
-                    .isEqualTo(Math.round((placed + DocxSemanticBackend.EDITOR_COLUMN_SLACK_POINTS) * 20));
+                    .as("no wider on its left, where its border is centred on its edge, and none past its right")
+                    .isEqualTo(Math.round(placed * 20));
             assertThat(DocxTwips.of(table.getCTTbl().getTblPr().getTblInd().getW()))
                     .as("a body table is placed by its text: the padding")
                     .isEqualTo(280L);

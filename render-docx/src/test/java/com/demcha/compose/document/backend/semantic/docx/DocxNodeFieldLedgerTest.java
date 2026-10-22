@@ -131,10 +131,11 @@ class DocxNodeFieldLedgerTest {
 
     // Word cuts off what passes a table cell's edge, and draws a nested table's right border
     // outside the table: a panel reaching its cell's edge is narrowed out of its right margin.
-    static final String RIGHT_BORDER = "a panel's right border reaching its table cell's edge, drawn in from it by "
-                                       + "what its right margin gives, up to its width and half a point, so the "
-                                       + "cell's edge does not cut it off; how far in, and what of it still passes "
-                                       + "the cell's edge, named (right border)";
+    static final String RIGHT_BORDER = "a panel's right border reaching its table cell's edge, its table written "
+                                       + "narrower out of its right margin so the border ends half a point short "
+                                       + "of the edge, which would cut it off; how much narrower than the page, "
+                                       + "and about how far what the margin cannot take in still passes the edge, "
+                                       + "named (right border)";
 
     // A row in the flow is written as a panel holding its columns, its paint the panel's.
     private static final String ROW_PAINT = "composed in a table cell, drawn as a shape where it frames no text "

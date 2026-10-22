@@ -8,18 +8,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
-- **A DOCX export names a panel's right border it draws in from its table cell's edge, or that
-  still passes it.** Word draws a nested table's right border outside the table and, on screen,
-  cuts off what passes its cell's edge. A bordered panel reaching that edge is written narrower,
-  out of its right margin, its border up to its width and half a point in. Nothing in the report
-  said so, nor where the margin was too narrow to take the border in.
-  - The panel's note (`right border`) names how much nearer its text the border is written, and
-    what of it still passes the cell's edge. A painted row is named the same way, and so is a
-    shape container written as a panel in a table cell, whose padding is set round its outline
-    and gives nothing.
+- **A DOCX export names a panel's right border its table cell's edge would cut off.** Word draws
+  a nested table's right border outside the table and, on screen, cuts off what passes its cell's
+  edge. A bordered panel reaching that edge has its table written narrower, out of its right
+  margin, so the border ends half a point short of the edge. Where the margin is too narrow, as
+  a shape container's always is, the border still passes it. The report said neither.
+  - The panel's note (`right border`) names how much narrower than the page draws the panel its
+    table is written, the editor's slack a panel sized round its content is given not counted,
+    and about how far its border still passes the cell's edge. A painted row is named the same
+    way, and so is a shape container written as a panel in a table cell.
   - Measured in Word on Windows: Obsidian's cards' right borders stood 0.8 and 0.9pt left of the
-    page's for 1.7pt taken, and Editorial Proposal's glance card 0.7pt for 1.9pt, since Word draws
-    the border partly outside the table's edge.
+    page's for tables written 1.7pt narrower, and Editorial Proposal's glance card 0.7pt for
+    1.9pt.
   - 28 panels of the corpus's 62 documents gain the note: 19 drawn in, and 9 passing the edge,
     rota-cobalt's outlined chips and two payment panels. None of the DOCX changes.
 - **A DOCX export names what a picture among a paragraph's words loses of its place, its width

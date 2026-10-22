@@ -24,75 +24,97 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /**
- * A panel whose right border reaches its table cell's edge: Word cuts off what passes that edge,
- * so the export narrows the panel's table out of its right margin, and the report names how much
- * nearer its text the border is written and what of it still reaches past the room the cell
- * leaves.
+ * A panel whose right border reaches its table cell's edge. Word draws a nested table's right
+ * border outside the table and cuts off what passes the cell's edge, so the export writes the
+ * panel's table narrower out of its right margin; the report names how much narrower than the
+ * page draws it, and about how far what the margin cannot take in still passes the cell's edge.
+ *
+ * <p>On a 523pt column, a card's 1.5pt border: the page draws the card as wide as the column, its
+ * border centred on its edges. Word starts the table at the cell's text and draws the border
+ * whole outside its right edge, half a point clear of the cell's gridline.
  */
 class DocxPanelRightBorderTest {
 
     private static final String SUBJECT = "right border";
     private static final DocumentColor SURFACE = DocumentColor.rgb(238, 243, 249);
-    // Word draws the whole border past the table's edge; the cell leaves room for it and half a
-    // point clear of its gridline.
     private static final double BORDER = 1.5;
+    // The page's column, which a panel as wide as its cell fills with no slack past it.
+    private static final double COLUMN = 523;
     private static final DocumentStroke ACCENT = DocumentStroke.of(DocumentColor.rgb(26, 86, 148), BORDER);
     private static final Pattern HELD = Pattern.compile(
-            "^its right border written up to (\\d+(?:\\.\\d+)?)pt nearer its text than the page draws it, to end "
-            + "short of its table cell's edge, past which Word cuts it off on screen$");
+            "^its table written (\\d+(?:\\.\\d+)?)pt narrower than the page draws it, out of its right margin, so "
+            + "its right border, which Word draws outside the table, ends short of its table cell's edge, past "
+            + "which Word cuts it off on screen$");
     private static final Pattern NOT_HELD = Pattern.compile(
-            "^its right border (?:written up to (\\d+(?:\\.\\d+)?)pt nearer its text than the page draws it, all "
-            + "its right margin gives, and still )?reaching up to (\\d+(?:\\.\\d+)?)pt past its table cell's "
-            + "edge, where Word cuts it off on screen$");
+            "^(?:its table written (\\d+(?:\\.\\d+)?)pt narrower than the page draws it, all its right margin "
+            + "gives, and its right border, which Word draws outside the table, still|its right border, which "
+            + "Word draws outside its table,) reaching about (\\d+(?:\\.\\d+)?)pt past its table cell's edge, "
+            + "where Word cuts it off on screen$");
 
     @Test
-    void aCardAsWideAsItsCellNamesHowMuchNearerItsTextItsRightBorderIsWritten() throws Exception {
+    void aCardAsWideAsItsCellNamesHowMuchNarrowerItsTableIsWritten() throws Exception {
         Consumer<PageFlowBuilder> content = card(10);
         List<DocxExportReport.Note> notes = notes(content);
 
         assertThat(notes).hasSize(1);
         assertThat(notes.get(0).severity()).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
         assertThat(notes.get(0).path()).as("on the card").contains("Inner");
-        Matcher held = HELD.matcher(notes.get(0).detail());
-        assertThat(held.matches()).as("the note: %s", notes.get(0).detail()).isTrue();
-        // The figure is what the table gives up: the card as wide as its cell, half its border
-        // past each side, less the table as written.
+        double narrower = held(notes.get(0));
+        // The table starts half a border right of the card's left edge and its border ends a
+        // whole border and half a point past its right one: 0.75 + 0.75 + 1.5 + 0.5 = 3.5.
+        assertThat(narrower).as("by half of each side's border, the whole border and the half point")
+                .isCloseTo(3.5, within(0.01));
         Nested nested = nested(content);
-        assertThat(Double.parseDouble(held.group(1))).as("the points the table gives up")
-                .isCloseTo(nested.room() + 1.5 - nested.written(), within(0.06))
-                .as("its whole border and the half point clear of the gridline, each side's half border")
-                .isCloseTo(1.5 + 1.5 + 0.5, within(0.06));
+        assertThat(nested.room()).as("a cell no wider than the card").isCloseTo(COLUMN, within(0.06));
+        assertThat(narrower).as("as the file writes it: the card and its half borders, less its table")
+                .isCloseTo(COLUMN + BORDER - nested.written(), within(0.06));
     }
 
     @Test
-    void aCardWhoseRightMarginCannotTakeItsBorderInNamesWhatStillReachesPast() throws Exception {
-        // A 1pt padding holds a quarter of a point past the half border it is drawn over.
-        Consumer<PageFlowBuilder> content = card(1);
+    void aCardTheEditorsSlackWidenedNamesOnlyWhatItsTableIsNarrowerThanThePage() throws Exception {
+        // 0.6pt narrower than its cell, the card is given that much slack, as a panel sized round
+        // its content is; its table gives that back first, which is not narrower than the page.
+        double width = COLUMN - 0.6;
+        Consumer<PageFlowBuilder> content = page -> page.addSection("Outer", outer -> outer
+                .fixedWidth(COLUMN)
+                .fillColor(SURFACE)
+                .addSection("Inner", inner -> inner
+                        .fixedWidth(width)
+                        .stroke(ACCENT)
+                        .padding(DocumentInsets.of(10))
+                        .addParagraph(p -> p.text("Inner"))));
         List<DocxExportReport.Note> notes = notes(content);
 
         assertThat(notes).hasSize(1);
-        Matcher past = NOT_HELD.matcher(notes.get(0).detail());
-        assertThat(past.matches()).as("the note: %s", notes.get(0).detail()).isTrue();
-        assertThat(Double.parseDouble(past.group(1))).as("all its right margin gives").isCloseTo(0.25, within(0.01));
-        Nested nested = nested(content);
-        assertThat(Double.parseDouble(past.group(2))).as("what the table still runs past the room it is left")
-                .isCloseTo(nested.past(), within(0.06))
-                .isGreaterThan(0.5);
+        double narrower = held(notes.get(0));
+        assertThat(narrower).isCloseTo(3.5 - 0.6, within(0.01));
+        assertThat(narrower).as("as the file writes it: the card and its half borders, less its table")
+                .isCloseTo(width + BORDER - nested(content).written(), within(0.06));
     }
 
     @Test
-    void aCardWithNoRightPaddingNamesItsWholeBorderPastTheRoom() throws Exception {
-        Consumer<PageFlowBuilder> content = card(0);
-        List<DocxExportReport.Note> notes = notes(content);
+    void aCardWhoseRightMarginCannotTakeItsBorderInNamesWhatStillPassesTheEdge() throws Exception {
+        // A 1pt padding gives a quarter of a point past the half border drawn over it. Word starts
+        // the table at the cell's text and its left side gives up what runs past the cell, the
+        // half border and what its margin gives of the other half: 1.5pt. The table ends a quarter
+        // of a point short of the cell's text, and its border 1.25pt past it.
+        List<DocxExportReport.Note> notes = notes(card(1));
 
         assertThat(notes).hasSize(1);
-        Matcher past = NOT_HELD.matcher(notes.get(0).detail());
-        assertThat(past.matches()).as("the note: %s", notes.get(0).detail()).isTrue();
-        assertThat(past.group(1)).as("nothing written nearer its text").isNull();
-        Nested nested = nested(content);
-        assertThat(Double.parseDouble(past.group(2)))
-                .isCloseTo(nested.past(), within(0.06))
-                .isGreaterThan(0.5);
+        double[] past = notHeld(notes.get(0));
+        assertThat(past[0]).as("all its right margin gives").isCloseTo(0.25, within(0.01));
+        assertThat(past[1]).as("about how far its border passes the cell's edge").isCloseTo(1.25, within(0.01));
+    }
+
+    @Test
+    void aCardWithNoRightPaddingNamesItsBorderPastTheEdge() throws Exception {
+        // Its table ends half a border past the cell's text, its border 2.25pt past it.
+        List<DocxExportReport.Note> notes = notes(card(0));
+
+        assertThat(notes).hasSize(1);
+        double[] past = notHeld(notes.get(0));
+        assertThat(past[0]).as("nothing narrower").isNaN();
+        assertThat(past[1]).isCloseTo(2.25, within(0.01));
     }
 
     @Test
@@ -100,29 +122,38 @@ class DocxPanelRightBorderTest {
         // A box composed in a table cell is written as a panel. Its padding is set round its
         // outline, as a margin: nothing of its right margin is there to take the border in, and
         // a cell with no padding of its own holds nothing past its text.
-        Consumer<PageFlowBuilder> content = shapeInACell(0);
-        List<DocxExportReport.Note> notes = notes(content);
+        List<DocxExportReport.Note> notes = notes(shapeInACell(200, 0));
 
         assertThat(notes).hasSize(1);
-        Matcher past = NOT_HELD.matcher(notes.get(0).detail());
-        assertThat(past.matches()).as("the note: %s", notes.get(0).detail()).isTrue();
-        Nested nested = nested(content);
-        assertThat(Double.parseDouble(past.group(2)))
-                .isCloseTo(nested.past(), within(0.06))
-                .isGreaterThan(0.5);
+        double[] past = notHeld(notes.get(0));
+        assertThat(past[0]).isNaN();
+        assertThat(past[1]).isCloseTo(2.25, within(0.01));
+    }
+
+    @Test
+    void aShapeContainerInACellTooNarrowToTakeAnyOfItsBorderInIsNamed() throws Exception {
+        // A 2pt column leaves no room for a 1.5pt border and the half point: nothing is taken in,
+        // and the border passes the edge all the same.
+        List<DocxExportReport.Note> notes = notes(shapeInACell(2, 0));
+
+        assertThat(notes).hasSize(1);
+        double[] past = notHeld(notes.get(0));
+        assertThat(past[0]).isNaN();
+        assertThat(past[1]).isCloseTo(2.25, within(0.01));
     }
 
     @Test
     void aShapeContainerWhoseBorderReachesIntoItsCellsPaddingIsNotNamed() throws Exception {
-        // The 2.5pt padding past the cell's text holds what the box's border reaches past it,
-        // 2.25pt, the border ending a quarter of a point inside the cell's edge, within the half
-        // point left clear of the gridline: it stands where the page draws it, inside the cell.
-        assertThat(notes(shapeInACell(2.5))).isEmpty();
+        // The 2.5pt padding past the cell's text holds the 2.25pt the box's border reaches past
+        // it: the border ends a quarter of a point inside the cell's edge, within the half point
+        // left clear of the gridline, and stands where the page draws it.
+        assertThat(notes(shapeInACell(200, 2.5))).isEmpty();
     }
 
     @Test
     void aPaintedRowAsWideAsItsCellIsNamedTheSameWay() throws Exception {
         List<DocxExportReport.Note> notes = notes(page -> page.addSection("Outer", outer -> outer
+                .fixedWidth(COLUMN)
                 .fillColor(SURFACE)
                 .addRow("Band", row -> row
                         .stroke(ACCENT)
@@ -132,19 +163,19 @@ class DocxPanelRightBorderTest {
 
         assertThat(notes).hasSize(1);
         assertThat(notes.get(0).path()).contains("Band");
-        Matcher held = HELD.matcher(notes.get(0).detail());
-        assertThat(held.matches()).as("the note: %s", notes.get(0).detail()).isTrue();
-        assertThat(Double.parseDouble(held.group(1))).isCloseTo(1.5 + 1.5 + 0.5, within(0.06));
+        assertThat(held(notes.get(0))).isCloseTo(3.5, within(0.01));
     }
 
     @Test
     void aCardWithRoomPastItsRightBorderIsNotNamed() throws Exception {
-        // Its right margin leaves the border and the half point clear of the gridline inside the cell.
+        // 6pt narrower than its cell, it leaves the border and the half point clear of the gridline
+        // inside the cell, the editor's slack given too.
         assertThat(notes(page -> page.addSection("Outer", outer -> outer
+                .fixedWidth(COLUMN)
                 .fillColor(SURFACE)
                 .addSection("Inner", inner -> inner
+                        .fixedWidth(COLUMN - 6)
                         .stroke(ACCENT)
-                        .margin(new DocumentInsets(0, 6, 0, 0))
                         .padding(DocumentInsets.of(10))
                         .addParagraph(p -> p.text("Inner")))))).isEmpty();
     }
@@ -152,6 +183,7 @@ class DocxPanelRightBorderTest {
     @Test
     void aCardWithNoRightBorderIsNotNamed() throws Exception {
         assertThat(notes(page -> page.addSection("Outer", outer -> outer
+                .fixedWidth(COLUMN)
                 .fillColor(SURFACE)
                 .addSection("Inner", inner -> inner
                         .borders(DocumentBorders.left(ACCENT))
@@ -171,19 +203,21 @@ class DocxPanelRightBorderTest {
     /** A stroked card as wide as the filled panel holding it, padded the same on every side. */
     private static Consumer<PageFlowBuilder> card(double padding) {
         return page -> page.addSection("Outer", outer -> outer
+                .fixedWidth(COLUMN)
                 .fillColor(SURFACE)
                 .addSection("Inner", inner -> inner
+                        .fixedWidth(COLUMN)
                         .stroke(ACCENT)
                         .padding(DocumentInsets.of(padding))
                         .addParagraph(p -> p.text("Inner"))));
     }
 
     /** A stroked box as wide as its table cell's text, the cell padded the same on every side. */
-    private static Consumer<PageFlowBuilder> shapeInACell(double padding) {
+    private static Consumer<PageFlowBuilder> shapeInACell(double column, double padding) {
         return page -> page.addTable(t -> t
-                .columns(DocumentTableColumn.fixed(200))
+                .columns(DocumentTableColumn.fixed(column))
                 .rowCells(DocumentTableCell.node(new ShapeContainerBuilder()
-                                .name("Shape").rectangle(200 - 2 * padding, 30)
+                                .name("Shape").rectangle(column - 2 * padding, 30)
                                 .stroke(ACCENT)
                                 .position(new ParagraphBuilder().name("Label").text("Label").build(), 10, 0,
                                         LayerAlign.CENTER_LEFT)
@@ -198,30 +232,34 @@ class DocxPanelRightBorderTest {
         return report.bySubject().getOrDefault(SUBJECT, List.of());
     }
 
-    /**
-     * The holding cell's text width, its right margin and the nested table's written width, in
-     * points.
-     */
-    private record Nested(double room, double right, double written) {
+    /** How much narrower a note of a border held inside its cell names its table. */
+    private static double held(DocxExportReport.Note note) {
+        Matcher held = HELD.matcher(note.detail());
+        assertThat(held.matches()).as("the note: %s", note.detail()).isTrue();
+        return Double.parseDouble(held.group(1));
+    }
 
-        /** What the table and the whole border Word draws past it run past the cell's edge. */
-        double past() {
-            return written + BORDER - room - right;
-        }
+    /** How much narrower a note of a border past the edge names its table, NaN for none, and how far past. */
+    private static double[] notHeld(DocxExportReport.Note note) {
+        Matcher past = NOT_HELD.matcher(note.detail());
+        assertThat(past.matches()).as("the note: %s", note.detail()).isTrue();
+        return new double[]{past.group(1) == null ? Double.NaN : Double.parseDouble(past.group(1)),
+                Double.parseDouble(past.group(2))};
+    }
+
+    /** The holding cell's text width and the nested table's written width, in points. */
+    private record Nested(double room, double written) {
     }
 
     private static Nested nested(Consumer<PageFlowBuilder> content) throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, content)) {
             XWPFTableCell host = document.getTables().get(0).getRow(0).getCell(0);
             var properties = host.getCTTc().getTcPr();
-            // A panel's cell states its width; a table's cell takes its grid column's.
-            Object cellWidth = properties.isSetTcW() ? properties.getTcW().getW()
-                    : host.getTableRow().getTable().getCTTbl().getTblGrid().getGridColArray(0).getW();
-            double room = (DocxTwips.of(cellWidth)
+            double room = (DocxTwips.of(properties.getTcW().getW())
                            - DocxTwips.of(properties.getTcMar().getLeft().getW())
                            - DocxTwips.of(properties.getTcMar().getRight().getW())) / 20.0;
             double written = DocxTwips.of(host.getTables().get(0).getCTTbl().getTblPr().getTblW().getW()) / 20.0;
-            return new Nested(room, DocxTwips.of(properties.getTcMar().getRight().getW()) / 20.0, written);
+            return new Nested(room, written);
         }
     }
 }

@@ -620,7 +620,14 @@ How it lands:
   right margin cannot take in, a shape container's included, since its padding is set round its
   outline, still passes the cell's edge where the cell's own margin does not hold it, and is
   named with it, about how far: reckoned, as Word drew them, with the table starting at the
-  cell's text and its whole border outside it.
+  cell's text and its whole border outside it. On the left, the page centres a panel's left
+  border on its cell's text edge, half of it outside, or sets the panel further out by a margin
+  below zero. LibreOffice starts a nested table at its cell's text, and Word does in most cells:
+  the panel stands up to that much right of the page's, its left border and fill, and with a
+  margin below zero its text too, and the report names how far (`left edge`). Measured, 3pt
+  accents stood 1.5pt right of the page's in LibreOffice; in Word, 1.55 to 1.73pt in a row's
+  cell and in a table cell, filled or not, and 0.04 to 0.17pt in a filled panel's cell or a row
+  inside one.
 - **Keeping together.** A `keepTogether()` panel the layout placed on one page is a row
   Word may not split. Anchors on the blocks inside a panel carry as they do anywhere else, and
   so do their keeps, but Word and LibreOffice do not hold them where the panel's row breaks over

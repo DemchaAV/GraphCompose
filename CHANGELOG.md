@@ -8,6 +8,28 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export ends a panel where the page ends it.**
+  - A panel's text is given a point of slack past the page's width, so an editor setting it in its
+    own face keeps the page's line breaks. The slack widened the panel's table, so its fill and
+    right border ended a point right of the page's. It now comes out of the panel's right margin,
+    and its text keeps its width.
+  - Where the margin cannot hold it, the panel keeps that much of the slack, and the report names
+    it (`right end`): a heading underlined by its bottom border with no padding, or a panel whose
+    line Word sets wider than the page, at its size to the half point, runs further into the
+    margin than the rest of it holds. Word cuts off what passes the panel's edge: the stop ending
+    a line of Engineering Resume's role card, set at 7.5pt where the page sets 7.25, would go.
+  - A bordered panel in a table cell is held in from the cell's edge rather than its text: the
+    cell's own right margin, a row's gap beside it, holds what passes the text, less the inner
+    half of the cell's own right rule.
+  - Measured in Word and LibreOffice on Windows:
+    - The right borders of Compact Mono's and Engineering Resume's cards and Nordic Clean's rail
+      stood 1.4 to 1.7pt right of the page's, and now 0.4 to 0.6pt. The fills of invoice and
+      proposal heroes and Violet Grid's quote band ended 0.8 to 1.4pt right, now within 0.5pt.
+    - The cards beside a gap in Panel, Obsidian, Metered and Workspace stood their border 0.6 to
+      0.9pt left of the page's, and now 0.3 to 0.6pt right of it.
+    - No word moves in either editor.
+  - 14 of the corpus's 62 documents change. 12 panels gain the `right end` note, 7 lose the
+    `right border` note.
 - **A DOCX export stands a badge and its initials where the page draws them.**
   - A badge's initials seated by their cap band (`verticalAlign`) were centred in their shape as
     the editors centre a line, the page's seat not written. The shape's insets are now set apart

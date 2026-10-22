@@ -83,6 +83,7 @@ class DocxExportReportTest {
         DocxExportReport report = reportOf(page -> page.addSection("Card", card -> card
                 .fillColor(SURFACE)
                 .cornerRadius(DocumentCornerRadius.of(14))
+                .padding(DocumentInsets.of(10))
                 .addParagraph(p -> p.text("Inside the card"))));
 
         assertThat(report.count(DocxExportReport.Severity.APPROXIMATED)).isEqualTo(1);

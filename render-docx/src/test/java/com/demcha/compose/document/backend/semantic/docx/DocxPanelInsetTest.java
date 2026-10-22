@@ -41,7 +41,9 @@ class DocxPanelInsetTest {
             assertThat(DocxTwips.of(margins.getLeft().getW()))
                     .as("all the padding: both editors centre the 3pt accent on the edge, as the page does")
                     .isEqualTo(14 * 20L);
-            assertThat(DocxTwips.of(margins.getRight().getW())).isEqualTo(14 * 20L);
+            assertThat(DocxTwips.of(margins.getRight().getW()))
+                    .as("the padding, less the point of slack an editor's face needs, which it holds")
+                    .isEqualTo(14 * 20L - Math.round(DocxSemanticBackend.EDITOR_COLUMN_SLACK_POINTS * 20));
         }
     }
 

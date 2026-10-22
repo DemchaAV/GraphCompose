@@ -245,6 +245,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // runs lose is told where it is first written.
     private final java.util.Set<DocumentNode> zoneLinesReported =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // The panels being written whose right end a table of theirs has written past the page's, the
+    // most of it, named once their last table is written: by identity, as a panel broken across
+    // pages is written a table a page, and any of them may be the wider.
+    private final java.util.Map<DocumentNode, RightEnd> rightEnds = new java.util.IdentityHashMap<>();
     // Whether the page zone line being written is written for the first time, so its runs report.
     private boolean reportingAZoneLine;
     // Whether a page zone's line is being written: its parts stand on its baseline as the line
@@ -506,6 +510,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // How much of panelCell's top margin its first line was raised into, in twips: the panel's row
     // is held as much taller (writePanelPiece).
     private long panelRaisedFromItsPadding;
+    // How far past panelCell's text the widest line written straight into it runs as Word sets it,
+    // in points (noteTheLinesPast): the right margin, holding the slack, has to hold that much.
+    private double panelLinesPast;
     // The rows of a table the layout placed, and Word keeps whole, before breakRowsWhereTheLayoutDoes
     // marks them so: their paragraphs are on one page (inARowKeptWhole).
     private final java.util.Set<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRow> rowsPlacedWhole =
@@ -1107,6 +1114,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         warnedNodeKinds.clear();
         zonePartsReported.clear();
         zoneLinesReported.clear();
+        rightEnds.clear();
         separatorsReported.clear();
         chartsNotDrawn.clear();
         textFillsWritten = false;
@@ -5923,6 +5931,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             long right = twipsOf(indent.isSetRight() ? indent.getRight() : null);
             indent.setRight(BigInteger.valueOf(right - Math.round((measure - room) * POINT_TO_TWIP)));
         }
+        noteTheLinesPast(para, laidOut.lines(), room + insetRight);
         return true;
     }
 
@@ -6448,6 +6457,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTInd indent = properties.isSetInd() ? properties.getInd() : properties.addNewInd();
         long right = twipsOf(indent.isSetRight() ? indent.getRight() : null);
         indent.setRight(BigInteger.valueOf(right - Math.round(more * POINT_TO_TWIP)));
+        // Its lines hold the prefix the column stands for, which the room does not.
+        noteTheLinesPast(para, lines, room + column / POINT_TO_TWIP + insetRight);
     }
 
     /**
@@ -6953,6 +6964,123 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** What the report calls a panel's right border held inside its table cell. */
     private static final String RIGHT_BORDER = "right border";
 
+    /** What the report calls a panel's right end, where its table is written past the page's. */
+    private static final String RIGHT_END = "right end";
+
+    /**
+     * Whether a panel paints up to its right end: a fill, or a border along its top, its foot or
+     * its right side. A left border alone stands where the page draws it, however wide the table.
+     */
+    private static boolean paintsItsRightEnd(DocumentColor fill, DocumentBorders borders) {
+        return fill != null || strokeWidth(borders.top()) > 0 || strokeWidth(borders.bottom()) > 0
+               || strokeWidth(borders.right()) > 0;
+    }
+
+    /**
+     * What a panel in a cell whose left border hangs left of the cell's text gives up of its
+     * table's width, in points.
+     *
+     * <p>Word starts such a panel half that border in from the cell's text, and a table that then
+     * runs past the cell widens the cell, fixed layout or not: CompactMono's rail, a 3pt accent at
+     * its column's edge, pushed the main column 2.3pt right in Word. It gives up what runs past,
+     * no more than its left side had given its text — the half border the table is wider by, and
+     * what of the other half its margin could give back — so its text keeps the page's width and
+     * the slack. A panel bled left by a negative margin keeps the rest, as its text would
+     * otherwise narrow and wrap.</p>
+     *
+     * @param outer    the table's width, in points
+     * @param indent   where the table starts from the cell's text, in points
+     * @param halfLeft half the panel's left border, in points
+     * @param padding  the panel's padding, whose left side gave its text the other half
+     */
+    private double whatTheHangGivesUp(double outer, double indent, double halfLeft, DocumentInsets padding) {
+        if (currentCell == null || !(indent < 0) || !(halfLeft > 0) || !Double.isFinite(currentCellWidth)) {
+            return 0;
+        }
+        double given = halfLeft + Math.min(halfLeft, Math.max(0, padding.left()));
+        return Math.max(0, Math.min(given, halfLeft + outer - (currentCellWidth - insetRight)));
+    }
+
+    /**
+     * How wide a panel's table is written in the cell it is in: as wide as asked, less what holding
+     * its right border in from the cell's edge takes, no more than its right margin holds, and
+     * what its left border, hanging out of the cell, then gives up ({@link #whatTheHangGivesUp}).
+     *
+     * @param outer  the width asked, its half borders in, in points
+     * @param room   the widest it may be with its right border clear of the cell's edge, or
+     *               {@code NaN} where no edge cuts it off
+     * @param margin the panel's right margin, in points
+     */
+    private double heldInItsCell(double outer, double room, double margin, double indent, double halfLeft,
+                                 DocumentInsets padding) {
+        double held = room > 0 && outer > room ? outer - Math.min(outer - room, margin) : outer;
+        return held - whatTheHangGivesUp(held, indent, halfLeft, padding);
+    }
+
+    /** A table cell's own right rule, in twips. */
+    private static long rightRule(XWPFTableCell cell) {
+        CTTcPr properties = cell.getCTTc().getTcPr();
+        if (properties == null || !properties.isSetTcBorders()) {
+            return 0;
+        }
+        var borders = properties.getTcBorders();
+        return borderTwips(borders.isSetRight() ? borders.getRight() : null);
+    }
+
+    /**
+     * How far past its text a panel's table is written wider than the page draws it, and whether
+     * a line set past its text took that back from its right margin ({@code writePanelPiece}).
+     */
+    private record RightEnd(double points, boolean besideLines) {
+
+        /** The wider of two of a panel's tables, a line set past the text in either. */
+        RightEnd wider(RightEnd other) {
+            return new RightEnd(Math.max(points, other.points), besideLines || other.besideLines);
+        }
+    }
+
+    /**
+     * Notes how far past the text of the panel holding it a paragraph written straight into the
+     * panel's cell may run in Word, for the panel ({@link #panelLinesPast}): as far as its right
+     * indent below zero lets its lines run, where it is given room past its text
+     * ({@link #measureAtWordsSize}, {@link #letTheLineStandOut}). A line set flush left, left to
+     * right, runs no further than its widest as Word sets it, at its size to the half point
+     * ({@link #widthAtWordsSize}); a centred or right-aligned one, or a right-to-left one, may run
+     * to its indent. One in a table inside the panel runs in that table's cell.
+     *
+     * @param lines the lines the page set it in, or {@code null} unknown
+     * @param start how far past where its lines start the cell's text ends, in points
+     */
+    private void noteTheLinesPast(XWPFParagraph para,
+                                  List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
+                                  double start) {
+        CTPPr properties = para.getCTP().getPPr();
+        if (currentCell == null || currentCell != panelCell || properties == null || !properties.isSetInd()) {
+            return;
+        }
+        CTInd indent = properties.getInd();
+        // Written by page side and turned to the flow's where it runs right to left (applyDirection):
+        // either side, there.
+        boolean rightToLeft = properties.isSetBidi();
+        double past = -twipsOf(indent.isSetRight() ? indent.getRight() : null) / POINT_TO_TWIP;
+        if (rightToLeft) {
+            past = Math.max(past, -twipsOf(indent.isSetLeft() ? indent.getLeft() : null) / POINT_TO_TWIP);
+        }
+        if (!(past > 0)) {
+            return;
+        }
+        boolean flushLeft = !rightToLeft && (!properties.isSetJc() || properties.getJc().getVal() == STJc.LEFT
+                                             || properties.getJc().getVal() == STJc.START);
+        if (flushLeft && lines != null && !lines.isEmpty() && Double.isFinite(start)) {
+            double widest = 0;
+            for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
+                widest = Math.max(widest, widthAtWordsSize(line));
+            }
+            past = Math.min(past, widest - start);
+        }
+        panelLinesPast = Math.max(panelLinesPast, past);
+    }
+
     /**
      * The report's note on a panel's right border that its table cell's edge reaches, or
      * {@code null} where the border stands clear of it.
@@ -7079,6 +7207,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         holdTheSpaceAboveATable(document);
         PanelWidth sized = panelWidth(node);
         double width = sized.width();
+        DocumentInsets margins = insideTheBorders(padding, borders);
 
         double edge = insetLeft + margin.left();
         // In the body the indent places the text, the padding in, and the margin is the whole
@@ -7090,50 +7219,56 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // 566.0pt had its right border from 566.2 to 566.9 — and on screen cuts off whatever
         // passes the cell's edge and draws the cell's gridline over it: a panel as wide as its
         // cell lost its right border, EditorialProposal's glance card. A panel with a right
-        // border that reaches its cell's text edge ends that border and a little more short of
-        // it, the points taken from its right margin and no more than it holds, so its text keeps
-        // its place and its width.
+        // border that reaches its cell's edge ends that border and a little more short of it, the
+        // points taken from its right margin and no more than it holds, so its text keeps its
+        // place and its width. The cell's own right margin, less the inner half of the cell's own
+        // right rule, holds what passes the cell's text: held in at the text, the right borders of
+        // Panel's left-column cards and of Obsidian's, Metered's and Workspace's cards beside a gap
+        // stood 0.6 to 0.9pt left of the page's in Word, and 0.3 to 0.6pt right of it held at the
+        // edge.
         double shortOfTheEdge = 0;
         // What of the border its right margin cannot take in, and the cell cannot hold, passes
         // the cell's edge.
         double pastTheEdge = 0;
+        double ruleIn = currentCell != null ? rightRule(currentCell) / POINT_TO_TWIP / 2 : 0;
         double room = currentCell != null && Double.isFinite(currentCellWidth) && strokeWidth(borders.right()) > 0
-                ? currentCellWidth - insetRight - Math.max(0, indent) - strokeWidth(borders.right())
-                  - CLEAR_OF_THE_GRIDLINE_POINTS
+                ? currentCellWidth + cellMarginOf(currentCell, false) - ruleIn - insetRight - Math.max(0, indent)
+                  - strokeWidth(borders.right()) - CLEAR_OF_THE_GRIDLINE_POINTS
                 : Double.NaN;
 
         XWPFTable table = newTable(document, 1, 1);
         hideTableGrid(table);
         XWPFTableCell cell = table.getRow(0).getCell(0);
+        double outer = Double.NaN;
+        // The slack an editor's face is given past the page's width comes out of the panel's right
+        // margin, as far as the margin holds it: its text keeps the slack, and its fill and borders
+        // end where the page ends them. Widened by it instead, a card's right border stood 1.6pt
+        // right of the page's in Word, CompactMono's and EngineeringResume's. The table is
+        // reckoned with the slack, as wide as the text needs it, and again without it: what the
+        // two differ by is the slack the table holds, and that comes off the table and the margin
+        // alike, so the text keeps its width. What the margin cannot take keeps the table wider,
+        // and is named.
+        double slackTaken = 0;
+        double slackKept = 0;
+        // The right margin, less what holding the border in from the cell's edge takes of it.
+        double marginHeld = margins.right();
         if (Double.isFinite(width) && width > 0) {
             // In the body the table starts at the panel's edge, its left border centred there.
-            double outer = width + (inTheBody ? 0 : halfLeft) + halfRight;
-            if (room > 0 && outer > room) {
-                // No more than the right margin holds: past that the text would narrow and wrap,
-                // which is worse than a border the cell's edge covers.
-                shortOfTheEdge = Math.min(outer - room, insideTheBorders(padding, borders).right());
-                outer -= shortOfTheEdge;
-            }
-            if (currentCell != null && indent < 0 && halfLeft > 0 && Double.isFinite(currentCellWidth)) {
-                // Word starts a panel its left border hangs left of its cell half that border in
-                // from the cell's text, and a table that then runs past the cell widens the cell,
-                // fixed layout or not: CompactMono's rail, a 3pt accent at its column's edge,
-                // pushed the main column 2.3pt right in Word. It gives up what runs past, no more
-                // than its left side had given its text — the half border the table is wider by,
-                // and what of the other half its margin could give back — so its text keeps the
-                // page's width and the slack, and both editors end the rail the slack past the
-                // page's. A panel bled left by a negative margin keeps the rest, as its text would
-                // otherwise narrow and wrap.
-                double given = halfLeft + Math.min(halfLeft, Math.max(0, padding.left()));
-                outer -= Math.max(0, Math.min(given, halfLeft + outer - (currentCellWidth - insetRight)));
-            }
+            double asked = width + (inTheBody ? 0 : halfLeft) + halfRight;
+            outer = heldInItsCell(asked, room, margins.right(), indent, halfLeft, padding);
+            shortOfTheEdge = room > 0 ? Math.max(0, Math.min(asked - room, margins.right())) : 0;
+            marginHeld = margins.right() - shortOfTheEdge;
+            double pageWide = heldInItsCell(width - sized.slack() + (inTheBody ? 0 : halfLeft) + halfRight, room,
+                    margins.right(), indent, halfLeft, padding);
+            slackKept = Math.max(0, outer - pageWide);
+            slackTaken = Math.min(slackKept, marginHeld);
+            slackKept -= slackTaken;
+            outer -= slackTaken;
             if (Double.isFinite(room)) {
-                // The room ends at the cell's text and half a point clear of the gridline; what
-                // the cell's right margin, what holds the panel in there and that half point do
-                // not take passes the cell's edge — all of the border, in a cell too narrow to
-                // take any of it in.
-                pastTheEdge = Math.max(0, outer - room - insetRight - cellMarginOf(currentCell, false)
-                                          - CLEAR_OF_THE_GRIDLINE_POINTS);
+                // The room ends half a point clear of the gridline; what that half point and what
+                // holds the panel in from the cell's text do not take passes the cell's edge — all
+                // of the border, in a cell too narrow to take any of it in.
+                pastTheEdge = Math.max(0, outer - room - ruleIn - insetRight - CLEAR_OF_THE_GRIDLINE_POINTS);
             }
             setTableWidth(table, outer);
             writeGrid(table, new double[]{outer});
@@ -7156,15 +7291,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (first) {
             reportFlattenedPaint(node, translucentFill, translucentSides, "its fill", "its borders");
             reportBorderWidths(node, "its borders", true, widthsOf(borders));
-            // What the table gives up of the slack it was given past the page's width is not
-            // narrower than the page draws it.
+            // The slack the table was given past the page's width is not narrower than the page.
             String rightBorder = rightBorderHeldIn(Math.max(0, shortOfTheEdge - sized.slack()), pastTheEdge);
             if (rightBorder != null) {
                 report.add(DocxExportReport.Severity.APPROXIMATED, RIGHT_BORDER, layout.pathOf(node), rightBorder);
             }
         }
-        DocumentInsets margins = insideTheBorders(padding, borders);
-        applyCellPadding(cell, new DocumentInsets(margins.top(), Math.max(0, margins.right() - shortOfTheEdge),
+        applyCellPadding(cell, new DocumentInsets(margins.top(), Math.max(0, marginHeld - slackTaken),
                 margins.bottom(), inTheBody ? padding.left() : margins.left()));
         // A row is laid out as one piece, never across a page break (writeRow): so is its panel.
         if ((node.keepTogether() || node instanceof RowNode) && layout.onOnePage(node)) {
@@ -7197,6 +7330,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         long outerMarginKept = panelsMarginKeeps;
         boolean outerGives = panelsPaddingGives;
         long outerRaised = panelRaisedFromItsPadding;
+        double outerLinesPast = panelLinesPast;
         int outerLastEndPage = panelLastEndPage;
         if (currentCell != outerPanelCell) {
             // In any other cell than the outer panel's what opens its page is that cell's — a
@@ -7211,11 +7345,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         panelsMarginKeeps = Math.min(cellMargin(cell, true), toTwips(topNotTaken));
         panelsPaddingGives = first && last && !(node instanceof ShapeContainerNode);
         panelRaisedFromItsPadding = 0;
+        panelLinesPast = Double.NEGATIVE_INFINITY;
         long raisedFromThePadding;
+        double linesPast;
         try {
             writeInCell(cell, content);
         } finally {
             raisedFromThePadding = panelRaisedFromItsPadding;
+            linesPast = panelLinesPast;
+            panelLinesPast = outerLinesPast;
             surfaceBehind = outerSurface;
             currentCellWidth = outerCellWidth;
             panelCell = outerPanelCell;
@@ -7229,6 +7367,34 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // A panel with nothing Word can hold inside is its padding tall on the page, not a
             // line of text taller.
             holdToHairline(cell.addParagraph());
+        }
+        // A line Word sets wider than the page, at its size to the half point, runs past its text
+        // into the right margin, given room there to break where the page breaks it
+        // (measureAtWordsSize). Where it runs, and the point an editor's face may set it wider,
+        // further than the margin still holds, the slack goes back to the table, no more than came
+        // off it: Word cuts off what passes the panel's edge, the stop ending a line of
+        // EngineeringResume's role card, set at 7.5pt where the page sets 7.25.
+        double givenBack = Math.min(slackTaken,
+                Math.max(0, linesPast + EDITOR_COLUMN_SLACK_POINTS - (marginHeld - slackTaken)));
+        if (givenBack > 0) {
+            outer += givenBack;
+            setTableWidth(table, outer);
+            writeGrid(table, new double[]{outer});
+            cellProperties(cell).getTcW().setW(BigInteger.valueOf(toTwips(outer)));
+            setCellMargin(cellProperties(cell).getTcMar().getRight(), marginHeld - slackTaken + givenBack);
+        }
+        // Less than a tenth of a point further right is not seen. A panel broken over pages is a
+        // table a page, and named once, at its widest.
+        if (slackKept + givenBack >= 0.1 && paintsItsRightEnd(fill, borders)) {
+            rightEnds.merge(node, new RightEnd(slackKept + givenBack, givenBack > 0), RightEnd::wider);
+        }
+        RightEnd rightEnd = last ? rightEnds.remove(node) : null;
+        if (rightEnd != null) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, RIGHT_END, layout.pathOf(node),
+                    "its table written " + pointsOf(rightEnd.points()) + "pt wider than the page draws it, the room "
+                    + "an editor setting its text in its own face may need, which its right margin cannot hold"
+                    + (rightEnd.besideLines() ? " beside the lines it sets past its text" : "")
+                    + ": what it paints at its right end reaches that much further right");
         }
         // What of the border's reach the space above did not take stands the content that low:
         // its padding takes what it can of that, then the space above its first paragraph. The
@@ -10733,9 +10899,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         insetRight += ownRight + shortRight;
         XWPFParagraph para;
         double room;
+        double rightIn;
         try {
             para = newBodyParagraph(document);
             room = availableWidth();
+            rightIn = insetRight;
         } finally {
             insetLeft = outerLeft;
             insetRight = outerRight;
@@ -10747,6 +10915,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!rightToLeft && !standsOut) {
             measureAtWordsSize(para, node, room);
         }
+        noteTheLinesPast(para, layout.lines(node), room + rightIn);
         applyHeadingRole(para, node);
         int anchor = openAnchor(para, node.anchor());
         // A line of a stack starts where its letters and the ones above leave room, not where

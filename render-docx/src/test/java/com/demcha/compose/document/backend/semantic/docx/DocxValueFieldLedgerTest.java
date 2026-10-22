@@ -36,6 +36,7 @@ import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLed
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.PANEL_WIDER_THAN_ITS_CELL;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.PULL_UNRECKONED;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.RIGHT_BORDER;
+import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.RIGHT_END;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.ROW_COLUMNS_UNLAID;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.SEAT_UNREAD;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.SPACE_BELOW_AT_THE_FOOT;
@@ -313,18 +314,20 @@ class DocxValueFieldLedgerTest {
                 + "is held to half the shorter side, at the largest of them; a chart's, with its drawing; any other "
                 + "is written");
         value(com.demcha.compose.document.style.DocumentBorders.class,
-                "bottom:REPORTED:as a panel's: its translucency, flattened against the panel's fill or the colour "
+                "bottom:REPORTED:" + RIGHT_END
+                + "; as a panel's: its translucency, flattened against the panel's fill or the colour "
                 + "under it; a width outside Word's quarter of a point to 12pt; its reach past the panel's box the "
                 + "space below it and its padding do not take, on the block below; a row's where its paint is not "
                 + "written; any other is written",
                 "left:REPORTED:as a panel's: its translucency, flattened against the panel's fill or the colour "
                 + "under it, and a width outside Word's quarter of a point to 12pt; a row's where its paint is not "
                 + "written; any other is written",
-                "right:REPORTED:" + RIGHT_BORDER
+                "right:REPORTED:" + RIGHT_BORDER + "; " + RIGHT_END
                 + "; as a panel's: its translucency, flattened against the panel's fill or the colour "
                 + "under it, and a width outside Word's quarter of a point to 12pt; a row's where its paint is not "
                 + "written; any other is written",
-                "top:REPORTED:as a panel's: its translucency, flattened against the panel's fill or the colour "
+                "top:REPORTED:" + RIGHT_END
+                + "; as a panel's: its translucency, flattened against the panel's fill or the colour "
                 + "under it; a width outside Word's quarter of a point to 12pt; its reach past the panel's box the "
                 + "space above it, its padding and the room over its first line do not take, on the panel; a row's "
                 + "where its paint is not written; any other is written");

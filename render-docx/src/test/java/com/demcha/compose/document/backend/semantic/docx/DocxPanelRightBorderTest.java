@@ -143,6 +143,36 @@ class DocxPanelRightBorderTest {
     }
 
     @Test
+    void aShapeContainerWhoseBorderReachesPastItsCellsPaddingIsNamedForWhatPassesIt() throws Exception {
+        // A 1pt padding past the cell's text holds a point of the 2.25pt the box's border reaches
+        // past it: the rest passes the cell's edge.
+        List<DocxExportReport.Note> notes = notes(shapeInACell(200, 1));
+
+        assertThat(notes).hasSize(1);
+        double[] past = notHeld(notes.get(0));
+        assertThat(past[0]).isNaN();
+        assertThat(past[1]).isCloseTo(1.25, within(0.01));
+    }
+
+    @Test
+    void aCardHeldClearOfItsCellsRuleIsNamedForIt() throws Exception {
+        // A card as wide as its composed cell's text, its cell padded 2.5pt and ruled 2pt: the
+        // rule's inner point lies over the padding, which holds the rest of the card's border
+        // past the text. Its table ends its border and the half point clear of the rule:
+        // 0.75 + 0.75 + 1.5 + 0.5 = 3.5pt, less the 1.5pt the padding holds.
+        List<DocxExportReport.Note> notes = notes(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(200))
+                .rowCells(DocumentTableCell.node(new com.demcha.compose.document.dsl.SectionBuilder()
+                                .name("Inner").stroke(ACCENT).padding(DocumentInsets.of(10))
+                                .addParagraph(p -> p.text("Inner")).build())
+                        .withStyle(DocumentTableStyle.builder().padding(DocumentInsets.of(2.5))
+                                .stroke(DocumentStroke.of(SURFACE, 2)).build()))));
+
+        assertThat(notes).hasSize(1);
+        assertThat(held(notes.get(0))).isCloseTo(2.0, within(0.01));
+    }
+
+    @Test
     void aShapeContainerWhoseBorderReachesIntoItsCellsPaddingIsNotNamed() throws Exception {
         // The 2.5pt padding past the cell's text holds the 2.25pt the box's border reaches past
         // it: the border ends a quarter of a point inside the cell's edge, within the half point

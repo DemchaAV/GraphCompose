@@ -21,8 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * A panel in a table cell that the page sets left of the cell's text: its left border centred on
- * the text's edge, or a margin below zero. LibreOffice starts a nested table at its cell's text,
- * and Word may, so the report names how far left the page sets it.
+ * the text's edge, or a margin below zero. LibreOffice and Word start a nested table at its cell's
+ * text, so the report names how far left the page sets it.
  */
 class DocxPanelLeftEdgeTest {
 
@@ -31,8 +31,8 @@ class DocxPanelLeftEdgeTest {
     private static final DocumentColor OUTER = DocumentColor.rgb(250, 245, 230);
     private static final DocumentColor ACCENT = DocumentColor.rgb(26, 86, 148);
     private static final String HUNG = "its left edge, which the page sets 1.5pt left of its table cell's text, "
-                                       + "comes out up to about that much right of the page's: LibreOffice starts a "
-                                       + "nested table at its cell's text, and Word may";
+                                       + "comes out up to about that much right of the page's: LibreOffice and Word "
+                                       + "start a nested table at its cell's text";
 
     @Test
     void anAccentHangingOutOfARowsCellIsNamed() throws Exception {
@@ -45,8 +45,8 @@ class DocxPanelLeftEdgeTest {
 
     @Test
     void anAccentHangingOutOfACellInAFilledPanelIsNamedTheSameWay() throws Exception {
-        // Word sets it where it is written there, measured 0.04 to 0.17pt off the page's;
-        // LibreOffice still starts it at the cell's text.
+        // Both editors start it at the cell's text there too: measured, a 3pt accent in a row
+        // inside a filled panel stood 1.59pt right of the page's in Word, 1.5pt in LibreOffice.
         List<DocxExportReport.Note> notes = notes(page -> page.addSection("Outer", outer -> outer.fillColor(OUTER)
                 .addRow(row -> row.spacing(12).weights(1, 1)
                         .addSection("Other", other -> other.addParagraph(p -> p.text("Other column")))
@@ -102,8 +102,8 @@ class DocxPanelLeftEdgeTest {
         assertThat(notes.get(0).path()).contains("Card");
         assertThat(notes.get(0).detail()).isEqualTo("the panel, which the page sets 4pt left of its table cell's "
                                                      + "text, comes out up to about that much right of the page's, "
-                                                     + "its text with it: LibreOffice starts a nested table at its "
-                                                     + "cell's text, and Word may");
+                                                     + "its text with it: LibreOffice and Word start a nested table "
+                                                     + "at its cell's text");
     }
 
     @Test

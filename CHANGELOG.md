@@ -34,17 +34,18 @@ follow semantic versioning; release dates are ISO 8601.
   - 5 of the corpus's 62 documents change. 4 tables gain the `right end` note.
 - **A DOCX export names a panel's left edge its table cell holds in.**
   - The page sets a panel in a table cell with its left border centred on the cell's text edge,
-    half of it outside, or further out by a margin below zero. LibreOffice starts a nested table
-    at its cell's text, and Word does in most cells, so the panel stands up to that much right of
-    the page's: its left border and fill, and with a margin below zero its text too. The report
-    said nothing.
+    half of it outside, or further out by a margin below zero. LibreOffice and Word start a nested
+    table at its cell's text, so the panel stands up to that much right of the page's: its left
+    border and fill, and with a margin below zero its text too. The report said nothing.
   - The panel's note (`left edge`) names how far left of the cell's text the page sets it, up to
     which the editors move it.
   - Measured on Windows, 3pt accents:
     - LibreOffice set them 1.5pt right of the page's, and a box's in a ruled table cell 1pt.
-    - Word set them 1.55 to 1.73pt right in a row's cell and in a table cell, filled or not, and
-      0.04 to 0.17pt in a filled panel's cell or a row inside one.
+    - Word set them 1.55 to 1.73pt right in every cell measured: a row's or a table's, filled or
+      not, a filled panel's, and a row's inside a filled or a ruled panel.
     - Engineering Resume's 2pt and 3pt card accents stood 1.05 and 1.71pt right in Word.
+  - A panel bled 4pt left by a margin below zero stood 4pt right of the page's in both editors, its
+    text with it.
   - A panel a placed row holds as a column had its left margin, which the row's cell already
     starts past, counted again in its table's indent. It is counted once.
   - 75 panels of the corpus's 62 documents gain the note. None of the DOCX changes.

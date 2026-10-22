@@ -589,7 +589,14 @@ How it lands:
   right border outside its right edge and, on screen, cuts off what passes its cell's edge
   and draws the cell's gridline there; a bordered panel reaching its cell's text edge ends its
   whole right border plus half a point short of that edge, the points taken from its right
-  margin and no more than it holds, so its text keeps its place and width.
+  margin and no more than it holds, so its text keeps its place and width. The report names
+  how much narrower than the page draws the panel its table is written (`right border`), the
+  editor's slack a panel sized round its content is given not counted; where its border then
+  stands is Word's (measured: 0.8pt left of the page's for a table 1.7pt narrower). What the
+  right margin cannot take in, a shape container's included, since its padding is set round its
+  outline, still passes the cell's edge where the cell's own margin does not hold it, and is
+  named with it, about how far: reckoned, as Word drew them, with the table starting at the
+  cell's text and its whole border outside it.
 - **Keeping together.** A `keepTogether()` panel the layout placed on one page is a row
   Word may not split. Anchors on the blocks inside a panel carry as they do anywhere else, and
   so do their keeps, but Word and LibreOffice do not hold them where the panel's row breaks over

@@ -129,6 +129,14 @@ class DocxNodeFieldLedgerTest {
                                                     + "short of it then needs more than the page's height, the row "
                                                     + "taller; any other is written";
 
+    // Word cuts off what passes a table cell's edge, and draws a nested table's right border
+    // outside the table: a panel reaching its cell's edge is narrowed out of its right margin.
+    static final String RIGHT_BORDER = "a panel's right border reaching its table cell's edge, its table written "
+                                       + "narrower out of its right margin so the border ends half a point short "
+                                       + "of the edge, which would cut it off; how much narrower than the page, "
+                                       + "and about how far what the margin cannot take in still passes the edge, "
+                                       + "named (right border)";
+
     // A row in the flow is written as a panel holding its columns, its paint the panel's.
     private static final String ROW_PAINT = "composed in a table cell, drawn as a shape where it frames no text "
                                             + "and not written where it does; in a page zone's line, in a band of "
@@ -153,9 +161,6 @@ class DocxNodeFieldLedgerTest {
                                                   + "row's column set at its middle or foot, which Word does not "
                                                   + "count there, the block set that much lower, not named but for "
                                                   + "a shape container";
-    static final String RIGHT_BORDER = "a panel's right border reaching its table cell's edge, drawn up to its width "
-                                       + "and half a point short of it so the cell's gridline does not cover it, not "
-                                       + "named";
     static final String CELL_PADDING = "a top or bottom a cell keeps where Word sets it, one opening with a table or "
                                        + "spanning rows, which Word gives the row's other cells too, not named";
     static final String LIST_PICTURE = "in a list's item or marker, placed by the list's first line and the item's "
@@ -182,7 +187,7 @@ class DocxNodeFieldLedgerTest {
 
     /** The known cases: a gap's note opens with one of them, or the ledger fails. */
     private static final List<String> GAPS = List.of(TOP_PULL, BOTTOM_PULL, PADDING_BELOW_ZERO, SPACE_BELOW_AT_THE_FOOT,
-            RIGHT_BORDER, CELL_PADDING, LIST_PICTURE, SEAT_UNREAD, ROW_COLUMNS_UNLAID, DRAWING_OVER_TEXT,
+            CELL_PADDING, LIST_PICTURE, SEAT_UNREAD, ROW_COLUMNS_UNLAID, DRAWING_OVER_TEXT,
             COMPOSED_STACK_LAYER, LAYER_PAST_THE_EDGE, LAYER_UNLAID, PANEL_WIDER_THAN_ITS_CELL);
 
     private static final Map<Class<?>, Map<String, Entry>> NODES = new LinkedHashMap<>();
@@ -240,8 +245,8 @@ class DocxNodeFieldLedgerTest {
                 "padding:GAP:" + PADDING_BELOW_ZERO + "; " + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
                 "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; " + PULL,
                 "fillColor:REPORTED:" + PANEL_TRANSLUCENCY,
-                "stroke:GAP:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
-                "cornerRadius:REPORTED", "borders:GAP:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
+                "stroke:REPORTED:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
+                "cornerRadius:REPORTED", "borders:REPORTED:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
                 "anchor:REPORTED:as a layer stack's column, or where it writes no paragraph, as of drawings alone, "
                 + "which has no bookmark; otherwise, in the flow, it is bookmarked",
                 "bookmarkOptions:REPORTED", "flowWidth:REPORTED:of an unpainted one, a panel in a table cell and a layer stack's column");
@@ -352,10 +357,10 @@ class DocxNodeFieldLedgerTest {
                 + PADDING_BELOW_ZERO + "; any other is written",
                 "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT
                 + "; any other is written",
-                "fillColor:REPORTED:" + ROW_PAINT, "stroke:GAP:" + RIGHT_BORDER + "; " + ROW_PAINT,
+                "fillColor:REPORTED:" + ROW_PAINT, "stroke:REPORTED:" + RIGHT_BORDER + "; " + ROW_PAINT,
                 "cornerRadius:REPORTED:a panel's corners, which a Word table cell does not round; with no paint "
                 + "it paints nothing",
-                "borders:GAP:" + RIGHT_BORDER + "; " + ROW_PAINT,
+                "borders:REPORTED:" + RIGHT_BORDER + "; " + ROW_PAINT,
                 "columns:GAP:" + ROW_COLUMNS_UNLAID + "; " + ROW_COLUMNS, "verticalAlign:WRITTEN",
                 "arrangement:REPORTED:" + ROW_COLUMNS);
         // The wrappers the layout adds round a timeline's parts, public records the export writes
@@ -369,8 +374,8 @@ class DocxNodeFieldLedgerTest {
                 "padding:GAP:" + PADDING_BELOW_ZERO + "; " + TOP_PULL + "; " + BOTTOM_PULL + "; any other is written",
                 "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + SPACE_BELOW_AT_THE_FOOT + "; " + PULL,
                 "fillColor:REPORTED:" + PANEL_TRANSLUCENCY,
-                "stroke:GAP:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
-                "cornerRadius:REPORTED", "borders:GAP:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
+                "stroke:REPORTED:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
+                "cornerRadius:REPORTED", "borders:REPORTED:" + RIGHT_BORDER + "; " + PANEL_BORDERS,
                 "keepTogether:WRITTEN",
                 "anchor:REPORTED:as a layer stack's column, or where it writes no paragraph, as of drawings alone, "
                 + "which has no bookmark; otherwise, in the flow, it is bookmarked",
@@ -394,7 +399,7 @@ class DocxNodeFieldLedgerTest {
                 "clipPolicy:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table",
                 "fillColor:REPORTED:its translucency, as a panel's, flattened against the colour under it; "
                 + "drawn, its alpha is written; any other is written",
-                "stroke:GAP:" + RIGHT_BORDER + "; its translucency, as a panel's border, flattened against the "
+                "stroke:REPORTED:" + RIGHT_BORDER + "; its translucency, as a panel's border, flattened against the "
                 + "panel's fill or "
                 + "the colour under it, and as a panel's, " + BORDER_WIDTH + "; drawn, its alpha and its width "
                 + "are written; any other is written",

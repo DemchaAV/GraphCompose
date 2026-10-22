@@ -552,9 +552,9 @@ How it lands:
   wider than the page, at its size to the half point, runs further into the margin than the rest
   of it holds, the table keeps that much of the slack, and the report names it (`right end`):
   Word cuts off what passes a panel's edge, the stop ending a line of a role card set at 7.5pt
-  where the page sets 7.25. A panel in a cell whose edge already holds it in, its left border
-  hanging out of the cell or its right border clear of the edge, keeps nothing of the slack in
-  its table, and its margin whole.
+  where the page sets 7.25. A panel its cell already holds in, its right border held clear of
+  the cell's edge or its left border hanging out of the cell, keeps nothing of the slack in its
+  table, and gives no more of its margin than holding it in takes.
 - **Borders.** The page centres a border on the panel's edge; in a cell, Word keeps a cell's
   border inside the cell. Half of each border comes off that side's margin and the table
   widens by the other half, so the text and the border land where the page draws them. A
@@ -611,8 +611,8 @@ How it lands:
   and draws the cell's gridline there; a bordered panel reaching its cell's edge ends its
   whole right border plus half a point short of that edge, the points taken from its right
   margin and no more than it holds, so its text keeps its place and width. The cell's own
-  right margin, a row's gap beside the cell, less the inner half of the cell's own right rule,
-  holds what of the border passes the cell's text:
+  right margin, a row's gap beside the cell, holds what of the border passes the cell's text,
+  where the cell draws no right rule of its own that may cover it:
   held in at the text, the borders of cards beside a gap stood 0.6 to 0.9pt left of the page's
   in Word, and stand 0.3 to 0.6pt right of it. The report names how much narrower than the page
   draws the panel its table is written (`right border`); where its border then stands is

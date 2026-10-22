@@ -144,7 +144,7 @@ class DocxNodeFieldLedgerTest {
 
     // A panel's text is given a point of slack past the page's width, out of its right margin.
     static final String RIGHT_END = "a panel's right end, written past the page's by the slack an editor's face is "
-                                    + "given where its right margin does not hold it, or not beside a line Word sets "
+                                    + "given where its right margin cannot hold it, alone or beside a line Word sets "
                                     + "wider than the page, named (right end)";
 
     // A badge's initials, written as its shape's text, stand off its middle by the page's seat.

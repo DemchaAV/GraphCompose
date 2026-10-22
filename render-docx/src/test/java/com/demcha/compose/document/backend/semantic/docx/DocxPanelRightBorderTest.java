@@ -155,11 +155,29 @@ class DocxPanelRightBorderTest {
     }
 
     @Test
-    void aCardHeldClearOfItsCellsRuleIsNamedForIt() throws Exception {
+    void aShapeContainerInAnUnruledCellIsNamedForWhatPassesItsEdge() throws Exception {
+        // With no rule at its edge, the cell's 1pt padding holds a point of the 2.25pt the box's
+        // border reaches past its text, as a ruled one does: the rest passes the cell's edge.
+        List<DocxExportReport.Note> notes = notes(page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(200))
+                .rowCells(DocumentTableCell.node(new ShapeContainerBuilder()
+                                .name("Shape").rectangle(198, 30)
+                                .stroke(ACCENT)
+                                .position(new ParagraphBuilder().name("Label").text("Label").build(), 10, 0,
+                                        LayerAlign.CENTER_LEFT)
+                                .build())
+                        .withStyle(DocumentTableStyle.builder().padding(DocumentInsets.of(1))
+                                .stroke(DocumentStroke.of(SURFACE, 0)).build()))));
+
+        assertThat(notes).hasSize(1);
+        assertThat(notHeld(notes.get(0))[1]).isCloseTo(1.25, within(0.01));
+    }
+
+    @Test
+    void aCardInARuledCellIsHeldInAtTheCellsText() throws Exception {
         // A card as wide as its composed cell's text, its cell padded 2.5pt and ruled 2pt: the
-        // rule's inner point lies over the padding, which holds the rest of the card's border
-        // past the text. Its table ends its border and the half point clear of the rule:
-        // 0.75 + 0.75 + 1.5 + 0.5 = 3.5pt, less the 1.5pt the padding holds.
+        // rule may cover the padding, which is left to the text, and the card's border ends the
+        // half point short of the text, as it does with no padding: 0.75 + 0.75 + 1.5 + 0.5.
         List<DocxExportReport.Note> notes = notes(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(200))
                 .rowCells(DocumentTableCell.node(new com.demcha.compose.document.dsl.SectionBuilder()
@@ -169,7 +187,7 @@ class DocxPanelRightBorderTest {
                                 .stroke(DocumentStroke.of(SURFACE, 2)).build()))));
 
         assertThat(notes).hasSize(1);
-        assertThat(held(notes.get(0))).isCloseTo(2.0, within(0.01));
+        assertThat(held(notes.get(0))).isCloseTo(3.5, within(0.01));
     }
 
     @Test

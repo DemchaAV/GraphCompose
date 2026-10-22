@@ -340,10 +340,52 @@ class DocxPanelSlackTest {
             assertThat(twips(left.getCTTbl().getTblPr().getTblW().getW()))
                     .as("as wide as the page draws it, and its half borders")
                     .isEqualTo(Math.round((placed + 1) * 20));
+            assertThat(textWidth(left)).as("the page's text, and its two borders").isCloseTo(placed - 18, within(0.05));
         }
         List<DocxExportReport.Note> notes = notes(content, RIGHT_BORDER);
         assertThat(notes).as("only the right card's border is held in").hasSize(1);
         assertThat(notes.get(0).path()).contains("Right");
+    }
+
+    @Test
+    void aCardHungLeftOfItsCellBesideAGapKeepsItsTextsWidth() throws Exception {
+        // A card filling its column, its border on the cell's text: Word starts it half that
+        // border in, and the table gives up what then runs past the text. Held at the text, its
+        // right border took 2.5pt of its margin first and its left side gave up nothing; held at
+        // the gap's edge, it takes none, and the left side gives up a point, which comes off the
+        // margin, so the text keeps its width.
+        Consumer<PageFlowBuilder> content = page -> page.addRow(row -> row
+                .spacing(12)
+                .weights(1, 1)
+                .addSection("Left", left -> left.stroke(ACCENT).padding(DocumentInsets.of(10))
+                        .fixedWidth(COLUMN).addParagraph(p -> p.text(LONG)))
+                .addSection("Right", right -> right.addParagraph(p -> p.text(LONG))));
+        try (XWPFDocument document = export(content)) {
+            XWPFTable left = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
+
+            assertThat(twips(left.getCTTbl().getTblPr().getTblW().getW())).as("ending at the cell's text as Word starts it")
+                    .isEqualTo(Math.round(COLUMN * 20));
+            assertThat(textWidth(left)).as("the page's text, and its two borders").isCloseTo(COLUMN - 18, within(0.05));
+        }
+        assertThat(notes(content, RIGHT_BORDER)).isEmpty();
+    }
+
+    @Test
+    void aTableItsBorderHoldsNarrowerThanThePageIsNotNamedWider() throws Exception {
+        // A point narrower than the right column, given that point of slack. Its 1.75pt padding
+        // holds 1.25pt past half its border: holding its border clear of the column's edge takes
+        // all of it, the slack included, and the table is still 0.25pt narrower than the page
+        // draws the card. Nothing of it reaches further right.
+        Consumer<PageFlowBuilder> content = page -> page.addRow(row -> row
+                .spacing(12)
+                .weights(1, 1)
+                .addSection("Left", left -> left.addParagraph(p -> p.text(LONG)))
+                .addSection("Right", right -> right.stroke(ACCENT).padding(DocumentInsets.of(1.75))
+                        .fixedWidth(COLUMN - 1).addParagraph(p -> p.text(LONG))));
+        assertThat(notes(content, RIGHT_END)).isEmpty();
+        List<DocxExportReport.Note> held = notes(content, RIGHT_BORDER);
+        assertThat(held).hasSize(1);
+        assertThat(held.get(0).detail()).startsWith("its table written 0.25pt narrower than the page draws it");
     }
 
     /** A filled card narrower than its page, padded 4pt, its lines filled at the size given. */

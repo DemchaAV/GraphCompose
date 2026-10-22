@@ -19,8 +19,8 @@ follow semantic versioning; release dates are ISO 8601.
     margin than the rest of it holds. Word cuts off what passes the panel's edge: the stop ending
     a line of Engineering Resume's role card, set at 7.5pt where the page sets 7.25, would go.
   - A bordered panel in a table cell is held in from the cell's edge rather than its text: the
-    cell's own right margin, a row's gap beside it, holds what passes the text, less the inner
-    half of the cell's own right rule.
+    cell's own right margin, a row's gap beside it, holds what passes the text, where the cell
+    draws no right rule of its own that may cover it.
   - Measured in Word and LibreOffice on Windows:
     - The right borders of Compact Mono's and Engineering Resume's cards and Nordic Clean's rail
       stood 1.4 to 1.7pt right of the page's, and now 0.4 to 0.6pt. The fills of invoice and

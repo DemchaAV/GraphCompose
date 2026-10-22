@@ -93,6 +93,9 @@ final class DocxDrawings {
      *                    or a line of text laid over the flow — or {@code null}
      * @param textAtTop   whether the paragraph is set from the box's top-left corner, as the page
      *                    sets a line in its box, rather than centred in the shape
+     * @param textRise    how far a paragraph centred in the shape stands above its middle, in
+     *                    points, below it where negative: the seat the page gives its text
+     * @param textLine    the height of that paragraph's line on the page, in points; 0 where none
      * @param lineCap     how its outline ends, as the page strokes it; butt where the page has none
      * @param lineJoin    how its outline turns a corner, as the page strokes it; mitred where the
      *                    page has none
@@ -100,7 +103,7 @@ final class DocxDrawings {
     record Shape(Kind kind, double x, double top, double width, double height, Color fill,
                  Color stroke, double strokeWidth, double radius, boolean flipH, int page,
                  List<DocumentPathSegment> path, boolean front, String picture, String text, boolean textAtTop,
-                 DocumentLineCap lineCap, DocumentLineJoin lineJoin) {
+                 double textRise, double textLine, DocumentLineCap lineCap, DocumentLineJoin lineJoin) {
         Shape {
             path = path == null ? List.of() : List.copyOf(path);
             lineCap = lineCap == null ? DocumentLineCap.BUTT : lineCap;
@@ -111,7 +114,7 @@ final class DocxDrawings {
               Color stroke, double strokeWidth, double radius, boolean flipH, int page,
               List<DocumentPathSegment> path, boolean front, String picture) {
             this(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front, picture,
-                    null, false, null, null);
+                    null, false, 0, 0, null, null);
         }
 
         Shape(Kind kind, double x, double top, double width, double height, Color fill,
@@ -134,17 +137,20 @@ final class DocxDrawings {
         /** The same shape in front of the text rather than behind it. */
         Shape inFront() {
             return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, true,
-                    picture, text, textAtTop, lineCap, lineJoin);
+                    picture, text, textAtTop, textRise, textLine, lineCap, lineJoin);
         }
 
         /**
          * The same shape holding a paragraph centred in it.
          *
          * @param paragraph the paragraph, as {@code w:p} markup
+         * @param rise      how far the paragraph stands above the shape's middle, in points, below
+         *                  it where negative
+         * @param line      the height of the paragraph's line on the page, in points
          */
-        Shape holding(String paragraph) {
+        Shape holding(String paragraph, double rise, double line) {
             return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
-                    picture, paragraph, false, lineCap, lineJoin);
+                    picture, paragraph, false, rise, line, lineCap, lineJoin);
         }
 
         /**
@@ -155,7 +161,7 @@ final class DocxDrawings {
          */
         Shape strokedWith(DocumentLineCap cap, DocumentLineJoin join) {
             return new Shape(kind, x, top, width, height, fill, stroke, strokeWidth, radius, flipH, page, path, front,
-                    picture, text, textAtTop, cap, join);
+                    picture, text, textAtTop, textRise, textLine, cap, join);
         }
 
         /**
@@ -173,7 +179,7 @@ final class DocxDrawings {
          */
         static Shape textBox(double x, double top, double width, double height, int page, String paragraph) {
             return new Shape(Kind.RECT, x, top, width, height, null, null, 0, 0, false, page, List.of(), true,
-                    null, paragraph, true, null, null);
+                    null, paragraph, true, 0, 0, null, null);
         }
 
         /**
@@ -498,8 +504,8 @@ final class DocxDrawings {
     }
 
     /**
-     * What a shape holds in its text body: a paragraph centred across and down, with no inset,
-     * so a badge's initials stand in its middle as the page sets them; or nothing.
+     * What a shape holds in its text body: a paragraph centred across and down, so a badge's
+     * initials stand in its middle as the page sets them; or nothing.
      *
      * <p>The text wraps in the shape's box, which the initials fit. Left unwrapped, Word sized
      * the shape to its text: {@code ObsidianInvoice}'s 35.5pt disc came out 16.9pt wide round its
@@ -509,6 +515,16 @@ final class DocxDrawings {
      * square inscribed in it, a rounded rectangle its box less part of each corner — where the
      * page sets the initials across the outline's whole width. Word broke "MWM" in a 36pt disc
      * after "MW". The insets reach out by as much, so the text wraps at the shape's edges.</p>
+     *
+     * <p>Text the page seats by its cap band ({@link Shape#textRise}) stands off the middle by as
+     * much, the insets set apart by twice that. Centred, {@code NorthlineProposal}'s monogram stood
+     * 0.9pt low and its step numbers 0.3pt high in their badges. LibreOffice takes an inset below
+     * zero for none: where the line, with twice the seat, fits the preset's own text rectangle,
+     * the seat is an inset at the bottom to raise the text or at the top to lower it, the other
+     * none, and both editors set it so. Where it does not, Word set it low by half what it
+     * passed — Spectral at 30pt seated at the top of an 88pt disc stood 3.8pt low — so the insets
+     * reach out at both sides, set apart by the seat. Word sets the text so. LibreOffice moves it
+     * only by half the inset it reads, short of the seat.</p>
      */
     private static String textOf(Shape shape) {
         if (shape.text() == null) {
@@ -532,8 +548,15 @@ final class DocxDrawings {
             across = corner * (1 - Math.sqrt(0.5));
             down = across;
         }
-        String sides = " lIns=\"" + -Units.toEMU(across) + "\" tIns=\"" + -Units.toEMU(down)
-                       + "\" rIns=\"" + -Units.toEMU(across) + "\" bIns=\"" + -Units.toEMU(down) + "\"";
+        double rise = shape.textRise();
+        long top = -Units.toEMU(down + rise);
+        long bottom = -Units.toEMU(down - rise);
+        if (rise != 0 && shape.textLine() + 2 * Math.abs(rise) <= shape.height() - 2 * down) {
+            top = Units.toEMU(Math.max(0, -2 * rise));
+            bottom = Units.toEMU(Math.max(0, 2 * rise));
+        }
+        String sides = " lIns=\"" + -Units.toEMU(across) + "\" tIns=\"" + top
+                       + "\" rIns=\"" + -Units.toEMU(across) + "\" bIns=\"" + bottom + "\"";
         return "<wps:txbx><w:txbxContent>" + shape.text() + "</w:txbxContent></wps:txbx>"
                + "<wps:bodyPr rot=\"0\" vert=\"horz\" wrap=\"square\"" + sides
                + " anchor=\"ctr\" anchorCtr=\"0\"><a:noAutofit/></wps:bodyPr>";

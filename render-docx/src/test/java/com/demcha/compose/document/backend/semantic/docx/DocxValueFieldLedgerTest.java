@@ -24,6 +24,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.BADGE_SEAT;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.BOTTOM_PULL;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.CELL_PADDING;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.COMPOSED_STACK_LAYER;
@@ -136,16 +137,16 @@ class DocxValueFieldLedgerTest {
                 "BOTTOM:GAP:" + SEAT_UNREAD
                 + "; written as its text's position in its lines, the first text line's seat for all "
                 + "of them; a line in another size or face, seated as the first, named from half a point; in a page "
-                + "zone, as its part of the zone's line",
+                + "zone, as its part of the zone's line; " + BADGE_SEAT,
                 "CENTER:GAP:" + SEAT_UNREAD
                 + "; written as its text's position in its lines, the first text line's seat for all "
                 + "of them; a line in another size or face, seated as the first, named from half a point; in a page "
-                + "zone, as its part of the zone's line",
+                + "zone, as its part of the zone's line; " + BADGE_SEAT,
                 "DEFAULT:WRITTEN:on the baseline, with no seat to write",
                 "TOP:GAP:" + SEAT_UNREAD
                 + "; written as its text's position in its lines, the first text line's seat for all of "
                 + "them; a line in another size or face, seated as the first, named from half a point; in a page "
-                + "zone, as its part of the zone's line");
+                + "zone, as its part of the zone's line; " + BADGE_SEAT);
         value(com.demcha.compose.document.node.TextDirection.class,
                 "AUTO:REPORTED:resolved as the page resolves it and written as the direction it resolves to; "
                 + "resolved right to left on a page zone's paragraph, named as written left to right",

@@ -142,6 +142,9 @@ class DocxNodeFieldLedgerTest {
                                        + "and about how far what the margin cannot take in still passes the edge, "
                                        + "named (right border)";
 
+    // A badge's initials, written as its shape's text, stand off its middle by the page's seat.
+    static final String BADGE_SEAT = "in a text badge, its text set off the shape's middle by as much";
+
     // A row in the flow is written as a panel holding its columns, its paint the panel's.
     private static final String ROW_PAINT = "composed in a table cell, drawn as a shape where it frames no text "
                                             + "and not written where it does; in a page zone's line, in a band of "
@@ -177,8 +180,7 @@ class DocxNodeFieldLedgerTest {
     static final String LIST_PICTURE = "in a list's item or marker, placed by the list's first line and the item's "
                                        + "tallest picture rather than its own line, and with no line read not moved "
                                        + "off the baseline, not named";
-    static final String SEAT_UNREAD = "in a text badge, not applied, and where a paragraph's lines are not read, no "
-                                      + "seat written, neither named";
+    static final String SEAT_UNREAD = "where a paragraph's lines are not read, no seat written, not named";
     static final String ROW_COLUMNS_UNLAID = "with no layout, a row's fixed or weighted column beside an auto one, "
                                              + "written with no width, not named";
     static final String DRAWING_OVER_TEXT = "a drawing the page paints over a text or picture layer, drawn behind it, "
@@ -357,7 +359,7 @@ class DocxNodeFieldLedgerTest {
                 + "paragraph's, or one paragraph added at more than one place — the text written at its "
                 + "style's, not measured; any other is written, at the size the page fits it to",
                 "verticalAlign:GAP:" + SEAT_UNREAD + "; its first text line's seat for all its lines, a line in "
-                + "another size or face named from half a point; any other is written",
+                + "another size or face named from half a point; " + BADGE_SEAT + "; any other is written",
                 "anchor:WRITTEN", "direction:WRITTEN");
         node(PathNode.class, "name:INERT", "width:WRITTEN", "height:WRITTEN", "segments:WRITTEN",
                 "fillColor:WRITTEN", "fillPaint:REPORTED", "stroke:WRITTEN", "strokePaint:REPORTED",

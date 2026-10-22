@@ -8,6 +8,28 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export stands a badge and its initials where the page draws them.**
+  - A badge's initials seated by their cap band (`verticalAlign`) were centred in their shape as
+    the editors centre a line, the page's seat not written. The shape's insets are now set apart
+    by twice the seat:
+    - Where the line and twice the seat fit the preset's text rectangle, the seat is one inset,
+      at the bottom to raise the initials or at the top to lower them, and both editors set them
+      where the page does.
+    - Where they do not, Word set the line low by half the excess, so the insets reach out at
+      both sides instead. Word sets the initials where the page does. LibreOffice, which takes an
+      inset below zero for none, moves them only by half the inset it reads, short of the seat.
+  - Word and LibreOffice place a shape anchored in a paragraph from the paragraph's top, the
+    space above its first line included. Space added above that line once the shape was placed
+    left the shape above its line: a lifted row's cell started lower, or a table cell's padding
+    past its row's was written above its paragraph. The shape now moves down with the line.
+  - Measured in Word and LibreOffice on Windows:
+    - Northline's monogram stood 0.9pt low, and its step numbers 0.3pt high in badges standing
+      1.35pt above their row. All now stand within 0.25pt in Word and 0.1pt in LibreOffice.
+    - Editorial's goal ticks stood up to 3.1pt high, now within 0.13pt.
+    - Four badges of other shapes and sizes, each in all four seats, stand within 0.12pt in Word.
+      Three were measured in LibreOffice: where the line and the seat fit, within 0.03pt.
+  - The field ledger's gap for a paragraph's seat narrows to one whose lines are not read.
+  - 2 of the corpus's 62 DOCX change, Northline and Editorial. The report does not.
 - **A DOCX export names what of a paragraph's pull up nothing above it gives back.** Word has no
   space above a paragraph below zero. A paragraph's, a page reference's or a rule's top edge
   below zero comes out of the space owed above it, and a paragraph's also off the foot of the one

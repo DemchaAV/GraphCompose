@@ -484,6 +484,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The paragraph a badge being drawn holds, as w:p markup (see textBadgeParagraph); null
     // otherwise.
     private String badgeText;
+    // How far the page moves that paragraph's text up off its baseline to seat it (seatShift), and
+    // the height of its face's line, in points.
+    private double badgeRise;
+    private double badgeLine;
     // The cell of the panel being written, painted or framed; null outside a panel.
     private XWPFTableCell panelCell;
     // The page the last block written straight into panelCell ended on, or into the panel holding
@@ -4855,7 +4859,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             if (badgeText != null && !Double.isNaN(canvasHeight)) {
                 // A badge holding its initials: in front, the text being its own.
                 List<DocxDrawings.Shape> shapes = DocxDrawings.of(fragment, canvasHeight).stream()
-                        .map(shape -> shape.holding(badgeText).inFront()).toList();
+                        .map(shape -> shape.holding(badgeText, badgeRise, badgeLine).inFront()).toList();
                 queueDrawings(shapes, false, layout.paintIndexOf(fragment));
                 drew |= !shapes.isEmpty();
                 front |= !shapes.isEmpty();
@@ -9618,6 +9622,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * container it sits at the start or the end of — and on the page a reader sees their
      * sum. Setting it would mean whichever ran last silently won.</p>
      *
+     * <p>The shapes already placed from the paragraph's top move down with its first line
+     * ({@link #lowerItsShapes}).</p>
+     *
      * @param para   the Word paragraph
      * @param before points to add above, zero to leave it alone
      * @param after  points to add below, zero to leave it alone
@@ -9629,6 +9636,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (before > 0) {
             spacing.setBefore(BigInteger.valueOf(
                     twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null) + toTwips(before)));
+            lowerItsShapes(para, toTwips(before));
         }
         if (after > 0) {
             spacing.setAfter(BigInteger.valueOf(
@@ -14114,7 +14122,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Writes a badge as one shape holding its initials, where the page draws it (see
      * {@link #textBadgeParagraph}). In the flow it keeps the room the page gives it; inside
-     * something already drawn, that holds the room.
+     * something already drawn, that holds the room. Text the page seats by its cap band stands
+     * off the shape's middle by the page's seat ({@link #seatShift}).
      */
     private void writeTextBadge(XWPFDocument document, ShapeContainerNode badge, ParagraphNode initials) {
         if (overlayDepth == 0) {
@@ -14129,10 +14138,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         badgeText = badgeParagraphXml(document, initials);
+        badgeRise = seatShift(initials);
+        badgeLine = layout.lines(initials).get(0).textLineHeight();
         try {
             drawOutlineOf(badge);
         } finally {
             badgeText = null;
+            badgeRise = 0;
+            badgeLine = 0;
         }
         reportWrittenWithout(initials, "written as its badge's text",
                 paragraphLost(initials, roomLostInItsBox(initials), null));
@@ -15449,15 +15462,49 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         side.setW(BigInteger.valueOf(twips));
     }
 
-    /** Adds space above and below a paragraph, in twips, to what it already has. */
+    /**
+     * Adds space above and below a paragraph, in twips, to what it already has. The shapes
+     * already placed from its top move down with its first line ({@link #lowerItsShapes}).
+     */
     private static void addSpacingTwips(XWPFParagraph para, long before, long after) {
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
         CTSpacing spacing = properties.isSetSpacing() ? properties.getSpacing() : properties.addNewSpacing();
         if (before > 0) {
             spacing.setBefore(BigInteger.valueOf(twipsOf(spacing.isSetBefore() ? spacing.getBefore() : null) + before));
+            lowerItsShapes(para, before);
         }
         if (after > 0) {
             spacing.setAfter(BigInteger.valueOf(twipsOf(spacing.isSetAfter() ? spacing.getAfter() : null) + after));
+        }
+    }
+
+    /**
+     * Moves the shapes placed from a paragraph's top down by space added above it, in twips.
+     *
+     * <p>Word and LibreOffice place a shape anchored to its paragraph from the paragraph's top,
+     * the space above its first line included. Space added above the line after the shape was
+     * placed moved the line down and left the shape. A drawing that is all its cell holds is
+     * placed from the cell's paragraph as the cell is written, and the cell may be started lower
+     * afterwards: by a lifted row ({@link #liftEachCell}), which left
+     * {@code NorthlineProposal}'s step badges 1.35pt above their row, or by padding past the
+     * row's ({@link #evenTheRowsMargins}).</p>
+     *
+     * <p>A shape placed from the page is left where it is. A shape placed beside text is
+     * anchored when its section ends, from the paragraph's spacing then, so none is there yet.</p>
+     */
+    private static void lowerItsShapes(XWPFParagraph para, long twips) {
+        for (XWPFRun run : para.getRuns()) {
+            for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing drawing
+                    : run.getCTR().getDrawingList()) {
+                for (org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor anchor
+                        : drawing.getAnchorList()) {
+                    org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTPosV down = anchor.getPositionV();
+                    if (down != null && down.isSetPosOffset() && down.getRelativeFrom()
+                            == org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.STRelFromV.PARAGRAPH) {
+                        down.setPosOffset(Math.toIntExact(down.getPosOffset() + twips * Units.EMU_PER_POINT / 20));
+                    }
+                }
+            }
         }
     }
 

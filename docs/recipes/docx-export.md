@@ -245,9 +245,11 @@ can give is not written, and the report names the block's own pull (`space above
 below the block above named apart. In the flow the block and what follows it stand that much
 lower. In a table cell the page sets the cell's content that much shorter, so the block stands
 up to that much lower, and where the cell sets its row's height the row is that much taller.
-The first block of a band's layer or of a row of columns' later layer, which resumes at the
-page's distance from what is above it, and a block opening a page in the flow are not reckoned
-this way yet, and not named. Measured: `TealPulse`'s
+Not reckoned this way yet, and not named: the first block of a band's layer or of a row of
+columns' later layer, which resumes at the page's distance from what is above it; a block
+opening a page in the flow — a section's first, one the layout moves to a new page, one after a
+page break; and a side of an overlay's line pair, which takes its pull out of the space above
+alone. Measured: `TealPulse`'s
 contact pairs, pulled 4.32pt up in a centred row past what a line holding an icon gives, a
 2.16pt lift on the page, stood 1.2pt lower in Word; written as space below them instead, they
 rose 0.8pt and grew their row past the page's, the page under it 2.2 to 2.8pt lower. Text laid

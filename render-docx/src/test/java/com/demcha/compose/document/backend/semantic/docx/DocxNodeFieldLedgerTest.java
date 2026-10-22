@@ -159,8 +159,10 @@ class DocxNodeFieldLedgerTest {
                                    + "it and the lines round it cannot give, not written; neither named";
     static final String PULL_UNRECKONED = "a top below zero on the first block of a band's layer or of a row of "
                                           + "columns' later layer, which resumes at the page's distance from what is "
-                                          + "above it, or on a block opening a page in the flow, the document's first "
-                                          + "among them: not reckoned against the space Word writes there, not named";
+                                          + "above it; on a block opening a page in the flow, a section's first, one "
+                                          + "the layout moves to a new page or one after a page break; or on a side "
+                                          + "of an overlay's line pair, which takes it out of the space above alone: "
+                                          + "not reckoned against the space Word writes there, not named";
     static final String BOTTOM_PULL = "a bottom below zero on a list, a table, a row, a stack, a canvas, a shape "
                                       + "container in the flow or a block with no paint of its own: the next block "
                                       + "not pulled up by it, set that much lower, not named";

@@ -33,6 +33,7 @@ import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLed
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.LIST_PICTURE;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.PADDING_BELOW_ZERO;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.PANEL_WIDER_THAN_ITS_CELL;
+import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.PULL_UNRECKONED;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.RIGHT_BORDER;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.ROW_COLUMNS_UNLAID;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.SEAT_UNREAD;
@@ -271,7 +272,8 @@ class DocxValueFieldLedgerTest {
                 + "; a page reference's on the side its alignment sets it from; a page field's at its "
                 + "sides; a picture's padding drawn beside its text or over its badge; a chip's its shading does not "
                 + "hold; any other is written",
-                "top:GAP:" + TOP_PULL + "; " + PADDING_BELOW_ZERO
+                "top:GAP:" + TOP_PULL + "; " + PULL_UNRECKONED + "; a paragraph's, a rule's or a page reference's "
+                + "otherwise named (space above); " + PADDING_BELOW_ZERO
                 + "; a chart's or a spacer's; a page field's beside other parts; a picture's padding drawn "
                 + "beside its text or over its badge; a chip's, above its letters; any other is written");
         value(com.demcha.compose.document.style.DocumentTransform.class,

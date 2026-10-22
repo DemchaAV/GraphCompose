@@ -20,11 +20,12 @@ import static org.assertj.core.api.Assertions.within;
  * A paragraph's, a page reference's or a rule's top edge below zero pulls it up into what is
  * above it. Word has no space above below zero, so the export takes the pull out of the space
  * owed above, and a paragraph's also off the foot of the line above and the top of its own line;
- * what none of them gives is not written, and the report names it, though not yet on a band's
- * later layer or a block opening a page, where the space Word writes is reckoned elsewhere.
+ * what none of them gives is not written, and the report names it, though not yet on a resumed
+ * layer's first block, on a block opening a page in the flow, or on a side of an overlay's line
+ * pair, where the space Word writes is reckoned elsewhere.
  *
- * <p>The paragraphs here run to two lines on a 160pt column, so neither line can give anything:
- * only a one-line paragraph rises inside its line, and only one above gives its foot.</p>
+ * <p>The paragraphs here run to more than one line on a 160pt column, so neither line can give
+ * anything: only a one-line paragraph rises inside its line, and only one above gives its foot.</p>
  */
 class DocxTopEdgePullTest {
 
@@ -137,13 +138,13 @@ class DocxTopEdgePullTest {
                         .addParagraph(p -> p.text(TWO_LINES)))
                 .addParagraph(p -> p.name("Pulled").text(TWO_LINES).margin(new DocumentInsets(-10, 0, 0, 0))));
 
-        List<Double> pulls = notes.stream()
+        // The figures as the report writes them, whole points without a fraction.
+        List<String> pulls = notes.stream()
                 .map(note -> IN_THE_FLOW.matcher(note.detail()))
                 .filter(Matcher::matches)
-                .map(flow -> Double.parseDouble(flow.group(2)))
+                .map(flow -> flow.group(2))
                 .toList();
-        assertThat(pulls).as("the pull over the block above, and no more").singleElement()
-                .satisfies(pull -> assertThat(pull).isCloseTo(4, within(0.01)));
+        assertThat(pulls).as("the pull over the block above, and no more").containsExactly("4");
     }
 
     @Test
@@ -187,7 +188,21 @@ class DocxTopEdgePullTest {
                     .addParagraph(p -> p.text(TWO_LINES)));
         });
 
-        assertThat(notes).extracting(DocxExportReport.Note::path).anySatisfy(path -> assertThat(path).contains("Pulled"));
+        List<DocxExportReport.Note> pulled = notes.stream().filter(note -> note.path().contains("Pulled")).toList();
+        assertThat(pulled).hasSize(1);
+        Matcher cell = IN_A_CELL.matcher(pulled.get(0).detail());
+        assertThat(cell.matches()).as("the note: %s", pulled.get(0).detail()).isTrue();
+        assertThat(cell.group(1)).as("all of it, nothing in the card giving it back").isEqualTo("4");
+    }
+
+    @Test
+    void aPullOnABlockAfterAPageBreakIsNotReckonedHere() throws Exception {
+        // Nothing stands above it on its page, and Word drops the space above at the page's top.
+        assertThat(notes(page -> page
+                .addParagraph(p -> p.name("Before").text(TWO_LINES))
+                .addPageBreak(pageBreak -> { })
+                .addParagraph(p -> p.name("After").text(TWO_LINES).margin(new DocumentInsets(-4, 0, 0, 0)))))
+                .isEmpty();
     }
 
     @Test
@@ -201,6 +216,7 @@ class DocxTopEdgePullTest {
     void anEdgeAtZeroOrAboveIsNotNamed() throws Exception {
         assertThat(notes(page -> page
                 .addParagraph(p -> p.name("Above").text(TWO_LINES))
+                .addParagraph(p -> p.name("Level").text(TWO_LINES).margin(new DocumentInsets(0, 0, 0, 0)))
                 .addParagraph(p -> p.name("Below").text(TWO_LINES).margin(new DocumentInsets(3, 0, 0, 0)))))
                 .isEmpty();
     }

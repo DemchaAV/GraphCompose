@@ -17,9 +17,12 @@ follow semantic versioning; release dates are ISO 8601.
     which is named apart. In the flow, the block and what follows it stand that much lower. In
     a table cell, the block stands up to that much lower, and where the cell sets its row's
     height the row is that much taller.
-  - Not reckoned yet, and not named: the first block of a band's layer or of a row of columns'
-    later layer, which resumes at the page's distance from what is above it, and a block opening
-    a page in the flow.
+  - Not reckoned yet, and not named:
+    - the first block of a band's layer or of a row of columns' later layer, which resumes at the
+      page's distance from what is above it;
+    - a block opening a page in the flow: a section's first, one the layout moves to a new page,
+      or one after a page break;
+    - a side of an overlay's line pair, which takes its pull out of the space above alone.
   - Measured in Word on Windows: `TealPulse`'s contact pairs are pulled 4.32pt up in a centred
     row, a 2.16pt lift on the page, past what a line holding an icon gives. They stood 1.2pt
     lower. Written as space below them, which shifts a centred paragraph as much, they rose

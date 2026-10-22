@@ -8,6 +8,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export names what of a paragraph's pull up nothing above it gives back.** Word has no
+  space above a paragraph below zero. A paragraph's, a page reference's or a rule's top edge
+  below zero comes out of the space owed above it, and a paragraph's also off the foot of the one
+  line above it and the top of its own line, as far as each gives. What none gives was dropped
+  without a note.
+  - The note (`space above`) names the block's own pull, not a border below the block above,
+    which is named apart. In the flow, the block and what follows it stand that much lower. In
+    a table cell, the block stands up to that much lower, and where the cell sets its row's
+    height the row is that much taller.
+  - Not reckoned yet, and not named: the first block of a band's layer or of a row of columns'
+    later layer, which resumes at the page's distance from what is above it, and a block opening
+    a page in the flow.
+  - Measured in Word on Windows: `TealPulse`'s contact pairs are pulled 4.32pt up in a centred
+    row, a 2.16pt lift on the page, past what a line holding an icon gives. They stood 1.2pt
+    lower. Written as space below them, which shifts a centred paragraph as much, they rose
+    0.8pt, but their row grew past the page's and the page under it stood 2.2 to 2.8pt lower, so
+    the pull is named, not written.
+  - 5 paragraphs of the corpus's 62 documents gain the note: the 4 pairs and Obsidian's wordmark,
+    0.1pt. None of the DOCX changes.
 - **A DOCX export names a panel's right border its table cell's edge would cut off.** Word draws
   a nested table's right border outside the table and, on screen, cuts off what passes its cell's
   edge. A bordered panel reaching that edge has its table written narrower, out of its right

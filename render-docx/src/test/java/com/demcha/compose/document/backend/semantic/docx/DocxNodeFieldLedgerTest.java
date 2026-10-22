@@ -114,6 +114,11 @@ class DocxNodeFieldLedgerTest {
                                                 + "first line takes, on the panel; below, what neither the space "
                                                 + "below it nor its padding takes, on the block below "
                                                 + "(space above); " + BORDER_WIDTH + "; any other is written";
+    // A paragraph's, a page reference's or a rule's own edge below zero is taken out of what is
+    // round it (standsIntoTheSpaceAbove); Word has no space above below zero.
+    private static final String PULLED_UP = "anywhere else, a top below zero out of the space above it and, a "
+                                            + "paragraph's, the foot of the one line above and the top of its own "
+                                            + "line, as far as they give; what none gives, named (space above)";
     // An edge below zero pulls the next block up; Word sets no block over another.
     private static final String PULL = "below zero below it, the pull the space under it and the next block's own "
                                        + "top edge do not give back, on the next block (space above); any other is "
@@ -152,6 +157,10 @@ class DocxNodeFieldLedgerTest {
     static final String TOP_PULL = "a top below zero: on a picture, a barcode or a block written as a table, a "
                                    + "table, a row or a panel, not written; on another block, what the space above "
                                    + "it and the lines round it cannot give, not written; neither named";
+    static final String PULL_UNRECKONED = "a top below zero on the first block of a band's layer or of a row of "
+                                          + "columns' later layer, which resumes at the page's distance from what is "
+                                          + "above it, or on a block opening a page in the flow, the document's first "
+                                          + "among them: not reckoned against the space Word writes there, not named";
     static final String BOTTOM_PULL = "a bottom below zero on a list, a table, a row, a stack, a canvas, a shape "
                                       + "container in the flow or a block with no paint of its own: the next block "
                                       + "not pulled up by it, set that much lower, not named";
@@ -187,7 +196,7 @@ class DocxNodeFieldLedgerTest {
 
     /** The known cases: a gap's note opens with one of them, or the ledger fails. */
     private static final List<String> GAPS = List.of(TOP_PULL, BOTTOM_PULL, PADDING_BELOW_ZERO, SPACE_BELOW_AT_THE_FOOT,
-            CELL_PADDING, LIST_PICTURE, SEAT_UNREAD, ROW_COLUMNS_UNLAID, DRAWING_OVER_TEXT,
+            PULL_UNRECKONED, CELL_PADDING, LIST_PICTURE, SEAT_UNREAD, ROW_COLUMNS_UNLAID, DRAWING_OVER_TEXT,
             COMPOSED_STACK_LAYER, LAYER_PAST_THE_EDGE, LAYER_UNLAID, PANEL_WIDER_THAN_ITS_CELL);
 
     private static final Map<Class<?>, Map<String, Entry>> NODES = new LinkedHashMap<>();
@@ -281,8 +290,8 @@ class DocxNodeFieldLedgerTest {
                 "stroke:REPORTED:its translucency, as a rule's, flattened against the colour under it, and as a "
                 + "rule, " + BORDER_WIDTH + "; drawn, its alpha is written; any other is written",
                 "linkTarget:REPORTED",
-                "bookmarkOptions:REPORTED", "padding:GAP:" + TOP_PULL + "; any other is written",
-                "margin:GAP:" + TOP_PULL + "; any other is written", "transform:REPORTED",
+                "bookmarkOptions:REPORTED", "padding:GAP:" + PULL_UNRECKONED + "; as a rule, " + PULLED_UP + "; any other is written",
+                "margin:GAP:" + PULL_UNRECKONED + "; as a rule, " + PULLED_UP + "; any other is written", "transform:REPORTED",
                 "dashPattern:REPORTED",
                 "anchor:REPORTED:drawn; a rule in the flow is bookmarked", "lineCap:REPORTED:a rule's other than butt, a border ending flat; drawn, it is written",
                 "fillWidth:WRITTEN", "keepWithNext:REPORTED:of a line drawn in the flow the page keeps blocks together in");
@@ -321,8 +330,8 @@ class DocxNodeFieldLedgerTest {
         node(PageReferenceNode.class, "name:INERT",
                 "anchor:REPORTED:where the anchor has no bookmark, its number is written as text",
                 "textStyle:WRITTEN", "align:WRITTEN", "placeholderText:WRITTEN",
-                "padding:GAP:" + TOP_PULL + "; the sides its alignment sets it from",
-                "margin:GAP:" + TOP_PULL + "; the sides its alignment sets it from");
+                "padding:GAP:" + PULL_UNRECKONED + "; " + PULLED_UP + "; the sides its alignment sets it from",
+                "margin:GAP:" + PULL_UNRECKONED + "; " + PULLED_UP + "; the sides its alignment sets it from");
         node(ParagraphNode.class, "name:INERT",
                 "text:REPORTED:where the page reads it as markdown, written as the page sets it where its lines "
                 + "hold the pieces read so, a heading written taller than its line named; its marks written as letters "
@@ -339,7 +348,8 @@ class DocxNodeFieldLedgerTest {
                 "bookmarkOptions:REPORTED:a title that is not the text Word lists it by, a pair's whole line for "
                 + "a side of one; a level past Word's ninth that shares it with another; the right side's of a "
                 + "pair whose left holds the level",
-                "padding:GAP:" + TOP_PULL + "; " + PULL, "margin:GAP:" + TOP_PULL + "; " + PULL,
+                "padding:GAP:" + PULL_UNRECKONED + "; " + PULLED_UP + "; " + PULL,
+                "margin:GAP:" + PULL_UNRECKONED + "; " + PULLED_UP + "; " + PULL,
                 "autoSize:REPORTED:where the layout does not tell the size the page fits the text in the "
                 + "paragraph's style to — no lines read, lines in sizes that do not say which is the "
                 + "paragraph's, or one paragraph added at more than one place — the text written at its "

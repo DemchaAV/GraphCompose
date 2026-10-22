@@ -17,7 +17,7 @@ follow semantic versioning; release dates are ISO 8601.
       where the page does.
     - Where they do not, Word set the line low by half the excess, so the insets reach out at
       both sides instead. Word sets the initials where the page does. LibreOffice, which takes an
-      inset below zero for none, keeps them on the shape's middle, as before.
+      inset below zero for none, moves them only by half the inset it reads, short of the seat.
   - Word and LibreOffice place a shape anchored in a paragraph from the paragraph's top, the
     space above its first line included. Space added above that line once the shape was placed
     left the shape above its line: a lifted row's cell started lower, or a table cell's padding

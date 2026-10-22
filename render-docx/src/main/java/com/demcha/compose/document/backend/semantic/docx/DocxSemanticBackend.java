@@ -485,7 +485,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // otherwise.
     private String badgeText;
     // How far the page moves that paragraph's text up off its baseline to seat it (seatShift), and
-    // the height of its line, in points.
+    // the height of its face's line, in points.
     private double badgeRise;
     private double badgeLine;
     // The cell of the panel being written, painted or framed; null outside a panel.
@@ -14139,7 +14139,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         badgeText = badgeParagraphXml(document, initials);
         badgeRise = seatShift(initials);
-        badgeLine = layout.lines(initials).get(0).lineHeight();
+        badgeLine = layout.lines(initials).get(0).textLineHeight();
         try {
             drawOutlineOf(badge);
         } finally {
@@ -15493,8 +15493,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * anchored when its section ends, from the paragraph's spacing then, so none is there yet.</p>
      */
     private static void lowerItsShapes(XWPFParagraph para, long twips) {
-        for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run : runsIn(para)) {
-            for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing drawing : run.getDrawingList()) {
+        for (XWPFRun run : para.getRuns()) {
+            for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing drawing
+                    : run.getCTR().getDrawingList()) {
                 for (org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor anchor
                         : drawing.getAnchorList()) {
                     org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTPosV down = anchor.getPositionV();

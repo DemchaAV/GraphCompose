@@ -523,8 +523,8 @@ final class DocxDrawings {
      * the seat is an inset at the bottom to raise the text or at the top to lower it, the other
      * none, and both editors set it so. Where it does not, Word set it low by half what it
      * passed — Spectral at 30pt seated at the top of an 88pt disc stood 3.8pt low — so the insets
-     * reach out at both sides, set apart by the seat: Word sets that, and LibreOffice, reading
-     * neither, the shape's middle.</p>
+     * reach out at both sides, set apart by the seat. Word sets the text so. LibreOffice moves it
+     * only by half the inset it reads, short of the seat.</p>
      */
     private static String textOf(Shape shape) {
         if (shape.text() == null) {

@@ -116,7 +116,7 @@ class DocxBadgeSeatTest {
         try (XWPFDocument document = DocxExports.withLayout(500, 400, 30, page -> page
                 .addParagraph(p -> p.text("Scope of work").margin(DocumentInsets.bottom(12)))
                 .addRow("Step", row -> row
-                        .gap(12)
+                        .spacing(12)
                         .columns(DocumentRowColumn.fixed(26), DocumentRowColumn.fixed(150),
                                 DocumentRowColumn.weight(1))
                         .add(new ShapeContainerBuilder().name("StepBadge").roundedRect(26, 15, 2)
@@ -160,8 +160,8 @@ class DocxBadgeSeatTest {
         assertThat(offset.find()).as("placed from its paragraph").isTrue();
 
         assertThat(before).as(spaceAbove).isPositive();
-        assertThat(Long.parseLong(offset.group(1))).as("placed below that space, on the paragraph's line")
-                .isEqualTo(before * Units.EMU_PER_POINT / 20);
+        assertThat(offset.group(1)).as("placed below that space, on the paragraph's line")
+                .isEqualTo(Long.toString(before * Units.EMU_PER_POINT / 20));
     }
 
     /** The two shapes a badge is drawn as, each holding the initials centred. */
@@ -211,8 +211,17 @@ class DocxBadgeSeatTest {
             Matcher insets = Pattern.compile("(lIns=\"-?\\d+\") tIns=\"(-?\\d+)\" (rIns=\"-?\\d+\") bIns=\"(-?\\d+)\"")
                     .matcher(xml);
             assertThat(insets.find()).isTrue();
-            return new Badge(Long.parseLong(insets.group(2)), Long.parseLong(insets.group(4)),
+            return new Badge(emus(insets.group(2)), emus(insets.group(4)),
                     insets.group(1) + " " + insets.group(3), baseline);
+        }
+    }
+
+    /** An inset as written, in EMUs; a value that is not a whole number fails the test. */
+    private static long emus(String written) {
+        try {
+            return Long.parseLong(written);
+        } catch (NumberFormatException notANumber) {
+            throw new AssertionError("an inset written as " + written, notANumber);
         }
     }
 

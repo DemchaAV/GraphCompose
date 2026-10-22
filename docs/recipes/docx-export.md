@@ -1241,7 +1241,8 @@ badges. Where the line and twice the seat fit the preset's text rectangle, the s
 inset, at the bottom to raise the text or at the top to lower it, and Word and LibreOffice
 both set it so. Where they do not, Word set the text low by half the excess, so the insets
 reach out at both sides instead: Word sets it where the page does, and LibreOffice, which
-takes an inset below zero for none, on the shape's middle, as before. Initials in a corner,
+takes an inset below zero for none, moves it only by half the inset it reads, short of the
+seat. Initials in a corner,
 in two styles, right to left or linked are written in the flow as before. A shape beside text
 in a panel is anchored in
 that text's paragraph in the cell and laid out in the cell, placed from the cell's text

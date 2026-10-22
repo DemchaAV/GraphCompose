@@ -651,14 +651,20 @@ class DocxPanelTailTest {
     @Test
     void aParagraphPulledUpStandsBelowNoBorder() throws Exception {
         // An edge below zero pulls a paragraph up, as TealPulse's contact pairs are in their
-        // strip: it is no border below a panel, and nothing is named for it.
+        // strip: it is no border below a panel. What of the pull nothing gives back is named as
+        // the pull it is, the border nowhere.
         Exported exported = export(page -> page.addParagraph("Above")
                 .addParagraph(p -> p.text("Pulled").margin(new DocumentInsets(-4, 0, 0, 0)))
                 .addRow(row -> row.addParagraph(p -> p.text("Lifted").margin(new DocumentInsets(-4, 0, 0, 0)))
                         .addParagraph("Beside"))
                 .addParagraph("Below"));
 
-        assertThat(exported.report().bySubject()).doesNotContainKey("space above");
+        List<DocxExportReport.Note> notes = exported.report().bySubject().get("space above");
+        assertThat(notes).hasSize(2).allSatisfy(note -> assertThat(note.detail()).doesNotContain("border"));
+        assertThat(notes.get(0).path()).as("in the flow").doesNotContain("RowNode");
+        assertThat(notes.get(0).detail()).contains("over the block above it");
+        assertThat(notes.get(1).path()).as("in the row's cell").contains("RowNode");
+        assertThat(notes.get(1).detail()).startsWith("its top edge below zero pulls it 4pt further up");
     }
 
     @Test

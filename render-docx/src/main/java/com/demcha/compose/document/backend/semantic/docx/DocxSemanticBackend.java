@@ -547,6 +547,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private long blocksWritten;
 
+    /** {@link #blocksWritten} once the last page break was written: equal, nothing has been since. */
+    private long blocksAtTheLastBreak = -1;
+
     /** Space the last body paragraph holds below itself, not yet written — see {@link #owePendingSpacingAfter}. */
     private double pendingSpacingAfter;
 
@@ -1149,6 +1152,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         writing = null;
         currentPage = 0;
         lastEndPage = -1;
+        blocksAtTheLastBreak = -1;
         topEdgeHeldAbove = null;
         topEdgeHeld = 0;
         topEdgeLine = null;
@@ -8981,7 +8985,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * {@link #newBodyParagraph} nets it against everything owed above, as the page sums it.
      * Where that cannot give it all, a paragraph takes the rest off the foot of the line written
      * just before it ({@link #takeFromTheLineAbove}), then off the top of its own line
-     * ({@link #riseInsideItsOwnLine}); what neither can give stays unwritten. Text laid over the flow owes no
+     * ({@link #riseInsideItsOwnLine}); what neither can give stays unwritten, and is named
+     * ({@link #nameAPullNotGivenBack}) where the space above it is the space owed here
+     * ({@link #spaceAboveWrittenElsewhere}). A side of an overlay's line pair is not this: it
+     * takes its pull out of the space above alone ({@link #writeLinePair}). Text laid over the flow owes no
      * space ({@link #writeOverTheFlow}), so its edges move nothing.</p>
      */
     private void standsIntoTheSpaceAbove(DocumentNode node) {
@@ -8995,7 +9002,55 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     riseInsideItsOwnLine(paragraph, shortBy);
                 }
             }
+            // Only the block's own pull is its to name: what the space was short of before it is
+            // a container's edge above it, and a border below the block above is named apart
+            // (nameTheTailNotTaken), so it is not counted here.
+            double notGivenBack = Math.min(-edge, -(carriedSpacingBefore + pendingSpacingAfter));
+            if (notGivenBack > TAIL_CLEARANCE && !spaceAboveWrittenElsewhere(node)) {
+                nameAPullNotGivenBack(node, notGivenBack);
+            }
         }
+    }
+
+    /**
+     * Whether the space Word writes above a block is not the space owed here, so a pull reckoned
+     * against it would be named wrong: a band's layer or a row of columns' later layer resumes at
+     * the page's distance from what is above it ({@link #resumeHere}), and a block opening a page in
+     * the flow — a section's first, one the layout moves to a new page, one after a page break —
+     * has the space above it held there or dropped, as Word drops it, with no block above it on
+     * the page. In a table cell the space owed is the cell's own, on whatever page.
+     */
+    private boolean spaceAboveWrittenElsewhere(DocumentNode node) {
+        return !Double.isNaN(resumeSpacing) || opensItsPageInTheFlow(node)
+               || currentCell == null && (startsAPageOfItsOwn(node) || lastEndPage < 0
+                                          || blocksWritten == blocksAtTheLastBreak);
+    }
+
+    /**
+     * Names what of a block's top edge below zero nothing above it gives back, which Word does not
+     * write: a paragraph's space above is never below zero.
+     *
+     * <p>In the flow the block and what follows it stand that much lower, as under a pull of the
+     * block above ({@link #nameTheTailNotTaken}). In a table cell the page sets the cell's content
+     * that much shorter: the block stands up to that much lower, less where the cell sets its
+     * content at the middle or the foot, and where the cell sets its row's height the row is that
+     * much taller.
+     * {@code TealPulse}'s contact strip pulls each pair 4.32pt up in its centred row, a 2.16pt lift on
+     * the page, past the room its line holds above an icon's: in Word they stood 1.2pt lower. Written
+     * as space below them, which shifts a centred paragraph as much, the pairs rose 0.8pt and their
+     * row grew past the page's, the page under it 2.2 to 2.8pt lower (measured).</p>
+     *
+     * @param pull what of the pull is not given back, in points
+     */
+    private void nameAPullNotGivenBack(DocumentNode node, double pull) {
+        if (currentCell == null) {
+            nameTheTailNotTaken(node, 0, 0, 0, pull);
+            return;
+        }
+        report.add(DocxExportReport.Severity.APPROXIMATED, "space above", layout.pathOf(node),
+                "its top edge below zero pulls it " + pointsOf(pull) + "pt further up than anything above it in "
+                + "its table cell gives back, which Word does not write: it stands up to that much lower than the "
+                + "page sets it, and where its cell sets its row's height, the row is that much taller");
     }
 
     /**
@@ -19868,6 +19923,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         flushSpacingAfter();
         XWPFParagraph para = document.createParagraph();
         blocksWritten++;
+        blocksAtTheLastBreak = blocksWritten;
         // It stands on the page the break ends, and carries what is drawn there when nothing else
         // written on that page does (DocxDrawingAnchors.breakOn): a shape alone before a break
         // was dropped, its note saying it was drawn.

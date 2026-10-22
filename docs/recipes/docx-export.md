@@ -241,8 +241,19 @@ that line's letters leave room below them where Word draws them, three quarters 
 clear: the line written shorter, its text lowered by the four fifths of that Word's baseline
 would rise. The rest it takes from the top of its own line, where it is one line of text, as
 far as its letters leave room above them, its text seated where the page sets it; what neither
-can give is not written. Text laid over the flow in text boxes owes no space, so its edges
-move nothing.
+can give is not written, and the report names the block's own pull (`space above`), a border
+below the block above named apart. In the flow the block and what follows it stand that much
+lower. In a table cell the page sets the cell's content that much shorter, so the block stands
+up to that much lower, and where the cell sets its row's height the row is that much taller.
+Not reckoned this way yet, and not named: the first block of a band's layer or of a row of
+columns' later layer, which resumes at the page's distance from what is above it; a block
+opening a page in the flow — a section's first, one the layout moves to a new page, one after a
+page break; and a side of an overlay's line pair, which takes its pull out of the space above
+alone. Measured: `TealPulse`'s
+contact pairs, pulled 4.32pt up in a centred row past what a line holding an icon gives, a
+2.16pt lift on the page, stood 1.2pt lower in Word; written as space below them instead, they
+rose 0.8pt and grew their row past the page's, the page under it 2.2 to 2.8pt lower. Text laid
+over the flow in text boxes owes no space, so its edges move nothing.
 
 A negative bottom `margin` or `padding` — a paragraph's, an image's, a barcode's or a rule's —
 pulls the next paragraph up into it the same way: it comes out of the space above that

@@ -159,7 +159,9 @@ class DocxHangingLeftTest {
 
             assertThat(firstColumn).as("the dash's column, whole").isCloseTo(DASH, offset(0.1));
             CTInd dash = nested.getRow(0).getCell(0).getParagraphs().get(0).getCTP().getPPr().getInd();
-            assertThat(dash == null || !dash.isSetRight() || DocxTwips.of(dash.getRight()) <= 10)
+            // Its right indent is Word's reach past it (wordsRuleReach), and no more.
+            long reach = Math.round(DocxSemanticBackend.WORD_RULE_REACH_RIGHT_POINTS * 20);
+            assertThat(dash == null || !dash.isSetRight() || DocxTwips.of(dash.getRight()) <= reach + 10)
                     .as("and the dash across all of it: the hang its cells take moves text, not widths")
                     .isTrue();
         }

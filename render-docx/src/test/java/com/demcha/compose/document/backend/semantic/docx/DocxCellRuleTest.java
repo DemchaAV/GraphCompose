@@ -61,9 +61,12 @@ class DocxCellRuleTest {
         // The cell's text starts 4pt in from its edge at 20, as its margin in the file does.
         double start = line.x() + ((LineFragmentPayload) line.payload()).startX() - 24;
 
+        // Each indent taken in by what Word draws its border past it (wordsRuleReach).
         CTInd indent = export.rule().getCTP().getPPr().getInd();
-        assertThat(DocxTwips.of(indent.getLeft())).isEqualTo(Math.round(start * 20));
-        assertThat(DocxTwips.of(indent.getRight())).as("as far from the right").isEqualTo(Math.round(start * 20));
+        assertThat(DocxTwips.of(indent.getLeft()))
+                .isEqualTo(Math.round((start + DocxSemanticBackend.WORD_RULE_REACH_LEFT_POINTS) * 20));
+        assertThat(DocxTwips.of(indent.getRight())).as("as far from the right")
+                .isEqualTo(Math.round((start + DocxSemanticBackend.WORD_RULE_REACH_RIGHT_POINTS) * 20));
         assertThat(export.body()).doesNotContain(LINE);
     }
 
@@ -86,7 +89,8 @@ class DocxCellRuleTest {
         assertThat(export.body().split(LINE, -1)).as("one line drawn").hasSize(2);
         assertThat(export.body()).as("the vertical one").contains("<wp:extent cx=\"0\" cy=\"" + Units.toEMU(20) + "\"");
         assertThat(DocxTwips.of(export.rule().getCTP().getPPr().getInd().getRight()))
-                .as("the rule 100pt long in its 192pt cell").isEqualTo(92 * 20);
+                .as("the rule 100pt long in its 192pt cell, Word's reach in")
+                .isEqualTo(92 * 20 + Math.round(DocxSemanticBackend.WORD_RULE_REACH_RIGHT_POINTS * 20));
 
         // A rule running to the end of its width has no length of its own to tell it by.
         Export filling = inACell(new SectionBuilder()

@@ -2,11 +2,14 @@ package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.LineBuilder;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.table.DocumentTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * heading or between entries was missing in Word. As a paragraph border the rule flows with
  * the text and a reader moves or deletes it as a line of the document.</p>
  *
+ * <p>Word draws a paragraph's border past both its indents, so each indent is taken in by as
+ * much: the rule ends where the page ends it in Word ({@code wordsRuleReach}).</p>
+ *
  * @author Artem Demchyshyn
  */
 class DocxRuleTest {
@@ -35,6 +41,9 @@ class DocxRuleTest {
     private static final DocumentColor ACCENT = DocumentColor.rgb(26, 86, 148);
     /** What the default text's line under a rule is raised into the space above it. */
     private static final long RAISE = DocxExports.DEFAULT_LINE_RAISE;
+    /** How far past its left and right indents Word draws a rule, in twips. */
+    private static final long REACH_LEFT = Math.round(DocxSemanticBackend.WORD_RULE_REACH_LEFT_POINTS * 20);
+    private static final long REACH_RIGHT = Math.round(DocxSemanticBackend.WORD_RULE_REACH_RIGHT_POINTS * 20);
 
     @Test
     void aFillLineIsAParagraphBorderAcrossTheWidth() throws Exception {
@@ -49,10 +58,11 @@ class DocxRuleTest {
             // w:sz counts eighths of a point.
             assertThat(bottom.getSz().intValue()).isEqualTo(16);
             assertThat(hex(bottom.getColor())).isEqualTo("1A5694");
-            assertThat(DocxTwips.of(rule.getCTP().getPPr().getInd().getLeft())).isZero();
+            assertThat(DocxTwips.of(rule.getCTP().getPPr().getInd().getLeft()))
+                    .as("from the left margin, Word's reach in").isEqualTo(REACH_LEFT);
             assertThat(DocxTwips.of(rule.getCTP().getPPr().getInd().getRight()))
-                    .as("a fill line runs to the right margin")
-                    .isZero();
+                    .as("a fill line runs to the right margin, Word's reach in")
+                    .isEqualTo(REACH_RIGHT);
         }
     }
 
@@ -63,7 +73,82 @@ class DocxRuleTest {
                 .addLine(l -> l.horizontal(200).stroke(DocumentStroke.of(ACCENT, 1))))) {
             CTPPr properties = document.getParagraphs().get(0).getCTP().getPPr();
 
-            assertThat(DocxTwips.of(properties.getInd().getRight())).isEqualTo(160 * 20L);
+            assertThat(DocxTwips.of(properties.getInd().getRight())).isEqualTo(160 * 20L + REACH_RIGHT);
+        }
+    }
+
+    @Test
+    void wordsReachIsAPointAndFourTenthsAtTheLeftAndAPointAndAHalfAtTheRight() {
+        // Measured on nine rules: 1.36 to 1.49pt past the left indent, 1.44 to 1.59pt past the right.
+        assertThat(REACH_LEFT).isEqualTo(28L);
+        assertThat(REACH_RIGHT).isEqualTo(30L);
+    }
+
+    @Test
+    void aRuleRunningPastItsWidthIsHeldAtItsEdgeAndTakenInOnlyByWhatWordDrawsFurther() throws Exception {
+        // A 355pt rule set 6pt in, in 360pt: the page ends it a point past the right margin. Held
+        // at the margin, Word's 1.51pt reach would end it half a point further than the page, so
+        // only that half point is taken in.
+        try (XWPFDocument document = export(page -> page
+                .addLine(l -> l.horizontal(355).stroke(DocumentStroke.of(ACCENT, 1))
+                        .margin(new DocumentInsets(0, 0, 0, 6))))) {
+            CTPPr properties = document.getParagraphs().get(0).getCTP().getPPr();
+
+            assertThat(DocxTwips.of(properties.getInd().getLeft())).isEqualTo(6 * 20L + REACH_LEFT);
+            assertThat(DocxTwips.of(properties.getInd().getRight())).isEqualTo(REACH_RIGHT - 20);
+        }
+    }
+
+    @Test
+    void aRuleInACellWhoseWidthIsWordsEndsWordsReachShortOfTheCellsText() throws Exception {
+        // No layout, an auto column: the table's columns are Word's, and the rule runs to the cell's
+        // text edge, which it is held in from by Word's reach past it.
+        try (XWPFDocument document = DocxExports.withoutLayout(400, 400, 20, page -> page.addTable(t -> t
+                .autoColumns(1)
+                .rowCells(DocumentTableCell.node(new LineBuilder().horizontal(100)
+                        .stroke(DocumentStroke.of(ACCENT, 1)).fill().build()))))) {
+            assertThat(DocxTwips.of(ruleIn(document).getCTP().getPPr().getInd().getRight())).isEqualTo(REACH_RIGHT);
+        }
+    }
+
+    @Test
+    void aRuleInAPaddedContainerOfACellWhoseWidthIsWordsKeepsThePaddingAndTheReach() throws Exception {
+        try (XWPFDocument document = DocxExports.withoutLayout(400, 400, 20, page -> page.addTable(t -> t
+                .autoColumns(1)
+                .rowCells(DocumentTableCell.node(new SectionBuilder().padding(DocumentInsets.of(8))
+                        .addLine(l -> l.horizontal(100).stroke(DocumentStroke.of(ACCENT, 1)).fill())
+                        .build()))))) {
+            assertThat(DocxTwips.of(ruleIn(document).getCTP().getPPr().getInd().getRight()))
+                    .as("the section's padding and Word's reach").isEqualTo(8 * 20L + REACH_RIGHT);
+        }
+    }
+
+    /** The rule's paragraph in the first cell of the first table, at any depth. */
+    private static XWPFParagraph ruleIn(XWPFDocument document) {
+        java.util.ArrayDeque<org.apache.poi.xwpf.usermodel.XWPFTableCell> cells = new java.util.ArrayDeque<>();
+        cells.add(document.getTables().get(0).getRow(0).getCell(0));
+        while (!cells.isEmpty()) {
+            org.apache.poi.xwpf.usermodel.XWPFTableCell cell = cells.poll();
+            for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                if (paragraph.getCTP().getPPr() != null && paragraph.getCTP().getPPr().isSetPBdr()) {
+                    return paragraph;
+                }
+            }
+            cell.getTables().forEach(table -> table.getRows().forEach(row -> cells.addAll(row.getTableCells())));
+        }
+        throw new AssertionError("no rule");
+    }
+
+    @Test
+    void aRuleShorterThanWordsReachAtBothEndsKeepsATenthOfAPointOfItsParagraph() throws Exception {
+        // A 2pt rule: each indent taken in by 0.95pt, the paragraph 0.1pt wide, which Word draws
+        // its reach past at both ends.
+        try (XWPFDocument document = export(page -> page
+                .addLine(l -> l.horizontal(2).stroke(DocumentStroke.of(ACCENT, 1))))) {
+            CTPPr properties = document.getParagraphs().get(0).getCTP().getPPr();
+
+            assertThat(DocxTwips.of(properties.getInd().getLeft())).isEqualTo(19L);
+            assertThat(DocxTwips.of(properties.getInd().getRight())).isEqualTo(358 * 20L + 19);
         }
     }
 
@@ -77,7 +162,7 @@ class DocxRuleTest {
             assertThat(properties.getPBdr().getBottom().getSz().intValue()).isEqualTo(24);
             assertThat(hex(properties.getPBdr().getBottom().getColor())).isEqualTo("1A5694");
             assertThat(DocxTwips.of(properties.getSpacing().getBefore())).isEqualTo(6 * 20L);
-            assertThat(DocxTwips.of(properties.getInd().getRight())).isEqualTo(160 * 20L);
+            assertThat(DocxTwips.of(properties.getInd().getRight())).isEqualTo(160 * 20L + REACH_RIGHT);
         }
     }
 
@@ -371,8 +456,8 @@ class DocxRuleTest {
                 .addLine(l -> l.horizontal(100).stroke(DocumentStroke.of(ACCENT, 1)).fill())))) {
             CTPPr properties = document.getParagraphs().get(0).getCTP().getPPr();
 
-            assertThat(DocxTwips.of(properties.getInd().getLeft())).isEqualTo(20 * 20L);
-            assertThat(DocxTwips.of(properties.getInd().getRight())).isEqualTo(20 * 20L);
+            assertThat(DocxTwips.of(properties.getInd().getLeft())).isEqualTo(20 * 20L + REACH_LEFT);
+            assertThat(DocxTwips.of(properties.getInd().getRight())).isEqualTo(20 * 20L + REACH_RIGHT);
         }
     }
 

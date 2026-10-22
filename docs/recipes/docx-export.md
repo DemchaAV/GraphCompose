@@ -1173,6 +1173,25 @@ Word's thickest border, or a filled bar no taller than that — what `addDivider
 draws — is Word's own rule: an empty paragraph
 whose bottom border is the stroke, in its colour and thickness, from where the
 line starts to where it ends, with the space above and below the stroke kept.
+Word draws a paragraph's border past both its indents, and LibreOffice between
+them, so each indent is taken in by Word's reach: 1.42pt at the left and 1.51pt at
+the right (measured on nine rules half a point to 4pt thick, in the body, a row's
+column and a table cell alike: 1.36 to 1.49pt past the left, 1.44 to 1.59pt past the
+right, whatever the paragraph's mark or a side border written as none). Word sets the
+rule where the page ends it; LibreOffice sets it that much short at each end. A rule
+running past the width it is written in is held at that width's edge, and only what
+Word draws further than the page ends it is taken in. A rule whose column the export
+starts right of the page's — the weight column after a row's auto column given an
+editor's point — starts that much right in Word too, where Word's reach used to cover
+part of it (measured on the corpus: in Word 280 strokes nearer the page's and 13
+further, `ReceiptModern`'s leaders and `VioletGrid`'s separators starting 1pt right
+instead of 0.45pt left; in LibreOffice 281 rules moved in, 249 by 1.4pt at the left and
+1.5pt at the right; no word moved in either). A rule shorter than both keeps a tenth of
+a point of its paragraph, which Word still draws its reach past (measured: rules of 1, 2
+and 3pt stood 3.0, 2.88 and 3.12pt long in Word, each centred where the page centres
+it). A header's or footer's separator is its text's own paragraph
+border, so its indents stay its text's, and Word draws it that much past the
+margins.
 Word makes the paragraph a tenth of a point of line where the stroke has no room
 above it, and the border as wide as it draws it, in eighths of a point: what that
 stands past the stroke's box comes off the space owed below the rule first, and the

@@ -7007,25 +7007,88 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * What a panel in a cell whose left border hangs left of the cell's text gives up of its
      * table's width, in points.
      *
-     * <p>Word, in any cell, starts such a panel half that border in from the cell's text
-     * ({@link #leftEdgeHungOut}), and a table that then runs past the cell widens the cell, fixed
-     * layout or not: CompactMono's rail, a 3pt accent at its column's edge, pushed the main
-     * column 2.3pt right in Word. It gives up what runs past, no more than its left side had given
-     * its text — the half border the table is wider by, and what of the other half its margin
-     * could give back — so its text keeps the page's width and the slack. A panel bled left by a
-     * negative margin keeps the rest, as its text would otherwise narrow and wrap.</p>
+     * <p>Word and LibreOffice, in any cell, start such a panel half that border in from the
+     * cell's text: the border's outer edge on the text, which is where the {@code left edge} note
+     * counts from ({@link #leftEdgeHungOut}). Its table is half that border wider than the panel,
+     * so its right end stands the whole border right of the page's: measured, a rail with a 3pt
+     * accent in a row's column ended its fill 3.07pt right of the page's in Word and 2.99pt in
+     * LibreOffice. A table that runs past its cell widens the cell too, fixed layout or not:
+     * CompactMono's rail pushed the main column 2.3pt right in Word. It gives up what its left side
+     * had given its text — the half border the table is wider by, and what of the other half its
+     * margin could give back — so its right end stands where the page's does and its text, where
+     * nothing holds its right border in, keeps the page's width and the slack. What holding its
+     * right border in from the cell's edge has already taken counts towards it: that narrowing is
+     * reckoned with the table where the editors start it, and the two taken together set a card
+     * beside a gap up to 0.96pt further left than the border's alone did (measured).</p>
+     *
+     * <p>Its text keeps more, no more than what the hang gives, in three cases. Where holding its
+     * right border in takes less than the hang gives, its margin still gives what it took: an
+     * approximation no document of the corpus meets. Where its cell's margin holds its right border,
+     * its right margin gives what the hang gives up more there than held in at the cell's text: the
+     * cards beside a gap of Panel, MeteredInvoice, ObsidianInvoice and WorkspaceInvoice, which keep
+     * the width they had before the hang gave anything up. And where a line set past its text takes
+     * the hang back, to the table alone ({@link #whatTheHangSpares}): given back to the margin too,
+     * it cut off the stop ending a line of EngineeringResume's role card in both editors
+     * (measured).</p>
+     *
+     * <p>Measured with its border on the cell's text. A panel set in less than half its border
+     * gives up no more than the editors move it, and one bled left by a negative margin keeps the
+     * bleed, as its text would otherwise narrow and wrap: both reckoned from that case, not
+     * measured. One set in by half its border or more does not hang and gives up nothing, a step of
+     * half its border from one set in a hair less.</p>
      *
      * @param outer    the table's width, in points
      * @param indent   where the table starts from the cell's text, in points
      * @param halfLeft half the panel's left border, in points
      * @param padding  the panel's padding, whose left side gave its text the other half
+     * @param pulled   what holding its right border in from the cell's edge has taken off it, in
+     *                 points ({@link #pullOf})
      */
-    private double whatTheHangGivesUp(double outer, double indent, double halfLeft, DocumentInsets padding) {
-        if (currentCell == null || !(indent < 0) || !(halfLeft > 0) || !Double.isFinite(currentCellWidth)) {
+    private double whatTheHangGivesUp(double outer, double indent, double halfLeft, DocumentInsets padding,
+                                      double pulled) {
+        if (!hangsInItsCell(indent, halfLeft)) {
             return 0;
         }
-        double given = halfLeft + Math.min(halfLeft, Math.max(0, padding.left()));
+        double given = hangGiven(halfLeft, padding, indent);
+        return Math.max(whatTheHangMustGiveUp(outer, halfLeft, given),
+                Math.max(0, Math.min(outer, given - pulled)));
+    }
+
+    /**
+     * What of {@link #whatTheHangGivesUp} the panel gives up only to stand its right end where the
+     * page's does, in points: past what the cell takes ({@link #whatTheHangMustGiveUp}). A line
+     * running further past its text than the margin holds may take it back.
+     */
+    private double whatTheHangSpares(double outer, double indent, double halfLeft, DocumentInsets padding,
+                                     double pulled) {
+        if (!hangsInItsCell(indent, halfLeft)) {
+            return 0;
+        }
+        return whatTheHangGivesUp(outer, indent, halfLeft, padding, pulled)
+               - whatTheHangMustGiveUp(outer, halfLeft, hangGiven(halfLeft, padding, indent));
+    }
+
+    /**
+     * What of the hang's give-up the cell takes whatever the panel's lines need: what of the table,
+     * started half its left border in from the cell's text, runs past the cell, which Word widens
+     * to hold it.
+     */
+    private double whatTheHangMustGiveUp(double outer, double halfLeft, double given) {
         return Math.max(0, Math.min(given, halfLeft + outer - (currentCellWidth - insetRight)));
+    }
+
+    /** Whether a panel with a left border writes its table starting left of its cell's text. */
+    private boolean hangsInItsCell(double indent, double halfLeft) {
+        return currentCell != null && indent < 0 && halfLeft > 0 && Double.isFinite(currentCellWidth);
+    }
+
+    /**
+     * What a hung panel's left side gave its text, in points: the half border its table is wider
+     * by, and what of the other half its margin could give back — no more than the editors move
+     * the table, half its left border in from the cell's text, from where it is written.
+     */
+    private static double hangGiven(double halfLeft, DocumentInsets padding, double indent) {
+        return Math.min(halfLeft + Math.min(halfLeft, Math.max(0, padding.left())), halfLeft - indent);
     }
 
     /**
@@ -7040,8 +7103,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private double heldInItsCell(double outer, double room, double margin, double indent, double halfLeft,
                                  DocumentInsets padding) {
-        double held = outer - pullOf(outer, room, margin);
-        return held - whatTheHangGivesUp(held, indent, halfLeft, padding);
+        double pulled = pullOf(outer, room, margin);
+        return outer - pulled - whatTheHangGivesUp(outer - pulled, indent, halfLeft, padding, pulled);
     }
 
     /**
@@ -7290,6 +7353,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // and is named.
         double slackTaken = 0;
         double slackKept = 0;
+        // What the hang gave up past what the cell takes of it (whatTheHangMustGiveUp).
+        double hangSpare = 0;
         // The right margin, less what holding the border in from the cell's edge takes of it.
         double marginHeld = margins.right();
         // The table as wide as the page draws the panel, held in from nothing at its right.
@@ -7299,13 +7364,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             double asked = width + (inTheBody ? 0 : halfLeft) + halfRight;
             outer = heldInItsCell(asked, room, margins.right(), indent, halfLeft, padding);
             shortOfTheEdge = pullOf(asked, room, margins.right());
-            // Held in at the cell's text, a table whose left border hangs out of the cell gave up
-            // only what then ran past the text, its text keeping the rest of its width. Held at
-            // the cell's edge it runs further, and gives up more: that comes off its right margin
-            // too, so its text keeps that width.
+            // Held at the cell's edge, a table whose left border hangs out of the cell gives up more
+            // than held in at the cell's text: it runs further past the cell, and holding its
+            // border in has taken less of it (whatTheHangGivesUp). That comes off its right margin
+            // too, so its text keeps the width it has held in at the text. The cards beside a gap
+            // of Panel, MeteredInvoice, ObsidianInvoice and WorkspaceInvoice, which the cell's text
+            // would hold in by more than the hang gives, so keep the width they had before the
+            // hang gave anything up.
             double shortAtTheText = pullOf(asked, room - heldByTheCell, margins.right());
-            double hungMore = whatTheHangGivesUp(asked - shortOfTheEdge, indent, halfLeft, padding)
-                              - whatTheHangGivesUp(asked - shortAtTheText, indent, halfLeft, padding);
+            double hungMore = whatTheHangGivesUp(asked - shortOfTheEdge, indent, halfLeft, padding, shortOfTheEdge)
+                              - whatTheHangGivesUp(asked - shortAtTheText, indent, halfLeft, padding, shortAtTheText);
+            // What of the hang's give-up only stands the right end where the page's does, which a
+            // line running past its text may take back (below).
+            hangSpare = whatTheHangSpares(asked - shortOfTheEdge, indent, halfLeft, padding, shortOfTheEdge);
             marginHeld = margins.right() - shortOfTheEdge - Math.max(0, hungMore);
             double pageAsked = width - sized.slack() + (inTheBody ? 0 : halfLeft) + halfRight;
             slackKept = Math.max(0, outer - heldInItsCell(pageAsked, room, margins.right(), indent, halfLeft,
@@ -7313,7 +7384,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             slackTaken = Math.min(slackKept, marginHeld);
             slackKept -= slackTaken;
             outer -= slackTaken;
-            pageWide = pageAsked - whatTheHangGivesUp(pageAsked, indent, halfLeft, padding);
+            // As the hang gives up beside what holding the border in takes (whatTheHangGivesUp).
+            pageWide = pageAsked - whatTheHangGivesUp(pageAsked, indent, halfLeft, padding, shortOfTheEdge);
             if (Double.isFinite(room)) {
                 // The room ends half a point clear of the gridline; what that half point, what
                 // holds the panel in from the cell's text and what of the cell's margin the room
@@ -7430,11 +7502,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // (measureAtWordsSize). Where it runs, and the point an editor's face may set it wider,
         // further than the margin still holds, the slack goes back to the table, no more than came
         // off it: Word cuts off what passes the panel's edge, the stop ending a line of
-        // EngineeringResume's role card, set at 7.5pt where the page sets 7.25.
-        double givenBack = Math.min(slackTaken,
-                Math.max(0, linesPast + EDITOR_COLUMN_SLACK_POINTS - (marginHeld - slackTaken)));
-        if (givenBack > 0) {
-            outer += givenBack;
+        // EngineeringResume's role card, set at 7.5pt where the page sets 7.25. Then what the hang
+        // spared, to the table alone, as it came off the table and not the margin, its text that
+        // much wider: given back to the margin too, it cut that stop off again in Word and
+        // LibreOffice.
+        double past = Math.max(0, linesPast + EDITOR_COLUMN_SLACK_POINTS - (marginHeld - slackTaken));
+        double givenBack = Math.min(slackTaken, past);
+        double hangBack = Math.min(hangSpare, past - givenBack);
+        if (givenBack + hangBack > 0) {
+            outer += givenBack + hangBack;
             setTableWidth(table, outer);
             writeGrid(table, new double[]{outer});
             cellProperties(cell).getTcW().setW(BigInteger.valueOf(toTwips(outer)));
@@ -7443,9 +7519,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Less than a tenth of a point further right is not seen, nor a table holding slack its
         // right border's narrowing has already taken back. A panel broken over pages is a table a
         // page, and named once, at its widest.
-        double wider = Math.min(slackKept + givenBack, outer - pageWide);
+        double wider = Math.min(slackKept + givenBack + hangBack, outer - pageWide);
         if (wider >= 0.1 && paintsItsRightEnd(fill, borders)) {
-            rightEnds.merge(node, new RightEnd(wider, givenBack > 0), RightEnd::wider);
+            rightEnds.merge(node, new RightEnd(wider, givenBack + hangBack > 0), RightEnd::wider);
         }
         RightEnd rightEnd = last ? rightEnds.remove(node) : null;
         if (rightEnd != null) {

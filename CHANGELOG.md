@@ -8,6 +8,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export ends a panel hung out of its table cell where the page ends it.**
+  - A panel whose left border the page centres on its cell's text edge is written with a negative
+    indent, its table half that border wider than the panel. LibreOffice and Word start a nested
+    table half that border in from its cell's text, so the table stood the whole border right of
+    where it is written: its left border half that border right of the page's, and its right end
+    the whole border. The table gave up width only where it then ran past its cell.
+  - It now always gives up what its left side had given its text: the half border it is wider by,
+    and what its left margin gave back of the other half. Its right end stands where the page's
+    does. What holding its right border in from the cell's edge has already taken counts towards
+    it, so a card held in beside a gap stays where it was.
+  - What of it the cell does not take goes back to a line set past its text further than its
+    margin holds. Engineering Resume's role card would lose the stop ending a line in both editors
+    otherwise. The panel is then named wider (`right end`), as far as it reaches.
+  - Measured on Windows:
+    - A rail with a 3pt accent in a row's column ended its fill 3.07pt right of the page's in Word
+      and 2.99pt in LibreOffice, and now 0.07 and −0.01pt. The same rail in a filled panel's cell
+      ended 1.1 and 1.02pt right, now 0.14 and 0.02pt.
+    - Compact Mono's rail ended 0.9pt right in Word and 0.86pt in LibreOffice, now 0.06 and −0.04pt.
+      Compact Mono's and Engineering Resume's bordered cards and Nordic Clean's rail ended 0.43 to
+      0.64pt right in Word and 0.35 to 0.54pt in LibreOffice, now 0.24 to 0.35pt and 0.09 to
+      0.22pt, as a bordered panel's right border stands in a cell.
+    - No word moves in either editor.
+  - 11 of the corpus's 62 documents change. Engineering Resume's report names three panels wider
+    (`right end`), one of them now at the 3pt its fill stands right of the page's.
 - **A DOCX export ends a rule where the page ends it in Word.**
   - A horizontal line, a divider or a thin bar is written as an empty paragraph's bottom border,
     its ends the paragraph's indents. Word draws a paragraph's border past both indents, so every

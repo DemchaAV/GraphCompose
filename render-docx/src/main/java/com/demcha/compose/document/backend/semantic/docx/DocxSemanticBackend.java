@@ -14560,8 +14560,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * paragraph's height, held to a tenth of a point when there is none, the space below is
      * owed to what follows, what Word's paragraph stands taller than the box hangs below it,
      * and the rule's two ends are the paragraph's indents, each taken in by what Word draws a
-     * border past it ({@link #wordsRuleReach}): LibreOffice, which draws it between them, sets the
-     * rule that much short at each end. Word draws
+     * border past it ({@link #wordsRuleReach}): LibreOffice, which draws it between them, sets each
+     * end that much further in. Word draws
      * a border in its own dash lengths, so a dashed rule keeps its dash and not the pattern's
      * lengths, and the report says so.</p>
      */
@@ -14680,10 +14680,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * points: Word's reach, but no further than leaves the rule's paragraph a tenth of a point.
      *
      * <p>Word draws a paragraph's bottom border past both its indents and LibreOffice between
-     * them. Measured on nine rules, half a point to 4pt thick, indented from nothing to 61.7pt:
-     * Word drew them 1.36 to 1.49pt past the left indent and 1.44 to 1.59pt past the right,
-     * whatever their weight, the size of the paragraph's mark, or a left and right border written
-     * as none; in a row's column and in a table cell alike. {@code SubscriptionInvoice}'s
+     * them. Measured on nine rules in the body, half a point to 4pt thick, indented from nothing
+     * to 61.7pt: Word drew them 1.36 to 1.49pt past the left indent and 1.44 to 1.59pt past the
+     * right, whatever the size of the paragraph's mark or a left and right border written as none;
+     * rules of 1 and 3pt in a row's column and in a table cell fell in the same range, and a
+     * dashed and a dotted one reached as far as a solid one. {@code SubscriptionInvoice}'s
      * separators stood 1.32pt left of the page's and 1.57pt right, and its four-coloured strip's
      * segments ran that far into each other. A rule shorter than Word's reach at both ends keeps a
      * tenth of a point of its paragraph, which Word still draws the reach past: measured, rules of

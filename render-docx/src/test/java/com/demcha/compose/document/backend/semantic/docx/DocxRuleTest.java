@@ -100,6 +100,22 @@ class DocxRuleTest {
     }
 
     @Test
+    void aRuleHungLessThanWordsReachLeftOfItsCellsTextIsTakenInByWhatIsLeft() throws Exception {
+        // A point left of its row column's text: Word's 1.42pt reach less that point, 0.42pt in.
+        try (XWPFDocument document = export(page -> page.addRow(row -> row.spacing(12).weights(1, 1)
+                .addSection(s -> s.addLine(l -> l.horizontal(100).stroke(DocumentStroke.of(ACCENT, 1))
+                        .margin(new DocumentInsets(0, 0, 0, -1))))
+                .addSection(s -> s.addParagraph("Beside"))))) {
+            XWPFParagraph rule = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getCTP().getPPr() != null
+                                         && paragraph.getCTP().getPPr().isSetPBdr())
+                    .findFirst().orElseThrow();
+
+            assertThat(DocxTwips.of(rule.getCTP().getPPr().getInd().getLeft())).isEqualTo(REACH_LEFT - 20);
+        }
+    }
+
+    @Test
     void aRuleInACellWhoseWidthIsWordsEndsWordsReachShortOfTheCellsText() throws Exception {
         // No layout, an auto column: the table's columns are Word's, and the rule runs to the cell's
         // text edge, which it is held in from by Word's reach past it.

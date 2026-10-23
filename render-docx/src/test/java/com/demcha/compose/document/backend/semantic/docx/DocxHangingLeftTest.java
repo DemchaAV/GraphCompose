@@ -164,6 +164,10 @@ class DocxHangingLeftTest {
             assertThat(dash == null || !dash.isSetRight() || DocxTwips.of(dash.getRight()) <= reach + 10)
                     .as("and the dash across all of it: the hang its cells take moves text, not widths")
                     .isTrue();
+            // It starts at its cell's text, the hang being the cell's: its left indent is Word's reach.
+            assertThat(dash == null || !dash.isSetLeft() ? 0 : DocxTwips.of(dash.getLeft()))
+                    .as("from its cell's text, Word's reach in")
+                    .isEqualTo(Math.round(DocxSemanticBackend.WORD_RULE_REACH_LEFT_POINTS * 20));
         }
     }
 

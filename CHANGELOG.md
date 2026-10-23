@@ -18,12 +18,13 @@ follow semantic versioning; release dates are ISO 8601.
     Word draws further than the page ends it is taken in. A rule shorter than both keeps a tenth of
     a point of its paragraph: rules of 1, 2 and 3pt stood 3.0, 2.88 and 3.12pt long in Word, each
     centred where the page centres it.
-  - LibreOffice draws the border between the indents, so it now sets each rule that much short at
-    each end.
+  - LibreOffice draws the border between the indents, so it now sets each end of a rule that much
+    further in.
   - Measured on Windows:
-    - Nine rules, half a point to 4pt thick, in the body, a row's column and a table cell: Word drew
-      them 1.36 to 1.49pt past the left indent and 1.44 to 1.59pt past the right. Neither a side
-      border written as none nor the size of the paragraph's mark changed that.
+    - Nine rules in the body, half a point to 4pt thick: Word drew them 1.36 to 1.49pt past the left
+      indent and 1.44 to 1.59pt past the right. Neither a side border written as none nor the size
+      of the paragraph's mark changed that. Rules of 1 and 3pt in a row's column and in a table
+      cell fell in the same range, and a dashed and a dotted one reached as far as a solid one.
     - On the corpus, in Word, 280 strokes stand nearer the page's and 13 further. The 13 are rules
       whose column the export already starts right of the page's, which Word's reach used to cover
       in part: Receipt Modern's leaders and Violet Grid's separators, after a row's auto column

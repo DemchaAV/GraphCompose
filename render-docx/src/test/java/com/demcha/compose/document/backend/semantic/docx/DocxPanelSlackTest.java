@@ -440,8 +440,12 @@ class DocxPanelSlackTest {
             assertThat(twips(left.getCTTbl().getTblPr().getTblW().getW()))
                     .as("as wide as the page draws it, its right end where the page's is")
                     .isEqualTo(Math.round(placed * 20));
-            assertThat(textWidth(left)).as("the page's text, the slack and half its right border")
-                    .isCloseTo(placed - 20 + SLACK + 0.5, within(0.05));
+            // Held in at the cell's text, its border would take half a point of its margin, and
+            // its hang give up the rest of its point: held at the gap's edge, the hang gives up
+            // the whole point, and that half point comes off its margin.
+            assertThat(textWidth(left))
+                    .as("the page's text and its two borders, less the point the hang gives up but for that half point")
+                    .isCloseTo(placed - 18 - 1 + 0.5, within(0.05));
         }
         List<DocxExportReport.Note> notes = notes(content, RIGHT_BORDER);
         assertThat(notes).as("only the right card's border is held in").hasSize(1);

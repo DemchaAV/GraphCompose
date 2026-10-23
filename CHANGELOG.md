@@ -26,9 +26,9 @@ follow semantic versioning; release dates are ISO 8601.
       and 2.99pt in LibreOffice, and now 0.07 and −0.01pt. The same rail in a filled panel's cell
       ended 1.1 and 1.02pt right, now 0.14 and 0.02pt.
     - Compact Mono's rail ended 0.9pt right in Word and 0.86pt in LibreOffice, now 0.06 and −0.04pt.
-      Compact Mono's and Engineering Resume's bordered cards and Nordic Clean's rail ended 0.35 to
-      0.64pt right, now 0.09 to 0.35pt in Word and 0.09 to 0.22pt in LibreOffice, as a bordered
-      panel's right border stands in a cell.
+      Compact Mono's and Engineering Resume's bordered cards and Nordic Clean's rail ended 0.43 to
+      0.64pt right in Word and 0.35 to 0.54pt in LibreOffice, now 0.24 to 0.35pt and 0.09 to
+      0.22pt, as a bordered panel's right border stands in a cell.
     - No word moves in either editor.
   - 11 of the corpus's 62 documents change. Engineering Resume's report names three panels wider
     (`right end`), one of them now at the 3pt its fill stands right of the page's.

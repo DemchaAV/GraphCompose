@@ -632,8 +632,8 @@ How it lands:
   page's does, where it ran the whole border further right (measured: a rail with a 3pt accent
   ended its fill 3.07pt right of the page's in Word and 2.99pt in LibreOffice, and 0.07 and
   −0.01pt once given up; `CompactMono`'s rail 0.9 and 0.86pt, now 0.06 and −0.04pt; bordered
-  cards 0.35 to 0.64pt, now 0.09 to 0.35pt in Word and 0.09 to 0.22pt in LibreOffice, as a
-  bordered panel's right border stands in a cell).
+  cards 0.43 to 0.64pt in Word and 0.35 to 0.54pt in LibreOffice, now 0.24 to 0.35pt and 0.09
+  to 0.22pt, as a bordered panel's right border stands in a cell).
   What holding its right border in from the cell's edge takes counts towards it. A line set
   past its text further than its margin holds takes back what of it the cell does not take,
   and the panel is named wider (`right end`): `EngineeringResume`'s role card would lose the

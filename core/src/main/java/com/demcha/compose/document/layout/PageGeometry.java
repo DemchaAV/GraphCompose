@@ -76,4 +76,24 @@ public final class PageGeometry {
     public double innerHeightForPage(int pageIndex) {
         return Math.max(0.0, canvas.height() - marginForPage(pageIndex).vertical());
     }
+
+    /**
+     * Equal to another resolver of the same canvas and overrides, as the layout graph that
+     * carries it is equal to one laid out alike.
+     */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof PageGeometry geometry
+               && canvas.equals(geometry.canvas) && overrides.equals(geometry.overrides);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(canvas, overrides);
+    }
+
+    @Override
+    public String toString() {
+        return "PageGeometry[canvas=" + canvas + ", overrides=" + overrides + "]";
+    }
 }

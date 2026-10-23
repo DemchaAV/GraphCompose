@@ -268,6 +268,28 @@ class DocxNodeFieldLedgerTest {
             + "lines placed from the edge, in a frame at its height where a measured zone shares its kind "
             + "with another page zone; its pictures are written in the line at the size the page draws them");
 
+    // What a session hands a semantic export beside the tree and its output options, and what
+    // the layout it hands carries: a session's input reaches the export through these.
+    private static final Map<String, Entry> EXPORT_CONTEXT = fields(
+            "canvas:WRITTEN:the page's size, its margins with no layout, and its side margins on every page, which "
+            + "the body is written against, a page's that differ from them named",
+            "customFontFamilies:REPORTED:a face that may not travel or cannot be read, named as an embedded "
+            + "font; any other is embedded",
+            "outputFile:INERT:where the bytes go, nothing in them",
+            "outputOptions:WRITTEN:as its own entries",
+            "layoutGraph:WRITTEN:as its own entries");
+    private static final Map<String, Entry> LAYOUT = fields(
+            "canvas:WRITTEN:the page's size",
+            "totalPages:WRITTEN:as a page total field's placeholder, which Word counts again and LibreOffice "
+            + "shows as it is",
+            "nodes:WRITTEN:where the nodes' entries say",
+            "fragments:WRITTEN:where the nodes' entries say",
+            "pageGeometry:REPORTED:a page's side margins, written as the document's, named where they differ; "
+            + "top and bottom margins that differ from those Word sets a page with, where it starts inside a "
+            + "block, after a page whose content reaches its foot under a table, or in a document of sections "
+            + "whose header or footer counts a section's pages, named; any other is written, a later page's top "
+            + "and bottom margins as a Word section starting where it does");
+
     static {
         node(AlignNode.class, "name:INERT", "child:WRITTEN",
                 "align:REPORTED:composed in a table cell where the layout does not say where its child stands, "
@@ -569,6 +591,16 @@ class DocxNodeFieldLedgerTest {
         assertThat(components(DocumentOutputOptions.class))
                 .as("the output options a session hands every export")
                 .containsExactlyInAnyOrderElementsOf(OUTPUT_OPTIONS.keySet());
+    }
+
+    @Test
+    void everyPartOfWhatASessionHandsAnExportHasAnEntry() {
+        assertThat(components(com.demcha.compose.document.backend.semantic.SemanticExportContext.class))
+                .as("the context a session hands a semantic export")
+                .containsExactlyInAnyOrderElementsOf(EXPORT_CONTEXT.keySet());
+        assertThat(components(com.demcha.compose.document.layout.LayoutGraph.class))
+                .as("the layout it hands")
+                .containsExactlyInAnyOrderElementsOf(LAYOUT.keySet());
     }
 
     private static void node(Class<? extends DocumentNode> kind, String... specs) {

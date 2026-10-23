@@ -468,6 +468,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The note what is drawn now is drawn for: one the section's end finds nothing to carry is
     // named there instead (endSection). Null where no note names it.
     private DocxDrawingAnchors.Owner drawingFor;
+    // The pages and node of each body element the section writes, where a page with other
+    // margins starts (DocxPageMarginSections).
+    private final java.util.Map<IBodyElement, DocxPageMarginSections.Owner> bodyOwners =
+            new java.util.IdentityHashMap<>();
+    // Whether the section's pages are laid out against more than one set of margins.
+    private boolean marginsVary;
+    // Whether the section's header or footer counts its own pages (SECTIONPAGES), which a Word
+    // section of its own for a page with other margins would count apart.
+    private boolean countsItsSectionPages;
+    // The hairlines the body sets between two tables, which a section may end in.
+    private final java.util.Set<XWPFParagraph> tableSeparators =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     // Where the section being written starts in the report: its notes' paths are its own.
     private int sectionNotesFrom;
     // Those of them a rule composed in a cell took, written as its border instead (takeTheDrawingOf).
@@ -1285,11 +1297,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 settleTheLineAbove();
                 raiseRows();
                 lowerTheLinesSetHigh();
+                // Where its pages start Word sections of their own, which sets the margins of its
+                // last page, under which what closes it must fit.
+                boolean zoned = !context.outputOptions().zones().isEmpty()
+                                || !context.outputOptions().headersAndFooters().isEmpty();
+                DocxPageMarginSections.Plan margins = DocxPageMarginSections.plan(document, sectionFirstElement,
+                        bodyOwners, tableSeparators, layout, report, sectioned ? "section " + (index + 1) : null,
+                        countsItsSectionPages, context.canvas() == null ? null : context.canvas().margin(), zoned);
                 // The paragraph closing a section that ends with a table is also the one that
                 // carries the drawings nothing else on the last page carried.
                 reportDrawingsLeftOver(document,
-                        dropTheSpaceAtTheEnd(document, roomBelowTheFlow(context.layoutGraph()),
+                        dropTheSpaceAtTheEnd(document, roomBelowTheFlow(margins.lastPageBottom()),
                                 index == sections.size() - 1));
+                DocxPageMarginSections.apply(document, margins);
             }
             // Every bookmark is written now, those a reference on an earlier page reads included.
             nameTheBlocksNoBookmarkMarks();
@@ -1383,6 +1403,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         forgetTheHang();
         // The layout counts a section's pages from its own first.
         lastEndPage = -1;
+        bodyOwners.clear();
+        marginsVary = DocxPageMarginSections.vary(layout);
+        countsItsSectionPages = false;
+        tableSeparators.clear();
         lastBodyParagraph = null;
         lastWrittenNode = null;
         lastWrittenParagraph = null;
@@ -2364,8 +2388,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     run.setText(segment.text());
                 }
                 case PAGE -> appendField(para, " PAGE" + format + " ", numerals.format(1), style);
-                case PAGES -> appendField(para, (sectioned ? " SECTIONPAGES" : " NUMPAGES") + format + " ",
-                        numerals.format(Math.max(1, layout.pageCount())), style);
+                case PAGES -> {
+                    countsItsSectionPages |= sectioned;
+                    appendField(para, (sectioned ? " SECTIONPAGES" : " NUMPAGES") + format + " ",
+                            numerals.format(Math.max(1, layout.pageCount())), style);
+                }
                 case DATE -> {
                     XWPFRun run = para.createRun();
                     applyStyle(run, style);
@@ -3529,6 +3556,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // A multi-section document numbers each section from 1, so the total a zone states is
         // its section's; in a document of one section the two are the same count.
         String total = sectioned ? " SECTIONPAGES " : " NUMPAGES ";
+        countsItsSectionPages |= sectioned && field.kind() == PageFieldKind.TOTAL;
         appendField(para, field.kind() == PageFieldKind.TOTAL ? total : " PAGE ",
                 fieldPlaceholder(field.kind()), field.textStyle());
     }
@@ -3609,6 +3637,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             currentPage = placed.startPage();
         }
         boolean inTheBody = currentCell == null;
+        int bodyElements = inTheBody && marginsVary ? document.getBodyElements().size() : -1;
         DocumentNode outer = writing;
         writing = node;
         try {
@@ -3617,6 +3646,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writing = outer;
             if (placed != null && inTheBody) {
                 lastEndPage = Math.max(lastEndPage, placed.endPage());
+                // What it wrote in the body and no node in it claimed is its own.
+                List<IBodyElement> elements = document.getBodyElements();
+                for (int index = bodyElements; index >= 0 && index < elements.size(); index++) {
+                    bodyOwners.putIfAbsent(elements.get(index),
+                            new DocxPageMarginSections.Owner(placed.startPage(), placed.endPage(), node));
+                }
             }
             if (placed != null && panelCell != null && currentCell == panelCell) {
                 panelLastEndPage = Math.max(panelLastEndPage, placed.endPage());
@@ -9222,26 +9257,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final double EDITOR_LINE_SHARE = 1.25;
 
     /**
-     * How far above its bottom margin a section's content ends on its last page, in points; 0
-     * where its last page holds no content, and NaN where there is no layout to say. Only the
-     * content counts: a page's backgrounds, its zones
-     * with the fields in them and a timeline's rail — fragments under a path of the layout's
-     * own, starting {@code @} — are drawn elsewhere and take no room in the flow.
+     * How far above the bottom margin Word sets its last page with a section's content ends there,
+     * in points; 0 where its last page holds no content, and NaN where there is no layout to say.
+     * Only the content counts ({@link DocxLayoutMetrics#lowestContentOn}).
+     *
+     * @param bottom the bottom margin of the section's last page as written
      */
-    private static double roomBelowTheFlow(com.demcha.compose.document.layout.LayoutGraph graph) {
-        if (graph == null || graph.totalPages() <= 0) {
+    private double roomBelowTheFlow(double bottom) {
+        if (layout.pageCount() <= 0) {
             return Double.NaN;
         }
-        int lastPage = graph.totalPages() - 1;
-        double lowest = Double.NaN;
-        for (com.demcha.compose.document.layout.PlacedFragment fragment : graph.fragments()) {
-            if (fragment.pageIndex() != lastPage || fragment.path() == null || fragment.path().startsWith("@")) {
-                continue;
-            }
-            // A fragment's y is its bottom edge, measured up from the page's foot.
-            lowest = Double.isNaN(lowest) ? fragment.y() : Math.min(lowest, fragment.y());
-        }
-        return Double.isNaN(lowest) ? 0 : lowest - graph.canvas().margin().bottom();
+        double lowest = layout.lowestContentOn(layout.pageCount() - 1);
+        return Double.isNaN(lowest) ? 0 : lowest - bottom;
     }
 
     /**
@@ -19857,6 +19884,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else {
             separator = newBodyParagraph(document);
             holdToHairline(separator);
+            tableSeparators.add(separator);
         }
         CTPPr properties = separator.getCTP().isSetPPr()
                 ? separator.getCTP().getPPr()
@@ -20061,7 +20089,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 || Double.isNaN(canvasHeight) || Double.isNaN(canvasTopMargin)) {
             return Double.NaN;
         }
-        return canvasHeight - canvasTopMargin - placed.placementY() - placed.placementHeight();
+        // The top margin of its page as the layout set it, a per-page margin's where one is.
+        double top = layout.marginOf(placed.startPage()) != null ? layout.marginOf(placed.startPage()).top()
+                : canvasTopMargin;
+        return canvasHeight - top - placed.placementY() - placed.placementHeight();
     }
 
     /**
@@ -20740,9 +20771,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 ? STPageOrientation.LANDSCAPE
                 : STPageOrientation.PORTRAIT);
 
+        // The top and bottom margins its first page is laid out against: the canvas's, or a
+        // per-page margin's, which a later page's differing from them start a section of their own
+        // with (DocxPageMarginSections). The sides stay the canvas's, which the body is written
+        // against.
+        com.demcha.compose.engine.components.style.Margin first =
+                layout.marginOf(0) != null ? layout.marginOf(0) : canvas.margin();
         CTPageMar margin = sectPr.isSetPgMar() ? sectPr.getPgMar() : sectPr.addNewPgMar();
-        margin.setTop(BigInteger.valueOf(toTwips(canvas.margin().top())));
-        margin.setBottom(BigInteger.valueOf(toTwips(canvas.margin().bottom())));
+        margin.setTop(BigInteger.valueOf(toTwips(first.top())));
+        margin.setBottom(BigInteger.valueOf(toTwips(first.bottom())));
         margin.setLeft(BigInteger.valueOf(toTwips(canvas.margin().left())));
         margin.setRight(BigInteger.valueOf(toTwips(canvas.margin().right())));
     }

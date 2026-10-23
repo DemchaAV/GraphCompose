@@ -70,7 +70,6 @@ final class DocumentPageBackgrounds {
             }
         }
         combined.addAll(base.fragments());
-        return new LayoutGraph(base.canvas(), base.totalPages(),
-                base.nodes(), combined);
+        return base.withFragments(combined);
     }
 }

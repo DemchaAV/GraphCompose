@@ -188,12 +188,22 @@ Side margins stay the document's. The body is written against its width — a ru
 panel's room — and the page sets its header and footer there, so a page whose side margins
 differ is named and Word sets its text between the document's.
 
-A section ends in a paragraph of the body, so a page that starts inside a block — the rows of a
-table, the lines of a paragraph, a panel — does not start one, nor does a page after one whose
-content reaches its foot under a table, where the line that would end the section has no room.
-Neither does a page of a document of several sections whose header or footer counts its
-section's pages: Word would count a section of its own apart. The report names each (`page
-margin`), on the block where there is one, and Word sets that page with the margins in force.
+A section ends in a paragraph of the body. A page that starts among a table's rows splits the
+table there: the rows from that one on are written as a table of their own, under copies of the
+header rows the layout repeats on each page, and the hairline between the two parts ends the
+section. Measured in Word and LibreOffice on Windows, every page holds the lines the layout sets
+on it. The report names the split on the table (`page margin`).
+
+A page that starts inside any other block — the lines of a paragraph, a panel — does not start a
+section. Nor does a page that starts at a table's row where a cell spans rows across it, where
+only the header rows stand above it, or where a header row holds a bookmark or a drawing, which
+the file can hold only once. Nor where a header row or a row from that one on holds a page
+reference, which the export settles in the paragraph it wrote it in once the body is written. A
+page after one whose content reaches its foot, under a table or in its rows, starts none either,
+as the line that would end the section has no room. Neither does a page of a
+document of several sections whose header or footer counts its section's pages: Word would count
+a section of its own apart. The report names each (`page margin`), on the block where there is
+one, and Word sets that page with the margins in force.
 
 ## Finding out what the export could not carry
 

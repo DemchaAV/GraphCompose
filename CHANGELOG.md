@@ -8,6 +8,32 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export splits a body table at the row where a page with other top and bottom margins
+  starts.**
+  - A Word section starts only between blocks. So a page that the layout started among a table's
+    rows was named, and Word set it with the margins of the page before. `WorkspaceInvoice` with
+    its line items run onto three pages set 58 words of its third page on its second.
+  - The table is written as two at the row the page starts with, and the hairline between the two
+    parts ends the section. The second part opens with copies of the table's header rows, which
+    the layout repeats at the top of each page.
+  - Measured in Word and LibreOffice on Windows:
+    - On tables with and without header rows, and across three sets of margins, every page held
+      the lines the layout sets on it. With header rows, each line stood within 0.4pt. Without
+      them, a continued table's pages stand about half a point lower in both editors, as they do
+      in the same table written whole.
+    - In `WorkspaceInvoice`, every word stood on its page, within 0.5pt. `MerchantInvoice` and
+      `PaymentsInvoice` are split too, and both editors set every word where they did before,
+      which was already its page.
+  - The report names the split on the table (`page margin`). A table is still not split, and its
+    page is still named on it, where:
+    - a cell spans rows across that row;
+    - only its header rows stand above that row;
+    - a header row holds a bookmark or a drawing, which the file can hold only once;
+    - a header row or a row from that one on holds a page reference, which the export settles in
+      the paragraph it wrote it in once the body is written;
+    - the rows above that row reach the foot of their page, leaving no room for the hairline.
+  - The corpus is unchanged: none of its documents has margins that change from page to page.
+
 - **A DOCX export writes top and bottom margins that change from page to page as Word
   sections.**
   - `DocumentSession.pageMargins(...)` reached the layout only. The DOCX wrote the canvas's
@@ -30,11 +56,11 @@ follow semantic versioning; release dates are ISO 8601.
     panel's room among them — and from which the page sets its header and footer. A page whose
     side margins differ is named.
   - The report names, and the export starts no section at, a page that starts inside a block —
-    the rows of a table, the lines of a paragraph, a panel — or after a page whose content
-    reaches its foot under a table, and a page of a document of several sections whose header or
-    footer counts its section's pages, which Word would count apart. The four invoice presets
-    that set another bottom margin from page 2 start their second page inside their line items,
-    so their later pages are named, not written.
+    the lines of a paragraph, a panel — or after a page whose content reaches its foot under a
+    table, and a page of a document of several sections whose header or footer counts its
+    section's pages, which Word would count apart. `ObsidianInvoice`, which sets another bottom
+    margin from page 2, starts its second page inside the panel holding its line items, so its
+    later pages are named, not written.
   - The corpus is unchanged: none of its documents has margins that change from page to page.
 
 - **A DOCX export names a document's timeline rails once.**

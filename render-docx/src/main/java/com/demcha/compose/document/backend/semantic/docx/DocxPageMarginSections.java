@@ -43,8 +43,10 @@ import java.util.Set;
  * margins differ is named.</p>
  *
  * <p>A section ends in a paragraph of the body, so it can start only between blocks written
- * there. Where the page starts inside a block — the rows of a table, the lines of a paragraph,
- * a panel — its margins are named instead, and Word sets that page with the margins in force.</p>
+ * there. A table the page starts among the rows of is split at the row it starts with
+ * ({@link DocxTableSplit}). Where the page starts inside any other block — the lines of a
+ * paragraph, a panel — its margins are named instead, and Word sets that page with the margins in
+ * force.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -56,9 +58,10 @@ final class DocxPageMarginSections {
     private static final double POINT_TO_TWIP = 20;
 
     // A section's end needs a line under the block before it; past a table there is none but a
-    // hairline, the one it is given or the one between two tables, which a page whose content
-    // reaches its foot moves onto a page of its own. Two points, as a table's rows rounded to whole
-    // twips stand an editor's page of them a little lower than the layout's.
+    // hairline — the one it is given, the one between two tables or the one between a table's two
+    // parts — which a page whose content reaches its foot moves onto a page of its own. Two
+    // points, as a table's rows rounded to whole twips stand an editor's page of them a little
+    // lower than the layout's.
     private static final double ROOM_FOR_THE_END = 2;
 
     /**
@@ -83,11 +86,14 @@ final class DocxPageMarginSections {
 
     /**
      * What ends the section before a start: a page break written there, a paragraph standing there —
-     * the one before it, or a hairline between two tables — or else a hairline put before {@code at}.
+     * the one before it, or a hairline between two tables — or else a hairline put before {@code at},
+     * or, where {@code row} is not -1, between the two parts of the table {@code at} is split into
+     * before that row.
      *
      * @param hairline whether what ends it is a hairline under a table, which needs room on its page
      */
-    private record Carrier(XWPFParagraph pageBreak, XWPFParagraph paragraph, IBodyElement at, boolean hairline) {
+    private record Carrier(XWPFParagraph pageBreak, XWPFParagraph paragraph, IBodyElement at, int row,
+                           boolean hairline) {
     }
 
     /**
@@ -181,12 +187,18 @@ final class DocxPageMarginSections {
                 return new Plan(opening, List.of(), zoned);
             }
             Owner inside = spanning(page, elements, owners);
-            int at = inside != null ? -1 : firstOn(page, elements, owners);
-            if (at >= 0 && owners.get(elements.get(at)).first() != page) {
-                // The first block after it starts on a later page: none starts this one.
-                at = -1;
+            XWPFTable table = inside == null ? null : tableOf(inside, elements, owners);
+            Carrier carrier = null;
+            if (table != null) {
+                int row = DocxTableSplit.rowStarting(table, page, index -> layout.rowPage(inside.node(), index));
+                carrier = row < 0 ? null : new Carrier(null, null, table, row, true);
+            } else if (inside == null) {
+                int at = firstOn(page, elements, owners);
+                // Where the first block after it starts on a later page, none starts this one.
+                carrier = at < 0 || owners.get(elements.get(at)).first() != page ? null
+                        : carrierBefore(at, elements, owners, separators);
             }
-            if (at < 0) {
+            if (carrier == null) {
                 if (inside == null || inside.node() != lastNamed) {
                     report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN,
                             inside != null ? layout.pathOf(inside.node()) : section,
@@ -197,21 +209,31 @@ final class DocxPageMarginSections {
                 }
                 continue;
             }
-            Carrier carrier = carrierBefore(at, elements, owners, separators);
             // A page with no content has room for a hairline.
             double room = layout.lowestContentOn(page - 1) - inForce.bottom();
             if (carrier.hairline() && room < ROOM_FOR_THE_END) {
-                report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, section, notWritten + "page " + page
+                report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN,
+                        table != null ? layout.pathOf(inside.node()) : section, notWritten + "page " + page
                         + "'s content reaches its foot, where the paragraph that would end a Word section before page "
                         + (page + 1) + " would open a page of its own");
                 continue;
             }
             starts.add(new Start(page, margin, carrier));
-            report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, section, differ + ": written as a Word "
-                    + "section that starts where page " + (page + 1) + " does, its page break fixed there, so text an "
-                    + "edit adds above it no longer runs onto that page");
+            if (table != null) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, layout.pathOf(inside.node()), differ
+                        + ": written as a Word section that starts at the row page " + (page + 1) + " starts with, the "
+                        + "table written as two there" + (DocxTableSplit.headerRows(table) > 0
+                        ? ", the second part opening with its header rows" : "") + ", and its page break fixed there, "
+                        + "so rows an edit adds above it no longer run onto that page");
+            } else {
+                report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, section, differ + ": written as a Word "
+                        + "section that starts where page " + (page + 1) + " does, its page break fixed there, so text "
+                        + "an edit adds above it no longer runs onto that page");
+            }
             inForce = margin;
             inForceFrom = page;
+            // A block named for a page before this section is named again for one after it.
+            lastNamed = null;
         }
         return new Plan(opening, starts, zoned);
     }
@@ -250,22 +272,26 @@ final class DocxPageMarginSections {
         }
         CTSectPr body = bodySectPr(document);
         CTSectPr opening = (CTSectPr) body.copy();
+        // Found last to first: a table split at two rows is split at the later one first, so the
+        // earlier still stands where the plan found it.
+        XWPFParagraph[] carriers = new XWPFParagraph[plan.starts().size()];
+        for (int index = carriers.length - 1; index >= 0; index--) {
+            carriers[index] = carrierOf(document, plan.starts().get(index).carrier());
+        }
         Margin margin = plan.opening();
-        boolean first = true;
-        for (Start start : plan.starts()) {
+        for (int index = 0; index < carriers.length; index++) {
             CTSectPr ending = (CTSectPr) opening.copy();
-            if (!first) {
+            if (index > 0) {
                 asALaterSection(ending, opening, margin, plan.zoned());
             }
-            XWPFParagraph carrier = carrierOf(document, start.carrier());
+            XWPFParagraph carrier = carriers[index];
             CTPPr properties = carrier.getCTP().isSetPPr() ? carrier.getCTP().getPPr() : carrier.getCTP().addNewPPr();
             // Kept with the next paragraph, on the page the section's break opens, it would go there.
             if (properties.isSetKeepNext()) {
                 properties.unsetKeepNext();
             }
             properties.setSectPr(ending);
-            margin = start.margin();
-            first = false;
+            margin = plan.starts().get(index).margin();
         }
         asALaterSection(body, opening, margin, plan.zoned());
     }
@@ -307,15 +333,29 @@ final class DocxPageMarginSections {
         IBodyElement element = elements.get(at);
         IBodyElement before = at > 0 ? elements.get(at - 1) : null;
         if (element instanceof XWPFParagraph breaking && owners.get(breaking).node() instanceof PageBreakNode) {
-            return new Carrier(breaking, null, null, false);
+            return new Carrier(breaking, null, null, -1, false);
         }
         if (element instanceof XWPFParagraph separator && separators.contains(separator)) {
-            return new Carrier(null, separator, null, true);
+            return new Carrier(null, separator, null, -1, true);
         }
         if (before instanceof XWPFParagraph last) {
-            return new Carrier(null, last, null, false);
+            return new Carrier(null, last, null, -1, false);
         }
-        return new Carrier(null, null, element, true);
+        return new Carrier(null, null, element, -1, true);
+    }
+
+    /**
+     * The table a block wrote in the body, if it wrote one: a table node's, its rows the node's,
+     * or a panel's, of no rows the layout placed.
+     */
+    private static XWPFTable tableOf(Owner block, List<IBodyElement> elements, Map<IBodyElement, Owner> owners) {
+        for (IBodyElement element : elements) {
+            Owner owner = owners.get(element);
+            if (owner != null && owner.node() == block.node() && element instanceof XWPFTable table) {
+                return table;
+            }
+        }
+        return null;
     }
 
     private static XWPFParagraph carrierOf(XWPFDocument document, Carrier carrier) {
@@ -332,6 +372,9 @@ final class DocxPageMarginSections {
         }
         if (carrier.paragraph() != null) {
             return carrier.paragraph();
+        }
+        if (carrier.row() >= 0) {
+            return hairline(DocxTableSplit.split(document, (XWPFTable) carrier.at(), carrier.row()));
         }
         XmlObject at = carrier.at() instanceof XWPFTable table ? table.getCTTbl() : ((XWPFParagraph) carrier.at()).getCTP();
         try (XmlCursor cursor = at.newCursor()) {

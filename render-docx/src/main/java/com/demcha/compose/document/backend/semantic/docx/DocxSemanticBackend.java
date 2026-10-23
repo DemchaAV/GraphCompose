@@ -10981,10 +10981,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * What a paragraph writes of its own sides as indents, in points: its margin and padding there,
+     * What a paragraph asks of its own sides as indents, in points: its margin and padding there,
      * less, in a table cell, the editor's points off each side it is not set from
-     * ({@link #EDITOR_SLACK_POINTS}); a side below zero as it is.
+     * ({@link #EDITOR_SLACK_POINTS}); a side below zero as it is, which a table cell then holds at
+     * its text ({@link #writeParagraph}).
      *
+     * @param node    the paragraph, whose direction and alignment say which side it is set from
      * @param left    its left margin and padding, as far as its paragraph writes them
      * @param right   its right margin and padding
      * @param inACell whether it is written in a table cell
@@ -18896,9 +18898,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * others leave: the row keeps its width, and a fixed column its size. Each weight column gives
      * in proportion to its text box and never more than it has, and what stands at the edges
      * between the columns moves that much off the page's — ReceiptModern's amounts, set after their
-     * leaders at the row's end, 0.9 to 1pt left in both editors — which the report names
-     * ({@code right end}) unless the weight columns giving it hold only spacers or it is under a
-     * tenth of a point. A row with no weight column gives what its gaps hold and no more. Written
+     * leaders at the row's end, 0.84 to 1.1pt left in Word and 0.86 to 1.02pt in LibreOffice —
+     * which the report names ({@code right end}) unless the weight columns giving it hold only
+     * spacers or it is under a tenth of a point. A row with no weight column gives what its gaps hold and no more. Written
      * as placed: a row with no auto column, and one with no stated columns — weights or an even
      * split. A row cannot state columns and be laid out as flex; {@code RowNode} refuses the
      * pair.</p>
@@ -18971,11 +18973,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return 0;
         }
         if (child instanceof ParagraphNode paragraph) {
-            // In the row's cell, which starts past its left margin.
+            // In the row's cell, which starts past its left margin and holds no side of it below
+            // zero (writeParagraph): a side a margin below zero pulls out stands at the cell's text.
             double[] sides = writtenSides(paragraph, paragraph.padding().left(),
                     paragraph.margin().right() + paragraph.padding().right(), true);
             double text = width.getAsDouble() - paragraph.padding().left() - paragraph.padding().right();
-            return Math.max(0, textBoxOf(column) - sides[0] - sides[1] - text);
+            return Math.max(0, textBoxOf(column) - Math.max(0, sides[0]) - Math.max(0, sides[1]) - text);
         }
         return Math.max(0, textBoxOf(column) - width.getAsDouble() - Math.max(0, child.margin().right()));
     }

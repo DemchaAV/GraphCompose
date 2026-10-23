@@ -432,6 +432,20 @@ class DocxEditorSlackTest {
     }
 
     @Test
+    void anAutoParagraphsSidePulledOutIsNoRoom() throws Exception {
+        // A right margin below zero pulls its side 2pt into the 2pt its neighbour stands in by: its
+        // cell holds that side at its text, so the column has no room past the page's line.
+        ExportedRow exported = exportRow(row -> row
+                .spacing(0)
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addParagraph(p -> p.text("Experience").margin(new DocumentInsets(0, -2, 0, 0)))
+                .addParagraph(p -> p.text("…").margin(new DocumentInsets(0, 0, 0, 2))));
+
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0) + SLACK_TWIPS);
+        assertThat(exported.notes(RIGHT_END)).hasSize(1);
+    }
+
+    @Test
     void aCentredAutoParagraphTakesNoneOfThePointFromTheGap() throws Exception {
         ExportedRow exported = exportRow(row -> row
                 .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))

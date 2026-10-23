@@ -491,6 +491,8 @@ class DocxRuleTest {
             XWPFParagraph rule = document.getTables().get(0).getRow(0).getCell(1).getParagraphs().get(0);
 
             assertThat(DocxTwips.of(rule.getCTP().getPPr().getInd().getLeft())).isEqualTo(REACH_LEFT);
+            assertThat(DocxTwips.of(rule.getCTP().getPPr().getInd().getRight())).as("to its cell's end")
+                    .isEqualTo(REACH_RIGHT);
         }
     }
 

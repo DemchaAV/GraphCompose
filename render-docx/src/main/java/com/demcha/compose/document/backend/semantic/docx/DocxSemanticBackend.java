@@ -1259,10 +1259,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     earlierZones.add(DocumentHeaderFooterZone.HEADER);
                 }
                 // Drawing the layout paints in a pass of its own — a timeline's rail — belongs to
-                // no node, so it waits for the first paragraph on its page.
+                // no node, so it waits for the first paragraph on its page. Every rail, and every
+                // page of one, shares the pass's path: it is named once, as what nothing carries
+                // is reckoned for that path together (DocxDrawingAnchors.Owner).
+                java.util.Set<String> railsNamed = new java.util.HashSet<>();
                 for (com.demcha.compose.document.layout.PlacedFragment pass : layout.passFragments()) {
                     drawingFor = new DocxDrawingAnchors.Owner("timeline rail", pass.path());
-                    if (queueDrawing(pass, drawsInFront())) {
+                    if (queueDrawing(pass, drawsInFront()) && railsNamed.add(pass.path())) {
                         report.add(DocxExportReport.Severity.APPROXIMATED, "timeline rail", pass.path(),
                                 "drawn as a line where the layout puts it, " + ANCHORED_BESIDE_ITS_TEXT);
                     }

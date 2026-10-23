@@ -98,6 +98,35 @@ class DocxFlowContainerReportTest {
     }
 
     @Test
+    void twoTimelinesRailsAreNamedOnce() throws Exception {
+        // Every rail the layout draws shares the pass's path, so a second timeline named its
+        // rail again under it, word for word: TerracottaRail's report carried the note twice.
+        Consumer<PageFlowBuilder> one = page -> page
+                .addTimeline(timeline -> timeline.connector(INK, 1.5)
+                        .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(8, INK), entry -> entry
+                                .title("Senior Engineer").meta("2023 - Present"))
+                        .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(8, INK), entry -> entry
+                                .title("Engineer").meta("2021 - 2023")));
+        Consumer<PageFlowBuilder> two = page -> {
+            one.accept(page);
+            page.addParagraph("Education")
+                    .addTimeline(timeline -> timeline.connector(INK, 1.5)
+                            .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(8, INK), entry -> entry
+                                    .title("MSc").meta("2019 - 2021"))
+                            .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(8, INK), entry -> entry
+                                    .title("BSc").meta("2016 - 2019")));
+        };
+
+        assertThat(detailOf(reportOf(two), "timeline rail")).startsWith("drawn as a line where the layout puts it");
+        assertThat(anchoredDrawings(bodyOf(two))).as("both rails drawn, with their markers")
+                .isEqualTo(2 * anchoredDrawings(bodyOf(one)));
+    }
+
+    private static int anchoredDrawings(String body) {
+        return body.split("<wp:anchor", -1).length - 1;
+    }
+
+    @Test
     void aPanelBledToThePagesEdgesNamesItsBleed() throws Exception {
         Consumer<PageFlowBuilder> bled = page -> page.addSection(band -> band.fillColor(SURFACE)
                 .bleedToEdge(DocumentEdge.LEFT, DocumentEdge.RIGHT).addParagraph("A band to the edges"));

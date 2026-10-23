@@ -8,6 +8,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export names a document's timeline rails once.**
+  - Every rail the layout draws shares one path, so each timeline named its rail again under
+    it, word for word, and a rail running onto another page named it again there:
+    `cv-terracotta_rail`, with two timelines, carried the note twice. It is named once a
+    section, and what no paragraph carries is reckoned for all of them together, as before.
+  - The file is unchanged: none of the corpus's 62 DOCX changes, and it carries one note fewer.
+
 - **A DOCX export sets a panel set in from its table cell's text where the page sets its text.**
   - In a cell, Word and LibreOffice set a nested table's left border with its outer edge at the
     cell's text, or as far in as its indent sets it, and its text that border's centre and the
@@ -318,8 +325,9 @@ follow semantic versioning; release dates are ISO 8601.
     14pt margin stood 14pt high, as did one with a backdrop laid first and one nested in a stack of
     one layer with that margin; one in a section with a 10pt margin stood 10pt high. Held, each
     stands where the page sets it, within 1.2pt, and the backdrop where the page draws it.
-  - A band whose first block is a list or a row still loses that space, measured; nor is it held
-    for a table, a panel or a line pair written first.
+  - A band whose first block is a list, a row, a table, a panel or a line pair holds that space
+    too, as the entry above on the space above a list, a line pair, a table, a row or a panel
+    says.
   - A later layer whose own margin, or a picture's room in its box, reaches above where the layers
     before it end stands lower than the page sets it by as much as it reaches above them, 13pt in
     the measured case. Such a band near the foot of a page, which the page keeps there, now moves
@@ -3862,6 +3870,24 @@ follow semantic versioning; release dates are ISO 8601.
   the three office backends share one schema set.
 
 ### Tests
+
+- **The DOCX field ledger states where a field it gave as written, or as moving nothing, is
+  lost.**
+  - A drawing the export drops — with no layout, painted only with a gradient, or painting
+    nothing — loses its geometry and paint, which its own note names; a line or a shape written
+    as a rule keeps them. With no layout, a paragraph's line spacing and a section's or a
+    line's keeps are lost, as the section's note says; inside a panel the layout runs on to the
+    next page, a keep is named as one Word may break. A page field in the flow is not written,
+    which its note names.
+  - A page field's alignment was given as moving nothing, and `TextAlign`'s centre and right
+    as not applied to one. The page sets the field in a box a point wider than its number, so
+    its alignment moves the number up to that point. In a page zone, where the part stands is
+    the zone's note, as for any part. The capability matrix and the DOCX recipe said the same
+    and are corrected.
+  - Two losses no note names are now gaps: a spacer of a layer, level with another layer's
+    content in a band or a stack written as columns, where that content is not written in its
+    place; and a paragraph composed in a table cell whose text no line the layout set carries,
+    which is written with no line gap.
 
 - **The DOCX field ledger reaches the values a node holds, and names the losses it knows of
   and its report does not.** `DocxNodeFieldLedgerTest` gives every field of every node a fate,

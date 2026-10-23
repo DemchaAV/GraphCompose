@@ -113,12 +113,12 @@ class DocxValueFieldLedgerTest {
                 + "to, where its lines tell it, as its autoSize says");
         value(com.demcha.compose.document.node.TextAlign.class,
                 "CENTER:REPORTED:a list's items, written flush left, named; in a page zone, where its part stands "
-                + "is the zone's note; a page field's the page does not apply; any other is written as Word's "
-                + "alignment, turned to the flow in a right-to-left paragraph",
+                + "is the zone's note; a page field's in the flow, not written, which its node's note names; any "
+                + "other is written as Word's alignment, turned to the flow in a right-to-left paragraph",
                 "LEFT:WRITTEN:turned to the flow in a right-to-left paragraph",
                 "RIGHT:REPORTED:a list's items, written flush left, named; in a page zone, where its part stands "
-                + "is the zone's note; a page field's the page does not apply; any other is written as Word's "
-                + "alignment, turned to the flow in a right-to-left paragraph");
+                + "is the zone's note; a page field's in the flow, not written, which its node's note names; any "
+                + "other is written as Word's alignment, turned to the flow in a right-to-left paragraph");
         value(com.demcha.compose.document.node.PageFieldKind.class,
                 "NUMBER:WRITTEN:as Word's page field on a page zone's line, each section counting from 1 as on the "
                 + "page; a field in the body is not written, which its node's note names",

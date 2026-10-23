@@ -626,7 +626,18 @@ How it lands:
   to that much right of the page's, its left border and fill, and with a margin below zero its
   text too, and the report names how far (`left edge`). Measured, 3pt accents stood 1.5pt right
   of the page's in LibreOffice; in Word, 1.55 to 1.73pt in every cell measured — a row's or a
-  table's, filled or not, a filled panel's, and a row's inside a filled or a ruled panel.
+  table's, filled or not, a filled panel's, and a row's inside a filled or a ruled panel. Its
+  table, half that border wider than the panel, gives up the whole border — the half it is
+  wider by, and what its left margin gave back of the other — so its right end stands where the
+  page's does, where it ran the whole border further right (measured: a rail with a 3pt accent
+  ended its fill 3.07pt right of the page's in Word and 2.99pt in LibreOffice, and 0.07 and
+  −0.01pt once given up; `CompactMono`'s rail 0.9 and 0.86pt, now 0.06 and −0.04pt; bordered
+  cards 0.35 to 0.64pt, now 0.09 to 0.35pt in Word and 0.09 to 0.22pt in LibreOffice, as a
+  bordered panel's right border stands in a cell).
+  What holding its right border in from the cell's edge takes counts towards it. A line set
+  past its text further than its margin holds takes back what of it the cell does not take,
+  and the panel is named wider (`right end`): `EngineeringResume`'s role card would lose the
+  stop ending its line otherwise.
 - **Keeping together.** A `keepTogether()` panel the layout placed on one page is a row
   Word may not split. Anchors on the blocks inside a panel carry as they do anywhere else, and
   so do their keeps, but Word and LibreOffice do not hold them where the panel's row breaks over

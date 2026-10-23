@@ -289,11 +289,11 @@ class DocxPanelSlackTest {
     }
 
     @Test
-    void aPanelTheCellsEdgeAlreadyHoldsInKeepsItsMarginWhole() throws Exception {
-        // 161pt wide in a 163pt column, its 3pt left border hanging out of the cell: Word starts it
-        // half that border in, and the table gives up what then runs past the cell, the slack
-        // with it. Nothing of the slack is left in the table to take out of the margin, and the
-        // text keeps its width.
+    void aRailHungOutOfTheColumnItFillsEndsWhereThePageEndsIt() throws Exception {
+        // 161pt wide in a 163pt column, its 3pt left border hanging out of the cell: Word and
+        // LibreOffice start it half that border in, and the table gives up the whole border, so
+        // it ends where the page ends it, clear of the cell's edge. Its slack then comes out of
+        // its right margin, as any panel's does.
         Consumer<PageFlowBuilder> content = page -> page.addRow(row -> row
                 .spacing(14)
                 .weights(1, 1)
@@ -312,9 +312,107 @@ class DocxPanelSlackTest {
 
             assertThat(room(cell)).as("the column").isCloseTo(163, within(0.05));
             assertThat(indent).isEqualTo(-1.5);
-            assertThat(1.5 + width).as("from half its border in, it ends at the cell's text")
-                    .isCloseTo(room(cell), within(0.05));
-            assertThat(twips(rightMargin(rail))).as("all its padding").isEqualTo(4 * 20L);
+            assertThat(1.5 + width).as("from half its border in, it ends where the page ends it, 161pt in")
+                    .isCloseTo(161, within(0.05));
+            assertThat(twips(rightMargin(rail))).as("its padding less the slack")
+                    .isEqualTo(Math.round((4 - SLACK) * 20));
+        }
+    }
+
+    @Test
+    void aHungCardsLineSetPastItsTextTakesBackWhatTheHangGaveUp() throws Exception {
+        // A 2pt accent hanging out of its column: the table gives up the whole border, 2pt, to end
+        // where the page ends the card. At 7.25pt, written at 7.5, its lines run past its text
+        // further than its 1pt margin holds, and take back the slack and those 2pt; at 7.5pt they
+        // do not, and the card ends where the page ends it.
+        java.util.function.DoubleFunction<Consumer<PageFlowBuilder>> hung = size -> page -> page.addRow(row -> row
+                .spacing(12)
+                .weights(1, 1)
+                .addSection("Card", card -> card.fixedWidth(160).fillColor(SURFACE)
+                        .accentLeft(ACCENT.color(), 2).padding(DocumentInsets.of(1))
+                        .addParagraph(p -> p.text(FILL).textStyle(DocumentTextStyle.DEFAULT.withSize(size))))
+                .addSection("Other", other -> other.addParagraph(p -> p.text("Beside"))));
+        double placed = placedWidth(hung.apply(7.25), "Card");
+        try (XWPFDocument document = export(hung.apply(7.25))) {
+            XWPFTable card = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
+            assertThat(twips(card.getCTTbl().getTblPr().getTblW().getW()))
+                    .as("its half border, the slack and the 2pt the hang gave up, back")
+                    .isEqualTo(Math.round((placed + 1 + SLACK) * 20));
+            assertThat(twips(rightMargin(card))).as("all its padding, the hang's taken back off the table alone")
+                    .isEqualTo(20L);
+        }
+        assertThat(notes(hung.apply(7.25), RIGHT_END)).singleElement()
+                .satisfies(note -> assertThat(note.detail()).contains("3pt wider than the page draws it")
+                        .contains("beside the lines it sets past its text"));
+        try (XWPFDocument document = export(hung.apply(7.5))) {
+            XWPFTable card = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
+            assertThat(twips(card.getCTTbl().getTblPr().getTblW().getW()))
+                    .as("its half border in, the whole border given up: ending where the page ends it")
+                    .isEqualTo(Math.round((placed + 1 - 2) * 20));
+            assertThat(twips(rightMargin(card))).as("its padding less the slack")
+                    .isEqualTo(Math.round((1 - SLACK) * 20));
+        }
+        assertThat(notes(hung.apply(7.5), RIGHT_END)).isEmpty();
+    }
+
+    @Test
+    void aCardBledLeftOfItsCellGivesUpItsBorderAndKeepsItsBleed() throws Exception {
+        // Bled 4pt left of its filled panel's text by a margin below zero, a 2pt accent on its edge:
+        // the editors move it, text and all, to the cell's text, and the table gives up the border
+        // alone, 2pt. Giving up the bleed too would narrow the text the editors move with it.
+        Consumer<PageFlowBuilder> content = page -> page.addSection("Outer", outer -> outer
+                .fillColor(SURFACE).padding(DocumentInsets.of(10))
+                .addSection("Card", card -> card.fixedWidth(140).fillColor(DocumentColor.WHITE)
+                        .accentLeft(ACCENT.color(), 2).padding(DocumentInsets.of(4))
+                        .margin(new DocumentInsets(0, 0, 0, -4)).addParagraph(p -> p.text("Bled"))));
+        double placed = placedWidth(content, "Card");
+        try (XWPFDocument document = export(content)) {
+            XWPFTable card = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
+            assertThat(twips(card.getCTTbl().getTblPr().getTblInd().getW())).as("its bleed and half its border out")
+                    .isEqualTo(-100L);
+            assertThat(twips(card.getCTTbl().getTblPr().getTblW().getW())).as("its half border in, its border given up")
+                    .isEqualTo(Math.round((placed + 1 - 2) * 20));
+        }
+    }
+
+    @Test
+    void aCardSetInLessThanHalfItsBorderGivesUpOnlyWhatTheEditorsMoveIt() throws Exception {
+        // Half a point in from its filled panel's text, a 2pt accent on its edge: written half a
+        // point left of the text, it is moved a point and a half, half its border in from the
+        // text, and gives up that much, not the whole border.
+        Consumer<PageFlowBuilder> content = page -> page.addSection("Outer", outer -> outer
+                .fillColor(SURFACE).padding(DocumentInsets.of(10))
+                .addSection("Card", card -> card.fixedWidth(140).fillColor(DocumentColor.WHITE)
+                        .accentLeft(ACCENT.color(), 2).padding(DocumentInsets.of(4))
+                        .margin(new DocumentInsets(0, 0, 0, 0.5)).addParagraph(p -> p.text("In"))));
+        double placed = placedWidth(content, "Card");
+        try (XWPFDocument document = export(content)) {
+            XWPFTable card = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
+            assertThat(twips(card.getCTTbl().getTblPr().getTblInd().getW())).isEqualTo(-10L);
+            assertThat(twips(card.getCTTbl().getTblPr().getTblW().getW())).as("its half border in, 1.5pt given up")
+                    .isEqualTo(Math.round((placed + 1 - 1.5) * 20));
+        }
+    }
+
+    @Test
+    void aHungCardFillingItsColumnKeepsWhatItsCellTakesWhateverItsLinesNeed() throws Exception {
+        // As wide as its column, the 2pt accent hanging out of it: started a point in, the table
+        // would run past the cell, which Word widens to hold it. Its lines at 7.25pt run past its
+        // text, but do not take back the 2pt the cell takes: it ends at the cell's text. As wide as
+        // its column, it is given no slack.
+        Consumer<PageFlowBuilder> content = page -> page.addRow(row -> row
+                .spacing(12)
+                .weights(1, 1)
+                .addSection("Card", card -> card.fixedWidth(COLUMN).fillColor(SURFACE)
+                        .accentLeft(ACCENT.color(), 2).padding(DocumentInsets.of(1))
+                        .addParagraph(p -> p.text(FILL).textStyle(DocumentTextStyle.DEFAULT.withSize(7.25))))
+                .addSection("Other", other -> other.addParagraph(p -> p.text("Beside"))));
+        double placed = placedWidth(content, "Card");
+        try (XWPFDocument document = export(content)) {
+            XWPFTable card = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
+            assertThat(twips(card.getCTTbl().getTblPr().getTblW().getW()))
+                    .as("its half border in, the 2pt the cell takes: from a point in, at the cell's text")
+                    .isEqualTo(Math.round((placed + 1 - 2) * 20));
         }
     }
 
@@ -337,10 +435,13 @@ class DocxPanelSlackTest {
             assertThat(twips(cell.getCTTc().getTcPr().getTcMar().getRight().getW())).as("the gap")
                     .isEqualTo(12 * 20L);
             XWPFTable left = cell.getTables().get(0);
+            // Its half borders in, less the whole of its left one: the editors start it half that
+            // border in from the cell's text (whatTheHangGivesUp).
             assertThat(twips(left.getCTTbl().getTblPr().getTblW().getW()))
-                    .as("as wide as the page draws it, and its half borders")
-                    .isEqualTo(Math.round((placed + 1) * 20));
-            assertThat(textWidth(left)).as("the page's text, and its two borders").isCloseTo(placed - 18, within(0.05));
+                    .as("as wide as the page draws it, its right end where the page's is")
+                    .isEqualTo(Math.round(placed * 20));
+            assertThat(textWidth(left)).as("the page's text, the slack and half its right border")
+                    .isCloseTo(placed - 20 + SLACK + 0.5, within(0.05));
         }
         List<DocxExportReport.Note> notes = notes(content, RIGHT_BORDER);
         assertThat(notes).as("only the right card's border is held in").hasSize(1);

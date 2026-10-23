@@ -146,7 +146,8 @@ class DocxNodeFieldLedgerTest {
     // table's auto column's, out of its cells' margins (DocxValueFieldLedgerTest).
     static final String RIGHT_END = "a panel's right end, written past the page's by the slack an editor's face is "
                                     + "given where its right margin cannot hold it, alone or beside a line Word sets "
-                                    + "wider than the page, named (right end)";
+                                    + "wider than the page, and by what a hung left border gave up that such a line "
+                                    + "takes back, named (right end)";
 
     // LibreOffice and Word start a nested table at its cell's text.
     static final String LEFT_EDGE = "a panel's left edge in a table cell, its left border hanging out of the cell or "

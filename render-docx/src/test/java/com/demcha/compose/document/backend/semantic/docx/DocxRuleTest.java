@@ -8,6 +8,7 @@ import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.table.DocumentTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -474,6 +475,22 @@ class DocxRuleTest {
 
             assertThat(DocxTwips.of(properties.getInd().getLeft())).isEqualTo(20 * 20L + REACH_LEFT);
             assertThat(DocxTwips.of(properties.getInd().getRight())).isEqualTo(20 * 20L + REACH_RIGHT);
+        }
+    }
+
+    @Test
+    void aRuleInARowsColumnCountsItsLeftMarginOnce() throws Exception {
+        // A heading and a rule 9pt in from it, as CharcoalGold draws them: the rule's column starts
+        // past its margin, so its paragraph starts at the cell's text, in by Word's reach alone.
+        // Counted again, the rule started 9pt right of the page's in Word.
+        try (XWPFDocument document = export(page -> page.addRow(row -> row
+                .spacing(0)
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addParagraph("Experience")
+                .addLine(l -> l.fill().stroke(DocumentStroke.of(ACCENT, 1)).margin(new DocumentInsets(0, 0, 0, 9)))))) {
+            XWPFParagraph rule = document.getTables().get(0).getRow(0).getCell(1).getParagraphs().get(0);
+
+            assertThat(DocxTwips.of(rule.getCTP().getPPr().getInd().getLeft())).isEqualTo(REACH_LEFT);
         }
     }
 

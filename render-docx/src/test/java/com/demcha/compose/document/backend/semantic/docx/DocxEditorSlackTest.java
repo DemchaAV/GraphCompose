@@ -7,6 +7,7 @@ import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
+import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -318,19 +319,148 @@ class DocxEditorSlackTest {
     }
 
     @Test
-    void aRowsAutoColumnsTakeTheirPointFromTheWeightColumnBetweenThem() throws Exception {
+    void aRowsAutoColumnTakesItsPointOutOfTheGapAfterItAndTheLastOneFromTheWeightColumn() throws Exception {
         // A table of contents' entry: label, leader, page number. Measured through LibreOffice,
-        // with the columns as placed the label wrapped mid-word ("Intr" / "o").
+        // with the columns as placed the label wrapped mid-word ("Intr" / "o"). The label takes
+        // its point from the 6pt gap after it, and the leader starts where the page starts it;
+        // the page number, at the row's end, has no gap after it and takes its point from the
+        // leader, which is named.
         ExportedRow exported = exportRow(row -> row
                 .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1), DocumentRowColumn.auto())
                 .addParagraph("Intro").addParagraph("…").addParagraph("12"));
 
-        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0) + SLACK_TWIPS);
-        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1) - 2 * SLACK_TWIPS);
+        assertThat(exported.gridTwips(0)).as("the label's column where the page sets it").isEqualTo(exported.placedTwips(0));
+        assertThat(exported.rightMarginTwips(0)).as("the gap, less the point").isEqualTo(6 * 20 - SLACK_TWIPS);
+        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1) - SLACK_TWIPS);
         assertThat(exported.gridTwips(2)).isEqualTo(exported.placedTwips(2) + SLACK_TWIPS);
         assertThat(exported.gridTwips(0) + exported.gridTwips(1) + exported.gridTwips(2))
                 .as("the row keeps the width the layout placed it at")
                 .isEqualTo(exported.placedTwips(0) + exported.placedTwips(1) + exported.placedTwips(2));
+        assertThat(exported.notes(RIGHT_END)).singleElement().satisfies(note -> assertThat(note.detail())
+                .startsWith("its columns sized to their content written 1pt wider than the page sets them")
+                .contains("what stands at the edges between them moves up to that much off where the page sets it"));
+    }
+
+    @Test
+    void aGapThinnerThanThePointGivesWhatItHasAndTheWeightColumnTheRest() throws Exception {
+        ExportedRow exported = exportRow(row -> row
+                .spacing(0.4)
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addParagraph("Experience").addParagraph("…"));
+
+        assertThat(exported.rightMarginTwips(0)).as("the whole gap given").isZero();
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0) + SLACK_TWIPS - 8);
+        assertThat(exported.notes(RIGHT_END)).singleElement()
+                .satisfies(note -> assertThat(note.detail()).contains("written 0.6pt wider"));
+    }
+
+    @Test
+    void anAutoColumnWhoseNeighbourStandsInByItsMarginNeedsNoPoint() throws Exception {
+        // A heading and a rule 9pt in from it, as CharcoalGold draws them: the label's column runs
+        // to where the rule starts, past its margin, and already holds the room.
+        ExportedRow exported = exportRow(row -> row
+                .spacing(0)
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addParagraph("Experience")
+                .addLine(line -> line.fill().thickness(0.6).margin(new DocumentInsets(0, 0, 0, 9))));
+
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0));
+        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1));
+        assertThat(exported.notes(RIGHT_END)).isEmpty();
+    }
+
+    @Test
+    void anAutoColumnWithNoGapTakesItsPointFromTheWeightColumnNamed() throws Exception {
+        ExportedRow exported = exportRow(row -> row
+                .spacing(0)
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addParagraph("Experience").addParagraph("…"));
+
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0) + SLACK_TWIPS);
+        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1) - SLACK_TWIPS);
+        assertThat(exported.notes(RIGHT_END)).hasSize(1);
+    }
+
+    @Test
+    void theRowsPaddingAfterItsLastColumnIsNotAGap() throws Exception {
+        // A painted row's panel takes the padding out of its columns: the point stays out of it.
+        ExportedRow exported = exportRow(row -> row
+                .padding(new DocumentInsets(0, 4, 0, 0))
+                .columns(DocumentRowColumn.weight(1), DocumentRowColumn.auto())
+                .addParagraph("…").addParagraph("12"));
+
+        assertThat(exported.rightMarginTwips(1)).as("the row's padding, whole").isEqualTo(4 * 20L);
+        assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1) + SLACK_TWIPS);
+        assertThat(exported.notes(RIGHT_END)).hasSize(1);
+    }
+
+    @Test
+    void aChildThatIsNotAParagraphTakesNoneOfThePointFromTheGap() throws Exception {
+        // What a section holds may lean either way.
+        ExportedRow exported = exportRow(row -> row
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addSection(section -> section.addParagraph("Experience")).addParagraph("…"));
+
+        assertThat(exported.rightMarginTwips(0)).as("the gap, whole").isEqualTo(6 * 20L);
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0) + SLACK_TWIPS);
+    }
+
+    @Test
+    void anAutoParagraphsOwnRightSideGivesTheRoomItsParagraphDoesNotIndent() throws Exception {
+        // In a cell, a paragraph set left writes its right side 2pt short as its indent: a 3pt
+        // margin leaves it 2pt past its text, and it needs none of the point; a 0.4pt one leaves
+        // it 0.4pt, and the rest comes out of the weight column.
+        java.util.function.DoubleFunction<ExportedRow> margined = margin -> {
+            try {
+                return exportRow(row -> row
+                        .spacing(0)
+                        .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                        .addParagraph(p -> p.text("Experience").margin(new DocumentInsets(0, margin, 0, 0)))
+                        .addParagraph("…"));
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        };
+        ExportedRow wide = margined.apply(3);
+        assertThat(wide.gridTwips(0)).isEqualTo(wide.placedTwips(0));
+        assertThat(wide.notes(RIGHT_END)).isEmpty();
+
+        ExportedRow thin = margined.apply(0.4);
+        assertThat(thin.gridTwips(0)).isEqualTo(thin.placedTwips(0) + SLACK_TWIPS - 8);
+        assertThat(thin.notes(RIGHT_END)).singleElement()
+                .satisfies(note -> assertThat(note.detail()).contains("written 0.6pt wider"));
+    }
+
+    @Test
+    void aCentredAutoParagraphTakesNoneOfThePointFromTheGap() throws Exception {
+        ExportedRow exported = exportRow(row -> row
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addParagraph(p -> p.text("Experience").align(TextAlign.CENTER)).addParagraph("…"));
+
+        assertThat(exported.rightMarginTwips(0)).as("the gap, whole").isEqualTo(6 * 20L);
+    }
+
+    @Test
+    void lessThanATenthOfAPointOffIsNotNamed() throws Exception {
+        ExportedRow exported = exportRow(row -> row
+                .spacing(0.95)
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addParagraph("Experience").addParagraph("…"));
+
+        assertThat(exported.rightMarginTwips(0)).isZero();
+        assertThat(exported.notes(RIGHT_END)).isEmpty();
+    }
+
+    @Test
+    void aWeightColumnHoldingASpacerGivesThePointUnnamed() throws Exception {
+        // A spacer stands nowhere a reader sees.
+        ExportedRow exported = exportRow(row -> row
+                .spacing(0)
+                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
+                .addParagraph("Experience").addSpacer(0));
+
+        assertThat(exported.gridTwips(0)).isEqualTo(exported.placedTwips(0) + SLACK_TWIPS);
+        assertThat(exported.notes(RIGHT_END)).isEmpty();
     }
 
     @Test
@@ -360,6 +490,7 @@ class DocxEditorSlackTest {
     @Test
     void aFixedColumnBesideThemKeepsItsSize() throws Exception {
         ExportedRow exported = exportRow(row -> row
+                .spacing(0)
                 .columns(DocumentRowColumn.fixed(60), DocumentRowColumn.auto(), DocumentRowColumn.weight(1))
                 .addParagraph("Invoice").addParagraph("No. 2041").addParagraph("…"));
 
@@ -370,20 +501,21 @@ class DocxEditorSlackTest {
 
     @Test
     void twoWeightColumnsGiveThePointInProportionToTheirTextBoxes() throws Exception {
-        // A wide gap, so a split by column width — the middle column carries the gap after it
-        // as its right margin, the last none — lands whole twips away from one by text box.
+        // A wide gap, so a split by column width — each weight column carries the gap after it as
+        // its right margin — lands whole twips away from one by text box. At the row's end, the
+        // number has no gap after it to take its point from.
         ExportedRow exported = exportRow(row -> row
                 .spacing(60)
-                .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1), DocumentRowColumn.weight(3))
-                .addParagraph("Intro").addParagraph("a").addParagraph("b"));
+                .columns(DocumentRowColumn.weight(1), DocumentRowColumn.weight(3), DocumentRowColumn.auto())
+                .addParagraph("a").addParagraph("b").addParagraph("12"));
 
-        double first = exported.placed()[1] - 60;
-        double second = exported.placed()[2];
+        double first = exported.placed()[0] - 60;
+        double second = exported.placed()[1] - 60;
         double point = DocxSemanticBackend.EDITOR_COLUMN_SLACK_POINTS;
+        assertThat(exported.gridTwips(0))
+                .isEqualTo(Math.round((exported.placed()[0] - point * first / (first + second)) * 20.0));
         assertThat(exported.gridTwips(1))
-                .isEqualTo(Math.round((exported.placed()[1] - point * first / (first + second)) * 20.0));
-        assertThat(exported.gridTwips(2))
-                .isEqualTo(Math.round((exported.placed()[2] - point * second / (first + second)) * 20.0));
+                .isEqualTo(Math.round((exported.placed()[1] - point * second / (first + second)) * 20.0));
     }
 
     @Test
@@ -396,8 +528,8 @@ class DocxEditorSlackTest {
         assertThat(exported.gridTwips(1)).isEqualTo(exported.placedTwips(1));
     }
 
-    /** A row exported through a session, with the column spans the layout placed it at. */
-    private record ExportedRow(XWPFTable table, double[] placed) {
+    /** A row exported through a session, with the column spans the layout placed it at and the report. */
+    private record ExportedRow(XWPFTable table, double[] placed, DocxExportReport report) {
 
         long gridTwips(int column) {
             return DocxTwips.of(table.getCTTbl().getTblGrid().getGridColArray(column).getW());
@@ -405,6 +537,15 @@ class DocxEditorSlackTest {
 
         long placedTwips(int column) {
             return Math.round(placed[column] * 20.0);
+        }
+
+        /** A column's cell's right margin as written, in twips. */
+        long rightMarginTwips(int column) {
+            return DocxTwips.of(table.getRow(0).getCell(column).getCTTc().getTcPr().getTcMar().getRight().getW());
+        }
+
+        List<DocxExportReport.Note> notes(String subject) {
+            return report.bySubject().getOrDefault(subject, List.of());
         }
     }
 
@@ -433,9 +574,11 @@ class DocxEditorSlackTest {
                         : children.get(index + 1).placementX();
                 placed[index] = end - start;
             }
-            byte[] docx = session.export(new DocxSemanticBackend());
+            AtomicReference<DocxExportReport> report = new AtomicReference<>();
+            byte[] docx = session.export(new DocxSemanticBackend(report::set));
             XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx));
-            return new ExportedRow(document.getTables().get(0), placed);
+            assertThat(report.get().bySubject()).as("laid out").doesNotContainKey("measured geometry");
+            return new ExportedRow(document.getTables().get(0), placed, report.get());
         }
     }
 

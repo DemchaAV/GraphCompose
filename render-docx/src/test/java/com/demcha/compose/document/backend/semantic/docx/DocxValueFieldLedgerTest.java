@@ -38,6 +38,7 @@ import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLed
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.PULL_UNRECKONED;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.RIGHT_BORDER;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.RIGHT_END;
+import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.ROW_AUTO_ROOM;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.ROW_COLUMNS_UNLAID;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.SEAT_UNREAD;
 import static com.demcha.compose.document.backend.semantic.docx.DocxNodeFieldLedgerTest.SPACE_BELOW_AT_THE_FOOT;
@@ -418,8 +419,8 @@ class DocxValueFieldLedgerTest {
                 "START:WRITTEN");
         value(com.demcha.compose.document.style.DocumentRowColumn.class,
                 "type:REPORTED:an auto column, with those beside it, where the layout does not show where the row's "
-                + "children start, Word's, sized to their text; with no layout, in the section's note; any other is "
-                + "written",
+                + "children start, Word's, sized to their text; with no layout, in the section's note; "
+                + ROW_AUTO_ROOM + "; any other is written",
                 "value:GAP:" + ROW_COLUMNS_UNLAID
                 + "; a fixed width or a weight beside an auto column, where the layout does not show where the "
                 + "row's children start, Word's with the rest, named; in a row its arrangement or a growing spacer "
@@ -427,8 +428,8 @@ class DocxValueFieldLedgerTest {
         value(com.demcha.compose.document.style.DocumentRowColumn.Type.class,
                 "AUTO:REPORTED:where the layout does not show where the row's children start — composed in a table "
                 + "cell with a child its lines do not place, or inside a panel or another table in its cell — Word's, "
-                + "sized to its text, with the columns beside it; with no layout, in the section's note; any other is "
-                + "written",
+                + "sized to its text, with the columns beside it; with no layout, in the section's note; "
+                + ROW_AUTO_ROOM + "; any other is written",
                 "FIXED:GAP:" + ROW_COLUMNS_UNLAID
                 + "; beside an auto column, where the layout does not show where the row's children start, "
                 + "Word's with the rest, named; any other is written",

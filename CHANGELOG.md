@@ -8,6 +8,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes margins that change from page to page as Word sections.**
+  - `DocumentSession.pageMargins(...)` reached the layout only. The DOCX wrote the canvas's
+    margins on every page and said nothing: a page with a larger bottom margin ran 7 lines of
+    33 further in Word and LibreOffice, past its foot, and a rule for page 1 alone was lost too.
+  - The layout graph carries the margins each page is laid out against
+    (`LayoutGraph.pageGeometry`), and the export writes the first page's as the section's. A
+    later page whose margins differ from those Word sets it with starts a Word section with
+    them, where it starts between blocks of the body; an explicit page break there becomes the
+    section's break, and the title-page header and footer and the page count from 1 stay with
+    the first section. Measured in Word and LibreOffice on Windows, on pages of paragraphs and on
+    a page after a page break, every page stood where the layout sets it, line for line. The
+    report names each such section (`page margin`): its page break is fixed when the text above
+    it is edited. The room for the line closing a section, and the space above a block the
+    layout moves onto a page, are reckoned against that page's margins.
+  - The report names, and the export starts no section at, a page that starts inside a block —
+    the rows of a table, the lines of a paragraph, a panel — or after a page whose content
+    reaches its foot under a table, and a page of a document of several sections whose header or
+    footer counts its
+    section's pages, which Word would count apart. Word sets a header and footer from its
+    section's side margins and the page from the document's: where they differ, that is named
+    too. The four invoice presets that set another bottom margin from page 2 start their second
+    page inside their line items, so their later pages are named, not written.
+  - The corpus is unchanged: none of its documents has margins that change from page to page.
+
 - **A DOCX export names a document's timeline rails once.**
   - Every rail the layout draws shares one path, so each timeline named its rail again under
     it, word for word, and a rail running onto another page named it again there:
@@ -3870,6 +3894,11 @@ follow semantic versioning; release dates are ISO 8601.
   the three office backends share one schema set.
 
 ### Tests
+
+- **The DOCX field ledger names what a session hands an export beside the tree.** Every part
+  of `SemanticExportContext` and of the `LayoutGraph` it carries has a fate, and a part with
+  none fails the ledger. A session's per-page margins reached the layout, no export read them,
+  and no entry said so.
 
 - **The DOCX field ledger states where a field it gave as written, or as moving nothing, is
   lost.**

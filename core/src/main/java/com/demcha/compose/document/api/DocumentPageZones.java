@@ -94,7 +94,7 @@ final class DocumentPageZones {
                         compiler, registry, resources, markdown));
             }
         }
-        return new LayoutGraph(base.canvas(), base.totalPages(), base.nodes(), combined);
+        return base.withFragments(combined);
     }
 
     private static List<PlacedFragment> placeZone(DocumentPageZone zone,

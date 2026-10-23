@@ -1,0 +1,471 @@
+package com.demcha.compose.document.backend.semantic.docx;
+
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.api.PageMarginRule;
+import com.demcha.compose.document.dsl.PageFlowBuilder;
+import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.output.DocumentPageZone;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableColumn;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.junit.jupiter.api.Test;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
+
+import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * A page the layout sets against other margins than the page before it starts a Word section with
+ * them, where it starts between blocks of the body, and is named where it does not.
+ *
+ * <p>Measured in Word and LibreOffice on Windows: one set of margins for the whole document ran a
+ * page with a larger bottom margin on past its foot, 7 lines of 33 further; a section starting
+ * where the page does set every page where the layout does, line for line.</p>
+ */
+class DocxPageMarginSectionsTest {
+
+    // From page 2, a bottom margin 100pt larger than the first page's.
+    private static final DocumentInsets FIRST = DocumentInsets.of(36);
+    private static final DocumentInsets LATER = new DocumentInsets(36, 36, 136, 36);
+
+    @Test
+    void aPageWithOtherMarginsStartingBetweenBlocksStartsASectionWithThem() throws Exception {
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> lines(page, "Line", 60));
+
+        List<XWPFParagraph> ending = exported.paragraphsEndingASection();
+        assertThat(ending).singleElement().satisfies(paragraph -> {
+            assertThat(paragraph.getText()).as("the last line of page 1").isEqualTo(exported.lastLineOf(0));
+            assertThat(bottom(paragraph.getCTP().getPPr().getSectPr())).isEqualTo(36 * 20);
+        });
+        assertThat(bottom(exported.body())).as("page 2 on").isEqualTo(136 * 20);
+        assertThat(exported.notes()).singleElement().asString()
+                .startsWith("page 2's margins differ from page 1's: written as a Word section that starts where page 2 does")
+                .as("no header to stand off").doesNotContain("header");
+    }
+
+    @Test
+    void aPageBreakIntoOtherMarginsBecomesTheSectionsBreak() throws Exception {
+        // Kept, the page break would open a blank page before the section's own.
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> {
+            lines(page, "Cover", 5);
+            page.addPageBreak(b -> { });
+            lines(page, "Line", 30);
+        });
+
+        assertThat(exported.document().getDocument().xmlText()).doesNotContain("w:type=\"page\"");
+        assertThat(exported.paragraphsEndingASection()).singleElement()
+                .satisfies(paragraph -> assertThat(paragraph.getText()).isEmpty());
+        assertThat(bottom(exported.body())).isEqualTo(136 * 20);
+    }
+
+    @Test
+    void aPageStartingInsideATableIsNamed() throws Exception {
+        // The total after the table starts on page 2 too: a section starting there would break
+        // the page under the table's last rows.
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> page
+                .addParagraph("Items")
+                .addTable(table -> {
+                    table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100));
+                    for (int row = 0; row < 40; row++) {
+                        table.row("Item " + row, "$" + row);
+                    }
+                })
+                .addParagraph("Total"));
+
+        assertThat(exported.paragraphsEndingASection()).isEmpty();
+        assertThat(bottom(exported.body())).as("page 1's, the only ones written").isEqualTo(36 * 20);
+        assertThat(exported.report().notes()).filteredOn(note -> note.subject().equals("page margin"))
+                .singleElement().satisfies(note -> {
+                    assertThat(note.path()).endsWith("TableNode[1]");
+                    assertThat(note.detail()).isEqualTo("page 2's margins differ from page 1's, which Word sets it "
+                                                        + "with: page 2 starts inside this block, where the export "
+                                                        + "starts no Word section");
+                });
+    }
+
+    @Test
+    void aOnePageDocumentIsWrittenWithItsPagesOwnMargins() throws Exception {
+        Exported exported = export(List.of(PageMarginRule.page(1, new DocumentInsets(50, 40, 30, 20))),
+                page -> page.addParagraph("Only page"));
+
+        assertThat(exported.paragraphsEndingASection()).isEmpty();
+        assertThat(exported.body().getPgMar().getTop()).isEqualTo(java.math.BigInteger.valueOf(50 * 20));
+        assertThat(exported.body().getPgMar().getLeft()).isEqualTo(java.math.BigInteger.valueOf(20 * 20));
+        assertThat(exported.notes()).isEmpty();
+    }
+
+    @Test
+    void aLaterSectionOpensWithNoTitlePageOfItsOwn() throws Exception {
+        // The first page's zone is the title page's part, written for page 1 alone: a later
+        // section with it would set it on its own first page too.
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), session -> session.chrome().zone(
+                DocumentPageZone.header(18, page -> new ParagraphBuilder().text(page.isFirst() ? "Cover" : "Running")
+                        .build())), page -> lines(page, "Line", 60));
+
+        assertThat(exported.paragraphsEndingASection()).singleElement().satisfies(paragraph ->
+                assertThat(paragraph.getCTP().getPPr().getSectPr().isSetTitlePg()).isTrue());
+        assertThat(exported.body().isSetTitlePg()).isFalse();
+    }
+
+    @Test
+    void aSideHeldAtItsMarginIsHeldInALaterSectionAndSoIsOneNarrower() {
+        assertThat(DocxPageMarginSections.held(-720, 40)).as("held in the first").isEqualTo(-800);
+        assertThat(DocxPageMarginSections.held(720, 40)).as("wider, nothing reaching over it").isEqualTo(800);
+        assertThat(DocxPageMarginSections.held(720, 20)).as("narrower").isEqualTo(-400);
+    }
+
+    @Test
+    void eachChangeOfMarginsStartsASectionOfItsOwn() throws Exception {
+        DocumentInsets middle = new DocumentInsets(36, 36, 86, 36);
+        Exported exported = export(List.of(PageMarginRule.page(2, middle), PageMarginRule.from(3, LATER)),
+                page -> lines(page, "Line", 90));
+
+        List<XWPFParagraph> ending = exported.paragraphsEndingASection();
+        assertThat(ending).hasSize(2);
+        assertThat(bottom(ending.get(0).getCTP().getPPr().getSectPr())).isEqualTo(36 * 20);
+        CTSectPr second = ending.get(1).getCTP().getPPr().getSectPr();
+        assertThat(bottom(second)).as("page 2's").isEqualTo(86 * 20);
+        assertThat(second.isSetTitlePg()).isFalse();
+        assertThat(bottom(exported.body())).as("page 3 on").isEqualTo(136 * 20);
+    }
+
+    @Test
+    void aPageAfterOneStartingInsideABlockStartsTheSectionItsMarginsNeed() throws Exception {
+        // Page 2 starts inside the table, and Word sets it with page 1's margins; page 3, which
+        // starts between paragraphs, has margins Word has not been given yet, and starts a section.
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> {
+            lines(page, "Intro", 10);
+            page.addTable(table -> {
+                table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100));
+                for (int row = 0; row < 15; row++) {
+                    table.row("Item " + row, "$" + row);
+                }
+            });
+            lines(page, "Line", 60);
+        });
+
+        assertThat(exported.notes()).hasSize(2);
+        assertThat(exported.notes().get(0)).startsWith("page 2's margins differ from page 1's, which Word sets it "
+                                                       + "with: page 2 starts inside this block");
+        assertThat(exported.notes().get(1)).startsWith("page 3's margins differ from page 1's: written as a Word "
+                                                       + "section that starts where page 3 does");
+        assertThat(exported.paragraphsEndingASection()).singleElement().satisfies(paragraph ->
+                assertThat(bottom(paragraph.getCTP().getPPr().getSectPr())).isEqualTo(36 * 20));
+        assertThat(bottom(exported.body())).isEqualTo(136 * 20);
+    }
+
+    @Test
+    void aSectionOfADocumentWhoseFooterCountsItsPagesKeepsOneSetOfMargins() throws Exception {
+        // Word counts a section's own pages: two Word sections would count this one's apart.
+        DocumentSession body = GraphCompose.document().pageSize(400, 400).margin(FIRST).create();
+        body.pageMargins(List.of(PageMarginRule.from(2, LATER)));
+        body.chrome().zone(DocumentPageZone.footer(30, page -> new com.demcha.compose.document.dsl.RowBuilder()
+                .addParagraph(p -> p.text("Body")).flexSpacer().add(page.pageNumber()).add(page.pageTotal())
+                .build()));
+        body.pageFlow(page -> lines(page, "Line", 60));
+        DocumentSession cover = GraphCompose.document().pageSize(400, 400).margin(FIRST).create();
+        cover.pageFlow(page -> page.addParagraph("Cover"));
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        byte[] bytes;
+        try (com.demcha.compose.document.api.MultiSectionDocument document = GraphCompose.documents()
+                .section(cover).section(body).create()) {
+            bytes = document.export(new DocxSemanticBackend(report::set));
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(bytes))) {
+            assertThat(document.getParagraphs()).as("the cover's section ends; the body's does not split")
+                    .filteredOn(p -> p.getCTP().isSetPPr() && p.getCTP().getPPr().isSetSectPr()).hasSize(1);
+        }
+        assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("page margin")).singleElement()
+                .satisfies(note -> assertThat(note.detail()).endsWith("a Word section would count its own pages, "
+                                                                      + "where this section's header or footer counts all of them"));
+    }
+
+    @Test
+    void theRoomForAClosingLineIsReckonedAgainstTheMarginsWordSetsTheLastPageWith() throws Exception {
+        // A page a table fills, against a bottom margin 64pt over the canvas's: reckoned against the
+        // canvas's, the room under the table took in those 64pt, and a closing line written there
+        // would not fit and open a page of its own.
+        List<PageMarginRule> rules = List.of(PageMarginRule.from(1, new DocumentInsets(36, 36, 100, 36)));
+        int rows = 1;
+        while (pagesOf(rules, rows + 1) == 1) {
+            rows++;
+        }
+        int filling = rows;
+        Exported exported = export(rules, page -> page.addTable(table -> {
+            table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100));
+            for (int row = 0; row < filling; row++) {
+                table.row("Item " + row, "$" + row);
+            }
+        }));
+
+        assertThat(exported.report().notes()).anyMatch(note -> note.subject().equals("closing paragraph"));
+    }
+
+    @Test
+    void theSeparatorBetweenTwoTablesEndsTheSectionAtTheirPageBreak() throws Exception {
+        // Written while the second table is, it stands at the foot of the first's page: the end of
+        // a section put before it, it would stand at the top of the next, and hold its space there.
+        int filling = rowsFilling(List.of(), 1);
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> page
+                .addTable(table -> rows(table, "First", filling))
+                .addTable(table -> rows(table, "Second", 5)));
+
+        List<org.apache.poi.xwpf.usermodel.IBodyElement> body = exported.document().getBodyElements();
+        assertThat(body.get(0)).isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
+        assertThat(body.get(1)).isInstanceOfSatisfying(XWPFParagraph.class, separator ->
+                assertThat(separator.getCTP().getPPr().isSetSectPr()).isTrue());
+        assertThat(body.get(2)).isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
+    }
+
+    @Test
+    void aPageFullToItsFootUnderATableStartsNoSectionAfterIt() throws Exception {
+        // The panel, a table in Word, ends at the page's bottom margin: a hairline after it, to end
+        // a section in, would not fit, and open a page of its own before the section's own.
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> {
+            page.addSection(section -> section.fillColor(com.demcha.compose.document.style.DocumentColor.rgb(238, 242, 247))
+                    .spacer(10, 400 - 36 - 36));
+            lines(page, "Line", 10);
+        });
+
+        assertThat(exported.paragraphsEndingASection()).isEmpty();
+        assertThat(exported.notes()).singleElement().asString().endsWith("page 1's content reaches its foot, where "
+                + "the paragraph that would end a Word section before page 2 would open a page of its own");
+    }
+
+    @Test
+    void theSeparatorBetweenTwoTablesNeedsRoomOnItsPageToo() throws Exception {
+        // The hairline between the panel, a table in Word, and the table after it ends the section
+        // where the panel ends at the page's foot: Word would move it, and the section, a page on.
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> {
+            page.addSection(section -> section.fillColor(com.demcha.compose.document.style.DocumentColor.rgb(238, 242, 247))
+                    .spacer(10, 400 - 36 - 36));
+            page.addTable(table -> rows(table, "Item", 5));
+        });
+
+        assertThat(exported.paragraphsEndingASection()).isEmpty();
+        assertThat(exported.notes()).singleElement().asString().contains("page 1's content reaches its foot");
+    }
+
+    @Test
+    void theLineHoldingTheSpaceAboveACardMovedOntoThePageStaysOnIt() throws Exception {
+        // The card the layout moves onto page 2 after a table holds its 12pt margin in a line above
+        // it on that page. Ending the section, that line stood at the foot of page 1 instead.
+        int filling = rowsFilling(List.of(), 1);
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> {
+            page.addTable(table -> rows(table, "Item", filling - 3));
+            page.addSection(card -> card.fillColor(com.demcha.compose.document.style.DocumentColor.rgb(238, 242, 247))
+                    .keepTogether().margin(new DocumentInsets(12, 0, 0, 0))
+                    .addParagraph("Card one").addParagraph("Card two").addParagraph("Card three")
+                    .addParagraph("Card four").addParagraph("Card five").addParagraph("Card six"));
+        });
+
+        List<XWPFParagraph> ending = exported.paragraphsEndingASection();
+        assertThat(ending).singleElement().satisfies(paragraph -> assertThat(((java.math.BigInteger) paragraph.getCTP()
+                .getPPr().getSpacing().getLine()).longValue()).as("a hairline of its own").isEqualTo(2));
+        List<org.apache.poi.xwpf.usermodel.IBodyElement> body = exported.document().getBodyElements();
+        int at = body.indexOf(ending.get(0));
+        assertThat(body.get(at + 1)).as("the held line, on page 2").isInstanceOfSatisfying(XWPFParagraph.class,
+                held -> assertThat(((java.math.BigInteger) held.getCTP().getPPr().getSpacing().getLine()).longValue())
+                        .isEqualTo(12 * 20));
+    }
+
+    @Test
+    void aSectionWrittenWithOtherSideMarginsNamesItsHeaderStandingOff() throws Exception {
+        // The page sets its header from the document's side margins, Word from the section's.
+        Exported exported = export(List.of(PageMarginRule.from(2, DocumentInsets.symmetric(36, 90))),
+                session -> session.chrome().zone(DocumentPageZone.header(18,
+                        page -> new ParagraphBuilder().text("Running").build())),
+                page -> lines(page, "Line", 60));
+
+        assertThat(exported.notes()).singleElement().asString().startsWith("page 2's margins differ from page 1's: "
+                + "written as a Word section").endsWith("; Word sets its header and footer from its side margins, "
+                + "where the page sets them from the document's, and they stand as far off the page's");
+    }
+
+    @Test
+    void aFirstPageWithOtherSideMarginsThanTheDocumentsNamesItsHeaderStandingOff() throws Exception {
+        Exported exported = export(List.of(PageMarginRule.page(1, DocumentInsets.symmetric(36, 90))),
+                session -> session.chrome().zone(DocumentPageZone.header(18,
+                        page -> new ParagraphBuilder().text("Running").build())),
+                page -> page.addParagraph("Only page"));
+
+        assertThat(exported.notes()).singleElement().asString().startsWith("page 1's side margins differ from the "
+                + "document's, which the page sets its header and footer from");
+    }
+
+    @Test
+    void aSectionOfADocumentWhoseTextFooterCountsItsPagesKeepsOneSetOfMargins() throws Exception {
+        DocumentSession body = GraphCompose.document().pageSize(400, 400).margin(FIRST).create();
+        body.pageMargins(List.of(PageMarginRule.from(2, LATER)));
+        body.footer(com.demcha.compose.document.output.DocumentHeaderFooter.builder()
+                .rightText("{page} of {pages}").build());
+        body.pageFlow(page -> lines(page, "Line", 60));
+        List<String> notes = sectionedNotes(body);
+
+        assertThat(notes).singleElement().asString().endsWith("a Word section would count its own pages, where this "
+                + "section's header or footer counts all of them");
+    }
+
+    @Test
+    void aLaterPartOfASectionOfSeveralCountsItsPagesOnFromTheFirst() throws Exception {
+        // Each section of a document of several counts its pages from 1: the part a page with other
+        // margins starts counts on.
+        DocumentSession body = GraphCompose.document().pageSize(400, 400).margin(FIRST).create();
+        body.pageMargins(List.of(PageMarginRule.from(2, LATER)));
+        body.pageFlow(page -> lines(page, "Line", 60));
+        DocumentSession cover = GraphCompose.document().pageSize(400, 400).margin(FIRST).create();
+        cover.pageFlow(page -> page.addParagraph("Cover"));
+        byte[] bytes;
+        try (com.demcha.compose.document.api.MultiSectionDocument document = GraphCompose.documents()
+                .section(cover).section(body).create()) {
+            bytes = document.toDocxBytes();
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(bytes))) {
+            List<CTSectPr> ending = document.getParagraphs().stream()
+                    .filter(p -> p.getCTP().isSetPPr() && p.getCTP().getPPr().isSetSectPr())
+                    .map(p -> p.getCTP().getPPr().getSectPr()).toList();
+            assertThat(ending).as("the cover's, then the body's first part").hasSize(2);
+            assertThat(ending.get(1).getPgNumType().isSetStart()).as("the body counts from 1").isTrue();
+            CTSectPr later = document.getDocument().getBody().getSectPr();
+            assertThat(later.isSetPgNumType() && later.getPgNumType().isSetStart()).as("and on").isFalse();
+        }
+    }
+
+    private static List<String> sectionedNotes(DocumentSession body) throws Exception {
+        DocumentSession cover = GraphCompose.document().pageSize(400, 400).margin(FIRST).create();
+        cover.pageFlow(page -> page.addParagraph("Cover"));
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (com.demcha.compose.document.api.MultiSectionDocument document = GraphCompose.documents()
+                .section(cover).section(body).create()) {
+            document.export(new DocxSemanticBackend(report::set));
+        }
+        return report.get().notes().stream().filter(note -> note.subject().equals("page margin"))
+                .map(DocxExportReport.Note::detail).toList();
+    }
+
+    @Test
+    void theSpaceAboveAPictureOpeningAPageIsReckonedFromThatPagesTopMargin() throws Exception {
+        // A picture the layout moves onto a page holds the space the page leaves above it there,
+        // read from where the layout places it. Page 2's top margin is 26pt under page 1's: read from
+        // page 1's, the space above the picture came to less than none, and its 20pt margin was lost.
+        Exported exported = export(List.of(PageMarginRule.from(2, new DocumentInsets(10, 36, 36, 36))), page -> {
+            lines(page, "Line", 24);
+            page.addImage(image -> image.source(png()).size(40, 40).margin(new DocumentInsets(20, 0, 0, 0)));
+        });
+
+        List<XWPFParagraph> paragraphs = exported.document().getParagraphs();
+        int picture = paragraphs.indexOf(paragraphs.stream()
+                .filter(paragraph -> !paragraph.getRuns().isEmpty() && !paragraph.getRuns().get(0)
+                        .getEmbeddedPictures().isEmpty()).findFirst().orElseThrow());
+        var held = paragraphs.get(picture - 1).getCTP().getPPr().getSpacing();
+        assertThat(paragraphs.get(picture - 1).getText()).as("a line held above it").isEmpty();
+        assertThat(((java.math.BigInteger) held.getLine()).longValue()).isEqualTo(20 * 20);
+    }
+
+    private static byte[] png() {
+        try (java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(16, 16,
+                    java.awt.image.BufferedImage.TYPE_INT_RGB), "png", bytes);
+            return bytes.toByteArray();
+        } catch (java.io.IOException failure) {
+            throw new IllegalStateException(failure);
+        }
+    }
+
+    private static void rows(com.demcha.compose.document.dsl.TableBuilder table, String text, int count) {
+        table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100));
+        for (int row = 0; row < count; row++) {
+            table.row(text + " " + row, "$" + row);
+        }
+    }
+
+    /** The most rows one table holds on a page, laid out alone. */
+    private static int rowsFilling(List<PageMarginRule> rules, int pages) throws Exception {
+        int rows = 1;
+        while (pagesOf(rules, rows + 1) == pages) {
+            rows++;
+        }
+        return rows;
+    }
+
+    private static int pagesOf(List<PageMarginRule> rules, int rows) throws Exception {
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 400).margin(FIRST).create()) {
+            session.pageMargins(rules);
+            session.pageFlow(page -> page.addTable(table -> {
+                table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100));
+                for (int row = 0; row < rows; row++) {
+                    table.row("Item " + row, "$" + row);
+                }
+            }));
+            return session.layoutGraph().totalPages();
+        }
+    }
+
+    private static void lines(PageFlowBuilder page, String text, int count) {
+        for (int line = 0; line < count; line++) {
+            int at = line;
+            page.addParagraph(p -> p.name(text + "_" + at).text(text + " " + at));
+        }
+    }
+
+    private static long bottom(CTSectPr section) {
+        return ((java.math.BigInteger) section.getPgMar().getBottom()).longValue();
+    }
+
+    private static Exported export(List<PageMarginRule> rules, Consumer<PageFlowBuilder> content) throws Exception {
+        return export(rules, session -> { }, content);
+    }
+
+    private static Exported export(List<PageMarginRule> rules, Consumer<DocumentSession> chrome,
+                                   Consumer<PageFlowBuilder> content) throws Exception {
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 400).margin(FIRST).create()) {
+            session.pageMargins(rules);
+            chrome.accept(session);
+            session.pageFlow(content::accept);
+            byte[] bytes = session.export(new DocxSemanticBackend(report::set));
+            List<String> lastLines = new ArrayList<>();
+            for (int page = 0; page < session.layoutGraph().totalPages(); page++) {
+                int at = page;
+                lastLines.add(session.layoutGraph().nodes().stream()
+                        .filter(node -> node.nodeKind().equals("ParagraphNode") && node.endPage() == at)
+                        .reduce((before, after) -> after)
+                        .map(node -> node.semanticName())
+                        .orElse(""));
+            }
+            return new Exported(new XWPFDocument(new ByteArrayInputStream(bytes)), report.get(), lastLines);
+        }
+    }
+
+    private record Exported(XWPFDocument document, DocxExportReport report, List<String> lastNames) {
+
+        CTSectPr body() {
+            return document.getDocument().getBody().getSectPr();
+        }
+
+        List<XWPFParagraph> paragraphsEndingASection() {
+            return document.getParagraphs().stream()
+                    .filter(paragraph -> paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetSectPr())
+                    .toList();
+        }
+
+        /** The text of the last paragraph the layout ends on a page: each is named for its text. */
+        String lastLineOf(int page) {
+            return lastNames.get(page).replace('_', ' ');
+        }
+
+        List<String> notes() {
+            return report.notes().stream().filter(note -> note.subject().equals("page margin"))
+                    .map(DocxExportReport.Note::detail).toList();
+        }
+    }
+}

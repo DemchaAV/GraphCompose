@@ -54,7 +54,7 @@ final class DocxLayoutMetrics {
 
     /** What an export with no compiled layout uses: every question answers "unknown". */
     static final DocxLayoutMetrics EMPTY =
-            new DocxLayoutMetrics(new IdentityHashMap<>(), java.util.Set.of(), Map.of(), Map.of(), List.of(), 0);
+            new DocxLayoutMetrics(new IdentityHashMap<>(), java.util.Set.of(), Map.of(), Map.of(), List.of(), 0, null);
 
     private final Map<DocumentNode, String> paths;
     // Nodes one instance of which stands at more than one place — see placedMoreThanOnce.
@@ -64,6 +64,8 @@ final class DocxLayoutMetrics {
     // Every fragment, in the order the page paints them.
     private final List<PlacedFragment> painted;
     private final int pageCount;
+    // The margin each page was laid out against, or null with no layout.
+    private final com.demcha.compose.document.layout.PageGeometry pageGeometry;
     // A table's measured cells by name, filled on first use — see measuredCellsOf.
     private final Map<DocumentNode, Map<String, TableResolvedCell>> measuredCells = new IdentityHashMap<>();
     private final Map<DocumentNode, Map<String, List<CellBox>>> cellBoxes = new IdentityHashMap<>();
@@ -89,13 +91,15 @@ final class DocxLayoutMetrics {
                               Map<String, List<PlacedFragment>> fragments,
                               Map<String, PlacedNode> placed,
                               List<PlacedFragment> painted,
-                              int pageCount) {
+                              int pageCount,
+                              com.demcha.compose.document.layout.PageGeometry pageGeometry) {
         this.paths = paths;
         this.repeated = repeated;
         this.fragments = fragments;
         this.placed = placed;
         this.painted = painted;
         this.pageCount = pageCount;
+        this.pageGeometry = pageGeometry;
     }
 
     /**
@@ -121,7 +125,7 @@ final class DocxLayoutMetrics {
         if (layout == null) {
             // No measurements, but the paths still name the nodes — which is what a
             // diagnostic note needs to say where in the document it came from.
-            return new DocxLayoutMetrics(paths, repeated, Map.of(), Map.of(), List.of(), 0);
+            return new DocxLayoutMetrics(paths, repeated, Map.of(), Map.of(), List.of(), 0, null);
         }
         Map<String, List<PlacedFragment>> fragments = new HashMap<>();
         for (PlacedFragment fragment : layout.fragments()) {
@@ -131,7 +135,18 @@ final class DocxLayoutMetrics {
         for (PlacedNode node : layout.nodes()) {
             placed.putIfAbsent(node.path(), node);
         }
-        return new DocxLayoutMetrics(paths, repeated, fragments, placed, layout.fragments(), layout.totalPages());
+        return new DocxLayoutMetrics(paths, repeated, fragments, placed, layout.fragments(), layout.totalPages(),
+                layout.pageGeometry());
+    }
+
+    /**
+     * The margin the layout set a page against: the canvas's, or a per-page margin's.
+     *
+     * @param page the page, from 0
+     * @return its margin, or {@code null} with no layout behind this index
+     */
+    com.demcha.compose.engine.components.style.Margin marginOf(int page) {
+        return pageGeometry == null ? null : pageGeometry.marginForPage(page);
     }
 
     /**
@@ -1878,6 +1893,24 @@ final class DocxLayoutMetrics {
      * @param painted what the page paints inside it, in paint order
      */
     record Clip(PlacedFragment opening, List<PlacedFragment> painted) {
+    }
+
+    /**
+     * Where a page's content ends, in points up from the page's foot: the bottom of its lowest
+     * fragment. A page's backgrounds, its zones and a timeline's rail — fragments under a path of
+     * the layout's own, starting {@code @} — are drawn elsewhere and take no room in the flow.
+     *
+     * @param page the page, from 0
+     * @return the bottom of its lowest fragment, or {@code NaN} where it holds no content
+     */
+    double lowestContentOn(int page) {
+        double lowest = Double.NaN;
+        for (PlacedFragment fragment : paintedOn(page)) {
+            if (fragment.path() != null && !fragment.path().startsWith("@")) {
+                lowest = Double.isNaN(lowest) ? fragment.y() : Math.min(lowest, fragment.y());
+            }
+        }
+        return lowest;
     }
 
     private List<PlacedFragment> paintedOn(int page) {

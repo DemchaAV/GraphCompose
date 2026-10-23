@@ -8,6 +8,31 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export holds a row's auto column's editor point in the gap after it.**
+  - A row column sized to its content (`DocumentRowColumn.auto()`) is given a point for an
+    editor's face. It came out of the row's weight columns and moved what stood right of the auto
+    column a point right: `ReceiptModern`'s leaders and `EditorialProposal`'s signature lines
+    started 0.88 to 1.04pt right of the page's in Word.
+  - The column already holds the next child's left margin, and a paragraph's own right side gives
+    what the paragraph does not write as an indent. A paragraph set left takes what that does not
+    give from the gap after its column, which stands where the page sets it.
+  - What neither holds still comes out of the weight columns, and the row is named (`right end`)
+    unless they hold only spacers or it is under a tenth of a point. Twenty rows of the corpus
+    are named, among them
+    `ReceiptModern`'s amounts at the row's end, 0.84 to 1.1pt left in Word and 0.86 to 1.02pt in
+    LibreOffice, and
+    `VioletGrid`'s section heading rules, a point right. Nothing named them before.
+  - A rule in a row's column counts its left margin once: the column starts past it. Counted
+    again, `CharcoalGold`'s heading rules started 9.25pt right of the page's in Word, their 9pt
+    margin again, and `VioletGrid`'s credential rules 12.3pt, their 11.3pt margin again and the
+    point.
+  - Measured on Windows, in Word: the leaders within 0.06pt of the page's, the signature lines
+    within 0.18pt and `VioletGrid`'s credential rules within 0.07pt. `CharcoalGold`'s heading
+    rules stand with their words, which stand 0.7pt left in both editors. LibreOffice sets each
+    end of a rule 1.4 and 1.5pt in, as before. No line breaks differently or moves down in either
+    editor, and no word moves across by more than 0.4pt.
+  - 4 of the corpus's 62 documents change. The notes go from 1365 to 1385.
+
 - **A DOCX export ends a panel hung out of its table cell where the page ends it.**
   - A panel whose left border the page centres on its cell's text edge is written with a negative
     indent, its table half that border wider than the panel. LibreOffice and Word start a nested

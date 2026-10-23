@@ -10980,6 +10980,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         fieldReferences.clear();
     }
 
+    /**
+     * What a paragraph asks of its own sides as indents, in points: its margin and padding there,
+     * less, in a table cell, the editor's points off each side it is not set from
+     * ({@link #EDITOR_SLACK_POINTS}); a side below zero as it is, which a table cell then holds at
+     * its text ({@link #writeParagraph}).
+     *
+     * @param node    the paragraph, whose direction and alignment say which side it is set from
+     * @param left    its left margin and padding, as far as its paragraph writes them
+     * @param right   its right margin and padding
+     * @param inACell whether it is written in a table cell
+     * @return the left and the right indent it writes of them
+     */
+    private static double[] writtenSides(ParagraphNode node, double left, double right, boolean inACell) {
+        double spare = inACell ? EDITOR_SLACK_POINTS : 0;
+        boolean leftToRight = ParagraphDirection.resolve(node) != TextDirection.RTL;
+        boolean fromTheLeft = leftToRight && node.align() == TextAlign.LEFT;
+        boolean fromTheRight = leftToRight && node.align() == TextAlign.RIGHT;
+        return new double[]{left < 0 ? left : Math.max(0, left - (fromTheLeft ? 0 : spare)),
+                right < 0 ? right : Math.max(0, right - (fromTheRight ? 0 : spare))};
+    }
+
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
         if (overTheFlowDepth > 0) {
             writeTextOverTheFlow(document, node);
@@ -11015,10 +11036,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // cell started 2pt left of the page's, every right-aligned one ended 2pt right of it.
         // A centred line, and a right-to-left one, is spared on both sides. A cell of a row the
         // layout placed already starts where the paragraph does, past its left margin.
-        double spare = currentCell != null ? EDITOR_SLACK_POINTS : 0;
-        boolean leftToRight = ParagraphDirection.resolve(node) != TextDirection.RTL;
-        boolean fromTheLeft = leftToRight && node.align() == TextAlign.LEFT;
-        boolean fromTheRight = leftToRight && node.align() == TextAlign.RIGHT;
         double left = (node == leftMarginInCell ? 0 : node.margin().left()) + node.padding().left();
         double right = node.margin().right() + node.padding().right();
         // A side the paragraph is pulled out past, by a margin below zero, stands out as far, with
@@ -11026,8 +11043,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // than the cell's: what a margin below zero, its own or a block's round it, takes past that
         // is not written, and is named (PULLED_OUT_OF_ITS_CELL), unless a line of a word set past
         // its box stands out alone (letTheLineStandOut).
-        double ownLeft = left < 0 ? left : Math.max(0, left - (fromTheLeft ? 0 : spare));
-        double ownRight = right < 0 ? right : Math.max(0, right - (fromTheRight ? 0 : spare));
+        double[] sides = writtenSides(node, left, right, currentCell != null);
+        double ownLeft = sides[0];
+        double ownRight = sides[1];
         double shortLeft = currentCell == null ? 0 : Math.max(0, -(insetLeft + ownLeft));
         double shortRight = currentCell == null ? 0 : Math.max(0, -(insetRight + ownRight));
         insetLeft += ownLeft + shortLeft;
@@ -14642,7 +14660,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * lengths, and the report says so.</p>
      */
     private void writeRule(XWPFDocument document, DocumentNode node, DocxRules.Rule rule) {
-        double sideLeft = node.margin().left() + node.padding().left();
+        // A cell of a row the layout placed already starts past its left margin: counted again,
+        // CharcoalGold's heading rules started 9.25pt right of the page's in Word, their 9pt margin
+        // again, and VioletGrid's credential rules 12.3pt, their 11.3pt margin again and the
+        // editor's point their column was given.
+        double sideLeft = (node == leftMarginInCell ? 0 : node.margin().left()) + node.padding().left();
         double sideRight = node.margin().right() + node.padding().right();
         java.util.OptionalDouble placed = layout.placedWidth(node);
         double boxWidth = placed.isPresent()
@@ -18850,7 +18872,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Widens a row's auto columns by a point, taken from its weight columns.
+     * Gives a row's auto columns the editor's point: out of the gap beside each where it holds it,
+     * the rest out of the row's weight columns, which is named.
      *
      * <p>An auto column is exactly as wide as its child's unwrapped content, and an editor
      * setting that content in its own substitute for the face wraps it — the reason a table's
@@ -18858,48 +18881,106 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * Measured through LibreOffice, a table of contents — auto label, weight leader, auto page
      * number — broke "Intro" into "Intr" and "o".</p>
      *
-     * <p>A row is as wide as the layout placed it, so the point comes out of the weight
-     * columns, which on the page take whatever the others leave: the row keeps its width, and
-     * a fixed column its size. Each weight column gives in proportion to its text box and
-     * never more than it has. Written as placed: a row with no auto column or no weight
-     * column, and one with no stated columns — weights or an even split. A row cannot state
-     * columns and be laid out as flex; {@code RowNode} refuses the pair.</p>
+     * <p>A column runs from its child's start to the next child's, so its text box already holds
+     * the next child's left margin, and a paragraph's own right side gives what it does not write
+     * as an indent ({@link #roomInItsColumn}): CharcoalGold's heading words have the 9pt their rule
+     * stands in by, and take none of the point from anywhere. What of the point that room does not
+     * give, a paragraph set left takes from the gap after its column, the column's right margin,
+     * and its column stands where the page sets it. Widened instead, it moved whatever stood right of it: measured in Word,
+     * ReceiptModern's leaders started 0.95 to 1.04pt right of the page's, and EditorialProposal's
+     * signature lines 0.88 to 1.02pt. The row's padding after its last column is not a gap: a
+     * painted row's panel takes it out of its columns ({@link #withoutTheRowsPadding}). A paragraph
+     * set otherwise, or a child that is not a paragraph, takes none of it from a gap: set right, a
+     * paragraph in an auto column claims its row's whole width on the page, and what another child
+     * holds may lean either way.</p>
      *
-     * <p>The point comes out of the weight column's text box, not only its empty part —
-     * which the layout does not report, as a paragraph or a line fills its slot. Weight
-     * columns in a row with auto columns hold leaders, rules and spacers; one holding text
-     * that fills it to the point could wrap a line sooner in the editor.</p>
+     * <p>What neither gives comes out of the weight columns, which on the page take whatever the
+     * others leave: the row keeps its width, and a fixed column its size. Each weight column gives
+     * in proportion to its text box and never more than it has, and what stands at the edges
+     * between the columns moves that much off the page's — ReceiptModern's amounts, set after their
+     * leaders at the row's end, 0.84 to 1.1pt left in Word and 0.86 to 1.02pt in LibreOffice —
+     * which the report names ({@code right end}) unless the weight columns giving it hold only
+     * spacers or it is under a tenth of a point. A row with no weight column gives what its gaps hold and no more. Written
+     * as placed: a row with no auto column, and one with no stated columns — weights or an even
+     * split. A row cannot state columns and be laid out as flex; {@code RowNode} refuses the
+     * pair.</p>
      */
-    private static List<CellColumn> withRowEditorSlack(RowNode node, List<CellColumn> columns) {
+    private List<CellColumn> withRowEditorSlack(RowNode node, List<CellColumn> columns) {
         List<DocumentRowColumn> specs = node.columns();
         if (specs.size() != columns.size()) {
             return columns;
         }
-        int autoColumns = 0;
+        List<CellColumn> held = new ArrayList<>(columns);
+        int last = columns.size() - 1;
+        double[] wants = new double[columns.size()];
+        double wanted = 0;
         double spare = 0;
         for (int index = 0; index < columns.size(); index++) {
             DocumentRowColumn.Type type = specs.get(index).type();
-            if (type == DocumentRowColumn.Type.AUTO) {
-                autoColumns++;
-            } else if (type == DocumentRowColumn.Type.WEIGHT) {
+            if (type == DocumentRowColumn.Type.WEIGHT) {
                 spare += textBoxOf(columns.get(index));
             }
-        }
-        if (autoColumns == 0 || !(spare > 0)) {
-            return columns;
-        }
-        double slack = Math.min(EDITOR_COLUMN_SLACK_POINTS, spare / autoColumns);
-        double taken = slack * autoColumns;
-        List<CellColumn> widened = new ArrayList<>(columns.size());
-        for (int index = 0; index < columns.size(); index++) {
+            if (type != DocumentRowColumn.Type.AUTO) {
+                continue;
+            }
+            DocumentNode child = node.children().get(index);
+            double need = Math.max(0, EDITOR_COLUMN_SLACK_POINTS - roomInItsColumn(child, columns.get(index)));
+            boolean setLeft = child instanceof ParagraphNode paragraph && paragraph.align() == TextAlign.LEFT;
+            // The gap after it, its column's right margin: the row's padding, at its end, is not one.
             CellColumn column = columns.get(index);
+            double fromTheGap = setLeft && index < last ? Math.min(need, column.trailing()) : 0;
+            held.set(index, new CellColumn(column.width(), column.leading(), column.trailing() - fromTheGap));
+            wants[index] = need - fromTheGap;
+            wanted += wants[index];
+        }
+        if (!(wanted > 0) || !(spare > 0)) {
+            return held;
+        }
+        double taken = Math.min(wanted, spare);
+        boolean movesWhatTheyHold = false;
+        List<CellColumn> widened = new ArrayList<>(held.size());
+        for (int index = 0; index < held.size(); index++) {
+            CellColumn column = held.get(index);
             DocumentRowColumn.Type type = specs.get(index).type();
-            double change = type == DocumentRowColumn.Type.AUTO ? slack
+            double change = type == DocumentRowColumn.Type.AUTO ? wants[index] * taken / wanted
                     : type == DocumentRowColumn.Type.WEIGHT ? -taken * textBoxOf(column) / spare
                     : 0;
+            if (change < 0 && !(node.children().get(index) instanceof SpacerNode)) {
+                movesWhatTheyHold = true;
+            }
             widened.add(new CellColumn(column.width() + change, column.leading(), column.trailing()));
         }
+        // Less than a tenth of a point off is not seen.
+        if (movesWhatTheyHold && taken >= 0.1) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, RIGHT_END, layout.pathOf(node),
+                    "its columns sized to their content written " + pointsOf(taken) + "pt wider than the page sets "
+                    + "them, the room an editor setting their text in its own face may need, which the gaps beside "
+                    + "them do not hold: it comes out of its columns sized by weight, and what stands at the edges "
+                    + "between them moves up to that much off where the page sets it");
+        }
         return widened;
+    }
+
+    /**
+     * The room a row's child has in its column's text box past what the page gives it, in points:
+     * the next child's left margin, which the column runs past ({@link #placedColumns}), and, for a
+     * paragraph, what of its own right side it does not write as an indent ({@link #writtenSides}).
+     * None where the layout did not place it.
+     */
+    private double roomInItsColumn(DocumentNode child, CellColumn column) {
+        java.util.OptionalDouble width = layout.placedWidth(child);
+        if (width.isEmpty()) {
+            return 0;
+        }
+        if (child instanceof ParagraphNode paragraph) {
+            // In the row's cell, which starts past its left margin and holds no side of it below
+            // zero (writeParagraph): a side a margin below zero pulls out stands at the cell's text.
+            double[] sides = writtenSides(paragraph, paragraph.padding().left(),
+                    paragraph.margin().right() + paragraph.padding().right(), true);
+            double text = width.getAsDouble() - paragraph.padding().left() - paragraph.padding().right();
+            return Math.max(0, textBoxOf(column) - Math.max(0, sides[0]) - Math.max(0, sides[1]) - text);
+        }
+        return Math.max(0, textBoxOf(column) - width.getAsDouble() - Math.max(0, child.margin().right()));
     }
 
     /** The width a row column leaves its content, between its margins. */

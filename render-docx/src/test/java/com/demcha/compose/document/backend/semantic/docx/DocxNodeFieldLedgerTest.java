@@ -149,6 +149,15 @@ class DocxNodeFieldLedgerTest {
                                     + "wider than the page, and by what a hung left border gave up that such a line "
                                     + "takes back, named (right end)";
 
+    // A row's auto column's text is given a point of slack, out of the gap beside it where that
+    // holds it (DocxEditorSlackTest).
+    static final String ROW_AUTO_ROOM = "the room an editor's face is given in a row's auto column, held in the "
+                                        + "room its child leaves and, for a paragraph set left, the gap after "
+                                        + "it; what they do not hold, out of its weight columns, what "
+                                        + "stands at the edges between them up to that much off the page's, "
+                                        + "named unless they hold only spacers or it is under a tenth of a "
+                                        + "point (right end)";
+
     // LibreOffice and Word start a nested table at its cell's text.
     static final String LEFT_EDGE = "a panel's left edge in a table cell, its left border hanging out of the cell or "
                                     + "its margin below zero, which LibreOffice and Word set at the cell's text: up "
@@ -389,7 +398,8 @@ class DocxNodeFieldLedgerTest {
                 "cornerRadius:REPORTED:a panel's corners, which a Word table cell does not round; with no paint "
                 + "it paints nothing",
                 "borders:REPORTED:" + RIGHT_BORDER + "; " + RIGHT_END + "; " + LEFT_EDGE + "; " + ROW_PAINT,
-                "columns:GAP:" + ROW_COLUMNS_UNLAID + "; " + ROW_COLUMNS, "verticalAlign:WRITTEN",
+                "columns:GAP:" + ROW_COLUMNS_UNLAID + "; " + ROW_AUTO_ROOM + "; " + ROW_COLUMNS,
+                "verticalAlign:WRITTEN",
                 "arrangement:REPORTED:" + ROW_COLUMNS);
         // The wrappers the layout adds round a timeline's parts, public records the export writes
         // through to their child.

@@ -14559,7 +14559,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * The paragraph is placed where the rule's box is: the space above the stroke is the
      * paragraph's height, held to a tenth of a point when there is none, the space below is
      * owed to what follows, what Word's paragraph stands taller than the box hangs below it,
-     * and the rule's two ends are the paragraph's indents. Word draws
+     * and the rule's two ends are the paragraph's indents, each taken in by what Word draws a
+     * border past it ({@link #wordsRuleReach}): LibreOffice, which draws it between them, sets each
+     * end that much further in. Word draws
      * a border in its own dash lengths, so a dashed rule keeps its dash and not the pattern's
      * lengths, and the report says so.</p>
      */
@@ -14584,6 +14586,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // known: a cell whose grid this export did not write has none, and measuring against the
         // page there put the rule's end past the cell's.
         boolean widthKnown = currentCell != null ? Double.isFinite(currentCellWidth) : contentWidth < Double.MAX_VALUE;
+        // Word draws a paragraph's border past both its indents, and LibreOffice between them: the
+        // indents are taken in by Word's reach, so the rule ends where the page ends it in Word.
+        // A rule running past the width it is written in is held at that width's edge, as before,
+        // and only what Word draws further than the page ends it is taken in.
+        double reachLeft = wordsRuleReach(drawnAs != null ? drawnAs.end() - drawnAs.start() : to - from,
+                WORD_RULE_REACH_LEFT_POINTS);
+        double reachRight = wordsRuleReach(drawnAs != null ? drawnAs.end() - drawnAs.start() : to - from,
+                WORD_RULE_REACH_RIGHT_POINTS);
         if (drawnAs != null) {
             // Written in the cell itself, it runs where that drawing does, between the cell's
             // margins: a composed cell's content has no place of its own, and the alignment or the
@@ -14591,14 +14601,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // the cell's left.
             double textLeft = drawnAs.box().left() + cellMarginOf(currentCell, true);
             double textRight = drawnAs.box().right() - cellMarginOf(currentCell, false);
-            indent.setLeft(BigInteger.valueOf(leftIndentTwips(drawnAs.start() - textLeft)));
-            indent.setRight(BigInteger.valueOf(toTwips(Math.max(0, textRight - drawnAs.end()))));
+            indent.setLeft(BigInteger.valueOf(leftIndentTwips(drawnAs.start() - textLeft + reachLeft)));
+            indent.setRight(BigInteger.valueOf(toTwips(Math.max(0, textRight - drawnAs.end() + reachRight))));
         } else {
             // A rule in a container hanging left starts out past the margin with its text.
-            indent.setLeft(BigInteger.valueOf(leftIndentTwips(insetLeft + sideLeft + from)));
+            indent.setLeft(BigInteger.valueOf(leftIndentTwips(insetLeft + sideLeft + from + reachLeft)));
             if (widthKnown) {
                 double rightGap = availableWidth() - sideLeft - to;
-                indent.setRight(BigInteger.valueOf(toTwips(insetRight + Math.max(0, rightGap))));
+                indent.setRight(BigInteger.valueOf(toTwips(insetRight + Math.max(0, rightGap + reachRight))));
+            } else {
+                // It runs to the edge Word gives it, held in from it by the containers round it
+                // (applyInset), and that much less past it.
+                long held = twipsOf(indent.isSetRight() ? indent.getRight() : null);
+                indent.setRight(BigInteger.valueOf(held + Math.round(reachRight * POINT_TO_TWIP)));
             }
         }
 
@@ -14659,6 +14674,38 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // A line's link is the rule link above; a filled bar's, and either's outline entry, here.
         reportWrittenWithout(node, "written as a paragraph border");
     }
+
+    /**
+     * How far one of a rule's indents is taken in for what Word draws its border past it, in
+     * points: Word's reach, but no further than leaves the rule's paragraph a tenth of a point.
+     *
+     * <p>Word draws a paragraph's bottom border past both its indents and LibreOffice between
+     * them. Measured on nine rules in the body, half a point to 4pt thick, indented from nothing
+     * to 61.7pt: Word drew them 1.36 to 1.49pt past the left indent and 1.44 to 1.59pt past the
+     * right, whatever the size of the paragraph's mark or a left and right border written as none;
+     * rules of 1 and 3pt in a row's column and in a table cell fell in the same range, and a
+     * dashed and a dotted one reached as far as a solid one. {@code SubscriptionInvoice}'s
+     * separators stood 1.32pt left of the page's and 1.57pt right, and its four-coloured strip's
+     * segments ran that far into each other. A rule shorter than Word's reach at both ends keeps a
+     * tenth of a point of its paragraph, which Word still draws the reach past: measured, rules of
+     * 1, 2 and 3pt stood 3.0, 2.88 and 3.12pt long in Word, each centred within 0.05pt of where
+     * the page centres it.</p>
+     *
+     * @param length the rule's length on the page, in points
+     * @param reach  how far past that indent Word draws it, in points
+     */
+    private static double wordsRuleReach(double length, double reach) {
+        return Math.min(reach, Math.max(0, (length - SHORTEST_RULE_PARAGRAPH_POINTS) / 2));
+    }
+
+    /** How far past its left indent Word draws a paragraph's border, in points: measured, 1.36 to 1.49. */
+    static final double WORD_RULE_REACH_LEFT_POINTS = 1.42;
+
+    /** How far past its right indent Word draws a paragraph's border, in points: measured, 1.44 to 1.59. */
+    static final double WORD_RULE_REACH_RIGHT_POINTS = 1.51;
+
+    /** What a rule shorter than Word's reach at both ends keeps of its paragraph's width, in points. */
+    private static final double SHORTEST_RULE_PARAGRAPH_POINTS = 0.1;
 
     /** Word's border for a rule's dash: dots where the dashes are no longer than the stroke. */
     private static STBorder.Enum dashOf(DocxRules.Rule rule) {

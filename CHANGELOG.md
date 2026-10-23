@@ -8,6 +8,33 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export ends a rule where the page ends it in Word.**
+  - A horizontal line, a divider or a thin bar is written as an empty paragraph's bottom border,
+    its ends the paragraph's indents. Word draws a paragraph's border past both indents, so every
+    rule stood about 1.4pt longer at its left and 1.5pt at its right. Subscription Invoice's
+    four-coloured strip had its segments run that far into each other.
+  - Each indent is now taken in by Word's reach: 1.42pt at the left, 1.51pt at the right. A rule
+    running past the width it is written in is held at that width's edge as before, and only what
+    Word draws further than the page ends it is taken in. A rule shorter than both keeps a tenth of
+    a point of its paragraph: rules of 1, 2 and 3pt stood 3.0, 2.88 and 3.12pt long in Word, each
+    centred where the page centres it.
+  - LibreOffice draws the border between the indents, so it now sets each end of a rule that much
+    further in.
+  - Measured on Windows:
+    - Nine rules in the body, half a point to 4pt thick: Word drew them 1.36 to 1.49pt past the left
+      indent and 1.44 to 1.59pt past the right. Neither a side border written as none nor the size
+      of the paragraph's mark changed that. Rules of 1 and 3pt in a row's column and in a table
+      cell fell in the same range, and a dashed and a dotted one reached as far as a solid one.
+    - On the corpus, in Word, 280 strokes stand nearer the page's and 13 further. The 13 are rules
+      whose column the export already starts right of the page's, which Word's reach used to cover
+      in part: Receipt Modern's leaders and Violet Grid's separators, after a row's auto column
+      given an editor's point, now start 1pt right instead of 0.45pt left.
+    - In LibreOffice, 281 rules move in: 249 by 1.4pt at the left and 1.5pt at the right, 21 at the
+      left only, being held at their width's edge, the rest by less at the right.
+    - No word moves in either editor.
+  - A header's or footer's separator is its text's own border and keeps its indents: Word still
+    draws it past the margins.
+  - 43 of the corpus's 62 documents change. No note changes.
 - **A DOCX export stands a table's rules where the page draws them beside a column sized to its
   content.**
   - An auto column's text is given a point of slack past the page's width, so an editor setting it

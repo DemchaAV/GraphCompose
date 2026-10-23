@@ -560,7 +560,7 @@ How it lands:
   widens by the other half, so the text and the border land where the page draws them. On the
   left, a nested panel set in from its cell's text keeps of that half what it is set in by,
   and all of it set in half its border or more, as both editors set its text its border's centre
-  and its margin in (see the left edge, under **Width**). A panel in the body is the exception
+  and its margin in (see the left edge, under **Nesting**). A panel in the body is the exception
   on its left: Word 16 and LibreOffice on Windows centre a
   body table's left border on its edge, as the page does, and start its text at its indent,
   the margin past that edge, so its left margin is the whole padding and the table is no
@@ -661,9 +661,9 @@ How it lands:
   whose own row may not split, and a row in the panel move whole, as the page sets them.
 - **Page breaks.** Word breaks no page inside a table cell, so a page break among a
   panel's children closes the panel there and opens it again after the break.
-- **Measured.** Cards stacked in a row's columns, panels nested in its table, stand where the
-  page sets them in Word 16 and LibreOffice on Windows; a panel inside a panel has not been
-  measured in Word, and may sit a few points off there.
+- **Measured.** Cards stacked in a row's columns, panels nested in its table, and a card set in
+  from a filled panel's text stand where the page sets them in Word 16 and LibreOffice on
+  Windows, as far as the left edge and the right end above say.
 
 Not representable, and left undone rather than approximated:
 

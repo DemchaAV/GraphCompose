@@ -16,7 +16,8 @@ follow semantic versioning; release dates are ISO 8601.
     its border where the page draws it; one set in less stood it as far left as it was set in.
   - It now keeps its whole left padding as its margin where it is set in half its border or
     more, and what it is set in by of that half where it is set in less. A panel on its cell's
-    text or bled left is unchanged: its editors move it that much right.
+    text or bled left is unchanged: its editors move it right by half its border, and a bled one
+    by its bleed too, its text with it, as the report says (`left edge`).
   - Measured on Windows: `CharcoalGold`'s headings, set in from their column's edge, stood their
     text 0.72pt left of the page's in Word and 0.71 to 0.81pt in LibreOffice, now 0.12pt and 0.04
     to 0.14pt right. Their rules stood 0.7pt left with them, now 0.13 to 0.16pt right. A card

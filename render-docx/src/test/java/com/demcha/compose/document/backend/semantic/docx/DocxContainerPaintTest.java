@@ -232,6 +232,22 @@ class DocxContainerPaintTest {
     }
 
     @Test
+    void aCardInARowsColumnIsOnItsCellsTextWhateverItsMargin() throws Exception {
+        // A row's cell starts past its child's left margin: the card stands on the cell's text and
+        // keeps none of its border's half, however far its margin sets it in on the page.
+        try (XWPFDocument document = export(page -> page.addRow(row -> row
+                .spacing(12)
+                .weights(1, 1)
+                .addSection("Card", card -> card.accentLeft(ACCENT, 2).padding(DocumentInsets.of(8))
+                        .margin(new DocumentInsets(0, 0, 0, 5)).addParagraph(p -> p.text("Card text")))
+                .addParagraph("Beside")))) {
+            XWPFTable card = document.getTables().get(0).getRow(0).getCell(0).getTables().get(0);
+
+            assertThat(leftMargin(card)).as("the padding less half the border").isEqualTo(7 * 20L);
+        }
+    }
+
+    @Test
     void aNestedPanelPaddedThinnerThanHalfItsBorderKeepsNoMoreThanItsPadding() throws Exception {
         // A 4pt border, a point of padding: set in a point or less, it has none to keep; set in 3pt,
         // all of it.

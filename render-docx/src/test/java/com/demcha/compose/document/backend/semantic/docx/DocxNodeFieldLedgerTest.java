@@ -123,11 +123,12 @@ class DocxNodeFieldLedgerTest {
     private static final String PULL = "below zero below it, the pull the space under it and the next block's own "
                                        + "top edge do not give back, on the next block (space above); any other is "
                                        + "written";
-    // A drawing is drawn where the layout puts it, and only where a shape can show it
-    // (droppedBecause): what the export drops, it names.
-    private static final String DRAWING_DROPPED = "where the export drops what is drawn, which its note names: with "
-                                                  + "no layout, painted only with a gradient or painting nothing; any "
-                                                  + "other is written";
+    // A drawing is drawn where the layout puts it, and only where a shape can show it: what the
+    // export drops, a note names, whatever the reason.
+    private static final String DRAWING_DROPPED = "where the export drops what is drawn, which a note names — with no "
+                                                  + "layout, in a page zone, painted only with a gradient or nothing, on "
+                                                  + "a page no paragraph is written on, among its reasons; any other is "
+                                                  + "written";
     private static final String RULE_TRANSLUCENCY = "its translucency, as a rule's, flattened against the colour "
                                                     + "under it; drawn, its alpha is written; " + DRAWING_DROPPED;
     // A rule is a paragraph's border, no wider than 12pt (DocxRules): only a hairline is held.
@@ -225,10 +226,12 @@ class DocxNodeFieldLedgerTest {
                                           + "no line gap written, not named";
     // A keep is written only for a block the layout keeps on one page.
     private static final String KEEP = "with no layout, in the section's note; inside a panel the layout runs on to "
-                                       + "the next page, named as one Word may break; any other is written";
-    // A page field is a zone's: in the flow it is dropped with a note.
-    private static final String FIELD_IN_THE_FLOW = "in the flow, not written, which its note names; any other is "
-                                                    + "written";
+                                       + "the next page, named as one Word may break; composed in a table cell, "
+                                       + "where the table row it stands in is what is kept, not written; any other "
+                                       + "is written";
+    // A page field is a zone line's part: anywhere else it is dropped with a note.
+    private static final String FIELD_OUTSIDE_A_ZONE = "outside a page zone's line, not written, which its note "
+                                                       + "names; any other is written";
     // A row whose children the layout does not place has columns Word sizes to their text.
     private static final String ROW_COLUMNS = "its columns Word's, sized to their text, where the layout does not "
                                               + "show where its children start: composed in a table cell with a "
@@ -368,17 +371,17 @@ class DocxNodeFieldLedgerTest {
                 "markerGap:REPORTED:where an item stands at a stated column, a space past its marker or "
                 + "two spaces a level in");
         node(PageBreakNode.class, "name:INERT", "margin:INERT");
-        node(PageFieldNode.class, "name:INERT", "kind:REPORTED:" + FIELD_IN_THE_FLOW,
-                "textStyle:REPORTED:" + FIELD_IN_THE_FLOW,
+        node(PageFieldNode.class, "name:INERT", "kind:REPORTED:" + FIELD_OUTSIDE_A_ZONE,
+                "textStyle:REPORTED:" + FIELD_OUTSIDE_A_ZONE,
                 "align:REPORTED:the page sets a field in a box a point wider than its number, which its "
                 + "alignment moves it up to that point within; in a page zone, where its part stands is the "
-                + "zone's note; " + FIELD_IN_THE_FLOW,
+                + "zone's note; " + FIELD_OUTSIDE_A_ZONE,
                 "padding:REPORTED:at its sides, and above and below beside other parts, where they stand the "
                 + "field off the place Word sets it on the zone's line; a lone or tallest field's above and "
-                + "below are written, where its line stands; " + FIELD_IN_THE_FLOW,
+                + "below are written, where its line stands; " + FIELD_OUTSIDE_A_ZONE,
                 "margin:REPORTED:at its sides, and above and below beside other parts, where they stand the "
                 + "field off the place Word sets it on the zone's line; a lone or tallest field's above and "
-                + "below are written, where its line stands; " + FIELD_IN_THE_FLOW);
+                + "below are written, where its line stands; " + FIELD_OUTSIDE_A_ZONE);
         node(PageReferenceNode.class, "name:INERT",
                 "anchor:REPORTED:where the anchor has no bookmark, its number is written as text",
                 "textStyle:WRITTEN", "align:WRITTEN", "placeholderText:WRITTEN",
@@ -392,7 +395,8 @@ class DocxNodeFieldLedgerTest {
                 "inlineRuns:REPORTED:a chip's translucent fill, flattened against the colour under it, with what "
                 + "else of its shape Word cannot hold; a run's translucent colour is written as Word's text fill",
                 "textStyle:WRITTEN", "align:WRITTEN",
-                "lineSpacing:GAP:" + LINE_GAP_UNREAD + "; with no layout, in the section's note; any other is written",
+                "lineSpacing:GAP:" + LINE_GAP_UNREAD + "; with no layout, in the section's note; in a page zone, "
+                + "where its part stands is the zone's note; any other is written",
                 "bulletOffset:REPORTED:its letters before the first line; over the flow, as a side of an "
                 + "overlay's pair or as a badge's text, the room it sets lines in by where that moves one",
                 "indentStrategy:REPORTED:as its bulletOffset's: a prefix's letters before the first line, and over "

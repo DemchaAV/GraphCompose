@@ -3873,12 +3873,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 - **The DOCX field ledger states where a field it gave as written, or as moving nothing, is
   lost.**
-  - A drawing the export drops — with no layout, painted only with a gradient, or painting
-    nothing — loses its geometry and paint, which its own note names; a line or a shape written
-    as a rule keeps them. With no layout, a paragraph's line spacing and a section's or a
-    line's keeps are lost, as the section's note says; inside a panel the layout runs on to the
-    next page, a keep is named as one Word may break. A page field in the flow is not written,
-    which its note names.
+  - A drawing the export drops — with no layout, in a page zone, painted only with a gradient
+    or nothing, or on a page no paragraph is written on — loses its geometry and paint, which a
+    note names; a line or a shape written as a rule is written as a rule. With no layout, a
+    paragraph's line spacing and a section's or a line's keeps are lost, as the section's note
+    says. Inside a panel the layout runs on to the next page, a keep is named as one Word may
+    break; composed in a table cell, the table row is what is kept. A page field anywhere but
+    on a page zone's line is not written, which its note names.
   - A page field's alignment was given as moving nothing, and `TextAlign`'s centre and right
     as not applied to one. The page sets the field in a box a point wider than its number, so
     its alignment moves the number up to that point. In a page zone, where the part stands is

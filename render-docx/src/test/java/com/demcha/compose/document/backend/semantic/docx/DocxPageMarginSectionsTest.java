@@ -46,7 +46,7 @@ class DocxPageMarginSectionsTest {
         });
         assertThat(bottom(exported.body())).as("page 2 on").isEqualTo(136 * 20);
         assertThat(exported.notes()).singleElement().asString()
-                .startsWith("page 2's margins differ from page 1's: written as a Word section that starts where page 2 does")
+                .startsWith("page 2's top and bottom margins differ from page 1's: written as a Word section that starts where page 2 does")
                 .as("no header to stand off").doesNotContain("header");
     }
 
@@ -84,21 +84,24 @@ class DocxPageMarginSectionsTest {
         assertThat(exported.report().notes()).filteredOn(note -> note.subject().equals("page margin"))
                 .singleElement().satisfies(note -> {
                     assertThat(note.path()).endsWith("TableNode[1]");
-                    assertThat(note.detail()).isEqualTo("page 2's margins differ from page 1's, which Word sets it "
+                    assertThat(note.detail()).isEqualTo("page 2's top and bottom margins differ from page 1's, which Word sets it "
                                                         + "with: page 2 starts inside this block, where the export "
                                                         + "starts no Word section");
                 });
     }
 
     @Test
-    void aOnePageDocumentIsWrittenWithItsPagesOwnMargins() throws Exception {
+    void aOnePageDocumentIsWrittenWithItsPagesOwnTopAndBottomMargins() throws Exception {
+        // Its sides stay the document's, which the body is written against, and are named.
         Exported exported = export(List.of(PageMarginRule.page(1, new DocumentInsets(50, 40, 30, 20))),
                 page -> page.addParagraph("Only page"));
 
         assertThat(exported.paragraphsEndingASection()).isEmpty();
         assertThat(exported.body().getPgMar().getTop()).isEqualTo(java.math.BigInteger.valueOf(50 * 20));
-        assertThat(exported.body().getPgMar().getLeft()).isEqualTo(java.math.BigInteger.valueOf(20 * 20));
-        assertThat(exported.notes()).isEmpty();
+        assertThat(bottom(exported.body())).isEqualTo(30 * 20);
+        assertThat(exported.body().getPgMar().getLeft()).isEqualTo(java.math.BigInteger.valueOf(36 * 20));
+        assertThat(exported.notes()).singleElement().asString().startsWith("page 1's side margins differ from the "
+                + "document's and are not written");
     }
 
     @Test
@@ -115,10 +118,24 @@ class DocxPageMarginSectionsTest {
     }
 
     @Test
-    void aSideHeldAtItsMarginIsHeldInALaterSectionAndSoIsOneNarrower() {
-        assertThat(DocxPageMarginSections.held(-720, 40)).as("held in the first").isEqualTo(-800);
-        assertThat(DocxPageMarginSections.held(720, 40)).as("wider, nothing reaching over it").isEqualTo(800);
-        assertThat(DocxPageMarginSections.held(720, 20)).as("narrower").isEqualTo(-400);
+    void aSideHeldAtItsMarginIsHeldInALaterSectionAndSoIsOneNarrowerUnderAHeaderOrFooter() {
+        assertThat(DocxPageMarginSections.held(-720, 40, false)).as("held in the first").isEqualTo(-800);
+        assertThat(DocxPageMarginSections.held(720, 40, true)).as("wider, nothing reaching over it").isEqualTo(800);
+        assertThat(DocxPageMarginSections.held(720, 20, true)).as("narrower, under a header").isEqualTo(-400);
+        assertThat(DocxPageMarginSections.held(720, 20, false)).as("narrower, with none to reach over it")
+                .isEqualTo(400);
+    }
+
+    @Test
+    void aLaterSectionsNarrowerTopMarginUnderAHeaderIsHeld() throws Exception {
+        // Narrower than page 1's, the header could reach past it; held, the body stays at it.
+        Exported exported = export(List.of(PageMarginRule.from(2, new DocumentInsets(20, 36, 36, 36))),
+                session -> session.chrome().zone(DocumentPageZone.header(18,
+                        page -> new ParagraphBuilder().text("Running").build())),
+                page -> lines(page, "Line", 60));
+
+        assertThat(exported.paragraphsEndingASection()).singleElement();
+        assertThat(((java.math.BigInteger) exported.body().getPgMar().getTop()).longValue()).isNegative();
     }
 
     @Test
@@ -152,9 +169,9 @@ class DocxPageMarginSectionsTest {
         });
 
         assertThat(exported.notes()).hasSize(2);
-        assertThat(exported.notes().get(0)).startsWith("page 2's margins differ from page 1's, which Word sets it "
+        assertThat(exported.notes().get(0)).startsWith("page 2's top and bottom margins differ from page 1's, which Word sets it "
                                                        + "with: page 2 starts inside this block");
-        assertThat(exported.notes().get(1)).startsWith("page 3's margins differ from page 1's: written as a Word "
+        assertThat(exported.notes().get(1)).startsWith("page 3's top and bottom margins differ from page 1's: written as a Word "
                                                        + "section that starts where page 3 does");
         assertThat(exported.paragraphsEndingASection()).singleElement().satisfies(paragraph ->
                 assertThat(bottom(paragraph.getCTP().getPPr().getSectPr())).isEqualTo(36 * 20));
@@ -190,22 +207,18 @@ class DocxPageMarginSectionsTest {
 
     @Test
     void theRoomForAClosingLineIsReckonedAgainstTheMarginsWordSetsTheLastPageWith() throws Exception {
-        // A page a table fills, against a bottom margin 64pt over the canvas's: reckoned against the
-        // canvas's, the room under the table took in those 64pt, and a closing line written there
-        // would not fit and open a page of its own.
-        List<PageMarginRule> rules = List.of(PageMarginRule.from(1, new DocumentInsets(36, 36, 100, 36)));
-        int rows = 1;
-        while (pagesOf(rules, rows + 1) == 1) {
-            rows++;
-        }
-        int filling = rows;
-        Exported exported = export(rules, page -> page.addTable(table -> {
-            table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100));
-            for (int row = 0; row < filling; row++) {
-                table.row("Item " + row, "$" + row);
-            }
-        }));
+        // Page 2, a section of its own, a table fills against a bottom margin 64pt over page 1's:
+        // reckoned against page 1's, the room under the table took in those 64pt, and a closing line
+        // written there would not fit and open a page of its own.
+        DocumentInsets later = new DocumentInsets(36, 36, 100, 36);
+        int filling = rowsFilling(List.of(PageMarginRule.from(1, later)), 1);
+        Exported exported = export(List.of(PageMarginRule.from(2, later)), page -> {
+            page.addParagraph("Cover");
+            page.addPageBreak(b -> { });
+            page.addTable(table -> rows(table, "Item", filling));
+        });
 
+        assertThat(exported.paragraphsEndingASection()).as("page 2 its own section").singleElement();
         assertThat(exported.report().notes()).anyMatch(note -> note.subject().equals("closing paragraph"));
     }
 
@@ -220,8 +233,11 @@ class DocxPageMarginSectionsTest {
 
         List<org.apache.poi.xwpf.usermodel.IBodyElement> body = exported.document().getBodyElements();
         assertThat(body.get(0)).isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
-        assertThat(body.get(1)).isInstanceOfSatisfying(XWPFParagraph.class, separator ->
-                assertThat(separator.getCTP().getPPr().isSetSectPr()).isTrue());
+        assertThat(body.get(1)).isInstanceOfSatisfying(XWPFParagraph.class, separator -> {
+            assertThat(separator.getCTP().getPPr().isSetSectPr()).isTrue();
+            assertThat(separator.getCTP().getPPr().isSetKeepNext()).as("kept with the next, it would follow it")
+                    .isFalse();
+        });
         assertThat(body.get(2)).isInstanceOf(org.apache.poi.xwpf.usermodel.XWPFTable.class);
     }
 
@@ -278,27 +294,29 @@ class DocxPageMarginSectionsTest {
     }
 
     @Test
-    void aSectionWrittenWithOtherSideMarginsNamesItsHeaderStandingOff() throws Exception {
-        // The page sets its header from the document's side margins, Word from the section's.
+    void otherSideMarginsFromAPageOnAreNamedNotWritten() throws Exception {
+        // The body is written against the document's width — a rule's length, a panel's room —
+        // and Word sets its text between the section's side margins: written, they would set a
+        // full-width rule 108pt short. Named once for the pages that share them.
         Exported exported = export(List.of(PageMarginRule.from(2, DocumentInsets.symmetric(36, 90))),
-                session -> session.chrome().zone(DocumentPageZone.header(18,
-                        page -> new ParagraphBuilder().text("Running").build())),
                 page -> lines(page, "Line", 60));
 
-        assertThat(exported.notes()).singleElement().asString().startsWith("page 2's margins differ from page 1's: "
-                + "written as a Word section").endsWith("; Word sets its header and footer from its side margins, "
-                + "where the page sets them from the document's, and they stand as far off the page's");
+        assertThat(exported.paragraphsEndingASection()).as("its top and bottom are page 1's").isEmpty();
+        assertThat(exported.body().getPgMar().getLeft()).isEqualTo(java.math.BigInteger.valueOf(36 * 20));
+        assertThat(exported.notes()).singleElement().asString().isEqualTo("page 2's side margins differ from the "
+                + "document's and are not written: the body is written against the document's width, and Word "
+                + "sets its text between the document's side margins");
     }
 
     @Test
-    void aFirstPageWithOtherSideMarginsThanTheDocumentsNamesItsHeaderStandingOff() throws Exception {
-        Exported exported = export(List.of(PageMarginRule.page(1, DocumentInsets.symmetric(36, 90))),
-                session -> session.chrome().zone(DocumentPageZone.header(18,
-                        page -> new ParagraphBuilder().text("Running").build())),
-                page -> page.addParagraph("Only page"));
+    void aPageWithOtherTopAndBottomAndSideMarginsWritesTheFirstAndNamesTheSides() throws Exception {
+        Exported exported = export(List.of(PageMarginRule.from(2, new DocumentInsets(36, 90, 136, 90))),
+                page -> lines(page, "Line", 60));
 
-        assertThat(exported.notes()).singleElement().asString().startsWith("page 1's side margins differ from the "
-                + "document's, which the page sets its header and footer from");
+        assertThat(exported.paragraphsEndingASection()).singleElement();
+        assertThat(bottom(exported.body())).isEqualTo(136 * 20);
+        assertThat(exported.body().getPgMar().getRight()).isEqualTo(java.math.BigInteger.valueOf(36 * 20));
+        assertThat(exported.notes()).hasSize(2);
     }
 
     @Test

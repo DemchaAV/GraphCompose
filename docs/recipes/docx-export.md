@@ -172,25 +172,28 @@ cannot combine sections refuses more than one.
 ### Margins that change from page to page
 
 A Word section holds one set of margins. A page that `session.pageMargins(...)` sets against
-other margins than Word sets it with starts a section of its own with them, where it starts
-between blocks of the body: the paragraph that ends the page before carries the section's end,
-an explicit page break there becomes the section's break, and the first page's title-page
-header and footer and its page count from 1 stay with the first section. Measured in Word and
-LibreOffice on Windows, on pages of paragraphs and on a page after a page break, a page break
-into a section with the later page's margins set every page where the page sets it, line for
-line; one set of margins for the whole document ran a page with a larger bottom margin on past
-its foot, 7 lines of 33 further. The report names the section (`page margin`): its page break
-is fixed, so text an edit adds above it no longer runs onto that page.
+other top and bottom margins than Word sets it with starts a section of its own with them,
+where it starts between blocks of the body: the paragraph that ends the page before carries the
+section's end, an explicit page break there becomes the section's break, a hairline between two
+tables carries it there, and the first page's title-page header and footer stay with the first
+section, as, in a document of several sections, does its page count from 1. Measured in Word
+and LibreOffice on Windows — on pages of paragraphs, on a page after a page break, after a
+table, between two tables and under a card's held margin — a page break into
+a section with the later page's margins set every page where the page sets it, line for line;
+one set of margins for the whole document ran a page with a larger bottom margin on past its
+foot, 7 lines of 33 further. The report names the section (`page margin`): its page break is
+fixed, so text an edit adds above it no longer runs onto that page.
+
+Side margins stay the document's. The body is written against its width — a rule's length, a
+panel's room — and the page sets its header and footer there, so a page whose side margins
+differ is named and Word sets its text between the document's.
 
 A section ends in a paragraph of the body, so a page that starts inside a block — the rows of a
 table, the lines of a paragraph, a panel — does not start one, nor does a page after one whose
 content reaches its foot under a table, where the line that would end the section has no room.
-Neither does a page of
-a document of several sections whose header or footer counts its section's pages: Word would
-count a section of its own apart. The report names each (`page margin`), on the block where
-there is one, and Word sets that page with the margins in force. The page sets its header and
-footer from the document's side margins and Word from its section's, so side margins that
-differ from the document's are named too.
+Neither does a page of a document of several sections whose header or footer counts its
+section's pages: Word would count a section of its own apart. The report names each (`page
+margin`), on the block where there is one, and Word sets that page with the margins in force.
 
 ## Finding out what the export could not carry
 

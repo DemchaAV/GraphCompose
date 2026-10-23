@@ -8,28 +8,33 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
-- **A DOCX export writes margins that change from page to page as Word sections.**
+- **A DOCX export writes top and bottom margins that change from page to page as Word
+  sections.**
   - `DocumentSession.pageMargins(...)` reached the layout only. The DOCX wrote the canvas's
     margins on every page and said nothing: a page with a larger bottom margin ran 7 lines of
     33 further in Word and LibreOffice, past its foot, and a rule for page 1 alone was lost too.
-  - The layout graph carries the margins each page is laid out against
-    (`LayoutGraph.pageGeometry`), and the export writes the first page's as the section's. A
-    later page whose margins differ from those Word sets it with starts a Word section with
-    them, where it starts between blocks of the body; an explicit page break there becomes the
-    section's break, and the title-page header and footer and the page count from 1 stay with
-    the first section. Measured in Word and LibreOffice on Windows, on pages of paragraphs and on
-    a page after a page break, every page stood where the layout sets it, line for line. The
-    report names each such section (`page margin`): its page break is fixed when the text above
-    it is edited. The room for the line closing a section, and the space above a block the
-    layout moves onto a page, are reckoned against that page's margins.
+  - The internal layout graph carries the margins each page is laid out against
+    (`LayoutGraph.pageGeometry`), and the export writes the first page's top and bottom margins
+    as the section's. A later page whose top and bottom margins differ from those Word sets it
+    with starts a Word section with them, where it starts between blocks of the body. An
+    explicit page break there becomes the section's break, the hairline between two tables
+    carries its end, and the title-page header and footer stay with the first section, as, in a
+    document of several sections, does its page count from 1. Measured in Word and LibreOffice
+    on Windows — on pages of paragraphs, on a page after a page break, after a table, between
+    two tables and under a card's held margin — every page stood
+    where the layout sets it, line for line. The report names each such section (`page
+    margin`): its page break is fixed when the text above it is edited. The room for the line
+    closing a section, and the space above a block the layout opens a page with, are reckoned
+    against that page's margins.
+  - Side margins stay the document's, which the body is written against — a rule's length and a
+    panel's room among them — and from which the page sets its header and footer. A page whose
+    side margins differ is named.
   - The report names, and the export starts no section at, a page that starts inside a block —
     the rows of a table, the lines of a paragraph, a panel — or after a page whose content
     reaches its foot under a table, and a page of a document of several sections whose header or
-    footer counts its
-    section's pages, which Word would count apart. Word sets a header and footer from its
-    section's side margins and the page from the document's: where they differ, that is named
-    too. The four invoice presets that set another bottom margin from page 2 start their second
-    page inside their line items, so their later pages are named, not written.
+    footer counts its section's pages, which Word would count apart. The four invoice presets
+    that set another bottom margin from page 2 start their second page inside their line items,
+    so their later pages are named, not written.
   - The corpus is unchanged: none of its documents has margins that change from page to page.
 
 - **A DOCX export names a document's timeline rails once.**

@@ -22,18 +22,25 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Writes the margins of a page the layout sets against other margins than Word sets it with —
- * {@code DocumentSession.pageMargins} — as a Word section that starts where that page starts.
+ * Writes the top and bottom margins of a page the layout sets against other ones than Word sets
+ * it with — {@code DocumentSession.pageMargins} — as a Word section that starts where that page
+ * starts.
  *
  * <p>A Word section holds one set of margins, and its first page starts on a page of its own.
- * Measured in Word and LibreOffice on Windows, on pages of paragraphs and on a page after a page
- * break: a page break into a section with the later page's margins sets that page and the pages
- * after it where the layout does, line for line; with one set of margins for the whole document,
- * a page whose bottom margin is larger ran its text on past the page's foot. A section starting in
- * the middle of a page, which Word reads as taking its top and bottom margins from the next page,
- * LibreOffice does not.</p>
+ * Measured in Word and LibreOffice on Windows — on pages of paragraphs, after a page break, after
+ * a table, between two tables and under a card's held margin — a page break into a section with
+ * the later page's margins sets that page and the pages after it where the layout does, line for
+ * line;
+ * with one set of margins for the whole document, a page whose bottom margin is larger ran its
+ * text on past the page's foot. A section starting in the middle of a page, which Word reads as
+ * taking its top and bottom margins from the next page, LibreOffice does not.</p>
+ *
+ * <p>Side margins stay the document's: the body is written against its width, a rule's length
+ * and a panel's room included, and the page sets its header and footer there. A page whose side
+ * margins differ is named.</p>
  *
  * <p>A section ends in a paragraph of the body, so it can start only between blocks written
  * there. Where the page starts inside a block — the rows of a table, the lines of a paragraph,
@@ -68,8 +75,8 @@ final class DocxPageMarginSections {
      * Where a section starts.
      *
      * @param page    its first page, from 0
-     * @param margin  the margins it is written with
-     * @param carrier what ends the section before it: the element before it, or one to put there
+     * @param margin  the margins its top and bottom are written from
+     * @param carrier what ends the section before it
      */
     private record Start(int page, Margin margin, Carrier carrier) {
     }
@@ -88,8 +95,10 @@ final class DocxPageMarginSections {
      *
      * @param opening the margins its first page is written with, {@code null} with no layout
      * @param starts  each later section, in page order
+     * @param zoned   whether the section has a header or footer, which a narrower margin holds the
+     *                body clear of
      */
-    record Plan(Margin opening, List<Start> starts) {
+    record Plan(Margin opening, List<Start> starts, boolean zoned) {
 
         /**
          * The bottom margin Word sets the section's last page with, in points.
@@ -117,7 +126,7 @@ final class DocxPageMarginSections {
             return false;
         }
         for (int page = 1; page < layout.pageCount(); page++) {
-            if (!sameMargin(layout.marginOf(page), layout.marginOf(page - 1))) {
+            if (!sameTopAndBottom(layout.marginOf(page), layout.marginOf(page - 1))) {
                 return true;
             }
         }
@@ -126,33 +135,29 @@ final class DocxPageMarginSections {
 
     /**
      * Decides where a section's pages start Word sections, and names each page set against
-     * margins it cannot write. Run once the section's body is written, before {@link #apply}.
+     * margins it does not write. Run once the section's body is written, before {@link #apply}.
      *
-     * @param document  the document, its section's body written
-     * @param from      the index of the section's first body element
-     * @param owners    the pages and node of each body element the section wrote
-     * @param separators the hairlines the body sets between two tables
-     * @param layout    the section's layout
-     * @param report    where the notes go
-     * @param section   the report's path for the section, or {@code null} for a document of one
+     * @param document       the document, its section's body written
+     * @param from           the index of the section's first body element
+     * @param owners         the pages and node of each body element the section wrote
+     * @param separators     the hairlines the body sets between two tables
+     * @param layout         the section's layout
+     * @param report         where the notes go
+     * @param section        the report's path for the section, or {@code null} for a document of one
      * @param countsItsPages whether the section's header or footer counts the section's own pages, as
      *                       one of a document of several does
-     * @param zones     the side margins the page sets the section's header and footer from, the
-     *                  document's own, or {@code null} where it has none
+     * @param sides          the document's own margins, which the body is written against, or
+     *                       {@code null} where none are known
+     * @param zoned          whether the section has a header or footer
      * @return the plan
      */
-    static Plan plan(XWPFDocument document, int from, Map<IBodyElement, Owner> owners,
-                     java.util.Set<XWPFParagraph> separators, DocxLayoutMetrics layout,
-                     DocxExportReport.Builder report, String section, boolean countsItsPages, Margin zones) {
+    static Plan plan(XWPFDocument document, int from, Map<IBodyElement, Owner> owners, Set<XWPFParagraph> separators,
+                     DocxLayoutMetrics layout, DocxExportReport.Builder report, String section,
+                     boolean countsItsPages, Margin sides, boolean zoned) {
         Margin opening = layout.marginOf(0);
-        boolean zoned = zones != null;
-        if (opening != null && zoned && !sameSides(opening, zones)) {
-            report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, section, "page 1's side margins differ "
-                    + "from the document's, which the page sets its header and footer from: Word sets them from "
-                    + "page 1's, and they stand as far off the page's");
-        }
+        nameTheSides(layout, report, section, sides);
         if (!vary(layout)) {
-            return new Plan(opening, List.of());
+            return new Plan(opening, List.of(), zoned);
         }
         List<IBodyElement> all = document.getBodyElements();
         List<IBodyElement> elements = new ArrayList<>(all.subList(Math.min(from, all.size()), all.size()));
@@ -162,17 +167,18 @@ final class DocxPageMarginSections {
         DocumentNode lastNamed = null;
         for (int page = 1; page < layout.pageCount(); page++) {
             Margin margin = layout.marginOf(page);
-            if (sameMargin(margin, inForce)) {
+            if (sameTopAndBottom(margin, inForce)) {
                 continue;
             }
-            String differ = "page " + (page + 1) + "'s margins differ from page " + (inForceFrom + 1) + "'s";
+            String differ = "page " + (page + 1) + "'s top and bottom margins differ from page " + (inForceFrom + 1)
+                            + "'s";
             String notWritten = differ + ", which Word sets it with: ";
             if (countsItsPages) {
                 // Word counts each section's own pages, and this section's page count would split.
                 report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, section, notWritten
                         + "a Word section would count its own pages, where this section's header or footer counts "
                         + "all of them");
-                return new Plan(opening, List.of());
+                return new Plan(opening, List.of(), zoned);
             }
             Owner inside = spanning(page, elements, owners);
             int at = inside != null ? -1 : firstOn(page, elements, owners);
@@ -201,16 +207,34 @@ final class DocxPageMarginSections {
                 continue;
             }
             starts.add(new Start(page, margin, carrier));
-            String sides = !zoned || sameSides(margin, zones) ? "" : "; Word sets its header and footer from its "
-                    + "side margins, where the page sets them from the document's, and they stand as far off the "
-                    + "page's";
             report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, section, differ + ": written as a Word "
                     + "section that starts where page " + (page + 1) + " does, its page break fixed there, so text an "
-                    + "edit adds above it no longer runs onto that page" + sides);
+                    + "edit adds above it no longer runs onto that page");
             inForce = margin;
             inForceFrom = page;
         }
-        return new Plan(opening, starts);
+        return new Plan(opening, starts, zoned);
+    }
+
+    /**
+     * Names each run of pages whose side margins differ from the document's, once: they are not
+     * written, as the body is written against the document's width.
+     */
+    private static void nameTheSides(DocxLayoutMetrics layout, DocxExportReport.Builder report, String section,
+                                     Margin sides) {
+        if (sides == null || layout.marginOf(0) == null) {
+            return;
+        }
+        for (int page = 0; page < layout.pageCount(); page++) {
+            Margin margin = layout.marginOf(page);
+            boolean differs = !sameSides(margin, sides);
+            boolean opensARun = page == 0 || !sameSides(margin, layout.marginOf(page - 1));
+            if (differs && opensARun) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, section, "page " + (page + 1)
+                        + "'s side margins differ from the document's and are not written: the body is written "
+                        + "against the document's width, and Word sets its text between the document's side margins");
+            }
+        }
     }
 
     /**
@@ -231,15 +255,19 @@ final class DocxPageMarginSections {
         for (Start start : plan.starts()) {
             CTSectPr ending = (CTSectPr) opening.copy();
             if (!first) {
-                asALaterSection(ending, opening, margin);
+                asALaterSection(ending, opening, margin, plan.zoned());
             }
             XWPFParagraph carrier = carrierOf(document, start.carrier());
             CTPPr properties = carrier.getCTP().isSetPPr() ? carrier.getCTP().getPPr() : carrier.getCTP().addNewPPr();
+            // Kept with the next paragraph, on the page the section's break opens, it would go there.
+            if (properties.isSetKeepNext()) {
+                properties.unsetKeepNext();
+            }
             properties.setSectPr(ending);
             margin = start.margin();
             first = false;
         }
-        asALaterSection(body, opening, margin);
+        asALaterSection(body, opening, margin, plan.zoned());
     }
 
     /** The last block written before a page that runs onto it, if one does. */
@@ -258,7 +286,7 @@ final class DocxPageMarginSections {
         return spanning;
     }
 
-    /** The index of the first element written for a page, or -1 where none is. */
+    /** The index of the first element written for a page or after it, or -1 where none is. */
     private static int firstOn(int page, List<IBodyElement> elements, Map<IBodyElement, Owner> owners) {
         for (int index = 0; index < elements.size(); index++) {
             Owner owner = owners.get(elements.get(index));
@@ -271,12 +299,11 @@ final class DocxPageMarginSections {
 
     /**
      * What ends the section before the element at a start: a page break written there, which the
-     * section's own break replaces — kept, it would open a blank page; a table's separator from the
-     * table before it, where the page drops the space it holds; or else the paragraph before it,
-     * or a hairline put before it.
+     * section's own break replaces — kept, it would open a blank page; the hairline between two
+     * tables; or else the paragraph before it, or a hairline put before it.
      */
     private static Carrier carrierBefore(int at, List<IBodyElement> elements, Map<IBodyElement, Owner> owners,
-                                         java.util.Set<XWPFParagraph> separators) {
+                                         Set<XWPFParagraph> separators) {
         IBodyElement element = elements.get(at);
         IBodyElement before = at > 0 ? elements.get(at - 1) : null;
         if (element instanceof XWPFParagraph breaking && owners.get(breaking).node() instanceof PageBreakNode) {
@@ -313,24 +340,20 @@ final class DocxPageMarginSections {
     }
 
     /**
-     * Turns a copy of the section's properties into a later section's: its margins, the first page
-     * its section opens with not its own, its pages counted on rather than from 1, and a page break
-     * before it. A top or bottom margin the section holds the body at — written negative, past a
-     * header or footer that reaches over it — is held here too, and so is one narrower than the
-     * section's: held where nothing reaches over it, it holds the body where it stands.
+     * Turns a copy of the section's properties into a later section's: its top and bottom margins,
+     * the first page its section opens with not its own, and its pages counted on rather than from
+     * 1. A top or bottom margin the section holds the body at — written negative, past a header or
+     * footer that reaches over it — is held here too, and so, in a section with a header or footer,
+     * is one narrower than the section's: held where nothing reaches over it, it holds the body
+     * where it stands.
      */
-    private static void asALaterSection(CTSectPr later, CTSectPr opening, Margin margin) {
+    private static void asALaterSection(CTSectPr later, CTSectPr opening, Margin margin, boolean zoned) {
         CTPageMar written = later.isSetPgMar() ? later.getPgMar() : later.addNewPgMar();
         CTPageMar first = opening.isSetPgMar() ? opening.getPgMar() : null;
-        written.setTop(BigInteger.valueOf(held(first == null ? null : first.getTop(), margin.top())));
-        written.setBottom(BigInteger.valueOf(held(first == null ? null : first.getBottom(), margin.bottom())));
-        written.setLeft(BigInteger.valueOf(toTwips(margin.left())));
-        written.setRight(BigInteger.valueOf(toTwips(margin.right())));
+        written.setTop(BigInteger.valueOf(held(first == null ? null : first.getTop(), margin.top(), zoned)));
+        written.setBottom(BigInteger.valueOf(held(first == null ? null : first.getBottom(), margin.bottom(), zoned)));
         if (later.isSetTitlePg()) {
             later.unsetTitlePg();
-        }
-        if (later.isSetType()) {
-            later.unsetType();
         }
         if (later.isSetPgNumType() && later.getPgNumType().isSetStart()) {
             later.getPgNumType().unsetStart();
@@ -338,16 +361,17 @@ final class DocxPageMarginSections {
     }
 
     /**
-     * A later section's top or bottom margin in twips: negative where the opening section's is, or
-     * where it is narrower than that.
+     * A later section's top or bottom margin in twips: negative where the opening section's is, or,
+     * with a header or footer, where it is narrower than that.
      *
      * @param opening the opening section's margin on that side, in twips as written
      * @param points  the later section's margin
+     * @param zoned   whether the section has a header or footer
      */
-    static long held(Object opening, double points) {
+    static long held(Object opening, double points, boolean zoned) {
         long twips = toTwips(points);
         long side = opening instanceof Number number ? number.longValue() : twips;
-        return side < 0 || twips < side ? -Math.max(1, twips) : twips;
+        return side < 0 || zoned && twips < side ? -Math.max(1, twips) : twips;
     }
 
     private static XWPFParagraph hairline(XWPFParagraph paragraph) {
@@ -360,8 +384,8 @@ final class DocxPageMarginSections {
         return paragraph;
     }
 
-    private static boolean sameMargin(Margin a, Margin b) {
-        return toTwips(a.top()) == toTwips(b.top()) && toTwips(a.bottom()) == toTwips(b.bottom()) && sameSides(a, b);
+    private static boolean sameTopAndBottom(Margin a, Margin b) {
+        return toTwips(a.top()) == toTwips(b.top()) && toTwips(a.bottom()) == toTwips(b.bottom());
     }
 
     private static boolean sameSides(Margin a, Margin b) {

@@ -1297,17 +1297,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 settleTheLineAbove();
                 raiseRows();
                 lowerTheLinesSetHigh();
-                // The paragraph closing a section that ends with a table is also the one that
-                // carries the drawings nothing else on the last page carried.
                 // Where its pages start Word sections of their own, which sets the margins of its
                 // last page, under which what closes it must fit.
-                // The page sets its header and footer from the canvas's side margins; Word, from the
-                // section's.
                 boolean zoned = !context.outputOptions().zones().isEmpty()
                                 || !context.outputOptions().headersAndFooters().isEmpty();
                 DocxPageMarginSections.Plan margins = DocxPageMarginSections.plan(document, sectionFirstElement,
                         bodyOwners, tableSeparators, layout, report, sectioned ? "section " + (index + 1) : null,
-                        countsItsSectionPages, zoned && context.canvas() != null ? context.canvas().margin() : null);
+                        countsItsSectionPages, context.canvas() == null ? null : context.canvas().margin(), zoned);
+                // The paragraph closing a section that ends with a table is also the one that
+                // carries the drawings nothing else on the last page carried.
                 reportDrawingsLeftOver(document,
                         dropTheSpaceAtTheEnd(document, roomBelowTheFlow(margins.lastPageBottom()),
                                 index == sections.size() - 1));
@@ -20773,16 +20771,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 ? STPageOrientation.LANDSCAPE
                 : STPageOrientation.PORTRAIT);
 
-        // The margins its first page is laid out against: the canvas's, or a per-page margin's,
-        // which a later page's differing from them start a section of their own with
-        // (DocxPageMarginSections).
+        // The top and bottom margins its first page is laid out against: the canvas's, or a
+        // per-page margin's, which a later page's differing from them start a section of their own
+        // with (DocxPageMarginSections). The sides stay the canvas's, which the body is written
+        // against.
         com.demcha.compose.engine.components.style.Margin first =
                 layout.marginOf(0) != null ? layout.marginOf(0) : canvas.margin();
         CTPageMar margin = sectPr.isSetPgMar() ? sectPr.getPgMar() : sectPr.addNewPgMar();
         margin.setTop(BigInteger.valueOf(toTwips(first.top())));
         margin.setBottom(BigInteger.valueOf(toTwips(first.bottom())));
-        margin.setLeft(BigInteger.valueOf(toTwips(first.left())));
-        margin.setRight(BigInteger.valueOf(toTwips(first.right())));
+        margin.setLeft(BigInteger.valueOf(toTwips(canvas.margin().left())));
+        margin.setRight(BigInteger.valueOf(toTwips(canvas.margin().right())));
     }
 
     private static long toTwips(double points) {

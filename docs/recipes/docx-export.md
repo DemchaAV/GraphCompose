@@ -1488,7 +1488,7 @@ elsewhere — by the zone's padding, a row's columns and gap, a paragraph's alig
 own sides — lower than the line holds, past the page's edge, over more than one line or after a
 prefix, the export report counts it (`page zone`): "1 of its 3 parts stands off where
 the page sets them". A page field's alignment
-moves nothing: the page sets it in a box a point wider than its number. Past a part Word sets
+moves its number up to a point: the page sets it in a box a point wider than it. Past a part Word sets
 at another width — after a prefix, auto-sized to a size its lines do not tell, over more
 lines than one — or in a zone whose nodes the page names or nests otherwise than the file, it
 says where a part stands is not measured. It names what a paragraph in the zone loses of its

@@ -213,12 +213,74 @@ class DocxContainerPaintTest {
             assertThat(DocxTwips.of(nested.getCTTbl().getTblPr().getTblInd().getW()))
                     .as("its margin, less the half of the border outside its edge")
                     .isEqualTo(4 * 20L);
-            // In a cell the editor keeps the border inside the cell: the padding less half of it,
-            // unlike a panel in the body.
-            assertThat(DocxTwips.of(nested.getRow(0).getCell(0).getCTTc().getTcPr().getTcMar().getLeft().getW()))
-                    .as("the padding less half the 2pt border")
-                    .isEqualTo(7 * 20L);
+            // Word and LibreOffice set its text the border's centre and its margin in: set in past
+            // half its border, its margin is its whole padding. Less half its border, its text
+            // stood a point left of the page's in Word, 0.9pt in LibreOffice (measured).
+            assertThat(leftMargin(nested)).as("its whole padding").isEqualTo(8 * 20L);
         }
+    }
+
+    @Test
+    void aNestedPanelKeepsOfHalfItsBorderWhatItIsSetInBy() throws Exception {
+        // Set in half a point from the cell's text, a 2pt border on its edge: its border's outer
+        // edge stands at the cell's text, half a point right of the page's, and its text that
+        // border's centre and its margin in, the padding less the half point of the border's half
+        // that is not set in. Hung on the text, it keeps none of that half; bled left, none.
+        assertThat(nestedCardsLeftMargin(0.5, 2, 8)).isEqualTo(150L);
+        assertThat(nestedCardsLeftMargin(0, 2, 8)).as("hung on the cell's text").isEqualTo(7 * 20L);
+        assertThat(nestedCardsLeftMargin(-4, 2, 8)).as("bled left").isEqualTo(7 * 20L);
+    }
+
+    @Test
+    void aNestedPanelPaddedThinnerThanHalfItsBorderKeepsNoMoreThanItsPadding() throws Exception {
+        // A 4pt border, a point of padding: set in a point or less, it has none to keep; set in 3pt,
+        // all of it.
+        assertThat(nestedCardsLeftMargin(0.5, 4, 1)).isZero();
+        assertThat(nestedCardsLeftMargin(1, 4, 1)).isZero();
+        assertThat(nestedCardsLeftMargin(3, 4, 1)).isEqualTo(20L);
+    }
+
+    @Test
+    void aPanelInAStacksColumnSetInFromItsEdgeKeepsItsPadding() throws Exception {
+        // CharcoalGold's main column: a layer as wide as the stack, inset past the sidebar, padded
+        // in from its edge, and a heading there with a 1.7pt accent and 9pt of padding.
+        com.demcha.compose.document.dsl.SectionBuilder sidebar = new com.demcha.compose.document.dsl.SectionBuilder();
+        sidebar.name("SidebarLayer").padding(new DocumentInsets(0, 220, 0, 0)).addParagraph("Sidebar");
+        com.demcha.compose.document.dsl.SectionBuilder main = new com.demcha.compose.document.dsl.SectionBuilder();
+        main.name("MainLayer").padding(new DocumentInsets(0, 0, 0, 120)).addSection("MainColumn", column -> column
+                .padding(new DocumentInsets(0, 0, 0, 23.7))
+                .addSection("Heading", heading -> heading
+                        .padding(new DocumentInsets(0, 0, 0, 9)).accentLeft(ACCENT, 1.7).addParagraph("Experience"))
+                .addParagraph("Column text"));
+        try (XWPFDocument document = export(page -> page.addLayerStack(stack -> stack.name("Body")
+                .layer(sidebar.build(), com.demcha.compose.document.node.LayerAlign.TOP_LEFT)
+                .layer(main.build(), com.demcha.compose.document.node.LayerAlign.TOP_LEFT)))) {
+            XWPFTable heading = document.getTables().get(0).getRow(0).getCell(1).getTables().get(0);
+
+            assertThat(leftMargin(heading)).as("its whole padding").isEqualTo(9 * 20L);
+        }
+    }
+
+    /**
+     * The left margin, in twips, of a card set in from a filled panel's text by a margin, with a left
+     * border of that width and that padding.
+     */
+    private static long nestedCardsLeftMargin(double margin, double border, double padding) throws Exception {
+        try (XWPFDocument document = export(page -> page.addSection("Outer", outer -> outer
+                .fillColor(SURFACE)
+                .padding(DocumentInsets.of(10))
+                .addSection("Inner", inner -> inner
+                        .accentLeft(ACCENT, border)
+                        .padding(DocumentInsets.of(padding))
+                        .margin(new DocumentInsets(0, 0, 0, margin))
+                        .addParagraph(p -> p.text("Inner text")))))) {
+            return leftMargin(onlyCell(document).getTables().get(0));
+        }
+    }
+
+    /** A panel's cell's left margin as written, in twips. */
+    private static long leftMargin(XWPFTable panel) {
+        return DocxTwips.of(panel.getRow(0).getCell(0).getCTTc().getTcPr().getTcMar().getLeft().getW());
     }
 
     @Test

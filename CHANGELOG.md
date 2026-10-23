@@ -8,6 +8,23 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export sets a panel set in from its table cell's text where the page sets its text.**
+  - In a cell, Word and LibreOffice set a nested table's left border with its outer edge at the
+    cell's text, or as far in as its indent sets it, and its text that border's centre and the
+    cell's margin in. A panel's margin was its padding less half that border. A panel set in
+    from its cell's text by half that border or more stood its text that half left of the page's,
+    its border where the page draws it; one set in less stood it as far left as it was set in.
+  - It now keeps its whole left padding as its margin where it is set in half its border or
+    more, and what it is set in by of that half where it is set in less. A panel on its cell's
+    text or bled left is unchanged: its editors move it that much right.
+  - Measured on Windows: `CharcoalGold`'s headings, set in from their column's edge, stood their
+    text 0.72pt left of the page's in Word and 0.71 to 0.81pt in LibreOffice, now 0.12pt and 0.04
+    to 0.14pt right. Their rules stood 0.7pt left with them, now 0.13 to 0.16pt right. A card
+    with a 2pt accent set in 5pt from a filled panel's text stood its text 1 and 0.9pt left, now
+    0.06 and 0.1pt right; set in half a point, 0.48 and 0.4pt left, now 0 and 0.1pt right. No
+    line breaks differently or moves down in either editor.
+  - 1 of the corpus's 62 documents changes, `cv-charcoal_gold`. The notes are unchanged.
+
 - **A DOCX export holds a row's auto column's editor point in the gap after it.**
   - A row column sized to its content (`DocumentRowColumn.auto()`) is given a point for an
     editor's face. It came out of the row's weight columns and moved what stood right of the auto

@@ -557,8 +557,11 @@ How it lands:
   table, and gives no more of its margin than holding it in takes.
 - **Borders.** The page centres a border on the panel's edge; in a cell, Word keeps a cell's
   border inside the cell. Half of each border comes off that side's margin and the table
-  widens by the other half, so the text and the border land where the page draws them. A
-  panel in the body is the exception on its left: Word 16 and LibreOffice on Windows centre a
+  widens by the other half, so the text and the border land where the page draws them. On the
+  left, a nested panel set in from its cell's text keeps of that half what it is set in by,
+  and all of it set in half its border or more, as both editors set its text its border's centre
+  and its margin in (see the left edge, under **Width**). A panel in the body is the exception
+  on its left: Word 16 and LibreOffice on Windows centre a
   body table's left border on its edge, as the page does, and start its text at its indent,
   the margin past that edge, so its left margin is the whole padding and the table is no
   wider on that side. An older LibreOffice — the build on the Linux CI — reads the indent as
@@ -638,6 +641,13 @@ How it lands:
   past its text further than its margin holds takes back what of it the cell does not take,
   and the panel is named wider (`right end`): `EngineeringResume`'s role card would lose the
   stop ending its line otherwise.
+  Both editors set a nested panel's text its left border's centre and its margin in. A panel
+  set in from its cell's text by half that border or more keeps its whole left padding as its
+  margin, and one set in less keeps what it is set in by of that half: less the half,
+  `CharcoalGold`'s headings, set in from their column's edge, stood their text 0.72pt left of
+  the page's in Word and 0.71 to 0.81pt in LibreOffice, and a card set in 5pt from a filled
+  panel's text, with a 2pt accent, 1 and 0.9pt (measured; now 0.12pt and 0.04 to 0.14pt, and
+  0.06 and 0.1pt, their bars where they were).
 - **Keeping together.** A `keepTogether()` panel the layout placed on one page is a row
   Word may not split. Anchors on the blocks inside a panel carry as they do anywhere else, and
   so do their keeps, but Word and LibreOffice do not hold them where the panel's row breaks over

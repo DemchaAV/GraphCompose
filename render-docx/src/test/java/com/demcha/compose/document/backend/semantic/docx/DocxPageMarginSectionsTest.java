@@ -5,11 +5,17 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.PageMarginRule;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
+import com.demcha.compose.document.node.PageReferenceNode;
+import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.output.DocumentPageZone;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
+import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 
@@ -23,7 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * A page the layout sets against other margins than the page before it starts a Word section with
- * them, where it starts between blocks of the body, and is named where it does not.
+ * them, where it starts between blocks of the body or among a table's rows, and is named where it
+ * does not.
  *
  * <p>Measured in Word and LibreOffice on Windows: one set of margins for the whole document ran a
  * page with a larger bottom margin on past its foot, 7 lines of 33 further; a section starting
@@ -66,27 +73,247 @@ class DocxPageMarginSectionsTest {
     }
 
     @Test
-    void aPageStartingInsideATableIsNamed() throws Exception {
-        // The total after the table starts on page 2 too: a section starting there would break
-        // the page under the table's last rows.
+    void aPageStartingAmongATablesRowsSplitsTheTableAtTheRowItStartsWith() throws Exception {
+        // The second part opens with the header row, which the layout repeats at the top of page 2.
         Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> page
-                .addParagraph("Items")
-                .addTable(table -> {
-                    table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100));
-                    for (int row = 0; row < 40; row++) {
-                        table.row("Item " + row, "$" + row);
-                    }
-                })
+                .addTable(table -> itemsUnderAHeader(table, 40))
                 .addParagraph("Total"));
 
+        List<XWPFTable> tables = exported.document().getTables();
+        assertThat(tables).hasSize(2);
+        XWPFTable first = tables.get(0);
+        XWPFTable second = tables.get(1);
+        int onPage1 = exported.rowsOn(0);
+        assertThat(first.getNumberOfRows()).as("the header and the rows of page 1").isEqualTo(onPage1);
+        assertThat(second.getRow(0).getCell(0).getText()).isEqualTo("Item");
+        assertThat(second.getRow(0).isRepeatHeader()).isTrue();
+        assertThat(second.getRow(1).getCell(0).getText()).as("page 2's first row").isEqualTo("Item " + (onPage1 - 1));
+        assertThat(first.getNumberOfRows() + second.getNumberOfRows()).isEqualTo(1 + 40 + 1);
+        XWPFParagraph ending = exported.paragraphsEndingASection().get(0);
+        assertThat(exported.paragraphsEndingASection()).singleElement();
+        List<IBodyElement> body = exported.document().getBodyElements();
+        assertThat(body.indexOf(ending)).as("between the two parts").isEqualTo(body.indexOf(first) + 1)
+                .isEqualTo(body.indexOf(second) - 1);
+        assertThat(((java.math.BigInteger) ending.getCTP().getPPr().getSpacing().getLine()).longValue())
+                .as("a hairline, which page 1 has room for").isEqualTo(2);
+        assertThat(bottom(ending.getCTP().getPPr().getSectPr())).isEqualTo(36 * 20);
+        assertThat(bottom(exported.body())).isEqualTo(136 * 20);
+        assertThat(exported.report().notes()).filteredOn(note -> note.subject().equals("page margin"))
+                .singleElement().satisfies(note -> {
+                    assertThat(note.path()).endsWith("TableNode[0]");
+                    assertThat(note.detail()).isEqualTo("page 2's top and bottom margins differ from page 1's: written "
+                                                        + "as a Word section that starts at the row page 2 starts with, "
+                                                        + "the table split there, the part after it opening with its "
+                                                        + "header rows, and its page break fixed there, so rows an edit "
+                                                        + "adds above it no longer run onto that page");
+                });
+    }
+
+    @Test
+    void aTableRunningOntoPagesOfTwoOtherSetsOfMarginsIsSplitAtTheRowEachStartsWith() throws Exception {
+        DocumentInsets middle = new DocumentInsets(36, 36, 86, 36);
+        Exported exported = export(List.of(PageMarginRule.page(2, middle), PageMarginRule.from(3, LATER)),
+                page -> page.addTable(table -> itemsUnderAHeader(table, 50)));
+
+        List<XWPFTable> tables = exported.document().getTables();
+        assertThat(tables).hasSize(3);
+        assertThat(tables.get(0).getNumberOfRows()).isEqualTo(exported.rowsOn(0));
+        assertThat(tables.get(1).getNumberOfRows()).as("the header and the rows of page 2").isEqualTo(exported.rowsOn(1));
+        assertThat(tables.get(2).getRow(0).getCell(0).getText()).isEqualTo("Item");
+        assertThat(tables.get(2).getRow(1).getCell(0).getText())
+                .isEqualTo("Item " + (exported.rowsOn(0) - 1 + exported.rowsOn(1) - 1));
+        List<XWPFParagraph> ending = exported.paragraphsEndingASection();
+        assertThat(ending).hasSize(2);
+        List<IBodyElement> body = exported.document().getBodyElements();
+        assertThat(body.indexOf(ending.get(0))).isEqualTo(body.indexOf(tables.get(0)) + 1);
+        assertThat(body.indexOf(ending.get(1))).isEqualTo(body.indexOf(tables.get(1)) + 1);
+        assertThat(bottom(ending.get(0).getCTP().getPPr().getSectPr())).isEqualTo(36 * 20);
+        assertThat(bottom(ending.get(1).getCTP().getPPr().getSectPr())).isEqualTo(86 * 20);
+        assertThat(bottom(exported.body())).isEqualTo(136 * 20);
+    }
+
+    @Test
+    void aTableWhoseRowsReachThePagesFootIsNotSplitThere() throws Exception {
+        // Page 1's rows end a point above its foot: the hairline between the two parts would not
+        // fit, and would open a page of its own before the section's.
+        double row = rowHeight();
+        Exported exported = export(List.of(PageMarginRule.page(1, new DocumentInsets(36, 36, 400 - 36 - 10 * row - 1, 36)),
+                PageMarginRule.from(2, LATER)), page -> page.addTable(table -> rows(table, "Item", 20)));
+
+        assertThat(exported.rowsOn(0)).as("ten rows on page 1").isEqualTo(10);
         assertThat(exported.paragraphsEndingASection()).isEmpty();
-        assertThat(bottom(exported.body())).as("page 1's, the only ones written").isEqualTo(36 * 20);
+        assertThat(exported.document().getTables()).hasSize(1);
+        assertThat(exported.report().notes()).filteredOn(note -> note.subject().equals("page margin"))
+                .singleElement().satisfies(note -> {
+                    assertThat(note.path()).endsWith("TableNode[0]");
+                    assertThat(note.detail()).endsWith("page 1's content reaches its foot, where the paragraph that "
+                                                       + "would end a Word section before page 2 would open a page of "
+                                                       + "its own");
+                });
+    }
+
+    @Test
+    void aTableWithoutHeaderRowsIsSplitIntoPartsWithNone() throws Exception {
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> page
+                .addTable(table -> rows(table, "Item", 30)));
+
+        List<XWPFTable> tables = exported.document().getTables();
+        assertThat(tables).hasSize(2);
+        assertThat(tables.get(0).getNumberOfRows()).isEqualTo(exported.rowsOn(0));
+        assertThat(tables.get(1).getRow(0).getCell(0).getText()).as("page 2's first row")
+                .isEqualTo("Item " + exported.rowsOn(0));
+        assertThat(tables.get(1).getRow(0).isRepeatHeader()).isFalse();
+        assertThat(exported.notes()).singleElement().asString().isEqualTo("page 2's top and bottom margins differ from "
+                + "page 1's: written as a Word section that starts at the row page 2 starts with, the table split "
+                + "there, and its page break fixed there, so rows an edit adds above it no longer run onto that page");
+    }
+
+    @Test
+    void aTableSplitBeforeAPageBreakIntoOtherMarginsEndsTwoSections() throws Exception {
+        // The split ends page 1's section; the page break, carrying the next, becomes its break.
+        DocumentInsets third = new DocumentInsets(36, 36, 86, 36);
+        Exported exported = export(List.of(PageMarginRule.page(2, LATER), PageMarginRule.from(3, third)), page -> {
+            page.addTable(table -> rows(table, "Item", 20));
+            page.addPageBreak(b -> { });
+            lines(page, "Line", 10);
+        });
+
+        List<XWPFTable> tables = exported.document().getTables();
+        assertThat(tables).hasSize(2);
+        List<XWPFParagraph> ending = exported.paragraphsEndingASection();
+        assertThat(ending).hasSize(2);
+        List<IBodyElement> body = exported.document().getBodyElements();
+        assertThat(body.indexOf(ending.get(0))).as("between the parts").isEqualTo(body.indexOf(tables.get(0)) + 1);
+        assertThat(body.indexOf(ending.get(1))).as("the page break, after the second part")
+                .isEqualTo(body.indexOf(tables.get(1)) + 1);
+        assertThat(exported.document().getDocument().xmlText()).doesNotContain("w:type=\"page\"");
+        assertThat(bottom(ending.get(1).getCTP().getPPr().getSectPr())).isEqualTo(136 * 20);
+        assertThat(bottom(exported.body())).isEqualTo(86 * 20);
+    }
+
+    @Test
+    void aTableOfALaterSectionOfADocumentOfSeveralIsSplitInIt() throws Exception {
+        DocumentSession body = GraphCompose.document().pageSize(400, 400).margin(FIRST).create();
+        body.pageMargins(List.of(PageMarginRule.from(2, LATER)));
+        body.pageFlow(page -> page.addTable(table -> rows(table, "Item", 30)));
+        DocumentSession cover = GraphCompose.document().pageSize(400, 400).margin(FIRST).create();
+        cover.pageFlow(page -> page.addParagraph("Cover"));
+        byte[] bytes;
+        try (com.demcha.compose.document.api.MultiSectionDocument document = GraphCompose.documents()
+                .section(cover).section(body).create()) {
+            bytes = document.toDocxBytes();
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(bytes))) {
+            assertThat(document.getTables()).hasSize(2);
+            assertThat(document.getParagraphs())
+                    .filteredOn(p -> p.getCTP().isSetPPr() && p.getCTP().getPPr().isSetSectPr())
+                    .as("the cover's, then the hairline between the parts").hasSize(2);
+            List<IBodyElement> elements = document.getBodyElements();
+            assertThat(elements.get(elements.indexOf(document.getTables().get(0)) + 1))
+                    .isInstanceOfSatisfying(XWPFParagraph.class,
+                            between -> assertThat(between.getCTP().getPPr().isSetSectPr()).isTrue());
+            assertThat(bottom(document.getDocument().getBody().getSectPr())).isEqualTo(136 * 20);
+        }
+    }
+
+    @Test
+    void aBookmarkInARowMovedToTheSecondPartIsWrittenOnceThere() throws Exception {
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> page.addTable(table -> {
+            table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100));
+            for (int row = 0; row < 30; row++) {
+                table.rowCells(row == 25
+                                ? DocumentTableCell.node(new ParagraphBuilder().text("Item " + row).anchor("late").build())
+                                : DocumentTableCell.text("Item " + row),
+                        DocumentTableCell.text("$" + row));
+            }
+        }));
+
+        List<XWPFTable> tables = exported.document().getTables();
+        assertThat(tables).hasSize(2);
+        assertThat(bookmarks(tables.get(0))).isEmpty();
+        assertThat(bookmarks(tables.get(1))).singleElement().isEqualTo("late");
+    }
+
+    @Test
+    void aPageReferenceInARowThatWouldMoveKeepsTheTableWhole() throws Exception {
+        // The export settles a page reference once the body is written, in the paragraph it wrote
+        // it in: moved to the second part, that paragraph is gone.
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> page
+                .addParagraph(p -> p.text("Intro").anchor("intro"))
+                .addTable(table -> {
+                    table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100));
+                    for (int row = 0; row < 30; row++) {
+                        table.rowCells(DocumentTableCell.text("Item " + row), row == 25
+                                ? DocumentTableCell.node(new PageReferenceNode("intro", null, TextAlign.LEFT))
+                                : DocumentTableCell.text("$" + row));
+                    }
+                }));
+
+        assertThat(exported.document().getTables()).hasSize(1);
+        assertThat(exported.document().getDocument().xmlText()).contains("PAGEREF");
         assertThat(exported.report().notes()).filteredOn(note -> note.subject().equals("page margin"))
                 .singleElement().satisfies(note -> {
                     assertThat(note.path()).endsWith("TableNode[1]");
-                    assertThat(note.detail()).isEqualTo("page 2's top and bottom margins differ from page 1's, which Word sets it "
-                                                        + "with: page 2 starts inside this block, where the export "
-                                                        + "starts no Word section");
+                    assertThat(note.detail()).endsWith("page 2 starts inside this block, where the export starts no "
+                                                       + "Word section");
+                });
+    }
+
+    @Test
+    void aTableNamedForAPageBeforeASectionItStartsIsNamedForAPageAfterItToo() throws Exception {
+        // Page 2 starts inside a cell spanning two rows, page 3 at a row of its own, and page 4
+        // inside a span again: named for page 2 and split for page 3, the table is named for page 4.
+        List<PageMarginRule> rules = List.of(PageMarginRule.page(2, new DocumentInsets(36, 36, 136, 36)),
+                PageMarginRule.page(3, new DocumentInsets(36, 36, 126, 36)),
+                PageMarginRule.from(4, new DocumentInsets(36, 36, 116, 36)));
+        List<Long> counts = export(rules, page -> page.addTable(table -> rows(table, "Item", 50))).rows();
+        int page2 = counts.get(0).intValue();
+        int page4 = page2 + counts.get(1).intValue() + counts.get(2).intValue();
+        Exported exported = export(rules, page -> page.addTable(table -> {
+            table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100));
+            for (int row = 0; row < 50; row++) {
+                if (row + 1 == page2 || row + 1 == page4) {
+                    table.rowCells(DocumentTableCell.text("Span " + row).rowSpan(2), DocumentTableCell.text("$" + row));
+                } else if (row == page2 || row == page4) {
+                    table.rowCells(DocumentTableCell.text("$" + row));
+                } else {
+                    table.row("Item " + row, "$" + row);
+                }
+            }
+        }));
+
+        assertThat(exported.notes()).filteredOn(note -> note.contains("starts inside this block"))
+                .extracting(note -> note.substring(0, 6)).containsExactly("page 2", "page 4");
+        assertThat(exported.notes()).anyMatch(note -> note.startsWith("page 3's top and bottom margins differ from "
+                + "page 1's: written"));
+    }
+
+    private static List<String> bookmarks(XWPFTable table) {
+        List<String> names = new ArrayList<>();
+        for (var found : table.getCTTbl().selectPath("declare namespace w='http://schemas.openxmlformats.org/"
+                                                     + "wordprocessingml/2006/main' .//w:bookmarkStart")) {
+            names.add(((org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBookmark) found).getName());
+        }
+        return names;
+    }
+
+    @Test
+    void aPageStartingInsideAPanelIsNamed() throws Exception {
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> page.addSection(panel -> {
+            panel.fillColor(com.demcha.compose.document.style.DocumentColor.rgb(238, 242, 247));
+            for (int line = 0; line < 40; line++) {
+                panel.addParagraph("Line " + line);
+            }
+        }));
+
+        assertThat(exported.paragraphsEndingASection()).isEmpty();
+        assertThat(exported.report().notes()).filteredOn(note -> note.subject().equals("page margin"))
+                .singleElement().satisfies(note -> {
+                    assertThat(note.path()).endsWith("SectionNode[0]");
+                    assertThat(note.detail()).isEqualTo("page 2's top and bottom margins differ from page 1's, which "
+                                                        + "Word sets it with: page 2 starts inside this block, where "
+                                                        + "the export starts no Word section");
                 });
     }
 
@@ -155,16 +382,11 @@ class DocxPageMarginSectionsTest {
 
     @Test
     void aPageAfterOneStartingInsideABlockStartsTheSectionItsMarginsNeed() throws Exception {
-        // Page 2 starts inside the table, and Word sets it with page 1's margins; page 3, which
+        // Page 2 starts inside the paragraph, and Word sets it with page 1's margins; page 3, which
         // starts between paragraphs, has margins Word has not been given yet, and starts a section.
         Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> {
-            lines(page, "Intro", 10);
-            page.addTable(table -> {
-                table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100));
-                for (int row = 0; row < 15; row++) {
-                    table.row("Item " + row, "$" + row);
-                }
-            });
+            lines(page, "Intro", 18);
+            page.addParagraph("Long " + "running on over the foot of the first page and onto the next one, ".repeat(6));
             lines(page, "Line", 60);
         });
 
@@ -406,6 +628,25 @@ class DocxPageMarginSectionsTest {
         }
     }
 
+    /** Rows "Item 0" on under a header row the layout repeats on each page. */
+    private static void itemsUnderAHeader(com.demcha.compose.document.dsl.TableBuilder table, int count) {
+        table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100));
+        table.header("Item", "Amount").repeatHeader();
+        for (int row = 0; row < count; row++) {
+            table.row("Item " + row, "$" + row);
+        }
+    }
+
+    /** How tall the layout sets a row of {@link #rows}. */
+    private static double rowHeight() throws Exception {
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 400).margin(FIRST).create()) {
+            session.pageFlow(page -> page.addTable(table -> rows(table, "Item", 1)));
+            return session.layoutGraph().fragments().stream()
+                    .filter(fragment -> fragment.payload() instanceof TableRowFragmentPayload)
+                    .findFirst().orElseThrow().height();
+        }
+    }
+
     /** The most rows one table holds on a page, laid out alone. */
     private static int rowsFilling(List<PageMarginRule> rules, int pages) throws Exception {
         int rows = 1;
@@ -452,6 +693,7 @@ class DocxPageMarginSectionsTest {
             session.pageFlow(content::accept);
             byte[] bytes = session.export(new DocxSemanticBackend(report::set));
             List<String> lastLines = new ArrayList<>();
+            List<Long> rows = new ArrayList<>();
             for (int page = 0; page < session.layoutGraph().totalPages(); page++) {
                 int at = page;
                 lastLines.add(session.layoutGraph().nodes().stream()
@@ -459,12 +701,21 @@ class DocxPageMarginSectionsTest {
                         .reduce((before, after) -> after)
                         .map(node -> node.semanticName())
                         .orElse(""));
+                rows.add(session.layoutGraph().fragments().stream()
+                        .filter(fragment -> fragment.pageIndex() == at
+                                            && fragment.payload() instanceof TableRowFragmentPayload)
+                        .count());
             }
-            return new Exported(new XWPFDocument(new ByteArrayInputStream(bytes)), report.get(), lastLines);
+            return new Exported(new XWPFDocument(new ByteArrayInputStream(bytes)), report.get(), lastLines, rows);
         }
     }
 
-    private record Exported(XWPFDocument document, DocxExportReport report, List<String> lastNames) {
+    private record Exported(XWPFDocument document, DocxExportReport report, List<String> lastNames, List<Long> rows) {
+
+        /** How many table rows the layout sets on a page, a header it repeats there included. */
+        int rowsOn(int page) {
+            return rows.get(page).intValue();
+        }
 
         CTSectPr body() {
             return document.getDocument().getBody().getSectPr();

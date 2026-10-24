@@ -30,8 +30,9 @@ final class DocxTableSplit {
     private static final String W =
             "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' ";
 
-    // What a file holds once: a bookmark's name marks one place, and a drawing's id names one drawing.
-    private static final List<String> HELD_ONCE = List.of("bookmarkStart", "drawing", "pict", "object");
+    // What a header row's copy cannot hold again: a bookmark's name marks one place, a drawing's id
+    // names one drawing, and a list item's number is counted on from the item before it.
+    private static final List<String> NOT_REPEATED = List.of("bookmarkStart", "drawing", "pict", "object", "numPr");
 
     // A field, which the export settles once the body is written, in the paragraph it wrote it in: a
     // row moved to the second part leaves that paragraph behind, and a copy of one is never settled.
@@ -44,8 +45,9 @@ final class DocxTableSplit {
      * The row of a table the layout starts a page with, where the table can be split there.
      *
      * <p>It cannot be where a cell spans rows across that row, where only the header rows stand
-     * above it, or where a header row holds what the file can hold only once — a bookmark or a
-     * drawing — as the part after it would hold that row again. Nor where a header row or a row
+     * above it, or where a header row holds what its copy in the part after it cannot hold again —
+     * a bookmark or a drawing, which the file holds once, or a numbered list item, which the copy
+     * would number on from the one above. Nor where a header row or a row
      * from that one on holds a field, a page reference's: the export settles it once the body is
      * written, in the paragraph it wrote it in.</p>
      *
@@ -57,7 +59,7 @@ final class DocxTableSplit {
     static int rowStarting(XWPFTable table, int page, IntUnaryOperator pageOf) {
         int rows = table.getNumberOfRows();
         int header = headerRows(table);
-        if (holds(table, 0, header, HELD_ONCE) || holds(table, 0, header, FIELDS)) {
+        if (holds(table, 0, header, NOT_REPEATED) || holds(table, 0, header, FIELDS)) {
             return -1;
         }
         for (int row = header; row < rows; row++) {

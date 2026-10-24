@@ -103,9 +103,9 @@ class DocxPageMarginSectionsTest {
                     assertThat(note.path()).endsWith("TableNode[0]");
                     assertThat(note.detail()).isEqualTo("page 2's top and bottom margins differ from page 1's: written "
                                                         + "as a Word section that starts at the row page 2 starts with, "
-                                                        + "the table written as two there, the second part opening with "
-                                                        + "its header rows, and its page break fixed there, so rows an "
-                                                        + "edit adds above it no longer run onto that page");
+                                                        + "the table split there, the part after it opening with its "
+                                                        + "header rows, and its page break fixed there, so rows an edit "
+                                                        + "adds above it no longer run onto that page");
                 });
     }
 
@@ -164,9 +164,57 @@ class DocxPageMarginSectionsTest {
                 .isEqualTo("Item " + exported.rowsOn(0));
         assertThat(tables.get(1).getRow(0).isRepeatHeader()).isFalse();
         assertThat(exported.notes()).singleElement().asString().isEqualTo("page 2's top and bottom margins differ from "
-                + "page 1's: written as a Word section that starts at the row page 2 starts with, the table written "
-                + "as two there, and its page break fixed there, so rows an edit adds above it no longer run onto "
-                + "that page");
+                + "page 1's: written as a Word section that starts at the row page 2 starts with, the table split "
+                + "there, and its page break fixed there, so rows an edit adds above it no longer run onto that page");
+    }
+
+    @Test
+    void aTableSplitBeforeAPageBreakIntoOtherMarginsEndsTwoSections() throws Exception {
+        // The split ends page 1's section; the page break, carrying the next, becomes its break.
+        DocumentInsets third = new DocumentInsets(36, 36, 86, 36);
+        Exported exported = export(List.of(PageMarginRule.page(2, LATER), PageMarginRule.from(3, third)), page -> {
+            page.addTable(table -> rows(table, "Item", 20));
+            page.addPageBreak(b -> { });
+            lines(page, "Line", 10);
+        });
+
+        List<XWPFTable> tables = exported.document().getTables();
+        assertThat(tables).hasSize(2);
+        List<XWPFParagraph> ending = exported.paragraphsEndingASection();
+        assertThat(ending).hasSize(2);
+        List<IBodyElement> body = exported.document().getBodyElements();
+        assertThat(body.indexOf(ending.get(0))).as("between the parts").isEqualTo(body.indexOf(tables.get(0)) + 1);
+        assertThat(body.indexOf(ending.get(1))).as("the page break, after the second part")
+                .isEqualTo(body.indexOf(tables.get(1)) + 1);
+        assertThat(exported.document().getDocument().xmlText()).doesNotContain("w:type=\"page\"");
+        assertThat(bottom(ending.get(1).getCTP().getPPr().getSectPr())).isEqualTo(136 * 20);
+        assertThat(bottom(exported.body())).isEqualTo(86 * 20);
+    }
+
+    @Test
+    void aTableOfALaterSectionOfADocumentOfSeveralIsSplitInIt() throws Exception {
+        DocumentSession body = GraphCompose.document().pageSize(400, 400).margin(FIRST).create();
+        body.pageMargins(List.of(PageMarginRule.from(2, LATER)));
+        body.pageFlow(page -> page.addTable(table -> rows(table, "Item", 30)));
+        DocumentSession cover = GraphCompose.document().pageSize(400, 400).margin(FIRST).create();
+        cover.pageFlow(page -> page.addParagraph("Cover"));
+        byte[] bytes;
+        try (com.demcha.compose.document.api.MultiSectionDocument document = GraphCompose.documents()
+                .section(cover).section(body).create()) {
+            bytes = document.toDocxBytes();
+        }
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(bytes))) {
+            assertThat(document.getTables()).hasSize(2);
+            assertThat(document.getParagraphs())
+                    .filteredOn(p -> p.getCTP().isSetPPr() && p.getCTP().getPPr().isSetSectPr())
+                    .as("the cover's, then the hairline between the parts").hasSize(2);
+            List<IBodyElement> elements = document.getBodyElements();
+            assertThat(elements.get(elements.indexOf(document.getTables().get(0)) + 1))
+                    .isInstanceOfSatisfying(XWPFParagraph.class,
+                            between -> assertThat(between.getCTP().getPPr().isSetSectPr()).isTrue());
+            assertThat(bottom(document.getDocument().getBody().getSectPr())).isEqualTo(136 * 20);
+        }
     }
 
     @Test

@@ -97,6 +97,17 @@ class DocxTableSplitTest {
     }
 
     @Test
+    void aTableIsNotSplitWhereAHeaderRowHoldsANumberedItem() throws Exception {
+        // Word numbers the copy on from the original: the page's "1." would read "2." there.
+        try (XWPFDocument document = new XWPFDocument()) {
+            XWPFTable table = table(document, 1, 5);
+            table.getRow(0).getCell(0).getParagraphs().get(0).setNumID(java.math.BigInteger.ONE);
+
+            assertThat(DocxTableSplit.rowStarting(table, 1, row -> row < 4 ? 0 : 1)).isEqualTo(-1);
+        }
+    }
+
+    @Test
     void aTableIsNotSplitWhereARowItMovesOrCopiesHoldsAField() throws Exception {
         // The export settles a page reference in the paragraph it wrote it in, once the body is written.
         try (XWPFDocument document = new XWPFDocument()) {

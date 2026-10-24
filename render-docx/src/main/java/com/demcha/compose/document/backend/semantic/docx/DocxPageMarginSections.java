@@ -43,8 +43,8 @@ import java.util.Set;
  * margins differ is named.</p>
  *
  * <p>A section ends in a paragraph of the body, so it can start only between blocks written
- * there. A table the page starts among the rows of is split at the row it starts with
- * ({@link DocxTableSplit}). Where the page starts inside any other block — the lines of a
+ * there. A table the page starts among the rows of is split at the row it starts with, where it
+ * can be ({@link DocxTableSplit#rowStarting}). Where the page starts inside any other block — the lines of a
  * paragraph, a panel — its margins are named instead, and Word sets that page with the margins in
  * force.</p>
  *
@@ -222,9 +222,9 @@ final class DocxPageMarginSections {
             if (table != null) {
                 report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, layout.pathOf(inside.node()), differ
                         + ": written as a Word section that starts at the row page " + (page + 1) + " starts with, the "
-                        + "table written as two there" + (DocxTableSplit.headerRows(table) > 0
-                        ? ", the second part opening with its header rows" : "") + ", and its page break fixed there, "
-                        + "so rows an edit adds above it no longer run onto that page");
+                        + "table split there" + (DocxTableSplit.headerRows(table) > 0
+                        ? ", the part after it opening with its header rows" : "") + ", and its page break fixed "
+                        + "there, so rows an edit adds above it no longer run onto that page");
             } else {
                 report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, section, differ + ": written as a Word "
                         + "section that starts where page " + (page + 1) + " does, its page break fixed there, so text "

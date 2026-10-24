@@ -17,10 +17,14 @@ follow semantic versioning; release dates are ISO 8601.
     `row[r]/cell[c]` — the row's index among the table's rows and the cell's among the cells
     authored for that row, from 0, not its column in the grid — then by its own segment, as
     `CobaltRota[0]/Schedule[0]/row[7]/cell[7]/ShiftBlock[0]/row[1]/cell[0]/Chip[0]` for a chip in
-    a table in a cell. A node that stands in the flow as well keeps the flow's path.
-  - Told by its path, a composed node's losses go into one note, as a node's in the flow do: a
-    section in a cell whose outline entry is not written and whose anchor has no bookmark gave
-    two notes, and gives one.
+    a table in a cell. A node that stands in the flow as well keeps the flow's path, and what its
+    cells hold is named under it.
+  - A section composed in a cell whose anchor has no bookmark adds that loss to its own note, as
+    one in the flow does: with its outline entry not written either, it gave two notes, and gives
+    one.
+  - The contract names the paths a note may carry that are not a node's: `page N`, and in a
+    document of several sections `section N` or `section N, page N`; a note about the whole
+    document or about a node of a page zone has none.
   - The file is unchanged: the 62 corpus DOCX are byte for byte the same, and so is the text of
     their notes. The 17 notes left without a path are about the whole document: the line that
     closes it and a text footer reaching past the margin.

@@ -220,9 +220,12 @@ Each note carries a severity, what it was about, the authored node's path, and w
 means for the document. The path is the one the layout graph addresses the node by. What a
 table's cell is composed of, which the layout lays out under its table, is named under the
 table's path by its cell — `row[r]/cell[c]`, the row's index and the cell's among the cells
-authored for that row, from 0, not its column in the grid where a cell before it spans columns —
-so `Invoice[0]/Lines[2]/row[3]/cell[1]/Total[0]` is the `Total` node in the second cell
-authored for the fourth row. A note about the whole document, such as the line closing it, has none.
+authored for that row, from 0, not its column in the grid where a cell before it spans columns
+or one above spans rows into its row — so `Invoice[0]/Lines[2]/row[3]/cell[1]/Total[0]` is the
+`Total` node in the second cell authored for the fourth row. A note about no one node names what
+it is about instead: `page N`, and in a document of several sections `section N` or
+`section N, page N`. A note about the whole document, such as the line closing it, or about a
+node of a page zone has none.
 `DROPPED` means the page draws it and the document does not carry
 it; `APPROXIMATED` means it is in the document as the nearest thing Word owns — a panel
 that keeps its fill and loses its rounded corners. Neither is an error: an export that

@@ -30,6 +30,11 @@ import java.util.stream.Collectors;
  * authored for that row, from 0, not its column in the grid — then by its own segment, as in
  * {@code Invoice[0]/Lines[2]/row[3]/cell[1]/Total[0]}.</p>
  *
+ * <p>A note about no one node says what it is about instead: {@code page N} for a page, and in a
+ * document of several sections {@code section N} for one of them or {@code section N, page N}. A
+ * note about the whole document, or about a node of a page zone, which the layout lays out apart
+ * from the body, has no path.</p>
+ *
  * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
  *
  * @param notes everything worth telling the caller, in the order it was found
@@ -62,7 +67,9 @@ public record DocxExportReport(List<Note> notes) {
      *
      * @param severity whether it is missing or merely different
      * @param subject  what it was, in a few words — {@code "chart"}, {@code "corner radius"}
-     * @param path     the authored node's path, or null when it belongs to the whole export
+     * @param path     the authored node's path; a page's or a section's where the note is about one
+     *                 ({@code page N}, {@code section N}, {@code section N, page N}); or null where
+     *                 it belongs to the whole export or to a node of a page zone
      * @param detail   what happened and what it means for the document
      */
     public record Note(Severity severity, String subject, String path, String detail) {

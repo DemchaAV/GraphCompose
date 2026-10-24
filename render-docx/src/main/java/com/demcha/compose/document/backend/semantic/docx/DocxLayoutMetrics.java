@@ -114,11 +114,16 @@ final class DocxLayoutMetrics {
             return EMPTY;
         }
         Map<DocumentNode, String> paths = new IdentityHashMap<>();
-        Map<DocumentNode, String> composed = new IdentityHashMap<>();
         for (int index = 0; index < graph.roots().size(); index++) {
-            indexPaths(graph.roots().get(index), null, index, paths, composed);
+            indexPaths(graph.roots().get(index), null, index, paths);
         }
-        composed.forEach(paths::putIfAbsent);
+        Map<DocumentNode, String> cells = new IdentityHashMap<>();
+        for (DocumentNode root : graph.roots()) {
+            if (root != null) {
+                indexCells(root, paths.get(root), paths, cells);
+            }
+        }
+        paths.putAll(cells);
         java.util.Set<DocumentNode> seen = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
         java.util.Set<DocumentNode> repeated = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
         for (DocumentNode root : graph.roots()) {
@@ -224,42 +229,75 @@ final class DocxLayoutMetrics {
      * <p>The rule is the compiler's: a node is named by its own name when it has one and by
      * its kind when it does not, suffixed with its index among its siblings, and joined to
      * its parent's path with a slash. Separators in a name are replaced the same way, so a
-     * name carrying one cannot collide with the structure.</p>
-     *
-     * <p>What a table's cell is composed of is laid out under the table, and the layout gives it
-     * no path of its own: it is named under the table's by its cell, {@code row[r]/cell[c]} —
-     * the row's index among the table's rows and the cell's among the cells authored for that row,
-     * not its column in the grid — then by its own segment, into {@code composed}. No layout path
-     * reads so, so a node there still finds no placement of its own. A node standing at more than
-     * one place takes the last, in the flow as in a cell; one that stands in the flow too keeps the
-     * flow's path, which the layout knows, as the caller merges {@code composed} in only where the
-     * flow names nothing.</p>
+     * name carrying one cannot collide with the structure. What a table's cells hold is not
+     * walked: the layout gives it no path ({@link #indexCells}).</p>
      */
     private static void indexPaths(DocumentNode node,
                                    String parentPath,
                                    int childIndex,
-                                   Map<DocumentNode, String> into,
-                                   Map<DocumentNode, String> composed) {
+                                   Map<DocumentNode, String> into) {
         if (node == null) {
             return;
         }
-        String base = node.name() == null || node.name().isBlank() ? node.nodeKind() : node.name().trim();
-        String segment = base.replace('\\', '_').replace('/', '_') + "[" + childIndex + "]";
-        String path = parentPath == null ? segment : parentPath + "/" + segment;
+        String path = parentPath == null ? segment(node, childIndex) : parentPath + "/" + segment(node, childIndex);
         into.put(node, path);
         List<DocumentNode> children = node.children();
         for (int index = 0; index < children.size(); index++) {
-            indexPaths(children.get(index), path, index, into, composed);
+            indexPaths(children.get(index), path, index, into);
+        }
+    }
+
+    /**
+     * Names what the tables of a tree hold in their cells, which the layout lays out under its
+     * table and gives no path of its own: under the table's path by its cell, {@code row[r]/cell[c]}
+     * — the row's index among the table's rows and the cell's among the cells authored for that
+     * row, not its column in the grid — then by its own segment. No layout path lies under a
+     * table's, so a node there still finds no placement of its own.
+     *
+     * <p>A node the flow names ({@link #indexPaths}) keeps that path, which the layout knows, and
+     * what it holds is named under it; one standing in several cells takes the last.</p>
+     *
+     * @param node  a node of the tree, walked from its root
+     * @param path  the node's path
+     * @param flow  the flow's paths
+     * @param cells where the paths of what cells hold go
+     */
+    private static void indexCells(DocumentNode node, String path, Map<DocumentNode, String> flow,
+                                   Map<DocumentNode, String> cells) {
+        List<DocumentNode> children = node.children();
+        for (int index = 0; index < children.size(); index++) {
+            DocumentNode child = children.get(index);
+            indexCells(child, placeOf(child, path + "/" + segment(child, index), flow, cells), flow, cells);
         }
         if (node instanceof TableNode table) {
             for (int row = 0; row < table.rows().size(); row++) {
-                List<DocumentTableCell> cells = table.rows().get(row);
-                for (int cell = 0; cell < cells.size(); cell++) {
-                    indexPaths(cells.get(cell).content(), path + "/row[" + row + "]/cell[" + cell + "]", 0,
-                            composed, composed);
+                List<DocumentTableCell> authored = table.rows().get(row);
+                for (int cell = 0; cell < authored.size(); cell++) {
+                    DocumentNode content = authored.get(cell).content();
+                    if (content != null) {
+                        indexCells(content, placeOf(content, path + "/row[" + row + "]/cell[" + cell + "]/"
+                                                             + segment(content, 0), flow, cells), flow, cells);
+                    }
                 }
             }
         }
+    }
+
+    /** A node's path: the flow's where the flow names it, or else this place's, the last it is found at. */
+    private static String placeOf(DocumentNode node, String here, Map<DocumentNode, String> flow,
+                                  Map<DocumentNode, String> cells) {
+        String named = flow.get(node);
+        if (named != null) {
+            return named;
+        }
+        cells.put(node, here);
+        return here;
+    }
+
+    /** A node's name, or its kind where it has none, and its index among its siblings. */
+    private static String segment(DocumentNode node, int index) {
+        String base = node.name() == null || node.name().isBlank() ? node.nodeKind() : node.name().trim();
+        return base.replace('\\', '_').replace('/', '_') + "[" + index + "]";
     }
 
     /** @return true when there is no layout behind this index */
@@ -801,9 +839,7 @@ final class DocxLayoutMetrics {
      */
     static Map<DocumentNode, String> pathsWithin(DocumentNode root) {
         Map<DocumentNode, String> paths = new IdentityHashMap<>();
-        Map<DocumentNode, String> composed = new IdentityHashMap<>();
-        indexPaths(root, null, 0, paths, composed);
-        composed.forEach(paths::putIfAbsent);
+        indexPaths(root, null, 0, paths);
         return paths;
     }
 
@@ -1347,9 +1383,12 @@ final class DocxLayoutMetrics {
     private Map<DocumentNode, List<PlacedFragment>> matchComposedText() {
         Map<DocumentNode, List<PlacedFragment>> matched = new IdentityHashMap<>();
         for (DocumentNode table : paths.keySet()) {
-            if (!(table instanceof TableNode tableNode)) {
+            List<PlacedFragment> own = table instanceof TableNode ? fragmentsOf(table) : List.of();
+            if (own.isEmpty()) {
+                // A table composed in a cell has none: the table holding it lays its lines out.
                 continue;
             }
+            TableNode tableNode = (TableNode) table;
             List<DocumentNode> composed = new ArrayList<>();
             collectComposedText(tableNode, composed);
             if (composed.isEmpty()) {
@@ -1359,7 +1398,7 @@ final class DocxLayoutMetrics {
             // still waiting, and each list the first run its first item's opens, so pairing a table
             // is linear in its cells.
             TableLines lines = new TableLines();
-            for (PlacedFragment fragment : fragmentsOf(table)) {
+            for (PlacedFragment fragment : own) {
                 if (fragment.payload() instanceof ParagraphFragmentPayload) {
                     lines.add(fragment);
                 }

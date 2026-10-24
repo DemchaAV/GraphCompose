@@ -45,6 +45,16 @@ class DocxNaturalLineTest {
     }
 
     @Test
+    void aFaceWhoseHheaExtentsAreNotTheMetricsItsLineIsSetOnHasNoLine() throws IOException {
+        // Alegreya Sans sets USE_TYPO_METRICS on a typographic descent of 0.2 of its size, and its
+        // hhea, which the page measures by, descends 0.3: a least line would stand its text a
+        // tenth of its size off the page's baseline. IBM Plex Serif, on its Windows metrics, descends
+        // 286 units there and 275 in its hhea.
+        assertThat(DocxNaturalLine.of(regularOf(FontName.ALEGREYA_SANS))).as("typographic").isNull();
+        assertThat(DocxNaturalLine.of(regularOf(FontName.IBM_PLEX_SERIF))).as("Windows").isNull();
+    }
+
+    @Test
     void aFileWithoutTheTablesHasNoLine() throws IOException {
         byte[] lato = regularOf(FontName.LATO);
 

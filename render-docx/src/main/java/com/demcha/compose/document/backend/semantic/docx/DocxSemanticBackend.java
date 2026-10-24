@@ -9490,9 +9490,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * which Word would raise with the baseline of a shorter exact line, lowered as much.</p>
      *
      * <p>Only an exact line of text alone in its paragraph — one grown to a least height is made
-     * exact again first ({@link #holdTheLineExact}) — not one of a stack, with no space
-     * written below it and no run shaded or underlined: a shaded run fills the line in Word, and
-     * an underline is drawn below the letters. Where both are laid out, the line must end on the
+     * exact first, its text kept where it stood ({@link #raiseHoldingItExact}) — not one of a stack,
+     * with no space written below it and no run shaded or underlined: a shaded run fills the line in
+     * Word, and an underline is drawn below the letters. Where both are laid out, the line must end on the
      * page the pulled paragraph starts on: the last line of a page shortened would move where
      * Word breaks it.</p>
      *
@@ -9539,24 +9539,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // that keeps its text where it stood once it is made exact; less the margin, and the
         // quarter point the lowering below can round away.
         List<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR> runs = runsIn(para);
-        long seated = grown ? raiseHoldingItExact(para) : 0;
+        double held = grown ? raiseHoldingItExact(para) : 0;
+        double seated = held;
         if (!runs.isEmpty() && runs.get(0).isSetRPr() && runs.get(0).getRPr().sizeOfPositionArray() > 0
             && runs.get(0).getRPr().getPositionArray(0).getVal() instanceof Number number) {
-            seated += number.longValue();
+            seated += number.longValue() / HALF_POINTS_PER_POINT;
         }
-        double wordFoot = (1 - DocxTextBands.BASELINE_SHARE) * line / POINT_TO_TWIP + seated / HALF_POINTS_PER_POINT;
+        double wordFoot = (1 - DocxTextBands.BASELINE_SHARE) * line / POINT_TO_TWIP + seated;
         double room = wordFoot - ink[1] - DocxStackedLines.INK_MARGIN - 0.5 / HALF_POINTS_PER_POINT;
         long taken = Math.round(Math.min(points, room) * POINT_TO_TWIP);
         if (taken <= 0 || taken >= line) {
             return 0;
         }
         if (grown) {
-            holdTheLineExact(para);
+            spacing.setLineRule(STLineSpacingRule.EXACT);
         }
         spacing.setLine(BigInteger.valueOf(line - taken));
         // Word stands an exact line's baseline four fifths of the way down it: shorter by the
-        // taken twips, its text would rise by four fifths of them.
-        long lowered = Math.round(taken / POINT_TO_TWIP * DocxTextBands.BASELINE_SHARE * HALF_POINTS_PER_POINT);
+        // taken twips, its text would rise by four fifths of them. A least line made exact first
+        // moves its text by what that differs from where the least line stood it, rounded with it
+        // to the half point once.
+        long lowered = Math.round((taken / POINT_TO_TWIP * DocxTextBands.BASELINE_SHARE - held) * HALF_POINTS_PER_POINT);
         for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run : runsIn(para)) {
             org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr runProperties =
                     run.isSetRPr() ? run.getRPr() : run.addNewRPr();
@@ -13112,29 +13115,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Makes a line {@link #letTheLinesGrow} wrote at a least height exact again, its text where it
-     * stood: an exact line stands it four fifths of the way down, so its runs are raised by what
-     * that differs from the least line's seat. For a step that shortens the line, which a least
-     * line's text, standing on its foot, would rise with.
+     * How far a line {@link #letTheLinesGrow} wrote at a least height must have its text raised to
+     * stay where it stands once the line is written exact at the same height, in points, positive
+     * where the exact line's baseline, four fifths of the way down, is the lower. For a step that
+     * shortens the line ({@link #takeFromTheLineAbove}), which a least line's text, standing on its
+     * foot, would rise with.
      */
-    private void holdTheLineExact(XWPFParagraph para) {
-        long raise = raiseHoldingItExact(para);
-        para.getCTP().getPPr().getSpacing().setLineRule(STLineSpacingRule.EXACT);
-        raiseRunsFrom(para, 0, raise);
-    }
-
-    /**
-     * The raise, in half points, that keeps a least line's text where it stands once the line is
-     * written exact at the same height ({@link #holdTheLineExact}): positive where the exact line's
-     * baseline, four fifths of the way down, is the lower.
-     */
-    private long raiseHoldingItExact(XWPFParagraph para) {
+    private double raiseHoldingItExact(XWPFParagraph para) {
         DocxGrownLines.Line grown = grownLines.lineOf(para.getCTP());
         if (grown == null) {
             return 0;
         }
         double written = writtenTwips(para.getCTP().getPPr().getSpacing().getLine()) / POINT_TO_TWIP;
-        return Math.round((written * DocxTextBands.BASELINE_SHARE - grown.baseline()) * HALF_POINTS_PER_POINT);
+        return written * DocxTextBands.BASELINE_SHARE - grown.baseline();
     }
 
     /**

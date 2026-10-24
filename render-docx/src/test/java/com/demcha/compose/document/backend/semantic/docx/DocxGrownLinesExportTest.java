@@ -52,7 +52,28 @@ class DocxGrownLinesExportTest {
     }
 
     @Test
-    void aComposedCellsParagraphIsWrittenAtALeastHeightToo() throws Exception {
+    void aLineGrowsOnlyWhileWordWouldSetItUnderAQuarterPointOffThePagesBaseline() throws Exception {
+        // Two lines right under the block above, which gives none of their gap: it is shared out
+        // over both, and a least line's text, on its foot, stands a quarter of the gap low at the
+        // middle of the two. A 0.8pt gap leaves it 0.2pt off and the lines grow; at 1.2pt it would
+        // stand 0.3pt off, and they stay exact.
+        for (double gap : new double[]{0.8, 1.2}) {
+            try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                    .addParagraph(p -> p.text("Lead").textStyle(face(FontName.GOTHIC_A1, 10)))
+                    .addParagraph(p -> p.text("First line\nSecond line").textStyle(face(FontName.LATO, 10))
+                            .lineSpacing(gap)))) {
+                XWPFParagraph text = paragraph(document, "First line");
+
+                assertThat(DocxTwips.of(spacing(text).getLine())).as("the premise: Lato's 12pt and half the gap")
+                        .isEqualTo(Math.round((12 + gap / 2) * 20));
+                assertThat(spacing(text).getLineRule()).as("a %spt gap", gap)
+                        .isEqualTo(gap < 1 ? STLineSpacingRule.AT_LEAST : STLineSpacingRule.EXACT);
+            }
+        }
+    }
+
+    @Test
+    void aRowOfColumnsParagraphIsWrittenAtALeastHeightToo() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addRow(row -> row
                         .addParagraph(p -> p.text("Left").textStyle(face(FontName.LATO, 10)))
@@ -87,9 +108,10 @@ class DocxGrownLinesExportTest {
 
     @Test
     void aFaceTheEditorsSetOnAnotherDescentIsWrittenExact() throws Exception {
-        // Alegreya Sans' Windows descent is two tenths of its size, its line's descent on the page
-        // three: a least line would stand its text a fifth of a point low at 20pt, its position
-        // moving nothing, so the line stays exact and its position seats it.
+        // Alegreya Sans' typographic descent, which the editors set its line on, is two tenths of
+        // its size, and its hhea descent, which the page measures, three: a least line would stand
+        // its text 2pt low at 20pt, its position moving nothing, so the face has no line to grow to
+        // and the line stays exact, where its position seats it.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Alegreya").textStyle(face(FontName.ALEGREYA_SANS, 20))))) {
             assertThat(spacing(paragraph(document, "Alegreya")).getLineRule()).isEqualTo(STLineSpacingRule.EXACT);

@@ -22,7 +22,8 @@ import java.util.Set;
  * text: the baseline stands the line's deepest run's descent above the line's foot. A run's own
  * line is its face's ({@link DocxNaturalLine}), and a line of several runs reaches as high as the
  * tallest and as deep as the deepest of them, the paragraph's mark among them in its last line
- * (measured in Word and in LibreOffice 24.2, mixed faces and sizes in one line, to 0.1pt).</p>
+ * (measured in Word and in LibreOffice 24.2: each face of the templates alone to 0.15pt, mixed
+ * faces and sizes in one line to 0.1pt).</p>
  *
  * <p>A text's position does not move it in a least line: Word, raising every run of a line, keeps
  * the text on the line's foot until it passes the line's top, and LibreOffice moves it and grows

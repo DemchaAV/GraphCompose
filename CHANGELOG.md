@@ -16,19 +16,20 @@ follow semantic versioning; release dates are ISO 8601.
     written as a least height (`w:lineRule="atLeast"`). The runs' own line is their faces' line by
     the faces' own tables: the tallest run's reach above the baseline and the deepest run's below,
     the paragraph's mark among them. It is so where the runs are set in faces the document ships,
-    all the same depth below the baseline, none raised, no picture in the line, and the paragraph
-    is seated on its baseline, not a Word list's item.
+    all the same depth below the baseline, left to right, none raised or a script, no picture in
+    the line, and the paragraph is seated on its baseline, not a Word list's item.
   - Word and LibreOffice keep a least line's spare above its text and stand its baseline the
     runs' descent above its foot (measured on the templates' faces, Word and LibreOffice 24.2, to
-    0.15pt). That is where the page sets it, so such a line needs none of the raises an exact
-    line's text was seated with. A line Word would still set a quarter point or more off the
-    page's baseline stays exact, where its position seats it.
+    0.15pt). That is where the page sets it, so such a line needs no position to stand there; it
+    is still moved into the space above it where Word would set it a little off. A line Word
+    would set a quarter point or more off the page's baseline stays exact.
   - The rest stays exact:
     - a line the page sets tighter than its faces' own: Poppins' and Gothic A1's, whose own line
       holds a line gap the page's does not; one rounded to the twip below its own, which a least
       line would grow back on every line;
     - a line in a face the document does not ship, the default Helvetica's among them, which the
-      reader's machine substitutes;
+      reader's machine substitutes, or in one whose `hhea` extents, which the page measures by,
+      are not the metrics its line is set on;
     - a table's text cells, page zones, text boxes, stacked lines and line pairs.
   - The report names how many paragraphs of text are still exact, once for the document
     (`line height`, no path).

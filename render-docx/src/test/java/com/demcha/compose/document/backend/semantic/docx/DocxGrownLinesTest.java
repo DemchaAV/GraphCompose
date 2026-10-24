@@ -75,6 +75,8 @@ class DocxGrownLinesTest {
 
         assertThat(lines.reachOf(bold.getCTP())).as("the bold face is shipped").isNotNull();
         assertThat(lines.reachOf(italic.getCTP())).as("the italic face is not").isNull();
+        assertThat(shipping(LATO).reachOf(bold.getCTP())).as("in a document shipping the regular face alone")
+                .isNull();
     }
 
     @Test

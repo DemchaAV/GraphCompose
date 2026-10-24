@@ -14,6 +14,11 @@ import java.nio.ByteOrder;
  * line gap asks beyond them above. A line given a least height taller than this keeps the spare
  * above its text: the baseline stands this line's {@link #descent} above the line's foot.</p>
  *
+ * <p>Only a face whose {@code hhea} ascender and descender are the metrics so chosen has a line
+ * here. The page measures a face's descent by {@code hhea}, so only then does a least line stand
+ * its text where the page does; and an editor that reads {@code hhea} for the face sets it the
+ * same. Every face the templates use is one.</p>
+ *
  * @param ascent  how far the line reaches above the baseline, its line gap included, in ems
  * @param descent how far it reaches below, in ems
  * @author Artem Demchyshyn
@@ -32,7 +37,7 @@ record DocxNaturalLine(double ascent, double descent) {
      *
      * @param font the whole font file
      * @return its line, or null where the font carries no readable {@code head}, {@code hhea} or
-     *         {@code OS/2} table
+     *         {@code OS/2} table, or its {@code hhea} extents are not the metrics its line is set on
      */
     static DocxNaturalLine of(byte[] font) {
         int head = DocxFontEmbedding.tableOffset(font, "head", 20);
@@ -46,18 +51,24 @@ record DocxNaturalLine(double ascent, double descent) {
         if (!(unitsPerEm > 0)) {
             return null;
         }
+        int ascender = buffer.getShort(hhea + 4);
+        int descender = buffer.getShort(hhea + 6);
         int version = Short.toUnsignedInt(buffer.getShort(os2));
         int selection = Short.toUnsignedInt(buffer.getShort(os2 + 62));
         if (version >= TYPO_METRICS_VERSION && (selection & USE_TYPO_METRICS) != 0) {
-            int ascender = buffer.getShort(os2 + 68);
-            int descender = buffer.getShort(os2 + 70);
-            int lineGap = Math.max(0, buffer.getShort(os2 + 72));
-            return new DocxNaturalLine((ascender + lineGap) / unitsPerEm, -descender / unitsPerEm);
+            int typoAscender = buffer.getShort(os2 + 68);
+            int typoDescender = buffer.getShort(os2 + 70);
+            int typoGap = Math.max(0, buffer.getShort(os2 + 72));
+            if (typoAscender != ascender || typoDescender != descender) {
+                return null;
+            }
+            return new DocxNaturalLine((typoAscender + typoGap) / unitsPerEm, -typoDescender / unitsPerEm);
         }
         int winAscent = Short.toUnsignedInt(buffer.getShort(os2 + 74));
         int winDescent = Short.toUnsignedInt(buffer.getShort(os2 + 76));
-        int ascender = buffer.getShort(hhea + 4);
-        int descender = buffer.getShort(hhea + 6);
+        if (winAscent != ascender || winDescent != -descender) {
+            return null;
+        }
         int lineGap = buffer.getShort(hhea + 8);
         int beyond = Math.max(0, lineGap - ((winAscent + winDescent) - (ascender - descender)));
         return new DocxNaturalLine((winAscent + beyond) / unitsPerEm, winDescent / unitsPerEm);

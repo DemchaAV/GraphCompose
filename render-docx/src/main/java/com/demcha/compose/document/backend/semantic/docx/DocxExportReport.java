@@ -32,8 +32,9 @@ import java.util.stream.Collectors;
  *
  * <p>A note about no one node says what it is about instead: {@code page N} for a page, and in a
  * document of several sections {@code section N} for one of them or {@code section N, page N}. A
- * note about the whole document, or about a node of a page zone, which the layout lays out apart
- * from the body, has no path.</p>
+ * note about the whole document has no path. One about a page zone, or about a node of one, which
+ * the layout lays out apart from the body, has none either, or names its section in a document of
+ * several.</p>
  *
  * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
  *
@@ -69,7 +70,8 @@ public record DocxExportReport(List<Note> notes) {
      * @param subject  what it was, in a few words — {@code "chart"}, {@code "corner radius"}
      * @param path     the authored node's path; a page's or a section's where the note is about one
      *                 ({@code page N}, {@code section N}, {@code section N, page N}); or null where
-     *                 it belongs to the whole export or to a node of a page zone
+     *                 it belongs to the whole export; about a page zone or a node of one, null or,
+     *                 in a document of several sections, its section
      * @param detail   what happened and what it means for the document
      */
     public record Note(Severity severity, String subject, String path, String detail) {

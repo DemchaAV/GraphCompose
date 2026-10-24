@@ -202,8 +202,10 @@ reference, which the export settles in the paragraph it wrote it in once the bod
 page after one whose content reaches its foot, under a table or in its rows, starts none either,
 as the line that would end the section has no room. Neither does a page of a
 document of several sections whose header or footer counts its section's pages: Word would count
-a section of its own apart. The report names each (`page margin`), on the block where there is
-one, and Word sets that page with the margins in force.
+a section of its own apart. The report names each (`page margin`): on the block where there is
+one, in one note naming every page that starts inside it; on the section, naming each of its
+pages, where its page count would split; and by the page, `page N`, otherwise. Word sets those
+pages with the margins in force.
 
 ## Finding out what the export could not carry
 
@@ -224,8 +226,9 @@ authored for that row, from 0, not its column in the grid where a cell before it
 or one above spans rows into its row — so `Invoice[0]/Lines[2]/row[3]/cell[1]/Total[0]` is the
 `Total` node in the second cell authored for the fourth row. A note about no one node names what
 it is about instead: `page N`, and in a document of several sections `section N` or
-`section N, page N`. A note about the whole document, such as the line closing it, or about a
-node of a page zone has none.
+`section N, page N`. A note about the whole document, such as the line closing it, has none. One
+about a page zone or a node of one has none either, or names its section in a document of
+several.
 `DROPPED` means the page draws it and the document does not carry
 it; `APPROXIMATED` means it is in the document as the nearest thing Word owns — a panel
 that keeps its fill and loses its rounded corners. Neither is an error: an export that

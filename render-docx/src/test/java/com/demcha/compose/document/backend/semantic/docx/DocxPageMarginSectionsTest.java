@@ -255,8 +255,10 @@ class DocxPageMarginSectionsTest {
         assertThat(exported.report().notes()).filteredOn(note -> note.subject().equals("page margin"))
                 .singleElement().satisfies(note -> {
                     assertThat(note.path()).endsWith("TableNode[1]");
-                    assertThat(note.detail()).endsWith("page 2 starts inside this block, where the export starts no "
-                                                       + "Word section");
+                    assertThat(note.detail()).as("each page the table runs onto")
+                            .isEqualTo("the top and bottom margins of pages 2 and 3 differ from page 1's, which Word "
+                                       + "sets them with: each starts inside this block, where the export starts no "
+                                       + "Word section");
                 });
     }
 
@@ -296,6 +298,71 @@ class DocxPageMarginSectionsTest {
             names.add(((org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBookmark) found).getName());
         }
         return names;
+    }
+
+    @Test
+    void aBlockSeveralPagesStartInsideNamesEachInItsOneNote() throws Exception {
+        // Word sets each with page 1's margins; named for page 2 alone, page 3's went unsaid.
+        Exported exported = export(List.of(PageMarginRule.from(2, LATER)), page -> page.addSection(panel -> {
+            panel.fillColor(com.demcha.compose.document.style.DocumentColor.rgb(238, 242, 247));
+            for (int line = 0; line < 70; line++) {
+                panel.addParagraph("Line " + line);
+            }
+        }));
+
+        assertThat(exported.lastNames()).as("four pages").hasSize(4);
+        assertThat(exported.report().notes()).filteredOn(note -> note.subject().equals("page margin"))
+                .singleElement().satisfies(note -> {
+                    assertThat(note.path()).endsWith("SectionNode[0]");
+                    assertThat(note.detail()).isEqualTo("the top and bottom margins of pages 2 to 4 differ from page "
+                                                        + "1's, which Word sets them with: each starts inside this "
+                                                        + "block, where the export starts no Word section");
+                });
+    }
+
+    @Test
+    void theRunsOfPagesStartingInsideABlockAreNamedAsRuns() throws Exception {
+        // Page 4 has page 1's margins again, which Word sets it with: the note leaves it out.
+        Exported exported = export(List.of(PageMarginRule.page(2, LATER), PageMarginRule.page(3, LATER),
+                PageMarginRule.page(5, LATER)), page -> page.addSection(panel -> {
+            panel.fillColor(com.demcha.compose.document.style.DocumentColor.rgb(238, 242, 247));
+            for (int line = 0; line < 100; line++) {
+                panel.addParagraph("Line " + line);
+            }
+        }));
+
+        assertThat(exported.lastNames().size()).as("five pages or more").isGreaterThanOrEqualTo(5);
+        assertThat(exported.notes()).singleElement().asString().startsWith("the top and bottom margins of pages 2, "
+                + "3 and 5 differ from page 1's");
+    }
+
+    @Test
+    void aNoteAboutAPageNamesThePage() throws Exception {
+        Exported written = export(List.of(PageMarginRule.from(2, LATER)), page -> lines(page, "Line", 60));
+        Exported sides = export(List.of(PageMarginRule.from(2, DocumentInsets.symmetric(36, 90))),
+                page -> lines(page, "Line", 60));
+
+        assertThat(written.report().notes()).filteredOn(note -> note.subject().equals("page margin"))
+                .extracting(DocxExportReport.Note::path).containsExactly("page 2");
+        assertThat(sides.report().notes()).filteredOn(note -> note.subject().equals("page margin"))
+                .extracting(DocxExportReport.Note::path).containsExactly("page 2");
+    }
+
+    @Test
+    void aNoteAboutAPageOfASectionOfSeveralNamesTheSectionAndThePage() throws Exception {
+        DocumentSession body = GraphCompose.document().pageSize(400, 400).margin(FIRST).create();
+        body.pageMargins(List.of(PageMarginRule.from(2, LATER)));
+        body.pageFlow(page -> lines(page, "Line", 60));
+        DocumentSession cover = GraphCompose.document().pageSize(400, 400).margin(FIRST).create();
+        cover.pageFlow(page -> page.addParagraph("Cover"));
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        try (com.demcha.compose.document.api.MultiSectionDocument document = GraphCompose.documents()
+                .section(cover).section(body).create()) {
+            document.export(new DocxSemanticBackend(report::set));
+        }
+
+        assertThat(report.get().notes()).filteredOn(note -> note.subject().equals("page margin"))
+                .extracting(DocxExportReport.Note::path).containsExactly("section 2, page 2");
     }
 
     @Test
@@ -476,6 +543,8 @@ class DocxPageMarginSectionsTest {
         assertThat(exported.paragraphsEndingASection()).isEmpty();
         assertThat(exported.notes()).singleElement().asString().endsWith("page 1's content reaches its foot, where "
                 + "the paragraph that would end a Word section before page 2 would open a page of its own");
+        assertThat(exported.report().notes()).filteredOn(note -> note.subject().equals("page margin"))
+                .extracting(DocxExportReport.Note::path).containsExactly("page 2");
     }
 
     @Test
@@ -525,9 +594,10 @@ class DocxPageMarginSectionsTest {
 
         assertThat(exported.paragraphsEndingASection()).as("its top and bottom are page 1's").isEmpty();
         assertThat(exported.body().getPgMar().getLeft()).isEqualTo(java.math.BigInteger.valueOf(36 * 20));
-        assertThat(exported.notes()).singleElement().asString().isEqualTo("page 2's side margins differ from the "
-                + "document's and are not written: the body is written against the document's width, and Word "
-                + "sets its text between the document's side margins");
+        assertThat(exported.lastNames()).as("three pages").hasSize(3);
+        assertThat(exported.notes()).singleElement().asString().isEqualTo("the side margins of pages 2 and 3 differ "
+                + "from the document's and are not written: the body is written against the document's width, and "
+                + "Word sets its text between the document's side margins");
     }
 
     @Test
@@ -550,8 +620,10 @@ class DocxPageMarginSectionsTest {
         body.pageFlow(page -> lines(page, "Line", 60));
         List<String> notes = sectionedNotes(body);
 
-        assertThat(notes).singleElement().asString().endsWith("a Word section would count its own pages, where this "
-                + "section's header or footer counts all of them");
+        assertThat(notes).singleElement().asString().as("each page it would set otherwise")
+                .startsWith("the top and bottom margins of pages 2 to ")
+                .endsWith("which Word sets them with: a Word section would count its own pages, where this "
+                          + "section's header or footer counts all of them");
     }
 
     @Test

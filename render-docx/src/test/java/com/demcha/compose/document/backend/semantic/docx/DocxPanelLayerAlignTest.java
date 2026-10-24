@@ -122,10 +122,12 @@ class DocxPanelLayerAlignTest {
         Exported exported = export(panel);
 
         assertThat(exported.vertical()).as("the first's").isNull();
-        // Composed in a table cell, it has no path of its own in the layout.
         assertThat(exported.offsetNotes()).singleElement().extracting(DocxExportReport.Note::detail)
                 .isEqualTo("written as a panel's content: the page sets it at the foot of the shape, and its cell "
                            + "sets all it holds at the top, it under the layers before it");
+        assertThat(exported.offsetNotes()).singleElement().extracting(DocxExportReport.Note::path)
+                .as("the layer, composed in a table cell, named under its table by its cell").asString()
+                .endsWith("TableNode[1]/row[0]/cell[0]/ShapeContainerNode[0]/ParagraphNode[1]");
     }
 
     @Test

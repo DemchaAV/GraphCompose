@@ -74,6 +74,18 @@ class DocxAnchorWithoutABookmarkTest {
     }
 
     @Test
+    void aSectionComposedInACellWithANoteOfItsOwnNamesItsAnchorThere() throws Exception {
+        // Told by its path under the table, it has one note, as in the flow.
+        Exported exported = export(page -> page.addParagraph(p -> p.text("Go there").linkTo("target"))
+                .addTable(table -> table.autoColumns(1).rowCells(DocumentTableCell.node(new SectionBuilder()
+                        .anchor("target").bookmark(new DocumentBookmarkOptions("Entry")).add(drawing()).build()))));
+
+        assertThat(notesOn(exported.report(), "SectionNode")).singleElement().asString()
+                .contains("its outline entry is not written")
+                .endsWith("it writes no paragraph, so " + LOST);
+    }
+
+    @Test
     void aSectionInAPanelsCellNamesItsAnchor() throws Exception {
         // What it writes lands in the panel's cell, which holds the panel's paragraph and none of its own.
         Exported exported = export(page -> page.addParagraph(p -> p.text("Go there").linkTo("target"))
@@ -86,8 +98,8 @@ class DocxAnchorWithoutABookmarkTest {
 
     @Test
     void aSectionInATablesComposedCellHasANoteOfItsOwn() throws Exception {
-        // Nothing in a composed cell has a path of its own to tell it by: the section inside, with its
-        // outline entry, keeps its note, and the anchored one round it has its own.
+        // Each node in a composed cell is told by its own path under the table: the section inside,
+        // with its outline entry, keeps its note, and the anchored one round it has its own.
         DocumentNode inner = new SectionBuilder().bookmark(new DocumentBookmarkOptions("Entry")).add(drawing()).build();
         Exported exported = export(page -> page.addParagraph(p -> p.text("Go there").linkTo("target"))
                 .addTable(table -> table.autoColumns(1).rowCells(DocumentTableCell.node(

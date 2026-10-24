@@ -263,7 +263,7 @@ class DocxCarriedWithoutReportTest {
         for (String name : List.of("UnevenShape", "UnevenContainer")) {
             assertThat(notesNaming(report, name)).as(name).anyMatch(detail -> detail.endsWith(CORNERS));
         }
-        // Composed in a cell, a node's note carries no path: the uneven one's, and not the pill's.
+        // Composed in a cell, the uneven one's note names its corners, and the pill's does not.
         assertThat(notesOn(report, "ShapeContainerNode"))
                 .filteredOn(detail -> detail.startsWith("composed in a table cell"))
                 .singleElement().asString().endsWith(CORNERS);

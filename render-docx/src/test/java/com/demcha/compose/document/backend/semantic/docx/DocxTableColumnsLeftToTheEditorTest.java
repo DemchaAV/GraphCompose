@@ -40,7 +40,8 @@ class DocxTableColumnsLeftToTheEditorTest {
         assertThat(notes).singleElement().satisfies(note -> {
             assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
             assertThat(note.detail()).isEqualTo(COMPOSED);
-            assertThat(note.path()).as("composed content has no path of its own").isNull();
+            assertThat(note.path()).as("composed content is named under its table, by its cell")
+                    .endsWith("TableNode[0]/row[0]/cell[1]/TableNode[0]");
         });
     }
 

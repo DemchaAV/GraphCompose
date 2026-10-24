@@ -24,7 +24,11 @@ import java.util.stream.Collectors;
  *
  * <p>Every note carries the path of the node it came from, the same path the layout graph
  * addresses that node by, so a note can be traced back to the authoring code rather than
- * guessed at from its text.</p>
+ * guessed at from its text. What a table's cell is composed of, which the layout lays out under
+ * the table and gives no path of its own, is named under the table's path by its cell —
+ * {@code row[r]/cell[c]}, the row's index among the table's rows and the cell's among the cells
+ * authored for that row, from 0, not its column in the grid — then by its own segment, as in
+ * {@code Invoice[0]/Lines[2]/row[3]/cell[1]/Total[0]}.</p>
  *
  * <p><b>Experimental</b> ({@code @Beta}) — see {@code docs/api-stability.md}.</p>
  *

@@ -114,9 +114,11 @@ final class DocxLayoutMetrics {
             return EMPTY;
         }
         Map<DocumentNode, String> paths = new IdentityHashMap<>();
+        Map<DocumentNode, String> composed = new IdentityHashMap<>();
         for (int index = 0; index < graph.roots().size(); index++) {
-            indexPaths(graph.roots().get(index), null, index, paths);
+            indexPaths(graph.roots().get(index), null, index, paths, composed);
         }
+        composed.forEach(paths::putIfAbsent);
         java.util.Set<DocumentNode> seen = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
         java.util.Set<DocumentNode> repeated = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
         for (DocumentNode root : graph.roots()) {
@@ -223,11 +225,21 @@ final class DocxLayoutMetrics {
      * its kind when it does not, suffixed with its index among its siblings, and joined to
      * its parent's path with a slash. Separators in a name are replaced the same way, so a
      * name carrying one cannot collide with the structure.</p>
+     *
+     * <p>What a table's cell is composed of is laid out under the table, and the layout gives it
+     * no path of its own: it is named under the table's by its cell, {@code row[r]/cell[c]} —
+     * the row's index among the table's rows and the cell's among the cells authored for that row,
+     * not its column in the grid — then by its own segment, into {@code composed}. No layout path
+     * reads so, so a node there still finds no placement of its own. A node standing at more than
+     * one place takes the last, in the flow as in a cell; one that stands in the flow too keeps the
+     * flow's path, which the layout knows, as the caller merges {@code composed} in only where the
+     * flow names nothing.</p>
      */
     private static void indexPaths(DocumentNode node,
                                    String parentPath,
                                    int childIndex,
-                                   Map<DocumentNode, String> into) {
+                                   Map<DocumentNode, String> into,
+                                   Map<DocumentNode, String> composed) {
         if (node == null) {
             return;
         }
@@ -237,7 +249,16 @@ final class DocxLayoutMetrics {
         into.put(node, path);
         List<DocumentNode> children = node.children();
         for (int index = 0; index < children.size(); index++) {
-            indexPaths(children.get(index), path, index, into);
+            indexPaths(children.get(index), path, index, into, composed);
+        }
+        if (node instanceof TableNode table) {
+            for (int row = 0; row < table.rows().size(); row++) {
+                List<DocumentTableCell> cells = table.rows().get(row);
+                for (int cell = 0; cell < cells.size(); cell++) {
+                    indexPaths(cells.get(cell).content(), path + "/row[" + row + "]/cell[" + cell + "]", 0,
+                            composed, composed);
+                }
+            }
         }
     }
 
@@ -780,16 +801,19 @@ final class DocxLayoutMetrics {
      */
     static Map<DocumentNode, String> pathsWithin(DocumentNode root) {
         Map<DocumentNode, String> paths = new IdentityHashMap<>();
-        indexPaths(root, null, 0, paths);
+        Map<DocumentNode, String> composed = new IdentityHashMap<>();
+        indexPaths(root, null, 0, paths, composed);
+        composed.forEach(paths::putIfAbsent);
         return paths;
     }
 
     /**
-     * The path the layout graph addresses a node by, for a note that has to say where in
-     * the document it came from.
+     * The path a note names a node by, to say where in the document it came from: the one the
+     * layout graph addresses it by, or, for what a table's cell is composed of, its table's by its
+     * cell ({@link #indexPaths}).
      *
      * @param node any authored node
-     * @return its path, or null when this index was built from no graph at all
+     * @return its path, or null for a node of no tree this index was built from
      */
     String pathOf(DocumentNode node) {
         return node == null ? null : paths.get(node);
@@ -1288,7 +1312,8 @@ final class DocxLayoutMetrics {
 
     /**
      * The fragments that hold a node's lines of text: its own, or — for a paragraph or a list
-     * composed in a table cell, which has no path of its own — the ones its table laid out for it.
+     * composed in a table cell, which the layout gives no path of its own — the ones its table laid
+     * out for it.
      */
     private List<PlacedFragment> textFragmentsOf(DocumentNode node) {
         List<PlacedFragment> own = fragmentsOf(node);

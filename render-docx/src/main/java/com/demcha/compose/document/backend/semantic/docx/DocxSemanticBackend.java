@@ -8472,7 +8472,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                          + "table cell (" + layer.node().nodeKind() + "), and it is written from the shape's left");
             }
             if (!lost.isEmpty()) {
-                // Composed in a table cell, it has no path of its own in the layout.
                 report.add(DocxExportReport.Severity.APPROXIMATED, "layer offset", layout.pathOf(layer.node()),
                         "written as a panel's content: " + String.join("; ", lost));
             }
@@ -10901,8 +10900,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>The loss goes into the block's own note where it has one, or a note of its own after the
      * others: a page reference's note is put in where it was counted, after this, and a note put in
-     * here would move it. A block whose path the layout does not register, composed in a table's
-     * cell, is not told from the nodes inside it, and has a note of its own.</p>
+     * here would move it. A block composed in a table's cell is told by its path under the table, as
+     * one in the flow is by its own.</p>
      */
     private void nameTheBlocksNoBookmarkMarks() {
         for (UnmarkedBlock block : blocksUnmarked) {

@@ -8,6 +8,27 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's report names what a table's cell is composed of by its cell.**
+  - The layout lays a composed cell's content out under its table and gives it no path of its
+    own, so every note about a node there carried none: 216 of the corpus's 1384 notes, a rounded
+    panel's corners, an inline icon or shape drawn as a picture, a nested chip's right border.
+    Two cells composed alike could not be told apart, nor which cell a note was about.
+  - `DocxExportReport.Note.path()` now names such a node under its table's path by its cell,
+    `row[r]/cell[c]` — the row's index among the table's rows and the cell's among the cells
+    authored for that row, from 0, not its column in the grid — then by its own segment, as
+    `CobaltRota[0]/Schedule[0]/row[7]/cell[7]/ShiftBlock[0]/row[1]/cell[0]/Chip[0]` for a chip in
+    a table in a cell. A node that stands in the flow as well keeps the flow's path, and what its
+    cells hold is named under it.
+  - A section composed in a cell whose anchor has no bookmark adds that loss to its own note, as
+    one in the flow does: with its outline entry not written either, it gave two notes, and gives
+    one.
+  - The contract names the paths a note may carry that are not a node's: `page N`, and in a
+    document of several sections `section N` or `section N, page N`; a note about the whole
+    document or about a node of a page zone has none.
+  - The file is unchanged: the 62 corpus DOCX are byte for byte the same, and so is the text of
+    their notes. The 17 notes left without a path are about the whole document: the line that
+    closes it and a text footer reaching past the margin.
+
 - **A DOCX export splits a body table at the row where a page with other top and bottom margins
   starts.**
   - A Word section starts only between blocks. So a page that the layout started among a table's

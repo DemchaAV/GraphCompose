@@ -160,7 +160,8 @@ class DocxCellRuleRoomTest {
         assertThat(composed).singleElement().satisfies(note -> {
             assertThat(note.detail()).as("its rows not held, an empty cell's line keeps its height: 4.5 + 4.5")
                     .isEqualTo(note("up to 9"));
-            assertThat(note.path()).as("composed content has no path of its own").isNull();
+            assertThat(note.path()).as("composed content is named under its table, by its cell")
+                    .endsWith("TableNode[0]/row[0]/cell[0]/TableNode[0]");
         });
         assertThat(DocxExports.reportWithoutLayout(500, 400, 30, rows(3, 0)).bySubject().get(SUBJECT))
                 .as("what the padding does not take needs no layout to tell").extracting(DocxExportReport.Note::detail)

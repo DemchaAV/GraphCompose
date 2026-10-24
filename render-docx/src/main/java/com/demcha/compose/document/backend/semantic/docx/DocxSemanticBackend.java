@@ -190,6 +190,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /** The least difference between Word's baseline and the page's that is moved: one half point. */
     private static final double LEAST_BASELINE_SHIFT_POINTS = 0.5;
     /**
+     * The least difference between Word's baseline and the page's that keeps a line exact
+     * ({@link #letTheLinesGrow}): what a position, counted in half points, leaves at most.
+     */
+    private static final double LEAST_GROWN_LINE_SHIFT_POINTS = 0.25;
+    /**
      * The least raise a line is moved by in the space written above it, in points: Word sets
      * lines on a grid of its own, 0.12pt apart (measured), and a twip less of space moves a line
      * a step or nothing.
@@ -424,8 +429,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // Identifiers for the shapes this export draws itself, kept clear of the ones POI numbers
     // its pictures with: a drawing's id has to be unique in the document.
     private long nextDrawingId;
+    // How tall Word stands each written paragraph's line, and where its text stands in it, by the
+    // faces the export ships (DocxGrownLines).
+    private DocxGrownLines grownLines = DocxGrownLines.NONE;
     // Where the shapes this export draws are anchored — see DocxDrawingAnchors.
-    private final DocxDrawingAnchors anchors = new DocxDrawingAnchors(() -> nextDrawingId++);
+    private final DocxDrawingAnchors anchors = new DocxDrawingAnchors(() -> nextDrawingId++,
+            paragraph -> grownLines.lineOf(paragraph));
     // The page the node being written starts on, as the layout placed it, counted within the
     // section being written.
     private int currentPage;
@@ -1231,6 +1240,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         measuredFamilies = List.copyOf(fonts);
         seatFonts = null;
         styleMetrics = null;
+        grownLines = DocxGrownLines.NONE;
         documentDefaultStyle = dominantTextStyle(whole);
         currentCell = null;
         aloneInItsRow = null;
@@ -1260,8 +1270,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 applyPageGeometry(document, context.canvas());
                 if (index == 0) {
                     writeStylesPart(document);
-                    DocxFontTable.write(document, whole, zoneContentsIn(sections), bandStylesIn(sections),
-                            fonts, report);
+                    grownLines = new DocxGrownLines(DocxFontTable.write(document, whole, zoneContentsIn(sections),
+                            bandStylesIn(sections), fonts, report), documentDefaultStyle);
                     applyMetadata(document, metadataOf(sections));
                     reportUnwrittenOutputOptions(sections);
                 }
@@ -1318,6 +1328,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             hideTheClosingMark(document);
             hideTheCellClosingMarks(document.getTables());
             letTheOneRowTablesKeptWithTheNextBreak(document.getTables());
+            nameTheExactLines(document);
             DocxTextControls.dropFrom(document);
             if (textFillsWritten) {
                 DocxTranslucency.settle(document);
@@ -1593,6 +1604,66 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 if (drawnOn != null
                     && drawnOn.contains(DocxPageClasses.PageClass.EVEN)
                        != drawnOn.contains(DocxPageClasses.PageClass.LATER_ODD)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Names, once for the document, the paragraphs of text whose lines are written at an exact
+     * height: Word keeps such a line's height when its text is made larger, and cuts off at its top
+     * the letters that grow taller than it. A line is written at a least height, which grows, only
+     * where the page's line is at least its faces' own and Word then stands its text where the page
+     * does ({@link #letTheLinesGrow}): the rest are set tighter than their faces' own line, in a
+     * face the document does not ship, or written where no line grows — a table's text cell, a
+     * page zone, a text box.
+     */
+    private void nameTheExactLines(XWPFDocument document) {
+        int exact = exactLinesOfTextIn(document.getDocument());
+        // A header or footer made in this export is among the document's relations: POI lists in
+        // getHeaderList() and getFooterList() only the parts it read.
+        for (org.apache.poi.ooxml.POIXMLDocumentPart part : document.getRelations()) {
+            if (part instanceof org.apache.poi.xwpf.usermodel.XWPFHeaderFooter headerOrFooter) {
+                exact += exactLinesOfTextIn(headerOrFooter._getHdrFtr());
+            }
+        }
+        if (exact > 0) {
+            report.add(DocxExportReport.Severity.APPROXIMATED, "line height", null,
+                    (exact == 1 ? "the lines of one paragraph are" : "the lines of " + exact + " paragraphs are")
+                    + " written at an exact height, which Word keeps when their text is made larger: letters"
+                    + " grown taller than their line are cut off at its top. Only a line at least as tall as"
+                    + " its faces' own, set in faces the document ships, is written at a least height, which"
+                    + " grows with its text");
+        }
+    }
+
+    /** How many paragraphs under {@code part} hold text of their own and are written at an exact height. */
+    private static int exactLinesOfTextIn(org.apache.xmlbeans.XmlObject part) {
+        int exact = 0;
+        try (org.apache.xmlbeans.XmlCursor cursor = part.newCursor()) {
+            cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' "
+                              + ".//w:p");
+            while (cursor.toNextSelection()) {
+                if (cursor.getObject() instanceof org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP paragraph
+                    && paragraph.isSetPPr() && paragraph.getPPr().isSetSpacing()
+                    && paragraph.getPPr().getSpacing().getLineRule() == STLineSpacingRule.EXACT
+                    && holdsTextOfItsOwn(paragraph)) {
+                    exact++;
+                }
+            }
+        }
+        return exact;
+    }
+
+    /** Whether a paragraph's own runs, its links' among them, hold any text. */
+    private static boolean holdsTextOfItsOwn(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP paragraph) {
+        try (org.apache.xmlbeans.XmlCursor cursor = paragraph.newCursor()) {
+            cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' "
+                              + "./w:r/w:t | ./w:hyperlink/w:r/w:t");
+            while (cursor.toNextSelection()) {
+                if (!cursor.getTextValue().isBlank()) {
                     return true;
                 }
             }
@@ -6209,6 +6280,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             takeBack(itemsLowered, grownBy(itemsLowered));
         }
         giveBack(itemsLowered, giveBackFromTheSpaceAbove(para, grownBy(itemsLowered)));
+        letTheLinesGrow(para, laidOut.lines(), listLineGap);
         double shift = shiftToThePagesBaseline(para, laidOut.lines(), listLineGap, 0, false, true, staysOnItsPage);
         if (!wordDrawsTheMarker) {
             // Its marker is its text, and its position moves the two together.
@@ -9417,7 +9489,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * it. The line above is written shorter by what its letters do not reach, and its text,
      * which Word would raise with the baseline of a shorter exact line, lowered as much.</p>
      *
-     * <p>Only an exact line of text alone in its paragraph, not one of a stack, with no space
+     * <p>Only an exact line of text alone in its paragraph — one grown to a least height is made
+     * exact again first ({@link #holdTheLineExact}) — not one of a stack, with no space
      * written below it and no run shaded or underlined: a shaded run fills the line in Word, and
      * an underline is drawn below the letters. Where both are laid out, the line must end on the
      * page the pulled paragraph starts on: the last line of a page shortened would move where
@@ -9446,7 +9519,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         CTPPr properties = para.getCTP().getPPr();
         CTSpacing spacing = properties != null && properties.isSetSpacing() ? properties.getSpacing() : null;
-        Long line = spacing != null && spacing.isSetLineRule() && spacing.getLineRule() == STLineSpacingRule.EXACT
+        // A line grown to a least height (letTheLinesGrow) is shortened as an exact one: its text
+        // stands on its foot, and would rise with it.
+        boolean grown = spacing != null && spacing.isSetLineRule()
+                        && spacing.getLineRule() == STLineSpacingRule.AT_LEAST
+                        && grownLines.lineOf(para.getCTP()) != null;
+        Long line = spacing != null && spacing.isSetLineRule()
+                    && (spacing.getLineRule() == STLineSpacingRule.EXACT || grown)
                 ? writtenTwips(spacing.getLine()) : null;
         java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> laid = layout.firstLine(above);
         // The letters' reach off their own baseline, before any seat: the position written on
@@ -9456,19 +9535,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return 0;
         }
         // The room under the letters where Word draws them: its baseline stands a fifth of the
-        // line above the foot, raised by the runs' written position; less the margin, and the
+        // line above the foot, raised by the runs' written position — for a least line, the raise
+        // that keeps its text where it stood once it is made exact; less the margin, and the
         // quarter point the lowering below can round away.
         List<org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR> runs = runsIn(para);
-        long seated = 0;
+        long seated = grown ? raiseHoldingItExact(para) : 0;
         if (!runs.isEmpty() && runs.get(0).isSetRPr() && runs.get(0).getRPr().sizeOfPositionArray() > 0
             && runs.get(0).getRPr().getPositionArray(0).getVal() instanceof Number number) {
-            seated = number.longValue();
+            seated += number.longValue();
         }
         double wordFoot = (1 - DocxTextBands.BASELINE_SHARE) * line / POINT_TO_TWIP + seated / HALF_POINTS_PER_POINT;
         double room = wordFoot - ink[1] - DocxStackedLines.INK_MARGIN - 0.5 / HALF_POINTS_PER_POINT;
         long taken = Math.round(Math.min(points, room) * POINT_TO_TWIP);
         if (taken <= 0 || taken >= line) {
             return 0;
+        }
+        if (grown) {
+            holdTheLineExact(para);
         }
         spacing.setLine(BigInteger.valueOf(line - taken));
         // Word stands an exact line's baseline four fifths of the way down it: shorter by the
@@ -12872,8 +12955,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         boolean ownsItsLine = ownLine && runsBefore == 0;
-        raiseRunsFrom(para, runsBefore, Math.round((seatShift(node)
-                + shiftToThePagesBaseline(para, node, lineTopAbove, heldExact, ownsItsLine)) * HALF_POINTS_PER_POINT));
+        double seat = seatShift(node);
+        // A text seated off its baseline is moved by its position, which a least line does not keep.
+        raiseRunsFrom(para, runsBefore, Math.round((seat
+                + shiftToThePagesBaseline(para, node, lineTopAbove, heldExact, ownsItsLine, seat == 0))
+                * HALF_POINTS_PER_POINT));
     }
 
     /**
@@ -12954,8 +13040,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Read off the first line holding text and the height the paragraph was written at, the
      * gap between lines included, at the paragraph's middle line: where the space above could not
      * give up a whole gap, Word's lines step a little closer than the page's, and the error is
-     * shared by the first and last. 0 for a paragraph not written at an exact height: Word
-     * then seats it by its own measure of the face.</p>
+     * shared by the first and last. A least line ({@link #letTheLinesGrow}) stands its baseline
+     * its runs' descent above its foot. 0 for a paragraph written at neither: Word then seats it
+     * by its own measure of the face.</p>
      *
      * <p>A line of its own Word sets low is raised first by moving it up into the space written
      * above it, where that space can take it ({@link #raiseIntoTheSpaceAbove}); under half a point,
@@ -12972,25 +13059,91 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *                     however little
      * @param ownsItsLine  whether the Word paragraph holds this paragraph's text alone, and so
      *                     its line can move for it
+     * @param mayGrow      whether its lines may be written at a least height ({@link #letTheLinesGrow})
      */
     private double shiftToThePagesBaseline(XWPFParagraph para, ParagraphNode node, double lineTopAbove,
-                                           boolean heldExact, boolean ownsItsLine) {
+                                           boolean heldExact, boolean ownsItsLine, boolean mayGrow) {
         // A line starting elsewhere than the page's — a stack's, a line pair's — was cut to fit
         // its letters where the page sets them, and is seated however little; so is one cut to
         // its pictures' reach, whose ink stands at its edges.
         boolean cutToFit = lineTopAbove != 0 || stackedLineHeights.containsKey(node) || heldExact;
         boolean staysOnItsPage = staysOnItsPage(node);
+        if (mayGrow && ownsItsLine && !cutToFit) {
+            letTheLinesGrow(para, layout.lines(node), layout.lineGap(node));
+        }
         return shiftToThePagesBaseline(para, layout.lines(node), layout.lineGap(node), lineTopAbove, cutToFit,
                 ownsItsLine, staysOnItsPage);
     }
 
     /**
-     * How far Word's baseline in exact lines of text the layout set stands below the page's, in
-     * points, positive when Word's is lower, after what the space above took of it: the position
-     * left to move, 0 where the whole difference is under half a point, which the space above, a
-     * cell's padding or the space above a row of columns takes instead for a line set low, and the
-     * space under it for one set high ({@link #offerToLower}) (see
-     * {@link #shiftToThePagesBaseline(XWPFParagraph, ParagraphNode, double, boolean, boolean)}).
+     * Writes a paragraph's lines at a least height rather than an exact one where they are at
+     * least as tall as their runs' own line, and Word then stands its text where the page does.
+     *
+     * <p>An exact line keeps its height whatever its text: a reader making the text larger in
+     * Word — the Normal style two points up — gets letters taller than their lines, cut off at the
+     * top. A least line grows with them. Where the page's line is as tall as the runs' own
+     * ({@link DocxGrownLines#reachOf}), a least line written at the page's height is that height,
+     * and its text stands its runs' descent above the line's foot, which is where the page sets it
+     * when the page's own line is its faces' ascent and descent with what lies between the lines
+     * above it: a line's gap is taken from the space above the paragraph ({@link #applyLineGap}).</p>
+     *
+     * <p>A least line's text is not moved by its position (see {@link DocxGrownLines}), so a line
+     * Word would set off the page's baseline by {@link #LEAST_GROWN_LINE_SHIFT_POINTS} or more —
+     * its gaps shared out over its lines where nothing above gave them, a face whose descent
+     * differs from the page's — stays exact, where its position seats it.</p>
+     *
+     * @param lines   the lines the layout set the text on
+     * @param lineGap the gap the layout puts between them, beyond their own height
+     */
+    private void letTheLinesGrow(XWPFParagraph para,
+                                 List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
+                                 double lineGap) {
+        CTPPr properties = para.getCTP().getPPr();
+        CTSpacing spacing = properties != null && properties.isSetSpacing() ? properties.getSpacing() : null;
+        if (spacing == null || !spacing.isSetLineRule() || spacing.getLineRule() != STLineSpacingRule.EXACT
+            || !grownLines.mayGrow(para.getCTP())) {
+            return;
+        }
+        spacing.setLineRule(STLineSpacingRule.AT_LEAST);
+        double shift = belowThePagesBaseline(para, lines, lineGap, 0);
+        if (!(Math.abs(shift) < LEAST_GROWN_LINE_SHIFT_POINTS)) {
+            spacing.setLineRule(STLineSpacingRule.EXACT);
+        }
+    }
+
+    /**
+     * Makes a line {@link #letTheLinesGrow} wrote at a least height exact again, its text where it
+     * stood: an exact line stands it four fifths of the way down, so its runs are raised by what
+     * that differs from the least line's seat. For a step that shortens the line, which a least
+     * line's text, standing on its foot, would rise with.
+     */
+    private void holdTheLineExact(XWPFParagraph para) {
+        long raise = raiseHoldingItExact(para);
+        para.getCTP().getPPr().getSpacing().setLineRule(STLineSpacingRule.EXACT);
+        raiseRunsFrom(para, 0, raise);
+    }
+
+    /**
+     * The raise, in half points, that keeps a least line's text where it stands once the line is
+     * written exact at the same height ({@link #holdTheLineExact}): positive where the exact line's
+     * baseline, four fifths of the way down, is the lower.
+     */
+    private long raiseHoldingItExact(XWPFParagraph para) {
+        DocxGrownLines.Line grown = grownLines.lineOf(para.getCTP());
+        if (grown == null) {
+            return 0;
+        }
+        double written = writtenTwips(para.getCTP().getPPr().getSpacing().getLine()) / POINT_TO_TWIP;
+        return Math.round((written * DocxTextBands.BASELINE_SHARE - grown.baseline()) * HALF_POINTS_PER_POINT);
+    }
+
+    /**
+     * How far Word's baseline in lines of text the layout set stands below the page's, in points,
+     * positive when Word's is lower, after what the space above took of it: the position left to
+     * move, 0 where the whole difference is under half a point, which the space above, a cell's
+     * padding or the space above a row of columns takes instead for a line set low, and the space
+     * under it for one set high ({@link #offerToLower}) (see
+     * {@link #shiftToThePagesBaseline(XWPFParagraph, ParagraphNode, double, boolean, boolean, boolean)}).
      *
      * @param lines          the lines the layout set the text on
      * @param lineGap        the gap the layout puts between them, beyond their own height
@@ -13026,10 +13179,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * How far Word's baseline in exact lines of text the layout set stands below the page's, in
-     * points, positive when Word's is lower; NaN where the paragraph is not written at an exact
-     * height or laid out no line of text (see
-     * {@link #shiftToThePagesBaseline(XWPFParagraph, ParagraphNode, double, boolean, boolean)}).
+     * How far Word's baseline in lines of text the layout set stands below the page's, in points,
+     * positive when Word's is lower; NaN where the paragraph is written at neither an exact nor a
+     * least height Word's seat is read from ({@link DocxGrownLines#lineOf}), or laid out no line of
+     * text (see
+     * {@link #shiftToThePagesBaseline(XWPFParagraph, ParagraphNode, double, boolean, boolean, boolean)}).
      *
      * @param lines        the lines the layout set the text on
      * @param lineGap      the gap the layout puts between them, beyond their own height
@@ -13038,13 +13192,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private double belowThePagesBaseline(XWPFParagraph para,
                                          List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
                                          double lineGap, double lineTopAbove) {
-        CTPPr properties = para.getCTP().getPPr();
-        if (properties == null || !properties.isSetSpacing()) {
-            return Double.NaN;
-        }
-        CTSpacing spacing = properties.getSpacing();
-        Long written = spacing.isSetLineRule() && spacing.getLineRule() == STLineSpacingRule.EXACT
-                ? writtenTwips(spacing.getLine()) : null;
+        // Read as Word stands it: an exact line's baseline four fifths of the way down, a least
+        // line's its runs' descent above the foot (DocxGrownLines). Any other line Word measures.
+        DocxGrownLines.Line written = grownLines.lineOf(para.getCTP());
         if (written == null) {
             return Double.NaN;
         }
@@ -13053,12 +13203,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                     span -> span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan)) {
                 // Lines whose gaps Word shares out step closer than the page's; the middle one is
                 // matched, so the first and last are off by as little as the steps allow.
-                double wordLine = written / POINT_TO_TWIP;
                 double middle = Math.max(0, lines.size() - 1) / 2.0;
                 double pageStep = line.lineHeight() + lineGap;
                 double pages = lineTopAbove + lineTopsTakenIn.getOrDefault(para.getCTP(), 0.0)
                                + middle * pageStep + line.lineHeight() - line.baselineOffsetFromBottom();
-                return middle * wordLine + wordLine * DocxTextBands.BASELINE_SHARE - pages;
+                return middle * written.height() + written.baseline() - pages;
             }
         }
         return Double.NaN;

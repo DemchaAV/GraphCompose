@@ -12,6 +12,7 @@ import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.junit.jupiter.api.Test;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule;
 
 import java.util.List;
 
@@ -30,6 +31,8 @@ import static org.assertj.core.api.Assertions.within;
 class DocxSpaceAboveTest {
 
     private static final DocumentTextStyle BODY = DocumentTextStyle.builder().fontName(FontName.LATO).size(10).build();
+    /** Lato's descent, in ems: 426 of 2000 units, where a least line stands its text off the foot. */
+    private static final double LATO_DESCENT = 0.213;
     /**
      * The header above a pulled block: Gothic A1, which Word seats where the page does, so it takes
      * nothing of the space under it to be lowered by ({@link DocxParagraphLowerTest}).
@@ -103,15 +106,21 @@ class DocxSpaceAboveTest {
         // above to give the pull. The wordmark's line, its letters standing on the baseline, is
         // written 3.5pt shorter, its text lowered by the four fifths of that Word's baseline would
         // rise — 6 half points, where three quarters would round to 5 — and the subtitle has no
-        // space above it.
+        // space above it. Alone, the wordmark's line is its face's own and written at a least
+        // height, its text on the line's foot; shortened, it is written exact, its text first
+        // moved to where the least line stood it.
         DocumentTextStyle wordmark = DocumentTextStyle.builder().fontName(FontName.LATO).size(21).build();
         XWPFParagraph[] plain = lockup(wordmark, 0);
         XWPFParagraph[] pulled = lockup(wordmark, -3.5);
 
         double shorter = (DocxTwips.of(lineOf(plain[0])) - DocxTwips.of(lineOf(pulled[0]))) / 20.0;
+        double line = DocxTwips.of(lineOf(plain[0])) / 20.0;
+        long held = Math.round((LATO_DESCENT * 21 - 0.2 * line) * 2);
+        assertThat(ruleOf(plain[0])).isEqualTo(STLineSpacingRule.AT_LEAST);
+        assertThat(ruleOf(pulled[0])).as("made exact to be shortened").isEqualTo(STLineSpacingRule.EXACT);
         assertThat(shorter).as("the wordmark's line gives up the pull").isCloseTo(3.5, within(0.06));
         assertThat(positionOf(pulled[0]) - positionOf(plain[0])).as("its text lowered as its baseline would rise")
-                .isEqualTo(-6);
+                .isEqualTo(held - 6);
         assertThat(DocxTwips.of(lineOf(pulled[1]))).as("the pulled line whole, the pull taken above it")
                 .isEqualTo(DocxTwips.of(lineOf(plain[1])));
     }
@@ -175,13 +184,28 @@ class DocxSpaceAboveTest {
     }
 
     /** A wordmark over a 10pt subtitle pulled up by {@code pull}, in a row's cell. */
+    @Test
+    void aLineAboveWhoseLettersLeaveNoRoomUnderThemKeepsItsLeastHeight() throws Exception {
+        // Its descenders reach the foot of its line: nothing is taken, and the line is not made
+        // exact for nothing, its text where the least line stands it.
+        DocumentTextStyle wordmark = DocumentTextStyle.builder().fontName(FontName.LATO).size(21).build();
+        XWPFParagraph[] pulled = lockup("gypsy", wordmark, -3.5);
+
+        assertThat(ruleOf(pulled[0])).isEqualTo(STLineSpacingRule.AT_LEAST);
+        assertThat(positionOf(pulled[0])).isZero();
+    }
+
     private static XWPFParagraph[] lockup(DocumentTextStyle wordmark, double pull) throws Exception {
+        return lockup("HALL", wordmark, pull);
+    }
+
+    private static XWPFParagraph[] lockup(String mark, DocumentTextStyle wordmark, double pull) throws Exception {
         DocumentTextStyle subtitle = DocumentTextStyle.builder().fontName(FontName.LATO).size(10).build();
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addRow("Head", row -> row
                         .columns(DocumentRowColumn.weight(1), DocumentRowColumn.weight(1))
                         .addSection("Lockup", cell -> cell
-                                .addParagraph(p -> p.text("HALL").textStyle(wordmark))
+                                .addParagraph(p -> p.text(mark).textStyle(wordmark))
                                 .addParagraph(p -> p.text("QUAYSIDE BAR").textStyle(subtitle)
                                         .margin(new DocumentInsets(pull, 0, 0, 0))))
                         .addParagraph(p -> p.text("MONDAY").textStyle(subtitle))))) {
@@ -192,6 +216,10 @@ class DocxSpaceAboveTest {
 
     private static Object lineOf(XWPFParagraph paragraph) {
         return paragraph.getCTP().getPPr().getSpacing().getLine();
+    }
+
+    private static STLineSpacingRule.Enum ruleOf(XWPFParagraph paragraph) {
+        return paragraph.getCTP().getPPr().getSpacing().getLineRule();
     }
 
     private static int positionOf(XWPFParagraph paragraph) {

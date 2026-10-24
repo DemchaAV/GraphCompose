@@ -63,7 +63,7 @@ class DocxComposedCellGeometryTest {
 
         assertThat(export.rowGrid()).containsExactly(
                 twips(amount - CELL_TEXT_LEFT), twips(CELL_TEXT_RIGHT - amount));
-        assertThat(export.report().notes()).isEmpty();
+        assertThat(DocxExports.besidesTheExactLines(export.report())).isEmpty();
     }
 
     @Test
@@ -180,7 +180,7 @@ class DocxComposedCellGeometryTest {
                 .addParagraph("Discount").addParagraph("").build());
 
         assertThat(export.rowGrid()).hasSize(2);
-        assertThat(export.report().notes()).isEmpty();
+        assertThat(DocxExports.besidesTheExactLines(export.report())).isEmpty();
     }
 
     @Test
@@ -225,7 +225,7 @@ class DocxComposedCellGeometryTest {
         Export export = inACell(new RowBuilder().weights(1, 2).addParagraph("One").addParagraph("Two").build());
 
         assertThat(export.rowGrid()).hasSize(2);
-        assertThat(export.report().notes()).isEmpty();
+        assertThat(DocxExports.besidesTheExactLines(export.report())).isEmpty();
     }
 
     @Test
@@ -235,7 +235,7 @@ class DocxComposedCellGeometryTest {
 
         assertThat(DocxTwips.of(export.paragraph("Total due").getCTP().getPPr().getInd().getLeft()))
                 .isEqualTo(twips(start - CELL_TEXT_LEFT));
-        assertThat(export.report().notes()).isEmpty();
+        assertThat(DocxExports.besidesTheExactLines(export.report())).isEmpty();
     }
 
     @Test
@@ -246,7 +246,7 @@ class DocxComposedCellGeometryTest {
 
         assertThat(DocxTwips.of(indent.getLeft())).isEqualTo(126 * 20L);
         assertThat(DocxTwips.of(indent.getRight())).isEqualTo(126 * 20L);
-        assertThat(export.report().notes()).isEmpty();
+        assertThat(DocxExports.besidesTheExactLines(export.report())).isEmpty();
     }
 
     @Test
@@ -370,7 +370,7 @@ class DocxComposedCellGeometryTest {
         XWPFParagraph paragraph = export.paragraph("Total due");
         assertThat(paragraph.getCTP().getPPr() == null || !paragraph.getCTP().getPPr().isSetInd()
                    || DocxTwips.of(paragraph.getCTP().getPPr().getInd().getLeft()) == 0).isTrue();
-        assertThat(export.report().notes()).isEmpty();
+        assertThat(DocxExports.besidesTheExactLines(export.report())).isEmpty();
     }
 
     private static long twips(double points) {

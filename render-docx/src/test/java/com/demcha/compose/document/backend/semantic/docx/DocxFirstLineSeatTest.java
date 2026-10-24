@@ -79,9 +79,10 @@ class DocxFirstLineSeatTest {
 
     @Test
     void aLineHalfAPointLowAndMoreKeepsItsPosition() throws Exception {
-        // Spectral's 30pt line stands 4.9pt low in Word: the position moves it, as before.
+        // Poppins' 30pt exact line stands 2pt low in Word: the position moves it, as before.
         Exported exported = export(page -> page.addSection("Card", card -> card.fillColor(SURFACE)
-                .padding(DocumentInsets.of(8)).addParagraph(p -> p.text("Title").textStyle(spectral(30)))));
+                .padding(DocumentInsets.of(8)).addParagraph(p -> p.text("Title").textStyle(DocumentTextStyle.builder()
+                        .fontName(FontName.POPPINS).size(30).build()))));
         XWPFTableCell panel = onlyTable(exported.document()).getRow(0).getCell(0);
 
         assertThat(topMargin(panel)).as("its padding, all of it").isEqualTo(8 * 20);
@@ -384,10 +385,6 @@ class DocxFirstLineSeatTest {
     private static DocumentTableCell composed(com.demcha.compose.document.node.DocumentNode node) {
         return DocumentTableCell.node(node).withStyle(DocumentTableStyle.builder().padding(DocumentInsets.of(4))
                 .stroke(DocumentStroke.of(DocumentColor.BLACK, 0)).build());
-    }
-
-    private static DocumentTextStyle spectral(double size) {
-        return DocumentTextStyle.builder().fontName(FontName.SPECTRAL).size(size).build();
     }
 
     private static DocumentTextStyle lato(double size) {

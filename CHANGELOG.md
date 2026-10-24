@@ -8,6 +8,38 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's lines grow with their text where they are as tall as their faces' own.**
+  - Every paragraph's lines were written at an exact height, which Word keeps whatever its text
+    holds: a reader making the body larger in Word — the `Normal` style two points up — got letters
+    taller than their lines, cut off at the top on screen.
+  - A paragraph's or a list item's line that is at least as tall as its runs' own line is now
+    written as a least height (`w:lineRule="atLeast"`). The runs' own line is their faces' line by
+    the faces' own tables: the tallest run's reach above the baseline and the deepest run's below,
+    the paragraph's mark among them. It is so where the runs are set in faces the document ships,
+    all the same depth below the baseline, none raised, no picture in the line, and the paragraph
+    is seated on its baseline, not a Word list's item.
+  - Word and LibreOffice keep a least line's spare above its text and stand its baseline the
+    runs' descent above its foot (measured on the templates' faces, Word and LibreOffice 24.2, to
+    0.15pt). That is where the page sets it, so such a line needs none of the raises an exact
+    line's text was seated with. A line Word would still set a quarter point or more off the
+    page's baseline stays exact, where its position seats it.
+  - The rest stays exact:
+    - a line the page sets tighter than its faces' own: Poppins' and Gothic A1's, whose own line
+      holds a line gap the page's does not; one rounded to the twip below its own, which a least
+      line would grow back on every line;
+    - a line in a face the document does not ship, the default Helvetica's among them, which the
+      reader's machine substitutes;
+    - a table's text cells, page zones, text boxes, stacked lines and line pairs.
+  - The report names how many paragraphs of text are still exact, once for the document
+    (`line height`, no path).
+  - The corpus writes 1164 of its 3856 paragraphs of text at a least height. In Word, two points
+    more on `Normal` leaves 1138 of the 1832 paragraphs it grows on lines shorter than 1.1 times
+    their letters, from 1617.
+  - Lines move as their seats change. In Word no line stands half a point further from the page
+    than its baseline holds. The step from a line to the next differs from the page's by 0.120pt
+    on average, from 0.130, and by more than 0.2pt for 238 of 2766 steps, from 335. In
+    LibreOffice 24.2 it differs by 0.173pt on average, from 0.187.
+
 - **A DOCX export's page-margin notes name every page they are about.**
   - A note about several pages named the first of them only, and the later ones, which Word sets
     with the margins in force too, went unnamed: `ObsidianInvoice` with its line items run onto

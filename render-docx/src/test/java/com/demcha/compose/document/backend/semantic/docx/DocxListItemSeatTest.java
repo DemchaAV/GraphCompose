@@ -36,12 +36,17 @@ import static org.assertj.core.api.Assertions.within;
  */
 class DocxListItemSeatTest {
 
-    /** Spectral's ascent, in ems: 1059 of 1000 units. */
-    private static final double SPECTRAL_ASCENT = 1.059;
-    /** Spectral's own line, in ems: its ascent and 463 units of descent. */
-    private static final double SPECTRAL_LINE = 1.522;
+    /** Poppins' ascent, in ems: 1050 of 1000 units. */
+    private static final double POPPINS_ASCENT = 1.05;
+    /**
+     * The page's line for Poppins, in ems: its ascent and 350 units of descent. Its own line holds
+     * a line gap of 100 units above that, so its lines are tighter than their own, and exact.
+     */
+    private static final double POPPINS_LINE = 1.4;
     /** Lato's ascent, in ems: 1974 of 2000 units. */
     private static final double LATO_ASCENT = 0.987;
+    /** Ubuntu's ascent, in ems: 932 of 1000 units, its own line taller than the page's. */
+    private static final double UBUNTU_ASCENT = 0.932;
     /**
      * The paragraph above a list: Gothic A1, which Word seats where the page does, so it takes
      * nothing of the space above the list to be lowered by ({@link DocxParagraphLowerTest}).
@@ -51,17 +56,17 @@ class DocxListItemSeatTest {
 
     @Test
     void anItemWordSetsLowRisesIntoTheSpaceAboveItAndTheNextIntoWhatItOwes() throws Exception {
-        // Spectral's 30pt line stands nearly 5pt low in Word. The first item moves up into the
+        // Poppins' 30pt exact line stands 2pt low in Word. The first item moves up into the
         // list's 20pt above it; the second into the gap and what the first owes, the gap left as
         // it was; the paragraph under the list stands where it did, the last item's raise above it.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(spectral(30)).itemSpacing(10).margin(DocumentInsets.top(20))
+                .addList(list -> list.textStyle(poppins(30)).itemSpacing(10).margin(DocumentInsets.top(20))
                         .items("One", "Two"))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10))))) {
             XWPFParagraph one = paragraph(document, "One");
             XWPFParagraph two = paragraph(document, "Two");
-            double raise = 0.8 * line(one) - SPECTRAL_ASCENT * 30;
+            double raise = 0.8 * line(one) - POPPINS_ASCENT * 30;
 
             assertThat(raise).as("the premise: Word's baseline is the lower, by less than the gap").isBetween(1.0, 10.0);
             assertThat(before(one)).isCloseTo(Math.round((20 - raise) * 20), within(1L));
@@ -75,16 +80,16 @@ class DocxListItemSeatTest {
 
     @Test
     void anItemWhoseMarkerIsWrittenAsTextIsLoweredWithItByItsPosition() throws Exception {
-        // Lato's 24pt line stands 0.65pt high in Word: moved down, the space above as written, and
-        // the marker, a run of the item's own, with it.
+        // Ubuntu's 24pt exact line stands 0.84pt high in Word: moved down, the space above as
+        // written, and the marker, a run of the item's own, with it.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(lato(24)).marker("•").hangingIndent(true).markerGap(6)
-                        .margin(DocumentInsets.top(10)).addItem(text -> text.style("Heading", lato(24))))
+                .addList(list -> list.textStyle(ubuntu(24)).marker("•").hangingIndent(true).markerGap(6)
+                        .margin(DocumentInsets.top(10)).addItem(text -> text.style("Heading", ubuntu(24))))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))))) {
             XWPFParagraph item = document.getParagraphs().stream()
                     .filter(paragraph -> paragraph.getText().contains("Heading")).findFirst().orElseThrow();
-            double raise = 0.8 * line(item) - LATO_ASCENT * 24;
+            double raise = 0.8 * line(item) - UBUNTU_ASCENT * 24;
 
             assertThat(item.getText()).as("the premise: its marker written as its text").startsWith("•");
             assertThat(item.getCTP().getPPr().getSpacing().getLineRule()).as("the premise: an exact line")
@@ -118,14 +123,14 @@ class DocxListItemSeatTest {
 
     @Test
     void anItemWhoseMarkerWordDrawsRisesAsFarAsTheSpaceAboveAndNoFurther() throws Exception {
-        // Spectral's 30pt line stands nearly 5pt low in Word, under 2pt of space: the line and its
+        // Poppins' 30pt exact line stands 2pt low in Word, under 2pt of space: the line and its
         // marker rise those 2pt, and what is left stays, rather than the text alone moving on.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(spectral(30)).margin(DocumentInsets.top(2)).items("Title"))
+                .addList(list -> list.textStyle(poppins(30)).margin(DocumentInsets.top(2)).items("Title"))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10))))) {
             XWPFParagraph item = paragraph(document, "Title");
-            double raise = 0.8 * line(item) - SPECTRAL_ASCENT * 30;
+            double raise = 0.8 * line(item) - POPPINS_ASCENT * 30;
 
             assertThat(item.getCTP().getPPr().isSetNumPr()).as("the premise: a Word list's item").isTrue();
             assertThat(raise).as("the premise: lower than the space above holds").isGreaterThan(2.0);
@@ -145,10 +150,10 @@ class DocxListItemSeatTest {
                 .addParagraph(p -> p.text("Above").textStyle(LEAD))
                 .addLayerStack(stack -> stack.name("Stack")
                         .back(new ShapeBuilder().name("Backdrop").size(200, 80).build())
-                        .layer(new ListBuilder().noMarker().textStyle(spectral(30))
+                        .layer(new ListBuilder().noMarker().textStyle(poppins(30))
                                 .items("Title").build(), LayerAlign.TOP_LEFT)))) {
             XWPFParagraph item = anywhere(document, "Title");
-            double raise = 0.8 * line(item) - SPECTRAL_ASCENT * 30;
+            double raise = 0.8 * line(item) - POPPINS_ASCENT * 30;
 
             assertThat(raise).as("the premise: Word's baseline is the lower").isGreaterThan(1);
             assertThat(item.getCTP().getPPr().getSpacing().isSetBefore()).as("the premise: no space above it").isFalse();
@@ -164,13 +169,13 @@ class DocxListItemSeatTest {
         // as much below; the first, under no space of its own, is moved by its position.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(200))
-                .rowCells(DocumentTableCell.node(new ListBuilder().noMarker().textStyle(spectral(30)).itemSpacing(10)
+                .rowCells(DocumentTableCell.node(new ListBuilder().noMarker().textStyle(poppins(30)).itemSpacing(10)
                         .items("One", "Two").build()))))) {
             XWPFParagraph one = inACell(document, "One");
             XWPFParagraph two = inACell(document, "Two");
-            double raise = 0.8 * line(two) - SPECTRAL_ASCENT * 30;
+            double raise = 0.8 * line(two) - POPPINS_ASCENT * 30;
 
-            assertThat(line(one)).as("the premise: the page's line").isCloseTo(SPECTRAL_LINE * 30, within(0.05));
+            assertThat(line(one)).as("the premise: the page's line").isCloseTo(POPPINS_LINE * 30, within(0.05));
             assertThat(raise).as("the premise: Word's baseline is the lower, by less than the gap").isBetween(1.0, 10.0);
             assertThat(before(two)).isCloseTo(Math.round((10 - raise) * 20), within(1L));
             assertThat(after(two)).as("what it owes, under the cell's last item").isCloseTo(Math.round(raise * 20), within(1L));
@@ -184,16 +189,16 @@ class DocxListItemSeatTest {
         // Two lines 10pt apart and no space above to give: Word's lines are each 5pt taller than
         // the face, stepping 5pt closer than the page's, and the error is shared by the two.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addList(list -> list.noMarker().textStyle(spectral(20)).lineSpacing(10).items("First\nSecond")))) {
+                .addList(list -> list.noMarker().textStyle(poppins(20)).lineSpacing(10).items("First\nSecond")))) {
             XWPFParagraph item = document.getParagraphs().stream()
                     .filter(paragraph -> paragraph.getText().contains("First")).findFirst().orElseThrow();
-            double face = SPECTRAL_LINE * 20;
+            double face = POPPINS_LINE * 20;
             double line = line(item);
             double middle = 0.5;
 
             assertThat(line).as("the premise: the one gap shared by two lines").isCloseTo(face + 5, within(0.05));
             assertThat(position(item)).isCloseTo(Math.round(
-                    (middle * line + 0.8 * line - middle * (face + 10) - SPECTRAL_ASCENT * 20) * 2), within(1L));
+                    (middle * line + 0.8 * line - middle * (face + 10) - POPPINS_ASCENT * 20) * 2), within(1L));
         }
     }
 
@@ -203,7 +208,7 @@ class DocxListItemSeatTest {
         // item would stand as low as before and what it owed would stand the third lower.
         try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
             session.pageFlow(page -> page.spacer(1, 480)
-                    .addList(list -> list.name("Duties").noMarker().textStyle(spectral(30)).itemSpacing(10)
+                    .addList(list -> list.name("Duties").noMarker().textStyle(poppins(30)).itemSpacing(10)
                             .margin(DocumentInsets.top(10)).items("One", "Two", "Three")));
             List<Integer> pages = session.layoutGraph().fragments().stream()
                     .filter(fragment -> fragment.path().contains("Duties"))
@@ -213,7 +218,7 @@ class DocxListItemSeatTest {
                 XWPFParagraph one = paragraph(document, "One");
                 XWPFParagraph two = paragraph(document, "Two");
                 XWPFParagraph three = paragraph(document, "Three");
-                double raise = 0.8 * line(one) - SPECTRAL_ASCENT * 30;
+                double raise = 0.8 * line(one) - POPPINS_ASCENT * 30;
 
                 assertThat(pages).as("the premise: the second item opens the next page").containsExactly(0, 1, 1);
                 assertThat(before(one)).as("the spacer's height past its hairline and the list's 10pt, less the raise")
@@ -231,8 +236,8 @@ class DocxListItemSeatTest {
     void theFirstItemOfAListTheLayoutStartsOnANewPageKeepsTheSpaceAboveIt() throws Exception {
         try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
             session.pageFlow(page -> page.spacer(1, 520)
-                    .addList(list -> list.name("Duties").noMarker().textStyle(spectral(30)).margin(DocumentInsets.top(10))
-                            .items("One"))
+                    .addList(list -> list.name("Duties").noMarker().textStyle(poppins(30))
+                            .margin(DocumentInsets.top(10)).items("One"))
                     .addParagraph(p -> p.text("Body").textStyle(lato(10))));
             List<Integer> pages = session.layoutGraph().fragments().stream()
                     .filter(fragment -> fragment.path().contains("Duties"))
@@ -240,7 +245,7 @@ class DocxListItemSeatTest {
             try (XWPFDocument document = new XWPFDocument(
                     new ByteArrayInputStream(session.export(new DocxSemanticBackend())))) {
                 XWPFParagraph one = paragraph(document, "One");
-                double raise = 0.8 * line(one) - SPECTRAL_ASCENT * 30;
+                double raise = 0.8 * line(one) - POPPINS_ASCENT * 30;
 
                 assertThat(pages).as("the premise: the list opens the next page").containsExactly(1);
                 assertThat(position(one)).as("raised by its position").isCloseTo(Math.round(raise * 2), within(1L));
@@ -297,7 +302,7 @@ class DocxListItemSeatTest {
         try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
             session.pageFlow(page -> page.spacer(1, 460)
                     .addSection("Card", card -> card.fillColor(DocumentColor.rgb(238, 243, 249))
-                            .addList(list -> list.name("Duties").noMarker().textStyle(spectral(30)).itemSpacing(10)
+                            .addList(list -> list.name("Duties").noMarker().textStyle(poppins(30)).itemSpacing(10)
                                     .margin(DocumentInsets.top(10)).items("One", "Two", "Three"))));
             List<Integer> pages = session.layoutGraph().fragments().stream()
                     .filter(fragment -> fragment.path().contains("Duties"))
@@ -307,7 +312,7 @@ class DocxListItemSeatTest {
                 XWPFParagraph one = inACell(document, "One");
                 XWPFParagraph two = inACell(document, "Two");
                 XWPFParagraph three = inACell(document, "Three");
-                double raise = 0.8 * line(three) - SPECTRAL_ASCENT * 30;
+                double raise = 0.8 * line(three) - POPPINS_ASCENT * 30;
 
                 assertThat(pages).as("the premise: the second item opens the next page").containsExactly(0, 1, 1);
                 assertThat(document.getTables()).as("the premise: one cell over both pages").hasSize(1);
@@ -323,12 +328,12 @@ class DocxListItemSeatTest {
     void anItemOfRunsIsSeatedAsAPlainOneIs() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(spectral(30)).marker("•").hangingIndent(true).markerGap(6)
+                .addList(list -> list.textStyle(poppins(30)).marker("•").hangingIndent(true).markerGap(6)
                         .margin(DocumentInsets.top(20))
-                        .addItem(text -> text.style("Rich ", spectral(30)).style("item", spectral(30)))))) {
+                        .addItem(text -> text.style("Rich ", poppins(30)).style("item", poppins(30)))))) {
             XWPFParagraph item = document.getParagraphs().stream()
                     .filter(paragraph -> paragraph.getText().contains("item")).findFirst().orElseThrow();
-            double raise = 0.8 * line(item) - SPECTRAL_ASCENT * 30;
+            double raise = 0.8 * line(item) - POPPINS_ASCENT * 30;
 
             assertThat(item.getCTP().getPPr().isSetNumPr()).as("the premise: its marker written as text").isFalse();
             assertThat(item.getCTP().getRList()).as("the premise: tabbed to its text's column")
@@ -338,8 +343,12 @@ class DocxListItemSeatTest {
         }
     }
 
-    private static DocumentTextStyle spectral(double size) {
-        return DocumentTextStyle.builder().fontName(FontName.SPECTRAL).size(size).build();
+    private static DocumentTextStyle poppins(double size) {
+        return DocumentTextStyle.builder().fontName(FontName.POPPINS).size(size).build();
+    }
+
+    private static DocumentTextStyle ubuntu(double size) {
+        return DocumentTextStyle.builder().fontName(FontName.UBUNTU).size(size).build();
     }
 
     private static DocumentTextStyle lato(double size) {

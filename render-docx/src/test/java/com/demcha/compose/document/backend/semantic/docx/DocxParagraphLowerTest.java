@@ -26,17 +26,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  * where it did.
  *
  * <p>Word and LibreOffice set an exact line's baseline four fifths of the way down it, the page
- * its face's ascent below the line's top: Lato's ascent is 0.82 of its line, and at 10pt Word
- * sets it about a quarter point high. Under half a point its position moves nothing, and a raise
+ * its face's ascent below the line's top: Ubuntu's ascent is 0.83 of its line, and at 10pt Word
+ * sets it about a third of a point high. Under half a point its position moves nothing, and a raise
  * only moves a line up. What nothing under the line gives back, it is not lowered by, so nothing
- * under it ever stands lower.</p>
+ * under it ever stands lower. Ubuntu's own line, its Windows ascent and descent, is taller than
+ * the page's, so its lines are written exact.</p>
  */
 class DocxParagraphLowerTest {
 
-    /** Lato's ascent, in ems: 1974 of 2000 units. */
-    private static final double LATO_ASCENT = 0.987;
+    /** Ubuntu's ascent, in ems: 932 of 1000 units. */
+    private static final double UBUNTU_ASCENT = 0.932;
     /** A line Word sets high, by under half a point. */
-    private static final DocumentTextStyle HIGH = DocumentTextStyle.builder().fontName(FontName.LATO).size(10).build();
+    private static final DocumentTextStyle HIGH = DocumentTextStyle.builder().fontName(FontName.UBUNTU).size(10)
+            .build();
     /** A paragraph that wraps onto two lines of the 360pt the page gives it. */
     private static final String WRAPPED = "A line long enough to wrap onto a second one in a column three hundred and "
                                           + "sixty points wide, set in Gothic A1 at ten points";
@@ -356,13 +358,13 @@ class DocxParagraphLowerTest {
     @Test
     void aLineSetHighByUnderATenthOfAPointIsNotLowered() throws Exception {
         // Word sets lines on a grid 0.12pt apart: a twip of space moves a line a step or nothing.
-        DocumentTextStyle small = DocumentTextStyle.builder().fontName(FontName.LATO).size(3).build();
+        DocumentTextStyle small = DocumentTextStyle.builder().fontName(FontName.UBUNTU).size(2.5).build();
         XWPFDocument document = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(EVEN))
                 .addParagraph(p -> p.text("Small").textStyle(small))
                 .addParagraph(p -> p.text("Next").textStyle(EVEN).margin(DocumentInsets.top(10))));
         XWPFParagraph line = paragraph(document, "Small");
-        double high = LATO_ASCENT * 3 - 0.8 * DocxTwips.of(line.getCTP().getPPr().getSpacing().getLine()) / 20.0;
+        double high = UBUNTU_ASCENT * 2.5 - 0.8 * DocxTwips.of(line.getCTP().getPPr().getSpacing().getLine()) / 20.0;
 
         assertThat(high).as("the premise: set high, by under a tenth of a point").isBetween(0.05, 0.1);
         assertThat(before(line)).isZero();
@@ -589,10 +591,13 @@ class DocxParagraphLowerTest {
                 .build();
     }
 
-    /** How far Word sets a 10pt Lato line above the page's baseline, in twips, from the line written. */
+    /** How far Word sets a 10pt Ubuntu line above the page's baseline, in twips, from the line written. */
     private static long lowering(XWPFParagraph paragraph) {
+        assertThat(paragraph.getCTP().getPPr().getSpacing().getLineRule())
+                .as("the premise: an exact line")
+                .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT);
         double line = DocxTwips.of(paragraph.getCTP().getPPr().getSpacing().getLine()) / 20.0;
-        long twips = Math.round((LATO_ASCENT * 10 - 0.8 * line) * 20);
+        long twips = Math.round((UBUNTU_ASCENT * 10 - 0.8 * line) * 20);
         assertThat(twips).as("the premise: Word sets it high, by under half a point").isBetween(2L, 9L);
         return twips;
     }

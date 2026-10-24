@@ -136,8 +136,9 @@ class DocxComposedListTest {
                 new ParagraphBuilder().text("**Languages**").textStyle(size(9)).build(),
                 new ListBuilder().name("Items").noMarker().hangingIndent(true).textStyle(size(9))
                         .items("Python").build())) {
-            assertThat(spacing(inACell(document, "Languages")).getLineRule()).hasToString("exact");
-            assertThat(spacing(inACell(document, "Python")).getLineRule()).hasToString("exact");
+            // Written at the height the page measured, Lato's own, as a least height.
+            assertThat(spacing(inACell(document, "Languages")).getLineRule()).hasToString("atLeast");
+            assertThat(spacing(inACell(document, "Python")).getLineRule()).hasToString("atLeast");
         }
     }
 
@@ -178,7 +179,8 @@ class DocxComposedListTest {
             List<XWPFParagraph> amounts = cellParagraphs(document, "0.00");
 
             assertThat(amounts).hasSize(2);
-            assertThat(spacing(amounts.get(0)).getLineRule()).as("the paragraph's").hasToString("exact");
+            assertThat(spacing(amounts.get(0)).getLineRule()).as("the paragraph's, Lato's own")
+                    .hasToString("atLeast");
             assertThat(line(amounts.get(1))).as("the list's, at 16pt").isEqualTo(2 * line(amounts.get(0)));
         }
     }

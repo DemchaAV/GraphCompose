@@ -8,6 +8,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's page-margin notes name every page they are about.**
+  - A note about several pages named the first of them only, and the later ones, which Word sets
+    with the margins in force too, went unnamed: `ObsidianInvoice` with its line items run onto
+    three pages named page 2, not page 3. The note on a block several pages start inside, on a run
+    of pages whose side margins differ, and on a section of several whose page count a Word
+    section would split now names each page, as "the top and bottom margins of pages 2 and 3
+    differ from page 1's", three or more in a row as "pages 2 to 4".
+  - A page-margin note about a page names it, `page N` or `section N, page N`, as the report's
+    contract says: the note on a section started where a page does, on a page after one whose
+    content reaches its foot, on a page no block starts and on a page's side margins carried
+    their section's path, which a document of one section has none of.
+  - The file is unchanged.
+
 - **A DOCX export's report names what a table's cell is composed of by its cell.**
   - The layout lays a composed cell's content out under its table and gives it no path of its
     own, so every note about a node there carried none: 216 of the corpus's 1384 notes, a rounded
@@ -23,8 +36,9 @@ follow semantic versioning; release dates are ISO 8601.
     one in the flow does: with its outline entry not written either, it gave two notes, and gives
     one.
   - The contract names the paths a note may carry that are not a node's: `page N`, and in a
-    document of several sections `section N` or `section N, page N`; a note about the whole
-    document or about a node of a page zone has none.
+    document of several sections `section N` or `section N, page N`. A note about the whole
+    document has none; one about a page zone or a node of one has none or, in a document of
+    several sections, names its section.
   - The file is unchanged: the 62 corpus DOCX are byte for byte the same, and so is the text of
     their notes. The 17 notes left without a path are about the whole document: the line that
     closes it and a text footer reaching past the margin.

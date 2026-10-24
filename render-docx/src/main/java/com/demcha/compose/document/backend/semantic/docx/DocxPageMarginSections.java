@@ -165,12 +165,27 @@ final class DocxPageMarginSections {
         if (!vary(layout)) {
             return new Plan(opening, List.of(), zoned);
         }
+        if (countsItsPages) {
+            // Word counts each section's own pages, and this section's page count would split.
+            List<Integer> differing = new ArrayList<>();
+            for (int page = 1; page < layout.pageCount(); page++) {
+                if (!sameTopAndBottom(layout.marginOf(page), opening)) {
+                    differing.add(page);
+                }
+            }
+            report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, section, notSetWith(differing, 0)
+                    + ": a Word section would count its own pages, where this section's header or footer counts all "
+                    + "of them");
+            return new Plan(opening, List.of(), zoned);
+        }
         List<IBodyElement> all = document.getBodyElements();
         List<IBodyElement> elements = new ArrayList<>(all.subList(Math.min(from, all.size()), all.size()));
         List<Start> starts = new ArrayList<>();
         Margin inForce = opening;
         int inForceFrom = 0;
         DocumentNode lastNamed = null;
+        int namedAt = -1;
+        List<Integer> namedPages = new ArrayList<>();
         for (int page = 1; page < layout.pageCount(); page++) {
             Margin margin = layout.marginOf(page);
             if (sameTopAndBottom(margin, inForce)) {
@@ -179,13 +194,6 @@ final class DocxPageMarginSections {
             String differ = "page " + (page + 1) + "'s top and bottom margins differ from page " + (inForceFrom + 1)
                             + "'s";
             String notWritten = differ + ", which Word sets it with: ";
-            if (countsItsPages) {
-                // Word counts each section's own pages, and this section's page count would split.
-                report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, section, notWritten
-                        + "a Word section would count its own pages, where this section's header or footer counts "
-                        + "all of them");
-                return new Plan(opening, List.of(), zoned);
-            }
             Owner inside = spanning(page, elements, owners);
             XWPFTable table = inside == null ? null : tableOf(inside, elements, owners);
             Carrier carrier = null;
@@ -199,13 +207,25 @@ final class DocxPageMarginSections {
                         : carrierBefore(at, elements, owners, separators);
             }
             if (carrier == null) {
-                if (inside == null || inside.node() != lastNamed) {
-                    report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN,
-                            inside != null ? layout.pathOf(inside.node()) : section,
-                            notWritten + (inside != null ? "page " + (page + 1) + " starts inside this block"
-                                    : "no block of the body starts page " + (page + 1))
+                if (inside == null) {
+                    report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, pagePath(section, page),
+                            notWritten + "no block of the body starts page " + (page + 1)
                             + ", where the export starts no Word section");
-                    lastNamed = inside != null ? inside.node() : null;
+                    lastNamed = null;
+                } else if (inside.node() != lastNamed) {
+                    namedAt = report.size();
+                    namedPages.clear();
+                    namedPages.add(page);
+                    report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, layout.pathOf(inside.node()),
+                            notSetWith(namedPages, inForceFrom) + ": page " + (page + 1) + " starts inside this "
+                            + "block, where the export starts no Word section");
+                    lastNamed = inside.node();
+                } else {
+                    // One note for the block, naming each page that starts inside it.
+                    namedPages.add(page);
+                    report.set(namedAt, DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN,
+                            layout.pathOf(inside.node()), notSetWith(namedPages, inForceFrom)
+                            + ": each starts inside this block, where the export starts no Word section");
                 }
                 continue;
             }
@@ -213,9 +233,9 @@ final class DocxPageMarginSections {
             double room = layout.lowestContentOn(page - 1) - inForce.bottom();
             if (carrier.hairline() && room < ROOM_FOR_THE_END) {
                 report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN,
-                        table != null ? layout.pathOf(inside.node()) : section, notWritten + "page " + page
-                        + "'s content reaches its foot, where the paragraph that would end a Word section before page "
-                        + (page + 1) + " would open a page of its own");
+                        table != null ? layout.pathOf(inside.node()) : pagePath(section, page),
+                        notWritten + "page " + page + "'s content reaches its foot, where the paragraph that would "
+                        + "end a Word section before page " + (page + 1) + " would open a page of its own");
                 continue;
             }
             starts.add(new Start(page, margin, carrier));
@@ -226,9 +246,9 @@ final class DocxPageMarginSections {
                         ? ", the part after it opening with its header rows" : "") + ", and its page break fixed "
                         + "there, so rows an edit adds above it no longer run onto that page");
             } else {
-                report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, section, differ + ": written as a Word "
-                        + "section that starts where page " + (page + 1) + " does, its page break fixed there, so text "
-                        + "an edit adds above it no longer runs onto that page");
+                report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, pagePath(section, page), differ
+                        + ": written as a Word section that starts where page " + (page + 1) + " does, its page break "
+                        + "fixed there, so text an edit adds above it no longer runs onto that page");
             }
             inForce = margin;
             inForceFrom = page;
@@ -239,8 +259,8 @@ final class DocxPageMarginSections {
     }
 
     /**
-     * Names each run of pages whose side margins differ from the document's, once: they are not
-     * written, as the body is written against the document's width.
+     * Names each run of pages whose side margins differ from the document's, once, and each page of
+     * it: they are not written, as the body is written against the document's width.
      */
     private static void nameTheSides(DocxLayoutMetrics layout, DocxExportReport.Builder report, String section,
                                      Margin sides) {
@@ -249,13 +269,17 @@ final class DocxPageMarginSections {
         }
         for (int page = 0; page < layout.pageCount(); page++) {
             Margin margin = layout.marginOf(page);
-            boolean differs = !sameSides(margin, sides);
-            boolean opensARun = page == 0 || !sameSides(margin, layout.marginOf(page - 1));
-            if (differs && opensARun) {
-                report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, section, "page " + (page + 1)
-                        + "'s side margins differ from the document's and are not written: the body is written "
-                        + "against the document's width, and Word sets its text between the document's side margins");
+            if (sameSides(margin, sides)) {
+                continue;
             }
+            List<Integer> run = new ArrayList<>(List.of(page));
+            while (page + 1 < layout.pageCount() && sameSides(layout.marginOf(page + 1), margin)) {
+                run.add(++page);
+            }
+            report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, pagePath(section, run.get(0)),
+                    (run.size() == 1 ? "page " + (run.get(0) + 1) + "'s side margins" : "the side margins of "
+                            + pages(run)) + " differ from the document's and are not written: the body is written "
+                    + "against the document's width, and Word sets its text between the document's side margins");
         }
     }
 
@@ -294,6 +318,46 @@ final class DocxPageMarginSections {
             margin = plan.starts().get(index).margin();
         }
         asALaterSection(body, opening, margin, plan.zoned());
+    }
+
+    /** What a note about one page of a section names: the page, after its section in a document of several. */
+    private static String pagePath(String section, int page) {
+        return (section == null ? "" : section + ", ") + "page " + (page + 1);
+    }
+
+    /**
+     * Some pages' top and bottom margins, and those Word sets them with: "page 3's top and bottom
+     * margins differ from page 1's, which Word sets it with", or "the top and bottom margins of pages
+     * 3 and 4 differ from page 1's, which Word sets them with".
+     */
+    private static String notSetWith(List<Integer> pages, int inForceFrom) {
+        String from = " differ from page " + (inForceFrom + 1) + "'s, which Word sets ";
+        return pages.size() == 1 ? "page " + (pages.get(0) + 1) + "'s top and bottom margins" + from + "it with"
+                : "the top and bottom margins of " + pages(pages) + from + "them with";
+    }
+
+    /**
+     * Pages counted from 0, named from 1: "pages 2 and 3", "pages 2, 3 and 5", and three or more in a
+     * row as "pages 2 to 4".
+     */
+    private static String pages(List<Integer> pages) {
+        List<String> named = new ArrayList<>();
+        for (int first = 0; first < pages.size(); ) {
+            int last = first;
+            while (last + 1 < pages.size() && pages.get(last + 1) == pages.get(last) + 1) {
+                last++;
+            }
+            if (last - first >= 2) {
+                named.add((pages.get(first) + 1) + " to " + (pages.get(last) + 1));
+            } else {
+                for (int page = first; page <= last; page++) {
+                    named.add(String.valueOf(pages.get(page) + 1));
+                }
+            }
+            first = last + 1;
+        }
+        return "pages " + (named.size() == 1 ? named.get(0)
+                : String.join(", ", named.subList(0, named.size() - 1)) + " and " + named.get(named.size() - 1));
     }
 
     /** The last block written before a page that runs onto it, if one does. */

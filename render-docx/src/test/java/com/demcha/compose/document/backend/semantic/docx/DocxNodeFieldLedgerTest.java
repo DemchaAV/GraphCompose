@@ -286,7 +286,8 @@ class DocxNodeFieldLedgerTest {
             "fragments:WRITTEN:where the nodes' entries say",
             "pageGeometry:REPORTED:a page's side margins, written as the document's, named where they differ; "
             + "top and bottom margins that differ from those Word sets a page with, where it starts inside a "
-            + "block, after a page whose content reaches its foot under a table, or in a document of sections "
+            + "block or where no block starts it, after a page whose content reaches its foot under a table, or in "
+            + "a document of sections "
             + "whose header or footer counts a section's pages, named; any other is written, a later page's top "
             + "and bottom margins as a Word section starting where it does");
 

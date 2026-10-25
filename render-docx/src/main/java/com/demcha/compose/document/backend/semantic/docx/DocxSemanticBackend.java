@@ -1271,7 +1271,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 if (index == 0) {
                     writeStylesPart(document);
                     grownLines = new DocxGrownLines(DocxFontTable.write(document, whole, zoneContentsIn(sections),
-                            bandStylesIn(sections), fonts, report), documentDefaultStyle);
+                            bandStylesIn(sections), fonts, report), documentDefaultStyle, document::getNumbering);
                     applyMetadata(document, metadataOf(sections));
                     reportUnwrittenOutputOptions(sections);
                 }

@@ -3,14 +3,19 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
+import org.apache.poi.xwpf.usermodel.XWPFAbstractNum;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFNumbering;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.junit.jupiter.api.Test;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTAbstractNum;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTLvl;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSpacing;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STNumberFormat;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -146,7 +151,7 @@ class DocxGrownLinesTest {
         assertThat(lines.reachOf(script.getCTP())).as("a script").isNull();
         assertThat(lines.reachOf(rightToLeft.getCTP())).as("right to left, in its complex-script face").isNull();
         assertThat(lines.reachOf(substituted.getCTP())).as("a face the document does not ship").isNull();
-        assertThat(lines.reachOf(listed.getCTP())).as("a marker Word draws in the numbering's face").isNull();
+        assertThat(lines.reachOf(listed.getCTP())).as("a list's item naming no list").isNull();
         assertThat(DocxGrownLines.NONE.reachOf(paragraph().getCTP())).as("nothing shipped").isNull();
     }
 
@@ -257,6 +262,126 @@ class DocxGrownLinesTest {
         assertThat(lines.reachOf(measured.getCTP())).as("a position in points, not half points").isNull();
     }
 
+    @Test
+    void aWordListsItemIsReadWithItsMarkerInItsLevelsFaceOverItsMarks() throws Exception {
+        try (XWPFDocument numbered = new XWPFDocument()) {
+            DocxGrownLines lines = shipping(numbered::getNumbering, LATO, LATO, face(FontName.BARLOW, 10));
+            XWPFParagraph plain = lato(240, 10);
+            XWPFParagraph stated = item(numbered, "•", level -> face(level, "Lato", 20));
+            XWPFParagraph ofTheMark = item(numbered, "•", level -> { });
+            XWPFParagraph larger = item(numbered, "•", level -> face(level, "Lato", 40));
+            // A white bullet: Lato holds one, Barlow none.
+            XWPFParagraph ofABarlowMark = item(numbered, "◦", level -> { });
+            markIn(ofABarlowMark, "Barlow");
+            XWPFParagraph latoOverABarlowMark = item(numbered, "◦", level -> face(level, "Lato", 20));
+            markIn(latoOverABarlowMark, "Barlow");
+
+            assertThat(lines.reachOf(stated.getCTP())).as("a bullet in the text's face and size")
+                    .isEqualTo(lines.reachOf(plain.getCTP()));
+            assertThat(lines.mayGrow(stated.getCTP())).isTrue();
+            assertThat(lines.reachOf(ofTheMark.getCTP())).as("its level stating none, in its mark's, Normal's Lato")
+                    .isEqualTo(lines.reachOf(plain.getCTP()));
+            assertThat(lines.mayGrow(ofTheMark.getCTP())).isTrue();
+            assertThat(lines.reachOf(larger.getCTP()).above()).as("a 20pt bullet's line in the first")
+                    .isCloseTo(LATO_UP * 20, within(0.01));
+            assertThat(lines.mayGrow(larger.getCTP())).isFalse();
+            assertThat(lines.reachOf(ofABarlowMark.getCTP())).as("in its mark's Barlow, which holds no white bullet")
+                    .isNull();
+            assertThat(lines.reachOf(latoOverABarlowMark.getCTP())).as("in its level's Lato over its mark's Barlow")
+                    .isNotNull();
+        }
+    }
+
+    /** Sets a paragraph's mark in {@code family}, at 10pt. */
+    private static void markIn(XWPFParagraph paragraph, String family) {
+        var mark = paragraph.getCTP().getPPr().isSetRPr() ? paragraph.getCTP().getPPr().getRPr()
+                : paragraph.getCTP().getPPr().addNewRPr();
+        mark.addNewRFonts().setAscii(family);
+        mark.addNewSz().setVal(BigInteger.valueOf(20));
+    }
+
+    @Test
+    void aWordListsMarkerNotSetInItsOwnFaceIsNotRead() throws Exception {
+        try (XWPFDocument numbered = new XWPFDocument()) {
+            DocxGrownLines lines = shipping(numbered::getNumbering, LATO, LATO);
+            XWPFParagraph arrowhead = item(numbered, "➤", level -> face(level, "Lato", 20));
+            XWPFParagraph numberedByWord = item(numbered, "%1.", level -> face(level, "Lato", 20));
+            XWPFParagraph decimal = item(numbered, "1.", level -> {
+                face(level, "Lato", 20);
+                level.getNumFmt().setVal(STNumberFormat.DECIMAL);
+            });
+            XWPFParagraph bold = item(numbered, "•", level -> face(level, "Lato", 20).addNewB());
+            XWPFParagraph raised = item(numbered, "•", level -> face(level, "Lato", 20).addNewPosition()
+                    .setVal(BigInteger.valueOf(2)));
+            XWPFParagraph pictured = item(numbered, "•", level -> {
+                face(level, "Lato", 20);
+                level.addNewLvlPicBulletId().setVal(BigInteger.ZERO);
+            });
+            XWPFParagraph deeper = item(numbered, "•", level -> face(level, "Lato", 20));
+            deeper.getCTP().getPPr().getNumPr().getIlvl().setVal(BigInteger.ONE);
+            XWPFParagraph overridden = item(numbered, "•", level -> face(level, "Lato", 20));
+            numbered.getNumbering().getNum(overridden.getCTP().getPPr().getNumPr().getNumId().getVal())
+                    .getCTNum().addNewLvlOverride().setIlvl(BigInteger.ZERO);
+            XWPFParagraph linked = item(numbered, "•", level -> face(level, "Lato", 20));
+            definitionOf(numbered, linked).addNewNumStyleLink().setVal("Bullets");
+            XWPFParagraph styled = item(numbered, "•", level -> face(level, "Lato", 20));
+            definitionOf(numbered, styled).addNewStyleLink().setVal("Bullets");
+            XWPFParagraph unknown = item(numbered, "•", level -> face(level, "Lato", 20));
+            unknown.getCTP().getPPr().getNumPr().getNumId().setVal(BigInteger.valueOf(99));
+            XWPFParagraph unnumbered = item(numbered, "•", level -> face(level, "Lato", 20));
+            DocxGrownLines withoutNumbering = shipping(LATO, LATO);
+
+            assertThat(lines.reachOf(arrowhead.getCTP())).as("an arrowhead Lato holds no glyph for").isNull();
+            assertThat(lines.reachOf(numberedByWord.getCTP())).as("a level's number").isNull();
+            assertThat(lines.reachOf(decimal.getCTP())).as("a level Word numbers").isNull();
+            assertThat(lines.reachOf(bold.getCTP())).as("in bold, a face the document does not ship").isNull();
+            assertThat(lines.reachOf(raised.getCTP())).as("raised").isNull();
+            assertThat(lines.reachOf(pictured.getCTP())).as("a picture bullet").isNull();
+            assertThat(lines.reachOf(deeper.getCTP())).as("a depth its list does not define").isNull();
+            assertThat(lines.reachOf(overridden.getCTP())).as("a level overridden").isNull();
+            assertThat(lines.reachOf(linked.getCTP())).as("a list a numbering style defines").isNull();
+            assertThat(lines.reachOf(styled.getCTP())).as("a list defining a numbering style").isNull();
+            assertThat(lines.reachOf(unknown.getCTP())).as("a list the numbering part does not hold").isNull();
+            assertThat(withoutNumbering.reachOf(unnumbered.getCTP())).as("no numbering part").isNull();
+        }
+    }
+
+    /** The list definition a numbered item's list takes its levels from. */
+    private static CTAbstractNum definitionOf(XWPFDocument numbered, XWPFParagraph item) {
+        var num = numbered.getNumbering().getNum(item.getCTP().getPPr().getNumPr().getNumId().getVal());
+        return numbered.getNumbering().getAbstractNum(num.getCTNum().getAbstractNumId().getVal()).getCTAbstractNum();
+    }
+
+    /**
+     * A list's item of one 10pt Lato line, exact at 240 twips, numbered by a new list of
+     * {@code numbered} whose one level writes {@code marker} as a bullet, as {@code level} states it.
+     */
+    private static XWPFParagraph item(XWPFDocument numbered, String marker,
+                                      java.util.function.Consumer<CTLvl> level) {
+        CTAbstractNum definition = CTAbstractNum.Factory.newInstance();
+        definition.setAbstractNumId(BigInteger.valueOf(numbered.createNumbering().getAbstractNums().size()));
+        CTLvl first = definition.addNewLvl();
+        first.setIlvl(BigInteger.ZERO);
+        first.addNewNumFmt().setVal(STNumberFormat.BULLET);
+        first.addNewLvlText().setVal(marker);
+        level.accept(first);
+        BigInteger numId = numbered.getNumbering().addNum(
+                numbered.getNumbering().addAbstractNum(new XWPFAbstractNum(definition)));
+        XWPFParagraph paragraph = lato(240, 10);
+        paragraph.setNumID(numId);
+        paragraph.setNumILvl(BigInteger.ZERO);
+        return paragraph;
+    }
+
+    /** States a level's marker's face and size, {@code halfPoints} half points. */
+    private static org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr face(CTLvl level, String family,
+                                                                                    int halfPoints) {
+        var properties = level.addNewRPr();
+        properties.addNewRFonts().setAscii(family);
+        properties.addNewSz().setVal(BigInteger.valueOf(halfPoints));
+        return properties;
+    }
+
     /**
      * Adds a run holding a picture {@code points} tall set in the line, its run's position
      * {@code position} half points and, where not 0, its size {@code halfPoints}.
@@ -282,6 +407,12 @@ class DocxGrownLinesTest {
      * {@code normal}, as an export does: Normal is the style the most of its text is set in.
      */
     private static DocxGrownLines shipping(DocumentTextStyle normal, DocumentTextStyle... faces) throws Exception {
+        return shipping(() -> null, normal, faces);
+    }
+
+    /** The same, its lists' items numbered by {@code numbering}. */
+    private static DocxGrownLines shipping(java.util.function.Supplier<XWPFNumbering> numbering,
+                                           DocumentTextStyle normal, DocumentTextStyle... faces) throws Exception {
         var graph = DocxExports.graphOf(page -> {
             page.addParagraph(p -> p.text("Normal").textStyle(normal));
             for (DocumentTextStyle face : faces) {
@@ -290,7 +421,7 @@ class DocxGrownLinesTest {
         });
         try (XWPFDocument document = new XWPFDocument()) {
             return new DocxGrownLines(DocxFontTable.write(document, graph, List.of(), List.of(), null,
-                    new DocxExportReport.Builder()), normal);
+                    new DocxExportReport.Builder()), normal, numbering);
         }
     }
 

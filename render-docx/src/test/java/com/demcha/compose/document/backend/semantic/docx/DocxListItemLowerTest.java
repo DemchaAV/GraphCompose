@@ -46,6 +46,13 @@ class DocxListItemLowerTest {
      * nothing of the space above the list to be lowered by ({@link DocxParagraphLowerTest}).
      */
     private static final DocumentTextStyle LEAD = DocumentTextStyle.builder().fontName(FontName.GOTHIC_A1).size(10).build();
+    /**
+     * The lists' marker: one Lato and Spectral hold no glyph for, which Word draws in a face of its
+     * own, so their items stay exact and Word sets them high or low ({@link DocxGrownLines}). An
+     * item in a face that holds its marker, as tall as its faces' own line, is a least line, which
+     * stands where the page sets it.
+     */
+    private static final String ARROWHEAD = "➤";
 
     @Test
     void anItemWhoseMarkerWordDrawsIsLoweredByTheSpaceAboveItAndWhatFollowsGivesItBack() throws Exception {
@@ -53,7 +60,7 @@ class DocxListItemLowerTest {
         // and the paragraph under the list takes as much out of the space above it.
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
+                .addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))));
         XWPFParagraph item = paragraph(exported, "Heading");
         long lower = Math.round(-(0.8 * line(item) - LATO_ASCENT * 24) * 20);
@@ -70,12 +77,30 @@ class DocxListItemLowerTest {
     }
 
     @Test
+    void anItemWhoseFaceHoldsItsBulletIsALeastLineAndNotLowered() throws Exception {
+        // The same item under Word's bullet, which Lato holds: a least line, its text on its
+        // foot where the page sets it, so its space above is as written and the paragraph under
+        // the list takes nothing back.
+        Exported exported = export(page -> page
+                .addParagraph(p -> p.text("Lead").textStyle(LEAD))
+                .addList(list -> list.textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
+                .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))));
+        XWPFParagraph item = paragraph(exported, "Heading");
+
+        assertThat(item.getCTP().getPPr().isSetNumPr()).as("the premise: a Word list's item").isTrue();
+        assertThat(spacing(item).getLineRule()).hasToString("atLeast");
+        assertThat(before(item)).isEqualTo(200);
+        assertThat(position(item)).isZero();
+        assertThat(before(paragraph(exported, "Body"))).isEqualTo(200);
+    }
+
+    @Test
     void theItemsUnderAnItemLoweredGiveItBackFromTheSpaceAboveThem() throws Exception {
         // Each item stands as high: the second and third are lowered by what the one above them
         // owes, their space above as written; the paragraph under the list gives back the last's.
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(lato(24)).itemSpacing(10).margin(DocumentInsets.top(10))
+                .addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).itemSpacing(10).margin(DocumentInsets.top(10))
                         .items("One", "Two", "Three"))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))));
         XWPFParagraph one = paragraph(exported, "One");
@@ -94,7 +119,7 @@ class DocxListItemLowerTest {
         // give, stand as low as the one above leaves them, which is their own lowering.
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(lato(10)).lineSpacing(3).itemSpacing(3).margin(DocumentInsets.top(10))
+                .addList(list -> list.marker(ARROWHEAD).textStyle(lato(10)).lineSpacing(3).itemSpacing(3).margin(DocumentInsets.top(10))
                         .items("One\nmore", "Two\nmore", "Three\nmore"))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))));
         XWPFParagraph one = starting(exported, "One");
@@ -114,7 +139,7 @@ class DocxListItemLowerTest {
         // much lower already, so it is lowered by the rest.
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(lato(24)).lineSpacing(3).itemSpacing(3).margin(DocumentInsets.top(10))
+                .addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).lineSpacing(3).itemSpacing(3).margin(DocumentInsets.top(10))
                         .items("One", "Two\nmore"))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))));
         XWPFParagraph two = starting(exported, "Two");
@@ -133,7 +158,7 @@ class DocxListItemLowerTest {
         // The first item, of two lines, stands high; the two under it, a quarter point high, are
         // not lowered. With no space between the items, lowered, the first would stand them lower
         // than Word sets them: it is taken back. With 3pt between them, it is given back.
-        Consumer<ListBuilder> items = list -> list.textStyle(lato(10)).lineSpacing(3).margin(DocumentInsets.top(10))
+        Consumer<ListBuilder> items = list -> list.marker(ARROWHEAD).textStyle(lato(10)).lineSpacing(3).margin(DocumentInsets.top(10))
                 .items("One\nmore", "Two", "Three");
         Exported flush = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
@@ -158,7 +183,7 @@ class DocxListItemLowerTest {
         // The list owes 4pt below it in its column, which gives the lowering back; at the end of
         // the document that space is left out of the row, and the lowering with it.
         Consumer<PageFlowBuilder> row = page -> page.addRow(r -> r
-                .addSection(column -> column.add(new ListBuilder().textStyle(lato(24))
+                .addSection(column -> column.add(new ListBuilder().marker(ARROWHEAD).textStyle(lato(24))
                         .margin(new DocumentInsets(10, 0, 4, 0)).items("Heading").build()))
                 .addSection(column -> column.addParagraph(p -> p.text("Side").textStyle(lato(10)))));
         Exported ending = export(page -> {
@@ -179,7 +204,7 @@ class DocxListItemLowerTest {
         Exported halfAPoint = export(page -> {
             page.addParagraph(p -> p.text("Lead").textStyle(LEAD));
             page.addRow(r -> r
-                    .addSection(column -> column.add(new ListBuilder().textStyle(lato(24))
+                    .addSection(column -> column.add(new ListBuilder().marker(ARROWHEAD).textStyle(lato(24))
                             .margin(new DocumentInsets(10, 0, 0.5, 0)).items("Heading").build()))
                     .addSection(column -> column.addParagraph(p -> p.text("Side").textStyle(lato(10)))));
         });
@@ -194,7 +219,7 @@ class DocxListItemLowerTest {
         // it gives back what the first owes, then rises into what is left of the gap above it.
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(spectral(10)).lineSpacing(15).itemSpacing(20)
+                .addList(list -> list.marker(ARROWHEAD).textStyle(spectral(10)).lineSpacing(15).itemSpacing(20)
                         .margin(DocumentInsets.top(20)).items("First\nSecond", "Third"))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))));
         XWPFParagraph first = exported.document().getParagraphs().stream()
@@ -218,7 +243,7 @@ class DocxListItemLowerTest {
         // paragraph lower too, and the report says so.
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.name("Duties").textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
+                .addList(list -> list.name("Duties").marker(ARROWHEAD).textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
                 .addParagraph(p -> p.name("Body").text("Body").textStyle(lato(10))));
         XWPFParagraph item = paragraph(exported, "Heading");
         long lower = Math.round(-(0.8 * line(item) - LATO_ASCENT * 24) * 20);
@@ -235,7 +260,7 @@ class DocxListItemLowerTest {
         Exported exported = export(page -> page
                 .addParagraph("Before")
                 .addSection("Card", card -> card.fillColor(DocumentColor.rgb(238, 243, 249))
-                        .padding(DocumentInsets.of(8)).addParagraph("Title").addList(list -> list.textStyle(lato(24))
+                        .padding(DocumentInsets.of(8)).addParagraph("Title").addList(list -> list.marker(ARROWHEAD).textStyle(lato(24))
                                 .margin(new DocumentInsets(10, 0, 4, 0)).items("Inside"))));
         XWPFTableCell panel = exported.document().getTables().get(0).getRow(0).getCell(0);
         XWPFParagraph inside = panel.getParagraphs().get(1);
@@ -257,7 +282,7 @@ class DocxListItemLowerTest {
                 .addParagraph("Before")
                 .addSection("Card", card -> card.fillColor(DocumentColor.rgb(238, 243, 249))
                         .padding(DocumentInsets.of(8)).addParagraph("Title")
-                        .addList(list -> list.textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Inside"))));
+                        .addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Inside"))));
         XWPFTableCell panel = exported.document().getTables().get(0).getRow(0).getCell(0);
         XWPFParagraph inside = panel.getParagraphs().get(1);
         long lower = Math.round(-(0.8 * line(inside) - LATO_ASCENT * 24) * 20);
@@ -275,7 +300,7 @@ class DocxListItemLowerTest {
         Exported exported = export(page -> page
                 .addParagraph("Before")
                 .addSection("Card", card -> card.fillColor(DocumentColor.rgb(238, 243, 249))
-                        .padding(DocumentInsets.of(8)).addList(list -> list.textStyle(lato(24)).items("Inside"))));
+                        .padding(DocumentInsets.of(8)).addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).items("Inside"))));
         XWPFTableCell panel = exported.document().getTables().get(0).getRow(0).getCell(0);
         XWPFParagraph inside = panel.getParagraphs().get(0);
 
@@ -291,7 +316,7 @@ class DocxListItemLowerTest {
         // Nothing under it gives it back, and the last page would run that much longer.
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(lato(24)).itemSpacing(10).margin(DocumentInsets.top(10))
+                .addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).itemSpacing(10).margin(DocumentInsets.top(10))
                         .items("One", "Two")));
         long lower = Math.round(-(0.8 * line(paragraph(exported, "One")) - LATO_ASCENT * 24) * 20);
 
@@ -306,7 +331,7 @@ class DocxListItemLowerTest {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
                 .columns(com.demcha.compose.document.table.DocumentTableColumn.fixed(200))
                 .rowCells(com.demcha.compose.document.table.DocumentTableCell.node(new ListBuilder()
-                        .textStyle(lato(24)).itemSpacing(10).items("One", "Two").build()))))) {
+                        .marker(ARROWHEAD).textStyle(lato(24)).itemSpacing(10).items("One", "Two").build()))))) {
             XWPFParagraph one = inACell(document, "One");
             long lower = Math.round(-(0.8 * line(one) - LATO_ASCENT * 24) * 20);
 
@@ -323,7 +348,7 @@ class DocxListItemLowerTest {
             session.pageFlow(page -> page
                     .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                     .spacer(1, 480)
-                    .addList(list -> list.textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
+                    .addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
                     .addParagraph(p -> p.name("Next").text("Next").textStyle(lato(10)).margin(DocumentInsets.top(30))));
             assertThat(startPage(session, "Next")).as("the premise: the paragraph under the list opens the next page")
                     .isEqualTo(1);
@@ -344,7 +369,7 @@ class DocxListItemLowerTest {
             session.pageFlow(page -> page
                     .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                     .spacer(1, 440)
-                    .addList(list -> list.textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
+                    .addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
                     .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10)))
                     .addParagraph(p -> p.name("Next").text("Next").textStyle(lato(10)).margin(DocumentInsets.top(50))));
             assertThat(startPage(session, "Next")).as("the premise: the last paragraph opens the next page").isEqualTo(1);
@@ -363,7 +388,7 @@ class DocxListItemLowerTest {
     void anItemLoweredAtTheEndOfARowsCellIsTakenBackWhereTheBlockUnderTheRowOpensAPage() throws Exception {
         // The row hangs what the item was lowered by below itself. A paragraph under it on the same
         // page gives that back; one opening the next page, where Word sets its line at the top, does not.
-        Consumer<SectionBuilder> lowered = column -> column.add(new ListBuilder().textStyle(lato(24))
+        Consumer<SectionBuilder> lowered = column -> column.add(new ListBuilder().marker(ARROWHEAD).textStyle(lato(24))
                 .margin(DocumentInsets.top(10)).items("Heading").build());
         // Lato's line, a quarter point high, lifts the row out of nothing.
         Consumer<SectionBuilder> side = column -> column.addParagraph(p -> p.text("Side").textStyle(lato(10)));
@@ -385,7 +410,7 @@ class DocxListItemLowerTest {
     void anItemLoweredAtTheEndOfACardWithNoPaddingIsTakenBackWhereTheBlockUnderItOpensAPage() throws Exception {
         Consumer<PageFlowBuilder> card = page -> page.addSection("Card", section -> section
                 .fillColor(DocumentColor.rgb(238, 243, 249)).addParagraph("Title")
-                .addList(list -> list.textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading")));
+                .addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading")));
         assertThat(headingAbove(10, card)).as("lowered, under a paragraph on its page").isEqualTo(200 + latoLowering());
         assertThat(headingAbove(50, card)).as("its space above, as written").isEqualTo(200);
     }
@@ -395,9 +420,9 @@ class DocxListItemLowerTest {
         // Each column's list hangs its own lowering below the row: the row's hang let go, both are
         // taken back, not as one run of the two.
         Consumer<PageFlowBuilder> row = page -> page.addRow(r -> r
-                .addSection(column -> column.add(new ListBuilder().textStyle(lato(24))
+                .addSection(column -> column.add(new ListBuilder().marker(ARROWHEAD).textStyle(lato(24))
                         .margin(DocumentInsets.top(10)).items("Heading").build()))
-                .addSection(column -> column.add(new ListBuilder().textStyle(lato(24))
+                .addSection(column -> column.add(new ListBuilder().marker(ARROWHEAD).textStyle(lato(24))
                         .margin(DocumentInsets.top(10)).items("Beside").build())));
         assertThat(headingAbove(10, row)).as("lowered, under a paragraph on its page").isEqualTo(200 + latoLowering());
         assertThat(headingAbove(50, row)).as("its space above, as written").isEqualTo(200);
@@ -406,9 +431,9 @@ class DocxListItemLowerTest {
 
     @Test
     void anItemLoweredAboveAListTheLayoutOpensAPageWithIsTakenBack() throws Exception {
-        assertThat(flowItemAbove(page -> page.addList(list -> list.name("Next").textStyle(lato(10))
+        assertThat(flowItemAbove(page -> page.addList(list -> list.name("Next").marker(ARROWHEAD).textStyle(lato(10))
                 .margin(DocumentInsets.top(10)).items("Next item")))).isEqualTo(200 + latoLowering());
-        assertThat(flowItemAbove(page -> page.addList(list -> list.name("Next").textStyle(lato(10))
+        assertThat(flowItemAbove(page -> page.addList(list -> list.name("Next").marker(ARROWHEAD).textStyle(lato(10))
                 .margin(DocumentInsets.top(50)).items("Next item")))).isEqualTo(200);
     }
 
@@ -418,8 +443,8 @@ class DocxListItemLowerTest {
         // whole, in the line holding its top edge, and nothing of a hang taken back is named.
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD)).spacer(1, 460)
-                .addList(list -> list.textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
-                .addList(list -> list.textStyle(lato(10)).margin(DocumentInsets.top(50)).items("Next item")));
+                .addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
+                .addList(list -> list.marker(ARROWHEAD).textStyle(lato(10)).margin(DocumentInsets.top(50)).items("Next item")));
         XWPFParagraph next = paragraph(exported, "Next item");
 
         assertThat(Math.round(line(paragraphBefore(exported.document(), next)) * 20)).as("its 50pt, whole")
@@ -449,7 +474,7 @@ class DocxListItemLowerTest {
     private static long aboveABand(double gap) throws Exception {
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
+                .addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"))
                 .addLayerStack(stack -> stack.name("Band").margin(DocumentInsets.top(gap))
                         .back(new com.demcha.compose.document.node.SpacerNode("Room", 200, 40,
                                 DocumentInsets.zero(), DocumentInsets.zero()))
@@ -463,7 +488,7 @@ class DocxListItemLowerTest {
         try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
             session.pageFlow(page -> {
                 page.addParagraph(p -> p.text("Lead").textStyle(LEAD)).spacer(1, 460)
-                        .addList(list -> list.textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"));
+                        .addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).margin(DocumentInsets.top(10)).items("Heading"));
                 next.accept(page);
             });
             try (XWPFDocument document = new XWPFDocument(
@@ -518,7 +543,7 @@ class DocxListItemLowerTest {
     void anItemLoweredAboveATableTakesItOutOfTheSpaceAboveTheTable() throws Exception {
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(lato(24)).margin(new DocumentInsets(10, 0, 10, 0)).items("Heading"))
+                .addList(list -> list.marker(ARROWHEAD).textStyle(lato(24)).margin(new DocumentInsets(10, 0, 10, 0)).items("Heading"))
                 .addTable(t -> t.columns(com.demcha.compose.document.table.DocumentTableColumn.fixed(200))
                         .row("Cell")));
         XWPFParagraph item = paragraph(exported, "Heading");
@@ -534,7 +559,7 @@ class DocxListItemLowerTest {
         // nothing, the space above does not either.
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addList(list -> list.textStyle(lato(10)).margin(DocumentInsets.top(10)).items("Item")));
+                .addList(list -> list.marker(ARROWHEAD).textStyle(lato(10)).margin(DocumentInsets.top(10)).items("Item")));
         XWPFParagraph item = paragraph(exported, "Item");
         double high = -(0.8 * line(item) - LATO_ASCENT * 10);
 
@@ -548,7 +573,7 @@ class DocxListItemLowerTest {
         // at its top: nothing on the page above gives back what the first item was lowered by.
         try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
             session.pageFlow(page -> page.spacer(1, 500)
-                    .addList(list -> list.name("Duties").textStyle(lato(24)).itemSpacing(10)
+                    .addList(list -> list.name("Duties").marker(ARROWHEAD).textStyle(lato(24)).itemSpacing(10)
                             .margin(DocumentInsets.top(10)).items("One", "Two", "Three"))
                     .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))));
             List<Integer> pages = session.layoutGraph().fragments().stream()
@@ -576,7 +601,7 @@ class DocxListItemLowerTest {
         try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
             session.pageFlow(page -> page.spacer(1, 460)
                     .addSection("Card", card -> card.fillColor(DocumentColor.rgb(238, 243, 249))
-                            .addList(list -> list.name("Duties").textStyle(lato(24)).itemSpacing(10)
+                            .addList(list -> list.name("Duties").marker(ARROWHEAD).textStyle(lato(24)).itemSpacing(10)
                                     .margin(DocumentInsets.top(10)).items("One", "Two", "Three"))));
             List<Integer> pages = session.layoutGraph().fragments().stream()
                     .filter(fragment -> fragment.path().contains("Duties"))
@@ -598,7 +623,7 @@ class DocxListItemLowerTest {
         Exported exported = export(page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addLayerStack(stack -> stack.name("Entry")
-                        .layer(new ListBuilder().textStyle(lato(24)).margin(DocumentInsets.top(10))
+                        .layer(new ListBuilder().marker(ARROWHEAD).textStyle(lato(24)).margin(DocumentInsets.top(10))
                                 .items("Heading").build(), LayerAlign.TOP_LEFT))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))));
         XWPFParagraph item = paragraph(exported, "Heading");
@@ -616,7 +641,7 @@ class DocxListItemLowerTest {
         try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
             session.pageFlow(page -> page.spacer(1, 500)
                     .addLayerStack(stack -> stack.name("Entry")
-                            .layer(new ListBuilder().name("Duties").textStyle(lato(24)).itemSpacing(10)
+                            .layer(new ListBuilder().name("Duties").marker(ARROWHEAD).textStyle(lato(24)).itemSpacing(10)
                                     .margin(DocumentInsets.top(10)).items("One", "Two").build(), LayerAlign.TOP_LEFT))
                     .addParagraph(p -> p.text("Body").textStyle(lato(10)).margin(DocumentInsets.top(10))));
             List<Integer> pages = session.layoutGraph().fragments().stream()
@@ -648,7 +673,7 @@ class DocxListItemLowerTest {
                 .addParagraph(p -> p.text("Above").textStyle(LEAD))
                 .addLayerStack(stack -> stack.name("Stack")
                         .back(new ShapeBuilder().name("Backdrop").size(200, 80).build())
-                        .layer(new ListBuilder().textStyle(lato(24)).margin(DocumentInsets.top(10))
+                        .layer(new ListBuilder().marker(ARROWHEAD).textStyle(lato(24)).margin(DocumentInsets.top(10))
                                 .items("Heading").build(), LayerAlign.TOP_LEFT))
                 .addParagraph(p -> p.text("After").textStyle(lato(10)).margin(DocumentInsets.top(10))));
         XWPFParagraph item = anywhere(exported.document(), "Heading");

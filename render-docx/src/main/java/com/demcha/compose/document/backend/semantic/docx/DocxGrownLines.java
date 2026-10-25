@@ -2,15 +2,24 @@ package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.document.style.DocumentTextStyle;
 import org.apache.poi.ooxml.util.POIXMLUnits;
+import org.apache.poi.xwpf.usermodel.XWPFAbstractNum;
+import org.apache.poi.xwpf.usermodel.XWPFNum;
+import org.apache.poi.xwpf.usermodel.XWPFNumbering;
 import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlObject;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTAbstractNum;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTLvl;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTNumPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTOnOff;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSpacing;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STNumberFormat;
 
+import java.math.BigInteger;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * How tall a paragraph's lines stand in an editor, and where its text stands in them, from what is
@@ -40,12 +49,21 @@ import java.util.Set;
  * in both places — no higher than its text, its faces' line gap included, no lower than its text's
  * descent — stands its text where it would without them (see {@link Reach#holdsItsPictures}).</p>
  *
+ * <p>A Word list's marker is a run of its first line, set in its level's face and size over its
+ * paragraph's mark's, in Word and in LibreOffice: a marker as tall as the item's text leaves its
+ * line where it stands, and a taller one grows it (measured: a bullet, a white bullet and a small
+ * square in 8pt Lato, a bullet and an en dash in 9pt Fira Sans Condensed, left exact and least lines
+ * as tall, with a space or a tab after it, its face its level's or its mark's; a bullet at twice the
+ * size grew a least line by its height). A marker whose
+ * face holds no glyph for it is set in another face in each editor, and is not read: Word set an
+ * arrowhead beside 8pt Lato in Segoe UI Symbol, its least line 0.72pt taller.</p>
+ *
  * @author Artem Demchyshyn
  */
 final class DocxGrownLines {
 
     /** No face shipped, and no default style: every line is read as exact or not at all. */
-    static final DocxGrownLines NONE = new DocxGrownLines(DocxFontTable.ShippedLines.NONE, null);
+    static final DocxGrownLines NONE = new DocxGrownLines(DocxFontTable.ShippedLines.NONE, null, () -> null);
 
     /** What a paragraph may hold besides its runs and still be read. */
     private static final Set<String> PARAGRAPH_PARTS = Set.of("pPr", "r", "hyperlink", "bookmarkStart", "bookmarkEnd");
@@ -81,15 +99,25 @@ final class DocxGrownLines {
 
     private final DocxFontTable.ShippedLines faces;
     private final DocumentTextStyle defaults;
+    private final Supplier<XWPFNumbering> numbering;
+    /**
+     * The levels read, by an item's list and depth: a list's levels are written whole before its
+     * first item, and an item's lines are read several times.
+     */
+    private final java.util.Map<String, CTLvl> levels = new java.util.HashMap<>();
 
     /**
-     * @param faces    the line each face the document ships is set in
-     * @param defaults the style the document's Normal style states, which a run that names no face
-     *                 or size of its own is set in; null where it states none
+     * @param faces     the line each face the document ships is set in
+     * @param defaults  the style the document's Normal style states, which a run that names no face
+     *                  or size of its own is set in; null where it states none
+     * @param numbering the document's numbering part as it stands when a line is read, which a
+     *                  Word list's item takes its marker from; it supplies null where the document
+     *                  holds none yet
      */
-    DocxGrownLines(DocxFontTable.ShippedLines faces, DocumentTextStyle defaults) {
+    DocxGrownLines(DocxFontTable.ShippedLines faces, DocumentTextStyle defaults, Supplier<XWPFNumbering> numbering) {
         this.faces = faces;
         this.defaults = defaults;
+        this.numbering = numbering;
     }
 
     /**
@@ -97,22 +125,22 @@ final class DocxGrownLines {
      * line, in points.
      *
      * @param paragraph the written paragraph
-     * @return the reach, its pictures' among it, or null where one of its runs is not read: a raise,
-     *         a face the document does not ship, a run Word sets right to left, a marker Word draws
-     *         itself, a drawing anchored beside pictures or holding none, a picture with no extent
-     *         written or whose run's position is not a number, or pictures in a
-     *         paragraph whose lines are broken, one of which may hold a picture alone, or that holds
-     *         no letter beside them
+     * @return the reach, its pictures' and its list marker's among it, or null where one of its runs
+     *         is not read: a raise, a face the document does not ship, a run Word sets right to left,
+     *         a list marker not read ({@link #withItsMarker}), a drawing anchored beside pictures or
+     *         holding none, a picture with no extent written or whose run's position is not a
+     *         number, or pictures in a paragraph whose lines are broken, one of which may hold a
+     *         picture alone, or that holds no letter beside them
      */
     Reach reachOf(CTP paragraph) {
         CTPPr properties = paragraph.getPPr();
-        if (properties != null && properties.isSetNumPr()) {
-            // Word draws a list's marker in the numbering's own face.
-            return null;
-        }
+        Run mark = Run.of(properties != null && properties.isSetRPr() ? properties.getRPr() : null);
         // The mark is set in what it states, or else in the Normal style, as a run is: Word counts
         // it into the paragraph's last line.
-        Reach reach = reachOf(properties != null && properties.isSetRPr() ? properties.getRPr() : null, Reach.NONE);
+        Reach reach = reachOf(mark, Reach.NONE, null);
+        if (reach != null && properties != null && properties.isSetNumPr()) {
+            reach = withItsMarker(properties.getNumPr(), mark, reach);
+        }
         if (reach == null || !holdsOnly(paragraph, PARAGRAPH_PARTS)) {
             return null;
         }
@@ -155,7 +183,7 @@ final class DocxGrownLines {
                     lettered |= letter.getStringValue() != null && letter.getStringValue().codePoints()
                             .anyMatch(c -> !Character.isWhitespace(c) && !Character.isSpaceChar(c));
                 }
-                reach = reachOf(text.isSetRPr() ? text.getRPr() : null, reach);
+                reach = reachOf(Run.of(text.isSetRPr() ? text.getRPr() : null), reach, null);
                 if (reach == null) {
                     return null;
                 }
@@ -274,8 +302,79 @@ final class DocxGrownLines {
         return new Line(height, height - reach.below());
     }
 
-    private Reach reachOf(XmlObject runProperties, Reach so) {
-        Run run = Run.of(runProperties);
+    /**
+     * A Word list's item's reach with its marker's: a run of its first line, in its level's
+     * properties over its paragraph's mark's, as Word and LibreOffice set it.
+     *
+     * @return the reach, or null where the marker is not read: its level not found by the item's
+     *         number and depth, or its list's levels overridden or a numbering style's; a level that
+     *         writes a number or a picture; one whose letters its face holds no glyph of its own
+     *         for, which each editor sets in a face of its own; or one whose face is not read
+     *         ({@link #reachOf(Run, Reach, String)})
+     */
+    private Reach withItsMarker(CTNumPr item, Run mark, Reach reach) {
+        CTLvl level = levelOf(item);
+        if (level == null || !level.isSetNumFmt() || level.getNumFmt().getVal() != STNumberFormat.BULLET
+            || level.isSetLvlPicBulletId() || !level.isSetLvlText() || level.getLvlText().getVal() == null
+            // A percent sign before a digit names a level's number in a level's text; any is read so.
+            || level.getLvlText().getVal().contains("%")) {
+            return null;
+        }
+        Run over = Run.of(level.isSetRPr() ? level.getRPr() : null);
+        return over == null ? null : reachOf(over.over(mark), reach, level.getLvlText().getVal());
+    }
+
+    /**
+     * The level of the numbering part a list's item names, or null where it names none the part
+     * holds, or its list's levels are overridden or a numbering style's.
+     */
+    private CTLvl levelOf(CTNumPr item) {
+        XWPFNumbering part = numbering.get();
+        if (part == null || !item.isSetNumId() || item.getNumId().getVal() == null) {
+            return null;
+        }
+        BigInteger depth = item.isSetIlvl() ? item.getIlvl().getVal() : BigInteger.ZERO;
+        String key = item.getNumId().getVal() + "/" + depth;
+        CTLvl read = levels.get(key);
+        if (read == null) {
+            read = levelOf(part, item.getNumId().getVal(), depth);
+            if (read != null) {
+                levels.put(key, read);
+            }
+        }
+        return read;
+    }
+
+    private static CTLvl levelOf(XWPFNumbering part, BigInteger numId, BigInteger depth) {
+        XWPFNum num = part.getNum(numId);
+        if (num == null || num.getCTNum().sizeOfLvlOverrideArray() > 0 || num.getCTNum().getAbstractNumId() == null) {
+            return null;
+        }
+        XWPFAbstractNum definition = part.getAbstractNum(num.getCTNum().getAbstractNumId().getVal());
+        if (definition == null) {
+            return null;
+        }
+        CTAbstractNum list = definition.getCTAbstractNum();
+        if (list.isSetNumStyleLink() || list.isSetStyleLink()) {
+            return null;
+        }
+        for (CTLvl level : list.getLvlList()) {
+            if (depth.equals(level.getIlvl())) {
+                return level;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * {@code so} with a run's reach: as high and as deep as the higher and deeper of the two, its
+     * descent the shallower.
+     *
+     * @param letters the run's letters, where they must each be its face's own glyph, or null
+     * @return the reach, or null where the run is not read: a raise or a face the document does not
+     *         ship, or does not hold {@code letters}
+     */
+    private Reach reachOf(Run run, Reach so, String letters) {
         if (run == null) {
             return null;
         }
@@ -289,6 +388,10 @@ final class DocxGrownLines {
                 : defaults != null ? Math.round(defaults.size() * HALF_POINTS_PER_POINT) / HALF_POINTS_PER_POINT
                 : Double.NaN;
         if (line == null || !(size > 0)) {
+            return null;
+        }
+        if (letters != null && !(run.family() != null ? faces.holds(run.family(), slot, letters)
+                : defaults != null && faces.holds(defaults.fontName(), slot, letters))) {
             return null;
         }
         return new Reach(Math.max(so.above(), line.ascent() * size), Math.max(so.below(), line.descent() * size),
@@ -421,6 +524,12 @@ final class DocxGrownLines {
                 }
             }
             return new Run(family, halfPoints, bold, italic);
+        }
+
+        /** What these properties say over {@code under}'s: theirs where they state it, else its. */
+        Run over(Run under) {
+            return new Run(family != null ? family : under.family, halfPoints > 0 ? halfPoints : under.halfPoints,
+                    bold != null ? bold : under.bold, italic != null ? italic : under.italic);
         }
 
         private static String attribute(XmlObject element, String name) {

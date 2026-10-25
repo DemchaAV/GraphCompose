@@ -12018,8 +12018,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Written as {@code w:lineRule="exact"} rather than as a multiple: the number is a
      * measurement in points, and a multiple would be measured again by Word against
      * whichever font it substituted. Exact is also the only rule that can make a line
-     * shorter than the font would like — which is the direction this always moves, since
-     * the engine's line box is the face's ascent plus descent with no leading.</p>
+     * shorter than the font would like, since the engine's line box is the face's ascent
+     * plus descent with no leading. A paragraph's or a text cell's line at least as tall as
+     * its faces' own is then rewritten as a least height, where Word stands its text where the
+     * page does ({@link #letTheLinesGrow}, {@link #letTheCellsLinesGrow}).</p>
      *
      * @param para   the Word paragraph
      * @param height the measured line height in points, empty when nothing measured it

@@ -171,6 +171,68 @@ class DocxGrownLinesTest {
     }
 
     @Test
+    void runsOfSeveralDepthsMayGrowWhereEveryLineIsAsDeepAsTheDeepest() throws Exception {
+        DocxGrownLines lines = shipping(LATO, LATO, face(FontName.LATO, 8));
+        XWPFParagraph mixed = lato(300, 10);
+        run(mixed, "Lato", 8);
+        XWPFParagraph broken = lato(300, 10);
+        run(broken, "Lato", 8).addBreak();
+
+        assertThat(lines.mayGrow(mixed.getCTP())).as("lines not known").isFalse();
+        assertThat(lines.mayGrow(mixed.getCTP(), new double[]{LATO_DOWN * 10})).as("one line, as deep as its 10pt run")
+                .isTrue();
+        assertThat(lines.mayGrow(mixed.getCTP(), new double[]{LATO_DOWN * 10, LATO_DOWN * 10})).isTrue();
+        assertThat(lines.mayGrow(mixed.getCTP(), new double[]{LATO_DOWN * 10, LATO_DOWN * 8}))
+                .as("a second line of the 8pt run alone").isFalse();
+        assertThat(lines.mayGrow(mixed.getCTP(), new double[]{Double.NaN})).as("a line not read").isFalse();
+        assertThat(lines.mayGrow(broken.getCTP(), new double[]{LATO_DOWN * 10})).as("a break written").isFalse();
+        XWPFParagraph deeperMark = lato(300, 10);
+        run(deeperMark, "Lato", 8);
+        deeperMark.getCTP().getPPr().addNewRPr().addNewSz().setVal(BigInteger.valueOf(24));
+        assertThat(lines.mayGrow(deeperMark.getCTP(), new double[]{LATO_DOWN * 10}))
+                .as("a 12pt mark, read deeper than the line").isFalse();
+    }
+
+    @Test
+    void aLineIsAsDeepAsItsDeepestRunWhereThatIsItsTallest() throws Exception {
+        DocxGrownLines lines = shipping(LATO, LATO, face(FontName.LATO, 8), face(FontName.SPECTRAL, 7));
+        var lato8 = span(FontName.LATO, 8, 9.6);
+        var lato10 = span(FontName.LATO, 10, 12);
+        var spectral7 = span(FontName.SPECTRAL, 7, 10.65);
+
+        assertThat(lines.depthOfLine(List.of(lato8, lato10))).isCloseTo(LATO_DOWN * 10, within(1e-9));
+        assertThat(lines.depthOfLine(List.of(lato10, spectral7)))
+                .as("10pt Lato the tallest, by which the page sets the line, 7pt Spectral the deepest").isNaN();
+        assertThat(lines.depthOfLine(List.of(lato10, span(FontName.HELVETICA, 8, 9.25)))).as("a run not read").isNaN();
+        assertThat(lines.depthOfLine(List.of())).isNaN();
+    }
+
+    /** A run of text the page set in {@code name} at {@code size}, its line {@code height} tall. */
+    private static com.demcha.compose.document.layout.payloads.ParagraphTextSpan span(FontName name, double size,
+                                                                                     double height) {
+        return new com.demcha.compose.document.layout.payloads.ParagraphTextSpan("Text",
+                new com.demcha.compose.engine.components.content.text.TextStyle(name, size,
+                        com.demcha.compose.engine.components.content.text.TextDecoration.DEFAULT, java.awt.Color.BLACK),
+                10, height, null, null);
+    }
+
+    @Test
+    void aRunsDepthIsItsFacesDescentAtTheSizeItIsWrittenAt() throws Exception {
+        DocxGrownLines lines = shipping(LATO, LATO);
+        java.awt.Color black = java.awt.Color.BLACK;
+
+        assertThat(lines.depthOf(new com.demcha.compose.engine.components.content.text.TextStyle(FontName.LATO, 7.35,
+                com.demcha.compose.engine.components.content.text.TextDecoration.DEFAULT, black)))
+                .as("7.35pt, written at 7.5").isCloseTo(LATO_DOWN * 7.5, within(1e-9));
+        assertThat(lines.depthOf(new com.demcha.compose.engine.components.content.text.TextStyle(FontName.LATO, 10,
+                com.demcha.compose.engine.components.content.text.TextDecoration.BOLD, black)))
+                .as("a bold face not shipped").isNaN();
+        assertThat(lines.depthOf(new com.demcha.compose.engine.components.content.text.TextStyle(FontName.HELVETICA, 10,
+                com.demcha.compose.engine.components.content.text.TextDecoration.DEFAULT, black)))
+                .as("a face not shipped").isNaN();
+    }
+
+    @Test
     void aLeastLineStandsItsBaselineItsRunsDescentAboveItsFootAndAnExactOneFourFifthsDown() throws Exception {
         DocxGrownLines lines = shipping(LATO, LATO);
         XWPFParagraph exact = lato(280, 10);

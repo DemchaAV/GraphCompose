@@ -8,6 +8,31 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's lines of runs of several depths grow with their text where every line is as
+  deep as the deepest.**
+  - A paragraph whose runs reach to different depths below the baseline — a bold title beside
+    lighter text, a weekday beside its date — was written at an exact height, which Word keeps
+    whatever its text holds: Word stands each least line's text its own deepest run's descent
+    above its foot, and one height for a paragraph's lines does not say which runs a line holds.
+  - Measured in Word and LibreOffice 24.2: 8pt bold Lato beside 7.5pt Lato, on one line or on two
+    each holding the bold run, stood each line within 0.1pt of its bold run's descent above its
+    foot; a second line of the 7.5pt runs alone stood at their descent.
+  - Such a paragraph is now written at a least height where every line, as the page breaks them,
+    holds a run as deep as the paragraph reaches, its mark no deeper, and that run is the line's
+    tallest, by which the page sets the line; each run is read at the size it is written at, to
+    the half point. One with a line of the shallower runs alone stays exact, and so does one with
+    a break written in a run, which the page may set on the line it ends, or a `bulletOffset`
+    prefix, which the page sets as a run and the export as an indent. A list's items and a
+    table's text cells keep to one depth.
+  - The corpus writes 20 more paragraphs at a least height, in six documents. In Word, two points
+    more on `Normal` leaves 921 of the 1832 paragraphs it grows on lines shorter than 1.1 times
+    their letters, from 923: most of the 20 are set in a size of their own.
+  - Of the six documents' lines, 5 stand nearer the page in Word and 4 further, of 440, and 4
+    nearer and none further in LibreOffice 24.2, of 437. The step from a line to the next differs
+    from the page's by more than 0.2pt for 13 of 234 steps in Word, from 19, and 16 of 227 in
+    LibreOffice, from 22. `ClassicSerif`'s project titles stand one step of Word's 0.12pt line grid
+    lower there.
+
 - **A DOCX export's Word list items grow with their text where their face holds their marker.**
   - A Word list's item, whose marker Word draws, was written at an exact height, which Word keeps
     whatever its text holds.
@@ -92,9 +117,9 @@ follow semantic versioning; release dates are ISO 8601.
     written as a least height (`w:lineRule="atLeast"`). The runs' own line is their faces' line by
     the faces' own tables: the tallest run's reach above the baseline and the deepest run's below,
     the paragraph's mark among them. It is so where the runs are set in faces the document ships,
-    all the same depth below the baseline, left to right, none raised or a script, no picture in
-    the line past its text, a Word list's marker in a face that holds it (see above), and the
-    paragraph is seated on its baseline.
+    all the same depth below the baseline or every line as deep as the deepest (see above), left to
+    right, none raised or a script, no picture in the line past its text, a Word list's marker in a
+    face that holds it (see above), and the paragraph is seated on its baseline.
   - Word and LibreOffice keep a least line's spare above its text and stand its baseline the
     runs' descent above its foot (measured on the templates' faces, Word and LibreOffice 24.2, to
     0.15pt). That is where the page sets it, so such a line needs no position to stand there; it

@@ -30,9 +30,11 @@ import java.util.function.Supplier;
  * as tall as written or as its runs' own line, whichever is taller, and keeps the spare above its
  * text: the baseline stands the line's deepest run's descent above the line's foot. A run's own
  * line is its face's ({@link DocxNaturalLine}), and a line of several runs reaches as high as the
- * tallest and as deep as the deepest of them, the paragraph's mark among them in its last line
+ * tallest and as deep as the deepest of them, the paragraph's mark read among them in its last line
  * (measured in Word and in LibreOffice 24.2: each face of the templates alone to 0.15pt, mixed
- * faces and sizes in one line to 0.1pt).</p>
+ * faces and sizes in one line to 0.1pt). A mark deeper than its line's runs did not deepen the line
+ * in either editor (an 8pt bold mark beside 7.5pt Lato); read as deepening it, it keeps such a
+ * paragraph's lines from growing where their depths differ.</p>
  *
  * <p>A text's position does not move it in a least line: Word, raising every run of a line, keeps
  * the text on the line's foot until it passes the line's top, and LibreOffice moves it and grows
@@ -135,8 +137,8 @@ final class DocxGrownLines {
     Reach reachOf(CTP paragraph) {
         CTPPr properties = paragraph.getPPr();
         Run mark = Run.of(properties != null && properties.isSetRPr() ? properties.getRPr() : null);
-        // The mark is set in what it states, or else in the Normal style, as a run is: Word counts
-        // it into the paragraph's last line.
+        // The mark is set in what it states, or else in the Normal style, as a run is, and read
+        // into the paragraph's last line.
         Reach reach = reachOf(mark, Reach.NONE, null);
         if (reach != null && properties != null && properties.isSetNumPr()) {
             reach = withItsMarker(properties.getNumPr(), mark, reach);
@@ -248,8 +250,9 @@ final class DocxGrownLines {
      *
      * <p>Word stands each least line's baseline its own deepest run's descent above the foot, not
      * the paragraph's: a line of 8pt bold Lato over a line of 7.5pt Lato stood its second line
-     * 0.1pt further down than its first, and its grid made it a step more. Only a paragraph whose
-     * runs and mark share one descent, to {@link #EPSILON}, has one place for its text in every line.</p>
+     * 0.1pt further down than its first, and its grid made it a step more. A paragraph whose runs
+     * and mark share one descent, to {@link #EPSILON}, has one place for its text in every line;
+     * see {@link #mayGrow(CTP, double[])} for one of runs of several depths.</p>
      *
      * @param paragraph the written paragraph
      * @return whether its runs are read ({@link #reachOf}), reach no taller than its line, to
@@ -257,6 +260,25 @@ final class DocxGrownLines {
      *         ({@link Reach#holdsItsPictures})
      */
     boolean mayGrow(CTP paragraph) {
+        return mayGrow(paragraph, null);
+    }
+
+    /**
+     * The same, for a paragraph whose lines, as the page breaks them, Word sets {@code lineDepths}
+     * deep: one of runs of several depths has one place for its text in every line too where every
+     * line is as deep as the paragraph reaches, its mark included (measured in Word and LibreOffice
+     * 24.2: 8pt bold Lato beside 7.5pt Lato, on one line or on two each holding the bold run, stood
+     * each line within 0.1pt of its bold run's descent above its foot). Word is taken to break the
+     * lines where the page does; a paragraph with a break written in a run is not read, as the page
+     * may set it on the line it ends.
+     *
+     * @param paragraph  the written paragraph
+     * @param lineDepths each of the paragraph's lines of text's depth ({@link #depthOfLine}), in
+     *                   points; null where they are not known
+     * @return as {@link #mayGrow(CTP)}, its runs of one descent, or every line as deep as they reach
+     *         and no break written
+     */
+    boolean mayGrow(CTP paragraph, double[] lineDepths) {
         CTPPr properties = paragraph.getPPr();
         CTSpacing spacing = properties != null && properties.isSetSpacing() ? properties.getSpacing() : null;
         if (spacing == null || !(spacing.getLine() instanceof Number twips)) {
@@ -265,7 +287,80 @@ final class DocxGrownLines {
         Reach reach = reachOf(paragraph);
         double line = twips.doubleValue() / POINT_TO_TWIP;
         return reach != null && line + EPSILON >= reach.height()
-               && reach.below() - reach.shallowest() <= EPSILON && reach.holdsItsPictures();
+               && (reach.below() - reach.shallowest() <= EPSILON || asDeepAsItReaches(paragraph, lineDepths, reach))
+               && reach.holdsItsPictures();
+    }
+
+    /**
+     * Whether every line of a paragraph with no break written is as deep as its runs and mark
+     * reach, to {@link #EPSILON}.
+     */
+    private static boolean asDeepAsItReaches(CTP paragraph, double[] lineDepths, Reach reach) {
+        if (lineDepths == null || lineDepths.length == 0) {
+            return false;
+        }
+        try (XmlCursor cursor = paragraph.newCursor()) {
+            cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' "
+                              + "./w:r/w:br | ./w:hyperlink/w:r/w:br");
+            if (cursor.toNextSelection()) {
+                return false;
+            }
+        }
+        for (double depth : lineDepths) {
+            if (!(Math.abs(depth - reach.below()) <= EPSILON)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * How deep below its baseline Word sets a line of the page's runs: its deepest run's descent as
+     * written ({@link #depthOf}), in points.
+     *
+     * <p>The page sets a line its tallest run's descent deep, and Word its deepest run's: a line
+     * whose tallest run is not its deepest, as a small run of a deep face beside a taller one of a
+     * shallow face, stands at two depths, and is not read.</p>
+     *
+     * @param runs the page's runs of text in the line
+     * @return the depth; NaN where its tallest run is not its deepest, a run's face is not read, or
+     *         the line holds no run
+     */
+    double depthOfLine(java.util.List<com.demcha.compose.document.layout.payloads.ParagraphTextSpan> runs) {
+        com.demcha.compose.document.layout.payloads.ParagraphTextSpan tallest = null;
+        // NaN, a run not read, carries through.
+        double deepest = Double.NEGATIVE_INFINITY;
+        for (com.demcha.compose.document.layout.payloads.ParagraphTextSpan run : runs) {
+            if (tallest == null || run.height() > tallest.height()) {
+                tallest = run;
+            }
+            deepest = Math.max(deepest, depthOf(run.textStyle()));
+        }
+        return tallest != null && Math.abs(depthOf(tallest.textStyle()) - deepest) <= EPSILON ? deepest : Double.NaN;
+    }
+
+    /**
+     * How deep below its baseline Word sets a run the page sets in {@code style}.
+     *
+     * @param style the style the page sets the run in
+     * @return its face's descent at the size it is written at, to the half point, in points; NaN
+     *         where the document does not ship that face, or the face has no line
+     *         ({@link DocxNaturalLine})
+     */
+    double depthOf(com.demcha.compose.engine.components.content.text.TextStyle style) {
+        com.demcha.compose.engine.components.content.text.TextDecoration decoration = style.decoration();
+        boolean bold = decoration == com.demcha.compose.engine.components.content.text.TextDecoration.BOLD
+                       || decoration == com.demcha.compose.engine.components.content.text.TextDecoration.BOLD_ITALIC;
+        boolean italic = decoration == com.demcha.compose.engine.components.content.text.TextDecoration.ITALIC
+                         || decoration == com.demcha.compose.engine.components.content.text.TextDecoration.BOLD_ITALIC;
+        DocxNaturalLine line = faces.of(style.fontName(), slotOf(bold, italic));
+        return line == null ? Double.NaN
+                : line.descent() * Math.round(style.size() * HALF_POINTS_PER_POINT) / HALF_POINTS_PER_POINT;
+    }
+
+    /** The font table's element for the face of a family a run in that weight and slant is set in. */
+    private static String slotOf(boolean bold, boolean italic) {
+        return bold ? italic ? "embedBoldItalic" : "embedBold" : italic ? "embedItalic" : "embedRegular";
     }
 
     /**
@@ -379,9 +474,7 @@ final class DocxGrownLines {
             return null;
         }
         // The Normal style states a face and a size, and never a weight or a slant.
-        boolean bold = Boolean.TRUE.equals(run.bold());
-        boolean italic = Boolean.TRUE.equals(run.italic());
-        String slot = bold ? italic ? "embedBoldItalic" : "embedBold" : italic ? "embedItalic" : "embedRegular";
+        String slot = slotOf(Boolean.TRUE.equals(run.bold()), Boolean.TRUE.equals(run.italic()));
         DocxNaturalLine line = run.family() != null ? faces.of(run.family(), slot)
                 : defaults != null ? faces.of(defaults.fontName(), slot) : null;
         double size = run.halfPoints() > 0 ? run.halfPoints() / HALF_POINTS_PER_POINT

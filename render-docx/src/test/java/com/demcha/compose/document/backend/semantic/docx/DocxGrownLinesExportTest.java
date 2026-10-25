@@ -103,16 +103,68 @@ class DocxGrownLinesExportTest {
     }
 
     @Test
-    void runsOfDifferentDepthsAreWrittenExact() throws Exception {
-        // Word stands each least line's text its own deepest run's descent above its foot: an 8pt
-        // run's line and a 7.5pt one's would stand their text at two depths.
+    void runsOfDifferentDepthsGrowWhereEveryLineIsAsDeepAsTheDeepest() throws Exception {
+        // Word stands each least line's text its own deepest run's descent above its foot, and the
+        // page its tallest run's: an 8pt bold run beside 7.5pt ones in every line stands every line
+        // where the page does; a line of the 7.5pt runs alone stands its text at another depth.
         DocumentTextStyle bold = DocumentTextStyle.builder().fontName(FontName.LATO).size(8)
                 .decoration(DocumentTextDecoration.BOLD).build();
-        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.inlineText("LayoutLint ", bold).inlineText("flags fragile patterns",
-                        face(FontName.LATO, 7.5)).lineSpacing(1)))) {
-            assertThat(spacing(paragraph(document, "LayoutLint")).getLineRule()).isEqualTo(STLineSpacingRule.EXACT);
+        DocumentTextStyle light = face(FontName.LATO, 7.5);
+        String boldWords = "Bold words long enough to wrap onto a second line in a column a hundred and sixty points wide";
+        String lightWords = "light words long enough to wrap onto a second line in a column a hundred and sixty points wide";
+        try (com.demcha.compose.document.api.DocumentSession session = com.demcha.compose.GraphCompose.document()
+                .pageSize(200, 600).margin(DocumentInsets.of(20)).create()) {
+            session.pageFlow(page -> page
+                    .addParagraph(p -> p.inlineText("LayoutLint ", bold).inlineText("flags", light).lineSpacing(0.5))
+                    .addParagraph(p -> p.inlineText(boldWords + " ", bold).inlineText("and light", light)
+                            .lineSpacing(0.5))
+                    .addParagraph(p -> p.inlineText("Docx ", bold).inlineText(lightWords, light).lineSpacing(0.5))
+                    .addParagraph(p -> p.inlineText("Graph ", bold).inlineText("lays out\n", light)
+                            .inlineText("Compose ", bold).inlineText("renders", light).lineSpacing(0.5))
+                    // A prefix the page sets as a run of the paragraph's style before the later
+                    // lines, written as an indent: those lines hold the light runs alone in Word.
+                    .addParagraph(p -> p.textStyle(bold).bulletOffset("    ")
+                            .indentStrategy(com.demcha.compose.document.style.DocumentTextIndent.FROM_SECOND_LINE)
+                            .inlineText("Prefixed ", bold).inlineText(lightWords, light).lineSpacing(0.5)));
+            try (XWPFDocument document = new XWPFDocument(
+                    new java.io.ByteArrayInputStream(session.export(new DocxSemanticBackend())))) {
+                XWPFParagraph oneLine = paragraph(document, "LayoutLint");
+                XWPFParagraph everyLineBold = paragraph(document, "Bold words");
+                XWPFParagraph lightLinesAlone = paragraph(document, "Docx");
+                XWPFParagraph broken = paragraph(document, "Graph");
+                XWPFParagraph prefixed = paragraph(document, "Prefixed");
+
+                assertThat(linesOf(session, "Bold words")).as("the premise: wrapped").isGreaterThan(1);
+                assertThat(linesOf(session, "Docx")).as("the premise: wrapped").isGreaterThan(1);
+                assertThat(linesOf(session, "Prefixed")).as("the premise: wrapped").isGreaterThan(1);
+                assertThat(spacing(oneLine).getLineRule()).as("one line").isEqualTo(STLineSpacingRule.AT_LEAST);
+                assertThat(positions(oneLine)).containsOnly(0L);
+                assertThat(spacing(everyLineBold).getLineRule()).as("wrapped, every line with a bold run")
+                        .isEqualTo(STLineSpacingRule.AT_LEAST);
+                assertThat(positions(everyLineBold)).containsOnly(0L);
+                assertThat(spacing(lightLinesAlone).getLineRule()).as("wrapped, later lines of the light runs alone")
+                        .isEqualTo(STLineSpacingRule.EXACT);
+                assertThat(broken.getCTP().xmlText()).as("the premise: a break written in a run").contains("w:br");
+                assertThat(spacing(broken).getLineRule()).as("a break the page may set on the line it ends")
+                        .isEqualTo(STLineSpacingRule.EXACT);
+                assertThat(spacing(prefixed).getLineRule()).as("a prefix the export writes as an indent")
+                        .isEqualTo(STLineSpacingRule.EXACT);
+            }
         }
+    }
+
+    /** How many lines the session laid out the paragraph starting {@code text} on. */
+    private static int linesOf(com.demcha.compose.document.api.DocumentSession session, String text) throws Exception {
+        return session.layoutGraph().fragments().stream()
+                .map(com.demcha.compose.document.layout.PlacedFragment::payload)
+                .filter(com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload.class::isInstance)
+                .map(payload -> ((com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload) payload).lines())
+                .filter(lines -> lines.get(0).spans().stream()
+                        .filter(com.demcha.compose.document.layout.payloads.ParagraphTextSpan.class::isInstance)
+                        .map(span -> ((com.demcha.compose.document.layout.payloads.ParagraphTextSpan) span).text())
+                        .reduce("", String::concat).strip().startsWith(text))
+                .mapToInt(List::size)
+                .sum();
     }
 
     @Test

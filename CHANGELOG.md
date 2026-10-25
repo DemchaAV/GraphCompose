@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export breaks a page inside a section or a panel of a panel where the page does.**
+  - Word breaks no page inside a table cell (measured in Word and LibreOffice 24.2: a run's page
+    break and a paragraph's break before it, in a table of the body or one nested in a cell, left
+    what follows on the same page). A panel was cut into two tables at a page break among its own
+    children only; one in a section or a panel inside it was written after the panel's table, so
+    the panel's text after the break stood on the page before, in the panel, and the page broke
+    after it.
+  - The panel's table is now cut at a page break among the children of any section or panel its
+    cell writes them in, at any depth, each table holding its part of every one the break runs
+    through: a section's top edge where it starts and its bottom edge where it ends, a panel's top
+    padding in its first table. A cut section's anchor marks where it starts, and its notes are
+    said once.
+  - The page goes on with a panel a break runs through at the top of the next page, with no
+    padding above its text there, its own or that of any panel round it: a table after the first
+    has none now, where it had the panel's top padding, the text 8pt lower in Word for a card
+    padded 8pt. What follows a break stands its container's spacing below that top.
+  - No document of the corpus has a page break inside a panel; its export is unchanged.
+
 - **A DOCX export's lines of runs of several depths grow with their text where every line is as
   deep as the deepest.**
   - A paragraph whose runs reach to different depths below the baseline — a bold title beside

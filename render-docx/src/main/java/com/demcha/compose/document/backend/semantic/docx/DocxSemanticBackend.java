@@ -9529,7 +9529,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 ? writtenTwips(spacing.getLine()) : null;
         java.util.Optional<com.demcha.compose.document.layout.payloads.ParagraphLine> laid = layout.firstLine(above);
         // The letters' reach off their own baseline, before any seat: the position written on
-        // the runs below carries the seat, as far as it was written.
+        // the runs below carries the seat, as far as it was written. A line holding a picture has
+        // none (DocxInk), and is not shortened: the picture would be cut where the letters are not.
         double[] ink = laid.isEmpty() ? null : DocxInk.of(laid.get(), measuredFonts());
         if (line == null || ink == null || spacing.isSetAfter()) {
             return 0;
@@ -13160,8 +13161,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         // The position is moved as before where the whole shift called for it, whatever the space
         // above took off it: a line 0.6pt low with 0.2pt above it is left a tenth off by its
-        // position, not four tenths.
-        boolean moved = Math.abs(shift) >= LEAST_BASELINE_SHIFT_POINTS || cutToFit;
+        // position, not four tenths. Not a least line's: Word does not move its text by a
+        // position, and LibreOffice moves it and grows the line (DocxGrownLines).
+        boolean least = para.getCTP().getPPr().getSpacing().getLineRule() == STLineSpacingRule.AT_LEAST;
+        boolean moved = !least && (Math.abs(shift) >= LEAST_BASELINE_SHIFT_POINTS || cutToFit);
         if (ownsItsLine && !cutToFit) {
             // Under half a point the position moves nothing, so the cell's padding may.
             shift -= raiseIntoTheSpaceAbove(para, staysOnItsPage, para.getCTP().getPPr().getSpacing(), shift, !moved);
@@ -13608,7 +13611,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Lets a line hold the pictures in it (see {@link PictureReach}).
      *
-     * <p>A paragraph whose pictures stay within its text keeps its exact height. One holding a
+     * <p>A paragraph whose pictures stay within its text keeps its exact height here; it is
+     * written at a least height where they stay within it in both editors and Word then stands
+     * its text within a quarter point of the page's ({@link #letTheLinesGrow},
+     * {@link DocxGrownLines.Reach#holdsItsPictures}). One holding a
      * picture that rises above the text is written with its lines <em>at least</em> the
      * height the picture reaches where Word puts it instead: the editor then grows the line to
      * the picture rather

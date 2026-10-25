@@ -195,7 +195,8 @@ class DocxComposedListTest {
             XWPFParagraph inTheFlow = flow.getParagraphs().stream()
                     .filter(paragraph -> paragraph.getText().contains("Setup")).findFirst().orElseThrow();
 
-            assertThat(spacing(composed).getLineRule()).hasToString("exact");
+            assertThat(spacing(composed).getLineRule()).as("its marker within its text in both editors")
+                    .hasToString("atLeast").hasToString(spacing(inTheFlow).getLineRule().toString());
             assertThat(line(composed)).as("as in the flow").isEqualTo(line(inTheFlow));
         }
     }

@@ -8,6 +8,34 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's lines holding a picture within their text grow with it.**
+  - A line holding a picture set in it, an icon or a drawn bullet beside its words, was written at
+    an exact height, which Word keeps whatever its text holds.
+  - Word lowers such a picture by its run's position, in a least line too; LibreOffice stands it a
+    tenth of a point above the baseline, whatever the position; and a picture run's own size sets
+    none of the line (measured in Word and LibreOffice 24.2: a 9pt icon lowered 1.5pt beside 8pt
+    Lato left a 9.95pt least line as tall in Word, and grew it to 10.75pt in LibreOffice).
+  - A line whose pictures stay within its text's own line where either editor stands them — no
+    higher than its text, its faces' line gap included, no lower than its text's descent — is now
+    written at a least height where its text alone would be, and stands its text there. A least
+    line is given no position to seat its text, which Word does not move it by. One whose
+    picture rises past its text in either editor, as `CharcoalGold`'s contact icons do in
+    LibreOffice, is written as before, and so are pictures in a paragraph of broken lines or among
+    spaces alone, a rating's dots.
+  - The corpus writes 92 more paragraphs at a least height, in seven documents. In Word, two
+    points more on `Normal` leaves 1005 of the 1832 paragraphs it grows on lines shorter than 1.1
+    times their letters, from 1041, and 14 documents pass, from 13.
+  - Of the seven documents' lines, 16 stand nearer the page in LibreOffice 24.2 and 9 further, of
+    880; in Word 9 nearer and 55 further, of 882. The step from a line to the next differs from the
+    page's by more than 0.2pt for 34 of 489 steps in LibreOffice, from 36, and 29 of 472 in Word,
+    from 31.
+  - Where such a line is taller than its text, the gap between lines written into it, and the
+    space above it does not take the difference, its text stands lower than as an exact line:
+    `TealPulse`'s duties 0.24pt lower in Word, inside the quarter point a least line is held to
+    there, and its skills 0.3pt lower in LibreOffice. `ConsultingInvoice`'s line items, whose
+    description now seats its row's lift differently, stand one step of Word's 0.12pt line grid
+    lower there and where they stood in LibreOffice.
+
 - **A DOCX export's table text cells grow with their text where they are as tall as their faces' own.**
   - A table's text cell was written at an exact line, which Word keeps whatever its text holds, and
     its row's margins, its lines' heights or its text's position moved it onto the page's baseline.
@@ -35,7 +63,8 @@ follow semantic versioning; release dates are ISO 8601.
     the faces' own tables: the tallest run's reach above the baseline and the deepest run's below,
     the paragraph's mark among them. It is so where the runs are set in faces the document ships,
     all the same depth below the baseline, left to right, none raised or a script, no picture in
-    the line, and the paragraph is seated on its baseline, not a Word list's item.
+    the line past its text (see above), and the paragraph is seated on its baseline, not a Word
+    list's item.
   - Word and LibreOffice keep a least line's spare above its text and stand its baseline the
     runs' descent above its foot (measured on the templates' faces, Word and LibreOffice 24.2, to
     0.15pt). That is where the page sets it, so such a line needs no position to stand there; it

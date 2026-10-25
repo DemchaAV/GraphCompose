@@ -119,7 +119,7 @@ class DocxGrownLinesTest {
         run(inline, "Lato", 7.5);
 
         assertThat(lines.reachOf(paragraph.getCTP()).below()).isCloseTo(LATO_DOWN * 7.5, within(0.01));
-        assertThat(lines.reachOf(inline.getCTP())).as("a picture set in the line").isNull();
+        assertThat(lines.reachOf(inline.getCTP())).as("a picture set in the line, its size not written").isNull();
     }
 
     @Test
@@ -141,7 +141,7 @@ class DocxGrownLinesTest {
         run(listed, "Lato", 10);
         listed.getCTP().addNewPPr().addNewNumPr();
 
-        assertThat(lines.reachOf(picture.getCTP())).as("a picture").isNull();
+        assertThat(lines.reachOf(picture.getCTP())).as("a drawing in a run of text").isNull();
         assertThat(lines.reachOf(raised.getCTP())).as("a raise, which a least line does not keep").isNull();
         assertThat(lines.reachOf(script.getCTP())).as("a script").isNull();
         assertThat(lines.reachOf(rightToLeft.getCTP())).as("right to left, in its complex-script face").isNull();
@@ -182,6 +182,99 @@ class DocxGrownLinesTest {
         assertThat(lines.lineOf(grown.getCTP()).height()).as("grown to its runs' own").isCloseTo(12, within(0.01));
         assertThat(lines.lineOf(grown.getCTP()).baseline()).isCloseTo(LATO_UP * 10, within(0.01));
         assertThat(lines.lineOf(auto.getCTP())).as("the editor's own measure").isNull();
+    }
+
+    @Test
+    void aLineMayGrowOnlyWhereItsPicturesStayWithinItsTextInBothEditors() throws Exception {
+        // A 12pt line of 10pt Lato leaves 9.87pt above the text's 2.13pt descent. Word lowers a
+        // picture by its run's position; LibreOffice stands it a tenth of a point above the baseline.
+        DocxGrownLines lines = shipping(LATO, LATO);
+        XWPFParagraph small = lato(240, 10);
+        picture(small, 6, 0, 0);
+        XWPFParagraph lowered = lato(240, 10);
+        picture(lowered, 9, -3, 0);
+        XWPFParagraph tall = lato(240, 10);
+        picture(tall, 9.8, 0, 0);
+        XWPFParagraph deep = lato(240, 10);
+        picture(deep, 6, -6, 0);
+        XWPFParagraph ownSize = lato(240, 10);
+        picture(ownSize, 6, 0, 48);
+        XWPFParagraph broken = lato(240, 10);
+        broken.getRuns().get(0).addBreak();
+        picture(broken, 6, 0, 0);
+        XWPFParagraph spaced = lato(240, 10);
+        spaced.getRuns().get(0).setText("    ", 0);
+        picture(spaced, 6, 0, 0);
+        XWPFParagraph unbroken = lato(240, 10);
+        unbroken.getRuns().get(0).setText("   ", 0);
+        picture(unbroken, 6, 0, 0);
+        XWPFParagraph raised = lato(240, 10);
+        picture(raised, 6, 8, 0);
+
+        assertThat(lines.mayGrow(small.getCTP())).as("on the baseline, under the text's top").isTrue();
+        assertThat(lines.mayGrow(lowered.getCTP())).as("Word's 7.5pt up and 1.5pt down, LibreOffice's 9.1pt up")
+                .isTrue();
+        assertThat(lines.mayGrow(tall.getCTP())).as("9.9pt up in LibreOffice").isFalse();
+        assertThat(lines.mayGrow(deep.getCTP())).as("3pt down in Word, past the text's descent").isFalse();
+        assertThat(lines.mayGrow(ownSize.getCTP())).as("the picture run's 24pt sets none of the line").isTrue();
+        assertThat(lines.reachOf(broken.getCTP())).as("a broken line may hold the picture alone").isNull();
+        assertThat(lines.reachOf(spaced.getCTP())).as("pictures among spaces, no letter").isNull();
+        assertThat(lines.reachOf(unbroken.getCTP())).as("among no-break spaces").isNull();
+        assertThat(lines.mayGrow(raised.getCTP())).as("raised 4pt, 10pt up in Word; 6.1pt in LibreOffice").isFalse();
+        assertThat(lines.reachOf(small.getCTP()).height()).as("the text's line").isCloseTo(12, within(0.01));
+
+        XWPFParagraph grownToItsPicture = lato(200, 10);
+        picture(grownToItsPicture, 6, 0, 0);
+        // Written 14pt for a 9pt picture raised 2pt, 11pt up in Word: taller than the text's own
+        // line, the line holds it, but its text's own line does not.
+        XWPFParagraph grownToARaise = lato(280, 10);
+        picture(grownToARaise, 9, 4, 0);
+        rule(small, STLineSpacingRule.AT_LEAST);
+        rule(tall, STLineSpacingRule.AT_LEAST);
+        rule(grownToItsPicture, STLineSpacingRule.AT_LEAST);
+        rule(grownToARaise, STLineSpacingRule.AT_LEAST);
+        assertThat(lines.lineOf(small.getCTP()).baseline()).isCloseTo(12 - LATO_DOWN * 10, within(0.01));
+        assertThat(lines.lineOf(tall.getCTP())).as("set apart by the two editors").isNull();
+        assertThat(lines.lineOf(grownToItsPicture.getCTP())).as("written shorter than its text's own line")
+                .isNull();
+        assertThat(lines.lineOf(grownToARaise.getCTP())).as("grown to a raised picture").isNull();
+    }
+
+    @Test
+    void aPictureRunHoldingAnythingButPicturesOfAWrittenSizeIsNotRead() throws Exception {
+        DocxGrownLines lines = shipping(LATO, LATO);
+        XWPFParagraph anchoredBeside = lato(240, 10);
+        var drawing = anchoredBeside.createRun().getCTR().addNewDrawing();
+        drawing.addNewAnchor();
+        var extent = drawing.addNewInline().addNewExtent();
+        extent.setCx(76200);
+        extent.setCy(76200);
+        XWPFParagraph measured = lato(240, 10);
+        picture(measured, 6, 0, 0);
+        measured.getCTP().getRList().get(1).addNewRPr().addNewPosition().setVal("2pt");
+
+        assertThat(lines.reachOf(anchoredBeside.getCTP())).as("an anchor beside the picture").isNull();
+        assertThat(lines.reachOf(measured.getCTP())).as("a position in points, not half points").isNull();
+    }
+
+    /**
+     * Adds a run holding a picture {@code points} tall set in the line, its run's position
+     * {@code position} half points and, where not 0, its size {@code halfPoints}.
+     */
+    private static void picture(XWPFParagraph paragraph, double points, int position, int halfPoints) {
+        var run = paragraph.createRun().getCTR();
+        if (position != 0 || halfPoints != 0) {
+            var properties = run.addNewRPr();
+            if (position != 0) {
+                properties.addNewPosition().setVal(BigInteger.valueOf(position));
+            }
+            if (halfPoints != 0) {
+                properties.addNewSz().setVal(BigInteger.valueOf(halfPoints));
+            }
+        }
+        var extent = run.addNewDrawing().addNewInline().addNewExtent();
+        extent.setCx(Math.round(points * 12700));
+        extent.setCy(Math.round(points * 12700));
     }
 
     /**

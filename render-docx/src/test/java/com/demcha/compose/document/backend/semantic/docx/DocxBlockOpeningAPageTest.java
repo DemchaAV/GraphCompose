@@ -385,8 +385,8 @@ class DocxBlockOpeningAPageTest {
     @Test
     void aRowWhoseGapCarriesToANewPageHoldsTheGap() throws Exception {
         // 157pt leave 3, less than the gap: the layout starts the row 4pt below the second page's
-        // margin. MeteredInvoice's closing row, the gap above it carried so, stood 12.4pt high in Word
-        // and LibreOffice.
+        // margin. MeteredInvoice's closing row, its 12.4pt gap carried so, stood 13.0pt high in Word
+        // and 12.8pt in LibreOffice.
         Consumer<PageFlowBuilder> content = gapCarried(0, row(0));
         assertOpensTheSecondPage(content, "Block");
         try (XWPFDocument document = export(content)) {

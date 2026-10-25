@@ -15576,7 +15576,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * paragraph ({@link #holdAParagraphsTopEdgeOnItsPage}). {@code MeteredInvoice} with its line
      * items repeated nine times opens its fourth page with its closing row 12.4pt below the margin,
      * the gap above it, which did not fit in the 9.2pt left at the foot of the third. Left on the page
-     * above, the row and everything under it stood 12.4pt high in Word and LibreOffice (measured).
+     * above, the row and everything under it stood 13.0pt high in Word and 12.8pt in LibreOffice
+     * (measured).
      * The part carried is what the page holds above the block past its own top margin, the edges
      * of the containers opening with it and a layer's offset down its stack of one layer, which is
      * named, not written; the space below the block above stays on that page. A block the layout

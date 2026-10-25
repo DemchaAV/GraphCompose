@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.within;
  * footer divider, 13pt below the margin. Word set the cards on the fifth page with the divider,
  * 17 lines low, and both editors set the fifth page 13pt high. {@code MeteredInvoice} with its
  * line items repeated nine times opens its fourth page with its closing row 12.4pt below the
- * margin, the gap above it carried there; both editors set that page 12.4pt high.</p>
+ * margin, the gap above it carried there; Word set that page 13.0pt high and LibreOffice 12.8pt.</p>
  */
 class InvoiceNaturalPageBreakDocxTest {
 

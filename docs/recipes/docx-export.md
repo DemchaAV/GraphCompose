@@ -749,10 +749,13 @@ How it lands:
   and 12pt). The page breaks are fixed there, and the report names the cut; a part after a cut
   stands about its top border's width lower than the page sets it, Word and LibreOffice drawing
   the border inside the row where the page strokes it on the panel's edge (1.1pt under a 1pt
-  border, 2.8pt under `SubscriptionInvoice`'s ruled top). A table is not cut at a page whose
-  first row continues a merged cell, nor where a row from that one on holds a field or its header
-  rows hold a bookmark, a drawing, a numbered item or a field; the report names a page so left
-  whole. Anything else the layout moves or breaks over
+  border, 2.8pt under `SubscriptionInvoice`'s ruled top). A panel is not cut where the page it
+  runs onto starts outside its table, where that page's first row continues a merged cell or a row
+  from it on holds a field, where the table's header rows hold a bookmark — an anchored card's —,
+  a drawing, a numbered item or a field, nor where the page above sets the panel's rows nearer its
+  foot than the borders Word sets inside the part there take, and a point for the editor's lines,
+  where Word would set the last row on a page of its own; the report names each such page, and a
+  panel cut at no page as written whole. Anything else the layout moves or breaks over
   a page inside a panel — a block kept together, a stack, a paragraph — is left to Word, a block
   kept named as above.
 - **Measured.** Cards stacked in a row's columns, panels nested in its table, and a card set in

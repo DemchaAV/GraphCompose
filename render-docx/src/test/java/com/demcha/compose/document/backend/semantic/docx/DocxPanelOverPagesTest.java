@@ -51,7 +51,7 @@ class DocxPanelOverPagesTest {
 
     private static final DocumentColor SURFACE = DocumentColor.rgb(238, 243, 249);
     private static final DocumentColor INK = DocumentColor.rgb(26, 86, 148);
-    private static final String CUT = "written as a table a page";
+    private static final String NOTE = "the layout breaks it over pages inside its table";
 
     @Test
     void aPanelWhoseTableRunsOverAPageIsATableAPageCutAtTheRowsThePagesStartWith() throws Exception {
@@ -136,8 +136,8 @@ class DocxPanelOverPagesTest {
 
     @Test
     void aPageWhoseRowsHoldAFieldIsLeftWholeAndTheNextOneIsStillCut() throws Exception {
-        // A page reference in a row on page 2: the table is not split where page 2 starts, a
-        // field's copy being one the export does not settle, and is where page 3 does.
+        // A page reference in a row on page 2: the table is not split where a row from page 2's
+        // first on holds a field, as a section's split of a table is not, and is where page 3 starts.
         Exported exported = export(page -> page.addSection(card -> card.fillColor(SURFACE)
                 .stroke(DocumentStroke.of(INK, 1)).padding(DocumentInsets.of(6))
                 .addParagraph(p -> p.text("Heading").anchor("top"))
@@ -156,7 +156,82 @@ class DocxPanelOverPagesTest {
         assertThat(exported.pages().get(1)).as("the premise: row 15 on page 2").contains("Row 15");
         assertThat(parts(exported.document())).hasSize(2);
         assertThat(cutNote(exported.report())).contains("cut at the row page 3 starts with")
-                .contains("page 2, whose first row its table cannot be split at, is left to Word");
+                .contains("it is not cut where page 2 starts, at a row its table cannot be split at");
+    }
+
+    @Test
+    void aCardThatCannotBeCutAtAnyPageIsNamedAsWrittenWhole() throws Exception {
+        // An anchored card's bookmark opens in its table's header row, which a part's copy would
+        // hold again: the table is split nowhere.
+        Exported exported = export(page -> page.addSection(card -> card.anchor("items").fillColor(SURFACE)
+                .stroke(DocumentStroke.of(INK, 1)).padding(DocumentInsets.of(6))
+                .addTable(table -> rows(table, 20, true))));
+
+        assertThat(exported.pages()).as("the premise: the card runs onto a second page").hasSize(2);
+        assertThat(exported.document().getParagraphs()).noneMatch(XWPFParagraph::isPageBreak);
+        assertThat(cutNote(exported.report())).contains("written as one table")
+                .contains("it is not cut where page 2 starts, at a row its table cannot be split at")
+                .doesNotContain("page breaks fixed");
+    }
+
+    @Test
+    void aPageTheCardStartsOutsideItsTableIsNamedAndTheTableStillCut() throws Exception {
+        // A heading and a gap fill page 1: the table starts on page 2 and runs onto page 3.
+        Exported exported = export(card(20, true, above -> above.addParagraph("Heading")
+                .addSpacer(spacer -> spacer.height(225)), null));
+
+        assertThat(exported.cardPages()).as("the premise: the card runs over three pages").isEqualTo(3);
+        assertThat(exported.pages().get(0)).as("the premise: no row of the table on page 1").containsExactly("Item");
+        assertThat(parts(exported.document())).hasSize(2);
+        assertThat(cutNote(exported.report())).contains("it is not cut where page 2 starts, outside its table");
+    }
+
+    @Test
+    void aPageAboveWhichTheRowsEndTooNearTheFootIsNotCut() throws Exception {
+        // Word sets the part's bottom border inside its row: where the page's last row on page 1
+        // leaves less room than that above the foot, Word would set that row on a page of its own.
+        double gap = gapLeavingTheLastRowNearTheFoot();
+        Exported exported = export(page -> {
+            page.addSpacer(spacer -> spacer.height(gap));
+            card(20, true, null, null).accept(page);
+        });
+
+        assertThat(parts(exported.document())).as("not cut where page 2 starts").hasSize(1);
+        assertThat(cutNote(exported.report())).contains("it is not cut where page 2 starts, the page above setting "
+                                                         + "its rows too near its foot");
+    }
+
+    @Test
+    void aTableDeeperThanThePanelsOwnChildrenIsNotCut() throws Exception {
+        Exported exported = export(page -> page.addSection(card -> card.fillColor(SURFACE)
+                .stroke(DocumentStroke.of(INK, 1)).padding(DocumentInsets.of(6))
+                .addSection(inner -> inner.addTable(table -> rows(table, 20, true)))));
+
+        assertThat(exported.cardPages()).as("the premise: the card runs onto a second page").isEqualTo(2);
+        assertThat(exported.document().getParagraphs()).noneMatch(XWPFParagraph::isPageBreak);
+        assertThat(exported.report().notes()).noneMatch(note -> note.detail().contains(NOTE));
+    }
+
+    /**
+     * A gap above the card that leaves its table's last row on page 1 less than its 1pt bottom
+     * border and a point above the page's foot, found by laying the page out.
+     */
+    private static double gapLeavingTheLastRowNearTheFoot() {
+        for (double gap = 0; gap < 40; gap += 0.25) {
+            double height = gap;
+            try (DocumentSession session = session(page -> {
+                page.addSpacer(spacer -> spacer.height(height));
+                card(20, true, null, null).accept(page);
+            })) {
+                DocxLayoutMetrics layout = DocxLayoutMetrics.of(session.documentGraph(), session.layoutGraph());
+                TableNode table = first(session.documentGraph().roots(), TableNode.class);
+                double room = layout.lowestRowOn(table, 0) - layout.marginOf(0).bottom();
+                if (room < 1.5 && layout.placement(table).endPage() == 1) {
+                    return gap;
+                }
+            }
+        }
+        throw new AssertionError("no gap leaves the last row near the foot");
     }
 
     @Test
@@ -181,7 +256,7 @@ class DocxPanelOverPagesTest {
 
         assertThat(exported.pages()).hasSize(1);
         assertThat(parts(exported.document())).hasSize(1);
-        assertThat(exported.report().notes()).noneMatch(note -> note.detail().contains(CUT));
+        assertThat(exported.report().notes()).noneMatch(note -> note.detail().contains(NOTE));
     }
 
     @Test
@@ -207,7 +282,7 @@ class DocxPanelOverPagesTest {
 
         assertThat(exported.cardPages()).as("the premise: the card runs over pages").isGreaterThan(2);
         assertThat(parts(exported.document())).hasSize(1);
-        assertThat(exported.report().notes()).noneMatch(note -> note.detail().contains(CUT));
+        assertThat(exported.report().notes()).noneMatch(note -> note.detail().contains(NOTE));
     }
 
     @Test
@@ -308,7 +383,7 @@ class DocxPanelOverPagesTest {
     }
 
     private static String cutNote(DocxExportReport report) {
-        return report.notes().stream().filter(note -> note.detail().contains(CUT)).findFirst().orElseThrow().detail();
+        return report.notes().stream().filter(note -> note.detail().contains(NOTE)).findFirst().orElseThrow().detail();
     }
 
     /** The panel's tables in the body, those that hold a table in their one cell. */

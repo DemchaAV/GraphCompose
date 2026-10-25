@@ -26,9 +26,12 @@ follow semantic versioning; release dates are ISO 8601.
     as Word and LibreOffice draw the border inside the row: 1.1pt under a 1pt border, 2.8pt under
     `SubscriptionInvoice`'s ruled top.
   - The page breaks are fixed there, so rows an edit adds above a cut no longer run onto the next
-    page, and the report names the cut and any page left whole. Anything else the layout moves or
-    breaks over a page inside a panel — a block kept together, a stack, a paragraph — is left to
-    Word, as before.
+    page, and the report names the cut. A page is not cut, and is named, where the panel starts it
+    outside its table, where the table cannot be split at that row — its header rows holding an
+    anchored card's bookmark among them — or where the page above sets the rows too near its foot
+    for the borders Word sets inside the part; a panel cut at no page is named as written whole.
+    Anything else the layout moves or breaks over a page inside a panel — a block kept together, a
+    stack, a paragraph — is left to Word, as before.
   - No document of the corpus has such a panel; its export is unchanged.
 
 - **A DOCX export writes no page break where the page breaks none: in a row's column, a table's

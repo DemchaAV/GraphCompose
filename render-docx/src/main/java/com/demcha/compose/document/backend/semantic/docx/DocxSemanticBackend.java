@@ -7163,8 +7163,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * header missing, and over three one row stood a page early, in LibreOffice 24.2 too. Each part
      * after a cut opens with copies of the table's header rows and has no top padding, and each part
      * before one no bottom padding: the page sets the panel's last rows on a page down to its foot,
-     * and closes the panel only on its last page. A table that cannot be split at a page's row
-     * ({@link DocxTableSplit#rowStarting}) is left whole there.</p>
+     * and closes the panel only on its last page.</p>
+     *
+     * <p>A page is left to Word, and named: one the panel runs onto outside its table's pages; one
+     * whose first row the table cannot be split at ({@link DocxTableSplit#rowStarting}); and one
+     * whose page above ends the panel's rows nearer its foot than the borders Word sets inside the
+     * part there take, its bottom border and, where that part opens the page, its top border and
+     * the paragraph before it, and a point for the editor's lines: Word would set the last row on
+     * a page of its own, the part after it on the next.</p>
      *
      * <p>Done once the document is written — its drawings anchored, its page references settled —
      * so that a part's copy carries what the writing put in it. A panel's own section's layout
@@ -7173,21 +7179,37 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void cutThePanelsAtTheirPages(XWPFDocument document) {
         for (PanelOverPages over : panelsOverPages) {
             DocxLayoutMetrics itsLayout = over.layout();
+            com.demcha.compose.document.layout.PlacedNode panel = itsLayout.placement(over.panel());
             com.demcha.compose.document.layout.PlacedNode placed = itsLayout.placement(over.table());
+            DocumentBorders borders = paintOf(over.panel()).borders();
+            double top = strokeWidth(borders == null ? null : borders.top());
+            double bottom = strokeWidth(borders == null ? null : borders.bottom());
             XWPFTable piece = over.outer();
             XWPFTable inner = over.inner();
             boolean header = DocxTableSplit.headerRows(inner) > 0;
             // The table's rows the parts before the current one hold, after its header rows.
             int before = 0;
             List<Integer> cut = new ArrayList<>();
-            List<Integer> left = new ArrayList<>();
-            for (int page = placed.startPage() + 1; page <= placed.endPage(); page++) {
+            java.util.Map<Integer, String> left = new java.util.TreeMap<>();
+            for (int page = panel.startPage() + 1; page <= panel.endPage(); page++) {
+                if (page <= placed.startPage() || page > placed.endPage()) {
+                    left.put(page, "outside its table");
+                    continue;
+                }
                 int headerRows = DocxTableSplit.headerRows(inner);
                 int skipped = before;
                 int row = DocxTableSplit.rowStarting(inner, page,
                         index -> itsLayout.rowPage(over.table(), index < headerRows ? index : index + skipped));
                 if (row < 0) {
-                    left.add(page);
+                    left.put(page, "at a row its table cannot be split at");
+                    continue;
+                }
+                var margin = itsLayout.marginOf(page - 1);
+                double room = itsLayout.lowestRowOn(over.table(), page - 1) - (margin == null ? 0 : margin.bottom());
+                double needed = bottom + (cut.contains(page - 1) ? top + SEPARATOR_POINTS : 0) + ROOM_FOR_THE_LINES;
+                if (!(room >= needed)) {
+                    left.put(page, "the page above setting its rows too near its foot for the borders Word sets inside "
+                                   + "the part");
                     continue;
                 }
                 DocxTableSplit.PanelPart part = DocxTableSplit.splitInItsPanel(document, piece, inner, row);
@@ -7203,35 +7225,51 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 inner = next.getRow(0).getCell(0).getTables().get(0);
                 cut.add(page);
             }
-            if (!cut.isEmpty()) {
-                reportTheCut(over.panel(), itsLayout.pathOf(over.panel()), header, cut, left);
-            }
+            reportTheCut(over.panel(), itsLayout.pathOf(over.panel()), header, top, cut, left);
         }
     }
 
     /**
-     * Names a panel cut at its pages ({@link #cutThePanelsAtTheirPages}): the pages it is cut at,
-     * those it is not, its fixed page breaks, and the top border a part after a cut stands lower by.
+     * Room a part before a cut keeps under its page's last row for the editor's lines, in points,
+     * besides the borders it sets there: Word's lines stand within a few tenths of the page's by a
+     * page's foot (measured: within 0.33pt in cards padded 6 and 12pt, 0.72pt in
+     * {@code ObsidianInvoice}).
+     */
+    private static final double ROOM_FOR_THE_LINES = 1.0;
+
+    /**
+     * Names a panel the layout breaks over pages inside its table ({@link #cutThePanelsAtTheirPages}):
+     * the pages it is cut at, its fixed page breaks and the top border a part after a cut stands
+     * lower by, or that it is written whole; and each page left to Word, and why.
      *
      * @param header whether its table has header rows a part after a cut opens with
+     * @param top    the width of its top border, in points
      * @param cut    the pages, from 0, it is cut at
-     * @param left   the pages, from 0, it runs onto whole, its table not split there
+     * @param left   the pages, from 0, left to Word, each with why
      */
-    private void reportTheCut(DocumentNode panel, String path, boolean header, List<Integer> cut, List<Integer> left) {
-        DocumentBorders borders = paintOf(panel).borders();
-        double border = strokeWidth(borders == null ? null : borders.top());
-        report.add(DocxExportReport.Severity.APPROXIMATED, panel.nodeKind(), path,
-                "the layout breaks it over pages inside its table: written as a table a page, cut at the "
-                + (cut.size() == 1 ? "row " : "rows ") + pagesNamed(cut) + (cut.size() == 1 ? " starts" : " start")
-                + " with"
-                + (header ? ", the part after a cut opening with the table's header rows" : "")
-                + ", and its page breaks fixed there, so rows an edit adds above a cut no longer run onto the page "
-                + "after it"
-                + (left.isEmpty() ? "" : "; " + pagesNamed(left) + ", whose first row its table cannot be split at, "
-                                         + (left.size() == 1 ? "is" : "are") + " left to Word")
-                + (border < 0.1 ? "" : "; in Word a part after a cut stands about its top border's width, "
-                + pointsOf(border) + "pt, lower than the page sets it: Word sets what a cell holds the whole border "
-                + "inside the row, where the page strokes it on the panel's edge, at the page's top"));
+    private void reportTheCut(DocumentNode panel, String path, boolean header, double top, List<Integer> cut,
+                              java.util.Map<Integer, String> left) {
+        StringBuilder detail = new StringBuilder("the layout breaks it over pages inside its table: ");
+        if (cut.isEmpty()) {
+            detail.append("written as one table, whose row Word breaks where its lines run out, repeating no header "
+                          + "row of the table nested in its cell");
+        } else {
+            detail.append("written as a table a page, cut at the ").append(cut.size() == 1 ? "row " : "rows ")
+                    .append(pagesNamed(cut)).append(cut.size() == 1 ? " starts" : " start").append(" with")
+                    .append(header ? ", the part after a cut opening with the table's header rows" : "")
+                    .append(", and its page breaks fixed there, so rows an edit adds above a cut no longer run onto "
+                            + "the page after it");
+        }
+        java.util.Map<String, List<Integer>> why = new java.util.LinkedHashMap<>();
+        left.forEach((page, reason) -> why.computeIfAbsent(reason, key -> new ArrayList<>()).add(page));
+        why.forEach((reason, pages) -> detail.append("; it is not cut where ").append(pagesNamed(pages))
+                .append(pages.size() == 1 ? " starts, " : " start, ").append(reason));
+        if (!cut.isEmpty() && top >= 0.1) {
+            detail.append("; in Word a part after a cut stands about its top border's width, ").append(pointsOf(top))
+                    .append("pt, lower than the page sets it: Word sets what a cell holds the whole border inside the "
+                            + "row, where the page strokes it on the panel's edge, at the page's top");
+        }
+        report.add(DocxExportReport.Severity.APPROXIMATED, panel.nodeKind(), path, detail.toString());
     }
 
     /** Pages counted from 0, named as the page counts them: "page 2", "pages 2 and 3", "pages 2, 3 and 4". */

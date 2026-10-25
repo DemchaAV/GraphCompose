@@ -13608,7 +13608,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Lets a line hold the pictures in it (see {@link PictureReach}).
      *
-     * <p>A paragraph whose pictures stay within its text keeps its exact height. One holding a
+     * <p>A paragraph whose pictures stay within its text keeps its exact height here; it is
+     * written at a least height where they stay within it in both editors and Word then stands
+     * its text within a quarter point of the page's ({@link #letTheLinesGrow},
+     * {@link DocxGrownLines.Reach#holdsItsPictures}). One holding a
      * picture that rises above the text is written with its lines <em>at least</em> the
      * height the picture reaches where Word puts it instead: the editor then grows the line to
      * the picture rather

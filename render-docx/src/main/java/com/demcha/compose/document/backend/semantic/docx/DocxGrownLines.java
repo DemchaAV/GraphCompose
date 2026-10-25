@@ -27,9 +27,18 @@ import java.util.Set;
  *
  * <p>A text's position does not move it in a least line: Word, raising every run of a line, keeps
  * the text on the line's foot until it passes the line's top, and LibreOffice moves it and grows
- * the line. So only a paragraph whose runs hold no position, no picture set in the line and no raise
- * of their own is read — a shape anchored to it takes no room in the line, and is passed over; the
- * rest, and one set in a face the document does not ship, have no reach.</p>
+ * the line. So only a paragraph whose runs of text hold no position and no raise of their own is
+ * read — a shape anchored to it takes no room in the line, and is passed over; the rest, and one
+ * set in a face the document does not ship, have no reach.</p>
+ *
+ * <p>A picture set in the line counts by where each editor stands it: Word lowers it by its run's
+ * position, in a least line too, and LibreOffice stands it {@link #PICTURE_RISE} above the
+ * baseline, whatever the position; a picture run's own face sets none of the line. A least line's
+ * height is its runs' and pictures' reach, the tallest above the baseline and the deepest below
+ * (measured: a 9pt picture lowered 1.5pt beside 8pt Lato left a 9.95pt least line as tall in Word,
+ * and grew it to 10.75pt in LibreOffice). Only a line whose pictures stay within its text in both
+ * places — no higher than the room the line leaves above its text's descent, no lower than that
+ * descent — stands its text where it would without them (see {@link Reach#holdsItsPictures}).</p>
  *
  * @author Artem Demchyshyn
  */
@@ -57,6 +66,18 @@ final class DocxGrownLines {
     /** Half points in a point, as Word writes sizes. */
     private static final double HALF_POINTS_PER_POINT = 2;
     private static final double POINT_TO_TWIP = 20;
+    /** EMUs in a point, as a drawing's extent is written. */
+    private static final double EMU_PER_POINT = 12700;
+    /**
+     * How far above the baseline LibreOffice stands a picture set in a line, its run's position
+     * aside, in points (measured in LibreOffice 24.2: a tenth of a point beside 8pt and 10pt Lato,
+     * for pictures 6 to 11pt tall and lowered by 0 to 3pt). Word lowers it by the position. The
+     * export's own reckoning of a picture's reach stands LibreOffice's on the baseline
+     * (DocxSemanticBackend.PictureReach); the tenth counts here, in whether a least line holds it.
+     */
+    static final double PICTURE_RISE = 0.1;
+    /** What a run holding pictures set in the line may hold besides them. */
+    private static final Set<String> PICTURE_RUN_PARTS = Set.of("rPr", "drawing");
 
     private final DocxFontTable.ShippedLines faces;
     private final DocumentTextStyle defaults;
@@ -76,8 +97,11 @@ final class DocxGrownLines {
      * line, in points.
      *
      * @param paragraph the written paragraph
-     * @return the reach, or null where one of its runs is not read: a picture, a raise, a face the
-     *         document does not ship, a run Word sets right to left, or a marker Word draws itself
+     * @return the reach, its pictures' among it, or null where one of its runs is not read: a raise,
+     *         a face the document does not ship, a run Word sets right to left, a marker Word draws
+     *         itself, a picture whose size or run's position is not a number, or pictures in a
+     *         paragraph whose lines are broken, one of which may hold a picture alone, or that holds
+     *         no letter beside them
      */
     Reach reachOf(CTP paragraph) {
         CTPPr properties = paragraph.getPPr();
@@ -92,6 +116,10 @@ final class DocxGrownLines {
             return null;
         }
         boolean anyRun = false;
+        boolean broken = false;
+        boolean lettered = false;
+        double pictureTop = 0;
+        double pictureFoot = Double.NEGATIVE_INFINITY;
         try (XmlCursor cursor = paragraph.newCursor()) {
             cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' "
                               + "./w:r | ./w:hyperlink/w:r");
@@ -106,8 +134,25 @@ final class DocxGrownLines {
                     // least line as tall, in Word and in LibreOffice).
                     continue;
                 }
+                if (text.sizeOfDrawingArray() > 0 && holdsOnly(text, PICTURE_RUN_PARTS)) {
+                    // Its face sets none of the line either (measured: a 24pt picture run left an
+                    // 8pt least line as tall, in both editors).
+                    double[] pictures = picturesIn(text);
+                    if (pictures == null) {
+                        return null;
+                    }
+                    pictureTop = Math.max(pictureTop, pictures[0]);
+                    pictureFoot = Math.max(pictureFoot, pictures[1]);
+                    continue;
+                }
                 if (!holdsOnly(text, RUN_PARTS)) {
                     return null;
+                }
+                broken |= text.sizeOfBrArray() > 0;
+                for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText letter : text.getTList()) {
+                    // A no-break space is a space too.
+                    lettered |= letter.getStringValue() != null && letter.getStringValue().codePoints()
+                            .anyMatch(c -> !Character.isWhitespace(c) && !Character.isSpaceChar(c));
                 }
                 reach = reachOf(text.isSetRPr() ? text.getRPr() : null, reach);
                 if (reach == null) {
@@ -116,7 +161,55 @@ final class DocxGrownLines {
                 anyRun = true;
             }
         }
-        return anyRun ? reach : null;
+        // Pictures among spaces alone, a rating's dots, LibreOffice sets on a taller line (measured:
+        // 6.4pt dots between runs of spaces in 8pt Barlow, written at a least 9.7pt, stood the
+        // languages under them 0.56pt low there, and a point lower for each row of dots more).
+        boolean pictured = pictureFoot > Double.NEGATIVE_INFINITY;
+        // A line wrapped where the page wraps it may leave a picture alone on a line too; the
+        // corpus has none, and a break is where one is known.
+        if (!anyRun || pictured && (broken || !lettered)) {
+            return null;
+        }
+        return new Reach(reach.above(), reach.below(), reach.shallowest(), pictureTop, pictureFoot);
+    }
+
+    /**
+     * How high above the baseline a run's pictures set in the line reach, the higher of Word's and
+     * LibreOffice's places of them, and how far below it Word lowers them, in points; null where a
+     * drawing in it is not a picture of a written size set in the line.
+     */
+    private static double[] picturesIn(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run) {
+        double lowered = 0;
+        if (run.isSetRPr() && run.getRPr().sizeOfPositionArray() > 0) {
+            if (!(run.getRPr().getPositionArray(0).getVal() instanceof Number position)) {
+                return null;
+            }
+            lowered = -position.doubleValue() / HALF_POINTS_PER_POINT;
+        }
+        double top = 0;
+        for (org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTInline picture
+                : inlinesIn(run)) {
+            if (picture == null || picture.getExtent() == null) {
+                return null;
+            }
+            double height = picture.getExtent().getCy() / EMU_PER_POINT;
+            top = Math.max(top, Math.max(height - lowered, height + PICTURE_RISE));
+        }
+        return new double[]{top, lowered};
+    }
+
+    /** A run's drawings set in its line, one null for a drawing holding anything else. */
+    private static java.util.List<org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTInline> inlinesIn(
+            org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR run) {
+        java.util.List<org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTInline> inlines =
+                new java.util.ArrayList<>();
+        for (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing drawing : run.getDrawingList()) {
+            if (drawing.sizeOfAnchorArray() > 0 || drawing.sizeOfInlineArray() == 0) {
+                inlines.add(null);
+            }
+            inlines.addAll(drawing.getInlineList());
+        }
+        return inlines;
     }
 
     /**
@@ -131,7 +224,8 @@ final class DocxGrownLines {
      *
      * @param paragraph the written paragraph
      * @return whether its runs are read ({@link #reachOf}), reach no taller than its line, to
-     *         {@link #EPSILON}, and share one descent
+     *         {@link #EPSILON}, share one descent, and hold its pictures within them
+     *         ({@link Reach#holdsItsPictures})
      */
     boolean mayGrow(CTP paragraph) {
         CTPPr properties = paragraph.getPPr();
@@ -140,8 +234,9 @@ final class DocxGrownLines {
             return false;
         }
         Reach reach = reachOf(paragraph);
-        return reach != null && twips.doubleValue() / POINT_TO_TWIP + EPSILON >= reach.height()
-               && reach.below() - reach.shallowest() <= EPSILON;
+        double line = twips.doubleValue() / POINT_TO_TWIP;
+        return reach != null && line + EPSILON >= reach.height()
+               && reach.below() - reach.shallowest() <= EPSILON && reach.holdsItsPictures(line);
     }
 
     /**
@@ -150,7 +245,8 @@ final class DocxGrownLines {
      *
      * @param paragraph the written paragraph
      * @return the line, or null where its height is the editor's own, or a least line's runs are
-     *         not read ({@link #reachOf})
+     *         not read ({@link #reachOf}) or its pictures reach past its text, where the two editors
+     *         stand them apart ({@link Reach#holdsItsPictures})
      */
     Line lineOf(CTP paragraph) {
         CTPPr properties = paragraph.getPPr();
@@ -166,7 +262,11 @@ final class DocxGrownLines {
             return null;
         }
         Reach reach = reachOf(paragraph);
-        if (reach == null) {
+        // A picture past the text is set elsewhere by each editor; and a line holding pictures
+        // written shorter than its text's own is one grown to its pictures (see
+        // DocxSemanticBackend#makeRoomForPictures), not read here.
+        if (reach == null || reach.holdsPictures() && !(written + EPSILON >= reach.height()
+                                                         && reach.holdsItsPictures(written))) {
             return null;
         }
         double height = Math.max(written, reach.height());
@@ -191,7 +291,7 @@ final class DocxGrownLines {
             return null;
         }
         return new Reach(Math.max(so.above(), line.ascent() * size), Math.max(so.below(), line.descent() * size),
-                Math.min(so.shallowest(), line.descent() * size));
+                Math.min(so.shallowest(), line.descent() * size), so.pictureTop(), so.pictureFoot());
     }
 
     /**
@@ -234,18 +334,38 @@ final class DocxGrownLines {
     }
 
     /**
-     * How far a line's text reaches above and below its baseline, in points.
+     * How far a line's text and the pictures set in it reach above and below its baseline, in
+     * points.
      *
-     * @param above      how far above, its faces' line gap included
-     * @param below      how far below: its deepest run's descent
-     * @param shallowest its shallowest run's descent
+     * @param above       how far its text reaches above, its faces' line gap included
+     * @param below       how far its text reaches below: its deepest run's descent
+     * @param shallowest  its shallowest run's descent
+     * @param pictureTop  how far above its pictures reach, the higher of where Word and LibreOffice
+     *                    stand them; 0 for none
+     * @param pictureFoot how far below Word lowers its pictures; negative infinity for none
      */
-    record Reach(double above, double below, double shallowest) {
-        static final Reach NONE = new Reach(0, 0, Double.POSITIVE_INFINITY);
+    record Reach(double above, double below, double shallowest, double pictureTop, double pictureFoot) {
+        static final Reach NONE = new Reach(0, 0, Double.POSITIVE_INFINITY, 0, Double.NEGATIVE_INFINITY);
 
-        /** The line's height. */
+        /** The text's line's height. */
         double height() {
             return above + below;
+        }
+
+        /**
+         * Whether a line this tall holds its pictures within its text in both editors: none reaches
+         * above the room the line leaves over its text's descent, nor below its shallowest run's
+         * descent, so that neither editor grows the line for them nor stands its text elsewhere.
+         *
+         * @param line the line's height, in points
+         */
+        boolean holdsItsPictures(double line) {
+            return pictureTop <= line - below + EPSILON && pictureFoot <= shallowest + EPSILON;
+        }
+
+        /** Whether its line holds a picture set in it. */
+        boolean holdsPictures() {
+            return pictureFoot > Double.NEGATIVE_INFINITY;
         }
     }
 

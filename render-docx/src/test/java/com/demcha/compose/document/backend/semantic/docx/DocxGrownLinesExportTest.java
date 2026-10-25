@@ -261,6 +261,56 @@ class DocxGrownLinesExportTest {
         }
     }
 
+    @Test
+    void aLineHoldingAPictureWithinItsTextIsWrittenAtALeastHeight() throws Exception {
+        // A 6pt picture on the baseline of 10pt Lato stays under the text's top in both editors,
+        // LibreOffice's tenth of a point above the baseline included: the line is the text's.
+        byte[] png = png();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addParagraph(p -> p.inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png),
+                                6, 6, com.demcha.compose.document.node.InlineImageAlignment.BASELINE, 0, null)
+                        .inlineText(" Small", face(FontName.LATO, 10))))) {
+            XWPFParagraph small = paragraph(document, " Small");
+
+            assertThat(small.getCTP().getRArray(0).sizeOfDrawingArray()).as("the premise: its picture first").isOne();
+            assertThat(spacing(small).getLineRule()).isEqualTo(STLineSpacingRule.AT_LEAST);
+            assertThat(DocxTwips.of(spacing(small).getLine())).as("Lato's own line").isEqualTo(240);
+            assertThat(positions(small)).containsOnly(0L);
+        }
+    }
+
+    @Test
+    void aLineGrownToAPictureRisingPastItsTextIsGivenNoPosition() throws Exception {
+        // An 11pt icon set at the middle of 10pt Poppins rises past the text the page measures, and
+        // the line is written at least the icon's 14pt reach, shorter than Poppins' own 15pt line:
+        // grown to its picture, it is not read as a line grown with its text. A least line's text
+        // is not moved by a position in Word, and LibreOffice moves it and grows the line: none is
+        // written.
+        byte[] png = png();
+        try (XWPFDocument document = DocxExports.withLayout(200, 600, 20, page -> page
+                .addParagraph(p -> p.inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png),
+                                11, 11, com.demcha.compose.document.node.InlineImageAlignment.CENTER)
+                        .inlineText(" Icon beside text long enough to wrap onto a second line", face(FontName.POPPINS, 10))))) {
+            XWPFParagraph icon = paragraph(document, " Icon");
+
+            var runs = icon.getCTP().getRList();
+            assertThat(spacing(icon).getLineRule()).as("the premise: grown to its icon").isEqualTo(STLineSpacingRule.AT_LEAST);
+            assertThat(runs.get(0).sizeOfDrawingArray()).as("the premise: the icon first, lowered to the middle")
+                    .isOne();
+            assertThat(positions(icon).subList(1, runs.size())).as("its text").containsOnly(0L);
+        }
+    }
+
+    private static byte[] png() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(8, 8,
+                    java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (java.io.IOException failure) {
+            throw new IllegalStateException(failure);
+        }
+    }
+
     private static DocumentTableCell textCell(String text, DocumentTableTextAnchor anchor) {
         return DocumentTableCell.text(text).withStyle(cellStyle(face(FontName.LATO, 8), anchor, 0));
     }

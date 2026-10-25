@@ -1,14 +1,15 @@
 <#
 .SYNOPSIS
-    Holds every template preset's DOCX export, as Microsoft Word sets it, to the
-    Word baseline of the DOCX fidelity corpus.
+    Holds the DOCX export of every document of the DOCX fidelity corpus — each
+    template preset, and each document built for a shape no preset has — as
+    Microsoft Word sets it, to the corpus's Word baseline.
 
 .DESCRIPTION
     Word is the editor the DOCX export answers to, and CI cannot run it. This is
     the same gate DocxFidelityCorpusTest runs with LibreOffice in CI, run locally
     with Word:
 
-      1. the corpus test in `export` mode writes each preset's PDF and DOCX to
+      1. the corpus test in `export` mode writes each document's PDF and DOCX to
          qa/target/docx-fidelity/engine;
       2. convert-with-word.ps1 converts the DOCX through a private, hidden Word
          instance into qa/target/docx-fidelity/word, recording Word's version;

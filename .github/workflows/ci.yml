@@ -535,9 +535,10 @@ jobs:
 
   docx-fidelity:
     name: DOCX Fidelity (LibreOffice)
-    # Every template preset exported to DOCX, set by LibreOffice, and held line by
-    # line to qa/src/test/resources/docx-fidelity/libreoffice-linux*.tsv
-    # (DocxFidelityCorpusTest): a change that sets any line of any preset further
+    # Every template preset, and the documents built for shapes no preset has, exported to
+    # DOCX, set by LibreOffice, and held line by line to
+    # qa/src/test/resources/docx-fidelity/libreoffice-linux*.tsv
+    # (DocxFidelityCorpusTest): a change that sets any line of any document further
     # from the engine's PDF, down or across, at other words, or on more pages fails here. Gated on
     # `docx` — what an export of the corpus is made from.
     #

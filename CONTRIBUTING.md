@@ -347,14 +347,17 @@ Choose the smallest tests that match the change:
   and the [per-preset smoke tests](qa/src/test/java/com/demcha/compose/document/templates/cv/presets)
 - For DOCX export (`render-docx`) changes:
   [DocxFidelityCorpusTest.java](qa/src/test/java/com/demcha/compose/document/templates/fidelity/DocxFidelityCorpusTest.java).
-  It exports every template preset to DOCX, has LibreOffice set each one, and holds every
+  It exports every template preset to DOCX, with documents built for shapes no preset has on
+  its own fixture, has LibreOffice set each one, and holds every
   line of every document to the drift its baseline records, down and across: a line set further
   from the page either way, a line set at other words, or a page more fails it. It needs
   LibreOffice and runs only when asked for — install first, as for any standalone `qa` run:
   `./mvnw -B -ntp test -f qa/pom.xml -Dtest=DocxFidelityCorpusTest -Dgraphcompose.docxFidelity=libreoffice`.
   A change that moves documents nearer the page rewrites the baseline with
   `-Dgraphcompose.docxFidelity.update=true`, and commits it with the change: its diff shows
-  which documents moved. A new preset joins the corpus in its family's `*DocxCorpus` class.
+  which documents moved. A new preset joins the corpus in its family's `*DocxCorpus` class,
+  and so does a preset on a longer fixture; a shape no preset has — a page break inside a
+  panel, a break in a row's column — goes in `SyntheticDocxCorpus`.
   CI runs it on Linux (the `DOCX Fidelity` job) against `libreoffice-linux.tsv`, and uploads
   what it measured: LibreOffice sets text a little differently per platform, so a change that
   moves documents nearer the page takes that artifact's files as the Linux baseline, and its own
@@ -362,7 +365,7 @@ Choose the smallest tests that match the change:
   Windows with Word, `scripts/docx-visual/word-fidelity.ps1` (`-Update` to rewrite) exports the
   corpus, has a private Word instance convert it, and holds it to `word-windows.tsv` — run it
   from PowerShell (pwsh), after the install above, before a DOCX export change is opened.
-  Each run also writes `measured-<editor>-acceptance.md`: which presets the editor sets as the
+  Each run also writes `measured-<editor>-acceptance.md`: which documents the editor sets as the
   page does — the same pages, 95% of the lines found, a median of 1pt or less, no more than 10%
   past 2pt — and what keeps the rest short of it. CI shows LibreOffice's in the job summary.
   The corpus also answers for how a document edits in Word.

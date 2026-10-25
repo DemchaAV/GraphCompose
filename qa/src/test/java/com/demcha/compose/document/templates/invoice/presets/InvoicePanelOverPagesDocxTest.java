@@ -4,7 +4,6 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend;
 import com.demcha.compose.document.layout.PlacedNode;
-import com.demcha.compose.document.templates.data.invoice.InvoiceServiceLines;
 import com.demcha.compose.document.templates.data.invoice.StructuredInvoiceData;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -48,7 +47,7 @@ class InvoicePanelOverPagesDocxTest {
         // From page 2 on the page sets a larger foot; the card's cut where page 2 starts ends a Word
         // section with the first page's margins, and the pages after it are set with page 2's.
         for (int times : new int[]{3, 6}) {
-            byte[] docx = export(longer(ObsidianInvoiceFixtures.invoice(), times),
+            byte[] docx = export(InvoiceDocxCorpus.withLinesRepeated(ObsidianInvoiceFixtures.invoice(), times),
                     (s, d) -> ObsidianInvoice.create().compose(s, d));
             try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
                 List<IBodyElement> body = document.getBodyElements();
@@ -77,18 +76,6 @@ class InvoicePanelOverPagesDocxTest {
         return Math.round(points * 20);
     }
 
-    /** The invoice with its line items repeated {@code times}. */
-    private static StructuredInvoiceData longer(StructuredInvoiceData data, int times) {
-        List<InvoiceServiceLines.Line> lines = new ArrayList<>();
-        for (int time = 0; time < times; time++) {
-            lines.addAll(data.serviceLines().lines());
-        }
-        return new StructuredInvoiceData(data.brand(), data.supplier(), data.masthead(),
-                data.billTo(), data.shipTo(), data.summary(),
-                new InvoiceServiceLines(data.serviceLines().columns(), lines), data.totals(), data.payment(),
-                data.notes(), data.currencyCode());
-    }
-
     private static byte[] export(StructuredInvoiceData data, BiConsumer<DocumentSession, StructuredInvoiceData> preset)
             throws Exception {
         try (DocumentSession session = GraphCompose.document().create()) {
@@ -106,7 +93,7 @@ class InvoicePanelOverPagesDocxTest {
     private static void assertCutAtItsPages(StructuredInvoiceData data, int times,
                                             BiConsumer<DocumentSession, StructuredInvoiceData> preset,
                                             String card, String header) throws Exception {
-        StructuredInvoiceData longer = longer(data, times);
+        StructuredInvoiceData longer = InvoiceDocxCorpus.withLinesRepeated(data, times);
         int pages;
         byte[] docx;
         try (DocumentSession session = GraphCompose.document().create()) {

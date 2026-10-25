@@ -1,5 +1,6 @@
 # libreoffice build 420(Build:2) on linux
 document	engine_pages	editor_pages	lines	matched	median	p90	over2
+# rows of invoice-metered_long, invoice-obsidian_long, synthetic-break_in_column, synthetic-break_in_panel, synthetic-card_over_pages: libreoffice build 420(Build:2) on linux
 cv-blue_banner	2	2	54	52	0.16	0.25	0
 cv-boxed_sections	2	2	58	58	0.06	0.11	0
 cv-centered_headline	2	2	58	56	0.12	0.29	0
@@ -34,9 +35,11 @@ invoice-luma_studio	1	1	97	97	0.17	0.46	2
 invoice-luma_studio_long	3	3	192	192	0.11	0.41	2
 invoice-merchant	1	1	94	94	0.78	1.96	5
 invoice-metered	1	1	99	99	1.26	10.63	48
+invoice-metered_long	4	4	350	334	41.91	96.38	239
 invoice-modern	1	1	54	54	0.03	0.10	0
 invoice-modern_long	2	2	162	162	0.03	0.08	0
 invoice-obsidian	1	1	81	81	0.37	2.90	15
+invoice-obsidian_long	5	5	375	375	4.17	8.36	253
 invoice-payments	1	1	104	104	0.30	5.14	40
 invoice-platform	1	1	111	111	0.31	0.41	0
 invoice-subscription	1	1	81	81	0.11	0.29	0
@@ -62,3 +65,6 @@ proposal-modern	1	1	44	44	0.03	0.12	0
 proposal-northline	2	2	132	132	0.13	0.42	0
 receipt-modern	1	1	57	57	0.04	0.09	0
 rota-cobalt	1	1	154	151	0.22	0.47	0
+synthetic-break_in_column	1	1	7	7	0.02	0.02	0
+synthetic-break_in_panel	3	3	8	8	3.02	5.02	5
+synthetic-card_over_pages	3	3	114	114	0.98	1.08	0

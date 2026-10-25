@@ -8,6 +8,32 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export cuts a panel whose table the layout breaks over pages into a table a page.**
+  - The layout breaks a table in a panel between rows, repeats its header rows at the top of the
+    next page and goes on with the panel there, no padding above it. The export wrote the panel as
+    one table of one cell: Word broke its row where its lines ran out, and repeats no header row of
+    a table nested in a cell. Measured in Word 16 and LibreOffice 24.2 on `ObsidianInvoice` and
+    `SubscriptionInvoice` with their line items set over two and three pages, the second page
+    stood 24 to 30pt high in Word, its header missing, and over three pages a row stood a page
+    early in both editors.
+  - Such a panel — the table one of its own children, and the only one the layout breaks over
+    pages — is now a table a page, cut at the row each page starts with: the part after a cut
+    opens with copies of the table's header rows and has no top padding, a part before one has no
+    bottom padding, as the page sets the rows down to the page's foot, and a hairline paragraph
+    between the parts breaks the page before itself. In both invoices, and in cards padded 6 and
+    12pt over two and three pages, every line now stands on the page the layout sets it on in both
+    editors. A part after a cut stands about its top border's width lower than the page sets it,
+    as Word and LibreOffice draw the border inside the row: 1.1pt under a 1pt border, 2.8pt under
+    `SubscriptionInvoice`'s ruled top.
+  - The page breaks are fixed there, so rows an edit adds above a cut no longer run onto the next
+    page, and the report names the cut. A page is not cut, and is named, where the panel starts it
+    outside its table, where the table cannot be split at that row — its header rows holding an
+    anchored card's bookmark among them — or where the page above sets the rows too near its foot
+    for the borders Word sets inside the part; a panel cut at no page is named as written whole.
+    Anything else the layout moves or breaks over a page inside a panel — a block kept together, a
+    stack, a paragraph — is left to Word, as before.
+  - No document of the corpus has such a panel; its export is unchanged.
+
 - **A DOCX export writes no page break where the page breaks none: in a row's column, a table's
   composed cell, a layer stack's layer, a shape container's layer or a canvas.**
   - The page places each of these as a box on one page: a page break in one is a box of no height,

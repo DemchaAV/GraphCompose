@@ -485,6 +485,24 @@ final class DocxLayoutMetrics {
     }
 
     /**
+     * Where the lowest of a table's own rows on a page ends, measured up from the page's foot as
+     * {@link #lowestContentOn} measures.
+     *
+     * @param table the table node
+     * @param page  the page, from 0
+     * @return the height above the page's foot, or NaN where the table has no row of its own there
+     */
+    double lowestRowOn(DocumentNode table, int page) {
+        double lowest = Double.NaN;
+        for (PlacedFragment fragment : ownRows(table)) {
+            if (fragment.pageIndex() == page) {
+                lowest = Double.isNaN(lowest) ? fragment.y() : Math.min(lowest, fragment.y());
+            }
+        }
+        return lowest;
+    }
+
+    /**
      * The index part of each placed row's name, kept as the text the layout wrote rather than
      * parsed: a row is looked up by writing its index the same way, so a name that only
      * resembles the pattern matches nothing instead of failing the export. Each is kept with

@@ -194,8 +194,35 @@ header rows the layout repeats on each page, and the hairline between the two pa
 section. Measured in Word and LibreOffice on Windows, every page holds the lines the layout sets
 on it. The report names the split on the table (`page margin`).
 
-A page that starts inside any other block — the lines of a paragraph, a panel — does not start a
-section. Nor does a page that starts at a table's row where a cell spans rows across it, where
+A page that starts inside a panel the export cuts at the row of its table that page starts with
+(*Over pages*, under *What a panel keeps and loses*) ends the section in the paragraph between the
+two parts. That paragraph then breaks no page before itself, as the section's own break opens the
+page, and stands under the part above it, so the page above must leave room for it under its last
+row, above the bottom margin Word sets that page with, as well as for the borders the cut keeps
+there; where the page has room for the cut and not for that paragraph as well, the panel is cut as
+before and the page is named. In a section whose margins change, a panel's cuts are decided once
+the section is written, before the document's page references are settled and its bookmarks kept:
+a row holding a page reference leaves the panel uncut at that row's page and every page before it,
+as any field does, though one whose anchor has no bookmark ends up as its number; so does a header
+row holding a bookmark the export later takes out. A section whose header or footer counts its own
+pages starts no Word section for a page's margins, and its panels are cut as in a section of one
+set of margins. Measured in Word 16 and LibreOffice 24.2 on a card whose table runs over three
+pages: with one set of margins, a top margin 54pt larger from page 2 on stood every line of pages
+2 and 3 52.9pt high, and margins of 20pt from page 2 on ran the card onto five pages in Word and
+four in LibreOffice; with the section at the cut, every line stands on the page the page sets it
+on, lower by the cut's top border only. `ObsidianInvoice` is written so from page 2 on, its larger
+foot there. With its line items repeated 3 to 11 times every line stands on its page in both
+editors. Repeated 12 times, page 5 starts between its info cards and its footer divider, a page
+break the editors place themselves: Word sets the cards on page 5 with the divider, `keepNext` on
+the paragraphs inside the cards' cell keeping their table with the paragraph after it, and both
+editors drop the divider's 13pt of space above it at a page they break themselves — as they do
+with one set of margins on every page. Where a page a panel runs onto is not cut and a later one
+is, LibreOffice 24.2 sets the part after that cut with the earlier section's margins: it reads no
+section's margins after a table it broke over a page itself. Word reads them.
+
+A page that starts inside any other block — the lines of a paragraph, a panel not cut there —
+does not start a section. Nor does a page that starts at a table's row where a cell spans rows
+across it, where
 only the header rows stand above it, or where a header row holds a bookmark or a drawing, which
 the file can hold only once, or a numbered list item, which its copy would number on. Nor where a header row or a row from that one on holds a page
 reference, which the export settles in the paragraph it wrote it in once the body is written. A
@@ -740,8 +767,10 @@ How it lands:
   the row each page starts with, the part after a cut opening with copies of the table's header
   rows and no padding above, as the page goes on with it, a part before a cut with no padding
   below, as the page sets the rows down to the page's foot, and a hairline paragraph between the
-  parts breaking the page before itself, which adds no page where the part above fills its own.
-  Written as one table, Word broke the panel's row where its lines ran out and repeated no header
+  parts breaking the page before itself, which adds no page where the part above fills its own;
+  where the page after the cut has other top and bottom margins, that paragraph ends a Word
+  section instead (*Margins that change from page to page*, above). Written as one table, Word
+  broke the panel's row where its lines ran out and repeated no header
   row of the table nested in its cell (measured in Word 16 and LibreOffice 24.2:
   `ObsidianInvoice`'s and `SubscriptionInvoice`'s line items over two pages stood 24 to 30pt
   high in Word on the second, its header missing, and over three pages a row stood a page early

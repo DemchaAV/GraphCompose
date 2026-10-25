@@ -14,6 +14,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
 
 import java.util.List;
 import java.util.function.IntUnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * Splits a table of the body in two at the row a page starts with, so that a Word section can
@@ -33,9 +34,14 @@ final class DocxTableSplit {
     private static final String W =
             "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' ";
 
+    // A drawing, whose id names one drawing: a panel's copy of the header rows leaves it out
+    // (splitInItsPanel).
+    private static final List<String> DRAWINGS = List.of("drawing", "pict", "object");
+
     // What a header row's copy cannot hold again: a bookmark's name marks one place, a drawing's id
     // names one drawing, and a list item's number is counted on from the item before it.
-    private static final List<String> NOT_REPEATED = List.of("bookmarkStart", "drawing", "pict", "object", "numPr");
+    private static final List<String> NOT_REPEATED =
+            Stream.concat(Stream.of("bookmarkStart", "numPr"), DRAWINGS.stream()).toList();
 
     // A field, which the export settles once the body is written, in the paragraph it wrote it in: a
     // row moved to the second part leaves that paragraph behind, and a copy of one is never settled.
@@ -120,6 +126,12 @@ final class DocxTableSplit {
      * row on and what follows the table in the cell. Each part is the panel's table, its fill and
      * its four borders. The paragraph put between them breaks the page before itself.</p>
      *
+     * <p>The copy of the header rows holds no drawing. Where the cut is decided, they hold none
+     * ({@link #rowStarting}); one the export anchors in them after that, at their section's end — a
+     * shape of the table's first page standing beside a header's text, or one a page with no other
+     * paragraph to carry it leaves in its first cell's — is that page's, and stays in the first
+     * part.</p>
+     *
      * @param document the document the panel is in the body of
      * @param panel    the panel
      * @param table    the table in its cell
@@ -145,6 +157,7 @@ final class DocxTableSplit {
             remove(continued, after.get(index));
         }
         keepTheRowsFrom(rest, row);
+        dropTheDrawings(rest, headerRows(rest));
         try (XmlCursor before = second.getCTTbl().newCursor()) {
             XWPFParagraph between = document.insertNewParagraph(before);
             between.setPageBreak(true);
@@ -190,6 +203,19 @@ final class DocxTableSplit {
         int header = headerRows(table);
         for (int index = row - 1; index >= header; index--) {
             table.removeRow(index);
+        }
+    }
+
+    /** Takes every drawing out of a table's first rows. */
+    private static void dropTheDrawings(XWPFTable table, int rows) {
+        for (int row = 0; row < rows; row++) {
+            for (String element : DRAWINGS) {
+                for (org.apache.xmlbeans.XmlObject found : table.getRow(row).getCtRow().selectPath(W + ".//w:" + element)) {
+                    try (XmlCursor cursor = found.newCursor()) {
+                        cursor.removeXml();
+                    }
+                }
+            }
         }
     }
 

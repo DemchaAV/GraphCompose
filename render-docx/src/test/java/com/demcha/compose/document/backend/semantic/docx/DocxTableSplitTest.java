@@ -5,6 +5,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
+import org.apache.xmlbeans.XmlCursor;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
 
@@ -94,6 +95,37 @@ class DocxTableSplitTest {
             assertThat(DocxTableSplit.rowStarting(marked, 1, row -> row < 4 ? 0 : 1)).isEqualTo(-1);
             assertThat(DocxTableSplit.rowStarting(drawn, 1, row -> row < 4 ? 0 : 1)).isEqualTo(-1);
         }
+    }
+
+    @Test
+    void aPanelsPartAfterACutCopiesItsHeaderRowsWithoutTheirDrawings() throws Exception {
+        // A shape the export anchors in a header row once a cut is decided is the table's first
+        // page's: the first part keeps it, and the copy of the row opening the next part has none.
+        try (XWPFDocument written = new XWPFDocument()) {
+            XWPFTable items = table(written, 1, 4);
+            items.getRow(0).getCell(0).getParagraphs().get(0).createRun().getCTR().addNewDrawing();
+            XWPFTable outer = written.createTable(1, 1);
+            try (XmlCursor at = outer.getRow(0).getCell(0).getParagraphArray(0).getCTP().newCursor();
+                 XmlCursor table = items.getCTTbl().newCursor()) {
+                table.moveXml(at);
+            }
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(bytes(written)))) {
+                XWPFTable panel = document.getTables().get(0);
+                XWPFTable inner = panel.getRow(0).getCell(0).getTables().get(0);
+
+                DocxTableSplit.PanelPart part = DocxTableSplit.splitInItsPanel(document, panel, inner, 3);
+
+                XWPFTable rest = part.second().getRow(0).getCell(0).getTables().get(0);
+                assertThat(texts(rest)).containsExactly("Header", "Row 3", "Row 4");
+                assertThat(drawings(rest.getRow(0))).as("the copy of the header row").isZero();
+                assertThat(drawings(inner.getRow(0))).as("the first part's header row").isEqualTo(1);
+            }
+        }
+    }
+
+    private static int drawings(XWPFTableRow row) {
+        return row.getCtRow().selectPath(
+                "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//w:drawing").length;
     }
 
     @Test

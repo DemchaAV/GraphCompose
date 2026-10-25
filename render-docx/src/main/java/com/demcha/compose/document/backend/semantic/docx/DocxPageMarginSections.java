@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Writes the top and bottom margins of a page the layout sets against other ones than Word sets
@@ -44,9 +45,10 @@ import java.util.Set;
  *
  * <p>A section ends in a paragraph of the body, so it can start only between blocks written
  * there. A table the page starts among the rows of is split at the row it starts with, where it
- * can be ({@link DocxTableSplit#rowStarting}). Where the page starts inside any other block — the lines of a
- * paragraph, a panel — its margins are named instead, and Word sets that page with the margins in
- * force.</p>
+ * can be ({@link DocxTableSplit#rowStarting}); a panel the export cuts at the row of its table the
+ * page starts with ends the section in the paragraph between its two parts ({@link PanelCut}).
+ * Where the page starts inside any other block — the lines of a paragraph, a panel not cut there —
+ * its margins are named instead, and Word sets that page with the margins in force.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -88,12 +90,36 @@ final class DocxPageMarginSections {
      * What ends the section before a start: a page break written there, a paragraph standing there —
      * the one before it, or a hairline between two tables — or else a hairline put before {@code at},
      * or, where {@code row} is not -1, between the two parts of the table {@code at} is split into
-     * before that row.
+     * before that row; or, where {@code cut} is set, the paragraph between the two parts of a panel
+     * cut there once the document is written.
      *
      * @param hairline whether what ends it is a hairline under a table, which needs room on its page
      */
     private record Carrier(XWPFParagraph pageBreak, XWPFParagraph paragraph, IBodyElement at, int row,
-                           boolean hairline) {
+                           boolean hairline, PanelCut cut) {
+    }
+
+    /**
+     * A cut the export makes in a panel of the body at the row of its table a page starts with, once
+     * the document is written: the panel is written as a table of one cell, and its part after the
+     * cut as a table of its own after it, a paragraph between the two. That paragraph ends a section
+     * there, the section's own break opening the page instead of a break before the paragraph:
+     * measured in Word and LibreOffice on Windows, a card whose table ran over three pages, from page
+     * 2 on with a top margin 54pt larger, stood every line of pages 2 and 3 where the page does but
+     * for its top border, where with one set of margins they stood 52.9pt high.
+     *
+     * <p>The paragraph then stands under the part before the cut, on the page above: that page's
+     * last row must leave room for it, above the bottom margin Word sets that page with, as well as
+     * for what the cut needs there.</p>
+     *
+     * @param rowsEnd how high above the page's foot the part's last row on the page above ends, in
+     *                points
+     * @param needed  the room the part needs under that row with the paragraph ending a section
+     *                under it
+     * @param section takes the properties of the section the paragraph ends, which the cut writes
+     *                there when it is made
+     */
+    record PanelCut(double rowsEnd, double needed, Consumer<CTSectPr> section) {
     }
 
     /**
@@ -147,6 +173,8 @@ final class DocxPageMarginSections {
      * @param from           the index of the section's first body element
      * @param owners         the pages and node of each body element the section wrote
      * @param separators     the hairlines the body sets between two tables
+     * @param cuts           the cuts the export makes in panels of the section, by the panel's table and
+     *                       the page each opens, from 0
      * @param layout         the section's layout
      * @param report         where the notes go
      * @param section        the report's path for the section, or {@code null} for a document of one
@@ -158,8 +186,9 @@ final class DocxPageMarginSections {
      * @return the plan
      */
     static Plan plan(XWPFDocument document, int from, Map<IBodyElement, Owner> owners, Set<XWPFParagraph> separators,
-                     DocxLayoutMetrics layout, DocxExportReport.Builder report, String section,
-                     boolean countsItsPages, Margin sides, boolean zoned) {
+                     Map<XWPFTable, Map<Integer, PanelCut>> cuts, DocxLayoutMetrics layout,
+                     DocxExportReport.Builder report, String section, boolean countsItsPages, Margin sides,
+                     boolean zoned) {
         Margin opening = layout.marginOf(0);
         nameTheSides(layout, report, section, sides);
         if (!vary(layout)) {
@@ -196,10 +225,13 @@ final class DocxPageMarginSections {
             String notWritten = differ + ", which Word sets it with: ";
             Owner inside = spanning(page, elements, owners);
             XWPFTable table = inside == null ? null : tableOf(inside, elements, owners);
+            PanelCut cut = table == null ? null : cuts.getOrDefault(table, Map.of()).get(page);
             Carrier carrier = null;
-            if (table != null) {
+            if (cut != null) {
+                carrier = new Carrier(null, null, null, -1, false, cut);
+            } else if (table != null) {
                 int row = DocxTableSplit.rowStarting(table, page, index -> layout.rowPage(inside.node(), index));
-                carrier = row < 0 ? null : new Carrier(null, null, table, row, true);
+                carrier = row < 0 ? null : new Carrier(null, null, table, row, true, null);
             } else if (inside == null) {
                 int at = firstOn(page, elements, owners);
                 // Where the first block after it starts on a later page, none starts this one.
@@ -229,6 +261,13 @@ final class DocxPageMarginSections {
                 }
                 continue;
             }
+            if (cut != null && !(cut.rowsEnd() - inForce.bottom() >= cut.needed())) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, layout.pathOf(inside.node()),
+                        notWritten + "page " + page + "'s rows reach too near its foot for the paragraph that would end "
+                        + "a Word section between the parts the panel is cut into there, which would open a page of "
+                        + "its own");
+                continue;
+            }
             // A page with no content has room for a hairline.
             double room = layout.lowestContentOn(page - 1) - inForce.bottom();
             if (carrier.hairline() && room < ROOM_FOR_THE_END) {
@@ -239,7 +278,11 @@ final class DocxPageMarginSections {
                 continue;
             }
             starts.add(new Start(page, margin, carrier));
-            if (table != null) {
+            if (cut != null) {
+                report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, layout.pathOf(inside.node()), differ
+                        + ": written as a Word section that starts where the panel is cut at the row of its table page "
+                        + (page + 1) + " starts with, in the paragraph between the two parts");
+            } else if (table != null) {
                 report.add(DocxExportReport.Severity.APPROXIMATED, PAGE_MARGIN, layout.pathOf(inside.node()), differ
                         + ": written as a Word section that starts at the row page " + (page + 1) + " starts with, the "
                         + "table split there" + (DocxTableSplit.headerRows(table) > 0
@@ -285,7 +328,8 @@ final class DocxPageMarginSections {
 
     /**
      * Ends a section before each start of a plan: the paragraph ending it carries the section's
-     * properties, and the body's own become the last section's.
+     * properties, and the body's own become the last section's. A section ending at a panel's cut
+     * hands its properties to the cut, which writes them once it is made ({@link PanelCut}).
      *
      * @param document the document, its section written
      * @param plan     where its pages start sections
@@ -300,22 +344,30 @@ final class DocxPageMarginSections {
         // earlier still stands where the plan found it.
         XWPFParagraph[] carriers = new XWPFParagraph[plan.starts().size()];
         for (int index = carriers.length - 1; index >= 0; index--) {
-            carriers[index] = carrierOf(document, plan.starts().get(index).carrier());
+            Carrier carrier = plan.starts().get(index).carrier();
+            if (carrier.cut() == null) {
+                carriers[index] = carrierOf(document, carrier);
+            }
         }
         Margin margin = plan.opening();
         for (int index = 0; index < carriers.length; index++) {
+            Start start = plan.starts().get(index);
             CTSectPr ending = (CTSectPr) opening.copy();
             if (index > 0) {
                 asALaterSection(ending, opening, margin, plan.zoned());
             }
-            XWPFParagraph carrier = carriers[index];
-            CTPPr properties = carrier.getCTP().isSetPPr() ? carrier.getCTP().getPPr() : carrier.getCTP().addNewPPr();
-            // Kept with the next paragraph, on the page the section's break opens, it would go there.
-            if (properties.isSetKeepNext()) {
-                properties.unsetKeepNext();
+            if (start.carrier().cut() != null) {
+                start.carrier().cut().section().accept(ending);
+            } else {
+                XWPFParagraph carrier = carriers[index];
+                CTPPr properties = carrier.getCTP().isSetPPr() ? carrier.getCTP().getPPr() : carrier.getCTP().addNewPPr();
+                // Kept with the next paragraph, on the page the section's break opens, it would go there.
+                if (properties.isSetKeepNext()) {
+                    properties.unsetKeepNext();
+                }
+                properties.setSectPr(ending);
             }
-            properties.setSectPr(ending);
-            margin = plan.starts().get(index).margin();
+            margin = start.margin();
         }
         asALaterSection(body, opening, margin, plan.zoned());
     }
@@ -397,15 +449,15 @@ final class DocxPageMarginSections {
         IBodyElement element = elements.get(at);
         IBodyElement before = at > 0 ? elements.get(at - 1) : null;
         if (element instanceof XWPFParagraph breaking && owners.get(breaking).node() instanceof PageBreakNode) {
-            return new Carrier(breaking, null, null, -1, false);
+            return new Carrier(breaking, null, null, -1, false, null);
         }
         if (element instanceof XWPFParagraph separator && separators.contains(separator)) {
-            return new Carrier(null, separator, null, -1, true);
+            return new Carrier(null, separator, null, -1, true, null);
         }
         if (before instanceof XWPFParagraph last) {
-            return new Carrier(null, last, null, -1, false);
+            return new Carrier(null, last, null, -1, false, null);
         }
-        return new Carrier(null, null, element, -1, true);
+        return new Carrier(null, null, element, -1, true, null);
     }
 
     /**

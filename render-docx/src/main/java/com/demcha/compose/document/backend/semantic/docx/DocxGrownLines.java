@@ -320,18 +320,25 @@ final class DocxGrownLines {
      *
      * <p>The page sets a line its tallest run's descent deep, and Word its deepest run's: a line
      * whose tallest run is not its deepest, as a small run of a deep face beside a taller one of a
-     * shallow face, stands at two depths, and is not read.</p>
+     * shallow face, stands at two depths, and is not read. The page passes over the runs of spaces
+     * ending a line, a chip's aside, and Word is not known to: they count among the deepest, not
+     * the tallest.</p>
      *
      * @param runs the page's runs of text in the line
      * @return the depth; NaN where its tallest run is not its deepest, a run's face is not read, or
-     *         the line holds no run
+     *         the line holds no run but spaces
      */
     double depthOfLine(java.util.List<com.demcha.compose.document.layout.payloads.ParagraphTextSpan> runs) {
+        int end = runs.size();
+        while (end > 0 && runs.get(end - 1).background() == null && runs.get(end - 1).text().isBlank()) {
+            end--;
+        }
         com.demcha.compose.document.layout.payloads.ParagraphTextSpan tallest = null;
         // NaN, a run not read, carries through.
         double deepest = Double.NEGATIVE_INFINITY;
-        for (com.demcha.compose.document.layout.payloads.ParagraphTextSpan run : runs) {
-            if (tallest == null || run.height() > tallest.height()) {
+        for (int i = 0; i < runs.size(); i++) {
+            com.demcha.compose.document.layout.payloads.ParagraphTextSpan run = runs.get(i);
+            if (i < end && (tallest == null || run.height() > tallest.height())) {
                 tallest = run;
             }
             deepest = Math.max(deepest, depthOf(run.textStyle()));

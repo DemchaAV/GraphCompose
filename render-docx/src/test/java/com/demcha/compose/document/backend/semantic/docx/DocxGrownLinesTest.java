@@ -205,12 +205,25 @@ class DocxGrownLinesTest {
                 .as("10pt Lato the tallest, by which the page sets the line, 7pt Spectral the deepest").isNaN();
         assertThat(lines.depthOfLine(List.of(lato10, span(FontName.HELVETICA, 8, 9.25)))).as("a run not read").isNaN();
         assertThat(lines.depthOfLine(List.of())).isNaN();
+        // The page passes over spaces ending a line; Word is not known to.
+        var spaces10 = span(" ", FontName.LATO, 10, 12);
+        assertThat(lines.depthOfLine(List.of(lato8, spaces10)))
+                .as("8pt text, the 10pt spaces after it the deepest but not the page's tallest").isNaN();
+        assertThat(lines.depthOfLine(List.of(lato10, span(" ", FontName.LATO, 8, 9.6))))
+                .isCloseTo(LATO_DOWN * 10, within(1e-9));
+        assertThat(lines.depthOfLine(List.of(spaces10))).as("spaces alone").isNaN();
     }
 
     /** A run of text the page set in {@code name} at {@code size}, its line {@code height} tall. */
     private static com.demcha.compose.document.layout.payloads.ParagraphTextSpan span(FontName name, double size,
                                                                                      double height) {
-        return new com.demcha.compose.document.layout.payloads.ParagraphTextSpan("Text",
+        return span("Text", name, size, height);
+    }
+
+    /** The same, of {@code text}. */
+    private static com.demcha.compose.document.layout.payloads.ParagraphTextSpan span(String text, FontName name,
+                                                                                     double size, double height) {
+        return new com.demcha.compose.document.layout.payloads.ParagraphTextSpan(text,
                 new com.demcha.compose.engine.components.content.text.TextStyle(name, size,
                         com.demcha.compose.engine.components.content.text.TextDecoration.DEFAULT, java.awt.Color.BLACK),
                 10, height, null, null);

@@ -6280,7 +6280,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             takeBack(itemsLowered, grownBy(itemsLowered));
         }
         giveBack(itemsLowered, giveBackFromTheSpaceAbove(para, grownBy(itemsLowered)));
-        letTheLinesGrow(para, laidOut.lines(), listLineGap);
+        letTheLinesGrow(para, laidOut.lines(), listLineGap, false);
         double shift = shiftToThePagesBaseline(para, laidOut.lines(), listLineGap, 0, false, true, staysOnItsPage);
         if (!wordDrawsTheMarker) {
             // Its marker is its text, and its position moves the two together.
@@ -13075,7 +13075,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         boolean cutToFit = lineTopAbove != 0 || stackedLineHeights.containsKey(node) || heldExact;
         boolean staysOnItsPage = staysOnItsPage(node);
         if (mayGrow && ownsItsLine && !cutToFit) {
-            letTheLinesGrow(para, layout.lines(node), layout.lineGap(node));
+            letTheLinesGrow(para, layout.lines(node), layout.lineGap(node), node.bulletOffset().isEmpty());
         }
         return shiftToThePagesBaseline(para, layout.lines(node), layout.lineGap(node), lineTopAbove, cutToFit,
                 ownsItsLine, staysOnItsPage);
@@ -13098,16 +13098,21 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * its gaps shared out over its lines where nothing above gave them, a face whose descent
      * differs from the page's — stays exact, where its position seats it.</p>
      *
-     * @param lines   the lines the layout set the text on
-     * @param lineGap the gap the layout puts between them, beyond their own height
+     * @param lines      the lines the layout set the text on
+     * @param lineGap    the gap the layout puts between them, beyond their own height
+     * @param asWritten  whether the lines' runs are the runs written, so that a paragraph of runs
+     *                   of several depths is read by its lines ({@link DocxGrownLines}): not a
+     *                   paragraph's whose {@code bulletOffset} the page sets as a run and the export
+     *                   as an indent, nor a list item's, whose indent and marker the page sets in
+     *                   its lines
      */
     private void letTheLinesGrow(XWPFParagraph para,
                                  List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines,
-                                 double lineGap) {
+                                 double lineGap, boolean asWritten) {
         CTPPr properties = para.getCTP().getPPr();
         CTSpacing spacing = properties != null && properties.isSetSpacing() ? properties.getSpacing() : null;
         if (spacing == null || !spacing.isSetLineRule() || spacing.getLineRule() != STLineSpacingRule.EXACT
-            || !grownLines.mayGrow(para.getCTP())) {
+            || !grownLines.mayGrow(para.getCTP(), asWritten ? lineDepths(lines) : null)) {
             return;
         }
         spacing.setLineRule(STLineSpacingRule.AT_LEAST);
@@ -13115,6 +13120,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (!(Math.abs(shift) < LEAST_GROWN_LINE_SHIFT_POINTS)) {
             spacing.setLineRule(STLineSpacingRule.EXACT);
         }
+    }
+
+    /**
+     * How deep below their baselines Word sets the lines that hold text, as the layout breaks them
+     * ({@link DocxGrownLines#depthOfLine}), in points. A paragraph of runs of several depths grows by
+     * them ({@link DocxGrownLines}).
+     */
+    private double[] lineDepths(List<com.demcha.compose.document.layout.payloads.ParagraphLine> lines) {
+        List<Double> depths = new ArrayList<>();
+        for (com.demcha.compose.document.layout.payloads.ParagraphLine line : lines) {
+            List<com.demcha.compose.document.layout.payloads.ParagraphTextSpan> runs = new ArrayList<>();
+            for (com.demcha.compose.document.layout.payloads.ParagraphSpan span : line.spans()) {
+                if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphTextSpan text) {
+                    runs.add(text);
+                }
+            }
+            if (!runs.isEmpty()) {
+                depths.add(grownLines.depthOfLine(runs));
+            }
+        }
+        return depths.stream().mapToDouble(Double::doubleValue).toArray();
     }
 
     /**

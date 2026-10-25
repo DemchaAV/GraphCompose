@@ -8,6 +8,37 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export keeps a page break the layout makes by itself after a card where the page
+  makes it.**
+  - A block kept together or kept with the next in a table cell — a row's column, a panel's cell —
+    keeps its lines together (`w:keepLines`) and no longer keeps with the next (`w:keepNext`).
+    Word reads keep-with-next on the paragraph a cell opens with as keeping the cell's whole row
+    with what follows its table, and holds no keep across a break inside the row, so in a cell
+    those keeps did nothing else; a row of columns, which may not split, keeps the block whole.
+    The separator between two tables in a cell keeps with the next table as before: measured, Word
+    does not read it as the paragraph the cell opens with. Measured in Word 16 on `ObsidianInvoice`
+    with its line items repeated 12 times: its info cards, kept together in a row's two cells, went
+    to page 5 with the footer divider under them, 17 lines below the page's, where the layout sets
+    them at the foot of page 4.
+  - A rule the layout moves to a new page in the flow holds the space the layout leaves above it
+    there in an empty line kept with it, as a paragraph, a list and a picture do: Word and
+    LibreOffice drop a paragraph's space above at the top of a page they break themselves, and
+    a rule's is its paragraph's. The same invoice's footer divider stood its 13pt margin high on
+    page 5 in both.
+  - A table, a row, a painted row or a panel the layout moves to a new page holds there, with its
+    own top edge, the gap above it the layout carries onto that page where the gap does not fit at
+    the foot of the page above. It left the gap on the page above: `MeteredInvoice` with its line
+    items repeated 9 times opens page 4 with its closing row 12.4pt below the margin, the gap, and
+    Word set the page 13.0pt high and LibreOffice 12.8pt. One the layout runs on past the page it
+    opens has no place of its own there to measure, and holds its own top edge alone, as before.
+  - After: `ObsidianInvoice` ×12 sets every line on its page in Word and LibreOffice 24.2, page 5
+    within 0.1pt; `MeteredInvoice` ×9's page 4 within 0.7pt in both. Of 35 lengths of 7 invoice
+    templates whose layout opens a page with a block of their body, those two move, and none
+    other.
+  - In the corpus, 15 documents lose keep-with-next on paragraphs in table cells, and nothing else;
+    no page in it opens with a rule or a gap the layout carries there. Word and LibreOffice 24.2
+    set every one of their lines where they did.
+
 - **A DOCX export writes the margins of a page that starts at a panel's cut as a Word section
   there.**
   - A page that `session.pageMargins(...)` sets against other top and bottom margins than Word
@@ -39,11 +70,9 @@ follow semantic versioning; release dates are ISO 8601.
     Word and LibreOffice 24.2, as it did. Repeated 12 times, its page 5 starts between its info
     cards and its footer divider. With page 1's margins in force on pages 2 to 4, page 5 opened a
     Word section of its own, which fixed that break, and Word held the cards on page 4; page 5's
-    margins are now page 2's, so the editors place that break themselves: Word sets the cards on
-    page 5 with the divider, because `keepNext` on
-    the paragraphs inside the cards' cell keeps their table with the paragraph after it, and both
-    editors drop the divider's 13pt of space above it at a page they break themselves. The same
-    invoice with one set of margins on every page is set the same way in both editors.
+    margins are now page 2's, so the editors place that break themselves, as they do the same
+    invoice with one set of margins on every page — where the page places it, since the entry
+    above.
   - Where a page the panel runs onto is not cut and a later one is, LibreOffice 24.2 sets the part
     after that cut with the margins of the section before: it reads no section's margins after a
     table it broke over a page itself. Word reads them.

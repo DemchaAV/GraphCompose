@@ -3783,7 +3783,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         List<IBodyElement> written = elements.get().subList(first, elements.get().size());
         if (keepTogether || keepWithNext) {
-            keepOnOnePage(written, keepWithNext);
+            keepOnOnePage(written, keepWithNext, destination == null);
         }
         // A section or a container that writes no paragraph — drawings alone, standing in the
         // paragraph beside them — has nothing for a bookmark to go round, and a link to its anchor is
@@ -4051,8 +4051,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>Only a block the layout placed on one page is kept. The layout keeps a block together
      * only when a page can hold it and lets a taller one flow, and a block that ran over a
      * page break is exactly that; without a layout there is nothing to say either way.</p>
+     *
+     * <p>In a table cell only the block's lines are kept together. Word reads keep-with-next on the
+     * paragraph a cell opens with as keeping the cell's row with what follows it — the next row,
+     * or the paragraph after the table — and holds none across a break inside the row (measured,
+     * see {@link #keepThePanelMayBreak}). Written there, a block's keeps held the table it stands in
+     * with what the layout set on the next page: {@code ObsidianInvoice}'s info cards, kept together
+     * in a row's two cells, went with the footer divider under them to the next page in Word, 17
+     * lines below the page's; with keep-with-next taken off the paragraphs each card opens with,
+     * they stood on their page (measured, Word 16). A row of columns keeps a block in it whole, as
+     * it may not split.</p>
+     *
+     * @param inTheBody whether the block is written in the body, not in a table cell
      */
-    private static void keepOnOnePage(List<IBodyElement> written, boolean withNext) {
+    private static void keepOnOnePage(List<IBodyElement> written, boolean withNext, boolean inTheBody) {
         List<List<XWPFParagraph>> units = new ArrayList<>();
         for (IBodyElement element : written) {
             if (element instanceof XWPFParagraph paragraph) {
@@ -4076,7 +4088,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 if (!properties.isSetKeepLines()) {
                     properties.addNewKeepLines();
                 }
-                if ((!last || withNext) && !properties.isSetKeepNext()) {
+                if (inTheBody && (!last || withNext) && !properties.isSetKeepNext()) {
                     properties.addNewKeepNext();
                 }
             }
@@ -7094,13 +7106,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 writePageBreak(document);
             } else if (currentCell == null && (bandOpensItsPage || startsAPageOfItsOwn(node))) {
                 // What the block above leaves below itself stays on its page, and the space above
-                // the panel is held on its own, as at a table the layout moves to a new page
-                // (writeTableWithItsOwnSpacing): a band's first, where the band opens its page, the
-                // band's top edge with it (leaveThePageAboveTheBand).
+                // the panel is held on its own, with a gap the layout carries there, as at a table
+                // the layout moves to a new page (writeTableWithItsOwnSpacing): a band's first, where
+                // the band opens its page, the band's top edge with it (leaveThePageAboveTheBand).
                 if (bandOpensItsPage) {
                     leaveThePageAboveTheBand(node);
                 } else {
-                    leaveThePageAbove();
+                    leaveThePageAboveForTheBlock(node);
                 }
                 onANewPage = true;
             }
@@ -15286,6 +15298,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // the rule takes that drawing, which is not drawn again.
         CellRule drawnAs = takeTheDrawingOf(node, rule);
 
+        if (opensItsPageInTheFlow(node)) {
+            // Its top edge is held on the page the layout moves it to, as a paragraph's is: the space
+            // above a rule is its paragraph's, which Word and LibreOffice drop at the top of a page.
+            // ObsidianInvoice's footer divider, moved under its info cards to a new page with its
+            // 13pt margin, stood 13pt high there in both, with everything under it.
+            holdAParagraphsTopEdgeOnItsPage(document, node, 0);
+        }
         XWPFParagraph para = newBodyParagraph(document);
         applyVerticalSpacing(para, node);
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
@@ -15547,6 +15566,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Leaves on the page above what the layout leaves there when it moves a table, a row or a
+     * panel to a new page ({@link #leaveThePageAbove}), but for the space owed above the block that
+     * the layout carries onto the new page, which is held there with the block's own top edge
+     * ({@link #holdTheSpaceAboveOnItsPage}).
+     *
+     * <p>Where the gap between two blocks does not fit at the foot of a page, the layout carries it
+     * onto the next, and starts the block that far below the page's top margin, as it starts a
+     * paragraph ({@link #holdAParagraphsTopEdgeOnItsPage}). {@code MeteredInvoice} with its line
+     * items repeated nine times opens its fourth page with its closing row 12.4pt below the margin,
+     * the gap above it, which did not fit in the 9.2pt left at the foot of the third. Left on the page
+     * above, the row and everything under it stood 12.4pt high in Word and LibreOffice (measured).
+     * The part carried is what the page holds above the block past its own top margin, the edges
+     * of the containers opening with it and a layer's offset down its stack of one layer, which is
+     * named, not written; the space below the block above stays on that page. A block the layout
+     * runs on past its first page has no place of its own on it ({@link #spaceAboveOnItsPage}),
+     * and holds its own edge alone.</p>
+     */
+    private void leaveThePageAboveForTheBlock(DocumentNode block) {
+        nameAHangLeftOver();
+        resumeHere();
+        double carried = spaceAboveOnItsPage(block) - block.margin().top() - carriedSpacingBefore
+                         - layerOffsetNotWritten;
+        double onItsPage = Double.isNaN(carried) ? 0 : Math.max(0, carried);
+        pendingSpacingAfter -= onItsPage;
+        leaveThePageAbove();
+        carriedSpacingBefore += onItsPage;
+    }
+
+    /**
      * Leaves on the page above what a band the layout moves to a new page leaves there, where the
      * band opens with a block Word puts no space of its own above — a table, a row or a panel: the
      * space the block before the band owes below itself ({@link #bandGapBefore}), as above such a
@@ -15578,15 +15626,16 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             reportWrittenWithout(node, "written as a Word table");
         }
         // The layout starts a block it moves to a new page at the block's own top edge: what
-        // the page above holds below its last block, and the gap between the two, stay there.
-        // A band's first block, where the band opens its page, opens that page too, the band's top
-        // edge above it (leaveThePageAboveTheBand).
+        // the page above holds below its last block, and the gap between the two, stay there,
+        // but for a gap that does not fit there, which it carries onto the new page
+        // (leaveThePageAboveForTheBlock). A band's first block, where the band opens its page,
+        // opens that page too, the band's top edge above it (leaveThePageAboveTheBand).
         boolean opensItsBand = currentCell == null && bandOpensItsPage;
         boolean onANewPage = currentCell == null && (opensItsBand || startsAPageOfItsOwn(node));
         if (opensItsBand) {
             leaveThePageAboveTheBand(node);
         } else if (onANewPage) {
-            leaveThePageAbove();
+            leaveThePageAboveForTheBlock(node);
         }
         // A table a band's or a column's layer opens is that layer's first block, so it starts
         // where the layer resumes, as a paragraph does, and its own top margin comes after:
@@ -17790,7 +17839,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         warnContainerRadiusDropped(row);
         boolean onANewPage = currentCell == null && startsAPageOfItsOwn(row);
         if (onANewPage) {
-            leaveThePageAbove();
+            leaveThePageAboveForTheBlock(row);
         }
         writePanelPiece(document, row, paint, () -> writeRow(document, row, true), true, true, onANewPage);
     }

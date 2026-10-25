@@ -1,15 +1,24 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.node.TextVerticalAlign;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.table.DocumentTableCell;
+import com.demcha.compose.document.table.DocumentTableColumn;
+import com.demcha.compose.document.table.DocumentTableStyle;
+import com.demcha.compose.document.table.DocumentTableTextAnchor;
 import com.demcha.compose.font.FontName;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSpacing;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule;
 
 import java.util.ArrayList;
@@ -147,6 +156,126 @@ class DocxGrownLinesExportTest {
             assertThat(spacing(drawn).getLineRule()).as("its marker in the numbering's own face")
                     .isEqualTo(STLineSpacingRule.EXACT);
         }
+    }
+
+    @Test
+    void aTableTextCellAsTallAsItsFacesOwnLineIsWrittenAtALeastHeightAndItsRowNotMoved() throws Exception {
+        // Lato's own line is the page's, its descent the page's: a least line stands the text
+        // where the page does, whatever the cell's anchor, and the row's margins, which seat an
+        // exact line, keep the padding.
+        java.util.function.Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content = page -> page
+                .addTable(t -> t.columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100),
+                                DocumentTableColumn.fixed(100))
+                        .rowCells(textCell("Middle", DocumentTableTextAnchor.CENTER),
+                                textCell("Top", DocumentTableTextAnchor.TOP_LEFT),
+                                textCell("Bottom", DocumentTableTextAnchor.BOTTOM_LEFT)));
+        DocxExportReport report = DocxExports.report(400, 600, 20, content);
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, content)) {
+            for (XWPFTableCell cell : document.getTables().get(0).getRow(0).getTableCells()) {
+                XWPFParagraph text = cell.getParagraphs().get(0);
+
+                assertThat(spacing(text).getLineRule()).as(text.getText()).isEqualTo(STLineSpacingRule.AT_LEAST);
+                assertThat(DocxTwips.of(spacing(text).getLine())).as("Lato's own line at 8pt").isEqualTo(192);
+                assertThat(margins(cell)).as("the padding, 4pt above and below").containsExactly(80L, 80L);
+                assertThat(positions(text)).containsOnly(0L);
+            }
+        }
+        assertThat(report.bySubject()).as("no line of text left exact").doesNotContainKey(DocxExports.EXACT_LINES);
+    }
+
+    @Test
+    void aTableTextCellOfSeveralLinesGrowsEachOfThem() throws Exception {
+        // A paragraph a line where the cell's lines stand apart, the space between them after
+        // each; one paragraph, its lines broken, where they do not.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(DocumentTableCell.lines("Apart", "Below").withStyle(cellStyle(face(FontName.LATO, 8),
+                                DocumentTableTextAnchor.BOTTOM_LEFT, 2)),
+                        DocumentTableCell.lines("Broken", "Under").withStyle(cellStyle(face(FontName.LATO, 8),
+                                DocumentTableTextAnchor.CENTER, 0)))))) {
+            XWPFTableCell apart = document.getTables().get(0).getRow(0).getCell(0);
+            XWPFTableCell broken = document.getTables().get(0).getRow(0).getCell(1);
+
+            assertThat(apart.getParagraphs()).as("the premise: a paragraph a line").hasSize(2)
+                    .allSatisfy(line -> assertThat(spacing(line).getLineRule()).isEqualTo(STLineSpacingRule.AT_LEAST));
+            assertThat(DocxTwips.of(spacing(apart.getParagraphs().get(0)).getAfter())).as("the space between them")
+                    .isEqualTo(40);
+            assertThat(broken.getParagraphs()).as("the premise: one paragraph, its lines broken").hasSize(1);
+            assertThat(spacing(broken.getParagraphs().get(0)).getLineRule()).isEqualTo(STLineSpacingRule.AT_LEAST);
+        }
+    }
+
+    @Test
+    void aTableTextCellTighterThanItsFacesOwnLineStaysExact() throws Exception {
+        // Poppins' own line holds a line gap the page's does not: a least line would grow to it,
+        // and the row with it. Exact, the row's margins seat it.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100))
+                .rowCells(DocumentTableCell.text("Poppins").withStyle(cellStyle(face(FontName.POPPINS, 8),
+                        DocumentTableTextAnchor.CENTER, 0)))))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(spacing(cell.getParagraphs().get(0)).getLineRule()).isEqualTo(STLineSpacingRule.EXACT);
+            assertThat(margins(cell)[0]).as("its room moved up").isLessThan(80L);
+        }
+    }
+
+    @Test
+    void anExactCellBesideALeastOneIsLeftItsCallByTheRowsMargins() throws Exception {
+        // The least cell calls for no move, so the row's margins, which move every cell's text at
+        // once, stay its padding; the exact Ubuntu cell beside it, which Word sets a quarter point
+        // high, is left that call, under the half point its position moves and with no space after
+        // its line to trade.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
+                .rowCells(textCell("Lato", DocumentTableTextAnchor.CENTER),
+                        DocumentTableCell.text("Ubuntu").withStyle(cellStyle(face(FontName.UBUNTU, 8),
+                                DocumentTableTextAnchor.CENTER, 0)))))) {
+            var row = document.getTables().get(0).getRow(0);
+            XWPFParagraph ubuntu = row.getCell(1).getParagraphs().get(0);
+
+            assertThat(spacing(row.getCell(0).getParagraphs().get(0)).getLineRule()).isEqualTo(STLineSpacingRule.AT_LEAST);
+            assertThat(spacing(ubuntu).getLineRule()).isEqualTo(STLineSpacingRule.EXACT);
+            for (XWPFTableCell cell : row.getTableCells()) {
+                assertThat(margins(cell)).containsExactly(80L, 80L);
+            }
+            assertThat(positions(ubuntu)).containsOnly(0L);
+            assertThat(spacing(ubuntu).isSetAfter() ? DocxTwips.of(spacing(ubuntu).getAfter()) : 0L).isZero();
+        }
+    }
+
+    @Test
+    void aRightToLeftTextCellStaysExact() throws Exception {
+        // Word sets a right-to-left run's line by its own measure, which a least line is not read by.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page.addTable(t -> t
+                .columns(DocumentTableColumn.fixed(100))
+                .rowCells(DocumentTableCell.text("Lato").withStyle(DocumentTableStyle.builder()
+                        .padding(DocumentInsets.of(4)).stroke(DocumentStroke.of(DocumentColor.BLACK, 0))
+                        .textStyle(face(FontName.LATO, 8)).textAnchor(DocumentTableTextAnchor.CENTER)
+                        .direction(TextDirection.RTL).build()))))) {
+            XWPFParagraph text = document.getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
+
+            assertThat(text.getCTP().getRArray(0).getRPr().sizeOfRtlArray()).as("the premise: a right-to-left run")
+                    .isPositive();
+            assertThat(spacing(text).getLineRule()).isEqualTo(STLineSpacingRule.EXACT);
+        }
+    }
+
+    private static DocumentTableCell textCell(String text, DocumentTableTextAnchor anchor) {
+        return DocumentTableCell.text(text).withStyle(cellStyle(face(FontName.LATO, 8), anchor, 0));
+    }
+
+    private static DocumentTableStyle cellStyle(DocumentTextStyle face, DocumentTableTextAnchor anchor,
+                                                double lineSpacing) {
+        return DocumentTableStyle.builder().padding(DocumentInsets.of(4))
+                .stroke(DocumentStroke.of(DocumentColor.BLACK, 0)).textStyle(face).textAnchor(anchor)
+                .lineSpacing(lineSpacing).build();
+    }
+
+    /** A cell's top and bottom margins, in twips. */
+    private static long[] margins(XWPFTableCell cell) {
+        CTTcMar mar = cell.getCTTc().getTcPr().getTcMar();
+        return new long[]{DocxTwips.of(mar.getTop().getW()), DocxTwips.of(mar.getBottom().getW())};
     }
 
     private static DocumentTextStyle face(FontName name, double size) {

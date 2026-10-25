@@ -3,6 +3,7 @@ package com.demcha.compose.document.backend.semantic.docx;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.CanvasLayerBuilder;
+import com.demcha.compose.document.dsl.PageBreakBuilder;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -141,6 +142,21 @@ class DocxCanvasRoomTest {
         assertThat(gapInWord(drawing.document(), "Above", "Caption"))
                 .as("the canvas only draws, the caption under it raised into the space above it, as in the flow")
                 .isCloseTo(gapOnThePage(drawing.layout(), "Above", "Caption") - RAISE, within(0.1))
+                .isGreaterThan(40);
+    }
+
+    @Test
+    void aCanvasBeforeABreakInAStackOfOneLayerHoldsItsRoom() throws Exception {
+        // The page breaks no page in a stack: the break is a box of no height, and what follows it
+        // follows the canvas on the same page.
+        Exported exported = export(page -> page
+                .addLayerStack(stack -> stack.layer(new SectionBuilder()
+                        .add(new CanvasLayerBuilder(360, 80).position(paragraph("Caption"), 0, 0).build())
+                        .add(new PageBreakBuilder().build())
+                        .add(paragraph("Below")).build(), LayerAlign.TOP_LEFT)));
+
+        assertThat(gapInWord(exported.document(), "Caption", "Below"))
+                .isCloseTo(gapOnThePage(exported.layout(), "Caption", "Below") - RAISE, within(0.1))
                 .isGreaterThan(40);
     }
 

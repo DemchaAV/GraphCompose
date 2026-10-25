@@ -723,8 +723,17 @@ How it lands:
   panel the break runs through. The page goes on with them at the top of the next page, with
   no padding above, its own or theirs, so the tables after the first have none; what follows
   the break stands the spacing of the container it is in below that top, as the page sets it.
-  A break in a panel composed in a table cell, a row's column or a stack's column is not cut,
-  nor one in an alignment, an anchor's wrapper or a stack of one layer inside a panel.
+  The page breaks no page in a row's column, a table's composed cell, a layer stack's layer — a
+  stack of one layer included — a shape container's layer or a canvas: there a break is a box of
+  no height, the spacing of its container on either side of it, and the export writes no break,
+  the spacing on both sides (measured: a section of two parts with a break between them, in a
+  row's column, a stack's column, a band, a stack of one layer or a table's cell, came out on
+  two pages in Word and LibreOffice 24.2, the break written after the table or between the
+  stack's layers, where the page has one). A margin set on such a break, which the page counts
+  there, is not written. A panel there is written whole. A break in an alignment or
+  an anchor's wrapper inside a panel is not cut; the page breaks no page in an alignment either,
+  and the export still writes that break — in its place in the body, after the table in a
+  panel.
 - **Measured.** Cards stacked in a row's columns, panels nested in its table, and a card set in
   from a filled panel's text stand where the page sets them in Word 16 and LibreOffice on
   Windows, as far as the left edge and the right end above say.

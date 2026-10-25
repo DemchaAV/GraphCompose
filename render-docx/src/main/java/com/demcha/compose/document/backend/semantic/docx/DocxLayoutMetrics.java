@@ -485,12 +485,6 @@ final class DocxLayoutMetrics {
     }
 
     /**
-     * The index part of each placed row's name, kept as the text the layout wrote rather than
-     * parsed: a row is looked up by writing its index the same way, so a name that only
-     * resembles the pattern matches nothing instead of failing the export. Each is kept with
-     * the page it was placed on.
-     */
-    /**
      * Where the lowest of a table's own rows on a page ends, measured up from the page's foot as
      * {@link #lowestContentOn} measures.
      *
@@ -508,6 +502,12 @@ final class DocxLayoutMetrics {
         return lowest;
     }
 
+    /**
+     * The index part of each placed row's name, kept as the text the layout wrote rather than
+     * parsed: a row is looked up by writing its index the same way, so a name that only
+     * resembles the pattern matches nothing instead of failing the export. Each is kept with
+     * the page it was placed on.
+     */
     private Map<String, Integer> placedRowsOf(DocumentNode table) {
         return placedRows.computeIfAbsent(table, node -> {
             Map<String, Integer> rows = new HashMap<>();

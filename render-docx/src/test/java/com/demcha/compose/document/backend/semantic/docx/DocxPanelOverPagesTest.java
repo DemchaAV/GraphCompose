@@ -154,7 +154,10 @@ class DocxPanelOverPagesTest {
 
         assertThat(exported.pages()).as("the premise: three pages").hasSize(3);
         assertThat(exported.pages().get(1)).as("the premise: row 15 on page 2").contains("Row 15");
-        assertThat(parts(exported.document())).hasSize(2);
+        List<String> first = new ArrayList<>(exported.pages().get(0));
+        first.addAll(exported.pages().get(1).subList(1, exported.pages().get(1).size()));
+        assertThat(rowsOf(parts(exported.document()))).as("pages 1 and 2 one part, page 3 another")
+                .containsExactly(first, exported.pages().get(2));
         assertThat(cutNote(exported.report())).contains("cut at the row page 3 starts with")
                 .contains("it is not cut where page 2 starts, at a row its table cannot be split at");
     }
@@ -190,7 +193,7 @@ class DocxPanelOverPagesTest {
     void aPageAboveWhichTheRowsEndTooNearTheFootIsNotCut() throws Exception {
         // Word sets the part's bottom border inside its row: where the page's last row on page 1
         // leaves less room than that above the foot, Word would set that row on a page of its own.
-        double gap = gapLeavingTheLastRowNearTheFoot();
+        double gap = gapLeavingTheLastRowNearTheFoot(true);
         Exported exported = export(page -> {
             page.addSpacer(spacer -> spacer.height(gap));
             card(20, true, null, null).accept(page);
@@ -198,7 +201,43 @@ class DocxPanelOverPagesTest {
 
         assertThat(parts(exported.document())).as("not cut where page 2 starts").hasSize(1);
         assertThat(cutNote(exported.report())).contains("it is not cut where page 2 starts, the page above setting "
-                                                         + "its rows too near its foot");
+                                                         + "its rows too near its foot")
+                .contains("repeating no header row of the table nested in its cell");
+    }
+
+    @Test
+    void aTableWithNoHeaderRowsCutNowhereIsNamedWithNoWordOfAHeader() throws Exception {
+        double gap = gapLeavingTheLastRowNearTheFoot(false);
+        Exported exported = export(page -> {
+            page.addSpacer(spacer -> spacer.height(gap));
+            card(20, false, null, null).accept(page);
+        });
+
+        assertThat(cutNote(exported.report())).contains("written as one table").doesNotContain("header");
+    }
+
+    @Test
+    void aPartOpeningItsPageNeedsRoomForItsTopBorderAndTheParagraphBeforeItToo() throws Exception {
+        // A page height at which page 2's last row leaves room for a bottom border and a point,
+        // and not for the top border and the hairline paragraph the part opening page 2 sets too.
+        double height = heightLeavingTheMiddlePartTooLittleRoom();
+        Exported exported = export(height, card(30, true, null, null));
+
+        assertThat(parts(exported.document())).as("cut where page 2 starts, not where page 3 does").hasSize(2);
+        assertThat(cutNote(exported.report())).contains("cut at the row page 2 starts with")
+                .contains("it is not cut where page 3 starts, the page above setting its rows too near its foot");
+    }
+
+    @Test
+    void aPageTheCardRunsOntoAfterItsTableIsNamed() throws Exception {
+        // A gap after the table moves the card's closing line to page 3.
+        Exported exported = export(card(20, true, null, below -> below.addSpacer(spacer -> spacer.height(240))
+                .addParagraph("Closing")));
+
+        assertThat(exported.cardPages()).as("the premise: the card runs over three pages").isEqualTo(3);
+        assertThat(exported.pages()).as("the premise: its table over two").hasSize(2);
+        assertThat(parts(exported.document())).hasSize(2);
+        assertThat(cutNote(exported.report())).contains("it is not cut where page 3 starts, outside its table");
     }
 
     @Test
@@ -216,12 +255,12 @@ class DocxPanelOverPagesTest {
      * A gap above the card that leaves its table's last row on page 1 less than its 1pt bottom
      * border and a point above the page's foot, found by laying the page out.
      */
-    private static double gapLeavingTheLastRowNearTheFoot() {
+    private static double gapLeavingTheLastRowNearTheFoot(boolean header) {
         for (double gap = 0; gap < 40; gap += 0.25) {
             double height = gap;
             try (DocumentSession session = session(page -> {
                 page.addSpacer(spacer -> spacer.height(height));
-                card(20, true, null, null).accept(page);
+                card(20, header, null, null).accept(page);
             })) {
                 DocxLayoutMetrics layout = DocxLayoutMetrics.of(session.documentGraph(), session.layoutGraph());
                 TableNode table = first(session.documentGraph().roots(), TableNode.class);
@@ -232,6 +271,30 @@ class DocxPanelOverPagesTest {
             }
         }
         throw new AssertionError("no gap leaves the last row near the foot");
+    }
+
+    /**
+     * A page height at which a 30-row card runs over three pages, its rows on page 1 ending far
+     * enough above the foot for the first part's 1pt bottom border and a point, and those on page 2
+     * ending room enough for that but not for the second part's 1pt top border and 0.1pt paragraph
+     * too, found by laying the pages out.
+     */
+    private static double heightLeavingTheMiddlePartTooLittleRoom() {
+        for (double height = 280; height < 340; height += 0.25) {
+            try (DocumentSession session = session(height, card(30, true, null, null))) {
+                DocxLayoutMetrics layout = DocxLayoutMetrics.of(session.documentGraph(), session.layoutGraph());
+                TableNode table = first(session.documentGraph().roots(), TableNode.class);
+                if (layout.placement(table).startPage() != 0 || layout.placement(table).endPage() != 2) {
+                    continue;
+                }
+                double first = layout.lowestRowOn(table, 0) - layout.marginOf(0).bottom();
+                double second = layout.lowestRowOn(table, 1) - layout.marginOf(1).bottom();
+                if (first >= 2.05 && second >= 2.05 && second < 3.05) {
+                    return height;
+                }
+            }
+        }
+        throw new AssertionError("no page height leaves the middle part too little room");
     }
 
     @Test
@@ -247,7 +310,22 @@ class DocxPanelOverPagesTest {
         }
 
         assertThat(parts(new XWPFDocument(new ByteArrayInputStream(docx)))).hasSize(2);
-        assertThat(cutNote(report.get())).contains("cut at the row page 2 starts with");
+        assertThat(cutNote(report.get())).contains("cut at the row section 1, page 2 starts with");
+    }
+
+    @Test
+    void aPanelInALaterSectionNamesItsPagesAsItsSectionCountsThem() throws Exception {
+        AtomicReference<DocxExportReport> report = new AtomicReference<>();
+        byte[] docx;
+        try (MultiSectionDocument sections = GraphCompose.documents()
+                .section(session(page -> page.addParagraph("First section")))
+                .section(session(card(20, true, null, null)))
+                .create()) {
+            docx = sections.export(DocxSemanticBackend.builder().reportSink(report::set).build());
+        }
+
+        assertThat(parts(new XWPFDocument(new ByteArrayInputStream(docx)))).hasSize(2);
+        assertThat(cutNote(report.get())).contains("cut at the row section 2, page 2 starts with");
     }
 
     @Test
@@ -340,14 +418,23 @@ class DocxPanelOverPagesTest {
     }
 
     private static DocumentSession session(Consumer<PageFlowBuilder> content) {
-        DocumentSession session = GraphCompose.document().pageSize(400, 300).margin(DocumentInsets.of(20)).create();
+        return session(300, content);
+    }
+
+    private static DocumentSession session(double pageHeight, Consumer<PageFlowBuilder> content) {
+        DocumentSession session = GraphCompose.document().pageSize(400, pageHeight).margin(DocumentInsets.of(20))
+                .create();
         session.pageFlow(content::accept);
         return session;
     }
 
     private static Exported export(Consumer<PageFlowBuilder> content) throws Exception {
+        return export(300, content);
+    }
+
+    private static Exported export(double pageHeight, Consumer<PageFlowBuilder> content) throws Exception {
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
-        try (DocumentSession session = session(content)) {
+        try (DocumentSession session = session(pageHeight, content)) {
             byte[] docx = session.export(new DocxSemanticBackend(report::set));
             DocxLayoutMetrics layout = DocxLayoutMetrics.of(session.documentGraph(), session.layoutGraph());
             List<List<String>> pages = new ArrayList<>();

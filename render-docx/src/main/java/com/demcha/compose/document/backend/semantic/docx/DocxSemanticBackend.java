@@ -7121,10 +7121,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * @param outer  the table of one cell the panel is written as
      * @param table  the table among its children the layout breaks over pages
      * @param inner  the table that one is written as, in the panel's cell
-     * @param layout the layout of the section the panel is in
+     * @param layout  the layout of the section the panel is in, which counts its pages
+     * @param section what the report calls that section, as "section 2", or null for a document of one
      */
     private record PanelOverPages(DocumentNode panel, XWPFTable outer, TableNode table, XWPFTable inner,
-                                  DocxLayoutMetrics layout) {
+                                  DocxLayoutMetrics layout, String section) {
     }
 
     /**
@@ -7147,7 +7148,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         XWPFTable inner = over == null ? null : tablesWritten.get(over);
         if (inner != null && outer.getRow(0).getCell(0).getBodyElements().contains(inner)) {
-            panelsOverPages.add(new PanelOverPages(node, outer, over, inner, layout));
+            panelsOverPages.add(new PanelOverPages(node, outer, over, inner, layout,
+                    sectioned ? "section " + (sectionIndex + 1) : null));
         }
     }
 
@@ -7225,7 +7227,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 inner = next.getRow(0).getCell(0).getTables().get(0);
                 cut.add(page);
             }
-            reportTheCut(over.panel(), itsLayout.pathOf(over.panel()), header, top, cut, left);
+            reportTheCut(over, header, top, cut, left);
         }
     }
 
@@ -7242,40 +7244,49 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the pages it is cut at, its fixed page breaks and the top border a part after a cut stands
      * lower by, or that it is written whole; and each page left to Word, and why.
      *
+     * @param over   the panel
      * @param header whether its table has header rows a part after a cut opens with
      * @param top    the width of its top border, in points
-     * @param cut    the pages, from 0, it is cut at
-     * @param left   the pages, from 0, left to Word, each with why
+     * @param cut    the pages, from 0 in its section, it is cut at
+     * @param left   the pages, from 0 in its section, left to Word, each with why
      */
-    private void reportTheCut(DocumentNode panel, String path, boolean header, double top, List<Integer> cut,
+    private void reportTheCut(PanelOverPages over, boolean header, double top, List<Integer> cut,
                               java.util.Map<Integer, String> left) {
         StringBuilder detail = new StringBuilder("the layout breaks it over pages inside its table: ");
         if (cut.isEmpty()) {
-            detail.append("written as one table, whose row Word breaks where its lines run out, repeating no header "
-                          + "row of the table nested in its cell");
+            detail.append("written as one table, whose row Word breaks where its lines run out")
+                    .append(header ? ", repeating no header row of the table nested in its cell" : "");
         } else {
-            detail.append("written as a table a page, cut at the ").append(cut.size() == 1 ? "row " : "rows ")
-                    .append(pagesNamed(cut)).append(cut.size() == 1 ? " starts" : " start").append(" with")
+            detail.append("written as tables cut at the ").append(cut.size() == 1 ? "row " : "rows ")
+                    .append(pagesNamed(over.section(), cut)).append(cut.size() == 1 ? " starts" : " start")
+                    .append(" with")
                     .append(header ? ", the part after a cut opening with the table's header rows" : "")
                     .append(", and its page breaks fixed there, so rows an edit adds above a cut no longer run onto "
                             + "the page after it");
         }
         java.util.Map<String, List<Integer>> why = new java.util.LinkedHashMap<>();
         left.forEach((page, reason) -> why.computeIfAbsent(reason, key -> new ArrayList<>()).add(page));
-        why.forEach((reason, pages) -> detail.append("; it is not cut where ").append(pagesNamed(pages))
-                .append(pages.size() == 1 ? " starts, " : " start, ").append(reason));
+        why.forEach((reason, pages) -> detail.append("; it is not cut where ")
+                .append(pagesNamed(over.section(), pages)).append(pages.size() == 1 ? " starts, " : " start, ")
+                .append(reason));
         if (!cut.isEmpty() && top >= 0.1) {
             detail.append("; in Word a part after a cut stands about its top border's width, ").append(pointsOf(top))
                     .append("pt, lower than the page sets it: Word sets what a cell holds the whole border inside the "
                             + "row, where the page strokes it on the panel's edge, at the page's top");
         }
-        report.add(DocxExportReport.Severity.APPROXIMATED, panel.nodeKind(), path, detail.toString());
+        report.add(DocxExportReport.Severity.APPROXIMATED, over.panel().nodeKind(), over.layout().pathOf(over.panel()),
+                detail.toString());
     }
 
-    /** Pages counted from 0, named as the page counts them: "page 2", "pages 2 and 3", "pages 2, 3 and 4". */
-    private static String pagesNamed(List<Integer> pages) {
+    /**
+     * Pages counted from 0 in a section, named as the section counts them: "page 2", "section 2,
+     * pages 2 and 3", "pages 2, 3 and 4".
+     *
+     * @param section what the report calls the section, or null for a document of one
+     */
+    private static String pagesNamed(String section, List<Integer> pages) {
         List<String> numbers = pages.stream().map(page -> String.valueOf(page + 1)).toList();
-        return (numbers.size() == 1 ? "page " : "pages ") + listed(numbers);
+        return (section == null ? "" : section + ", ") + (numbers.size() == 1 ? "page " : "pages ") + listed(numbers);
     }
 
     /**

@@ -95,7 +95,9 @@ final class SyntheticDocxCorpus {
      *
      * <p>Spaced so that page 1's rows leave room under them for the paragraph that ends a Word
      * section at the cut, as gaps of 2 to 6pt and 12 to 16pt do: at 8 or 10pt the export names
-     * page 2's margins instead, and both editors set page 2 with page 1's.</p>
+     * page 2's margins instead, and both editors set page 2 with page 1's. A change to a table's
+     * metrics can move page 1's last row into that case: the gate then fails this document with
+     * every line of page 2 about 53pt high, which a re-spaced fixture answers, not the change.</p>
      */
     private static void cardOverPages(DocumentSession session) {
         session.pageSize(400, 600).margin(MARGIN);

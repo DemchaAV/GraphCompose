@@ -4244,15 +4244,21 @@ follow semantic versioning; release dates are ISO 8601.
       `MeteredInvoice` with them repeated 9 times, the gap above its closing row carried onto
       page 4.
   - Measured in Word 16, every line of all five stands on the page the PDF sets it on, nine in
-    ten within 1.2pt of it. Word sets the amounts of the bordered card's table 36.4pt left, the
-    table's first column narrower than its grid, which LibreOffice keeps. In LibreOffice 24.2 and
-    26.8 the parts of the card after its explicit breaks stand 3 to 5pt high. LibreOffice 26.8 on
-    Windows carries `ObsidianInvoice`'s info cards to page 5, 17 lines, where Word and LibreOffice
-    24.2, CI's, keep them on page 4, as it did before the page break after them was fixed; its
-    baseline holds that as it stands.
-  - The Word and Windows LibreOffice baselines take the five documents' rows alone; the presets'
-    rows stay as recorded. The tests holding `ObsidianInvoice` and `MeteredInvoice` with their line
-    items repeated take the corpus's helper for that.
+    ten within 1.2pt of it down. Across, Word sets the amounts of the bordered card's table 36.4pt
+    left, the table's first column narrower than its grid, which LibreOffice keeps. In
+    LibreOffice 24.2 and 26.8 the parts of the card after its explicit breaks stand 3 to 5pt high.
+    LibreOffice 24.2, CI's, sets each on the pages the PDF does; it sets the line items of the
+    two long invoices high, more so page after page (`ObsidianInvoice`'s up to 10pt,
+    `MeteredInvoice`'s by a median of 52 and 87pt on its second and third pages, 16 of its lines
+    on another page), as it does the presets'
+    long tables, and holds their last pages, which carry the page break after the cards and the
+    gap above the closing row, within 0.8pt. LibreOffice
+    26.8 on Windows carries `ObsidianInvoice`'s info cards to page 5, 17 lines, where Word and
+    LibreOffice 24.2 keep them on page 4, as it did before the page break after them was fixed;
+    its baseline holds that as it stands.
+  - Each baseline takes the five documents' rows alone, from the run of its editor — Linux's from
+    CI's; the presets' rows stay as recorded. The tests holding `ObsidianInvoice` and
+    `MeteredInvoice` with their line items repeated take the corpus's helper for that.
 
 - **The DOCX field ledger names what a session hands an export beside the tree.** Every part
   of `SemanticExportContext` and of the `LayoutGraph` it carries has a fate, and a part with

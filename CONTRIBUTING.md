@@ -356,8 +356,8 @@ Choose the smallest tests that match the change:
   A change that moves documents nearer the page rewrites the baseline with
   `-Dgraphcompose.docxFidelity.update=true`, and commits it with the change: its diff shows
   which documents moved. A new preset joins the corpus in its family's `*DocxCorpus` class,
-  and a shape no preset has — a page break inside a panel, a card run over pages — in
-  `SyntheticDocxCorpus`.
+  and so does a preset on a longer fixture; a shape no preset has — a page break inside a
+  panel, a card run over pages — goes in `SyntheticDocxCorpus`.
   CI runs it on Linux (the `DOCX Fidelity` job) against `libreoffice-linux.tsv`, and uploads
   what it measured: LibreOffice sets text a little differently per platform, so a change that
   moves documents nearer the page takes that artifact's files as the Linux baseline, and its own

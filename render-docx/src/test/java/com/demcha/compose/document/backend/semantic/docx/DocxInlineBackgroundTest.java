@@ -510,7 +510,7 @@ class DocxInlineBackgroundTest {
                 .addParagraph(p -> p.inlineHighlight("overdue", DocumentTextStyle.DEFAULT,
                         BADGE, 0, DocumentInsets.zero())));
 
-        assertThat(report.isEmpty()).isTrue();
+        assertThat(DocxExports.besidesTheExactLines(report)).isEmpty();
     }
 
     @Test

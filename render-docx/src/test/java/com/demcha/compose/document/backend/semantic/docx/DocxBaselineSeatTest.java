@@ -11,6 +11,7 @@ import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,10 @@ import static org.assertj.core.api.Assertions.within;
  *
  * <p>Word stands the baseline of an exact line four fifths of the way down it, whatever the
  * face; the page sets it the face's ascent below the line's top. {@code NorthlineProposal}'s
- * 46pt Spectral title, whose ascent is under seven tenths of its line, stood 7pt low in Word.</p>
+ * 46pt Spectral title, whose ascent is under seven tenths of its line, stood 7pt low in Word.
+ * A line as tall as its face's own is now written at a least height, which stands its text where
+ * the page does; the lines seated here are tighter than their faces' own — Poppins', whose own
+ * line holds a line gap the page's does not, and Ubuntu's — and stay exact.</p>
  */
 class DocxBaselineSeatTest {
 
@@ -34,10 +38,10 @@ class DocxBaselineSeatTest {
     private static final double SPECTRAL_ASCENT = 1.059;
     /** Spectral's own line, in ems: its ascent and 463 units of descent. */
     private static final double SPECTRAL_LINE = 1.522;
-    /** Lato's ascent, in ems: 1974 of 2000 units. */
-    private static final double LATO_ASCENT = 0.987;
     /** Poppins' ascent, in ems: 1050 of 1000 units. */
     private static final double POPPINS_ASCENT = 1.05;
+    /** Ubuntu's ascent, in ems: 932 of 1000 units. */
+    private static final double UBUNTU_ASCENT = 0.932;
     /** Gothic A1's ascent, in ems: 798 of 1000 units, its own line one em. */
     private static final double GOTHIC_A1_ASCENT = 0.798;
     /**
@@ -51,24 +55,54 @@ class DocxBaselineSeatTest {
         return DocumentTextStyle.builder().fontName(FontName.SPECTRAL).size(size).build();
     }
 
-    @Test
-    void aDeepFaceIsRaisedFromWordsBaselineToThePages() throws Exception {
-        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
-                .addParagraph(p -> p.text("Title").textStyle(spectral(30))))) {
-            XWPFParagraph title = paragraph(document, "Title");
-            double wordBelowThePage = 0.8 * line(title) - SPECTRAL_ASCENT * 30;
+    /**
+     * Poppins: its own line holds a line gap a tenth of its size above its letters, which the page's
+     * does not, so its lines are tighter than its own and written exact, where Word sets it low.
+     */
+    private static DocumentTextStyle poppins(double size) {
+        return DocumentTextStyle.builder().fontName(FontName.POPPINS).size(size).build();
+    }
 
+    @Test
+    void aFaceWordSetsLowInAnExactLineIsRaisedFromWordsBaselineToThePages() throws Exception {
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addParagraph(p -> p.text("Title").textStyle(poppins(60))))) {
+            XWPFParagraph title = paragraph(document, "Title");
+            double wordBelowThePage = 0.8 * line(title) - POPPINS_ASCENT * 60;
+
+            assertThat(rule(title)).as("the premise: an exact line").isEqualTo(STLineSpacingRule.EXACT);
             assertThat(wordBelowThePage).as("the premise: Word's baseline is the lower").isGreaterThan(4);
             assertThat(position(title)).isCloseTo((int) Math.round(wordBelowThePage * 2), within(1));
         }
     }
 
     @Test
+    void aDeepFaceAsTallAsItsOwnLineStandsItsTextWhereThePageDoes() throws Exception {
+        // Spectral's line is its own: written at a least height, Word keeps the spare above the
+        // letters and stands the baseline the descent above the foot, where the page does, so
+        // nothing moves it. Exact, Word stood its 25pt title 4pt low. At 25pt the line is a whole
+        // number of twips; at 30pt it rounds a hundredth short of its own, which a least line would
+        // grow back, and stays exact.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addParagraph(p -> p.text("Title").textStyle(spectral(25)))
+                .addParagraph(p -> p.text("Rounded").textStyle(spectral(30))))) {
+            XWPFParagraph title = paragraph(document, "Title");
+
+            assertThat(rule(title)).isEqualTo(STLineSpacingRule.AT_LEAST);
+            assertThat(line(title)).as("the page's line").isEqualTo(SPECTRAL_LINE * 25);
+            assertThat(position(title)).isZero();
+            assertThat(rule(paragraph(document, "Rounded"))).isEqualTo(STLineSpacingRule.EXACT);
+        }
+    }
+
+    @Test
     void aFaceWhoseBaselineWordAlreadyNearlyMatchesIsLeftAlone() throws Exception {
-        // Lato's ascent is 0.82 of its line: a quarter point from Word's four fifths at 10pt.
+        // Gothic A1's ascent is four fifths of its line, a fiftieth of a point from Word's seat at
+        // 10pt; its own line holds a line gap the page's does not, so the line is exact.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Body").textStyle(DocumentTextStyle.builder()
-                        .fontName(FontName.LATO).size(10).build())))) {
+                        .fontName(FontName.GOTHIC_A1).size(10).build())))) {
+            assertThat(rule(paragraph(document, "Body"))).isEqualTo(STLineSpacingRule.EXACT);
             assertThat(position(paragraph(document, "Body"))).isZero();
         }
     }
@@ -129,35 +163,56 @@ class DocxBaselineSeatTest {
 
     @Test
     void linesThatTookTheirGapFromTheSpaceAboveAreSeatedFromTheHigherTop() throws Exception {
-        // Two lines 10pt apart under 20pt of space: Word's lines take their gaps from above and
-        // start 10pt above the page's first line, and are raised into the 10pt left above them.
+        // Two lines a point apart under 20pt of space: Word's lines take their gaps from above and
+        // start a point above the page's first line, and are raised into the 19pt left above them.
+        // Poppins' own line holds a line gap of a tenth of its size above its letters, which the
+        // page's line does not: the lines are tighter than that, and exact.
+        try (XWPFDocument document = DocxExports.withLayout(240, 600, 20, page -> page
+                .addParagraph(p -> p.text("First line of it and second line").textStyle(DocumentTextStyle.builder()
+                                .fontName(FontName.POPPINS).size(20).build())
+                        .lineSpacing(1).margin(new DocumentInsets(20, 0, 0, 0))))) {
+            XWPFParagraph text = paragraph(document, "First line of it and second line");
+            double line = line(text);
+            double raise = 0.8 * line - 1 - POPPINS_ASCENT * 20;
+
+            assertThat(line).as("the premise: two lines, each its gap taller").isGreaterThan(28.5);
+            assertThat(text.getCTP().getPPr().getSpacing().getLineRule()).isEqualTo(STLineSpacingRule.EXACT);
+            assertThat(raise).as("the premise: Word's baseline is the lower, by less than the space left")
+                    .isBetween(0.5, 19.0);
+            assertThat(before(text)).isCloseTo(Math.round((19 - raise) * 20), within(1L));
+            assertThat(position(text)).isZero();
+        }
+    }
+
+    @Test
+    void linesAtLeastAsTallAsTheirFacesOwnStandTheirTextOnTheirFootWhereThePageDoes() throws Exception {
+        // Two lines 10pt apart under 20pt of space, Spectral's own line and the gap tall: written at a
+        // least height, which keeps the gap above the letters, as the page has it above the second
+        // line; the first's comes off the space above, and nothing is raised.
         try (XWPFDocument document = DocxExports.withLayout(240, 600, 20, page -> page
                 .addParagraph(p -> p.text("First line of it and second line of it").textStyle(spectral(20))
                         .lineSpacing(10).margin(new DocumentInsets(20, 0, 0, 0))))) {
             XWPFParagraph text = paragraph(document, "First line of it and second line of it");
-            double line = line(text);
-            double raise = 0.8 * line - 10 - SPECTRAL_ASCENT * 20;
 
-            assertThat(line).as("the premise: two lines, each its gap taller").isGreaterThan(40);
-            assertThat(raise).as("the premise: Word's baseline is the lower, by less than the space left")
-                    .isBetween(0.5, 10.0);
-            assertThat(before(text)).isCloseTo(Math.round((10 - raise) * 20), within(1L));
+            assertThat(line(text)).as("the premise: two lines, each its gap taller").isGreaterThan(40);
+            assertThat(text.getCTP().getPPr().getSpacing().getLineRule()).isEqualTo(STLineSpacingRule.AT_LEAST);
+            assertThat(before(text)).as("the gap off the 20pt above").isEqualTo(200);
             assertThat(position(text)).isZero();
         }
     }
 
     @Test
     void aLineWordSetsLowIsRaisedIntoTheSpaceAboveItAndOwesItBelow() throws Exception {
-        // 20pt above a 30pt Spectral title: Word's baseline stands nearly 5pt below the page's.
-        // The line moves up that much of the space, to the twip, where its position would move
-        // it in half points, and LibreOffice that half again; Lato under it, which Word sets high
-        // and nothing under it lowers, stands where the page does all the same.
+        // 20pt above a 30pt Poppins title: Word's baseline stands 2pt below the page's. The line
+        // moves up that much of the space, to the twip, where its position would move it in half
+        // points, and LibreOffice that half again; Lato under it, its line its own and written at a
+        // least height, stands where the page does all the same.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addParagraph(p -> p.text("Title").textStyle(spectral(30)).margin(DocumentInsets.top(20)))
+                .addParagraph(p -> p.text("Title").textStyle(poppins(30)).margin(DocumentInsets.top(20)))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10))))) {
             XWPFParagraph title = paragraph(document, "Title");
-            double raise = 0.8 * line(title) - SPECTRAL_ASCENT * 30;
+            double raise = 0.8 * line(title) - POPPINS_ASCENT * 30;
 
             assertThat(raise).as("the premise: Word's baseline is the lower, by less than the space")
                     .isBetween(1.0, 20.0);
@@ -173,10 +228,10 @@ class DocxBaselineSeatTest {
     void whatTheSpaceAboveCannotGiveIsLeftToThePosition() throws Exception {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addParagraph(p -> p.text("Title").textStyle(spectral(30)).margin(DocumentInsets.top(2)))
+                .addParagraph(p -> p.text("Title").textStyle(poppins(60)).margin(DocumentInsets.top(2)))
                 .addParagraph(p -> p.text("Body").textStyle(lato(10))))) {
             XWPFParagraph title = paragraph(document, "Title");
-            double raise = 0.8 * line(title) - SPECTRAL_ASCENT * 30;
+            double raise = 0.8 * line(title) - POPPINS_ASCENT * 60;
 
             assertThat(before(title)).as("all of the 2pt").isZero();
             assertThat(position(title)).isCloseTo((int) Math.round((raise - 2) * 2), within(1));
@@ -207,7 +262,8 @@ class DocxBaselineSeatTest {
         String text = "A title long enough to run onto a second line and a third one";
         try (DocumentSession session = GraphCompose.document().pageSize(400, 600).margin(DocumentInsets.of(20)).create()) {
             session.pageFlow(page -> page.spacer(1, 500)
-                    .addParagraph(p -> p.name("Broken").text(text).textStyle(spectral(30)).margin(DocumentInsets.top(10))));
+                    .addParagraph(p -> p.name("Broken").text(text).textStyle(poppins(30))
+                            .margin(DocumentInsets.top(10))));
             var placed = session.layoutGraph().nodes().stream()
                     .filter(node -> "Broken".equals(node.semanticName())).findFirst().orElseThrow();
             try (XWPFDocument document = new XWPFDocument(
@@ -241,15 +297,17 @@ class DocxBaselineSeatTest {
 
     @Test
     void aLineWordSetsHighKeepsTheSpaceAboveIt() throws Exception {
-        // Lato's ascent is 0.82 of its line: at 24pt Word's baseline stands 0.65pt above the
-        // page's. Half a point and more is its position's, as for a line set that much low: it
-        // is lowered by its position, the space as written. Under half a point the space below
-        // it gives it ({@link DocxParagraphLowerTest}).
+        // Ubuntu's ascent is 0.83 of its line, and its own line taller than the page's: at 24pt
+        // Word's baseline stands 0.84pt above the page's in the exact line. Half a point and more
+        // is its position's, as for a line set that much low: it is lowered by its position, the
+        // space as written. Under half a point the space below it gives it
+        // ({@link DocxParagraphLowerTest}).
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
-                .addParagraph(p -> p.text("Heading").textStyle(lato(24)).margin(DocumentInsets.top(10))))) {
+                .addParagraph(p -> p.text("Heading").textStyle(DocumentTextStyle.builder().fontName(FontName.UBUNTU)
+                        .size(24).build()).margin(DocumentInsets.top(10))))) {
             XWPFParagraph heading = paragraph(document, "Heading");
-            double raise = 0.8 * line(heading) - LATO_ASCENT * 24;
+            double raise = 0.8 * line(heading) - UBUNTU_ASCENT * 24;
 
             assertThat(raise).as("the premise: Word's baseline is the higher, by more than half a point")
                     .isLessThan(-0.5);
@@ -294,14 +352,14 @@ class DocxBaselineSeatTest {
                 .addParagraph(p -> p.text("Above").textStyle(lato(10)))
                 .addLayerStack(stack -> stack.name("Stack")
                         .back(new com.demcha.compose.document.dsl.ShapeBuilder().name("Backdrop").size(200, 80).build())
-                        .layer(new ParagraphBuilder().name("Title").text("Title").textStyle(spectral(30))
+                        .layer(new ParagraphBuilder().name("Title").text("Title").textStyle(poppins(30))
                                 .margin(DocumentInsets.top(20)).build(), LayerAlign.TOP_LEFT))
-                .addParagraph(p -> p.name("Below").text("Below").textStyle(spectral(30))));
+                .addParagraph(p -> p.name("Below").text("Below").textStyle(poppins(30))));
         try (session; XWPFDocument document = new XWPFDocument(new java.io.ByteArrayInputStream(
                 session.export(new DocxSemanticBackend())))) {
             XWPFParagraph title = paragraph(document, "Title");
             XWPFParagraph below = paragraph(document, "Below");
-            double raise = 0.8 * line(title) - SPECTRAL_ASCENT * 30;
+            double raise = 0.8 * line(title) - POPPINS_ASCENT * 30;
             var placedTitle = session.layoutGraph().nodes().stream()
                     .filter(node -> "Title".equals(node.semanticName())).findFirst().orElseThrow();
             var placedBelow = session.layoutGraph().nodes().stream()
@@ -324,12 +382,12 @@ class DocxBaselineSeatTest {
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addParagraph(p -> p.text("Lead").textStyle(LEAD))
                 .addRow(row -> row
-                        .addParagraph(p -> p.text("Left").textStyle(spectral(30)).margin(DocumentInsets.top(20)))
+                        .addParagraph(p -> p.text("Left").textStyle(poppins(30)).margin(DocumentInsets.top(20)))
                         .addParagraph(p -> p.text("Right").textStyle(lato(10))))
                 .addParagraph(p -> p.text("Below").textStyle(lato(10))))) {
             List<XWPFParagraph> cell = document.getTables().get(0).getRow(0).getCell(0).getParagraphs();
             XWPFParagraph left = cell.get(cell.size() - 1);
-            double raise = 0.8 * line(left) - SPECTRAL_ASCENT * 30;
+            double raise = 0.8 * line(left) - POPPINS_ASCENT * 30;
 
             assertThat(left.getText()).as("the premise: the column's last paragraph").isEqualTo("Left");
 
@@ -439,6 +497,10 @@ class DocxBaselineSeatTest {
 
     private static double line(XWPFParagraph paragraph) {
         return DocxTwips.of(paragraph.getCTP().getPPr().getSpacing().getLine()) / 20.0;
+    }
+
+    private static STLineSpacingRule.Enum rule(XWPFParagraph paragraph) {
+        return paragraph.getCTP().getPPr().getSpacing().getLineRule();
     }
 
     private static int position(XWPFParagraph paragraph) {

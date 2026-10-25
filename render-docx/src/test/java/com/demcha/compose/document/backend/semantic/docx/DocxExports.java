@@ -44,7 +44,20 @@ final class DocxExports {
     /** {@link #DEFAULT_LINE_RAISE} for the default face at 7pt, the size tests set small text in. */
     static final long SMALL_LINE_RAISE = 3;
 
+    /** The subject of the note naming the lines of text written at an exact height. */
+    static final String EXACT_LINES = "line height";
+
     private DocxExports() {
+    }
+
+    /**
+     * A report's notes besides the one naming the lines of text written at an exact height
+     * ({@code DocxSemanticBackend#nameTheExactLines}). The default face, Helvetica, is a name the
+     * document does not ship, so a test's lines of default text are exact and the report says so;
+     * a test of what else the export says reads past it.
+     */
+    static List<DocxExportReport.Note> besidesTheExactLines(DocxExportReport report) {
+        return report.notes().stream().filter(note -> !EXACT_LINES.equals(note.subject())).toList();
     }
 
     /** Exports through a session, so the backend is handed the compiled layout. */
@@ -93,6 +106,15 @@ final class DocxExports {
                     new SemanticExportContext(captured.canvas, List.of(), null, null));
         }
         return report.get();
+    }
+
+    /** The document graph a session hands its backends, for a writer that reads the graph alone. */
+    static DocumentGraph graphOf(Consumer<PageFlowBuilder> content) throws Exception {
+        Captured captured = new Captured();
+        try (DocumentSession session = session(400, 600, 20, content)) {
+            session.export(captured);
+        }
+        return captured.graph;
     }
 
     /** Exports with neither a layout nor a canvas, as a caller holding only the graph does. */

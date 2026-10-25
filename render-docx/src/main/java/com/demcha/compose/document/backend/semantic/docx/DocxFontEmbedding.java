@@ -76,6 +76,22 @@ final class DocxFontEmbedding {
      * @return the raw {@code fsType}, or -1 when the font carries no readable {@code OS/2}
      */
     private static int readFsType(byte[] font) {
+        // version(2) avgCharWidth(2) weightClass(2) widthClass(2) then fsType.
+        int offset = tableOffset(font, "OS/2", 10);
+        return offset < 0 ? -1 : Short.toUnsignedInt(ByteBuffer.wrap(font).order(ByteOrder.BIG_ENDIAN)
+                .getShort(offset + 8));
+    }
+
+    /**
+     * Finds a table in the font's table directory.
+     *
+     * @param font   the whole font file
+     * @param tag    the table's four-letter tag
+     * @param length how many of its bytes the reader needs
+     * @return where the table starts, or -1 when the font has no such table, or the table or the
+     *         file ends before that many of its bytes
+     */
+    static int tableOffset(byte[] font, String tag, int length) {
         if (font == null || font.length < 12) {
             return -1;
         }
@@ -86,16 +102,14 @@ final class DocxFontEmbedding {
             if (entry + 16 > font.length) {
                 return -1;
             }
-            String tag = new String(font, entry, 4, java.nio.charset.StandardCharsets.US_ASCII);
-            if (!"OS/2".equals(tag)) {
+            if (!tag.equals(new String(font, entry, 4, java.nio.charset.StandardCharsets.US_ASCII))) {
                 continue;
             }
             int offset = buffer.getInt(entry + 8);
-            // version(2) avgCharWidth(2) weightClass(2) widthClass(2) then fsType.
-            if (offset < 0 || offset + 10 > font.length) {
-                return -1;
-            }
-            return Short.toUnsignedInt(buffer.getShort(offset + 8));
+            // The directory states each table's length: a table shorter than the reader needs would
+            // be read into the next one's bytes.
+            int tableLength = buffer.getInt(entry + 12);
+            return offset < 0 || tableLength < length || offset + length > font.length ? -1 : offset;
         }
         return -1;
     }

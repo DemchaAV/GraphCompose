@@ -37,9 +37,14 @@ import static org.assertj.core.api.Assertions.within;
  */
 class DocxBandRaiseTest {
 
-    /** Spectral's ascent, in ems: 1059 of 1000 units. */
-    private static final double SPECTRAL_ASCENT = 1.059;
-    private static final DocumentTextStyle TITLE = DocumentTextStyle.builder().fontName(FontName.SPECTRAL).size(30).build();
+    /** Poppins' ascent, in ems: 1050 of 1000 units. */
+    private static final double POPPINS_ASCENT = 1.05;
+    /**
+     * A title Word sets 2pt low in its exact line: Poppins' own line holds a line gap the page's
+     * does not, so the line is tighter than it and stays exact.
+     */
+    private static final DocumentTextStyle TITLE = DocumentTextStyle.builder().fontName(FontName.POPPINS).size(30)
+            .build();
 
     @Test
     void aLaterLayerResumesBelowTheRaisedLineAboveIt() throws Exception {
@@ -235,10 +240,10 @@ class DocxBandRaiseTest {
         return new ParagraphBuilder().name(name).text(name).textStyle(TITLE).margin(DocumentInsets.top(above)).build();
     }
 
-    /** How far Word sets a Spectral 30pt line's baseline below the page's, in points. */
+    /** How far Word sets a Poppins 30pt line's baseline below the page's, in points. */
     private static double raiseOf(XWPFParagraph paragraph) {
         BigInteger line = (BigInteger) paragraph.getCTP().getPPr().getSpacing().getLine();
-        return 0.8 * line.doubleValue() / 20 - SPECTRAL_ASCENT * 30;
+        return 0.8 * line.doubleValue() / 20 - POPPINS_ASCENT * 30;
     }
 
     /** The position the paragraph's first run is raised by, in half points. */

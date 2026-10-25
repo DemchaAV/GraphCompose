@@ -115,7 +115,10 @@ class DocxLineGapAboveTheRowTest {
     @Test
     void aGapTooSmallForItsLinesPositionToTakeBackIsSharedOut() throws Exception {
         // Lifted by 0.6pt, the first of two lines would stand 0.36pt high, less than its position
-        // moves it, and a cell's last paragraph has no space under it to lower it into.
+        // moves it, and a cell's last paragraph has no space under it to lower it into. Its lines,
+        // as tall as Lato's own and the gap's half, are written at a least height, whose text
+        // stands on the line's foot: the middle of the two stands a quarter of the gap low, which
+        // the row is lifted by.
         double gap = 0.6;
         try (Export export = export(page -> aRow(page, ABOVE, WRAPPING, gap));
              Export alone = export(page -> aRow(page, ABOVE, "Phase", gap))) {
@@ -123,7 +126,10 @@ class DocxLineGapAboveTheRowTest {
 
             assertThat(lineTwips(export.paragraph("Research"))).as("the line and half the gap, as before")
                     .isCloseTo(Math.round((line + gap / 2) * 20), within(1L));
-            assertThat(after(export.paragraph("Above"))).as("nothing lifted").isEqualTo(after(alone.paragraph("Above")));
+            assertThat(export.paragraph("Research").getCTP().getPPr().getSpacing().getLineRule())
+                    .isEqualTo(org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.AT_LEAST);
+            assertThat(after(export.paragraph("Above"))).as("lifted by the middle line's quarter gap")
+                    .isEqualTo(after(alone.paragraph("Above")) - Math.round(gap / 4 * 20));
         }
     }
 

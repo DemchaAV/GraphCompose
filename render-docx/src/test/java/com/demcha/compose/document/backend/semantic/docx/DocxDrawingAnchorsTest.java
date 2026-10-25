@@ -188,6 +188,27 @@ class DocxDrawingAnchorsTest {
     }
 
     @Test
+    void aLeastLinesTopIsItsBaselineLessWhatItsRunsReachAboveItLessTheSpaceAbove() {
+        // A 15pt least line, 12pt above it: Word keeps the spare above its text and stands the
+        // baseline its runs' descent, 2pt here, above the foot. The page draws the baseline at 172,
+        // so Word's line starts at 172 - 13 = 159, its paragraph at 147.
+        XWPFDocument document = new XWPFDocument();
+        XWPFParagraph paragraph = text(document, "Languages");
+        spacing(paragraph, 240, 300);
+        paragraph.getCTP().getPPr().getSpacing().setLineRule(STLineSpacingRule.AT_LEAST);
+        AtomicLong ids = new AtomicLong(1);
+        DocxDrawingAnchors anchors = new DocxDrawingAnchors(ids::getAndIncrement,
+                ctp -> ctp == paragraph.getCTP() ? new DocxGrownLines.Line(15, 13) : null);
+        anchors.paragraphOn(0, paragraph, true);
+        anchors.seat(0, paragraph, paragraph, 40, 300, 163.5, 172);
+
+        queue(anchors, List.of(dot(30, 150)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        assertThat(offsetDown(drawingsIn(paragraph).get(0))).isCloseTo(150 - 147, within(0.01));
+    }
+
+    @Test
     void aShapeInACellIsPlacedFromTheCellsTextColumn() {
         XWPFDocument document = new XWPFDocument();
         XWPFTable table = document.createTable(1, 1);

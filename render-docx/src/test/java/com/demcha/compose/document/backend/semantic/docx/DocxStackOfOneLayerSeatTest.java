@@ -37,14 +37,19 @@ import static org.assertj.core.api.Assertions.within;
  */
 class DocxStackOfOneLayerSeatTest {
 
-    /** Spectral's ascent, in ems: 1059 of 1000 units. */
-    private static final double SPECTRAL_ASCENT = 1.059;
-    /** Lato's ascent, in ems: 1974 of 2000 units. */
-    private static final double LATO_ASCENT = 0.987;
-    /** Spectral at 30pt, which Word sets nearly 5pt low. */
-    private static final DocumentTextStyle LOW = DocumentTextStyle.builder().fontName(FontName.SPECTRAL).size(30).build();
-    /** Lato at 10pt, which Word sets high by under half a point. */
-    private static final DocumentTextStyle HIGH = DocumentTextStyle.builder().fontName(FontName.LATO).size(10).build();
+    /** Poppins' ascent, in ems: 1050 of 1000 units. */
+    private static final double POPPINS_ASCENT = 1.05;
+    /** Ubuntu's ascent, in ems: 932 of 1000 units. */
+    private static final double UBUNTU_ASCENT = 0.932;
+    /**
+     * Poppins at 30pt, which Word sets 2pt low: its own line holds a line gap the page's does not,
+     * so the line is tighter than it and exact.
+     */
+    private static final DocumentTextStyle LOW = DocumentTextStyle.builder().fontName(FontName.POPPINS).size(30)
+            .build();
+    /** Ubuntu at 10pt, whose own line is taller than the page's, which Word sets high by under half a point. */
+    private static final DocumentTextStyle HIGH = DocumentTextStyle.builder().fontName(FontName.UBUNTU).size(10)
+            .build();
     /** Gothic A1, which Word seats where the page does to a few hundredths: neither raised nor lowered. */
     private static final DocumentTextStyle EVEN = DocumentTextStyle.builder().fontName(FontName.GOTHIC_A1).size(10).build();
 
@@ -57,7 +62,7 @@ class DocxStackOfOneLayerSeatTest {
                         .build(), LayerAlign.TOP_LEFT))
                 .addParagraph(p -> p.text("Body").textStyle(EVEN)));
         XWPFParagraph title = paragraph(document, "Title");
-        double raise = 0.8 * line(title) - SPECTRAL_ASCENT * 30;
+        double raise = 0.8 * line(title) - POPPINS_ASCENT * 30;
 
         assertThat(raise).as("the premise: Word's baseline is the lower, by less than the space").isBetween(1.0, 20.0);
         assertThat(before(title)).isCloseTo(Math.round((20 - raise) * 20), within(1L));
@@ -78,7 +83,7 @@ class DocxStackOfOneLayerSeatTest {
                         .build(), LayerAlign.TOP_LEFT))
                 .addParagraph(p -> p.text("Body").textStyle(EVEN)));
         XWPFParagraph one = paragraph(document, "One");
-        double raise = 0.8 * line(one) - SPECTRAL_ASCENT * 30;
+        double raise = 0.8 * line(one) - POPPINS_ASCENT * 30;
 
         assertThat(raise).as("the premise: Word's baseline is the lower, by less than the gap").isBetween(1.0, 10.0);
         assertThat(before(one)).isCloseTo(Math.round((20 - raise) * 20), within(1L));
@@ -103,7 +108,7 @@ class DocxStackOfOneLayerSeatTest {
         }
         XWPFDocument document = export(content);
         XWPFParagraph title = paragraph(document, "Title");
-        double raise = 0.8 * line(title) - SPECTRAL_ASCENT * 30;
+        double raise = 0.8 * line(title) - POPPINS_ASCENT * 30;
 
         assertThat(position(title)).as("raised by its position").isCloseTo((int) Math.round(raise * 2), within(1));
         assertThat(before(paragraph(document, "Body"))).as("nothing owed below it").isZero();
@@ -125,7 +130,7 @@ class DocxStackOfOneLayerSeatTest {
         }
         XWPFDocument document = export(content);
         XWPFParagraph high = paragraph(document, "High");
-        long lower = Math.round((LATO_ASCENT * 10 - 0.8 * line(high)) * 20);
+        long lower = Math.round((UBUNTU_ASCENT * 10 - 0.8 * line(high)) * 20);
 
         assertThat(lower).as("the premise: Word sets it high, by under half a point").isBetween(2L, 9L);
         assertThat(before(paragraph(document, "Next"))).as("its 10pt, whole").isEqualTo(200);
@@ -212,7 +217,7 @@ class DocxStackOfOneLayerSeatTest {
                                 .addParagraph(p -> p.text("Title").textStyle(LOW).margin(DocumentInsets.top(20)))
                                 .build(), LayerAlign.TOP_LEFT).build(), LayerAlign.TOP_LEFT)))) {
             XWPFParagraph title = paragraph(document, "Title");
-            double raise = 0.8 * line(title) - SPECTRAL_ASCENT * 30;
+            double raise = 0.8 * line(title) - POPPINS_ASCENT * 30;
 
             assertThat(raise).as("the premise: Word's baseline is the lower").isGreaterThan(1);
             assertThat(before(title)).as("its 20pt less the raise").isCloseTo(Math.round((20 - raise) * 20), within(1L));

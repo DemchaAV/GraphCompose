@@ -4,6 +4,7 @@ import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSpacing;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
@@ -80,6 +82,8 @@ final class DocxDrawingAnchors {
     private final List<Offer> offers = new ArrayList<>();
     // Identifiers unique in the document, shared with the other drawings the export writes.
     private final LongSupplier ids;
+    // How tall Word stands a written paragraph's line, and its baseline in it.
+    private final Function<CTP, DocxGrownLines.Line> lines;
     // The places given each fragment's shapes in the section so far, by the fragment's place in
     // the page's paint order.
     private final Map<Integer, Integer> placesTaken = new HashMap<>();
@@ -97,7 +101,17 @@ final class DocxDrawingAnchors {
     static final int PLACES_PER_FRAGMENT = 8;
 
     DocxDrawingAnchors(LongSupplier ids) {
+        this(ids, DocxGrownLines.NONE::lineOf);
+    }
+
+    /**
+     * @param ids   identifiers unique in the document
+     * @param lines how tall Word stands a written paragraph's line, and its baseline in it
+     *              ({@link DocxGrownLines#lineOf})
+     */
+    DocxDrawingAnchors(LongSupplier ids, Function<CTP, DocxGrownLines.Line> lines) {
         this.ids = ids;
+        this.lines = lines;
     }
 
     /** Forgets everything, for a new export. */
@@ -410,7 +424,7 @@ final class DocxDrawingAnchors {
         // the paragraph's first line does: Word and LibreOffice place it there, out of a cell's
         // top too, and draw it whole. One rising further stands by other text: LibreOffice set an
         // 11pt rule 45pt above its paragraph's top at the head of the next page.
-        return nearest == null ? null : nearest.place(shape);
+        return nearest == null ? null : nearest.place(shape, lines);
     }
 
     /**
@@ -474,10 +488,14 @@ final class DocxDrawingAnchors {
          *
          * <p>Word's line is not the page's: the export stands Word's baseline where the page's
          * is, and Word stands an exact line's baseline four fifths of the way down it, raised by
-         * the runs' position. A 15pt exact line round 8.6pt text starts 4.6pt above the page's
-         * line, and a shape placed from the page's line stood that much high.</p>
+         * the runs' position, and a least line's its runs' descent above its foot
+         * ({@link DocxGrownLines#lineOf}), which holds no position. A 15pt exact line round 8.6pt
+         * text starts 4.6pt above the page's line, and a shape placed from the page's line stood
+         * that much high.</p>
+         *
+         * @param lines how tall Word stands a paragraph's line, and its baseline in it
          */
-        double paragraphTop() {
+        double paragraphTop(Function<CTP, DocxGrownLines.Line> lines) {
             CTPPr properties = paragraph.getCTP().getPPr();
             double before = 0;
             double lineTop = top;
@@ -498,11 +516,11 @@ final class DocxDrawingAnchors {
                         }
                         before = twips.doubleValue() / 20;
                     }
-                    if (spacing.isSetLineRule() && spacing.getLineRule() == STLineSpacingRule.EXACT) {
-                        if (!(spacing.getLine() instanceof Number twips)) {
-                            return Double.NaN;
-                        }
-                        lineTop = baseline - (DocxTextBands.BASELINE_SHARE * twips.doubleValue() / 20 - raised());
+                    DocxGrownLines.Line line = lines.apply(paragraph.getCTP());
+                    if (line != null) {
+                        lineTop = baseline - (line.baseline() - raised());
+                    } else if (spacing.isSetLineRule() && spacing.getLineRule() == STLineSpacingRule.EXACT) {
+                        return Double.NaN;
                     }
                 }
             }
@@ -552,8 +570,8 @@ final class DocxDrawingAnchors {
          * written short of the page's, or in a repeated header row, which Word repeats on every
          * page with what is anchored in it.</p>
          */
-        Place place(DocxDrawings.Shape shape) {
-            double top = paragraphTop();
+        Place place(DocxDrawings.Shape shape, Function<CTP, DocxGrownLines.Line> lines) {
+            double top = paragraphTop(lines);
             if (!(paragraph.getBody() instanceof XWPFTableCell cell)) {
                 return risesNoFurther(shape, top, false) ? new Place(paragraph, Double.POSITIVE_INFINITY, top) : null;
             }

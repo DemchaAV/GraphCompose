@@ -35,10 +35,31 @@ class DocxExportReportTest {
 
     @Test
     void aDocumentThatLosesNothingReportsNothing() throws Exception {
-        assertThat(reportOf(page -> page.addParagraph(p -> p.text("Ordinary text")))
+        // Set in a face the document ships, whose own line its line is: written at a least height,
+        // it grows with its text, and there is nothing to say.
+        assertThat(reportOf(page -> page.addParagraph(p -> p.text("Ordinary text").textStyle(
+                        com.demcha.compose.document.style.DocumentTextStyle.builder()
+                                .fontName(com.demcha.compose.font.FontName.LATO).size(10).build())))
                 .isEmpty())
                 .as("an export with nothing to say says nothing")
                 .isTrue();
+    }
+
+    @Test
+    void linesOfTextWrittenAtAnExactHeightAreNamedOnceForTheDocument() throws Exception {
+        // Helvetica is a name, not a file the document ships: its lines are exact, which Word keeps
+        // when the text is made larger. The spacer's empty line holds no text to grow.
+        DocxExportReport report = reportOf(page -> page
+                .addParagraph(p -> p.text("First"))
+                .spacer(1, 12)
+                .addParagraph(p -> p.text("Second")));
+
+        assertThat(report.notes()).singleElement().satisfies(note -> {
+            assertThat(note.severity()).isEqualTo(DocxExportReport.Severity.APPROXIMATED);
+            assertThat(note.subject()).isEqualTo(DocxExports.EXACT_LINES);
+            assertThat(note.path()).as("about the whole document").isNull();
+            assertThat(note.detail()).startsWith("the lines of 2 paragraphs are written at an exact height");
+        });
     }
 
     @Test
@@ -48,7 +69,7 @@ class DocxExportReportTest {
                 .addPath(path -> path.name("Rail").size(20, 20).moveTo(0, 0).lineTo(1, 0).lineTo(0.5, 1)
                         .closePath().fill(GRADIENT)));
 
-        List<DocxExportReport.Note> notes = report.notes();
+        List<DocxExportReport.Note> notes = DocxExports.besidesTheExactLines(report);
         assertThat(notes).hasSize(1);
         assertThat(notes.get(0).severity()).isEqualTo(DocxExportReport.Severity.DROPPED);
         assertThat(notes.get(0).path())
@@ -86,10 +107,11 @@ class DocxExportReportTest {
                 .padding(DocumentInsets.of(10))
                 .addParagraph(p -> p.text("Inside the card"))));
 
-        assertThat(report.count(DocxExportReport.Severity.APPROXIMATED)).isEqualTo(1);
+        assertThat(DocxExports.besidesTheExactLines(report)).extracting(DocxExportReport.Note::severity)
+                .containsExactly(DocxExportReport.Severity.APPROXIMATED);
         assertThat(report.count(DocxExportReport.Severity.DROPPED)).isZero();
         assertThat(report.bySubject()).containsKey("corner radius");
-        assertThat(report.notes().get(0).path()).contains("Card");
+        assertThat(DocxExports.besidesTheExactLines(report).get(0).path()).contains("Card");
     }
 
     @Test
@@ -174,6 +196,24 @@ class DocxExportReportTest {
 
         assertThat(builder.build().notes()).extracting(DocxExportReport.Note::detail)
                 .containsExactly("drawn", "gone", "gone", "never named");
+    }
+
+    @Test
+    void aFootersLinesAreCountedAmongTheExactOnes() throws Exception {
+        // A band's line is written exact, in a footer part POI does not list for a document it
+        // made: the body's Lato line grows, and the note counts the footer's alone.
+        AtomicReference<DocxExportReport> captured = new AtomicReference<>();
+        try (DocumentSession session = session(page -> page.addParagraph(p -> p.text("Body").textStyle(
+                com.demcha.compose.document.style.DocumentTextStyle.builder()
+                        .fontName(com.demcha.compose.font.FontName.LATO).size(10).build())))) {
+            session.footer(com.demcha.compose.document.output.DocumentHeaderFooter.builder()
+                    .zone(com.demcha.compose.document.output.DocumentHeaderFooterZone.FOOTER)
+                    .height(10).fontSize(9).leftText("Foot").build());
+            session.export(new DocxSemanticBackend(captured::set));
+        }
+
+        assertThat(captured.get().bySubject().get(DocxExports.EXACT_LINES)).singleElement()
+                .satisfies(note -> assertThat(note.detail()).startsWith("the lines of one paragraph are"));
     }
 
     private static DocxExportReport reportOf(Consumer<PageFlowBuilder> content) throws Exception {

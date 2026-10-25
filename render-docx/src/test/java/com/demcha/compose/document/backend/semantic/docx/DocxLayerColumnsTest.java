@@ -68,11 +68,11 @@ class DocxLayerColumnsTest {
 
     @Test
     void aLaterLayerStandsBelowTheLineAboveItAsFarAsThatLineWasRaised() throws Exception {
-        // The first layer's line, Spectral under 20pt of space, is moved up into that space and
-        // owes as much below it. The later layer measures the gap to itself from the page, where
-        // that line stood lower, so it takes the raise back with the gap.
+        // The first layer's line, Poppins under 20pt of space, exact and set low in Word, is moved
+        // up into that space and owes as much below it. The later layer measures the gap to itself
+        // from the page, where that line stood lower, so it takes the raise back with the gap.
         com.demcha.compose.document.style.DocumentTextStyle spectral = com.demcha.compose.document.style
-                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.SPECTRAL).size(30).build();
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.POPPINS).size(30).build();
         com.demcha.compose.document.style.DocumentTextStyle lato = com.demcha.compose.document.style
                 .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.LATO).size(10).build();
         try (Export export = export(stack -> stack
@@ -87,7 +87,7 @@ class DocxLayerColumnsTest {
             double line = org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule.EXACT
                     .equals(title.getCTP().getPPr().getSpacing().getLineRule())
                     ? DocxTwips.of(title.getCTP().getPPr().getSpacing().getLine()) / 20.0 : Double.NaN;
-            double raise = 0.8 * line - 1.059 * 30;
+            double raise = 0.8 * line - 1.05 * 30;
             PlacedNode placedTitle = export.placed("Title");
             PlacedNode role = export.placed("Role");
             double gap = placedTitle.placementY() - (role.placementY() + role.placementHeight());
@@ -147,14 +147,16 @@ class DocxLayerColumnsTest {
 
     @Test
     void aLaterLayerGivesNothingToTheLineEndingTheLayerAboveIt() throws Exception {
-        // The first layer ends with a paragraph's line Word sets high. The later layer measures the
-        // gap to itself from the page: the line is not lowered by it, and the later layer stands
-        // where it did.
+        // The first layer ends with a paragraph's line Word sets high, exact Ubuntu. The later layer
+        // measures the gap to itself from the page: the line is not lowered by it, and the later
+        // layer stands where it did.
         com.demcha.compose.document.style.DocumentTextStyle lato = com.demcha.compose.document.style
                 .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.LATO).size(10).build();
+        com.demcha.compose.document.style.DocumentTextStyle high = com.demcha.compose.document.style
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.UBUNTU).size(10).build();
         try (Export export = export(stack -> stack
                 .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addParagraph(p -> p.name("Title").text("Heading")
-                        .textStyle(lato).margin(DocumentInsets.top(20)))), LayerAlign.TOP_LEFT)
+                        .textStyle(high).margin(DocumentInsets.top(20)))), LayerAlign.TOP_LEFT)
                 .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
                 .layer(column("MainLayer", SIDEBAR, 0, main -> main
                         .addSpacer(spacer -> spacer.name("TitlePlace").width(100).height(80))
@@ -173,7 +175,7 @@ class DocxLayerColumnsTest {
         // A paragraph under it in its own layer gives it.
         try (Export export = export(stack -> stack
                 .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addParagraph(p -> p.name("Title").text("Heading")
-                                .textStyle(lato).margin(DocumentInsets.top(20)))
+                                .textStyle(high).margin(DocumentInsets.top(20)))
                         .addParagraph(p -> p.text("Under").textStyle(lato).margin(DocumentInsets.top(10)))),
                         LayerAlign.TOP_LEFT)
                 .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
@@ -235,9 +237,10 @@ class DocxLayerColumnsTest {
     @Test
     void aLaterLayerThatWritesNothingLeavesTheRaiseOwedInTheCell() throws Exception {
         // The later layer only holds the title's place: written of it is nothing, and the raised
-        // title still owes below it what it was raised by, at the cell's end.
+        // title, exact Poppins Word sets low, still owes below it what it was raised by, at the
+        // cell's end.
         com.demcha.compose.document.style.DocumentTextStyle spectral = com.demcha.compose.document.style
-                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.SPECTRAL).size(30).build();
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.POPPINS).size(30).build();
         try (Export export = export(stack -> stack
                 .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addParagraph(p -> p.name("Title").text("Title")
                         .textStyle(spectral).margin(DocumentInsets.top(20)))), LayerAlign.TOP_LEFT)
@@ -260,9 +263,9 @@ class DocxLayerColumnsTest {
     void aLaterLayerUnderAPanelTakesNoRaiseThePanelAlreadyOwedInside() throws Exception {
         // The first layer ends in a painted card whose line is raised: the card's cell owes the
         // raise below that line, inside the card, and the later layer's gap from the card's foot
-        // is the page's alone.
+        // is the page's alone. The line is exact Poppins, which Word sets low.
         com.demcha.compose.document.style.DocumentTextStyle spectral = com.demcha.compose.document.style
-                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.SPECTRAL).size(30).build();
+                .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.POPPINS).size(30).build();
         com.demcha.compose.document.style.DocumentTextStyle lato = com.demcha.compose.document.style
                 .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.LATO).size(10).build();
         try (Export export = export(stack -> stack

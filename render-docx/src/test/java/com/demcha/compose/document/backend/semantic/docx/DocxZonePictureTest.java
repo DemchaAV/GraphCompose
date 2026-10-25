@@ -71,7 +71,7 @@ class DocxZonePictureTest {
         assertThat(share(line)).as("the line holds it above its baseline").isGreaterThanOrEqualTo(24 - 0.05);
         assertThat(line.getRuns().get(0).getCTR().getDrawingArray(0).getInlineArray(0).getDocPr().getDescr())
                 .as("no file name for a screen reader to read out").isEmpty();
-        assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+        assertThat(DocxExports.besidesTheExactLines(exported.report())).isEmpty();
     }
 
     @Test
@@ -104,7 +104,7 @@ class DocxZonePictureTest {
         assertThat(lineOf(line)).as("30pt above the logo's foot, four fifths of it").isCloseTo(37.5, within(0.1));
         assertThat(baseline).as("the logo's foot").isCloseTo(PAGE_HEIGHT - exported.picture().y(), within(0.1));
         assertThat(baseline - positionOf(text)).isCloseTo(exported.baseline("Quarterly"), within(0.5));
-        assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+        assertThat(DocxExports.besidesTheExactLines(exported.report())).isEmpty();
     }
 
     @Test
@@ -114,7 +114,7 @@ class DocxZonePictureTest {
 
         assertThat(fromTheTop(exported.margin().getFooter()) + (lineOf(line) - share(line)))
                 .as("its foot, from the page's foot").isCloseTo(exported.picture().y(), within(0.1));
-        assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+        assertThat(DocxExports.besidesTheExactLines(exported.report())).isEmpty();
     }
 
     @Test
@@ -135,7 +135,7 @@ class DocxZonePictureTest {
             assertThat(text.text()).isEqualTo("Quarterly");
             assertThat(baseline - positionOf(text)).as("raised onto its own baseline, within half a point, " + align)
                     .isCloseTo(exported.baseline("Quarterly"), within(0.5));
-            assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+            assertThat(DocxExports.besidesTheExactLines(exported.report())).isEmpty();
         }
     }
 
@@ -154,7 +154,7 @@ class DocxZonePictureTest {
                 .addParagraph(p -> p.text("Quarterly").textStyle(CHROME))
                 .build()));
 
-        assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+        assertThat(DocxExports.besidesTheExactLines(exported.report())).isEmpty();
         assertThat(split.report().bySubject().get("page zone")).extracting(DocxExportReport.Note::detail)
                 .containsExactly("a header written as one line of Word's header; 1 of its 2 parts stands off where "
                                  + "the page sets them");
@@ -175,7 +175,7 @@ class DocxZonePictureTest {
                 .allSatisfy(run -> assertThat(positionOf(run)).isEqualTo(raise));
         double baseline = PAGE_HEIGHT - fromTheTop(exported.margin().getFooter()) - (lineOf(line) - share(line));
         assertThat(baseline - raise).isCloseTo(exported.baseline("1"), within(0.5));
-        assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+        assertThat(DocxExports.besidesTheExactLines(exported.report())).isEmpty();
     }
 
     @Test
@@ -223,7 +223,7 @@ class DocxZonePictureTest {
         XWPFHeaderFooter header = exported.document().getHeaderList().get(0);
         assertThat(header.getPackagePart().getRelationship(link.getId()).getTargetURI())
                 .hasToString("https://example.com");
-        assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+        assertThat(DocxExports.besidesTheExactLines(exported.report())).isEmpty();
     }
 
     @Test
@@ -317,7 +317,7 @@ class DocxZonePictureTest {
 
         assertThat(positionOf(text)).as("lowered, to the half point towards the baseline").isEqualTo(-4.0);
         assertThat(baseline - positionOf(text)).isCloseTo(exported.baseline("Quarterly"), within(0.5));
-        assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+        assertThat(DocxExports.besidesTheExactLines(exported.report())).isEmpty();
     }
 
     @Test
@@ -409,7 +409,7 @@ class DocxZonePictureTest {
 
         assertThat(fromTheTop(exported.margin().getHeader()) + share(line))
                 .isCloseTo(PAGE_HEIGHT - exported.picture().y(), within(0.1));
-        assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+        assertThat(DocxExports.besidesTheExactLines(exported.report())).isEmpty();
     }
 
     @Test
@@ -423,7 +423,7 @@ class DocxZonePictureTest {
                 .add(page.pageNumber(CHROME))
                 .build()));
 
-        assertThat(exported.report().isEmpty()).as(String.valueOf(exported.report().notes())).isTrue();
+        assertThat(DocxExports.besidesTheExactLines(exported.report())).isEmpty();
     }
 
     @Test

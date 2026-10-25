@@ -90,17 +90,20 @@ final class DocxFontTable {
      * @param bands     the style each header and footer band of text sets its text in
      * @param custom    families the session registered, which win over the bundled ones
      * @param report    where a face that may not travel is recorded
+     * @return the line an editor sets each shipped face in
      * @throws IOException if a part cannot be written
      */
-    static void write(XWPFDocument document,
-                      DocumentGraph graph,
-                      List<DocumentNode> zones,
-                      List<DocumentTextStyle> bands,
-                      Collection<FontFamilyDefinition> custom,
-                      DocxExportReport.Builder report) throws IOException {
-        List<Embedded> embedded = resolve(graph, zones, bands, custom, report);
+    static ShippedLines write(XWPFDocument document,
+                              DocumentGraph graph,
+                              List<DocumentNode> zones,
+                              List<DocumentTextStyle> bands,
+                              Collection<FontFamilyDefinition> custom,
+                              DocxExportReport.Builder report) throws IOException {
+        Map<FontName, FontFamilyDefinition> families = familiesByName(custom);
+        List<Embedded> embedded = resolve(graph, zones, bands, families, report);
+        ShippedLines lines = new ShippedLines(families, embedded);
         if (embedded.isEmpty()) {
-            return;
+            return lines;
         }
 
         OPCPackage pkg = document.getPackage();
@@ -123,6 +126,55 @@ final class DocxFontTable {
 
         try (OutputStream out = table.getOutputStream()) {
             out.write(toXml(embedded).getBytes(StandardCharsets.UTF_8));
+        }
+        return lines;
+    }
+
+    /**
+     * The line an editor sets each face the document ships in where nothing fixes the line's
+     * height ({@link DocxNaturalLine}). A face it does not ship — a standard PDF name, one that
+     * may not travel — is set in whatever the reader's machine substitutes, so it has none.
+     */
+    static final class ShippedLines {
+        /** No face shipped: an export written without a font table. */
+        static final ShippedLines NONE = new ShippedLines(Map.of(), List.of());
+
+        private final Map<FontName, FontFamilyDefinition> families;
+        private final Map<String, DocxNaturalLine> lines = new java.util.HashMap<>();
+
+        private ShippedLines(Map<FontName, FontFamilyDefinition> families, List<Embedded> embedded) {
+            this.families = families;
+            for (Embedded family : embedded) {
+                for (Face face : family.faces()) {
+                    if (face.line() != null) {
+                        lines.put(family.wordFamily() + '\n' + face.element(), face.line());
+                    }
+                }
+            }
+        }
+
+        /**
+         * The line a face is set in.
+         *
+         * @param fontName the face a style names
+         * @param slot     which of its family's faces: {@code embedRegular}, {@code embedBold},
+         *                 {@code embedItalic} or {@code embedBoldItalic}
+         * @return its line, or null where the document does not ship that face
+         */
+        DocxNaturalLine of(FontName fontName, String slot) {
+            FontFamilyDefinition family = fontName == null ? null : families.get(FontLibrary.resolveFamily(fontName));
+            return family == null ? null : of(family.wordFamily(), slot);
+        }
+
+        /**
+         * The line a face is set in, by the family a run names in Word.
+         *
+         * @param wordFamily the family's name as the font table writes it
+         * @param slot       which of its faces, as {@link #of(FontName, String)}
+         * @return its line, or null where the document does not ship that face
+         */
+        DocxNaturalLine of(String wordFamily, String slot) {
+            return lines.get(wordFamily + '\n' + slot);
         }
     }
 
@@ -152,17 +204,22 @@ final class DocxFontTable {
     private record Embedded(String wordFamily, List<Face> faces) {
     }
 
-    /** One face of a family: which slot it fills, its bytes, and how the part refers to it. */
+    /**
+     * One face of a family: which slot it fills, its bytes, how the part refers to it, and the
+     * line an editor sets it in.
+     */
     private static final class Face {
         private final String element;
         private final byte[] bytes;
         private final String fontKey;
+        private final DocxNaturalLine line;
         private String relationshipId;
 
-        Face(String element, byte[] bytes, String fontKey) {
+        Face(String element, byte[] bytes, String fontKey, DocxNaturalLine line) {
             this.element = element;
             this.bytes = bytes;
             this.fontKey = fontKey;
+            this.line = line;
         }
 
         String element() {
@@ -171,6 +228,10 @@ final class DocxFontTable {
 
         byte[] bytes() {
             return bytes;
+        }
+
+        DocxNaturalLine line() {
+            return line;
         }
 
         void relationshipId(String id) {
@@ -188,7 +249,7 @@ final class DocxFontTable {
     private static List<Embedded> resolve(DocumentGraph graph,
                                           List<DocumentNode> zones,
                                           List<DocumentTextStyle> bands,
-                                          Collection<FontFamilyDefinition> custom,
+                                          Map<FontName, FontFamilyDefinition> families,
                                           DocxExportReport.Builder report) {
         Map<FontName, Set<Slot>> used = new LinkedHashMap<>();
         for (DocumentNode root : graph.roots()) {
@@ -201,8 +262,6 @@ final class DocxFontTable {
         if (used.isEmpty()) {
             return List.of();
         }
-
-        Map<FontName, FontFamilyDefinition> families = familiesByName(custom);
 
         List<Embedded> embedded = new ArrayList<>();
         for (Map.Entry<FontName, Set<Slot>> entry : used.entrySet()) {
@@ -325,7 +384,7 @@ final class DocxFontTable {
             }
         }
         DocxFontEmbedding.Obfuscated obfuscated = DocxFontEmbedding.obfuscate(bytes);
-        faces.add(new Face(slot.element(), obfuscated.bytes(), obfuscated.fontKey()));
+        faces.add(new Face(slot.element(), obfuscated.bytes(), obfuscated.fontKey(), DocxNaturalLine.of(bytes)));
     }
 
     /**

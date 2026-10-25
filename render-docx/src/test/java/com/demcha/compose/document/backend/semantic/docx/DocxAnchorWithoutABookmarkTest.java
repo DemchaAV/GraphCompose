@@ -193,7 +193,7 @@ class DocxAnchorWithoutABookmarkTest {
                 .contains("its anchor has no bookmark in the Word file");
         assertThat(notesOn(exported.report(), "SectionNode")).singleElement()
                 .isEqualTo("writes no paragraph, so " + LOST);
-        assertThat(exported.report().notes()).extracting(DocxExportReport.Note::subject)
+        assertThat(DocxExports.besidesTheExactLines(exported.report())).extracting(DocxExportReport.Note::subject)
                 .as("each where its node was written, the block's own after them")
                 .containsExactly("ShapeNode", "PageReferenceNode", "SectionNode");
     }

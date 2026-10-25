@@ -8203,7 +8203,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * height, the spacing of the container it stands in on either side of it, and goes on on the
      * same page.
      * Written there, the break went into the body after the table, or between a stack's layers:
-     * Word and LibreOffice 24.2 set everything after it on a page the page does not have.
+     * Word and LibreOffice 24.2 set everything after it on a page the page does not have. An
+     * alignment's child is placed so too, and the page breaks no page in it either; the writer,
+     * which writes an alignment as what it holds, does not count it, and its break is written.
      */
     private boolean breaksThePage(DocumentNode node) {
         return node instanceof PageBreakNode && inThePagedFlow();

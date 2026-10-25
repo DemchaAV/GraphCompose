@@ -82,8 +82,35 @@ class DocxPageBreakOutsideTheFlowTest {
                         .addRow(row -> row.add(parts()).add(paragraph("Right"))))
                 .addParagraph("After the card"));
 
+        assertThat(onThePageOfPartA(exported.layout(), "Part B")).as("the premise: the page breaks no page").isTrue();
         assertThat(pageBreaks(exported.document())).isZero();
         assertThat(exported.document().getTables()).as("one card").hasSize(1);
+        assertThat(bodyText(exported.document())).containsExactly("Above", "After the card");
+    }
+
+    @Test
+    void aBreakInARowThatPaintsItsBoxIsNotWritten() throws Exception {
+        // The row is a panel holding its columns.
+        Exported exported = export(page -> page.addParagraph("Above")
+                .addRow(row -> row.fillColor(SURFACE).padding(DocumentInsets.of(6)).add(parts()).add(paragraph("Right")))
+                .addParagraph("After the row"));
+
+        assertThat(onThePageOfPartA(exported.layout(), "Part B")).as("the premise: the page breaks no page").isTrue();
+        assertThat(pageBreaks(exported.document())).isZero();
+        assertThat(exported.document().getTables()).as("the premise: one panel").hasSize(1);
+        assertThat(bodyText(exported.document())).containsExactly("Above", "After the row");
+    }
+
+    @Test
+    void aBreakInAStackInACardIsNotWrittenAfterTheCard() throws Exception {
+        Exported exported = export(page -> page.addParagraph("Above")
+                .addSection(card -> card.fillColor(SURFACE).padding(DocumentInsets.of(8))
+                        .addLayerStack(stack -> stack.topLeft(parts())))
+                .addParagraph("After the card"));
+
+        assertThat(onThePageOfPartA(exported.layout(), "Part B")).as("the premise: the page breaks no page").isTrue();
+        assertThat(pageBreaks(exported.document())).isZero();
+        assertThat(exported.document().getTables()).as("one card, not cut").hasSize(1);
         assertThat(bodyText(exported.document())).containsExactly("Above", "After the card");
     }
 
@@ -155,6 +182,7 @@ class DocxPageBreakOutsideTheFlowTest {
                         .padding(DocumentInsets.of(8)).add(parts()).build()))
                 .addParagraph("After the stack"));
 
+        assertThat(onThePageOfPartA(exported.layout(), "Part B")).as("the premise: the page breaks no page").isTrue();
         assertThat(pageBreaks(exported.document())).isZero();
         assertThat(exported.document().getTables()).as("one card").hasSize(1);
         assertThat(exported.document().getTables().get(0).getRow(0).getCell(0).getText())
@@ -170,8 +198,10 @@ class DocxPageBreakOutsideTheFlowTest {
 
         assertThat(onThePageOfPartA(exported.layout(), "Part B")).as("the premise: the page breaks no page").isTrue();
         assertThat(pageBreaks(exported.document())).isZero();
+        // A line in a shape container's layer is not raised into the space above it.
         assertThat(gapInWord(exported.document(), "Part A", "Part B")).as("the section's spacing on either side")
-                .isCloseTo(2 * SPACING, within(RAISE + 0.05));
+                .isCloseTo(gapOnThePage(exported.layout(), "Part A", "Part B"), within(0.05))
+                .isCloseTo(2 * SPACING, within(0.05));
     }
 
     @Test

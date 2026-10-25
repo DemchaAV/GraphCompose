@@ -266,8 +266,9 @@ side a left-to-right line does not lean on, so it keeps the edge it is set from 
 of a left-aligned paragraph and of a list, the left of a right-aligned one, both of a
 centred or a right-to-left one. A section's or a container's
 `spacing` is the gap between each two of its children, owed below one and written above
-the next; before a page break there is none, as the page ends there, and after one the next
-page starts that far down, as the layout starts it. A spacer is its height alone: its empty
+the next; before a page break the page breaks at there is none, as the page ends there, and
+after one the next page starts that far down, as the layout starts it (a break the page breaks
+no page at stands the spacing on both sides; see "Page breaks"). A spacer is its height alone: its empty
 paragraph is held to a tenth of a point, so it adds no line of text to the gap it carries; the
 space below a spacer shorter than that takes the rest of the tenth.
 

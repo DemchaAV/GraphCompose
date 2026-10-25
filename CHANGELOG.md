@@ -8,6 +8,43 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes the margins of a page that starts at a panel's cut as a Word section
+  there.**
+  - A page that `session.pageMargins(...)` sets against other top and bottom margins than Word
+    would set it with starts a Word section with them, where it starts between blocks of the body
+    or among a body table's rows. Where it started inside a panel, it started none and was named:
+    Word set it with the margins in force. Measured in Word 16 and LibreOffice 24.2 on a card
+    whose table runs over three pages, a top margin 54pt larger from page 2 on stood every line of
+    pages 2 and 3 52.9pt high; margins of 20pt from page 2 on ran the card onto five pages in Word
+    and four in LibreOffice, where the page sets three.
+  - Where the export cuts such a panel at the row of its table the page starts with, the
+    paragraph between the two parts now ends the section: it breaks no page before itself, the
+    section's own break opening the page, and stands under the part above it. In both editors
+    every line of the card now stands on the page the page sets it on, lower by the cut's top
+    border only. `ObsidianInvoice`, whose pages from 2 on have a larger foot, is written so when its
+    line items run over pages: its cut where page 2 starts ends a section, and the pages after it
+    are set with page 2's margins.
+  - Where the page above has room for the cut and not for that paragraph under the part, the
+    panel is cut there as before and the page is named. A page the panel is not cut at is named,
+    as before. A panel in a section whose pages share one set of margins, or whose header or footer
+    counts its own pages, is cut as before.
+  - In a section whose margins change, a panel's cuts are decided once the section is written,
+    before the document's page references are settled: a row holding a page reference keeps its
+    page whole, as any field does, though one whose anchor has no bookmark ends up as its number.
+    A drawing the export anchors in the table's header row after that stays in the first part, the
+    page it is drawn on, and the part after a cut opens with a copy of the row without it.
+  - With its line items repeated 3 to 11 times `ObsidianInvoice` sets every line on its page in
+    Word and LibreOffice 24.2, as it did. Repeated 12 times, its page 5 starts between its info
+    cards and its footer divider, a page break the editors now place themselves, as page 5's
+    margins are page 2's: Word sets the cards on page 5 with the divider, because `keepNext` on
+    the paragraphs inside the cards' cell keeps their table with the paragraph after it, and both
+    editors drop the divider's 13pt of space above it at a page they break themselves. The same
+    invoice with one set of margins on every page is set the same way in both editors.
+  - Where a page the panel runs onto is not cut and a later one is, LibreOffice 24.2 sets the part
+    after that cut with the margins of the section before: it reads no section's margins after a
+    table it broke over a page itself. Word reads them.
+  - No document of the corpus has such a panel; its export is unchanged.
+
 - **A DOCX export cuts a panel whose table the layout breaks over pages into a table a page.**
   - The layout breaks a table in a panel between rows, repeats its header rows at the top of the
     next page and goes on with the panel there, no padding above it. The export wrote the panel as

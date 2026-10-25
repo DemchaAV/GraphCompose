@@ -43,22 +43,70 @@ class InvoicePanelOverPagesDocxTest {
                 (s, d) -> SubscriptionInvoice.create().compose(s, d), "LineItemsRuled", "DESCRIPTION");
     }
 
-    /**
-     * Exports the invoice with its line items repeated {@code times} and checks that the card the
-     * layout breaks over pages is as many tables as it has pages, each after the first set apart by
-     * a paragraph that breaks the page before itself and opening with the line items' header.
-     */
-    private static void assertCutAtItsPages(StructuredInvoiceData data, int times,
-                                            BiConsumer<DocumentSession, StructuredInvoiceData> preset,
-                                            String card, String header) throws Exception {
+    @Test
+    void obsidiansContinuationMarginsStartAWordSectionAtTheCardsFirstCut() throws Exception {
+        // From page 2 on the page sets a larger foot; the card's cut where page 2 starts ends a Word
+        // section with the first page's margins, and the pages after it are set with page 2's.
+        for (int times : new int[]{3, 6}) {
+            byte[] docx = export(longer(ObsidianInvoiceFixtures.invoice(), times),
+                    (s, d) -> ObsidianInvoice.create().compose(s, d));
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+                List<IBodyElement> body = document.getBodyElements();
+                List<XWPFParagraph> ending = document.getParagraphs().stream()
+                        .filter(paragraph -> paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetSectPr())
+                        .toList();
+                assertThat(ending).as("×%d: one section ends, at the card's first cut", times).singleElement()
+                        .satisfies(between -> {
+                            assertThat(body.get(body.indexOf(between) - 1)).isInstanceOf(XWPFTable.class);
+                            assertThat(body.get(body.indexOf(between) + 1)).isInstanceOf(XWPFTable.class);
+                            assertThat(between.isPageBreak()).isFalse();
+                            assertThat(bottomOf(between.getCTP().getPPr().getSectPr()))
+                                    .isEqualTo(twips(ObsidianStyles.MARGIN_B_FIRST));
+                        });
+                assertThat(bottomOf(document.getDocument().getBody().getSectPr()))
+                        .isEqualTo(twips(ObsidianStyles.MARGIN_B_LATER));
+            }
+        }
+    }
+
+    private static long bottomOf(org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr section) {
+        return ((java.math.BigInteger) section.getPgMar().getBottom()).longValue();
+    }
+
+    private static long twips(double points) {
+        return Math.round(points * 20);
+    }
+
+    /** The invoice with its line items repeated {@code times}. */
+    private static StructuredInvoiceData longer(StructuredInvoiceData data, int times) {
         List<InvoiceServiceLines.Line> lines = new ArrayList<>();
         for (int time = 0; time < times; time++) {
             lines.addAll(data.serviceLines().lines());
         }
-        StructuredInvoiceData longer = new StructuredInvoiceData(data.brand(), data.supplier(), data.masthead(),
+        return new StructuredInvoiceData(data.brand(), data.supplier(), data.masthead(),
                 data.billTo(), data.shipTo(), data.summary(),
                 new InvoiceServiceLines(data.serviceLines().columns(), lines), data.totals(), data.payment(),
                 data.notes(), data.currencyCode());
+    }
+
+    private static byte[] export(StructuredInvoiceData data, BiConsumer<DocumentSession, StructuredInvoiceData> preset)
+            throws Exception {
+        try (DocumentSession session = GraphCompose.document().create()) {
+            preset.accept(session, data);
+            return session.export(new DocxSemanticBackend());
+        }
+    }
+
+    /**
+     * Exports the invoice with its line items repeated {@code times} and checks that the card the
+     * layout breaks over pages is as many tables as it has pages, each after the first set apart by
+     * a paragraph that breaks the page before itself, or ends a Word section where the page's
+     * margins change, and opening with the line items' header.
+     */
+    private static void assertCutAtItsPages(StructuredInvoiceData data, int times,
+                                            BiConsumer<DocumentSession, StructuredInvoiceData> preset,
+                                            String card, String header) throws Exception {
+        StructuredInvoiceData longer = longer(data, times);
         int pages;
         byte[] docx;
         try (DocumentSession session = GraphCompose.document().create()) {
@@ -72,12 +120,16 @@ class InvoicePanelOverPagesDocxTest {
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
             List<IBodyElement> body = document.getBodyElements();
             List<XWPFTable> parts = new ArrayList<>();
-            for (int index = 0; index < body.size(); index++) {
-                if (body.get(index) instanceof XWPFParagraph between && between.isPageBreak()) {
-                    parts.add((XWPFTable) body.get(index + 1));
+            for (int index = 0; index + 1 < body.size(); index++) {
+                if (body.get(index) instanceof XWPFParagraph between
+                    && (between.isPageBreak() || between.getCTP().isSetPPr() && between.getCTP().getPPr().isSetSectPr())
+                    && body.get(index + 1) instanceof XWPFTable part
+                    && !part.getRows().isEmpty() && !part.getRow(0).getCell(0).getTables().isEmpty()) {
+                    parts.add(part);
                 }
             }
-            assertThat(parts).as("%s's parts after the first, %d lines", card, lines.size()).hasSize(pages - 1);
+            assertThat(parts).as("%s's parts after the first, %d lines", card, longer.serviceLines().lines().size())
+                    .hasSize(pages - 1);
             for (XWPFTable part : parts) {
                 XWPFTable items = part.getRow(0).getCell(0).getTables().get(0);
                 // The header's cells may hold tables of their own, which a cell's text leaves out.

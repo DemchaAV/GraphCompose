@@ -440,6 +440,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // Panels the layout breaks over pages inside the table they hold, cut there once the document is
     // written (cutThePanelsAtTheirPages).
     private final List<PanelOverPages> panelsOverPages = new ArrayList<>();
+    // Where each of those is cut, decided once: where a page's margins start a Word section at a cut,
+    // when its section is written (cutsOpeningSections).
+    private final java.util.Map<PanelOverPages, PanelCuts> cutsDecided = new java.util.IdentityHashMap<>();
     // Where the shapes this export draws are anchored — see DocxDrawingAnchors.
     private final DocxDrawingAnchors anchors = new DocxDrawingAnchors(() -> nextDrawingId++,
             paragraph -> grownLines.lineOf(paragraph));
@@ -1152,6 +1155,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         followedInFlow.clear();
         tablesWritten.clear();
         panelsOverPages.clear();
+        cutsDecided.clear();
         slotDepth = 0;
         surfaceBehind = null;
         overlayDepth = 0;
@@ -1323,8 +1327,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 boolean zoned = !context.outputOptions().zones().isEmpty()
                                 || !context.outputOptions().headersAndFooters().isEmpty();
                 DocxPageMarginSections.Plan margins = DocxPageMarginSections.plan(document, sectionFirstElement,
-                        bodyOwners, tableSeparators, layout, report, sectioned ? "section " + (index + 1) : null,
-                        countsItsSectionPages, context.canvas() == null ? null : context.canvas().margin(), zoned);
+                        bodyOwners, tableSeparators, cutsOpeningSections(), layout, report,
+                        sectioned ? "section " + (index + 1) : null, countsItsSectionPages,
+                        context.canvas() == null ? null : context.canvas().margin(), zoned);
                 // The paragraph closing a section that ends with a table is also the one that
                 // carries the drawings nothing else on the last page carried.
                 reportDrawingsLeftOver(document,
@@ -7176,59 +7181,144 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>Done once the document is written — its drawings anchored, its page references settled —
      * so that a part's copy carries what the writing put in it. A panel's own section's layout
-     * reads its pages: each section is laid out on its own.</p>
+     * reads its pages: each section is laid out on its own. A panel in a section whose pages are set
+     * against more than one set of margins was decided on when that section was written
+     * ({@link #cutsOpeningSections}); where a page's margins start a Word section at a cut, the
+     * paragraph between the parts ends it, and the section's own break opens the page.</p>
      */
     private void cutThePanelsAtTheirPages(XWPFDocument document) {
         for (PanelOverPages over : panelsOverPages) {
-            DocxLayoutMetrics itsLayout = over.layout();
-            com.demcha.compose.document.layout.PlacedNode panel = itsLayout.placement(over.panel());
-            com.demcha.compose.document.layout.PlacedNode placed = itsLayout.placement(over.table());
-            DocumentBorders borders = paintOf(over.panel()).borders();
-            double top = strokeWidth(borders == null ? null : borders.top());
-            double bottom = strokeWidth(borders == null ? null : borders.bottom());
+            PanelCuts cuts = cutsDecided.computeIfAbsent(over, this::decideTheCuts);
             XWPFTable piece = over.outer();
             XWPFTable inner = over.inner();
-            boolean header = DocxTableSplit.headerRows(inner) > 0;
+            int headerRows = DocxTableSplit.headerRows(inner);
             // The table's rows the parts before the current one hold, after its header rows.
             int before = 0;
-            List<Integer> cut = new ArrayList<>();
-            java.util.Map<Integer, String> left = new java.util.TreeMap<>();
-            for (int page = panel.startPage() + 1; page <= panel.endPage(); page++) {
-                if (page <= placed.startPage() || page > placed.endPage()) {
-                    left.put(page, "outside its table");
-                    continue;
-                }
-                int headerRows = DocxTableSplit.headerRows(inner);
-                int skipped = before;
-                int row = DocxTableSplit.rowStarting(inner, page,
-                        index -> itsLayout.rowPage(over.table(), index < headerRows ? index : index + skipped));
-                if (row < 0) {
-                    left.put(page, "at a row its table cannot be split at");
-                    continue;
-                }
-                var margin = itsLayout.marginOf(page - 1);
-                double room = itsLayout.lowestRowOn(over.table(), page - 1) - (margin == null ? 0 : margin.bottom());
-                double needed = bottom + (cut.contains(page - 1) ? top + SEPARATOR_POINTS : 0) + ROOM_FOR_THE_LINES;
-                if (!(room >= needed)) {
-                    left.put(page, "the page above setting its rows too near its foot for the borders Word sets inside "
-                                   + "the part");
-                    continue;
-                }
+            for (java.util.Map.Entry<Integer, RowCut> cut : cuts.cuts().entrySet()) {
+                int row = cut.getValue().row() - before;
                 DocxTableSplit.PanelPart part = DocxTableSplit.splitInItsPanel(document, piece, inner, row);
                 XWPFTable next = part.second();
                 // The paragraph closing the first part's table, and the paragraph between the parts,
                 // which keeps them two tables, are as short as one between tables.
                 holdToHairline(part.closer());
                 holdToHairline(part.between());
+                CTSectPr section = cuts.sections().get(cut.getKey());
+                if (section != null) {
+                    // A break before the paragraph ending the section would open a page more.
+                    part.between().getCTP().getPPr().unsetPageBreakBefore();
+                    part.between().getCTP().getPPr().setSectPr(section);
+                }
                 setCellMarginTwips(piece.getRow(0).getCell(0), false, 0);
                 setCellMarginTwips(next.getRow(0).getCell(0), true, 0);
                 before += row - headerRows;
                 piece = next;
                 inner = next.getRow(0).getCell(0).getTables().get(0);
-                cut.add(page);
             }
-            reportTheCut(over, header, top, cut, left);
+            reportTheCut(over, headerRows > 0, cuts.top(), new ArrayList<>(cuts.cuts().keySet()), cuts.left());
         }
+    }
+
+    /**
+     * Where a panel the layout breaks over pages inside its table is cut ({@link #cutThePanelsAtTheirPages}).
+     *
+     * @param cuts     each cut, by the page it opens, from 0 in the panel's section
+     * @param left     the pages, from 0 in its section, left to Word, each with why
+     * @param sections the properties of the Word section that ends at a cut, by the page it opens, where
+     *                 that page's margins start one there: filled as the section's margins are applied
+     *                 ({@link DocxPageMarginSections#apply}, through {@link DocxPageMarginSections.PanelCut}),
+     *                 for cuts decided when their section was written, and each written when its cut is
+     *                 made
+     * @param top      the width of the panel's top border, in points
+     */
+    private record PanelCuts(java.util.SortedMap<Integer, RowCut> cuts, java.util.Map<Integer, String> left,
+                             java.util.Map<Integer, CTSectPr> sections, double top) {
+    }
+
+    /**
+     * One cut of a panel.
+     *
+     * @param row     the row of its table the page starts with, counted in the table as written whole
+     * @param rowsEnd how high above the page's foot the table's last row on the page above ends, in points
+     * @param needed  the room the part before the cut needs under that row for the borders Word sets
+     *                inside it
+     */
+    private record RowCut(int row, double rowsEnd, double needed) {
+    }
+
+    /**
+     * Decides where a panel the layout breaks over pages inside its table is cut: at the row of its
+     * table each page starts with, except where {@link #cutThePanelsAtTheirPages} leaves a page to
+     * Word. The rows are read in the table as written whole: a part after a cut holds the header rows
+     * and the rows from the cut on, so a later page starts with the same row either way.
+     */
+    private PanelCuts decideTheCuts(PanelOverPages over) {
+        DocxLayoutMetrics itsLayout = over.layout();
+        com.demcha.compose.document.layout.PlacedNode panel = itsLayout.placement(over.panel());
+        com.demcha.compose.document.layout.PlacedNode placed = itsLayout.placement(over.table());
+        DocumentBorders borders = paintOf(over.panel()).borders();
+        double top = strokeWidth(borders == null ? null : borders.top());
+        double bottom = strokeWidth(borders == null ? null : borders.bottom());
+        java.util.SortedMap<Integer, RowCut> cuts = new java.util.TreeMap<>();
+        java.util.Map<Integer, String> left = new java.util.TreeMap<>();
+        for (int page = panel.startPage() + 1; page <= panel.endPage(); page++) {
+            if (page <= placed.startPage() || page > placed.endPage()) {
+                left.put(page, "outside its table");
+                continue;
+            }
+            int row = DocxTableSplit.rowStarting(over.inner(), page, index -> itsLayout.rowPage(over.table(), index));
+            if (row < 0) {
+                left.put(page, "at a row its table cannot be split at");
+                continue;
+            }
+            var margin = itsLayout.marginOf(page - 1);
+            double rowsEnd = itsLayout.lowestRowOn(over.table(), page - 1);
+            double room = rowsEnd - (margin == null ? 0 : margin.bottom());
+            double needed = bottom + (cuts.containsKey(page - 1) ? top + SEPARATOR_POINTS : 0) + ROOM_FOR_THE_LINES;
+            if (!(room >= needed)) {
+                left.put(page, "the page above setting its rows too near its foot for the borders Word sets inside "
+                               + "the part");
+                continue;
+            }
+            cuts.put(page, new RowCut(row, rowsEnd, needed));
+        }
+        return new PanelCuts(cuts, left, new java.util.HashMap<>(), top);
+    }
+
+    /**
+     * The cuts of the panels of the section just written, where a page's margins may start a Word
+     * section ({@link DocxPageMarginSections}), by each panel's table and the page each cut opens;
+     * none where the section's pages share one set of margins.
+     *
+     * <p>A section's margins are planned once it is written, before the next is, and its panels are
+     * cut only once the document is ({@link #cutThePanelsAtTheirPages}): so their cuts are decided
+     * now, and made as decided. A cut can end a section where the page above leaves room under the
+     * part before it for the paragraph between the parts as well, which then stands there.</p>
+     *
+     * <p>Decided now, a cut reads its rows before the document's page references are settled and its
+     * bookmarks kept: a row holding a page reference is still a field, and a header row a bookmark
+     * the export later takes out still holds it, so the page is not cut there, where once the document
+     * is written it would be. A section whose header or footer counts its own pages starts no Word
+     * section of its own for a page's margins, and its panels are decided once the document is
+     * written.</p>
+     */
+    private java.util.Map<XWPFTable, java.util.Map<Integer, DocxPageMarginSections.PanelCut>> cutsOpeningSections() {
+        if (!marginsVary || countsItsSectionPages) {
+            return java.util.Map.of();
+        }
+        java.util.Map<XWPFTable, java.util.Map<Integer, DocxPageMarginSections.PanelCut>> found =
+                new java.util.IdentityHashMap<>();
+        for (PanelOverPages over : panelsOverPages) {
+            if (over.layout() != layout || cutsDecided.containsKey(over)) {
+                continue;
+            }
+            PanelCuts cuts = decideTheCuts(over);
+            cutsDecided.put(over, cuts);
+            java.util.Map<Integer, DocxPageMarginSections.PanelCut> pages = new java.util.HashMap<>();
+            cuts.cuts().forEach((page, cut) -> pages.put(page, new DocxPageMarginSections.PanelCut(cut.rowsEnd(),
+                    cut.needed() + SEPARATOR_POINTS, section -> cuts.sections().put(page, section))));
+            found.put(over.outer(), pages);
+        }
+        return found;
     }
 
     /**

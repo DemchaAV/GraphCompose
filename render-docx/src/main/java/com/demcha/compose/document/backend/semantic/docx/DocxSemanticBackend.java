@@ -435,6 +435,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // The part a panel's table being written holds of each container a page break cuts it at
     // (DocxPanelPieces), by node, taken by the container's writer.
     private final java.util.Map<DocumentNode, DocxPanelPieces.Part> panelWindows = new java.util.IdentityHashMap<>();
+    // The table each table node is written as (writeTableRows).
+    private final java.util.Map<TableNode, XWPFTable> tablesWritten = new java.util.IdentityHashMap<>();
+    // Panels the layout breaks over pages inside the table they hold, cut there once the document is
+    // written (cutThePanelsAtTheirPages).
+    private final List<PanelOverPages> panelsOverPages = new ArrayList<>();
     // Where the shapes this export draws are anchored — see DocxDrawingAnchors.
     private final DocxDrawingAnchors anchors = new DocxDrawingAnchors(() -> nextDrawingId++,
             paragraph -> grownLines.lineOf(paragraph));
@@ -1145,6 +1150,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         closingBlocks.clear();
         keepsUnheld.clear();
         followedInFlow.clear();
+        tablesWritten.clear();
+        panelsOverPages.clear();
         slotDepth = 0;
         surfaceBehind = null;
         overlayDepth = 0;
@@ -1329,6 +1336,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             nameTheBlocksNoBookmarkMarks();
             keepTheLastBookmarkOfEachAnchor(document);
             settleThePageReferences();
+            cutThePanelsAtTheirPages(document);
             hideTheClosingMark(document);
             hideTheCellClosingMarks(document.getTables());
             letTheOneRowTablesKeptWithTheNextBreak(document.getTables());
@@ -7060,7 +7068,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * break runs through ({@link DocxPanelPieces}). A panel inside one so cut is written in the
      * piece of it each table holds. Inside a cell the break is not cut otherwise, and the panel is
      * written whole; so is it where the page breaks no page at a break — in a layer stack's layer,
-     * a shape container's layer or a canvas ({@link #breaksThePage}).</p>
+     * a shape container's layer or a canvas ({@link #breaksThePage}). A panel written whole that the
+     * layout breaks over pages inside a table it holds is cut at those pages once the document is
+     * written ({@link #cutThePanelsAtTheirPages}).</p>
      */
     private void writePanel(XWPFDocument document, DocumentNode node, ContainerPaint paint) throws Exception {
         DocxPanelPieces.Part window = panelWindows.remove(node);
@@ -7072,6 +7082,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else {
             pieces = List.of(node.children().stream().map(DocxPanelPieces.Part::whole).toList());
         }
+        int bodyTables = document.getTables().size();
         for (int index = 0; index < pieces.size(); index++) {
             boolean onANewPage = false;
             if (index > 0) {
@@ -7095,6 +7106,138 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writePanelPiece(document, node, paint, () -> writeParts(document, piece, spacingOf(node), false, shape,
                     DocxPanelPieces.followsABreak(piece, first)), first, last, onANewPage);
         }
+        if (window == null && pieces.size() == 1 && currentCell == null && inThePagedFlow()
+            && document.getTables().size() == bodyTables + 1) {
+            noteATableOverPages(node, document.getTables().get(bodyTables));
+        }
+    }
+
+    /**
+     * A panel written whole in the body, with a table among its own children the layout breaks
+     * over pages: a panel to cut at the rows those pages start with
+     * ({@link #cutThePanelsAtTheirPages}).
+     *
+     * @param panel  the panel's node
+     * @param outer  the table of one cell the panel is written as
+     * @param table  the table among its children the layout breaks over pages
+     * @param inner  the table that one is written as, in the panel's cell
+     * @param layout the layout of the section the panel is in
+     */
+    private record PanelOverPages(DocumentNode panel, XWPFTable outer, TableNode table, XWPFTable inner,
+                                  DocxLayoutMetrics layout) {
+    }
+
+    /**
+     * Notes a panel the layout breaks over pages inside a table it holds: one of its own children,
+     * the only one the layout breaks over pages, written in the panel's cell.
+     */
+    private void noteATableOverPages(DocumentNode node, XWPFTable outer) {
+        if (layout.onOnePage(node) || layout.placement(node) == null) {
+            return;
+        }
+        TableNode over = null;
+        for (DocumentNode child : node.children()) {
+            if (layout.placement(child) == null || layout.onOnePage(child)) {
+                continue;
+            }
+            if (over != null || !(child instanceof TableNode table)) {
+                return;
+            }
+            over = table;
+        }
+        XWPFTable inner = over == null ? null : tablesWritten.get(over);
+        if (inner != null && outer.getRow(0).getCell(0).getBodyElements().contains(inner)) {
+            panelsOverPages.add(new PanelOverPages(node, outer, over, inner, layout));
+        }
+    }
+
+    /**
+     * Cuts each panel the layout breaks over pages inside the table it holds into a table a page,
+     * at the row of its table each page starts with, with a page break between.
+     *
+     * <p>The layout breaks such a table between rows, repeats its header rows at the top of the
+     * next page and goes on with the panel there, no padding above its text. Word breaks the
+     * panel's row where its lines run out instead, and repeats no header row of a table nested in a
+     * cell: measured in Word 16, the line items of {@code ObsidianInvoice} and
+     * {@code SubscriptionInvoice} set over two pages stood 24 to 30pt high on the second, its
+     * header missing, and over three one row stood a page early, in LibreOffice 24.2 too. Each part
+     * after a cut opens with copies of the table's header rows and has no top padding, and each part
+     * before one no bottom padding: the page sets the panel's last rows on a page down to its foot,
+     * and closes the panel only on its last page. A table that cannot be split at a page's row
+     * ({@link DocxTableSplit#rowStarting}) is left whole there.</p>
+     *
+     * <p>Done once the document is written — its drawings anchored, its page references settled —
+     * so that a part's copy carries what the writing put in it. A panel's own section's layout
+     * reads its pages: each section is laid out on its own.</p>
+     */
+    private void cutThePanelsAtTheirPages(XWPFDocument document) {
+        for (PanelOverPages over : panelsOverPages) {
+            DocxLayoutMetrics itsLayout = over.layout();
+            com.demcha.compose.document.layout.PlacedNode placed = itsLayout.placement(over.table());
+            XWPFTable piece = over.outer();
+            XWPFTable inner = over.inner();
+            boolean header = DocxTableSplit.headerRows(inner) > 0;
+            // The table's rows the parts before the current one hold, after its header rows.
+            int before = 0;
+            List<Integer> cut = new ArrayList<>();
+            List<Integer> left = new ArrayList<>();
+            for (int page = placed.startPage() + 1; page <= placed.endPage(); page++) {
+                int headerRows = DocxTableSplit.headerRows(inner);
+                int skipped = before;
+                int row = DocxTableSplit.rowStarting(inner, page,
+                        index -> itsLayout.rowPage(over.table(), index < headerRows ? index : index + skipped));
+                if (row < 0) {
+                    left.add(page);
+                    continue;
+                }
+                DocxTableSplit.PanelPart part = DocxTableSplit.splitInItsPanel(document, piece, inner, row);
+                XWPFTable next = part.second();
+                // The paragraph closing the first part's table, and the paragraph between the parts,
+                // which keeps them two tables, are as short as one between tables.
+                holdToHairline(part.closer());
+                holdToHairline(part.between());
+                setCellMarginTwips(piece.getRow(0).getCell(0), false, 0);
+                setCellMarginTwips(next.getRow(0).getCell(0), true, 0);
+                before += row - headerRows;
+                piece = next;
+                inner = next.getRow(0).getCell(0).getTables().get(0);
+                cut.add(page);
+            }
+            if (!cut.isEmpty()) {
+                reportTheCut(over.panel(), itsLayout.pathOf(over.panel()), header, cut, left);
+            }
+        }
+    }
+
+    /**
+     * Names a panel cut at its pages ({@link #cutThePanelsAtTheirPages}): the pages it is cut at,
+     * those it is not, its fixed page breaks, and the top border a part after a cut stands lower by.
+     *
+     * @param header whether its table has header rows a part after a cut opens with
+     * @param cut    the pages, from 0, it is cut at
+     * @param left   the pages, from 0, it runs onto whole, its table not split there
+     */
+    private void reportTheCut(DocumentNode panel, String path, boolean header, List<Integer> cut, List<Integer> left) {
+        DocumentBorders borders = paintOf(panel).borders();
+        double border = strokeWidth(borders == null ? null : borders.top());
+        report.add(DocxExportReport.Severity.APPROXIMATED, panel.nodeKind(), path,
+                "the layout breaks it over pages inside its table: written as a table a page, cut at the "
+                + (cut.size() == 1 ? "row " : "rows ") + pagesNamed(cut) + (cut.size() == 1 ? " starts" : " start")
+                + " with"
+                + (header ? ", the part after a cut opening with the table's header rows" : "")
+                + ", and its page breaks fixed there, so rows an edit adds above a cut no longer run onto the page "
+                + "after it"
+                + (left.isEmpty() ? "" : "; " + pagesNamed(left) + ", whose first row its table cannot be split at, "
+                                         + (left.size() == 1 ? "is" : "are") + " left to Word")
+                + (border < 0.1 ? "" : "; in Word a part after a cut stands about its top border's width, "
+                + pointsOf(border) + "pt, lower than the page sets it: Word sets what a cell holds the whole border "
+                + "inside the row, where the page strokes it on the panel's edge, at the page's top"));
+    }
+
+    /** Pages counted from 0, named as the page counts them: "page 2", "pages 2 and 3", "pages 2, 3 and 4". */
+    private static String pagesNamed(List<Integer> pages) {
+        List<String> numbers = pages.stream().map(page -> String.valueOf(page + 1)).toList();
+        return (numbers.size() == 1 ? "page " : "pages ") + listed(numbers);
     }
 
     /**
@@ -16427,6 +16570,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             holdRowHeight(table, node, rowIdx);
         }
         breakRowsWhereTheLayoutDoes(table, node);
+        tablesWritten.put(node, table);
         indentTable(table);
         carryDrawingsInRows(table, node);
         reportFlattenedPaint(node, translucentFills, translucentRules, "its cells' fills", "its cells' rules");

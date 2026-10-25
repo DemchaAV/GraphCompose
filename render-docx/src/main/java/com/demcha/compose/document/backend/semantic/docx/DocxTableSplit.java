@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
@@ -16,7 +17,9 @@ import java.util.function.IntUnaryOperator;
 
 /**
  * Splits a table of the body in two at the row a page starts with, so that a Word section can
- * start there: a section ends in a paragraph, which stands between blocks.
+ * start there: a section ends in a paragraph, which stands between blocks; and cuts a panel there
+ * at a row of the table in its cell, which Word would otherwise break as its lines run out, the
+ * table's header rows not repeated (see {@link #splitInItsPanel}).
  *
  * <p>The rows from that row on go to a table of their own after it, which opens with copies of
  * the table's header rows: the layout repeats them at the top of each page the table runs onto,
@@ -100,7 +103,69 @@ final class DocxTableSplit {
      * @return the paragraph between the two parts
      */
     static XWPFParagraph split(XWPFDocument document, XWPFTable table, int row) {
-        int header = headerRows(table);
+        XWPFTable second = copyAfter(document, table);
+        keepTheRowsBefore(table, row);
+        keepTheRowsFrom(second, row);
+        try (XmlCursor before = second.getCTTbl().newCursor()) {
+            return document.insertNewParagraph(before);
+        }
+    }
+
+    /**
+     * Cuts a panel — a table of one cell in the body — in two at a row of a table its cell holds,
+     * with a page break between the two parts.
+     *
+     * <p>The first part keeps what its cell holds up to that table and the table's rows before
+     * that row; the second, a copy of the first, holds the table's header rows, its rows from that
+     * row on and what follows the table in the cell. Each part is the panel's table, its fill and
+     * its four borders. The paragraph put between them breaks the page before itself.</p>
+     *
+     * @param document the document the panel is in the body of
+     * @param panel    the panel
+     * @param table    the table in its cell
+     * @param row      the row the second part starts with, after the header rows
+     * @return the paragraph closing the first part's cell, the paragraph between the two parts and
+     *         the second part, the table in its cell the first thing it holds
+     */
+    static PanelPart splitInItsPanel(XWPFDocument document, XWPFTable panel, XWPFTable table, int row) {
+        XWPFTableCell cell = panel.getRow(0).getCell(0);
+        int nested = cell.getTables().indexOf(table);
+        XWPFTable second = copyAfter(document, panel);
+        XWPFTableCell continued = second.getRow(0).getCell(0);
+        XWPFTable rest = continued.getTables().get(nested);
+        List<IBodyElement> held = cell.getBodyElements();
+        for (int index = held.size() - 1; index > held.indexOf(table); index--) {
+            remove(cell, held.get(index));
+        }
+        // A cell ends in a paragraph: one after the table now ending the first part's.
+        XWPFParagraph closer = cell.addParagraph();
+        keepTheRowsBefore(table, row);
+        List<IBodyElement> after = continued.getBodyElements();
+        for (int index = after.indexOf(rest) - 1; index >= 0; index--) {
+            remove(continued, after.get(index));
+        }
+        keepTheRowsFrom(rest, row);
+        try (XmlCursor before = second.getCTTbl().newCursor()) {
+            XWPFParagraph between = document.insertNewParagraph(before);
+            between.setPageBreak(true);
+            return new PanelPart(closer, between, second);
+        }
+    }
+
+    /**
+     * What cutting a panel puts in and after its first part.
+     *
+     * @param closer  the empty paragraph that ends the first part's cell, after its table
+     * @param between the paragraph between the two parts, which opens the next page: a break before
+     *                it, which a paragraph that opens a page anyway does not add, where a break in it
+     *                would put a page of its own after a part that fills its page
+     * @param second  the second part
+     */
+    record PanelPart(XWPFParagraph closer, XWPFParagraph between, XWPFTable second) {
+    }
+
+    /** A copy of a table of the body, put right after it. */
+    private static XWPFTable copyAfter(XWPFDocument document, XWPFTable table) {
         CTBody body = document.getDocument().getBody();
         int written = List.of(body.getTblArray()).indexOf(table.getCTTbl());
         try (XmlCursor from = table.getCTTbl().newCursor(); XmlCursor after = table.getCTTbl().newCursor()) {
@@ -108,17 +173,32 @@ final class DocxTableSplit {
             after.toNextToken();
             from.copyXml(after);
         }
-        CTTbl copied = body.getTblArray(written + 1);
-        XWPFTable second = new XWPFTable(copied, document);
-        document.insertTable(document.getBodyElements().indexOf(table) + 1, second);
-        for (int index = row - 1; index >= header; index--) {
-            second.removeRow(index);
-        }
+        XWPFTable copy = new XWPFTable(body.getTblArray(written + 1), document);
+        document.insertTable(document.getBodyElements().indexOf(table) + 1, copy);
+        return copy;
+    }
+
+    /** Takes a table's rows from one on away. */
+    private static void keepTheRowsBefore(XWPFTable table, int row) {
         for (int index = table.getNumberOfRows() - 1; index >= row; index--) {
             table.removeRow(index);
         }
-        try (XmlCursor before = copied.newCursor()) {
-            return document.insertNewParagraph(before);
+    }
+
+    /** Takes a table's rows between its header rows and one away. */
+    private static void keepTheRowsFrom(XWPFTable table, int row) {
+        int header = headerRows(table);
+        for (int index = row - 1; index >= header; index--) {
+            table.removeRow(index);
+        }
+    }
+
+    /** Takes a paragraph or a table out of a cell. */
+    private static void remove(XWPFTableCell cell, IBodyElement element) {
+        if (element instanceof XWPFParagraph paragraph) {
+            cell.removeParagraph(cell.getParagraphs().indexOf(paragraph));
+        } else if (element instanceof XWPFTable table) {
+            cell.removeTable(cell.getTables().indexOf(table));
         }
     }
 

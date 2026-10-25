@@ -735,6 +735,26 @@ How it lands:
   an anchor's wrapper inside a panel is not cut; the page breaks no page in an alignment either,
   and the export still writes that break — in its place in the body, after the table in a
   panel.
+- **Over pages.** A panel in the body that the layout breaks over pages inside a table it holds
+  — one of its own children, and the only one it breaks over pages — is a table a page: cut at
+  the row each page starts with, the part after a cut opening with copies of the table's header
+  rows and no padding above, as the page goes on with it, a part before a cut with no padding
+  below, as the page sets the rows down to the page's foot, and a hairline paragraph between the
+  parts breaking the page before itself, which adds no page where the part above fills its own.
+  Written as one table, Word broke the panel's row where its lines ran out and repeated no header
+  row of the table nested in its cell (measured in Word 16 and LibreOffice 24.2:
+  `ObsidianInvoice`'s and `SubscriptionInvoice`'s line items over two pages stood 24 to 30pt
+  high in Word on the second, its header missing, and over three pages a row stood a page early
+  in both; cut, every line stands on the page the layout sets it on, there and in cards padded 6
+  and 12pt). The page breaks are fixed there, and the report names the cut; a part after a cut
+  stands about its top border's width lower than the page sets it, Word and LibreOffice drawing
+  the border inside the row where the page strokes it on the panel's edge (1.1pt under a 1pt
+  border, 2.8pt under `SubscriptionInvoice`'s ruled top). A table is not cut at a page whose
+  first row continues a merged cell, nor where a row from that one on holds a field or its header
+  rows hold a bookmark, a drawing, a numbered item or a field; the report names a page so left
+  whole. Anything else the layout moves or breaks over
+  a page inside a panel — a block kept together, a stack, a paragraph — is left to Word, a block
+  kept named as above.
 - **Measured.** Cards stacked in a row's columns, panels nested in its table, and a card set in
   from a filled panel's text stand where the page sets them in Word 16 and LibreOffice on
   Windows, as far as the left edge and the right end above say.

@@ -29,14 +29,18 @@ follow semantic versioning; release dates are ISO 8601.
     as before. A panel in a section whose pages share one set of margins, or whose header or footer
     counts its own pages, is cut as before.
   - In a section whose margins change, a panel's cuts are decided once the section is written,
-    before the document's page references are settled: a row holding a page reference keeps its
-    page whole, as any field does, though one whose anchor has no bookmark ends up as its number.
-    A drawing the export anchors in the table's header row after that stays in the first part, the
-    page it is drawn on, and the part after a cut opens with a copy of the row without it.
+    before the document's page references are settled and its bookmarks kept: a row holding a page
+    reference leaves the panel uncut at that row's page and every page before it, as any field
+    does, though one whose anchor has no bookmark ends up as its number; so does a header row
+    holding a bookmark the export later takes out. A drawing the export anchors in the table's
+    header row after that stays in the first part, the page it is drawn on, and the part after a
+    cut opens with a copy of the row without it.
   - With its line items repeated 3 to 11 times `ObsidianInvoice` sets every line on its page in
     Word and LibreOffice 24.2, as it did. Repeated 12 times, its page 5 starts between its info
-    cards and its footer divider, a page break the editors now place themselves, as page 5's
-    margins are page 2's: Word sets the cards on page 5 with the divider, because `keepNext` on
+    cards and its footer divider. With page 1's margins in force on pages 2 to 4, page 5 opened a
+    Word section of its own, which fixed that break, and Word held the cards on page 4; page 5's
+    margins are now page 2's, so the editors place that break themselves: Word sets the cards on
+    page 5 with the divider, because `keepNext` on
     the paragraphs inside the cards' cell keeps their table with the paragraph after it, and both
     editors drop the divider's 13pt of space above it at a page they break themselves. The same
     invoice with one set of margins on every page is set the same way in both editors.

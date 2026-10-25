@@ -14,6 +14,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
 
 import java.util.List;
 import java.util.function.IntUnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * Splits a table of the body in two at the row a page starts with, so that a Word section can
@@ -33,16 +34,18 @@ final class DocxTableSplit {
     private static final String W =
             "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' ";
 
+    // A drawing, whose id names one drawing: a panel's copy of the header rows leaves it out
+    // (splitInItsPanel).
+    private static final List<String> DRAWINGS = List.of("drawing", "pict", "object");
+
     // What a header row's copy cannot hold again: a bookmark's name marks one place, a drawing's id
     // names one drawing, and a list item's number is counted on from the item before it.
-    private static final List<String> NOT_REPEATED = List.of("bookmarkStart", "drawing", "pict", "object", "numPr");
+    private static final List<String> NOT_REPEATED =
+            Stream.concat(Stream.of("bookmarkStart", "numPr"), DRAWINGS.stream()).toList();
 
     // A field, which the export settles once the body is written, in the paragraph it wrote it in: a
     // row moved to the second part leaves that paragraph behind, and a copy of one is never settled.
     private static final List<String> FIELDS = List.of("fldChar", "instrText", "fldSimple");
-
-    // A drawing, which a panel's copy of the header rows leaves out (splitInItsPanel).
-    private static final List<String> DRAWINGS = List.of("drawing", "pict", "object");
 
     private DocxTableSplit() {
     }

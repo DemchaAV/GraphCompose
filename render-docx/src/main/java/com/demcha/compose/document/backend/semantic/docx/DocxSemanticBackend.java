@@ -7180,7 +7180,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * a page of its own, the part after it on the next.</p>
      *
      * <p>Done once the document is written — its drawings anchored, its page references settled —
-     * so that a part's copy carries what the writing put in it. A panel's own section's layout
+     * so that a part's copy carries what the writing put in it, but for a drawing anchored in the
+     * table's header rows after its cuts were decided, which is the first page's and stays in the
+     * first part ({@link DocxTableSplit#splitInItsPanel}). A panel's own section's layout
      * reads its pages: each section is laid out on its own. A panel in a section whose pages are set
      * against more than one set of margins was decided on when that section was written
      * ({@link #cutsOpeningSections}); where a page's margins start a Word section at a cut, the
@@ -7296,8 +7298,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>Decided now, a cut reads its rows before the document's page references are settled and its
      * bookmarks kept: a row holding a page reference is still a field, and a header row a bookmark
-     * the export later takes out still holds it, so the page is not cut there, where once the document
-     * is written it would be. A section whose header or footer counts its own pages starts no Word
+     * the export later takes out still holds it, so the panel is not cut at that row's page, nor at
+     * any before it, where once the document is written it would be. A section whose header or footer counts its own pages starts no Word
      * section of its own for a page's margins, and its panels are decided once the document is
      * written.</p>
      */

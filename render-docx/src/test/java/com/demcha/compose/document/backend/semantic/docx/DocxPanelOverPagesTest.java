@@ -451,6 +451,29 @@ class DocxPanelOverPagesTest {
     }
 
     @Test
+    void aSectionEndingAtABodyTablesSplitAndOneAtAPanelsCutAreEachWrittenInPlace() throws Exception {
+        // Page 2 starts among a body table's rows, which is split there; page 3 inside the card.
+        Exported exported = export(PAGE_HEIGHT, List.of(PageMarginRule.page(2, MIDDLE), PageMarginRule.from(3, LATER)),
+                page -> {
+                    page.addTable(table -> rows(table, 16, true)).addParagraph("Between");
+                    card(30, true, null, null).accept(page);
+                });
+        XWPFDocument document = exported.document();
+
+        List<XWPFTable> tables = document.getTables();
+        List<XWPFTable> parts = parts(document);
+        assertThat(tables.get(0).getNumberOfRows()).as("the premise: the body table split where page 2 starts")
+                .isLessThan(1 + 16);
+        List<XWPFParagraph> ending = endingASection(document);
+        assertThat(ending).hasSize(2);
+        assertThat(ending.get(0)).as("between the body table's parts").isSameAs(between(document, tables.get(0)));
+        assertThat(ending.get(1)).as("between the card's first two parts").isSameAs(between(document, parts.get(0)));
+        assertThat(topAndBottom(ending.get(0).getCTP().getPPr().getSectPr())).containsExactly(400L, 400L);
+        assertThat(topAndBottom(ending.get(1).getCTP().getPPr().getSectPr())).containsExactly(700L, 880L);
+        assertThat(topAndBottom(body(document))).isEqualTo(LATER_TWIPS);
+    }
+
+    @Test
     void aPanelInALaterSectionOfSeveralEndsAWordSectionAtItsCut() throws Exception {
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
         byte[] docx;

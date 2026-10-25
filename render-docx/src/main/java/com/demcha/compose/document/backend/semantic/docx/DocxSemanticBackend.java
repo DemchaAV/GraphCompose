@@ -1616,9 +1616,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * height: Word keeps such a line's height when its text is made larger, and cuts off at its top
      * the letters that grow taller than it. A line is written at a least height, which grows, only
      * where the page's line is at least its faces' own and Word then stands its text where the page
-     * does ({@link #letTheLinesGrow}): the rest are set tighter than their faces' own line, in a
-     * face the document does not ship, or written where no line grows — a table's text cell, a
-     * page zone, a text box.
+     * does ({@link #letTheLinesGrow}, {@link #letTheCellsLinesGrow}): the rest are set tighter than
+     * their faces' own line, in a face the document does not ship, or written where no line grows —
+     * a page zone, a text box.
      */
     private void nameTheExactLines(XWPFDocument document) {
         int exact = exactLinesOfTextIn(document.getDocument());
@@ -16812,6 +16812,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             textCellRaises.put(cell.getCTTc(), Double.NaN);
         } else if (lineHeight.isPresent()) {
             TableResolvedCell measured = layout.measuredCell(node, placement.row(), placement.column());
+            letTheCellsLinesGrow(cell, measured);
             double below = belowThePage(measured, cell.getParagraphs().get(0));
             if (!Double.isNaN(below)) {
                 textCellRaises.put(cell.getCTTc(), below);
@@ -16849,33 +16850,59 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * Writes a text cell's lines at a least height where each of its paragraphs may grow
+     * ({@link DocxGrownLines#mayGrow}) and Word then stands their text under
+     * {@link #LEAST_GROWN_LINE_SHIFT_POINTS} off the page's ({@link #belowThePage}), as
+     * {@link #letTheLinesGrow} does a paragraph's: a reader's larger text grows the cell's lines,
+     * and its row with them, where an exact line cuts the letters off. A least line's text cannot
+     * be moved by its position, so a cell Word would set further off stays exact, where the row's
+     * margins, its lines' heights or the position seat it ({@link #moveTheRowsText}). In the faces
+     * the export ships, whose descent the page and the editors measure alike, a least cell stands
+     * within its line's rounding to the twip and its size's to the half point of the page, under a
+     * fifth of a point, and none stays exact for it.
+     *
+     * @param cell     the text cell, its paragraphs written
+     * @param measured the cell as the layout measured it, or {@code null}
+     */
+    private void letTheCellsLinesGrow(XWPFTableCell cell, TableResolvedCell measured) {
+        List<XWPFParagraph> paragraphs = cell.getParagraphs();
+        for (XWPFParagraph para : paragraphs) {
+            if (!hasAnExactLine(para) || !grownLines.mayGrow(para.getCTP())) {
+                return;
+            }
+        }
+        paragraphs.forEach(para -> para.getCTP().getPPr().getSpacing().setLineRule(STLineSpacingRule.AT_LEAST));
+        if (!(Math.abs(belowThePage(measured, paragraphs.get(0))) < LEAST_GROWN_LINE_SHIFT_POINTS)) {
+            paragraphs.forEach(para -> para.getCTP().getPPr().getSpacing().setLineRule(STLineSpacingRule.EXACT));
+        }
+    }
+
+    /**
      * How far Word sets a text cell's lines below the page's, in points, negative where Word sets
      * them higher; NaN where the layout did not measure the cell, draws it in a face the measured
-     * fonts do not hold, or the line is not written exact.
+     * fonts do not hold, or the line is written at neither an exact nor a least height Word's seat
+     * is read from ({@link DocxGrownLines#lineOf}).
      *
      * <p>The page sets each of a cell's lines its height less its face's descent below the line's
      * top, as the PDF backend draws a cell (PdfTableRowFragmentRenderHandler); Word stands an exact
      * line's baseline four fifths of the way down the line it was given, whatever the face
-     * ({@link DocxTextBands#BASELINE_SHARE}). Measured on cells anchored at the top, the middle and
-     * the bottom, a line of 8pt Helvetica stood 0.24pt low in Word and 0.16 in LibreOffice, Poppins
-     * 0.58 and 0.55, and Lato 0.24 and 0.25 high: as far as the two seats are apart, and nothing
-     * else in the cell moved.</p>
+     * ({@link DocxTextBands#BASELINE_SHARE}), and a least line's its runs' descent above its foot.
+     * Measured on cells anchored at the top, the middle and the bottom, an exact line of 8pt
+     * Helvetica stood 0.24pt low in Word and 0.16 in LibreOffice, Poppins 0.58 and 0.55, and Lato
+     * 0.24 and 0.25 high: as far as the two seats are apart, and nothing else in the cell moved.</p>
      *
      * @param measured the cell as the layout measured it, or {@code null}
-     * @param first    the cell's first paragraph, whose exact line its lines are written at
+     * @param first    the cell's first paragraph, whose line its lines are written at
      */
     private double belowThePage(TableResolvedCell measured, XWPFParagraph first) {
-        CTPPr properties = first.getCTP().getPPr();
-        CTSpacing spacing = properties != null && properties.isSetSpacing() ? properties.getSpacing() : null;
-        Long line = spacing != null && spacing.isSetLineRule() && spacing.getLineRule() == STLineSpacingRule.EXACT
-                ? writtenTwips(spacing.getLine()) : null;
+        DocxGrownLines.Line line = grownLines.lineOf(first.getCTP());
         if (measured == null || line == null) {
             return Double.NaN;
         }
         TextStyle face = measured.style().textStyle();
         try {
             return measuredFonts().getFont(face.fontName(), com.demcha.compose.engine.render.pdf.PdfFont.class)
-                    .map(font -> line / POINT_TO_TWIP * DocxTextBands.BASELINE_SHARE
+                    .map(font -> line.baseline()
                                  - (measured.lineHeight() - font.verticalMetrics(face).baselineOffsetFromBottom()))
                     .orElse(Double.NaN);
         } catch (RuntimeException unknownFace) {
@@ -16904,12 +16931,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * whose least call is under {@link #LEAST_ROW_TEXT_MOVE}. Only a row of text cells the layout
      * measured, in a face the measured fonts hold: a composed cell's paragraphs are seated by their
      * own writers where they can be, and the margins would move them again. Not a row in a
-     * vertical merge, whose cells' margins are evened apart.</p>
+     * vertical merge, whose cells' margins are evened apart. A cell written at a least height
+     * ({@link #letTheCellsLinesGrow}) calls for no more than its rounding, and so holds its row's
+     * margins to as little: an exact cell beside it is left the rest of its call, to its position
+     * and its lines' heights.</p>
      *
      * <p>What the margins leave of a text cell's call, in a row they do not move or move by less,
      * is moved by its text's position where that is half a point or more
-     * ({@link #LEAST_BASELINE_SHIFT_POINTS}), as a paragraph's is: a cell of 8pt Poppins beside one
-     * of Lato, the two called opposite ways, stood 0.58pt low. The position counts in half points,
+     * ({@link #LEAST_BASELINE_SHIFT_POINTS}), as a paragraph's is: an exact cell of 8pt Poppins
+     * beside one Word set high, the two called opposite ways, stood 0.58pt low. The position counts in half points,
      * and LibreOffice moves text further than it is raised, by up to half as much again
      * ({@link #raiseIntoTheSpaceAbove}); from half a point up that overshoot is less than what is
      * left, and under it more. Less, from a tenth of a point, is moved by the height of the cell's

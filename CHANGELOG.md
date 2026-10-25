@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's table text cells grow with their text where they are as tall as their faces' own.**
+  - A table's text cell was written at an exact line, which Word keeps whatever its text holds, and
+    its row's margins, its lines' heights or its text's position moved it onto the page's baseline.
+  - A text cell's lines are now written at a least height where each of its paragraphs is at least
+    as tall as its runs' own line, by the rule a paragraph's line grows by, and Word then stands its
+    text within a quarter point of the page's. In the faces the document ships a least line stands
+    its text where the page does, so the row keeps the cells' padding as its margins and no line is
+    traded for the space after it. A cell tighter than its face's own, as Poppins' are, in a face
+    the document does not ship, or set right to left stays exact and is moved as before, except
+    beside a least cell: that cell calls for no more than its rounding, so the row's margins move
+    by as little and the exact cell is left the rest of its call, for its position and its lines'
+    heights. No row of the corpus holds both.
+  - The corpus writes 138 more paragraphs of text at a least height, in five documents. In Word,
+    two points more on `Normal` leaves 1041 of the 1832 paragraphs it grows on lines shorter than
+    1.1 times their letters, from 1138, and 13 documents pass, from 10. Of the five documents'
+    638 lines, 51 stand nearer the page in LibreOffice 24.2 and none further. Of their 334 steps
+    from a line to the next, 27 differ from the page's by more than 0.2pt in Word, from 34.
+
 - **A DOCX export's lines grow with their text where they are as tall as their faces' own.**
   - Every paragraph's lines were written at an exact height, which Word keeps whatever its text
     holds: a reader making the body larger in Word — the `Normal` style two points up — got letters
@@ -30,7 +48,7 @@ follow semantic versioning; release dates are ISO 8601.
     - a line in a face the document does not ship, the default Helvetica's among them, which the
       reader's machine substitutes, or in one whose `hhea` extents, which the page measures by,
       are not the metrics its line is set on;
-    - a table's text cells, page zones, text boxes, stacked lines and line pairs.
+    - page zones, text boxes, stacked lines and line pairs.
   - The report names how many paragraphs of text are still exact, once for the document
     (`line height`, no path).
   - The corpus writes 1164 of its 3856 paragraphs of text at a least height. In Word, two points

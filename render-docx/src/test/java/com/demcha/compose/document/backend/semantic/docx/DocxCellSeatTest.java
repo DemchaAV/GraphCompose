@@ -17,6 +17,7 @@ import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSpacing;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcMar;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STLineSpacingRule;
 
 import java.util.function.Consumer;
 
@@ -34,13 +35,18 @@ import static org.assertj.core.api.Assertions.within;
  * made smaller by as much as the bottom is made larger, and the row keeps its height. What they
  * leave is moved by the text's position from half a point up, and under it by each line's height
  * traded for the space after it.</p>
+ *
+ * <p>The cells here are in faces whose lines stay exact: Poppins, which Word sets low, and
+ * Ubuntu, which it sets high, both tighter than their own line, and Helvetica, which the document
+ * does not ship. A cell of Lato is as tall as its face's own line and is written at a least height,
+ * which stands its text where the page does ({@link DocxGrownLinesExportTest}).</p>
  */
 class DocxCellSeatTest {
 
     /** Poppins' ascent, in ems: 1050 of 1000 units. */
     private static final double POPPINS_ASCENT = 1.05;
-    /** Lato's ascent, in ems: 1974 of 2000 units. */
-    private static final double LATO_ASCENT = 0.987;
+    /** Ubuntu's ascent, in ems: 932 of 1000 units. */
+    private static final double UBUNTU_ASCENT = 0.932;
     /** Helvetica's ascent, in ems: 718 of 1000 units, as its font metrics state it. */
     private static final double HELVETICA_ASCENT = 0.718;
     /** Gothic A1's ascent, in ems: 798 of 1000 units, its own line one em. */
@@ -70,11 +76,12 @@ class DocxCellSeatTest {
     void aRowOfTextCellsSetHighInWordIsLoweredThroughItsMargins() throws Exception {
         try (XWPFDocument document = export(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(100))
-                .rowCells(cell("Lato", lato(8), DocumentTableTextAnchor.CENTER))))) {
+                .rowCells(cell("Ubuntu", ubuntu(8), DocumentTableTextAnchor.CENTER))))) {
             XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
-            long raise = Math.round((0.8 * line(cell) - LATO_ASCENT * 8) * 20);
+            long raise = Math.round((0.8 * line(cell) - UBUNTU_ASCENT * 8) * 20);
 
-            assertThat(raise).as("the premise: Word sets Lato a quarter point high").isBetween(-5L, -3L);
+            assertThat(rule(cell)).as("the premise: written exact").isEqualTo(STLineSpacingRule.EXACT);
+            assertThat(raise).as("the premise: Word sets Ubuntu a quarter point high").isBetween(-7L, -5L);
             assertThat(margins(cell)).containsExactly(PADDING - raise, PADDING + raise);
         }
     }
@@ -123,12 +130,14 @@ class DocxCellSeatTest {
     void eachRowIsMovedOnItsOwn() throws Exception {
         try (XWPFDocument document = export(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(100))
-                .rowCells(cell("Header", lato(8), DocumentTableTextAnchor.CENTER))
+                .rowCells(cell("Header", ubuntu(8), DocumentTableTextAnchor.CENTER))
                 .rowCells(cell("Body", poppins(8), DocumentTableTextAnchor.CENTER))))) {
             var table = document.getTables().get(0);
-            long lowered = Math.round((0.8 * line(table.getRow(0).getCell(0)) - LATO_ASCENT * 8) * 20);
+            long lowered = Math.round((0.8 * line(table.getRow(0).getCell(0)) - UBUNTU_ASCENT * 8) * 20);
             long raised = Math.round((0.8 * line(table.getRow(1).getCell(0)) - POPPINS_ASCENT * 8) * 20);
 
+            assertThat(rule(table.getRow(0).getCell(0))).as("the premise: written exact")
+                    .isEqualTo(STLineSpacingRule.EXACT);
             assertThat(margins(table.getRow(0).getCell(0))).containsExactly(PADDING - lowered, PADDING + lowered);
             assertThat(margins(table.getRow(1).getCell(0))).containsExactly(PADDING - raised, PADDING + raised);
         }
@@ -151,17 +160,18 @@ class DocxCellSeatTest {
         try (XWPFDocument document = export(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
                 .rowCells(cell("Low", poppins(8), DocumentTableTextAnchor.CENTER),
-                        cell("High", lato(8), DocumentTableTextAnchor.CENTER))))) {
+                        cell("High", ubuntu(8), DocumentTableTextAnchor.CENTER))))) {
             XWPFTableRow row = document.getTables().get(0).getRow(0);
             double poppins = 0.8 * line(row.getCell(0)) - POPPINS_ASCENT * 8;
 
             for (XWPFTableCell cell : row.getTableCells()) {
                 assertThat(margins(cell)).containsExactly(PADDING, PADDING);
             }
+            assertThat(rule(row.getCell(1))).as("the premise: written exact").isEqualTo(STLineSpacingRule.EXACT);
             assertThat(poppins).as("the premise: half a point and more").isGreaterThanOrEqualTo(0.5);
             assertThat(position(row.getCell(0))).isEqualTo(Math.round(poppins * 2));
             assertThat(after(row.getCell(0))).as("its line as it was").isZero();
-            assertThat(position(row.getCell(1))).as("Lato's quarter point is left").isZero();
+            assertThat(position(row.getCell(1))).as("Ubuntu's quarter point is left").isZero();
             assertThat(after(row.getCell(1))).as("with no space after its line to take").isZero();
         }
     }
@@ -190,7 +200,7 @@ class DocxCellSeatTest {
         try (XWPFDocument document = export(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
                 .rowCells(cell("Text", poppins(8), DocumentTableTextAnchor.CENTER),
-                        cell("", lato(8), DocumentTableTextAnchor.CENTER))))) {
+                        cell("", ubuntu(8), DocumentTableTextAnchor.CENTER))))) {
             XWPFTableRow row = document.getTables().get(0).getRow(0);
             long raise = Math.round((0.8 * line(row.getCell(0)) - POPPINS_ASCENT * 8) * 20);
 
@@ -292,18 +302,19 @@ class DocxCellSeatTest {
         // written above and below its line, and the line takes from what is below it.
         try (XWPFDocument document = export(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
-                .rowCells(DocumentTableCell.text("Lato").withStyle(DocumentTableStyle.builder()
+                .rowCells(DocumentTableCell.text("Ubuntu").withStyle(DocumentTableStyle.builder()
                                 .padding(DocumentInsets.of(6)).stroke(DocumentStroke.of(DocumentColor.BLACK, 0))
-                                .textStyle(lato(8)).textAnchor(DocumentTableTextAnchor.CENTER).build()),
+                                .textStyle(ubuntu(8)).textAnchor(DocumentTableTextAnchor.CENTER).build()),
                         composed("Composed"))))) {
             XWPFTableCell text = document.getTables().get(0).getRow(0).getCell(0);
             CTSpacing spacing = text.getParagraphs().get(0).getCTP().getPPr().getSpacing();
             long before = DocxTwips.of(spacing.getBefore());
             long grown = before - after(text);
-            double high = 0.8 * (line(text) - grown / 20.0) - LATO_ASCENT * 8;
+            double high = 0.8 * (line(text) - grown / 20.0) - UBUNTU_ASCENT * 8;
 
+            assertThat(rule(text)).as("the premise: written exact").isEqualTo(STLineSpacingRule.EXACT);
             assertThat(before).as("the premise: the padding past the row's margins").isEqualTo(40);
-            assertThat(high).as("the premise: Word sets Lato high").isNegative();
+            assertThat(high).as("the premise: Word sets Ubuntu high").isNegative();
             assertThat(grown).as("its line as much taller as the space after it shorter")
                     .isEqualTo(Math.round(-high * 20 / 0.8));
         }
@@ -337,13 +348,16 @@ class DocxCellSeatTest {
 
     @Test
     void aLoweringTakesNoMoreThanTheBottomMarginHolds() throws Exception {
-        // A tenth of a point below the text: Lato calls for more.
+        // A tenth of a point below the text: Ubuntu calls for more.
         try (XWPFDocument document = export(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(100))
                 .rowCells(DocumentTableCell.text("Tight").withStyle(DocumentTableStyle.builder()
                         .padding(new DocumentInsets(4, 4, 0.1, 4)).stroke(DocumentStroke.of(DocumentColor.BLACK, 0))
-                        .textStyle(lato(8)).textAnchor(DocumentTableTextAnchor.CENTER).build()))))) {
-            assertThat(margins(document.getTables().get(0).getRow(0).getCell(0))).containsExactly(PADDING + 2, 0L);
+                        .textStyle(ubuntu(8)).textAnchor(DocumentTableTextAnchor.CENTER).build()))))) {
+            XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
+
+            assertThat(rule(cell)).as("the premise: written exact").isEqualTo(STLineSpacingRule.EXACT);
+            assertThat(margins(cell)).containsExactly(PADDING + 2, 0L);
         }
     }
 
@@ -367,16 +381,18 @@ class DocxCellSeatTest {
     @Test
     void aCallUnderATenthOfAPointLeavesTheLineAsItWas() throws Exception {
         // Beside a composed cell, as above: a twip of line moves a line a step of Word's grid or
-        // nothing. Lato at 3pt stands high by a twip and more, padded so as to have space after it.
+        // nothing. Ubuntu at 2.5pt stands high by a twip and more, padded so as to have space
+        // after it.
         try (XWPFDocument document = export(page -> page.addTable(t -> t
                 .columns(DocumentTableColumn.fixed(100), DocumentTableColumn.fixed(100))
-                .rowCells(DocumentTableCell.text("Lato").withStyle(DocumentTableStyle.builder()
+                .rowCells(DocumentTableCell.text("Ubuntu").withStyle(DocumentTableStyle.builder()
                                 .padding(DocumentInsets.of(6)).stroke(DocumentStroke.of(DocumentColor.BLACK, 0))
-                                .textStyle(lato(3)).textAnchor(DocumentTableTextAnchor.CENTER).build()),
+                                .textStyle(ubuntu(2.5)).textAnchor(DocumentTableTextAnchor.CENTER).build()),
                         composed("Composed"))))) {
             XWPFTableCell cell = document.getTables().get(0).getRow(0).getCell(0);
 
-            assertThat(0.8 * line(cell) - LATO_ASCENT * 3).as("the premise: a twip and more, under a tenth")
+            assertThat(rule(cell)).as("the premise: written exact").isEqualTo(STLineSpacingRule.EXACT);
+            assertThat(0.8 * line(cell) - UBUNTU_ASCENT * 2.5).as("the premise: a twip and more, under a tenth")
                     .isBetween(-0.1, -0.025);
             assertThat(after(cell)).as("the space after it as its padding gives it").isEqualTo(40);
         }
@@ -452,8 +468,8 @@ class DocxCellSeatTest {
         return DocumentTextStyle.builder().fontName(FontName.POPPINS).size(size).build();
     }
 
-    private static DocumentTextStyle lato(double size) {
-        return DocumentTextStyle.builder().fontName(FontName.LATO).size(size).build();
+    private static DocumentTextStyle ubuntu(double size) {
+        return DocumentTextStyle.builder().fontName(FontName.UBUNTU).size(size).build();
     }
 
     private static DocumentTextStyle helvetica(double size) {
@@ -471,6 +487,11 @@ class DocxCellSeatTest {
      */
     private static double written(XWPFTableCell cell) {
         return line(cell) + after(cell) / 20.0;
+    }
+
+    /** The rule a cell's first paragraph's line is written at. */
+    private static STLineSpacingRule.Enum rule(XWPFTableCell cell) {
+        return cell.getParagraphs().get(0).getCTP().getPPr().getSpacing().getLineRule();
     }
 
     /** The space after a cell's first paragraph, in twips; 0 for none. */

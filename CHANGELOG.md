@@ -15,9 +15,10 @@ follow semantic versioning; release dates are ISO 8601.
     tenth of a point above the baseline, whatever the position; and a picture run's own size sets
     none of the line (measured in Word and LibreOffice 24.2: a 9pt icon lowered 1.5pt beside 8pt
     Lato left a 9.95pt least line as tall in Word, and grew it to 10.75pt in LibreOffice).
-  - A line whose pictures stay within its text where either editor stands them — no higher than
-    the room the line leaves above its text's descent, no lower than that descent — is now
-    written at a least height where its text alone would be, and stands its text there. One whose
+  - A line whose pictures stay within its text's own line where either editor stands them — no
+    higher than its text, its faces' line gap included, no lower than its text's descent — is now
+    written at a least height where its text alone would be, and stands its text there. A least
+    line is given no position to seat its text, which Word does not move it by. One whose
     picture rises past its text in either editor, as `CharcoalGold`'s contact icons do in
     LibreOffice, is written as before, and so are pictures in a paragraph of broken lines or among
     spaces alone, a rating's dots.
@@ -25,9 +26,9 @@ follow semantic versioning; release dates are ISO 8601.
     points more on `Normal` leaves 1005 of the 1832 paragraphs it grows on lines shorter than 1.1
     times their letters, from 1041, and 14 documents pass, from 13.
   - Of the seven documents' lines, 16 stand nearer the page in LibreOffice 24.2 and 9 further, of
-    966; in Word 9 nearer and 55 further, of 968. The step from a line to the next differs from the
-    page's by more than 0.2pt for 49 of 544 steps in LibreOffice, from 51, and 43 of 527 in Word,
-    from 45.
+    880; in Word 9 nearer and 55 further, of 882. The step from a line to the next differs from the
+    page's by more than 0.2pt for 34 of 489 steps in LibreOffice, from 36, and 29 of 472 in Word,
+    from 31.
   - Where such a line is taller than its text, the gap between lines written into it, and the
     space above it does not take the difference, its text stands lower than as an exact line:
     `TealPulse`'s duties 0.24pt lower in Word, inside the quarter point a least line is held to

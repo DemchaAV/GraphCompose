@@ -225,13 +225,36 @@ class DocxGrownLinesTest {
 
         XWPFParagraph grownToItsPicture = lato(200, 10);
         picture(grownToItsPicture, 6, 0, 0);
+        // Written 14pt for a 9pt picture raised 2pt, 11pt up in Word: taller than the text's own
+        // line, the line holds it, but its text's own line does not.
+        XWPFParagraph grownToARaise = lato(280, 10);
+        picture(grownToARaise, 9, 4, 0);
         rule(small, STLineSpacingRule.AT_LEAST);
         rule(tall, STLineSpacingRule.AT_LEAST);
         rule(grownToItsPicture, STLineSpacingRule.AT_LEAST);
+        rule(grownToARaise, STLineSpacingRule.AT_LEAST);
         assertThat(lines.lineOf(small.getCTP()).baseline()).isCloseTo(12 - LATO_DOWN * 10, within(0.01));
         assertThat(lines.lineOf(tall.getCTP())).as("set apart by the two editors").isNull();
         assertThat(lines.lineOf(grownToItsPicture.getCTP())).as("written shorter than its text's own line")
                 .isNull();
+        assertThat(lines.lineOf(grownToARaise.getCTP())).as("grown to a raised picture").isNull();
+    }
+
+    @Test
+    void aPictureRunHoldingAnythingButPicturesOfAWrittenSizeIsNotRead() throws Exception {
+        DocxGrownLines lines = shipping(LATO, LATO);
+        XWPFParagraph anchoredBeside = lato(240, 10);
+        var drawing = anchoredBeside.createRun().getCTR().addNewDrawing();
+        drawing.addNewAnchor();
+        var extent = drawing.addNewInline().addNewExtent();
+        extent.setCx(76200);
+        extent.setCy(76200);
+        XWPFParagraph measured = lato(240, 10);
+        picture(measured, 6, 0, 0);
+        measured.getCTP().getRList().get(1).addNewRPr().addNewPosition().setVal("2pt");
+
+        assertThat(lines.reachOf(anchoredBeside.getCTP())).as("an anchor beside the picture").isNull();
+        assertThat(lines.reachOf(measured.getCTP())).as("a position in points, not half points").isNull();
     }
 
     /**

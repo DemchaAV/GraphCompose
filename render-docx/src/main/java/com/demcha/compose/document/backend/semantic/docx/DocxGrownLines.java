@@ -36,8 +36,8 @@ import java.util.Set;
  * baseline, whatever the position; a picture run's own face sets none of the line. A least line's
  * height is its runs' and pictures' reach, the tallest above the baseline and the deepest below
  * (measured: a 9pt picture lowered 1.5pt beside 8pt Lato left a 9.95pt least line as tall in Word,
- * and grew it to 10.75pt in LibreOffice). Only a line whose pictures stay within its text in both
- * places — no higher than the room the line leaves above its text's descent, no lower than that
+ * and grew it to 10.75pt in LibreOffice). Only a line whose pictures stay within its text's own line
+ * in both places — no higher than its text, its faces' line gap included, no lower than its text's
  * descent — stands its text where it would without them (see {@link Reach#holdsItsPictures}).</p>
  *
  * @author Artem Demchyshyn
@@ -99,7 +99,8 @@ final class DocxGrownLines {
      * @param paragraph the written paragraph
      * @return the reach, its pictures' among it, or null where one of its runs is not read: a raise,
      *         a face the document does not ship, a run Word sets right to left, a marker Word draws
-     *         itself, a picture whose size or run's position is not a number, or pictures in a
+     *         itself, a drawing anchored beside pictures or holding none, a picture with no extent
+     *         written or whose run's position is not a number, or pictures in a
      *         paragraph whose lines are broken, one of which may hold a picture alone, or that holds
      *         no letter beside them
      */
@@ -236,7 +237,7 @@ final class DocxGrownLines {
         Reach reach = reachOf(paragraph);
         double line = twips.doubleValue() / POINT_TO_TWIP;
         return reach != null && line + EPSILON >= reach.height()
-               && reach.below() - reach.shallowest() <= EPSILON && reach.holdsItsPictures(line);
+               && reach.below() - reach.shallowest() <= EPSILON && reach.holdsItsPictures();
     }
 
     /**
@@ -266,7 +267,7 @@ final class DocxGrownLines {
         // written shorter than its text's own is one grown to its pictures (see
         // DocxSemanticBackend#makeRoomForPictures), not read here.
         if (reach == null || reach.holdsPictures() && !(written + EPSILON >= reach.height()
-                                                         && reach.holdsItsPictures(written))) {
+                                                         && reach.holdsItsPictures())) {
             return null;
         }
         double height = Math.max(written, reach.height());
@@ -353,14 +354,14 @@ final class DocxGrownLines {
         }
 
         /**
-         * Whether a line this tall holds its pictures within its text in both editors: none reaches
-         * above the room the line leaves over its text's descent, nor below its shallowest run's
-         * descent, so that neither editor grows the line for them nor stands its text elsewhere.
-         *
-         * @param line the line's height, in points
+         * Whether its pictures stay within its text's own line in both editors: none reaches above
+         * its text, its faces' line gap included, nor below its shallowest run's descent, so that
+         * neither editor grows a line as tall as its text's for them nor stands its text elsewhere.
+         * Read against the text's own line, not the line written: a line written taller for its
+         * pictures, {@code makeRoomForPictures}' in DocxSemanticBackend, would hold them too.
          */
-        boolean holdsItsPictures(double line) {
-            return pictureTop <= line - below + EPSILON && pictureFoot <= shallowest + EPSILON;
+        boolean holdsItsPictures() {
+            return pictureTop <= above + EPSILON && pictureFoot <= shallowest + EPSILON;
         }
 
         /** Whether its line holds a picture set in it. */

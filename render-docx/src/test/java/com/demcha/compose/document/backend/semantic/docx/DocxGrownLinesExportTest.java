@@ -295,9 +295,56 @@ class DocxGrownLinesExportTest {
 
             var runs = icon.getCTP().getRList();
             assertThat(spacing(icon).getLineRule()).as("the premise: grown to its icon").isEqualTo(STLineSpacingRule.AT_LEAST);
-            assertThat(runs.get(0).sizeOfDrawingArray()).as("the premise: the icon first, lowered to the middle")
-                    .isOne();
+            assertThat(DocxTwips.of(spacing(icon).getLine())).as("the premise: shorter than Poppins' own 15pt")
+                    .isLessThan(300);
+            assertThat(runs.get(0).sizeOfDrawingArray()).as("the premise: the icon first").isOne();
+            assertThat(positions(icon).get(0)).as("the premise: lowered to the middle").isNegative();
             assertThat(positions(icon).subList(1, runs.size())).as("its text").containsOnly(0L);
+        }
+    }
+
+    @Test
+    void aLeastLineGrownToAPictureWithinItsFacesOwnLineIsGivenNoPosition() throws Exception {
+        // An 11pt picture on the baseline of 10pt Poppins rises past the ascent the page measures
+        // and stays under Poppins' own, its line gap above its letters; the 2pt between the lines
+        // make the line taller than that own line. Seated, a least line is still given no position.
+        byte[] png = png();
+        try (XWPFDocument document = DocxExports.withLayout(200, 600, 20, page -> page
+                .addParagraph(p -> p.inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png),
+                                11, 11, com.demcha.compose.document.node.InlineImageAlignment.BASELINE, 0, null)
+                        .inlineText(" Gapped text long enough to wrap onto a second line", face(FontName.POPPINS, 10))
+                        .lineSpacing(2)))) {
+            XWPFParagraph gapped = paragraph(document, " Gapped");
+
+            assertThat(spacing(gapped).getLineRule()).as("the premise: grown to its picture")
+                    .isEqualTo(STLineSpacingRule.AT_LEAST);
+            assertThat(DocxTwips.of(spacing(gapped).getLine())).as("the premise: as tall as Poppins' own line")
+                    .isGreaterThanOrEqualTo(300);
+            assertThat(positions(gapped).subList(1, gapped.getCTP().getRList().size())).as("its text")
+                    .containsOnly(0L);
+        }
+    }
+
+    @Test
+    void aLineGrownToARaisedPictureIsGivenNoPosition() throws Exception {
+        // A 9pt picture raised 2pt off the baseline of 10pt Lato reaches 11pt up in Word, past the
+        // text's own line, and opening the page it has no space above to be held in: the line is
+        // written at least that reach, taller than Lato's own 12pt line. Its text is given no
+        // position, which Word would not move it by, and its picture keeps its own raise.
+        byte[] png = png();
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addParagraph(p -> p.inlineImage(com.demcha.compose.document.image.DocumentImageData.fromBytes(png),
+                                9, 9, com.demcha.compose.document.node.InlineImageAlignment.BASELINE, 2, null)
+                        .inlineText(" Raised", face(FontName.LATO, 10))))) {
+            XWPFParagraph raised = paragraph(document, " Raised");
+            List<Long> positions = positions(raised);
+
+            assertThat(spacing(raised).getLineRule()).as("the premise: grown to its picture")
+                    .isEqualTo(STLineSpacingRule.AT_LEAST);
+            assertThat(DocxTwips.of(spacing(raised).getLine())).as("the premise: taller than Lato's own line")
+                    .isGreaterThan(240);
+            assertThat(positions.get(0)).as("the picture's own raise").isEqualTo(4L);
+            assertThat(positions.subList(1, positions.size())).as("its text").containsOnly(0L);
         }
     }
 

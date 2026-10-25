@@ -66,7 +66,9 @@ class DocxPanelEdgeCasesTest {
     }
 
     @Test
-    void keepingABlockInsideACardTogetherKeepsItsParagraphs() throws Exception {
+    void keepingABlockInsideACardTogetherKeepsItsLinesAndNothingWithTheNext() throws Exception {
+        // Word reads keep-with-next on the paragraph a cell opens with as keeping the card's row
+        // with what follows the card.
         try (XWPFDocument document = export(page -> page.addSection("Card", card -> card
                 .fillColor(SURFACE)
                 .addSection("Kept", kept -> kept.keepTogether()
@@ -74,7 +76,8 @@ class DocxPanelEdgeCasesTest {
                         .addParagraph(p -> p.text("Second kept")))))) {
             XWPFTableCell cell = card(document);
 
-            assertThat(paragraphIn(cell, "First kept").getCTP().getPPr().isSetKeepNext()).isTrue();
+            assertThat(paragraphIn(cell, "First kept").getCTP().getPPr().isSetKeepNext()).isFalse();
+            assertThat(paragraphIn(cell, "First kept").getCTP().getPPr().isSetKeepLines()).isTrue();
             assertThat(paragraphIn(cell, "Second kept").getCTP().getPPr().isSetKeepLines()).isTrue();
         }
     }

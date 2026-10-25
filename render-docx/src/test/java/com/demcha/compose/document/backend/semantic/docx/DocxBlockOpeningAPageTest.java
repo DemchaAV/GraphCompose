@@ -11,6 +11,7 @@ import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -40,6 +41,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * stack. A row, a table or a panel opening a band with a 14pt margin stood 14pt high too: the
  * band's margin was left on the page above. Each held in a line kept with it, as a paragraph's
  * edge is, stood where the page sets it, within 0.1pt of the paragraphs round it.</p>
+ *
+ * <p>So do a rule, and a table, a row or a panel whose gap above it the layout carries onto the new
+ * page, where the gap does not fit at the foot of the page above. Measured in Word 16 and
+ * LibreOffice 24.2: {@code ObsidianInvoice}'s footer divider stood 13pt high, its margin, and
+ * {@code MeteredInvoice}'s closing row about 13pt, its 12.4pt gap; held in a line, within 0.7pt.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -332,6 +338,187 @@ class DocxBlockOpeningAPageTest {
                     .as("the filler's hairline, no line held").isEqualTo(HAIRLINE);
             assertThat(before(spacing(line))).as("its space above, as before").isPositive();
         }
+    }
+
+    @Test
+    void aRuleTheLayoutMovesToANewPageHoldsItsMarginInALineKeptWithIt() throws Exception {
+        // A rule's space above is its paragraph's, which Word and LibreOffice drop at the top of a
+        // page: ObsidianInvoice's footer divider, moved to a new page with its 13pt margin, stood
+        // 13pt high in both.
+        Consumer<PageFlowBuilder> content = movedToANewPage(rule(EDGE));
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph rule = rule(document);
+
+            assertThat(lineBefore(document, rule)).as("the rule's margin, a line's height").isEqualTo(Math.round(EDGE * 20));
+            assertThat(before(spacing(paragraphBefore(document, rule))))
+                    .as("the filler's height stays above the line").isEqualTo(owed(CONTENT - 10));
+            assertThat(before(spacing(rule))).as("its edge is the line's").isZero();
+        }
+    }
+
+    @Test
+    void aRuleWhoseGapCarriesToANewPageHoldsTheGapWithItsMargin() throws Exception {
+        // 157pt leave 3, less than the gap: the gap and the rule open the second page.
+        Consumer<PageFlowBuilder> content = page -> page.spacing(GAP).spacer(0, CONTENT - 3).add(rule(EDGE));
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(lineBefore(document, rule(document))).as("the gap and the margin")
+                    .isEqualTo(Math.round((GAP + EDGE) * 20));
+        }
+    }
+
+    @Test
+    void aRuleOnThePageOfTheBlockBeforeItHoldsNoLine() throws Exception {
+        Consumer<PageFlowBuilder> content = page -> page.spacer(0, CONTENT - 40).add(rule(EDGE));
+        assertThat(startPage(content, "Block")).as("the premise: the rule stays on the first page").isZero();
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph rule = rule(document);
+
+            assertThat(DocxTwips.of(spacing(paragraphBefore(document, rule)).getLine()))
+                    .as("the filler's hairline, no line held").isEqualTo(HAIRLINE);
+            assertThat(before(spacing(rule))).as("the filler's height and its margin, as before")
+                    .isEqualTo(owed(CONTENT - 40 + EDGE));
+        }
+    }
+
+    @Test
+    void aRowWhoseGapCarriesToANewPageHoldsTheGap() throws Exception {
+        // 157pt leave 3, less than the gap: the layout starts the row 4pt below the second page's
+        // margin. MeteredInvoice's closing row, its 12.4pt gap carried so, stood 13.0pt high in Word
+        // and 12.8pt in LibreOffice.
+        Consumer<PageFlowBuilder> content = gapCarried(0, row(0));
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph line = paragraphBefore(document, document.getTables().get(0));
+
+            assertThat(lineHeight(line)).as("the gap").isEqualTo(Math.round(GAP * 20));
+            assertThat(after(spacing(paragraphBefore(document, line))))
+                    .as("the filler's height alone below it, the gap not left on the page above as well")
+                    .isEqualTo(owed(CONTENT - 3));
+        }
+    }
+
+    @Test
+    void aRowWhoseGapStaysAboveHoldsNoLine() throws Exception {
+        // 150pt leave 10: the gap fits at the foot of the first page, the row does not.
+        Consumer<PageFlowBuilder> content = page -> page.spacing(GAP).spacer(0, CONTENT - 10).add(row(0));
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(DocxTwips.of(spacing(paragraphBefore(document, document.getTables().get(0))).getLine()))
+                    .as("the filler's hairline, no line held").isEqualTo(HAIRLINE);
+        }
+    }
+
+    @Test
+    void aRowsOwnMarginIsHeldWithTheGapAndTheSpaceBelowTheBlockAboveStaysThere() throws Exception {
+        // The filler's 6pt below it fit at the foot of the first page and the gap did not: the layout
+        // starts the row its own 6pt and the gap below the margin.
+        Consumer<PageFlowBuilder> content = gapCarried(6, row(6));
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            XWPFParagraph line = paragraphBefore(document, document.getTables().get(0));
+
+            assertThat(lineHeight(line)).as("the gap and the row's margin").isEqualTo(Math.round((GAP + 6) * 20));
+            assertThat(after(spacing(paragraphBefore(document, line))))
+                    .as("the filler's height and its margin below it stay on the page above")
+                    .isEqualTo(owed(CONTENT - 3));
+        }
+    }
+
+    @Test
+    void aRowSetDownItsStackOfOneLayerHoldsNoneOfTheOffset() throws Exception {
+        // The layer stands 12pt down its stack, which is named, not written; no gap is carried, and
+        // no line holds the offset, where the note says Word writes the row.
+        Consumer<PageFlowBuilder> content = movedToANewPage(new LayerStackBuilder()
+                .position(row(0), 0, EDGE, LayerAlign.TOP_LEFT).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(DocxTwips.of(spacing(paragraphBefore(document, document.getTables().get(0))).getLine()))
+                    .as("the filler's hairline, no line held").isEqualTo(HAIRLINE);
+        }
+        assertThat(DocxExports.report(300, 200, 20, content).bySubject().get("layer offset"))
+                .as("the offset named").isNotNull();
+    }
+
+    @Test
+    void aRowOpeningAPaddedSectionHoldsTheGapWithThePadding() throws Exception {
+        Consumer<PageFlowBuilder> content = gapCarried(6, new SectionBuilder().padding(DocumentInsets.top(PADDING))
+                .add(row(0)).build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(lineHeight(paragraphBefore(document, document.getTables().get(0))))
+                    .as("the gap and the section's padding").isEqualTo(Math.round((GAP + PADDING) * 20));
+        }
+    }
+
+    @Test
+    void aTableWhoseGapCarriesToANewPageHoldsTheGapWithItsMargin() throws Exception {
+        Consumer<PageFlowBuilder> content = gapCarried(0, new TableBuilder().name("Block").margin(DocumentInsets.top(6))
+                .autoColumns(2).row("Opening", "Beside").build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(lineHeight(paragraphBefore(document, document.getTables().get(0))))
+                    .as("the gap and the table's margin").isEqualTo(Math.round((GAP + 6) * 20));
+        }
+    }
+
+    @Test
+    void aPaintedRowWhoseGapCarriesToANewPageHoldsTheGap() throws Exception {
+        Consumer<PageFlowBuilder> content = gapCarried(0, new RowBuilder().name("Block").fillColor(DocumentColor.LIGHT_GRAY)
+                .addParagraph("Opening").addParagraph("Beside").build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(lineHeight(paragraphBefore(document, document.getTables().get(0))))
+                    .as("the gap").isEqualTo(Math.round(GAP * 20));
+        }
+    }
+
+    @Test
+    void aPanelWhoseGapCarriesToANewPageHoldsTheGap() throws Exception {
+        Consumer<PageFlowBuilder> content = gapCarried(0, new SectionBuilder().name("Block")
+                .fillColor(DocumentColor.LIGHT_GRAY).padding(DocumentInsets.of(6))
+                .addParagraph("Opening").build());
+        assertOpensTheSecondPage(content, "Block");
+        try (XWPFDocument document = export(content)) {
+            assertThat(lineHeight(paragraphBefore(document, document.getTables().get(0))))
+                    .as("the gap").isEqualTo(Math.round(GAP * 20));
+        }
+    }
+
+    /** A gap between blocks, which does not fit in the 3pt the filler leaves at the foot of the first page. */
+    private static final double GAP = 4;
+
+    /** A section's padding above a block opening the second page with it. */
+    private static final double PADDING = 8;
+
+    /**
+     * A 157pt filler with {@code below} of it its margin below, {@link #GAP} between the blocks, and
+     * {@code block}: the 3pt the filler leaves at the foot of the first page do not hold the gap.
+     */
+    private static Consumer<PageFlowBuilder> gapCarried(double below, DocumentNode block) {
+        return page -> page.spacing(GAP)
+                .addSection(s -> s.margin(DocumentInsets.bottom(below)).spacer(0, CONTENT - 3 - below))
+                .add(block);
+    }
+
+    /** A row of two paragraphs with {@code margin} above it, named for the layout's placement of it. */
+    private static DocumentNode row(double margin) {
+        return new RowBuilder().name("Block").margin(DocumentInsets.top(margin))
+                .addParagraph("Opening").addParagraph("Beside").build();
+    }
+
+    /** A rule with {@code margin} above it, named for the layout's placement of it. */
+    private static DocumentNode rule(double margin) {
+        return new com.demcha.compose.document.dsl.LineBuilder().name("Block").horizontal(200).thickness(1)
+                .margin(DocumentInsets.top(margin)).build();
+    }
+
+    /** The paragraph a rule is written as: the one with a border. */
+    private static XWPFParagraph rule(XWPFDocument document) {
+        return document.getParagraphs().stream()
+                .filter(paragraph -> paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetPBdr())
+                .findFirst().orElseThrow();
     }
 
     /** A list of one item, named for the layout's placement of it. */

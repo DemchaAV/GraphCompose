@@ -1,11 +1,17 @@
 package com.demcha.compose.document.backend.semantic.docx;
 
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.junit.jupiter.api.Test;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -214,6 +220,58 @@ class DocxKeepTogetherTest {
     }
 
     @Test
+    void aBlockKeptTogetherInARowsCellKeepsItsLinesAndNothingWithTheNext() throws Exception {
+        // Word reads keep-with-next on the paragraph a cell opens with as keeping the row with what
+        // follows the table; the row, which may not split, keeps the block whole.
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addRow(row -> row
+                        .addSection(s -> s.keepTogether().addParagraph("Opening").addParagraph("Body"))
+                        .addParagraph("Beside"))
+                .addParagraph(p -> p.text("After")))) {
+            XWPFTableRow row = document.getTables().get(0).getRow(0);
+            List<XWPFParagraph> kept = row.getCell(0).getParagraphs().stream()
+                    .filter(paragraph -> !paragraph.getText().isEmpty()).toList();
+
+            assertThat(kept).extracting(XWPFParagraph::getText).containsExactly("Opening", "Body");
+            for (XWPFParagraph paragraph : kept) {
+                assertThat(keepsNext(paragraph)).as("kept with nothing in its cell").isFalse();
+                assertThat(keepsLines(paragraph)).as("its lines kept together").isTrue();
+            }
+            assertThat(row.isCantSplitRow()).isTrue();
+        }
+    }
+
+    @Test
+    void cardsKeptTogetherInARowsCellsKeepNothingWithWhatFollowsTheRow() throws Exception {
+        // ObsidianInvoice's info cards: kept with the next, the paragraph each card's cell opens with
+        // kept the row with the footer divider the layout set on the next page, and Word set the
+        // cards there too, 17 lines below the page's (measured, Word 16).
+        DocumentColor surface = DocumentColor.LIGHT_GRAY;
+        try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
+                .addRow(row -> row
+                        .addSection(card -> card.keepTogether().fillColor(surface).padding(DocumentInsets.of(6))
+                                .addParagraph("Notes").addParagraph("Thank you"))
+                        .addSection(card -> card.keepTogether().fillColor(surface).padding(DocumentInsets.of(6))
+                                .addParagraph("Payment")
+                                .addSection(fields -> fields.addParagraph("Payee").addParagraph("Kestrel"))))
+                .addParagraph(p -> p.text("After")))) {
+            XWPFTable row = document.getTables().get(0);
+            List<CTP> inside = paragraphsIn(row);
+
+            assertThat(inside).extracting(DocxKeepTogetherTest::textOf)
+                    .contains("Notes", "Thank you", "Payment", "Payee", "Kestrel");
+            for (CTP paragraph : inside) {
+                assertThat(paragraph.isSetPPr() && paragraph.getPPr().isSetKeepNext())
+                        .as("a paragraph in the cards' row keeps nothing with the next").isFalse();
+                if (!textOf(paragraph).isEmpty()) {
+                    // Laid out, and kept: the cards' lines are kept together.
+                    assertThat(paragraph.getPPr().isSetKeepLines()).as("%s keeps its lines", textOf(paragraph)).isTrue();
+                }
+            }
+        }
+    }
+
+    @Test
     void withoutALayoutAStackIsNotKnownToBeOnOnePage() throws Exception {
         try (XWPFDocument document = DocxExports.withoutLayout(595, 842, 36, page -> page
                 .addLayerStack(stack -> stack.topLeft(new com.demcha.compose.document.dsl.SectionBuilder()
@@ -241,6 +299,22 @@ class DocxKeepTogetherTest {
                 .filter(paragraph -> paragraph.getText().equals(text))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("no paragraph reads " + text));
+    }
+
+    /** Every paragraph a table holds, at any depth. */
+    private static List<CTP> paragraphsIn(XWPFTable table) {
+        List<CTP> paragraphs = new ArrayList<>();
+        for (org.apache.xmlbeans.XmlObject found : table.getCTTbl().selectPath(
+                "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//w:p")) {
+            paragraphs.add((CTP) found);
+        }
+        return paragraphs;
+    }
+
+    private static String textOf(CTP paragraph) {
+        try (org.apache.xmlbeans.XmlCursor cursor = paragraph.newCursor()) {
+            return cursor.getTextValue();
+        }
     }
 
     private static boolean keepsNext(XWPFParagraph paragraph) {

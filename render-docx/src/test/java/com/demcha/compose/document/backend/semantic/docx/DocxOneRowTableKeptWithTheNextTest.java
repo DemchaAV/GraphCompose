@@ -64,8 +64,9 @@ class DocxOneRowTableKeptWithTheNextTest {
 
     @Test
     void aRowWhoseHeadingAloneIsKeptWithTheNextStaysWhole() throws Exception {
-        // Only a row whose every paragraph holds onto what follows is kept with it: LibreOffice
-        // reads the keep off the first alone.
+        // The heading is kept with the line under it in its column, which the row holds whole: kept
+        // with the next in the cell it opens, it would keep the row with the paragraph after it in
+        // Word, which reads the keep off the paragraph a cell opens with.
         try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
                 .addRow(row -> row
                         .addSection(column -> column
@@ -75,8 +76,8 @@ class DocxOneRowTableKeptWithTheNextTest {
                 .addParagraph("Deliverables"))) {
             XWPFTableRow row = document.getTables().get(0).getRow(0);
 
-            assertThat(keepsNext(paragraph(row, "Summary"))).isTrue();
-            assertThat(rowKeepsNext(row)).isFalse();
+            assertThat(keepsNext(paragraph(row, "Summary"))).isFalse();
+            assertThat(paragraph(row, "Summary").getCTP().getPPr().isSetKeepLines()).isTrue();
             assertThat(row.isCantSplitRow()).isTrue();
         }
     }
@@ -133,7 +134,8 @@ class DocxOneRowTableKeptWithTheNextTest {
 
     @Test
     void aRowKeptWithTheNextInsideACellStaysWhole() throws Exception {
-        // A table in a cell goes where its cell's row goes.
+        // A table in a cell goes where its cell's row goes. Kept with the next, the paragraph the
+        // card's cell opens with would keep the card with what follows it in Word.
         try (XWPFDocument document = DocxExports.withLayout(595, 842, 36, page -> page
                 .addSection(card -> card.fillColor(SURFACE)
                         .addSection(s -> s.keepWithNext().addRow(row -> row.addParagraph("Northline").addParagraph("Proposal")))
@@ -141,7 +143,11 @@ class DocxOneRowTableKeptWithTheNextTest {
             XWPFTableCell card = document.getTables().get(0).getRow(0).getCell(0);
             XWPFTableRow row = card.getTables().get(0).getRow(0);
 
-            assertThat(rowKeepsNext(row)).isTrue();
+            for (XWPFTableCell cell : row.getTableCells()) {
+                for (XWPFParagraph paragraph : cell.getParagraphs()) {
+                    assertThat(keepsNext(paragraph)).as("nothing in the card keeps with the next").isFalse();
+                }
+            }
             assertThat(row.isCantSplitRow()).isTrue();
         }
     }

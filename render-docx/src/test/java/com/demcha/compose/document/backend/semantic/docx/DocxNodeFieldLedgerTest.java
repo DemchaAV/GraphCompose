@@ -227,8 +227,10 @@ class DocxNodeFieldLedgerTest {
     // A keep is written only for a block the layout keeps on one page.
     private static final String KEEP = "with no layout, in the section's note; inside a panel the layout runs on to "
                                        + "the next page, named as one Word may break; composed in a table cell, "
-                                       + "where the table row it stands in is what is kept, not written; any other "
-                                       + "is written";
+                                       + "where the table row it stands in is what is kept, not written; in any other "
+                                       + "table cell its lines kept together and nothing kept with the next, as Word "
+                                       + "reads keep-with-next there as keeping the row with what follows the table; "
+                                       + "any other is written";
     // A page field is a zone line's part: anywhere else it is dropped with a note.
     private static final String FIELD_OUTSIDE_A_ZONE = "outside a page zone's line, not written, which its note "
                                                        + "names; any other is written";

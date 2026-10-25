@@ -8,6 +8,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes no page break where the page breaks none: in a row's column, a table's
+  composed cell, a layer stack's layer, a shape container's layer or a canvas.**
+  - The page places each of these as a box on one page: a page break in one is a box of no height,
+    the spacing of the container it stands in on either side of it, and what follows stays on that
+    page. The export wrote the break in the body after the row's, the columns' or the table's
+    table, or between the stack's layers. Measured in Word and LibreOffice 24.2, a section of
+    "Part A", a break and "Part B" in a row's column, a stack's column, a band of overlapping
+    layers, a stack of one layer or a table's cell came out on two pages where the page has one;
+    in a cell "Part B" stood 6pt high, its spacing written once.
+  - Such a break is no longer written, and its spacing stands on both sides of it. A panel in a
+    stack's layer is no longer cut into two tables at a break inside it. In the measured shapes
+    the text after the break now stands on the page the page sets it on in Word and LibreOffice
+    24.2, "Part B" within 0.13pt of it; in the band the layer laid over "Part B" stands as low as
+    before, and is named.
+  - A break in an alignment, where the page breaks no page either, is still written. A margin set
+    on a break the page breaks no page at, which the page counts there, is not written.
+  - No document of the corpus has a page break in a row, a stack or a table's cell; its export is
+    unchanged.
+
 - **A DOCX export breaks a page inside a section or a panel of a panel where the page does.**
   - Word breaks no page inside a table cell (measured in Word and LibreOffice 24.2: a run's page
     break and a paragraph's break before it, in a table of the body or one nested in a cell, left

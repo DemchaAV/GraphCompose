@@ -4559,7 +4559,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         } else if (node instanceof SpacerNode spacer) {
             writeSpacer(document, spacer);
         } else if (node instanceof PageBreakNode) {
-            writePageBreak(document);
+            // Only where the page breaks: anywhere else it is a box of no height (breaksThePage).
+            if (breaksThePage(node)) {
+                writePageBreak(document);
+            }
         } else if (node instanceof RowNode row) {
             // Decided, and its paint named where it is not written, before anything of it is: what
             // keeps it from its panel is read off where the writing stands now.
@@ -7056,14 +7059,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * there and opens it again after the break, on the next page — the way the page draws a card a
      * break runs through ({@link DocxPanelPieces}). A panel inside one so cut is written in the
      * piece of it each table holds. Inside a cell the break is not cut otherwise, and the panel is
-     * written whole.</p>
+     * written whole; so is it where the page breaks no page at a break — in a layer stack's layer,
+     * a shape container's layer or a canvas ({@link #breaksThePage}).</p>
      */
     private void writePanel(XWPFDocument document, DocumentNode node, ContainerPaint paint) throws Exception {
         DocxPanelPieces.Part window = panelWindows.remove(node);
         List<List<DocxPanelPieces.Part>> pieces;
         if (window != null) {
             pieces = List.of(window.parts());
-        } else if (currentCell == null) {
+        } else if (currentCell == null && inThePagedFlow()) {
             pieces = DocxPanelPieces.of(node, DocxSemanticBackend::writtenInItsCell);
         } else {
             pieces = List.of(node.children().stream().map(DocxPanelPieces.Part::whole).toList());
@@ -8116,7 +8120,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * owed like any other, so it lands above whatever the next child writes first — a
      * paragraph's space above, or the paragraph before a table. Before a page break it is
      * not owed, as the page ends there; after one it is, as the layout starts the next page
-     * that far down.</p>
+     * that far down. A break the page breaks no page at ({@link #breaksThePage}) is a box of no
+     * height, and the spacing is owed on both sides of it.</p>
      */
     private void writeChildren(XWPFDocument document, List<DocumentNode> children, double spacing)
             throws Exception {
@@ -8144,10 +8149,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                boolean lastFollowed, ShapeContainerNode panel) throws Exception {
         for (int index = 0; index < children.size(); index++) {
             DocumentNode child = children.get(index);
-            if (index > 0 && spacing > 0 && !(child instanceof PageBreakNode)) {
+            if (index > 0 && spacing > 0 && !breaksThePage(child)) {
                 owePendingSpacingAfter(spacing);
             }
-            if (index + 1 < children.size() ? !(children.get(index + 1) instanceof PageBreakNode) : lastFollowed) {
+            if (index + 1 < children.size() ? !breaksThePage(children.get(index + 1)) : lastFollowed) {
                 followedInFlow.add(child);
             }
             if (index + 1 < children.size() && keepGoesUnheld(child, children.get(index + 1))) {
@@ -8182,11 +8187,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Whether what is being written stands in the flow the page lays out page by page: the body
      * and the panels and boxes in it, not a row's cell, a table's composed cell, a layer stack's
-     * column or anything laid over another. Only there does the page keep a block with the next
-     * and bleed a section's paint toward its edges; everywhere else it places a fixed box.
+     * column or layer — a stack of one layer's included — a shape container's layer or a canvas.
+     * Only there does the page break a page at a page break,
+     * keep a block with the next and bleed a section's paint toward its edges; everywhere else it
+     * places a fixed box.
      */
     private boolean inThePagedFlow() {
         return overlayDepth == 0 && slotDepth == 0;
+    }
+
+    /**
+     * Whether a node is a page break the page breaks at: one in the flow it lays out page by page
+     * ({@link #inThePagedFlow}). Anywhere else — a row's column, a table's composed cell, a layer
+     * stack's layer, a shape container's layer, a canvas — the page sets a break as a box of no
+     * height, the spacing of the container it stands in on either side of it, and goes on on the
+     * same page.
+     * Written there, the break went into the body after the table, or between a stack's layers:
+     * Word and LibreOffice 24.2 set everything after it on a page the page does not have. An
+     * alignment's child is placed so too, and the page breaks no page in it either; the writer,
+     * which writes an alignment as what it holds, does not count it, and its break is written.
+     */
+    private boolean breaksThePage(DocumentNode node) {
+        return node instanceof PageBreakNode && inThePagedFlow();
     }
 
     /** The space a container puts between its children, zero for any other node. */

@@ -4231,8 +4231,8 @@ follow semantic versioning; release dates are ISO 8601.
 ### Tests
 
 - **The DOCX fidelity corpus holds the ways a page breaks inside a panel.**
-  - Five documents join it, so the gate holds every line of each where the editor set it, in
-    LibreOffice in CI and in Word on Windows, as it holds the presets:
+  - Five documents join it, so the gate holds every line it finds of each where the editor set
+    it, in LibreOffice in CI and in Word on Windows, as it holds the presets:
     - `SyntheticDocxCorpus`, a family of documents built for shapes no preset has on its own
       fixture: a page break among a card's children and inside a card nested in it; page breaks
       in a row's column and in a stack's layer, where the page breaks none; and a bordered card
@@ -4248,9 +4248,9 @@ follow semantic versioning; release dates are ISO 8601.
     left, the table's first column narrower than its grid, which LibreOffice keeps. In
     LibreOffice 24.2 and 26.8 the parts of the card after its explicit breaks stand 3 to 5pt high.
     LibreOffice 24.2, CI's, sets each on the pages the PDF does; it sets the line items of the
-    two long invoices high, more so page after page (`ObsidianInvoice`'s up to 10pt,
-    `MeteredInvoice`'s by a median of 52 and 87pt on its second and third pages, 16 of its lines
-    on another page), as it does the presets'
+    two long invoices high (`ObsidianInvoice`'s up to 10pt; `MeteredInvoice`'s more so page after
+    page, by a median of 52 and 87pt on its second and third pages, 16 of its lines on another
+    page), as it does the presets'
     long tables, and holds their last pages, which carry the page break after the cards and the
     gap above the closing row, within 0.8pt. LibreOffice
     26.8 on Windows carries `ObsidianInvoice`'s info cards to page 5, 17 lines, where Word and

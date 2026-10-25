@@ -97,7 +97,9 @@ final class SyntheticDocxCorpus {
      * section at the cut, as gaps of 2 to 6pt and 12 to 16pt do: at 8 or 10pt the export names
      * page 2's margins instead, and both editors set page 2 with page 1's. A change to a table's
      * metrics can move page 1's last row into that case: the gate then fails this document with
-     * every line of page 2 about 53pt high, which a re-spaced fixture answers, not the change.</p>
+     * every line of page 2 about 53pt high. Where the export's report names page 2's margins as
+     * leaving page 1's rows too near its foot, the fixture is to be re-spaced; where it does not,
+     * the section at the cut was lost, and the change is at fault.</p>
      */
     private static void cardOverPages(DocumentSession session) {
         session.pageSize(400, 600).margin(MARGIN);

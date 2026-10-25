@@ -357,7 +357,7 @@ Choose the smallest tests that match the change:
   `-Dgraphcompose.docxFidelity.update=true`, and commits it with the change: its diff shows
   which documents moved. A new preset joins the corpus in its family's `*DocxCorpus` class,
   and so does a preset on a longer fixture; a shape no preset has — a page break inside a
-  panel, a card run over pages — goes in `SyntheticDocxCorpus`.
+  panel, a break in a row's column — goes in `SyntheticDocxCorpus`.
   CI runs it on Linux (the `DOCX Fidelity` job) against `libreoffice-linux.tsv`, and uploads
   what it measured: LibreOffice sets text a little differently per platform, so a change that
   moves documents nearer the page takes that artifact's files as the Linux baseline, and its own
@@ -365,7 +365,7 @@ Choose the smallest tests that match the change:
   Windows with Word, `scripts/docx-visual/word-fidelity.ps1` (`-Update` to rewrite) exports the
   corpus, has a private Word instance convert it, and holds it to `word-windows.tsv` — run it
   from PowerShell (pwsh), after the install above, before a DOCX export change is opened.
-  Each run also writes `measured-<editor>-acceptance.md`: which presets the editor sets as the
+  Each run also writes `measured-<editor>-acceptance.md`: which documents the editor sets as the
   page does — the same pages, 95% of the lines found, a median of 1pt or less, no more than 10%
   past 2pt — and what keeps the rest short of it. CI shows LibreOffice's in the job summary.
   The corpus also answers for how a document edits in Word.

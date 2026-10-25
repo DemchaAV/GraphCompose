@@ -432,6 +432,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     // How tall Word stands each written paragraph's line, and where its text stands in it, by the
     // faces the export ships (DocxGrownLines).
     private DocxGrownLines grownLines = DocxGrownLines.NONE;
+    // The part a panel's table being written holds of each container a page break cuts it at
+    // (DocxPanelPieces), by node, taken by the container's writer.
+    private final java.util.Map<DocumentNode, DocxPanelPieces.Part> panelWindows = new java.util.IdentityHashMap<>();
     // Where the shapes this export draws are anchored — see DocxDrawingAnchors.
     private final DocxDrawingAnchors anchors = new DocxDrawingAnchors(() -> nextDrawingId++,
             paragraph -> grownLines.lineOf(paragraph));
@@ -1220,6 +1223,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         markdownWritten.clear();
         fittedWritten.clear();
         listNumbering.clear();
+        panelWindows.clear();
         measuredColumns.clear();
         prefixColumns.clear();
         report = new DocxExportReport.Builder();
@@ -3740,7 +3744,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                && layout.onOnePage(node);
         PanelBreak panelBreak = keepThePanelMayBreak(node);
         boolean keepWithNext = node.keepWithNext() && layout.onOnePage(node);
-        String anchor = blockAnchorOf(node, inTheFlow(node, overlayDepth, oneLayerDepth));
+        // A container a page break cuts is written once a table of its panel, its anchor marked
+        // where it starts: a bookmark round the part after the break would be the one kept.
+        DocxPanelPieces.Part part = panelWindows.get(node);
+        String anchor = part != null && !part.opens() ? null
+                : blockAnchorOf(node, inTheFlow(node, overlayDepth, oneLayerDepth));
         if (!keepTogether && !keepWithNext && anchor == null && panelBreak == null) {
             writeNodeContent(document, node);
             return;
@@ -6996,12 +7004,20 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             alsoLost.add("its bleed is not in the file, so its fill and borders stop at its box, not at "
                          + "the page's edge");
         }
-        reportWrittenWithout(node, paint.isEmpty() ? "written as its contents" : "written as a panel", alsoLost);
+        // A container a page break cuts is written once a table of its panel (DocxPanelPieces), and
+        // named once, where it starts.
+        DocxPanelPieces.Part part = panelWindows.get(node);
+        boolean itsStart = part == null || part.opens();
+        if (itsStart) {
+            reportWrittenWithout(node, paint.isEmpty() ? "written as its contents" : "written as a panel", alsoLost);
+        }
         if (paint.isEmpty()) {
             writeContainerBody(document, node);
             return;
         }
-        warnContainerRadiusDropped(node);
+        if (itsStart) {
+            warnContainerRadiusDropped(node);
+        }
         writePanel(document, node, paint);
     }
 
@@ -7035,20 +7051,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * margins are the space around the table, owed like any block's. A container kept
      * together that the layout held on one page is a row that may not break.</p>
      *
-     * <p>Word breaks no page inside a table cell, so a page break among the panel's children
-     * closes the panel there and opens it again after the break, on the next page — the way
-     * the page draws a card a break runs through. Inside a cell there is no page to break,
-     * and the panel is written whole.</p>
+     * <p>Word breaks no page inside a table cell, so a page break among the panel's children, or
+     * among those of a section or panel its cell writes them in, at any depth, closes the panel
+     * there and opens it again after the break, on the next page — the way the page draws a card a
+     * break runs through ({@link DocxPanelPieces}). A panel inside one so cut is written in the
+     * piece of it each table holds. Inside a cell the break is not cut otherwise, and the panel is
+     * written whole.</p>
      */
     private void writePanel(XWPFDocument document, DocumentNode node, ContainerPaint paint) throws Exception {
-        List<List<DocumentNode>> pieces = new ArrayList<>();
-        pieces.add(new ArrayList<>());
-        for (DocumentNode child : node.children()) {
-            if (child instanceof PageBreakNode && currentCell == null) {
-                pieces.add(new ArrayList<>());
-            } else {
-                pieces.get(pieces.size() - 1).add(child);
-            }
+        DocxPanelPieces.Part window = panelWindows.remove(node);
+        List<List<DocxPanelPieces.Part>> pieces;
+        if (window != null) {
+            pieces = List.of(window.parts());
+        } else if (currentCell == null) {
+            pieces = DocxPanelPieces.of(node, DocxSemanticBackend::writtenInItsCell);
+        } else {
+            pieces = List.of(node.children().stream().map(DocxPanelPieces.Part::whole).toList());
         }
         for (int index = 0; index < pieces.size(); index++) {
             boolean onANewPage = false;
@@ -7066,11 +7084,54 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
                 onANewPage = true;
             }
-            List<DocumentNode> piece = pieces.get(index);
+            List<DocxPanelPieces.Part> piece = pieces.get(index);
             ShapeContainerNode shape = node instanceof ShapeContainerNode container ? container : null;
-            writePanelPiece(document, node, paint, () -> writeChildren(document, piece, spacingOf(node), false, shape),
-                    index == 0, index == pieces.size() - 1, onANewPage);
+            boolean first = window == null ? index == 0 : window.opens();
+            boolean last = window == null ? index == pieces.size() - 1 : window.closes();
+            writePanelPiece(document, node, paint, () -> writeParts(document, piece, spacingOf(node), false, shape,
+                    DocxPanelPieces.followsABreak(piece, first)), first, last, onANewPage);
         }
+    }
+
+    /**
+     * Writes what a piece of a panel holds of a container's children ({@link DocxPanelPieces}),
+     * each one cut by a break written in the part of it the piece holds ({@link #panelWindows}).
+     *
+     * @param lastFollowed whether something is written after them in the flow, as
+     *                     {@link #writeChildren(XWPFDocument, List, double, boolean)}
+     * @param afterABreak  whether the first of them follows a page break among the container's own
+     *                     children, the container's spacing above it
+     */
+    private void writeParts(XWPFDocument document, List<DocxPanelPieces.Part> parts, double spacing,
+                            boolean lastFollowed, ShapeContainerNode shape, boolean afterABreak) throws Exception {
+        for (DocxPanelPieces.Part part : parts) {
+            if (!part.isWhole()) {
+                panelWindows.put(part.node(), part);
+            }
+        }
+        if (afterABreak && spacing > 0) {
+            // The page sets what follows a break the container's spacing below the page's top.
+            owePendingSpacingAfter(spacing);
+        }
+        try {
+            writeChildren(document, DocxPanelPieces.nodesOf(parts), spacing, lastFollowed, shape);
+        } finally {
+            // A part not written through its container's writer, one an earlier layer wrote in
+            // its place (movedIntoAStandIn), leaves no window for anything after it.
+            for (DocxPanelPieces.Part part : parts) {
+                panelWindows.remove(part.node());
+            }
+        }
+    }
+
+    /**
+     * Whether a panel's cell writes a node in it as its children after one another, its own top
+     * and bottom edges around them: a section or a container, painted or not — the containers a
+     * page break inside is cut through ({@link DocxPanelPieces}). An alignment, an anchor's
+     * wrapper and a stack of one layer, written so too, are not cut through.
+     */
+    private static boolean writtenInItsCell(DocumentNode node) {
+        return node instanceof SectionNode || node instanceof ContainerNode;
     }
 
     /**
@@ -7554,7 +7615,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // Below zero — a padding thinner than what of the half it does not keep — written as none
         // (setCellMargin).
         double marginLeft = inTheBody ? padding.left() : padding.left() - halfLeft + setIn;
-        applyCellPadding(cell, new DocumentInsets(margins.top(), Math.max(0, marginHeld - slackTaken),
+        // The page goes on with a panel a break runs through at the top of the next page, its text
+        // there with no padding above it, its own or any panel's round it (measured: a card's and a
+        // card's in it, padded 8 and 6pt, set their text at the page's top edge after the break):
+        // a piece after the first has none.
+        applyCellPadding(cell, new DocumentInsets(first ? margins.top() : 0, Math.max(0, marginHeld - slackTaken),
                 margins.bottom(), marginLeft));
         // A row is laid out as one piece, never across a page break (writeRow): so is its panel.
         if ((node.keepTogether() || node instanceof RowNode) && layout.onOnePage(node)) {
@@ -8136,10 +8201,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     private void writeContainerBody(XWPFDocument document, DocumentNode node) throws Exception {
+        // Cut by a page break its panel's tables are cut at, it writes the part of it this table
+        // holds, and its top and bottom edges where that part holds them (DocxPanelPieces).
+        DocxPanelPieces.Part window = panelWindows.remove(node);
+        boolean opens = window == null || window.opens();
+        boolean closes = window == null || window.closes();
         double carriedFromOutside = carriedSpacingBefore;
         long blocksBefore = blocksWritten;
-        carriedSpacingBefore += node.margin().top() + node.padding().top();
-        riseIntoItsLine(node);
+        if (opens) {
+            carriedSpacingBefore += node.margin().top() + node.padding().top();
+            riseIntoItsLine(node);
+        }
         // The sides are carried the same way, as the indent of every paragraph inside: a
         // container's content starts inside its margin and its padding on the page, and was
         // written flush with the page margin, the card's text touching the card's edge.
@@ -8164,14 +8236,22 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (isOneLayer(node)) {
             layerOffsetNotWritten += layerOffsetDown(node);
         }
+        boolean followed = followedInFlow.remove(node);
         try {
-            writeChildren(document, node.children(), spacingOf(node), followedInFlow.remove(node));
+            if (window == null) {
+                writeChildren(document, node.children(), spacingOf(node), followed);
+            } else {
+                writeParts(document, window.parts(), spacingOf(node), closes && followed, null,
+                        DocxPanelPieces.followsABreak(window.parts(), opens));
+            }
         } finally {
             insetLeft = outerLeft;
             insetRight = outerRight;
             layerOffsetNotWritten = outerOffset;
         }
-        owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
+        if (closes) {
+            owePendingSpacingAfter(node.margin().bottom() + node.padding().bottom());
+        }
         // A container that wrote something has had its top edge taken — by its first
         // paragraph, or owed above its first table (see newTable) — and none of it is left
         // waiting. A container that wrote nothing at all — empty, or holding nothing but a

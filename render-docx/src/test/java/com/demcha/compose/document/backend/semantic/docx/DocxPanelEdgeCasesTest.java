@@ -111,7 +111,139 @@ class DocxPanelEdgeCasesTest {
             XWPFTableCell second = ((XWPFTable) body.get(2)).getRow(0).getCell(0);
             assertThat(second.getText()).isEqualTo("After the break");
             assertThat(second.getCTTc().getTcPr().getShd()).as("still the card").isNotNull();
+            assertThat(topMargin(second)).as("the page goes on with the card at its top, padding none").isZero();
         }
+    }
+
+    @Test
+    void aPageBreakInASectionInsideACardCutsTheCardThere() throws Exception {
+        // The page goes on with the card on the next page, its section with it: Word, which breaks
+        // no page inside a cell, set both parts in the card on the first page, the break after it.
+        try (XWPFDocument document = export(page -> page
+                .addSection("Card", card -> card.fillColor(SURFACE).padding(DocumentInsets.of(8))
+                        .addSection(in -> in.addParagraph("Part A").addPageBreak(b -> { }).addParagraph("Part B")))
+                .addParagraph("After the card"))) {
+            List<IBodyElement> body = document.getBodyElements();
+
+            assertThat(body).as("two tables of the card, the break between them, and what follows").hasSize(4);
+            XWPFTableCell first = ((XWPFTable) body.get(0)).getRow(0).getCell(0);
+            XWPFTableCell second = ((XWPFTable) body.get(2)).getRow(0).getCell(0);
+            assertThat(first.getText()).isEqualTo("Part A");
+            assertThat(((XWPFParagraph) body.get(1)).getRuns().get(0).getCTR().getBrArray(0).getType())
+                    .isEqualTo(STBrType.PAGE);
+            assertThat(second.getText()).isEqualTo("Part B");
+            assertThat(((XWPFParagraph) body.get(3)).getText()).isEqualTo("After the card");
+            assertThat(topMargin(first)).as("the card's padding where it starts").isEqualTo(8 * 20);
+            assertThat(topMargin(second)).as("none where the page goes on with it").isZero();
+        }
+    }
+
+    @Test
+    void aPageBreakInACardInsideACardCutsBoth() throws Exception {
+        try (XWPFDocument document = export(page -> page
+                .addSection("Card", card -> card.fillColor(SURFACE).padding(DocumentInsets.of(8))
+                        .addSection(in -> in.fillColor(DocumentColor.rgb(220, 230, 240)).padding(DocumentInsets.of(6))
+                                .addParagraph("Part A").addPageBreak(b -> { }).addParagraph("Part B"))
+                        .addParagraph("Card tail"))
+                .addParagraph("After the card"))) {
+            List<IBodyElement> body = document.getBodyElements();
+
+            assertThat(body).hasSize(4);
+            XWPFTableCell first = ((XWPFTable) body.get(0)).getRow(0).getCell(0);
+            XWPFTableCell second = ((XWPFTable) body.get(2)).getRow(0).getCell(0);
+            assertThat(first.getTables()).as("the inner card's first part").hasSize(1);
+            assertThat(first.getTables().get(0).getRow(0).getCell(0).getText()).isEqualTo("Part A");
+            assertThat(second.getTables()).as("its second, in the card's second table").hasSize(1);
+            XWPFTableCell innerAfter = second.getTables().get(0).getRow(0).getCell(0);
+            assertThat(innerAfter.getText()).isEqualTo("Part B");
+            assertThat(topMargin(innerAfter)).as("none where the page goes on with it").isZero();
+            assertThat(second.getParagraphs()).extracting(XWPFParagraph::getText).contains("Card tail");
+            String xml = document.getDocument().xmlText();
+            assertThat(xml.split("Part A", -1)).as("written once").hasSize(2);
+            assertThat(xml.split("Part B", -1)).as("written once").hasSize(2);
+            assertThat(xml.split("Card tail", -1)).as("written once").hasSize(2);
+        }
+    }
+
+    @Test
+    void whatFollowsABreakInASectionStandsItsSpacingBelowThePagesTop() throws Exception {
+        // The section's top edge stands above its first part and its bottom edge below its last,
+        // not at the break.
+        try (XWPFDocument document = export(page -> page
+                .addSection("Card", card -> card.fillColor(SURFACE)
+                        .addSection(in -> in.spacing(4).padding(DocumentInsets.of(6)).addParagraph("Part A")
+                                .addPageBreak(b -> { }).addParagraph("Part B"))))) {
+            XWPFTableCell first = ((XWPFTable) document.getBodyElements().get(0)).getRow(0).getCell(0);
+            XWPFTableCell second = ((XWPFTable) document.getBodyElements().get(2)).getRow(0).getCell(0);
+            XWPFParagraph before = first.getParagraphs().get(first.getParagraphs().size() - 1);
+            XWPFParagraph after = second.getParagraphs().get(0);
+
+            assertThat(after.getText()).isEqualTo("Part B");
+            assertThat(DocxTwips.of(after.getCTP().getPPr().getSpacing().getBefore()))
+                    .as("the section's spacing, as the page sets it after the break, less what the line takes "
+                        + "of it to stand on the page's baseline")
+                    .isBetween(4 * 20 - 10L, 4 * 20L);
+            assertThat(before.getText()).isEqualTo("Part A");
+            var spacing = before.getCTP().getPPr().getSpacing();
+            assertThat(spacing.isSetAfter() ? DocxTwips.of(spacing.getAfter()) : 0)
+                    .as("no bottom edge of the section at the break").isLessThan(6 * 20);
+        }
+    }
+
+    @Test
+    void aCutSectionsAnchorMarksWhereItStartsAndItsNotesAreSaidOnce() throws Exception {
+        java.util.function.Consumer<com.demcha.compose.document.dsl.PageFlowBuilder> content = page -> page
+                .addSection("Card", card -> card.fillColor(SURFACE)
+                        .addSection(in -> in.anchor("terms").fillColor(DocumentColor.rgb(220, 230, 240)).cornerRadius(6)
+                                .addParagraph("Part A").addPageBreak(b -> { }).addParagraph("Part B")));
+        try (XWPFDocument document = export(content)) {
+            String xml = document.getDocument().xmlText();
+            XWPFTableCell first = ((XWPFTable) document.getBodyElements().get(0)).getRow(0).getCell(0);
+
+            assertThat(xml.split("w:name=\"terms\"", -1)).as("one bookmark").hasSize(2);
+            assertThat(paragraphIn(first.getTables().get(0).getRow(0).getCell(0), "Part A").getCTP()
+                    .getBookmarkStartList()).extracting(CTBookmark::getName).containsExactly("terms");
+        }
+        DocxExportReport report = DocxExports.report(595, 842, 36, content);
+        assertThat(report.notes()).filteredOn(note -> note.subject().equals("corner radius"))
+                .as("said once, of the panel the break cuts").hasSize(1);
+    }
+
+    @Test
+    void aBreakOpeningASectionInACardLeavesNothingWrittenTwice() throws Exception {
+        try (XWPFDocument document = export(page -> page
+                .addSection("Card", card -> card.fillColor(SURFACE).addParagraph("Head")
+                        .addSection(in -> in.addPageBreak(b -> { }).addParagraph("Part B")
+                                .addPageBreak(b -> { }).addPageBreak(b -> { }).addParagraph("Part D")))
+                .addParagraph("After the card"))) {
+            String xml = document.getDocument().xmlText();
+
+            for (String text : List.of("Head", "Part B", "Part D", "After the card")) {
+                assertThat(xml.split(text, -1)).as(text + ", written once").hasSize(2);
+            }
+            assertThat(((XWPFTable) document.getBodyElements().get(0)).getRow(0).getCell(0).getText()).isEqualTo("Head");
+        }
+    }
+
+    @Test
+    void aBreakInACardInARowsColumnIsNotCutThere() throws Exception {
+        // A row's columns are a table of their own, laid out as one piece: a card there is written
+        // whole, as it was.
+        try (XWPFDocument document = export(page -> page.addRow(row -> row
+                .addSection(card -> card.fillColor(SURFACE)
+                        .addSection(in -> in.addParagraph("Part A").addPageBreak(b -> { }).addParagraph("Part B")))
+                .addParagraph("Beside")))) {
+            XWPFTable rowTable = (XWPFTable) document.getBodyElements().get(0);
+            XWPFTableCell column = rowTable.getRow(0).getCell(0);
+
+            assertThat(column.getTables()).as("one card").hasSize(1);
+            assertThat(column.getTables().get(0).getRow(0).getCell(0).getText()).contains("Part A").contains("Part B");
+        }
+    }
+
+    private static long topMargin(XWPFTableCell cell) {
+        var margins = cell.getCTTc().getTcPr().getTcMar();
+        return margins == null || !margins.isSetTop() ? 0 : DocxTwips.of(margins.getTop().getW());
     }
 
     @Test

@@ -715,8 +715,16 @@ How it lands:
   inside a panel that runs on there. One moved whole that Word cannot split — one line, one
   picture, a drawing, a row that may not split — is not named: a painted section kept together,
   whose own row may not split, and a row in the panel move whole, as the page sets them.
-- **Page breaks.** Word breaks no page inside a table cell, so a page break among a
-  panel's children closes the panel there and opens it again after the break.
+- **Page breaks.** Word breaks no page inside a table cell (measured in Word and LibreOffice
+  24.2: a run's page break and a paragraph's break before it, in a table of the body or one
+  nested in a cell, left what follows on the same page), so a page break among a panel's
+  children, or among those of a section or a panel inside it, at any depth, closes the panel
+  there and opens it again after the break, each table holding its part of every section and
+  panel the break runs through. The page goes on with them at the top of the next page, with
+  no padding above, its own or theirs, so the tables after the first have none; what follows
+  the break stands the spacing of the container it is in below that top, as the page sets it.
+  A break in a panel composed in a table cell, a row's column or a stack's column is not cut,
+  nor one in an alignment, an anchor's wrapper or a stack of one layer inside a panel.
 - **Measured.** Cards stacked in a row's columns, panels nested in its table, and a card set in
   from a filled panel's text stand where the page sets them in Word 16 and LibreOffice on
   Windows, as far as the left edge and the right end above say.

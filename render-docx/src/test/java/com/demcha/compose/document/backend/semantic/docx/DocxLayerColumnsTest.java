@@ -37,6 +37,11 @@ class DocxLayerColumnsTest {
     private static final double MAIN = PAGE_WIDTH - 2 * MARGIN - SIDEBAR;
     /** What a line of the default text in a column is raised into the space above it. */
     private static final long RAISE = DocxExports.DEFAULT_LINE_RAISE;
+    /**
+     * A list's marker Lato holds no glyph for, which Word draws in a face of its own: its items stay
+     * exact, and Word sets Lato's high ({@link DocxGrownLines}).
+     */
+    private static final String ARROWHEAD = "➤";
     /** A paragraph long enough to fill its column, so the stack is as wide as the page's. */
     private static final String LONG = "Led the delivery of a document platform across three teams, "
             + "from the first prototype to the release that replaced the old reporting stack.";
@@ -110,7 +115,7 @@ class DocxLayerColumnsTest {
         com.demcha.compose.document.style.DocumentTextStyle lato = com.demcha.compose.document.style
                 .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.LATO).size(10).build();
         try (Export export = export(stack -> stack
-                .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addList(list -> list.name("Duties")
+                .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addList(list -> list.name("Duties").marker(ARROWHEAD)
                         .textStyle(lato24).margin(DocumentInsets.top(20)).items("Heading"))), LayerAlign.TOP_LEFT)
                 .layer(column("Sidebar", 0, MAIN, side -> side.addParagraph("Contact")), LayerAlign.TOP_LEFT)
                 .layer(column("MainLayer", SIDEBAR, 0, main -> main
@@ -130,7 +135,7 @@ class DocxLayerColumnsTest {
         }
         // A paragraph under the list in its own layer gives the lowering back.
         try (Export export = export(stack -> stack
-                .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addList(list -> list.name("Duties")
+                .layer(column("TitleLayer", SIDEBAR, 0, top -> top.addList(list -> list.name("Duties").marker(ARROWHEAD)
                         .textStyle(lato24).margin(DocumentInsets.top(20)).items("Heading"))
                         .addParagraph(p -> p.text("Under").textStyle(lato).margin(DocumentInsets.top(10)))),
                         LayerAlign.TOP_LEFT)
@@ -197,7 +202,7 @@ class DocxLayerColumnsTest {
         com.demcha.compose.document.style.DocumentTextStyle lato24 = com.demcha.compose.document.style
                 .DocumentTextStyle.builder().fontName(com.demcha.compose.font.FontName.LATO).size(24).build();
         try (Export export = export(stack -> stack
-                .layer(column("Sidebar", 0, MAIN, side -> side.addList(list -> list.textStyle(lato24)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addList(list -> list.marker(ARROWHEAD).textStyle(lato24)
                         .margin(DocumentInsets.top(10)).items("Heading"))), LayerAlign.TOP_LEFT)
                 .layer(column("Main", SIDEBAR, 0, main -> main.addParagraph(LONG)), LayerAlign.TOP_LEFT))) {
             XWPFParagraph heading = export.document().getTables().get(0).getRow(0).getCell(0).getParagraphs().get(0);
@@ -209,7 +214,7 @@ class DocxLayerColumnsTest {
         // The sidebar the taller column, the hang is below the stack: a paragraph under it gives it
         // back, and at the end of the document it is taken back.
         Consumer<LayerStackBuilder> tallest = stack -> stack
-                .layer(column("Sidebar", 0, MAIN, side -> side.addList(list -> list.textStyle(lato24)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addList(list -> list.marker(ARROWHEAD).textStyle(lato24)
                         .margin(DocumentInsets.top(10)).items("Heading"))), LayerAlign.TOP_LEFT)
                 .layer(column("Main", SIDEBAR, 0, main -> main.addParagraph("Side")), LayerAlign.TOP_LEFT);
         try (Export export = export(tallest, true)) {
@@ -224,7 +229,7 @@ class DocxLayerColumnsTest {
         }
         // A paragraph under the list in the same column gives the lowering back.
         try (Export export = export(stack -> stack
-                .layer(column("Sidebar", 0, MAIN, side -> side.addList(list -> list.textStyle(lato24)
+                .layer(column("Sidebar", 0, MAIN, side -> side.addList(list -> list.marker(ARROWHEAD).textStyle(lato24)
                         .margin(DocumentInsets.top(10)).items("Heading")).addParagraph(p -> p.text("Under")
                         .margin(DocumentInsets.top(10)))), LayerAlign.TOP_LEFT)
                 .layer(column("Main", SIDEBAR, 0, main -> main.addParagraph(LONG)), LayerAlign.TOP_LEFT))) {

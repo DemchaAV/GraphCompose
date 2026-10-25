@@ -40,7 +40,8 @@ class DocxComposedListTest {
             for (String item : List.of("Setup", "Training", "Support")) {
                 XWPFParagraph composed = inACell(cell, item);
 
-                assertThat(spacing(composed).getLineRule()).as(item).hasToString("exact");
+                assertThat(spacing(composed).getLineRule()).as(item).hasToString("atLeast")
+                        .hasToString(spacing(inTheBody(flow, item)).getLineRule().toString());
                 assertThat(line(composed)).as(item + ", as in the flow").isEqualTo(line(inTheBody(flow, item)));
             }
         }
@@ -48,12 +49,25 @@ class DocxComposedListTest {
 
     @Test
     void aWrappedItemInACellTakesTheListsLineSpacingBetweenItsLines() throws Exception {
-        // As in the flow: the gap goes into the item's line and comes off the space above it. Its
-        // lines then stand high in Word, and the space above lowers them, which the item under it
-        // gives back.
+        // As in the flow: the gap goes into the item's line and comes off the space above it. A
+        // least line keeps the gap above its text, where the page sets it, and nothing is lowered.
         String wrapped = "Training that runs long enough to wrap onto a second line of the cell";
         try (XWPFDocument document = inACellBeside(new ListBuilder().name("Items").bullet().itemSpacing(3).lineSpacing(2)
                 .textStyle(size(9)).items("Setup", wrapped, "Support").build())) {
+            XWPFParagraph one = inACell(document, "Setup");
+            XWPFParagraph two = inACell(document, wrapped);
+
+            assertThat(DocxTwips.of(spacing(two).getLine()) - DocxTwips.of(spacing(one).getLine()))
+                    .as("2pt between its lines").isEqualTo(40);
+            assertThat(spacing(two).getLineRule()).hasToString("atLeast");
+            assertThat(before(two)).as("3pt above it, less the gap").isEqualTo(60 - 40);
+            assertThat(before(inACell(document, "Support"))).as("3pt above it").isEqualTo(60);
+        }
+        // An exact one's lines stand high in Word, and the space above lowers them, which the item
+        // under it gives back: its marker one Lato holds no glyph for, which Word draws in a face of
+        // its own.
+        try (XWPFDocument document = inACellBeside(new ListBuilder().name("Items").marker("➤").itemSpacing(3)
+                .lineSpacing(2).textStyle(size(9)).items("Setup", wrapped, "Support").build())) {
             XWPFParagraph one = inACell(document, "Setup");
             XWPFParagraph two = inACell(document, wrapped);
             XWPFParagraph three = inACell(document, "Support");
@@ -211,7 +225,9 @@ class DocxComposedListTest {
 
             assertThat(items).as("the premise: both items written").hasSize(2);
             for (XWPFParagraph item : items) {
-                assertThat(spacing(item).getLineRule()).as(item.getText()).hasToString("exact");
+                // A Word list's items, their markers Word's, each depth's in Lato, which holds it.
+                assertThat(item.getCTP().getPPr().isSetNumPr()).as("the premise: " + item.getText()).isTrue();
+                assertThat(spacing(item).getLineRule()).as(item.getText()).hasToString("atLeast");
             }
         }
         // With hangingIndent, each item's marker in a column of its own, its depth's.
@@ -222,7 +238,8 @@ class DocxComposedListTest {
 
             assertThat(items).as("the premise: both items written").hasSize(2);
             for (XWPFParagraph item : items) {
-                assertThat(spacing(item).getLineRule()).as(item.getText()).hasToString("exact");
+                assertThat(item.getCTP().getPPr().isSetNumPr()).as("the premise: " + item.getText()).isTrue();
+                assertThat(spacing(item).getLineRule()).as(item.getText()).hasToString("atLeast");
             }
         }
     }

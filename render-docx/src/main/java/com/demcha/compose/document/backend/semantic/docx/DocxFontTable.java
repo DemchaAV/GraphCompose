@@ -141,6 +141,11 @@ final class DocxFontTable {
 
         private final Map<FontName, FontFamilyDefinition> families;
         private final Map<String, DocxNaturalLine> lines = new java.util.HashMap<>();
+        /** The file of each face with a line whose character map is not read yet. */
+        private final Map<String, byte[]> files = new java.util.HashMap<>();
+        /** Each face's character map, read the first time a text is asked of it; empty where unreadable. */
+        private final Map<String, java.util.Optional<org.apache.fontbox.ttf.CmapLookup>> characters =
+                new java.util.HashMap<>();
 
         private ShippedLines(Map<FontName, FontFamilyDefinition> families, List<Embedded> embedded) {
             this.families = families;
@@ -148,8 +153,57 @@ final class DocxFontTable {
                 for (Face face : family.faces()) {
                     if (face.line() != null) {
                         lines.put(family.wordFamily() + '\n' + face.element(), face.line());
+                        files.put(family.wordFamily() + '\n' + face.element(), face.font());
                     }
                 }
+            }
+        }
+
+        /**
+         * Whether a face the document ships, with a line, holds a glyph of its own for every letter
+         * of a text, so that an editor sets the text in it, not in a face it falls back to.
+         *
+         * @param fontName the face a style names
+         * @param slot     which of its family's faces, as {@link #of(FontName, String)}
+         * @param text     the letters
+         * @return whether it does; false where the document does not ship that face, it has no line,
+         *         or its Unicode character map cannot be read
+         */
+        boolean holds(FontName fontName, String slot, String text) {
+            String wordFamily = wordFamilyOf(fontName);
+            return wordFamily != null && holds(wordFamily, slot, text);
+        }
+
+        /**
+         * The same, by the family a run names in Word.
+         *
+         * @param wordFamily the family's name as the font table writes it
+         * @param slot       which of its faces, as {@link #of(FontName, String)}
+         * @param text       the letters
+         * @return whether it does, as {@link #holds(FontName, String, String)}
+         */
+        boolean holds(String wordFamily, String slot, String text) {
+            String face = wordFamily + '\n' + slot;
+            java.util.Optional<org.apache.fontbox.ttf.CmapLookup> map = characters.get(face);
+            if (map == null) {
+                byte[] file = files.remove(face);
+                if (file == null) {
+                    return false;
+                }
+                map = characterMapOf(file);
+                characters.put(face, map);
+            }
+            org.apache.fontbox.ttf.CmapLookup read = map.orElse(null);
+            return read != null && text.codePoints().allMatch(letter -> read.getGlyphId(letter) > 0);
+        }
+
+        /** A face's Unicode character map; empty where it holds none, or cannot be read. */
+        private static java.util.Optional<org.apache.fontbox.ttf.CmapLookup> characterMapOf(byte[] file) {
+            try (org.apache.fontbox.ttf.TrueTypeFont font = new org.apache.fontbox.ttf.TTFParser()
+                    .parse(new org.apache.pdfbox.io.RandomAccessReadBuffer(file))) {
+                return java.util.Optional.ofNullable(font.getUnicodeCmapLookup(true));
+            } catch (IOException | RuntimeException unreadable) {
+                return java.util.Optional.empty();
             }
         }
 
@@ -162,8 +216,14 @@ final class DocxFontTable {
          * @return its line, or null where the document does not ship that face
          */
         DocxNaturalLine of(FontName fontName, String slot) {
+            String wordFamily = wordFamilyOf(fontName);
+            return wordFamily == null ? null : of(wordFamily, slot);
+        }
+
+        /** The family a style's face is written as in Word, or null where none is known. */
+        private String wordFamilyOf(FontName fontName) {
             FontFamilyDefinition family = fontName == null ? null : families.get(FontLibrary.resolveFamily(fontName));
-            return family == null ? null : of(family.wordFamily(), slot);
+            return family == null ? null : family.wordFamily();
         }
 
         /**
@@ -205,18 +265,20 @@ final class DocxFontTable {
     }
 
     /**
-     * One face of a family: which slot it fills, its bytes, how the part refers to it, and the
-     * line an editor sets it in.
+     * One face of a family: which slot it fills, its file and the bytes the part stores, how the
+     * part refers to it, and the line an editor sets it in.
      */
     private static final class Face {
         private final String element;
+        private final byte[] font;
         private final byte[] bytes;
         private final String fontKey;
         private final DocxNaturalLine line;
         private String relationshipId;
 
-        Face(String element, byte[] bytes, String fontKey, DocxNaturalLine line) {
+        Face(String element, byte[] font, byte[] bytes, String fontKey, DocxNaturalLine line) {
             this.element = element;
+            this.font = font;
             this.bytes = bytes;
             this.fontKey = fontKey;
             this.line = line;
@@ -226,6 +288,12 @@ final class DocxFontTable {
             return element;
         }
 
+        /** The face's own file, as read. */
+        byte[] font() {
+            return font;
+        }
+
+        /** The file as the part stores it, obfuscated. */
         byte[] bytes() {
             return bytes;
         }
@@ -384,7 +452,7 @@ final class DocxFontTable {
             }
         }
         DocxFontEmbedding.Obfuscated obfuscated = DocxFontEmbedding.obfuscate(bytes);
-        faces.add(new Face(slot.element(), obfuscated.bytes(), obfuscated.fontKey(), DocxNaturalLine.of(bytes)));
+        faces.add(new Face(slot.element(), bytes, obfuscated.bytes(), obfuscated.fontKey(), DocxNaturalLine.of(bytes)));
     }
 
     /**

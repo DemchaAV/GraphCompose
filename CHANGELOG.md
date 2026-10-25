@@ -8,6 +8,33 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export's Word list items grow with their text where their face holds their marker.**
+  - A Word list's item, whose marker Word draws, was written at an exact height, which Word keeps
+    whatever its text holds.
+  - Word draws the marker as a run of the item's first line, in its level's face and size over its
+    paragraph mark's, and LibreOffice does too (measured in Word and LibreOffice 24.2: a bullet, a
+    white bullet and a small square in 8pt Lato, a bullet and an en dash in 9pt Fira Sans Condensed,
+    left exact and least lines as tall, with a space or a tab after it, its face its level's or its
+    mark's; a bullet at twice the size grew a least line by its height). A marker whose face holds no glyph for it is set in another face in each editor: Word
+    set an arrowhead beside 8pt Lato in Segoe UI Symbol, its least line 0.72pt taller.
+  - An item is now read with its marker, by the rule a paragraph's line grows by, where its level
+    writes letters its face holds, not a number or a picture. An item whose marker its face holds
+    no glyph for, or whose level is overridden or defined by a numbering style, stays exact. A
+    least item needs none of the lowering the space above gave an exact one Word set half a point
+    or more high, as `MidnightNavy`'s and `NavySidebar`'s duties were.
+  - The corpus writes 96 more list items at a least height, in eight documents; the 44 Word list
+    items still exact are set tighter than their faces' own line. In Word, two points more on
+    `Normal` leaves 923 of the 1832 paragraphs it grows on lines shorter than 1.1 times their
+    letters, from 1005, and 15 documents pass, from 14.
+  - Of the eight documents' lines, 53 stand nearer the page in Word and 26 further, of 682, and 53
+    nearer and 23 further in LibreOffice 24.2, of 678. The step from a line to the next differs
+    from the page's by more than 0.2pt for 80 of 456 steps in Word, from 95, and 88 of 482 in
+    LibreOffice, from 107.
+  - Where an item's line is taller than its text, the gap between its lines written into it, and
+    the space above it does not take the difference, its text stands lower than as an exact line,
+    inside the quarter point a least line is held to: `OrangeOps`' duties and `SerifHeadline`'s
+    items about 0.25pt lower in both editors, the lowest 0.42pt in Word.
+
 - **A DOCX export's lines holding a picture within their text grow with it.**
   - A line holding a picture set in it, an icon or a drawn bullet beside its words, was written at
     an exact height, which Word keeps whatever its text holds.
@@ -63,8 +90,8 @@ follow semantic versioning; release dates are ISO 8601.
     the faces' own tables: the tallest run's reach above the baseline and the deepest run's below,
     the paragraph's mark among them. It is so where the runs are set in faces the document ships,
     all the same depth below the baseline, left to right, none raised or a script, no picture in
-    the line past its text (see above), and the paragraph is seated on its baseline, not a Word
-    list's item.
+    the line past its text, a Word list's marker in a face that holds it (see above), and the
+    paragraph is seated on its baseline.
   - Word and LibreOffice keep a least line's spare above its text and stand its baseline the
     runs' descent above its foot (measured on the templates' faces, Word and LibreOffice 24.2, to
     0.15pt). That is where the page sets it, so such a line needs no position to stand there; it

@@ -141,8 +141,9 @@ class DocxGrownLinesExportTest {
     }
 
     @Test
-    void aListsItemGrowsWhereItsMarkerIsItsTextAndNotWhereWordDrawsIt() throws Exception {
-        // An item of runs, under a hanging marker, has its marker written as its first run.
+    void aListsItemGrowsWhetherItsMarkerIsItsTextOrWordDrawsIt() throws Exception {
+        // An item of runs, under a hanging marker, has its marker written as its first run; a
+        // Word list's has Word draw it in its level's face, the list's.
         try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
                 .addList(list -> list.textStyle(face(FontName.LATO, 10)).marker("•").hangingIndent(true).markerGap(6)
                         .addItem(text -> text.style("Written", face(FontName.LATO, 10))))
@@ -153,8 +154,22 @@ class DocxGrownLinesExportTest {
             assertThat(written.getText()).as("the premise: its marker its text").contains("Written");
             assertThat(spacing(written).getLineRule()).isEqualTo(STLineSpacingRule.AT_LEAST);
             assertThat(drawn.getCTP().getPPr().isSetNumPr()).as("the premise: a Word list's item").isTrue();
-            assertThat(spacing(drawn).getLineRule()).as("its marker in the numbering's own face")
-                    .isEqualTo(STLineSpacingRule.EXACT);
+            assertThat(spacing(drawn).getLineRule()).isEqualTo(STLineSpacingRule.AT_LEAST);
+            assertThat(positions(drawn)).containsOnly(0L);
+        }
+    }
+
+    @Test
+    void aWordListsItemWhoseMarkerItsFaceHoldsNoGlyphForStaysExact() throws Exception {
+        // Lato holds no arrowhead: Word draws it in a face of its own, whose line is taller.
+        try (XWPFDocument document = DocxExports.withLayout(400, 600, 20, page -> page
+                .addList(list -> list.textStyle(face(FontName.LATO, 10)).marker("➤").items("Arrowed")))) {
+            XWPFParagraph arrowed = paragraph(document, "Arrowed");
+
+            assertThat(arrowed.getCTP().getPPr().isSetNumPr()).as("the premise: a Word list's item").isTrue();
+            assertThat(document.getNumbering().getAbstractNums().get(0).getCTAbstractNum().getLvlArray(0)
+                    .getLvlText().getVal()).as("the premise: the arrowhead its marker").isEqualTo("➤");
+            assertThat(spacing(arrowed).getLineRule()).isEqualTo(STLineSpacingRule.EXACT);
         }
     }
 

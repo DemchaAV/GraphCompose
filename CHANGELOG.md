@@ -30,10 +30,13 @@ follow semantic versioning; release dates are ISO 8601.
     nearer and 23 further in LibreOffice 24.2, of 678. The step from a line to the next differs
     from the page's by more than 0.2pt for 80 of 456 steps in Word, from 95, and 88 of 482 in
     LibreOffice, from 107.
-  - Where an item's line is taller than its text, the gap between its lines written into it, and
-    the space above it does not take the difference, its text stands lower than as an exact line,
-    inside the quarter point a least line is held to: `OrangeOps`' duties and `SerifHeadline`'s
-    items about 0.25pt lower in both editors, the lowest 0.42pt in Word.
+  - Some least items stand lower than they stood as exact lines: `OrangeOps`' duties and
+    `SerifHeadline`'s items, 8pt Lato on lines of 9.7 to 10.15pt in a table's cell, about 0.25pt
+    lower in both editors, the lowest 0.42pt in Word. The export reckons their least line within
+    0.06pt of the page, and Word and LibreOffice stand it about a quarter point lower; as exact
+    lines the export reckoned them as much high, and they stood nearer the page,
+    from 0.35pt high to 0.18pt low. The quarter-point check on a least line reads the export's
+    reckoning, so it does not hold these lines; each stands within half a point.
 
 - **A DOCX export's lines holding a picture within their text grow with it.**
   - A line holding a picture set in it, an icon or a drawn bullet beside its words, was written at
@@ -56,10 +59,10 @@ follow semantic versioning; release dates are ISO 8601.
     880; in Word 9 nearer and 55 further, of 882. The step from a line to the next differs from the
     page's by more than 0.2pt for 34 of 489 steps in LibreOffice, from 36, and 29 of 472 in Word,
     from 31.
-  - Where such a line is taller than its text, the gap between lines written into it, and the
-    space above it does not take the difference, its text stands lower than as an exact line:
-    `TealPulse`'s duties 0.24pt lower in Word, inside the quarter point a least line is held to
-    there, and its skills 0.3pt lower in LibreOffice. `ConsultingInvoice`'s line items, whose
+  - `TealPulse`'s duties stand 0.24pt lower in Word than as exact lines, and its skills 0.3pt
+    lower in LibreOffice, within half a point: the export reckons the duties' least line within
+    0.06pt of the page, and Word stands it lower, as it does the Word list items
+    above. `ConsultingInvoice`'s line items, whose
     description now seats its row's lift differently, stand one step of Word's 0.12pt line grid
     lower there and where they stood in LibreOffice.
 

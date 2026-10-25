@@ -324,7 +324,10 @@ final class DocxGrownLines {
         return over == null ? null : reachOf(over.over(mark), reach, level.getLvlText().getVal());
     }
 
-    /** The level of the numbering part a list's item names, or null where none, or one overridden. */
+    /**
+     * The level of the numbering part a list's item names, or null where it names none the part
+     * holds, or its list's levels are overridden or a numbering style's.
+     */
     private CTLvl levelOf(CTNumPr item) {
         XWPFNumbering part = numbering.get();
         if (part == null || !item.isSetNumId() || item.getNumId().getVal() == null) {

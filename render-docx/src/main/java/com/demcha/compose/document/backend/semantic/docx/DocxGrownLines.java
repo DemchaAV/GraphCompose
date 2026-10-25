@@ -391,7 +391,7 @@ final class DocxGrownLines {
             return null;
         }
         if (letters != null && !(run.family() != null ? faces.holds(run.family(), slot, letters)
-                : faces.holds(defaults.fontName(), slot, letters))) {
+                : defaults != null && faces.holds(defaults.fontName(), slot, letters))) {
             return null;
         }
         return new Reach(Math.max(so.above(), line.ascent() * size), Math.max(so.below(), line.descent() * size),

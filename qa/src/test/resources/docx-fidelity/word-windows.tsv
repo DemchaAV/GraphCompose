@@ -1,5 +1,6 @@
 # word 16.0 (16.0.20430) on windows
 document	engine_pages	editor_pages	lines	matched	median	p90	over2
+# rows of invoice-metered_long, invoice-obsidian_long, synthetic-break_in_column, synthetic-break_in_panel, synthetic-card_over_pages: word 16.0 (16.0.20527) on windows
 cv-blue_banner	2	2	54	52	0.10	0.23	0
 cv-boxed_sections	2	2	58	58	0.12	0.21	0
 cv-centered_headline	2	2	58	56	0.12	0.25	0
@@ -34,9 +35,11 @@ invoice-luma_studio	1	1	97	97	0.11	0.36	0
 invoice-luma_studio_long	3	3	192	192	0.16	0.37	0
 invoice-merchant	1	1	94	94	0.11	0.20	0
 invoice-metered	1	1	99	99	0.22	0.93	0
+invoice-metered_long	4	4	350	350	0.06	0.16	0
 invoice-modern	1	1	54	54	0.05	0.12	0
 invoice-modern_long	2	2	162	162	0.04	0.10	0
 invoice-obsidian	1	1	81	81	0.33	0.73	0
+invoice-obsidian_long	5	5	375	375	0.94	1.14	0
 invoice-payments	1	1	104	104	0.09	0.36	0
 invoice-platform	1	1	111	111	0.19	0.35	0
 invoice-subscription	1	1	81	81	0.09	0.36	0
@@ -62,3 +65,6 @@ proposal-modern	1	1	44	44	0.07	0.16	0
 proposal-northline	2	2	132	132	0.13	0.28	0
 receipt-modern	1	1	57	57	0.11	0.21	0
 rota-cobalt	1	1	154	154	0.14	0.26	0
+synthetic-break_in_column	1	1	7	7	0.03	0.03	0
+synthetic-break_in_panel	3	3	8	8	0.95	0.99	0
+synthetic-card_over_pages	3	3	114	114	1.03	1.15	0

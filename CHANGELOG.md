@@ -4230,6 +4230,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX fidelity corpus holds the ways a page breaks inside a panel.**
+  - Five documents join it, so the gate holds every line of each where the editor set it, in
+    LibreOffice in CI and in Word on Windows, as it holds the presets:
+    - `SyntheticDocxCorpus`, a family of documents built for shapes no preset has on its own
+      fixture: a page break among a card's children and inside a card nested in it; page breaks
+      in a row's column and in a stack's layer, where the page breaks none; and a bordered card
+      whose table runs over three pages, the pages after the first set against a larger top
+      margin. Their text is set in Lato, which the export embeds, so both editors break its lines
+      at the page's words.
+    - `ObsidianInvoice` with its line items repeated 12 times — its line items card run over four
+      pages with other margins from page 2, and the page break after its info cards — and
+      `MeteredInvoice` with them repeated 9 times, the gap above its closing row carried onto
+      page 4.
+  - Measured in Word 16, every line of all five stands on the page the PDF sets it on, nine in
+    ten within 1.2pt of it. Word sets the amounts of the bordered card's table 36.4pt left, the
+    table's first column narrower than its grid, which LibreOffice keeps. In LibreOffice 24.2 and
+    26.8 the parts of the card after its explicit breaks stand 3 to 5pt high. LibreOffice 26.8 on
+    Windows carries `ObsidianInvoice`'s info cards to page 5, 17 lines, where Word and LibreOffice
+    24.2, CI's, keep them on page 4, as it did before the page break after them was fixed; its
+    baseline holds that as it stands.
+  - The Word and Windows LibreOffice baselines take the five documents' rows alone; the presets'
+    rows stay as recorded. The tests holding `ObsidianInvoice` and `MeteredInvoice` with their line
+    items repeated take the corpus's helper for that.
+
 - **The DOCX field ledger names what a session hands an export beside the tree.** Every part
   of `SemanticExportContext` and of the `LayoutGraph` it carries has a fate, and a part with
   none fails the ledger. A session's per-page margins reached the layout, no export read them,

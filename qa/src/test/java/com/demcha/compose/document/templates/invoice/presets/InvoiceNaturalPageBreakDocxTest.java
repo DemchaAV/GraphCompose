@@ -5,8 +5,6 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedNode;
-import com.demcha.compose.document.templates.data.invoice.InvoiceServiceLines;
-import com.demcha.compose.document.templates.data.invoice.StructuredInvoiceData;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
@@ -41,7 +39,8 @@ class InvoiceNaturalPageBreakDocxTest {
     @Test
     void obsidiansInfoCardsKeepNothingWithTheDividerTheNextPageOpensWith() throws Exception {
         try (DocumentSession session = GraphCompose.document().create()) {
-            ObsidianInvoice.create().compose(session, longer(ObsidianInvoiceFixtures.invoice(), 12));
+            ObsidianInvoice.create().compose(session,
+                    InvoiceDocxCorpus.withLinesRepeated(ObsidianInvoiceFixtures.invoice(), 12));
             LayoutGraph layout = session.layoutGraph();
             PlacedNode cards = named(layout, "InfoCardsRow");
             PlacedNode divider = named(layout, "FooterDivider");
@@ -77,7 +76,8 @@ class InvoiceNaturalPageBreakDocxTest {
     @Test
     void meteredsClosingRowHoldsTheGapTheLayoutCarriesOntoItsPage() throws Exception {
         try (DocumentSession session = GraphCompose.document().create()) {
-            MeteredInvoice.create().compose(session, longer(MeteredInvoiceFixtures.invoice(), 9));
+            MeteredInvoice.create().compose(session,
+                    InvoiceDocxCorpus.withLinesRepeated(MeteredInvoiceFixtures.invoice(), 9));
             LayoutGraph layout = session.layoutGraph();
             PlacedNode items = named(layout, "LineItems");
             PlacedNode closing = named(layout, "ClosingRow");
@@ -147,17 +147,5 @@ class InvoiceNaturalPageBreakDocxTest {
             paragraphs.add((CTP) found);
         }
         return paragraphs;
-    }
-
-    /** The invoice with its line items repeated {@code times}. */
-    private static StructuredInvoiceData longer(StructuredInvoiceData data, int times) {
-        List<InvoiceServiceLines.Line> lines = new ArrayList<>();
-        for (int time = 0; time < times; time++) {
-            lines.addAll(data.serviceLines().lines());
-        }
-        return new StructuredInvoiceData(data.brand(), data.supplier(), data.masthead(),
-                data.billTo(), data.shipTo(), data.summary(),
-                new InvoiceServiceLines(data.serviceLines().columns(), lines), data.totals(), data.payment(),
-                data.notes(), data.currencyCode());
     }
 }

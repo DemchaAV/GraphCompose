@@ -6,10 +6,11 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
- * One document of the DOCX fidelity corpus: a template preset composed on its fixture.
+ * One document of the DOCX fidelity corpus: a template preset composed on its fixture, or a
+ * document built for a shape no preset has ({@link SyntheticDocxCorpus}).
  *
- * @param family  the template family, such as {@code cv} or {@code invoice}
- * @param name    the preset, unique within its family
+ * @param family  the template family, such as {@code cv} or {@code invoice}, or {@code synthetic}
+ * @param name    the preset, or the shape, unique within its family
  * @param margin  the page margin on A4, in points, or a negative value for the session's own
  *                page and margins
  * @param compose composes the document into a fresh session

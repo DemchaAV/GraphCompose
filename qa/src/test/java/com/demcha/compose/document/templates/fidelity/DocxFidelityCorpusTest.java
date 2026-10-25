@@ -23,7 +23,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Every template preset's DOCX, set by an editor, stands no further from the engine's PDF than
+ * Every template preset's DOCX, and that of each document built for a shape no preset has
+ * ({@link SyntheticDocxCorpus}), set by an editor, stands no further from the engine's PDF than
  * its baseline holds it.
  *
  * <p>The engine draws each corpus document to PDF and exports it to DOCX; an editor converts the
@@ -141,7 +142,7 @@ class DocxFidelityCorpusTest {
         }
     }
 
-    /** Every family's presets. */
+    /** Every family's presets, and the documents built for shapes no preset has. */
     static List<DocxCorpusDocument> corpus() {
         List<DocxCorpusDocument> corpus = new ArrayList<>();
         corpus.addAll(CvDocxCorpus.documents());
@@ -150,6 +151,7 @@ class DocxFidelityCorpusTest {
         corpus.addAll(ProposalDocxCorpus.documents());
         corpus.addAll(ReceiptDocxCorpus.documents());
         corpus.addAll(RotaDocxCorpus.documents());
+        corpus.addAll(SyntheticDocxCorpus.documents());
         return corpus;
     }
 

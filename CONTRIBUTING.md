@@ -347,14 +347,17 @@ Choose the smallest tests that match the change:
   and the [per-preset smoke tests](qa/src/test/java/com/demcha/compose/document/templates/cv/presets)
 - For DOCX export (`render-docx`) changes:
   [DocxFidelityCorpusTest.java](qa/src/test/java/com/demcha/compose/document/templates/fidelity/DocxFidelityCorpusTest.java).
-  It exports every template preset to DOCX, has LibreOffice set each one, and holds every
+  It exports every template preset to DOCX, with documents built for shapes no preset has on
+  its own fixture, has LibreOffice set each one, and holds every
   line of every document to the drift its baseline records, down and across: a line set further
   from the page either way, a line set at other words, or a page more fails it. It needs
   LibreOffice and runs only when asked for — install first, as for any standalone `qa` run:
   `./mvnw -B -ntp test -f qa/pom.xml -Dtest=DocxFidelityCorpusTest -Dgraphcompose.docxFidelity=libreoffice`.
   A change that moves documents nearer the page rewrites the baseline with
   `-Dgraphcompose.docxFidelity.update=true`, and commits it with the change: its diff shows
-  which documents moved. A new preset joins the corpus in its family's `*DocxCorpus` class.
+  which documents moved. A new preset joins the corpus in its family's `*DocxCorpus` class,
+  and a shape no preset has — a page break inside a panel, a card run over pages — in
+  `SyntheticDocxCorpus`.
   CI runs it on Linux (the `DOCX Fidelity` job) against `libreoffice-linux.tsv`, and uploads
   what it measured: LibreOffice sets text a little differently per platform, so a change that
   moves documents nearer the page takes that artifact's files as the Linux baseline, and its own

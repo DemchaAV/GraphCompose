@@ -319,6 +319,29 @@ class DocxDrawnBlockBookmarkTest {
         assertThat(exported.report().notes()).filteredOn(note -> note.subject().equals("SectionNode")).isEmpty();
     }
 
+    @Test
+    void aBlockThatDrawsNothingIsNotNamedWhereALaterSectionsBlockOfDrawingsMarksItsAnchor() throws Exception {
+        // Named once every section's blocks of drawings alone are marked, not at its own section's end.
+        List<DocxExportReport.Note> notes = new ArrayList<>();
+        byte[] docx;
+        DocumentSession first = GraphCompose.document().pageSize(400, 500).margin(DocumentInsets.of(30)).create();
+        first.pageFlow(page -> page.add(new SectionBuilder().anchor("target").build()).addParagraph("Cover"));
+        DocumentSession second = GraphCompose.document().pageSize(400, 500).margin(DocumentInsets.of(30)).create();
+        second.pageFlow(page -> {
+            lines(page, "Top", 1);
+            page.add(drawings("target"));
+            page.addParagraph("After the drawings");
+        });
+        try (com.demcha.compose.document.api.MultiSectionDocument sections =
+                     GraphCompose.documents().section(first).section(second).create()) {
+            docx = sections.export(DocxSemanticBackend.builder().reportSink(report -> notes.addAll(report.notes()))
+                    .build());
+        }
+
+        assertThat(bookmarkNames(new XWPFDocument(new ByteArrayInputStream(docx)))).containsExactly("target");
+        assertThat(notes).filteredOn(note -> note.subject().equals("SectionNode")).isEmpty();
+    }
+
     private static DocumentNode drawings(String anchor) {
         SectionBuilder section = new SectionBuilder()
                 .addShape(120, 30, DocumentColor.rgb(26, 86, 148))

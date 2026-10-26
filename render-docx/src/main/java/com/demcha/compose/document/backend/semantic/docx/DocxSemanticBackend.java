@@ -11496,9 +11496,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * to it points at none, and a page reference to it is settled as its number
      * ({@link #settleThePageReferences}).
      *
-     * <p>Such a block draws nothing a paragraph carries as its own: nothing at all, a first drawing
-     * on a page no paragraph is written on, or drawings composed in a table's cell, which its table
-     * draws. Where another node's bookmark holds the name, a link goes there, and the anchor two nodes
+     * <p>No paragraph carries such a block's first drawing as its own: it draws nothing at all, its
+     * first drawing stands on a page no paragraph is written on, or its drawings are composed in a
+     * table's cell, which its table draws. Where another node's bookmark holds the name, a link goes there, and the anchor two nodes
      * declare is named as such ({@link #keepTheLastBookmarkOfEachAnchor}): it is named once every
      * block of drawings alone, in every section, is marked.</p>
      *

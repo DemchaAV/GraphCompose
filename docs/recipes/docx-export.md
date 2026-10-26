@@ -126,9 +126,9 @@ The export does not set `w:updateFields`. It would make Word ask, on every open,
 update fields — to recompute numbers that already read correctly.
 
 A page reference to an anchor the export writes no bookmark for — a drawn shape's, or a
-block's that writes no paragraph and draws nothing a paragraph carries as its own, as a
-section that draws nothing or one composed in a table's cell (see the links and anchors row
-above) — is written as the text the page prints, a number no edit updates, and its report note
+block's that writes no paragraph and whose first drawing no paragraph carries as its own, as a
+section that draws nothing, one whose first drawing stands on a page nothing is written on, or
+one composed in a table's cell (see the links and anchors row above) — is written as the text the page prints, a number no edit updates, and its report note
 says so: Word turns a `PAGEREF` to a missing bookmark into "Error! Bookmark not defined." the
 first time it updates. Each field is named after the bookmark its anchor was written under,
 or taken back to its text, once the body is written, so a reference before its anchor is

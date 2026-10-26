@@ -21,13 +21,14 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A block that writes no paragraph, and draws nothing a paragraph carries as its own, names the
- * anchor it declares, where no bookmark marks it.
+ * A block that writes no paragraph, and whose first drawing no paragraph carries as its own, names
+ * the anchor it declares, where no bookmark marks it.
  *
  * <p>A bookmark goes round the paragraphs a block writes, or, for a block of drawings alone, at the
  * start of the paragraph its first drawing is anchored in ({@code DocxDrawnBlockBookmarkTest}). A
- * block that draws nothing has neither, and nor has one composed in a table's cell, whose drawings its
- * table draws as its own. A link to its anchor is written all the same, to a bookmark the file lacks:
+ * block that draws nothing has neither, nor has one whose first drawing stands on a page nothing is
+ * written on, nor one composed in a table's cell, whose drawings its table draws as its own. A link
+ * to its anchor is written all the same, to a bookmark the file lacks:
  * measured in Word 16 and LibreOffice on Windows, the page's link went to the block's place, and in
  * both editors' PDFs the text carried no link at all, with nothing in the report. A page reference to
  * it was already named, as the number it is written as.</p>

@@ -136,20 +136,21 @@ settled too.
 
 Every field the export writes names a bookmark the file holds. Measured in Word 16 and
 LibreOffice 24.2, with the fields updated and again with a page put in at the start, each read
-its bookmark's page and then the next, but for three cases:
+its bookmark's page and then the next — an anchor in a table's header row the page repeats reads
+the row's first page, as the links and anchors row says — but for three cases:
 
 - A page reference in a table's composed cell stores no number: the layout keeps no text for what
   such a cell holds. As a field, it shows nothing in Word until its fields are updated, and the
   page in LibreOffice. Where its anchor has no bookmark it is empty for good, though its report
   note says it is written as its number.
 - LibreOffice reads a page reference as empty where its bookmark is named like one of its own
-  numbering sequences: `Table`, in any case, `Figure`, `Illustration`, `Drawing` or `Text`. Word
-  reads the page.
+  numbering sequences: `Table` (measured as `table`, `Table` and `TABLE`), `Figure`,
+  `Illustration`, `Drawing` or `Text`. Word reads the page.
 - An anchored block that opens with a table right after another table — a panel under a layer
   stack's columns, say — is bookmarked from the paragraph Word keeps between the two tables, which
-  stays with the table below it, to the block's last line. LibreOffice drops a bookmark that runs
-  from outside a table into its cell, and a page reference to it reads "Error: Reference source
-  not found". Word reads the page.
+  stays with the table below it, to the block's last line. LibreOffice drops a bookmark opened on
+  that paragraph, and a page reference to it reads "Error: Reference source not found"; one opened
+  on an ordinary paragraph above a table, or closed on one below it, is kept. Word reads the page.
 
 ## Several sections in one document
 

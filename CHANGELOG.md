@@ -4280,13 +4280,14 @@ follow semantic versioning; release dates are ISO 8601.
     anchor on each kind of node that declares one — the kinds read off the node classes — from a
     table of contents, the body, a table's composed cell, a layer stack's column, a panel and a
     row's column: blocks of drawings alone, a layer stack's columns, anchors named past Word's 40
-    characters, names that clean or fold to another's, and tables split for other page margins,
-    each shape held by the note the export's report gives it. A reference whose anchor the export
+    characters, names that clean or fold to another's, and tables split for other page margins —
+    the split tables and the page nothing is written on held by the notes the export's report
+    gives them, the rest by the bookmarks the fields name. A reference whose anchor the export
     writes no bookmark for — a block that draws nothing, one whose first drawing fills a page
     nothing is written on, one composed in a table's cell, a drawn shape, an anchor the document
-    lacks — must be the number it reads, with a report note. Each document must be exported from
-    its layout: a document the layout cannot lay out is exported without it, and its references
-    read no page.
+    lacks — must be the number it reads, read off its paragraph, with a report note. Each
+    document must be exported from its layout: a document the layout cannot lay out is exported
+    without it, and its references read no page.
   - Measured on the four documents in Word 16, every field updated, and again with a page put in
     at the start: each of the 27 fields read its bookmark's page, and the next one with the page
     put in; the 8 references written as text did not move. LibreOffice 24.2 read 25 of the fields

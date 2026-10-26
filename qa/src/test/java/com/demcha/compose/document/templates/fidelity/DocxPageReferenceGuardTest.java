@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.RecordComponent;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -116,16 +115,19 @@ class DocxPageReferenceGuardTest {
             assertThat(notedAsText(report.get()))
                     .as("%s: each reference whose anchor has none written as its number, and named", document.name())
                     .isEqualTo(document.asText());
-            // A reference standing after a paragraph of its own: what its paragraph reads.
+            // A reference standing between paragraphs of its own: what its paragraph reads, and that it
+            // is there at all — one reading nothing is otherwise one not written.
             for (Reference reference : document.references()) {
                 if (reference.label() == null) {
                     continue;
                 }
-                DocxPageReferenceFields.Paragraph own = fields.after(reference.label());
-                assertThat(own.text()).as("%s: the reference to %s reads", document.name(), reference.anchor())
-                        .isEqualTo(reads(reference, pages));
-                assertThat(own.holdsAField()).as("%s: the reference to %s is a field", document.name(), reference.anchor())
-                        .isEqualTo(reference.bookmark() != null);
+                List<DocxPageReferenceFields.Paragraph> following = fields.following(reference.label(), 2);
+                assertThat(following.get(1).text()).as("%s: the paragraph after the reference to %s",
+                        document.name(), reference.anchor()).isEqualTo(reference.next());
+                assertThat(following.get(0).text()).as("%s: the reference to %s reads", document.name(),
+                        reference.anchor()).isEqualTo(reads(reference, pages));
+                assertThat(following.get(0).holdsAField()).as("%s: the reference to %s is a field", document.name(),
+                        reference.anchor()).isEqualTo(reference.bookmark() != null);
             }
         }
     }
@@ -268,6 +270,25 @@ class DocxPageReferenceGuardTest {
                 problem -> assertThat(problem).contains("never ended"));
     }
 
+    @Test
+    void aStrayInstructionASimpleFieldClosedOverAnotherOrAnIdOpenedTwiceIsAProblem() throws Exception {
+        // Each in a part of its own, so the order they are named in is the parts'.
+        String stray = "<w:r><w:instrText> PAGEREF a \\h </w:instrText></w:r>";
+        String over = "<w:fldSimple w:instr=\" PAGE \"><w:r><w:fldChar w:fldCharType=\"begin\"/></w:r></w:fldSimple>";
+        String twice = "<w:bookmarkStart w:id=\"5\" w:name=\"one\"/><w:bookmarkStart w:id=\"5\" w:name=\"two\"/>"
+                       + "<w:bookmarkEnd w:id=\"5\"/>";
+        DocxPageReferenceFields fields = DocxPageReferenceFields.read(docx(Map.of(
+                "word/document.xml", body(paragraph(stray)),
+                "word/header1.xml", "<w:hdr " + NAMESPACES + ">" + paragraph(over) + "</w:hdr>",
+                "word/header2.xml", "<w:hdr " + NAMESPACES + ">" + paragraph(twice) + "</w:hdr>")));
+
+        assertThat(fields.problems()).satisfiesExactly(
+                problem -> assertThat(problem).isEqualTo("an instruction where no field's code is open, in word/document.xml"),
+                problem -> assertThat(problem).isEqualTo("a simple field closed over an open one, in word/header1.xml"),
+                problem -> assertThat(problem).isEqualTo("2 field(s) never ended, in word/header1.xml"),
+                problem -> assertThat(problem).isEqualTo("bookmark id 5 opened twice, in word/header2.xml"));
+    }
+
     /** What a reference reads in the file: as the document states, or the page of its anchor, or nothing. */
     private static String reads(Reference reference, Map<String, Integer> pages) {
         if (reference.reads() != null) {
@@ -321,7 +342,8 @@ class DocxPageReferenceGuardTest {
                     false, DocumentNode.class.getClassLoader());
             if (DocumentNode.class.isAssignableFrom(type) && type.isRecord() && type != PageReferenceNode.class
                 && !Modifier.isAbstract(type.getModifiers())
-                && Arrays.stream(type.getRecordComponents()).map(RecordComponent::getName).anyMatch("anchor"::equals)) {
+                && Arrays.stream(type.getRecordComponents())
+                        .anyMatch(component -> component.getName().equals("anchor") && component.getType() == String.class)) {
                 kinds.add(type.getSimpleName());
             }
         }

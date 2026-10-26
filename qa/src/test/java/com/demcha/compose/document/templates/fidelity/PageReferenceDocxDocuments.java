@@ -39,8 +39,8 @@ import java.util.function.Consumer;
  *
  * <p>The template corpus declares no anchor: no preset refers to a page. These documents do, so
  * that {@link DocxPageReferenceGuardTest} reads a page reference of every kind the export writes.
- * A reference whose anchor has no bookmark stands right after a paragraph of its own, which names
- * it, so its number can be found and read.</p>
+ * A reference whose anchor has no bookmark stands between paragraphs of its own, the one before
+ * naming it, so its number can be found and read, and told from a reference not written.</p>
  */
 final class PageReferenceDocxDocuments {
 
@@ -48,6 +48,9 @@ final class PageReferenceDocxDocuments {
     private static final String TERMS = "Terms and conditions of the agreement between both parties";
     /** Another, of text, cut to a name of its own. */
     private static final String SCHEDULE = "Payment schedule for the second phase of the work";
+
+    /** The paragraph closing a run of references written as their numbers. */
+    private static final String END = "End of the references.";
 
     private static final DocumentInsets MARGIN = DocumentInsets.of(30);
     private static final DocumentInsets LEFT_COLUMN = new DocumentInsets(0, 190, 0, 0);
@@ -71,15 +74,24 @@ final class PageReferenceDocxDocuments {
      *                 where the layout resolved none
      * @param label    the text of the paragraph right before its own, or {@code null} where the
      *                 paragraph before it is not one of its own: a table of contents' entry
+     * @param next     the text of the paragraph right after its own, where it has a label: so a
+     *                 reference reading nothing is told from one not written
      */
-    record Reference(String anchor, String bookmark, String reads, String label) {
+    record Reference(String anchor, String bookmark, String reads, String label, String next) {
 
-        static Reference field(String anchor, String bookmark) {
-            return new Reference(anchor, Objects.requireNonNull(bookmark, "bookmark"), null, null);
+        Reference {
+            if ((label == null) != (next == null)) {
+                throw new IllegalArgumentException("a label and the paragraph after, or neither");
+            }
         }
 
-        static Reference asText(String anchor, String label) {
-            return new Reference(anchor, null, null, Objects.requireNonNull(label, "label"));
+        static Reference field(String anchor, String bookmark) {
+            return new Reference(anchor, Objects.requireNonNull(bookmark, "bookmark"), null, null, null);
+        }
+
+        static Reference asText(String anchor, String label, String next) {
+            return new Reference(anchor, null, null, Objects.requireNonNull(label, "label"),
+                    Objects.requireNonNull(next, "next"));
         }
     }
 
@@ -127,8 +139,8 @@ final class PageReferenceDocxDocuments {
                         Reference.field(TERMS, "Terms_and_conditions_of_the_agreement_be"),
                         Reference.field(SCHEDULE, "Payment_schedule_for_the_second_phase_of"),
                         // A drawn shape's own anchor has no bookmark for a field to name.
-                        Reference.asText("shape", "See the shape:"),
-                        Reference.asText("ellipse", "See the ellipse:")),
+                        Reference.asText("shape", "See the shape:", "See the ellipse:"),
+                        Reference.asText("ellipse", "See the ellipse:", END)),
                         List.of()),
                 new ReferringDocument("reference_places", PageReferenceDocxDocuments::referencePlaces, List.of(
                         Reference.field("cell", "cell"),
@@ -140,25 +152,25 @@ final class PageReferenceDocxDocuments {
                         // a row's column and the body. The layout holds no text for what a table's
                         // composed cell holds: the field there reads nothing until it is updated, and
                         // a reference there written as its number is empty.
-                        new Reference("target", "target", "", null),
+                        new Reference("target", "target", "", null, null),
                         Reference.field("target", "target"),
                         Reference.field("target", "target"),
                         Reference.field("target", "target"),
                         Reference.field("target", "target"),
-                        new Reference("mark", null, "", "From a table's cell, to a shape:")),
+                        new Reference("mark", null, "", "From a table's cell, to a shape:", "End of the cell.")),
                         List.of()),
                 new ReferringDocument("unmarked", PageReferenceDocxDocuments::unmarked, List.of(
                         // Blocks that write no paragraph, and whose first drawing no paragraph
                         // carries as their own: one that draws nothing, one whose first drawing fills a
                         // page nothing is written on, one composed in a table's cell.
-                        Reference.asText("empty", "See empty:"),
-                        Reference.asText("tall", "See tall:"),
-                        Reference.asText("composed", "See composed:"),
+                        Reference.asText("empty", "See empty:", "See tall:"),
+                        Reference.asText("tall", "See tall:", "See composed:"),
+                        Reference.asText("composed", "See composed:", "See nowhere:"),
                         // An anchor the document does not have, and one that cleans to another's name:
                         // the link to "a." is named first, so "a" is marked under a name of its own,
                         // which its field names, and the link to "a." lands on no bookmark.
-                        Reference.asText("nowhere", "See nowhere:"),
-                        Reference.asText("a.", "See a.:"),
+                        Reference.asText("nowhere", "See nowhere:", "See a.:"),
+                        Reference.asText("a.", "See a.:", END),
                         Reference.field("a", "a_2"),
                         // Word reads names without case: a block of drawings declared after a
                         // paragraph of the same name in another case takes a name of its own.
@@ -201,6 +213,7 @@ final class PageReferenceDocxDocuments {
                     .entry("Text named by a sentence", SCHEDULE));
             page.addParagraph("See the shape:").addPageReference("shape");
             page.addParagraph("See the ellipse:").addPageReference("ellipse");
+            page.addParagraph(END);
             page.addPageBreak(pageBreak -> { });
 
             page.addParagraph(p -> p.text("A paragraph, anchored.").anchor("para"));
@@ -250,7 +263,8 @@ final class PageReferenceDocxDocuments {
                     .entry("In a row's column", "row"));
             page.addTable(t -> t.autoColumns(1).rowCells(DocumentTableCell.node(new SectionBuilder()
                     .addParagraph("From a table's cell:").add(reference("target"))
-                    .addParagraph("From a table's cell, to a shape:").add(reference("mark")).build())));
+                    .addParagraph("From a table's cell, to a shape:").add(reference("mark"))
+                    .addParagraph("End of the cell.").build())));
             page.add(new LayerStackBuilder()
                     .layer(new SectionBuilder().margin(LEFT_COLUMN).addParagraph("From a stack's column:")
                             .add(reference("target")).build(), LayerAlign.TOP_LEFT)
@@ -305,6 +319,7 @@ final class PageReferenceDocxDocuments {
             page.addParagraph("See composed:").addPageReference("composed");
             page.addParagraph("See nowhere:").addPageReference("nowhere");
             page.addParagraph("See a.:").addPageReference("a.");
+            page.addParagraph(END);
             page.addPageBreak(pageBreak -> { });
 
             page.addParagraph(p -> p.text("The anchor a, on page 2.").anchor("a"));

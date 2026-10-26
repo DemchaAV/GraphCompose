@@ -128,12 +128,13 @@ final class DocxPageReferenceFields {
     }
 
     /**
-     * The paragraph after the one paragraph of the body whose text is the given text.
+     * The paragraphs of the body after the one paragraph whose text is the given text.
      *
+     * @param count how many to return
      * @throws IllegalArgumentException where no paragraph of the body, or more than one, has the text,
-     *                                  or none follows it
+     *                                  or fewer than {@code count} follow it
      */
-    Paragraph after(String text) {
+    List<Paragraph> following(String text, int count) {
         List<Paragraph> body = paragraphs.stream().filter(paragraph -> paragraph.part().equals(BODY)).toList();
         List<Integer> found = new ArrayList<>();
         for (int index = 0; index < body.size(); index++) {
@@ -141,11 +142,11 @@ final class DocxPageReferenceFields {
                 found.add(index);
             }
         }
-        if (found.size() != 1 || found.get(0) + 1 >= body.size()) {
+        if (found.size() != 1 || found.get(0) + count >= body.size()) {
             throw new IllegalArgumentException(found.size() + " paragraph(s) of the body read \"" + text
-                                               + "\", where one, and one after it, was expected");
+                                               + "\", where one, and " + count + " after it, was expected");
         }
-        return body.get(found.get(0) + 1);
+        return body.subList(found.get(0) + 1, found.get(0) + 1 + count);
     }
 
     /** Every page reference, in the order of the parts and of each part. */

@@ -365,6 +365,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private final List<DocxLayerColumns.Moves> moves = new ArrayList<>();
     private final java.util.Set<DocumentNode> writingInAStandIn =
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    // What each block written in a stand-in's place wrote there, in the order written: its layer's
+    // bookmark goes round it too (writeLayerColumns).
+    private final List<WrittenInAStandIn> writtenInStandIns = new ArrayList<>();
     // The line a layer of text is written at when it overlaps the layer above it, in points:
     // see holdStackedLines.
     private final java.util.Map<ParagraphNode, DocxStackedLines.Line> stackedLineHeights =
@@ -1220,6 +1223,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         panelCell = null;
         moves.clear();
         writingInAStandIn.clear();
+        writtenInStandIns.clear();
         stackedLineHeights.clear();
         lineTopsTakenIn.clear();
         cellsGivingTheirPadding.clear();
@@ -3766,38 +3770,40 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeNodeContent(document, node);
             return;
         }
-        // What the block writes lands where writing is going on — the body, or the cell being
-        // filled. Read off the body alone, a block inside a card wrote nothing, and its
-        // anchor and its keeps were silently dropped.
-        XWPFTableCell destination = currentCell;
-        java.util.function.Supplier<List<IBodyElement>> elements = destination == null
-                ? document::getBodyElements
-                : destination::getBodyElements;
-        int first = elements.get().size();
-        // The paragraph closing a table above, if the block takes it over, is the block's.
-        XWPFParagraph closer = cellEndsWithItsTableCloser() ? tableCloser : null;
+        boolean inTheBody = currentCell == null;
         int notesBefore = report.size();
-        writeNodeContent(document, node);
-        if (closer != null && tableCloser != closer) {
-            first--;
-        }
-        List<IBodyElement> written = elements.get().subList(first, elements.get().size());
+        List<IBodyElement> written = writtenBy(document, () -> writeNodeContent(document, node));
         if (keepTogether || keepWithNext) {
-            keepOnOnePage(written, keepWithNext, destination == null);
+            keepOnOnePage(written, keepWithNext, inTheBody);
         }
         // A section or a container that writes no paragraph — drawings alone, standing in the
         // paragraph beside them — has nothing for a bookmark to go round, and a link to its anchor is
         // written to a bookmark the file lacks: Word's and LibreOffice's PDFs carry no link there.
         // Whether another node marks the anchor is known once all are written
         // (nameTheBlocksNoBookmarkMarks).
-        boolean unmarked = anchor != null && !bookmarkAround(written, anchor);
         if (panelBreak != null) {
             reportAKeepThePanelBreaks(node, panelBreak, written);
         }
-        if (unmarked) {
-            blocksUnmarked.add(new UnmarkedBlock(notesBefore, report.size(), node.nodeKind(), layout.pathOf(node),
-                    anchor));
+        markOrName(node, anchor, written, notesBefore);
+    }
+
+    /**
+     * Writes a block and returns what it wrote where writing is going on — the body, or the cell
+     * being filled. Read off the body alone, a block inside a card wrote nothing, and its anchor
+     * and its keeps were silently dropped. The paragraph closing a table above, if the block takes
+     * it over, is the block's.
+     */
+    private List<IBodyElement> writtenBy(XWPFDocument document, CellContent block) throws Exception {
+        java.util.function.Supplier<List<IBodyElement>> elements = currentCell == null
+                ? document::getBodyElements
+                : currentCell::getBodyElements;
+        int first = elements.get().size();
+        XWPFParagraph closer = cellEndsWithItsTableCloser() ? tableCloser : null;
+        block.write();
+        if (closer != null && tableCloser != closer) {
+            first--;
         }
+        return elements.get().subList(first, elements.get().size());
     }
 
     /** How a block the layout moves to a new page inside a panel may be broken there in Word. */
@@ -11377,6 +11383,55 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * A later layer's block written in an earlier layer's stand-in, and what it wrote there.
+     *
+     * @param block   the block, in its own layer
+     * @param written the paragraphs and tables it wrote, in the file's order
+     */
+    private record WrittenInAStandIn(DocumentNode block, List<IBodyElement> written) {
+    }
+
+    /**
+     * Marks with the anchor's bookmark what a block wrote, or, where that holds no paragraph or
+     * table for one to go round, keeps the block to be named once all are written
+     * ({@link #nameTheBlocksNoBookmarkMarks}).
+     *
+     * @param notesBefore how many notes the report held before the block was written
+     */
+    private void markOrName(DocumentNode node, String anchor, List<IBodyElement> written, int notesBefore) {
+        if (anchor != null && !bookmarkAround(written, anchor)) {
+            blocksUnmarked.add(new UnmarkedBlock(notesBefore, report.size(), node.nodeKind(), layout.pathOf(node),
+                    anchor));
+        }
+    }
+
+    /**
+     * What earlier layers' stand-ins hold of a layer, written there before the layer itself
+     * ({@link #writeInPlaceOf}), in the file's order.
+     *
+     * @param layer   a layer of a stack written as columns
+     * @param written how many blocks had been written in a stand-in's place when the layer's own
+     *                writing began: those written since are inside what the layer writes itself
+     */
+    private List<IBodyElement> writtenInAnEarlierLayer(DocumentNode layer, int written) {
+        java.util.Set<DocumentNode> under = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        java.util.ArrayDeque<DocumentNode> open = new java.util.ArrayDeque<>(layer.children());
+        while (!open.isEmpty()) {
+            DocumentNode node = open.pop();
+            if (under.add(node)) {
+                open.addAll(node.children());
+            }
+        }
+        List<IBodyElement> elements = new ArrayList<>();
+        for (WrittenInAStandIn moved : writtenInStandIns.subList(0, written)) {
+            if (under.contains(moved.block())) {
+                elements.addAll(moved.written());
+            }
+        }
+        return elements;
+    }
+
+    /**
      * Names each block that wrote no paragraph for its anchor's bookmark, where no other node marks
      * that anchor either: a link to it points at none, and a page reference to it is settled as its
      * number ({@link #settleThePageReferences}). Where another node's bookmark holds the name, a link
@@ -11421,7 +11476,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the report names an anchor declared there too.</p>
      *
      * <p>The last is the last in the file, whose order is the page's: a block's bookmark opens at
-     * its first paragraph, before those of the nodes inside it, though it is written after them.</p>
+     * its first paragraph, before those of the nodes inside it, though it is written after them.
+     * A stack's columns are written left to right, not in the order the stack declares its layers:
+     * where two columns declare one anchor, the bookmark kept may be another node's than the one
+     * the page goes to, which the anchor's note already allows for.</p>
      */
     private void keepTheLastBookmarkOfEachAnchor(XWPFDocument document) {
         for (String anchor : new java.util.LinkedHashSet<>(anchorsDeclared.keySet())) {
@@ -11478,10 +11536,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * takes the one whose anchor has none back to the number it reads, saying so in its note.
      *
      * <p>Whether an anchor gets a bookmark is known only from what the body wrote: an anchor that
-     * names nothing, a drawn shape's, a block that writes no paragraph — a section holding only
-     * shapes the export draws — or a column of a layer stack has none to put round it. Read off
-     * the tree instead, a table's composed cells were missed, and a stack holding only drawing in
-     * one would read as an overlay the writer does not write it as. A field on a bookmark the
+     * names nothing, a drawn shape's, or a block that writes no paragraph — a section holding only
+     * shapes the export draws — has none to put round it. Read off the tree instead, a table's
+     * composed cells were missed, and a stack holding only drawing in one would read as an
+     * overlay the writer does not write it as. A field on a bookmark the
      * file lacks reads "Error! Bookmark not defined." once Word updates it. The field's marks and
      * code go; its text stays, in its style.</p>
      */
@@ -18281,16 +18339,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                                 pendingSpacingAfter = 0;
                                 resumeLayer(plan.resume(node) + raised);
                             }
-                            // A column layer is written as what it holds, never dispatched itself:
-                            // no bookmark goes round it, and a page reference to it is taken back to
-                            // its text (settleThePageReferences).
-                            List<String> columnLost = new ArrayList<>(2);
-                            String anchor = blockAnchorOf(node, true);
-                            if (anchor != null && !anchor.isBlank()) {
-                                columnLost.add("its anchor has no bookmark in the Word file: a link to it names a "
-                                               + "bookmark the file does not hold, and a page reference to it is "
-                                               + "written as the number it reads");
-                            }
+                            List<String> columnLost = new ArrayList<>(1);
+                            int notesBefore = report.size();
+                            int movedBefore = writtenInStandIns.size();
                             // Its column runs between its neighbours' bands, not to the width it is fixed at.
                             com.demcha.compose.document.layout.PlacedNode placedLayer = layout.placement(node);
                             if (node.flowWidth().isFixed() && holdsWrappedText(node) && placedLayer != null
@@ -18302,7 +18353,18 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                             }
                             reportWrittenWithout(node, "written as a column of its layer stack", columnLost);
                             reportWrittenUnderTheLayersBefore(node, plan.over(node), "column");
-                            writeChildren(document, node.children(), spacingOf(node));
+                            List<IBodyElement> written = writtenBy(document,
+                                    () -> writeChildren(document, node.children(), spacingOf(node)));
+                            // A column layer is written as what it holds, never dispatched itself: its
+                            // anchor's bookmark goes round what it wrote, as a block's does
+                            // (writePlacedNode) — from what an earlier layer's stand-in holds of it,
+                            // written there first, to the last it wrote in its own place.
+                            String anchor = blockAnchorOf(node, true);
+                            if (anchor != null) {
+                                List<IBodyElement> marked = writtenInAnEarlierLayer(node, movedBefore);
+                                marked.addAll(written);
+                                markOrName(node, anchor, marked, notesBefore);
+                            }
                             if (layer > 0 && blocksWritten == blocksBefore && !holdsMovedContent(node)) {
                                 // A later layer that wrote nothing leaves the line above it raised:
                                 // what that line owes below it is still owed in the cell.
@@ -20835,7 +20897,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
-    /** Something written into a cell. */
+    /** Something written into a cell, or wherever writing is going on ({@link #writtenBy}). */
     @FunctionalInterface
     private interface CellContent {
         void write() throws Exception;
@@ -21040,7 +21102,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 if (placed != null && across != null) {
                     holdIn(content, placed.placementX(), placed.placementWidth(), across[0], across[1]);
                 }
-                writeNode(document, content);
+                writtenInStandIns.add(new WrittenInAStandIn(content,
+                        List.copyOf(writtenBy(document, () -> writeNode(document, content)))));
             }
         } finally {
             writingInAStandIn.removeAll(contents);

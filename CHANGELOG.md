@@ -8,6 +8,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export bookmarks a layer stack's column, so a page reference or a link to its anchor
+  works.**
+  - A stack whose layers stand side by side is written as a one-row table, each layer's content in
+    its column's cell; the layer itself is not written as a block, and its anchor got no bookmark.
+    A link to it named a bookmark the file did not hold, and a page reference to it was written as
+    the number the layout read, which no edit updates. The bookmark now goes round what the layer
+    writes, from the first paragraph it writes to the last, as a section's or a container's does in
+    the flow. A block of the layer that an earlier layer's stand-in holds — a subtitle drawn in a
+    later layer for the reading order, written in the strip above it — is written there first, and
+    the bookmark opens there.
+  - Measured in Word 16, fields updated, and LibreOffice 24.2, on an anchored column on page 2 and
+    on the same file with a page put in ahead of it: before, both editors read 2 in each and
+    carried no link; now both read 2 and then 3, and the link goes to the column's page. So it is
+    for a left and a right column, a container, a later layer of a column, a column opening with a
+    table, a stack in a panel, and a table of contents' entry.
+  - A column that writes no paragraph — drawings alone — has no bookmark still, and the report
+    names its anchor, as it does a section's of drawings alone.
+
 - **A DOCX export keeps a page break the layout makes by itself after a card where the page
   makes it.**
   - A block kept together or kept with the next in a table cell — a row's column, a panel's cell —

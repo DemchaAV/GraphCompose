@@ -164,15 +164,26 @@ class DocxFidelityCorpusTest {
 
     /** Writes a document's PDF into {@code dir}; returns its DOCX. */
     private static byte[] exportTo(DocxCorpusDocument document, Path dir) throws Exception {
+        try (DocumentSession session = composed(document)) {
+            Files.write(dir.resolve(document.stem() + ".pdf"), session.toPdfBytes());
+            return session.export(DocxSemanticBackend.builder().deterministic(true).build());
+        }
+    }
+
+    /** A fresh session holding a corpus document, on its page; the caller closes it. */
+    static DocumentSession composed(DocxCorpusDocument document) {
         var builder = GraphCompose.document();
         if (document.margin() >= 0) {
             float margin = (float) document.margin();
             builder.pageSize(DocumentPageSize.A4).margin(margin, margin, margin, margin);
         }
-        try (DocumentSession session = builder.create()) {
+        DocumentSession session = builder.create();
+        try {
             document.compose().accept(session);
-            Files.write(dir.resolve(document.stem() + ".pdf"), session.toPdfBytes());
-            return session.export(DocxSemanticBackend.builder().deterministic(true).build());
+        } catch (RuntimeException | Error e) {
+            session.close();
+            throw e;
         }
+        return session;
     }
 }

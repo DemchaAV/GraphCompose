@@ -309,8 +309,9 @@ paragraph is the picture's block, and a list's edges go to the paragraphs around
 its margin and padding — indent its items, the level's own indent added on top, so its
 markers start where the page starts them. A paragraph's and a list's sides hold under a
 layer stack or a shape container too, inside the box that places the layer — but not in a
-shape container narrower than the block it stands in, whose layers' room runs past its
-right edge (see "Shape containers → inline layers"). In a cell, two
+shape container written as inline layers narrower than the block it stands in, whose
+layers' room runs past its right edge (see "Shape containers → panels or inline layers").
+In a cell, two
 points of a side stay the editor's, to set a line a little wider than the page: off the
 side a left-to-right line does not lean on, so it keeps the edge it is set from — the right
 of a left-aligned paragraph and of a list, the left of a right-aligned one, both of a
@@ -1107,12 +1108,14 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   in it, over a spacer that keeps its place in the flow — writes its initials where
   the ring centres them and keeps its height below them. Each layer is held in across
   to its box in the stack, with a few points to spare on the side its text does not
-  lean on. A shape container's layers are held in by as far as their box stands in
-  from the container's edges, but from the edges of the block the container stands
-  in, set in by its margin and padding: in a container narrower than that block the
-  right edge of their room runs that much further right, past its outline, so text
-  that wraps runs past the outline and centred or right-aligned text stands right of
-  where the page sets it (see "Shape containers → inline layers"). A block in `addAligned(...)` is held in
+  lean on. A shape container written as a panel holds its layers in from the cell's
+  edges, inside its outline. One written as inline layers holds them in by as far as
+  their box stands in from the container's edges, but from the edges of the block the
+  container stands in, set in by its margin and padding: in a container narrower than
+  that block the right edge of their room runs that much further right, past its
+  outline, so text that wraps runs past the outline and centred or right-aligned text
+  stands right of where the page sets it (see "Shape containers → panels or inline
+  layers"). A block in `addAligned(...)` is held in
   the same way, to where the alignment puts it — composed in a table cell, a paragraph
   where the lines its table laid out for it stand and a picture where the alignment sets
   one of its written width; any other block there, or one inside a panel or another table
@@ -1166,19 +1169,50 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   is not that line and a right side's outline entry beside a left one's.
   Two texts closer than 4pt stay one after the other. Drawing in the band is drawn as shapes
   where the page draws it.
-- **Shape containers → inline layers.** DOCX has no portable equivalent of
+- **Shape containers → panels or inline layers.** A rectangle or a rounded
+  rectangle, filled or outlined, holding text is written as a panel, as a
+  section with a fill is: a table of one cell, its outline's size, the fill
+  and border on the cell and its padding round it, its row kept on one page
+  as the layout moves the shape whole. So it is composed in a table's cell,
+  and placed in the body, outside any cell, laid over nothing and given room
+  in the flow. Its corners are square, and a turned one stands upright; the
+  report names both. Its layers stand in the cell at the height its first
+  written layer is set — top, middle or foot, the top where the page starts
+  a layer taller than the outline there — and across where the layout places them,
+  a block set at the outline's left keeping the room the page laid it out
+  in. Word sets a cell's content below its whole top border, where the page
+  sets the layers from the outline's top, under the border: a shape set
+  from its top takes the border out of the space above its first line, and
+  the report names one with nothing there to take it. The row is held at
+  least the outline's height, so the panel grows with text added to it in
+  an editor. A clip that cuts what the layers paint past the outline's foot
+  holds it at exactly that height instead: Word and LibreOffice cut a
+  cell's content at an exact row's foot, as the page cuts it at the
+  outline, but square, and hide text an edit adds there, which the report
+  says. Layers running past the foot with no clip to cut them grow it, and
+  the report says how far. Measured in Word 16 and LibreOffice 24.2: a note
+  the page wraps over three lines inside a box 220pt wide stands in three,
+  inside the box, within 0.03pt of the page's in Word; a clipped box shows
+  the five lines the page shows, 1pt low under its border; the block under
+  either box stands within 0.02pt of the page's in Word. LibreOffice 24.2,
+  which counts the borders inside a least height, sets the narrow box 2pt
+  short and the block under it 1pt high, and the block under a card whose
+  content is shorter than its outline 0.6pt high. A card lengthened in Word
+  grows with its text, and the block under it moves down with it.
+  Any other container — an ellipse, a polygon or a star, one holding no
+  text, one set as a band beside a drawing, one inside a layer stack, a
+  row's cell or a panel — is written as inline layers, or drawn where it
+  holds only drawing. DOCX has no portable equivalent of
   a graphics-state path clip, so the container's layers are written
   inline, in source order, without clipping — again with one warning per
   export, and a note on each container that writes a layer in the flow.
   The outline is drawn at its size and does not grow with what is written
   in the flow, and the layers take the room of the flow, not of the
-  outline. Measured in Word and LibreOffice: a note the page wraps over
-  three lines inside a box 220pt wide runs over two, up to 95pt past the
-  box; a clipped box's text is written whole, past its outline; the block
-  under a container stands where the flow puts it, over the outline where
-  its layers are written shorter than the page sets them — 12pt high under
-  the narrow box, 20pt under the clipped one. In Word, text added to a card
-  runs past its foot, the outline keeping its height. A
+  outline: in a container narrower than the block it stands in, the right
+  edge of their room runs past the outline, so text that wraps runs past
+  it, and the block under the container stands where the flow puts it,
+  over the outline where its layers are written shorter than the page sets
+  them. A
   container whose layers are all drawn — a tile, an icon, a badge holding
   its glyph — writes none: each layer is drawn where the page draws it, in
   the order the page stacks them, by their z-index. Word stacks drawings by

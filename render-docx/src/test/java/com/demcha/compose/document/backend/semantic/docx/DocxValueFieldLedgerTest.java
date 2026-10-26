@@ -293,11 +293,13 @@ class DocxValueFieldLedgerTest {
         value(com.demcha.compose.document.style.DocumentTransform.class,
                 "rotationDegrees:REPORTED", "scaleX:REPORTED", "scaleY:REPORTED");
         value(com.demcha.compose.document.style.ClipPolicy.class,
-                "CLIP_BOUNDS:REPORTED:where it cuts what its layers paint past its box, which is written whole; "
+                "CLIP_BOUNDS:REPORTED:where it cuts what its layers paint past its box, which is written whole, but "
+                + "for a shape written as a panel in the body, cut square at its foot by its panel's exact height; "
                 + "composed in a table cell, on its table; with no layout, wherever it is set; a canvas's, which the "
                 + "page does not apply, cuts nothing",
                 "CLIP_PATH:REPORTED:where it cuts what its layers paint past its outline, which is written whole, a "
-                + "picture filling the ellipse that clips it cropped to it in the file; composed in a table cell, on "
+                + "picture filling the ellipse that clips it cropped to it in the file, and a shape written as a "
+                + "panel in the body cut square at its foot by its panel's exact height; composed in a table cell, on "
                 + "its table; with no layout, wherever it is set; a canvas's cuts nothing",
                 "OVERFLOW_VISIBLE:INERT:it cuts nothing, on the page or in the Word file");
         value(com.demcha.compose.document.style.DocumentColor.class,

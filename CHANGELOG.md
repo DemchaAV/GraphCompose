@@ -8,6 +8,48 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export writes a painted box holding text in the body as a panel, its text inside its
+  outline.**
+  - A shape container shaped as a rectangle or a rounded rectangle, filled or outlined, holding
+    text, placed in the body outside any table cell and laid over nothing, was drawn as a shape at
+    its size with its layers written in the flow. Its text took the flow's width and ran past the
+    outline, the block under it stood where the flow put it, over the outline, and the outline
+    kept its height when text was added to it in an editor. It is now written as a panel, as it
+    already was composed in a table cell: a table of one cell its outline's size, its fill and
+    border on the cell, its padding round it, its row kept on one page, as the layout moves the
+    shape whole.
+  - Its layers stand in the cell at the height its first written layer is set — at the top where
+    the page starts one taller than the outline there — and across where the layout places them in
+    the outline; a block set at the outline's left keeps the room the page laid it out in. Word sets a cell's content below its whole top border, where the page
+    sets the layers from the outline's top, under the border: a shape set from its top takes the
+    border out of the space above its first line, and the report names one with nothing there to
+    take it.
+  - Its row is held at least the outline's height, so the panel grows with text an edit adds. A
+    clip that cuts what its layers paint past the outline's foot holds the row at exactly the
+    outline's height instead, less the one border Word and LibreOffice add to an exact height:
+    both cut a cell's content at an exact row's foot, as the page cuts it at the outline. The cut
+    is square, and text an edit adds there is hidden too; the report says so where it said the
+    clip was not in the file. Layers running past the foot with no clip to cut them grow the
+    panel, and the report says how far.
+  - Measured in Word 16 and LibreOffice 24.2:
+    - a note the page wraps over three lines inside a box 220pt wide ran over two, 95pt past the
+      box, with the paragraph under it 12pt high; now its three lines stand inside the box,
+      within 0.03pt of the page's in Word, and the paragraph under it within 0.02pt.
+      LibreOffice 24.2, which counts the borders inside a least height, sets the box 2pt short and
+      the paragraph under it 1pt high;
+    - a box clipped short of its text wrote all of it, 125pt past the outline, with the paragraph
+      under it 20pt high; now both editors show the five lines the page shows, 1pt low under the
+      border, and set the paragraph under it within 0.02pt;
+    - a card stands where the page sets it in Word, as before, within 0.1pt; with three lines
+      added to it in Word it grows by them, and the paragraph under it moves down with it. In
+      LibreOffice 24.2 the paragraph under the card stands 0.6pt high, where it stood within
+      0.02pt: the card's content is shorter than its outline, and that build counts the borders
+      inside the row's least height.
+  - The rounded corners are square, and a turned box stands upright; the report names both. An
+    ellipse, a polygon or a star, a box holding no text — drawing alone, or a picture's frame —,
+    an unpainted one, one set as a band beside a drawing, one its margins give no room in the flow,
+    and one inside a layer stack, a row's cell or a panel are written as before.
+
 - **A DOCX export bookmarks a block of drawings alone where its first drawing is anchored, so a
   page reference or a link to its anchor works.**
   - A section, a container or a layer stack's column holding nothing but drawings writes no
@@ -4268,6 +4310,18 @@ follow semantic versioning; release dates are ISO 8601.
   the three office backends share one schema set.
 
 ### Tests
+
+- **The DOCX fidelity corpus holds its three body shape containers where the export now sets
+  them.** With the boxes written as panels, Word and LibreOffice set every line of
+  `narrow_container` and `rounded_card` at the page's words, and Word the paragraph under each box
+  where the page sets it. The rows of the three documents are rewritten — Word's and
+  LibreOffice's on Windows from local runs, LibreOffice's on Linux from CI — and every other row
+  is as it was. Of `narrow_container` and `clipped_container` every row moves nearer the page; of
+  `rounded_card`, the paragraph under the card stands 0.6pt high in LibreOffice 24.2, which counts
+  a cell's borders inside the row's least height.
+  `DocxBodyShapePanelTest` holds the panel: its size, its row's height and rule, the layers held
+  in across, the top border taken out of the space above, the clip written as an exact height,
+  and the boxes that stay drawn.
 
 - **The DOCX fidelity corpus holds three shape containers in the body, as the export writes them
   today.**

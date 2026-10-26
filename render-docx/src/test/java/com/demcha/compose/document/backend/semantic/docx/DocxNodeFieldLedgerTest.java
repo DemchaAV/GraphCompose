@@ -490,18 +490,21 @@ class DocxNodeFieldLedgerTest {
         node(ShapeContainerNode.class, "name:INERT",
                 "outline:GAP:" + PANEL_WIDER_THAN_ITS_CELL + "; drawn as a shape, corners whose radii differ once "
                 + "held to half its shorter side "
-                + "at the largest of them; a box "
-                + "written as a panel in a table cell, its corners square; one no shape draws, or composed in a "
-                + "table cell with nowhere to draw it, dropped",
+                + "at the largest of them; a painted box holding text "
+                + "written as a panel, in a table cell or placed in the body, its corners square; one no shape "
+                + "draws, or composed in a table cell with nowhere to draw it, dropped",
                 "layers:GAP:" + DRAWING_OVER_TEXT + "; written inline one after another in source order where it "
                 + "writes them in the "
                 + "flow; drawn where the page puts them, unreported, where they are all drawing, stacked as the "
                 + "page paints them among those behind the text and among those in front of it; a panel's in its "
-                + "cell, at its first written layer's height, a paragraph held across to its box, and named where "
+                + "cell, at its first written layer's height, held across to its box — a paragraph's, and in the "
+                + "body any layer set away from the shape's left — and named where "
                 + "one follows the first, is moved down or up, is set past the shape's side, or is set across by "
-                + "a box the layout does not give; one set left of its content in a table cell further than the "
+                + "a box the layout does not give, or where a body panel's run past its outline's foot unclipped; "
+                + "one set left of its content in a table cell further than the "
                 + "indents round it give",
-                "clipPolicy:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table",
+                "clipPolicy:REPORTED:where it cuts what its layers paint; composed in a table cell, on its table; a "
+                + "body panel's cutting past its outline's foot written as the panel's exact height, square",
                 "fillColor:REPORTED:" + RIGHT_END + "; " + LEFT_EDGE + "; its translucency, as a panel's, flattened "
                 + "against the colour under it; drawn, its alpha is written; any other is written",
                 "stroke:REPORTED:" + RIGHT_BORDER + "; " + RIGHT_END + "; " + LEFT_EDGE + "; its translucency, as a "
@@ -510,8 +513,8 @@ class DocxNodeFieldLedgerTest {
                 + "panel's fill or "
                 + "the colour under it, and as a panel's, " + BORDER_WIDTH + "; drawn, its alpha and its width "
                 + "are written; any other is written",
-                "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + LEFT_EDGE + "; written as a panel's in a "
-                + "table cell, round its outline as a margin "
+                "padding:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + LEFT_EDGE + "; written as a panel's, in a "
+                + "table cell or the body, round its outline as a margin "
                 + "is, and below it, where its table ends its cell and the cell sets what it holds at its middle or "
                 + "foot, as far as Word does not count it there; any other is written",
                 "margin:GAP:" + TOP_PULL + "; " + BOTTOM_PULL + "; " + LEFT_EDGE + "; written as a panel's in a "

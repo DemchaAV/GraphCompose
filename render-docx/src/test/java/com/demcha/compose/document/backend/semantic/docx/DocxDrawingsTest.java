@@ -911,7 +911,8 @@ class DocxDrawingsTest {
                 .addLayerStack(stack -> stack.name("Stack")
                         .layer(tile("Tile"), LayerAlign.TOP_LEFT)
                         .layer(new ParagraphBuilder().text("Beside the tile").build(), LayerAlign.TOP_RIGHT))
-                .add(new ShapeContainerBuilder().name("Note").rectangle(160, 40).fillColor(ACCENT)
+                // An ellipse's outline is drawn; a painted box holding text is a panel.
+                .add(new ShapeContainerBuilder().name("Note").ellipse(160, 40).fillColor(ACCENT)
                         .center(new ParagraphBuilder().text("A line too long for a badge").build()).build())
                 .addContainer(band -> band.name("Header").rectangle(300, 30)
                         .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)

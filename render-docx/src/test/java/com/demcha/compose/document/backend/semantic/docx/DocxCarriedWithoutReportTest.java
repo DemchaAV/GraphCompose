@@ -167,7 +167,8 @@ class DocxCarriedWithoutReportTest {
 
     @Test
     void aDrawnContainerWithCornersOfDifferentRadiiSaysTheyAreDrawnAtTheLargest() throws Exception {
-        DocxExportReport report = reportOf(page -> page.add(cornered(SURFACE, null)));
+        // A tile holding only drawing is drawn; one holding text is a panel, its corners squared.
+        DocxExportReport report = reportOf(page -> page.add(cornered(SURFACE, null, dot())));
 
         assertThat(notesOn(report, "ShapeContainerNode"))
                 .filteredOn(detail -> detail.startsWith("drawn as a shape"))
@@ -179,7 +180,7 @@ class DocxCarriedWithoutReportTest {
         DocxExportReport report = reportOf(page -> page
                 .add(new com.demcha.compose.document.dsl.ShapeContainerBuilder()
                         .roundedRect(120, 40, DocumentCornerRadius.of(6)).fillColor(SURFACE)
-                        .layer(new com.demcha.compose.document.dsl.ParagraphBuilder().text("Even").build()).build()));
+                        .layer(dot()).build()));
 
         assertThat(notesOn(report, "ShapeContainerNode")).anyMatch(detail -> detail.startsWith("drawn as a shape"))
                 .noneMatch(detail -> detail.contains("corners"));
@@ -460,9 +461,9 @@ class DocxCarriedWithoutReportTest {
                 .build();
     }
 
-    /** A shape container rounding its corners by two radii, painted as given, holding a line of text. */
-    private static com.demcha.compose.document.node.DocumentNode cornered(DocumentColor fill, DocumentStroke stroke) {
-        return cornered(fill, stroke, new com.demcha.compose.document.dsl.ParagraphBuilder().text("Cornered").build());
+    /** A dot, all a tile holds: drawing, so the tile round it is drawn too. */
+    private static com.demcha.compose.document.node.DocumentNode dot() {
+        return new ShapeBuilder().size(12, 12).fillColor(INK).build();
     }
 
     /** A shape container rounding its corners by two radii, painted as given, holding one layer. */

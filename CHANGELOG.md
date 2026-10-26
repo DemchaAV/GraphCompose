@@ -36,7 +36,7 @@ follow semantic versioning; release dates are ISO 8601.
     - a note the page wraps over three lines inside a box 220pt wide ran over two, 95pt past the
       box, with the paragraph under it 12pt high; now its three lines stand inside the box,
       within 0.03pt of the page's in Word, and the paragraph under it within 0.02pt.
-      LibreOffice 24.2, which counts the borders inside a least height, sets the box 2pt short and
+      LibreOffice 24.2, which counts the borders inside a least height, sets the box 1pt short and
       the paragraph under it 1pt high;
     - a box clipped short of its text wrote all of it, 125pt past the outline, with the paragraph
       under it 20pt high; now both editors show the five lines the page shows, 1pt low under the
@@ -48,8 +48,9 @@ follow semantic versioning; release dates are ISO 8601.
       inside the row's least height.
   - The rounded corners are square, and a turned box stands upright; the report names both. An
     ellipse, a polygon or a star, a box holding no text — drawing alone, or a picture's frame —,
-    an unpainted one, one set as a band beside a drawing, one its margins give no room in the flow,
-    and one inside a layer stack, a row's cell or a panel are written as before.
+    an unpainted one, one set as a band beside a drawing, a badge centring a few letters, a pill
+    holding a title and its dates on one line, one its margins give no room in the flow, and one
+    inside a layer stack, a row's cell or a panel are written as before.
 
 - **A DOCX export bookmarks a block of drawings alone where its first drawing is anchored, so a
   page reference or a link to its anchor works.**
@@ -4317,9 +4318,10 @@ follow semantic versioning; release dates are ISO 8601.
   `narrow_container` and `rounded_card` at the page's words, and Word the paragraph under each box
   where the page sets it. The rows of the three documents are rewritten — Word's and
   LibreOffice's on Windows from local runs, LibreOffice's on Linux from CI — and every other row
-  is as it was. Of `narrow_container` and `clipped_container` every row moves nearer the page; of
-  `rounded_card`, the paragraph under the card stands 0.6pt high in LibreOffice 24.2, which counts
-  a cell's borders inside the row's least height.
+  is as it was. Every line of `narrow_container` and `clipped_container` stands nearer the page or
+  where it stood, and the lines inside each box are found; of `rounded_card`, the paragraph under
+  the card stands 0.6pt high in LibreOffice 24.2, which counts a cell's borders inside the row's
+  least height.
   `DocxBodyShapePanelTest` holds the panel: its size, its row's height and rule, the layers held
   in across, the top border taken out of the space above, the clip written as an exact height,
   and the boxes that stay drawn.

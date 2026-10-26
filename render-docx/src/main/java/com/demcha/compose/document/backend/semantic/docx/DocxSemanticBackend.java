@@ -8196,7 +8196,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         row.setHeight((int) exact);
         row.setHeightRule(org.apache.poi.xwpf.usermodel.TableRowHeightRule.EXACT);
         report.replace(noted, DocxExportReport.Severity.APPROXIMATED, "clipped shape container", layout.pathOf(shape),
-                "its clip is written as its panel's exact height, its outline's: Word cuts what its layers paint "
+                "its clip is written as its panel's exact height, its outline's: Word cuts what its cell holds "
                 + "past the foot of the panel, as the page cuts it at the outline" + (roundsItsCorners(shape)
                         ? ", but square, not round its rounded corners" : "")
                 + ", and text added to it in an editor is hidden too, the panel no taller");
@@ -9008,14 +9008,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     /**
      * Whether a layer stands where its shape sets it without being held in: unmoved across, and a
-     * paragraph's own alignment leaning the way its layer's does, or any other block set at the
-     * shape's left at the width it comes to.
+     * paragraph's own alignment leaning the way its layer's does, or a section, a container or a
+     * list set at the shape's left at the width its content comes to.
      *
      * <p>The page lays such a block out in the room the shape leaves it and reports the box it
      * comes to, no wider than what it holds: a card's section set at the top left, held in to that
      * box, left its text no room past the page's longest line, and the cell's right border took the
      * rest — Word broke the line a word early. A block given a fixed width is laid out in that width,
-     * and is held to it.</p>
+     * and any other — a shape, a canvas, a table — has a width of its own: each is held to it.</p>
      */
     private static boolean standsAsItsLayer(DocumentNode node,
                                             com.demcha.compose.document.node.LayerStackNode.Layer layer) {
@@ -9024,7 +9024,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         double share = shareAcross(layer.align());
         if (!(node instanceof ParagraphNode paragraph)) {
-            return share == 0 && !node.flowWidth().isFixed();
+            boolean flowsAtItsContentsWidth = node instanceof SectionNode || node instanceof ContainerNode
+                                              || node instanceof com.demcha.compose.document.node.ListNode;
+            return share == 0 && flowsAtItsContentsWidth && !node.flowWidth().isFixed();
         }
         return share == 0 ? paragraph.align() != TextAlign.CENTER && paragraph.align() != TextAlign.RIGHT
                 : share == 1 ? paragraph.align() == TextAlign.RIGHT

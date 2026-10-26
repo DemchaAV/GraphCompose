@@ -1198,14 +1198,17 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   counts a cell's borders inside the least height its row is held at, as it
   counts the row's margins (see "Line height"), where Word and LibreOffice
   26.8 add them round it: there a panel whose content is shorter than its
-  outline stands its borders short — the narrow box 2pt, the block under it
-  1pt high, and the block under a card 0.6pt high, where Word sets it within
-  0.1pt. A card lengthened in Word grows with its text, and the block under
-  it moves down with it.
+  outline stands up to its borders short — the narrow box 1pt, the block
+  under it 1pt high, and the block under a card 0.6pt high, where Word sets
+  it within 0.1pt. A card lengthened in Word grows with its text, and the
+  block under it moves down with it.
   Any other container — an ellipse, a polygon or a star, one holding no
   text, one set as a band beside a drawing, one inside a layer stack, a
   row's cell or a panel — is written as inline layers, or drawn where it
-  holds only drawing. DOCX has no portable equivalent of
+  holds only drawing; a badge centring a few letters is drawn as one shape
+  holding them, and a pill holding a title and its dates is written as one
+  line (see "Text at the left and the right of one band → one line split by
+  a tab"). DOCX has no portable equivalent of
   a graphics-state path clip, so the container's layers are written
   inline, in source order, without clipping — again with one warning per
   export, and a note on each container that writes a layer in the flow.

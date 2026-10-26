@@ -33,7 +33,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -140,6 +139,42 @@ class DocxBodyShapePanelTest {
     }
 
     @Test
+    void aShapeSetAtTheOutlinesLeftIsHeldToItsOwnWidth() throws Exception {
+        // A pill at the card's top left: its label is centred in the pill, not in the card.
+        Exported exported = export(page -> page
+                .addParagraph("Above")
+                .add(new ShapeContainerBuilder().name("Box").roundedRect(328, 80, 12).fillColor(SURFACE).stroke(BORDER)
+                        .topLeft(new ShapeContainerBuilder().name("Pill").roundedRect(140, 20, 10)
+                                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                                .center(new ParagraphBuilder().text("Most popular plan").build())
+                                .build())
+                        .build())
+                .addParagraph("Below"));
+
+        XWPFParagraph label = onlyTable(exported.document()).getRow(0).getCell(0).getParagraphs().get(0);
+        assertThat(label.getText()).isEqualTo("Most popular plan");
+        // Held in to the pill's 140pt, the label's right edge stands well short of the card's.
+        assertThat(indentOf(label, false)).isGreaterThan(Math.round((328 - 140 - 10) * 20));
+    }
+
+    @Test
+    void aLaterLayerOfAShapeSetFromItsTopIsNamedAgainstTheTop() throws Exception {
+        // The first layer, centred but taller than the outline, is set from its top, and the cell
+        // with it; a second layer the page centres is named as set at the middle, its cell's at the top.
+        Exported exported = export(page -> page
+                .addParagraph("Above")
+                .add(clippedBox(ClipPolicy.CLIP_PATH)
+                        .layer(new ParagraphBuilder().name("Second").text("A second layer").build(), LayerAlign.CENTER)
+                        .build())
+                .addParagraph("Below"));
+
+        assertThat(exported.report().notes()).filteredOn(note -> note.subject().equals("layer offset"))
+                .extracting(DocxExportReport.Note::detail)
+                .contains("written as a panel's content: the page sets it at the middle of the shape, and its cell "
+                          + "sets all it holds at the top, it under the layers before it");
+    }
+
+    @Test
     void aShapeSetFromItsTopTakesItsTopBorderOutOfTheSpaceAboveItsFirstLine() throws Exception {
         Exported card = export(page -> page
                 .addParagraph("Above")
@@ -206,8 +241,8 @@ class DocxBodyShapePanelTest {
         assertThat(ruleOf(row)).isEqualTo(STHeightRule.EXACT);
         assertThat(heightOf(row)).isEqualTo((60 - 1) * 20);
         assertThat(detailOf(exported.report(), "clipped shape container"))
-                .isEqualTo("its clip is written as its panel's exact height, its outline's: Word cuts what its layers "
-                           + "paint past the foot of the panel, as the page cuts it at the outline, but square, not "
+                .isEqualTo("its clip is written as its panel's exact height, its outline's: Word cuts what its cell "
+                           + "holds past the foot of the panel, as the page cuts it at the outline, but square, not "
                            + "round its rounded corners, and text added to it in an editor is hidden too, the panel no "
                            + "taller");
         // Its text is set from the outline's top, with nothing above its first line to take the border;
@@ -231,8 +266,8 @@ class DocxBodyShapePanelTest {
 
         assertThat(ruleOf(onlyTable(exported.document()).getRow(0))).isEqualTo(STHeightRule.EXACT);
         assertThat(detailOf(exported.report(), "clipped shape container"))
-                .isEqualTo("its clip is written as its panel's exact height, its outline's: Word cuts what its layers "
-                           + "paint past the foot of the panel, as the page cuts it at the outline, and text added to "
+                .isEqualTo("its clip is written as its panel's exact height, its outline's: Word cuts what its cell "
+                           + "holds past the foot of the panel, as the page cuts it at the outline, and text added to "
                            + "it in an editor is hidden too, the panel no taller");
         assertThat(exported.report().bySubject()).doesNotContainKey("corner radius");
     }
@@ -461,7 +496,7 @@ class DocxBodyShapePanelTest {
     }
 
     private static long twipsOf(Object value) {
-        return value instanceof BigInteger big ? big.longValue() : Long.parseLong(String.valueOf(value));
+        return DocxTwips.of(value);
     }
 
     private static byte[] png() {

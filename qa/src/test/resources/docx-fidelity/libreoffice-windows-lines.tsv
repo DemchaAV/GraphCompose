@@ -1,5 +1,6 @@
 # libreoffice build bf6ef2662401 on windows — document, line, drift below the page (pt), drift right of the page (pt), letters
 # rows of invoice-metered_long, invoice-obsidian_long, synthetic-break_in_column, synthetic-break_in_panel, synthetic-card_over_pages: libreoffice build bf6ef2662401 on windows
+# rows of synthetic-clipped_container, synthetic-narrow_container, synthetic-rounded_card: libreoffice build bf6ef2662401 on windows
 cv-blue_banner	0:8f1010120ed6	0.02	1.95	jordanrivera
 cv-blue_banner	0:8d7a2cca3060	0.00	0.24	+442055551000|jordan.rivera@exam
 cv-blue_banner	0:b944906ed84c	-0.20	-0.38	professionalsummary
@@ -5016,3 +5017,16 @@ synthetic-card_over_pages	2:1c49f22f6de9	1.08	0.60	413
 synthetic-card_over_pages	2:f69c59b028ea	1.08	0.60	lineitem60
 synthetic-card_over_pages	2:db55da3fc309	1.08	0.60	420
 synthetic-card_over_pages	2:8c569b972e01	1.08	0.10	afterthecard,onitslastpage.
+synthetic-clipped_container	0:cbe6ee14976b	-0.02	0.10	beforetheclippedbox,onalineofits
+synthetic-clipped_container	0:2633ce73dc24	-20.02	0.10	aftertheclippedbox:thisparagraph
+synthetic-clipped_container	0:667f8b3b3eff	-20.02	0.10	noneofitslinesrunsoverthebox.
+synthetic-narrow_container	0:fa13cab3fe73	-0.02	0.10	beforethebox,onalineofitsown.
+synthetic-narrow_container	0:697e6629574d	-12.02	0.10	afterthebox:thisparagraphstandsu
+synthetic-narrow_container	0:0efb534ce6c6	-12.02	0.10	linesrunsoverthebox.
+synthetic-rounded_card	0:2a3c79dd9054	-0.02	0.10	beforethecard,onalineofitsown.
+synthetic-rounded_card	0:b8608d77afb0	0.01	0.10	aroundedcard
+synthetic-rounded_card	0:bcb0465dee5d	-0.02	0.10	itstextrunsoverthreelinesfromthe
+synthetic-rounded_card	0:73c347391d3b	-0.02	0.10	cardisjusttallenoughtoholdthemwi
+synthetic-rounded_card	0:8993a52a9026	-0.02	0.10	linemore,andthecardneedstobetall
+synthetic-rounded_card	0:103d88aab213	-0.02	0.10	afterthecard:thisparagraphstands
+synthetic-rounded_card	0:66b11b97a20e	-0.02	0.10	linesrunsoverthecard.

@@ -4269,6 +4269,40 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The DOCX fidelity corpus holds three shape containers in the body, as the export writes them
+  today.**
+  - Three documents join `SyntheticDocxCorpus`, each a rounded shape container holding text,
+    with a paragraph under it:
+    - `narrow_container`: a note centred in a box 220pt wide, which the page wraps over three
+      lines inside it;
+    - `clipped_container`: a box 60pt tall, clipped to its outline, holding 84pt of text, which
+      the page cuts at the box's foot;
+    - `rounded_card`: a card as wide as the page between its margins, its heading and text
+      filling it.
+  - Measured in Word 16 and in LibreOffice 24.2 and 26.8, which set the three alike. The export
+    draws each outline at its size, where the page draws it, and writes its text in the flow,
+    held in from the edges of the block the container stands in rather than from the outline's:
+    - the narrow box's note runs over two lines instead of three, up to 95pt past the box's right
+      edge, and the paragraph under the box stands 12pt high, its first line reaching 4pt into
+      the box;
+    - the clipped box's text is written whole, none of it cut, up to 124pt past the box, and the
+      paragraph under it stands 20pt high, inside the box;
+    - the card stands where the page sets it, every line within 0.1pt. Text added to it in Word
+      runs past its foot: the outline keeps its height, the card's text runs over seven lines to
+      22pt below it, and the paragraph under it moves down 36pt.
+  - The baselines record the three as they stand. Of the narrow box and the clipped box, the
+    gate holds the lines the editors set at the page's words — the paragraph above the box, and
+    the paragraph under it, 12 and 20pt high — and none of the text inside the box, which they
+    set at other words. A change that writes a container's text inside its outline finds that
+    text and moves the paragraph under each box nearer the page, and rewrites their rows. The
+    card, which the export sets where the page does today, holds such a change to keep it there.
+  - The gate measures lines of text, not outlines. It does not see whether the text stays inside
+    the outline, or whether the card grows when text is added to it. Word's editing protocol
+    (`edit-protocol-corpus.ps1`) does not either: it passes all three, since the paragraph it
+    lengthens grows and still ends above the paragraph under it, past the outline as it is.
+  - Each baseline takes the three documents' rows alone, from the run of its editor — Linux's
+    from CI's.
+
 - **Every page reference a DOCX export writes names a bookmark the file holds.**
   - `DocxPageReferenceGuardTest` reads each `PAGEREF` field, bookmark and paragraph from every XML
     part of the exported file — the body, its headers and footers, nested tables and text boxes.

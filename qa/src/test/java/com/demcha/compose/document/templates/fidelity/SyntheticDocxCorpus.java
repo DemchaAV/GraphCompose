@@ -4,9 +4,12 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.PageMarginRule;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.node.ParagraphNode;
+import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
@@ -19,15 +22,28 @@ import java.util.function.Consumer;
  * Documents of the DOCX fidelity corpus built for a shape no template preset has on its own
  * fixture, so that an editor setting one off the page fails the gate as a preset would.
  *
- * <p>Each sets a way the page breaks inside a panel or a column: a page break among a panel's
+ * <p>Three set a way the page breaks inside a panel or a column: a page break among a panel's
  * children and inside a panel nested in it, page breaks the page sets as boxes of no height in a
  * row's column and in a stack's layer, and a card whose table the layout runs over three pages,
- * with other margins from the second. Their text is set in a face the export embeds, so both
- * editors break its lines at the page's words.</p>
+ * with other margins from the second. Three others set a shape container holding text in the
+ * body: a box narrower than the page, a box clipped to its outline, and a card. Their text is
+ * set in a face the export embeds, so both editors break at the page's words the lines they
+ * set at the page's width.</p>
+ *
+ * <p>The baselines hold the shape containers as the export writes them now, with their text
+ * past the outline: Word and LibreOffice set the narrow box's note and the clipped box's text
+ * wider than the box, at other words, which the gate therefore does not hold, and the paragraph
+ * under each box 12 and 20pt high. A change that writes the text inside the outline finds it,
+ * moves the paragraph under each box nearer the page, and rewrites their rows. The card, which
+ * the export sets where the page does, holds such a change to keep it there. The gate reads
+ * lines of text only: whether the text stays inside the outline, and whether the card grows
+ * when text is added to it in an editor, it does not see.</p>
  */
 final class SyntheticDocxCorpus {
 
     private static final DocumentTextStyle TEXT = DocumentTextStyle.builder().fontName(FontName.LATO).size(10).build();
+    private static final DocumentTextStyle HEADING = DocumentTextStyle.builder().fontName(FontName.LATO).size(12)
+            .decoration(DocumentTextDecoration.BOLD).build();
     private static final DocumentTableStyle CELLS = DocumentTableStyle.builder().textStyle(TEXT).build();
     private static final DocumentColor SURFACE = DocumentColor.rgb(238, 243, 249);
     private static final DocumentColor INNER = DocumentColor.rgb(224, 233, 244);
@@ -42,7 +58,68 @@ final class SyntheticDocxCorpus {
         return List.of(
                 synthetic("break_in_panel", SyntheticDocxCorpus::breakInAPanel),
                 synthetic("break_in_column", SyntheticDocxCorpus::breakInAColumn),
-                synthetic("card_over_pages", SyntheticDocxCorpus::cardOverPages));
+                synthetic("card_over_pages", SyntheticDocxCorpus::cardOverPages),
+                synthetic("narrow_container", SyntheticDocxCorpus::narrowContainer),
+                synthetic("clipped_container", SyntheticDocxCorpus::clippedContainer),
+                synthetic("rounded_card", SyntheticDocxCorpus::roundedCard));
+    }
+
+    /**
+     * A rounded box narrower than the page, its note centred in it and wrapped over three lines
+     * inside it, and a paragraph under the box.
+     */
+    private static void narrowContainer(DocumentSession session) {
+        session.pageSize(400, 500).margin(MARGIN);
+        session.pageFlow(page -> page.spacing(8)
+                .addParagraph(p -> text(p, "Before the box, on a line of its own."))
+                .addContainer(box -> box.roundedRect(220, 90, 10).fillColor(SURFACE).stroke(DocumentStroke.of(INK, 1))
+                        .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                        .center(paragraph("A note centred in a box narrower than the page: the page wraps "
+                                          + "it over three lines inside the box, each line held within "
+                                          + "its outline.")))
+                .addParagraph(p -> text(p, "After the box: this paragraph stands under it on the page, "
+                                           + "and none of its lines runs over the box.")));
+    }
+
+    /**
+     * A rounded box clipped to its outline, holding more text than it has room for: the page
+     * centres the text across the box, sets it from the box's top, as it is taller than the box,
+     * and cuts the lines that run past its foot. A paragraph stands under the box.
+     */
+    private static void clippedContainer(DocumentSession session) {
+        session.pageSize(400, 500).margin(MARGIN);
+        session.pageFlow(page -> page.spacing(8)
+                .addParagraph(p -> text(p, "Before the clipped box, on a line of its own."))
+                .addContainer(box -> box.roundedRect(200, 60, 12).fillColor(SURFACE).stroke(DocumentStroke.of(INK, 1))
+                        .clipPolicy(ClipPolicy.CLIP_PATH)
+                        .center(paragraph("Clipped text in a rounded box too short to hold it. The page "
+                                          + "sets it from the top of the box and cuts it at the outline, so "
+                                          + "the lines that run past the foot of the box are not seen. Only "
+                                          + "the lines the box holds are read, and the box stays as tall as "
+                                          + "it was made, whatever it is given to hold.")))
+                .addParagraph(p -> text(p, "After the clipped box: this paragraph stands under it on the page, "
+                                           + "and none of its lines runs over the box.")));
+    }
+
+    /**
+     * A rounded card as wide as the page between its margins, its heading and text set from its
+     * top left corner and filling it, under its default clip, with a paragraph under it. Text
+     * added to the card in an editor needs it taller.
+     */
+    private static void roundedCard(DocumentSession session) {
+        session.pageSize(400, 500).margin(MARGIN);
+        session.pageFlow(page -> page.spacing(8)
+                .addParagraph(p -> text(p, "Before the card, on a line of its own."))
+                .addContainer(card -> card.roundedRect(328, 80, 12).fillColor(SURFACE).stroke(DocumentStroke.of(INK, 1))
+                        .topLeft(new SectionBuilder().padding(DocumentInsets.of(12)).spacing(4)
+                                .addParagraph(p -> p.text("A rounded card").textStyle(HEADING))
+                                .addParagraph(p -> text(p, "Its text runs over three lines from the card's top "
+                                                           + "left corner, and the card is just tall enough to hold "
+                                                           + "them with its padding round them: a line more, and "
+                                                           + "the card needs to be taller."))
+                                .build()))
+                .addParagraph(p -> text(p, "After the card: this paragraph stands under it on the page, "
+                                           + "and none of its lines runs over the card.")));
     }
 
     /**
@@ -121,6 +198,10 @@ final class SyntheticDocxCorpus {
 
     private static ParagraphBuilder text(ParagraphBuilder paragraph, String text) {
         return paragraph.text(text).textStyle(TEXT);
+    }
+
+    private static ParagraphNode paragraph(String text) {
+        return text(new ParagraphBuilder(), text).build();
     }
 
     private static DocxCorpusDocument synthetic(String name, Consumer<DocumentSession> compose) {

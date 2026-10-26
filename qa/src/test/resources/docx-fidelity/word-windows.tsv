@@ -69,6 +69,6 @@ rota-cobalt	1	1	154	154	0.14	0.26	0
 synthetic-break_in_column	1	1	7	7	0.03	0.03	0
 synthetic-break_in_panel	3	3	8	8	0.95	0.99	0
 synthetic-card_over_pages	3	3	114	114	1.03	1.15	0
-synthetic-clipped_container	1	1	10	3	19.97	19.97	2
-synthetic-narrow_container	1	1	6	3	12.02	12.02	2
+synthetic-clipped_container	1	1	10	10	0.99	0.99	0
+synthetic-narrow_container	1	1	6	6	0.03	0.03	0
 synthetic-rounded_card	1	1	7	7	0.01	0.02	0

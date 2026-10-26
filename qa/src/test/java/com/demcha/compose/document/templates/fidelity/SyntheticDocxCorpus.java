@@ -30,14 +30,12 @@ import java.util.function.Consumer;
  * set in a face the export embeds, so both editors break at the page's words the lines they
  * set at the page's width.</p>
  *
- * <p>The baselines hold the shape containers as the export writes them now, with their text
- * past the outline: Word and LibreOffice set the narrow box's note and the clipped box's text
- * wider than the box, at other words, which the gate therefore does not hold, and the paragraph
- * under each box 12 and 20pt high. A change that writes the text inside the outline finds it,
- * moves the paragraph under each box nearer the page, and rewrites their rows. The card, which
- * the export sets where the page does, holds such a change to keep it there. The gate reads
- * lines of text only: whether the text stays inside the outline, and whether the card grows
- * when text is added to it in an editor, it does not see.</p>
+ * <p>The export writes the three boxes as panels, their text inside the outline: Word sets the
+ * narrow box's note and the card's text at the page's words, and the paragraph under each box
+ * where the page sets it; of the clipped box, whose clip is written as the panel's exact height,
+ * both editors show the lines the page shows. The gate reads lines of text only: whether the
+ * text stays inside the outline, and whether the card grows when text is added to it in an
+ * editor, it does not see.</p>
  */
 final class SyntheticDocxCorpus {
 

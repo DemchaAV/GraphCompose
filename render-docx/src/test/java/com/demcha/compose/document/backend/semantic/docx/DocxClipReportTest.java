@@ -289,9 +289,10 @@ class DocxClipReportTest {
                         .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE).transform(DocumentTransform.rotate(30))
                         .center(new ParagraphBuilder().text("Turned").build()).build())
                 .addParagraph("Below"));
+        // An ellipse's outline is drawn; a painted box holding text is a panel (DocxBodyShapePanelTest).
         DocxExportReport painted = reportOf(page -> page
                 .addParagraph("Above")
-                .add(new ShapeContainerBuilder().name("Turned").rectangle(120, 30).fillColor(SURFACE)
+                .add(new ShapeContainerBuilder().name("Turned").ellipse(120, 30).fillColor(SURFACE)
                         .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE).transform(DocumentTransform.rotate(30))
                         .center(new ParagraphBuilder().text("Turned").build()).build())
                 .addParagraph("Below"));

@@ -63,7 +63,7 @@ import java.util.function.Predicate;
 final class DocxClipInk {
 
     /** How far ink may stand past a clip before the clip is taken to cut it. */
-    private static final double TOLERANCE = 0.5;
+    static final double TOLERANCE = 0.5;
 
     /** The most bands a clip's outline is indexed in, by height. */
     private static final int MAX_BANDS = 256;

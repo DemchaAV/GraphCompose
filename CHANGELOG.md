@@ -4269,6 +4269,32 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **Every page reference a DOCX export writes names a bookmark the file holds.**
+  - `DocxPageReferenceGuardTest` reads each `PAGEREF` field, bookmark and paragraph from every XML
+    part of the exported file — the body, its headers and footers, nested tables and text boxes.
+    It fails on a field naming a bookmark the body does not hold, or a name Word does not give a
+    bookmark, which Word reads as "Error! Bookmark not defined." once it updates the field; and on
+    one naming more than one bookmark, one in another case or one never closed, since the export
+    names exactly the bookmark it wrote.
+  - It holds the template corpus, which refers to no page, and four documents that refer to an
+    anchor on each kind of node that declares one — the kinds read off the node classes — from a
+    table of contents, the body, a table's composed cell, a layer stack's column, a panel and a
+    row's column: blocks of drawings alone, a layer stack's columns, anchors named past Word's 40
+    characters, names that clean or fold to another's, and tables split for other page margins,
+    each shape held by the note the export's report gives it. A reference whose anchor the export
+    writes no bookmark for — a block that draws nothing, one whose first drawing fills a page
+    nothing is written on, one composed in a table's cell, a drawn shape, an anchor the document
+    lacks — must be the number it reads, with a report note. Each document must be exported from
+    its layout: a document the layout cannot lay out is exported without it, and its references
+    read no page.
+  - Measured on the four documents in Word 16, every field updated, and again with a page put in
+    at the start: each of the 27 fields read its bookmark's page, and the next one with the page
+    put in; the 8 references written as text did not move. LibreOffice 24.2 read 25 of the fields
+    alike. The DOCX recipe and the capability matrix name the three cases that differ: a reference
+    in a table's composed cell stores no number, and LibreOffice reads neither a bookmark named like
+    one of its numbering sequences nor one of a block that opens with a table right after another
+    table.
+
 - **The DOCX fidelity corpus holds the ways a page breaks inside a panel.**
   - Five documents join it, so the gate holds every line it finds of each where the editor set
     it, in LibreOffice in CI and in Word on Windows, as it holds the presets:

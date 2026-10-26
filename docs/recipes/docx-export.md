@@ -308,9 +308,9 @@ paragraph is the picture's block, and a list's edges go to the paragraphs around
 `itemSpacing` as the gap above each item after the first. A list's left and right edges —
 its margin and padding — indent its items, the level's own indent added on top, so its
 markers start where the page starts them. A paragraph's and a list's sides hold under a
-layer stack or a shape container too, inside the box that places the layer — but for a
-shape container narrower than the block it stands in, whose layers run past its right
-edge (see "Shape containers → inline layers"). In a cell, two
+layer stack or a shape container too, inside the box that places the layer — but not in a
+shape container narrower than the block it stands in, whose layers' room runs past its
+right edge (see "Shape containers → inline layers"). In a cell, two
 points of a side stay the editor's, to set a line a little wider than the page: off the
 side a left-to-right line does not lean on, so it keeps the edge it is set from — the right
 of a left-aligned paragraph and of a list, the left of a right-aligned one, both of a
@@ -1109,9 +1109,10 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   to its box in the stack, with a few points to spare on the side its text does not
   lean on. A shape container's layers are held in by as far as their box stands in
   from the container's edges, but from the edges of the block the container stands
-  in, set in by its margin and padding: in a container narrower than that block they
-  run as much further right, past its outline (see "Shape containers → inline
-  layers"). A block in `addAligned(...)` is held in
+  in, set in by its margin and padding: in a container narrower than that block the
+  right edge of their room runs that much further right, past its outline, so text
+  that wraps runs past the outline and centred or right-aligned text stands right of
+  where the page sets it (see "Shape containers → inline layers"). A block in `addAligned(...)` is held in
   the same way, to where the alignment puts it — composed in a table cell, a paragraph
   where the lines its table laid out for it stand and a picture where the alignment sets
   one of its written width; any other block there, or one inside a panel or another table

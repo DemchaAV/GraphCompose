@@ -65,8 +65,8 @@ final class SyntheticDocxCorpus {
     }
 
     /**
-     * A rounded box narrower than the page, its note centred in it and wrapped over three lines
-     * inside it, and a paragraph under the box.
+     * A rounded box narrower than the page between a paragraph above it and one under it, its
+     * note set left in a block centred in the box and wrapped over three lines inside it.
      */
     private static void narrowContainer(DocumentSession session) {
         session.pageSize(400, 500).margin(MARGIN);
@@ -84,7 +84,8 @@ final class SyntheticDocxCorpus {
     /**
      * A rounded box clipped to its outline, holding more text than it has room for: the page
      * centres the text across the box, sets it from the box's top, as it is taller than the box,
-     * and cuts the lines that run past its foot. A paragraph stands under the box.
+     * and cuts the lines that run past its foot. A paragraph stands above the box and one under
+     * it.
      */
     private static void clippedContainer(DocumentSession session) {
         session.pageSize(400, 500).margin(MARGIN);
@@ -103,8 +104,8 @@ final class SyntheticDocxCorpus {
 
     /**
      * A rounded card as wide as the page between its margins, its heading and text set from its
-     * top left corner and filling it, under its default clip, with a paragraph under it. Text
-     * added to the card in an editor needs it taller.
+     * top left corner and filling it, under its default clip, between a paragraph above it and
+     * one under it. Text added to the card in an editor needs it taller.
      */
     private static void roundedCard(DocumentSession session) {
         session.pageSize(400, 500).margin(MARGIN);

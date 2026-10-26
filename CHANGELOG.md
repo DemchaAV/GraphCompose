@@ -4272,16 +4272,17 @@ follow semantic versioning; release dates are ISO 8601.
 - **The DOCX fidelity corpus holds three shape containers in the body, as the export writes them
   today.**
   - Three documents join `SyntheticDocxCorpus`, each a rounded shape container holding text,
-    with a paragraph under it:
-    - `narrow_container`: a note centred in a box 220pt wide, which the page wraps over three
-      lines inside it;
+    between a paragraph above it and one under it:
+    - `narrow_container`: a note set left in a block centred in a box 220pt wide, which the page
+      wraps over three lines inside it;
     - `clipped_container`: a box 60pt tall, clipped to its outline, holding 84pt of text, which
       the page cuts at the box's foot;
     - `rounded_card`: a card as wide as the page between its margins, its heading and text
       filling it.
   - Measured in Word 16 and in LibreOffice 24.2 and 26.8, which set the three alike. The export
     draws each outline at its size, where the page draws it, and writes its text in the flow,
-    held in from the edges of the block the container stands in rather than from the outline's:
+    held in from the edges of the block the container stands in rather than from the outline's,
+    so the right edge of its room stands past the outline:
     - the narrow box's note runs over two lines instead of three, up to 95pt past the box's right
       edge, and the paragraph under the box stands 12pt high, its first line reaching 4pt into
       the box;

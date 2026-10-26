@@ -1194,11 +1194,14 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   the page wraps over three lines inside a box 220pt wide stands in three,
   inside the box, within 0.03pt of the page's in Word; a clipped box shows
   the five lines the page shows, 1pt low under its border; the block under
-  either box stands within 0.02pt of the page's in Word. LibreOffice 24.2,
-  which counts the borders inside a least height, sets the narrow box 2pt
-  short and the block under it 1pt high, and the block under a card whose
-  content is shorter than its outline 0.6pt high. A card lengthened in Word
-  grows with its text, and the block under it moves down with it.
+  either box stands within 0.02pt of the page's in Word. LibreOffice 24.2
+  counts a cell's borders inside the least height its row is held at, as it
+  counts the row's margins (see "Line height"), where Word and LibreOffice
+  26.8 add them round it: there a panel whose content is shorter than its
+  outline stands its borders short — the narrow box 2pt, the block under it
+  1pt high, and the block under a card 0.6pt high, where Word sets it within
+  0.1pt. A card lengthened in Word grows with its text, and the block under
+  it moves down with it.
   Any other container — an ellipse, a polygon or a star, one holding no
   text, one set as a band beside a drawing, one inside a layer stack, a
   row's cell or a panel — is written as inline layers, or drawn where it

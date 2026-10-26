@@ -11409,11 +11409,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * What earlier layers' stand-ins hold of a layer, written there before the layer itself
      * ({@link #writeInPlaceOf}), in the file's order.
      *
-     * @param layer   a layer of a stack written as columns
-     * @param written how many blocks had been written in a stand-in's place when the layer's own
-     *                writing began: those written since are inside what the layer writes itself
+     * @param layer  a layer of a stack written as columns
+     * @param before how many blocks had been written in a stand-in's place when the layer's own
+     *               writing began: those written since are inside what the layer writes itself
      */
-    private List<IBodyElement> writtenInAnEarlierLayer(DocumentNode layer, int written) {
+    private List<IBodyElement> writtenInAnEarlierLayer(DocumentNode layer, int before) {
         java.util.Set<DocumentNode> under = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         java.util.ArrayDeque<DocumentNode> open = new java.util.ArrayDeque<>(layer.children());
         while (!open.isEmpty()) {
@@ -11423,7 +11423,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         List<IBodyElement> elements = new ArrayList<>();
-        for (WrittenInAStandIn moved : writtenInStandIns.subList(0, written)) {
+        for (WrittenInAStandIn moved : writtenInStandIns.subList(0, before)) {
             if (under.contains(moved.block())) {
                 elements.addAll(moved.written());
             }
@@ -21102,7 +21102,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 if (placed != null && across != null) {
                     holdIn(content, placed.placementX(), placed.placementWidth(), across[0], across[1]);
                 }
-                writtenInStandIns.add(new WrittenInAStandIn(content,
+                // Its place is taken before it is written: a stack inside it writing in its own
+                // stand-ins records them after it, in the order the file holds them.
+                int slot = writtenInStandIns.size();
+                writtenInStandIns.add(new WrittenInAStandIn(content, List.of()));
+                writtenInStandIns.set(slot, new WrittenInAStandIn(content,
                         List.copyOf(writtenBy(document, () -> writeNode(document, content)))));
             }
         } finally {

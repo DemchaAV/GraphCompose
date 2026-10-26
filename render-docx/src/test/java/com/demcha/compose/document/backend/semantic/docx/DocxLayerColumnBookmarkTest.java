@@ -61,6 +61,9 @@ class DocxLayerColumnBookmarkTest {
     private static final DocumentInsets RIGHT_BAND = new DocumentInsets(0, 0, 0, 170);
     private static final DocumentTextStyle TEXT = DocumentTextStyle.DEFAULT.withSize(12);
     private static final String NAME = "Jordan Alexander Rivera";
+    private static final String OUTER_NAME = "Morgan Blake Ellison";
+    // Wide enough to lay out on its own any block these tests set in a stand-in.
+    private static final double PROBE_WIDTH = 1000;
 
     @Test
     void eachAnchoredColumnIsBookmarkedRoundWhatItWroteInItsCell() throws Exception {
@@ -283,6 +286,23 @@ class DocxLayerColumnBookmarkTest {
         assertThat(marked.start().getText()).isEqualTo("Heading");
     }
 
+    @Test
+    void aLayerWhoseMovedBlockIsAStackOfItsOwnIsBookmarkedFromThatStacksFirstLine() throws Exception {
+        // The block the stand-in holds is a strip of its own, which writes its subtitle in its own
+        // strip as it is written: the layer's bookmark opens where the block does, not there.
+        DocumentNode inner = strip(460, null, "Inner contact", NAME,
+                new ParagraphBuilder().name("Subtitle").text("Subtitle").textStyle(TEXT).build(), false);
+        DocumentNode outer = strip(580, "main", "Contact", OUTER_NAME, inner, false);
+        Exported exported = export(640, page -> page.add(outer));
+
+        XWPFParagraph innerContact = paragraphHolding(exported.document(), "Inner contact");
+        assertThat(((XWPFTableCell) tableOf(innerContact).getBody()).getText())
+                .as("the premise: the inner strip is written in the outer one").contains(OUTER_NAME);
+        assertThat(cellOf(paragraphHolding(exported.document(), "Subtitle")).getText())
+                .as("the premise: the inner strip writes its subtitle in its own strip").contains(NAME);
+        assertThat(marked(exported.document(), "main").start()).isSameAs(innerContact);
+    }
+
     private static DocumentNode column(String anchor, DocumentInsets band, String... lines) {
         SectionBuilder section = new SectionBuilder().margin(band);
         if (anchor != null) {
@@ -304,41 +324,56 @@ class DocxLayerColumnBookmarkTest {
      * @param anchor the main layer's anchor, or {@code null}
      */
     private static DocumentNode strip(double width, String anchor, boolean body) throws Exception {
-        double[] name = new double[2];
-        double[] subtitle = new double[2];
-        try (DocumentSession probe = GraphCompose.document().pageSize(400, 500).margin(DocumentInsets.of(20))
-                .create()) {
-            probe.pageFlow(page -> page.addSection("Probe", strip -> strip.padding(DocumentInsets.of(10))
-                    .addParagraph(p -> p.name("Name").text(NAME).textStyle(TEXT))
-                    .addParagraph(p -> p.name("Subtitle").text("Subtitle").textStyle(TEXT))));
-            for (com.demcha.compose.document.layout.PlacedNode node : probe.layoutGraph().nodes()) {
-                double[] box = "Name".equals(node.semanticName()) ? name
-                        : "Subtitle".equals(node.semanticName()) ? subtitle : null;
-                if (box != null) {
-                    box[0] = node.placementWidth();
-                    box[1] = node.placementHeight();
-                }
-            }
-        }
+        DocumentNode subtitle = new ParagraphBuilder().name("Subtitle").text("Subtitle").textStyle(TEXT).build();
+        return strip(width, anchor, "Contact", NAME, subtitle, body);
+    }
+
+    /**
+     * As {@link #strip(double, String, boolean)}, with the sidebar's text, the name, and the block
+     * the main layer lays in the stand-in, which is sized to it.
+     */
+    private static DocumentNode strip(double width, String anchor, String contact, String nameText, DocumentNode moved,
+                                      boolean body) throws Exception {
+        double[] name = sizeOf("Name", page -> page.addSection("Probe", strip -> strip.padding(DocumentInsets.of(10))
+                .addParagraph(p -> p.name("Name").text(nameText).textStyle(TEXT))));
+        double[] place = sizeOf(moved.name(), page -> page.addSection("Probe", strip -> strip
+                .padding(new DocumentInsets(0, 10, 0, PROBE_WIDTH - 60 - width + 110)).add(moved)));
         DocumentNode main = layer("MainLayer", 100, 0, anchor, content -> {
             content.addSection("Hero", hero -> hero.padding(new DocumentInsets(10, 10, 10, 10))
                     .addSpacer(spacer -> spacer.name("NamePlace").width(name[0]).height(name[1]))
-                    .addParagraph(p -> p.name("Subtitle").text("Subtitle").textStyle(TEXT)));
+                    .add(moved));
             if (body) {
                 content.addParagraph(p -> p.name("Body").text("Body").textStyle(TEXT));
             }
         });
         return new LayerStackBuilder()
+                .name("Stack")
                 .layer(layer("Sidebar", 0, width - 100, null, sidebar -> sidebar
-                        .addParagraph(p -> p.text("Contact").textStyle(TEXT))), LayerAlign.TOP_LEFT)
+                        .addParagraph(p -> p.text(contact).textStyle(TEXT))), LayerAlign.TOP_LEFT)
                 .layer(layer("StripLayer", 100, 0, null, content -> content.addSection("Strip", strip -> strip
                         .fillColor(DocumentColor.rgb(240, 240, 236))
                         .padding(DocumentInsets.of(10))
-                        .addParagraph(p -> p.name("Name").text(NAME).textStyle(TEXT))
-                        .addSpacer(spacer -> spacer.name("SubtitlePlace").width(subtitle[0]).height(subtitle[1])))),
+                        .addParagraph(p -> p.name("Name").text(nameText).textStyle(TEXT))
+                        .addSpacer(spacer -> spacer.name("MovedPlace").width(place[0]).height(place[1])))),
                         LayerAlign.TOP_LEFT)
                 .layer(main, LayerAlign.TOP_LEFT)
                 .build();
+    }
+
+    /** The width and height the layout gives the node of a name, laid out on its own page. */
+    private static double[] sizeOf(String name, Consumer<PageFlowBuilder> content) {
+        try (DocumentSession probe = GraphCompose.document().pageSize(PROBE_WIDTH, 500).margin(DocumentInsets.of(30))
+                .create()) {
+            probe.pageFlow(content::accept);
+            for (com.demcha.compose.document.layout.PlacedNode node : probe.layoutGraph().nodes()) {
+                if (name.equals(node.semanticName())) {
+                    return new double[] {node.placementWidth(), node.placementHeight()};
+                }
+            }
+        } catch (Exception failure) {
+            throw new IllegalStateException(failure);
+        }
+        throw new AssertionError("no node named " + name);
     }
 
     private static DocumentNode layer(String name, double left, double right, String anchor,
@@ -378,9 +413,13 @@ class DocxLayerColumnBookmarkTest {
     }
 
     private static Exported export(Consumer<PageFlowBuilder> content) throws Exception {
+        return export(400, content);
+    }
+
+    private static Exported export(double pageWidth, Consumer<PageFlowBuilder> content) throws Exception {
         AtomicReference<DocxExportReport> report = new AtomicReference<>();
         byte[] docx;
-        try (DocumentSession session = GraphCompose.document().pageSize(400, 500).margin(DocumentInsets.of(30))
+        try (DocumentSession session = GraphCompose.document().pageSize(pageWidth, 500).margin(DocumentInsets.of(30))
                 .create()) {
             session.pageFlow(content::accept);
             docx = session.export(new DocxSemanticBackend(report::set));

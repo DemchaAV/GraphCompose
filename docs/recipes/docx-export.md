@@ -308,7 +308,9 @@ paragraph is the picture's block, and a list's edges go to the paragraphs around
 `itemSpacing` as the gap above each item after the first. A list's left and right edges —
 its margin and padding — indent its items, the level's own indent added on top, so its
 markers start where the page starts them. A paragraph's and a list's sides hold under a
-layer stack or a shape container too, inside the box that places the layer. In a cell, two
+layer stack or a shape container too, inside the box that places the layer — but not in a
+shape container narrower than the block it stands in, whose layers' room runs past its
+right edge (see "Shape containers → inline layers"). In a cell, two
 points of a side stay the editor's, to set a line a little wider than the page: off the
 side a left-to-right line does not lean on, so it keeps the edge it is set from — the right
 of a left-aligned paragraph and of a list, the left of a right-aligned one, both of a
@@ -1103,9 +1105,14 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   margin opening a band stood 20pt high, and one in a later layer 7pt. A badge — a ring,
   drawn, with initials centred
   in it, over a spacer that keeps its place in the flow — writes its initials where
-  the ring centres them and keeps its height below them. Each layer, here and in a
-  shape container, is held in across to its box in the stack, with a few points to
-  spare on the side its text does not lean on. A block in `addAligned(...)` is held in
+  the ring centres them and keeps its height below them. Each layer is held in across
+  to its box in the stack, with a few points to spare on the side its text does not
+  lean on. A shape container's layers are held in by as far as their box stands in
+  from the container's edges, but from the edges of the block the container stands
+  in, set in by its margin and padding: in a container narrower than that block the
+  right edge of their room runs that much further right, past its outline, so text
+  that wraps runs past the outline and centred or right-aligned text stands right of
+  where the page sets it (see "Shape containers → inline layers"). A block in `addAligned(...)` is held in
   the same way, to where the alignment puts it — composed in a table cell, a paragraph
   where the lines its table laid out for it stand and a picture where the alignment sets
   one of its written width; any other block there, or one inside a panel or another table
@@ -1162,7 +1169,16 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
 - **Shape containers → inline layers.** DOCX has no portable equivalent of
   a graphics-state path clip, so the container's layers are written
   inline, in source order, without clipping — again with one warning per
-  export, and a note on each container that writes a layer in the flow. A
+  export, and a note on each container that writes a layer in the flow.
+  The outline is drawn at its size and does not grow with what is written
+  in the flow, and the layers take the room of the flow, not of the
+  outline. Measured in Word and LibreOffice: a note the page wraps over
+  three lines inside a box 220pt wide runs over two, up to 95pt past the
+  box; a clipped box's text is written whole, past its outline; the block
+  under a container stands where the flow puts it, over the outline where
+  its layers are written shorter than the page sets them — 12pt high under
+  the narrow box, 20pt under the clipped one. In Word, text added to a card
+  runs past its foot, the outline keeping its height. A
   container whose layers are all drawn — a tile, an icon, a badge holding
   its glyph — writes none: each layer is drawn where the page draws it, in
   the order the page stacks them, by their z-index. Word stacks drawings by

@@ -213,36 +213,36 @@ class DocxLayerColumnBookmarkTest {
     }
 
     @Test
-    void aColumnOfDrawingsAloneIsNamedAndAReferenceToItStaysItsNumber() throws Exception {
-        // Its drawing stands in the paragraph beside it: the column writes none to put a bookmark round.
+    void aColumnOfDrawingsAloneIsBookmarkedWhereItsDrawingIsAnchored() throws Exception {
+        // Its drawing stands in the paragraph beside it: the column writes none to put a bookmark round,
+        // and its bookmark is a place at the start of the paragraph its drawing is anchored in.
         DocumentNode drawn = new SectionBuilder().anchor("drawn").margin(LEFT_BAND)
                 .addCircle(40, DocumentColor.rgb(26, 86, 148)).build();
         Exported exported = export(page -> page
                 .addPageReference("drawn")
                 .add(columns(drawn, column(null, RIGHT_BAND, "Right one"))));
 
-        assertThat(bookmarkNames(exported.document())).isEmpty();
-        assertThat(pageReferences(exported.document())).isEmpty();
-        assertThat(exported.document().getParagraphs().get(0).getText()).as("the number it reads, as text")
-                .isEqualTo("1");
-        assertThat(notesOn(exported.report(), "PageReferenceNode")).singleElement().asString()
-                .contains("its page number is written as text");
-        assertThat(notesOn(exported.report(), "SectionNode")).containsExactly("writes no paragraph, so its anchor "
-                + "\"drawn\" has no bookmark in the Word file: a link to it points at none, and a page reference to "
-                + "it is a fixed number rather than a field");
+        Marked marked = marked(exported.document(), "drawn");
+        assertThat(marked.start()).as("opened and closed in one paragraph").isSameAs(marked.end());
+        assertThat(marked.start().getCTP().xmlText()).as("the paragraph carries the column's drawing")
+                .contains("<wp:anchor");
+        assertThat(pageReferences(exported.document())).containsExactly(Map.entry("PAGEREF drawn \\h", "1"));
+        assertThat(exported.report().notes()).noneMatch(note -> note.detail().contains("bookmark"));
     }
 
     @Test
     void aColumnThatWritesNothingNamesItsAnchorInItsOwnNote() throws Exception {
-        // The column has a note of its own already — its outline entry — and the anchor joins it.
-        DocumentNode drawn = new SectionBuilder().anchor("drawn").bookmark(new DocumentBookmarkOptions("Drawn"))
-                .margin(LEFT_BAND).addCircle(40, DocumentColor.rgb(26, 86, 148)).build();
-        Exported exported = export(page -> page.add(columns(drawn, column(null, RIGHT_BAND, "Right one"))));
+        // The column has a note of its own already — its outline entry — and the anchor joins it. It
+        // draws nothing either: no paragraph carries a drawing of it.
+        DocumentNode empty = new SectionBuilder().anchor("empty").bookmark(new DocumentBookmarkOptions("Empty"))
+                .margin(LEFT_BAND).build();
+        Exported exported = export(page -> page.add(columns(empty, column(null, RIGHT_BAND, "Right one"))));
 
+        assertThat(bookmarkNames(exported.document())).isEmpty();
         assertThat(notesOn(exported.report(), "SectionNode")).containsExactly("written as a column of its layer "
-                + "stack; its outline entry is not written; it writes no paragraph, so its anchor \"drawn\" has no "
-                + "bookmark in the Word file: a link to it points at none, and a page reference to it is a fixed "
-                + "number rather than a field");
+                + "stack; its outline entry is not written; it writes no paragraph, and no paragraph carries the "
+                + "first drawing of its own, so its anchor \"empty\" has no bookmark in the Word file: a link to it "
+                + "points at none, and a page reference to it is a fixed number rather than a field");
     }
 
     @Test

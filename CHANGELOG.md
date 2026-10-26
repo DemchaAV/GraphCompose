@@ -8,6 +8,27 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A DOCX export bookmarks a block of drawings alone where its first drawing is anchored, so a
+  page reference or a link to its anchor works.**
+  - A section, a container or a layer stack's column holding nothing but drawings writes no
+    paragraph for a bookmark to go round: its drawings are anchored in the paragraphs beside them,
+    or in one written on their page. Its anchor had no bookmark: a link to it named a bookmark the
+    file did not hold, and a page reference to it was written as the number the layout read, which
+    no edit updates, with a report note. The bookmark now goes at the start of the paragraph its
+    first drawing is anchored in — the drawing on the earliest page, highest on it. Word keeps a
+    drawing on its paragraph's page and moves it with that paragraph, so the reference reads the
+    page the block starts on, and goes on reading it once the text above is edited.
+  - Measured in Word 16, fields updated, and LibreOffice 24.2, on such a block on page 2 and on
+    the same file with a page put in ahead of it: before, both editors read 2 in each and carried
+    no link; now both read 2 and then 3, and the link goes to the block's page. So it is for a
+    section and a container of drawings, one opening its page, one alone on its page, one in a
+    panel, a layer stack's column of drawings, and an anchor named with spaces past the 40
+    characters Word keeps; a block at the foot of page 1 whose drawings run onto page 2 reads 1,
+    and then 2.
+  - A block that draws nothing, one whose first drawing stands on a page nothing is written on,
+    and one composed in a table's cell, whose drawings its table draws, still have no bookmark, and
+    the report names the anchor.
+
 - **A DOCX export bookmarks a layer stack's column, so a page reference or a link to its anchor
   works.**
   - A stack whose layers stand side by side is written as a one-row table, each layer's content in
@@ -23,8 +44,8 @@ follow semantic versioning; release dates are ISO 8601.
     carried no link; now both read 2 and then 3, and the link goes to the column's page. So it is
     for a left and a right column, a container, a later layer of a column, a column opening with a
     table, a stack in a panel, and a table of contents' entry.
-  - A column that writes no paragraph — drawings alone — has no bookmark still, and the report
-    names its anchor, as it does a section's of drawings alone.
+  - A column that writes no paragraph — drawings alone — is bookmarked where its first drawing is
+    anchored, as a section of drawings alone is (above).
 
 - **A DOCX export keeps a page break the layout makes by itself after a card where the page
   makes it.**

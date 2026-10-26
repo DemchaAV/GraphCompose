@@ -723,6 +723,81 @@ class DocxDrawingAnchorsTest {
         assertThat(drawingsIn(aloneBreak)).as("a page of nothing else, in its break").hasSize(1);
     }
 
+    @Test
+    void theFirstOfSomeShapesIsCarriedByTheParagraphOfTheOneOnTheEarliestPageHighestOnIt() {
+        // Numbered in the order drawn: a low dot on page 0, a dot on page 1, a high dot on page 0.
+        XWPFDocument document = new XWPFDocument();
+        XWPFParagraph upper = text(document, "Upper");
+        XWPFParagraph lower = text(document, "Lower");
+        XWPFParagraph next = text(document, "Next page");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, upper, true);
+        anchors.paragraphOn(1, next, true);
+        anchors.seat(0, upper, upper, 40, 300, 100, 110);
+        anchors.seat(0, lower, lower, 40, 300, 300, 310);
+        int from = anchors.drawnSoFar();
+        queue(anchors, List.of(dot(30, 302), onPage(1, dot(30, 50)), dot(30, 102)));
+        int to = anchors.drawnSoFar();
+
+        assertThat(anchors.carrierOfTheFirst(from, to)).as("nothing anchored before the section ends").isNull();
+        anchors.endSection(1, null, document::createParagraph);
+
+        assertThat(to - from).isEqualTo(3);
+        assertThat(anchors.carrierOfTheFirst(from, to)).as("the high dot's, on page 0").isSameAs(upper);
+        assertThat(anchors.carrierOfTheFirst(from, from + 2)).as("the low dot's, on page 0, before page 1's")
+                .isSameAs(lower);
+        assertThat(anchors.carrierOfTheFirst(from + 1, from + 2)).isSameAs(next);
+        assertThat(anchors.carrierOfTheFirst(to, to)).as("no shapes").isNull();
+    }
+
+    @Test
+    void aShapeAnchoredInACellIsCarriedByTheCellsParagraph() {
+        XWPFDocument document = new XWPFDocument();
+        XWPFParagraph cell = text(document, "");
+        DocxDrawingAnchors anchors = anchors();
+        int from = anchors.drawnSoFar();
+        anchors.anchorInCell(cell, anchors.ordered(List.of(dot(30, 300)), -1), new DocxDrawings.CellOrigin(30, 300));
+
+        assertThat(anchors.carrierOfTheFirst(from, anchors.drawnSoFar())).isSameAs(cell);
+    }
+
+    @Test
+    void shapesWhoseFirstNothingCarriesHaveNoParagraph() {
+        // Page 1, between the section's first page and its last, has no paragraph; page 2 has one.
+        XWPFDocument document = new XWPFDocument();
+        XWPFParagraph last = text(document, "Last");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, text(document, "First"), true);
+        anchors.paragraphOn(2, last, true);
+        int from = anchors.drawnSoFar();
+        queue(anchors, List.of(onPage(1, dot(30, 300)), onPage(2, dot(30, 100))));
+        int to = anchors.drawnSoFar();
+
+        assertThat(anchors.endSection(2, null, document::createParagraph).dropped()).containsEntry(1, 1);
+        assertThat(anchors.carrierOfTheFirst(from, to)).as("not the later page's, where they do not start").isNull();
+        assertThat(anchors.carrierOfTheFirst(from + 1, to)).isSameAs(last);
+    }
+
+    @Test
+    void whereEachShapeIsCarriedIsKeptAcrossSectionsAndForgottenForANewExport() {
+        XWPFDocument document = new XWPFDocument();
+        XWPFParagraph first = text(document, "First");
+        DocxDrawingAnchors anchors = anchors();
+        anchors.paragraphOn(0, first, true);
+        queue(anchors, List.of(dot(30, 300)));
+        anchors.endSection(0, null, document::createParagraph);
+        XWPFParagraph second = text(document, "Second");
+        anchors.paragraphOn(0, second, true);
+        queue(anchors, List.of(dot(30, 300)));
+        anchors.endSection(0, null, document::createParagraph);
+
+        assertThat(anchors.carrierOfTheFirst(0, 1)).as("the first section's").isSameAs(first);
+        assertThat(anchors.carrierOfTheFirst(1, 2)).as("numbered on through the document").isSameAs(second);
+        anchors.reset();
+        assertThat(anchors.drawnSoFar()).isZero();
+        assertThat(anchors.carrierOfTheFirst(0, 2)).isNull();
+    }
+
     /** A shape moved to another page. */
     private static DocxDrawings.Shape onPage(int page, DocxDrawings.Shape shape) {
         return new DocxDrawings.Shape(shape.kind(), shape.x(), shape.top(), shape.width(), shape.height(), shape.fill(),

@@ -164,6 +164,10 @@ final class DocxDrawingAnchors {
      * <p>Word anchors a shape in a paragraph on its page and keeps it there, whatever an edit
      * does to the text above: the paragraph's page is the shape's.</p>
      *
+     * <p>The paragraph is the one the shape was anchored in, as its section's end found it: asked
+     * then, before the section's pages are given their margins, it is in the file. A table split
+     * for those margins later takes the rows it moves out of the part it read them from.</p>
+     *
      * @param from the number of the first shape, as {@link #drawnSoFar} read before they were drawn
      * @param to   the number after the last
      */

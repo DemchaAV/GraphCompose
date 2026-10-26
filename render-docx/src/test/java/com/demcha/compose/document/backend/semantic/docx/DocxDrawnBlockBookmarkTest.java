@@ -133,6 +133,44 @@ class DocxDrawnBlockBookmarkTest {
     }
 
     @Test
+    void aBlockAboveATableSplitForItsPagesMarginsIsMarkedOnce() throws Exception {
+        // The block opens page 2 above a table with a repeated header row; page 3 has other margins,
+        // so the table is split where it starts, under a copy of the header row. The paragraph holding
+        // the block's room above the table carries its drawings and its bookmark, written once.
+        byte[] docx;
+        try (DocumentSession session = GraphCompose.document().pageSize(400, 300).margin(DocumentInsets.of(20))
+                .create()) {
+            session.pageMargins(List.of(PageMarginRule.from(3, new DocumentInsets(45, 20, 34, 20))));
+            session.pageFlow(page -> {
+                referTo("drawn").accept(page);
+                page.addPageBreak(b -> { });
+                page.add(drawings("drawn"));
+                page.addTable(table -> {
+                    table.columns(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(100))
+                            .header("Item", "Amount").repeatHeader();
+                    for (int row = 1; row <= 20; row++) {
+                        table.rowCells(DocumentTableCell.text("Row " + row), DocumentTableCell.text(String.valueOf(row)));
+                    }
+                });
+                page.addParagraph("After the table");
+            });
+            docx = session.export(new DocxSemanticBackend());
+        }
+        XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx));
+
+        assertThat(document.getTables()).as("the premise: the table split where page 3 starts").hasSize(2);
+        XWPFParagraph holder = placeMarked(document, "drawn");
+        List<IBodyElement> body = document.getBodyElements();
+        assertThat(body.get(body.indexOf(holder) + 1)).as("the paragraph right above the table")
+                .isSameAs(document.getTables().get(0));
+        assertThat(drawingsIn(holder)).isEqualTo(2);
+        for (XWPFTable part : document.getTables()) {
+            assertThat(part.getRow(0).getCtRow().xmlText()).as("each part's header row").doesNotContain("bookmark");
+        }
+        assertThat(pageReferences(document)).containsExactly(Map.entry("PAGEREF drawn \\h", "2"));
+    }
+
+    @Test
     void aBlocksNameIsGivenAfterTheBodyNamedItsAnchors() throws Exception {
         // Word reads a bookmark's name without case. The block's bookmark is written once its section's
         // drawings are anchored, after the paragraph's: the paragraph keeps the name its anchor cleans to.

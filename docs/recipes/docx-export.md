@@ -224,7 +224,10 @@ A page that starts inside any other block — the lines of a paragraph, a panel 
 does not start a section. Nor does a page that starts at a table's row where a cell spans rows
 across it, where
 only the header rows stand above it, or where a header row holds a bookmark or a drawing, which
-the file can hold only once, or a numbered list item, which its copy would number on. Nor where a header row or a row from that one on holds a page
+the file can hold only once, or a numbered list item, which its copy would number on. A bookmark
+the export puts in a header row once the split is decided — a block of drawings alone, marked in
+the paragraph holding its first drawing — stays in the first part, and the copy of the row leaves
+it out. Nor where a header row or a row from that one on holds a page
 reference, which the export settles in the paragraph it wrote it in once the body is written. A
 page after one whose content reaches its foot, under a table or in its rows, starts none either,
 as the line that would end the section has no room. Neither does a page of a

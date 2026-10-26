@@ -123,6 +123,65 @@ class DocxTableSplitTest {
         }
     }
 
+    @Test
+    void aTablesPartAfterASplitCopiesItsHeaderRowsWithoutTheirBookmarks() throws Exception {
+        // A block of drawings alone the export marks in a header row once a split is decided marks the
+        // table's first page: the first part keeps it, and the copy of the row has none. Copied with its
+        // id, both copies went when the export kept the last bookmark of the name.
+        try (XWPFDocument document = new XWPFDocument()) {
+            XWPFTable table = table(document, 1, 4);
+            mark(table.getRow(0));
+
+            DocxTableSplit.split(document, table, 3);
+
+            XWPFTable second = document.getTables().get(1);
+            assertThat(texts(second)).containsExactly("Header", "Row 3", "Row 4");
+            assertThat(bookmarks(second.getRow(0))).as("the copy of the header row").isZero();
+            assertThat(bookmarks(table.getRow(0))).as("the first part's header row, its start and its end")
+                    .isEqualTo(2);
+        }
+    }
+
+    @Test
+    void aPanelsPartAfterACutCopiesItsHeaderRowsWithoutTheirBookmarks() throws Exception {
+        try (XWPFDocument written = new XWPFDocument()) {
+            XWPFTable items = table(written, 1, 4);
+            mark(items.getRow(0));
+            XWPFTable outer = written.createTable(1, 1);
+            try (XmlCursor at = outer.getRow(0).getCell(0).getParagraphArray(0).getCTP().newCursor();
+                 XmlCursor table = items.getCTTbl().newCursor()) {
+                table.moveXml(at);
+            }
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(bytes(written)))) {
+                XWPFTable panel = document.getTables().get(0);
+                XWPFTable inner = panel.getRow(0).getCell(0).getTables().get(0);
+
+                DocxTableSplit.PanelPart part = DocxTableSplit.splitInItsPanel(document, panel, inner, 3);
+
+                XWPFTable rest = part.second().getRow(0).getCell(0).getTables().get(0);
+                assertThat(bookmarks(rest.getRow(0))).as("the copy of the header row").isZero();
+                assertThat(bookmarks(inner.getRow(0))).as("the first part's header row").isEqualTo(2);
+            }
+        }
+    }
+
+    /** Marks a row's first paragraph with a bookmark opened and closed at its start. */
+    private static void mark(XWPFTableRow row) {
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP paragraph =
+                row.getCell(0).getParagraphs().get(0).getCTP();
+        org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBookmark start = paragraph.addNewBookmarkStart();
+        start.setId(java.math.BigInteger.valueOf(7));
+        start.setName("drawn");
+        paragraph.addNewBookmarkEnd().setId(java.math.BigInteger.valueOf(7));
+    }
+
+    /** How many bookmark starts and ends a row holds. */
+    private static int bookmarks(XWPFTableRow row) {
+        String w = "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' ";
+        return row.getCtRow().selectPath(w + ".//w:bookmarkStart").length
+               + row.getCtRow().selectPath(w + ".//w:bookmarkEnd").length;
+    }
+
     private static int drawings(XWPFTableRow row) {
         return row.getCtRow().selectPath(
                 "declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//w:drawing").length;

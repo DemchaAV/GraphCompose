@@ -63,6 +63,23 @@ class DocxAnchorWithoutABookmarkTest {
     }
 
     @Test
+    void aBlockWhoseFirstDrawingNothingCarriesNamesItsAnchor() throws Exception {
+        // Its tall shape fills page 2, which no paragraph is written on; its circle goes to page 3,
+        // under the paragraph there. Marked there, a reference would read 3 where the page prints 2.
+        Exported exported = export(page -> page.addParagraph(p -> p.text("Go there").linkTo("target"))
+                .addPageBreak(b -> { })
+                .add(new SectionBuilder().anchor("target")
+                        .addShape(120, 550, DocumentColor.LIGHT_GRAY)
+                        .addCircle(24, DocumentColor.LIGHT_GRAY).build())
+                .addParagraph("After"));
+
+        assertThat(exported.report().notes()).as("the premise: its shape on a page nothing carries")
+                .anyMatch(note -> note.severity() == DocxExportReport.Severity.DROPPED);
+        assertThat(exported.document().getDocument().xmlText()).doesNotContain("w:name=\"target\"");
+        assertThat(notesOn(exported.report(), "SectionNode")).singleElement().isEqualTo(WHY + LOST);
+    }
+
+    @Test
     void aSectionWithANoteOfItsOwnNamesItsAnchorThere() throws Exception {
         // One node, one note: its outline entry and its anchor together.
         Exported exported = export(page -> page.addParagraph(p -> p.text("Go there").linkTo("target"))

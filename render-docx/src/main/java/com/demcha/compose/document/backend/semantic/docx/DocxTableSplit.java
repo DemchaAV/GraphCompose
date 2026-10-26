@@ -38,6 +38,11 @@ final class DocxTableSplit {
     // (splitInItsPanel).
     private static final List<String> DRAWINGS = List.of("drawing", "pict", "object");
 
+    // A bookmark, whose name marks one place: a copy of the header rows leaves it out (split,
+    // splitInItsPanel), its end with it. A bookmark that closes in a header row opened in one: a
+    // block holding the table closes at its last row or after it.
+    private static final List<String> BOOKMARKS = List.of("bookmarkStart", "bookmarkEnd");
+
     // What a header row's copy cannot hold again: a bookmark's name marks one place, a drawing's id
     // names one drawing, and a list item's number is counted on from the item before it.
     private static final List<String> NOT_REPEATED =
@@ -103,6 +108,12 @@ final class DocxTableSplit {
      * table of their own after it, under copies of its header rows, and a paragraph is put between
      * the two.
      *
+     * <p>The copy of the header rows holds no bookmark. Where the split is decided, they hold none
+     * ({@link #rowStarting}); one the export puts in them after that, at their section's end — a
+     * block of drawings alone, marked in the paragraph its first drawing is anchored in — marks the
+     * table's first page, and stays in the first part. Copied with its name and its id, both copies
+     * went when the export kept one bookmark of each name.</p>
+     *
      * @param document the document the table is in the body of
      * @param table    the table
      * @param row      the row the second part starts with, after the header rows
@@ -112,6 +123,7 @@ final class DocxTableSplit {
         XWPFTable second = copyAfter(document, table);
         keepTheRowsBefore(table, row);
         keepTheRowsFrom(second, row);
+        drop(second, headerRows(second), BOOKMARKS);
         try (XmlCursor before = second.getCTTbl().newCursor()) {
             return document.insertNewParagraph(before);
         }
@@ -130,7 +142,8 @@ final class DocxTableSplit {
      * ({@link #rowStarting}); one the export anchors in them after that, at their section's end — a
      * shape of the table's first page standing beside a header's text, or one a page with no other
      * paragraph to carry it leaves in its first cell's — is that page's, and stays in the first
-     * part.</p>
+     * part. So does a bookmark the export puts there, for a block of drawings alone, as where a
+     * table of the body is split ({@link #split}).</p>
      *
      * @param document the document the panel is in the body of
      * @param panel    the panel
@@ -157,7 +170,8 @@ final class DocxTableSplit {
             remove(continued, after.get(index));
         }
         keepTheRowsFrom(rest, row);
-        dropTheDrawings(rest, headerRows(rest));
+        drop(rest, headerRows(rest), DRAWINGS);
+        drop(rest, headerRows(rest), BOOKMARKS);
         try (XmlCursor before = second.getCTTbl().newCursor()) {
             XWPFParagraph between = document.insertNewParagraph(before);
             between.setPageBreak(true);
@@ -206,10 +220,10 @@ final class DocxTableSplit {
         }
     }
 
-    /** Takes every drawing out of a table's first rows. */
-    private static void dropTheDrawings(XWPFTable table, int rows) {
+    /** Takes every element of the given names out of a table's first rows. */
+    private static void drop(XWPFTable table, int rows, List<String> elements) {
         for (int row = 0; row < rows; row++) {
-            for (String element : DRAWINGS) {
+            for (String element : elements) {
                 for (org.apache.xmlbeans.XmlObject found : table.getRow(row).getCtRow().selectPath(W + ".//w:" + element)) {
                     try (XmlCursor cursor = found.newCursor()) {
                         cursor.removeXml();

@@ -188,8 +188,8 @@ class DocxPageReferenceTest {
     }
 
     @Test
-    void aReferenceToALayerStacksColumnIsWrittenAsTheNumberItReads() throws Exception {
-        // A column of a layer stack is written as what it holds, with no bookmark round it.
+    void aReferenceToALayerStacksColumnIsAFieldOnItsBookmark() throws Exception {
+        // A column of a layer stack is written as what it holds, its bookmark round that.
         try (XWPFDocument document = export(page -> page
                 .addPageReference("left")
                 .addLayerStack(stack -> stack
@@ -200,9 +200,8 @@ class DocxPageReferenceTest {
                                 .margin(new DocumentInsets(0, 0, 0, 130)).addParagraph("Right").build(),
                                 com.demcha.compose.document.node.LayerAlign.TOP_LEFT)))) {
 
-            assertThat(bookmarkNames(document)).doesNotContain("left");
-            assertThat(pageReferences(document)).isEmpty();
-            assertThat(document.getParagraphs().get(0).getText()).isEqualTo("1");
+            assertThat(bookmarkNames(document)).containsExactly("left");
+            assertThat(pageReferences(document)).containsExactly(Map.entry("PAGEREF left \\h", "1"));
         }
     }
 

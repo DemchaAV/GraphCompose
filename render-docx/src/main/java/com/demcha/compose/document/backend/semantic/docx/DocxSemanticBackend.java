@@ -9009,12 +9009,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     /**
      * Whether a layer stands where its shape sets it without being held in: unmoved across, and a
      * paragraph's own alignment leaning the way its layer's does, or any other block set at the
-     * shape's left.
+     * shape's left at the width it comes to.
      *
-     * <p>The page lays a layer out in the room the shape leaves it and reports the box it comes to,
-     * no wider than what it holds: a card's section set at the top left, held in to that box,
-     * left its text no room past the page's longest line, and the cell's right border took the
-     * rest — Word broke the line a word early.</p>
+     * <p>The page lays such a block out in the room the shape leaves it and reports the box it
+     * comes to, no wider than what it holds: a card's section set at the top left, held in to that
+     * box, left its text no room past the page's longest line, and the cell's right border took the
+     * rest — Word broke the line a word early. A block given a fixed width is laid out in that width,
+     * and is held to it.</p>
      */
     private static boolean standsAsItsLayer(DocumentNode node,
                                             com.demcha.compose.document.node.LayerStackNode.Layer layer) {
@@ -9023,7 +9024,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
         double share = shareAcross(layer.align());
         if (!(node instanceof ParagraphNode paragraph)) {
-            return share == 0;
+            return share == 0 && !node.flowWidth().isFixed();
         }
         return share == 0 ? paragraph.align() != TextAlign.CENTER && paragraph.align() != TextAlign.RIGHT
                 : share == 1 ? paragraph.align() == TextAlign.RIGHT
@@ -9080,7 +9081,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             List<String> lost = new ArrayList<>();
             double share = shareDown(layer.align());
             if (Double.isNaN(down)) {
-                down = share;
+                // Where its cell sets what it holds (verticalOfItsLayers): the top for a first layer
+                // the page starts at the outline's top, taller than it, whatever its alignment.
+                down = setFromItsTop(shape) ? 0 : share;
             } else {
                 lost.add(share == down
                         ? "the page sets it at the height of the layers before it, and its cell writes it under them"
@@ -11215,7 +11218,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * Writes a shape container's layers, drawing its outline where the page draws it. A
+     * Writes a shape container: as a panel where it is one ({@link #writtenAsAPanel}), its
+     * layers in its cell; otherwise its layers, drawing its outline where the page draws it. A
      * container whose one written layer is laid beside drawing is written as a band (see
      * {@link #writeOverlayBand}, {@link #writesOneLayer}): a section title beside its badge
      * stands where the page places it in the header, with the page's space above and below it.

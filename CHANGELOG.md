@@ -20,10 +20,11 @@ follow semantic versioning; release dates are ISO 8601.
     shape whole.
   - Its layers stand in the cell at the height its first written layer is set — at the top where
     the page starts one taller than the outline there — and across where the layout places them in
-    the outline; a block set at the outline's left keeps the room the page laid it out in. Word sets a cell's content below its whole top border, where the page
-    sets the layers from the outline's top, under the border: a shape set from its top takes the
-    border out of the space above its first line, and the report names one with nothing there to
-    take it.
+    the outline; a block set at the outline's left keeps the room the page laid it out in, the
+    whole room or a width it is given. Word sets a cell's content below its whole top border, where
+    the page sets the layers from the outline's top, under the border: a shape set from its top
+    takes the border out of the space above its first line, and the report names one with nothing
+    there to take it.
   - Its row is held at least the outline's height, so the panel grows with text an edit adds. A
     clip that cuts what its layers paint past the outline's foot holds the row at exactly the
     outline's height instead, less the one border Word and LibreOffice add to an exact height:

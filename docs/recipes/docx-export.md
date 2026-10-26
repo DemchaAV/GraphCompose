@@ -1173,14 +1173,14 @@ recolour what is under it in Word and it keeps the colour it was flattened to.
   rectangle, filled or outlined, holding text is written as a panel, as a
   section with a fill is: a table of one cell, its outline's size, the fill
   and border on the cell and its padding round it, its row kept on one page
-  as the layout moves the shape whole. So it is composed in a table's cell,
-  and placed in the body, outside any cell, laid over nothing and given room
-  in the flow. Its corners are square, and a turned one stands upright; the
+  as the layout moves the shape whole. So is one composed in a table's cell,
+  and one placed in the body, outside any cell, laid over nothing and given
+  room in the flow. Its corners are square, and a turned one stands upright; the
   report names both. Its layers stand in the cell at the height its first
   written layer is set — top, middle or foot, the top where the page starts
   a layer taller than the outline there — and across where the layout places them,
   a block set at the outline's left keeping the room the page laid it out
-  in. Word sets a cell's content below its whole top border, where the page
+  in — the whole room, or a width it is given. Word sets a cell's content below its whole top border, where the page
   sets the layers from the outline's top, under the border: a shape set
   from its top takes the border out of the space above its first line, and
   the report names one with nothing there to take it. The row is held at

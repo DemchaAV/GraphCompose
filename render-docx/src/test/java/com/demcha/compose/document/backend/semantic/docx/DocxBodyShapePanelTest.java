@@ -2,11 +2,14 @@ package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.ImageBuilder;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.ShapeBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
+import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
@@ -24,13 +27,19 @@ import org.junit.jupiter.api.Test;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
 
 /**
  * A painted rectangle or rounded rectangle holding text, placed in the body, is written as a
@@ -112,6 +121,25 @@ class DocxBodyShapePanelTest {
     }
 
     @Test
+    void aBlockOfAFixedWidthSetAtTheOutlinesLeftIsHeldToItsWidth() throws Exception {
+        // The page lays the section's text out in its 160pt, not in the card's room.
+        Exported exported = export(page -> page
+                .addParagraph("Above")
+                .add(new ShapeContainerBuilder().name("Box").roundedRect(328, 80, 12).fillColor(SURFACE).stroke(BORDER)
+                        .topLeft(new SectionBuilder().name("Column").fixedWidth(160)
+                                .addParagraph(p -> p.text("A column of text held to a fixed width, narrower than "
+                                                          + "the card it stands in."))
+                                .build())
+                        .build())
+                .addParagraph("Below"));
+
+        PlacedNode column = exported.placed("Column");
+        assertThat(column.placementWidth()).isEqualTo(160, offset(0.01));
+        XWPFParagraph written = onlyTable(exported.document()).getRow(0).getCell(0).getParagraphs().get(0);
+        assertThat(indentOf(written, false)).isEqualTo(Math.round((328 - 160) * 20));
+    }
+
+    @Test
     void aShapeSetFromItsTopTakesItsTopBorderOutOfTheSpaceAboveItsFirstLine() throws Exception {
         Exported card = export(page -> page
                 .addParagraph("Above")
@@ -130,6 +158,40 @@ class DocxBodyShapePanelTest {
         // A layer the cell centres stands between both borders, as the page centres it.
         XWPFParagraph note = onlyTable(centred.document()).getRow(0).getCell(0).getParagraphs().get(0);
         assertThat(spacingBefore(note)).isZero();
+    }
+
+    @Test
+    void aPaddedShapeIsReadFromItsOutlineNotItsPaddedBox() throws Exception {
+        // Its padding stands round the outline: the card's heading is still set from the outline's top.
+        Exported card = export(page -> page
+                .addParagraph("Above")
+                .add(new ShapeContainerBuilder().name("Box").roundedRect(300, 80, 12).fillColor(SURFACE).stroke(BORDER)
+                        .padding(DocumentInsets.of(10))
+                        .topLeft(new SectionBuilder().padding(DocumentInsets.of(12)).spacing(4)
+                                .addParagraph(p -> p.text("A padded card"))
+                                .addParagraph(p -> p.text("Its text is short."))
+                                .build())
+                        .build())
+                .addParagraph("Below"));
+        // Its text runs past the outline's foot by less than the padding under it: the clip still cuts it.
+        Exported clipped = export(page -> page
+                .addParagraph("Above")
+                .add(new ShapeContainerBuilder().name("Box").rectangle(200, 47).fillColor(SURFACE).stroke(BORDER)
+                        .padding(DocumentInsets.of(10)).clipPolicy(ClipPolicy.CLIP_BOUNDS)
+                        .topLeft(new ParagraphBuilder().name("Note")
+                                .text("Three short lines of text, a little taller than the box they stand in, so "
+                                      + "that the clip cuts the foot of the third.")
+                                .build())
+                        .build())
+                .addParagraph("Below"));
+
+        XWPFParagraph heading = onlyTable(card.document()).getRow(0).getCell(0).getParagraphs().get(0);
+        assertThat(spacingBefore(heading)).isEqualTo((12 - 1) * 20);
+        PlacedNode box = clipped.placed("Box");
+        PlacedNode note = clipped.placed("Note");
+        double past = box.placementY() + 10 - note.placementY();
+        assertThat(past).as("how far the text runs past the outline's foot").isBetween(1.0, 9.0);
+        assertThat(ruleOf(onlyTable(clipped.document()).getRow(0))).isEqualTo(STHeightRule.EXACT);
     }
 
     @Test
@@ -217,10 +279,8 @@ class DocxBodyShapePanelTest {
         Exported framed = export(page -> page.addParagraph("Above")
                 .add(new ShapeContainerBuilder().name("Box").roundedRect(60, 60, 8).fillColor(SURFACE)
                         .clipPolicy(ClipPolicy.CLIP_BOUNDS)
-                        .center(new com.demcha.compose.document.dsl.ImageBuilder()
-                                .source(com.demcha.compose.document.image.DocumentImageData.fromBytes(png()))
-                                .size(60, 70).fitMode(com.demcha.compose.document.image.DocumentImageFitMode.CONTAIN)
-                                .build())
+                        .center(new ImageBuilder().source(DocumentImageData.fromBytes(png()))
+                                .size(60, 70).fitMode(DocumentImageFitMode.CONTAIN).build())
                         .build())
                 .addParagraph("Below"));
         // In a painted section's cell and a row's: written in that cell, as before.
@@ -242,16 +302,6 @@ class DocxBodyShapePanelTest {
         assertThat(onlyTable(inAPanel.document()).getRow(0).getCell(0).getTables()).isEmpty();
         assertThat(onlyTable(inARow.document()).getRow(0).getCell(0).getTables()).isEmpty();
         assertThat(noRoom.document().getTables()).isEmpty();
-    }
-
-    private static byte[] png() {
-        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
-            javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(100, 20,
-                    java.awt.image.BufferedImage.TYPE_INT_RGB), "png", out);
-            return out.toByteArray();
-        } catch (java.io.IOException failure) {
-            throw new java.io.UncheckedIOException(failure);
-        }
     }
 
     @Test
@@ -412,5 +462,14 @@ class DocxBodyShapePanelTest {
 
     private static long twipsOf(Object value) {
         return value instanceof BigInteger big ? big.longValue() : Long.parseLong(String.valueOf(value));
+    }
+
+    private static byte[] png() {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            ImageIO.write(new BufferedImage(100, 20, BufferedImage.TYPE_INT_RGB), "png", out);
+            return out.toByteArray();
+        } catch (IOException failure) {
+            throw new UncheckedIOException(failure);
+        }
     }
 }

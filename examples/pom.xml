@@ -18,7 +18,7 @@
 
     <properties>
         <graphcompose.version>${project.version}</graphcompose.version>
-        <logback.version>1.6.4</logback.version>
+        <logback.version>1.6.5</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
 
         <!--
@@ -198,7 +198,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.6.1</version>
                 <configuration>
                     <systemPropertyVariables>
                         <!--
